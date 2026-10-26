@@ -38,7 +38,7 @@ func UnmappedOf(items []lading.Unmapped) Unmapped {
 
 func decode(raw jsonutils.RawJSON, target any) error {
 	if len(raw) == 0 {
-		return fmt.Errorf("ladingdoc: the run produced no document")
+		return ErrNoDocument
 	}
 	if err := sonic.Unmarshal(raw, target); err != nil {
 		return fmt.Errorf("ladingdoc: decode the document: %w", err)
@@ -140,7 +140,7 @@ func source(
 	unmapped Unmapped,
 	path string,
 	fallbacks ...string,
-) (pulid.ID, string) {
+) (id pulid.ID, display string) {
 	code := ""
 	label := ""
 	if reference != nil {
@@ -374,9 +374,7 @@ func ToTenderAnswer(raw jsonutils.RawJSON) (*TenderAnswer, error) {
 	if answer.Accepted {
 		answer.ReservationCode = "A"
 	}
-	for _, value := range sortedValues(document.Refs) {
-		answer.References = append(answer.References, value)
-	}
+	answer.References = append(answer.References, sortedValues(document.Refs)...)
 	return answer, nil
 }
 

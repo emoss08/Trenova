@@ -53,39 +53,46 @@ func readCurrent(setup *ediports.EDIPartnerSetup, method edi.ConnectionMethod) *
 }
 
 func readManifest(current *currentSetup, manifest *lading.Check) {
-	values := current.values
 	if manifest.Partner != nil && manifest.Partner.Interchange != nil {
-		interchange := manifest.Partner.Interchange
-		if interchange.Them != nil {
-			values[fieldPartnerQualifier] = interchange.Them.Qualifier
-			values[fieldPartnerID] = interchange.Them.ID
-		}
-		if interchange.Us != nil {
-			values[fieldOurQualifier] = interchange.Us.Qualifier
-			values[fieldOurID] = interchange.Us.ID
-		}
-		if interchange.Group != nil {
-			values[fieldPartnerGSID] = interchange.Group.Theirs
-			values[fieldOurGSID] = interchange.Group.Ours
-		}
-		values[fieldX12Version] = interchange.Version
-		values[fieldUsageIndicator] = "T"
-		if interchange.Usage == valueProduction {
-			values[fieldUsageIndicator] = "P"
-		}
-		keys := []string{fieldElementSep, fieldSegmentSep, fieldComponentSep, fieldRepetitionSep}
-		for index, separator := range interchange.Separators {
-			if index < len(keys) {
-				values[keys[index]] = separator
-			}
+		readInterchange(current.values, manifest.Partner.Interchange)
+	}
+	readMaps(current, manifest)
+	readAcknowledgments(current.values, manifest)
+}
+
+func readInterchange(values map[string]string, interchange *lading.Interchange) {
+	if interchange.Them != nil {
+		values[fieldPartnerQualifier] = interchange.Them.Qualifier
+		values[fieldPartnerID] = interchange.Them.ID
+	}
+	if interchange.Us != nil {
+		values[fieldOurQualifier] = interchange.Us.Qualifier
+		values[fieldOurID] = interchange.Us.ID
+	}
+	if interchange.Group != nil {
+		values[fieldPartnerGSID] = interchange.Group.Theirs
+		values[fieldOurGSID] = interchange.Group.Ours
+	}
+	values[fieldX12Version] = interchange.Version
+	values[fieldUsageIndicator] = "T"
+	if interchange.Usage == valueProduction {
+		values[fieldUsageIndicator] = "P"
+	}
+	keys := []string{fieldElementSep, fieldSegmentSep, fieldComponentSep, fieldRepetitionSep}
+	for index, separator := range interchange.Separators {
+		if index < len(keys) {
+			values[keys[index]] = separator
 		}
 	}
+}
 
+func readMaps(current *currentSetup, manifest *lading.Check) {
 	versions := make(map[string]string, len(manifest.Guides))
 	for _, guide := range manifest.Guides {
 		versions[guide.Name] = guide.Version
 	}
-	for _, item := range manifest.Maps {
+	for index := range manifest.Maps {
+		item := &manifest.Maps[index]
 		if item.Set == "" {
 			continue
 		}
@@ -97,13 +104,17 @@ func readManifest(current *currentSetup, manifest *lading.Check) {
 			guide = item.From
 		}
 		current.exchanged[setKey(set, direction)] = true
-		values[setField(set, direction, setAttrSupported)] = valueTrue
+		current.values[setField(set, direction, setAttrSupported)] = valueTrue
 		if version := versions[guide]; version != "" {
-			values[setField(set, direction, setAttrVersion)] = version
+			current.values[setField(set, direction, setAttrVersion)] = version
 		}
 	}
+}
+
+func readAcknowledgments(values map[string]string, manifest *lading.Check) {
 	for _, flow := range manifest.Flows {
-		for _, clause := range flow.Clauses {
+		for index := range flow.Clauses {
+			clause := &flow.Clauses[index]
 			if clause.Kind != lading.ClauseReceive || clause.Set == "" {
 				continue
 			}
@@ -111,7 +122,8 @@ func readManifest(current *currentSetup, manifest *lading.Check) {
 			if ack == lading.AcknowledgeNone {
 				ack = ackNone
 			}
-			values[setField(edi.TransactionSet(clause.Set), edi.DocumentDirectionInbound, setAttrAck)] = ack
+			set := edi.TransactionSet(clause.Set)
+			values[setField(set, edi.DocumentDirectionInbound, setAttrAck)] = ack
 		}
 	}
 }

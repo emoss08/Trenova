@@ -450,9 +450,8 @@ func roleFor(exchanges []*exchange) string {
 	return lading.RoleCarrier
 }
 
-func (p *planner) acknowledgment(exchanges []*exchange) (string, int) {
+func (p *planner) acknowledgment(exchanges []*exchange) (acknowledge string, window int) {
 	counts := map[string]int{}
-	window := 0
 	for _, exchanged := range exchanges {
 		if exchanged.ack != "" {
 			counts[exchanged.ack]++
@@ -501,8 +500,8 @@ func (p *planner) adaptProject(
 	version *edi.LadingVersion,
 	starter []lading.File,
 	exchanges []*exchange,
-) ([]lading.File, map[string]string) {
-	files := slices.Clone(version.Files)
+) (files []lading.File, guided map[string]string) {
+	files = slices.Clone(version.Files)
 	var interchange, zone string
 	for _, file := range starter {
 		if partnerHeader.MatchString(file.Source) {
@@ -525,7 +524,7 @@ func (p *planner) adaptProject(
 	}
 
 	manifest := &version.Manifest
-	guided := map[string]string{}
+	guided = map[string]string{}
 	for _, guide := range manifest.Guides {
 		if guide.Set != "" && guide.Path != guidePath(edi.TransactionSet(guide.Set)) {
 			guided[guide.Set] = guide.Name
@@ -554,8 +553,8 @@ func mapsSet(manifest *lading.Check, set edi.TransactionSet, direction edi.Docum
 	if direction == edi.DocumentDirectionInbound {
 		wanted = lading.DirectionInbound
 	}
-	for _, item := range manifest.Maps {
-		if item.Set == string(set) && item.Direction == wanted {
+	for index := range manifest.Maps {
+		if item := &manifest.Maps[index]; item.Set == string(set) && item.Direction == wanted {
 			return true
 		}
 	}
@@ -595,8 +594,8 @@ func (p *planner) guides(
 			order = append(order, exchanged.set)
 		}
 		for _, item := range exchanged.requirements {
-			line, ok := guideRule(item.input)
-			if !ok {
+			line, found := guideRule(item.input)
+			if !found {
 				continue
 			}
 			doc := fmt.Sprintf("/// p.%d: %s\n", item.source.Page, oneLine(item.source.Quote))
@@ -719,11 +718,11 @@ func withGuides(files []lading.File, guides []*guideFile) []lading.File {
 }
 
 func (p *planner) check(ctx context.Context, files []lading.File) (*lading.Check, error) {
-	context, err := p.s.lading.Context(ctx, p.req.TenantInfo)
+	ladingContext, err := p.s.lading.Context(ctx, p.req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	encoded, err := lading.Encode(&lading.Project{Files: files}, context)
+	encoded, err := lading.Encode(&lading.Project{Files: files}, ladingContext)
 	if err != nil {
 		return nil, err
 	}
@@ -747,7 +746,8 @@ func (p *planner) dropFailingGuideLines(
 		if checked == nil {
 			continue
 		}
-		for _, diagnostic := range checked.Diagnostics {
+		for index := range checked.Diagnostics {
+			diagnostic := &checked.Diagnostics[index]
 			if diagnostic.Severity != lading.SeverityError {
 				continue
 			}
@@ -802,35 +802,7 @@ func lineAt(source string, offset int) int {
 }
 
 func (p *planner) unmet(check *lading.Check, exchanges []*exchange) {
-	unwritten := map[string]map[string]string{}
-	for _, item := range check.Maps {
-		if item.Direction != lading.DirectionOutbound || item.Set == "" {
-			continue
-		}
-		checked := checkedFile(check, item.Path)
-		if checked == nil {
-			continue
-		}
-		for _, diagnostic := range checked.Diagnostics {
-			problem := ""
-			switch diagnostic.Code {
-			case "x12-mandatory-unwritten":
-				problem = diagnostic.Message.String()
-			case "x12-mandatory-conditional":
-				problem = conditionalNote
-			default:
-				continue
-			}
-			if unwritten[item.Set] == nil {
-				unwritten[item.Set] = map[string]string{}
-			}
-			for _, name := range unwrittenNames(diagnostic.Message) {
-				if _, seen := unwritten[item.Set][name]; !seen {
-					unwritten[item.Set][name] = problem
-				}
-			}
-		}
-	}
+	unwritten := unwrittenBySet(check)
 	for _, exchanged := range exchanges {
 		if exchanged.direction != edi.DocumentDirectionOutbound {
 			continue
@@ -852,6 +824,47 @@ func (p *planner) unmet(check *lading.Check, exchanges []*exchange) {
 				problem,
 			))
 		}
+	}
+}
+
+func unwrittenBySet(check *lading.Check) map[string]map[string]string {
+	unwritten := map[string]map[string]string{}
+	for index := range check.Maps {
+		item := &check.Maps[index]
+		if item.Direction != lading.DirectionOutbound || item.Set == "" {
+			continue
+		}
+		checked := checkedFile(check, item.Path)
+		if checked == nil {
+			continue
+		}
+		for diagnosticIndex := range checked.Diagnostics {
+			diagnostic := &checked.Diagnostics[diagnosticIndex]
+			problem, unmet := unmetProblem(diagnostic)
+			if !unmet {
+				continue
+			}
+			if unwritten[item.Set] == nil {
+				unwritten[item.Set] = map[string]string{}
+			}
+			for _, name := range unwrittenNames(diagnostic.Message) {
+				if _, seen := unwritten[item.Set][name]; !seen {
+					unwritten[item.Set][name] = problem
+				}
+			}
+		}
+	}
+	return unwritten
+}
+
+func unmetProblem(diagnostic *lading.Diagnostic) (problem string, unmet bool) {
+	switch diagnostic.Code {
+	case "x12-mandatory-unwritten":
+		return diagnostic.Message.String(), true
+	case "x12-mandatory-conditional":
+		return conditionalNote, true
+	default:
+		return "", false
 	}
 }
 
@@ -882,7 +895,8 @@ func (p *planner) projectFailures(check *lading.Check, guides []*guideFile) {
 		if file.Kind != "partner" && !owned[file.Path] && p.current.version != nil {
 			continue
 		}
-		for _, diagnostic := range file.Diagnostics {
+		for diagnosticIndex := range file.Diagnostics {
+			diagnostic := &file.Diagnostics[diagnosticIndex]
 			if diagnostic.Severity != lading.SeverityError ||
 				diagnostic.Code == "x12-mandatory-unwritten" {
 				continue
@@ -927,8 +941,10 @@ func projectFiles(
 
 func projectDiagnostics(check *lading.Check) []ediports.DraftDiagnostic {
 	out := make([]ediports.DraftDiagnostic, 0)
-	for _, file := range check.Files {
-		for _, diagnostic := range file.Diagnostics {
+	for fileIndex := range check.Files {
+		file := &check.Files[fileIndex]
+		for index := range file.Diagnostics {
+			diagnostic := &file.Diagnostics[index]
 			if diagnostic.Severity == lading.SeverityInfo || len(out) == maxDiagnostics {
 				continue
 			}

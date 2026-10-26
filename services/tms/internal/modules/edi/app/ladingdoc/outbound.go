@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	ErrNoKey   = errors.New("ladingdoc: the document has no key the partner knows the load by")
-	ErrNoStops = errors.New(
+	ErrNoDocument = errors.New("ladingdoc: the run produced no document")
+	ErrNoKey      = errors.New("ladingdoc: the document has no key the partner knows the load by")
+	ErrNoStops    = errors.New(
 		"ladingdoc: a load tender needs at least one stop with a scheduled time",
 	)
 	ErrNoEvents = errors.New("ladingdoc: a shipment status needs at least one event with a time")
@@ -123,9 +124,9 @@ func purposeOf(code edi.LoadTenderPurposeCode) string {
 		return PurposeChange
 	case edi.LoadTenderPurposeCancel:
 		return PurposeCancel
-	default:
-		return PurposeOriginal
+	case edi.LoadTenderPurposeOriginal:
 	}
+	return PurposeOriginal
 }
 
 func stopTypeOf(stopType string) string {

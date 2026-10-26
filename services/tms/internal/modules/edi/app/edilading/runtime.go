@@ -90,7 +90,7 @@ type Runtime struct {
 	cache        *programCache
 }
 
-func NewRuntime(p RuntimeParams) *Runtime {
+func NewRuntime(p RuntimeParams) *Runtime { //nolint:gocritic // fx params are passed by value
 	return &Runtime{
 		l:            p.Logger.Named("edi.lading.runtime"),
 		client:       lading.Default(),
@@ -189,11 +189,11 @@ func (r *Runtime) program(
 			Manifest: &version.Manifest,
 		}, nil
 	}
-	context, err := r.Context(ctx, tenantInfo)
+	ladingContext, err := r.Context(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	encoded, err := lading.Encode(&lading.Project{Files: version.Files}, context)
+	encoded, err := lading.Encode(&lading.Project{Files: version.Files}, ladingContext)
 	if err != nil {
 		return nil, err
 	}
@@ -254,9 +254,9 @@ func customFieldType(fieldType customfield.FieldType) string {
 		return "Date"
 	case customfield.FieldTypeBoolean:
 		return "Bool"
-	default:
-		return "Text"
+	case customfield.FieldTypeText, customfield.FieldTypeSelect, customfield.FieldTypeMultiSelect:
 	}
+	return "Text"
 }
 
 type RunRequest struct {
@@ -439,11 +439,12 @@ func LookupEntity(kind string) (edi.MappingEntityType, bool) {
 
 // Settings are a project's setting values that differ from its partner file's defaults.
 func Settings(project *edi.LadingProject) (map[string]jsonutils.RawJSON, error) {
-	if project == nil || len(project.Settings) == 0 {
-		return nil, nil
+	var values map[string]any
+	if project != nil {
+		values = project.Settings
 	}
-	settings := make(map[string]jsonutils.RawJSON, len(project.Settings))
-	for name, value := range project.Settings {
+	settings := make(map[string]jsonutils.RawJSON, len(values))
+	for name, value := range values {
 		encoded, err := sonic.Marshal(value)
 		if err != nil {
 			return nil, fmt.Errorf("encode setting %s: %w", name, err)

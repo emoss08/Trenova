@@ -257,9 +257,9 @@ func (s *Service) zones(
 	payload *edi.DocumentPayload,
 ) ladingdoc.Zones {
 	zones := ladingdoc.Zones{Locations: map[pulid.ID]string{}}
-	context, err := s.lading.Context(ctx, tenantInfo)
+	ladingContext, err := s.lading.Context(ctx, tenantInfo)
 	if err == nil {
-		zones.Default = context.Org.Zone
+		zones.Default = ladingContext.Org.Zone
 	}
 	ids := make([]pulid.ID, 0)
 	tender := payload.LoadTender
@@ -383,7 +383,6 @@ func (s *Service) tenderKey(
 }
 
 type writeOptions struct {
-	control        lading.Control
 	flowInstanceID pulid.ID
 	flowSendID     string
 }
@@ -656,26 +655,9 @@ func (s *Service) write(
 	o *outbound,
 	options *writeOptions,
 ) (*edi.EDIMessage, error) {
-	allocated, err := s.controlNumberRepo.AllocateControlNumbers(
-		ctx,
-		ediports.AllocateEDIControlNumbersRequest{
-			TenantInfo:     req.TenantInfo,
-			PartnerID:      o.partner.ID,
-			DocumentTypeID: o.documentType.ID,
-			Kinds: []edi.ControlNumberKind{
-				edi.ControlNumberKindInterchange,
-				edi.ControlNumberKindGroup,
-				edi.ControlNumberKindTransaction,
-			},
-		},
-	)
+	control, err := s.allocateControl(ctx, req.TenantInfo, o)
 	if err != nil {
 		return nil, err
-	}
-	control := lading.Control{
-		Interchange: uint64(allocated[edi.ControlNumberKindInterchange]),
-		Group:       uint64(allocated[edi.ControlNumberKindGroup]),
-		Transaction: uint64(allocated[edi.ControlNumberKindTransaction]),
 	}
 	result, err := s.render(ctx, req.TenantInfo, o, control)
 	if err != nil {
@@ -754,6 +736,57 @@ func (s *Service) write(
 		}
 	}
 	return created, nil
+}
+
+func (s *Service) allocateControl(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	o *outbound,
+) (lading.Control, error) {
+	allocated, err := s.controlNumberRepo.AllocateControlNumbers(
+		ctx,
+		ediports.AllocateEDIControlNumbersRequest{
+			TenantInfo:     tenantInfo,
+			PartnerID:      o.partner.ID,
+			DocumentTypeID: o.documentType.ID,
+			Kinds: []edi.ControlNumberKind{
+				edi.ControlNumberKindInterchange,
+				edi.ControlNumberKindGroup,
+				edi.ControlNumberKindTransaction,
+			},
+		},
+	)
+	if err != nil {
+		return lading.Control{}, err
+	}
+	var control lading.Control
+	if control.Interchange, err = controlNumberOf(
+		allocated,
+		edi.ControlNumberKindInterchange,
+	); err != nil {
+		return lading.Control{}, err
+	}
+	if control.Group, err = controlNumberOf(allocated, edi.ControlNumberKindGroup); err != nil {
+		return lading.Control{}, err
+	}
+	if control.Transaction, err = controlNumberOf(
+		allocated,
+		edi.ControlNumberKindTransaction,
+	); err != nil {
+		return lading.Control{}, err
+	}
+	return control, nil
+}
+
+func controlNumberOf(
+	allocated map[edi.ControlNumberKind]int64,
+	kind edi.ControlNumberKind,
+) (uint64, error) {
+	number, ok := allocated[kind]
+	if !ok || number <= 0 {
+		return 0, fmt.Errorf("ediservice: no %s control number was allocated", kind)
+	}
+	return uint64(number), nil
 }
 
 func (s *Service) shadowOutbound(

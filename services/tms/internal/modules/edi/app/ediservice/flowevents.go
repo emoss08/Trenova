@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -21,31 +22,30 @@ import (
 	"go.uber.org/zap"
 )
 
-// FlowShipmentEvent is whether a shipment event concerns the partners' flows: one that moves the
-// load, or one a flow may answer with a status.
-func FlowShipmentEvent(eventType shipmentevent.Type) bool {
-	switch eventType {
-	case shipmentevent.TypeStatusChanged,
+var (
+	flowShipmentEvents = []shipmentevent.Type{
+		shipmentevent.TypeStatusChanged,
 		shipmentevent.TypeShipmentCanceled,
 		shipmentevent.TypeShipmentUncanceled,
 		shipmentevent.TypeMoveArrived,
 		shipmentevent.TypeMoveDeparted,
-		shipmentevent.TypeStopCompleted:
-		return true
-	default:
-		return false
+		shipmentevent.TypeStopCompleted,
 	}
+	statusShipmentEvents = []shipmentevent.Type{
+		shipmentevent.TypeMoveArrived,
+		shipmentevent.TypeMoveDeparted,
+		shipmentevent.TypeStopCompleted,
+	}
+)
+
+// FlowShipmentEvent is whether a shipment event concerns the partners' flows: one that moves the
+// load, or one a flow may answer with a status.
+func FlowShipmentEvent(eventType shipmentevent.Type) bool {
+	return slices.Contains(flowShipmentEvents, eventType)
 }
 
 func statusShipmentEvent(eventType shipmentevent.Type) bool {
-	switch eventType {
-	case shipmentevent.TypeMoveArrived,
-		shipmentevent.TypeMoveDeparted,
-		shipmentevent.TypeStopCompleted:
-		return true
-	default:
-		return false
-	}
+	return slices.Contains(statusShipmentEvents, eventType)
 }
 
 // HasShipmentFlows is whether any partner's flow follows the shipment.
@@ -134,9 +134,9 @@ func LoadStateOf(status shipment.Status) string {
 		return lading.LoadInvoiced
 	case shipment.StatusCanceled:
 		return lading.LoadCancelled
-	default:
-		return lading.LoadOpen
+	case shipment.StatusNew, shipment.StatusPartiallyAssigned, shipment.StatusAssigned:
 	}
+	return lading.LoadOpen
 }
 
 func (s *Service) tellLoad(

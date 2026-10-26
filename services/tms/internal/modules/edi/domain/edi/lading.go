@@ -167,9 +167,9 @@ func (v *LadingVersion) Runnable() bool {
 	switch v.Status {
 	case LadingVersionStatusActive, LadingVersionStatusShadow, LadingVersionStatusCertified:
 		return true
-	default:
-		return false
+	case LadingVersionStatusDraft, LadingVersionStatusSuperseded, LadingVersionStatusArchived:
 	}
+	return false
 }
 
 type LadingSample struct {

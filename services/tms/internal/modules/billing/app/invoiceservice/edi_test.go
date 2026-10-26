@@ -205,9 +205,10 @@ func TestInvoiceLadingVersionNeedsAnOutbound210Map(t *testing.T) {
 				Once()
 			svc := &Service{l: zap.NewNop(), ediLadingProjects: projects}
 
-			version, err := svc.invoiceLadingVersion(t.Context(), tenantInfo, partner)
+			version, found, err := svc.invoiceLadingVersion(t.Context(), tenantInfo, partner)
 
 			require.NoError(t, err)
+			assert.Equal(t, tt.found, found)
 			if tt.found {
 				require.NotNil(t, version)
 				assert.Equal(t, tt.runnable.Active.ID, version.ID)

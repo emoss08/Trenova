@@ -180,6 +180,7 @@ func (r *readTransaction) payload(set edi.TransactionSet) (edi.DocumentPayload, 
 			return payload, err
 		}
 		payload.FreightInvoice = invoice
+	case edi.TransactionSet997, edi.TransactionSet999:
 	}
 	return payload, nil
 }
@@ -377,14 +378,14 @@ func (s *Service) applyReceived(ctx context.Context, in *received) ([]string, er
 		)
 	case edi.TransactionSet210:
 		return s.routeFreightInvoice(ctx, in.file, in.partner, in.message, in.transaction)
-	default:
-		return []string{fmt.Sprintf(
-			"transaction %s/%s recorded without processing: Trenova applies no %s",
-			in.transaction.set,
-			in.transaction.controlNumber,
-			in.transaction.set,
-		)}, nil
+	case edi.TransactionSet204, edi.TransactionSet997, edi.TransactionSet999:
 	}
+	return []string{fmt.Sprintf(
+		"transaction %s/%s recorded without processing: Trenova applies no %s",
+		in.transaction.set,
+		in.transaction.controlNumber,
+		in.transaction.set,
+	)}, nil
 }
 
 func statusDetails(

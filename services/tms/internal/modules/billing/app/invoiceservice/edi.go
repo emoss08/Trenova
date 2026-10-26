@@ -166,11 +166,11 @@ func (s *Service) resolvePartnerTarget(
 ) (*ediPartnerTarget, error) {
 	target := &ediPartnerTarget{Partner: partner}
 	if partner.Kind != edi.PartnerKindInternal {
-		version, err := s.invoiceLadingVersion(ctx, tenantInfo, partner)
+		version, found, err := s.invoiceLadingVersion(ctx, tenantInfo, partner)
 		if err != nil {
 			return nil, err
 		}
-		if version == nil {
+		if !found {
 			target.Blockers = append(target.Blockers, ediBlockerNoLadingVersion)
 		}
 		target.LadingVersion = version
@@ -204,34 +204,36 @@ func (s *Service) resolvePartnerTarget(
 }
 
 // invoiceLadingVersion is the partner's active Lading version when it has a map that writes a
-// 210, and nil otherwise.
+// 210.
 func (s *Service) invoiceLadingVersion(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 	partner *edi.EDIPartner,
-) (*edi.LadingVersion, error) {
+) (version *edi.LadingVersion, found bool, err error) {
 	if s.ediLadingProjects == nil {
-		return nil, nil
+		return nil, false, nil
 	}
 	runnable, err := s.ediLadingProjects.GetRunnableVersions(
 		ctx,
 		ediports.GetRunnableLadingVersionRequest{TenantInfo: tenantInfo, PartnerID: partner.ID},
 	)
 	if errortypes.IsNotFoundError(err) {
-		return nil, nil
+		return nil, false, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if runnable == nil || runnable.Active == nil {
-		return nil, nil
+		return nil, false, nil
 	}
-	for _, item := range runnable.Active.Manifest.Maps {
-		if item.Set == string(edi.TransactionSet210) && item.Direction == lading.DirectionOutbound {
-			return runnable.Active, nil
+	maps := runnable.Active.Manifest.Maps
+	for index := range maps {
+		if maps[index].Set == string(edi.TransactionSet210) &&
+			maps[index].Direction == lading.DirectionOutbound {
+			return runnable.Active, true, nil
 		}
 	}
-	return nil, nil
+	return nil, false, nil
 }
 
 func buildEDISendPlan(

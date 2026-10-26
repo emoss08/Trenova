@@ -73,7 +73,7 @@ func ladingExchangesToModel(manifest *lading.Check) []*gqlmodel.EDILadingExchang
 // acknowledgmentOf is the acknowledgment that answers a map's set, and how long the flow waits
 // for it: the one the receive clause sends back for an inbound map, the one the sending flow's
 // expect clause waits on for an outbound one.
-func acknowledgmentOf(manifest *lading.Check, item *lading.Map) (string, int64) {
+func acknowledgmentOf(manifest *lading.Check, item *lading.Map) (set string, within int64) {
 	for flowIndex := range manifest.Flows {
 		flow := &manifest.Flows[flowIndex]
 		sends := false

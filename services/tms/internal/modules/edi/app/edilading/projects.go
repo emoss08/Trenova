@@ -59,7 +59,7 @@ type Projects struct {
 	workflows kernelports.WorkflowStarter
 }
 
-func NewProjects(p ProjectsParams) *Projects {
+func NewProjects(p ProjectsParams) *Projects { //nolint:gocritic // fx params are passed by value
 	return &Projects{
 		l:         p.Logger.Named("edi.lading.projects"),
 		runtime:   p.Runtime,
@@ -193,9 +193,9 @@ func validateCreate(req *CreateProjectRequest) error {
 
 func (s *Projects) GetProject(
 	ctx context.Context,
-	req ediports.GetLadingProjectRequest,
+	req *ediports.GetLadingProjectRequest,
 ) (*edi.LadingProject, error) {
-	return s.projects.GetProject(ctx, req)
+	return s.projects.GetProject(ctx, *req)
 }
 
 func (s *Projects) ListProjects(
@@ -367,11 +367,11 @@ func (s *Projects) checkedDraft(
 	files []lading.File,
 	samples []lading.Sample,
 ) (*edi.LadingVersion, []*edi.LadingSample, error) {
-	context, err := s.runtime.Context(ctx, tenantInfo)
+	ladingContext, err := s.runtime.Context(ctx, tenantInfo)
 	if err != nil {
 		return nil, nil, err
 	}
-	encoded, err := lading.Encode(&lading.Project{Files: files}, context)
+	encoded, err := lading.Encode(&lading.Project{Files: files}, ladingContext)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -626,11 +626,11 @@ func (s *Projects) NewDraft(
 			"The version belongs to another project",
 		)
 	}
-	context, err := s.runtime.Context(ctx, req.TenantInfo)
+	ladingContext, err := s.runtime.Context(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	encoded, err := lading.Encode(&lading.Project{Files: from.Files}, context)
+	encoded, err := lading.Encode(&lading.Project{Files: from.Files}, ladingContext)
 	if err != nil {
 		return nil, err
 	}
@@ -794,11 +794,14 @@ func (s *Projects) test(
 	if err != nil {
 		return nil, err
 	}
-	context, err := s.runtime.Context(ctx, tenantInfo)
+	ladingContext, err := s.runtime.Context(ctx, tenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	encoded, err := lading.Encode(&lading.Project{Files: version.Files, Samples: samples}, context)
+	encoded, err := lading.Encode(
+		&lading.Project{Files: version.Files, Samples: samples},
+		ladingContext,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -1090,6 +1093,9 @@ func (s *Projects) Archive(
 		)
 	case edi.LadingVersionStatusArchived:
 		return version, nil
+	case edi.LadingVersionStatusDraft,
+		edi.LadingVersionStatusCertified,
+		edi.LadingVersionStatusSuperseded:
 	}
 	previous := versionSummary(version)
 	now := timeutils.NowUnix()
@@ -1524,13 +1530,13 @@ type ShadowReport struct {
 
 func (s *Projects) ShadowResults(
 	ctx context.Context,
-	req ediports.ListLadingShadowResultsRequest,
+	req *ediports.ListLadingShadowResultsRequest,
 ) (*ShadowReport, error) {
-	summary, err := s.replays.SummarizeShadow(ctx, req)
+	summary, err := s.replays.SummarizeShadow(ctx, *req)
 	if err != nil {
 		return nil, err
 	}
-	results, err := s.replays.ListShadowResults(ctx, req)
+	results, err := s.replays.ListShadowResults(ctx, *req)
 	if err != nil {
 		return nil, err
 	}

@@ -74,7 +74,7 @@ func (h *Handler) ladingCatalog(c *gin.Context) {
 // ladingContext is what the studio checks and runs a project against in the browser: the
 // organisation and its shipment custom fields, the same context the server encodes with.
 func (h *Handler) ladingContext(c *gin.Context) {
-	context, err := h.ladingRuntime.Context(
+	result, err := h.ladingRuntime.Context(
 		c.Request.Context(),
 		tenantInfoFromAuth(authctx.GetAuthContext(c)),
 	)
@@ -82,7 +82,7 @@ func (h *Handler) ladingContext(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	helpers.JSON(c, http.StatusOK, context)
+	helpers.JSON(c, http.StatusOK, result)
 }
 
 func (h *Handler) createLadingProject(c *gin.Context) {
@@ -111,7 +111,7 @@ func (h *Handler) getPartnerLadingProject(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	project, err := h.projects.GetProject(c.Request.Context(), ediports.GetLadingProjectRequest{
+	project, err := h.projects.GetProject(c.Request.Context(), &ediports.GetLadingProjectRequest{
 		TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
 		PartnerID:  partnerID,
 	})
@@ -128,7 +128,7 @@ func (h *Handler) getLadingProject(c *gin.Context) {
 		h.eh.HandleError(c, err)
 		return
 	}
-	project, err := h.projects.GetProject(c.Request.Context(), ediports.GetLadingProjectRequest{
+	project, err := h.projects.GetProject(c.Request.Context(), &ediports.GetLadingProjectRequest{
 		TenantInfo: tenantInfoFromAuth(authctx.GetAuthContext(c)),
 		ID:         projectID,
 	})
@@ -367,7 +367,7 @@ func (h *Handler) ladingShadowResults(c *gin.Context) {
 	}
 	report, err := h.projects.ShadowResults(
 		c.Request.Context(),
-		ediports.ListLadingShadowResultsRequest{
+		&ediports.ListLadingShadowResultsRequest{
 			TenantInfo:    tenantInfoFromAuth(authctx.GetAuthContext(c)),
 			VersionID:     versionID,
 			OnlyDiffering: helpers.QueryBool(c, "onlyDiffering"),

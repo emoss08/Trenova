@@ -118,7 +118,7 @@ func (s *Service) GetPartnerCard(
 	}
 
 	card := &EDIPartnerCard{Partner: partner}
-	if card.Lading, err = s.partnerCardLading(ctx, req); err != nil {
+	if err = s.fillPartnerCardLading(ctx, req, card); err != nil {
 		return nil, err
 	}
 	if card.Transports, err = s.partnerCardTransports(ctx, req); err != nil {
@@ -158,25 +158,26 @@ func (s *Service) GetPartnerCard(
 	return card, nil
 }
 
-func (s *Service) partnerCardLading(
+func (s *Service) fillPartnerCardLading(
 	ctx context.Context,
 	req *GetEDIPartnerCardRequest,
-) (*EDIPartnerLading, error) {
+	card *EDIPartnerCard,
+) error {
 	programs, err := s.lading.Load(ctx, req.TenantInfo, req.PartnerID)
-	if err != nil {
-		if errors.Is(err, edilading.ErrNoProject) {
-			return nil, nil
-		}
-		return nil, err
+	if errors.Is(err, edilading.ErrNoProject) {
+		return nil
 	}
-	card := &EDIPartnerLading{Project: programs.Project}
+	if err != nil {
+		return err
+	}
+	card.Lading = &EDIPartnerLading{Project: programs.Project}
 	if programs.Active != nil {
-		card.Active = withoutFiles(programs.Active.Version)
+		card.Lading.Active = withoutFiles(programs.Active.Version)
 	}
 	if programs.Shadow != nil {
-		card.Shadow = withoutFiles(programs.Shadow.Version)
+		card.Lading.Shadow = withoutFiles(programs.Shadow.Version)
 	}
-	return card, nil
+	return nil
 }
 
 func withoutFiles(version *edi.LadingVersion) *edi.LadingVersion {

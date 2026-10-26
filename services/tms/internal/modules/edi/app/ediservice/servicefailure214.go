@@ -402,8 +402,7 @@ func normalizedX12Code(value string) string {
 
 func serviceFailure214Diagnostics(payload *edi.ShipmentStatusPayload) []edi.Diagnostic {
 	if payload == nil {
-		return []edi.Diagnostic{serviceFailure214Diagnostic(
-			"required",
+		return []edi.Diagnostic{requiredServiceFailure214Diagnostic(
 			"shipmentStatus",
 			"EDI 214 shipment status payload is required",
 			"Build the shipment status payload before generating the 214.",
@@ -413,24 +412,21 @@ func serviceFailure214Diagnostics(payload *edi.ShipmentStatusPayload) []edi.Diag
 	statusCode := normalizedX12Code(payload.StatusCode)
 	reasonCode := normalizedX12Code(payload.StatusReasonCode)
 	if payload.EventDate == 0 {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
+		diagnostics = append(diagnostics, requiredServiceFailure214Diagnostic(
 			"shipmentStatus.eventDate",
 			"Service failure 214 event date is required",
 			"Set the service failure detection, creation, or actual arrival timestamp before generating the 214.",
 		))
 	}
 	if payload.EventTime == 0 {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
+		diagnostics = append(diagnostics, requiredServiceFailure214Diagnostic(
 			"shipmentStatus.eventTime",
 			"Service failure 214 event time is required",
 			"Set the service failure detection, creation, or actual arrival timestamp before generating the 214.",
 		))
 	}
 	if statusCode == "SD" && reasonCode == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
+		diagnostics = append(diagnostics, requiredServiceFailure214Diagnostic(
 			"shipmentStatus.statusReasonCode",
 			"X12 214 service failure status code SD requires a status reason code",
 			"Set an override reason code or configure a default reason code on the service failure reason code.",
@@ -439,10 +435,10 @@ func serviceFailure214Diagnostics(payload *edi.ShipmentStatusPayload) []edi.Diag
 	return diagnostics
 }
 
-func serviceFailure214Diagnostic(code, path, message, suggestedFix string) edi.Diagnostic {
+func requiredServiceFailure214Diagnostic(path, message, suggestedFix string) edi.Diagnostic {
 	diagnostic := edi.Diagnostic{
 		Severity:     edi.ValidationSeverityError,
-		Code:         code,
+		Code:         "required",
 		SegmentID:    "AT7",
 		Path:         path,
 		Message:      message,
