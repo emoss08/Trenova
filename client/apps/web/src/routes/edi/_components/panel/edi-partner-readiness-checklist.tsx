@@ -10,22 +10,21 @@ import { AlertTriangleIcon, CheckCircleIcon, CircleIcon } from "@trenova/shared/
 import { Link } from "react-router";
 import { defineLabels } from "@trenova/shared/i18n/labels";
 
-const READINESS_LINKS: Record<string, { label: string; to: string } | undefined> = {
+const READINESS_LINKS: Record<
+  string,
+  { label: string; to: (partnerId: string) => string } | undefined
+> = {
   "communication-profile": {
     label: "Create communication profile",
-    to: "/edi/communication-profiles?panelType=create",
+    to: () => "/edi/communication-profiles?panelType=create",
   },
-  "inbound-document-profile": {
-    label: "Open designer",
-    to: "/edi/designer",
+  "lading-project": {
+    label: "Open the Lading studio",
+    to: (partnerId) => `/edi/lading/${partnerId}`,
   },
-  "outbound-document-profile": {
-    label: "Open designer",
-    to: "/edi/designer",
-  },
-  "test-case": {
-    label: "Open test cases",
-    to: "/edi/test-cases?panelType=create",
+  "lading-active-version": {
+    label: "Open the Lading studio",
+    to: (partnerId) => `/edi/lading/${partnerId}`,
   },
 };
 
@@ -114,7 +113,7 @@ export function PartnerReadinessChecklist({ partner }: { partner: EDIPartner }) 
                   variant="outline"
                   size="sm"
                   className="shrink-0"
-                  render={<Link to={link.to} />}
+                  render={<Link to={link.to(partnerId)} />}
                 >
                   {t(link.label)}
                 </Button>

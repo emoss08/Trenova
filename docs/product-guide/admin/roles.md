@@ -40,9 +40,10 @@ Keywords: new role, add permissions, permission set, build role
 Keywords: grant access, remove access, data scope, operations
 1. On the create or edit page for a role, go to **Permissions**.
 2. Use **Search resources...** to find a resource, or expand a category.
-3. Select an operation chip on a resource's row to grant or remove that operation. The box at
-   the start of the row toggles **Grant all** or **Remove all** for that resource, and **All** or
-   **None** on a category header does the same for every resource in the category.
+3. Select an operation chip on a resource's row to grant or remove that operation. To change
+   many resources at once, select **Set all** and pick **Full access**, **View only** or
+   **No access**; **All** or **None** on a category header does the same for every resource in
+   the category.
 4. For a granted resource, choose how much data it reaches in the scope selector: **Own data
    only**, **Organization** or **All data**.
 

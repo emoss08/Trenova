@@ -4,8 +4,8 @@ aliases: [trading partners, EDI trading partner, EDI customers, EDI connections,
 related:
   - /edi/communication-profiles
   - /edi/mapping-profiles
-  - /edi/designer
-  - /edi/test-cases
+  - /edi/lading
+  - /edi/flows
 ---
 
 ## What it's for
@@ -48,7 +48,7 @@ Keywords: pending EDI connection, approve connection
 Keywords: partner settings, onboarding checklist, partner contact
 1. Open [Partners](/edi/partners) and select the partner's row.
 2. On the **Details** tab, change the fields you need, then select **Save partner**.
-3. Open the **Readiness** tab to see which onboarding steps are complete. Missing steps offer shortcuts such as **Create communication profile**, **Open designer** or **Open test cases**.
+3. Open the **Readiness** tab to see which onboarding steps are complete. Missing steps offer shortcuts such as **Create communication profile** or **Open the Lading studio**.
 
 ### Map partner values to your records
 Keywords: partner mapping, code mapping, cross reference

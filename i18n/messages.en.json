@@ -179788,15 +179788,6 @@
       "apps/web/components"
     ]
   },
-  "Open designer": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
   "Open differences": {
     "sites": 1,
     "scope": [
@@ -180520,15 +180511,6 @@
       "routes/desk"
     ]
   },
-  "Open test cases": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
   "Open the Desk": {
     "sites": 1,
     "scope": [
@@ -180545,6 +180527,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Open the Lading studio": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Open the PDF": {
@@ -293069,7 +293060,7 @@
       "routes/edi"
     ]
   },
-  "Transport endpoints, envelope identifiers, and credentials": {
+  "Transport endpoints, credentials, and the partner's test or production system": {
     "sites": 1,
     "scope": [
       "ts"

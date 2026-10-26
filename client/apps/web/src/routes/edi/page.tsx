@@ -23,13 +23,15 @@ const pageTitles: Record<EDIPageKind, string> = defineLabels({
 const pageDescriptions: Record<EDIPageKind, string> = defineLabels({
   overview: "Live health view of deliveries, inbound processing, and acknowledgment state",
   partners: "Trading partners, connection requests, and partner defaults",
-  "communication-profiles": "Transport endpoints, envelope identifiers, and credentials",
+  "communication-profiles":
+    "Transport endpoints, credentials, and the partner's test or production system",
   "mapping-profiles": "Cross-organization entity mapping for tendered loads",
   inbound: "Load tenders received from partners awaiting review",
   outbound: "Load tenders submitted to partners and their lifecycle",
   messages: "Generated X12 documents with delivery and acknowledgment status",
   "inbound-files": "Files received from partner mailboxes and their processing state",
-  flows: "Each load, tender and invoice a partner flow is following, and the ones held for a planner",
+  flows:
+    "Each load, tender and invoice a partner flow is following, and the ones held for a planner",
 });
 
 export function EDIOverviewPage() {
