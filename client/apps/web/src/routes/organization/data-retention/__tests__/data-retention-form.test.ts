@@ -7,6 +7,7 @@ import {
   AI_CORRECTION_RETENTION_MIN_DAYS,
   dataRetentionFormSchema,
   dataRetentionFormValues,
+  retentionCutoff,
 } from "../data-retention-form";
 
 /*
@@ -114,5 +115,20 @@ describe("AI correction retention", () => {
       aiCorrectionRetentionPeriod: 90,
     });
     expect(dataRetentionFormValues(saved).aiCorrectionRetentionPeriod).toBe(90);
+  });
+});
+
+describe("retentionCutoff", () => {
+  const now = 1_793_000_000;
+
+  it("reaches back exactly the window's days from now", () => {
+    expect(retentionCutoff(1, now)).toBe(now - 86_400);
+    expect(retentionCutoff(120, now)).toBe(now - 120 * 86_400);
+    expect(retentionCutoff(2555, now)).toBe(now - 2555 * 86_400);
+  });
+
+  it("has no cutoff for a window that keeps everything", () => {
+    expect(retentionCutoff(0, now)).toBeNull();
+    expect(retentionCutoff(Number.NaN, now)).toBeNull();
   });
 });

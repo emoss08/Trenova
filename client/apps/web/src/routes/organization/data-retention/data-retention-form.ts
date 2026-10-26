@@ -13,6 +13,24 @@ export const AI_AUDIT_RETENTION_MIN_DAYS = 365;
 export const AI_CORRECTION_RETENTION_MIN_DAYS = 30;
 export const AI_CORRECTION_RETENTION_DEFAULT_DAYS = 730;
 
+/** What a window that kept everything starts at when someone gives it a limit. */
+export const EDI_RETENTION_LIMIT_DAYS = 90;
+export const AGENT_EVAL_CASE_RETENTION_LIMIT_DAYS = 365;
+
+const DAY_SECONDS = 86_400;
+
+/**
+ * The moment a window reaches back to: what is older than it goes in the next
+ * nightly purge. A window of 0 keeps everything, so there is none.
+ */
+export function retentionCutoff(days: number, now: number): number | null {
+  if (!Number.isFinite(days) || days <= 0) {
+    return null;
+  }
+
+  return now - days * DAY_SECONDS;
+}
+
 export const dataRetentionFormSchema = z.object({
   auditRetentionPeriod: z
     .number()
