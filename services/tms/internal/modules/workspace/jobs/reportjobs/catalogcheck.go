@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/zap"
 )
@@ -27,9 +28,11 @@ const (
 )
 
 type CheckCatalogResult struct {
-	Checked        int `json:"checked"`
-	NeedsAttention int `json:"needsAttention"`
-	Restored       int `json:"restored"`
+	Checked        int  `json:"checked"`
+	NeedsAttention int  `json:"needsAttention"`
+	Restored       int  `json:"restored"`
+	Notified       int  `json:"notified"`
+	Superseded     bool `json:"superseded"`
 }
 
 func (a *Activities) CheckDefinitionsAgainstCatalogActivity(
@@ -37,8 +40,25 @@ func (a *Activities) CheckDefinitionsAgainstCatalogActivity(
 ) (*CheckCatalogResult, error) {
 	result := &CheckCatalogResult{}
 	version := a.engine.Catalog().Version()
+	if err := recordCatalogVersion(ctx, a.versions, version, timeutils.NowUnix()); err != nil {
+		return nil, err
+	}
+
+	notices := newAttentionNotices()
+	defer func() {
+		result.Notified = a.notifyNeedsAttention(context.WithoutCancel(ctx), version, notices)
+	}()
 
 	for result.Checked < catalogCheckMaxPerRun {
+		newest, err := a.versions.Newest(ctx, catalogVersionAliveSince(timeutils.NowUnix()))
+		if err != nil {
+			return nil, err
+		}
+		if newest != version {
+			result.Superseded = true
+			break
+		}
+
 		stale, err := a.defRepo.ListCatalogStale(
 			ctx,
 			&reportports.ListCatalogStaleReportDefinitionsRequest{
@@ -53,7 +73,7 @@ func (a *Activities) CheckDefinitionsAgainstCatalogActivity(
 		settled := 0
 		for _, def := range stale {
 			activity.RecordHeartbeat(ctx, def.ID.String())
-			if a.checkAgainstCatalog(ctx, def, version, result) {
+			if a.checkAgainstCatalog(ctx, def, version, result, notices) {
 				settled++
 			}
 		}
@@ -64,9 +84,10 @@ func (a *Activities) CheckDefinitionsAgainstCatalogActivity(
 		}
 	}
 
-	if result.NeedsAttention > 0 || result.Restored > 0 {
+	if result.NeedsAttention > 0 || result.Restored > 0 || result.Superseded {
 		a.l.Info("checked saved reports against the report catalog",
 			zap.String("catalogVersion", version),
+			zap.Bool("superseded", result.Superseded),
 			zap.Int("checked", result.Checked),
 			zap.Int("needsAttention", result.NeedsAttention),
 			zap.Int("restored", result.Restored))
@@ -80,6 +101,7 @@ func (a *Activities) checkAgainstCatalog(
 	def *report.ReportDefinition,
 	version string,
 	result *CheckCatalogResult,
+	notices *attentionNotices,
 ) bool {
 	diagnostics := a.catalogDiagnostics(def.Definition)
 	status := catalogCheckStatus(def.Status, diagnostics)
@@ -107,6 +129,7 @@ func (a *Activities) checkAgainstCatalog(
 
 	if status == report.DefinitionStatusNeedsAttention {
 		result.NeedsAttention++
+		notices.add(def)
 	} else {
 		result.Restored++
 	}

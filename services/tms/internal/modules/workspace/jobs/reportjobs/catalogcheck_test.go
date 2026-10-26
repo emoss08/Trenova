@@ -2,8 +2,10 @@ package reportjobs
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/keel/analytics/ir"
@@ -14,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.temporal.io/sdk/testsuite"
@@ -86,6 +89,57 @@ func (r *catalogCheckRepo) get(id pulid.ID) *report.ReportDefinition {
 		}
 	}
 	return nil
+}
+
+type seenVersion struct {
+	first, last int64
+}
+
+type catalogVersions struct {
+	mu   sync.Mutex
+	seen map[string]seenVersion
+}
+
+func newCatalogVersions() *catalogVersions {
+	return &catalogVersions{seen: map[string]seenVersion{}}
+}
+
+func (v *catalogVersions) Heartbeat(
+	_ context.Context,
+	req *reportports.ReportCatalogHeartbeatRequest,
+) error {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	seen, ok := v.seen[req.Version]
+	if !ok {
+		seen.first = req.Now
+	}
+	seen.last = req.Now
+	v.seen[req.Version] = seen
+	for version, other := range v.seen {
+		if other.last < req.ForgetBefore {
+			delete(v.seen, version)
+		}
+	}
+	return nil
+}
+
+func (v *catalogVersions) Newest(_ context.Context, aliveSince int64) (string, error) {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	newest, first := "", int64(-1)
+	for version, seen := range v.seen {
+		if seen.last >= aliveSince && seen.first > first {
+			newest, first = version, seen.first
+		}
+	}
+	return newest, nil
+}
+
+func (v *catalogVersions) record(version string, first, last int64) {
+	v.mu.Lock()
+	defer v.mu.Unlock()
+	v.seen[version] = seenVersion{first: first, last: last}
 }
 
 type catalogCheckEngine struct {
@@ -172,10 +226,11 @@ func TestCheckDefinitionsAgainstCatalog_MarksWhatNoLongerValidatesAndRestoresWha
 	}}
 	audit := &recordingAudit{}
 	a := &Activities{
-		defRepo: repo,
-		engine:  &catalogCheckEngine{catalog: catalog},
-		audit:   audit,
-		l:       zap.NewNop(),
+		defRepo:  repo,
+		engine:   &catalogCheckEngine{catalog: catalog},
+		versions: newCatalogVersions(),
+		audit:    audit,
+		l:        zap.NewNop(),
 	}
 
 	result := runCatalogCheck(t, a)
@@ -229,10 +284,11 @@ func TestCheckDefinitionsAgainstCatalog_LeavesADefinitionSavedMeanwhileAlone(t *
 	repo := &catalogCheckRepo{definitions: []*report.ReportDefinition{saved}}
 	audit := &recordingAudit{}
 	a := &Activities{
-		defRepo: &racingRepo{catalogCheckRepo: repo},
-		engine:  &catalogCheckEngine{catalog: catalog},
-		audit:   audit,
-		l:       zap.NewNop(),
+		defRepo:  &racingRepo{catalogCheckRepo: repo},
+		engine:   &catalogCheckEngine{catalog: catalog},
+		versions: newCatalogVersions(),
+		audit:    audit,
+		l:        zap.NewNop(),
 	}
 
 	result := runCatalogCheck(t, a)
@@ -259,6 +315,76 @@ func (r *racingRepo) RecordCatalogCheck(
 	}
 	r.mu.Unlock()
 	return r.catalogCheckRepo.RecordCatalogCheck(ctx, req)
+}
+
+func TestCheckDefinitionsAgainstCatalog_LeavesTheCheckToTheNewestRunningVersion(t *testing.T) {
+	t.Parallel()
+
+	catalog, err := reportengine.NewCatalog()
+	require.NoError(t, err)
+
+	broken := savedReport(t, "rd_broken", report.DefinitionStatusActive, brokenShipmentReport)
+	repo := &catalogCheckRepo{definitions: []*report.ReportDefinition{broken}}
+	versions := newCatalogVersions()
+	now := timeutils.NowUnix()
+	versions.record("catalog-of-the-next-deploy", now+60, now)
+	audit := &recordingAudit{}
+	a := &Activities{
+		defRepo:  repo,
+		engine:   &catalogCheckEngine{catalog: catalog},
+		versions: versions,
+		audit:    audit,
+		l:        zap.NewNop(),
+	}
+
+	result := runCatalogCheck(t, a)
+	assert.True(t, result.Superseded)
+	assert.Zero(t, result.Checked)
+	assert.Equal(t, report.DefinitionStatusActive, repo.get("rd_broken").Status,
+		"an older worker of a rolling deploy leaves the verdict to the newer one")
+	assert.Equal(t, staleCatalogVersion, repo.get("rd_broken").CatalogVersion)
+
+	versions.record("catalog-of-the-next-deploy", now+60, now-int64(time.Hour.Seconds()))
+	result = runCatalogCheck(t, a)
+	assert.False(t, result.Superseded,
+		"once the newer version stops running, as after a rollback, this one checks again")
+	assert.Equal(t, 1, result.NeedsAttention)
+	assert.Equal(t, report.DefinitionStatusNeedsAttention, repo.get("rd_broken").Status)
+}
+
+func TestAttentionNoticesGroupEachOwnersReports(t *testing.T) {
+	t.Parallel()
+
+	owner := pulid.ID("usr_owner")
+	other := pulid.ID("usr_other")
+	notices := newAttentionNotices()
+	for i := range maxNoticeDefinitionIDs + 5 {
+		def := savedReport(t, fmt.Sprintf("rd_%02d", i), report.DefinitionStatusActive,
+			validShipmentReport)
+		def.OwnerID = owner
+		notices.add(def)
+	}
+	single := savedReport(t, "rd_single", report.DefinitionStatusActive, validShipmentReport)
+	single.OwnerID = other
+	notices.add(single)
+
+	list := notices.list()
+	require.Len(t, list, 2, "one notice per owner, however many of their reports broke")
+
+	byOwner := map[pulid.ID]*attentionNotice{}
+	for _, notice := range list {
+		byOwner[notice.Owner.OwnerID] = notice
+	}
+	many := byOwner[owner]
+	require.NotNil(t, many)
+	assert.Equal(t, maxNoticeDefinitionIDs+5, many.Count)
+	assert.Len(t, many.DefinitionIDs, maxNoticeDefinitionIDs)
+	assert.Equal(t, "rd_00", many.FirstReport)
+
+	one := byOwner[other]
+	require.NotNil(t, one)
+	assert.Equal(t, 1, one.Count)
+	assert.Equal(t, []pulid.ID{"rd_single"}, one.DefinitionIDs)
 }
 
 func TestCatalogCheckStatus(t *testing.T) {

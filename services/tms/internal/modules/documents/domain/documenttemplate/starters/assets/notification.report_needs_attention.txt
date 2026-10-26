@@ -1,0 +1,1 @@
+{{ if gt .OtherReports 0 }}{{ t "{0} and {1, plural, one {# other report} other {# other reports}} use fields that no longer exist and cannot run until they are repaired." .ReportName .OtherReports }}{{ else }}{{ t "{0} uses a field that no longer exists and cannot run until it is repaired." .ReportName }}{{ end }} {{ t "Open the report builder to see what changed." }}

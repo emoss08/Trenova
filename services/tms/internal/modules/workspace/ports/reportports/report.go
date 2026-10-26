@@ -52,6 +52,17 @@ type RecordReportCatalogCheckRequest struct {
 	Diagnostics    []string
 }
 
+type ReportCatalogHeartbeatRequest struct {
+	Version      string
+	Now          int64
+	ForgetBefore int64
+}
+
+type ReportCatalogVersionRepository interface {
+	Heartbeat(ctx context.Context, req *ReportCatalogHeartbeatRequest) error
+	Newest(ctx context.Context, aliveSince int64) (string, error)
+}
+
 type ListReportDefinitionConnectionRequest struct {
 	Filter *pagination.QueryOptions `json:"filter"`
 	Cursor pagination.CursorInfo    `json:"-"`

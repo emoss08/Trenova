@@ -422,3 +422,29 @@ describe("notification catalog", () => {
     expect(new Set(clientUrgent)).toEqual(new Set(serverUrgent));
   });
 });
+
+describe("notification registry — reports that need attention", () => {
+  const needsAttention = (data: Record<string, unknown>) =>
+    notification({ eventType: "report_needs_attention", channel: "user", data });
+
+  it("files the notice under Reports as a warning", () => {
+    const descriptor = getNotificationDescriptor("report_needs_attention");
+
+    expect(descriptor.category).toBe("Reports");
+    expect(descriptor.iconClass).toBe("text-warning");
+  });
+
+  it("opens the one report a notice names in the builder", () => {
+    expect(getNotificationLink(needsAttention({ reportCount: 1, definitionIds: ["rd_1"] }))).toBe(
+      "/reports/explore/rd_1",
+    );
+  });
+
+  it("opens the library for a notice about several reports, or one that names none", () => {
+    expect(
+      getNotificationLink(needsAttention({ reportCount: 2, definitionIds: ["rd_1", "rd_2"] })),
+    ).toBe("/reports");
+    expect(getNotificationLink(needsAttention({ reportCount: 1 }))).toBe("/reports");
+    expect(getNotificationLink(needsAttention({ definitionIds: [""] }))).toBe("/reports");
+  });
+});
