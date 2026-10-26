@@ -464,7 +464,7 @@ func (r *repository) MarkUsed(
 		if _, err := m.Where(m.ID.In(req.IDs...)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			m.UseCount.Add(1),
+			m.UseCount.Increment(1),
 			m.LastUsedAt.To(req.At),
 			m.UpdatedAt.ToExpr(m.UpdatedAt),
 			m.Version.ToExpr(m.Version),

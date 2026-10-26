@@ -239,7 +239,7 @@ func (r *repository) SetBalanceAfter(
 			ctx,
 			r.db.Keel(ctx),
 			p.BalanceAfterDays.To(decimal.NewNullDecimal(req.BalanceAfterDays)),
-			p.Version.Add(0),
+			p.Version.Increment(0),
 		)
 		if err != nil {
 			r.l.Error("failed to set PTO balance after", zap.Error(err))

@@ -314,7 +314,7 @@ func (r *repository) AttachEntries(
 			e.ClockedInAt.Lt(to),
 			e.ClockedOutAt.IsNotNull(),
 			e.TimesheetID.IsNull(),
-		).Update(ctx, r.db.Keel(ctx), e.TimesheetID.To(timesheetID), e.Version.Add(0))
+		).Update(ctx, r.db.Keel(ctx), e.TimesheetID.To(timesheetID), e.Version.Increment(0))
 		if err != nil {
 			r.l.Error("failed to attach time clock entries", zap.Error(err))
 			return 0, fmt.Errorf("attach time clock entries: %w", err)

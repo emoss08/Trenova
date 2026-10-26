@@ -204,7 +204,7 @@ func (r *repository) RecordMatch(
 		_, err := ru.Where(ru.ID.Eq(req.RuleID)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			ru.MatchCount.Add(1),
+			ru.MatchCount.Increment(1),
 			ru.LastMatchedAt.ToExpr(
 				ru.LastMatchedAt.Coalesce(0).Greatest(keel.Int64(req.At)),
 			),

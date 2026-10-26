@@ -237,7 +237,7 @@ func (r *repository) IncrementHit(
 		_, err := sm.Where(sm.ID.Eq(id)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			sm.HitCount.Add(1),
+			sm.HitCount.Increment(1),
 			sm.LastUsedAt.To(now),
 			sm.UpdatedAt.To(now),
 			sm.Version.ToExpr(sm.Version),

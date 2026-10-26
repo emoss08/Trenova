@@ -349,7 +349,7 @@ func (r *syncRecordRepository) Claim(
 				r.db.Keel(ctx),
 				sr.Status.To(accountingsync.SyncStatusInFlight),
 				sr.LeaseExpiresAt.To(now+int64(lease/time.Second)),
-				sr.AttemptCount.Add(1),
+				sr.AttemptCount.Increment(1),
 				sr.StartedAt.To(now),
 				sr.UpdatedAt.To(now),
 			)

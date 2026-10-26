@@ -45,7 +45,7 @@ func (r *hintRepository) Upsert(
 			[]*triage.SenderHint{hint},
 			keel.OnConflict(h.OrganizationID, h.BusinessUnitID, h.SenderDomain, h.Classification).
 				Update(h.LastCorrectedAt).
-				Set(h.Corrections.Add(1)),
+				Set(h.Corrections.Increment(1)),
 		)
 		if err != nil {
 			r.l.Error("failed to record a sender hint",

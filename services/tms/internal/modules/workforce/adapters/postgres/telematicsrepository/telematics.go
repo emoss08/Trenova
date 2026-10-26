@@ -658,7 +658,7 @@ func (r *repository) AssignTractorExternalIDs(
 		n, err := t.With(data).
 			Join(data, data.Col("id").EqCol(t.ID)).
 			Where(keel.True()).
-			Update(ctx, r.db.Keel(ctx), t.ExternalID.ToExpr(data.Col("external_id")), t.Version.Add(0))
+			Update(ctx, r.db.Keel(ctx), t.ExternalID.ToExpr(data.Col("external_id")), t.Version.Increment(0))
 		if err != nil {
 			return 0, fmt.Errorf("assign tractor external ids: %w", err)
 		}
@@ -708,7 +708,7 @@ func (r *repository) AssignTrailerExternalIDs(
 		n, err := t.With(data).
 			Join(data, data.Col("id").EqCol(t.ID)).
 			Where(keel.True()).
-			Update(ctx, r.db.Keel(ctx), t.ExternalID.ToExpr(data.Col("external_id")), t.Version.Add(0))
+			Update(ctx, r.db.Keel(ctx), t.ExternalID.ToExpr(data.Col("external_id")), t.Version.Increment(0))
 		if err != nil {
 			return 0, fmt.Errorf("assign trailer external ids: %w", err)
 		}

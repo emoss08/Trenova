@@ -394,7 +394,7 @@ func credentialFieldAssignments(
 	column keel.Int64Col,
 ) []keel.Assignment {
 	wp := workerdb.WorkerProfiles
-	sets := []keel.Assignment{wp.Version.Add(0)}
+	sets := []keel.Assignment{wp.Version.Increment(0)}
 	hasExpiry := req.ExpiresAt != nil && *req.ExpiresAt > 0
 
 	if req.Field == worker.CredentialProfileFieldLicenseExpiry {
@@ -476,7 +476,7 @@ func (r *repository) UpdateProfileComplianceStatus(
 			r.db.Keel(ctx),
 			wp.ComplianceStatus.To(req.Status),
 			setNullable(wp.NextCredentialExpiry, req.NextExpiry),
-			wp.Version.Add(0),
+			wp.Version.Increment(0),
 		)
 		if err != nil {
 			r.l.Error("failed to update worker compliance status",
@@ -506,7 +506,7 @@ func (r *repository) UpdateProfileTrainingRollup(
 			r.db.Keel(ctx),
 			wp.TrainingHealth.To(req.Health),
 			setNullable(wp.NextTrainingDue, req.NextDue),
-			wp.Version.Add(0),
+			wp.Version.Increment(0),
 		)
 		if err != nil {
 			r.l.Error("failed to update worker training rollup",
@@ -535,7 +535,7 @@ func (r *repository) UpdateProfileSafetyRollup(
 			r.db.Keel(ctx),
 			wp.SafetyRating.To(req.Rating),
 			wp.SafetyScore.To(req.Score),
-			wp.Version.Add(0),
+			wp.Version.Increment(0),
 		)
 		if err != nil {
 			r.l.Error("failed to update worker safety rollup",
@@ -557,7 +557,7 @@ func (r *repository) UpdateProfileQualification(
 		_, err := wp.Where(
 			wp.WorkerID.Eq(req.WorkerID),
 			wp.IsQualified.Eq(!req.Qualified),
-		).Update(ctx, r.db.Keel(ctx), wp.IsQualified.To(req.Qualified), wp.Version.Add(0))
+		).Update(ctx, r.db.Keel(ctx), wp.IsQualified.To(req.Qualified), wp.Version.Increment(0))
 		if err != nil {
 			r.l.Error("failed to update worker qualification",
 				zap.String("workerId", req.WorkerID.String()),

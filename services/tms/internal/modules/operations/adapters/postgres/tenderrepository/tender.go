@@ -522,7 +522,7 @@ func reopenTender(
 		ctx,
 		db,
 		t.Status.To(tender.StatusActive),
-		t.BounceCount.Add(1),
+		t.BounceCount.Increment(1),
 		t.LastBouncedAt.To(req.At),
 		t.AcceptedOfferID.ToNull(),
 		t.AcceptedAt.ToNull(),

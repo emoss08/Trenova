@@ -347,7 +347,7 @@ func (r *repository) UpdateMessageDelivery(
 			sets = append(sets, m.AS2MIC.To(req.AS2MIC))
 		}
 		if req.IncrementAttempts {
-			sets = append(sets, m.DeliveryAttempts.Add(1))
+			sets = append(sets, m.DeliveryAttempts.Increment(1))
 		}
 
 		return updateOne(ctx, r.db.Keel(ctx), req.ID, sets)

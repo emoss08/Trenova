@@ -274,9 +274,9 @@ func applySeedJournalBalances(
 		).Update(
 			ctx,
 			db,
-			a.CurrentBalance.Add(m.debit-m.credit),
-			a.DebitBalance.Add(m.debit),
-			a.CreditBalance.Add(m.credit),
+			a.CurrentBalance.Increment(m.debit-m.credit),
+			a.DebitBalance.Increment(m.debit),
+			a.CreditBalance.Increment(m.credit),
 		); err != nil {
 			return fmt.Errorf("update gl account running balance: %w", err)
 		}

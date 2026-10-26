@@ -730,7 +730,7 @@ func (r *repository) shiftSubsequentMoveSequences(
 	_, err := sm.Where(
 		sm.ShipmentID.Eq(originalMove.ShipmentID),
 		sm.Sequence.Gt(originalMove.Sequence),
-	).Update(ctx, r.db.Keel(ctx), sm.Sequence.Add(1))
+	).Update(ctx, r.db.Keel(ctx), sm.Sequence.Increment(1))
 	if err != nil {
 		return fmt.Errorf("shift subsequent move sequences: %w", err)
 	}

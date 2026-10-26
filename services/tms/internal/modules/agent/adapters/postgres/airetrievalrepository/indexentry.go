@@ -122,7 +122,7 @@ func (r *repository) MarkStale(
 			keel.OnConflict(e.OrganizationID, e.BusinessUnitID, e.SourceType, e.SourceID, e.ModelKey).
 				Set(
 					e.Status.To(airetrieval.IndexStatusPending),
-					e.Generation.Add(1),
+					e.Generation.Increment(1),
 					e.Attempts.To(0),
 					e.LastError.ToNull(),
 					e.NextAttemptAt.ToNull(),
@@ -199,7 +199,7 @@ func (r *repository) ClaimIndexEntries(
 			Where(e.ModelKey.Eq(req.ModelKey)).
 			UpdateReturning(ctx, r.db.Keel(ctx),
 				e.LeaseExpiresAt.To(now+int64(lease/time.Second)),
-				e.Attempts.Add(1),
+				e.Attempts.Increment(1),
 				e.LastAttemptAt.To(now),
 				e.UpdatedAt.To(now),
 			)

@@ -205,7 +205,7 @@ func syncEntries(ctx context.Context, db *keel.DB, entity *tender.RoutingGuide) 
 		if _, err := e.Where(e.RoutingGuideID.Eq(entity.ID), e.ID.In(kept...)).Update(
 			ctx,
 			db,
-			e.Rank.Add(rankShift),
+			e.Rank.Increment(rankShift),
 			e.Version.ToExpr(e.Version),
 			e.UpdatedAt.ToExpr(e.UpdatedAt),
 		); err != nil {

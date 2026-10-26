@@ -343,7 +343,7 @@ func (r *batchRepository) IncrementReceived(
 		_, err := b.Where(b.ID.Eq(req.ID)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			b.ReceivedPageCount.Add(1),
+			b.ReceivedPageCount.Increment(1),
 			b.Version.ToExpr(b.Version),
 			b.UpdatedAt.ToExpr(b.UpdatedAt),
 		)

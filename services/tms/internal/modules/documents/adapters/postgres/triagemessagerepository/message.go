@@ -121,7 +121,7 @@ func (r *repository) SaveTriageFields(
 		}
 
 		if len(sets) == 0 {
-			sets = append(sets, m.Version.Add(1))
+			sets = append(sets, m.Version.Increment(1))
 		}
 
 		n, err := m.Where(m.ID.Eq(req.MessageID), m.Version.Eq(req.Version)).

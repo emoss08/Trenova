@@ -123,7 +123,7 @@ func (r *linkRepository) RecordView(
 			ctx,
 			r.db.Keel(ctx),
 			l.LastViewedAt.To(at),
-			l.ViewCount.Add(1),
+			l.ViewCount.Increment(1),
 			l.UpdatedAt.To(at),
 		)
 		if err != nil {
