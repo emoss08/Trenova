@@ -2,6 +2,7 @@ package sequenceconfigrepository
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sort"
 
@@ -44,29 +45,37 @@ func (r *repository) GetByTenant(
 	ctx context.Context,
 	req tenantports.GetSequenceConfigRequest,
 ) (*tenant.SequenceConfigDocument, error) {
-	configs, err := dbtx.Read(ctx, r.db, r.listRequired)
-	if err != nil {
-		return nil, err
-	}
+	var found []*tenant.SequenceConfig
 
-	if len(configs) < len(tenant.RequiredSequenceTypes()) {
-		configs, err = dbtx.Write(
-			ctx,
-			r.db,
-			func(ctx context.Context) ([]*tenant.SequenceConfig, error) {
-				seedErr := r.ensureDefaults(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
-				if seedErr != nil {
-					return nil, seedErr
-				}
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.SequenceConfigDocument]{
+		Find: func(ctx context.Context) (*tenant.SequenceConfigDocument, error) {
+			configs, err := r.listRequired(ctx)
+			if err != nil {
+				return nil, err
+			}
+			found = configs
+			if len(configs) < len(tenant.RequiredSequenceTypes()) {
+				return nil, sql.ErrNoRows
+			}
 
-				return r.listRequired(ctx)
-			},
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
+			return sequenceConfigDocument(req.TenantInfo, configs), nil
+		},
+		Create: func(ctx context.Context) error {
+			return r.ensureDefaults(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
+		},
+		Default: func() *tenant.SequenceConfigDocument {
+			return sequenceConfigDocument(
+				req.TenantInfo,
+				withDefaults(found, req.TenantInfo.OrgID, req.TenantInfo.BuID),
+			)
+		},
+	})
+}
 
+func sequenceConfigDocument(
+	tenantInfo pagination.TenantInfo,
+	configs []*tenant.SequenceConfig,
+) *tenant.SequenceConfigDocument {
 	sort.Slice(configs, func(i, j int) bool {
 		return tenant.SequenceTypeSortOrder(
 			configs[i].SequenceType,
@@ -77,10 +86,33 @@ func (r *repository) GetByTenant(
 	normalizeSequenceConfigs(configs)
 
 	return &tenant.SequenceConfigDocument{
-		OrganizationID: req.TenantInfo.OrgID,
-		BusinessUnitID: req.TenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
 		Configs:        configs,
-	}, nil
+	}
+}
+
+func withDefaults(
+	saved []*tenant.SequenceConfig,
+	orgID, buID pulid.ID,
+) []*tenant.SequenceConfig {
+	bySequence := make(map[tenant.SequenceType]*tenant.SequenceConfig, len(saved))
+	for _, cfg := range saved {
+		bySequence[cfg.SequenceType] = cfg
+	}
+
+	configs := make([]*tenant.SequenceConfig, 0, len(tenant.RequiredSequenceTypes()))
+	for _, sequenceType := range tenant.RequiredSequenceTypes() {
+		if cfg, ok := bySequence[sequenceType]; ok {
+			configs = append(configs, cfg)
+			continue
+		}
+		if cfg := tenant.DefaultSequenceConfig(orgID, buID, sequenceType); cfg != nil {
+			configs = append(configs, cfg)
+		}
+	}
+
+	return configs
 }
 
 func (r *repository) listRequired(ctx context.Context) ([]*tenant.SequenceConfig, error) {
