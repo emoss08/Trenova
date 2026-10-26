@@ -35,9 +35,12 @@ type accumulationSource struct {
 	jm  *keel.CTETable
 }
 
-func inMiles(distance keel.Expr, units keel.StringCol) keel.DynExpr {
-	return keel.DynCase().
-		When(units.Eq(shipment.JurisdictionDistanceUnitsKilometers), keel.DynOf(distance).Div(kilometersPerMile)).
+func inMiles(distance keel.Float64Col, units keel.StringCol) keel.Float64Expr {
+	return keel.CaseFloat64().
+		When(
+			units.Eq(shipment.JurisdictionDistanceUnitsKilometers),
+			distance.Div(keel.Float64(kilometersPerMile)),
+		).
 		Else(distance)
 }
 
@@ -149,8 +152,8 @@ func (s accumulationSource) unattributed() *keel.Query[*keel.Row] {
 
 func (s accumulationSource) mismatches() *keel.Query[*keel.Row] {
 	jm := s.jm
-	moveDistance := keel.DynOf(jm.Col("move_distance"))
-	attributed := jm.Col("miles").Sum()
+	moveDistance := keel.Float64Of(jm.Col("move_distance"))
+	attributed := keel.Float64Of(jm.Col("miles").Sum())
 
 	return jm.Query().
 		With(s.inp, jm).
@@ -158,9 +161,9 @@ func (s accumulationSource) mismatches() *keel.Query[*keel.Row] {
 		Where(moveDistance.IsNotNull()).
 		Group(jm.Col("shipment_move_id"), jm.Col("move_distance")).
 		Having(
-			keel.NumericOf(keel.DynOf(attributed).Sub(moveDistance)).Abs().GtExpr(
-				keel.Numeric(mismatchFloorMiles).
-					Greatest(keel.NumericOf(moveDistance.Mul(mismatchTolerance))),
+			attributed.Sub(moveDistance).Abs().GtExpr(
+				keel.Float64(mismatchFloorMiles).
+					Greatest(moveDistance.Mul(keel.Float64(mismatchTolerance))),
 			),
 		).
 		Order(jm.Col("shipment_move_id").Asc())

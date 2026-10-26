@@ -115,7 +115,8 @@ func (r *repository) GetPreviousFill(
 			fp.ID.Ne(current.ID),
 			fp.Odometer.IsNotNull(),
 			fp.FuelType.In(domaintypes.IFTAFuelTypes()...),
-			keel.DynRow(fp.PurchasedAt, fp.ID).Lt(keel.DynRow(current.PurchasedAt, current.ID.String())),
+			keel.Tuple(fp.PurchasedAt, fp.ID).
+				Lt(keel.Tuple(current.PurchasedAt, current.ID.String())),
 		).Order(fp.PurchasedAt.Desc(), fp.ID.Desc()).First(ctx, r.db.Keel(ctx))
 		if dberror.IsNotFoundError(err) {
 			return nil, nil
