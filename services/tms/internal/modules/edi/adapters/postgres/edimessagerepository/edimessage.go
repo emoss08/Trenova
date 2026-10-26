@@ -563,7 +563,7 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[*e
 	}
 	pendingDelivery := keel.And(outbound, m.DeliveryStatus.In(pendingDeliveryStatuses...))
 	acknowledged := keel.And(m.AckReceivedAt.IsNotNull(), m.DeliverySentAt.IsNotNull())
-	latency := keel.DynOf(m.AckReceivedAt).Sub(m.DeliverySentAt)
+	latency := m.AckReceivedAt.Sub(m.DeliverySentAt)
 
 	return m.Where(
 		m.EDIPartnerID.IsNotNull(),
@@ -580,7 +580,7 @@ func scorecardQuery(req *ediports.GetEDIPartnerScorecardsRequest) *keel.Query[*e
 			keel.Count().Filter(delivered(edi.MessageDeliveryStatusFailed)),
 			keel.Count().Filter(delivered(edi.MessageDeliveryStatusDeadLettered)),
 			keel.Count().Filter(m.Direction.Eq(edi.DocumentDirectionInbound)),
-			latency.Avg().Filter(acknowledged).Cast(keel.TypeFloat64),
+			keel.CastFloat64(latency.Avg().Filter(acknowledged)),
 			keel.CastFloat64(
 				keel.Float64Of(keel.PercentileCont(0.95, latency.Asc()).Filter(acknowledged)),
 			),
@@ -621,7 +621,8 @@ func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMe
 	if bucket <= 0 {
 		bucket = defaultBucketSeconds
 	}
-	bucketStart := keel.DynOf(m.GeneratedAt).Div(bucket).Mul(bucket)
+	bucketSeconds := keel.Int64(bucket)
+	bucketStart := m.GeneratedAt.Div(bucketSeconds).Mul(bucketSeconds)
 	outbound := m.Direction.Eq(edi.DocumentDirectionOutbound)
 
 	return m.Where(
@@ -640,7 +641,7 @@ func volumeQuery(req *ediports.GetEDIVolumeSeriesRequest) *keel.Query[*edi.EDIMe
 			))),
 			keel.Count().Filter(m.Direction.Eq(edi.DocumentDirectionInbound)),
 		).
-		Order(keel.Asc(bucketStart))
+		Order(bucketStart.Asc())
 }
 
 func (r *repository) GetPartnerSetActivity(

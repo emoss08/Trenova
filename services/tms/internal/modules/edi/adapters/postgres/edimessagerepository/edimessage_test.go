@@ -74,12 +74,17 @@ func TestVolumeQuery_GroupsByTheBucketItSelects(t *testing.T) {
 	assert.Contains(
 		t,
 		sql,
-		`SELECT ((em."generated_at" / $4::bigint) * $5::bigint), `+
+		`SELECT ((em."generated_at" / $4::bigint) * $4::bigint), `+
 			`count(*) FILTER (WHERE em."direction" = 'Outbound')`,
 	)
 	assert.Contains(t, sql, `WHERE em."business_unit_id" = $1 AND em."organization_id" = $2 AND em."generated_at" >= $3`)
-	assert.Contains(t, sql, `GROUP BY 1 ORDER BY 1 ASC`)
+	assert.Contains(
+		t,
+		sql,
+		`GROUP BY ((em."generated_at" / $4::bigint) * $4::bigint) `+
+			`ORDER BY ((em."generated_at" / $4::bigint) * $4::bigint) ASC`,
+	)
 	assert.Contains(t, sql, `em."delivery_status" IN ('Failed', 'DeadLettered')`)
 	assert.Contains(t, sql, `count(*) FILTER (WHERE em."direction" = 'Inbound')`)
-	assert.Equal(t, []any{"bu_1", "org_1", int64(100), int64(3600), int64(3600)}, args)
+	assert.Equal(t, []any{"bu_1", "org_1", int64(100), int64(3600)}, args)
 }
