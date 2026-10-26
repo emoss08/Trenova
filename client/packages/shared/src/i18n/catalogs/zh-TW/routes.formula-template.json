@@ -211,6 +211,7 @@
   "Suggested tests": "建議的測試",
   "Tariff source": "運價表原始碼",
   "Template duplicated successfully": "已成功複製範本",
+  "Template name": "範本名稱",
   "Test name": "測試名稱",
   "Tests and the preview read each table's newest published version. Approval pins it for contracts.": "測試與預覽會讀取每個表的最新已發布版本。核准時會為合約鎖定該版本。",
   "Tests live in the source and run on every change. A version with a failing test cannot be submitted.": "測試寫在原始碼中，每次修改都會執行。含有未通過測試的版本無法提交。",

@@ -71,5 +71,6 @@
   "Your new password is active. Any other sessions on this account have been signed out.": "Su nueva contraseña está activa. Se cerraron todas las demás sesiones de esta cuenta.",
   "Your password is set. Sign in to get started.": "Su contraseña está establecida. Inicie sesión para comenzar.",
   "you@carrier.com": "usted@transportista.com",
-  "{0, plural, one {permission} other {permissions}}": "{0, plural, one {permiso} other {permisos}}"
+  "{0, plural, one {permission} other {permissions}}": "{0, plural, one {permiso} other {permisos}}",
+  "{0} available": "{0} disponibles"
 }

@@ -111,20 +111,18 @@ pub fn node(program: &Program, reference: NodeRef) -> (String, Doc) {
             (format!("loop {id} · {name}"), name)
         }
     };
-    let mut message = Message::with(
-        message!("{0}: {1}, at most {2}"),
-        [
-            Arg::from(name),
-            Arg::from(usage(node.usage)),
-            Arg::from(node.max as usize),
-        ],
-    );
-    if let Some(note) = guide_note(program, reference.guide, &path) {
-        message = Message::with(
-            message!("{0}\n\n{1}"),
-            [Arg::from(message), Arg::from(note)],
-        );
-    }
+    let used = Arg::from(usage(node.usage));
+    let max = Arg::from(node.max as usize);
+    let message = match guide_note(program, reference.guide, &path) {
+        Some(note) => Message::with(
+            message!("{0}: {1}, at most {2}. The partner's guide says: {3}"),
+            [Arg::from(name), used, max, Arg::from(note)],
+        ),
+        None => Message::with(
+            message!("{0}: {1}, at most {2}"),
+            [Arg::from(name), used, max],
+        ),
+    };
     (detail, Doc::Message(message))
 }
 
@@ -181,26 +179,26 @@ pub fn element_parts(segment: &str, position: u32, element: &ElementDef) -> (Str
             .collect::<Vec<_>>()
             .join(", ")
     });
-    let mut message = Message::with(
-        message!("{0} ({1}), element {2}"),
-        [
-            Arg::from(element.name.as_str()),
-            Arg::from(usage(element.usage)),
-            Arg::from(element.reference.as_str()),
-        ],
-    );
-    if let Some(codes) = codes.filter(|codes| !codes.is_empty()) {
-        message = Message::with(
-            message!("{0}. Codes: {1}"),
-            [Arg::from(message), Arg::from(codes)],
-        );
-    }
-    if !element.notes.is_empty() {
-        message = Message::with(
-            message!("{0}\n\n{1}"),
-            [Arg::from(message), Arg::from(element.notes.as_str())],
-        );
-    }
+    let name = Arg::from(element.name.as_str());
+    let used = Arg::from(usage(element.usage));
+    let reference = Arg::from(element.reference.as_str());
+    let codes = codes.filter(|codes| !codes.is_empty());
+    let notes = Some(element.notes.as_str()).filter(|notes| !notes.is_empty());
+    let message = match (codes, notes) {
+        (None, None) => Message::with(message!("{0} ({1}), element {2}"), [name, used, reference]),
+        (Some(codes), None) => Message::with(
+            message!("{0} ({1}), element {2}. Codes: {3}"),
+            [name, used, reference, Arg::from(codes)],
+        ),
+        (None, Some(notes)) => Message::with(
+            message!("{0} ({1}), element {2}. The partner's guide says: {3}"),
+            [name, used, reference, Arg::from(notes)],
+        ),
+        (Some(codes), Some(notes)) => Message::with(
+            message!("{0} ({1}), element {2}. Codes: {3}. The partner's guide says: {4}"),
+            [name, used, reference, Arg::from(codes), Arg::from(notes)],
+        ),
+    };
     (label, detail, Doc::Message(message))
 }
 

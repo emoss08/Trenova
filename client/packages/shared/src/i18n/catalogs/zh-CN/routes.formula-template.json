@@ -211,6 +211,7 @@
   "Suggested tests": "建议的测试",
   "Tariff source": "运价表源代码",
   "Template duplicated successfully": "模板复制成功",
+  "Template name": "模板名称",
   "Test name": "测试名称",
   "Tests and the preview read each table's newest published version. Approval pins it for contracts.": "测试和预览读取每个表最新的已发布版本。批准后会为合同锁定该版本。",
   "Tests live in the source and run on every change. A version with a failing test cannot be submitted.": "测试写在源代码中，每次修改都会运行。包含未通过测试的版本无法提交。",
