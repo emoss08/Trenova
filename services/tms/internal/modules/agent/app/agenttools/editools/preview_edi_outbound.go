@@ -120,13 +120,8 @@ func (t *SendEDIStatusUpdateTool) Preview(
 	}
 
 	partner := tradingPartnerFallback
-	if document.Profile != nil {
-		switch {
-		case document.Profile.Partner != nil && document.Profile.Partner.Name != "":
-			partner = document.Profile.Partner.Name
-		case document.Profile.Name != "":
-			partner = document.Profile.Name
-		}
+	if document.PartnerName != "" {
+		partner = document.PartnerName
 	}
 	sent := toolpreview.Send(toolpreview.Record{
 		Resource: permission.ResourceEDI,

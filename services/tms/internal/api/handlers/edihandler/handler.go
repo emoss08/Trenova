@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,8 @@ type Params struct {
 
 	Service              *ediservice.Service
 	InboundService       *ediinboundservice.Service
+	Projects             *edilading.Projects
+	LadingRuntime        *edilading.Runtime
 	ErrorHandler         *helpers.ErrorHandler
 	PermissionMiddleware *middleware.PermissionMiddleware
 }
@@ -22,6 +25,8 @@ type Params struct {
 type Handler struct {
 	service        *ediservice.Service
 	inboundService *ediinboundservice.Service
+	projects       *edilading.Projects
+	ladingRuntime  *edilading.Runtime
 	eh             *helpers.ErrorHandler
 	pm             *middleware.PermissionMiddleware
 }
@@ -30,6 +35,8 @@ func New(p Params) *Handler {
 	return &Handler{
 		service:        p.Service,
 		inboundService: p.InboundService,
+		projects:       p.Projects,
+		ladingRuntime:  p.LadingRuntime,
 		eh:             p.ErrorHandler,
 		pm:             p.PermissionMiddleware,
 	}
@@ -45,15 +52,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	h.registerCommunicationProfileRoutes(api.Group("/communication-profiles"))
 	h.registerDocumentTypeRoutes(catalog.Group("/document-types"))
 	h.registerTransactionSetRoutes(catalog.Group("/transaction-sets"))
-	h.registerSourceContextRoutes(catalog.Group("/source-context"))
-	h.registerPartnerSettingsRoutes(catalog.Group("/partner-settings"))
-	h.registerTemplateRoutes(api.Group("/templates"))
-	h.registerDocumentProfileRoutes(api.Group("/document-profiles"))
+	h.registerLadingRoutes(api.Group("/lading"))
+	h.registerFlowRoutes(api.Group("/flows"))
 	h.registerDocumentRoutes(api.Group("/documents"))
 	h.registerMessageRoutes(api.Group("/messages"))
 	h.registerInboundFileRoutes(api.Group("/inbound-files"))
 	h.registerX12Routes(api.Group("/x12"))
-	h.registerTestCaseRoutes(api.Group("/test-cases"))
 	api.POST(
 		"/load-tenders/",
 		h.pm.RequirePermission(permission.ResourceEDI.String(), permission.OpCreate),

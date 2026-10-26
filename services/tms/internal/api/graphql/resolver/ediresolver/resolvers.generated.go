@@ -14,13 +14,9 @@ type Deps struct {
 	EdiInboundService *ediinboundservice.Service
 }
 
-type EdiAcknowledgmentConfigResolver struct{ *Deps }
+type EdiFlowInstanceResolver struct{ *Deps }
 
 type EdiMessageResolver struct{ *Deps }
-
-type EdiPartnerDocumentProfileResolver struct{ *Deps }
-
-type EdiTemplateResolver struct{ *Deps }
 
 type EdiTransferResolver struct{ *Deps }
 

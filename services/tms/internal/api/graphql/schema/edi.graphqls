@@ -71,19 +71,6 @@ enum EdiTransferDirection {
   Outbound
 }
 
-enum EdiTemplateStatus {
-  Draft
-  Certified
-  Active
-  Deprecated
-  Archived
-  Superseded
-}
-
-enum EdiStandard {
-  X12
-}
-
 enum EdiMappingEntityType {
   Customer
   ServiceType
@@ -93,11 +80,6 @@ enum EdiMappingEntityType {
   Commodity
   AccessorialCharge
   ServiceFailureReasonCode
-}
-
-enum EdiDocumentStatus {
-  Active
-  Inactive
 }
 
 type EdiConnectionCapabilities {
@@ -280,9 +262,10 @@ type EdiMessage @kind(resource: "edi") {
   organizationId: ID!
   ediPartnerId: ID!
   documentTypeId: ID!
-  partnerDocumentProfileId: ID
-  templateId: ID
-  templateVersionId: ID
+  "The version of the partner's Lading project that read or wrote the message."
+  ladingVersionId: ID
+  "The flow conversation the message belongs to."
+  flowInstanceId: ID
   shipmentId: ID
   transferId: ID
   inboundFileId: ID
@@ -387,51 +370,6 @@ type EdiInboundFileDetail @kind(resource: "edi") {
   raw: EdiRawText
 }
 
-type EdiTemplateVersion {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  templateId: ID!
-  sourceVersionId: ID
-  versionNumber: Int!
-  x12Version: String!
-  functionalGroupId: String!
-  status: EdiTemplateStatus!
-  isActive: Boolean!
-  notes: String
-  certificationNotes: String
-  activationNotes: String
-  archiveNotes: String
-  deprecatedNotes: String
-  supersededNotes: String
-  certifiedAt: Timestamp
-  activatedAt: Timestamp
-  archivedAt: Timestamp
-  deprecatedAt: Timestamp
-  supersededAt: Timestamp
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-}
-
-type EdiTemplate {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  documentTypeId: ID!
-  name: String!
-  description: String
-  direction: EdiDocumentDirection!
-  standard: EdiStandard!
-  transactionSet: String!
-  status: EdiTemplateStatus!
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  activeVersion: EdiTemplateVersion
-  versions: [EdiTemplateVersion!]
-}
-
 type EdiMappingProfileItem {
   id: ID!
   businessUnitId: ID!
@@ -527,19 +465,6 @@ type EdiInboundFileConnection {
   totalCountExact: Boolean!
 }
 
-type EdiTemplateEdge {
-  node: EdiTemplate!
-  cursor: String!
-}
-
-type EdiTemplateConnection {
-  edges: [EdiTemplateEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
-  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
-  totalCountExact: Boolean!
-}
-
 type EdiMappingProfileEdge {
   node: EdiMappingProfile!
   cursor: String!
@@ -551,61 +476,6 @@ type EdiMappingProfileConnection {
   totalCount: Int
   "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
   totalCountExact: Boolean!
-}
-
-"""
-The ISA and GS identities and separators every interchange of a document profile is
-written with.
-"""
-type EdiX12Envelope {
-  interchangeSenderQualifier: String!
-  interchangeSenderId: String!
-  interchangeReceiverQualifier: String!
-  interchangeReceiverId: String!
-  applicationSenderCode: String!
-  applicationReceiverCode: String!
-  "T for test, P for production."
-  interchangeUsageIndicator: String!
-  elementSeparator: String!
-  segmentTerminator: String!
-  componentSeparator: String!
-  repetitionSeparator: String!
-}
-
-type EdiAcknowledgmentConfig {
-  expected: Boolean!
-  "None, 997 or 999."
-  type: String!
-  slaInMinutes: Int!
-}
-
-type EdiPartnerDocumentProfile {
-  id: ID!
-  ediPartnerId: ID!
-  name: String!
-  status: EdiDocumentStatus!
-  direction: EdiDocumentDirection!
-  transactionSet: String!
-  functionalGroupId: String!
-  x12VersionOverride: String
-  envelope: EdiX12Envelope!
-  acknowledgment: EdiAcknowledgmentConfig!
-  partner: EdiPartner
-}
-
-type EdiTestCase {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  partnerDocumentProfileId: ID!
-  name: String!
-  description: String
-  expectedWarnings: Int!
-  expectedErrors: Int!
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  documentProfile: EdiPartnerDocumentProfile
 }
 
 type EdiSummaryStatusCount {
@@ -830,7 +700,8 @@ ever returned.
 type EdiPartnerCard {
   partner: EdiPartner!
   customer: EdiPartnerCustomer
-  documentProfiles: [EdiPartnerDocumentProfile!]!
+  "The partner's Lading project and the versions running."
+  lading: EdiPartnerLading!
   transports: [EdiPartnerTransport!]!
   readiness: EdiPartnerCardReadiness!
   mappings: EdiPartnerMappingSummary!
@@ -840,13 +711,103 @@ type EdiPartnerCard {
   carriers: [EdiPartnerCarrier!]
 }
 
-type EdiTestCaseEdge {
-  node: EdiTestCase!
+enum EdiLadingVersionStatus {
+  Draft
+  Certified
+  Active
+  Shadow
+  Superseded
+  Archived
+}
+
+enum EdiFlowInstanceStatus {
+  Open
+  Held
+  Escalated
+  Closed
+}
+
+"What a version's tests and checks last found."
+type EdiLadingReadiness {
+  errors: Int!
+  failing: Int!
+  tests: Int!
+  uncoveredFlowClauses: Int!
+  ready: Boolean!
+  checkedAt: Timestamp!
+}
+
+"A version of a partner's Lading project, without its files."
+type EdiLadingVersion @kind(resource: "edi") {
+  id: ID!
+  projectId: ID!
+  number: Int!
+  status: EdiLadingVersionStatus!
+  parentVersionId: ID
+  readiness: EdiLadingReadiness
+  notes: String
+  errorCount: Int!
+  warningCount: Int!
+  "When a shadow run ends."
+  shadowUntil: Timestamp
+  certifiedAt: Timestamp
+  activatedAt: Timestamp
+  supersededAt: Timestamp
+  archivedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"A partner's Lading project: its maps, rules, guides and flows, kept as versions."
+type EdiLadingProject @kind(resource: "edi") {
+  id: ID!
+  ediPartnerId: ID!
+  activeVersionId: ID
+  shadowVersionId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type EdiPartnerLading {
+  project: EdiLadingProject
+  "The version Trenova runs for the partner."
+  active: EdiLadingVersion
+  "The version compared with it on live traffic, if one is."
+  shadow: EdiLadingVersion
+}
+
+"One conversation with a partner about one load, stepped by the partner's flow."
+type EdiFlowInstance @kind(resource: "edi") {
+  id: ID!
+  ediPartnerId: ID!
+  projectId: ID
+  versionId: ID
+  flow: String!
+  "What the conversation is about: the partner's load number for a tender."
+  key: String!
+  status: EdiFlowInstanceStatus!
+  "Why it is held or escalated."
+  reason: String
+  "When the flow next wakes on its own."
+  wakeAt: Timestamp
+  shipmentId: ID
+  transferId: ID
+  lastEventAt: Timestamp!
+  heldAt: Timestamp
+  resolvedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  partner: EdiPartner
+}
+
+type EdiFlowInstanceEdge {
+  node: EdiFlowInstance!
   cursor: String!
 }
 
-type EdiTestCaseConnection {
-  edges: [EdiTestCaseEdge!]!
+type EdiFlowInstanceConnection {
+  edges: [EdiFlowInstanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
   "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
@@ -888,17 +849,14 @@ extend type Query {
     status: EdiInboundFileStatus
     partnerId: ID
   ): EdiInboundFileConnection!
-  ediTemplates(
-    input: DataTableConnectionInput!
-    status: EdiTemplateStatus
-    transactionSet: String
-    direction: EdiDocumentDirection
-  ): EdiTemplateConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
-  ediTestCases(
+  "The partners' flow conversations: open ones, and the ones held or escalated for a person."
+  ediFlowInstances(
     input: DataTableConnectionInput!
-    partnerDocumentProfileId: ID
-  ): EdiTestCaseConnection!
+    partnerId: ID
+    shipmentId: ID
+    statuses: [EdiFlowInstanceStatus!]
+  ): EdiFlowInstanceConnection!
   ediSummary(sinceHours: Int): EdiSummary!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!

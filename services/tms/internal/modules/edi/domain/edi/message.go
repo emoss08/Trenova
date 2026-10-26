@@ -4,10 +4,12 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -25,9 +27,9 @@ type EDIMessage struct {
 	OrganizationID           pulid.ID                    `json:"organizationId"           keel:"organization_id,pk,tenant"`
 	EDIPartnerID             pulid.ID                    `json:"ediPartnerId"             keel:"edi_partner_id"`
 	DocumentTypeID           pulid.ID                    `json:"documentTypeId"           keel:"document_type_id"`
-	PartnerDocumentProfileID pulid.ID                    `json:"partnerDocumentProfileId" keel:"partner_document_profile_id,nullzero"`
-	TemplateID               pulid.ID                    `json:"templateId"               keel:"template_id,nullzero"`
-	TemplateVersionID        pulid.ID                    `json:"templateVersionId"        keel:"template_version_id,nullzero"`
+	LadingVersionID          pulid.ID                    `json:"ladingVersionId"          keel:"lading_version_id,nullzero"`
+	FlowInstanceID           pulid.ID                    `json:"flowInstanceId"           keel:"flow_instance_id,nullzero"`
+	FlowSendID               string                      `json:"flowSendId"               keel:"flow_send_id,nullzero"`
 	ShipmentID               pulid.ID                    `json:"shipmentId"               keel:"shipment_id,nullzero"`
 	InvoiceID                pulid.ID                    `json:"invoiceId"                keel:"invoice_id,nullzero"`
 	TransferID               pulid.ID                    `json:"transferId"               keel:"transfer_id,nullzero"`
@@ -37,13 +39,15 @@ type EDIMessage struct {
 	TransactionSet           TransactionSet              `json:"transactionSet"           keel:"transaction_set"`
 	X12Version               string                      `json:"x12Version"               keel:"x12_version"`
 	Status                   MessageStatus               `json:"status"                   keel:"status"`
-	ValidationMode           ValidationMode              `json:"validationMode"           keel:"validation_mode"`
 	InterchangeControlNumber string                      `json:"interchangeControlNumber" keel:"interchange_control_number"`
 	GroupControlNumber       string                      `json:"groupControlNumber"       keel:"group_control_number"`
 	TransactionControlNumber string                      `json:"transactionControlNumber" keel:"transaction_control_number"`
 	SegmentCount             int64                       `json:"segmentCount"             keel:"segment_count"`
 	RawX12                   string                      `json:"rawX12"                   keel:"raw_x12"`
 	PayloadSnapshot          DocumentPayload             `json:"payloadSnapshot"          keel:"payload_snapshot,jsonb"`
+	Document                 jsonutils.RawJSON           `json:"document"                 keel:"document,jsonb"`
+	Lineage                  []lading.Lineage            `json:"lineage"                  keel:"lineage,jsonb"`
+	Outcomes                 []lading.Outcome            `json:"outcomes"                 keel:"outcomes,jsonb"`
 	RawPurgedAt              *int64                      `json:"rawPurgedAt"              keel:"raw_purged_at"`
 	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus"           keel:"delivery_status,nullzero"`
 	DeliveryRemotePath       string                      `json:"deliveryRemotePath"       keel:"delivery_remote_path,nullzero"`
@@ -68,9 +72,7 @@ type EDIMessage struct {
 
 	Partner                *EDIPartner                  `json:"partner,omitempty"                keel:"belongs:edi_partner_id"`
 	DocumentType           *EDIDocumentType             `json:"documentType,omitempty"           keel:"belongs:document_type_id"`
-	PartnerDocumentProfile *EDIPartnerDocumentProfile   `json:"partnerDocumentProfile,omitempty" keel:"belongs:partner_document_profile_id"`
-	Template               *EDITemplate                 `json:"template,omitempty"               keel:"belongs:template_id"`
-	TemplateVersion        *EDITemplateVersion          `json:"templateVersion,omitempty"        keel:"belongs:template_version_id"`
+	LadingVersion          *LadingVersion               `json:"ladingVersion,omitempty"          keel:"belongs:lading_version_id"`
 	ValidationErrors       []*EDIMessageValidationError `json:"validationErrors,omitempty"       keel:"many:message_id"`
 }
 
@@ -114,64 +116,6 @@ type EDIMessageValidationError struct {
 	CreatedAt       int64              `json:"createdAt"       keel:"created_at,autocreate"`
 }
 
-type EDITestCase struct {
-	keel.Table `keel:"edi_test_cases"`
-
-	ID                       pulid.ID        `json:"id"                       keel:"id,pk,autoid:editc_"`
-	BusinessUnitID           pulid.ID        `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
-	OrganizationID           pulid.ID        `json:"organizationId"           keel:"organization_id,pk,tenant"`
-	PartnerDocumentProfileID pulid.ID        `json:"partnerDocumentProfileId" keel:"partner_document_profile_id"`
-	Name                     string          `json:"name"                     keel:"name"`
-	Description              string          `json:"description"              keel:"description,nullzero"`
-	Payload                  DocumentPayload `json:"payload"                  keel:"payload,jsonb"`
-	ExpectedWarnings         int             `json:"expectedWarnings"         keel:"expected_warnings"`
-	ExpectedErrors           int             `json:"expectedErrors"           keel:"expected_errors"`
-	ExpectedWarningCodes     []string        `json:"expectedWarningCodes"     keel:"expected_warning_codes,jsonb"`
-	ExpectedErrorCodes       []string        `json:"expectedErrorCodes"       keel:"expected_error_codes,jsonb"`
-	LastRunAt                *int64          `json:"lastRunAt"                keel:"last_run_at"`
-	LastRunPassed            *bool           `json:"lastRunPassed"            keel:"last_run_passed"`
-	LastRunWarnings          int             `json:"lastRunWarnings"          keel:"last_run_warnings"`
-	LastRunErrors            int             `json:"lastRunErrors"            keel:"last_run_errors"`
-	Version                  int64           `json:"version"                  keel:"version,version"`
-	CreatedAt                int64           `json:"createdAt"                keel:"created_at,autocreate"`
-	UpdatedAt                int64           `json:"updatedAt"                keel:"updated_at,autoupdate"`
-
-	DocumentProfile *EDIPartnerDocumentProfile `json:"documentProfile,omitempty" keel:"belongs:partner_document_profile_id"`
-}
-
-func (t *EDITestCase) GetID() pulid.ID {
-	return t.ID
-}
-
-func (t *EDITestCase) GetTableName() string {
-	return "edi_test_cases"
-}
-
-func (t *EDITestCase) GetOrganizationID() pulid.ID {
-	return t.OrganizationID
-}
-
-func (t *EDITestCase) GetBusinessUnitID() pulid.ID {
-	return t.BusinessUnitID
-}
-
-func (t *EDITestCase) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
-	return domaintypes.PostgresSearchConfig{
-		TableAlias: "etc",
-		SearchableFields: []domaintypes.SearchableField{
-			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{
-				Name:   "description",
-				Type:   domaintypes.FieldTypeText,
-				Weight: domaintypes.SearchWeightB,
-			},
-		},
-	}
-}
-
-func (t *EDITestCase) GetCreatedAt() int64 {
-	return t.CreatedAt
-}
 
 func (m *EDIMessage) GetID() pulid.ID {
 	return m.ID
@@ -240,10 +184,6 @@ func (m *EDIMessage) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&m.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[MessageStatus]("Status is invalid"),
-		),
-		validation.Field(&m.ValidationMode,
-			validation.Required.Error("Validation mode is required"),
-			domainvalidation.ValidEnum[ValidationMode]("Validation mode is invalid"),
 		),
 		// The three control numbers are how a partner's acknowledgment is
 		// matched back to what was sent; a message missing one cannot be
@@ -328,49 +268,6 @@ func (e *EDIMessageValidationError) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&e.Message, validation.Required.Error("Message is required")),
 	))
-}
-
-func (c *EDITestCase) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(c,
-		validation.Field(&c.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&c.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&c.PartnerDocumentProfileID,
-			validation.Required.Error("Document profile is required"),
-		),
-		validation.Field(&c.Name,
-			validation.Required.Error("Name is required"),
-			validation.Length(1, maxEDINameLength).
-				Error("Name cannot be longer than 200 characters"),
-		),
-		// The expectations are what the run is judged against, so a negative one
-		// could never be met and the case would fail forever.
-		validation.Field(&c.ExpectedWarnings,
-			validation.Min(0).Error("Expected warnings cannot be negative"),
-		),
-		validation.Field(&c.ExpectedErrors,
-			validation.Min(0).Error("Expected errors cannot be negative"),
-		),
-		validation.Field(&c.LastRunWarnings,
-			validation.Min(0).Error("Last run warnings cannot be negative"),
-		),
-		validation.Field(&c.LastRunErrors,
-			validation.Min(0).Error("Last run errors cannot be negative"),
-		),
-	))
-}
-
-func (EDITestCase) Constraints() []keel.Constraint {
-	return []keel.Constraint{
-		{
-			Name:    "idx_edi_test_cases_name_profile",
-			Field:   "name",
-			Message: "An EDI test case with this name already exists for the document profile",
-		},
-	}
 }
 
 const (

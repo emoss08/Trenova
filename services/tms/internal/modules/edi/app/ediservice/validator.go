@@ -155,39 +155,6 @@ func (v *Validator) ValidateCommunicationProfile(
 	return nil
 }
 
-func (v *Validator) ValidatePartnerDocumentProfileRequest(
-	req *UpsertEDIPartnerDocumentProfileRequest,
-) *errortypes.MultiError {
-	multiErr := errortypes.NewMultiError()
-	if req == nil {
-		multiErr.Add("profile", errortypes.ErrRequired, "Profile is required")
-		return multiErr
-	}
-	if req.EDIPartnerID.IsNil() {
-		multiErr.Add("ediPartnerId", errortypes.ErrRequired, "EDI partner is required")
-	}
-	if req.TransactionSet != "" && !req.TransactionSet.IsValid() {
-		multiErr.Add("transactionSet", errortypes.ErrInvalid, "Transaction set is invalid")
-	}
-	if req.TransactionSet.IsAcknowledgment() &&
-		(req.TemplateID.IsNotNil() || req.TemplateVersionID.IsNotNil()) {
-		multiErr.Add(
-			"templateId",
-			errortypes.ErrInvalidOperation,
-			"Trenova writes 997 and 999 acknowledgments from the files it receives, so they have no template",
-		)
-	}
-	validateDocumentStatus(multiErr, req.Status)
-	validateValidationMode(multiErr, req.ValidationMode)
-	validateAcknowledgmentType(multiErr, req.Acknowledgment.Type)
-	validateEnvelope(multiErr, &req.Envelope)
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-	return nil
-}
-
 func (v *Validator) ValidatePreviewDocumentRequest(
 	req *PreviewEDIDocumentRequest,
 ) *errortypes.MultiError {
@@ -196,12 +163,8 @@ func (v *Validator) ValidatePreviewDocumentRequest(
 		multiErr.Add("document", errortypes.ErrRequired, "Document request is required")
 		return multiErr
 	}
-	if req.PartnerDocumentProfileID.IsNil() && req.EDIPartnerID.IsNil() {
-		multiErr.Add(
-			"ediPartnerId",
-			errortypes.ErrRequired,
-			"EDI partner or document profile is required",
-		)
+	if req.EDIPartnerID.IsNil() {
+		multiErr.Add("ediPartnerId", errortypes.ErrRequired, "EDI partner is required")
 	}
 	hasPayloadSource := req.Payload != nil ||
 		req.TransferID.IsNotNil() ||
@@ -222,102 +185,6 @@ func (v *Validator) ValidatePreviewDocumentRequest(
 		return multiErr
 	}
 	return nil
-}
-
-func validateDocumentStatus(multiErr *errortypes.MultiError, status edi.DocumentStatus) {
-	if status == "" {
-		return
-	}
-	switch status {
-	case edi.DocumentStatusActive, edi.DocumentStatusInactive:
-	default:
-		multiErr.Add("status", errortypes.ErrInvalid, "Document profile status is invalid")
-	}
-}
-
-func validateValidationMode(multiErr *errortypes.MultiError, mode edi.ValidationMode) {
-	if mode == "" {
-		return
-	}
-	switch mode {
-	case edi.ValidationModeStrict, edi.ValidationModeWarnOnly, edi.ValidationModeDisabled:
-	default:
-		multiErr.Add("validationMode", errortypes.ErrInvalid, "Validation mode is invalid")
-	}
-}
-
-func validateAcknowledgmentType(multiErr *errortypes.MultiError, ackType edi.AcknowledgmentType) {
-	if ackType == "" {
-		return
-	}
-	switch ackType {
-	case edi.AcknowledgmentTypeNone, edi.AcknowledgmentType997, edi.AcknowledgmentType999:
-	default:
-		multiErr.Add("acknowledgment.type", errortypes.ErrInvalid, "Acknowledgment type is invalid")
-	}
-}
-
-func validateEnvelope(multiErr *errortypes.MultiError, envelope *edi.X12EnvelopeSettings) {
-	requireX12ID(
-		multiErr,
-		"envelope.interchangeSenderId",
-		envelope.InterchangeSenderID,
-		"ISA sender ID is required",
-	)
-	requireX12ID(
-		multiErr,
-		"envelope.interchangeReceiverId",
-		envelope.InterchangeReceiverID,
-		"ISA receiver ID is required",
-	)
-	validateISAQualifier(
-		multiErr,
-		"envelope.interchangeSenderQualifier",
-		envelope.InterchangeSenderQualifier,
-	)
-	validateISAQualifier(
-		multiErr,
-		"envelope.interchangeReceiverQualifier",
-		envelope.InterchangeReceiverQualifier,
-	)
-	requireSeparator(multiErr, "envelope.elementSeparator", envelope.ElementSeparator)
-	requireSeparator(multiErr, "envelope.segmentTerminator", envelope.SegmentTerminator)
-	requireSeparator(multiErr, "envelope.componentSeparator", envelope.ComponentSeparator)
-	requireSeparator(multiErr, "envelope.repetitionSeparator", envelope.RepetitionSeparator)
-
-	if envelope.InterchangeUsageIndicator == "" {
-		return
-	}
-	switch envelope.InterchangeUsageIndicator {
-	case "P", "T":
-	default:
-		multiErr.Add(
-			"envelope.interchangeUsageIndicator",
-			errortypes.ErrInvalid,
-			"Usage indicator must be P or T",
-		)
-	}
-}
-
-func requireX12ID(multiErr *errortypes.MultiError, field, value, message string) {
-	value = strings.TrimSpace(value)
-	if value == "" {
-		multiErr.Add(field, errortypes.ErrRequired, message)
-		return
-	}
-	if len(value) > 15 {
-		multiErr.Add(field, errortypes.ErrInvalid, "X12 envelope ID must be 15 characters or fewer")
-	}
-}
-
-func requireSeparator(multiErr *errortypes.MultiError, field, value string) {
-	if value == "" {
-		multiErr.Add(field, errortypes.ErrRequired, "Separator is required")
-		return
-	}
-	if len(value) != 1 {
-		multiErr.Add(field, errortypes.ErrInvalid, "Separator must be exactly one character")
-	}
 }
 
 func (v *Validator) validateProfileConfig(
@@ -349,23 +216,6 @@ func (v *Validator) validateProfileConfig(
 		requireCredentials(multiErr, entity)
 	}
 	if entity.Method != edi.ConnectionMethodInternal {
-		requireConfigString(
-			multiErr,
-			entity.Config,
-			"isaSenderQualifier",
-			"ISA sender qualifier is required",
-		)
-		requireConfigString(multiErr, entity.Config, "isaSenderId", "ISA sender ID is required")
-		requireConfigString(
-			multiErr,
-			entity.Config,
-			"isaReceiverQualifier",
-			"ISA receiver qualifier is required",
-		)
-		requireConfigString(multiErr, entity.Config, "isaReceiverId", "ISA receiver ID is required")
-		requireConfigString(multiErr, entity.Config, "gsSenderId", "GS sender ID is required")
-		requireConfigString(multiErr, entity.Config, "gsReceiverId", "GS receiver ID is required")
-		requireConfigString(multiErr, entity.Config, "x12Version", "X12 version is required")
 		requireConfigString(multiErr, entity.Config, "environment", "Environment is required")
 		validateDeliveryRetryConfig(multiErr, entity.Config)
 	}
@@ -433,15 +283,6 @@ func validateRetryConfigInt(
 		return 0, false
 	}
 	return value, true
-}
-
-func validateISAQualifier(multiErr *errortypes.MultiError, field, value string) {
-	if value == "" {
-		return
-	}
-	if len(value) != 2 {
-		multiErr.Add(field, errortypes.ErrInvalid, "ISA qualifier must be exactly 2 characters")
-	}
 }
 
 func requireConfigString(

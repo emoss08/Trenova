@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -236,7 +235,7 @@ func TestEDIHandler_ValidatePartnerSettings(t *testing.T) {
 	)
 
 	var resp struct {
-		Diagnostics []edix12.Diagnostic `json:"diagnostics"`
+		Diagnostics []edi.Diagnostic `json:"diagnostics"`
 	}
 	require.NoError(t, recorder.ResponseJSON(&resp))
 	require.Len(t, resp.Diagnostics, 1)

@@ -2269,9 +2269,9 @@ var eDIMessagesTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "edi_partner_id", Quoted: `"edi_partner_id"`, Field: "EDIPartnerID", Kind: schema.KindString, Flags: 0, Label: `EDI Partner ID`, JSON: `ediPartnerId`},
 		{Name: "document_type_id", Quoted: `"document_type_id"`, Field: "DocumentTypeID", Kind: schema.KindString, Flags: 0, Label: `Document Type ID`, JSON: `documentTypeId`},
-		{Name: "partner_document_profile_id", Quoted: `"partner_document_profile_id"`, Field: "PartnerDocumentProfileID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Partner Document Profile ID`, JSON: `partnerDocumentProfileId`},
-		{Name: "template_id", Quoted: `"template_id"`, Field: "TemplateID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Template ID`, JSON: `templateId`},
-		{Name: "template_version_id", Quoted: `"template_version_id"`, Field: "TemplateVersionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Template Version ID`, JSON: `templateVersionId`},
+		{Name: "lading_version_id", Quoted: `"lading_version_id"`, Field: "LadingVersionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Lading Version ID`, JSON: `ladingVersionId`},
+		{Name: "flow_instance_id", Quoted: `"flow_instance_id"`, Field: "FlowInstanceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Flow Instance ID`, JSON: `flowInstanceId`},
+		{Name: "flow_send_id", Quoted: `"flow_send_id"`, Field: "FlowSendID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Flow Send ID`, JSON: `flowSendId`},
 		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment ID`, JSON: `shipmentId`},
 		{Name: "invoice_id", Quoted: `"invoice_id"`, Field: "InvoiceID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Invoice ID`, JSON: `invoiceId`},
 		{Name: "transfer_id", Quoted: `"transfer_id"`, Field: "TransferID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Transfer ID`, JSON: `transferId`},
@@ -2281,13 +2281,15 @@ var eDIMessagesTable = schema.Table{
 		{Name: "transaction_set", Quoted: `"transaction_set"`, Field: "TransactionSet", Kind: schema.KindString, Flags: 0, Label: `Transaction Set`, JSON: `transactionSet`, Enum: enumTransactionSet[:]},
 		{Name: "x12_version", Quoted: `"x12_version"`, Field: "X12Version", Kind: schema.KindString, Flags: 0, Label: `X 12 Version`, JSON: `x12Version`},
 		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumMessageStatus[:]},
-		{Name: "validation_mode", Quoted: `"validation_mode"`, Field: "ValidationMode", Kind: schema.KindString, Flags: 0, Label: `Validation Mode`, JSON: `validationMode`, Enum: enumValidationMode[:]},
 		{Name: "interchange_control_number", Quoted: `"interchange_control_number"`, Field: "InterchangeControlNumber", Kind: schema.KindString, Flags: 0, Label: `Interchange Control Number`, JSON: `interchangeControlNumber`},
 		{Name: "group_control_number", Quoted: `"group_control_number"`, Field: "GroupControlNumber", Kind: schema.KindString, Flags: 0, Label: `Group Control Number`, JSON: `groupControlNumber`},
 		{Name: "transaction_control_number", Quoted: `"transaction_control_number"`, Field: "TransactionControlNumber", Kind: schema.KindString, Flags: 0, Label: `Transaction Control Number`, JSON: `transactionControlNumber`},
 		{Name: "segment_count", Quoted: `"segment_count"`, Field: "SegmentCount", Kind: schema.KindInt64, Flags: 0, Label: `Segment Count`, JSON: `segmentCount`},
 		{Name: "raw_x12", Quoted: `"raw_x12"`, Field: "RawX12", Kind: schema.KindString, Flags: 0, Label: `Raw X 12`, JSON: `rawX12`},
 		{Name: "payload_snapshot", Quoted: `"payload_snapshot"`, Field: "PayloadSnapshot", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Payload Snapshot`, JSON: `payloadSnapshot`},
+		{Name: "document", Quoted: `"document"`, Field: "Document", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Document`, JSON: `document`},
+		{Name: "lineage", Quoted: `"lineage"`, Field: "Lineage", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Lineage`, JSON: `lineage`},
+		{Name: "outcomes", Quoted: `"outcomes"`, Field: "Outcomes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Outcomes`, JSON: `outcomes`},
 		{Name: "raw_purged_at", Quoted: `"raw_purged_at"`, Field: "RawPurgedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Raw Purged At`, JSON: `rawPurgedAt`},
 		{Name: "delivery_status", Quoted: `"delivery_status"`, Field: "DeliveryStatus", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Delivery Status`, JSON: `deliveryStatus`, Enum: enumMessageDeliveryStatus[:]},
 		{Name: "delivery_remote_path", Quoted: `"delivery_remote_path"`, Field: "DeliveryRemotePath", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Delivery Remote Path`, JSON: `deliveryRemotePath`},
@@ -2312,21 +2314,19 @@ var eDIMessagesTable = schema.Table{
 	Relations: []schema.Relation{
 		{Name: "Partner", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Partner`, JSON: `partner`},
 		{Name: "DocumentType", Alias: "dt", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Document Type`, JSON: `documentType`},
-		{Name: "PartnerDocumentProfile", Alias: "pdp", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Partner Document Profile`, JSON: `partnerDocumentProfile`},
-		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Template`, JSON: `template`},
-		{Name: "TemplateVersion", Alias: "tv", Kind: schema.BelongsTo, Local: []int32{7}, Remote: []int32{0}, Label: `Template Version`, JSON: `templateVersion`},
+		{Name: "LadingVersion", Alias: "lv", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Lading Version`, JSON: `ladingVersion`},
 		{Name: "ValidationErrors", Alias: "ve", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Validation Errors`, JSON: `validationErrors`},
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 42},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 44},
 	Returning:    nil,
-	Version:      40,
+	Version:      42,
 	AutoID:       0,
-	AutoCreate:   41,
-	AutoUpdate:   42,
+	AutoCreate:   43,
+	AutoUpdate:   44,
 	IDPrefix:     "edimsg_",
 	New:          newEDIMessage,
 	NewN:         newNEDIMessage,
@@ -2349,9 +2349,9 @@ type EDIMessagesTable struct {
 	OrganizationID           keelkinds.PulidIDCol
 	EDIPartnerID             keelkinds.PulidIDCol
 	DocumentTypeID           keelkinds.PulidIDCol
-	PartnerDocumentProfileID keelkinds.PulidIDCol
-	TemplateID               keelkinds.PulidIDCol
-	TemplateVersionID        keelkinds.PulidIDCol
+	LadingVersionID          keelkinds.PulidIDCol
+	FlowInstanceID           keelkinds.PulidIDCol
+	FlowSendID               keel.StringCol
 	ShipmentID               keelkinds.PulidIDCol
 	InvoiceID                keelkinds.PulidIDCol
 	TransferID               keelkinds.PulidIDCol
@@ -2361,13 +2361,15 @@ type EDIMessagesTable struct {
 	TransactionSet           TransactionSetCol
 	X12Version               keel.StringCol
 	Status                   MessageStatusCol
-	ValidationMode           ValidationModeCol
 	InterchangeControlNumber keel.StringCol
 	GroupControlNumber       keel.StringCol
 	TransactionControlNumber keel.StringCol
 	SegmentCount             keel.Int64Col
 	RawX12                   keel.StringCol
 	PayloadSnapshot          keel.JSONBCol
+	Document                 keel.JSONBCol
+	Lineage                  keel.JSONBCol
+	Outcomes                 keel.JSONBCol
 	RawPurgedAt              keel.Int64Col
 	DeliveryStatus           MessageDeliveryStatusCol
 	DeliveryRemotePath       keel.StringCol
@@ -2398,9 +2400,9 @@ var EDIMessages = &EDIMessagesTable{
 	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 2}}},
 	EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 3}}},
 	DocumentTypeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 4}}},
-	PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 5}}},
-	TemplateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 6}}},
-	TemplateVersionID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 7}}},
+	LadingVersionID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 5}}},
+	FlowInstanceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 6}}},
+	FlowSendID:               keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 7}},
 	ShipmentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 8}}},
 	InvoiceID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 9}}},
 	TransferID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 10}}},
@@ -2410,33 +2412,35 @@ var EDIMessages = &EDIMessagesTable{
 	TransactionSet:           TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 14}}},
 	X12Version:               keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 15}},
 	Status:                   MessageStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 16}}},
-	ValidationMode:           ValidationModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 17}}},
-	InterchangeControlNumber: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 18}},
-	GroupControlNumber:       keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 19}},
-	TransactionControlNumber: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 20}},
-	SegmentCount:             keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 21}},
-	RawX12:                   keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 22}},
-	PayloadSnapshot:          keel.JSONBCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 23}},
-	RawPurgedAt:              keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 24}},
-	DeliveryStatus:           MessageDeliveryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 25}}},
-	DeliveryRemotePath:       keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 26}},
-	DeliveryAttempts:         keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 27}},
-	DeliveryLastAttemptAt:    keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 28}},
-	DeliverySentAt:           keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 29}},
-	DeliveryLastError:        keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 30}},
-	AS2MessageID:             keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 31}},
-	AS2MIC:                   keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 32}},
-	AckStatus:                MessageAcknowledgmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 33}}},
-	AckMessageID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 34}}},
-	AckReceivedAt:            keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 35}},
-	AckLastError:             keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 36}},
-	GeneratedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 37}}},
-	IdempotencyKey:           keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 38}},
-	GeneratedAt:              keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 39}},
-	Version:                  keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 40}},
-	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 41}},
-	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 42}},
-	DiagnosticCount:          keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 43}},
+	InterchangeControlNumber: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 17}},
+	GroupControlNumber:       keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 18}},
+	TransactionControlNumber: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 19}},
+	SegmentCount:             keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 20}},
+	RawX12:                   keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 21}},
+	PayloadSnapshot:          keel.JSONBCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 22}},
+	Document:                 keel.JSONBCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 23}},
+	Lineage:                  keel.JSONBCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 24}},
+	Outcomes:                 keel.JSONBCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 25}},
+	RawPurgedAt:              keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 26}},
+	DeliveryStatus:           MessageDeliveryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 27}}},
+	DeliveryRemotePath:       keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 28}},
+	DeliveryAttempts:         keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 29}},
+	DeliveryLastAttemptAt:    keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 30}},
+	DeliverySentAt:           keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 31}},
+	DeliveryLastError:        keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 32}},
+	AS2MessageID:             keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 33}},
+	AS2MIC:                   keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 34}},
+	AckStatus:                MessageAcknowledgmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 35}}},
+	AckMessageID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 36}}},
+	AckReceivedAt:            keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 37}},
+	AckLastError:             keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 38}},
+	GeneratedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 39}}},
+	IdempotencyKey:           keel.StringCol{Col: keel.Col{Ref: &eDIMessagesRef, Index: 40}},
+	GeneratedAt:              keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 41}},
+	Version:                  keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 42}},
+	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 43}},
+	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 44}},
+	DiagnosticCount:          keel.Int64Col{Col: keel.Col{Ref: &eDIMessagesRef, Index: 45}},
 }
 
 // BuildEDIMessages builds the handle of edi_messages for ref. Generated relation and alias methods call it.
@@ -2448,9 +2452,9 @@ func BuildEDIMessages(r *keel.Ref) *EDIMessagesTable {
 		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
 		EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
 		DocumentTypeID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		TemplateID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		TemplateVersionID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		LadingVersionID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		FlowInstanceID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		FlowSendID:               keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
 		ShipmentID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
 		InvoiceID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
 		TransferID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
@@ -2460,33 +2464,35 @@ func BuildEDIMessages(r *keel.Ref) *EDIMessagesTable {
 		TransactionSet:           TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
 		X12Version:               keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
 		Status:                   MessageStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		ValidationMode:           ValidationModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		InterchangeControlNumber: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
-		GroupControlNumber:       keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		TransactionControlNumber: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}},
-		SegmentCount:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		RawX12:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		PayloadSnapshot:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
-		RawPurgedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		DeliveryStatus:           MessageDeliveryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 25}}},
-		DeliveryRemotePath:       keel.StringCol{Col: keel.Col{Ref: r, Index: 26}},
-		DeliveryAttempts:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		DeliveryLastAttemptAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		DeliverySentAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
-		DeliveryLastError:        keel.StringCol{Col: keel.Col{Ref: r, Index: 30}},
-		AS2MessageID:             keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
-		AS2MIC:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
-		AckStatus:                MessageAcknowledgmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 33}}},
-		AckMessageID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 34}}},
-		AckReceivedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
-		AckLastError:             keel.StringCol{Col: keel.Col{Ref: r, Index: 36}},
-		GeneratedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 37}}},
-		IdempotencyKey:           keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
-		GeneratedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 39}},
-		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 40}},
-		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
-		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
-		DiagnosticCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		InterchangeControlNumber: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}},
+		GroupControlNumber:       keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
+		TransactionControlNumber: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
+		SegmentCount:             keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		RawX12:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 21}},
+		PayloadSnapshot:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 22}},
+		Document:                 keel.JSONBCol{Col: keel.Col{Ref: r, Index: 23}},
+		Lineage:                  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 24}},
+		Outcomes:                 keel.JSONBCol{Col: keel.Col{Ref: r, Index: 25}},
+		RawPurgedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		DeliveryStatus:           MessageDeliveryStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 27}}},
+		DeliveryRemotePath:       keel.StringCol{Col: keel.Col{Ref: r, Index: 28}},
+		DeliveryAttempts:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		DeliveryLastAttemptAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
+		DeliverySentAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
+		DeliveryLastError:        keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
+		AS2MessageID:             keel.StringCol{Col: keel.Col{Ref: r, Index: 33}},
+		AS2MIC:                   keel.StringCol{Col: keel.Col{Ref: r, Index: 34}},
+		AckStatus:                MessageAcknowledgmentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 35}}},
+		AckMessageID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 36}}},
+		AckReceivedAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 37}},
+		AckLastError:             keel.StringCol{Col: keel.Col{Ref: r, Index: 38}},
+		GeneratedByID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 39}}},
+		IdempotencyKey:           keel.StringCol{Col: keel.Col{Ref: r, Index: 40}},
+		GeneratedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 41}},
+		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 42}},
+		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 43}},
+		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 44}},
+		DiagnosticCount:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 45}},
 	}
 }
 
@@ -2506,24 +2512,14 @@ func (t *EDIMessagesTable) DocumentType() *EDIDocumentTypesTable {
 	return keel.Path(t.Ref, 1, BuildEDIDocumentTypes)
 }
 
-// PartnerDocumentProfile is the belongs relation.
-func (t *EDIMessagesTable) PartnerDocumentProfile() *EDIPartnerDocumentProfilesTable {
-	return keel.Path(t.Ref, 2, BuildEDIPartnerDocumentProfiles)
-}
-
-// Template is the belongs relation.
-func (t *EDIMessagesTable) Template() *EDITemplatesTable {
-	return keel.Path(t.Ref, 3, BuildEDITemplates)
-}
-
-// TemplateVersion is the belongs relation.
-func (t *EDIMessagesTable) TemplateVersion() *EDITemplateVersionsTable {
-	return keel.Path(t.Ref, 4, BuildEDITemplateVersions)
+// LadingVersion is the belongs relation.
+func (t *EDIMessagesTable) LadingVersion() *LadingVersionsTable {
+	return keel.Path(t.Ref, 2, BuildLadingVersions)
 }
 
 // ValidationErrors is the many relation.
 func (t *EDIMessagesTable) ValidationErrors() *EDIMessageValidationErrorsTable {
-	return keel.Path(t.Ref, 5, BuildEDIMessageValidationErrors)
+	return keel.Path(t.Ref, 3, BuildEDIMessageValidationErrors)
 }
 
 // Get returns the edi_messages row with the given key, or keel.ErrNotFound.
@@ -2551,11 +2547,11 @@ func ptrEDIMessage(p unsafe.Pointer, c int32) any {
 	case 4:
 		return (*string)(unsafe.Pointer(&r.DocumentTypeID))
 	case 5:
-		return (*string)(unsafe.Pointer(&r.PartnerDocumentProfileID))
+		return (*string)(unsafe.Pointer(&r.LadingVersionID))
 	case 6:
-		return (*string)(unsafe.Pointer(&r.TemplateID))
+		return (*string)(unsafe.Pointer(&r.FlowInstanceID))
 	case 7:
-		return (*string)(unsafe.Pointer(&r.TemplateVersionID))
+		return &r.FlowSendID
 	case 8:
 		return (*string)(unsafe.Pointer(&r.ShipmentID))
 	case 9:
@@ -2575,58 +2571,62 @@ func ptrEDIMessage(p unsafe.Pointer, c int32) any {
 	case 16:
 		return (*string)(unsafe.Pointer(&r.Status))
 	case 17:
-		return (*string)(unsafe.Pointer(&r.ValidationMode))
-	case 18:
 		return &r.InterchangeControlNumber
-	case 19:
+	case 18:
 		return &r.GroupControlNumber
-	case 20:
+	case 19:
 		return &r.TransactionControlNumber
-	case 21:
+	case 20:
 		return &r.SegmentCount
-	case 22:
+	case 21:
 		return &r.RawX12
-	case 23:
+	case 22:
 		return &r.PayloadSnapshot
+	case 23:
+		return &r.Document
 	case 24:
-		return &r.RawPurgedAt
+		return &r.Lineage
 	case 25:
-		return (*string)(unsafe.Pointer(&r.DeliveryStatus))
+		return &r.Outcomes
 	case 26:
-		return &r.DeliveryRemotePath
+		return &r.RawPurgedAt
 	case 27:
-		return &r.DeliveryAttempts
+		return (*string)(unsafe.Pointer(&r.DeliveryStatus))
 	case 28:
-		return &r.DeliveryLastAttemptAt
+		return &r.DeliveryRemotePath
 	case 29:
-		return &r.DeliverySentAt
+		return &r.DeliveryAttempts
 	case 30:
-		return &r.DeliveryLastError
+		return &r.DeliveryLastAttemptAt
 	case 31:
-		return &r.AS2MessageID
+		return &r.DeliverySentAt
 	case 32:
-		return &r.AS2MIC
+		return &r.DeliveryLastError
 	case 33:
-		return (*string)(unsafe.Pointer(&r.AckStatus))
+		return &r.AS2MessageID
 	case 34:
-		return (*string)(unsafe.Pointer(&r.AckMessageID))
+		return &r.AS2MIC
 	case 35:
-		return &r.AckReceivedAt
+		return (*string)(unsafe.Pointer(&r.AckStatus))
 	case 36:
-		return &r.AckLastError
+		return (*string)(unsafe.Pointer(&r.AckMessageID))
 	case 37:
-		return (*string)(unsafe.Pointer(&r.GeneratedByID))
+		return &r.AckReceivedAt
 	case 38:
-		return &r.IdempotencyKey
+		return &r.AckLastError
 	case 39:
-		return &r.GeneratedAt
+		return (*string)(unsafe.Pointer(&r.GeneratedByID))
 	case 40:
-		return &r.Version
+		return &r.IdempotencyKey
 	case 41:
-		return &r.CreatedAt
+		return &r.GeneratedAt
 	case 42:
-		return &r.UpdatedAt
+		return &r.Version
 	case 43:
+		return &r.CreatedAt
+	case 44:
+		return &r.UpdatedAt
+	case 45:
 		return &r.DiagnosticCount
 	}
 	return nil
@@ -2646,20 +2646,20 @@ func valueEDIMessage(p unsafe.Pointer, c int32) any {
 	case 4:
 		return string(r.DocumentTypeID)
 	case 5:
-		if r.PartnerDocumentProfileID == "" {
+		if r.LadingVersionID == "" {
 			return nil
 		}
-		return string(r.PartnerDocumentProfileID)
+		return string(r.LadingVersionID)
 	case 6:
-		if r.TemplateID == "" {
+		if r.FlowInstanceID == "" {
 			return nil
 		}
-		return string(r.TemplateID)
+		return string(r.FlowInstanceID)
 	case 7:
-		if r.TemplateVersionID == "" {
+		if r.FlowSendID == "" {
 			return nil
 		}
-		return string(r.TemplateVersionID)
+		return r.FlowSendID
 	case 8:
 		if r.ShipmentID == "" {
 			return nil
@@ -2691,100 +2691,113 @@ func valueEDIMessage(p unsafe.Pointer, c int32) any {
 	case 16:
 		return string(r.Status)
 	case 17:
-		return string(r.ValidationMode)
-	case 18:
 		return r.InterchangeControlNumber
-	case 19:
+	case 18:
 		return r.GroupControlNumber
-	case 20:
+	case 19:
 		return r.TransactionControlNumber
-	case 21:
+	case 20:
 		return r.SegmentCount
-	case 22:
+	case 21:
 		return r.RawX12
-	case 23:
+	case 22:
 		return r.PayloadSnapshot
+	case 23:
+		if r.Document == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Document
 	case 24:
+		if r.Lineage == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Lineage
+	case 25:
+		if r.Outcomes == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Outcomes
+	case 26:
 		if r.RawPurgedAt == nil {
 			return nil
 		}
 		return *r.RawPurgedAt
-	case 25:
+	case 27:
 		if r.DeliveryStatus == "" {
 			return nil
 		}
 		return string(r.DeliveryStatus)
-	case 26:
+	case 28:
 		if r.DeliveryRemotePath == "" {
 			return nil
 		}
 		return r.DeliveryRemotePath
-	case 27:
+	case 29:
 		return r.DeliveryAttempts
-	case 28:
+	case 30:
 		if r.DeliveryLastAttemptAt == nil {
 			return nil
 		}
 		return *r.DeliveryLastAttemptAt
-	case 29:
+	case 31:
 		if r.DeliverySentAt == nil {
 			return nil
 		}
 		return *r.DeliverySentAt
-	case 30:
+	case 32:
 		if r.DeliveryLastError == "" {
 			return nil
 		}
 		return r.DeliveryLastError
-	case 31:
+	case 33:
 		if r.AS2MessageID == "" {
 			return nil
 		}
 		return r.AS2MessageID
-	case 32:
+	case 34:
 		if r.AS2MIC == "" {
 			return nil
 		}
 		return r.AS2MIC
-	case 33:
+	case 35:
 		if r.AckStatus == "" {
 			return nil
 		}
 		return string(r.AckStatus)
-	case 34:
+	case 36:
 		if r.AckMessageID == "" {
 			return nil
 		}
 		return string(r.AckMessageID)
-	case 35:
+	case 37:
 		if r.AckReceivedAt == nil {
 			return nil
 		}
 		return *r.AckReceivedAt
-	case 36:
+	case 38:
 		if r.AckLastError == "" {
 			return nil
 		}
 		return r.AckLastError
-	case 37:
+	case 39:
 		if r.GeneratedByID == "" {
 			return nil
 		}
 		return string(r.GeneratedByID)
-	case 38:
+	case 40:
 		if r.IdempotencyKey == "" {
 			return nil
 		}
 		return r.IdempotencyKey
-	case 39:
-		return r.GeneratedAt
-	case 40:
-		return r.Version
 	case 41:
-		return r.CreatedAt
+		return r.GeneratedAt
 	case 42:
-		return r.UpdatedAt
+		return r.Version
 	case 43:
+		return r.CreatedAt
+	case 44:
+		return r.UpdatedAt
+	case 45:
 		return r.DiagnosticCount
 	}
 	return nil
@@ -2798,12 +2811,8 @@ func attachEDIMessage(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
 	case 1:
 		r.DocumentType = (*edi.EDIDocumentType)(child)
 	case 2:
-		r.PartnerDocumentProfile = (*edi.EDIPartnerDocumentProfile)(child)
+		r.LadingVersion = (*edi.LadingVersion)(child)
 	case 3:
-		r.Template = (*edi.EDITemplate)(child)
-	case 4:
-		r.TemplateVersion = (*edi.EDITemplateVersion)(child)
-	case 5:
 		r.ValidationErrors = append(r.ValidationErrors, (*edi.EDIMessageValidationError)(child))
 	}
 }
@@ -3401,2612 +3410,6 @@ func beforeSaveEDIPartner(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.EDIPartner)(p).BeforeSave(ctx)
 }
 
-// eDIPartnerDocumentProfilesTable is the schema of edi.EDIPartnerDocumentProfile.
-var eDIPartnerDocumentProfilesTable = schema.Table{
-	Name:   "edi_partner_document_profiles",
-	Quoted: `"edi_partner_document_profiles"`,
-	Alias:  "epdp",
-	Model:  "edi.EDIPartnerDocumentProfile",
-	Label:  `EDI Partner Document Profile`,
-	Plural: `EDI Partner Document Profiles`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "edi_partner_id", Quoted: `"edi_partner_id"`, Field: "EDIPartnerID", Kind: schema.KindString, Flags: 0, Label: `EDI Partner ID`, JSON: `ediPartnerId`},
-		{Name: "document_type_id", Quoted: `"document_type_id"`, Field: "DocumentTypeID", Kind: schema.KindString, Flags: 0, Label: `Document Type ID`, JSON: `documentTypeId`},
-		{Name: "template_id", Quoted: `"template_id"`, Field: "TemplateID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Template ID`, JSON: `templateId`},
-		{Name: "template_version_id", Quoted: `"template_version_id"`, Field: "TemplateVersionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Template Version ID`, JSON: `templateVersionId`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumDocumentStatus[:]},
-		{Name: "direction", Quoted: `"direction"`, Field: "Direction", Kind: schema.KindString, Flags: 0, Label: `Direction`, JSON: `direction`, Enum: enumDocumentDirection[:]},
-		{Name: "standard", Quoted: `"standard"`, Field: "Standard", Kind: schema.KindString, Flags: 0, Label: `Standard`, JSON: `standard`, Enum: enumEDIStandard[:]},
-		{Name: "transaction_set", Quoted: `"transaction_set"`, Field: "TransactionSet", Kind: schema.KindString, Flags: 0, Label: `Transaction Set`, JSON: `transactionSet`, Enum: enumTransactionSet[:]},
-		{Name: "x12_version_override", Quoted: `"x12_version_override"`, Field: "X12VersionOverride", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `X 12 Version Override`, JSON: `x12VersionOverride`},
-		{Name: "functional_group_id", Quoted: `"functional_group_id"`, Field: "FunctionalGroupID", Kind: schema.KindString, Flags: 0, Label: `Functional Group ID`, JSON: `functionalGroupId`},
-		{Name: "envelope", Quoted: `"envelope"`, Field: "Envelope", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Envelope`, JSON: `envelope`},
-		{Name: "acknowledgment", Quoted: `"acknowledgment"`, Field: "Acknowledgment", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Acknowledgment`, JSON: `acknowledgment`},
-		{Name: "validation_mode", Quoted: `"validation_mode"`, Field: "ValidationMode", Kind: schema.KindString, Flags: 0, Label: `Validation Mode`, JSON: `validationMode`, Enum: enumValidationMode[:]},
-		{Name: "partner_settings", Quoted: `"partner_settings"`, Field: "PartnerSettings", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Partner Settings`, JSON: `partnerSettings`},
-		{Name: "partner_settings_schema_id", Quoted: `"partner_settings_schema_id"`, Field: "PartnerSettingsSchemaID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Partner Settings Schema ID`, JSON: `partnerSettingsSchemaId`},
-		{Name: "partner_settings_schema_version", Quoted: `"partner_settings_schema_version"`, Field: "PartnerSettingsSchemaVersion", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Partner Settings Schema Version`, JSON: `partnerSettingsSchemaVersion`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "Partner", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Partner`, JSON: `partner`},
-		{Name: "DocumentType", Alias: "dt", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Document Type`, JSON: `documentType`},
-		{Name: "PartnerSettingsSchema", Alias: "pss", Kind: schema.BelongsTo, Local: []int32{18}, Remote: []int32{0}, Label: `Partner Settings Schema`, JSON: `partnerSettingsSchema`},
-		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{5}, Remote: []int32{0}, Label: `Template`, JSON: `template`},
-		{Name: "TemplateVersion", Alias: "tv", Kind: schema.BelongsTo, Local: []int32{6}, Remote: []int32{0}, Label: `Template Version`, JSON: `templateVersion`},
-	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 22},
-	Returning:    nil,
-	Version:      20,
-	AutoID:       0,
-	AutoCreate:   21,
-	AutoUpdate:   22,
-	IDPrefix:     "edidp_",
-	New:          newEDIPartnerDocumentProfile,
-	NewN:         newNEDIPartnerDocumentProfile,
-	Size:         unsafe.Sizeof(edi.EDIPartnerDocumentProfile{}),
-	Ptr:          ptrEDIPartnerDocumentProfile,
-	Value:        valueEDIPartnerDocumentProfile,
-	Attach:       attachEDIPartnerDocumentProfile,
-	BeforeCreate: beforeCreateEDIPartnerDocumentProfile,
-	BeforeUpdate: beforeUpdateEDIPartnerDocumentProfile,
-	BeforeSave:   beforeSaveEDIPartnerDocumentProfile,
-}
-
-var eDIPartnerDocumentProfilesRef = keel.Ref{Table: &eDIPartnerDocumentProfilesTable}
-
-// EDIPartnerDocumentProfilesTable is the table of edi.EDIPartnerDocumentProfile.
-type EDIPartnerDocumentProfilesTable struct {
-	keel.Handle[*edi.EDIPartnerDocumentProfile]
-	ID                           keelkinds.PulidIDCol
-	BusinessUnitID               keelkinds.PulidIDCol
-	OrganizationID               keelkinds.PulidIDCol
-	EDIPartnerID                 keelkinds.PulidIDCol
-	DocumentTypeID               keelkinds.PulidIDCol
-	TemplateID                   keelkinds.PulidIDCol
-	TemplateVersionID            keelkinds.PulidIDCol
-	Name                         keel.StringCol
-	Status                       DocumentStatusCol
-	Direction                    DocumentDirectionCol
-	Standard                     EDIStandardCol
-	TransactionSet               TransactionSetCol
-	X12VersionOverride           keel.StringCol
-	FunctionalGroupID            keel.StringCol
-	Envelope                     keel.JSONBCol
-	Acknowledgment               keel.JSONBCol
-	ValidationMode               ValidationModeCol
-	PartnerSettings              keel.JSONBCol
-	PartnerSettingsSchemaID      keelkinds.PulidIDCol
-	PartnerSettingsSchemaVersion keel.Int64Col
-	Version                      keel.Int64Col
-	CreatedAt                    keel.Int64Col
-	UpdatedAt                    keel.Int64Col
-}
-
-// EDIPartnerDocumentProfiles references the edi_partner_document_profiles table.
-var EDIPartnerDocumentProfiles = &EDIPartnerDocumentProfilesTable{
-	Handle:                       keel.Handle[*edi.EDIPartnerDocumentProfile]{Ref: &eDIPartnerDocumentProfilesRef},
-	ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 0}}},
-	BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 1}}},
-	OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 2}}},
-	EDIPartnerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 3}}},
-	DocumentTypeID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 4}}},
-	TemplateID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 5}}},
-	TemplateVersionID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 6}}},
-	Name:                         keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 7}},
-	Status:                       DocumentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 8}}},
-	Direction:                    DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 9}}},
-	Standard:                     EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 10}}},
-	TransactionSet:               TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 11}}},
-	X12VersionOverride:           keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 12}},
-	FunctionalGroupID:            keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 13}},
-	Envelope:                     keel.JSONBCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 14}},
-	Acknowledgment:               keel.JSONBCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 15}},
-	ValidationMode:               ValidationModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 16}}},
-	PartnerSettings:              keel.JSONBCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 17}},
-	PartnerSettingsSchemaID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 18}}},
-	PartnerSettingsSchemaVersion: keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 19}},
-	Version:                      keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 20}},
-	CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 21}},
-	UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerDocumentProfilesRef, Index: 22}},
-}
-
-// BuildEDIPartnerDocumentProfiles builds the handle of edi_partner_document_profiles for ref. Generated relation and alias methods call it.
-func BuildEDIPartnerDocumentProfiles(r *keel.Ref) *EDIPartnerDocumentProfilesTable {
-	return &EDIPartnerDocumentProfilesTable{
-		Handle:                       keel.Handle[*edi.EDIPartnerDocumentProfile]{Ref: r},
-		ID:                           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		EDIPartnerID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DocumentTypeID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TemplateID:                   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		TemplateVersionID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Name:                         keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Status:                       DocumentStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Direction:                    DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Standard:                     EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		TransactionSet:               TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		X12VersionOverride:           keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		FunctionalGroupID:            keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		Envelope:                     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 14}},
-		Acknowledgment:               keel.JSONBCol{Col: keel.Col{Ref: r, Index: 15}},
-		ValidationMode:               ValidationModeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		PartnerSettings:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
-		PartnerSettingsSchemaID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		PartnerSettingsSchemaVersion: keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-		Version:                      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		CreatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		UpdatedAt:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-	}
-}
-
-// EDIPartnerDocumentProfilesSchema returns the schema of edi_partner_document_profiles.
-func EDIPartnerDocumentProfilesSchema() *schema.Table { return &eDIPartnerDocumentProfilesTable }
-
-// As returns a handle that references edi_partner_document_profiles under its own alias.
-func (t *EDIPartnerDocumentProfilesTable) As(alias string) *EDIPartnerDocumentProfilesTable {
-	return keel.Alias(t.Ref, alias, BuildEDIPartnerDocumentProfiles)
-}
-
-// Partner is the belongs relation.
-func (t *EDIPartnerDocumentProfilesTable) Partner() *EDIPartnersTable {
-	return keel.Path(t.Ref, 0, BuildEDIPartners)
-}
-
-// DocumentType is the belongs relation.
-func (t *EDIPartnerDocumentProfilesTable) DocumentType() *EDIDocumentTypesTable {
-	return keel.Path(t.Ref, 1, BuildEDIDocumentTypes)
-}
-
-// PartnerSettingsSchema is the belongs relation.
-func (t *EDIPartnerDocumentProfilesTable) PartnerSettingsSchema() *EDIPartnerSettingSchemasTable {
-	return keel.Path(t.Ref, 2, BuildEDIPartnerSettingSchemas)
-}
-
-// Template is the belongs relation.
-func (t *EDIPartnerDocumentProfilesTable) Template() *EDITemplatesTable {
-	return keel.Path(t.Ref, 3, BuildEDITemplates)
-}
-
-// TemplateVersion is the belongs relation.
-func (t *EDIPartnerDocumentProfilesTable) TemplateVersion() *EDITemplateVersionsTable {
-	return keel.Path(t.Ref, 4, BuildEDITemplateVersions)
-}
-
-// Get returns the edi_partner_document_profiles row with the given key, or keel.ErrNotFound.
-func (t *EDIPartnerDocumentProfilesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDIPartnerDocumentProfile, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDIPartnerDocumentProfile() unsafe.Pointer {
-	return unsafe.Pointer(new(edi.EDIPartnerDocumentProfile))
-}
-
-func newNEDIPartnerDocumentProfile(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDIPartnerDocumentProfile, n)))
-}
-
-func ptrEDIPartnerDocumentProfile(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDIPartnerDocumentProfile)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.EDIPartnerID))
-	case 4:
-		return (*string)(unsafe.Pointer(&r.DocumentTypeID))
-	case 5:
-		return (*string)(unsafe.Pointer(&r.TemplateID))
-	case 6:
-		return (*string)(unsafe.Pointer(&r.TemplateVersionID))
-	case 7:
-		return &r.Name
-	case 8:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 9:
-		return (*string)(unsafe.Pointer(&r.Direction))
-	case 10:
-		return (*string)(unsafe.Pointer(&r.Standard))
-	case 11:
-		return (*string)(unsafe.Pointer(&r.TransactionSet))
-	case 12:
-		return &r.X12VersionOverride
-	case 13:
-		return &r.FunctionalGroupID
-	case 14:
-		return &r.Envelope
-	case 15:
-		return &r.Acknowledgment
-	case 16:
-		return (*string)(unsafe.Pointer(&r.ValidationMode))
-	case 17:
-		return &r.PartnerSettings
-	case 18:
-		return (*string)(unsafe.Pointer(&r.PartnerSettingsSchemaID))
-	case 19:
-		return &r.PartnerSettingsSchemaVersion
-	case 20:
-		return &r.Version
-	case 21:
-		return &r.CreatedAt
-	case 22:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDIPartnerDocumentProfile(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDIPartnerDocumentProfile)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.EDIPartnerID)
-	case 4:
-		return string(r.DocumentTypeID)
-	case 5:
-		if r.TemplateID == "" {
-			return nil
-		}
-		return string(r.TemplateID)
-	case 6:
-		if r.TemplateVersionID == "" {
-			return nil
-		}
-		return string(r.TemplateVersionID)
-	case 7:
-		return r.Name
-	case 8:
-		return string(r.Status)
-	case 9:
-		return string(r.Direction)
-	case 10:
-		return string(r.Standard)
-	case 11:
-		return string(r.TransactionSet)
-	case 12:
-		if r.X12VersionOverride == "" {
-			return nil
-		}
-		return r.X12VersionOverride
-	case 13:
-		return r.FunctionalGroupID
-	case 14:
-		return r.Envelope
-	case 15:
-		return r.Acknowledgment
-	case 16:
-		return string(r.ValidationMode)
-	case 17:
-		if r.PartnerSettings == nil {
-			return keel.EmptyJSONObject
-		}
-		return r.PartnerSettings
-	case 18:
-		if r.PartnerSettingsSchemaID == "" {
-			return nil
-		}
-		return string(r.PartnerSettingsSchemaID)
-	case 19:
-		if r.PartnerSettingsSchemaVersion == 0 {
-			return nil
-		}
-		return r.PartnerSettingsSchemaVersion
-	case 20:
-		return r.Version
-	case 21:
-		return r.CreatedAt
-	case 22:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func attachEDIPartnerDocumentProfile(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDIPartnerDocumentProfile)(p)
-	switch rel {
-	case 0:
-		r.Partner = (*edi.EDIPartner)(child)
-	case 1:
-		r.DocumentType = (*edi.EDIDocumentType)(child)
-	case 2:
-		r.PartnerSettingsSchema = (*edi.EDIPartnerSettingSchema)(child)
-	case 3:
-		r.Template = (*edi.EDITemplate)(child)
-	case 4:
-		r.TemplateVersion = (*edi.EDITemplateVersion)(child)
-	}
-}
-
-func beforeCreateEDIPartnerDocumentProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*edi.EDIPartnerDocumentProfile)(p).BeforeCreate(ctx)
-}
-
-func beforeUpdateEDIPartnerDocumentProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*edi.EDIPartnerDocumentProfile)(p).BeforeUpdate(ctx)
-}
-
-func beforeSaveEDIPartnerDocumentProfile(ctx context.Context, p unsafe.Pointer) error {
-	return (*edi.EDIPartnerDocumentProfile)(p).BeforeSave(ctx)
-}
-
-// eDIPartnerSettingFieldsTable is the schema of edi.EDIPartnerSettingField.
-var eDIPartnerSettingFieldsTable = schema.Table{
-	Name:   "edi_partner_setting_fields",
-	Quoted: `"edi_partner_setting_fields"`,
-	Alias:  "epsf",
-	Model:  "edi.EDIPartnerSettingField",
-	Label:  `EDI Partner Setting Field`,
-	Plural: `EDI Partner Setting Fields`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "schema_id", Quoted: `"schema_id"`, Field: "SchemaID", Kind: schema.KindString, Flags: 0, Label: `Schema ID`, JSON: `schemaId`},
-		{Name: "path", Quoted: `"path"`, Field: "Path", Kind: schema.KindString, Flags: 0, Label: `Path`, JSON: `path`},
-		{Name: "label", Quoted: `"label"`, Field: "Label", Kind: schema.KindString, Flags: 0, Label: `Label`, JSON: `label`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
-		{Name: "data_type", Quoted: `"data_type"`, Field: "DataType", Kind: schema.KindString, Flags: 0, Label: `Data Type`, JSON: `dataType`, Enum: enumPartnerSettingDataType[:]},
-		{Name: "required", Quoted: `"required"`, Field: "Required", Kind: schema.KindBool, Flags: 0, Label: `Required`, JSON: `required`},
-		{Name: "nullable", Quoted: `"nullable"`, Field: "Nullable", Kind: schema.KindBool, Flags: 0, Label: `Nullable`, JSON: `nullable`},
-		{Name: "default_value", Quoted: `"default_value"`, Field: "DefaultValue", Kind: schema.KindJSON, Flags: schema.FlagJSONB | schema.FlagNullZero, Label: `Default Value`, JSON: `defaultValue`},
-		{Name: "allowed_values", Quoted: `"allowed_values"`, Field: "AllowedValues", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Allowed Values`, JSON: `allowedValues`},
-		{Name: "secret", Quoted: `"secret"`, Field: "Secret", Kind: schema.KindBool, Flags: 0, Label: `Secret`, JSON: `secret`},
-		{Name: "group_key", Quoted: `"group_key"`, Field: "GroupKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Group Key`, JSON: `groupKey`},
-		{Name: "display_order", Quoted: `"display_order"`, Field: "DisplayOrder", Kind: schema.KindInt64, Flags: 0, Label: `Display Order`, JSON: `displayOrder`},
-		{Name: "validation_pattern", Quoted: `"validation_pattern"`, Field: "ValidationPattern", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Validation Pattern`, JSON: `validationPattern`},
-		{Name: "min_length", Quoted: `"min_length"`, Field: "MinLength", Kind: schema.KindInt64, Flags: 0, Label: `Min Length`, JSON: `minLength`},
-		{Name: "max_length", Quoted: `"max_length"`, Field: "MaxLength", Kind: schema.KindInt64, Flags: 0, Label: `Max Length`, JSON: `maxLength`},
-		{Name: "usage_notes", Quoted: `"usage_notes"`, Field: "UsageNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Usage Notes`, JSON: `usageNotes`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumPartnerSettingStatus[:]},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "Schema", Alias: "s", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Schema`, JSON: `schema`},
-	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 18,
-	AutoUpdate: 19,
-	IDPrefix:   "edipsf_",
-	New:        newEDIPartnerSettingField,
-	NewN:       newNEDIPartnerSettingField,
-	Size:       unsafe.Sizeof(edi.EDIPartnerSettingField{}),
-	Ptr:        ptrEDIPartnerSettingField,
-	Value:      valueEDIPartnerSettingField,
-	Attach:     attachEDIPartnerSettingField,
-}
-
-var eDIPartnerSettingFieldsRef = keel.Ref{Table: &eDIPartnerSettingFieldsTable}
-
-// EDIPartnerSettingFieldsTable is the table of edi.EDIPartnerSettingField.
-type EDIPartnerSettingFieldsTable struct {
-	keel.Handle[*edi.EDIPartnerSettingField]
-	ID                keelkinds.PulidIDCol
-	SchemaID          keelkinds.PulidIDCol
-	Path              keel.StringCol
-	Label             keel.StringCol
-	Description       keel.StringCol
-	DataType          PartnerSettingDataTypeCol
-	Required          keel.BoolCol
-	Nullable          keel.BoolCol
-	DefaultValue      keel.JSONBCol
-	AllowedValues     keel.JSONBCol
-	Secret            keel.BoolCol
-	GroupKey          keel.StringCol
-	DisplayOrder      keel.Int64Col
-	ValidationPattern keel.StringCol
-	MinLength         keel.Int64Col
-	MaxLength         keel.Int64Col
-	UsageNotes        keel.StringCol
-	Status            PartnerSettingStatusCol
-	CreatedAt         keel.Int64Col
-	UpdatedAt         keel.Int64Col
-}
-
-// EDIPartnerSettingFields references the edi_partner_setting_fields table.
-var EDIPartnerSettingFields = &EDIPartnerSettingFieldsTable{
-	Handle:            keel.Handle[*edi.EDIPartnerSettingField]{Ref: &eDIPartnerSettingFieldsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 0}}},
-	SchemaID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 1}}},
-	Path:              keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 2}},
-	Label:             keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 3}},
-	Description:       keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 4}},
-	DataType:          PartnerSettingDataTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 5}}},
-	Required:          keel.BoolCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 6}},
-	Nullable:          keel.BoolCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 7}},
-	DefaultValue:      keel.JSONBCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 8}},
-	AllowedValues:     keel.JSONBCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 9}},
-	Secret:            keel.BoolCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 10}},
-	GroupKey:          keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 11}},
-	DisplayOrder:      keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 12}},
-	ValidationPattern: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 13}},
-	MinLength:         keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 14}},
-	MaxLength:         keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 15}},
-	UsageNotes:        keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 16}},
-	Status:            PartnerSettingStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 17}}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 18}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerSettingFieldsRef, Index: 19}},
-}
-
-// BuildEDIPartnerSettingFields builds the handle of edi_partner_setting_fields for ref. Generated relation and alias methods call it.
-func BuildEDIPartnerSettingFields(r *keel.Ref) *EDIPartnerSettingFieldsTable {
-	return &EDIPartnerSettingFieldsTable{
-		Handle:            keel.Handle[*edi.EDIPartnerSettingField]{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		SchemaID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		Path:              keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
-		Label:             keel.StringCol{Col: keel.Col{Ref: r, Index: 3}},
-		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		DataType:          PartnerSettingDataTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Required:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
-		Nullable:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
-		DefaultValue:      keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
-		AllowedValues:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		Secret:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		GroupKey:          keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		DisplayOrder:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		ValidationPattern: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		MinLength:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		MaxLength:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		UsageNotes:        keel.StringCol{Col: keel.Col{Ref: r, Index: 16}},
-		Status:            PartnerSettingStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
-	}
-}
-
-// EDIPartnerSettingFieldsSchema returns the schema of edi_partner_setting_fields.
-func EDIPartnerSettingFieldsSchema() *schema.Table { return &eDIPartnerSettingFieldsTable }
-
-// As returns a handle that references edi_partner_setting_fields under its own alias.
-func (t *EDIPartnerSettingFieldsTable) As(alias string) *EDIPartnerSettingFieldsTable {
-	return keel.Alias(t.Ref, alias, BuildEDIPartnerSettingFields)
-}
-
-// Schema is the belongs relation.
-func (t *EDIPartnerSettingFieldsTable) Schema() *EDIPartnerSettingSchemasTable {
-	return keel.Path(t.Ref, 0, BuildEDIPartnerSettingSchemas)
-}
-
-// Get returns the edi_partner_setting_fields row with the given key, or keel.ErrNotFound.
-func (t *EDIPartnerSettingFieldsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDIPartnerSettingField, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDIPartnerSettingField() unsafe.Pointer {
-	return unsafe.Pointer(new(edi.EDIPartnerSettingField))
-}
-
-func newNEDIPartnerSettingField(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDIPartnerSettingField, n)))
-}
-
-func ptrEDIPartnerSettingField(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDIPartnerSettingField)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.SchemaID))
-	case 2:
-		return &r.Path
-	case 3:
-		return &r.Label
-	case 4:
-		return &r.Description
-	case 5:
-		return (*string)(unsafe.Pointer(&r.DataType))
-	case 6:
-		return &r.Required
-	case 7:
-		return &r.Nullable
-	case 8:
-		return &r.DefaultValue
-	case 9:
-		return &r.AllowedValues
-	case 10:
-		return &r.Secret
-	case 11:
-		return &r.GroupKey
-	case 12:
-		return (*int64)(unsafe.Pointer(&r.DisplayOrder))
-	case 13:
-		return &r.ValidationPattern
-	case 14:
-		return (*int64)(unsafe.Pointer(&r.MinLength))
-	case 15:
-		return (*int64)(unsafe.Pointer(&r.MaxLength))
-	case 16:
-		return &r.UsageNotes
-	case 17:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 18:
-		return &r.CreatedAt
-	case 19:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDIPartnerSettingField(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDIPartnerSettingField)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.SchemaID)
-	case 2:
-		return r.Path
-	case 3:
-		return r.Label
-	case 4:
-		if r.Description == "" {
-			return nil
-		}
-		return r.Description
-	case 5:
-		return string(r.DataType)
-	case 6:
-		return r.Required
-	case 7:
-		return r.Nullable
-	case 8:
-		if r.DefaultValue == nil {
-			return nil
-		}
-		return r.DefaultValue
-	case 9:
-		if r.AllowedValues == nil {
-			return keel.EmptyJSONArray
-		}
-		return r.AllowedValues
-	case 10:
-		return r.Secret
-	case 11:
-		if r.GroupKey == "" {
-			return nil
-		}
-		return r.GroupKey
-	case 12:
-		return int64(r.DisplayOrder)
-	case 13:
-		if r.ValidationPattern == "" {
-			return nil
-		}
-		return r.ValidationPattern
-	case 14:
-		return int64(r.MinLength)
-	case 15:
-		return int64(r.MaxLength)
-	case 16:
-		if r.UsageNotes == "" {
-			return nil
-		}
-		return r.UsageNotes
-	case 17:
-		return string(r.Status)
-	case 18:
-		return r.CreatedAt
-	case 19:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func attachEDIPartnerSettingField(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDIPartnerSettingField)(p)
-	switch rel {
-	case 0:
-		r.Schema = (*edi.EDIPartnerSettingSchema)(child)
-	}
-}
-
-// eDIPartnerSettingSchemasTable is the schema of edi.EDIPartnerSettingSchema.
-var eDIPartnerSettingSchemasTable = schema.Table{
-	Name:   "edi_partner_setting_schemas",
-	Quoted: `"edi_partner_setting_schemas"`,
-	Alias:  "epss",
-	Model:  "edi.EDIPartnerSettingSchema",
-	Label:  `EDI Partner Setting Schema`,
-	Plural: `EDI Partner Setting Schemas`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "document_type_id", Quoted: `"document_type_id"`, Field: "DocumentTypeID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Document Type ID`, JSON: `documentTypeId`},
-		{Name: "standard", Quoted: `"standard"`, Field: "Standard", Kind: schema.KindString, Flags: 0, Label: `Standard`, JSON: `standard`, Enum: enumEDIStandard[:]},
-		{Name: "transaction_set", Quoted: `"transaction_set"`, Field: "TransactionSet", Kind: schema.KindString, Flags: 0, Label: `Transaction Set`, JSON: `transactionSet`, Enum: enumTransactionSet[:]},
-		{Name: "direction", Quoted: `"direction"`, Field: "Direction", Kind: schema.KindString, Flags: 0, Label: `Direction`, JSON: `direction`, Enum: enumDocumentDirection[:]},
-		{Name: "x12_version", Quoted: `"x12_version"`, Field: "X12Version", Kind: schema.KindString, Flags: 0, Label: `X 12 Version`, JSON: `x12Version`},
-		{Name: "schema_version", Quoted: `"schema_version"`, Field: "SchemaVersion", Kind: schema.KindInt64, Flags: 0, Label: `Schema Version`, JSON: `schemaVersion`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumPartnerSettingStatus[:]},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "Fields", Alias: "f", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Fields`, JSON: `fields`},
-	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "edips_",
-	New:        newEDIPartnerSettingSchema,
-	NewN:       newNEDIPartnerSettingSchema,
-	Size:       unsafe.Sizeof(edi.EDIPartnerSettingSchema{}),
-	Ptr:        ptrEDIPartnerSettingSchema,
-	Value:      valueEDIPartnerSettingSchema,
-	Attach:     attachEDIPartnerSettingSchema,
-}
-
-var eDIPartnerSettingSchemasRef = keel.Ref{Table: &eDIPartnerSettingSchemasTable}
-
-// EDIPartnerSettingSchemasTable is the table of edi.EDIPartnerSettingSchema.
-type EDIPartnerSettingSchemasTable struct {
-	keel.Handle[*edi.EDIPartnerSettingSchema]
-	ID             keelkinds.PulidIDCol
-	BusinessUnitID keelkinds.PulidIDCol
-	OrganizationID keelkinds.PulidIDCol
-	DocumentTypeID keelkinds.PulidIDCol
-	Standard       EDIStandardCol
-	TransactionSet TransactionSetCol
-	Direction      DocumentDirectionCol
-	X12Version     keel.StringCol
-	SchemaVersion  keel.Int64Col
-	Name           keel.StringCol
-	Description    keel.StringCol
-	Status         PartnerSettingStatusCol
-	CreatedAt      keel.Int64Col
-	UpdatedAt      keel.Int64Col
-}
-
-// EDIPartnerSettingSchemas references the edi_partner_setting_schemas table.
-var EDIPartnerSettingSchemas = &EDIPartnerSettingSchemasTable{
-	Handle:         keel.Handle[*edi.EDIPartnerSettingSchema]{Ref: &eDIPartnerSettingSchemasRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 2}}},
-	DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 3}}},
-	Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 4}}},
-	TransactionSet: TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 5}}},
-	Direction:      DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 6}}},
-	X12Version:     keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 7}},
-	SchemaVersion:  keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 8}},
-	Name:           keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 9}},
-	Description:    keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 10}},
-	Status:         PartnerSettingStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 11}}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 12}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDIPartnerSettingSchemasRef, Index: 13}},
-}
-
-// BuildEDIPartnerSettingSchemas builds the handle of edi_partner_setting_schemas for ref. Generated relation and alias methods call it.
-func BuildEDIPartnerSettingSchemas(r *keel.Ref) *EDIPartnerSettingSchemasTable {
-	return &EDIPartnerSettingSchemasTable{
-		Handle:         keel.Handle[*edi.EDIPartnerSettingSchema]{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		TransactionSet: TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		Direction:      DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		X12Version:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		SchemaVersion:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		Status:         PartnerSettingStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-	}
-}
-
-// EDIPartnerSettingSchemasSchema returns the schema of edi_partner_setting_schemas.
-func EDIPartnerSettingSchemasSchema() *schema.Table { return &eDIPartnerSettingSchemasTable }
-
-// As returns a handle that references edi_partner_setting_schemas under its own alias.
-func (t *EDIPartnerSettingSchemasTable) As(alias string) *EDIPartnerSettingSchemasTable {
-	return keel.Alias(t.Ref, alias, BuildEDIPartnerSettingSchemas)
-}
-
-// Fields is the many relation.
-func (t *EDIPartnerSettingSchemasTable) Fields() *EDIPartnerSettingFieldsTable {
-	return keel.Path(t.Ref, 0, BuildEDIPartnerSettingFields)
-}
-
-// Get returns the edi_partner_setting_schemas row with the given key, or keel.ErrNotFound.
-func (t *EDIPartnerSettingSchemasTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDIPartnerSettingSchema, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDIPartnerSettingSchema() unsafe.Pointer {
-	return unsafe.Pointer(new(edi.EDIPartnerSettingSchema))
-}
-
-func newNEDIPartnerSettingSchema(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDIPartnerSettingSchema, n)))
-}
-
-func ptrEDIPartnerSettingSchema(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDIPartnerSettingSchema)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.DocumentTypeID))
-	case 4:
-		return (*string)(unsafe.Pointer(&r.Standard))
-	case 5:
-		return (*string)(unsafe.Pointer(&r.TransactionSet))
-	case 6:
-		return (*string)(unsafe.Pointer(&r.Direction))
-	case 7:
-		return &r.X12Version
-	case 8:
-		return &r.SchemaVersion
-	case 9:
-		return &r.Name
-	case 10:
-		return &r.Description
-	case 11:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 12:
-		return &r.CreatedAt
-	case 13:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDIPartnerSettingSchema(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDIPartnerSettingSchema)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		if r.BusinessUnitID == "" {
-			return nil
-		}
-		return string(r.BusinessUnitID)
-	case 2:
-		if r.OrganizationID == "" {
-			return nil
-		}
-		return string(r.OrganizationID)
-	case 3:
-		if r.DocumentTypeID == "" {
-			return nil
-		}
-		return string(r.DocumentTypeID)
-	case 4:
-		return string(r.Standard)
-	case 5:
-		return string(r.TransactionSet)
-	case 6:
-		return string(r.Direction)
-	case 7:
-		return r.X12Version
-	case 8:
-		return r.SchemaVersion
-	case 9:
-		return r.Name
-	case 10:
-		if r.Description == "" {
-			return nil
-		}
-		return r.Description
-	case 11:
-		return string(r.Status)
-	case 12:
-		return r.CreatedAt
-	case 13:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func attachEDIPartnerSettingSchema(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDIPartnerSettingSchema)(p)
-	switch rel {
-	case 0:
-		r.Fields = append(r.Fields, (*edi.EDIPartnerSettingField)(child))
-	}
-}
-
-// eDISourceContextFieldsTable is the schema of edi.EDISourceContextField.
-var eDISourceContextFieldsTable = schema.Table{
-	Name:   "edi_source_context_fields",
-	Quoted: `"edi_source_context_fields"`,
-	Alias:  "escf",
-	Model:  "edi.EDISourceContextField",
-	Label:  `EDI Source Context Field`,
-	Plural: `EDI Source Context Fields`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "schema_id", Quoted: `"schema_id"`, Field: "SchemaID", Kind: schema.KindString, Flags: 0, Label: `Schema ID`, JSON: `schemaId`},
-		{Name: "path", Quoted: `"path"`, Field: "Path", Kind: schema.KindString, Flags: 0, Label: `Path`, JSON: `path`},
-		{Name: "source_kind", Quoted: `"source_kind"`, Field: "SourceKind", Kind: schema.KindString, Flags: 0, Label: `Source Kind`, JSON: `sourceKind`, Enum: enumSourceContextKind[:]},
-		{Name: "data_type", Quoted: `"data_type"`, Field: "DataType", Kind: schema.KindString, Flags: 0, Label: `Data Type`, JSON: `dataType`, Enum: enumSourceContextDataType[:]},
-		{Name: "repeated", Quoted: `"repeated"`, Field: "Repeated", Kind: schema.KindBool, Flags: 0, Label: `Repeated`, JSON: `repeated`},
-		{Name: "repeat_path", Quoted: `"repeat_path"`, Field: "RepeatPath", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Repeat Path`, JSON: `repeatPath`},
-		{Name: "parent_path", Quoted: `"parent_path"`, Field: "ParentPath", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Parent Path`, JSON: `parentPath`},
-		{Name: "display_name", Quoted: `"display_name"`, Field: "DisplayName", Kind: schema.KindString, Flags: 0, Label: `Display Name`, JSON: `displayName`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumSourceContextFieldStatus[:]},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "Schema", Alias: "s", Kind: schema.BelongsTo, Local: []int32{1}, Remote: []int32{0}, Label: `Schema`, JSON: `schema`},
-	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "ediscf_",
-	New:        newEDISourceContextField,
-	NewN:       newNEDISourceContextField,
-	Size:       unsafe.Sizeof(edi.EDISourceContextField{}),
-	Ptr:        ptrEDISourceContextField,
-	Value:      valueEDISourceContextField,
-	Attach:     attachEDISourceContextField,
-}
-
-var eDISourceContextFieldsRef = keel.Ref{Table: &eDISourceContextFieldsTable}
-
-// EDISourceContextFieldsTable is the table of edi.EDISourceContextField.
-type EDISourceContextFieldsTable struct {
-	keel.Handle[*edi.EDISourceContextField]
-	ID          keelkinds.PulidIDCol
-	SchemaID    keelkinds.PulidIDCol
-	Path        keel.StringCol
-	SourceKind  SourceContextKindCol
-	DataType    SourceContextDataTypeCol
-	Repeated    keel.BoolCol
-	RepeatPath  keel.StringCol
-	ParentPath  keel.StringCol
-	DisplayName keel.StringCol
-	Description keel.StringCol
-	Status      SourceContextFieldStatusCol
-	CreatedAt   keel.Int64Col
-	UpdatedAt   keel.Int64Col
-}
-
-// EDISourceContextFields references the edi_source_context_fields table.
-var EDISourceContextFields = &EDISourceContextFieldsTable{
-	Handle:      keel.Handle[*edi.EDISourceContextField]{Ref: &eDISourceContextFieldsRef},
-	ID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 0}}},
-	SchemaID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 1}}},
-	Path:        keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 2}},
-	SourceKind:  SourceContextKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 3}}},
-	DataType:    SourceContextDataTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 4}}},
-	Repeated:    keel.BoolCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 5}},
-	RepeatPath:  keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 6}},
-	ParentPath:  keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 7}},
-	DisplayName: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 8}},
-	Description: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 9}},
-	Status:      SourceContextFieldStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 10}}},
-	CreatedAt:   keel.Int64Col{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 11}},
-	UpdatedAt:   keel.Int64Col{Col: keel.Col{Ref: &eDISourceContextFieldsRef, Index: 12}},
-}
-
-// BuildEDISourceContextFields builds the handle of edi_source_context_fields for ref. Generated relation and alias methods call it.
-func BuildEDISourceContextFields(r *keel.Ref) *EDISourceContextFieldsTable {
-	return &EDISourceContextFieldsTable{
-		Handle:      keel.Handle[*edi.EDISourceContextField]{Ref: r},
-		ID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		SchemaID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		Path:        keel.StringCol{Col: keel.Col{Ref: r, Index: 2}},
-		SourceKind:  SourceContextKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		DataType:    SourceContextDataTypeCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Repeated:    keel.BoolCol{Col: keel.Col{Ref: r, Index: 5}},
-		RepeatPath:  keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		ParentPath:  keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		DisplayName: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Description: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Status:      SourceContextFieldStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		CreatedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		UpdatedAt:   keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-	}
-}
-
-// EDISourceContextFieldsSchema returns the schema of edi_source_context_fields.
-func EDISourceContextFieldsSchema() *schema.Table { return &eDISourceContextFieldsTable }
-
-// As returns a handle that references edi_source_context_fields under its own alias.
-func (t *EDISourceContextFieldsTable) As(alias string) *EDISourceContextFieldsTable {
-	return keel.Alias(t.Ref, alias, BuildEDISourceContextFields)
-}
-
-// Schema is the belongs relation.
-func (t *EDISourceContextFieldsTable) Schema() *EDISourceContextSchemasTable {
-	return keel.Path(t.Ref, 0, BuildEDISourceContextSchemas)
-}
-
-// Get returns the edi_source_context_fields row with the given key, or keel.ErrNotFound.
-func (t *EDISourceContextFieldsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDISourceContextField, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDISourceContextField() unsafe.Pointer { return unsafe.Pointer(new(edi.EDISourceContextField)) }
-
-func newNEDISourceContextField(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDISourceContextField, n)))
-}
-
-func ptrEDISourceContextField(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDISourceContextField)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.SchemaID))
-	case 2:
-		return &r.Path
-	case 3:
-		return (*string)(unsafe.Pointer(&r.SourceKind))
-	case 4:
-		return (*string)(unsafe.Pointer(&r.DataType))
-	case 5:
-		return &r.Repeated
-	case 6:
-		return &r.RepeatPath
-	case 7:
-		return &r.ParentPath
-	case 8:
-		return &r.DisplayName
-	case 9:
-		return &r.Description
-	case 10:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 11:
-		return &r.CreatedAt
-	case 12:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDISourceContextField(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDISourceContextField)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.SchemaID)
-	case 2:
-		return r.Path
-	case 3:
-		return string(r.SourceKind)
-	case 4:
-		return string(r.DataType)
-	case 5:
-		return r.Repeated
-	case 6:
-		if r.RepeatPath == "" {
-			return nil
-		}
-		return r.RepeatPath
-	case 7:
-		if r.ParentPath == "" {
-			return nil
-		}
-		return r.ParentPath
-	case 8:
-		return r.DisplayName
-	case 9:
-		if r.Description == "" {
-			return nil
-		}
-		return r.Description
-	case 10:
-		return string(r.Status)
-	case 11:
-		return r.CreatedAt
-	case 12:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func attachEDISourceContextField(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDISourceContextField)(p)
-	switch rel {
-	case 0:
-		r.Schema = (*edi.EDISourceContextSchema)(child)
-	}
-}
-
-// eDISourceContextSchemasTable is the schema of edi.EDISourceContextSchema.
-var eDISourceContextSchemasTable = schema.Table{
-	Name:   "edi_source_context_schemas",
-	Quoted: `"edi_source_context_schemas"`,
-	Alias:  "escs",
-	Model:  "edi.EDISourceContextSchema",
-	Label:  `EDI Source Context Schema`,
-	Plural: `EDI Source Context Schemas`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "standard", Quoted: `"standard"`, Field: "Standard", Kind: schema.KindString, Flags: 0, Label: `Standard`, JSON: `standard`, Enum: enumEDIStandard[:]},
-		{Name: "transaction_set", Quoted: `"transaction_set"`, Field: "TransactionSet", Kind: schema.KindString, Flags: 0, Label: `Transaction Set`, JSON: `transactionSet`, Enum: enumTransactionSet[:]},
-		{Name: "direction", Quoted: `"direction"`, Field: "Direction", Kind: schema.KindString, Flags: 0, Label: `Direction`, JSON: `direction`, Enum: enumDocumentDirection[:]},
-		{Name: "x12_version", Quoted: `"x12_version"`, Field: "X12Version", Kind: schema.KindString, Flags: 0, Label: `X 12 Version`, JSON: `x12Version`},
-		{Name: "context_key", Quoted: `"context_key"`, Field: "ContextKey", Kind: schema.KindString, Flags: 0, Label: `Context Key`, JSON: `contextKey`},
-		{Name: "schema_version", Quoted: `"schema_version"`, Field: "SchemaVersion", Kind: schema.KindInt64, Flags: 0, Label: `Schema Version`, JSON: `schemaVersion`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumSourceContextFieldStatus[:]},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "Fields", Alias: "f", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{1}, Label: `Fields`, JSON: `fields`},
-	},
-	PK:         []int32{0},
-	Tenant:     nil,
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13},
-	Update:     []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13},
-	Returning:  nil,
-	Version:    -1,
-	AutoID:     0,
-	AutoCreate: 12,
-	AutoUpdate: 13,
-	IDPrefix:   "edisc_",
-	New:        newEDISourceContextSchema,
-	NewN:       newNEDISourceContextSchema,
-	Size:       unsafe.Sizeof(edi.EDISourceContextSchema{}),
-	Ptr:        ptrEDISourceContextSchema,
-	Value:      valueEDISourceContextSchema,
-	Attach:     attachEDISourceContextSchema,
-}
-
-var eDISourceContextSchemasRef = keel.Ref{Table: &eDISourceContextSchemasTable}
-
-// EDISourceContextSchemasTable is the table of edi.EDISourceContextSchema.
-type EDISourceContextSchemasTable struct {
-	keel.Handle[*edi.EDISourceContextSchema]
-	ID             keelkinds.PulidIDCol
-	BusinessUnitID keelkinds.PulidIDCol
-	OrganizationID keelkinds.PulidIDCol
-	Standard       EDIStandardCol
-	TransactionSet TransactionSetCol
-	Direction      DocumentDirectionCol
-	X12Version     keel.StringCol
-	ContextKey     keel.StringCol
-	SchemaVersion  keel.Int64Col
-	Name           keel.StringCol
-	Description    keel.StringCol
-	Status         SourceContextFieldStatusCol
-	CreatedAt      keel.Int64Col
-	UpdatedAt      keel.Int64Col
-}
-
-// EDISourceContextSchemas references the edi_source_context_schemas table.
-var EDISourceContextSchemas = &EDISourceContextSchemasTable{
-	Handle:         keel.Handle[*edi.EDISourceContextSchema]{Ref: &eDISourceContextSchemasRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 2}}},
-	Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 3}}},
-	TransactionSet: TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 4}}},
-	Direction:      DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 5}}},
-	X12Version:     keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 6}},
-	ContextKey:     keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 7}},
-	SchemaVersion:  keel.Int64Col{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 8}},
-	Name:           keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 9}},
-	Description:    keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 10}},
-	Status:         SourceContextFieldStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 11}}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 12}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDISourceContextSchemasRef, Index: 13}},
-}
-
-// BuildEDISourceContextSchemas builds the handle of edi_source_context_schemas for ref. Generated relation and alias methods call it.
-func BuildEDISourceContextSchemas(r *keel.Ref) *EDISourceContextSchemasTable {
-	return &EDISourceContextSchemasTable{
-		Handle:         keel.Handle[*edi.EDISourceContextSchema]{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		TransactionSet: TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		Direction:      DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		X12Version:     keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		ContextKey:     keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		SchemaVersion:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		Status:         SourceContextFieldStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-	}
-}
-
-// EDISourceContextSchemasSchema returns the schema of edi_source_context_schemas.
-func EDISourceContextSchemasSchema() *schema.Table { return &eDISourceContextSchemasTable }
-
-// As returns a handle that references edi_source_context_schemas under its own alias.
-func (t *EDISourceContextSchemasTable) As(alias string) *EDISourceContextSchemasTable {
-	return keel.Alias(t.Ref, alias, BuildEDISourceContextSchemas)
-}
-
-// Fields is the many relation.
-func (t *EDISourceContextSchemasTable) Fields() *EDISourceContextFieldsTable {
-	return keel.Path(t.Ref, 0, BuildEDISourceContextFields)
-}
-
-// Get returns the edi_source_context_schemas row with the given key, or keel.ErrNotFound.
-func (t *EDISourceContextSchemasTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDISourceContextSchema, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDISourceContextSchema() unsafe.Pointer {
-	return unsafe.Pointer(new(edi.EDISourceContextSchema))
-}
-
-func newNEDISourceContextSchema(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDISourceContextSchema, n)))
-}
-
-func ptrEDISourceContextSchema(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDISourceContextSchema)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.Standard))
-	case 4:
-		return (*string)(unsafe.Pointer(&r.TransactionSet))
-	case 5:
-		return (*string)(unsafe.Pointer(&r.Direction))
-	case 6:
-		return &r.X12Version
-	case 7:
-		return &r.ContextKey
-	case 8:
-		return &r.SchemaVersion
-	case 9:
-		return &r.Name
-	case 10:
-		return &r.Description
-	case 11:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 12:
-		return &r.CreatedAt
-	case 13:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDISourceContextSchema(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDISourceContextSchema)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		if r.BusinessUnitID == "" {
-			return nil
-		}
-		return string(r.BusinessUnitID)
-	case 2:
-		if r.OrganizationID == "" {
-			return nil
-		}
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.Standard)
-	case 4:
-		return string(r.TransactionSet)
-	case 5:
-		return string(r.Direction)
-	case 6:
-		return r.X12Version
-	case 7:
-		return r.ContextKey
-	case 8:
-		return r.SchemaVersion
-	case 9:
-		return r.Name
-	case 10:
-		if r.Description == "" {
-			return nil
-		}
-		return r.Description
-	case 11:
-		return string(r.Status)
-	case 12:
-		return r.CreatedAt
-	case 13:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func attachEDISourceContextSchema(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDISourceContextSchema)(p)
-	switch rel {
-	case 0:
-		r.Fields = append(r.Fields, (*edi.EDISourceContextField)(child))
-	}
-}
-
-// eDITemplatesTable is the schema of edi.EDITemplate.
-var eDITemplatesTable = schema.Table{
-	Name:        "edi_templates",
-	Quoted:      `"edi_templates"`,
-	Alias:       "et",
-	Model:       "edi.EDITemplate",
-	Label:       `EDI Template`,
-	Plural:      `EDI Templates`,
-	Constraints: (&edi.EDITemplate{}).Constraints(),
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "document_type_id", Quoted: `"document_type_id"`, Field: "DocumentTypeID", Kind: schema.KindString, Flags: 0, Label: `Document Type ID`, JSON: `documentTypeId`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
-		{Name: "direction", Quoted: `"direction"`, Field: "Direction", Kind: schema.KindString, Flags: 0, Label: `Direction`, JSON: `direction`, Enum: enumDocumentDirection[:]},
-		{Name: "standard", Quoted: `"standard"`, Field: "Standard", Kind: schema.KindString, Flags: 0, Label: `Standard`, JSON: `standard`, Enum: enumEDIStandard[:]},
-		{Name: "transaction_set", Quoted: `"transaction_set"`, Field: "TransactionSet", Kind: schema.KindString, Flags: 0, Label: `Transaction Set`, JSON: `transactionSet`, Enum: enumTransactionSet[:]},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumTemplateStatus[:]},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`},
-	},
-	Relations: []schema.Relation{
-		{Name: "DocumentType", Alias: "dt", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Document Type`, JSON: `documentType`},
-		{Name: "ActiveVersion", Alias: "av", Kind: schema.HasOne, Local: []int32{0}, Remote: []int32{3}, Label: `Active Version`, JSON: `activeVersion`},
-		{Name: "Versions", Alias: "v", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Versions`, JSON: `versions`},
-	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 12},
-	Returning:  nil,
-	Version:    10,
-	AutoID:     0,
-	AutoCreate: 11,
-	AutoUpdate: 12,
-	IDPrefix:   "editpl_",
-	New:        newEDITemplate,
-	NewN:       newNEDITemplate,
-	Size:       unsafe.Sizeof(edi.EDITemplate{}),
-	Ptr:        ptrEDITemplate,
-	Value:      valueEDITemplate,
-	Attach:     attachEDITemplate,
-}
-
-var eDITemplatesRef = keel.Ref{Table: &eDITemplatesTable}
-
-// EDITemplatesTable is the table of edi.EDITemplate.
-type EDITemplatesTable struct {
-	keel.Handle[*edi.EDITemplate]
-	ID             keelkinds.PulidIDCol
-	BusinessUnitID keelkinds.PulidIDCol
-	OrganizationID keelkinds.PulidIDCol
-	DocumentTypeID keelkinds.PulidIDCol
-	Name           keel.StringCol
-	Description    keel.StringCol
-	Direction      DocumentDirectionCol
-	Standard       EDIStandardCol
-	TransactionSet TransactionSetCol
-	Status         TemplateStatusCol
-	Version        keel.Int64Col
-	CreatedAt      keel.Int64Col
-	UpdatedAt      keel.Int64Col
-	SearchVector   keel.TSVectorCol
-}
-
-// EDITemplates references the edi_templates table.
-var EDITemplates = &EDITemplatesTable{
-	Handle:         keel.Handle[*edi.EDITemplate]{Ref: &eDITemplatesRef},
-	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 0}}},
-	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 1}}},
-	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 2}}},
-	DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 3}}},
-	Name:           keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 4}},
-	Description:    keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 5}},
-	Direction:      DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 6}}},
-	Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 7}}},
-	TransactionSet: TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 8}}},
-	Status:         TemplateStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 9}}},
-	Version:        keel.Int64Col{Col: keel.Col{Ref: &eDITemplatesRef, Index: 10}},
-	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDITemplatesRef, Index: 11}},
-	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &eDITemplatesRef, Index: 12}},
-	SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: &eDITemplatesRef, Index: 13}},
-}
-
-// BuildEDITemplates builds the handle of edi_templates for ref. Generated relation and alias methods call it.
-func BuildEDITemplates(r *keel.Ref) *EDITemplatesTable {
-	return &EDITemplatesTable{
-		Handle:         keel.Handle[*edi.EDITemplate]{Ref: r},
-		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		DocumentTypeID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Name:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Description:    keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Direction:      DocumentDirectionCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Standard:       EDIStandardCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		TransactionSet: TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Status:         TemplateStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
-		SearchVector:   keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 13}},
-	}
-}
-
-// EDITemplatesSchema returns the schema of edi_templates.
-func EDITemplatesSchema() *schema.Table { return &eDITemplatesTable }
-
-// As returns a handle that references edi_templates under its own alias.
-func (t *EDITemplatesTable) As(alias string) *EDITemplatesTable {
-	return keel.Alias(t.Ref, alias, BuildEDITemplates)
-}
-
-// DocumentType is the belongs relation.
-func (t *EDITemplatesTable) DocumentType() *EDIDocumentTypesTable {
-	return keel.Path(t.Ref, 0, BuildEDIDocumentTypes)
-}
-
-// ActiveVersion is the one relation.
-func (t *EDITemplatesTable) ActiveVersion() *EDITemplateVersionsTable {
-	return keel.Path(t.Ref, 1, BuildEDITemplateVersions)
-}
-
-// Versions is the many relation.
-func (t *EDITemplatesTable) Versions() *EDITemplateVersionsTable {
-	return keel.Path(t.Ref, 2, BuildEDITemplateVersions)
-}
-
-// Get returns the edi_templates row with the given key, or keel.ErrNotFound.
-func (t *EDITemplatesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDITemplate, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDITemplate() unsafe.Pointer { return unsafe.Pointer(new(edi.EDITemplate)) }
-
-func newNEDITemplate(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDITemplate, n)))
-}
-
-func ptrEDITemplate(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITemplate)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.DocumentTypeID))
-	case 4:
-		return &r.Name
-	case 5:
-		return &r.Description
-	case 6:
-		return (*string)(unsafe.Pointer(&r.Direction))
-	case 7:
-		return (*string)(unsafe.Pointer(&r.Standard))
-	case 8:
-		return (*string)(unsafe.Pointer(&r.TransactionSet))
-	case 9:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 10:
-		return &r.Version
-	case 11:
-		return &r.CreatedAt
-	case 12:
-		return &r.UpdatedAt
-	case 13:
-		return &r.SearchVector
-	}
-	return nil
-}
-
-func valueEDITemplate(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITemplate)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.DocumentTypeID)
-	case 4:
-		return r.Name
-	case 5:
-		if r.Description == "" {
-			return nil
-		}
-		return r.Description
-	case 6:
-		return string(r.Direction)
-	case 7:
-		return string(r.Standard)
-	case 8:
-		return string(r.TransactionSet)
-	case 9:
-		return string(r.Status)
-	case 10:
-		return r.Version
-	case 11:
-		return r.CreatedAt
-	case 12:
-		return r.UpdatedAt
-	case 13:
-		return r.SearchVector
-	}
-	return nil
-}
-
-func attachEDITemplate(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDITemplate)(p)
-	switch rel {
-	case 0:
-		r.DocumentType = (*edi.EDIDocumentType)(child)
-	case 1:
-		r.ActiveVersion = (*edi.EDITemplateVersion)(child)
-	case 2:
-		r.Versions = append(r.Versions, (*edi.EDITemplateVersion)(child))
-	}
-}
-
-// eDITemplateScriptLibrariesTable is the schema of edi.EDITemplateScriptLibrary.
-var eDITemplateScriptLibrariesTable = schema.Table{
-	Name:        "edi_template_script_libraries",
-	Quoted:      `"edi_template_script_libraries"`,
-	Alias:       "etsl",
-	Model:       "edi.EDITemplateScriptLibrary",
-	Label:       `EDI Template Script Library`,
-	Plural:      `EDI Template Script Libraries`,
-	Constraints: (&edi.EDITemplateScriptLibrary{}).Constraints(),
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "template_version_id", Quoted: `"template_version_id"`, Field: "TemplateVersionID", Kind: schema.KindString, Flags: 0, Label: `Template Version ID`, JSON: `templateVersionId`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
-		{Name: "language", Quoted: `"language"`, Field: "Language", Kind: schema.KindString, Flags: 0, Label: `Language`, JSON: `language`, Enum: enumScriptLanguage[:]},
-		{Name: "script", Quoted: `"script"`, Field: "Script", Kind: schema.KindString, Flags: 0, Label: `Script`, JSON: `script`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumTemplateStatus[:]},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "TemplateVersion", Alias: "tv", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Template Version`, JSON: `templateVersion`},
-	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 11},
-	Returning:  nil,
-	Version:    9,
-	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
-	IDPrefix:   "edisl_",
-	New:        newEDITemplateScriptLibrary,
-	NewN:       newNEDITemplateScriptLibrary,
-	Size:       unsafe.Sizeof(edi.EDITemplateScriptLibrary{}),
-	Ptr:        ptrEDITemplateScriptLibrary,
-	Value:      valueEDITemplateScriptLibrary,
-	Attach:     attachEDITemplateScriptLibrary,
-}
-
-var eDITemplateScriptLibrariesRef = keel.Ref{Table: &eDITemplateScriptLibrariesTable}
-
-// EDITemplateScriptLibrariesTable is the table of edi.EDITemplateScriptLibrary.
-type EDITemplateScriptLibrariesTable struct {
-	keel.Handle[*edi.EDITemplateScriptLibrary]
-	ID                keelkinds.PulidIDCol
-	BusinessUnitID    keelkinds.PulidIDCol
-	OrganizationID    keelkinds.PulidIDCol
-	TemplateVersionID keelkinds.PulidIDCol
-	Name              keel.StringCol
-	Description       keel.StringCol
-	Language          ScriptLanguageCol
-	Script            keel.StringCol
-	Status            TemplateStatusCol
-	Version           keel.Int64Col
-	CreatedAt         keel.Int64Col
-	UpdatedAt         keel.Int64Col
-}
-
-// EDITemplateScriptLibraries references the edi_template_script_libraries table.
-var EDITemplateScriptLibraries = &EDITemplateScriptLibrariesTable{
-	Handle:            keel.Handle[*edi.EDITemplateScriptLibrary]{Ref: &eDITemplateScriptLibrariesRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 2}}},
-	TemplateVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 3}}},
-	Name:              keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 4}},
-	Description:       keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 5}},
-	Language:          ScriptLanguageCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 6}}},
-	Script:            keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 7}},
-	Status:            TemplateStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 8}}},
-	Version:           keel.Int64Col{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 9}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 10}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDITemplateScriptLibrariesRef, Index: 11}},
-}
-
-// BuildEDITemplateScriptLibraries builds the handle of edi_template_script_libraries for ref. Generated relation and alias methods call it.
-func BuildEDITemplateScriptLibraries(r *keel.Ref) *EDITemplateScriptLibrariesTable {
-	return &EDITemplateScriptLibrariesTable{
-		Handle:            keel.Handle[*edi.EDITemplateScriptLibrary]{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TemplateVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Name:              keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Description:       keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Language:          ScriptLanguageCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		Script:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Status:            TemplateStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-	}
-}
-
-// EDITemplateScriptLibrariesSchema returns the schema of edi_template_script_libraries.
-func EDITemplateScriptLibrariesSchema() *schema.Table { return &eDITemplateScriptLibrariesTable }
-
-// As returns a handle that references edi_template_script_libraries under its own alias.
-func (t *EDITemplateScriptLibrariesTable) As(alias string) *EDITemplateScriptLibrariesTable {
-	return keel.Alias(t.Ref, alias, BuildEDITemplateScriptLibraries)
-}
-
-// TemplateVersion is the belongs relation.
-func (t *EDITemplateScriptLibrariesTable) TemplateVersion() *EDITemplateVersionsTable {
-	return keel.Path(t.Ref, 0, BuildEDITemplateVersions)
-}
-
-// Get returns the edi_template_script_libraries row with the given key, or keel.ErrNotFound.
-func (t *EDITemplateScriptLibrariesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDITemplateScriptLibrary, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDITemplateScriptLibrary() unsafe.Pointer {
-	return unsafe.Pointer(new(edi.EDITemplateScriptLibrary))
-}
-
-func newNEDITemplateScriptLibrary(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDITemplateScriptLibrary, n)))
-}
-
-func ptrEDITemplateScriptLibrary(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITemplateScriptLibrary)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.TemplateVersionID))
-	case 4:
-		return &r.Name
-	case 5:
-		return &r.Description
-	case 6:
-		return (*string)(unsafe.Pointer(&r.Language))
-	case 7:
-		return &r.Script
-	case 8:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 9:
-		return &r.Version
-	case 10:
-		return &r.CreatedAt
-	case 11:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDITemplateScriptLibrary(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITemplateScriptLibrary)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.TemplateVersionID)
-	case 4:
-		return r.Name
-	case 5:
-		if r.Description == "" {
-			return nil
-		}
-		return r.Description
-	case 6:
-		return string(r.Language)
-	case 7:
-		return r.Script
-	case 8:
-		return string(r.Status)
-	case 9:
-		return r.Version
-	case 10:
-		return r.CreatedAt
-	case 11:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func attachEDITemplateScriptLibrary(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDITemplateScriptLibrary)(p)
-	switch rel {
-	case 0:
-		r.TemplateVersion = (*edi.EDITemplateVersion)(child)
-	}
-}
-
-// eDITemplateSegmentsTable is the schema of edi.EDITemplateSegment.
-var eDITemplateSegmentsTable = schema.Table{
-	Name:   "edi_template_segments",
-	Quoted: `"edi_template_segments"`,
-	Alias:  "ets",
-	Model:  "edi.EDITemplateSegment",
-	Label:  `EDI Template Segment`,
-	Plural: `EDI Template Segments`,
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "template_version_id", Quoted: `"template_version_id"`, Field: "TemplateVersionID", Kind: schema.KindString, Flags: 0, Label: `Template Version ID`, JSON: `templateVersionId`},
-		{Name: "segment_id", Quoted: `"segment_id"`, Field: "SegmentID", Kind: schema.KindString, Flags: 0, Label: `Segment ID`, JSON: `segmentId`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
-		{Name: "sequence", Quoted: `"sequence"`, Field: "Sequence", Kind: schema.KindInt64, Flags: 0, Label: `Sequence`, JSON: `sequence`},
-		{Name: "loop_id", Quoted: `"loop_id"`, Field: "LoopID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Loop ID`, JSON: `loopId`},
-		{Name: "repeat_path", Quoted: `"repeat_path"`, Field: "RepeatPath", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Repeat Path`, JSON: `repeatPath`},
-		{Name: "condition", Quoted: `"condition"`, Field: "Condition", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Condition`, JSON: `condition`},
-		{Name: "required", Quoted: `"required"`, Field: "Required", Kind: schema.KindBool, Flags: 0, Label: `Required`, JSON: `required`},
-		{Name: "max_use", Quoted: `"max_use"`, Field: "MaxUse", Kind: schema.KindInt64, Flags: 0, Label: `Max Use`, JSON: `maxUse`},
-		{Name: "elements", Quoted: `"elements"`, Field: "Elements", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Elements`, JSON: `elements`},
-		{Name: "usage_notes", Quoted: `"usage_notes"`, Field: "UsageNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Usage Notes`, JSON: `usageNotes`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	PK:           []int32{0, 1, 2},
-	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15},
-	Returning:    nil,
-	Version:      -1,
-	AutoID:       0,
-	AutoCreate:   14,
-	AutoUpdate:   15,
-	IDPrefix:     "edisg_",
-	New:          newEDITemplateSegment,
-	NewN:         newNEDITemplateSegment,
-	Size:         unsafe.Sizeof(edi.EDITemplateSegment{}),
-	Ptr:          ptrEDITemplateSegment,
-	Value:        valueEDITemplateSegment,
-	BeforeCreate: beforeCreateEDITemplateSegment,
-	BeforeUpdate: beforeUpdateEDITemplateSegment,
-	BeforeSave:   beforeSaveEDITemplateSegment,
-}
-
-var eDITemplateSegmentsRef = keel.Ref{Table: &eDITemplateSegmentsTable}
-
-// EDITemplateSegmentsTable is the table of edi.EDITemplateSegment.
-type EDITemplateSegmentsTable struct {
-	keel.Handle[*edi.EDITemplateSegment]
-	ID                keelkinds.PulidIDCol
-	BusinessUnitID    keelkinds.PulidIDCol
-	OrganizationID    keelkinds.PulidIDCol
-	TemplateVersionID keelkinds.PulidIDCol
-	SegmentID         keel.StringCol
-	Name              keel.StringCol
-	Sequence          keel.Int64Col
-	LoopID            keel.StringCol
-	RepeatPath        keel.StringCol
-	Condition         keel.StringCol
-	Required          keel.BoolCol
-	MaxUse            keel.Int64Col
-	Elements          keel.JSONBCol
-	UsageNotes        keel.StringCol
-	CreatedAt         keel.Int64Col
-	UpdatedAt         keel.Int64Col
-}
-
-// EDITemplateSegments references the edi_template_segments table.
-var EDITemplateSegments = &EDITemplateSegmentsTable{
-	Handle:            keel.Handle[*edi.EDITemplateSegment]{Ref: &eDITemplateSegmentsRef},
-	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 0}}},
-	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 1}}},
-	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 2}}},
-	TemplateVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 3}}},
-	SegmentID:         keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 4}},
-	Name:              keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 5}},
-	Sequence:          keel.Int64Col{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 6}},
-	LoopID:            keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 7}},
-	RepeatPath:        keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 8}},
-	Condition:         keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 9}},
-	Required:          keel.BoolCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 10}},
-	MaxUse:            keel.Int64Col{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 11}},
-	Elements:          keel.JSONBCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 12}},
-	UsageNotes:        keel.StringCol{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 13}},
-	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 14}},
-	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDITemplateSegmentsRef, Index: 15}},
-}
-
-// BuildEDITemplateSegments builds the handle of edi_template_segments for ref. Generated relation and alias methods call it.
-func BuildEDITemplateSegments(r *keel.Ref) *EDITemplateSegmentsTable {
-	return &EDITemplateSegmentsTable{
-		Handle:            keel.Handle[*edi.EDITemplateSegment]{Ref: r},
-		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TemplateVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SegmentID:         keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Name:              keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Sequence:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 6}},
-		LoopID:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		RepeatPath:        keel.StringCol{Col: keel.Col{Ref: r, Index: 8}},
-		Condition:         keel.StringCol{Col: keel.Col{Ref: r, Index: 9}},
-		Required:          keel.BoolCol{Col: keel.Col{Ref: r, Index: 10}},
-		MaxUse:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		Elements:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
-		UsageNotes:        keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-	}
-}
-
-// EDITemplateSegmentsSchema returns the schema of edi_template_segments.
-func EDITemplateSegmentsSchema() *schema.Table { return &eDITemplateSegmentsTable }
-
-// As returns a handle that references edi_template_segments under its own alias.
-func (t *EDITemplateSegmentsTable) As(alias string) *EDITemplateSegmentsTable {
-	return keel.Alias(t.Ref, alias, BuildEDITemplateSegments)
-}
-
-// Get returns the edi_template_segments row with the given key, or keel.ErrNotFound.
-func (t *EDITemplateSegmentsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDITemplateSegment, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDITemplateSegment() unsafe.Pointer { return unsafe.Pointer(new(edi.EDITemplateSegment)) }
-
-func newNEDITemplateSegment(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDITemplateSegment, n)))
-}
-
-func ptrEDITemplateSegment(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITemplateSegment)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.TemplateVersionID))
-	case 4:
-		return &r.SegmentID
-	case 5:
-		return &r.Name
-	case 6:
-		return &r.Sequence
-	case 7:
-		return &r.LoopID
-	case 8:
-		return &r.RepeatPath
-	case 9:
-		return &r.Condition
-	case 10:
-		return &r.Required
-	case 11:
-		return &r.MaxUse
-	case 12:
-		return &r.Elements
-	case 13:
-		return &r.UsageNotes
-	case 14:
-		return &r.CreatedAt
-	case 15:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDITemplateSegment(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITemplateSegment)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.TemplateVersionID)
-	case 4:
-		return r.SegmentID
-	case 5:
-		return r.Name
-	case 6:
-		return r.Sequence
-	case 7:
-		if r.LoopID == "" {
-			return nil
-		}
-		return r.LoopID
-	case 8:
-		if r.RepeatPath == "" {
-			return nil
-		}
-		return r.RepeatPath
-	case 9:
-		if r.Condition == "" {
-			return nil
-		}
-		return r.Condition
-	case 10:
-		return r.Required
-	case 11:
-		return r.MaxUse
-	case 12:
-		if r.Elements == nil {
-			return keel.EmptyJSONArray
-		}
-		return r.Elements
-	case 13:
-		if r.UsageNotes == "" {
-			return nil
-		}
-		return r.UsageNotes
-	case 14:
-		return r.CreatedAt
-	case 15:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func beforeCreateEDITemplateSegment(ctx context.Context, p unsafe.Pointer) error {
-	return (*edi.EDITemplateSegment)(p).BeforeCreate(ctx)
-}
-
-func beforeUpdateEDITemplateSegment(ctx context.Context, p unsafe.Pointer) error {
-	return (*edi.EDITemplateSegment)(p).BeforeUpdate(ctx)
-}
-
-func beforeSaveEDITemplateSegment(ctx context.Context, p unsafe.Pointer) error {
-	return (*edi.EDITemplateSegment)(p).BeforeSave(ctx)
-}
-
-// eDITemplateVersionsTable is the schema of edi.EDITemplateVersion.
-var eDITemplateVersionsTable = schema.Table{
-	Name:        "edi_template_versions",
-	Quoted:      `"edi_template_versions"`,
-	Alias:       "etv",
-	Model:       "edi.EDITemplateVersion",
-	Label:       `EDI Template Version`,
-	Plural:      `EDI Template Versions`,
-	Constraints: (&edi.EDITemplateVersion{}).Constraints(),
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "template_id", Quoted: `"template_id"`, Field: "TemplateID", Kind: schema.KindString, Flags: 0, Label: `Template ID`, JSON: `templateId`},
-		{Name: "source_version_id", Quoted: `"source_version_id"`, Field: "SourceVersionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Source Version ID`, JSON: `sourceVersionId`},
-		{Name: "version_number", Quoted: `"version_number"`, Field: "VersionNumber", Kind: schema.KindInt64, Flags: 0, Label: `Version Number`, JSON: `versionNumber`},
-		{Name: "x12_version", Quoted: `"x12_version"`, Field: "X12Version", Kind: schema.KindString, Flags: 0, Label: `X 12 Version`, JSON: `x12Version`},
-		{Name: "functional_group_id", Quoted: `"functional_group_id"`, Field: "FunctionalGroupID", Kind: schema.KindString, Flags: 0, Label: `Functional Group ID`, JSON: `functionalGroupId`},
-		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumTemplateStatus[:]},
-		{Name: "is_active", Quoted: `"is_active"`, Field: "IsActive", Kind: schema.KindBool, Flags: 0, Label: `Is Active`, JSON: `isActive`},
-		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`, JSON: `notes`},
-		{Name: "certification_notes", Quoted: `"certification_notes"`, Field: "CertificationNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Certification Notes`, JSON: `certificationNotes`},
-		{Name: "activation_notes", Quoted: `"activation_notes"`, Field: "ActivationNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Activation Notes`, JSON: `activationNotes`},
-		{Name: "archive_notes", Quoted: `"archive_notes"`, Field: "ArchiveNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Archive Notes`, JSON: `archiveNotes`},
-		{Name: "deprecated_notes", Quoted: `"deprecated_notes"`, Field: "DeprecatedNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Deprecated Notes`, JSON: `deprecatedNotes`},
-		{Name: "superseded_notes", Quoted: `"superseded_notes"`, Field: "SupersededNotes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Superseded Notes`, JSON: `supersededNotes`},
-		{Name: "certified_by_id", Quoted: `"certified_by_id"`, Field: "CertifiedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Certified By ID`, JSON: `certifiedById`},
-		{Name: "activated_by_id", Quoted: `"activated_by_id"`, Field: "ActivatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Activated By ID`, JSON: `activatedById`},
-		{Name: "archived_by_id", Quoted: `"archived_by_id"`, Field: "ArchivedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Archived By ID`, JSON: `archivedById`},
-		{Name: "deprecated_by_id", Quoted: `"deprecated_by_id"`, Field: "DeprecatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Deprecated By ID`, JSON: `deprecatedById`},
-		{Name: "superseded_by_id", Quoted: `"superseded_by_id"`, Field: "SupersededByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Superseded By ID`, JSON: `supersededById`},
-		{Name: "certified_at", Quoted: `"certified_at"`, Field: "CertifiedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Certified At`, JSON: `certifiedAt`},
-		{Name: "activated_at", Quoted: `"activated_at"`, Field: "ActivatedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Activated At`, JSON: `activatedAt`},
-		{Name: "archived_at", Quoted: `"archived_at"`, Field: "ArchivedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Archived At`, JSON: `archivedAt`},
-		{Name: "deprecated_at", Quoted: `"deprecated_at"`, Field: "DeprecatedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Deprecated At`, JSON: `deprecatedAt`},
-		{Name: "superseded_at", Quoted: `"superseded_at"`, Field: "SupersededAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Superseded At`, JSON: `supersededAt`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "Template", Alias: "t", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Template`, JSON: `template`},
-		{Name: "SourceVersion", Alias: "sv", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Source Version`, JSON: `sourceVersion`},
-		{Name: "Segments", Alias: "s", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Segments`, JSON: `segments`},
-		{Name: "ScriptLibraries", Alias: "sl", Kind: schema.HasMany, Local: []int32{0}, Remote: []int32{3}, Label: `Script Libraries`, JSON: `scriptLibraries`},
-	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 28},
-	Returning:  nil,
-	Version:    26,
-	AutoID:     0,
-	AutoCreate: 27,
-	AutoUpdate: 28,
-	IDPrefix:   "editv_",
-	New:        newEDITemplateVersion,
-	NewN:       newNEDITemplateVersion,
-	Size:       unsafe.Sizeof(edi.EDITemplateVersion{}),
-	Ptr:        ptrEDITemplateVersion,
-	Value:      valueEDITemplateVersion,
-	Attach:     attachEDITemplateVersion,
-}
-
-var eDITemplateVersionsRef = keel.Ref{Table: &eDITemplateVersionsTable}
-
-// EDITemplateVersionsTable is the table of edi.EDITemplateVersion.
-type EDITemplateVersionsTable struct {
-	keel.Handle[*edi.EDITemplateVersion]
-	ID                 keelkinds.PulidIDCol
-	BusinessUnitID     keelkinds.PulidIDCol
-	OrganizationID     keelkinds.PulidIDCol
-	TemplateID         keelkinds.PulidIDCol
-	SourceVersionID    keelkinds.PulidIDCol
-	VersionNumber      keel.Int64Col
-	X12Version         keel.StringCol
-	FunctionalGroupID  keel.StringCol
-	Status             TemplateStatusCol
-	IsActive           keel.BoolCol
-	Notes              keel.StringCol
-	CertificationNotes keel.StringCol
-	ActivationNotes    keel.StringCol
-	ArchiveNotes       keel.StringCol
-	DeprecatedNotes    keel.StringCol
-	SupersededNotes    keel.StringCol
-	CertifiedByID      keelkinds.PulidIDCol
-	ActivatedByID      keelkinds.PulidIDCol
-	ArchivedByID       keelkinds.PulidIDCol
-	DeprecatedByID     keelkinds.PulidIDCol
-	SupersededByID     keelkinds.PulidIDCol
-	CertifiedAt        keel.Int64Col
-	ActivatedAt        keel.Int64Col
-	ArchivedAt         keel.Int64Col
-	DeprecatedAt       keel.Int64Col
-	SupersededAt       keel.Int64Col
-	Version            keel.Int64Col
-	CreatedAt          keel.Int64Col
-	UpdatedAt          keel.Int64Col
-}
-
-// EDITemplateVersions references the edi_template_versions table.
-var EDITemplateVersions = &EDITemplateVersionsTable{
-	Handle:             keel.Handle[*edi.EDITemplateVersion]{Ref: &eDITemplateVersionsRef},
-	ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 0}}},
-	BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 1}}},
-	OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 2}}},
-	TemplateID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 3}}},
-	SourceVersionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 4}}},
-	VersionNumber:      keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 5}},
-	X12Version:         keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 6}},
-	FunctionalGroupID:  keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 7}},
-	Status:             TemplateStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 8}}},
-	IsActive:           keel.BoolCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 9}},
-	Notes:              keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 10}},
-	CertificationNotes: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 11}},
-	ActivationNotes:    keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 12}},
-	ArchiveNotes:       keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 13}},
-	DeprecatedNotes:    keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 14}},
-	SupersededNotes:    keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 15}},
-	CertifiedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 16}}},
-	ActivatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 17}}},
-	ArchivedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 18}}},
-	DeprecatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 19}}},
-	SupersededByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 20}}},
-	CertifiedAt:        keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 21}},
-	ActivatedAt:        keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 22}},
-	ArchivedAt:         keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 23}},
-	DeprecatedAt:       keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 24}},
-	SupersededAt:       keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 25}},
-	Version:            keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 26}},
-	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 27}},
-	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &eDITemplateVersionsRef, Index: 28}},
-}
-
-// BuildEDITemplateVersions builds the handle of edi_template_versions for ref. Generated relation and alias methods call it.
-func BuildEDITemplateVersions(r *keel.Ref) *EDITemplateVersionsTable {
-	return &EDITemplateVersionsTable{
-		Handle:             keel.Handle[*edi.EDITemplateVersion]{Ref: r},
-		ID:                 keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		TemplateID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		SourceVersionID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		VersionNumber:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
-		X12Version:         keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
-		FunctionalGroupID:  keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		Status:             TemplateStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		IsActive:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 9}},
-		Notes:              keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
-		CertificationNotes: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
-		ActivationNotes:    keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
-		ArchiveNotes:       keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		DeprecatedNotes:    keel.StringCol{Col: keel.Col{Ref: r, Index: 14}},
-		SupersededNotes:    keel.StringCol{Col: keel.Col{Ref: r, Index: 15}},
-		CertifiedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		ActivatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 17}}},
-		ArchivedByID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
-		DeprecatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 19}}},
-		SupersededByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 20}}},
-		CertifiedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
-		ActivatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
-		ArchivedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
-		DeprecatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		SupersededAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-	}
-}
-
-// EDITemplateVersionsSchema returns the schema of edi_template_versions.
-func EDITemplateVersionsSchema() *schema.Table { return &eDITemplateVersionsTable }
-
-// As returns a handle that references edi_template_versions under its own alias.
-func (t *EDITemplateVersionsTable) As(alias string) *EDITemplateVersionsTable {
-	return keel.Alias(t.Ref, alias, BuildEDITemplateVersions)
-}
-
-// Template is the belongs relation.
-func (t *EDITemplateVersionsTable) Template() *EDITemplatesTable {
-	return keel.Path(t.Ref, 0, BuildEDITemplates)
-}
-
-// SourceVersion is the belongs relation.
-func (t *EDITemplateVersionsTable) SourceVersion() *EDITemplateVersionsTable {
-	return keel.Path(t.Ref, 1, BuildEDITemplateVersions)
-}
-
-// Segments is the many relation.
-func (t *EDITemplateVersionsTable) Segments() *EDITemplateSegmentsTable {
-	return keel.Path(t.Ref, 2, BuildEDITemplateSegments)
-}
-
-// ScriptLibraries is the many relation.
-func (t *EDITemplateVersionsTable) ScriptLibraries() *EDITemplateScriptLibrariesTable {
-	return keel.Path(t.Ref, 3, BuildEDITemplateScriptLibraries)
-}
-
-// Get returns the edi_template_versions row with the given key, or keel.ErrNotFound.
-func (t *EDITemplateVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDITemplateVersion, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDITemplateVersion() unsafe.Pointer { return unsafe.Pointer(new(edi.EDITemplateVersion)) }
-
-func newNEDITemplateVersion(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDITemplateVersion, n)))
-}
-
-func ptrEDITemplateVersion(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITemplateVersion)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.TemplateID))
-	case 4:
-		return (*string)(unsafe.Pointer(&r.SourceVersionID))
-	case 5:
-		return &r.VersionNumber
-	case 6:
-		return &r.X12Version
-	case 7:
-		return &r.FunctionalGroupID
-	case 8:
-		return (*string)(unsafe.Pointer(&r.Status))
-	case 9:
-		return &r.IsActive
-	case 10:
-		return &r.Notes
-	case 11:
-		return &r.CertificationNotes
-	case 12:
-		return &r.ActivationNotes
-	case 13:
-		return &r.ArchiveNotes
-	case 14:
-		return &r.DeprecatedNotes
-	case 15:
-		return &r.SupersededNotes
-	case 16:
-		return (*string)(unsafe.Pointer(&r.CertifiedByID))
-	case 17:
-		return (*string)(unsafe.Pointer(&r.ActivatedByID))
-	case 18:
-		return (*string)(unsafe.Pointer(&r.ArchivedByID))
-	case 19:
-		return (*string)(unsafe.Pointer(&r.DeprecatedByID))
-	case 20:
-		return (*string)(unsafe.Pointer(&r.SupersededByID))
-	case 21:
-		return &r.CertifiedAt
-	case 22:
-		return &r.ActivatedAt
-	case 23:
-		return &r.ArchivedAt
-	case 24:
-		return &r.DeprecatedAt
-	case 25:
-		return &r.SupersededAt
-	case 26:
-		return &r.Version
-	case 27:
-		return &r.CreatedAt
-	case 28:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDITemplateVersion(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITemplateVersion)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.TemplateID)
-	case 4:
-		if r.SourceVersionID == "" {
-			return nil
-		}
-		return string(r.SourceVersionID)
-	case 5:
-		return r.VersionNumber
-	case 6:
-		return r.X12Version
-	case 7:
-		return r.FunctionalGroupID
-	case 8:
-		return string(r.Status)
-	case 9:
-		return r.IsActive
-	case 10:
-		if r.Notes == "" {
-			return nil
-		}
-		return r.Notes
-	case 11:
-		if r.CertificationNotes == "" {
-			return nil
-		}
-		return r.CertificationNotes
-	case 12:
-		if r.ActivationNotes == "" {
-			return nil
-		}
-		return r.ActivationNotes
-	case 13:
-		if r.ArchiveNotes == "" {
-			return nil
-		}
-		return r.ArchiveNotes
-	case 14:
-		if r.DeprecatedNotes == "" {
-			return nil
-		}
-		return r.DeprecatedNotes
-	case 15:
-		if r.SupersededNotes == "" {
-			return nil
-		}
-		return r.SupersededNotes
-	case 16:
-		if r.CertifiedByID == "" {
-			return nil
-		}
-		return string(r.CertifiedByID)
-	case 17:
-		if r.ActivatedByID == "" {
-			return nil
-		}
-		return string(r.ActivatedByID)
-	case 18:
-		if r.ArchivedByID == "" {
-			return nil
-		}
-		return string(r.ArchivedByID)
-	case 19:
-		if r.DeprecatedByID == "" {
-			return nil
-		}
-		return string(r.DeprecatedByID)
-	case 20:
-		if r.SupersededByID == "" {
-			return nil
-		}
-		return string(r.SupersededByID)
-	case 21:
-		if r.CertifiedAt == nil {
-			return nil
-		}
-		return *r.CertifiedAt
-	case 22:
-		if r.ActivatedAt == nil {
-			return nil
-		}
-		return *r.ActivatedAt
-	case 23:
-		if r.ArchivedAt == nil {
-			return nil
-		}
-		return *r.ArchivedAt
-	case 24:
-		if r.DeprecatedAt == nil {
-			return nil
-		}
-		return *r.DeprecatedAt
-	case 25:
-		if r.SupersededAt == nil {
-			return nil
-		}
-		return *r.SupersededAt
-	case 26:
-		return r.Version
-	case 27:
-		return r.CreatedAt
-	case 28:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func attachEDITemplateVersion(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDITemplateVersion)(p)
-	switch rel {
-	case 0:
-		r.Template = (*edi.EDITemplate)(child)
-	case 1:
-		r.SourceVersion = (*edi.EDITemplateVersion)(child)
-	case 2:
-		r.Segments = append(r.Segments, (*edi.EDITemplateSegment)(child))
-	case 3:
-		r.ScriptLibraries = append(r.ScriptLibraries, (*edi.EDITemplateScriptLibrary)(child))
-	}
-}
-
-// eDITestCasesTable is the schema of edi.EDITestCase.
-var eDITestCasesTable = schema.Table{
-	Name:        "edi_test_cases",
-	Quoted:      `"edi_test_cases"`,
-	Alias:       "etc",
-	Model:       "edi.EDITestCase",
-	Label:       `EDI Test Case`,
-	Plural:      `EDI Test Cases`,
-	Constraints: (&edi.EDITestCase{}).Constraints(),
-	Columns: []schema.Column{
-		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
-		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
-		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
-		{Name: "partner_document_profile_id", Quoted: `"partner_document_profile_id"`, Field: "PartnerDocumentProfileID", Kind: schema.KindString, Flags: 0, Label: `Partner Document Profile ID`, JSON: `partnerDocumentProfileId`},
-		{Name: "name", Quoted: `"name"`, Field: "Name", Kind: schema.KindString, Flags: 0, Label: `Name`, JSON: `name`},
-		{Name: "description", Quoted: `"description"`, Field: "Description", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Description`, JSON: `description`},
-		{Name: "payload", Quoted: `"payload"`, Field: "Payload", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Payload`, JSON: `payload`},
-		{Name: "expected_warnings", Quoted: `"expected_warnings"`, Field: "ExpectedWarnings", Kind: schema.KindInt64, Flags: 0, Label: `Expected Warnings`, JSON: `expectedWarnings`},
-		{Name: "expected_errors", Quoted: `"expected_errors"`, Field: "ExpectedErrors", Kind: schema.KindInt64, Flags: 0, Label: `Expected Errors`, JSON: `expectedErrors`},
-		{Name: "expected_warning_codes", Quoted: `"expected_warning_codes"`, Field: "ExpectedWarningCodes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Expected Warning Codes`, JSON: `expectedWarningCodes`},
-		{Name: "expected_error_codes", Quoted: `"expected_error_codes"`, Field: "ExpectedErrorCodes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Expected Error Codes`, JSON: `expectedErrorCodes`},
-		{Name: "last_run_at", Quoted: `"last_run_at"`, Field: "LastRunAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Last Run At`, JSON: `lastRunAt`},
-		{Name: "last_run_passed", Quoted: `"last_run_passed"`, Field: "LastRunPassed", Kind: schema.KindBool, Flags: schema.FlagNullable, Label: `Last Run Passed`, JSON: `lastRunPassed`},
-		{Name: "last_run_warnings", Quoted: `"last_run_warnings"`, Field: "LastRunWarnings", Kind: schema.KindInt64, Flags: 0, Label: `Last Run Warnings`, JSON: `lastRunWarnings`},
-		{Name: "last_run_errors", Quoted: `"last_run_errors"`, Field: "LastRunErrors", Kind: schema.KindInt64, Flags: 0, Label: `Last Run Errors`, JSON: `lastRunErrors`},
-		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
-		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
-		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
-	},
-	Relations: []schema.Relation{
-		{Name: "DocumentProfile", Alias: "dp", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Document Profile`, JSON: `documentProfile`},
-	},
-	PK:         []int32{0, 1, 2},
-	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
-	Returning:  nil,
-	Version:    15,
-	AutoID:     0,
-	AutoCreate: 16,
-	AutoUpdate: 17,
-	IDPrefix:   "editc_",
-	New:        newEDITestCase,
-	NewN:       newNEDITestCase,
-	Size:       unsafe.Sizeof(edi.EDITestCase{}),
-	Ptr:        ptrEDITestCase,
-	Value:      valueEDITestCase,
-	Attach:     attachEDITestCase,
-}
-
-var eDITestCasesRef = keel.Ref{Table: &eDITestCasesTable}
-
-// EDITestCasesTable is the table of edi.EDITestCase.
-type EDITestCasesTable struct {
-	keel.Handle[*edi.EDITestCase]
-	ID                       keelkinds.PulidIDCol
-	BusinessUnitID           keelkinds.PulidIDCol
-	OrganizationID           keelkinds.PulidIDCol
-	PartnerDocumentProfileID keelkinds.PulidIDCol
-	Name                     keel.StringCol
-	Description              keel.StringCol
-	Payload                  keel.JSONBCol
-	ExpectedWarnings         keel.Int64Col
-	ExpectedErrors           keel.Int64Col
-	ExpectedWarningCodes     keel.JSONBCol
-	ExpectedErrorCodes       keel.JSONBCol
-	LastRunAt                keel.Int64Col
-	LastRunPassed            keel.BoolCol
-	LastRunWarnings          keel.Int64Col
-	LastRunErrors            keel.Int64Col
-	Version                  keel.Int64Col
-	CreatedAt                keel.Int64Col
-	UpdatedAt                keel.Int64Col
-}
-
-// EDITestCases references the edi_test_cases table.
-var EDITestCases = &EDITestCasesTable{
-	Handle:                   keel.Handle[*edi.EDITestCase]{Ref: &eDITestCasesRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 2}}},
-	PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 3}}},
-	Name:                     keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 4}},
-	Description:              keel.StringCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 5}},
-	Payload:                  keel.JSONBCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 6}},
-	ExpectedWarnings:         keel.Int64Col{Col: keel.Col{Ref: &eDITestCasesRef, Index: 7}},
-	ExpectedErrors:           keel.Int64Col{Col: keel.Col{Ref: &eDITestCasesRef, Index: 8}},
-	ExpectedWarningCodes:     keel.JSONBCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 9}},
-	ExpectedErrorCodes:       keel.JSONBCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 10}},
-	LastRunAt:                keel.Int64Col{Col: keel.Col{Ref: &eDITestCasesRef, Index: 11}},
-	LastRunPassed:            keel.BoolCol{Col: keel.Col{Ref: &eDITestCasesRef, Index: 12}},
-	LastRunWarnings:          keel.Int64Col{Col: keel.Col{Ref: &eDITestCasesRef, Index: 13}},
-	LastRunErrors:            keel.Int64Col{Col: keel.Col{Ref: &eDITestCasesRef, Index: 14}},
-	Version:                  keel.Int64Col{Col: keel.Col{Ref: &eDITestCasesRef, Index: 15}},
-	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &eDITestCasesRef, Index: 16}},
-	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &eDITestCasesRef, Index: 17}},
-}
-
-// BuildEDITestCases builds the handle of edi_test_cases for ref. Generated relation and alias methods call it.
-func BuildEDITestCases(r *keel.Ref) *EDITestCasesTable {
-	return &EDITestCasesTable{
-		Handle:                   keel.Handle[*edi.EDITestCase]{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		Name:                     keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
-		Description:              keel.StringCol{Col: keel.Col{Ref: r, Index: 5}},
-		Payload:                  keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
-		ExpectedWarnings:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
-		ExpectedErrors:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
-		ExpectedWarningCodes:     keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
-		ExpectedErrorCodes:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
-		LastRunAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
-		LastRunPassed:            keel.BoolCol{Col: keel.Col{Ref: r, Index: 12}},
-		LastRunWarnings:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
-		LastRunErrors:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
-		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
-		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-	}
-}
-
-// EDITestCasesSchema returns the schema of edi_test_cases.
-func EDITestCasesSchema() *schema.Table { return &eDITestCasesTable }
-
-// As returns a handle that references edi_test_cases under its own alias.
-func (t *EDITestCasesTable) As(alias string) *EDITestCasesTable {
-	return keel.Alias(t.Ref, alias, BuildEDITestCases)
-}
-
-// DocumentProfile is the belongs relation.
-func (t *EDITestCasesTable) DocumentProfile() *EDIPartnerDocumentProfilesTable {
-	return keel.Path(t.Ref, 0, BuildEDIPartnerDocumentProfiles)
-}
-
-// Get returns the edi_test_cases row with the given key, or keel.ErrNotFound.
-func (t *EDITestCasesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.EDITestCase, error) {
-	return t.Where(t.ID.Eq(key)).One(ctx, db)
-}
-
-func newEDITestCase() unsafe.Pointer { return unsafe.Pointer(new(edi.EDITestCase)) }
-
-func newNEDITestCase(n int) unsafe.Pointer {
-	return unsafe.Pointer(unsafe.SliceData(make([]edi.EDITestCase, n)))
-}
-
-func ptrEDITestCase(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITestCase)(p)
-	switch c {
-	case 0:
-		return (*string)(unsafe.Pointer(&r.ID))
-	case 1:
-		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
-	case 2:
-		return (*string)(unsafe.Pointer(&r.OrganizationID))
-	case 3:
-		return (*string)(unsafe.Pointer(&r.PartnerDocumentProfileID))
-	case 4:
-		return &r.Name
-	case 5:
-		return &r.Description
-	case 6:
-		return &r.Payload
-	case 7:
-		return (*int64)(unsafe.Pointer(&r.ExpectedWarnings))
-	case 8:
-		return (*int64)(unsafe.Pointer(&r.ExpectedErrors))
-	case 9:
-		return &r.ExpectedWarningCodes
-	case 10:
-		return &r.ExpectedErrorCodes
-	case 11:
-		return &r.LastRunAt
-	case 12:
-		return &r.LastRunPassed
-	case 13:
-		return (*int64)(unsafe.Pointer(&r.LastRunWarnings))
-	case 14:
-		return (*int64)(unsafe.Pointer(&r.LastRunErrors))
-	case 15:
-		return &r.Version
-	case 16:
-		return &r.CreatedAt
-	case 17:
-		return &r.UpdatedAt
-	}
-	return nil
-}
-
-func valueEDITestCase(p unsafe.Pointer, c int32) any {
-	r := (*edi.EDITestCase)(p)
-	switch c {
-	case 0:
-		return string(r.ID)
-	case 1:
-		return string(r.BusinessUnitID)
-	case 2:
-		return string(r.OrganizationID)
-	case 3:
-		return string(r.PartnerDocumentProfileID)
-	case 4:
-		return r.Name
-	case 5:
-		if r.Description == "" {
-			return nil
-		}
-		return r.Description
-	case 6:
-		return r.Payload
-	case 7:
-		return int64(r.ExpectedWarnings)
-	case 8:
-		return int64(r.ExpectedErrors)
-	case 9:
-		if r.ExpectedWarningCodes == nil {
-			return keel.EmptyJSONArray
-		}
-		return r.ExpectedWarningCodes
-	case 10:
-		if r.ExpectedErrorCodes == nil {
-			return keel.EmptyJSONArray
-		}
-		return r.ExpectedErrorCodes
-	case 11:
-		if r.LastRunAt == nil {
-			return nil
-		}
-		return *r.LastRunAt
-	case 12:
-		if r.LastRunPassed == nil {
-			return nil
-		}
-		return *r.LastRunPassed
-	case 13:
-		return int64(r.LastRunWarnings)
-	case 14:
-		return int64(r.LastRunErrors)
-	case 15:
-		return r.Version
-	case 16:
-		return r.CreatedAt
-	case 17:
-		return r.UpdatedAt
-	}
-	return nil
-}
-
-func attachEDITestCase(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
-	r := (*edi.EDITestCase)(p)
-	switch rel {
-	case 0:
-		r.DocumentProfile = (*edi.EDIPartnerDocumentProfile)(child)
-	}
-}
-
 // eDITransactionSetsTable is the schema of edi.EDITransactionSet.
 var eDITransactionSetsTable = schema.Table{
 	Name:   "edi_transaction_sets",
@@ -6571,6 +3974,1576 @@ func beforeUpdateEDITransfer(ctx context.Context, p unsafe.Pointer) error {
 
 func beforeSaveEDITransfer(ctx context.Context, p unsafe.Pointer) error {
 	return (*edi.EDITransfer)(p).BeforeSave(ctx)
+}
+
+// flowEventsTable is the schema of edi.FlowEvent.
+var flowEventsTable = schema.Table{
+	Name:   "edi_flow_events",
+	Quoted: `"edi_flow_events"`,
+	Alias:  "efe",
+	Model:  "edi.FlowEvent",
+	Label:  `Flow Event`,
+	Plural: `Flow Events`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "instance_id", Quoted: `"instance_id"`, Field: "InstanceID", Kind: schema.KindString, Flags: 0, Label: `Instance ID`, JSON: `instanceId`},
+		{Name: "kind", Quoted: `"kind"`, Field: "Kind", Kind: schema.KindString, Flags: 0, Label: `Kind`, JSON: `kind`},
+		{Name: "detail", Quoted: `"detail"`, Field: "Detail", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Detail`, JSON: `detail`},
+		{Name: "actions", Quoted: `"actions"`, Field: "Actions", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Actions`, JSON: `actions`},
+		{Name: "error", Quoted: `"error"`, Field: "Error", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Error`, JSON: `error`},
+		{Name: "message_id", Quoted: `"message_id"`, Field: "MessageID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Message ID`, JSON: `messageId`},
+		{Name: "actor_id", Quoted: `"actor_id"`, Field: "ActorID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Actor ID`, JSON: `actorId`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 10,
+	AutoUpdate: -1,
+	IDPrefix:   "edfe_",
+	New:        newFlowEvent,
+	NewN:       newNFlowEvent,
+	Size:       unsafe.Sizeof(edi.FlowEvent{}),
+	Ptr:        ptrFlowEvent,
+	Value:      valueFlowEvent,
+}
+
+var flowEventsRef = keel.Ref{Table: &flowEventsTable}
+
+// FlowEventsTable is the table of edi.FlowEvent.
+type FlowEventsTable struct {
+	keel.Handle[*edi.FlowEvent]
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	InstanceID     keelkinds.PulidIDCol
+	Kind           keel.StringCol
+	Detail         keel.JSONBCol
+	Actions        keel.JSONBCol
+	Error          keel.JSONBCol
+	MessageID      keelkinds.PulidIDCol
+	ActorID        keelkinds.PulidIDCol
+	CreatedAt      keel.Int64Col
+}
+
+// FlowEvents references the edi_flow_events table.
+var FlowEvents = &FlowEventsTable{
+	Handle:         keel.Handle[*edi.FlowEvent]{Ref: &flowEventsRef},
+	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 2}}},
+	InstanceID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 3}}},
+	Kind:           keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 4}},
+	Detail:         keel.JSONBCol{Col: keel.Col{Ref: &flowEventsRef, Index: 5}},
+	Actions:        keel.JSONBCol{Col: keel.Col{Ref: &flowEventsRef, Index: 6}},
+	Error:          keel.JSONBCol{Col: keel.Col{Ref: &flowEventsRef, Index: 7}},
+	MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 8}}},
+	ActorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowEventsRef, Index: 9}}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &flowEventsRef, Index: 10}},
+}
+
+// BuildFlowEvents builds the handle of edi_flow_events for ref. Generated relation and alias methods call it.
+func BuildFlowEvents(r *keel.Ref) *FlowEventsTable {
+	return &FlowEventsTable{
+		Handle:         keel.Handle[*edi.FlowEvent]{Ref: r},
+		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		InstanceID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Kind:           keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		Detail:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 5}},
+		Actions:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
+		Error:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
+		MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ActorID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+	}
+}
+
+// FlowEventsSchema returns the schema of edi_flow_events.
+func FlowEventsSchema() *schema.Table { return &flowEventsTable }
+
+// As returns a handle that references edi_flow_events under its own alias.
+func (t *FlowEventsTable) As(alias string) *FlowEventsTable {
+	return keel.Alias(t.Ref, alias, BuildFlowEvents)
+}
+
+// Get returns the edi_flow_events row with the given key, or keel.ErrNotFound.
+func (t *FlowEventsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.FlowEvent, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newFlowEvent() unsafe.Pointer { return unsafe.Pointer(new(edi.FlowEvent)) }
+
+func newNFlowEvent(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]edi.FlowEvent, n)))
+}
+
+func ptrFlowEvent(p unsafe.Pointer, c int32) any {
+	r := (*edi.FlowEvent)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.InstanceID))
+	case 4:
+		return &r.Kind
+	case 5:
+		return &r.Detail
+	case 6:
+		return &r.Actions
+	case 7:
+		return &r.Error
+	case 8:
+		return (*string)(unsafe.Pointer(&r.MessageID))
+	case 9:
+		return (*string)(unsafe.Pointer(&r.ActorID))
+	case 10:
+		return &r.CreatedAt
+	}
+	return nil
+}
+
+func valueFlowEvent(p unsafe.Pointer, c int32) any {
+	r := (*edi.FlowEvent)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.InstanceID)
+	case 4:
+		return r.Kind
+	case 5:
+		if r.Detail == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Detail
+	case 6:
+		if r.Actions == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Actions
+	case 7:
+		if r.Error == nil {
+			return nil
+		}
+		return *r.Error
+	case 8:
+		if r.MessageID == "" {
+			return nil
+		}
+		return string(r.MessageID)
+	case 9:
+		if r.ActorID == "" {
+			return nil
+		}
+		return string(r.ActorID)
+	case 10:
+		return r.CreatedAt
+	}
+	return nil
+}
+
+// flowInstancesTable is the schema of edi.FlowInstance.
+var flowInstancesTable = schema.Table{
+	Name:   "edi_flow_instances",
+	Quoted: `"edi_flow_instances"`,
+	Alias:  "efi",
+	Model:  "edi.FlowInstance",
+	Label:  `Flow Instance`,
+	Plural: `Flow Instances`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "edi_partner_id", Quoted: `"edi_partner_id"`, Field: "EDIPartnerID", Kind: schema.KindString, Flags: 0, Label: `EDI Partner ID`, JSON: `ediPartnerId`},
+		{Name: "project_id", Quoted: `"project_id"`, Field: "ProjectID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Project ID`, JSON: `projectId`},
+		{Name: "version_id", Quoted: `"version_id"`, Field: "VersionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Version ID`, JSON: `versionId`},
+		{Name: "flow", Quoted: `"flow"`, Field: "Flow", Kind: schema.KindString, Flags: 0, Label: `Flow`, JSON: `flow`},
+		{Name: "key", Quoted: `"key"`, Field: "Key", Kind: schema.KindString, Flags: 0, Label: `Key`, JSON: `key`},
+		{Name: "state", Quoted: `"state"`, Field: "State", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `State`, JSON: `state`},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumFlowInstanceStatus[:]},
+		{Name: "reason", Quoted: `"reason"`, Field: "Reason", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Reason`, JSON: `reason`},
+		{Name: "wake_at", Quoted: `"wake_at"`, Field: "WakeAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Wake At`, JSON: `wakeAt`},
+		{Name: "shipment_id", Quoted: `"shipment_id"`, Field: "ShipmentID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment ID`, JSON: `shipmentId`},
+		{Name: "transfer_id", Quoted: `"transfer_id"`, Field: "TransferID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Transfer ID`, JSON: `transferId`},
+		{Name: "last_event_at", Quoted: `"last_event_at"`, Field: "LastEventAt", Kind: schema.KindInt64, Flags: 0, Label: `Last Event At`, JSON: `lastEventAt`},
+		{Name: "held_at", Quoted: `"held_at"`, Field: "HeldAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Held At`, JSON: `heldAt`},
+		{Name: "resolved_by_id", Quoted: `"resolved_by_id"`, Field: "ResolvedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Resolved By ID`, JSON: `resolvedById`},
+		{Name: "resolved_at", Quoted: `"resolved_at"`, Field: "ResolvedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Resolved At`, JSON: `resolvedAt`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	Relations: []schema.Relation{
+		{Name: "Partner", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Partner`, JSON: `partner`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 20},
+	Returning:  nil,
+	Version:    18,
+	AutoID:     0,
+	AutoCreate: 19,
+	AutoUpdate: 20,
+	IDPrefix:   "edfi_",
+	New:        newFlowInstance,
+	NewN:       newNFlowInstance,
+	Size:       unsafe.Sizeof(edi.FlowInstance{}),
+	Ptr:        ptrFlowInstance,
+	Value:      valueFlowInstance,
+	Attach:     attachFlowInstance,
+}
+
+var flowInstancesRef = keel.Ref{Table: &flowInstancesTable}
+
+// FlowInstancesTable is the table of edi.FlowInstance.
+type FlowInstancesTable struct {
+	keel.Handle[*edi.FlowInstance]
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	EDIPartnerID   keelkinds.PulidIDCol
+	ProjectID      keelkinds.PulidIDCol
+	VersionID      keelkinds.PulidIDCol
+	Flow           keel.StringCol
+	Key            keel.StringCol
+	State          keel.JSONBCol
+	Status         FlowInstanceStatusCol
+	Reason         keel.JSONBCol
+	WakeAt         keel.Int64Col
+	ShipmentID     keelkinds.PulidIDCol
+	TransferID     keelkinds.PulidIDCol
+	LastEventAt    keel.Int64Col
+	HeldAt         keel.Int64Col
+	ResolvedByID   keelkinds.PulidIDCol
+	ResolvedAt     keel.Int64Col
+	Version        keel.Int64Col
+	CreatedAt      keel.Int64Col
+	UpdatedAt      keel.Int64Col
+}
+
+// FlowInstances references the edi_flow_instances table.
+var FlowInstances = &FlowInstancesTable{
+	Handle:         keel.Handle[*edi.FlowInstance]{Ref: &flowInstancesRef},
+	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 2}}},
+	EDIPartnerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 3}}},
+	ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 4}}},
+	VersionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 5}}},
+	Flow:           keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 6}},
+	Key:            keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 7}},
+	State:          keel.JSONBCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 8}},
+	Status:         FlowInstanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 9}}},
+	Reason:         keel.JSONBCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 10}},
+	WakeAt:         keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 11}},
+	ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 12}}},
+	TransferID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 13}}},
+	LastEventAt:    keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 14}},
+	HeldAt:         keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 15}},
+	ResolvedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &flowInstancesRef, Index: 16}}},
+	ResolvedAt:     keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 17}},
+	Version:        keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 18}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 19}},
+	UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: &flowInstancesRef, Index: 20}},
+}
+
+// BuildFlowInstances builds the handle of edi_flow_instances for ref. Generated relation and alias methods call it.
+func BuildFlowInstances(r *keel.Ref) *FlowInstancesTable {
+	return &FlowInstancesTable{
+		Handle:         keel.Handle[*edi.FlowInstance]{Ref: r},
+		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDIPartnerID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		VersionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Flow:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		Key:            keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
+		State:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
+		Status:         FlowInstanceStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Reason:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
+		WakeAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		ShipmentID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 12}}},
+		TransferID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		LastEventAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		HeldAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		ResolvedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		ResolvedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		Version:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		UpdatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+	}
+}
+
+// FlowInstancesSchema returns the schema of edi_flow_instances.
+func FlowInstancesSchema() *schema.Table { return &flowInstancesTable }
+
+// As returns a handle that references edi_flow_instances under its own alias.
+func (t *FlowInstancesTable) As(alias string) *FlowInstancesTable {
+	return keel.Alias(t.Ref, alias, BuildFlowInstances)
+}
+
+// Partner is the belongs relation.
+func (t *FlowInstancesTable) Partner() *EDIPartnersTable {
+	return keel.Path(t.Ref, 0, BuildEDIPartners)
+}
+
+// Get returns the edi_flow_instances row with the given key, or keel.ErrNotFound.
+func (t *FlowInstancesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.FlowInstance, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newFlowInstance() unsafe.Pointer { return unsafe.Pointer(new(edi.FlowInstance)) }
+
+func newNFlowInstance(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]edi.FlowInstance, n)))
+}
+
+func ptrFlowInstance(p unsafe.Pointer, c int32) any {
+	r := (*edi.FlowInstance)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.EDIPartnerID))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.ProjectID))
+	case 5:
+		return (*string)(unsafe.Pointer(&r.VersionID))
+	case 6:
+		return &r.Flow
+	case 7:
+		return &r.Key
+	case 8:
+		return &r.State
+	case 9:
+		return (*string)(unsafe.Pointer(&r.Status))
+	case 10:
+		return &r.Reason
+	case 11:
+		return &r.WakeAt
+	case 12:
+		return (*string)(unsafe.Pointer(&r.ShipmentID))
+	case 13:
+		return (*string)(unsafe.Pointer(&r.TransferID))
+	case 14:
+		return &r.LastEventAt
+	case 15:
+		return &r.HeldAt
+	case 16:
+		return (*string)(unsafe.Pointer(&r.ResolvedByID))
+	case 17:
+		return &r.ResolvedAt
+	case 18:
+		return &r.Version
+	case 19:
+		return &r.CreatedAt
+	case 20:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueFlowInstance(p unsafe.Pointer, c int32) any {
+	r := (*edi.FlowInstance)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.EDIPartnerID)
+	case 4:
+		if r.ProjectID == "" {
+			return nil
+		}
+		return string(r.ProjectID)
+	case 5:
+		if r.VersionID == "" {
+			return nil
+		}
+		return string(r.VersionID)
+	case 6:
+		return r.Flow
+	case 7:
+		return r.Key
+	case 8:
+		if r.State == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.State
+	case 9:
+		return string(r.Status)
+	case 10:
+		if r.Reason == nil {
+			return nil
+		}
+		return *r.Reason
+	case 11:
+		if r.WakeAt == nil {
+			return nil
+		}
+		return *r.WakeAt
+	case 12:
+		if r.ShipmentID == "" {
+			return nil
+		}
+		return string(r.ShipmentID)
+	case 13:
+		if r.TransferID == "" {
+			return nil
+		}
+		return string(r.TransferID)
+	case 14:
+		return r.LastEventAt
+	case 15:
+		if r.HeldAt == nil {
+			return nil
+		}
+		return *r.HeldAt
+	case 16:
+		if r.ResolvedByID == "" {
+			return nil
+		}
+		return string(r.ResolvedByID)
+	case 17:
+		if r.ResolvedAt == nil {
+			return nil
+		}
+		return *r.ResolvedAt
+	case 18:
+		return r.Version
+	case 19:
+		return r.CreatedAt
+	case 20:
+		return r.UpdatedAt
+	}
+	return nil
+}
+
+func attachFlowInstance(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*edi.FlowInstance)(p)
+	switch rel {
+	case 0:
+		r.Partner = (*edi.EDIPartner)(child)
+	}
+}
+
+// ladingProjectsTable is the schema of edi.LadingProject.
+var ladingProjectsTable = schema.Table{
+	Name:   "edi_lading_projects",
+	Quoted: `"edi_lading_projects"`,
+	Alias:  "elp",
+	Model:  "edi.LadingProject",
+	Label:  `Lading Project`,
+	Plural: `Lading Projects`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "edi_partner_id", Quoted: `"edi_partner_id"`, Field: "EDIPartnerID", Kind: schema.KindString, Flags: 0, Label: `EDI Partner ID`, JSON: `ediPartnerId`},
+		{Name: "active_version_id", Quoted: `"active_version_id"`, Field: "ActiveVersionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Active Version ID`, JSON: `activeVersionId`},
+		{Name: "shadow_version_id", Quoted: `"shadow_version_id"`, Field: "ShadowVersionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shadow Version ID`, JSON: `shadowVersionId`},
+		{Name: "settings", Quoted: `"settings"`, Field: "Settings", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Settings`, JSON: `settings`},
+		{Name: "next_version_number", Quoted: `"next_version_number"`, Field: "NextVersionNumber", Kind: schema.KindInt64, Flags: 0, Label: `Next Version Number`, JSON: `nextVersionNumber`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	Relations: []schema.Relation{
+		{Name: "Partner", Alias: "p", Kind: schema.BelongsTo, Local: []int32{3}, Remote: []int32{0}, Label: `Partner`, JSON: `partner`},
+		{Name: "ActiveVersion", Alias: "av", Kind: schema.BelongsTo, Local: []int32{4}, Remote: []int32{0}, Label: `Active Version`, JSON: `activeVersion`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:     []int32{3, 4, 5, 6, 7, 10},
+	Returning:  nil,
+	Version:    8,
+	AutoID:     0,
+	AutoCreate: 9,
+	AutoUpdate: 10,
+	IDPrefix:   "ldp_",
+	New:        newLadingProject,
+	NewN:       newNLadingProject,
+	Size:       unsafe.Sizeof(edi.LadingProject{}),
+	Ptr:        ptrLadingProject,
+	Value:      valueLadingProject,
+	Attach:     attachLadingProject,
+}
+
+var ladingProjectsRef = keel.Ref{Table: &ladingProjectsTable}
+
+// LadingProjectsTable is the table of edi.LadingProject.
+type LadingProjectsTable struct {
+	keel.Handle[*edi.LadingProject]
+	ID                keelkinds.PulidIDCol
+	BusinessUnitID    keelkinds.PulidIDCol
+	OrganizationID    keelkinds.PulidIDCol
+	EDIPartnerID      keelkinds.PulidIDCol
+	ActiveVersionID   keelkinds.PulidIDCol
+	ShadowVersionID   keelkinds.PulidIDCol
+	Settings          keel.JSONBCol
+	NextVersionNumber keel.Int64Col
+	Version           keel.Int64Col
+	CreatedAt         keel.Int64Col
+	UpdatedAt         keel.Int64Col
+}
+
+// LadingProjects references the edi_lading_projects table.
+var LadingProjects = &LadingProjectsTable{
+	Handle:            keel.Handle[*edi.LadingProject]{Ref: &ladingProjectsRef},
+	ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 0}}},
+	BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 1}}},
+	OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 2}}},
+	EDIPartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 3}}},
+	ActiveVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 4}}},
+	ShadowVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 5}}},
+	Settings:          keel.JSONBCol{Col: keel.Col{Ref: &ladingProjectsRef, Index: 6}},
+	NextVersionNumber: keel.Int64Col{Col: keel.Col{Ref: &ladingProjectsRef, Index: 7}},
+	Version:           keel.Int64Col{Col: keel.Col{Ref: &ladingProjectsRef, Index: 8}},
+	CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: &ladingProjectsRef, Index: 9}},
+	UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: &ladingProjectsRef, Index: 10}},
+}
+
+// BuildLadingProjects builds the handle of edi_lading_projects for ref. Generated relation and alias methods call it.
+func BuildLadingProjects(r *keel.Ref) *LadingProjectsTable {
+	return &LadingProjectsTable{
+		Handle:            keel.Handle[*edi.LadingProject]{Ref: r},
+		ID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		EDIPartnerID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		ActiveVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		ShadowVersionID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Settings:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 6}},
+		NextVersionNumber: keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		Version:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		CreatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		UpdatedAt:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
+	}
+}
+
+// LadingProjectsSchema returns the schema of edi_lading_projects.
+func LadingProjectsSchema() *schema.Table { return &ladingProjectsTable }
+
+// As returns a handle that references edi_lading_projects under its own alias.
+func (t *LadingProjectsTable) As(alias string) *LadingProjectsTable {
+	return keel.Alias(t.Ref, alias, BuildLadingProjects)
+}
+
+// Partner is the belongs relation.
+func (t *LadingProjectsTable) Partner() *EDIPartnersTable {
+	return keel.Path(t.Ref, 0, BuildEDIPartners)
+}
+
+// ActiveVersion is the belongs relation.
+func (t *LadingProjectsTable) ActiveVersion() *LadingVersionsTable {
+	return keel.Path(t.Ref, 1, BuildLadingVersions)
+}
+
+// Get returns the edi_lading_projects row with the given key, or keel.ErrNotFound.
+func (t *LadingProjectsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.LadingProject, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newLadingProject() unsafe.Pointer { return unsafe.Pointer(new(edi.LadingProject)) }
+
+func newNLadingProject(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]edi.LadingProject, n)))
+}
+
+func ptrLadingProject(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingProject)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.EDIPartnerID))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.ActiveVersionID))
+	case 5:
+		return (*string)(unsafe.Pointer(&r.ShadowVersionID))
+	case 6:
+		return &r.Settings
+	case 7:
+		return &r.NextVersionNumber
+	case 8:
+		return &r.Version
+	case 9:
+		return &r.CreatedAt
+	case 10:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueLadingProject(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingProject)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.EDIPartnerID)
+	case 4:
+		if r.ActiveVersionID == "" {
+			return nil
+		}
+		return string(r.ActiveVersionID)
+	case 5:
+		if r.ShadowVersionID == "" {
+			return nil
+		}
+		return string(r.ShadowVersionID)
+	case 6:
+		if r.Settings == nil {
+			return keel.EmptyJSONObject
+		}
+		return r.Settings
+	case 7:
+		return r.NextVersionNumber
+	case 8:
+		return r.Version
+	case 9:
+		return r.CreatedAt
+	case 10:
+		return r.UpdatedAt
+	}
+	return nil
+}
+
+func attachLadingProject(p unsafe.Pointer, rel int32, child unsafe.Pointer) {
+	r := (*edi.LadingProject)(p)
+	switch rel {
+	case 0:
+		r.Partner = (*edi.EDIPartner)(child)
+	case 1:
+		r.ActiveVersion = (*edi.LadingVersion)(child)
+	}
+}
+
+// ladingReplaysTable is the schema of edi.LadingReplay.
+var ladingReplaysTable = schema.Table{
+	Name:   "edi_lading_replays",
+	Quoted: `"edi_lading_replays"`,
+	Alias:  "elr",
+	Model:  "edi.LadingReplay",
+	Label:  `Lading Replay`,
+	Plural: `Lading Replays`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "project_id", Quoted: `"project_id"`, Field: "ProjectID", Kind: schema.KindString, Flags: 0, Label: `Project ID`, JSON: `projectId`},
+		{Name: "version_id", Quoted: `"version_id"`, Field: "VersionID", Kind: schema.KindString, Flags: 0, Label: `Version ID`, JSON: `versionId`},
+		{Name: "against_version_id", Quoted: `"against_version_id"`, Field: "AgainstVersionID", Kind: schema.KindString, Flags: 0, Label: `Against Version ID`, JSON: `againstVersionId`},
+		{Name: "map", Quoted: `"map"`, Field: "Map", Kind: schema.KindString, Flags: 0, Label: `Map`, JSON: `map`},
+		{Name: "period_start", Quoted: `"period_start"`, Field: "PeriodStart", Kind: schema.KindInt64, Flags: 0, Label: `Period Start`, JSON: `periodStart`},
+		{Name: "period_end", Quoted: `"period_end"`, Field: "PeriodEnd", Kind: schema.KindInt64, Flags: 0, Label: `Period End`, JSON: `periodEnd`},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumLadingReplayStatus[:]},
+		{Name: "summary", Quoted: `"summary"`, Field: "Summary", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Summary`, JSON: `summary`},
+		{Name: "items", Quoted: `"items"`, Field: "Items", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Items`, JSON: `items`},
+		{Name: "error", Quoted: `"error"`, Field: "Error", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Error`, JSON: `error`},
+		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Created By ID`, JSON: `createdById`},
+		{Name: "finished_at", Quoted: `"finished_at"`, Field: "FinishedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Finished At`, JSON: `finishedAt`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17},
+	Returning:  nil,
+	Version:    15,
+	AutoID:     0,
+	AutoCreate: 16,
+	AutoUpdate: 17,
+	IDPrefix:   "ldr_",
+	New:        newLadingReplay,
+	NewN:       newNLadingReplay,
+	Size:       unsafe.Sizeof(edi.LadingReplay{}),
+	Ptr:        ptrLadingReplay,
+	Value:      valueLadingReplay,
+}
+
+var ladingReplaysRef = keel.Ref{Table: &ladingReplaysTable}
+
+// LadingReplaysTable is the table of edi.LadingReplay.
+type LadingReplaysTable struct {
+	keel.Handle[*edi.LadingReplay]
+	ID               keelkinds.PulidIDCol
+	BusinessUnitID   keelkinds.PulidIDCol
+	OrganizationID   keelkinds.PulidIDCol
+	ProjectID        keelkinds.PulidIDCol
+	VersionID        keelkinds.PulidIDCol
+	AgainstVersionID keelkinds.PulidIDCol
+	Map              keel.StringCol
+	PeriodStart      keel.Int64Col
+	PeriodEnd        keel.Int64Col
+	Status           LadingReplayStatusCol
+	Summary          keel.JSONBCol
+	Items            keel.JSONBCol
+	Error            keel.StringCol
+	CreatedByID      keelkinds.PulidIDCol
+	FinishedAt       keel.Int64Col
+	Version          keel.Int64Col
+	CreatedAt        keel.Int64Col
+	UpdatedAt        keel.Int64Col
+}
+
+// LadingReplays references the edi_lading_replays table.
+var LadingReplays = &LadingReplaysTable{
+	Handle:           keel.Handle[*edi.LadingReplay]{Ref: &ladingReplaysRef},
+	ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 0}}},
+	BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 1}}},
+	OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 2}}},
+	ProjectID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 3}}},
+	VersionID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 4}}},
+	AgainstVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 5}}},
+	Map:              keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 6}},
+	PeriodStart:      keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 7}},
+	PeriodEnd:        keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 8}},
+	Status:           LadingReplayStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 9}}},
+	Summary:          keel.JSONBCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 10}},
+	Items:            keel.JSONBCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 11}},
+	Error:            keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 12}},
+	CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingReplaysRef, Index: 13}}},
+	FinishedAt:       keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 14}},
+	Version:          keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 15}},
+	CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 16}},
+	UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: &ladingReplaysRef, Index: 17}},
+}
+
+// BuildLadingReplays builds the handle of edi_lading_replays for ref. Generated relation and alias methods call it.
+func BuildLadingReplays(r *keel.Ref) *LadingReplaysTable {
+	return &LadingReplaysTable{
+		Handle:           keel.Handle[*edi.LadingReplay]{Ref: r},
+		ID:               keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProjectID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		VersionID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		AgainstVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Map:              keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		PeriodStart:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+		PeriodEnd:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		Status:           LadingReplayStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		Summary:          keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
+		Items:            keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
+		Error:            keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
+		CreatedByID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 13}}},
+		FinishedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		Version:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 15}},
+		CreatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		UpdatedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+	}
+}
+
+// LadingReplaysSchema returns the schema of edi_lading_replays.
+func LadingReplaysSchema() *schema.Table { return &ladingReplaysTable }
+
+// As returns a handle that references edi_lading_replays under its own alias.
+func (t *LadingReplaysTable) As(alias string) *LadingReplaysTable {
+	return keel.Alias(t.Ref, alias, BuildLadingReplays)
+}
+
+// Get returns the edi_lading_replays row with the given key, or keel.ErrNotFound.
+func (t *LadingReplaysTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.LadingReplay, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newLadingReplay() unsafe.Pointer { return unsafe.Pointer(new(edi.LadingReplay)) }
+
+func newNLadingReplay(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]edi.LadingReplay, n)))
+}
+
+func ptrLadingReplay(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingReplay)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.ProjectID))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.VersionID))
+	case 5:
+		return (*string)(unsafe.Pointer(&r.AgainstVersionID))
+	case 6:
+		return &r.Map
+	case 7:
+		return &r.PeriodStart
+	case 8:
+		return &r.PeriodEnd
+	case 9:
+		return (*string)(unsafe.Pointer(&r.Status))
+	case 10:
+		return &r.Summary
+	case 11:
+		return &r.Items
+	case 12:
+		return &r.Error
+	case 13:
+		return (*string)(unsafe.Pointer(&r.CreatedByID))
+	case 14:
+		return &r.FinishedAt
+	case 15:
+		return &r.Version
+	case 16:
+		return &r.CreatedAt
+	case 17:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueLadingReplay(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingReplay)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.ProjectID)
+	case 4:
+		return string(r.VersionID)
+	case 5:
+		return string(r.AgainstVersionID)
+	case 6:
+		return r.Map
+	case 7:
+		return r.PeriodStart
+	case 8:
+		return r.PeriodEnd
+	case 9:
+		return string(r.Status)
+	case 10:
+		if r.Summary == nil {
+			return nil
+		}
+		return *r.Summary
+	case 11:
+		if r.Items == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Items
+	case 12:
+		if r.Error == "" {
+			return nil
+		}
+		return r.Error
+	case 13:
+		if r.CreatedByID == "" {
+			return nil
+		}
+		return string(r.CreatedByID)
+	case 14:
+		if r.FinishedAt == nil {
+			return nil
+		}
+		return *r.FinishedAt
+	case 15:
+		return r.Version
+	case 16:
+		return r.CreatedAt
+	case 17:
+		return r.UpdatedAt
+	}
+	return nil
+}
+
+// ladingSamplesTable is the schema of edi.LadingSample.
+var ladingSamplesTable = schema.Table{
+	Name:   "edi_lading_samples",
+	Quoted: `"edi_lading_samples"`,
+	Alias:  "els",
+	Model:  "edi.LadingSample",
+	Label:  `Lading Sample`,
+	Plural: `Lading Samples`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "project_id", Quoted: `"project_id"`, Field: "ProjectID", Kind: schema.KindString, Flags: 0, Label: `Project ID`, JSON: `projectId`},
+		{Name: "digest", Quoted: `"digest"`, Field: "Digest", Kind: schema.KindString, Flags: 0, Label: `Digest`, JSON: `digest`},
+		{Name: "size", Quoted: `"size"`, Field: "Size", Kind: schema.KindInt64, Flags: 0, Label: `Size`, JSON: `size`},
+		{Name: "content", Quoted: `"content"`, Field: "Content", Kind: schema.KindString, Flags: 0, Label: `Content`, JSON: `content`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7},
+	Update:     []int32{3, 4, 5, 6},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 7,
+	AutoUpdate: -1,
+	IDPrefix:   "lds_",
+	New:        newLadingSample,
+	NewN:       newNLadingSample,
+	Size:       unsafe.Sizeof(edi.LadingSample{}),
+	Ptr:        ptrLadingSample,
+	Value:      valueLadingSample,
+}
+
+var ladingSamplesRef = keel.Ref{Table: &ladingSamplesTable}
+
+// LadingSamplesTable is the table of edi.LadingSample.
+type LadingSamplesTable struct {
+	keel.Handle[*edi.LadingSample]
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	ProjectID      keelkinds.PulidIDCol
+	Digest         keel.StringCol
+	Size           keel.Int64Col
+	Content        keel.StringCol
+	CreatedAt      keel.Int64Col
+}
+
+// LadingSamples references the edi_lading_samples table.
+var LadingSamples = &LadingSamplesTable{
+	Handle:         keel.Handle[*edi.LadingSample]{Ref: &ladingSamplesRef},
+	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 2}}},
+	ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 3}}},
+	Digest:         keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 4}},
+	Size:           keel.Int64Col{Col: keel.Col{Ref: &ladingSamplesRef, Index: 5}},
+	Content:        keel.StringCol{Col: keel.Col{Ref: &ladingSamplesRef, Index: 6}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &ladingSamplesRef, Index: 7}},
+}
+
+// BuildLadingSamples builds the handle of edi_lading_samples for ref. Generated relation and alias methods call it.
+func BuildLadingSamples(r *keel.Ref) *LadingSamplesTable {
+	return &LadingSamplesTable{
+		Handle:         keel.Handle[*edi.LadingSample]{Ref: r},
+		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProjectID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Digest:         keel.StringCol{Col: keel.Col{Ref: r, Index: 4}},
+		Size:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 5}},
+		Content:        keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 7}},
+	}
+}
+
+// LadingSamplesSchema returns the schema of edi_lading_samples.
+func LadingSamplesSchema() *schema.Table { return &ladingSamplesTable }
+
+// As returns a handle that references edi_lading_samples under its own alias.
+func (t *LadingSamplesTable) As(alias string) *LadingSamplesTable {
+	return keel.Alias(t.Ref, alias, BuildLadingSamples)
+}
+
+// Get returns the edi_lading_samples row with the given key, or keel.ErrNotFound.
+func (t *LadingSamplesTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.LadingSample, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newLadingSample() unsafe.Pointer { return unsafe.Pointer(new(edi.LadingSample)) }
+
+func newNLadingSample(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]edi.LadingSample, n)))
+}
+
+func ptrLadingSample(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingSample)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.ProjectID))
+	case 4:
+		return &r.Digest
+	case 5:
+		return (*int64)(unsafe.Pointer(&r.Size))
+	case 6:
+		return &r.Content
+	case 7:
+		return &r.CreatedAt
+	}
+	return nil
+}
+
+func valueLadingSample(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingSample)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.ProjectID)
+	case 4:
+		return r.Digest
+	case 5:
+		return int64(r.Size)
+	case 6:
+		return r.Content
+	case 7:
+		return r.CreatedAt
+	}
+	return nil
+}
+
+// ladingShadowResultsTable is the schema of edi.LadingShadowResult.
+var ladingShadowResultsTable = schema.Table{
+	Name:   "edi_lading_shadow_results",
+	Quoted: `"edi_lading_shadow_results"`,
+	Alias:  "elsr",
+	Model:  "edi.LadingShadowResult",
+	Label:  `Lading Shadow Result`,
+	Plural: `Lading Shadow Results`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "version_id", Quoted: `"version_id"`, Field: "VersionID", Kind: schema.KindString, Flags: 0, Label: `Version ID`, JSON: `versionId`},
+		{Name: "message_id", Quoted: `"message_id"`, Field: "MessageID", Kind: schema.KindString, Flags: 0, Label: `Message ID`, JSON: `messageId`},
+		{Name: "transaction_set", Quoted: `"transaction_set"`, Field: "TransactionSet", Kind: schema.KindString, Flags: 0, Label: `Transaction Set`, JSON: `transactionSet`, Enum: enumTransactionSet[:]},
+		{Name: "same", Quoted: `"same"`, Field: "Same", Kind: schema.KindBool, Flags: 0, Label: `Same`, JSON: `same`},
+		{Name: "differences", Quoted: `"differences"`, Field: "Differences", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Differences`, JSON: `differences`},
+		{Name: "new_outcomes", Quoted: `"new_outcomes"`, Field: "NewOutcomes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `New Outcomes`, JSON: `newOutcomes`},
+		{Name: "gone_outcomes", Quoted: `"gone_outcomes"`, Field: "GoneOutcomes", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Gone Outcomes`, JSON: `goneOutcomes`},
+		{Name: "error", Quoted: `"error"`, Field: "Error", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Error`, JSON: `error`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10},
+	Returning:  nil,
+	Version:    -1,
+	AutoID:     0,
+	AutoCreate: 11,
+	AutoUpdate: -1,
+	IDPrefix:   "ldsh_",
+	New:        newLadingShadowResult,
+	NewN:       newNLadingShadowResult,
+	Size:       unsafe.Sizeof(edi.LadingShadowResult{}),
+	Ptr:        ptrLadingShadowResult,
+	Value:      valueLadingShadowResult,
+}
+
+var ladingShadowResultsRef = keel.Ref{Table: &ladingShadowResultsTable}
+
+// LadingShadowResultsTable is the table of edi.LadingShadowResult.
+type LadingShadowResultsTable struct {
+	keel.Handle[*edi.LadingShadowResult]
+	ID             keelkinds.PulidIDCol
+	BusinessUnitID keelkinds.PulidIDCol
+	OrganizationID keelkinds.PulidIDCol
+	VersionID      keelkinds.PulidIDCol
+	MessageID      keelkinds.PulidIDCol
+	TransactionSet TransactionSetCol
+	Same           keel.BoolCol
+	Differences    keel.JSONBCol
+	NewOutcomes    keel.JSONBCol
+	GoneOutcomes   keel.JSONBCol
+	Error          keel.StringCol
+	CreatedAt      keel.Int64Col
+}
+
+// LadingShadowResults references the edi_lading_shadow_results table.
+var LadingShadowResults = &LadingShadowResultsTable{
+	Handle:         keel.Handle[*edi.LadingShadowResult]{Ref: &ladingShadowResultsRef},
+	ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 0}}},
+	BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 1}}},
+	OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 2}}},
+	VersionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 3}}},
+	MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 4}}},
+	TransactionSet: TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 5}}},
+	Same:           keel.BoolCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 6}},
+	Differences:    keel.JSONBCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 7}},
+	NewOutcomes:    keel.JSONBCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 8}},
+	GoneOutcomes:   keel.JSONBCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 9}},
+	Error:          keel.StringCol{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 10}},
+	CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: &ladingShadowResultsRef, Index: 11}},
+}
+
+// BuildLadingShadowResults builds the handle of edi_lading_shadow_results for ref. Generated relation and alias methods call it.
+func BuildLadingShadowResults(r *keel.Ref) *LadingShadowResultsTable {
+	return &LadingShadowResultsTable{
+		Handle:         keel.Handle[*edi.LadingShadowResult]{Ref: r},
+		ID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		VersionID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		MessageID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		TransactionSet: TransactionSetCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		Same:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 6}},
+		Differences:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
+		NewOutcomes:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
+		GoneOutcomes:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
+		Error:          keel.StringCol{Col: keel.Col{Ref: r, Index: 10}},
+		CreatedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+	}
+}
+
+// LadingShadowResultsSchema returns the schema of edi_lading_shadow_results.
+func LadingShadowResultsSchema() *schema.Table { return &ladingShadowResultsTable }
+
+// As returns a handle that references edi_lading_shadow_results under its own alias.
+func (t *LadingShadowResultsTable) As(alias string) *LadingShadowResultsTable {
+	return keel.Alias(t.Ref, alias, BuildLadingShadowResults)
+}
+
+// Get returns the edi_lading_shadow_results row with the given key, or keel.ErrNotFound.
+func (t *LadingShadowResultsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.LadingShadowResult, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newLadingShadowResult() unsafe.Pointer { return unsafe.Pointer(new(edi.LadingShadowResult)) }
+
+func newNLadingShadowResult(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]edi.LadingShadowResult, n)))
+}
+
+func ptrLadingShadowResult(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingShadowResult)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.VersionID))
+	case 4:
+		return (*string)(unsafe.Pointer(&r.MessageID))
+	case 5:
+		return (*string)(unsafe.Pointer(&r.TransactionSet))
+	case 6:
+		return &r.Same
+	case 7:
+		return &r.Differences
+	case 8:
+		return &r.NewOutcomes
+	case 9:
+		return &r.GoneOutcomes
+	case 10:
+		return &r.Error
+	case 11:
+		return &r.CreatedAt
+	}
+	return nil
+}
+
+func valueLadingShadowResult(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingShadowResult)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.VersionID)
+	case 4:
+		return string(r.MessageID)
+	case 5:
+		return string(r.TransactionSet)
+	case 6:
+		return r.Same
+	case 7:
+		if r.Differences == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Differences
+	case 8:
+		if r.NewOutcomes == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.NewOutcomes
+	case 9:
+		if r.GoneOutcomes == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.GoneOutcomes
+	case 10:
+		if r.Error == "" {
+			return nil
+		}
+		return r.Error
+	case 11:
+		return r.CreatedAt
+	}
+	return nil
+}
+
+// ladingVersionsTable is the schema of edi.LadingVersion.
+var ladingVersionsTable = schema.Table{
+	Name:   "edi_lading_versions",
+	Quoted: `"edi_lading_versions"`,
+	Alias:  "elv",
+	Model:  "edi.LadingVersion",
+	Label:  `Lading Version`,
+	Plural: `Lading Versions`,
+	Columns: []schema.Column{
+		{Name: "id", Quoted: `"id"`, Field: "ID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagAutoID, Label: `ID`, JSON: `id`},
+		{Name: "business_unit_id", Quoted: `"business_unit_id"`, Field: "BusinessUnitID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Business Unit ID`, JSON: `businessUnitId`},
+		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
+		{Name: "project_id", Quoted: `"project_id"`, Field: "ProjectID", Kind: schema.KindString, Flags: 0, Label: `Project ID`, JSON: `projectId`},
+		{Name: "number", Quoted: `"number"`, Field: "Number", Kind: schema.KindInt64, Flags: 0, Label: `Number`, JSON: `number`},
+		{Name: "status", Quoted: `"status"`, Field: "Status", Kind: schema.KindString, Flags: 0, Label: `Status`, JSON: `status`, Enum: enumLadingVersionStatus[:]},
+		{Name: "parent_version_id", Quoted: `"parent_version_id"`, Field: "ParentVersionID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Parent Version ID`, JSON: `parentVersionId`},
+		{Name: "files", Quoted: `"files"`, Field: "Files", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Files`, JSON: `files`},
+		{Name: "samples", Quoted: `"samples"`, Field: "Samples", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Samples`, JSON: `samples`},
+		{Name: "manifest", Quoted: `"manifest"`, Field: "Manifest", Kind: schema.KindJSON, Flags: schema.FlagJSONB, Label: `Manifest`, JSON: `manifest`},
+		{Name: "readiness", Quoted: `"readiness"`, Field: "Readiness", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Readiness`, JSON: `readiness`},
+		{Name: "notes", Quoted: `"notes"`, Field: "Notes", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Notes`, JSON: `notes`},
+		{Name: "error_count", Quoted: `"error_count"`, Field: "ErrorCount", Kind: schema.KindInt64, Flags: 0, Label: `Error Count`, JSON: `errorCount`},
+		{Name: "warning_count", Quoted: `"warning_count"`, Field: "WarningCount", Kind: schema.KindInt64, Flags: 0, Label: `Warning Count`, JSON: `warningCount`},
+		{Name: "shadow_until", Quoted: `"shadow_until"`, Field: "ShadowUntil", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Shadow Until`, JSON: `shadowUntil`},
+		{Name: "created_by_id", Quoted: `"created_by_id"`, Field: "CreatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Created By ID`, JSON: `createdById`},
+		{Name: "certified_by_id", Quoted: `"certified_by_id"`, Field: "CertifiedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Certified By ID`, JSON: `certifiedById`},
+		{Name: "certified_at", Quoted: `"certified_at"`, Field: "CertifiedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Certified At`, JSON: `certifiedAt`},
+		{Name: "activated_by_id", Quoted: `"activated_by_id"`, Field: "ActivatedByID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Activated By ID`, JSON: `activatedById`},
+		{Name: "activated_at", Quoted: `"activated_at"`, Field: "ActivatedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Activated At`, JSON: `activatedAt`},
+		{Name: "superseded_at", Quoted: `"superseded_at"`, Field: "SupersededAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Superseded At`, JSON: `supersededAt`},
+		{Name: "archived_at", Quoted: `"archived_at"`, Field: "ArchivedAt", Kind: schema.KindInt64, Flags: schema.FlagNullable, Label: `Archived At`, JSON: `archivedAt`},
+		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`},
+		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`},
+		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`},
+	},
+	PK:         []int32{0, 1, 2},
+	Tenant:     []int32{1, 2},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24},
+	Update:     []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 24},
+	Returning:  nil,
+	Version:    22,
+	AutoID:     0,
+	AutoCreate: 23,
+	AutoUpdate: 24,
+	IDPrefix:   "ldv_",
+	New:        newLadingVersion,
+	NewN:       newNLadingVersion,
+	Size:       unsafe.Sizeof(edi.LadingVersion{}),
+	Ptr:        ptrLadingVersion,
+	Value:      valueLadingVersion,
+}
+
+var ladingVersionsRef = keel.Ref{Table: &ladingVersionsTable}
+
+// LadingVersionsTable is the table of edi.LadingVersion.
+type LadingVersionsTable struct {
+	keel.Handle[*edi.LadingVersion]
+	ID              keelkinds.PulidIDCol
+	BusinessUnitID  keelkinds.PulidIDCol
+	OrganizationID  keelkinds.PulidIDCol
+	ProjectID       keelkinds.PulidIDCol
+	Number          keel.Int64Col
+	Status          LadingVersionStatusCol
+	ParentVersionID keelkinds.PulidIDCol
+	Files           keel.JSONBCol
+	Samples         keel.JSONBCol
+	Manifest        keel.JSONBCol
+	Readiness       keel.JSONBCol
+	Notes           keel.StringCol
+	ErrorCount      keel.Int64Col
+	WarningCount    keel.Int64Col
+	ShadowUntil     keel.Int64Col
+	CreatedByID     keelkinds.PulidIDCol
+	CertifiedByID   keelkinds.PulidIDCol
+	CertifiedAt     keel.Int64Col
+	ActivatedByID   keelkinds.PulidIDCol
+	ActivatedAt     keel.Int64Col
+	SupersededAt    keel.Int64Col
+	ArchivedAt      keel.Int64Col
+	Version         keel.Int64Col
+	CreatedAt       keel.Int64Col
+	UpdatedAt       keel.Int64Col
+}
+
+// LadingVersions references the edi_lading_versions table.
+var LadingVersions = &LadingVersionsTable{
+	Handle:          keel.Handle[*edi.LadingVersion]{Ref: &ladingVersionsRef},
+	ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 0}}},
+	BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 1}}},
+	OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 2}}},
+	ProjectID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 3}}},
+	Number:          keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 4}},
+	Status:          LadingVersionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 5}}},
+	ParentVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 6}}},
+	Files:           keel.JSONBCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 7}},
+	Samples:         keel.JSONBCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 8}},
+	Manifest:        keel.JSONBCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 9}},
+	Readiness:       keel.JSONBCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 10}},
+	Notes:           keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 11}},
+	ErrorCount:      keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 12}},
+	WarningCount:    keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 13}},
+	ShadowUntil:     keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 14}},
+	CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 15}}},
+	CertifiedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 16}}},
+	CertifiedAt:     keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 17}},
+	ActivatedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &ladingVersionsRef, Index: 18}}},
+	ActivatedAt:     keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 19}},
+	SupersededAt:    keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 20}},
+	ArchivedAt:      keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 21}},
+	Version:         keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 22}},
+	CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 23}},
+	UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: &ladingVersionsRef, Index: 24}},
+}
+
+// BuildLadingVersions builds the handle of edi_lading_versions for ref. Generated relation and alias methods call it.
+func BuildLadingVersions(r *keel.Ref) *LadingVersionsTable {
+	return &LadingVersionsTable{
+		Handle:          keel.Handle[*edi.LadingVersion]{Ref: r},
+		ID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		ProjectID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		Number:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 4}},
+		Status:          LadingVersionStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		ParentVersionID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		Files:           keel.JSONBCol{Col: keel.Col{Ref: r, Index: 7}},
+		Samples:         keel.JSONBCol{Col: keel.Col{Ref: r, Index: 8}},
+		Manifest:        keel.JSONBCol{Col: keel.Col{Ref: r, Index: 9}},
+		Readiness:       keel.JSONBCol{Col: keel.Col{Ref: r, Index: 10}},
+		Notes:           keel.StringCol{Col: keel.Col{Ref: r, Index: 11}},
+		ErrorCount:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 12}},
+		WarningCount:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		ShadowUntil:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
+		CreatedByID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		CertifiedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
+		CertifiedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		ActivatedByID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 18}}},
+		ActivatedAt:     keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		SupersededAt:    keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
+		ArchivedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		Version:         keel.Int64Col{Col: keel.Col{Ref: r, Index: 22}},
+		CreatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 23}},
+		UpdatedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
+	}
+}
+
+// LadingVersionsSchema returns the schema of edi_lading_versions.
+func LadingVersionsSchema() *schema.Table { return &ladingVersionsTable }
+
+// As returns a handle that references edi_lading_versions under its own alias.
+func (t *LadingVersionsTable) As(alias string) *LadingVersionsTable {
+	return keel.Alias(t.Ref, alias, BuildLadingVersions)
+}
+
+// Get returns the edi_lading_versions row with the given key, or keel.ErrNotFound.
+func (t *LadingVersionsTable) Get(ctx context.Context, db *keel.DB, key pulid.ID) (*edi.LadingVersion, error) {
+	return t.Where(t.ID.Eq(key)).One(ctx, db)
+}
+
+func newLadingVersion() unsafe.Pointer { return unsafe.Pointer(new(edi.LadingVersion)) }
+
+func newNLadingVersion(n int) unsafe.Pointer {
+	return unsafe.Pointer(unsafe.SliceData(make([]edi.LadingVersion, n)))
+}
+
+func ptrLadingVersion(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingVersion)(p)
+	switch c {
+	case 0:
+		return (*string)(unsafe.Pointer(&r.ID))
+	case 1:
+		return (*string)(unsafe.Pointer(&r.BusinessUnitID))
+	case 2:
+		return (*string)(unsafe.Pointer(&r.OrganizationID))
+	case 3:
+		return (*string)(unsafe.Pointer(&r.ProjectID))
+	case 4:
+		return &r.Number
+	case 5:
+		return (*string)(unsafe.Pointer(&r.Status))
+	case 6:
+		return (*string)(unsafe.Pointer(&r.ParentVersionID))
+	case 7:
+		return &r.Files
+	case 8:
+		return &r.Samples
+	case 9:
+		return &r.Manifest
+	case 10:
+		return &r.Readiness
+	case 11:
+		return &r.Notes
+	case 12:
+		return (*int64)(unsafe.Pointer(&r.ErrorCount))
+	case 13:
+		return (*int64)(unsafe.Pointer(&r.WarningCount))
+	case 14:
+		return &r.ShadowUntil
+	case 15:
+		return (*string)(unsafe.Pointer(&r.CreatedByID))
+	case 16:
+		return (*string)(unsafe.Pointer(&r.CertifiedByID))
+	case 17:
+		return &r.CertifiedAt
+	case 18:
+		return (*string)(unsafe.Pointer(&r.ActivatedByID))
+	case 19:
+		return &r.ActivatedAt
+	case 20:
+		return &r.SupersededAt
+	case 21:
+		return &r.ArchivedAt
+	case 22:
+		return &r.Version
+	case 23:
+		return &r.CreatedAt
+	case 24:
+		return &r.UpdatedAt
+	}
+	return nil
+}
+
+func valueLadingVersion(p unsafe.Pointer, c int32) any {
+	r := (*edi.LadingVersion)(p)
+	switch c {
+	case 0:
+		return string(r.ID)
+	case 1:
+		return string(r.BusinessUnitID)
+	case 2:
+		return string(r.OrganizationID)
+	case 3:
+		return string(r.ProjectID)
+	case 4:
+		return r.Number
+	case 5:
+		return string(r.Status)
+	case 6:
+		if r.ParentVersionID == "" {
+			return nil
+		}
+		return string(r.ParentVersionID)
+	case 7:
+		if r.Files == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Files
+	case 8:
+		if r.Samples == nil {
+			return keel.EmptyJSONArray
+		}
+		return r.Samples
+	case 9:
+		return r.Manifest
+	case 10:
+		if r.Readiness == nil {
+			return nil
+		}
+		return *r.Readiness
+	case 11:
+		if r.Notes == "" {
+			return nil
+		}
+		return r.Notes
+	case 12:
+		return int64(r.ErrorCount)
+	case 13:
+		return int64(r.WarningCount)
+	case 14:
+		if r.ShadowUntil == nil {
+			return nil
+		}
+		return *r.ShadowUntil
+	case 15:
+		if r.CreatedByID == "" {
+			return nil
+		}
+		return string(r.CreatedByID)
+	case 16:
+		if r.CertifiedByID == "" {
+			return nil
+		}
+		return string(r.CertifiedByID)
+	case 17:
+		if r.CertifiedAt == nil {
+			return nil
+		}
+		return *r.CertifiedAt
+	case 18:
+		if r.ActivatedByID == "" {
+			return nil
+		}
+		return string(r.ActivatedByID)
+	case 19:
+		if r.ActivatedAt == nil {
+			return nil
+		}
+		return *r.ActivatedAt
+	case 20:
+		if r.SupersededAt == nil {
+			return nil
+		}
+		return *r.SupersededAt
+	case 21:
+		if r.ArchivedAt == nil {
+			return nil
+		}
+		return *r.ArchivedAt
+	case 22:
+		return r.Version
+	case 23:
+		return r.CreatedAt
+	case 24:
+		return r.UpdatedAt
+	}
+	return nil
 }
 
 // shipmentLinksTable is the schema of edi.ShipmentLink.
@@ -7176,7 +6149,6 @@ var tenderRecipientsTable = schema.Table{
 		{Name: "recipient_kind", Quoted: `"recipient_kind"`, Field: "RecipientKind", Kind: schema.KindString, Flags: 0, Label: `Recipient Kind`, JSON: `recipientKind`, Enum: enumTenderRecipientKind[:]},
 		{Name: "recipient_organization_id", Quoted: `"recipient_organization_id"`, Field: "RecipientOrganizationID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Recipient Organization ID`, JSON: `recipientOrganizationId`},
 		{Name: "edi_partner_id", Quoted: `"edi_partner_id"`, Field: "EDIPartnerID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `EDI Partner ID`, JSON: `ediPartnerId`},
-		{Name: "partner_document_profile_id", Quoted: `"partner_document_profile_id"`, Field: "PartnerDocumentProfileID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Partner Document Profile ID`, JSON: `partnerDocumentProfileId`},
 		{Name: "communication_profile_id", Quoted: `"communication_profile_id"`, Field: "CommunicationProfileID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Communication Profile ID`, JSON: `communicationProfileId`},
 		{Name: "original_transfer_id", Quoted: `"original_transfer_id"`, Field: "OriginalTransferID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Original Transfer ID`, JSON: `originalTransferId`},
 		{Name: "shipment_link_id", Quoted: `"shipment_link_id"`, Field: "ShipmentLinkID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Shipment Link ID`, JSON: `shipmentLinkId`},
@@ -7192,14 +6164,14 @@ var tenderRecipientsTable = schema.Table{
 	},
 	PK:           []int32{0, 1},
 	Tenant:       []int32{1},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
-	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18},
+	Update:       []int32{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 18},
 	Returning:    nil,
-	Version:      17,
+	Version:      16,
 	AutoID:       0,
-	AutoCreate:   18,
-	AutoUpdate:   19,
+	AutoCreate:   17,
+	AutoUpdate:   18,
 	IDPrefix:     "editr_",
 	New:          newTenderRecipient,
 	NewN:         newNTenderRecipient,
@@ -7216,77 +6188,74 @@ var tenderRecipientsRef = keel.Ref{Table: &tenderRecipientsTable}
 // TenderRecipientsTable is the table of edi.TenderRecipient.
 type TenderRecipientsTable struct {
 	keel.Handle[*edi.TenderRecipient]
-	ID                       keelkinds.PulidIDCol
-	BusinessUnitID           keelkinds.PulidIDCol
-	SourceOrganizationID     keelkinds.PulidIDCol
-	SourceShipmentID         keelkinds.PulidIDCol
-	RecipientKind            TenderRecipientKindCol
-	RecipientOrganizationID  keelkinds.PulidIDCol
-	EDIPartnerID             keelkinds.PulidIDCol
-	PartnerDocumentProfileID keelkinds.PulidIDCol
-	CommunicationProfileID   keelkinds.PulidIDCol
-	OriginalTransferID       keelkinds.PulidIDCol
-	ShipmentLinkID           keelkinds.PulidIDCol
-	OriginalMessageID        keelkinds.PulidIDCol
-	LatestBaselinePayload    keel.JSONBCol
-	LatestBaselineHash       keel.StringCol
-	BaselineRecordedAt       keel.Int64Col
-	BaselineStatus           TenderRecipientBaselineStatusCol
-	Status                   TenderRecipientStatusCol
-	Version                  keel.Int64Col
-	CreatedAt                keel.Int64Col
-	UpdatedAt                keel.Int64Col
+	ID                      keelkinds.PulidIDCol
+	BusinessUnitID          keelkinds.PulidIDCol
+	SourceOrganizationID    keelkinds.PulidIDCol
+	SourceShipmentID        keelkinds.PulidIDCol
+	RecipientKind           TenderRecipientKindCol
+	RecipientOrganizationID keelkinds.PulidIDCol
+	EDIPartnerID            keelkinds.PulidIDCol
+	CommunicationProfileID  keelkinds.PulidIDCol
+	OriginalTransferID      keelkinds.PulidIDCol
+	ShipmentLinkID          keelkinds.PulidIDCol
+	OriginalMessageID       keelkinds.PulidIDCol
+	LatestBaselinePayload   keel.JSONBCol
+	LatestBaselineHash      keel.StringCol
+	BaselineRecordedAt      keel.Int64Col
+	BaselineStatus          TenderRecipientBaselineStatusCol
+	Status                  TenderRecipientStatusCol
+	Version                 keel.Int64Col
+	CreatedAt               keel.Int64Col
+	UpdatedAt               keel.Int64Col
 }
 
 // TenderRecipients references the edi_tender_recipients table.
 var TenderRecipients = &TenderRecipientsTable{
-	Handle:                   keel.Handle[*edi.TenderRecipient]{Ref: &tenderRecipientsRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 1}}},
-	SourceOrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 2}}},
-	SourceShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 3}}},
-	RecipientKind:            TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 4}}},
-	RecipientOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 5}}},
-	EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 6}}},
-	PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 7}}},
-	CommunicationProfileID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 8}}},
-	OriginalTransferID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 9}}},
-	ShipmentLinkID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 10}}},
-	OriginalMessageID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 11}}},
-	LatestBaselinePayload:    keel.JSONBCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 12}},
-	LatestBaselineHash:       keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 13}},
-	BaselineRecordedAt:       keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 14}},
-	BaselineStatus:           TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 15}}},
-	Status:                   TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 16}}},
-	Version:                  keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 17}},
-	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 18}},
-	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 19}},
+	Handle:                  keel.Handle[*edi.TenderRecipient]{Ref: &tenderRecipientsRef},
+	ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 0}}},
+	BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 1}}},
+	SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 2}}},
+	SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 3}}},
+	RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 4}}},
+	RecipientOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 5}}},
+	EDIPartnerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 6}}},
+	CommunicationProfileID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 7}}},
+	OriginalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 8}}},
+	ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 9}}},
+	OriginalMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 10}}},
+	LatestBaselinePayload:   keel.JSONBCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 11}},
+	LatestBaselineHash:      keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 12}},
+	BaselineRecordedAt:      keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 13}},
+	BaselineStatus:          TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 14}}},
+	Status:                  TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 15}}},
+	Version:                 keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 16}},
+	CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 17}},
+	UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: &tenderRecipientsRef, Index: 18}},
 }
 
 // BuildTenderRecipients builds the handle of edi_tender_recipients for ref. Generated relation and alias methods call it.
 func BuildTenderRecipients(r *keel.Ref) *TenderRecipientsTable {
 	return &TenderRecipientsTable{
-		Handle:                   keel.Handle[*edi.TenderRecipient]{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		SourceOrganizationID:     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		SourceShipmentID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		RecipientKind:            TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		RecipientOrganizationID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
-		CommunicationProfileID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
-		OriginalTransferID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
-		ShipmentLinkID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
-		OriginalMessageID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 11}}},
-		LatestBaselinePayload:    keel.JSONBCol{Col: keel.Col{Ref: r, Index: 12}},
-		LatestBaselineHash:       keel.StringCol{Col: keel.Col{Ref: r, Index: 13}},
-		BaselineRecordedAt:       keel.Int64Col{Col: keel.Col{Ref: r, Index: 14}},
-		BaselineStatus:           TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
-		Status:                   TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 16}}},
-		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
-		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
-		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 19}},
+		Handle:                  keel.Handle[*edi.TenderRecipient]{Ref: r},
+		ID:                      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		SourceOrganizationID:    keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		SourceShipmentID:        keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		RecipientKind:           TenderRecipientKindCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		RecipientOrganizationID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		EDIPartnerID:            keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
+		CommunicationProfileID:  keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 7}}},
+		OriginalTransferID:      keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 8}}},
+		ShipmentLinkID:          keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 9}}},
+		OriginalMessageID:       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 10}}},
+		LatestBaselinePayload:   keel.JSONBCol{Col: keel.Col{Ref: r, Index: 11}},
+		LatestBaselineHash:      keel.StringCol{Col: keel.Col{Ref: r, Index: 12}},
+		BaselineRecordedAt:      keel.Int64Col{Col: keel.Col{Ref: r, Index: 13}},
+		BaselineStatus:          TenderRecipientBaselineStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 14}}},
+		Status:                  TenderRecipientStatusCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 15}}},
+		Version:                 keel.Int64Col{Col: keel.Col{Ref: r, Index: 16}},
+		CreatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 17}},
+		UpdatedAt:               keel.Int64Col{Col: keel.Col{Ref: r, Index: 18}},
 	}
 }
 
@@ -7327,30 +6296,28 @@ func ptrTenderRecipient(p unsafe.Pointer, c int32) any {
 	case 6:
 		return (*string)(unsafe.Pointer(&r.EDIPartnerID))
 	case 7:
-		return (*string)(unsafe.Pointer(&r.PartnerDocumentProfileID))
-	case 8:
 		return (*string)(unsafe.Pointer(&r.CommunicationProfileID))
-	case 9:
+	case 8:
 		return (*string)(unsafe.Pointer(&r.OriginalTransferID))
-	case 10:
+	case 9:
 		return (*string)(unsafe.Pointer(&r.ShipmentLinkID))
-	case 11:
+	case 10:
 		return (*string)(unsafe.Pointer(&r.OriginalMessageID))
-	case 12:
+	case 11:
 		return &r.LatestBaselinePayload
-	case 13:
+	case 12:
 		return &r.LatestBaselineHash
-	case 14:
+	case 13:
 		return &r.BaselineRecordedAt
-	case 15:
+	case 14:
 		return (*string)(unsafe.Pointer(&r.BaselineStatus))
-	case 16:
+	case 15:
 		return (*string)(unsafe.Pointer(&r.Status))
-	case 17:
+	case 16:
 		return &r.Version
-	case 18:
+	case 17:
 		return &r.CreatedAt
-	case 19:
+	case 18:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -7380,45 +6347,40 @@ func valueTenderRecipient(p unsafe.Pointer, c int32) any {
 		}
 		return string(r.EDIPartnerID)
 	case 7:
-		if r.PartnerDocumentProfileID == "" {
-			return nil
-		}
-		return string(r.PartnerDocumentProfileID)
-	case 8:
 		if r.CommunicationProfileID == "" {
 			return nil
 		}
 		return string(r.CommunicationProfileID)
-	case 9:
+	case 8:
 		if r.OriginalTransferID == "" {
 			return nil
 		}
 		return string(r.OriginalTransferID)
-	case 10:
+	case 9:
 		if r.ShipmentLinkID == "" {
 			return nil
 		}
 		return string(r.ShipmentLinkID)
-	case 11:
+	case 10:
 		if r.OriginalMessageID == "" {
 			return nil
 		}
 		return string(r.OriginalMessageID)
-	case 12:
+	case 11:
 		return r.LatestBaselinePayload
-	case 13:
+	case 12:
 		return r.LatestBaselineHash
-	case 14:
+	case 13:
 		return r.BaselineRecordedAt
-	case 15:
+	case 14:
 		return string(r.BaselineStatus)
-	case 16:
+	case 15:
 		return string(r.Status)
-	case 17:
+	case 16:
 		return r.Version
-	case 18:
+	case 17:
 		return r.CreatedAt
-	case 19:
+	case 18:
 		return r.UpdatedAt
 	}
 	return nil
@@ -7757,36 +6719,19 @@ func init() {
 	eDIMappingProfileItemsTable.Relations[1].Target = EDIMappingProfilesSchema()
 	eDIMessagesTable.Relations[0].Target = EDIPartnersSchema()
 	eDIMessagesTable.Relations[1].Target = EDIDocumentTypesSchema()
-	eDIMessagesTable.Relations[2].Target = EDIPartnerDocumentProfilesSchema()
-	eDIMessagesTable.Relations[3].Target = EDITemplatesSchema()
-	eDIMessagesTable.Relations[4].Target = EDITemplateVersionsSchema()
-	eDIMessagesTable.Relations[5].Target = EDIMessageValidationErrorsSchema()
+	eDIMessagesTable.Relations[2].Target = LadingVersionsSchema()
+	eDIMessagesTable.Relations[3].Target = EDIMessageValidationErrorsSchema()
 	eDIPartnersTable.Relations[0].Target = tenantdb.OrganizationsSchema()
 	eDIPartnersTable.Relations[1].Target = customerdb.CustomersSchema()
 	eDIPartnersTable.Relations[2].Target = EDIConnectionsSchema()
 	eDIPartnersTable.Relations[3].Target = EDICommunicationProfilesSchema()
 	eDIPartnersTable.Relations[4].Target = EDIMappingProfilesSchema()
 	eDIPartnersTable.Relations[5].Target = EDIMappingProfileItemsSchema()
-	eDIPartnerDocumentProfilesTable.Relations[0].Target = EDIPartnersSchema()
-	eDIPartnerDocumentProfilesTable.Relations[1].Target = EDIDocumentTypesSchema()
-	eDIPartnerDocumentProfilesTable.Relations[2].Target = EDIPartnerSettingSchemasSchema()
-	eDIPartnerDocumentProfilesTable.Relations[3].Target = EDITemplatesSchema()
-	eDIPartnerDocumentProfilesTable.Relations[4].Target = EDITemplateVersionsSchema()
-	eDIPartnerSettingFieldsTable.Relations[0].Target = EDIPartnerSettingSchemasSchema()
-	eDIPartnerSettingSchemasTable.Relations[0].Target = EDIPartnerSettingFieldsSchema()
-	eDISourceContextFieldsTable.Relations[0].Target = EDISourceContextSchemasSchema()
-	eDISourceContextSchemasTable.Relations[0].Target = EDISourceContextFieldsSchema()
-	eDITemplatesTable.Relations[0].Target = EDIDocumentTypesSchema()
-	eDITemplatesTable.Relations[1].Target = EDITemplateVersionsSchema()
-	eDITemplatesTable.Relations[2].Target = EDITemplateVersionsSchema()
-	eDITemplateScriptLibrariesTable.Relations[0].Target = EDITemplateVersionsSchema()
-	eDITemplateVersionsTable.Relations[0].Target = EDITemplatesSchema()
-	eDITemplateVersionsTable.Relations[1].Target = EDITemplateVersionsSchema()
-	eDITemplateVersionsTable.Relations[2].Target = EDITemplateSegmentsSchema()
-	eDITemplateVersionsTable.Relations[3].Target = EDITemplateScriptLibrariesSchema()
-	eDITestCasesTable.Relations[0].Target = EDIPartnerDocumentProfilesSchema()
 	eDITransfersTable.Relations[0].Target = EDIPartnersSchema()
 	eDITransfersTable.Relations[1].Target = EDIPartnersSchema()
+	flowInstancesTable.Relations[0].Target = EDIPartnersSchema()
+	ladingProjectsTable.Relations[0].Target = EDIPartnersSchema()
+	ladingProjectsTable.Relations[1].Target = LadingVersionsSchema()
 	tenderChangesTable.Relations[0].Target = TenderRecipientsSchema()
 }
 
@@ -7840,6 +6785,13 @@ var enumEDIStandard = [...]schema.EnumValue{
 	{Value: `X12`, Label: `X 12`},
 }
 
+var enumFlowInstanceStatus = [...]schema.EnumValue{
+	{Value: `Open`, Label: `Open`},
+	{Value: `Held`, Label: `Held`},
+	{Value: `Escalated`, Label: `Escalated`},
+	{Value: `Closed`, Label: `Closed`},
+}
+
 var enumInboundFileStatus = [...]schema.EnumValue{
 	{Value: `Received`, Label: `Received`},
 	{Value: `Parsed`, Label: `Parsed`},
@@ -7847,6 +6799,21 @@ var enumInboundFileStatus = [...]schema.EnumValue{
 	{Value: `PartiallyProcessed`, Label: `Partially Processed`},
 	{Value: `Quarantined`, Label: `Quarantined`},
 	{Value: `Duplicate`, Label: `Duplicate`},
+}
+
+var enumLadingReplayStatus = [...]schema.EnumValue{
+	{Value: `Running`, Label: `Running`},
+	{Value: `Completed`, Label: `Completed`},
+	{Value: `Failed`, Label: `Failed`},
+}
+
+var enumLadingVersionStatus = [...]schema.EnumValue{
+	{Value: `Draft`, Label: `Draft`},
+	{Value: `Certified`, Label: `Certified`},
+	{Value: `Active`, Label: `Active`},
+	{Value: `Shadow`, Label: `Shadow`},
+	{Value: `Superseded`, Label: `Superseded`},
+	{Value: `Archived`, Label: `Archived`},
 }
 
 var enumMappingEntityType = [...]schema.EnumValue{
@@ -7887,30 +6854,6 @@ var enumPartnerKind = [...]schema.EnumValue{
 	{Value: `External`, Label: `External`},
 }
 
-var enumPartnerSettingDataType = [...]schema.EnumValue{
-	{Value: `string`, Label: `String`},
-	{Value: `number`, Label: `Number`},
-	{Value: `integer`, Label: `Integer`},
-	{Value: `boolean`, Label: `Boolean`},
-	{Value: `decimal`, Label: `Decimal`},
-	{Value: `enum`, Label: `Enum`},
-	{Value: `object`, Label: `Object`},
-	{Value: `array`, Label: `Array`},
-	{Value: `map`, Label: `Map`},
-	{Value: `secret`, Label: `Secret`},
-	{Value: `unknown`, Label: `Unknown`},
-}
-
-var enumPartnerSettingStatus = [...]schema.EnumValue{
-	{Value: `Active`, Label: `Active`},
-	{Value: `Deprecated`, Label: `Deprecated`},
-	{Value: `Future`, Label: `Future`},
-}
-
-var enumScriptLanguage = [...]schema.EnumValue{
-	{Value: `Starlark`, Label: `Starlark`},
-}
-
 var enumShipmentLinkStatus = [...]schema.EnumValue{
 	{Value: `Active`, Label: `Active`},
 	{Value: `Suspended`, Label: `Suspended`},
@@ -7922,48 +6865,6 @@ var enumShipmentSyncPolicy = [...]schema.EnumValue{
 	{Value: `AutoOperational`, Label: `Auto Operational`},
 	{Value: `AutoAllSafe`, Label: `Auto All Safe`},
 	{Value: `ReadOnly`, Label: `Read Only`},
-}
-
-var enumSourceContextDataType = [...]schema.EnumValue{
-	{Value: `string`, Label: `String`},
-	{Value: `number`, Label: `Number`},
-	{Value: `integer`, Label: `Integer`},
-	{Value: `boolean`, Label: `Boolean`},
-	{Value: `timestamp`, Label: `Timestamp`},
-	{Value: `date`, Label: `Date`},
-	{Value: `decimal`, Label: `Decimal`},
-	{Value: `object`, Label: `Object`},
-	{Value: `array`, Label: `Array`},
-	{Value: `unknown`, Label: `Unknown`},
-}
-
-var enumSourceContextFieldStatus = [...]schema.EnumValue{
-	{Value: `Active`, Label: `Active`},
-	{Value: `Deprecated`, Label: `Deprecated`},
-	{Value: `Future`, Label: `Future`},
-}
-
-var enumSourceContextKind = [...]schema.EnumValue{
-	{Value: `shipment`, Label: `Shipment`},
-	{Value: `repeat`, Label: `Repeat`},
-	{Value: `partner`, Label: `Partner`},
-	{Value: `runtime`, Label: `Runtime`},
-	{Value: `mapping`, Label: `Mapping`},
-	{Value: `organization`, Label: `Organization`},
-	{Value: `customer`, Label: `Customer`},
-	{Value: `location`, Label: `Location`},
-	{Value: `commodity`, Label: `Commodity`},
-	{Value: `charge`, Label: `Charge`},
-	{Value: `envelope`, Label: `Envelope`},
-}
-
-var enumTemplateStatus = [...]schema.EnumValue{
-	{Value: `Draft`, Label: `Draft`},
-	{Value: `Certified`, Label: `Certified`},
-	{Value: `Active`, Label: `Active`},
-	{Value: `Deprecated`, Label: `Deprecated`},
-	{Value: `Archived`, Label: `Archived`},
-	{Value: `Superseded`, Label: `Superseded`},
 }
 
 var enumTenderChangeStatus = [...]schema.EnumValue{
@@ -8030,12 +6931,6 @@ var enumTransferStatus = [...]schema.EnumValue{
 	{Value: `Expired`, Label: `Expired`},
 	{Value: `Canceled`, Label: `Canceled`},
 	{Value: `Failed`, Label: `Failed`},
-}
-
-var enumValidationMode = [...]schema.EnumValue{
-	{Value: `Strict`, Label: `Strict`},
-	{Value: `WarnOnly`, Label: `Warn Only`},
-	{Value: `Disabled`, Label: `Disabled`},
 }
 
 var enumValidationSeverity = [...]schema.EnumValue{
@@ -8235,6 +7130,43 @@ func (c EDIStandardCol) NotIn(vs ...edi.EDIStandard) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
+// FlowInstanceStatusCol is a column of edi.FlowInstanceStatus values.
+type FlowInstanceStatusCol struct{ keel.StringCol }
+
+func (c FlowInstanceStatusCol) Eq(v edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c FlowInstanceStatusCol) Ne(v edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c FlowInstanceStatusCol) Gt(v edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c FlowInstanceStatusCol) Gte(v edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c FlowInstanceStatusCol) Lt(v edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c FlowInstanceStatusCol) Lte(v edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c FlowInstanceStatusCol) IsDistinctFrom(v edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c FlowInstanceStatusCol) Between(lo, hi edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c FlowInstanceStatusCol) To(v edi.FlowInstanceStatus) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c FlowInstanceStatusCol) In(vs ...edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c FlowInstanceStatusCol) NotIn(vs ...edi.FlowInstanceStatus) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
 // InboundFileStatusCol is a column of edi.InboundFileStatus values.
 type InboundFileStatusCol struct{ keel.StringCol }
 
@@ -8261,6 +7193,80 @@ func (c InboundFileStatusCol) In(vs ...edi.InboundFileStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c InboundFileStatusCol) NotIn(vs ...edi.InboundFileStatus) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// LadingReplayStatusCol is a column of edi.LadingReplayStatus values.
+type LadingReplayStatusCol struct{ keel.StringCol }
+
+func (c LadingReplayStatusCol) Eq(v edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c LadingReplayStatusCol) Ne(v edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c LadingReplayStatusCol) Gt(v edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c LadingReplayStatusCol) Gte(v edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c LadingReplayStatusCol) Lt(v edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c LadingReplayStatusCol) Lte(v edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c LadingReplayStatusCol) IsDistinctFrom(v edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c LadingReplayStatusCol) Between(lo, hi edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c LadingReplayStatusCol) To(v edi.LadingReplayStatus) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c LadingReplayStatusCol) In(vs ...edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c LadingReplayStatusCol) NotIn(vs ...edi.LadingReplayStatus) keel.Pred {
+	return c.StringCol.NotIn(keel.Strings(vs)...)
+}
+
+// LadingVersionStatusCol is a column of edi.LadingVersionStatus values.
+type LadingVersionStatusCol struct{ keel.StringCol }
+
+func (c LadingVersionStatusCol) Eq(v edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.Eq(string(v))
+}
+func (c LadingVersionStatusCol) Ne(v edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.Ne(string(v))
+}
+func (c LadingVersionStatusCol) Gt(v edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.Gt(string(v))
+}
+func (c LadingVersionStatusCol) Gte(v edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.Gte(string(v))
+}
+func (c LadingVersionStatusCol) Lt(v edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.Lt(string(v))
+}
+func (c LadingVersionStatusCol) Lte(v edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.Lte(string(v))
+}
+func (c LadingVersionStatusCol) IsDistinctFrom(v edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.IsDistinctFrom(string(v))
+}
+func (c LadingVersionStatusCol) Between(lo, hi edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.Between(string(lo), string(hi))
+}
+func (c LadingVersionStatusCol) To(v edi.LadingVersionStatus) keel.Assignment {
+	return c.StringCol.To(string(v))
+}
+func (c LadingVersionStatusCol) In(vs ...edi.LadingVersionStatus) keel.Pred {
+	return c.StringCol.In(keel.Strings(vs)...)
+}
+func (c LadingVersionStatusCol) NotIn(vs ...edi.LadingVersionStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -8413,103 +7419,6 @@ func (c PartnerKindCol) NotIn(vs ...edi.PartnerKind) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
-// PartnerSettingDataTypeCol is a column of edi.PartnerSettingDataType values.
-type PartnerSettingDataTypeCol struct{ keel.StringCol }
-
-func (c PartnerSettingDataTypeCol) Eq(v edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PartnerSettingDataTypeCol) Ne(v edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PartnerSettingDataTypeCol) Gt(v edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c PartnerSettingDataTypeCol) Gte(v edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c PartnerSettingDataTypeCol) Lt(v edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c PartnerSettingDataTypeCol) Lte(v edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c PartnerSettingDataTypeCol) IsDistinctFrom(v edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c PartnerSettingDataTypeCol) Between(lo, hi edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c PartnerSettingDataTypeCol) To(v edi.PartnerSettingDataType) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c PartnerSettingDataTypeCol) In(vs ...edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c PartnerSettingDataTypeCol) NotIn(vs ...edi.PartnerSettingDataType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// PartnerSettingStatusCol is a column of edi.PartnerSettingStatus values.
-type PartnerSettingStatusCol struct{ keel.StringCol }
-
-func (c PartnerSettingStatusCol) Eq(v edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c PartnerSettingStatusCol) Ne(v edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c PartnerSettingStatusCol) Gt(v edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c PartnerSettingStatusCol) Gte(v edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c PartnerSettingStatusCol) Lt(v edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c PartnerSettingStatusCol) Lte(v edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c PartnerSettingStatusCol) IsDistinctFrom(v edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c PartnerSettingStatusCol) Between(lo, hi edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c PartnerSettingStatusCol) To(v edi.PartnerSettingStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c PartnerSettingStatusCol) In(vs ...edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c PartnerSettingStatusCol) NotIn(vs ...edi.PartnerSettingStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// ScriptLanguageCol is a column of edi.ScriptLanguage values.
-type ScriptLanguageCol struct{ keel.StringCol }
-
-func (c ScriptLanguageCol) Eq(v edi.ScriptLanguage) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ScriptLanguageCol) Ne(v edi.ScriptLanguage) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ScriptLanguageCol) Gt(v edi.ScriptLanguage) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ScriptLanguageCol) Gte(v edi.ScriptLanguage) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ScriptLanguageCol) Lt(v edi.ScriptLanguage) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ScriptLanguageCol) Lte(v edi.ScriptLanguage) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ScriptLanguageCol) IsDistinctFrom(v edi.ScriptLanguage) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c ScriptLanguageCol) Between(lo, hi edi.ScriptLanguage) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c ScriptLanguageCol) To(v edi.ScriptLanguage) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c ScriptLanguageCol) In(vs ...edi.ScriptLanguage) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c ScriptLanguageCol) NotIn(vs ...edi.ScriptLanguage) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
 // ShipmentLinkStatusCol is a column of edi.ShipmentLinkStatus values.
 type ShipmentLinkStatusCol struct{ keel.StringCol }
 
@@ -8581,132 +7490,6 @@ func (c ShipmentSyncPolicyCol) In(vs ...edi.ShipmentSyncPolicy) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c ShipmentSyncPolicyCol) NotIn(vs ...edi.ShipmentSyncPolicy) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// SourceContextDataTypeCol is a column of edi.SourceContextDataType values.
-type SourceContextDataTypeCol struct{ keel.StringCol }
-
-func (c SourceContextDataTypeCol) Eq(v edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SourceContextDataTypeCol) Ne(v edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SourceContextDataTypeCol) Gt(v edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c SourceContextDataTypeCol) Gte(v edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SourceContextDataTypeCol) Lt(v edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c SourceContextDataTypeCol) Lte(v edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c SourceContextDataTypeCol) IsDistinctFrom(v edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c SourceContextDataTypeCol) Between(lo, hi edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c SourceContextDataTypeCol) To(v edi.SourceContextDataType) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c SourceContextDataTypeCol) In(vs ...edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c SourceContextDataTypeCol) NotIn(vs ...edi.SourceContextDataType) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// SourceContextFieldStatusCol is a column of edi.SourceContextFieldStatus values.
-type SourceContextFieldStatusCol struct{ keel.StringCol }
-
-func (c SourceContextFieldStatusCol) Eq(v edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.Eq(string(v))
-}
-func (c SourceContextFieldStatusCol) Ne(v edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.Ne(string(v))
-}
-func (c SourceContextFieldStatusCol) Gt(v edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.Gt(string(v))
-}
-func (c SourceContextFieldStatusCol) Gte(v edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SourceContextFieldStatusCol) Lt(v edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.Lt(string(v))
-}
-func (c SourceContextFieldStatusCol) Lte(v edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c SourceContextFieldStatusCol) IsDistinctFrom(v edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c SourceContextFieldStatusCol) Between(lo, hi edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c SourceContextFieldStatusCol) To(v edi.SourceContextFieldStatus) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c SourceContextFieldStatusCol) In(vs ...edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c SourceContextFieldStatusCol) NotIn(vs ...edi.SourceContextFieldStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// SourceContextKindCol is a column of edi.SourceContextKind values.
-type SourceContextKindCol struct{ keel.StringCol }
-
-func (c SourceContextKindCol) Eq(v edi.SourceContextKind) keel.Pred { return c.StringCol.Eq(string(v)) }
-func (c SourceContextKindCol) Ne(v edi.SourceContextKind) keel.Pred { return c.StringCol.Ne(string(v)) }
-func (c SourceContextKindCol) Gt(v edi.SourceContextKind) keel.Pred { return c.StringCol.Gt(string(v)) }
-func (c SourceContextKindCol) Gte(v edi.SourceContextKind) keel.Pred {
-	return c.StringCol.Gte(string(v))
-}
-func (c SourceContextKindCol) Lt(v edi.SourceContextKind) keel.Pred { return c.StringCol.Lt(string(v)) }
-func (c SourceContextKindCol) Lte(v edi.SourceContextKind) keel.Pred {
-	return c.StringCol.Lte(string(v))
-}
-func (c SourceContextKindCol) IsDistinctFrom(v edi.SourceContextKind) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c SourceContextKindCol) Between(lo, hi edi.SourceContextKind) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c SourceContextKindCol) To(v edi.SourceContextKind) keel.Assignment {
-	return c.StringCol.To(string(v))
-}
-func (c SourceContextKindCol) In(vs ...edi.SourceContextKind) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c SourceContextKindCol) NotIn(vs ...edi.SourceContextKind) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// TemplateStatusCol is a column of edi.TemplateStatus values.
-type TemplateStatusCol struct{ keel.StringCol }
-
-func (c TemplateStatusCol) Eq(v edi.TemplateStatus) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c TemplateStatusCol) Ne(v edi.TemplateStatus) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c TemplateStatusCol) Gt(v edi.TemplateStatus) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c TemplateStatusCol) Gte(v edi.TemplateStatus) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c TemplateStatusCol) Lt(v edi.TemplateStatus) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c TemplateStatusCol) Lte(v edi.TemplateStatus) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c TemplateStatusCol) IsDistinctFrom(v edi.TemplateStatus) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c TemplateStatusCol) Between(lo, hi edi.TemplateStatus) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c TemplateStatusCol) To(v edi.TemplateStatus) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c TemplateStatusCol) In(vs ...edi.TemplateStatus) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c TemplateStatusCol) NotIn(vs ...edi.TemplateStatus) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 
@@ -9012,29 +7795,6 @@ func (c TransferStatusCol) In(vs ...edi.TransferStatus) keel.Pred {
 	return c.StringCol.In(keel.Strings(vs)...)
 }
 func (c TransferStatusCol) NotIn(vs ...edi.TransferStatus) keel.Pred {
-	return c.StringCol.NotIn(keel.Strings(vs)...)
-}
-
-// ValidationModeCol is a column of edi.ValidationMode values.
-type ValidationModeCol struct{ keel.StringCol }
-
-func (c ValidationModeCol) Eq(v edi.ValidationMode) keel.Pred  { return c.StringCol.Eq(string(v)) }
-func (c ValidationModeCol) Ne(v edi.ValidationMode) keel.Pred  { return c.StringCol.Ne(string(v)) }
-func (c ValidationModeCol) Gt(v edi.ValidationMode) keel.Pred  { return c.StringCol.Gt(string(v)) }
-func (c ValidationModeCol) Gte(v edi.ValidationMode) keel.Pred { return c.StringCol.Gte(string(v)) }
-func (c ValidationModeCol) Lt(v edi.ValidationMode) keel.Pred  { return c.StringCol.Lt(string(v)) }
-func (c ValidationModeCol) Lte(v edi.ValidationMode) keel.Pred { return c.StringCol.Lte(string(v)) }
-func (c ValidationModeCol) IsDistinctFrom(v edi.ValidationMode) keel.Pred {
-	return c.StringCol.IsDistinctFrom(string(v))
-}
-func (c ValidationModeCol) Between(lo, hi edi.ValidationMode) keel.Pred {
-	return c.StringCol.Between(string(lo), string(hi))
-}
-func (c ValidationModeCol) To(v edi.ValidationMode) keel.Assignment { return c.StringCol.To(string(v)) }
-func (c ValidationModeCol) In(vs ...edi.ValidationMode) keel.Pred {
-	return c.StringCol.In(keel.Strings(vs)...)
-}
-func (c ValidationModeCol) NotIn(vs ...edi.ValidationMode) keel.Pred {
 	return c.StringCol.NotIn(keel.Strings(vs)...)
 }
 

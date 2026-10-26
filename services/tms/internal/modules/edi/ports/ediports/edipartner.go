@@ -46,9 +46,8 @@ type EDIPartnerReadinessRow struct {
 	Timezone              string
 	HasActiveProfile      bool
 	HasMappingProfile     bool
-	HasInboundDocProfile  bool
-	HasOutboundDocProfile bool
-	HasPassingTestCase    bool
+	HasLadingProject      bool
+	HasActiveVersion      bool
 	EnabledForInbound     bool
 	EnabledForOutbound    bool
 	Kind                  string

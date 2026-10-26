@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -615,7 +614,7 @@ func TestServiceFailurePayloadDiagnosticsRequiresEventDateAndTime(t *testing.T) 
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.eventTime")
 }
 
-func diagnosticPaths(diagnostics []edix12.Diagnostic) []string {
+func diagnosticPaths(diagnostics []edi.Diagnostic) []string {
 	paths := make([]string, 0, len(diagnostics))
 	for _, diagnostic := range diagnostics {
 		paths = append(paths, diagnostic.Path)

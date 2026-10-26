@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -133,7 +132,7 @@ func documentTypeID(set edi.TransactionSet, direction edi.DocumentDirection) pul
 }
 
 type fakeSetup struct {
-	settingsErrors []edix12.Diagnostic
+	settingsErrors []edi.Diagnostic
 	partners       []*edi.EDIPartner
 	transports     []*ediservice.UpsertEDICommunicationProfileRequest
 	profiles       []*ediservice.UpsertEDIPartnerDocumentProfileRequest
@@ -229,7 +228,7 @@ func (f *fakeSetup) StartControlNumber(
 func (f *fakeSetup) ValidatePartnerSettings(
 	context.Context,
 	*ediservice.ValidatePartnerSettingsRequest,
-) ([]edix12.Diagnostic, error) {
+) ([]edi.Diagnostic, error) {
 	return f.settingsErrors, nil
 }
 

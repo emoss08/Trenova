@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -748,7 +747,7 @@ func TestPlan_ListsWhatAnInvalidPartnerSettingWouldBreak(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, draft.Failures)
 
-	h.setup.settingsErrors = []edix12.Diagnostic{{Severity: edi.ValidationSeverityError, Path: "carrier.scac", Message: "SCAC is required"}}
+	h.setup.settingsErrors = []edi.Diagnostic{{Severity: edi.ValidationSeverityError, Path: "carrier.scac", Message: "SCAC is required"}}
 	draft, err = h.service.PlanConnectionDraft(t.Context(), req)
 	require.NoError(t, err)
 	require.NotEmpty(t, draft.Failures)

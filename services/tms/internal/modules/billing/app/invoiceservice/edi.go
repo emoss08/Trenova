@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/pkg/lading"
+
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -23,13 +25,13 @@ import (
 )
 
 const (
-	ediBlockerVoided            = "The invoice has been voided"
-	ediBlockerNotPosted         = "The invoice has not been posted"
-	ediBlockerProfileDisabled   = "EDI invoicing is not enabled on the customer's billing profile"
-	ediBlockerNoPartner         = "The customer has no active EDI partner enabled for outbound documents"
-	ediBlockerNoDocumentProfile = "The partner has no active outbound 210 document profile"
-	ediBlockerNoCommunication   = "The partner has no active communication profile to deliver through"
-	ediBlockerNotWired          = "EDI invoicing is not available on this server"
+	ediBlockerVoided          = "The invoice has been voided"
+	ediBlockerNotPosted       = "The invoice has not been posted"
+	ediBlockerProfileDisabled = "EDI invoicing is not enabled on the customer's billing profile"
+	ediBlockerNoPartner       = "The customer has no active EDI partner enabled for outbound documents"
+	ediBlockerNoLadingVersion = "The partner's active Lading version writes no 210"
+	ediBlockerNoCommunication = "The partner has no active communication profile to deliver through"
+	ediBlockerNotWired        = "EDI invoicing is not available on this server"
 )
 
 // ResolveEDISendPlans works out, for each invoice, whether an outbound 210 can
@@ -119,7 +121,7 @@ func (s *Service) ResolveEDISendPlans(
 // transport it would use, or the reason it cannot be used.
 type ediPartnerTarget struct {
 	Partner             *edi.EDIPartner
-	DocumentProfile     *edi.EDIPartnerDocumentProfile
+	LadingVersion       *edi.LadingVersion
 	CommunicationMethod edi.ConnectionMethod
 	Blockers            []string
 }
@@ -163,26 +165,15 @@ func (s *Service) resolvePartnerTarget(
 	partner *edi.EDIPartner,
 ) (*ediPartnerTarget, error) {
 	target := &ediPartnerTarget{Partner: partner}
-	if s.ediDocumentProfileRepo != nil {
-		profile, err := s.ediDocumentProfileRepo.GetActivePartnerDocumentProfile(
-			ctx,
-			ediports.GetActiveEDIPartnerDocumentProfileRequest{
-				PartnerID:      partner.ID,
-				TenantInfo:     tenantInfo,
-				TransactionSet: edi.TransactionSet210,
-				Direction:      edi.DocumentDirectionOutbound,
-			},
-		)
-		switch {
-		case err == nil:
-			target.DocumentProfile = profile
-		case errortypes.IsNotFoundError(err):
-			target.Blockers = append(target.Blockers, ediBlockerNoDocumentProfile)
-		default:
+	if partner.Kind != edi.PartnerKindInternal {
+		version, err := s.invoiceLadingVersion(ctx, tenantInfo, partner)
+		if err != nil {
 			return nil, err
 		}
-	} else {
-		target.Blockers = append(target.Blockers, ediBlockerNoDocumentProfile)
+		if version == nil {
+			target.Blockers = append(target.Blockers, ediBlockerNoLadingVersion)
+		}
+		target.LadingVersion = version
 	}
 
 	if partner.Kind == edi.PartnerKindInternal {
@@ -210,6 +201,37 @@ func (s *Service) resolvePartnerTarget(
 	}
 
 	return target, nil
+}
+
+// invoiceLadingVersion is the partner's active Lading version when it has a map that writes a
+// 210, and nil otherwise.
+func (s *Service) invoiceLadingVersion(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	partner *edi.EDIPartner,
+) (*edi.LadingVersion, error) {
+	if s.ediLadingProjects == nil {
+		return nil, nil
+	}
+	runnable, err := s.ediLadingProjects.GetRunnableVersions(
+		ctx,
+		ediports.GetRunnableLadingVersionRequest{TenantInfo: tenantInfo, PartnerID: partner.ID},
+	)
+	if errortypes.IsNotFoundError(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	if runnable == nil || runnable.Active == nil {
+		return nil, nil
+	}
+	for _, item := range runnable.Active.Manifest.Maps {
+		if item.Set == string(edi.TransactionSet210) && item.Direction == lading.DirectionOutbound {
+			return runnable.Active, nil
+		}
+	}
+	return nil, nil
 }
 
 func buildEDISendPlan(
@@ -247,8 +269,8 @@ func buildEDISendPlan(
 	}
 	plan.PartnerID = target.Partner.ID
 	plan.PartnerName = target.Partner.Name
-	if target.DocumentProfile != nil {
-		plan.DocumentProfileID = target.DocumentProfile.ID
+	if target.LadingVersion != nil {
+		plan.LadingVersionID = target.LadingVersion.ID
 	}
 	plan.CommunicationMethod = string(target.CommunicationMethod)
 	plan.Blockers = append(plan.Blockers, target.Blockers...)

@@ -36,6 +36,12 @@ const DeliverEDIMessageWorkflowName = "DeliverEDIMessageWorkflow"
 
 const ProcessInboundEDIFileWorkflowName = "ProcessInboundEDIFileWorkflow"
 
+const RunLadingReplayWorkflowName = "RunLadingReplayWorkflow"
+
+const EDIFlowTimerWorkflowName = "EDIFlowTimerWorkflow"
+
+const EDIFlowTimerWakeSignal = "wake"
+
 const ProcessInboundMessageWorkflowName = "ProcessInboundMessageWorkflow"
 
 const InboundMessageRetentionWorkflowName = "InboundMessageRetentionWorkflow"

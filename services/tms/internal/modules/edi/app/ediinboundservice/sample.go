@@ -24,9 +24,8 @@ type ParsedSample struct {
 }
 
 type ParsedSampleTransaction struct {
-	TransactionSet edi.TransactionSet  `json:"transactionSet"`
-	ControlNumber  string              `json:"controlNumber"`
-	Payload        edi.DocumentPayload `json:"payload"`
+	TransactionSet edi.TransactionSet `json:"transactionSet"`
+	ControlNumber  string             `json:"controlNumber"`
 }
 
 func ParseSample(ctx context.Context, rawX12 string) (*ParsedSample, error) {
@@ -60,7 +59,6 @@ func ParseSample(ctx context.Context, rawX12 string) (*ParsedSample, error) {
 		sample.Transactions = append(sample.Transactions, ParsedSampleTransaction{
 			TransactionSet: transaction.set,
 			ControlNumber:  transaction.controlNumber,
-			Payload:        transaction.documentPayload(),
 		})
 	}
 

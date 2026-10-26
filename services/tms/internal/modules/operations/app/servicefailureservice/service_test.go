@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
@@ -708,7 +707,7 @@ func TestPreflightServiceFailure214BlocksMandatoryDiagnostics(t *testing.T) {
 			Trigger:   servicefailureports.ServiceFailureEDITriggerReviewed,
 			Action:    ediports.ServiceFailureEDIActionBlocked,
 			Mandatory: true,
-			Diagnostics: []edix12.Diagnostic{{
+			Diagnostics: []edi.Diagnostic{{
 				Severity: edi.ValidationSeverityError,
 				Path:     "shipmentStatus.statusReasonCode",
 				Message:  "status reason required",

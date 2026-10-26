@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -252,28 +253,6 @@ type DraftRequirementCheck struct {
 	Source          DraftSource      `json:"source"`
 }
 
-type DraftTemplateCandidate struct {
-	TemplateID pulid.ID `json:"templateId,omitempty"`
-	VersionID  pulid.ID `json:"versionId,omitempty"`
-	Name       string   `json:"name"`
-	Starter    bool     `json:"starter"`
-	Unmet      int      `json:"unmet"`
-}
-
-type DraftTemplateChoice struct {
-	TemplateID pulid.ID                 `json:"templateId,omitempty"`
-	VersionID  pulid.ID                 `json:"versionId,omitempty"`
-	Name       string                   `json:"name"`
-	Starter    bool                     `json:"starter"`
-	Current    string                   `json:"current,omitempty"`
-	Change     ChangeKind               `json:"change"`
-	Met        int                      `json:"met"`
-	Unmet      []DraftRequirementCheck  `json:"unmet"`
-	Considered []DraftTemplateCandidate `json:"considered"`
-	Unverified []DraftRequirementCheck  `json:"unverified,omitempty"`
-	Note       string                   `json:"note,omitempty"`
-}
-
 type DraftControlNumber struct {
 	Kind    edi.ControlNumberKind `json:"kind"`
 	Start   int64                 `json:"start"`
@@ -283,18 +262,39 @@ type DraftControlNumber struct {
 	Problem string                `json:"problem,omitempty"`
 }
 
-type DraftDocumentProfile struct {
-	TransactionSet edi.TransactionSet    `json:"transactionSet"`
-	Direction      edi.DocumentDirection `json:"direction"`
-	DocumentTypeID pulid.ID              `json:"documentTypeId,omitempty"`
-	ProfileID      pulid.ID              `json:"profileId,omitempty"`
-	Version        int64                 `json:"version,omitempty"`
-	Name           string                `json:"name"`
-	Status         edi.DocumentStatus    `json:"status"`
-	Change         ChangeKind            `json:"change"`
-	Fields         []DraftValue          `json:"fields"`
-	Template       DraftTemplateChoice   `json:"template"`
-	ControlNumbers []DraftControlNumber  `json:"controlNumbers,omitempty"`
+type DraftSet struct {
+	TransactionSet edi.TransactionSet      `json:"transactionSet"`
+	Direction      edi.DocumentDirection   `json:"direction"`
+	DocumentTypeID pulid.ID                `json:"documentTypeId,omitempty"`
+	Change         ChangeKind              `json:"change"`
+	Fields         []DraftValue            `json:"fields"`
+	Requirements   int                     `json:"requirements"`
+	Unmet          []DraftRequirementCheck `json:"unmet"`
+	Unverified     []DraftRequirementCheck `json:"unverified,omitempty"`
+	ControlNumbers []DraftControlNumber    `json:"controlNumbers,omitempty"`
+}
+
+type DraftProjectFile struct {
+	Path   string     `json:"path"`
+	Kind   string     `json:"kind"`
+	Change ChangeKind `json:"change"`
+}
+
+type DraftDiagnostic struct {
+	Path     string `json:"path"`
+	Severity string `json:"severity"`
+	Code     string `json:"code"`
+	Message  string `json:"message"`
+}
+
+type DraftProject struct {
+	ProjectID   pulid.ID           `json:"projectId,omitempty"`
+	Role        string             `json:"role"`
+	Change      ChangeKind         `json:"change"`
+	Files       []DraftProjectFile `json:"files"`
+	Errors      int                `json:"errors"`
+	Warnings    int                `json:"warnings"`
+	Diagnostics []DraftDiagnostic  `json:"diagnostics"`
 }
 
 type DraftMapping struct {
@@ -355,24 +355,25 @@ type DraftKept struct {
 }
 
 type ConnectionDraft struct {
-	DocumentID       pulid.ID               `json:"documentId"`
-	FileName         string                 `json:"fileName"`
-	PageCount        int                    `json:"pageCount"`
-	DocumentDigest   string                 `json:"documentDigest"`
-	Partner          DraftPartner           `json:"partner"`
-	Connection       DraftConnection        `json:"connection"`
-	Interchange      []DraftValue           `json:"interchange"`
-	Transport        *DraftTransport        `json:"transport,omitempty"`
-	DocumentProfiles []DraftDocumentProfile `json:"documentProfiles"`
-	Mappings         []DraftMapping         `json:"mappings"`
-	Kept             []DraftKept            `json:"kept,omitempty"`
-	Samples          []DraftSample          `json:"samples"`
-	Gaps             []DraftGap             `json:"gaps"`
-	Decisions        []DraftValue           `json:"decisions"`
-	Failures         []DraftFailure         `json:"failures"`
-	Blockers         []string               `json:"blockers"`
-	Changes          int                    `json:"changes"`
-	Ready            bool                   `json:"ready"`
+	DocumentID     pulid.ID        `json:"documentId"`
+	FileName       string          `json:"fileName"`
+	PageCount      int             `json:"pageCount"`
+	DocumentDigest string          `json:"documentDigest"`
+	Partner        DraftPartner    `json:"partner"`
+	Connection     DraftConnection `json:"connection"`
+	Interchange    []DraftValue    `json:"interchange"`
+	Transport      *DraftTransport `json:"transport,omitempty"`
+	Sets           []DraftSet      `json:"sets"`
+	Project        *DraftProject   `json:"project,omitempty"`
+	Mappings       []DraftMapping  `json:"mappings"`
+	Kept           []DraftKept     `json:"kept,omitempty"`
+	Samples        []DraftSample   `json:"samples"`
+	Gaps           []DraftGap      `json:"gaps"`
+	Decisions      []DraftValue    `json:"decisions"`
+	Failures       []DraftFailure  `json:"failures"`
+	Blockers       []string        `json:"blockers"`
+	Changes        int             `json:"changes"`
+	Ready          bool            `json:"ready"`
 }
 
 func (d *ConnectionDraft) CredentialsToEnter() []string {
@@ -420,10 +421,12 @@ type PlannedTransport struct {
 	Change ChangeKind                   `json:"change"`
 }
 
-type PlannedDocumentProfile struct {
-	Before *edi.EDIPartnerDocumentProfile `json:"before,omitempty"`
-	After  *edi.EDIPartnerDocumentProfile `json:"after"`
-	Change ChangeKind                     `json:"change"`
+type PlannedProject struct {
+	Project *edi.LadingProject `json:"project,omitempty"`
+	Before  *edi.LadingVersion `json:"before,omitempty"`
+	Files   []lading.File      `json:"files"`
+	Samples []lading.Sample    `json:"samples"`
+	Change  ChangeKind         `json:"change"`
 }
 
 type PlannedMapping struct {
@@ -439,12 +442,12 @@ type PlannedControlNumber struct {
 }
 
 type ConnectionDraftPlan struct {
-	Draft            *ConnectionDraft         `json:"draft"`
-	Partner          PlannedPartner           `json:"partner"`
-	Transport        *PlannedTransport        `json:"transport,omitempty"`
-	DocumentProfiles []PlannedDocumentProfile `json:"documentProfiles"`
-	Mappings         []PlannedMapping         `json:"mappings"`
-	ControlNumbers   []PlannedControlNumber   `json:"controlNumbers"`
+	Draft          *ConnectionDraft       `json:"draft"`
+	Partner        PlannedPartner         `json:"partner"`
+	Transport      *PlannedTransport      `json:"transport,omitempty"`
+	Project        *PlannedProject        `json:"project,omitempty"`
+	Mappings       []PlannedMapping       `json:"mappings"`
+	ControlNumbers []PlannedControlNumber `json:"controlNumbers"`
 }
 
 type EDIConnectionDraftService interface {
@@ -487,24 +490,19 @@ type GetEDIPartnerSetupRequest struct {
 }
 
 type EDIPartnerSetup struct {
-	Partner               *edi.EDIPartner                  `json:"partner"`
-	CommunicationProfiles []*edi.EDICommunicationProfile   `json:"communicationProfiles"`
-	DocumentProfiles      []*edi.EDIPartnerDocumentProfile `json:"documentProfiles"`
-	MappingItems          []*edi.EDIMappingProfileItem     `json:"mappingItems"`
-	ControlNumbers        []*edi.EDIControlNumberSequence  `json:"controlNumbers"`
-}
-
-type ListEDITemplateCandidatesRequest struct {
-	TenantInfo     pagination.TenantInfo `json:"-"`
-	TransactionSet edi.TransactionSet    `json:"transactionSet"`
-	Direction      edi.DocumentDirection `json:"direction"`
+	Partner               *edi.EDIPartner                 `json:"partner"`
+	CommunicationProfiles []*edi.EDICommunicationProfile  `json:"communicationProfiles"`
+	Project               *edi.LadingProject              `json:"project,omitempty"`
+	LatestVersion         *edi.LadingVersion              `json:"latestVersion,omitempty"`
+	MappingItems          []*edi.EDIMappingProfileItem    `json:"mappingItems"`
+	ControlNumbers        []*edi.EDIControlNumberSequence `json:"controlNumbers"`
 }
 
 type InterchangeIdentity struct {
 	Qualifier     string `json:"qualifier"`
 	ID            string `json:"id"`
 	ApplicationID string `json:"applicationId"`
-	Profiles      int    `json:"profiles"`
+	Partners      int    `json:"partners"`
 }
 
 type ResolveEDIMappingTargetsRequest struct {
@@ -518,10 +516,6 @@ type EDIConnectionDraftRepository interface {
 		req *FindEDIPartnerMatchesRequest,
 	) ([]*EDIPartnerMatch, error)
 	GetPartnerSetup(ctx context.Context, req *GetEDIPartnerSetupRequest) (*EDIPartnerSetup, error)
-	ListTemplateCandidates(
-		ctx context.Context,
-		req *ListEDITemplateCandidatesRequest,
-	) ([]*edi.EDITemplateVersion, error)
 	GetInterchangeIdentity(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,

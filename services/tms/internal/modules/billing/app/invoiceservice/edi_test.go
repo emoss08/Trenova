@@ -102,14 +102,14 @@ func TestBuildEDISendPlanBlockers(t *testing.T) {
 		t.Parallel()
 		plan := buildEDISendPlan(posted, enabled, &ediPartnerTarget{
 			Partner:  partner,
-			Blockers: []string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication},
+			Blockers: []string{ediBlockerNoLadingVersion, ediBlockerNoCommunication},
 		})
 		assert.Equal(t, partner.ID, plan.PartnerID)
 		assert.Equal(t, "AMD EDI", plan.PartnerName)
 		assert.True(t, plan.DocumentProfileID.IsNil())
 		assert.Equal(
 			t,
-			[]string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication},
+			[]string{ediBlockerNoLadingVersion, ediBlockerNoCommunication},
 			plan.Blockers,
 		)
 	})
@@ -189,7 +189,7 @@ func TestResolvePartnerTargetReportsMissingProfiles(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(
 		t,
-		[]string{ediBlockerNoDocumentProfile, ediBlockerNoCommunication},
+		[]string{ediBlockerNoLadingVersion, ediBlockerNoCommunication},
 		target.Blockers,
 	)
 }
@@ -464,7 +464,7 @@ func TestEnqueueEDIAfterPostRecordsTheFirstBlocker(t *testing.T) {
 			TenantInfo: f.tenantInfo,
 			InvoiceID:  f.inv.ID,
 			Status:     invoice.EDISendStatusNotConfigured,
-			Error:      ediBlockerNoDocumentProfile,
+			Error:      ediBlockerNoLadingVersion,
 		}).
 		Return(nil).
 		Once()
@@ -472,7 +472,7 @@ func TestEnqueueEDIAfterPostRecordsTheFirstBlocker(t *testing.T) {
 	f.svc.enqueueEDIAfterPost(t.Context(), f.inv, f.tenantInfo, f.actor)
 
 	assert.Equal(t, invoice.EDISendStatusNotConfigured, f.inv.EDISendStatus)
-	assert.Equal(t, ediBlockerNoDocumentProfile, f.inv.LastEDIError)
+	assert.Equal(t, ediBlockerNoLadingVersion, f.inv.LastEDIError)
 	f.starter.AssertNotCalled(
 		t,
 		"StartWorkflow",

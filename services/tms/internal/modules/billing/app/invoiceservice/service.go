@@ -105,7 +105,7 @@ type Params struct {
 	BillingPolicy        *billingcontrolpolicyservice.Service
 
 	EDIPartnerRepo              ediports.EDIPartnerRepository                `optional:"true"`
-	EDIDocumentProfileRepo      ediports.EDIPartnerDocumentProfileRepository `optional:"true"`
+	EDILadingProjects           ediports.LadingProjectRepository             `optional:"true"`
 	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository   `optional:"true"`
 	LateChargeRepo              latechargeports.LateChargeRepository         `optional:"true"`
 	AccountingSync              accountingsyncports.AccountingSyncEnqueuer   `optional:"true"`
@@ -156,7 +156,7 @@ type Service struct {
 	billingPolicy        *billingcontrolpolicyservice.Service
 
 	ediPartnerRepo              ediports.EDIPartnerRepository
-	ediDocumentProfileRepo      ediports.EDIPartnerDocumentProfileRepository
+	ediLadingProjects           ediports.LadingProjectRepository
 	ediCommunicationProfileRepo ediports.EDICommunicationProfileRepository
 	lateChargeRepo              latechargeports.LateChargeRepository
 	accountingSync              accountingsyncports.AccountingSyncEnqueuer
@@ -236,7 +236,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		accountingPolicy:            p.AccountingPolicy,
 		billingPolicy:               p.BillingPolicy,
 		ediPartnerRepo:              p.EDIPartnerRepo,
-		ediDocumentProfileRepo:      p.EDIDocumentProfileRepo,
+		ediLadingProjects:           p.EDILadingProjects,
 		ediCommunicationProfileRepo: p.EDICommunicationProfileRepo,
 		lateChargeRepo:              p.LateChargeRepo,
 		accountingSync:              p.AccountingSync,

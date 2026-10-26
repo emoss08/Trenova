@@ -410,11 +410,9 @@ type ResolverRoot interface {
 	DriverSettlementLine() DriverSettlementLineResolver
 	DriverSettlementLineGroup() DriverSettlementLineGroupResolver
 	DrugAlcoholStanding() DrugAlcoholStandingResolver
-	EdiAcknowledgmentConfig() EdiAcknowledgmentConfigResolver
 	EdiCarrierInvoice() EdiCarrierInvoiceResolver
+	EdiFlowInstance() EdiFlowInstanceResolver
 	EdiMessage() EdiMessageResolver
-	EdiPartnerDocumentProfile() EdiPartnerDocumentProfileResolver
-	EdiTemplate() EdiTemplateResolver
 	EdiTransfer() EdiTransferResolver
 	EquipmentContinuity() EquipmentContinuityResolver
 	EscrowAccount() EscrowAccountResolver
@@ -1289,10 +1287,6 @@ type DrugAlcoholStandingResolver interface {
 	NextClearinghouseQueryDue(ctx context.Context, obj *worker.DrugAlcoholStanding) (*int, error)
 }
 
-type EdiAcknowledgmentConfigResolver interface {
-	Type(ctx context.Context, obj *edi.AcknowledgmentConfig) (string, error)
-}
-
 type EdiCarrierInvoiceResolver interface {
 	TotalAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
 	ExpectedAmount(ctx context.Context, obj *edi.CarrierInvoice) (*string, error)
@@ -1301,16 +1295,12 @@ type EdiCarrierInvoiceResolver interface {
 	SuggestedCarrier(ctx context.Context, obj *edi.CarrierInvoice) (*carrier.Carrier, error)
 }
 
+type EdiFlowInstanceResolver interface {
+	Reason(ctx context.Context, obj *edi.FlowInstance) (*string, error)
+}
+
 type EdiMessageResolver interface {
 	TransactionSet(ctx context.Context, obj *edi.EDIMessage) (string, error)
-}
-
-type EdiPartnerDocumentProfileResolver interface {
-	TransactionSet(ctx context.Context, obj *edi.EDIPartnerDocumentProfile) (string, error)
-}
-
-type EdiTemplateResolver interface {
-	TransactionSet(ctx context.Context, obj *edi.EDITemplate) (string, error)
 }
 
 type EdiTransferResolver interface {
@@ -3025,9 +3015,8 @@ type QueryResolver interface {
 	EDIAckHealth(ctx context.Context, partnerID *string, transactionSet *string, overdueAfterSeconds *int, sinceHours *int) (*gqlmodel.EDIAckHealth, error)
 	EDIMessages(ctx context.Context, input gqlmodel.DataTableConnectionInput, transactionSet *string, direction *edi.DocumentDirection, partnerID *string) (*gqlmodel.EDIMessageConnection, error)
 	EDIInboundFiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.InboundFileStatus, partnerID *string) (*gqlmodel.EDIInboundFileConnection, error)
-	EDITemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput, status *edi.TemplateStatus, transactionSet *string, direction *edi.DocumentDirection) (*gqlmodel.EDITemplateConnection, error)
 	EDIMappingProfiles(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string) (*gqlmodel.EDIMappingProfileConnection, error)
-	EDITestCases(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerDocumentProfileID *string) (*gqlmodel.EDITestCaseConnection, error)
+	EDIFlowInstances(ctx context.Context, input gqlmodel.DataTableConnectionInput, partnerID *string, shipmentID *string, statuses []edi.FlowInstanceStatus) (*gqlmodel.EDIFlowInstanceConnection, error)
 	EDISummary(ctx context.Context, sinceHours *int) (*gqlmodel.EDISummary, error)
 	EDIPartnerScorecards(ctx context.Context, sinceHours *int) ([]*gqlmodel.EDIPartnerScorecard, error)
 	EDIPartnerReadiness(ctx context.Context, partnerIds []string) ([]*gqlmodel.EDIPartnerReadinessState, error)
@@ -4159,11 +4148,9 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DriverSettlementLine":               func() any { return r.DriverSettlementLine() },
 			"DriverSettlementLineGroup":          func() any { return r.DriverSettlementLineGroup() },
 			"DrugAlcoholStanding":                func() any { return r.DrugAlcoholStanding() },
-			"EdiAcknowledgmentConfig":            func() any { return r.EdiAcknowledgmentConfig() },
 			"EdiCarrierInvoice":                  func() any { return r.EdiCarrierInvoice() },
+			"EdiFlowInstance":                    func() any { return r.EdiFlowInstance() },
 			"EdiMessage":                         func() any { return r.EdiMessage() },
-			"EdiPartnerDocumentProfile":          func() any { return r.EdiPartnerDocumentProfile() },
-			"EdiTemplate":                        func() any { return r.EdiTemplate() },
 			"EdiTransfer":                        func() any { return r.EdiTransfer() },
 			"EquipmentContinuity":                func() any { return r.EquipmentContinuity() },
 			"EscrowAccount":                      func() any { return r.EscrowAccount() },

@@ -15,26 +15,25 @@ import (
 type TenderRecipient struct {
 	keel.Table `keel:"edi_tender_recipients"`
 
-	ID                       pulid.ID                      `json:"id"                       keel:"id,pk,autoid:editr_"`
-	BusinessUnitID           pulid.ID                      `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
-	SourceOrganizationID     pulid.ID                      `json:"sourceOrganizationId"     keel:"source_organization_id"`
-	SourceShipmentID         pulid.ID                      `json:"sourceShipmentId"         keel:"source_shipment_id"`
-	RecipientKind            TenderRecipientKind           `json:"recipientKind"            keel:"recipient_kind"`
-	RecipientOrganizationID  pulid.ID                      `json:"recipientOrganizationId"  keel:"recipient_organization_id,nullzero"`
-	EDIPartnerID             pulid.ID                      `json:"ediPartnerId"             keel:"edi_partner_id,nullzero"`
-	PartnerDocumentProfileID pulid.ID                      `json:"partnerDocumentProfileId" keel:"partner_document_profile_id,nullzero"`
-	CommunicationProfileID   pulid.ID                      `json:"communicationProfileId"   keel:"communication_profile_id,nullzero"`
-	OriginalTransferID       pulid.ID                      `json:"originalTransferId"       keel:"original_transfer_id,nullzero"`
-	ShipmentLinkID           pulid.ID                      `json:"shipmentLinkId"           keel:"shipment_link_id,nullzero"`
-	OriginalMessageID        pulid.ID                      `json:"originalMessageId"        keel:"original_message_id,nullzero"`
-	LatestBaselinePayload    LoadTenderPayload             `json:"latestBaselinePayload"    keel:"latest_baseline_payload,jsonb"`
-	LatestBaselineHash       string                        `json:"latestBaselineHash"       keel:"latest_baseline_hash"`
-	BaselineRecordedAt       int64                         `json:"baselineRecordedAt"       keel:"baseline_recorded_at"`
-	BaselineStatus           TenderRecipientBaselineStatus `json:"baselineStatus"           keel:"baseline_status"`
-	Status                   TenderRecipientStatus         `json:"status"                   keel:"status"`
-	Version                  int64                         `json:"version"                  keel:"version,version"`
-	CreatedAt                int64                         `json:"createdAt"                keel:"created_at,autocreate"`
-	UpdatedAt                int64                         `json:"updatedAt"                keel:"updated_at,autoupdate"`
+	ID                      pulid.ID                      `json:"id"                       keel:"id,pk,autoid:editr_"`
+	BusinessUnitID          pulid.ID                      `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
+	SourceOrganizationID    pulid.ID                      `json:"sourceOrganizationId"     keel:"source_organization_id"`
+	SourceShipmentID        pulid.ID                      `json:"sourceShipmentId"         keel:"source_shipment_id"`
+	RecipientKind           TenderRecipientKind           `json:"recipientKind"            keel:"recipient_kind"`
+	RecipientOrganizationID pulid.ID                      `json:"recipientOrganizationId"  keel:"recipient_organization_id,nullzero"`
+	EDIPartnerID            pulid.ID                      `json:"ediPartnerId"             keel:"edi_partner_id,nullzero"`
+	CommunicationProfileID  pulid.ID                      `json:"communicationProfileId"   keel:"communication_profile_id,nullzero"`
+	OriginalTransferID      pulid.ID                      `json:"originalTransferId"       keel:"original_transfer_id,nullzero"`
+	ShipmentLinkID          pulid.ID                      `json:"shipmentLinkId"           keel:"shipment_link_id,nullzero"`
+	OriginalMessageID       pulid.ID                      `json:"originalMessageId"        keel:"original_message_id,nullzero"`
+	LatestBaselinePayload   LoadTenderPayload             `json:"latestBaselinePayload"    keel:"latest_baseline_payload,jsonb"`
+	LatestBaselineHash      string                        `json:"latestBaselineHash"       keel:"latest_baseline_hash"`
+	BaselineRecordedAt      int64                         `json:"baselineRecordedAt"       keel:"baseline_recorded_at"`
+	BaselineStatus          TenderRecipientBaselineStatus `json:"baselineStatus"           keel:"baseline_status"`
+	Status                  TenderRecipientStatus         `json:"status"                   keel:"status"`
+	Version                 int64                         `json:"version"                  keel:"version,version"`
+	CreatedAt               int64                         `json:"createdAt"                keel:"created_at,autocreate"`
+	UpdatedAt               int64                         `json:"updatedAt"                keel:"updated_at,autoupdate"`
 }
 
 func (r *TenderRecipient) BeforeUpdate(ctx context.Context) error {

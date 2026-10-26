@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -84,7 +83,7 @@ func TestPreviewEDIDocument_RendersA214ThroughTheSendPathWithItsFindings(t *test
 			RawX12:       rendered214,
 			SegmentCount: 5,
 			X12Version:   "004010",
-			Diagnostics: []edix12.Diagnostic{{
+			Diagnostics: []edi.Diagnostic{{
 				Severity:        edi.ValidationSeverityError,
 				Code:            "required",
 				SegmentID:       "B10",
@@ -186,7 +185,7 @@ func TestPreviewEDIDocument_WithholdsTheX12BelowRestrictedButKeepsTheFindings(t 
 		Document: &ediservice.EDIDocumentPreview{
 			RawX12:      rendered214,
 			Profile:     partnerProfile("Acme Retail"),
-			Diagnostics: []edix12.Diagnostic{{Severity: edi.ValidationSeverityWarning, Message: "N1 missing"}},
+			Diagnostics: []edi.Diagnostic{{Severity: edi.ValidationSeverityWarning, Message: "N1 missing"}},
 		},
 	}}
 	tool := newPreviewEDIDocumentTool(fake, &fakePermissions{})

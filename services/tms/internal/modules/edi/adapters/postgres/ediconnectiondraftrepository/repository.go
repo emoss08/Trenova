@@ -26,25 +26,15 @@ import (
 	"go.uber.org/zap"
 )
 
-const (
-	envelopeReceiverID        = "interchangeReceiverId"
-	envelopeReceiverQualifier = "interchangeReceiverQualifier"
-	envelopeSenderID          = "interchangeSenderId"
-	envelopeSenderQualifier   = "interchangeSenderQualifier"
-	envelopeApplicationSender = "applicationSenderCode"
-	configPartnerAS2ID        = "partnerAS2Id"
-)
+const configPartnerAS2ID = "partnerAS2Id"
 
 var partnerErrors = dberror.Mapping{Entity: "EDIPartner"}
 
-var excludedTemplateStatuses = []edi.TemplateStatus{
-	edi.TemplateStatusArchived,
-	edi.TemplateStatusSuperseded,
-}
-
-var candidateVersionStatuses = []edi.TemplateStatus{
-	edi.TemplateStatusActive,
-	edi.TemplateStatusCertified,
+var identifyingStatuses = []edi.LadingVersionStatus{
+	edi.LadingVersionStatusDraft,
+	edi.LadingVersionStatusCertified,
+	edi.LadingVersionStatusActive,
+	edi.LadingVersionStatusShadow,
 }
 
 type Params struct {
@@ -190,25 +180,26 @@ func (r *repository) partnerIDsByInterchange(
 		return nil, nil
 	}
 
-	dp := edidb.EDIPartnerDocumentProfiles
+	db := r.db.Keel(ctx)
+	lv := edidb.LadingVersions
 	qualifier := strings.TrimSpace(req.ISAQualifier)
-	return keel.Into[pulid.ID](ctx, r.db.Keel(ctx), dp.Pick(dp.EDIPartnerID).
-		DistinctOn(dp.EDIPartnerID).
-		Where(keel.Or(
-			keel.And(
-				dp.Direction.Eq(edi.DocumentDirectionOutbound),
-				dp.Envelope.Text(envelopeReceiverID).Eq(isaID),
-				keel.When(
-					qualifier != "",
-					dp.Envelope.Text(envelopeReceiverQualifier).Eq(qualifier),
-				),
+	projectIDs, err := keel.Into[pulid.ID](ctx, db, lv.Pick(lv.ProjectID).
+		DistinctOn(lv.ProjectID).
+		Where(
+			lv.Status.In(identifyingStatuses...),
+			lv.Manifest.Text("partner", "interchange", "them", "id").Eq(isaID),
+			keel.When(
+				qualifier != "",
+				lv.Manifest.Text("partner", "interchange", "them", "qualifier").Eq(qualifier),
 			),
-			keel.And(
-				dp.Direction.Eq(edi.DocumentDirectionInbound),
-				dp.Envelope.Text(envelopeSenderID).Eq(isaID),
-				keel.When(qualifier != "", dp.Envelope.Text(envelopeSenderQualifier).Eq(qualifier)),
-			),
-		)))
+		))
+	if err != nil || len(projectIDs) == 0 {
+		return nil, err
+	}
+	lp := edidb.LadingProjects
+	return keel.Into[pulid.ID](ctx, db, lp.Pick(lp.EDIPartnerID).
+		Where(lp.ID.In(projectIDs...)).
+		Limit(len(projectIDs)))
 }
 
 func (r *repository) partnerIDsByAS2(
@@ -246,11 +237,12 @@ func (r *repository) GetPartnerSetup(
 		db := r.db.Keel(ctx)
 		ep := edidb.EDIPartners
 		cp := edidb.EDICommunicationProfiles
-		dp := edidb.EDIPartnerDocumentProfiles
+		lp := edidb.LadingProjects
 		mi := edidb.EDIMappingProfileItems
 		cn := edidb.EDIControlNumberSequences
 
 		setup := new(ediports.EDIPartnerSetup)
+		var projects []*edi.LadingProject
 		err := keel.Batch(
 			ctx,
 			db,
@@ -259,12 +251,7 @@ func (r *repository) GetPartnerSetup(
 				cp.Where(cp.EDIPartnerID.Eq(req.PartnerID)).Order(cp.CreatedAt.Asc()),
 				&setup.CommunicationProfiles,
 			),
-			keel.AllInto(
-				dp.Where(dp.EDIPartnerID.Eq(req.PartnerID)).
-					Load(dp.Template()).
-					Order(dp.CreatedAt.Asc()),
-				&setup.DocumentProfiles,
-			),
+			keel.AllInto(lp.Where(lp.EDIPartnerID.Eq(req.PartnerID)).Limit(1), &projects),
 			keel.AllInto(
 				mi.Where(mi.EDIPartnerID.Eq(req.PartnerID)).
 					Order(mi.EntityType.Asc(), mi.SourceID.Asc()),
@@ -275,79 +262,23 @@ func (r *repository) GetPartnerSetup(
 		if err != nil {
 			return nil, partnerErrors.Map(err, req.PartnerID.String())
 		}
-
+		if len(projects) == 0 {
+			return setup, nil
+		}
+		setup.Project = projects[0]
+		lv := edidb.LadingVersions
+		versions, err := lv.Where(lv.ProjectID.Eq(setup.Project.ID)).
+			Order(lv.Number.Desc()).
+			Limit(1).
+			All(ctx, db)
+		if err != nil {
+			return nil, err
+		}
+		if len(versions) > 0 {
+			setup.LatestVersion = versions[0]
+		}
 		return setup, nil
 	})
-}
-
-func (r *repository) ListTemplateCandidates(
-	ctx context.Context,
-	req *ediports.ListEDITemplateCandidatesRequest,
-) ([]*edi.EDITemplateVersion, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDITemplateVersion, error) {
-		db := r.db.Keel(ctx)
-		t := edidb.EDITemplates
-		templates, err := t.Where(
-			t.Standard.Eq(edi.EDIStandardX12),
-			t.TransactionSet.Eq(req.TransactionSet),
-			t.Direction.Eq(req.Direction),
-			t.Status.NotIn(excludedTemplateStatuses...),
-		).
-			Order(t.CreatedAt.Asc()).
-			All(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-		if len(templates) == 0 {
-			return []*edi.EDITemplateVersion{}, nil
-		}
-
-		byID := make(map[pulid.ID]*edi.EDITemplate, len(templates))
-		ids := make([]pulid.ID, 0, len(templates))
-		for _, template := range templates {
-			byID[template.ID] = template
-			ids = append(ids, template.ID)
-		}
-
-		tv := edidb.EDITemplateVersions
-		versions, err := tv.Where(tv.TemplateID.In(ids...), tv.Status.In(candidateVersionStatuses...)).
-			Load(tv.Segments()).
-			Order(tv.TemplateID.Asc(), tv.VersionNumber.Desc()).
-			All(ctx, db)
-		if err != nil {
-			return nil, err
-		}
-
-		latest := make([]*edi.EDITemplateVersion, 0, len(versions))
-		seen := make(map[pulid.ID]struct{}, len(versions))
-		for _, version := range versions {
-			if _, ok := seen[version.TemplateID]; ok && !version.IsActive {
-				continue
-			}
-			if _, ok := seen[version.TemplateID]; ok {
-				latest = replaceVersion(latest, version)
-				continue
-			}
-			seen[version.TemplateID] = struct{}{}
-			version.Template = byID[version.TemplateID]
-			latest = append(latest, version)
-		}
-
-		return latest, nil
-	})
-}
-
-func replaceVersion(
-	versions []*edi.EDITemplateVersion,
-	active *edi.EDITemplateVersion,
-) []*edi.EDITemplateVersion {
-	for index, version := range versions {
-		if version.TemplateID == active.TemplateID {
-			active.Template = version.Template
-			versions[index] = active
-		}
-	}
-	return versions
 }
 
 func (r *repository) GetInterchangeIdentity(
@@ -355,14 +286,14 @@ func (r *repository) GetInterchangeIdentity(
 	_ pagination.TenantInfo,
 ) (*ediports.InterchangeIdentity, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.InterchangeIdentity, error) {
-		dp := edidb.EDIPartnerDocumentProfiles
-		qualifier := dp.Envelope.Text(envelopeSenderQualifier).Coalesce("")
-		senderID := dp.Envelope.Text(envelopeSenderID)
-		applicationID := dp.Envelope.Text(envelopeApplicationSender).Coalesce("")
+		lv := edidb.LadingVersions
+		qualifier := lv.Manifest.Text("partner", "interchange", "us", "qualifier").Coalesce("")
+		senderID := lv.Manifest.Text("partner", "interchange", "us", "id")
+		applicationID := lv.Manifest.Text("partner", "interchange", "group", "ours").Coalesce("")
 
-		identity, err := keel.IntoOne[ediports.InterchangeIdentity](ctx, r.db.Keel(ctx), dp.
+		identity, err := keel.IntoOne[ediports.InterchangeIdentity](ctx, r.db.Keel(ctx), lv.
 			Where(
-				dp.Direction.Eq(edi.DocumentDirectionOutbound),
+				lv.Status.Eq(edi.LadingVersionStatusActive),
 				senderID.Trim().NullIf("").IsNotNull(),
 			).
 			Group(qualifier, senderID, applicationID).

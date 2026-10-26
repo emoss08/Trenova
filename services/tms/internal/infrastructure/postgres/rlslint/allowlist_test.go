@@ -182,9 +182,6 @@ var allowed = map[string]string{
 	"internal/modules/billing/adapters/postgres/journalrepairrepository/journalrepair.go:repository.ListUnjournaledAdjustmentMemos": "list adjustment credit memos missing a journal across every organization",
 	"internal/modules/billing/adapters/postgres/journalrepairrepository/journalrepair.go:repository.ListUnjournaledDriverPayments":  "list paid driver settlements missing a journal across every organization",
 	"internal/modules/billing/billingtest/seed.go:SeededTenant":                                                                     "read back the organization and business unit a billing test seeded, before the test has a tenant",
-	"internal/modules/edi/adapters/postgres/editenderrepairrepository/editenderrepair.go:repository.CountUnreadableTenders":         "count inbound EDI tenders whose X12 was purged across every organization",
-	"internal/modules/edi/adapters/postgres/editenderrepairrepository/editenderrepair.go:repository.ListTenderReferenceCandidates":  "re-read inbound EDI tenders across every organization",
-	"internal/modules/edi/adapters/postgres/editenderrepairrepository/editenderrepair.go:repository.RepairTenderReference":          "repair the references of a re-read inbound EDI tender for the organization the repair sweep names",
 	"internal/testutil/seedtest/entities.go:systemContext":                                                                          "seed the fixture tenants a test runs against, which exist before any tenant scope does",
 }
 

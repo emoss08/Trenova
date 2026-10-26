@@ -140,14 +140,13 @@ func (s *Service) generateExternalTenderChange(
 			BuID:   recipient.BusinessUnitID,
 			UserID: actorUserID(actor),
 		},
-		PartnerDocumentProfileID: recipient.PartnerDocumentProfileID,
-		EDIPartnerID:             recipient.EDIPartnerID,
-		ShipmentID:               recipient.SourceShipmentID,
-		TransactionSet:           edi.TransactionSet204,
-		Direction:                edi.DocumentDirectionOutbound,
-		Payload:                  loadTenderDocumentPayload(&payload),
-		GeneratedByID:            actorUserID(actor),
-		DisableDeliveryQueue:     true,
+		EDIPartnerID:         recipient.EDIPartnerID,
+		ShipmentID:           recipient.SourceShipmentID,
+		TransactionSet:       edi.TransactionSet204,
+		Direction:            edi.DocumentDirectionOutbound,
+		Payload:              loadTenderDocumentPayload(&payload),
+		GeneratedByID:        actorUserID(actor),
+		DisableDeliveryQueue: true,
 	})
 	if err != nil {
 		change.Status = edi.TenderChangeStatusFailed
@@ -512,16 +511,16 @@ func (s *Service) upsertInternalTenderRecipient(
 func (s *Service) upsertExternalTenderRecipient(
 	ctx context.Context,
 	message *edi.EDIMessage,
-	profile *edi.EDIPartnerDocumentProfile,
+	partner *edi.EDIPartner,
 ) error {
-	if s.tenderRecipientRepo == nil || message == nil || profile == nil ||
+	if s.tenderRecipientRepo == nil || message == nil || partner == nil ||
 		message.TransactionSet != edi.TransactionSet204 ||
 		message.Direction != edi.DocumentDirectionOutbound ||
 		message.PayloadSnapshot.LoadTender == nil ||
 		message.PayloadSnapshot.LoadTender.PurposeCode == edi.LoadTenderPurposeChange {
 		return nil
 	}
-	if profile.Partner != nil && profile.Partner.Kind != edi.PartnerKindExternal {
+	if partner.Kind != edi.PartnerKindExternal {
 		return nil
 	}
 	commProfile, err := s.profileRepo.GetActiveProfileByPartner(
@@ -544,18 +543,17 @@ func (s *Service) upsertExternalTenderRecipient(
 	payload := *message.PayloadSnapshot.LoadTender
 	payload.PurposeCode = edi.LoadTenderPurposeOriginal
 	recipient := &edi.TenderRecipient{
-		BusinessUnitID:           message.BusinessUnitID,
-		SourceOrganizationID:     message.OrganizationID,
-		SourceShipmentID:         payload.ShipmentID,
-		RecipientKind:            edi.TenderRecipientKindExternal,
-		EDIPartnerID:             message.EDIPartnerID,
-		PartnerDocumentProfileID: message.PartnerDocumentProfileID,
-		OriginalMessageID:        message.ID,
-		LatestBaselinePayload:    payload,
-		LatestBaselineHash:       tenderPayloadHash(&payload),
-		BaselineRecordedAt:       timeutils.NowUnix(),
-		BaselineStatus:           edi.TenderRecipientBaselineStatusSent,
-		Status:                   edi.TenderRecipientStatusActive,
+		BusinessUnitID:        message.BusinessUnitID,
+		SourceOrganizationID:  message.OrganizationID,
+		SourceShipmentID:      payload.ShipmentID,
+		RecipientKind:         edi.TenderRecipientKindExternal,
+		EDIPartnerID:          message.EDIPartnerID,
+		OriginalMessageID:     message.ID,
+		LatestBaselinePayload: payload,
+		LatestBaselineHash:    tenderPayloadHash(&payload),
+		BaselineRecordedAt:    timeutils.NowUnix(),
+		BaselineStatus:        edi.TenderRecipientBaselineStatusSent,
+		Status:                edi.TenderRecipientStatusActive,
 	}
 	if commProfile != nil {
 		recipient.CommunicationProfileID = commProfile.ID

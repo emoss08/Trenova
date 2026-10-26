@@ -55,7 +55,6 @@ func TestEDIMessageIdempotencyKey_Integration(t *testing.T) {
 			TransactionSet:           edi.TransactionSet204,
 			X12Version:               edi.DefaultX12204Version,
 			Status:                   edi.MessageStatusGenerated,
-			ValidationMode:           edi.ValidationModeDisabled,
 			RawX12:                   "ISA*TEST~",
 			InterchangeControlNumber: "00000" + control,
 			GroupControlNumber:       control,

@@ -139,14 +139,30 @@ func (a *Activities) SendInvoiceEDIActivity(
 	}
 
 	message, err := a.ediService.GenerateDocument(ctx, &ediports.GenerateEDIDocumentRequest{
-		TenantInfo:               tenantInfo,
-		PartnerDocumentProfileID: plan.DocumentProfileID,
-		EDIPartnerID:             plan.PartnerID,
-		InvoiceID:                current.ID,
-		TransactionSet:           edi.TransactionSet210,
-		Direction:                edi.DocumentDirectionOutbound,
-		GeneratedByID:            payload.UserID,
+		TenantInfo:     tenantInfo,
+		EDIPartnerID:   plan.PartnerID,
+		InvoiceID:      current.ID,
+		TransactionSet: edi.TransactionSet210,
+		Direction:      edi.DocumentDirectionOutbound,
+		GeneratedByID:  payload.UserID,
 	})
+	if errors.Is(err, ediports.ErrSendDeferred) {
+		if err = a.invoiceRepo.UpdateEDISendStatus(
+			ctx,
+			invoiceports.UpdateInvoiceEDISendStatusRequest{
+				TenantInfo: tenantInfo,
+				InvoiceID:  current.ID,
+				Status:     invoice.EDISendStatusQueued,
+			},
+		); err != nil {
+			return nil, err
+		}
+		return &SendInvoiceEDIResult{
+			InvoiceID:   current.ID,
+			Status:      invoice.EDISendStatusQueued,
+			CompletedAt: timeutils.NowUnix(),
+		}, nil
+	}
 	if err != nil {
 		if updateErr := a.invoiceRepo.UpdateEDISendStatus(
 			ctx,

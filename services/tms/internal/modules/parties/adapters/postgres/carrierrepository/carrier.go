@@ -368,7 +368,6 @@ func (r *repository) upsertChildren(ctx context.Context, entity *carrier.Carrier
 		inserted, err := cec.Upsert(ctx, db, entity.EDIChannels,
 			keel.OnConflict(cec.ID, cec.BusinessUnitID, cec.OrganizationID).Update(
 				cec.EDIPartnerID,
-				cec.PartnerDocumentProfileID,
 				cec.CommunicationProfileID,
 				cec.SCACOverride,
 				cec.IsDefault,

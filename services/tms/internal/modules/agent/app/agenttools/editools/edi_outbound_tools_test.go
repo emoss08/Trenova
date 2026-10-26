@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -187,7 +186,7 @@ func TestSendEDIStatusUpdate_PreviewsTheRenderedStatusAndNeverTakesAPayload(t *t
 			RawX12:       "ISA*00*~ST*214*0001~B10*PRO-88*BOL-88~",
 			SegmentCount: 3,
 			Profile:      &edi.EDIPartnerDocumentProfile{Name: "Acme 214"},
-			Diagnostics: []edix12.Diagnostic{{
+			Diagnostics: []edi.Diagnostic{{
 				Severity: edi.ValidationSeverityWarning,
 				Message:  "AT7 reason code defaulted",
 			}},

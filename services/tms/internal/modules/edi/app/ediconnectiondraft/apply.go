@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -99,7 +100,7 @@ func (s *Service) write(
 	steps := []func(context.Context) error{
 		w.writePartner,
 		w.writeTransport,
-		w.writeProfiles,
+		w.writeProject,
 		w.writeControlNumbers,
 		w.writeMappings,
 	}
@@ -164,37 +165,26 @@ func (w *writer) writeTransport(ctx context.Context) error {
 	return nil
 }
 
-func (w *writer) writeProfiles(ctx context.Context) error {
-	for _, profile := range w.p.writes.profiles {
-		if !profile.change.Writes() {
-			continue
-		}
-		request := profile.request
-		request.EDIPartnerID = w.partner.ID
-		action := writeUpdated
-		if request.ProfileID.IsNil() {
-			action = writeCreated
-			request.Name = profileName(w.partner.Name, profile.set, profile.direction)
-		}
-		if profile.starter {
-			template, version, err := w.s.templates.EnsureStarterTemplate(
-				ctx,
-				w.tenant,
-				profile.set,
-				profile.direction,
-			)
-			if err != nil {
-				return err
-			}
-			request.TemplateID = template.ID
-			request.TemplateVersionID = version.ID
-		}
-		saved, err := w.s.setup.UpsertPartnerDocumentProfile(ctx, request, w.actor)
-		if err != nil {
-			return err
-		}
-		w.note("Document profile", saved.ID, action, saved.Name)
+func (w *writer) writeProject(ctx context.Context) error {
+	project := w.p.writes.project
+	if project == nil || !project.change.Writes() {
+		return nil
 	}
+	version, err := w.s.projects.Import(ctx, &edilading.ImportRequest{
+		TenantInfo: w.tenant,
+		PartnerID:  w.partner.ID,
+		Files:      project.files,
+		Samples:    project.samples,
+		Notes:      project.notes,
+	}, w.actor)
+	if err != nil {
+		return err
+	}
+	action := writeUpdated
+	if project.change == ediports.ChangeKindAdd {
+		action = writeCreated
+	}
+	w.note(projectRecord, version.ProjectID, action, fmt.Sprintf("Draft %d", version.Number))
 	return nil
 }
 
@@ -203,7 +193,7 @@ func (w *writer) writeControlNumbers(ctx context.Context) error {
 		sequence, err := w.s.setup.StartControlNumber(ctx, &ediports.ResetEDIControlNumberRequest{
 			TenantInfo:     w.tenant,
 			PartnerID:      w.partner.ID,
-			DocumentTypeID: w.p.docTypes[profileKey(control.set, control.direction)],
+			DocumentTypeID: w.p.docTypes[setKey(control.set, control.direction)],
 			Kind:           control.kind,
 			NextValue:      control.next,
 		}, w.actor)

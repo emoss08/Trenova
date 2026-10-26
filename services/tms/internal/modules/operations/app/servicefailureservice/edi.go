@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -75,7 +74,9 @@ func (s *service) generateServiceFailure214(
 		return
 	}
 	switch result.Action {
-	case ediports.ServiceFailureEDIActionGenerated, ediports.ServiceFailureEDIActionDuplicate:
+	case ediports.ServiceFailureEDIActionGenerated,
+		ediports.ServiceFailureEDIActionDuplicate,
+		ediports.ServiceFailureEDIActionQueued:
 		s.recordServiceFailure214Result(ctx, params, result)
 	case ediports.ServiceFailureEDIActionBlocked:
 		s.l.Warn(
@@ -128,7 +129,7 @@ func serviceFailure214Trigger(
 	}
 }
 
-func serviceFailure214DiagnosticsError(diagnostics []edix12.Diagnostic) error {
+func serviceFailure214DiagnosticsError(diagnostics []edi.Diagnostic) error {
 	multiErr := errortypes.NewMultiError()
 	for _, diagnostic := range diagnostics {
 		if diagnostic.Severity != edi.ValidationSeverityError {
@@ -154,13 +155,15 @@ func (s *service) recordServiceFailure214Result(
 	metadata := serviceFailureLifecycleMetadata(params.previous, params.current, params.actor)
 	metadata["ediMessageId"] = result.MessageID.String()
 	metadata["ediPartnerId"] = result.EDIPartnerID.String()
-	metadata["ediPartnerDocumentProfileId"] = result.PartnerDocumentProfileID.String()
 	metadata["serviceFailure214Trigger"] = string(result.Trigger)
 	metadata["serviceFailure214Action"] = string(result.Action)
 
 	comment := "Service failure EDI 214 generated"
 	if result.Action == ediports.ServiceFailureEDIActionDuplicate {
 		comment = "Service failure EDI 214 already generated"
+	}
+	if result.Action == ediports.ServiceFailureEDIActionQueued {
+		comment = "Service failure EDI 214 queued to go with the partner's next batch"
 	}
 	s.logServiceFailureEDIAction(params, comment, metadata)
 	s.comment(ctx, commentParams{

@@ -58,11 +58,6 @@ func (s *Service) SendTenderOffer(
 	if err != nil {
 		return nil, err
 	}
-	profileID, err := s.resolveCarrierTenderProfileID(ctx, req.TenantInfo, channel)
-	if err != nil {
-		return nil, err
-	}
-
 	source, err := s.shipmentSvc.Get(ctx, &shipmentports.GetShipmentByIDRequest{
 		ID:         offer.Tender.ShipmentID,
 		TenantInfo: req.TenantInfo,
@@ -81,7 +76,6 @@ func (s *Service) SendTenderOffer(
 
 	message, err := s.GenerateDocument(ctx, &GenerateEDIDocumentRequest{
 		TenantInfo:                    req.TenantInfo,
-		PartnerDocumentProfileID:      profileID,
 		EDIPartnerID:                  channel.EDIPartnerID,
 		TransactionSet:                edi.TransactionSet204,
 		Direction:                     edi.DocumentDirectionOutbound,
@@ -141,26 +135,6 @@ func (s *Service) resolveCarrierEDIChannel(
 		)
 	}
 	return channel, nil
-}
-
-func (s *Service) resolveCarrierTenderProfileID(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	channel *carrier.CarrierEDIChannel,
-) (pulid.ID, error) {
-	if channel.PartnerDocumentProfileID != nil && channel.PartnerDocumentProfileID.IsNotNil() {
-		return *channel.PartnerDocumentProfileID, nil
-	}
-	profile, err := s.EnsureOutboundDocumentProfile(
-		ctx,
-		tenantInfo,
-		channel.EDIPartnerID,
-		edi.TransactionSet204,
-	)
-	if err != nil {
-		return pulid.Nil, err
-	}
-	return profile.ID, nil
 }
 
 // buildCarrierOfferDocumentPayload assembles the COST-side 204 for a carrier

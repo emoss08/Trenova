@@ -112,7 +112,6 @@ func (r *repository) UpsertTenderRecipient(
 			tr.RecipientKind,
 			tr.RecipientOrganizationID.Coalesce(keel.ConstText("")),
 			tr.EDIPartnerID.Coalesce(keel.ConstText("")),
-			tr.PartnerDocumentProfileID.Coalesce(keel.ConstText("")),
 		).
 			Update(
 				tr.LatestBaselinePayload,
@@ -124,9 +123,6 @@ func (r *repository) UpsertTenderRecipient(
 				tr.OriginalTransferID.ToExpr(keepStored(tr.OriginalTransferID.Col)),
 				tr.ShipmentLinkID.ToExpr(keepStored(tr.ShipmentLinkID.Col)),
 				tr.OriginalMessageID.ToExpr(keepStored(tr.OriginalMessageID.Col)),
-				tr.PartnerDocumentProfileID.ToExpr(
-					keepStored(tr.PartnerDocumentProfileID.Col),
-				),
 				tr.CommunicationProfileID.ToExpr(
 					keepStored(tr.CommunicationProfileID.Col),
 				),
@@ -142,7 +138,6 @@ func (r *repository) UpsertTenderRecipient(
 			tr.RecipientKind.Eq(entity.RecipientKind),
 			tr.RecipientOrganizationID.Eq(entity.RecipientOrganizationID),
 			tr.EDIPartnerID.Eq(entity.EDIPartnerID),
-			tr.PartnerDocumentProfileID.Eq(entity.PartnerDocumentProfileID),
 		).One(ctx, db)
 		if err != nil {
 			return nil, recipientErrors.Map(err, entity.ID.String())

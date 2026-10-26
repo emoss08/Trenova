@@ -3,7 +3,10 @@ package editools
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
+
+	"github.com/emoss08/trenova/pkg/lading"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttools/common"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
@@ -26,11 +29,8 @@ var (
 		"contactPhone", "timezone", "country", "enabledForInbound", "enabledForOutbound",
 	}
 	draftTransportFields = []string{fieldName, "method", fieldStatus, "config"}
-	draftProfileFields   = []string{
-		fieldName, fieldStatus, "transactionSet", "direction", "templateId", "x12VersionOverride",
-		"functionalGroupId", "envelope", "acknowledgment", "validationMode", "partnerSettings",
-	}
-	draftMappingFields = []string{
+	draftProjectFields   = []string{"files", "samples"}
+	draftMappingFields   = []string{
 		"entityType",
 		"sourceId",
 		"sourceLabel",
@@ -76,7 +76,7 @@ func pinned(id pulid.ID, version int64) *int64 {
 }
 
 func draftChanges(plan *ediports.ConnectionDraftPlan) ([]*agent.RecordChange, error) {
-	changes := make([]*agent.RecordChange, 0, 2+len(plan.DocumentProfiles)+len(plan.Mappings))
+	changes := make([]*agent.RecordChange, 0, 3+len(plan.Mappings))
 	add := func(change *agent.RecordChange, err error) error {
 		if err != nil {
 			return err
@@ -112,20 +112,24 @@ func draftChanges(plan *ediports.ConnectionDraftPlan) ([]*agent.RecordChange, er
 			return nil, err
 		}
 	}
-	for index := range plan.DocumentProfiles {
-		profile := &plan.DocumentProfiles[index]
-		if !profile.Change.Writes() {
-			continue
-		}
+	if project := plan.Project; project != nil && project.Change.Writes() {
 		record := toolpreview.Record{
 			Resource: permission.ResourceEDI,
-			ID:       profile.After.ID,
-			Label:    "Document profile " + profile.After.Name,
-			Version:  pinned(profile.After.ID, profile.After.Version),
+			Label:    "Lading project draft",
 		}
-		if err := add(
-			writeChange(record, profile.Before, profile.After, draftProfileFields),
-		); err != nil {
+		if project.Project != nil {
+			record.ID = project.Project.ID
+		}
+		after := projectView(project.Files, project.Samples)
+		var before *ladingProjectView
+		if project.Before != nil {
+			before = projectView(project.Before.Files, nil)
+			for _, sample := range project.Before.Samples {
+				before.Samples = append(before.Samples, sample.Path)
+			}
+			after.Samples = append(slices.Clone(before.Samples), after.Samples...)
+		}
+		if err := add(writeChange(record, before, after, draftProjectFields)); err != nil {
 			return nil, err
 		}
 	}
@@ -158,6 +162,24 @@ func draftChanges(plan *ediports.ConnectionDraftPlan) ([]*agent.RecordChange, er
 		}
 	}
 	return changes, nil
+}
+
+// ladingProjectView is what a draft writes into a Lading project: its files by path, and the
+// paths of its samples.
+type ladingProjectView struct {
+	Files   map[string]string `json:"files"`
+	Samples []string          `json:"samples"`
+}
+
+func projectView(files []lading.File, samples []lading.Sample) *ladingProjectView {
+	view := &ladingProjectView{Files: make(map[string]string, len(files))}
+	for _, file := range files {
+		view.Files[file.Path] = file.Source
+	}
+	for _, sample := range samples {
+		view.Samples = append(view.Samples, sample.Path)
+	}
+	return view
 }
 
 func writeChange[T any](
@@ -214,14 +236,19 @@ func outstanding(draft *ediports.ConnectionDraft) string {
 		notes = append(notes, "Before turning it on, enter: "+strings.Join(missing, ", ")+".")
 	}
 	unmet := 0
-	for index := range draft.DocumentProfiles {
-		unmet += len(draft.DocumentProfiles[index].Template.Unmet)
+	for index := range draft.Sets {
+		unmet += len(draft.Sets[index].Unmet)
 	}
 	if unmet > 0 {
 		notes = append(notes, fmt.Sprintf(
-			"The chosen templates leave %d of the guide's segment rules unmet for the template designer.",
+			"The drafted maps leave %d of the guide's mandatory elements unwritten, to finish in the Lading studio.",
 			unmet,
 		))
+	}
+	if draft.Project != nil && draft.Project.Errors > 0 {
+		notes = append(notes, fmt.Sprintf(
+			"The drafted Lading project has %d %s to fix before it can be certified.",
+			draft.Project.Errors, plural(draft.Project.Errors, "error", "errors")))
 	}
 	if len(draft.Gaps) > 0 {
 		notes = append(notes, fmt.Sprintf(

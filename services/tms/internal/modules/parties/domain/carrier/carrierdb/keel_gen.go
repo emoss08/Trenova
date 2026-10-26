@@ -801,7 +801,6 @@ var carrierEDIChannelsTable = schema.Table{
 		{Name: "organization_id", Quoted: `"organization_id"`, Field: "OrganizationID", Kind: schema.KindString, Flags: schema.FlagPK | schema.FlagTenant, Label: `Organization ID`, JSON: `organizationId`},
 		{Name: "carrier_id", Quoted: `"carrier_id"`, Field: "CarrierID", Kind: schema.KindString, Flags: 0, Label: `Carrier ID`, JSON: `carrierId`},
 		{Name: "edi_partner_id", Quoted: `"edi_partner_id"`, Field: "EDIPartnerID", Kind: schema.KindString, Flags: 0, Label: `EDI Partner ID`, JSON: `ediPartnerId`},
-		{Name: "partner_document_profile_id", Quoted: `"partner_document_profile_id"`, Field: "PartnerDocumentProfileID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Partner Document Profile ID`, JSON: `partnerDocumentProfileId`},
 		{Name: "communication_profile_id", Quoted: `"communication_profile_id"`, Field: "CommunicationProfileID", Kind: schema.KindString, Flags: schema.FlagNullable, Label: `Communication Profile ID`, JSON: `communicationProfileId`},
 		{Name: "scac_override", Quoted: `"scac_override"`, Field: "SCACOverride", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `SCAC Override`, JSON: `scacOverride`},
 		{Name: "is_default", Quoted: `"is_default"`, Field: "IsDefault", Kind: schema.KindBool, Flags: 0, Label: `Is Default`, JSON: `isDefault`},
@@ -815,14 +814,14 @@ var carrierEDIChannelsTable = schema.Table{
 	},
 	PK:         []int32{0, 1, 2},
 	Tenant:     []int32{1, 2},
-	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11},
-	Update:     []int32{3, 4, 5, 6, 7, 8, 11},
+	Select:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Insert:     []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	Update:     []int32{3, 4, 5, 6, 7, 10},
 	Returning:  nil,
-	Version:    9,
+	Version:    8,
 	AutoID:     0,
-	AutoCreate: 10,
-	AutoUpdate: 11,
+	AutoCreate: 9,
+	AutoUpdate: 10,
 	IDPrefix:   "cec_",
 	New:        newCarrierEDIChannel,
 	NewN:       newNCarrierEDIChannel,
@@ -837,53 +836,50 @@ var carrierEDIChannelsRef = keel.Ref{Table: &carrierEDIChannelsTable}
 // CarrierEDIChannelsTable is the table of carrier.CarrierEDIChannel.
 type CarrierEDIChannelsTable struct {
 	keel.Handle[*carrier.CarrierEDIChannel]
-	ID                       keelkinds.PulidIDCol
-	BusinessUnitID           keelkinds.PulidIDCol
-	OrganizationID           keelkinds.PulidIDCol
-	CarrierID                keelkinds.PulidIDCol
-	EDIPartnerID             keelkinds.PulidIDCol
-	PartnerDocumentProfileID keelkinds.PulidIDCol
-	CommunicationProfileID   keelkinds.PulidIDCol
-	SCACOverride             keel.StringCol
-	IsDefault                keel.BoolCol
-	Version                  keel.Int64Col
-	CreatedAt                keel.Int64Col
-	UpdatedAt                keel.Int64Col
+	ID                     keelkinds.PulidIDCol
+	BusinessUnitID         keelkinds.PulidIDCol
+	OrganizationID         keelkinds.PulidIDCol
+	CarrierID              keelkinds.PulidIDCol
+	EDIPartnerID           keelkinds.PulidIDCol
+	CommunicationProfileID keelkinds.PulidIDCol
+	SCACOverride           keel.StringCol
+	IsDefault              keel.BoolCol
+	Version                keel.Int64Col
+	CreatedAt              keel.Int64Col
+	UpdatedAt              keel.Int64Col
 }
 
 // CarrierEDIChannels references the carrier_edi_channels table.
 var CarrierEDIChannels = &CarrierEDIChannelsTable{
-	Handle:                   keel.Handle[*carrier.CarrierEDIChannel]{Ref: &carrierEDIChannelsRef},
-	ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 0}}},
-	BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 1}}},
-	OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 2}}},
-	CarrierID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 3}}},
-	EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 4}}},
-	PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 5}}},
-	CommunicationProfileID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 6}}},
-	SCACOverride:             keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 7}},
-	IsDefault:                keel.BoolCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 8}},
-	Version:                  keel.Int64Col{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 9}},
-	CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 10}},
-	UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 11}},
+	Handle:                 keel.Handle[*carrier.CarrierEDIChannel]{Ref: &carrierEDIChannelsRef},
+	ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 0}}},
+	BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 1}}},
+	OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 2}}},
+	CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 3}}},
+	EDIPartnerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 4}}},
+	CommunicationProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 5}}},
+	SCACOverride:           keel.StringCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 6}},
+	IsDefault:              keel.BoolCol{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 7}},
+	Version:                keel.Int64Col{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 8}},
+	CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 9}},
+	UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: &carrierEDIChannelsRef, Index: 10}},
 }
 
 // BuildCarrierEDIChannels builds the handle of carrier_edi_channels for ref. Generated relation and alias methods call it.
 func BuildCarrierEDIChannels(r *keel.Ref) *CarrierEDIChannelsTable {
 	return &CarrierEDIChannelsTable{
-		Handle:                   keel.Handle[*carrier.CarrierEDIChannel]{Ref: r},
-		ID:                       keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
-		BusinessUnitID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
-		OrganizationID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
-		CarrierID:                keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
-		EDIPartnerID:             keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
-		PartnerDocumentProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
-		CommunicationProfileID:   keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 6}}},
-		SCACOverride:             keel.StringCol{Col: keel.Col{Ref: r, Index: 7}},
-		IsDefault:                keel.BoolCol{Col: keel.Col{Ref: r, Index: 8}},
-		Version:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
-		CreatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
-		UpdatedAt:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 11}},
+		Handle:                 keel.Handle[*carrier.CarrierEDIChannel]{Ref: r},
+		ID:                     keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 0}}},
+		BusinessUnitID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 1}}},
+		OrganizationID:         keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 2}}},
+		CarrierID:              keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 3}}},
+		EDIPartnerID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 4}}},
+		CommunicationProfileID: keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 5}}},
+		SCACOverride:           keel.StringCol{Col: keel.Col{Ref: r, Index: 6}},
+		IsDefault:              keel.BoolCol{Col: keel.Col{Ref: r, Index: 7}},
+		Version:                keel.Int64Col{Col: keel.Col{Ref: r, Index: 8}},
+		CreatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 9}},
+		UpdatedAt:              keel.Int64Col{Col: keel.Col{Ref: r, Index: 10}},
 	}
 }
 
@@ -928,18 +924,16 @@ func ptrCarrierEDIChannel(p unsafe.Pointer, c int32) any {
 	case 4:
 		return (*string)(unsafe.Pointer(&r.EDIPartnerID))
 	case 5:
-		return (**string)(unsafe.Pointer(&r.PartnerDocumentProfileID))
-	case 6:
 		return (**string)(unsafe.Pointer(&r.CommunicationProfileID))
-	case 7:
+	case 6:
 		return &r.SCACOverride
-	case 8:
+	case 7:
 		return &r.IsDefault
-	case 9:
+	case 8:
 		return &r.Version
-	case 10:
+	case 9:
 		return &r.CreatedAt
-	case 11:
+	case 10:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -959,27 +953,22 @@ func valueCarrierEDIChannel(p unsafe.Pointer, c int32) any {
 	case 4:
 		return string(r.EDIPartnerID)
 	case 5:
-		if r.PartnerDocumentProfileID == nil {
-			return nil
-		}
-		return string(*r.PartnerDocumentProfileID)
-	case 6:
 		if r.CommunicationProfileID == nil {
 			return nil
 		}
 		return string(*r.CommunicationProfileID)
-	case 7:
+	case 6:
 		if r.SCACOverride == "" {
 			return nil
 		}
 		return r.SCACOverride
-	case 8:
+	case 7:
 		return r.IsDefault
-	case 9:
+	case 8:
 		return r.Version
-	case 10:
+	case 9:
 		return r.CreatedAt
-	case 11:
+	case 10:
 		return r.UpdatedAt
 	}
 	return nil

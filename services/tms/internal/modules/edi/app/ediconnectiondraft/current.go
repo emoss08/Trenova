@@ -1,10 +1,9 @@
 package ediconnectiondraft
 
 import (
-	"strconv"
-
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/maputils"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -12,19 +11,16 @@ import (
 type currentSetup struct {
 	setup     *ediports.EDIPartnerSetup
 	transport *edi.EDICommunicationProfile
-	profiles  map[string]*edi.EDIPartnerDocumentProfile
+	version   *edi.LadingVersion
+	exchanged map[string]bool
 	values    map[string]string
-}
-
-func profileKey(set edi.TransactionSet, direction edi.DocumentDirection) string {
-	return string(set) + "/" + string(direction)
 }
 
 func readCurrent(setup *ediports.EDIPartnerSetup, method edi.ConnectionMethod) *currentSetup {
 	current := &currentSetup{
-		setup:    setup,
-		profiles: map[string]*edi.EDIPartnerDocumentProfile{},
-		values:   map[string]string{},
+		setup:     setup,
+		exchanged: map[string]bool{},
+		values:    map[string]string{},
 	}
 	if setup == nil {
 		return current
@@ -47,24 +43,77 @@ func readCurrent(setup *ediports.EDIPartnerSetup, method edi.ConnectionMethod) *
 				current.values[key] = maputils.StringValue(current.transport.Config, spec.configKey)
 			}
 		}
-		current.values[fieldX12Version] = maputils.StringValue(
-			current.transport.Config,
-			"x12Version",
-		)
 	}
 
-	for _, profile := range setup.DocumentProfiles {
-		key := profileKey(profile.TransactionSet, profile.Direction)
-		if existing, ok := current.profiles[key]; ok &&
-			existing.Status == edi.DocumentStatusActive {
+	if setup.LatestVersion != nil {
+		current.version = setup.LatestVersion
+		readManifest(current, &setup.LatestVersion.Manifest)
+	}
+	return current
+}
+
+func readManifest(current *currentSetup, manifest *lading.Check) {
+	values := current.values
+	if manifest.Partner != nil && manifest.Partner.Interchange != nil {
+		interchange := manifest.Partner.Interchange
+		if interchange.Them != nil {
+			values[fieldPartnerQualifier] = interchange.Them.Qualifier
+			values[fieldPartnerID] = interchange.Them.ID
+		}
+		if interchange.Us != nil {
+			values[fieldOurQualifier] = interchange.Us.Qualifier
+			values[fieldOurID] = interchange.Us.ID
+		}
+		if interchange.Group != nil {
+			values[fieldPartnerGSID] = interchange.Group.Theirs
+			values[fieldOurGSID] = interchange.Group.Ours
+		}
+		values[fieldX12Version] = interchange.Version
+		values[fieldUsageIndicator] = "T"
+		if interchange.Usage == valueProduction {
+			values[fieldUsageIndicator] = "P"
+		}
+		keys := []string{fieldElementSep, fieldSegmentSep, fieldComponentSep, fieldRepetitionSep}
+		for index, separator := range interchange.Separators {
+			if index < len(keys) {
+				values[keys[index]] = separator
+			}
+		}
+	}
+
+	versions := make(map[string]string, len(manifest.Guides))
+	for _, guide := range manifest.Guides {
+		versions[guide.Name] = guide.Version
+	}
+	for _, item := range manifest.Maps {
+		if item.Set == "" {
 			continue
 		}
-		current.profiles[key] = profile
-		readProfile(current.values, profile)
+		set := edi.TransactionSet(item.Set)
+		direction := edi.DocumentDirectionOutbound
+		guide := item.To
+		if item.Direction == lading.DirectionInbound {
+			direction = edi.DocumentDirectionInbound
+			guide = item.From
+		}
+		current.exchanged[setKey(set, direction)] = true
+		values[setField(set, direction, setAttrSupported)] = valueTrue
+		if version := versions[guide]; version != "" {
+			values[setField(set, direction, setAttrVersion)] = version
+		}
 	}
-	readEnvelope(current.values, current.profiles)
-
-	return current
+	for _, flow := range manifest.Flows {
+		for _, clause := range flow.Clauses {
+			if clause.Kind != lading.ClauseReceive || clause.Set == "" {
+				continue
+			}
+			ack := clause.Acknowledge
+			if ack == lading.AcknowledgeNone {
+				ack = ackNone
+			}
+			values[setField(edi.TransactionSet(clause.Set), edi.DocumentDirectionInbound, setAttrAck)] = ack
+		}
+	}
 }
 
 func pickTransport(
@@ -87,79 +136,6 @@ func pickTransport(
 		return nil
 	}
 	return first
-}
-
-func readProfile(values map[string]string, profile *edi.EDIPartnerDocumentProfile) {
-	set, direction := profile.TransactionSet, profile.Direction
-	values[setField(set, direction, setAttrSupported)] = "true"
-	values[setField(set, direction, setAttrVersion)] = profile.X12VersionOverride
-	values[setField(set, direction, setAttrFunctionalGroupID)] = profile.FunctionalGroupID
-	switch {
-	case profile.Acknowledgment.Expected:
-		values[setField(set, direction, setAttrAck)] = string(profile.Acknowledgment.Type)
-	default:
-		values[setField(set, direction, setAttrAck)] = ackNone
-	}
-	if profile.Acknowledgment.SLAInMinutes > 0 {
-		values[setField(set, direction, setAttrAckWindowMinutes)] = strconv.FormatInt(
-			profile.Acknowledgment.SLAInMinutes,
-			10,
-		)
-	}
-	if direction == edi.DocumentDirectionOutbound {
-		if scac := nestedString(profile.PartnerSettings, "carrier", "scac"); scac != "" {
-			values[fieldCarrierSCAC] = scac
-		}
-	}
-}
-
-func readEnvelope(values map[string]string, profiles map[string]*edi.EDIPartnerDocumentProfile) {
-	for _, direction := range []edi.DocumentDirection{
-		edi.DocumentDirectionOutbound,
-		edi.DocumentDirectionInbound,
-	} {
-		for _, set := range supportedSets {
-			profile, ok := profiles[profileKey(set, direction)]
-			if !ok {
-				continue
-			}
-			envelope := profile.Envelope
-			partnerQualifier, partnerID := envelope.InterchangeReceiverQualifier,
-				envelope.InterchangeReceiverID
-			ourQualifier, ourID := envelope.InterchangeSenderQualifier, envelope.InterchangeSenderID
-			partnerGS, ourGS := envelope.ApplicationReceiverCode, envelope.ApplicationSenderCode
-			if direction == edi.DocumentDirectionInbound {
-				partnerQualifier, ourQualifier = ourQualifier, partnerQualifier
-				partnerID, ourID = ourID, partnerID
-				partnerGS, ourGS = ourGS, partnerGS
-			}
-			values[fieldPartnerQualifier] = partnerQualifier
-			values[fieldPartnerID] = partnerID
-			values[fieldOurQualifier] = ourQualifier
-			values[fieldOurID] = ourID
-			values[fieldPartnerGSID] = partnerGS
-			values[fieldOurGSID] = ourGS
-			values[fieldUsageIndicator] = envelope.InterchangeUsageIndicator
-			values[fieldElementSep] = envelope.ElementSeparator
-			values[fieldSegmentSep] = envelope.SegmentTerminator
-			values[fieldComponentSep] = envelope.ComponentSeparator
-			values[fieldRepetitionSep] = envelope.RepetitionSeparator
-			return
-		}
-	}
-}
-
-func nestedString(values map[string]any, path ...string) string {
-	current := any(values)
-	for _, key := range path {
-		next, ok := current.(map[string]any)
-		if !ok {
-			return ""
-		}
-		current = next[key]
-	}
-	value, _ := current.(string)
-	return value
 }
 
 func (c *currentSetup) sequence(

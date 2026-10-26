@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -377,7 +376,7 @@ func documentPreviewView(
 	return view, nil
 }
 
-func previewFindings(diagnostics []edix12.Diagnostic) []ediDiagnosticRow {
+func previewFindings(diagnostics []edi.Diagnostic) []ediDiagnosticRow {
 	rows := make([]ediDiagnosticRow, 0, min(len(diagnostics), maxMessageDiagnostics))
 	for idx := range diagnostics {
 		if len(rows) == maxMessageDiagnostics {
