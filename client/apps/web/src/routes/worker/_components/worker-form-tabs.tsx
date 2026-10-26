@@ -1,4 +1,3 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import {
   FleetCodeAutocompleteField,
   JobPositionAutocompleteField,
@@ -10,7 +9,6 @@ import { InputField } from "@/components/fields/input-field";
 import { PhoneNumberField } from "@/components/fields/phone-number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   cdlClassChoices,
   complianceStatusChoices,
@@ -20,6 +18,8 @@ import {
   statusChoices,
   workerTypeChoices,
 } from "@/lib/choices";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import type { Worker } from "@trenova/shared/types/worker";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -178,7 +178,7 @@ export function GeneralTab() {
               description={t("U.S. state of residence.")}
             />
           </FormControl>
-          <FormControl className="pb-2">
+          <FormControl cols="full">
             <InputField
               control={control}
               rules={{ required: true }}
@@ -261,7 +261,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
         title={t("Employment information")}
         description={t("Employment information for the worker.")}
       >
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <AutoCompleteDateField
               control={control}
@@ -285,7 +285,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
               placeholder={t("MM/DD/YYYY")}
             />
           </FormControl>
-          <FormControl className="pb-2">
+          <FormControl cols="full">
             <AutoCompleteDateField
               control={control}
               name="profile.terminationDate"
@@ -369,7 +369,7 @@ export function EmploymentTab({ personalWithheld = false }: PersonalDetailsProps
             />
           </FormControl>
           {requiresHazmatExpiry && (
-            <FormControl className="pb-2">
+            <FormControl cols="full">
               <AutoCompleteDateField
                 control={control}
                 name="profile.hazmatExpiry"
@@ -464,7 +464,7 @@ export function ComplianceTab({ personalWithheld = false }: PersonalDetailsProps
               placeholder={t("MM/DD/YYYY")}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <SwitchField
               control={control}
               name="profile.isQualified"
