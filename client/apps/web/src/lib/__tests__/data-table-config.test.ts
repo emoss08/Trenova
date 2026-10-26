@@ -1,8 +1,10 @@
 import type { TableConfig } from "@/types/table-configuration";
-import type { Column, Row } from "@trenova/shared/types/data-table";
+import type { Column, Header, Row } from "@trenova/shared/types/data-table";
 import { describe, expect, it } from "vitest";
 import {
+  columnLayout,
   compileFormatRules,
+  FORMAT_RULE_COLOR_CLASSES,
   fromColumnPinningState,
   isTableConfigEqual,
   stringifyUnknown,
@@ -143,6 +145,26 @@ describe("compileFormatRules", () => {
     expect(evaluate?.(makeRow({ amount: "not-a-number" }))).toBeUndefined();
     expect(evaluate?.(makeRow({ amount: 3 }))).toContain("sky");
   });
+
+  it("paints every colour opaque and deepens it when the row is hovered, on the cursor or opened", () => {
+    const tones = {
+      red: "danger",
+      amber: "warning",
+      green: "success",
+      blue: "accent-sky",
+      purple: "accent-violet",
+      gray: "neutral",
+    } as const;
+
+    for (const [color, tone] of Object.entries(tones)) {
+      expect(FORMAT_RULE_COLOR_CLASSES[color as keyof typeof tones].split(" ")).toEqual([
+        `bg-${tone}-subtle`,
+        `hover:bg-${tone}-subtle-hover`,
+        `data-cursor:bg-${tone}-subtle-hover`,
+        `data-expanded:bg-${tone}-subtle-hover`,
+      ]);
+    }
+  });
 });
 
 describe("stringifyUnknown", () => {
@@ -216,5 +238,45 @@ describe("withRequiredPinning", () => {
   it("returns the view's pinning when the table requires none", () => {
     const pinning = { left: ["pro"], right: [] };
     expect(withRequiredPinning(pinning, undefined)).toEqual(pinning);
+  });
+});
+
+describe("columnLayout", () => {
+  function makeHeader(
+    id: string,
+    size: number,
+    pinned: false | "start" | "end",
+    offset = 0,
+  ): Header<Record<string, unknown>> {
+    return {
+      getSize: () => size,
+      column: {
+        id,
+        getIsPinned: () => pinned,
+        getStart: () => offset,
+        getAfter: () => offset,
+      },
+    } as unknown as Header<Record<string, unknown>>;
+  }
+
+  it("totals the columns pinned to each side apart from the ones that scroll", () => {
+    const layout = columnLayout([
+      makeHeader("select", 40, "start", 0),
+      makeHeader("lane", 220, "start", 40),
+      makeHeader("status", 120, false),
+      makeHeader("pro", 160, false),
+      makeHeader("actions", 48, "end", 0),
+    ]);
+
+    expect(layout.totalSize).toBe(588);
+    expect(layout.pinnedStartSize).toBe(260);
+    expect(layout.pinnedEndSize).toBe(48);
+  });
+
+  it("reports no pinned width when nothing is pinned", () => {
+    const layout = columnLayout([makeHeader("status", 120, false), makeHeader("pro", 160, false)]);
+
+    expect(layout.pinnedStartSize).toBe(0);
+    expect(layout.pinnedEndSize).toBe(0);
   });
 });

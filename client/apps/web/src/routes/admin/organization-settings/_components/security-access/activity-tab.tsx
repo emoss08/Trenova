@@ -8,11 +8,11 @@ import {
 import { DataTableLazyComponent } from "@trenova/shared/components/error-boundary";
 import {
   ActivityIcon,
-  type IconComponent,
   Key01Icon,
   LinkExternal01Icon,
   Lock01Icon,
   ShieldAlertIcon,
+  type IconComponent,
 } from "@trenova/shared/components/icons";
 import {
   SegmentedControl,

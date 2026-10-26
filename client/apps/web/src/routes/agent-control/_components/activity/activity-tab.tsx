@@ -1,17 +1,15 @@
+import { lazyComponent } from "@/lib/lazy-component";
 import { aiControl } from "@/lib/queries/ai-control";
 import { useQuery } from "@tanstack/react-query";
-import { lazyComponent } from "@/lib/lazy-component";
 import { DataTableLazyComponent, LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { getStartOfDay } from "@trenova/shared/lib/date";
-import { lazy, useMemo } from "react";
+import { Activity, lazy, useMemo } from "react";
 import { useAIControlNavigation } from "../../use-ai-control-navigation";
 import { Callout } from "../edit/callout";
 import type { ActivityView } from "../rail-items";
 import { ActivityFigures } from "./activity-figures";
 import { ActivityHero } from "./activity-hero";
-import { ACTIVITY_TABLE_COLUMNS, ActivityHeadSkeleton } from "./activity-skeleton";
-import { AnalysisRunsSkeleton } from "./analysis-runs-skeleton";
 import {
   ACTIVITY_STALE_MS,
   OPEN_EXCEPTION_FILTERS,
@@ -19,6 +17,8 @@ import {
   activityFacts,
   failedTodayFilters,
 } from "./activity-model";
+import { ACTIVITY_TABLE_COLUMNS, ActivityHeadSkeleton } from "./activity-skeleton";
+import { AnalysisRunsSkeleton } from "./analysis-runs-skeleton";
 
 const AgentRunTable = lazy(() => import("./agent-run-table"));
 const AgentProposalTable = lazy(() => import("./agent-proposal-table"));
@@ -87,13 +87,33 @@ export default function ActivityTab({ view }: { view: ActivityView }) {
           <analysisRuns.Component />
         </LazyComponent>
       ) : (
-        <DataTableLazyComponent columnCount={ACTIVITY_TABLE_COLUMNS[view]}>
-          {view === "runs" && <AgentRunTable />}
-          {view === "proposals" && <AgentProposalTable />}
-          {view === "plans" && <AgentPlanTable />}
-          {view === "evaluations" && <AgentEvaluationTable />}
-          {view === "exceptions" && <AgentExceptionTable />}
-        </DataTableLazyComponent>
+        <div className="flex flex-col gap-4 pt-2">
+          <Activity mode={view === "runs" ? "visible" : "hidden"}>
+            <DataTableLazyComponent columnCount={ACTIVITY_TABLE_COLUMNS[view]}>
+              <AgentRunTable />
+            </DataTableLazyComponent>
+          </Activity>
+          <Activity mode={view === "proposals" ? "visible" : "hidden"}>
+            <DataTableLazyComponent columnCount={ACTIVITY_TABLE_COLUMNS[view]}>
+              <AgentProposalTable />
+            </DataTableLazyComponent>
+          </Activity>
+          <Activity mode={view === "plans" ? "visible" : "hidden"}>
+            <DataTableLazyComponent columnCount={ACTIVITY_TABLE_COLUMNS[view]}>
+              <AgentPlanTable />
+            </DataTableLazyComponent>
+          </Activity>
+          <Activity mode={view === "evaluations" ? "visible" : "hidden"}>
+            <DataTableLazyComponent columnCount={ACTIVITY_TABLE_COLUMNS[view]}>
+              <AgentEvaluationTable />
+            </DataTableLazyComponent>
+          </Activity>
+          <Activity mode={view === "exceptions" ? "visible" : "hidden"}>
+            <DataTableLazyComponent columnCount={ACTIVITY_TABLE_COLUMNS[view]}>
+              <AgentExceptionTable />
+            </DataTableLazyComponent>
+          </Activity>
+        </div>
       )}
     </div>
   );

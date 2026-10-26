@@ -1,4 +1,7 @@
-import type { DataTableAggregateValues, DataTableTotals } from "@/hooks/data-table/use-data-table-insights";
+import type {
+  DataTableAggregateValues,
+  DataTableTotals,
+} from "@/hooks/data-table/use-data-table-insights";
 import { columnCellStyle, pinnedCellClass } from "@/lib/data-table";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { TableCell, TableFooter, TableRow } from "@trenova/shared/components/ui/table";
@@ -49,6 +52,24 @@ function pick(value: DataTableAggregateValues | undefined, kind: DataTableAggreg
   }
 }
 
+/**
+ * Tells the table how tall the totals row is, so the scroll fade ends above it
+ * rather than under it; the row's height follows its figures and the sideways
+ * scrollbar, so it is measured, not assumed.
+ */
+function reserveFooterSpace(footer: HTMLTableSectionElement | null) {
+  const container = footer?.closest<HTMLElement>('[data-slot="table-container"]');
+  if (!footer || !container || typeof ResizeObserver === "undefined") return;
+  const apply = () => container.style.setProperty("--dt-foot-h", `${footer.offsetHeight}px`);
+  apply();
+  const observer = new ResizeObserver(apply);
+  observer.observe(footer);
+  return () => {
+    observer.disconnect();
+    container.style.removeProperty("--dt-foot-h");
+  };
+}
+
 /** Where a column's total comes from, or null when it has none the server can give. */
 export function aggregateFieldOf<TData extends RowData>(column: Column<TData, unknown>) {
   const meta = column.columnDef.meta;
@@ -70,7 +91,7 @@ export function DataTableTotalsRow<TData extends RowData>({
   const t = useT();
 
   return (
-    <TableFooter className="bg-canvas sticky bottom-0 z-15 font-normal">
+    <TableFooter ref={reserveFooterSpace} className="bg-canvas sticky bottom-0 z-15 font-normal">
       <TableRow className="hover:bg-transparent">
         {columns.map((column) => {
           const field = aggregateFieldOf(column);
@@ -108,7 +129,10 @@ export function DataTableTotalsRow<TData extends RowData>({
                         </span>
                       ) : null}
                       <span
-                        className={cn("font-table font-semibold", TOTAL_SIZE[aggregate?.size ?? "md"])}
+                        className={cn(
+                          "font-table font-semibold",
+                          TOTAL_SIZE[aggregate?.size ?? "md"],
+                        )}
                       >
                         {formatTotal(pick(value, kind), aggregate?.format)}
                       </span>
