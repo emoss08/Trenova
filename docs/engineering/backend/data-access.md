@@ -195,9 +195,18 @@ struct.
 - **Offset lists** (`listquery.List`, `listquery.Offset`) return rows and the count in one
   `keel.Batch`, for small, bounded sets (agent tools, exports, REST lists through
   `pagination.List`, whose `after` is an opaque offset cursor). `Then` orders after the request's
-  sorts and the search rank.
+  sorts and the search rank. Their total counts like a connection's: exact up to
+  `pagination.ExactTotalUpTo`, the planner's estimate above, with `ListResult.TotalExact` saying
+  which. A repository that builds its own batch counts with
+  `keel.CountEstimateInto(q, pagination.ExactTotalUpTo, &total)` beside the page and returns
+  `listquery.Result(items, total)`; a total taken from rows already in memory (a whole set read
+  with `AllInto`, a filtered scan) is `len` and exact. Never `keel.CountInto` for a list total.
 - **Select options** use `listquery.SelectOptions` with the search predicate the picker needs
   (`ContainsFold` over the code and description).
+- **Code that pages to a total** never stops at an estimate: an estimate can sit below the rows
+  that match when statistics are stale. Stop at a short or empty page, or at `Total` only when
+  `TotalExact` (`invoiceshareservice/candidates.go`), and say whether there is a next page with
+  `pagination.HasMore(result, page)`, which trusts `Total` only when it was counted.
 - **Filters, search and relation paths.** `listquery` resolves a request's JSON field names
   through the generated schema: a field filters when it has a JSON name and is a stored, selectable
   column that is not JSON, an array, bytea or a `tsvector`. `relation.field` resolves through a

@@ -77,6 +77,12 @@ rather than raising the ceiling.
 - The caller from `authctx.GetAuthContext(c)`; bodies through `authctx.BindJSON(c, authCtx, &v)`,
   which also sets tenant info; large bodies through `helpers.ReadBoundedRequestBody`.
 - Every error through `h.eh.HandleError(c, err)`, which maps `errortypes` to status codes.
+- Lists go through `pagination.List` (cursor response: `count`, `totalCount`) or
+  `pagination.SelectOptions` (`count`, offset `next`); both carry `totalCountExact` from
+  `ListResult.TotalExact`, and a select-options `next` comes from `pagination.HasMore`, so an
+  estimated total never ends or extends the pages. A response built by hand from a `ListResult`
+  carries `totalExact` beside `total`, as does a GraphQL list type with a `total` or `totalCount`
+  (`totalExact`/`totalCountExact: Boolean!`).
 - Register the constructor in `bootstrap/modules/api/handlers.go` and call `RegisterRoutes` from
   `internal/api/router.go`. The protected group already applies auth, read scope, rate limiting
   by principal, CSRF, the read-only guard and idempotency; a public route (token links,

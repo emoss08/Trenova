@@ -612,6 +612,14 @@ compactly ("1.2M") inside a message that says so ("of about {0}"), never as a ba
 that reads as counted. Paging never trusts an estimate for the last page: it pages as far as
 it has read.
 
+Offset lists follow the same rule. A REST list or select-options response carries
+`totalCountExact` beside `count` (the shared `GenericLimitOffsetResponse`), a hand-built REST
+page carries `totalExact` beside `total`, and so does a GraphQL list type with a `total`. With an
+estimate, an offset pager shows "Page 3" rather than "Page 3 of about 50K", offers no last-page
+jump and follows a full page to the next one (`DataTablePagination`, `insightPaging`); code that
+reads every page follows the list's cursor or `next` until it ends, never offsets computed from
+the total (`listInboundFileTransfers`).
+
 ### Loading states
 
 A page's first paint is its Suspense fallback: the chunk is still on the wire, or a
