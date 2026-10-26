@@ -5,9 +5,11 @@ import { ScrollArea, ScrollBar } from "./scroll-area";
 interface TableProps extends React.ComponentProps<"table"> {
   containerClassName?: string;
   maskHeight?: number;
+  /** Places the scroll fades, so a table with sticky rows can keep them clear of those rows. */
+  maskClassName?: string;
 }
 
-function Table({ className, containerClassName, maskHeight, ...props }: TableProps) {
+function Table({ className, containerClassName, maskHeight, maskClassName, ...props }: TableProps) {
   return (
     <ScrollArea
       data-slot="table-container"
@@ -15,12 +17,19 @@ function Table({ className, containerClassName, maskHeight, ...props }: TablePro
       // scrollbars sit above them so a stuck row never hides the thumb.
       className={cn("w-full [&>[data-slot=scroll-area-scrollbar]]:z-30", containerClassName)}
       maskHeight={maskHeight}
+      maskClassName={maskClassName}
     >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props}
-      />
+      {/* Rows rise in on a transform that pokes past the table's last edge, which
+          made a short table scrollable and left the bottom fade on once the rows
+          settled, since nothing measures a transform ending. Clip, unlike hidden,
+          is no scroll container, so the sticky header and footer still stick. */}
+      <div data-slot="table-clip" className="overflow-y-clip">
+        <table
+          data-slot="table"
+          className={cn("w-full caption-bottom text-sm", className)}
+          {...props}
+        />
+      </div>
       {/* Rendered inside the viewport, so it stacks against the sticky header and
           footer there; it must sit above them or a totals row hides it. */}
       <ScrollBar orientation="horizontal" className="z-30" />

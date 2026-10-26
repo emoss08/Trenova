@@ -368,6 +368,8 @@ const ScrollMask = ({
       <div
         {...props}
         aria-hidden="true"
+        data-slot="scroll-area-mask"
+        data-orientation="vertical"
         style={
           {
             "--top-fade-height": showMask.top ? `${maskHeight}px` : "0px",
@@ -390,6 +392,8 @@ const ScrollMask = ({
       <div
         {...props}
         aria-hidden="true"
+        data-slot="scroll-area-mask"
+        data-orientation="horizontal"
         style={
           {
             "--left-fade-width": showMask.left ? `${maskHeight}px` : "0px",

@@ -1018,13 +1018,12 @@ export function DataTable<TData extends Record<string, any>>({
   });
 
   const restoreView = useLatestCallback(async (id: string) => {
-    try {
-      const view = await queryClient.fetchQuery({
-        ...tableConfiguration.detail(id),
-        staleTime: 60_000,
-      });
-      if (view) setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
-    } catch {
+    const view = await queryClient
+      .fetchQuery({ ...tableConfiguration.detail(id), staleTime: 60_000 })
+      .catch(() => null);
+    if (view) {
+      setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
+    } else {
       setActiveView((current) => (current?.id === id ? null : current));
     }
   });
@@ -1311,7 +1310,9 @@ export function DataTable<TData extends Record<string, any>>({
   const writeColumnLayout = useLatestCallback(() => {
     const element = tableElementRef.current;
     if (!element) return;
-    const { vars, totalSize } = columnLayout(table.getFlatHeaders());
+    const { vars, totalSize, pinnedStartSize, pinnedEndSize } = columnLayout(
+      table.getFlatHeaders(),
+    );
     for (const name of writtenLayoutVarsRef.current) {
       if (!(name in vars)) element.style.removeProperty(name);
     }
@@ -1319,6 +1320,11 @@ export function DataTable<TData extends Record<string, any>>({
       element.style.setProperty(name, vars[name]);
     }
     element.style.minWidth = `${totalSize}px`;
+    // The sideways fades sit outside the table, beside the pinned columns rather
+    // than over them, so their widths go on the container the fades share.
+    const container = element.closest<HTMLElement>('[data-slot="table-container"]');
+    container?.style.setProperty("--dt-pin-start", `${pinnedStartSize}px`);
+    container?.style.setProperty("--dt-pin-end", `${pinnedEndSize}px`);
     writtenLayoutVarsRef.current = Object.keys(vars);
   });
   useLayoutEffect(() => {
@@ -1539,7 +1545,14 @@ export function DataTable<TData extends Record<string, any>>({
                     )}
                     // The vertical track starts below the sticky column header, so the
                     // scrollbar runs beside the rows and never over the header.
-                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[65vh] rounded-lg border border-border [&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)!"
+                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[65vh] rounded-lg border border-border [&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)! [&>[data-slot=scroll-area-mask][data-orientation=horizontal]]:left-[var(--dt-pin-start,0px)] [&>[data-slot=scroll-area-mask][data-orientation=horizontal]]:right-[var(--dt-pin-end,0px)]"
+                    // The fades sit between the sticky rows, which would otherwise
+                    // cover them: below the column header and the group header stuck
+                    // under it (h-9), and above the totals row, which measures itself.
+                    maskClassName={cn(
+                      "bottom-[var(--dt-foot-h,0px)]",
+                      grouping ? "top-[calc(var(--row-head-h)+2.25rem)]" : "top-(--row-head-h)",
+                    )}
                     ref={tableElementRef}
                   >
                     <TableHeader className="sticky top-0 z-20">

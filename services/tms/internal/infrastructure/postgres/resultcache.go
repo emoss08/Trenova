@@ -27,7 +27,7 @@ func (c *Connection) resultCache() (*keel.CacheConfig, error) {
 	settings := &c.cfg.Database.Cache
 
 	cache := &keel.CacheConfig{
-		Local:   keel.LRU(settings.GetLocalBytes()),
+		Local:   keel.MemoryCache(settings.GetLocalBytes()),
 		Key:     readScopeCacheKey,
 		OnError: newCacheErrorLog(c.logger).report,
 	}

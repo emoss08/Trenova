@@ -163,6 +163,9 @@ function DataTableRowInner<TData extends RowData>({
       if (e.shiftKey || e.altKey) return;
       const target = e.target as HTMLElement;
 
+      // React bubbles a click through a portal to the row that rendered it, so a
+      // choice made in a cell's popover, menu or dialog would otherwise open the row.
+      if (!e.currentTarget.contains(target)) return;
       if (target.closest(INTERACTIVE_SELECTOR)) return;
       if (target.closest<HTMLElement>("td")?.dataset.columnId === "select") return;
 
@@ -190,6 +193,7 @@ function DataTableRowInner<TData extends RowData>({
       data-expanded={isExpanded || undefined}
       data-changed={changed}
       data-pinned={isPinned || undefined}
+      data-formatted={formatClass ? true : undefined}
       data-unseen={unseen || undefined}
       aria-expanded={isExpanded ? true : undefined}
       aria-rowindex={ariaRowIndex}
@@ -223,8 +227,11 @@ function DataTableRowInner<TData extends RowData>({
                 "border-border truncate border-b font-sans",
                 isLastRow && "border-b-0",
                 pinned && pinnedCellClass(cell.column),
+                // A pinned cell hides what scrolls beneath it, so it is opaque; once
+                // the row takes a colour (a format rule, hover, the cursor, an
+                // expansion or a selection) it wears the row's, which is opaque too.
                 pinned &&
-                  "group-hover/row:bg-field group-data-cursor/row:bg-field group-data-expanded/row:bg-field",
+                  "group-hover/row:bg-inherit group-data-cursor/row:bg-inherit group-data-expanded/row:bg-inherit group-data-formatted/row:bg-inherit group-data-[state=selected]/row:bg-inherit",
                 canEdit && "group/cell relative",
                 "data-cell-selected:bg-brand-subtle data-cell-focused:shadow-[inset_0_0_0_1px_var(--brand)]",
                 isEditing && "overflow-visible py-1",

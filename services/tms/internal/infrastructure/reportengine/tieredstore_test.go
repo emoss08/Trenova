@@ -13,8 +13,8 @@ import (
 func TestTieredStoreWritesBothTiersAndPromotesASharedHit(t *testing.T) {
 	t.Parallel()
 
-	local := cache.NewMemory(cache.MemoryOptions{MaxBytes: 1 << 20, Shards: 1})
-	shared := cache.NewMemory(cache.MemoryOptions{MaxBytes: 1 << 20, Shards: 1})
+	local := cache.NewMemory(cache.MemoryOptions{MaxBytes: 1 << 20})
+	shared := cache.NewMemory(cache.MemoryOptions{MaxBytes: 1 << 20})
 	store := &tieredStore{local: local, shared: shared, ttl: time.Minute}
 
 	require.NoError(t, store.Set(t.Context(), "a", []byte("rows"), time.Minute))
@@ -42,8 +42,8 @@ func TestTieredStoreWritesBothTiersAndPromotesASharedHit(t *testing.T) {
 func TestTieredStoreKeepsAValueTooLargeForThisProcessInTheSharedTier(t *testing.T) {
 	t.Parallel()
 
-	local := cache.NewMemory(cache.MemoryOptions{MaxBytes: 128, Shards: 1})
-	shared := cache.NewMemory(cache.MemoryOptions{MaxBytes: 1 << 20, Shards: 1})
+	local := cache.NewMemory(cache.MemoryOptions{MaxBytes: 128})
+	shared := cache.NewMemory(cache.MemoryOptions{MaxBytes: 1 << 20})
 	store := &tieredStore{local: local, shared: shared, ttl: time.Minute}
 
 	require.NoError(t, store.Set(t.Context(), "big", make([]byte, 4096), time.Minute))

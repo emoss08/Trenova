@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/emoss08/keel"
@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -22,9 +23,21 @@ type slowWaitLog struct {
 	metrics   *metrics.Database
 	component string
 	pool      string
-	mu        sync.Mutex
-	last      map[keel.WaitKind]time.Time
-	skipped   map[keel.WaitKind]int
+	kinds     map[keel.WaitKind]*slowWaitKind
+}
+
+type slowWaitKind struct {
+	sometimes rate.Sometimes
+	waits     atomic.Int64
+}
+
+func newSlowWaitKinds(interval time.Duration) map[keel.WaitKind]*slowWaitKind {
+	kinds := map[keel.WaitKind]*slowWaitKind{}
+	for _, kind := range []keel.WaitKind{keel.WaitTenantSlot, keel.WaitConnection, keel.WaitCacheFill} {
+		kinds[kind] = &slowWaitKind{sometimes: rate.Sometimes{Interval: interval}}
+	}
+
+	return kinds
 }
 
 func (c *Connection) slowWaits(pool scopePool) keel.SlowWaitConfig {
@@ -37,8 +50,7 @@ func (c *Connection) slowWaits(pool scopePool) keel.SlowWaitConfig {
 		logger:    c.logger.Named("slow-wait"),
 		component: c.settings.component,
 		pool:      string(pool),
-		last:      map[keel.WaitKind]time.Time{},
-		skipped:   map[keel.WaitKind]int{},
+		kinds:     newSlowWaitKinds(slowWaitLogInterval),
 	}
 	if c.metrics != nil {
 		l.metrics = c.metrics.Database
@@ -52,11 +64,19 @@ func (l *slowWaitLog) report(ctx context.Context, w *keel.SlowWait) {
 		l.metrics.RecordSlowWait(l.component, l.pool, w.Kind.String())
 	}
 
-	suppressed, ok := l.admit(w.Kind, time.Now())
-	if !ok {
+	kind := l.kinds[w.Kind]
+	if kind == nil {
+		l.log(ctx, w, 0)
 		return
 	}
 
+	kind.waits.Add(1)
+	kind.sometimes.Do(func() {
+		l.log(ctx, w, int(kind.waits.Swap(0))-1)
+	})
+}
+
+func (l *slowWaitLog) log(ctx context.Context, w *keel.SlowWait, suppressed int) {
 	fields := []zap.Field{
 		zap.String("kind", w.Kind.String()),
 		zap.String("pool", l.pool),
@@ -83,21 +103,6 @@ func (l *slowWaitLog) report(ctx context.Context, w *keel.SlowWait) {
 	}
 
 	l.logger.Warn(ctx, slowWaitMessage(w.Kind), fields...)
-}
-
-func (l *slowWaitLog) admit(kind keel.WaitKind, now time.Time) (int, bool) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-
-	if last, ok := l.last[kind]; ok && now.Sub(last) < slowWaitLogInterval {
-		l.skipped[kind]++
-		return 0, false
-	}
-
-	suppressed := l.skipped[kind]
-	l.last[kind], l.skipped[kind] = now, 0
-
-	return suppressed, true
 }
 
 func slowWaitMessage(kind keel.WaitKind) string {

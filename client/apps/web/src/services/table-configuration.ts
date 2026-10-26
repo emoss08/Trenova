@@ -84,6 +84,8 @@ export class TableConfigurationService {
       signal: options?.signal,
     })) as TableConfigurationDetailQuery;
 
+    if (!response.tableConfiguration) return null;
+
     return safeParse(tableConfigurationSchema, response.tableConfiguration, "Table Configuration");
   }
 

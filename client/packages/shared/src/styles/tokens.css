@@ -228,6 +228,7 @@
   --danger-hover: oklch(0.55 0.196 25);
   --danger-foreground: oklch(0.55 0.196 25);
   --danger-subtle: oklch(0.955 0.022 17.5);
+  --danger-subtle-hover: oklch(0.935 0.032 18);
   --danger-subtle-foreground: oklch(0.55 0.197 25);
   --danger-border: oklch(0.914 0.041 18);
 
@@ -236,6 +237,7 @@
   --warning-on-solid: oklch(0.307 0.077 44);
   --warning-foreground: oklch(0.528 0.13 55);
   --warning-subtle: oklch(0.968 0.041 90);
+  --warning-subtle-hover: oklch(0.939 0.073 88);
   --warning-subtle-foreground: oklch(0.528 0.132 54);
   --warning-border: oklch(0.91 0.104 87);
 
@@ -243,6 +245,7 @@
   --success-hover: oklch(0.49 0.12 147);
   --success-foreground: oklch(0.515 0.125 147);
   --success-subtle: oklch(0.969 0.026 145);
+  --success-subtle-hover: oklch(0.943 0.049 146);
   --success-subtle-foreground: oklch(0.516 0.125 147);
   --success-border: oklch(0.916 0.071 146);
 
@@ -257,6 +260,7 @@
   --neutral-hover: oklch(0.42 0 0);
   --neutral-foreground: oklch(0.51 0 0);
   --neutral-subtle: oklch(0.961 0 0);
+  --neutral-subtle-hover: oklch(0.942 0 0);
   --neutral-subtle-foreground: oklch(0.45 0 0);
   --neutral-border: oklch(0.922 0 0);
 
@@ -511,11 +515,13 @@
 
   --accent-sky: oklch(0.58 0.118 var(--hue-sky));
   --accent-sky-subtle: oklch(0.966 0.02 var(--hue-sky));
+  --accent-sky-subtle-hover: oklch(0.94 0.035 var(--hue-sky));
   --accent-sky-on-subtle: oklch(0.5 0.102 var(--hue-sky));
   --accent-sky-border: oklch(0.914 0.05 var(--hue-sky));
 
   --accent-violet: oklch(0.555 0.182 var(--hue-violet));
   --accent-violet-subtle: oklch(0.967 0.02 var(--hue-violet));
+  --accent-violet-subtle-hover: oklch(0.943 0.032 var(--hue-violet));
   --accent-violet-on-subtle: oklch(0.471 0.22 var(--hue-violet));
   --accent-violet-border: oklch(0.918 0.043 var(--hue-violet));
 
@@ -630,6 +636,7 @@
   --danger-hover: oklch(0.67 0.19 23);
   --danger-foreground: oklch(0.698 0.193 22);
   --danger-subtle: oklch(0.259 0.059 19);
+  --danger-subtle-hover: oklch(0.306 0.082 20);
   --danger-subtle-foreground: oklch(0.698 0.193 22);
   --danger-border: oklch(0.352 0.104 21);
 
@@ -638,6 +645,7 @@
   --warning-on-solid: oklch(0.22 0.04 70);
   --warning-foreground: oklch(0.772 0.165 65);
   --warning-subtle: oklch(0.25 0.055 66);
+  --warning-subtle-hover: oklch(0.303 0.066 66);
   --warning-subtle-foreground: oklch(0.772 0.165 64);
   --warning-border: oklch(0.356 0.076 67);
 
@@ -645,6 +653,7 @@
   --success-hover: oklch(0.69 0.14 147);
   --success-foreground: oklch(0.731 0.142 148);
   --success-subtle: oklch(0.271 0.055 150);
+  --success-subtle-hover: oklch(0.308 0.073 148);
   --success-subtle-foreground: oklch(0.732 0.142 148);
   --success-border: oklch(0.345 0.091 147);
 
@@ -659,6 +668,7 @@
   --neutral-hover: oklch(0.77 0 0);
   --neutral-foreground: oklch(0.709 0 0);
   --neutral-subtle: oklch(0.239 0 0);
+  --neutral-subtle-hover: oklch(0.27 0 0);
   --neutral-subtle-foreground: oklch(0.86 0 0);
   --neutral-border: oklch(0.301 0 0);
 
@@ -726,11 +736,13 @@
 
   --accent-sky: oklch(0.71 0.144 var(--hue-sky));
   --accent-sky-subtle: oklch(0.258 0.053 var(--hue-sky));
+  --accent-sky-subtle-hover: oklch(0.303 0.062 var(--hue-sky));
   --accent-sky-on-subtle: oklch(0.71 0.144 var(--hue-sky));
   --accent-sky-border: oklch(0.348 0.071 var(--hue-sky));
 
   --accent-violet: oklch(0.699 0.179 var(--hue-violet));
   --accent-violet-subtle: oklch(0.259 0.062 var(--hue-violet));
+  --accent-violet-subtle-hover: oklch(0.309 0.089 var(--hue-violet));
   --accent-violet-on-subtle: oklch(0.699 0.179 var(--hue-violet));
   --accent-violet-border: oklch(0.358 0.115 var(--hue-violet));
 
@@ -1058,6 +1070,7 @@
   --color-danger-hover: var(--danger-hover);
   --color-danger-foreground: var(--danger-foreground);
   --color-danger-subtle: var(--danger-subtle);
+  --color-danger-subtle-hover: var(--danger-subtle-hover);
   --color-danger-subtle-foreground: var(--danger-subtle-foreground);
   --color-danger-border: var(--danger-border);
 
@@ -1066,6 +1079,7 @@
   --color-warning-on-solid: var(--warning-on-solid);
   --color-warning-foreground: var(--warning-foreground);
   --color-warning-subtle: var(--warning-subtle);
+  --color-warning-subtle-hover: var(--warning-subtle-hover);
   --color-warning-subtle-foreground: var(--warning-subtle-foreground);
   --color-warning-border: var(--warning-border);
 
@@ -1073,6 +1087,7 @@
   --color-success-hover: var(--success-hover);
   --color-success-foreground: var(--success-foreground);
   --color-success-subtle: var(--success-subtle);
+  --color-success-subtle-hover: var(--success-subtle-hover);
   --color-success-subtle-foreground: var(--success-subtle-foreground);
   --color-success-border: var(--success-border);
 
@@ -1087,6 +1102,7 @@
   --color-neutral-hover: var(--neutral-hover);
   --color-neutral-foreground: var(--neutral-foreground);
   --color-neutral-subtle: var(--neutral-subtle);
+  --color-neutral-subtle-hover: var(--neutral-subtle-hover);
   --color-neutral-subtle-foreground: var(--neutral-subtle-foreground);
   --color-neutral-border: var(--neutral-border);
 
@@ -1171,10 +1187,12 @@
   --color-accent-emerald-border: var(--accent-emerald-border);
   --color-accent-sky: var(--accent-sky);
   --color-accent-sky-subtle: var(--accent-sky-subtle);
+  --color-accent-sky-subtle-hover: var(--accent-sky-subtle-hover);
   --color-accent-sky-on-subtle: var(--accent-sky-on-subtle);
   --color-accent-sky-border: var(--accent-sky-border);
   --color-accent-violet: var(--accent-violet);
   --color-accent-violet-subtle: var(--accent-violet-subtle);
+  --color-accent-violet-subtle-hover: var(--accent-violet-subtle-hover);
   /* Desk ---------------------------------------------------------------
      The Desk's palette as Tailwind colours, so its controls are written as
      classes (text-dsk-muted, bg-dsk-hover) rather than one-off rules. */

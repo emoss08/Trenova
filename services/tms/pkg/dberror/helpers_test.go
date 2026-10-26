@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgerrcode"
@@ -282,6 +283,11 @@ func TestIsRetryableTransactionError(t *testing.T) {
 		{name: "query canceled", err: &pgconn.PgError{Code: pgerrcode.QueryCanceled}, want: true},
 		{name: "context deadline", err: context.DeadlineExceeded, want: true},
 		{
+			name: "database wait limit",
+			err:  fmt.Errorf("%w: a tenant slot, after 1m0s", keel.ErrWaitLimit),
+			want: true,
+		},
+		{
 			name: "other pg error",
 			err:  &pgconn.PgError{Code: pgerrcode.UniqueViolation},
 			want: false,
@@ -332,6 +338,21 @@ func TestMapRetryableTransactionError(t *testing.T) {
 		require.True(t, errors.As(err, &conflictErr))
 		assert.Equal(t, "deadline", conflictErr.Message)
 		assert.ErrorIs(t, conflictErr.Internal, context.DeadlineExceeded)
+	})
+
+	t.Run("maps a database wait limit to conflict error", func(t *testing.T) {
+		t.Parallel()
+
+		err := MapRetryableTransactionError(
+			fmt.Errorf("%w: a pool connection, after 1m0s", keel.ErrWaitLimit),
+			"",
+		)
+		require.Error(t, err)
+
+		var conflictErr *errortypes.ConflictError
+		require.True(t, errors.As(err, &conflictErr))
+		assert.Equal(t, "The record is busy. Retry the request.", conflictErr.Message)
+		assert.ErrorIs(t, conflictErr.Internal, keel.ErrWaitLimit)
 	})
 }
 

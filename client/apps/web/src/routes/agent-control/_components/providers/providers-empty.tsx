@@ -20,7 +20,7 @@ export function ProvidersEmpty({ presets, canCreate, onPick }: ProvidersEmptyPro
   };
 
   return (
-    <div className="tabp">
+    <div className="tabp flex justify-center items-center">
       <div className="ep">
         <span className="ep-k mono">{t("No providers yet")}</span>
         <h2>{t("Connect a model to wake your agents")}</h2>

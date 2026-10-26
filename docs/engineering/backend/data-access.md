@@ -115,7 +115,9 @@ Shape: an fx `Params{DB *postgres.Connection; Logger}`, an unexported `repositor
   method so a dataloader can batch it ([api.md](api.md)):
   `t.Where(t.ID.In(ids...)).Limit(len(ids)).List(ctx, db)`. `In` binds one array, so 3 or 3,000
   IDs are one statement shape. `List` refuses a query without `Limit`; `All` is for sets bounded by
-  the input.
+  the input. The refusal is at run time, applies to `ListInto` inside a `Batch` too, and counts
+  `Limit(0)` as no limit: return early on empty IDs, and read children bounded by a page of
+  parents (every version of a page's lineages) with `AllInto`.
 
 ### Reads
 
@@ -313,6 +315,7 @@ security scoped.
 | Deadlines | `DeadlineTimeouts: true`: every transaction sets `statement_timeout` to the time left on its context's deadline in its `BEGIN` round trip, so the server stops work nobody waits for; the session `statement_timeout` stays the ceiling |
 | Tenant concurrency | `database.tenantConcurrency` (0: a quarter of the pool's `maxOpenConns`) bounds one organization's concurrent transactions and terminals per pool, so one tenant's burst cannot hold every connection; system scopes take no slot; waits count in `trenova_db_pool_tenant_waits_total` |
 | Slow waits | `database.slowWaitWarning` (default `5s`, `0` off) is keel's `Config.SlowWaits` on the tenant and system pools: work that waits that long for its organization's slot, a pool connection or another request's read of the same cache entry logs a warning (`slow-wait` logger, at most once per kind every 10s, counting the ones held back) with its stack and, for a slot, every holder of the organization's slots with how long it has held it and its stack; each wait counts in `trenova_db_slow_waits_total{component,pool,kind}`. A holder that never lets go is the leak to fix (`slow_wait_log.go`) |
+| Wait ceiling | `database.maxWait` (default `60s`, `0` off) is keel's `Config.MaxWait` on the tenant and system pools: a wait for a slot or a connection that reaches it fails with `keel.ErrWaitLimit`, which `dberror.IsRetryableTransactionError` treats as retryable (`MapRetryableTransactionError` gives "busy, retry"), and a read waiting on another request's cache read reads the database itself. It sits above `server.requestTimeout`, so it ends only waits with no deadline of their own (jobs, consumers) |
 | Result cache | `database.cache` on the tenant pool ([Caching](#caching)); `trenova_db_cache_*` |
 | Query budgets | every REST request and GraphQL operation runs under `keel.Budget` ([Budgets](#budgets)) |
 | Pool metrics | `trenova_db_pool_*` from `pgxpool.Stat` and keel (`metrics.Database.RegisterPoolStats`, `RegisterRuntimeStats`) |
