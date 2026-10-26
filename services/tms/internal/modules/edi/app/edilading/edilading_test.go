@@ -195,6 +195,42 @@ func TestRequireReplays_NeedsAFreshReplayOfEveryInboundMapThatRejectsNothingNew(
 	assert.Equal(t, []any{"statusIn", 2}, multi.Errors[1].Args)
 }
 
+func TestStartReplay_RecordsNothingWithoutTheWorkflowService(t *testing.T) {
+	t.Parallel()
+
+	projects := &Projects{
+		l:        zap.NewNop(),
+		projects: ediportsmock.NewMockLadingProjectRepository(t),
+		replays:  ediportsmock.NewMockLadingReplayRepository(t),
+	}
+
+	replay, err := projects.StartReplay(t.Context(), &StartReplayRequest{
+		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		VersionID:  pulid.MustNew("ldv_"),
+		Map:        "tenderIn",
+		From:       1_000,
+		To:         2_000,
+	}, nil)
+
+	assert.Nil(t, replay)
+	var business *errortypes.BusinessError
+	require.ErrorAs(t, err, &business)
+	assert.Equal(t, "Replays need the workflow service, which is not configured", business.Message)
+}
+
+func TestStartReplay_RefusesAPeriodThatEndsBeforeItStarts(t *testing.T) {
+	t.Parallel()
+
+	projects := &Projects{l: zap.NewNop()}
+
+	_, err := projects.StartReplay(t.Context(), &StartReplayRequest{From: 2_000, To: 1_000}, nil)
+
+	var validation *errortypes.Error
+	require.ErrorAs(t, err, &validation)
+	assert.Equal(t, "to", validation.Field)
+	assert.Equal(t, errortypes.ErrInvalid, validation.Code)
+}
+
 func TestValidateSettings_KeepsOnlyDeclaredSettingsOfTheirType(t *testing.T) {
 	t.Parallel()
 

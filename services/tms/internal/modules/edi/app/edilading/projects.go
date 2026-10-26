@@ -1405,18 +1405,12 @@ func (s *Projects) StartReplay(
 	req *StartReplayRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.LadingReplay, error) {
-	if req.From <= 0 || req.To <= req.From {
-		return nil, errortypes.NewValidationError(
-			"to",
-			errortypes.ErrInvalid,
-			"The period ends after it starts",
-		)
+	if err := validateReplayPeriod(req); err != nil {
+		return nil, err
 	}
-	if req.To-req.From > MaxReplayDays*24*60*60 {
-		return nil, errortypes.NewValidationError(
-			"from",
-			errortypes.ErrInvalid,
-			"A replay covers at most 90 days",
+	if s.workflows == nil || !s.workflows.Enabled() {
+		return nil, errortypes.NewBusinessError(
+			"Replays need the workflow service, which is not configured",
 		)
 	}
 	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
@@ -1437,28 +1431,9 @@ func (s *Projects) StartReplay(
 	if version.ErrorCount > 0 {
 		return nil, errortypes.NewBusinessError("Fix the version's errors before replaying it")
 	}
-	against := req.AgainstVersionID
-	if against.IsNil() {
-		project, getErr := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
-			TenantInfo: req.TenantInfo,
-			ID:         version.ProjectID,
-		})
-		if getErr != nil {
-			return nil, getErr
-		}
-		against = project.ActiveVersionID
-	}
-	if against.IsNil() {
-		return nil, errortypes.NewBusinessError(
-			"The project has no active version to replay against",
-		)
-	}
-	if against == version.ID {
-		return nil, errortypes.NewValidationError(
-			"againstVersionId",
-			errortypes.ErrInvalid,
-			"A version is not replayed against itself",
-		)
+	against, err := s.replayAgainst(ctx, req, version)
+	if err != nil {
+		return nil, err
 	}
 	replay, err := s.replays.CreateReplay(ctx, &edi.LadingReplay{
 		OrganizationID:   req.TenantInfo.OrgID,
@@ -1474,11 +1449,6 @@ func (s *Projects) StartReplay(
 	})
 	if err != nil {
 		return nil, err
-	}
-	if s.workflows == nil || !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError(
-			"Replays need the workflow service, which is not configured",
-		)
 	}
 	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                                       "edi-lading-replay:" + replay.ID.String(),
@@ -1502,6 +1472,55 @@ func (s *Projects) StartReplay(
 		Comment:   fmt.Sprintf("Replay of Lading version %d started", version.Number),
 	})
 	return replay, nil
+}
+
+func validateReplayPeriod(req *StartReplayRequest) error {
+	if req.From <= 0 || req.To <= req.From {
+		return errortypes.NewValidationError(
+			"to",
+			errortypes.ErrInvalid,
+			"The period ends after it starts",
+		)
+	}
+	if req.To-req.From > MaxReplayDays*24*60*60 {
+		return errortypes.NewValidationError(
+			"from",
+			errortypes.ErrInvalid,
+			"A replay covers at most 90 days",
+		)
+	}
+	return nil
+}
+
+func (s *Projects) replayAgainst(
+	ctx context.Context,
+	req *StartReplayRequest,
+	version *edi.LadingVersion,
+) (pulid.ID, error) {
+	against := req.AgainstVersionID
+	if against.IsNil() {
+		project, err := s.projects.GetProject(ctx, ediports.GetLadingProjectRequest{
+			TenantInfo: req.TenantInfo,
+			ID:         version.ProjectID,
+		})
+		if err != nil {
+			return pulid.Nil, err
+		}
+		against = project.ActiveVersionID
+	}
+	if against.IsNil() {
+		return pulid.Nil, errortypes.NewBusinessError(
+			"The project has no active version to replay against",
+		)
+	}
+	if against == version.ID {
+		return pulid.Nil, errortypes.NewValidationError(
+			"againstVersionId",
+			errortypes.ErrInvalid,
+			"A version is not replayed against itself",
+		)
+	}
+	return against, nil
 }
 
 type ReplayWorkflowPayload struct {
