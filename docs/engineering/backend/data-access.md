@@ -393,7 +393,9 @@ so a new migration does not call it (the files written before keel still do). A 
 
 An index on an existing table goes in its own file that starts with `--keel:notx`, one
 `CREATE INDEX CONCURRENTLY IF NOT EXISTS` (or `DROP INDEX CONCURRENTLY IF EXISTS`) per
-`--keel:split` part, as does `ALTER TYPE … ADD VALUE`. Pre-launch, reshape a table freely; write
+`--keel:split` part, as does `ALTER TYPE … ADD VALUE`. The exception is an index rebuilt in the
+migration that drops or repoints the columns it covers: it stays in that transaction, so a
+conflict target or a foreign key is never left without its index. Pre-launch, reshape a table freely; write
 the migration that gets there directly, with no dual-write or backfill phase for the old shape.
 A new column, relation or table needs `task keel-gen` in the same change, and
 `keel_verify_integration_test.go` fails when a model and the migrated schema disagree.
