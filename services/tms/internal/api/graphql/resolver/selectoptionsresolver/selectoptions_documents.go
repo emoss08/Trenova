@@ -46,7 +46,7 @@ func (r *Deps) resolveDocumentTypeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		documentTypeSelectOptionItem,
 	)
 }
@@ -86,7 +86,7 @@ func (r *Deps) resolveFormulaTemplateSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		formulaTemplateSelectOptionItem,
 	)
 }
@@ -126,7 +126,7 @@ func (r *Deps) resolveEmailProfileSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		emailProfileSelectOptionItem,
 	)
 }

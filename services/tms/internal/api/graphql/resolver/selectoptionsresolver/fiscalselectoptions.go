@@ -44,7 +44,7 @@ func (r *Deps) resolveFiscalYearSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		fiscalYearSelectOptionItem,
 	)
 }
@@ -85,7 +85,7 @@ func (r *Deps) resolveFiscalPeriodSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		fiscalPeriodSelectOptionItem,
 	)
 }

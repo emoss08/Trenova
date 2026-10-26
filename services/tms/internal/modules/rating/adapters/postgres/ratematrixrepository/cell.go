@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -41,12 +42,12 @@ func (r *repository) ListCells(
 				Offset(page.SafeOffset())
 
 			var items []*ratematrix.RateMatrixCell
-			var total int64
+			var total keel.RowCount
 			err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.ListInto(rows, &items),
-				keel.CountInto(cellsQuery(req), &total),
+				keel.CountEstimateInto(cellsQuery(req), pagination.ExactTotalUpTo, &total),
 			)
 			if err != nil {
 				r.l.Error("failed to list rate matrix cells",
@@ -56,10 +57,7 @@ func (r *repository) ListCells(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*ratematrix.RateMatrixCell]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }

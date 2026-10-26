@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/keelkinds"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -86,22 +87,19 @@ func (r *repository) List(
 			live := liveAssignments()
 
 			var items []*shipment.Assignment
-			var total int64
+			var total keel.RowCount
 			err := keel.Batch(ctx, r.db.Keel(ctx),
 				keel.ListInto(withResources(live.Clone()).
 					Order(a.CreatedAt.Desc()).
 					Limit(req.Filter.Pagination.SafeLimit()).
 					Offset(req.Filter.Pagination.SafeOffset()), &items),
-				keel.CountInto(live, &total),
+				keel.CountEstimateInto(live, pagination.ExactTotalUpTo, &total),
 			)
 			if err != nil {
 				return nil, err
 			}
 
-			return &pagination.ListResult[*shipment.Assignment]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }

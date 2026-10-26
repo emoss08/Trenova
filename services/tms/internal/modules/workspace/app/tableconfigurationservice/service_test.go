@@ -387,8 +387,9 @@ func TestList_Success(t *testing.T) {
 
 	entities := []*tableconfiguration.TableConfiguration{createValidEntity()}
 	listResult := &pagination.ListResult[*tableconfiguration.TableConfiguration]{
-		Items: entities,
-		Total: 1,
+		Items:      entities,
+		Total:      1,
+		TotalExact: true,
 	}
 
 	req := &tableconfigurationports.ListTableConfigurationsRequest{

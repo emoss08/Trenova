@@ -130,5 +130,9 @@ func (t *listRateImportsTool) Query(
 		rows = append(rows, row)
 	}
 
-	return map[string]any{"imports": rows, "total": result.Total}, nil
+	return map[string]any{
+		"imports":        rows,
+		"total":          result.Total,
+		"totalEstimated": !result.TotalExact,
+	}, nil
 }

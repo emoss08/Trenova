@@ -537,17 +537,17 @@ func (r *repository) ListSuppressions(
 			rows := s.Order(s.CreatedAt.Desc()).Limit(page.SafeLimit()).Offset(page.SafeOffset())
 
 			var items []*email.Suppression
-			var total int64
+			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.ListInto(rows, &items),
-				keel.CountInto(s.Query(), &total),
+				keel.CountEstimateInto(s.Query(), pagination.ExactTotalUpTo, &total),
 			); err != nil {
 				return nil, err
 			}
 
-			return &pagination.ListResult[*email.Suppression]{Items: items, Total: int(total)}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -75,20 +76,17 @@ func (r *repository) ListByShipmentID(
 				Offset(req.Filter.Pagination.Offset)
 
 			var holds []*shipment.ShipmentHold
-			var total int64
+			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.ListInto(rows, &holds),
-				keel.CountInto(counted, &total),
+				keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total),
 			); err != nil {
 				return nil, err
 			}
 
-			return &pagination.ListResult[*shipment.ShipmentHold]{
-				Items: holds,
-				Total: int(total),
-			}, nil
+			return listquery.Result(holds, total), nil
 		},
 	)
 }

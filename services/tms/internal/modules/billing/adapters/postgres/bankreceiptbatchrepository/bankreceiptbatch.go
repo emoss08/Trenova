@@ -125,8 +125,9 @@ func (r *repository) DistinctSources(
 			end := min(offset+limit, total)
 
 			return &pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption]{
-				Items: options[offset:end],
-				Total: total,
+				Items:      options[offset:end],
+				Total:      total,
+				TotalExact: true,
 			}, nil
 		},
 	)

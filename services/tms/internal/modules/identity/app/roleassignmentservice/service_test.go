@@ -48,8 +48,9 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*permission.UserRoleAssignment]{
-		Items: []*permission.UserRoleAssignment{newTestEntity()},
-		Total: 1,
+		Items:      []*permission.UserRoleAssignment{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &permissionports.ListRoleAssignmentsRequest{
 		Filter:      &pagination.QueryOptions{},

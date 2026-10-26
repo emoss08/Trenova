@@ -153,8 +153,9 @@ func TestListAndGetJournalReversal(t *testing.T) {
 		List(mock.Anything, mock.Anything).
 		Return(
 			&pagination.ListResult[*journalreversal.Reversal]{
-				Items: []*journalreversal.Reversal{entity},
-				Total: 1,
+				Items:      []*journalreversal.Reversal{entity},
+				Total:      1,
+				TotalExact: true,
 			},
 			nil,
 		)

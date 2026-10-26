@@ -76,7 +76,11 @@ func (f *fakeRunReader) List(
 	context.Context,
 	*invoicerunports.ListInvoiceRunsRequest,
 ) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
-	return &pagination.ListResult[*invoicerun.InvoiceRun]{Items: f.runs, Total: len(f.runs)}, nil
+	return &pagination.ListResult[*invoicerun.InvoiceRun]{
+		Items:      f.runs,
+		Total:      len(f.runs),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeRunReader) ListOpenStatements(
@@ -100,8 +104,9 @@ func (f *fakeShareCandidates) ListCandidates(
 	f.req = req
 
 	return &pagination.ListResult[*invoiceports.ShareCandidate]{
-		Items: f.candidates,
-		Total: len(f.candidates),
+		Items:      f.candidates,
+		Total:      len(f.candidates),
+		TotalExact: true,
 	}, nil
 }
 

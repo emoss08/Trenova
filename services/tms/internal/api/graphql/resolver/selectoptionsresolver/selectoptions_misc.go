@@ -44,7 +44,7 @@ func (r *Deps) resolveServiceFailureReasonCodeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		serviceFailureReasonCodeSelectOptionItem,
 	)
 }

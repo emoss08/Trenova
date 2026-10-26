@@ -52,7 +52,7 @@ func (r *Deps) resolveEquipmentTypeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		equipmentTypeSelectOptionItem,
 	)
 }
@@ -89,7 +89,7 @@ func (r *Deps) resolveEquipmentManufacturerSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		equipmentManufacturerSelectOptionItem,
 	)
 }
@@ -121,7 +121,7 @@ func (r *Deps) resolveTrailerSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		trailerSelectOptionItem,
 	)
 }
@@ -158,7 +158,7 @@ func (r *Deps) resolveTractorSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		tractorSelectOptionItem,
 	)
 }

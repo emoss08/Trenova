@@ -74,20 +74,17 @@ func (r *repository) List(
 				Offset(req.Filter.Pagination.SafeOffset())
 
 			var items []*customerpayment.Payment
-			var total int64
+			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.ListInto(rows, &items),
-				keel.CountInto(counted, &total),
+				keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total),
 			); err != nil {
 				return nil, fmt.Errorf("list customer payments: %w", err)
 			}
 
-			return &pagination.ListResult[*customerpayment.Payment]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }

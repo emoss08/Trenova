@@ -297,7 +297,7 @@ func (s *Service) resolveServiceFailure214Candidate(
 		), nil
 	}
 
-	candidates := make([]serviceFailure214Candidate, 0, partners.Total)
+	candidates := make([]serviceFailure214Candidate, 0, len(partners.Items))
 	activeOutboundPartners := 0
 	capabilityDisabled := false
 	inactiveProfile := false

@@ -45,7 +45,7 @@ func (r *Deps) resolveJournalEntrySelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		journalEntrySelectOptionItem,
 	)
 }

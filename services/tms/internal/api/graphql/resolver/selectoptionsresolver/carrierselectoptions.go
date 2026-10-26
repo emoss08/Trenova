@@ -41,7 +41,7 @@ func (r *Deps) resolveCarrierSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		carrierSelectOptionItem,
 	)
 }

@@ -36,7 +36,7 @@ func (n *NoopAuditService) List(
 	_ context.Context,
 	_ *auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{}, nil
+	return &pagination.ListResult[*audit.Entry]{TotalExact: true}, nil
 }
 
 func (n *NoopAuditService) ListConnection(
@@ -50,7 +50,7 @@ func (n *NoopAuditService) ListByResourceID(
 	_ context.Context,
 	_ *auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{}, nil
+	return &pagination.ListResult[*audit.Entry]{TotalExact: true}, nil
 }
 
 func (n *NoopAuditService) GetByID(

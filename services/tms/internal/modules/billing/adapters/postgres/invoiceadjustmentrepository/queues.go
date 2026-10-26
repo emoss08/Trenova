@@ -209,7 +209,11 @@ func (r *repository) ListReconciliationQueue(
 				items[i] = reconciliationQueueItem(exception)
 			}
 
-			return &pagination.ListResult[*reconciliationItem]{Items: items, Total: rows.Total}, nil
+			return &pagination.ListResult[*reconciliationItem]{
+				Items:      items,
+				Total:      rows.Total,
+				TotalExact: rows.TotalExact,
+			}, nil
 		},
 	)
 }

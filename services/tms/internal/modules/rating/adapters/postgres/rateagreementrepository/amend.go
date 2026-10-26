@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -127,19 +128,20 @@ func (r *repository) ListVersions(
 			rows := versionsQuery(req).Load(v.CreatedBy()).Order(v.VersionNumber.Desc())
 
 			var entities []*rateagreement.RateAgreementVersion
-			var total int64
-			read := keel.AllInto(rows, &entities)
+			total := keel.RowCount{Exact: true}
+			reads := []keel.BatchItem{keel.AllInto(rows, &entities)}
 			if req.Limit > 0 {
-				read = keel.ListInto(rows.Limit(req.Limit).Offset(req.Offset), &entities)
+				reads = []keel.BatchItem{
+					keel.ListInto(rows.Limit(req.Limit).Offset(req.Offset), &entities),
+					keel.CountEstimateInto(versionsQuery(req), pagination.ExactTotalUpTo, &total),
+				}
 			}
-			if err := keel.Batch(
-				ctx,
-				r.db.Keel(ctx),
-				read,
-				keel.CountInto(versionsQuery(req), &total),
-			); err != nil {
+			if err := keel.Batch(ctx, r.db.Keel(ctx), reads...); err != nil {
 				r.l.Error("failed to list rate agreement versions", zap.Error(err))
 				return nil, err
+			}
+			if req.Limit <= 0 {
+				total.N = int64(len(entities))
 			}
 
 			if err := r.resolveAccessorialNames(ctx, entities); err != nil {
@@ -147,10 +149,7 @@ func (r *repository) ListVersions(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*rateagreement.RateAgreementVersion]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.Result(entities, total), nil
 		},
 	)
 }

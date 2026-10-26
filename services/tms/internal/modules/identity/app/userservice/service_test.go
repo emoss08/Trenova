@@ -118,8 +118,9 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*tenant.User]{
-		Items: []*tenant.User{newTestUser()},
-		Total: 1,
+		Items:      []*tenant.User{newTestUser()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &tenantports.ListUsersRequest{
 		Filter: &pagination.QueryOptions{},
@@ -164,8 +165,9 @@ func TestSelectOptions_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*tenant.User]{
-		Items: []*tenant.User{newTestUser()},
-		Total: 1,
+		Items:      []*tenant.User{newTestUser()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &pagination.SelectQueryRequest{
 		Query: "test",

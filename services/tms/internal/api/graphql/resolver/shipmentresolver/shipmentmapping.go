@@ -720,8 +720,9 @@ func previousRatesToModel(
 		})
 	}
 	return &gqlmodel.ShipmentPreviousRatesResponse{
-		Items: items,
-		Total: result.Total,
+		Items:      items,
+		Total:      result.Total,
+		TotalExact: result.TotalExact,
 	}
 }
 

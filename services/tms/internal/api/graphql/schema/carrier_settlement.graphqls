@@ -378,6 +378,8 @@ type EdiCarrierInvoice @kind(resource: "carrier_invoice_match") {
 type EdiCarrierInvoiceList {
   items: [EdiCarrierInvoice!]!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -422,6 +424,8 @@ type CarrierInvoiceMatch {
 type CarrierInvoiceMatchList {
   items: [CarrierInvoiceMatch!]!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input GenerateCarrierSettlementBatchInput {

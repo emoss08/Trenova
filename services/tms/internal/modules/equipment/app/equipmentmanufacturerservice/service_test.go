@@ -132,8 +132,9 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
-		Items: []*equipmentmanufacturer.EquipmentManufacturer{newTestEntity()},
-		Total: 1,
+		Items:      []*equipmentmanufacturer.EquipmentManufacturer{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &equipmentmanufacturerports.ListEquipmentManufacturersRequest{
 		Filter: &pagination.QueryOptions{},
@@ -430,8 +431,9 @@ func TestSelectOptions_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
-		Items: []*equipmentmanufacturer.EquipmentManufacturer{newTestEntity()},
-		Total: 1,
+		Items:      []*equipmentmanufacturer.EquipmentManufacturer{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &pagination.SelectQueryRequest{Query: "Freight"}
 

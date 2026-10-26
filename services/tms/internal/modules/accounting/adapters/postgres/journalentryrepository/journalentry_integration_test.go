@@ -118,6 +118,7 @@ func TestListJournalEntriesSearchesAndOrdersNewestFirst(t *testing.T) {
 	assert.Equal(t, f.manual.ID, result.Items[0].ID)
 	assert.Equal(t, f.invoice.ID, result.Items[1].ID)
 	assert.Equal(t, 2, result.Total)
+	assert.True(t, result.TotalExact)
 
 	other, err := f.repo.List(f.db.B.Ctx, &journalentryports.ListJournalEntriesRequest{
 		Filter: &pagination.QueryOptions{
@@ -128,6 +129,7 @@ func TestListJournalEntriesSearchesAndOrdersNewestFirst(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, other.Items)
 	assert.Equal(t, 0, other.Total)
+	assert.True(t, other.TotalExact)
 }
 
 func (f *journalEntryFixture) connection(

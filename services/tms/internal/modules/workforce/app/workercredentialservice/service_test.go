@@ -75,7 +75,11 @@ func (f *fakeRepo) TypeSelectOptions(
 			out = append(out, typ)
 		}
 	}
-	return &pagination.ListResult[*worker.WorkerCredentialType]{Items: out, Total: len(out)}, nil
+	return &pagination.ListResult[*worker.WorkerCredentialType]{
+		Items:      out,
+		Total:      len(out),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeRepo) GetTypeByID(

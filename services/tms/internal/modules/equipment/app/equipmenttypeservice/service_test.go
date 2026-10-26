@@ -465,8 +465,9 @@ func TestSelectOptions_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*equipmenttype.EquipmentType]{
-		Items: []*equipmenttype.EquipmentType{newTestEntity()},
-		Total: 1,
+		Items:      []*equipmenttype.EquipmentType{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &equipmenttypeports.EquipmentTypeSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{Query: "TRLR"},

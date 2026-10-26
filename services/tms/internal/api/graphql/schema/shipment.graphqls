@@ -953,6 +953,8 @@ type ShipmentPreviousRateSummary {
 type ShipmentPreviousRatesResponse {
   items: [ShipmentPreviousRateSummary!]!
   total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
 }
 
 "Why a shipment in a bulk transfer did not reach the billing queue."

@@ -152,8 +152,9 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*fleetcode.FleetCode]{
-		Items: []*fleetcode.FleetCode{newTestEntity()},
-		Total: 1,
+		Items:      []*fleetcode.FleetCode{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &fleetcodeports.ListFleetCodesRequest{
 		Filter: &pagination.QueryOptions{},
@@ -198,8 +199,9 @@ func TestSelectOptions_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*fleetcode.FleetCode]{
-		Items: []*fleetcode.FleetCode{newTestEntity()},
-		Total: 1,
+		Items:      []*fleetcode.FleetCode{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &pagination.SelectQueryRequest{
 		Query: "FC001",

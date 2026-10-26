@@ -164,12 +164,16 @@ func (r *repository) List(
 		page := listPageQuery(&req, limit)
 		var (
 			rows   []*conversationschedule.Schedule
-			total  int64
+			total  keel.RowCount
 			titles []threadTitle
 		)
 		err := keel.Batch(ctx, r.db.Keel(ctx),
 			keel.ListInto(page, &rows),
-			keel.CountInto(scoped(req.UserID, req.ThreadID), &total),
+			keel.CountEstimateInto(
+				scoped(req.UserID, req.ThreadID),
+				pagination.ExactTotalUpTo,
+				&total,
+			),
 			keel.IntoSlice(threadTitlesQuery(page), &titles),
 		)
 		if err != nil {
@@ -190,10 +194,7 @@ func (r *repository) List(
 			})
 		}
 
-		return &pagination.ListResult[*conversationscheduleports.ListedConversationSchedule]{
-			Items: items,
-			Total: int(total),
-		}, nil
+		return listquery.Result(items, total), nil
 	})
 }
 

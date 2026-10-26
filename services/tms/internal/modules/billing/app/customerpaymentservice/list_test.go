@@ -20,8 +20,9 @@ func TestListDelegatesToRepository(t *testing.T) {
 		Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}},
 	}
 	expected := &pagination.ListResult[*customerpayment.Payment]{
-		Items: []*customerpayment.Payment{{}},
-		Total: 1,
+		Items:      []*customerpayment.Payment{{}},
+		Total:      1,
+		TotalExact: true,
 	}
 
 	repo.EXPECT().List(t.Context(), req).Return(expected, nil).Once()

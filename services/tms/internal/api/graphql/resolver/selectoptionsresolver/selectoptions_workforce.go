@@ -44,7 +44,7 @@ func (r *Deps) resolveWorkerCredentialTypeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		workerCredentialTypeSelectOptionItem,
 	)
 }
@@ -105,7 +105,7 @@ func (r *Deps) resolveTrainingCourseSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		trainingCourseSelectOptionItem,
 	)
 }
@@ -169,7 +169,7 @@ func (r *Deps) resolvePerformanceReviewTemplateSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		performanceReviewTemplateSelectOptionItem,
 	)
 }
@@ -225,7 +225,7 @@ func (r *Deps) resolvePTOPolicySelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ptoPolicySelectOptionItem,
 	)
 }
@@ -279,7 +279,7 @@ func (r *Deps) resolveBenefitPlanSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		benefitPlanSelectOptionItem,
 	)
 }

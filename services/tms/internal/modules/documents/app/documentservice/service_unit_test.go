@@ -453,7 +453,8 @@ func TestUnit_List_Success(t *testing.T) {
 		Items: []*document.Document{
 			{ID: pulid.MustNew("doc_"), OriginalName: "test.pdf"},
 		},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}
 
 	repo := &mockDocRepo{

@@ -225,7 +225,10 @@ func (t *listInsightsTool) Query(
 		rows = append(rows, insightRowFrom(entity, now))
 	}
 
-	return searchResult(criteria, rows, result.Total), nil
+	outcome := searchResult(criteria, rows, result.Total)
+	outcome.TotalEstimated = !result.TotalExact
+
+	return outcome, nil
 }
 
 // insightDetailRow is one finding with its trend and the rule behind it.

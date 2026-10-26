@@ -308,12 +308,12 @@ func (r *repository) GetPreviousRates(
 				Limit(previousRatesLimit)
 
 			var rows []shipmentports.PreviousRateSummary
-			var total int64
+			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.IntoSlice(items, &rows),
-				keel.CountInto(q, &total),
+				keel.CountEstimateInto(q, pagination.ExactTotalUpTo, &total),
 			); err != nil {
 				return nil, err
 			}
@@ -323,10 +323,7 @@ func (r *repository) GetPreviousRates(
 				entities[i] = &rows[i]
 			}
 
-			return &pagination.ListResult[*shipmentports.PreviousRateSummary]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.Result(entities, total), nil
 		},
 	)
 }

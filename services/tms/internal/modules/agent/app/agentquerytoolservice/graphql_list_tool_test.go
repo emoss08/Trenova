@@ -102,7 +102,7 @@ func (m *manufacturerRows) List(
 	end := min(start+req.Filter.Pagination.Limit, len(rows))
 
 	return &pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
-		Items: rows[start:end], Total: len(rows),
+		Items: rows[start:end], Total: len(rows), TotalExact: true,
 	}, nil
 }
 
