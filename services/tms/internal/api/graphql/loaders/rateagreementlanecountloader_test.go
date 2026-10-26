@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -86,6 +87,17 @@ type stubRateAgreementRepository struct {
 		context.Context,
 		*rateagreementports.CountLiveLanesRequest,
 	) (map[pulid.ID]rateagreementports.LaneCount, error)
+	listFirstLanes func(
+		context.Context,
+		*rateagreementports.ListFirstLanesRequest,
+	) (map[pulid.ID][]*rateagreement.RateAgreementRule, error)
+}
+
+func (s *stubRateAgreementRepository) ListFirstLanes(
+	ctx context.Context,
+	req *rateagreementports.ListFirstLanesRequest,
+) (map[pulid.ID][]*rateagreement.RateAgreementRule, error) {
+	return s.listFirstLanes(ctx, req)
 }
 
 func (s *stubRateAgreementRepository) CountLiveLanes(

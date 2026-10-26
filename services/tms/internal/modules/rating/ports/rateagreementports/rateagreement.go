@@ -116,6 +116,12 @@ type CountLiveLanesRequest struct {
 	RateAgreementIDs []pulid.ID
 }
 
+type ListFirstLanesRequest struct {
+	TenantInfo       pagination.TenantInfo
+	RateAgreementIDs []pulid.ID
+	First            int
+}
+
 type LaneCount struct {
 	Count int
 	Exact bool
@@ -238,6 +244,10 @@ type RateAgreementRepository interface {
 		ctx context.Context,
 		req *CountLiveLanesRequest,
 	) (map[pulid.ID]LaneCount, error)
+	ListFirstLanes(
+		ctx context.Context,
+		req *ListFirstLanesRequest,
+	) (map[pulid.ID][]*rateagreement.RateAgreementRule, error)
 	GetRuleByID(
 		ctx context.Context,
 		req *GetRateAgreementRuleByIDRequest,

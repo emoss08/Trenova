@@ -99,3 +99,17 @@ func TestLaneCountExactUpTo_SharesTheExactBudgetAcrossTheAgreementsRead(t *testi
 	assert.Equal(t, minLaneCountExactUpTo, laneCountExactUpTo(1_000))
 	assert.Equal(t, int64(10_000), laneCountExactUpTo(0))
 }
+
+func TestFirstLanes_ReadsEveryAgreementsFirstLanesInOneStatement(t *testing.T) {
+	t.Parallel()
+
+	sql, args := keeltest.Render(t, firstLanes([]pulid.ID{"ragr_1", "ragr_2"}, 1_000, 50))
+
+	assert.Contains(t, sql, " IN (SELECT ")
+	assert.Contains(t, sql, "CROSS JOIN LATERAL")
+	assert.Contains(t, sql, "LIMIT 50)", "each agreement reads at most first lanes")
+	assert.Contains(t, sql, "LIMIT 100", "the whole read is bounded by agreements times first")
+	assert.Contains(t, sql, `"specificity_score" DESC`)
+	assert.NotContains(t, sql, "count(", "a lane list counts nothing")
+	assert.Contains(t, args, []string{"ragr_1", "ragr_2"})
+}

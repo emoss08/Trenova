@@ -40,6 +40,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
@@ -108,6 +109,7 @@ type FactoryParams struct {
 	FormulaLibraryByID                        *FormulaLibraryByIDLoaderFactory
 	RateMatrixByID                            *RateMatrixByIDLoaderFactory
 	RateAgreementLaneCount                    *RateAgreementLaneCountLoaderFactory
+	RateAgreementLanes                        *RateAgreementLanesLoaderFactory
 	ShipmentMoveJurisdictionMilesByMoveID     *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory
 	UserByID                                  *UserByIDLoaderFactory
 	DocumentByID                              *DocumentByIDLoaderFactory
@@ -201,6 +203,7 @@ type Factory struct {
 	formulaLibraryByID                        *FormulaLibraryByIDLoaderFactory
 	rateMatrixByID                            *RateMatrixByIDLoaderFactory
 	rateAgreementLaneCount                    *RateAgreementLaneCountLoaderFactory
+	rateAgreementLanes                        *RateAgreementLanesLoaderFactory
 	shipmentMoveJurisdictionMilesByMoveID     *ShipmentMoveJurisdictionMilesByMoveIDLoaderFactory
 	userByID                                  *UserByIDLoaderFactory
 	documentByID                              *DocumentByIDLoaderFactory
@@ -294,6 +297,7 @@ type set struct {
 	formulaLibraryByID                        *dataloadgen.Loader[string, *formulalibrary.FormulaLibrary]
 	rateMatrixByID                            *dataloadgen.Loader[string, *ratematrix.RateMatrix]
 	rateAgreementLaneCount                    *dataloadgen.Loader[string, rateagreementports.LaneCount]
+	rateAgreementLanes                        *dataloadgen.Loader[string, []*rateagreement.RateAgreementRule]
 	shipmentMoveJurisdictionMilesByMoveID     *dataloadgen.Loader[string, []*shipment.ShipmentMoveJurisdictionMile]
 	userByID                                  *dataloadgen.Loader[string, *tenant.User]
 	documentByID                              *dataloadgen.Loader[string, *document.Document]
@@ -394,6 +398,7 @@ func NewFactory(p FactoryParams) *Factory {
 		formulaLibraryByID:                        p.FormulaLibraryByID,
 		rateMatrixByID:                            p.RateMatrixByID,
 		rateAgreementLaneCount:                    p.RateAgreementLaneCount,
+		rateAgreementLanes:                        p.RateAgreementLanes,
 		shipmentMoveJurisdictionMilesByMoveID:     p.ShipmentMoveJurisdictionMilesByMoveID,
 		userByID:                                  p.UserByID,
 		documentByID:                              p.DocumentByID,
@@ -552,6 +557,7 @@ func newSet(f *Factory, tenantInfo pagination.TenantInfo) *set {
 			f.rateAgreementLaneCount,
 			tenantInfo,
 		),
+		rateAgreementLanes: newRateAgreementLanesLoader(f.rateAgreementLanes, tenantInfo),
 		shipmentMoveJurisdictionMilesByMoveID: newShipmentMoveJurisdictionMilesByMoveIDLoader(
 			f.shipmentMoveJurisdictionMilesByMoveID,
 			tenantInfo,

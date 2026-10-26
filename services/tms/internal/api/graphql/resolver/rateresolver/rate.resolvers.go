@@ -205,13 +205,13 @@ func (r *RateAgreementResolver) Lanes(ctx context.Context, obj *gqlmodel.RateAgr
 		limit = min(max(*first, 1), rateagreementports.MaxLaneLimit)
 	}
 
-	page, err := r.agreementLanes(ctx, obj, limit)
+	rules, err := r.firstLanes(ctx, obj, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	lanes := make([]*gqlmodel.RateAgreementLane, 0, len(page.Lanes))
-	for _, lane := range page.Lanes {
+	lanes := make([]*gqlmodel.RateAgreementLane, 0, len(rules))
+	for _, lane := range rules {
 		if lane == nil {
 			continue
 		}

@@ -59,7 +59,13 @@ but `Core`.
   counts every requested parent in one statement, a lateral `LIMIT` capping each at its share of
   `pagination.ExactTotalUpTo` (`ExactTotalUpTo / parents`, at least 100), and estimates only the
   parents past their cap (`rateagreementrepository.CountLiveLanes`). A stored count suits only a
-  figure that does not depend on the clock; lane liveness does, so lanes are counted at read.
+  figure that does not depend on the clock; lane liveness does, so lanes are counted at read. A
+  per-parent list with an argument (`lanes(first:)`) loads through `batchFirstFunc`: the key
+  carries the argument (`firstKey(id, first)`), each distinct `first` is one read for every parent
+  asking it, and the repository reads them in one statement, `id IN (SELECT child.id FROM parents
+  CROSS JOIN LATERAL (… ORDER BY … LIMIT first))`, bounded by parents times `first`
+  (`rateagreementrepository.ListFirstLanes`). It counts nothing; a total is its own field on the
+  count loader.
 - **Another kind's record** on a type shows its reference view; more needs
   `@requiresRead(kind:)` ([reference-views.md](../reference-views.md)).
 - Tests build `&QueryResolver{&Deps{Core: &base.Core{...}, ...}}`.

@@ -151,6 +151,60 @@ func (r *repository) CountLiveLanes(
 	)
 }
 
+func (r *repository) ListFirstLanes(
+	ctx context.Context,
+	req *rateagreementports.ListFirstLanesRequest,
+) (map[pulid.ID][]*rateagreement.RateAgreementRule, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID][]*rateagreement.RateAgreementRule, error) {
+			lanes := make(
+				map[pulid.ID][]*rateagreement.RateAgreementRule,
+				len(req.RateAgreementIDs),
+			)
+			if len(req.RateAgreementIDs) == 0 {
+				return lanes, nil
+			}
+
+			first := min(max(req.First, 1), rateagreementports.MaxLaneLimit)
+			rows, err := firstLanes(req.RateAgreementIDs, timeutils.NowUnix(), first).
+				List(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to list the first lanes of rate agreements", zap.Error(err))
+				return nil, err
+			}
+			for _, lane := range rows {
+				lanes[lane.RateAgreementID] = append(lanes[lane.RateAgreementID], lane)
+			}
+
+			return lanes, nil
+		},
+	)
+}
+
+func firstLanes(
+	agreementIDs []pulid.ID,
+	now int64,
+	first int,
+) *keel.Query[*rateagreement.RateAgreementRule] {
+	ra := rateagreementdb.RateAgreements
+	rr := rateagreementdb.RateAgreementRules
+	lane := rr.As("lane")
+
+	firstIDs := ra.Where(ra.ID.In(agreementIDs...)).
+		JoinLateral(lane.
+			Pick(lane.ID).
+			Where(lane.RateAgreementID.EqCol(ra.ID), liveLanes(lane, now)).
+			Order(lane.SpecificityScore.Desc(), lane.ID.Asc()).
+			Limit(first)).
+		Pick(lane.ID)
+
+	return rr.Where(rr.ID.InQuery(firstIDs)).
+		Order(rr.RateAgreementID.Asc(), rr.SpecificityScore.Desc(), rr.ID.Asc()).
+		Limit(len(agreementIDs) * first)
+}
+
 func laneCountExactUpTo(agreements int) int64 {
 	return max(pagination.ExactTotalUpTo/int64(max(agreements, 1)), minLaneCountExactUpTo)
 }
