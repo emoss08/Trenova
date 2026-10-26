@@ -401,14 +401,14 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 		inv.ID,
 		inv.Number,
 		inv.CustomerID,
-		keel.DynOf(inv.BillType).Cast(keel.TypeString),
-		keel.DynOf(inv.MemoKind).Cast(keel.TypeString).Coalesce(""),
+		keel.CastText(inv.BillType),
+		keel.CastText(inv.MemoKind).Coalesce(""),
 		inv.TotalAmountMinor,
 		inv.AppliedAmountMinor,
 		inv.InvoiceDate,
 		inv.DueDate,
 		inv.UpdatedAt,
-		keel.DynOf(inv.DisputeStatus).Cast(keel.TypeString).Coalesce(""),
+		keel.CastText(inv.DisputeStatus).Coalesce(""),
 		inv.FactoringCompanyID,
 		inv.FactoringAgreementID,
 	))
@@ -493,7 +493,7 @@ func (g *generator) cashLoadInvoices(ctx context.Context, st *cashState, ids []p
 	factorApps, err := keel.Into[cashApplicationRow](ctx, g.db, fre.Where(
 		fre.CustomerID.In(ids...),
 		fre.ARMinor.Ne(0),
-	).Pick(fre.InvoiceID, keel.DynOf(fre.ARMinor).Neg(), fre.AccountingDate))
+	).Pick(fre.InvoiceID, fre.ARMinor.Neg(), fre.AccountingDate))
 	if err != nil {
 		return fmt.Errorf("load factoring settlements: %w", err)
 	}
@@ -634,7 +634,7 @@ func (g *generator) cashReversedPayments(ctx context.Context) (map[pulid.ID]*cas
 	rows, err := keel.Into[cashReversal](ctx, g.db, cp.Where(
 		cp.Status.Eq(customerpayment.StatusReversed),
 		cp.ID.In(ids...),
-	).Pick(cp.ID, cp.ReversedAt, keel.DynOf(cp.ReversalReason).Coalesce("")))
+	).Pick(cp.ID, cp.ReversedAt, cp.ReversalReason.Coalesce("")))
 	if err != nil {
 		return nil, fmt.Errorf("load reversed payments: %w", err)
 	}

@@ -254,11 +254,11 @@ func applySeedJournalBalances(
 		b.FiscalYearID,
 		b.FiscalPeriodID,
 	).Set(
-		b.PeriodDebitMinor.ToExpr(keel.DynOf(b.PeriodDebitMinor).Add(b.PeriodDebitMinor.Excluded())),
+		b.PeriodDebitMinor.ToExpr(b.PeriodDebitMinor.Add(keel.Int64Of(b.PeriodDebitMinor.Excluded()))),
 		b.PeriodCreditMinor.ToExpr(
-			keel.DynOf(b.PeriodCreditMinor).Add(b.PeriodCreditMinor.Excluded()),
+			b.PeriodCreditMinor.Add(keel.Int64Of(b.PeriodCreditMinor.Excluded())),
 		),
-		b.NetChangeMinor.ToExpr(keel.DynOf(b.NetChangeMinor).Add(b.NetChangeMinor.Excluded())),
+		b.NetChangeMinor.ToExpr(b.NetChangeMinor.Add(keel.Int64Of(b.NetChangeMinor.Excluded()))),
 		b.LastJournalEntryID.ToExpr(b.LastJournalEntryID.Excluded()),
 	),
 	); err != nil {

@@ -1680,10 +1680,12 @@ func (s *DetentionSeed) createDetentionCharge(
 		ctx,
 		db,
 		sh.OtherChargeAmount.ToExpr(
-			keel.DynOf(sh.OtherChargeAmount).Coalesce(0).Add(p.occurrence.BillableAmount),
+			keel.NumericOf(sh.OtherChargeAmount.Coalesce(0)).
+				Add(keel.Numeric(p.occurrence.BillableAmount)),
 		),
 		sh.TotalChargeAmount.ToExpr(
-			keel.DynOf(sh.TotalChargeAmount).Coalesce(0).Add(p.occurrence.BillableAmount),
+			keel.NumericOf(sh.TotalChargeAmount.Coalesce(0)).
+				Add(keel.Numeric(p.occurrence.BillableAmount)),
 		),
 	)
 	if err != nil {
