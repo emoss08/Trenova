@@ -3,7 +3,7 @@ WITH candidates (unit_id, finished_at) AS (
   FROM ai_work_unit_tools awut
   WHERE awut.organization_id = $12 AND awut.business_unit_id = $11 AND awut.finished_at >= $13 AND awut.task = 'AssistantChat' AND awut.tool_name = $14 AND awut.provider_id = $15 AND awut.cause <> $16
   GROUP BY awut.unit_id
-  ORDER BY max(awut.finished_at) DESC LIMIT 125
+  ORDER BY 2 DESC LIMIT 125
 )
 SELECT awu.id, awu.source, ars.tool_name, left(coalesce(nullif((ars.outcome #>> $4), $5), (ars.outcome #>> $6), $7), $8), coalesce(awu.agent_definition_id, $9), coalesce((ars.settled_at_ms / $10::bigint), ars.updated_at)
 FROM candidates c

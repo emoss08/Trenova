@@ -13,7 +13,7 @@ FROM (
       FROM touched t
       WHERE t.unit_id = CASE WHEN aur2.trace_id IS NOT NULL THEN ($12::text || md5(((((aur2.trace_id || $13::text) || aur2.task) || $13::text) || coalesce(aur2.subject_id, $14)))) ELSE aur2.id END
     )
-    GROUP BY CASE WHEN aur2.trace_id IS NOT NULL THEN ($12::text || md5(((((aur2.trace_id || $13::text) || aur2.task) || $13::text) || coalesce(aur2.subject_id, $14)))) ELSE aur2.id END
+    GROUP BY 1
   )
   SELECT c.unit_id, $3::text, c.agent_definition_id, c.provider_id, c.model, $4::text, c.task, CASE WHEN c.answered IS TRUE THEN $5::text ELSE $6::text END, c.first_start_ms, c.last_call_at, greatest(0, (c.last_end_ms - c.first_start_ms)), c.first_token_ms, c.model_calls, c.failed_calls, c.failovers, c.input_tokens, c.output_tokens, c.cache_read_tokens, c.cache_write_tokens, c.cost_usd, c.advisor_calls, c.advisor_prompt_tokens, c.advisor_output_tokens, c.advisor_cost_usd, 0, 0, 0, $7::bigint
   FROM calls c
