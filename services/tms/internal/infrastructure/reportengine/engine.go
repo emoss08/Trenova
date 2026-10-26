@@ -20,9 +20,8 @@ import (
 )
 
 const (
-	cachePrefix      = "report:analytics:"
-	slotWait         = 2 * time.Second
-	localCacheShards = 8
+	cachePrefix = "report:analytics:"
+	slotWait    = 2 * time.Second
 )
 
 var (
@@ -95,10 +94,7 @@ func (e *Engine) resultStore() analytics.Cache {
 	if !cfg.Enabled {
 		return nil
 	}
-	local := cache.NewMemory(cache.MemoryOptions{
-		MaxBytes: cfg.GetLocalBytes(),
-		Shards:   localCacheShards,
-	})
+	local := cache.NewMemory(cache.MemoryOptions{MaxBytes: cfg.GetLocalBytes()})
 	if !cfg.SharedEnabled() || e.redis == nil {
 		return local
 	}

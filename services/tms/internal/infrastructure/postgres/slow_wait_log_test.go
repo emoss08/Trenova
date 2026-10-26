@@ -111,13 +111,17 @@ func TestSlowWaits_LogEachKindAtMostOncePerInterval(t *testing.T) {
 	report(context.Background(), &keel.SlowWait{Kind: keel.WaitCacheFill})
 	assert.Len(t, logs.All(), 2, "a burst of waits of one kind logs once")
 
-	l := &slowWaitLog{last: map[keel.WaitKind]time.Time{}, skipped: map[keel.WaitKind]int{}}
-	start := time.Now()
-	_, ok := l.admit(keel.WaitConnection, start)
-	require.True(t, ok)
-	_, ok = l.admit(keel.WaitConnection, start.Add(time.Second))
-	require.False(t, ok)
-	suppressed, ok := l.admit(keel.WaitConnection, start.Add(slowWaitLogInterval))
-	require.True(t, ok)
-	assert.Equal(t, 1, suppressed, "the next warning counts the ones it held back")
+	interval := 50 * time.Millisecond
+	conn, logs = slowWaitConnection(t, time.Second)
+	l := &slowWaitLog{logger: conn.logger, pool: "tenant", kinds: newSlowWaitKinds(interval)}
+	wait := &keel.SlowWait{Kind: keel.WaitConnection}
+	l.report(context.Background(), wait)
+	l.report(context.Background(), wait)
+	require.Len(t, logs.All(), 1)
+	time.Sleep(interval)
+	l.report(context.Background(), wait)
+	entries := logs.All()
+	require.Len(t, entries, 2)
+	assert.Equal(t, int64(1), entries[1].ContextMap()["suppressed_since_last"],
+		"the next warning counts the ones it held back")
 }
