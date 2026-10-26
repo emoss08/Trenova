@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
@@ -73,6 +74,108 @@ func (r *repository) ListLanes(
 			}, nil
 		},
 	)
+}
+
+const minLaneCountExactUpTo int64 = 100
+
+type laneCountRow struct {
+	AgreementID pulid.ID
+	Lanes       int64
+}
+
+func (r *repository) CountLiveLanes(
+	ctx context.Context,
+	req *rateagreementports.CountLiveLanesRequest,
+) (map[pulid.ID]rateagreementports.LaneCount, error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (map[pulid.ID]rateagreementports.LaneCount, error) {
+			counts := make(map[pulid.ID]rateagreementports.LaneCount, len(req.RateAgreementIDs))
+			if len(req.RateAgreementIDs) == 0 {
+				return counts, nil
+			}
+
+			now := timeutils.NowUnix()
+			exactUpTo := laneCountExactUpTo(len(req.RateAgreementIDs))
+			rows, err := keel.Into[laneCountRow](
+				ctx,
+				r.db.Keel(ctx),
+				cappedLaneCounts(req.RateAgreementIDs, now, exactUpTo),
+			)
+			if err != nil {
+				r.l.Error("failed to count rate agreement lanes", zap.Error(err))
+				return nil, err
+			}
+
+			for _, agreementID := range req.RateAgreementIDs {
+				counts[agreementID] = rateagreementports.LaneCount{Exact: true}
+			}
+			var over []pulid.ID
+			for _, row := range rows {
+				if row.Lanes > exactUpTo {
+					over = append(over, row.AgreementID)
+					continue
+				}
+				counts[row.AgreementID] = rateagreementports.LaneCount{
+					Count: int(row.Lanes),
+					Exact: true,
+				}
+			}
+			if len(over) == 0 {
+				return counts, nil
+			}
+
+			estimates := make([]keel.RowCount, len(over))
+			items := make([]keel.BatchItem, len(over))
+			for i, agreementID := range over {
+				items[i] = keel.CountEstimateInto(
+					liveLanesOf(agreementID, now),
+					exactUpTo,
+					&estimates[i],
+				)
+			}
+			if err = keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
+				r.l.Error("failed to estimate rate agreement lanes", zap.Error(err))
+				return nil, err
+			}
+			for i, agreementID := range over {
+				counts[agreementID] = rateagreementports.LaneCount{
+					Count: int(estimates[i].N),
+					Exact: estimates[i].Exact,
+				}
+			}
+
+			return counts, nil
+		},
+	)
+}
+
+func laneCountExactUpTo(agreements int) int64 {
+	return max(pagination.ExactTotalUpTo/int64(max(agreements, 1)), minLaneCountExactUpTo)
+}
+
+func cappedLaneCounts(
+	agreementIDs []pulid.ID,
+	now int64,
+	exactUpTo int64,
+) *keel.Query[*rateagreement.RateAgreement] {
+	ra := rateagreementdb.RateAgreements
+	lane := rateagreementdb.RateAgreementRules.As("lane")
+
+	return ra.Where(ra.ID.In(agreementIDs...)).
+		LeftJoinLateral(lane.
+			Pick(lane.ID).
+			Where(lane.RateAgreementID.EqCol(ra.ID), liveLanes(lane, now)).
+			Limit(int(exactUpTo+1))).
+		Group(ra.ID).
+		Pick(ra.ID, keel.CountOf(lane.ID))
+}
+
+func liveLanesOf(agreementID pulid.ID, now int64) *keel.Query[*rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+
+	return rr.Where(rr.RateAgreementID.Eq(agreementID), liveLanes(rr, now))
 }
 
 func agreementRules(

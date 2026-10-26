@@ -54,7 +54,12 @@ but `Core`.
   `loaders/loaders.go` and `bootstrap/modules/api/graphql.go`, add its field to `set` and its
   accessor and `Attach` to `loaders/access.go`; resolvers read through the accessors
   (`loaders.Available(ctx)`, `loaders.CustomerByID(ctx, id)`). No exported type or function in
-  `loaders` mentions `dataloadgen.Loader`.
+  `loaders` mentions `dataloadgen.Loader`. A per-parent count goes through one too, and every field that shows it
+  (`laneCount`, `laneCountExact`) reads the same loader, so they share one read: the repository
+  counts every requested parent in one statement, a lateral `LIMIT` capping each at its share of
+  `pagination.ExactTotalUpTo` (`ExactTotalUpTo / parents`, at least 100), and estimates only the
+  parents past their cap (`rateagreementrepository.CountLiveLanes`). A stored count suits only a
+  figure that does not depend on the clock; lane liveness does, so lanes are counted at read.
 - **Another kind's record** on a type shows its reference view; more needs
   `@requiresRead(kind:)` ([reference-views.md](../reference-views.md)).
 - Tests build `&QueryResolver{&Deps{Core: &base.Core{...}, ...}}`.

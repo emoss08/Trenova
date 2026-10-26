@@ -111,6 +111,16 @@ type ListRateAgreementLanesRequest struct {
 	Offset          int                   `json:"offset"`
 }
 
+type CountLiveLanesRequest struct {
+	TenantInfo       pagination.TenantInfo
+	RateAgreementIDs []pulid.ID
+}
+
+type LaneCount struct {
+	Count int
+	Exact bool
+}
+
 // Normalize falls back to the default page size for a missing or non-positive
 // limit, caps it at MaxLaneLimit, and floors the offset at zero.
 func (r *ListRateAgreementLanesRequest) Normalize() {
@@ -224,6 +234,10 @@ type RateAgreementRepository interface {
 		ctx context.Context,
 		req *ListRateAgreementLanesRequest,
 	) (*RateAgreementLaneSummary, error)
+	CountLiveLanes(
+		ctx context.Context,
+		req *CountLiveLanesRequest,
+	) (map[pulid.ID]LaneCount, error)
 	GetRuleByID(
 		ctx context.Context,
 		req *GetRateAgreementRuleByIDRequest,

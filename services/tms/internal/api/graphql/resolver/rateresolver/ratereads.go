@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
@@ -40,6 +41,21 @@ func (r *RateAgreementResolver) agreementLanes(
 		RateAgreementID: agreementID,
 		Limit:           limit,
 	})
+}
+
+func (r *RateAgreementResolver) laneCount(
+	ctx context.Context,
+	obj *gqlmodel.RateAgreement,
+) (rateagreementports.LaneCount, error) {
+	if _, err := r.RequirePermission(
+		ctx,
+		permission.ResourceRateAgreement,
+		permission.OpRead,
+	); err != nil {
+		return rateagreementports.LaneCount{}, err
+	}
+
+	return loaders.RateAgreementLaneCount(ctx, obj.ID)
 }
 
 type cellPageRequest struct {

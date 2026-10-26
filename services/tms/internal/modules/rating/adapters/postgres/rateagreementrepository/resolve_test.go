@@ -77,3 +77,25 @@ func TestLaneCountQueries_SplitTheAgreementsRulesIntoLiveAndRetired(t *testing.T
 func countOf(text, needle string) int {
 	return strings.Count(text, needle)
 }
+
+func TestCappedLaneCounts_CountsEveryAgreementInOneBoundedStatement(t *testing.T) {
+	t.Parallel()
+
+	sql, args := keeltest.Render(t, cappedLaneCounts([]pulid.ID{"ragr_1", "ragr_2"}, 1_000, 100))
+
+	assert.Contains(t, sql, "LEFT JOIN LATERAL")
+	assert.Contains(t, sql, "LIMIT 101", "each agreement reads at most one row past its cap")
+	assert.Contains(t, sql, "GROUP BY")
+	assert.Equal(t, 1, countOf(sql, "count("))
+	assert.Contains(t, args, []string{"ragr_1", "ragr_2"}, "the agreements bind as one array")
+}
+
+func TestLaneCountExactUpTo_SharesTheExactBudgetAcrossTheAgreementsRead(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, int64(10_000), laneCountExactUpTo(1))
+	assert.Equal(t, int64(1_000), laneCountExactUpTo(10))
+	assert.Equal(t, int64(100), laneCountExactUpTo(100))
+	assert.Equal(t, minLaneCountExactUpTo, laneCountExactUpTo(1_000))
+	assert.Equal(t, int64(10_000), laneCountExactUpTo(0))
+}

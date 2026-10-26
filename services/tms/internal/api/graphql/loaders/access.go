@@ -43,6 +43,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
@@ -296,6 +297,21 @@ func (f *RateMatrixByIDLoaderFactory) Attach(
 ) context.Context {
 	return attach(ctx, func(s *set) {
 		s.rateMatrixByID = newRateMatrixByIDLoader(f, tenantInfo)
+	})
+}
+
+func RateAgreementLaneCount(ctx context.Context, key string) (rateagreementports.LaneCount, error) {
+	return load(ctx, key, func(s *set) *dataloadgen.Loader[string, rateagreementports.LaneCount] {
+		return s.rateAgreementLaneCount
+	})
+}
+
+func (f *RateAgreementLaneCountLoaderFactory) Attach(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return attach(ctx, func(s *set) {
+		s.rateAgreementLaneCount = newRateAgreementLaneCountLoader(f, tenantInfo)
 	})
 }
 
