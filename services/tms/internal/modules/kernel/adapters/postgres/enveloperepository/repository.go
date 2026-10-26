@@ -260,16 +260,16 @@ func (s *source) listQuery(req *kernelports.ListEnvelopeRowsRequest) *keel.Query
 		Limit(req.Limit)
 }
 
-func (s *source) extraArray() keel.Expr {
+func (s *source) extraArray() keel.StringArrayExpr {
 	if len(s.extra) == 0 {
-		return keel.DynLit([]string{})
+		return keel.TextArray(nil)
 	}
 
-	items := make([]any, len(s.extra))
+	items := make([]keel.StringValue, len(s.extra))
 	for i := range s.extra {
 		items[i] = keel.CastText(s.extra[i]).Coalesce("")
 	}
-	return keel.DynArray(items...)
+	return keel.ArrayOfString(items...)
 }
 
 func (s *source) matches(row *kernelports.EnvelopeRow) []keel.Pred {
