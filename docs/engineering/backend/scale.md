@@ -55,7 +55,9 @@ fails it, fix it in the same change if it is small, or name it in your report.
   records.
 - **No in-process state that assumes one replica.** API and worker processes are stateless and
   horizontally scaled; shared state lives in Postgres, Redis or Temporal. An in-process cache
-  (`shared/lrucache`, `ttlcache`) is only an accelerator with a bound and an expiry.
+  (`shared/lrucache`, `ttlcache`) is only an accelerator with a bound and an expiry, for what
+  Postgres does not hold; a database read is cached with keel's result cache, which every
+  process's writes invalidate.
 
 ## Data growth
 
