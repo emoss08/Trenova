@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { defaultedEnumSchema, nullableArraySchema, nullableStringSchema } from "./helpers";
+import { nullableArraySchema, nullableStringSchema } from "./helpers";
 import { createLimitOffsetResponse } from "./server";
 
 export const ediPartnerKindSchema = z.enum(["Internal", "External"]);
