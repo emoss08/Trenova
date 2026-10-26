@@ -98,16 +98,8 @@ func (e *Engine) start(ctx context.Context) error {
 func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
 	cfg := e.cfg
 	opts := analytics.RunnerOptions{
-		Limits: ir.Limits{
-			MaxDimensions:   cfg.GetMaxDimensions(),
-			MaxLimit:        cfg.GetMaxDefinitionLimit(),
-			MaxPivotColumns: cfg.GetMaxPivotColumns(),
-			MaxPathDepth:    cfg.GetMaxPathDepth(),
-		},
-		Complexity: analytics.ComplexityLimits{
-			MaxJoins:  cfg.GetMaxToOneJoins(),
-			MaxToMany: cfg.GetMaxToManySubqueries(),
-		},
+		Limits:      DefinitionLimits(cfg),
+		Complexity:  ComplexityLimits(cfg),
 		MaxCost:     cfg.GetExplainCostLimit(),
 		MaxPlanRows: cfg.GetExplainRowLimit(),
 		PreviewRows: cfg.GetPreviewRowLimit(),
@@ -129,6 +121,22 @@ func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
 	return opts
 }
 
+func DefinitionLimits(cfg *config.ReportingConfig) ir.Limits {
+	return ir.Limits{
+		MaxDimensions:   cfg.GetMaxDimensions(),
+		MaxLimit:        cfg.GetMaxDefinitionLimit(),
+		MaxPivotColumns: cfg.GetMaxPivotColumns(),
+		MaxPathDepth:    cfg.GetMaxPathDepth(),
+	}
+}
+
+func ComplexityLimits(cfg *config.ReportingConfig) analytics.ComplexityLimits {
+	return analytics.ComplexityLimits{
+		MaxJoins:  cfg.GetMaxToOneJoins(),
+		MaxToMany: cfg.GetMaxToManySubqueries(),
+	}
+}
+
 func (e *Engine) report(err error) {
 	e.l.Warn("report engine", zap.Error(err))
 }
@@ -143,6 +151,11 @@ func (e *Engine) runners() (interactive, cached *analytics.Runner, err error) {
 }
 
 func (e *Engine) Catalog() *analytics.Catalog { return e.catalog }
+
+func (e *Engine) Validate(def *ir.Definition) error {
+	_, err := ir.Resolve(def, e.catalog, DefinitionLimits(e.cfg))
+	return err
+}
 
 func (e *Engine) Preview(ctx context.Context, req *analytics.Request) (*analytics.Result, error) {
 	interactive, _, err := e.runners()
