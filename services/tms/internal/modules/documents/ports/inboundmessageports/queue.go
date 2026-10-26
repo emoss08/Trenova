@@ -2,6 +2,7 @@ package inboundmessageports
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
@@ -314,6 +315,16 @@ type MailboxTestRequest struct {
 	At         int64
 }
 
+var ErrMailboxTestTooSoon = errors.New("a test was sent to this mailbox too recently")
+
+type ClaimMailboxTestRequest struct {
+	TenantInfo     pagination.TenantInfo
+	MailboxID      pulid.ID
+	Token          string
+	At             int64
+	LastSentBefore int64
+}
+
 type TriageQueueRepository interface {
 	QueueStates(ctx context.Context, req QueueStatesRequest) ([]*QueueState, error)
 	SelectIDs(ctx context.Context, req SelectInboundMessageIDsRequest) ([]pulid.ID, error)
@@ -339,6 +350,7 @@ type TriageQueueRepository interface {
 
 type TriageMailboxStateRepository interface {
 	MarkReceived(ctx context.Context, req MailboxReceivedRequest) error
+	ClaimTestSend(ctx context.Context, req ClaimMailboxTestRequest) (*inboundmessage.Mailbox, error)
 	MarkTestSent(ctx context.Context, req MailboxTestRequest) (*inboundmessage.Mailbox, error)
 	MarkTestReceived(ctx context.Context, req MailboxTestRequest) (bool, error)
 }

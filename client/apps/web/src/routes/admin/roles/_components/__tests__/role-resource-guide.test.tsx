@@ -91,23 +91,31 @@ describe("ResourceGuideLine", () => {
 });
 
 describe("useRoleResourceGuides", () => {
-  it("asks for a category's resources at most 64 at a time, only while it is open", async () => {
+  it("asks for each open category's resources at most 64 at a time, only once it is open", async () => {
     fetchRoleResourceGuides.mockImplementation(async (resources) =>
       resources.map((resource) => ({ ...customer, resource })),
     );
-    const resources = Array.from({ length: 70 }, (_, i) => `resource_${i}`);
+    const billing = Array.from({ length: 70 }, (_, i) => `billing_${i}`);
+    const dispatch = ["location", "location_category"];
 
-    const { result, rerender } = renderHook(
-      ({ enabled }) => useRoleResourceGuides(resources, "internal", enabled),
-      { wrapper, initialProps: { enabled: false } },
-    );
+    const { result, rerender } = renderHook(({ open }) => useRoleResourceGuides(open, "internal"), {
+      wrapper,
+      initialProps: { open: [] as string[][] },
+    });
     expect(fetchRoleResourceGuides).not.toHaveBeenCalled();
 
-    rerender({ enabled: true });
+    rerender({ open: [billing] });
     await waitFor(() => expect(result.current.guides.size).toBe(70));
-    expect(fetchRoleResourceGuides).toHaveBeenCalledTimes(2);
     expect(fetchRoleResourceGuides.mock.calls.map(([batch]) => batch.length)).toEqual([64, 6]);
     expect(fetchRoleResourceGuides.mock.calls[0][1]).toBe("internal");
+
+    rerender({ open: [billing, dispatch] });
+    await waitFor(() => expect(result.current.guides.size).toBe(72));
+    expect(fetchRoleResourceGuides.mock.calls.map(([batch]) => batch)).toEqual([
+      billing.slice(0, 64),
+      billing.slice(64),
+      dispatch,
+    ]);
     expect(result.current.isPending).toBe(false);
   });
 });

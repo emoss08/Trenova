@@ -1,5 +1,6 @@
 "use no memo";
 import { useDeferredMeasure } from "@/hooks/use-deferred-measure";
+import { ScrollArea, type ScrollAreaMaskVariant } from "@trenova/shared/components/ui/scroll-area";
 import { cn } from "@trenova/shared/lib/utils";
 import { defaultRangeExtractor, useVirtualizer, type Range } from "@tanstack/react-virtual";
 import {
@@ -54,6 +55,13 @@ type VirtualRowsProps = {
   endReachedThreshold?: number;
   /** Drawn after the last row, inside the scroll container: a "loading more" line. */
   footer?: ReactNode;
+  /**
+   * Scrolls the rows inside a `ScrollArea` whose edges fade into this surface,
+   * so the list shows there is more above or below it.
+   */
+  mask?: ScrollAreaMaskVariant;
+  /** Classes on the masks, such as an inset that keeps a pinned heading clear of the top fade. */
+  maskClassName?: string;
 };
 
 function assignRef<T>(ref: Ref<T> | undefined, value: T | null) {
@@ -89,6 +97,8 @@ export function VirtualRows({
   onEndReached,
   endReachedThreshold = 5,
   footer,
+  mask,
+  maskClassName,
 }: VirtualRowsProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const setScrollElement = useCallback(
@@ -171,6 +181,42 @@ export function VirtualRows({
     return empty ? <>{empty}</> : null;
   }
 
+  const body = (
+    <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
+      {items.map((item) => {
+        const pinned = rows[item.index].sticky === true && item.index === activeSticky.current;
+        return (
+          <div
+            key={item.key}
+            data-index={item.index}
+            ref={measureRow}
+            className={cn(pinned ? "sticky top-0 z-10" : "absolute inset-x-0 top-0", rowClassName)}
+            style={pinned ? undefined : { transform: `translateY(${item.start}px)` }}
+          >
+            {rows[item.index].render()}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  if (mask !== undefined) {
+    return (
+      <ScrollArea
+        viewportRef={setScrollElement}
+        maskVariant={mask}
+        maskClassName={maskClassName}
+        className={className}
+        viewportClassName="overscroll-contain"
+      >
+        <div role={role} aria-label={ariaLabel} aria-multiselectable={ariaMultiselectable}>
+          {body}
+          {footer}
+        </div>
+      </ScrollArea>
+    );
+  }
+
   return (
     <div
       ref={setScrollElement}
@@ -179,25 +225,7 @@ export function VirtualRows({
       aria-multiselectable={ariaMultiselectable}
       className={cn("scrollbar-overlay overflow-y-auto overscroll-contain", className)}
     >
-      <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>
-        {items.map((item) => {
-          const pinned = rows[item.index].sticky === true && item.index === activeSticky.current;
-          return (
-            <div
-              key={item.key}
-              data-index={item.index}
-              ref={measureRow}
-              className={cn(
-                pinned ? "sticky top-0 z-10" : "absolute inset-x-0 top-0",
-                rowClassName,
-              )}
-              style={pinned ? undefined : { transform: `translateY(${item.start}px)` }}
-            >
-              {rows[item.index].render()}
-            </div>
-          );
-        })}
-      </div>
+      {body}
       {footer}
     </div>
   );

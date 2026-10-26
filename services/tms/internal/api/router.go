@@ -49,9 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
@@ -203,7 +201,6 @@ type RouterParams struct {
 	CustomFieldHandler              *customfieldhandler.Handler
 	DocumentHandler                 *documenthandler.Handler
 	ReportHandler                   *reporthandler.Handler
-	DocumentOperationsHandler       *documentoperationshandler.Handler
 	AccessorialChargeHandler        *accessorialchargehandler.Handler
 	AgentProposalHandler            *agentproposalhandler.Handler
 	AgentPlanHandler                *agentplanhandler.Handler
@@ -291,7 +288,6 @@ type RouterParams struct {
 	DataEntryControlHandler         *dataentrycontrolhandler.Handler
 	DispatchControlHandler          *dispatchcontrolhandler.Handler
 	DocumentControlHandler          *documentcontrolhandler.Handler
-	DocumentParsingRuleHandler      *documentparsingrulehandler.Handler
 	ExchangeRateHandler             *exchangeratehandler.Handler
 	DistanceControlHandler          *distancecontrolhandler.Handler
 	DistanceOverrideHandler         *distanceoverridehandler.Handler
@@ -364,7 +360,6 @@ type Router struct {
 	customFieldHandler              *customfieldhandler.Handler
 	documentHandler                 *documenthandler.Handler
 	reportHandler                   *reporthandler.Handler
-	documentOperationsHandler       *documentoperationshandler.Handler
 	accessorialChargeHandler        *accessorialchargehandler.Handler
 	agentProposalHandler            *agentproposalhandler.Handler
 	agentPlanHandler                *agentplanhandler.Handler
@@ -441,7 +436,6 @@ type Router struct {
 	dataEntryControlHandler         *dataentrycontrolhandler.Handler
 	dispatchControlHandler          *dispatchcontrolhandler.Handler
 	documentControlHandler          *documentcontrolhandler.Handler
-	documentParsingRuleHandler      *documentparsingrulehandler.Handler
 	exchangeRateHandler             *exchangeratehandler.Handler
 	distanceControlHandler          *distancecontrolhandler.Handler
 	distanceOverrideHandler         *distanceoverridehandler.Handler
@@ -516,7 +510,6 @@ func NewRouter(p RouterParams) *Router {
 		customFieldHandler:              p.CustomFieldHandler,
 		documentHandler:                 p.DocumentHandler,
 		reportHandler:                   p.ReportHandler,
-		documentOperationsHandler:       p.DocumentOperationsHandler,
 		accessorialChargeHandler:        p.AccessorialChargeHandler,
 		agentProposalHandler:            p.AgentProposalHandler,
 		agentPlanHandler:                p.AgentPlanHandler,
@@ -593,7 +586,6 @@ func NewRouter(p RouterParams) *Router {
 		dataEntryControlHandler:         p.DataEntryControlHandler,
 		dispatchControlHandler:          p.DispatchControlHandler,
 		documentControlHandler:          p.DocumentControlHandler,
-		documentParsingRuleHandler:      p.DocumentParsingRuleHandler,
 		exchangeRateHandler:             p.ExchangeRateHandler,
 		distanceControlHandler:          p.DistanceControlHandler,
 		distanceOverrideHandler:         p.DistanceOverrideHandler,
@@ -725,7 +717,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.customFieldHandler.RegisterRoutes(protected)
 	r.documentHandler.RegisterRoutes(protected)
 	r.reportHandler.RegisterRoutes(protected)
-	r.documentOperationsHandler.RegisterRoutes(protected)
 	r.accessorialChargeHandler.RegisterRoutes(protected)
 	r.agentProposalHandler.RegisterRoutes(protected)
 	r.agentPlanHandler.RegisterRoutes(protected)
@@ -804,7 +795,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dataEntryControlHandler.RegisterRoutes(protected)
 	r.dispatchControlHandler.RegisterRoutes(protected)
 	r.documentControlHandler.RegisterRoutes(protected)
-	r.documentParsingRuleHandler.RegisterRoutes(protected)
 	r.distanceControlHandler.RegisterRoutes(protected)
 	r.distanceOverrideHandler.RegisterRoutes(protected)
 	r.distanceProfileHandler.RegisterRoutes(protected)

@@ -79,19 +79,6 @@ func (r *Registry) registerComplianceResources() {
 		DefaultSensitivity: SensitivityInternal,
 	})
 
-	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceDocumentParsingRule.String(),
-		DisplayName: "Document Parsing Rule",
-		Description: "Tenant-managed parsing rules, versions, fixtures, and simulations",
-		Category:    "Intake",
-		Operations: relabel(append(GetAllOperations(), OperationDefinition{
-			Operation:   OpDelete,
-			DisplayName: "Delete",
-			Description: "Delete rule sets and fixtures",
-		}), OpActivate, "Activate", "Activate and publish parsing rule versions"),
-		DefaultSensitivity: SensitivityInternal,
-	})
-
 	// The intake queue is desk work, so its data scope decides whose scans a
 	// person sees: their own, or everybody's. Filing an item also needs
 	// document create on the record it lands on, which is checked separately.

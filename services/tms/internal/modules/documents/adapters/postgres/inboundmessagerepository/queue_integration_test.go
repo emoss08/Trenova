@@ -4,7 +4,9 @@ package inboundmessagerepository
 
 import (
 	"context"
+	"errors"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/emoss08/keel"
@@ -16,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/sourcegraph/conc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -363,6 +366,64 @@ func TestMarkingAMailboxReceivedNeverMovesItBackwards(t *testing.T) {
 	theirs, err := mb.Get(f.b.ctx, f.admin, f.b.mailbox.ID)
 	require.NoError(t, err)
 	assert.Zero(t, theirs.LastReceivedAt)
+}
+
+func TestAMailboxTestIsClaimedOncePerCooldown(t *testing.T) {
+	f := newQueueFixture(t)
+
+	claim := func(at int64) error {
+		_, err := f.mailboxes.ClaimTestSend(f.a.ctx, inboundmessageports.ClaimMailboxTestRequest{
+			TenantInfo:     f.a.info,
+			MailboxID:      f.a.mailbox.ID,
+			Token:          pulid.MustNew("tst_").String(),
+			At:             at,
+			LastSentBefore: at - 60,
+		})
+		return err
+	}
+
+	require.NoError(t, claim(queueNow))
+	require.ErrorIs(t, claim(queueNow+59), inboundmessageports.ErrMailboxTestTooSoon)
+	require.NoError(t, claim(queueNow+60))
+
+	mb := inboundmessagedb.Mailboxes
+	ours, err := mb.Get(f.a.ctx, f.admin, f.a.mailbox.ID)
+	require.NoError(t, err)
+	assert.Equal(t, queueNow+60, ours.TestSentAt)
+
+	theirs, err := mb.Get(f.b.ctx, f.admin, f.b.mailbox.ID)
+	require.NoError(t, err)
+	assert.Zero(t, theirs.TestSentAt)
+}
+
+func TestConcurrentMailboxTestClaimsLetExactlyOneThrough(t *testing.T) {
+	f := newQueueFixture(t)
+
+	var claimed, refused atomic.Int32
+	var wg conc.WaitGroup
+	for range 8 {
+		wg.Go(func() {
+			_, err := f.mailboxes.ClaimTestSend(f.a.ctx, inboundmessageports.ClaimMailboxTestRequest{
+				TenantInfo:     f.a.info,
+				MailboxID:      f.a.mailbox.ID,
+				Token:          pulid.MustNew("tst_").String(),
+				At:             queueNow,
+				LastSentBefore: queueNow - 60,
+			})
+			switch {
+			case err == nil:
+				claimed.Add(1)
+			case errors.Is(err, inboundmessageports.ErrMailboxTestTooSoon):
+				refused.Add(1)
+			default:
+				t.Errorf("unexpected claim error: %v", err)
+			}
+		})
+	}
+	wg.Wait()
+
+	assert.Equal(t, int32(1), claimed.Load())
+	assert.Equal(t, int32(7), refused.Load())
 }
 
 func TestRetentionDeletesOnlyInsideOneTenant(t *testing.T) {

@@ -3,13 +3,11 @@ package fixtures
 import (
 	"context"
 	"crypto/md5" //nolint:gosec // identifier derivation, not security
-	"embed"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -17,29 +15,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/goccy/go-yaml"
 )
-
-//go:embed data
-var data embed.FS
 
 var Seeds = seed.NewRegistry()
 
 var errFixtureMissing = errors.New("a fixture this seed builds on is missing")
-
-func yamlAsJSON(sr *seed.Run, path string, dest any) error {
-	raw, err := sr.ReadFile(path)
-	if err != nil {
-		return err
-	}
-
-	asJSON, err := yaml.YAMLToJSON(raw)
-	if err != nil {
-		return fmt.Errorf("convert %s to JSON: %w", path, err)
-	}
-
-	return sonic.Unmarshal(asJSON, dest)
-}
 
 func backdate[T any](
 	ctx context.Context,

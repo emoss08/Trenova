@@ -5,8 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -240,7 +238,7 @@ Received in good order`
 	assert.Empty(t, analysis.MissingFields)
 }
 
-func TestBuildStructuredDataIncludesParsingRuleMetadata(t *testing.T) {
+func TestBuildStructuredDataIncludesIntelligenceAndAIDiagnostics(t *testing.T) {
 	t.Parallel()
 
 	intelligence := &DocumentIntelligenceAnalysis{
@@ -251,15 +249,6 @@ func TestBuildStructuredDataIncludesParsingRuleMetadata(t *testing.T) {
 		Fields:        map[string]*ReviewField{},
 		Stops:         []*IntelligenceStop{},
 		Conflicts:     []*ReviewConflict{},
-		ParsingRuleMetadata: &documentparsingruleports.DocumentParsingRuleMetadata{
-			RuleSetID:        pulid.MustNew("dprs_"),
-			RuleSetName:      "Generic",
-			RuleVersionID:    pulid.MustNew("dprv_"),
-			VersionNumber:    2,
-			ParserMode:       "merge_with_base",
-			ProviderMatched:  "GenericBroker",
-			MatchSpecificity: 220,
-		},
 	}
 
 	data := buildStructuredData(intelligence, &AIDiagnostics{
@@ -271,9 +260,8 @@ func TestBuildStructuredDataIncludesParsingRuleMetadata(t *testing.T) {
 
 	intelligenceMap, ok := data["intelligence"].(map[string]any)
 	require.True(t, ok)
-	metadata, ok := intelligenceMap["parsingRuleMetadata"].(*documentparsingruleports.DocumentParsingRuleMetadata)
-	require.True(t, ok)
-	require.Equal(t, "Generic", metadata.RuleSetName)
+	require.Equal(t, kindRateConfirmation, intelligenceMap["kind"])
+	require.Equal(t, []string{"rule:generic"}, intelligenceMap["signals"])
 
 	aiDiagnosticsMap, ok := data["aiDiagnostics"].(map[string]any)
 	require.True(t, ok)

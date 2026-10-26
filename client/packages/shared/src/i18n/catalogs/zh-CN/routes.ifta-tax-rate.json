@@ -18,6 +18,7 @@
   "Period & product": "期间与产品",
   "Publish one jurisdiction's rate for a quarter and fuel type. Rates are global, so this is what every organization's return will owe.": "为某一管辖区发布特定季度与燃油类型的税率。税率为全局共用，因此这即是每个组织申报时应缴的依据。",
   "Publishing would set {0, plural, one {# rate} other {# rates}} for Q{1} {2}, replacing any already published for the same jurisdiction and fuel.": "发布后将为 {2} 年第 {1} 季度设置 {0, plural, other {# 项费率}}，并替换同一辖区和燃料已发布的费率。",
+  "Publishing...": "发布中...",
   "Q{0}": "第 {0} 季度",
   "Rate / gal": "费率／加仑",
   "Rate per gallon": "每加仑费率",
