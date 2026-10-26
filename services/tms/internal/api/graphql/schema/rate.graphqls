@@ -79,6 +79,8 @@ type RateAgreement {
   lanes(first: Int = 50): [RateAgreementLane!]!
   "How many live lanes the agreement holds."
   laneCount: Int!
+  "Whether laneCount was counted; false when it is the planner's estimate of more lanes than it counts."
+  laneCountExact: Boolean!
   "The accessorial schedule. Read by rateAgreement only."
   accessorials: [RateAgreementAccessorial!]
   "The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only."

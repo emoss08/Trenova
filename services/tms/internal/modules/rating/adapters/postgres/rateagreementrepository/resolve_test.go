@@ -61,14 +61,17 @@ func TestBaseCandidateQuery_ASimulationRelaxesTheServiceWindow(t *testing.T) {
 	assert.Contains(t, args, "rag_sim")
 }
 
-func TestLaneCountQuery_CountsLiveAndRetiredInOnePass(t *testing.T) {
+func TestLaneCountQueries_SplitTheAgreementsRulesIntoLiveAndRetired(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, laneCountQuery(&rateagreementports.ListRateAgreementLanesRequest{
-		RateAgreementID: "rag_1",
-	}, 1_000))
+	req := &rateagreementports.ListRateAgreementLanesRequest{RateAgreementID: "rag_1"}
+	live, _ := keeltest.Render(t, liveLaneQuery(req, 1_000))
+	retired, _ := keeltest.Render(t, retiredLaneQuery(req, 1_000))
 
-	assert.Contains(t, sql, "count(*) FILTER (WHERE")
+	assert.Contains(t, live, `"rate_agreement_id" = `)
+	assert.NotContains(t, live, "NOT (")
+	assert.Contains(t, retired, `"rate_agreement_id" = `)
+	assert.Contains(t, retired, "NOT (", "retired is every rule that is not live")
 }
 
 func countOf(text, needle string) int {

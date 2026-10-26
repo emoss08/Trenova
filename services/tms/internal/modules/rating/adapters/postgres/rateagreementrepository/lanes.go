@@ -9,19 +9,16 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
-type laneCounts struct {
-	Total int64
-	Live  int64
-}
-
 // ListLanes pages an agreement's live lanes — active rules an amendment has
 // not closed out, most specific first — and counts the live and retired rules
-// in one aggregate pass, so an agreement with tens of thousands of lanes is
-// never read whole.
+// in the same round trip, exactly up to pagination.ExactTotalUpTo and by the
+// planner's estimate above, so an agreement with tens of thousands of lanes is
+// never read or counted whole.
 func (r *repository) ListLanes(
 	ctx context.Context,
 	req *rateagreementports.ListRateAgreementLanesRequest,
@@ -37,40 +34,43 @@ func (r *repository) ListLanes(
 
 			req.Normalize()
 			now := timeutils.NowUnix()
+			ra := rateagreementdb.RateAgreements
 
-			if err := r.requireAgreement(ctx, req); err != nil {
-				log.Error("failed to find rate agreement", zap.Error(err))
-				return nil, err
-			}
-
-			counts, err := keel.IntoOne[laneCounts](ctx, r.db.Keel(ctx), laneCountQuery(req, now))
-			if err != nil {
-				log.Error("failed to count rate agreement lanes", zap.Error(err))
-				return nil, err
-			}
-			total, live := int(counts.Total), int(counts.Live)
-
-			pageSize := min(req.Limit, max(live-req.Offset, 0))
-			page := &rateagreementports.RateAgreementLanePage{
-				Lanes:   make([]*rateagreement.RateAgreementRule, 0, pageSize),
-				Count:   live,
-				Retired: total - live,
-				Limit:   req.Limit,
-				Offset:  req.Offset,
-			}
-
-			if req.Offset >= live {
-				return page, nil
-			}
-
-			lanes, err := lanePageQuery(req, now).List(ctx, r.db.Keel(ctx))
-			if err != nil {
+			var (
+				exists  bool
+				lanes   []*rateagreement.RateAgreementRule
+				live    keel.RowCount
+				retired keel.RowCount
+			)
+			if err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.ExistsInto(ra.Where(ra.ID.Eq(req.RateAgreementID)), &exists),
+				keel.ListInto(lanePageQuery(req, now), &lanes),
+				keel.CountEstimateInto(liveLaneQuery(req, now), pagination.ExactTotalUpTo, &live),
+				keel.CountEstimateInto(
+					retiredLaneQuery(req, now),
+					pagination.ExactTotalUpTo,
+					&retired,
+				),
+			); err != nil {
 				log.Error("failed to list rate agreement lanes", zap.Error(err))
 				return nil, err
 			}
-			page.Lanes = lanes
+			if !exists {
+				return nil, agreementErrors.Map(keel.ErrNotFound, req.RateAgreementID.String())
+			}
+			if lanes == nil {
+				lanes = []*rateagreement.RateAgreementRule{}
+			}
 
-			return page, nil
+			return &rateagreementports.RateAgreementLanePage{
+				Lanes:        lanes,
+				Count:        int(live.N),
+				CountExact:   live.Exact,
+				Retired:      int(retired.N),
+				RetiredExact: retired.Exact,
+				Limit:        req.Limit,
+				Offset:       req.Offset,
+			}, nil
 		},
 	)
 }
@@ -83,13 +83,22 @@ func agreementRules(
 	return rr.Where(rr.RateAgreementID.Eq(req.RateAgreementID))
 }
 
-func laneCountQuery(
+func liveLaneQuery(
 	req *rateagreementports.ListRateAgreementLanesRequest,
 	now int64,
 ) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 
-	return agreementRules(req).Pick(keel.Count(), keel.Count().Filter(liveLanes(rr, now)))
+	return agreementRules(req).Where(liveLanes(rr, now))
+}
+
+func retiredLaneQuery(
+	req *rateagreementports.ListRateAgreementLanesRequest,
+	now int64,
+) *keel.Query[*rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+
+	return agreementRules(req).Where(keel.Not(liveLanes(rr, now)))
 }
 
 func lanePageQuery(
@@ -111,10 +120,10 @@ func laneSummaryQuery(
 ) *keel.Query[*rateagreement.RateAgreementRule] {
 	rr := rateagreementdb.RateAgreementRules
 	ft := formulatemplatedb.FormulaTemplates
-	rate := keel.DynCase().
+	rate := keel.CaseNumeric().
 		When(
 			keel.JSONBOf(rr.Inputs.Path("rate")).TypeOf().Eq("object"),
-			keel.DynOf(rr.Inputs.Text("rate", "$q")).Cast(keel.TypeNumeric),
+			keel.CastNumeric(rr.Inputs.Text("rate", "$q")),
 		).
 		End()
 

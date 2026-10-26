@@ -234,6 +234,15 @@ func (r *RateAgreementResolver) LaneCount(ctx context.Context, obj *gqlmodel.Rat
 	return page.Count, nil
 }
 
+func (r *RateAgreementResolver) LaneCountExact(ctx context.Context, obj *gqlmodel.RateAgreement) (bool, error) {
+	page, err := r.agreementLanes(ctx, obj, 1)
+	if err != nil {
+		return false, err
+	}
+
+	return page.CountExact, nil
+}
+
 func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrix.RateMatrixVersion, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateMatrix, permission.OpRead)
 	if err != nil {

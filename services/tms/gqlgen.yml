@@ -94,6 +94,8 @@ models:
         resolver: true
       laneCount:
         resolver: true
+      laneCountExact:
+        resolver: true
   RateMatrix:
     fields:
       cells:
