@@ -64,7 +64,7 @@ func TestGroupSummaryBucketsShipDatesByLocalDayOfTheFirstPickup(t *testing.T) {
 		sql,
 		`SELECT `+key+`, $6::text, count(*), coalesce(sum(s."total_charge_amount"), $7) FROM`,
 	)
-	assert.Contains(t, sql, ` GROUP BY `+key+` ORDER BY`)
+	assert.Contains(t, sql, ` GROUP BY 1 ORDER BY`)
 	assert.Contains(t, sql, `min(grp_stop."scheduled_window_start") ASC NULLS LAST`)
 	assert.Equal(t, "America/Chicago", args[2])
 	assert.Equal(t, []any{"", "", 0}, args[4:7])
