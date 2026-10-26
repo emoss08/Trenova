@@ -9,10 +9,10 @@
 use super::budget::Meter;
 use super::error::{Code, EvalError};
 use super::value::Value;
-use crate::message::{Arg, Message};
 use regex_lite::{Regex, RegexBuilder};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The most a compiled pattern may take, in bytes.
 const REGEX_SIZE_LIMIT: usize = 64 * 1024;
@@ -38,7 +38,7 @@ fn text_arg<'a>(args: &'a [Value], index: usize, method: &str) -> Result<&'a str
     match args.get(index) {
         Some(Value::Text(text)) => Ok(text),
         other => Err(EvalError::internal(Message::with(
-            crate::message!("{0} needs text, not {1}"),
+            trenova_module_kit::message!("{0} needs text, not {1}"),
             [
                 Arg::from(method),
                 Arg::from(other.map_or_else(|| Value::None.kind(), Value::kind)),
@@ -73,7 +73,7 @@ pub fn call(
             regex
                 .map(|regex| Value::Bool(regex.is_match(text)))
                 .ok_or_else(|| {
-                    EvalError::internal(Message::new(crate::message!(
+                    EvalError::internal(Message::new(trenova_module_kit::message!(
                         "matches was called without its pattern"
                     )))
                 })
@@ -88,7 +88,7 @@ fn replace(text: &str, args: &[Value], meter: &mut Meter) -> Result<Value, EvalE
     if from.is_empty() {
         return Err(EvalError::new(
             Code::Argument,
-            Message::new(crate::message!(
+            Message::new(trenova_module_kit::message!(
                 "replace needs some text to look for, not \"\""
             )),
         ));
@@ -107,7 +107,9 @@ fn split(text: &str, args: &[Value], meter: &mut Meter) -> Result<Value, EvalErr
     if separator.is_empty() {
         return Err(EvalError::new(
             Code::Argument,
-            Message::new(crate::message!("split needs a separator, not \"\"")),
+            Message::new(trenova_module_kit::message!(
+                "split needs a separator, not \"\""
+            )),
         ));
     }
     let count = text.matches(separator).count().saturating_add(1);
@@ -132,7 +134,7 @@ pub fn compile(pattern: &str) -> Result<Regex, EvalError> {
         .map_err(|_| {
             EvalError::with(
                 Code::Regex,
-                crate::message!("\"{0}\" is not a pattern matches can use"),
+                trenova_module_kit::message!("\"{0}\" is not a pattern matches can use"),
                 [Arg::from(pattern)],
             )
         })

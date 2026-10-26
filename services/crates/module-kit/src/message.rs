@@ -7,14 +7,11 @@
 //! arguments over the wire; the browser and the server look the template up in their catalogs,
 //! fill the arguments and fall back to English.
 //!
-//! `task i18n` extracts every `message!` literal in this crate into the catalogs (the Go scope
+//! `task i18n` extracts every `message!` literal in the crates that use this one (`trenova-rules`
+//! and `trenova-edi`, listed in `i18n/tools/extract-rust.mjs`) into the catalogs (the Go scope
 //! and the web app's `web` bundle), so the literal must be a single string literal: no
 //! `concat!`, no variables. A template never contains a bare `{` or `}` that is not a
 //! placeholder, since ICU would read it as one; write `'{'` instead.
-//!
-//! The one other source of templates is the Tariff standard library: its doc comments are
-//! product text too, and [`crate::tariff::stdlib::docs`] turns each into a template that
-//! `task i18n` collects from the `.tariff` sources.
 
 use serde::Serialize;
 

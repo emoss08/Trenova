@@ -5,8 +5,8 @@
 //! fixes the editor offers. Spans stay in bytes inside the crate and are converted to UTF-16 at
 //! the operation boundary.
 
-use crate::message::Message;
 use crate::span::Span;
+use trenova_module_kit::message::Message;
 
 /// How much a finding matters. Only errors stop a file from saving, previewing and rating.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

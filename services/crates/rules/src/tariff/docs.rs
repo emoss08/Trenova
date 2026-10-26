@@ -13,10 +13,10 @@
 //! whitespace collapsed ([`collapse`]), the only form the catalogs, which collapse whitespace in
 //! their keys, can find. [`crate::tariff::stdlib::docs`] holds those templates.
 
-use crate::message::Message;
 use crate::tariff::stdlib;
 use crate::tariff::syntax::ast;
 use serde::{Serialize, Serializer};
+use trenova_module_kit::message::Message;
 
 /// A doc as the hosts receive it: the author's text, or a message they translate.
 #[derive(Debug, Clone, PartialEq, Eq)]

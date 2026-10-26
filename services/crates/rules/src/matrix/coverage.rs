@@ -31,14 +31,14 @@
 use crate::matrix::input::Cell;
 use crate::matrix::input::Dimension;
 use crate::matrix::input::MatchMode;
-use crate::message;
-use crate::message::Arg;
-use crate::message::Message;
 use crate::report::fixed::group_thousands;
 use rust_decimal::Decimal;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Arg;
+use trenova_module_kit::message::Message;
 
 /// What kind of problem an issue is.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

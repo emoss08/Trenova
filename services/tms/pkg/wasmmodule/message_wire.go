@@ -1,4 +1,4 @@
-package rules
+package wasmmodule
 
 import (
 	"fmt"
@@ -7,10 +7,10 @@ import (
 )
 
 func (m Message) MarshalJSON() ([]byte, error) {
-	return appendMessage(make([]byte, 0, len(m.Template)+32), m)
+	return AppendMessage(make([]byte, 0, len(m.Template)+32), m)
 }
 
-func appendMessage(dst []byte, message Message) ([]byte, error) {
+func AppendMessage(dst []byte, message Message) ([]byte, error) {
 	dst = append(dst, `{"message":`...)
 	dst = appendString(dst, message.Template)
 	if len(message.Args) == 0 {
@@ -39,7 +39,7 @@ func appendMessageArgs(dst []byte, args []any) ([]byte, error) {
 			dst = strconv.AppendInt(dst, int64(typed), 10)
 		case Message:
 			var err error
-			if dst, err = appendMessage(dst, typed); err != nil {
+			if dst, err = AppendMessage(dst, typed); err != nil {
 				return nil, err
 			}
 		default:

@@ -3842,6 +3842,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "trenova-module-kit"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "trenova-proto"
 version = "0.1.0"
 dependencies = [
@@ -3862,6 +3870,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+ "trenova-module-kit",
 ]
 
 [[package]]

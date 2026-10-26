@@ -72,7 +72,7 @@ impl<'a> Interp<'_, 'a> {
                 Ok(true)
             }
             PatternKind::Missing => Err(internal(
-                crate::message!("The tariff is incomplete here"),
+                trenova_module_kit::message!("The tariff is incomplete here"),
                 [],
             )),
             PatternKind::Or(alternatives) => {
@@ -112,8 +112,8 @@ impl<'a> Interp<'_, 'a> {
                     Ok(other) => {
                         env.pop();
                         return Err(internal(
-                            crate::message!("A guard must be true or false, not {0}"),
-                            [crate::message::Arg::from(other.kind())],
+                            trenova_module_kit::message!("A guard must be true or false, not {0}"),
+                            [trenova_module_kit::message::Arg::from(other.kind())],
                         ));
                     }
                     Err(stop) => {
@@ -153,7 +153,7 @@ impl<'a> Interp<'_, 'a> {
             ArmBody::Block(block) => self.exec_block(env, block).and_then(|flow| match flow {
                 Flow::Return(value) => Ok(value),
                 _ => Err(internal(
-                    crate::message!("A match arm used as a value must give one"),
+                    trenova_module_kit::message!("A match arm used as a value must give one"),
                     [],
                 )),
             }),
@@ -184,7 +184,7 @@ impl<'a> Interp<'_, 'a> {
 
 fn no_arm(value: &Value) -> Stop {
     internal(
-        crate::message!("No arm of this match covers {0}"),
-        [crate::message::Arg::from(value.display())],
+        trenova_module_kit::message!("No arm of this match covers {0}"),
+        [trenova_module_kit::message::Arg::from(value.display())],
     )
 }

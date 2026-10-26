@@ -11,13 +11,13 @@ use crate::allocation::split::Method;
 use crate::allocation::split::PERCENT_PLACES;
 use crate::allocation::split::SHARE_PLACES;
 use crate::allocation::split::checked_sum;
-use crate::message;
-use crate::message::Message;
-use crate::ops::RequestError;
 use crate::report::fixed::round_bank;
 use crate::report::fixed::round_half_away;
 use rust_decimal::Decimal;
 use std::collections::HashSet;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
+use trenova_module_kit::ops::RequestError;
 
 const HUNDRED: Decimal = Decimal::ONE_HUNDRED;
 

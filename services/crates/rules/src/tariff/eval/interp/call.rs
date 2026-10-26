@@ -4,7 +4,6 @@
 
 use super::expr::{internal, unit_argument};
 use super::{Env, Flow, Interp};
-use crate::message::Arg;
 use crate::span::Span;
 use crate::tariff::eval::bill::Wanted;
 use crate::tariff::eval::error::Stop;
@@ -14,6 +13,7 @@ use crate::tariff::eval::value::Value;
 use crate::tariff::eval::{methods, text};
 use crate::tariff::syntax::ast::{Arg as CallArg, Expr, ExprKind, FnBody, FnDecl};
 use rust_decimal::Decimal;
+use trenova_module_kit::message::Arg;
 
 /// The record constructors tests may call, with the stop kind each builds.
 const STOP_CONSTRUCTORS: [(&str, &str); 4] = [
@@ -54,7 +54,7 @@ impl<'a> Interp<'_, 'a> {
                     }
                 }
                 Err(internal(
-                    crate::message!("Nothing named {0} can be called"),
+                    trenova_module_kit::message!("Nothing named {0} can be called"),
                     [Arg::from(name.text.clone())],
                 ))
             }
@@ -85,7 +85,10 @@ impl<'a> Interp<'_, 'a> {
                 }
                 self.method(env, expr, &receiver, &name.text, args)
             }
-            _ => Err(internal(crate::message!("This cannot be called"), [])),
+            _ => Err(internal(
+                trenova_module_kit::message!("This cannot be called"),
+                [],
+            )),
         }
     }
 
@@ -116,7 +119,7 @@ impl<'a> Interp<'_, 'a> {
                 Some(entry) => *entry = Some(value),
                 None => {
                     return Err(internal(
-                        crate::message!("{0} has no parameter for this argument"),
+                        trenova_module_kit::message!("{0} has no parameter for this argument"),
                         [Arg::from(decl.name.text.clone())],
                     ));
                 }
@@ -161,7 +164,7 @@ impl<'a> Interp<'_, 'a> {
                 },
                 (None, None) => {
                     outcome = Err(internal(
-                        crate::message!("{0} needs a value for {1}"),
+                        trenova_module_kit::message!("{0} needs a value for {1}"),
                         [
                             Arg::from(decl.name.text.clone()),
                             Arg::from(param.name.text.clone()),
@@ -183,7 +186,7 @@ impl<'a> Interp<'_, 'a> {
             FnBody::Block(block) => match self.exec_block(&mut scope, block)? {
                 Flow::Return(value) => Ok(value),
                 _ => Err(internal(
-                    crate::message!("{0} ended without returning a value"),
+                    trenova_module_kit::message!("{0} ended without returning a value"),
                     [Arg::from(decl.name.text.clone())],
                 )),
             },
@@ -210,7 +213,7 @@ impl<'a> Interp<'_, 'a> {
             }
             ("Int", Some("parse"), Value::Text(content)) => Ok(parse_int(content)),
             _ => Err(internal(
-                crate::message!("{0} cannot be converted like this"),
+                trenova_module_kit::message!("{0} cannot be converted like this"),
                 [Arg::from(value.kind())],
             )),
         }
@@ -232,7 +235,7 @@ impl<'a> Interp<'_, 'a> {
         for arg in args {
             let Some(name) = &arg.name else {
                 return Err(internal(
-                    crate::message!("A test constructor takes named arguments only"),
+                    trenova_module_kit::message!("A test constructor takes named arguments only"),
                     [],
                 ));
             };
@@ -250,7 +253,7 @@ impl<'a> Interp<'_, 'a> {
                 }
                 _ => {
                     return Err(internal(
-                        crate::message!("{0} is not a field this constructor sets"),
+                        trenova_module_kit::message!("{0} is not a field this constructor sets"),
                         [Arg::from(name.text.clone())],
                     ));
                 }
@@ -275,14 +278,14 @@ impl<'a> Interp<'_, 'a> {
             Some(ExprKind::Name(code)) => code.text.as_str(),
             _ => {
                 return Err(internal(
-                    crate::message!("requested needs an accessorial charge code"),
+                    trenova_module_kit::message!("requested needs an accessorial charge code"),
                     [],
                 ));
             }
         };
         let Some(Value::List(accessorials)) = shipment.get("accessorials") else {
             return Err(internal(
-                crate::message!("The shipment has no accessorials to read"),
+                trenova_module_kit::message!("The shipment has no accessorials to read"),
                 [],
             ));
         };
@@ -301,7 +304,7 @@ impl<'a> Interp<'_, 'a> {
     fn wanted(&mut self, env: &mut Env, args: &'a [CallArg]) -> Result<Wanted, Stop> {
         let Some(arg) = args.first() else {
             return Err(internal(
-                crate::message!("charge needs a code or a label"),
+                trenova_module_kit::message!("charge needs a code or a label"),
                 [],
             ));
         };
@@ -314,7 +317,7 @@ impl<'a> Interp<'_, 'a> {
             _ => match self.eval(env, &arg.value)? {
                 Value::Text(label) => Ok(Wanted::Label(label.to_string())),
                 other => Err(internal(
-                    crate::message!("charge needs a code or a label, not {0}"),
+                    trenova_module_kit::message!("charge needs a code or a label, not {0}"),
                     [Arg::from(other.kind())],
                 )),
             },
@@ -418,7 +421,7 @@ impl<'a> Interp<'_, 'a> {
                 Some(entry) => *entry = value,
                 None => {
                     return Err(internal(
-                        crate::message!("{0} has no parameter for this argument"),
+                        trenova_module_kit::message!("{0} has no parameter for this argument"),
                         [Arg::from(name)],
                     ));
                 }
@@ -449,7 +452,7 @@ impl<'a> Interp<'_, 'a> {
             "interpolate" => self.read_table(|tables, meter| tables.interpolate(code, &key, meter)),
             _ => {
                 return Err(internal(
-                    crate::message!("A rate table has no method named {0}"),
+                    trenova_module_kit::message!("A rate table has no method named {0}"),
                     [Arg::from(name)],
                 ));
             }
@@ -484,7 +487,7 @@ impl<'a> Interp<'_, 'a> {
         };
         lists::call(items, name, &values, empty_sum.as_ref(), &mut host).unwrap_or_else(|| {
             Err(internal(
-                crate::message!("A list has no method named {0}"),
+                trenova_module_kit::message!("A list has no method named {0}"),
                 [Arg::from(name)],
             ))
         })
@@ -526,8 +529,8 @@ impl Host for LambdaHost<'_, '_, '_> {
 }
 
 fn no_method(receiver: &Value, name: &str) -> crate::tariff::eval::error::EvalError {
-    crate::tariff::eval::error::EvalError::internal(crate::message::Message::with(
-        crate::message!("{0} has no method named {1}"),
+    crate::tariff::eval::error::EvalError::internal(trenova_module_kit::message::Message::with(
+        trenova_module_kit::message!("{0} has no method named {1}"),
         [Arg::from(receiver.kind()), Arg::from(name)],
     ))
 }

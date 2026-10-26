@@ -9,11 +9,11 @@ import (
 )
 
 const (
-	rulesSubsystem = "rules"
 	labelOp        = "op"
+	rulesSubsystem = "rules"
 )
 
-var RulesDurationBuckets = []float64{
+var WasmModuleDurationBuckets = []float64{
 	.0001,
 	.00025,
 	.0005,
@@ -28,7 +28,7 @@ var RulesDurationBuckets = []float64{
 	1,
 }
 
-type Rules struct {
+type WasmModule struct {
 	Base
 	calls     *prometheus.CounterVec
 	duration  *prometheus.HistogramVec
@@ -36,39 +36,44 @@ type Rules struct {
 	discarded *prometheus.CounterVec
 }
 
-func NewRules(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Rules {
-	m := &Rules{Base: NewBase(registry, logger, enabled)}
+func NewWasmModule(
+	registry *prometheus.Registry,
+	logger *zap.Logger,
+	enabled bool,
+	subsystem, module string,
+) *WasmModule {
+	m := &WasmModule{Base: NewBase(registry, logger, enabled)}
 	if !enabled {
 		return m
 	}
 
 	m.calls = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
-		Subsystem: rulesSubsystem,
+		Subsystem: subsystem,
 		Name:      "calls_total",
-		Help:      "Calls into the rules WebAssembly module, by operation and outcome",
+		Help:      "Calls into the " + module + " WebAssembly module, by operation and outcome",
 	}, []string{labelOp, labelOutcome})
 
 	m.duration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: Namespace,
-		Subsystem: rulesSubsystem,
+		Subsystem: subsystem,
 		Name:      "call_duration_seconds",
-		Help:      "Time a rules call took, including the wait for a free instance",
-		Buckets:   RulesDurationBuckets,
+		Help:      "Time a " + module + " module call took, including the wait for a free instance",
+		Buckets:   WasmModuleDurationBuckets,
 	}, []string{labelOp})
 
 	m.inUse = prometheus.NewGauge(prometheus.GaugeOpts{
 		Namespace: Namespace,
-		Subsystem: rulesSubsystem,
+		Subsystem: subsystem,
 		Name:      "instances_in_use",
-		Help:      "Rules module instances running a call",
+		Help:      "The " + module + " module's instances running a call",
 	})
 
 	m.discarded = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Namespace: Namespace,
-		Subsystem: rulesSubsystem,
+		Subsystem: subsystem,
 		Name:      "instances_discarded_total",
-		Help:      "Rules module instances thrown away instead of reused, by reason",
+		Help:      "The " + module + " module's instances thrown away instead of reused, by reason",
 	}, []string{labelReason})
 
 	m.mustRegister(m.calls, m.duration, m.inUse, m.discarded)
@@ -76,7 +81,7 @@ func NewRules(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *
 	return m
 }
 
-func (m *Rules) CallFinished(op, outcome string, duration time.Duration) {
+func (m *WasmModule) CallFinished(op, outcome string, duration time.Duration) {
 	if m == nil || !m.IsEnabled() {
 		return
 	}
@@ -84,21 +89,21 @@ func (m *Rules) CallFinished(op, outcome string, duration time.Duration) {
 	m.duration.WithLabelValues(op).Observe(duration.Seconds())
 }
 
-func (m *Rules) InstanceAcquired() {
+func (m *WasmModule) InstanceAcquired() {
 	if m == nil || !m.IsEnabled() {
 		return
 	}
 	m.inUse.Inc()
 }
 
-func (m *Rules) InstanceReleased() {
+func (m *WasmModule) InstanceReleased() {
 	if m == nil || !m.IsEnabled() {
 		return
 	}
 	m.inUse.Dec()
 }
 
-func (m *Rules) InstanceDiscarded(reason string) {
+func (m *WasmModule) InstanceDiscarded(reason string) {
 	if m == nil || !m.IsEnabled() {
 		return
 	}

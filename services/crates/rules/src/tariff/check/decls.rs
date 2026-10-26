@@ -8,8 +8,6 @@ use super::describe::quote;
 use super::lower::{Lowerer, TypeScope};
 use super::scope::Scopes;
 use super::{HintKind, ModuleAnalysis, ModuleId, Reference, Symbol, SymbolId, SymbolKind};
-use crate::message;
-use crate::message::Message;
 use crate::tariff::context::Context;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::docs::Doc;
@@ -22,6 +20,8 @@ use crate::tariff::syntax::program::{Decl, Module, Program};
 use crate::tariff::types::{EnumType, RecordType, Type};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
 
 /// The calls one function makes: the callee's module and name, and where the call is.
 pub type Calls = Vec<(ModuleId, String, crate::span::Span)>;

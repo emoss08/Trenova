@@ -12,8 +12,6 @@ use super::ModuleAnalysis;
 use super::calls::{REQUESTED, is_code};
 use super::describe::quote;
 use super::fixes::changes;
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::context::Context;
 use crate::tariff::diagnostic::{Change, Diagnostic, nearest};
@@ -21,6 +19,8 @@ use crate::tariff::schema::ChargeCode;
 use crate::tariff::syntax::ast::{Expr, ExprKind, Stmt, StmtKind};
 use crate::tariff::syntax::program::Module;
 use crate::tariff::syntax::walk::{self, Visit};
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// One use of a code the catalog doesn't have.
 struct Use {

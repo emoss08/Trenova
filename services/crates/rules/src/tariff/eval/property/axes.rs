@@ -25,7 +25,6 @@ use super::super::operators;
 use super::super::tables::Tables;
 use super::super::time::{Date, DateTime, Time};
 use super::super::value::Value;
-use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{Expr, ExprKind, Input, ItemKind, Name, Stmt, StmtKind, UnaryOp};
@@ -36,6 +35,7 @@ use crate::tariff::units::Unit;
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use std::collections::BTreeMap;
+use trenova_module_kit::message::Message;
 
 /// The values a range axis is filled to.
 pub const POINTS: usize = 24;
@@ -363,9 +363,9 @@ pub fn axis<'a>(
         }
     };
     if points.is_empty() {
-        return Err(EvalError::internal(Message::new(crate::message!(
-            "This vary takes no values"
-        ))));
+        return Err(EvalError::internal(Message::new(
+            trenova_module_kit::message!("This vary takes no values"),
+        )));
     }
     let ty = declared
         .map(|ty| match (&line, ty) {
@@ -399,7 +399,7 @@ impl Axis<'_> {
 }
 
 fn not_varied() -> EvalError {
-    EvalError::internal(Message::new(crate::message!(
+    EvalError::internal(Message::new(trenova_module_kit::message!(
         "A vary takes a range with both ends, a list, or a Bool, enum or constrained input"
     )))
 }
@@ -444,7 +444,7 @@ fn range(
     landmarks: &[Value],
 ) -> Result<(Vec<Value>, Vec<bool>, Line), EvalError> {
     let empty = || {
-        EvalError::internal(Message::new(crate::message!(
+        EvalError::internal(Message::new(trenova_module_kit::message!(
             "This range holds no values a property can vary over"
         )))
     };

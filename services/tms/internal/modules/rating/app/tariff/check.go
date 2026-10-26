@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/rules"
@@ -22,7 +24,7 @@ type moduleCalls interface {
 	) (*rules.TariffScaffold, error)
 	SetTariffName(ctx context.Context, source, name string) (*rules.TariffNamed, error)
 	TariffCatalog(ctx context.Context) (rules.RawJSON, error)
-	Version(ctx context.Context) (rules.VersionInfo, error)
+	Version(ctx context.Context) (wasmmodule.VersionInfo, error)
 }
 
 type defaultModule struct{}
@@ -59,7 +61,7 @@ func (defaultModule) TariffCatalog(ctx context.Context) (rules.RawJSON, error) {
 	return rules.TariffCatalog(ctx)
 }
 
-func (defaultModule) Version(ctx context.Context) (rules.VersionInfo, error) {
+func (defaultModule) Version(ctx context.Context) (wasmmodule.VersionInfo, error) {
 	return rules.Version(ctx)
 }
 

@@ -30,8 +30,6 @@ use super::run::{Outcome, Request, run_program};
 use super::tables::Tables;
 use super::trace::Trace;
 use super::value::{Record, Value, format_decimal, format_quantity, money_digits};
-use crate::message::Message;
-use crate::ops::{OpResult, decode, encode};
 use crate::span::Utf16Index;
 use crate::tariff::check::Analysis;
 use crate::tariff::context::Context;
@@ -46,6 +44,8 @@ use serde_json::{Map, Value as Json};
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::rc::Rc;
+use trenova_module_kit::message::Message;
+use trenova_module_kit::ops::{OpResult, decode, encode};
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -90,10 +90,10 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
         Some(json) => decode_record(json, &schema).map_err(|error| {
             EvalError::with(
                 Code::Record,
-                crate::message!("The record does not fit the schema at {0}: {1}"),
+                trenova_module_kit::message!("The record does not fit the schema at {0}: {1}"),
                 [
-                    crate::message::Arg::from(error.path.clone()),
-                    crate::message::Arg::from(error.message),
+                    trenova_module_kit::message::Arg::from(error.path.clone()),
+                    trenova_module_kit::message::Arg::from(error.message),
                 ],
             )
         }),
@@ -143,7 +143,7 @@ pub fn op(input: &serde_json::value::RawValue) -> OpResult {
             return encode(&Json::Object(output));
         }
         Outcome::Condition(_) => {
-            let error = EvalError::internal(Message::new(crate::message!(
+            let error = EvalError::internal(Message::new(trenova_module_kit::message!(
                 "Only a tariff's rating can be saved as a test"
             )));
             output.insert(String::from("error"), error_json(&error, &index));

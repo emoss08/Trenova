@@ -4,6 +4,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/shopspring/decimal"
@@ -73,7 +75,7 @@ func TestTariffRefusalWritesTheWireFormItReads(t *testing.T) {
 	assert.JSONEq(t, `{"message":"No fuel price","range":{"from":1,"to":4}}`, string(authored))
 
 	generated, err := sonic.Marshal(&rules.TariffRefusal{
-		Message: &rules.Message{Template: "No value for {0}", Args: []any{"rate"}},
+		Message: &wasmmodule.Message{Template: "No value for {0}", Args: []any{"rate"}},
 	})
 	require.NoError(t, err)
 	assert.JSONEq(t,

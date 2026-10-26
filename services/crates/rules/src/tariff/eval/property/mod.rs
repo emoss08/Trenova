@@ -35,12 +35,12 @@ use super::record::sample;
 use super::tables::Need;
 use super::tests::{CaseSetup, Ended, Failure, Kind, Runner, Status, TestResult, stopped};
 use super::value::Value;
-use crate::message::{Arg, Message};
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{Direction, Expect, Expr, ExprKind, FileKind, Property, StmtKind};
 use axes::{Axis, Sources, Target};
 use report::Writing;
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// How one case ended.
 #[derive(Debug, Clone)]
@@ -408,7 +408,7 @@ impl<'a> Driver<'_, '_, '_, 'a> {
             failures.push(Failure {
                 span: self.property.name.span,
                 message: Message::with(
-                    crate::message!("The rating was refused: {0}"),
+                    trenova_module_kit::message!("The rating was refused: {0}"),
                     [Arg::from(refusal.message.text())],
                 ),
                 values: Vec::new(),
@@ -435,10 +435,10 @@ impl<'a> Driver<'_, '_, '_, 'a> {
             .map(|axis| axis.label.clone())
             .unwrap_or_default();
         let template = match order.direction {
-            Direction::Nondecreasing => crate::message!(
+            Direction::Nondecreasing => trenova_module_kit::message!(
                 "{0} falls from {1} at {2} to {3} at {4}: it must not fall as {5} grows"
             ),
-            Direction::Nonincreasing => crate::message!(
+            Direction::Nonincreasing => trenova_module_kit::message!(
                 "{0} rises from {1} at {2} to {3} at {4}: it must not rise as {5} grows"
             ),
         };

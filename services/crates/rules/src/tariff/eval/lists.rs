@@ -19,12 +19,12 @@ use super::budget::Meter;
 use super::error::{Code, EvalError, Stop};
 use super::operators;
 use super::value::Value;
-use crate::message::{Arg, Message};
 use crate::tariff::types::Type;
 use crate::tariff::units::{Base, Dim, Unit};
 use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use std::cmp::Ordering;
+use trenova_module_kit::message::{Arg, Message};
 
 /// What runs a list method's lambda.
 pub trait Host {
@@ -111,7 +111,7 @@ fn expect_bool(value: &Value) -> Result<bool, Stop> {
     match value {
         Value::Bool(flag) => Ok(*flag),
         other => Err(failed(EvalError::internal(Message::with(
-            crate::message!("A list method's test must be true or false, not {0}"),
+            trenova_module_kit::message!("A list method's test must be true or false, not {0}"),
             [Arg::from(other.kind())],
         )))),
     }
@@ -124,7 +124,7 @@ fn count_arg(name: &str, args: &[Value]) -> Result<usize, Stop> {
         }
         Some(Value::Int(_)) => Ok(0),
         other => Err(failed(EvalError::internal(Message::with(
-            crate::message!("{0} needs a whole number, not {1}"),
+            trenova_module_kit::message!("{0} needs a whole number, not {1}"),
             [
                 Arg::from(name),
                 Arg::from(other.map_or_else(|| Value::None.kind(), Value::kind)),
@@ -238,7 +238,7 @@ fn average(items: &[Value], host: &mut dyn Host) -> Result<Value, Stop> {
     match total(&values)? {
         None => Err(failed(EvalError::new(
             Code::Argument,
-            Message::new(crate::message!(
+            Message::new(trenova_module_kit::message!(
                 "avg needs at least one item: an empty list has no average"
             )),
         ))),

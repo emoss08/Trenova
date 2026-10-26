@@ -27,16 +27,16 @@ use crate::allocation::charge::overflow;
 use crate::allocation::input::AllocationRow;
 use crate::allocation::input::ChargeInput;
 use crate::allocation::input::SplitInput;
-use crate::message;
-use crate::message::Arg;
-use crate::message::Message;
-use crate::ops::RequestError;
 use crate::report::fixed::div_round;
 use crate::report::fixed::round_bank;
 use crate::report::fixed::round_half_away;
 use crate::report::fixed::string_fixed;
 use rust_decimal::Decimal;
 use std::collections::BTreeMap;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Arg;
+use trenova_module_kit::message::Message;
+use trenova_module_kit::ops::RequestError;
 
 /// Cents: every share is rounded to this many places.
 pub const SHARE_PLACES: u32 = 2;

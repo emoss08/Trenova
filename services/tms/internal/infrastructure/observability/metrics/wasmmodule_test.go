@@ -11,10 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
-func TestRules_DisabledAndNilRecordsAreNoOps(t *testing.T) {
+func TestWasmModule_DisabledAndNilRecordsAreNoOps(t *testing.T) {
 	t.Parallel()
 
-	for _, m := range []*Rules{nil, NewRules(nil, zap.NewNop(), false)} {
+	for _, m := range []*WasmModule{nil, NewWasmModule(nil, zap.NewNop(), false, "rules", "rules")} {
 		assert.NotPanics(t, func() {
 			m.InstanceAcquired()
 			m.CallFinished("rules.version", "ok", time.Millisecond)
@@ -24,10 +24,10 @@ func TestRules_DisabledAndNilRecordsAreNoOps(t *testing.T) {
 	}
 }
 
-func TestRules_CountsCallsInstancesAndDiscards(t *testing.T) {
+func TestWasmModule_CountsCallsInstancesAndDiscards(t *testing.T) {
 	t.Parallel()
 
-	m := NewRules(prometheus.NewRegistry(), zap.NewNop(), true)
+	m := NewWasmModule(prometheus.NewRegistry(), zap.NewNop(), true, "rules", "rules")
 
 	m.InstanceAcquired()
 	m.InstanceAcquired()
@@ -45,4 +45,23 @@ func TestRules_CountsCallsInstancesAndDiscards(t *testing.T) {
 
 	m.InstanceReleased()
 	assert.InDelta(t, 0, testutil.ToFloat64(m.inUse), 0)
+}
+
+func TestWasmModule_EachModuleRegistersUnderItsOwnSubsystem(t *testing.T) {
+	t.Parallel()
+
+	registry := prometheus.NewRegistry()
+	rules := NewWasmModule(registry, zap.NewNop(), true, "rules", "rules")
+	edi := NewWasmModule(registry, zap.NewNop(), true, "edi_module", "EDI")
+	rules.CallFinished("rules.version", "ok", time.Millisecond)
+	edi.CallFinished("x12.read", "ok", time.Millisecond)
+
+	families, err := registry.Gather()
+	assert.NoError(t, err)
+	names := make([]string, 0, len(families))
+	for _, family := range families {
+		names = append(names, family.GetName())
+	}
+	assert.Contains(t, names, Namespace+"_rules_calls_total")
+	assert.Contains(t, names, Namespace+"_edi_module_calls_total")
 }

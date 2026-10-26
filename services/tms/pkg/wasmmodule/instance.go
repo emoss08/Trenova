@@ -1,4 +1,4 @@
-package rules
+package wasmmodule
 
 import (
 	"context"
@@ -11,16 +11,20 @@ import (
 )
 
 const (
-	exportAlloc  = "rules_alloc"
-	exportCall   = "rules_call"
-	exportFree   = "rules_free"
+	exportAlloc  = "alloc"
+	exportCall   = "call"
+	exportFree   = "free"
 	exportMemory = "memory"
 )
 
 var (
-	errOutOfBounds   = errors.New("rules: the module named memory outside its linear memory")
-	errMissingExport = errors.New("rules: the instance is missing an export")
+	errOutOfBounds   = errors.New("the module named memory outside its linear memory")
+	errMissingExport = errors.New("the instance is missing an export")
 )
+
+func exportName(module, export string) string {
+	return module + "_" + export
+}
 
 type instance struct {
 	module api.Module
@@ -32,7 +36,7 @@ type instance struct {
 	broken string
 }
 
-func instantiate(ctx context.Context, c *compiled) (*instance, error) {
+func instantiate(ctx context.Context, c *compiled, name string) (*instance, error) {
 	module, err := c.runtime.InstantiateModule(
 		ctx,
 		c.module,
@@ -44,9 +48,9 @@ func instantiate(ctx context.Context, c *compiled) (*instance, error) {
 	in := &instance{
 		module: module,
 		memory: module.ExportedMemory(exportMemory),
-		alloc:  module.ExportedFunction(exportAlloc),
-		call:   module.ExportedFunction(exportCall),
-		free:   module.ExportedFunction(exportFree),
+		alloc:  module.ExportedFunction(exportName(name, exportAlloc)),
+		call:   module.ExportedFunction(exportName(name, exportCall)),
+		free:   module.ExportedFunction(exportName(name, exportFree)),
 	}
 	if in.memory == nil || in.alloc == nil || in.call == nil || in.free == nil {
 		return nil, errors.Join(errMissingExport, module.Close(context.WithoutCancel(ctx)))

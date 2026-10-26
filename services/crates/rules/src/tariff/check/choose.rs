@@ -23,8 +23,6 @@
 use super::checker::{Body, Checker};
 use super::describe::quote;
 use super::fixes::replace;
-use crate::message;
-use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
@@ -32,6 +30,8 @@ use crate::tariff::syntax::ast::{
     Name, NodeId, StmtKind,
 };
 use crate::tariff::types::Type;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
 
 /// What the checker tracks about the choices around the statement being checked.
 #[derive(Debug, Default)]

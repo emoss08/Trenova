@@ -17,7 +17,6 @@
 
 use super::expr::internal;
 use super::{Env, Flow, Interp};
-use crate::message::Arg;
 use crate::span::Span;
 use crate::tariff::eval::bill::{Bill, ChoiceRecord, OptionOutcome, OptionRecord};
 use crate::tariff::eval::error::Stop;
@@ -25,6 +24,7 @@ use crate::tariff::eval::trace::Event;
 use crate::tariff::eval::value::Value;
 use crate::tariff::syntax::ast::{Arg as CallArg, Choose, ChooseKind};
 use rust_decimal::Decimal;
+use trenova_module_kit::message::Arg;
 
 impl<'a> Interp<'_, 'a> {
     /// Runs a `best` or `worst` and bills the option it keeps.
@@ -90,7 +90,7 @@ impl<'a> Interp<'_, 'a> {
             None => match first_refusal {
                 Some(refusal) => Err(Stop::Refused(refusal)),
                 None => Err(internal(
-                    crate::message!("A choice needs an option to bill"),
+                    trenova_module_kit::message!("A choice needs an option to bill"),
                     [],
                 )),
             },
@@ -120,7 +120,9 @@ impl<'a> Interp<'_, 'a> {
                 }
                 Ok(Flow::Break | Flow::Continue | Flow::Return(_)) => {
                     return Err(internal(
-                        crate::message!("An option runs to its end: it can't leave its choice"),
+                        trenova_module_kit::message!(
+                            "An option runs to its end: it can't leave its choice"
+                        ),
                         [],
                     )
                     .at(option.span));
@@ -149,7 +151,7 @@ impl<'a> Interp<'_, 'a> {
     ) -> Result<Value, Stop> {
         let Some(arg) = args.first() else {
             return Err(internal(
-                crate::message!("chosen needs a choice's label"),
+                trenova_module_kit::message!("chosen needs a choice's label"),
                 [],
             ));
         };
@@ -157,7 +159,7 @@ impl<'a> Interp<'_, 'a> {
             Value::Text(label) => label,
             other => {
                 return Err(internal(
-                    crate::message!("chosen needs a choice's label, not {0}"),
+                    trenova_module_kit::message!("chosen needs a choice's label, not {0}"),
                     [Arg::from(other.kind())],
                 ));
             }

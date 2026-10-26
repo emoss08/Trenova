@@ -29,7 +29,6 @@ use super::cursor::{self, Body, Bracket, Located, Scopes, line_start, previous, 
 use super::describe::{function_signature, method_signature, type_text};
 use super::names;
 use super::session::Session;
-use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::check::describe::snippet as source_text;
 use crate::tariff::check::lower::BUILTIN_TYPES;
@@ -45,6 +44,7 @@ use crate::tariff::syntax::token::{Token, TokenKind};
 use crate::tariff::types::Type;
 use crate::tariff::units::{Dim, SIMPLE_UNITS, Simple};
 use std::collections::BTreeSet;
+use trenova_module_kit::message::Message;
 
 /// What a completion item is, for its icon.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -532,7 +532,7 @@ fn patterns(items: &mut Items, ty: Option<&Type>) {
         names::keyword(items, Rank::Expected, "false");
     }
     if let Some(item) = items.add(Rank::Keyword, Kind::Keyword, "_") {
-        item.doc = Some(Doc::Message(Message::new(crate::message!(
+        item.doc = Some(Doc::Message(Message::new(trenova_module_kit::message!(
             "Matches anything not matched above."
         ))));
     }
@@ -572,13 +572,15 @@ fn use_path(site: &Site<'_, '_>, items: &mut Items) {
         for (root, doc) in [
             (
                 "std",
-                Message::new(crate::message!(
+                Message::new(trenova_module_kit::message!(
                     "The standard library, shipped with the module."
                 )),
             ),
             (
                 "org",
-                Message::new(crate::message!("Your organisation's libraries.")),
+                Message::new(trenova_module_kit::message!(
+                    "Your organisation's libraries."
+                )),
             ),
         ] {
             if let Some(item) = items.add(Rank::Root, Kind::Module, root) {
@@ -1237,7 +1239,7 @@ fn input_tail(site: &Site<'_, '_>, items: &mut Items) -> bool {
     if let Some(item) = items.add(Rank::Keyword, Kind::Snippet, "where …..…") {
         item.insert = String::from("where ${1:low}..=${2:high}");
         item.snippet = true;
-        item.doc = Some(Doc::Message(Message::new(crate::message!(
+        item.doc = Some(Doc::Message(Message::new(trenova_module_kit::message!(
             "Bounds the values a contract may set: a range, or a list after `where`."
         ))));
     }
@@ -1273,12 +1275,12 @@ fn given_path(site: &Site<'_, '_>, items: &mut Items, stop: &str) -> bool {
         if matches!(session.kind(), FileKind::Tariff | FileKind::Condition)
             && let Some(item) = items.add(Rank::Root, Kind::Keyword, "input")
         {
-            item.doc = Some(Doc::Message(Message::new(crate::message!(
+            item.doc = Some(Doc::Message(Message::new(trenova_module_kit::message!(
                 "Sets one of the file's inputs for this test: `given input.rate = $2.10/mi`."
             ))));
         }
         if cells && let Some(item) = items.add(Rank::Root, Kind::Name, "tables") {
-            item.doc = Some(Doc::Message(Message::new(crate::message!(
+            item.doc = Some(Doc::Message(Message::new(trenova_module_kit::message!(
                 "Gives a rate table's cell for this test: `given tables.Zones[\"A\", \"B\"] = $20/cwt`. The table then holds only the cells the test gives."
             ))));
         }
@@ -1474,21 +1476,25 @@ fn charge_options(items: &mut Items, bracket: &Bracket) {
     for (option, doc) in [
         (
             "quantity",
-            crate::message!("How much is billed: the invoice line's quantity, in the rate's unit."),
+            trenova_module_kit::message!(
+                "How much is billed: the invoice line's quantity, in the rate's unit."
+            ),
         ),
         (
             "rate",
-            crate::message!("The price per unit of the quantity: the invoice line's unit price."),
+            trenova_module_kit::message!(
+                "The price per unit of the quantity: the invoice line's unit price."
+            ),
         ),
         (
             "minimum",
-            crate::message!(
+            trenova_module_kit::message!(
                 "The least the line bills: a smaller amount is raised to it, and the line says the minimum applied."
             ),
         ),
         (
             "maximum",
-            crate::message!(
+            trenova_module_kit::message!(
                 "The most the line bills: a larger amount is lowered to it, and the line says the maximum applied."
             ),
         ),

@@ -6,6 +6,8 @@ import (
 	"testing"
 	"unicode/utf16"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
@@ -37,17 +39,17 @@ func TestFindings_ReadRangesAsUTF16AfterNonASCIIText(t *testing.T) {
 	findings := Findings(i18n.Locale("en"), source, []rules.TariffDiagnostic{{
 		Severity: rules.SeverityError,
 		Code:     "unknown-name",
-		Message:  rules.Message{Template: "Nothing is named {0}", Args: []any{"nope"}},
+		Message:  wasmmodule.Message{Template: "Nothing is named {0}", Args: []any{"nope"}},
 		Range:    &rules.TariffRange{From: from, To: from + 4},
 	}, {
 		Severity: rules.SeverityWarning,
 		Code:     "unused",
-		Message:  rules.Message{Template: "Unused"},
+		Message:  wasmmodule.Message{Template: "Unused"},
 		Range:    &rules.TariffRange{From: utf16Offset(source, "°F"), To: utf16Offset(source, "°F") + 2},
 	}, {
 		Severity: rules.SeverityWarning,
 		Code:     "doc",
-		Message:  rules.Message{Template: "The name"},
+		Message:  wasmmodule.Message{Template: "The name"},
 		Range:    &rules.TariffRange{From: utf16Offset(source, "Café"), To: utf16Offset(source, "\"\n")},
 	}})
 
@@ -66,21 +68,21 @@ func TestFindings_PlaceSourceFindingsAndLeaveLibraryOnesUnplaced(t *testing.T) {
 		{
 			Severity: rules.SeverityError,
 			Code:     "unknown-code",
-			Message:  rules.Message{Template: "There is no code {0}", Args: []any{"HAZ"}},
+			Message:  wasmmodule.Message{Template: "There is no code {0}", Args: []any{"HAZ"}},
 			Range:    &rules.TariffRange{From: 19, To: len(source) - 1},
-			Fixes:    []rules.TariffFix{{Label: rules.Message{Template: "Remove the code"}}},
+			Fixes:    []rules.TariffFix{{Label: wasmmodule.Message{Template: "Remove the code"}}},
 		},
 		{
 			Severity: rules.SeverityError,
 			Code:     "type",
-			Message:  rules.Message{Template: "A weight is not a distance"},
+			Message:  wasmmodule.Message{Template: "A weight is not a distance"},
 			Range:    &rules.TariffRange{From: 3, To: 9},
 			Module:   "org.accessorials",
 		},
 		{
 			Severity: rules.SeverityError,
 			Code:     "input-value",
-			Message:  rules.Message{Template: "Expected money"},
+			Message:  wasmmodule.Message{Template: "Expected money"},
 			Path:     "rule.rate",
 		},
 	})
@@ -104,7 +106,7 @@ func TestSummarizeTests_CountsAndBoundsFailures(t *testing.T) {
 	failures := make([]rules.TariffTestFailure, 0, 8)
 	for range 8 {
 		failures = append(failures, rules.TariffTestFailure{
-			Message: rules.Message{Template: "total was wrong"},
+			Message: wasmmodule.Message{Template: "total was wrong"},
 			Values:  []rules.TariffTestValue{{Display: "$200"}},
 		})
 	}
@@ -115,7 +117,7 @@ func TestSummarizeTests_CountsAndBoundsFailures(t *testing.T) {
 			{
 				Name:   "c",
 				Status: rules.TariffTestError,
-				Error:  &rules.TariffEvalError{Code: "none", Message: rules.Message{Template: "no weight"}},
+				Error:  &rules.TariffEvalError{Code: "none", Message: wasmmodule.Message{Template: "no weight"}},
 			},
 		},
 	})

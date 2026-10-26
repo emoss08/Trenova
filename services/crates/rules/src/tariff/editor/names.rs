@@ -11,8 +11,6 @@ use super::complete::{CompletionItem, Items, Kind, Rank, Site, Then, callee_of, 
 use super::cursor::{Body, Bracket};
 use super::describe::{symbol_signature, type_text};
 use super::session::Session;
-use crate::message;
-use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::check::methods::ParamKind;
 use crate::tariff::check::{APPLIES, CONSTRUCTORS, Callee, SymbolKind, location_record};
@@ -23,6 +21,8 @@ use crate::tariff::syntax::program::{Decl, ModuleId};
 use crate::tariff::types::{EnumType, Type};
 use crate::tariff::units::Dim;
 use std::sync::Arc;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
 
 /// Adds a keyword.
 pub fn keyword(items: &mut Items, rank: Rank, word: &str) {
@@ -335,7 +335,7 @@ fn test_names(site: &Site<'_, '_>, items: &mut Items) {
                 message!(
                     "Builds a `{0}` for a test: every field is named and optional, and the sample record's values fill the rest."
                 ),
-                [crate::message::Arg::from(*record)],
+                [trenova_module_kit::message::Arg::from(*record)],
             )));
         }
     }

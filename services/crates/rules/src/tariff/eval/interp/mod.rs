@@ -32,7 +32,6 @@ use super::tables::{Need, Tables};
 use super::text;
 use super::trace::Trace;
 use super::value::Value;
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::syntax::ast::NodeId;
 use crate::tariff::types::Type;
@@ -41,6 +40,7 @@ use regex_lite::Regex;
 use rust_decimal::Decimal;
 use std::collections::{BTreeMap, BTreeSet};
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// How a statement ended.
 #[derive(Debug, Clone)]
@@ -322,7 +322,7 @@ pub fn literal_value(expr: &crate::tariff::syntax::ast::Expr) -> Option<Value> {
 /// An internal error about a name nothing declares.
 fn unknown_name(name: &str) -> EvalError {
     EvalError::internal(Message::with(
-        crate::message!("Nothing named {0} is in scope here"),
+        trenova_module_kit::message!("Nothing named {0} is in scope here"),
         [Arg::from(name)],
     ))
 }

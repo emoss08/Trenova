@@ -3,6 +3,8 @@ package rules
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -51,9 +53,9 @@ type AllocationShare struct {
 }
 
 type AllocationChargeSplit struct {
-	Total  decimal.Decimal   `json:"total"`
-	Shares []AllocationShare `json:"shares"`
-	Error  *Message          `json:"error"`
+	Total  decimal.Decimal     `json:"total"`
+	Shares []AllocationShare   `json:"shares"`
+	Error  *wasmmodule.Message `json:"error"`
 }
 
 type AllocationPayer struct {
@@ -69,7 +71,7 @@ type AllocationSplit struct {
 	IsSplit bool                    `json:"isSplit"`
 }
 
-func (s *AllocationSplit) FirstError() (int, *Message) {
+func (s *AllocationSplit) FirstError() (int, *wasmmodule.Message) {
 	for i := range s.Charges {
 		if s.Charges[i].Error != nil {
 			return i, s.Charges[i].Error

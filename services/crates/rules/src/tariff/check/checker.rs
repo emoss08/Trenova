@@ -6,8 +6,6 @@ use super::scope::{Local, LocalKind, PathKey, Scopes};
 use super::{
     Callee, Hint, HintKind, ModuleAnalysis, ModuleId, Reference, Symbol, SymbolId, SymbolKind,
 };
-use crate::message;
-use crate::message::Message;
 use crate::span::Span;
 use crate::tariff::context::Context;
 use crate::tariff::diagnostic::Diagnostic;
@@ -16,6 +14,8 @@ use crate::tariff::syntax::ast::{Expr, FileKind, Name, NodeId};
 use crate::tariff::types::{EnumType, Type};
 use std::collections::BTreeMap;
 use std::sync::Arc;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
 
 /// A function's signature with what the checker needs at call sites.
 #[derive(Debug, Clone)]

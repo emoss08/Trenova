@@ -19,12 +19,12 @@ use super::error::{Code, EvalError};
 use super::operators::unit_error;
 use super::time::{Date, DateTime};
 use super::value::{Value, format_quantity};
-use crate::message::{Arg, Message};
 use crate::tariff::units::{Base, Dim, Quantity, Unit};
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::{Decimal, MathematicalOps, RoundingStrategy};
 use std::cmp::Ordering;
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The parameter names of a method on `receiver`, in order, for binding named arguments.
 #[must_use]
@@ -54,7 +54,7 @@ fn arg(args: &[Value], index: usize) -> &Value {
 
 fn bad_argument(method: &str, value: &Value) -> EvalError {
     EvalError::internal(Message::with(
-        crate::message!("{0} cannot take {1}"),
+        trenova_module_kit::message!("{0} cannot take {1}"),
         [Arg::from(method), Arg::from(value.kind())],
     ))
 }
@@ -80,7 +80,7 @@ fn places(method: &str, args: &[Value]) -> Result<u32, EvalError> {
                 .ok_or_else(|| {
                     EvalError::with(
                         Code::Argument,
-                        crate::message!("{0} takes 0 to 28 places, not {1}"),
+                        trenova_module_kit::message!("{0} takes 0 to 28 places, not {1}"),
                         [Arg::from(method), Arg::from(value.display())],
                     )
                 })
@@ -167,7 +167,7 @@ fn number_method(
             if number.is_sign_negative() && !number.is_zero() {
                 Err(EvalError::with(
                     Code::Argument,
-                    crate::message!("{0} has no square root"),
+                    trenova_module_kit::message!("{0} has no square root"),
                     [Arg::from(receiver.display())],
                 ))
             } else {
@@ -224,7 +224,9 @@ fn choose(receiver: &Value, name: &str, args: &[Value]) -> Result<Value, EvalErr
             if low.compare(high)? == Ordering::Greater {
                 return Err(EvalError::with(
                     Code::Argument,
-                    crate::message!("clamp needs its low bound {0} at or below its high bound {1}"),
+                    trenova_module_kit::message!(
+                        "clamp needs its low bound {0} at or below its high bound {1}"
+                    ),
                     [Arg::from(low.display()), Arg::from(high.display())],
                 ));
             }
@@ -280,9 +282,9 @@ fn quantity_method(
 /// denominator: `$0.185/lb`.in(cwt) is `$18.50/cwt` ([`Unit::conversion_target`]).
 fn convert(quantity: &Quantity, unit: Option<&Unit>) -> Result<Value, EvalError> {
     let Some(unit) = unit else {
-        return Err(EvalError::internal(Message::new(crate::message!(
-            "in needs a unit, such as cwt or lb/ft3"
-        ))));
+        return Err(EvalError::internal(Message::new(
+            trenova_module_kit::message!("in needs a unit, such as cwt or lb/ft3"),
+        )));
     };
     if let Some(target) = Unit::conversion_target(quantity.unit.dim(), unit) {
         return quantity
@@ -292,7 +294,7 @@ fn convert(quantity: &Quantity, unit: Option<&Unit>) -> Result<Value, EvalError>
     }
     Err(EvalError::with(
         Code::Conversion,
-        crate::message!("{0} cannot be converted to {1}"),
+        trenova_module_kit::message!("{0} cannot be converted to {1}"),
         [
             Arg::from(format_quantity(quantity)),
             Arg::from(unit.to_string()),
@@ -316,7 +318,7 @@ fn to_multiple(
     if increment <= Decimal::ZERO {
         return Err(EvalError::with(
             Code::Argument,
-            crate::message!("{0} needs an increment above zero, not {1}"),
+            trenova_module_kit::message!("{0} needs an increment above zero, not {1}"),
             [Arg::from(name), Arg::from(format_quantity(step))],
         ));
     }

@@ -28,8 +28,6 @@ use super::occurrences::{
     occurrences, variant_at,
 };
 use super::session::Session;
-use crate::message;
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::check::describe::{quote, snippet};
 use crate::tariff::check::lower::BUILTIN_TYPES;
@@ -39,6 +37,8 @@ use crate::tariff::syntax::lexer::{classify, is_keyword};
 use crate::tariff::syntax::program::{Decl, ModuleId};
 use crate::tariff::syntax::token::TokenKind;
 use crate::tariff::types::Type;
+use trenova_module_kit::message;
+use trenova_module_kit::message::{Arg, Message};
 
 /// A name that can be renamed: where it is and its text.
 #[derive(Debug, Clone, PartialEq, Eq)]

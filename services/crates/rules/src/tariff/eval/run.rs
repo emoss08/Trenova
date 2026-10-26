@@ -26,12 +26,12 @@ use super::interp::{Env, Interp, Setup};
 use super::tables::{Need, Tables};
 use super::trace::Trace;
 use super::value::Value;
-use crate::message::{Arg, Message};
 use crate::tariff::syntax::ast::FileKind;
 use crate::tariff::syntax::program::Program;
 use crate::tariff::wire::decode;
 use serde_json::Value as Json;
 use std::collections::BTreeMap;
+use trenova_module_kit::message::{Arg, Message};
 
 /// What a run is given.
 pub struct Request<'p> {
@@ -146,12 +146,14 @@ fn finish(interp: &mut Interp<'_, '_>, kind: Option<FileKind>, ran: Result<(), S
         }
         Some(FileKind::Condition) => match interp.last_value.take() {
             Some(Value::Bool(holds)) => Outcome::Condition(holds),
-            _ => Outcome::Failed(EvalError::internal(Message::new(crate::message!(
-                "A condition must end with an expression that is true or false"
-            )))),
+            _ => Outcome::Failed(EvalError::internal(Message::new(
+                trenova_module_kit::message!(
+                    "A condition must end with an expression that is true or false"
+                ),
+            ))),
         },
         Some(FileKind::Library) | None => Outcome::Failed(EvalError::internal(Message::new(
-            crate::message!("Only a tariff or a condition can be evaluated"),
+            trenova_module_kit::message!("Only a tariff or a condition can be evaluated"),
         ))),
     }
 }
@@ -210,7 +212,7 @@ pub fn bind_inputs(
     {
         return Err(Stop::Failed(EvalError::with(
             Code::Input,
-            crate::message!("This tariff has no input named {0}"),
+            trenova_module_kit::message!("This tariff has no input named {0}"),
             [Arg::from(unknown)],
         )));
     }
@@ -226,7 +228,7 @@ pub fn bind_inputs(
                 let ty = interp.input_type(name).ok_or_else(|| {
                     Stop::Failed(
                         EvalError::internal(Message::with(
-                            crate::message!(
+                            trenova_module_kit::message!(
                                 "The input {0} has no checked type, so its value can't be read"
                             ),
                             [Arg::from(name)],
@@ -238,7 +240,7 @@ pub fn bind_inputs(
                     Stop::Failed(
                         EvalError::with(
                             Code::Input,
-                            crate::message!(
+                            trenova_module_kit::message!(
                                 "The value given for the input {0} does not fit it: {1}"
                             ),
                             [Arg::from(name), Arg::from(error.message)],
@@ -257,7 +259,7 @@ pub fn bind_inputs(
             (None, None) => {
                 return Err(Stop::Refused(Refusal {
                     message: RefusalText::Crate(Message::with(
-                        crate::message!("The input {0} has no value and no default"),
+                        trenova_module_kit::message!("The input {0} has no value and no default"),
                         [Arg::from(name)],
                     )),
                     span: input.name.span,

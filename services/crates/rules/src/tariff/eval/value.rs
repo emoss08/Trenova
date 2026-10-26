@@ -11,13 +11,13 @@
 
 use super::error::EvalError;
 use super::time::{Date, DateTime, Time};
-use crate::message::{Arg, Message};
 use crate::tariff::schema::variant_rank;
 use crate::tariff::units::{Dim, Quantity, Unit};
 use rust_decimal::Decimal;
 use std::cmp::Ordering;
 use std::fmt::Write as _;
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// A run-time value.
 #[derive(Debug, Clone)]
@@ -193,15 +193,15 @@ impl Value {
     #[must_use]
     pub fn kind(&self) -> Message {
         Message::new(match self {
-            Self::None => crate::message!("nothing (none)"),
-            Self::Bool(_) => crate::message!("true or false"),
-            Self::Int(_) => crate::message!("a whole number"),
-            Self::Number(_) => crate::message!("a number"),
+            Self::None => trenova_module_kit::message!("nothing (none)"),
+            Self::Bool(_) => trenova_module_kit::message!("true or false"),
+            Self::Int(_) => trenova_module_kit::message!("a whole number"),
+            Self::Number(_) => trenova_module_kit::message!("a number"),
             Self::Quantity(quantity) if is_percent_unit(&quantity.unit) => {
-                crate::message!("a percent")
+                trenova_module_kit::message!("a percent")
             }
             Self::Quantity(quantity) if quantity.unit.dim() == Dim::money() => {
-                crate::message!("money")
+                trenova_module_kit::message!("money")
             }
             Self::Quantity(quantity)
                 if quantity
@@ -210,17 +210,17 @@ impl Value {
                     .exponent(crate::tariff::units::Base::Money)
                     == 1 =>
             {
-                crate::message!("a rate")
+                trenova_module_kit::message!("a rate")
             }
-            Self::Quantity(_) => crate::message!("a quantity"),
-            Self::Text(_) => crate::message!("text"),
-            Self::Date(_) => crate::message!("a date"),
-            Self::DateTime(_) => crate::message!("a date-time"),
-            Self::Time(_) => crate::message!("a time of day"),
-            Self::List(_) => crate::message!("a list"),
-            Self::Record(_) => crate::message!("a record"),
-            Self::Enum(_) => crate::message!("an enum value"),
-            Self::Table(_) => crate::message!("a rate table"),
+            Self::Quantity(_) => trenova_module_kit::message!("a quantity"),
+            Self::Text(_) => trenova_module_kit::message!("text"),
+            Self::Date(_) => trenova_module_kit::message!("a date"),
+            Self::DateTime(_) => trenova_module_kit::message!("a date-time"),
+            Self::Time(_) => trenova_module_kit::message!("a time of day"),
+            Self::List(_) => trenova_module_kit::message!("a list"),
+            Self::Record(_) => trenova_module_kit::message!("a record"),
+            Self::Enum(_) => trenova_module_kit::message!("an enum value"),
+            Self::Table(_) => trenova_module_kit::message!("a rate table"),
         })
     }
 
@@ -444,14 +444,14 @@ pub fn money_digits(amount: Decimal) -> String {
 
 fn mismatch(left: &Value, right: &Value) -> EvalError {
     EvalError::internal(Message::with(
-        crate::message!("{0} cannot be compared with {1}"),
+        trenova_module_kit::message!("{0} cannot be compared with {1}"),
         [Arg::from(left.kind()), Arg::from(right.kind())],
     ))
 }
 
 fn unordered(left: &Value, right: &Value) -> EvalError {
     EvalError::internal(Message::with(
-        crate::message!("{0} and {1} have no order between them"),
+        trenova_module_kit::message!("{0} and {1} have no order between them"),
         [Arg::from(left.kind()), Arg::from(right.kind())],
     ))
 }

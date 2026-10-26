@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
@@ -368,8 +370,8 @@ func (f *fakeModule) TariffCatalog(context.Context) (rules.RawJSON, error) {
 	return rules.RawJSON(`{"modules":[]}`), nil
 }
 
-func (f *fakeModule) Version(context.Context) (rules.VersionInfo, error) {
-	return rules.VersionInfo{Version: f.version}, nil
+func (f *fakeModule) Version(context.Context) (wasmmodule.VersionInfo, error) {
+	return wasmmodule.VersionInfo{Version: f.version}, nil
 }
 
 func TestCheckSource_ChecksWithTheLatestApprovedLibrariesAndPinsThem(t *testing.T) {

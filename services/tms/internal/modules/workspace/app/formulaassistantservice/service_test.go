@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
@@ -97,7 +99,7 @@ func cleanCheck() *rules.TariffCheck {
 		Diagnostics: []rules.TariffDiagnostic{{
 			Severity: rules.SeverityWarning,
 			Code:     "unused",
-			Message:  rules.Message{Template: "`miles` is never used"},
+			Message:  wasmmodule.Message{Template: "`miles` is never used"},
 			Range:    &rules.TariffRange{From: 19, To: 24},
 		}},
 		Charges: []rules.TariffChargeRef{{Label: "Per Mile"}},
@@ -288,7 +290,7 @@ func TestPropose_ShowsOnlySourceThatChecksAndPassesItsTests(t *testing.T) {
 	f.templates.result.Check = &rules.TariffCheck{OK: false, Diagnostics: []rules.TariffDiagnostic{{
 		Severity: rules.SeverityError,
 		Code:     "unknown-name",
-		Message:  rules.Message{Template: "There is no `ratee`"},
+		Message:  wasmmodule.Message{Template: "There is no `ratee`"},
 	}}}
 	f.templates.result.Tests = passing("a short haul")
 	proposed, err = f.svc.Propose(t.Context(), &ProposeRequest{

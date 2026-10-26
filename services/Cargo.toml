@@ -13,6 +13,7 @@ repository = "https://github.com/emoss08/trenova"
 
 [workspace.dependencies]
 trenova-imaging-core = { path = "crates/imaging-core" }
+trenova-module-kit = { path = "crates/module-kit" }
 trenova-proto = { path = "crates/proto" }
 trenova-rules = { path = "crates/rules" }
 trenova-sandbox = { path = "crates/sandbox" }

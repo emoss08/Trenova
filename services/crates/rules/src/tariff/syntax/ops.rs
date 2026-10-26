@@ -27,9 +27,6 @@ use super::format::format as format_source;
 use super::parse;
 use super::token::Token;
 use super::token::TokenKind;
-use crate::ops::OpResult;
-use crate::ops::decode;
-use crate::ops::encode;
 use crate::span::Range;
 use crate::span::Span;
 use crate::span::Utf16Index;
@@ -37,6 +34,9 @@ use crate::tariff::diagnostic::WireDiagnostic;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::value::RawValue;
+use trenova_module_kit::ops::OpResult;
+use trenova_module_kit::ops::decode;
+use trenova_module_kit::ops::encode;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]

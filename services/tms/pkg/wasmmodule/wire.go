@@ -1,4 +1,4 @@
-package rules
+package wasmmodule
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 var (
 	okPrefix = []byte(`{"ok":`)
 
-	errUnreadableResponse = errors.New("the response is not a rules envelope")
+	errUnreadableResponse = errors.New("the response is not a module envelope")
 )
 
 type responseEnvelope struct {
@@ -24,16 +24,22 @@ type wireRequestError struct {
 	Detail string `json:"detail"`
 }
 
-func envelope(op string, input []byte) ([]byte, error) {
+func (r *Runtime) envelope(op string, input []byte) ([]byte, error) {
 	name, err := sonic.Marshal(op)
 	if err != nil {
-		return nil, &RequestError{Op: op, Code: CodeMalformed, Detail: err.Error()}
+		return nil, &RequestError{
+			Module: r.spec.Name,
+			Op:     op,
+			Code:   CodeMalformed,
+			Detail: err.Error(),
+		}
 	}
 	size := len(`{"op":,"input":}`) + len(name) + len(input)
 	if size > MaxRequestBytes {
 		return nil, &RequestError{
-			Op:   op,
-			Code: CodeTooLarge,
+			Module: r.spec.Name,
+			Op:     op,
+			Code:   CodeTooLarge,
 			Detail: fmt.Sprintf(
 				"the request is %d bytes; the module takes at most %d",
 				size,
@@ -51,7 +57,7 @@ func envelope(op string, input []byte) ([]byte, error) {
 	return append(request, '}'), nil
 }
 
-func decodeResponse(op string, response []byte) ([]byte, error) {
+func (r *Runtime) decodeResponse(op string, response []byte) ([]byte, error) {
 	if bytes.HasPrefix(response, okPrefix) && response[len(response)-1] == '}' {
 		return response[len(okPrefix) : len(response)-1], nil
 	}
@@ -61,7 +67,12 @@ func decodeResponse(op string, response []byte) ([]byte, error) {
 	}
 	switch {
 	case decoded.Error != nil:
-		return nil, &RequestError{Op: op, Code: decoded.Error.Code, Detail: decoded.Error.Detail}
+		return nil, &RequestError{
+			Module: r.spec.Name,
+			Op:     op,
+			Code:   decoded.Error.Code,
+			Detail: decoded.Error.Detail,
+		}
 	case len(decoded.OK) > 0:
 		return decoded.OK, nil
 	default:

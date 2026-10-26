@@ -7,6 +7,8 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	tarifferrors "github.com/emoss08/trenova/internal/modules/rating/app/tariff/errors"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
@@ -59,8 +61,8 @@ func previewBounds(source string, inputs tarifftypes.Inputs) error {
 	return nil
 }
 
-func timeoutMessage() rules.Message {
-	return rules.Message{
+func timeoutMessage() wasmmodule.Message {
+	return wasmmodule.Message{
 		Template: "The formula took longer than {0} to price, so it was stopped",
 		Args:     []any{previewEvaluationTimeout.String()},
 	}

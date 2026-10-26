@@ -58,7 +58,6 @@ use super::record::{sample, settle};
 use super::run::{Supplied, bind_inputs, enforce_constraint};
 use super::tables::{GivenCell, Need, Tables};
 use super::value::{Record, Value};
-use crate::message::{Arg, Message};
 use crate::span::Span;
 use crate::tariff::schema::Settings;
 use crate::tariff::syntax::ast::{
@@ -67,6 +66,7 @@ use crate::tariff::syntax::ast::{
 use crate::tariff::syntax::program::Program;
 use std::collections::BTreeMap;
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// The whole run's step meter, as a multiple of the per-test step limit.
 pub const FILE_STEPS: u64 = 32;
@@ -274,7 +274,7 @@ impl Ledger {
         (self.spent >= self.limit).then(|| {
             EvalError::with(
                 Code::Budget,
-                crate::message!(
+                trenova_module_kit::message!(
                     "The tests used up the file's step budget ({0, plural, one {# step} other {# steps}}) before they finished"
                 ),
                 [Arg::Count(i64::try_from(self.limit).unwrap_or(i64::MAX))],
@@ -592,7 +592,7 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
         self.failures.push(Failure {
             span,
             message: Message::with(
-                crate::message!("The rating was refused: {0}"),
+                trenova_module_kit::message!("The rating was refused: {0}"),
                 [Arg::from(refusal.message.text())],
             ),
             values: Vec::new(),
@@ -628,9 +628,11 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
 
     fn expect_refused(&mut self, span: Span, refusal: Option<&Refusal>, wanted: Option<&str>) {
         let message = match (refusal, wanted) {
-            (None, _) => Message::new(crate::message!("Expected a refusal, but nothing refused")),
+            (None, _) => Message::new(trenova_module_kit::message!(
+                "Expected a refusal, but nothing refused"
+            )),
             (Some(refusal), Some(wanted)) if refusal.message.text() != wanted => Message::with(
-                crate::message!(
+                trenova_module_kit::message!(
                     "Expected the rating to be refused with \"{0}\", but it was refused with \"{1}\""
                 ),
                 [Arg::from(wanted), Arg::from(refusal.message.text())],
@@ -665,13 +667,15 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
                 }
                 self.failures.push(Failure {
                     span: stmt.span,
-                    message: Message::new(crate::message!("This expectation does not hold")),
+                    message: Message::new(trenova_module_kit::message!(
+                        "This expectation does not hold"
+                    )),
                     values,
                 });
                 Ok(())
             }
             Ok(other) => Err(EvalError::internal(Message::with(
-                crate::message!("An expectation must be true or false, not {0}"),
+                trenova_module_kit::message!("An expectation must be true or false, not {0}"),
                 [Arg::from(other.kind())],
             ))
             .at(expr.span)),
@@ -734,10 +738,12 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
                     self.monotone.push(Some(found));
                 }
                 StmtKind::Given { .. } => {
-                    return Err(EvalError::internal(Message::new(crate::message!(
-                        "A library's tests have no record to give values to"
-                    )))
-                    .at(stmt.span));
+                    return Err(
+                        EvalError::internal(Message::new(trenova_module_kit::message!(
+                            "A library's tests have no record to give values to"
+                        )))
+                        .at(stmt.span),
+                    );
                 }
                 _ => match interp.exec(&mut scope, stmt) {
                     Ok(_) => {}
@@ -752,7 +758,7 @@ impl<'r, 'p, 'a> Runner<'r, 'p, 'a> {
         self.failures.push(Failure {
             span: refusal.span,
             message: Message::with(
-                crate::message!("The test was refused: {0}"),
+                trenova_module_kit::message!("The test was refused: {0}"),
                 [Arg::from(refusal.message.text())],
             ),
             values: Vec::new(),
@@ -783,7 +789,7 @@ fn assumptions<'a>(
             Value::Bool(false) => return Ok(false),
             other => {
                 return Err(EvalError::internal(Message::with(
-                    crate::message!("An assumption must be true or false, not {0}"),
+                    trenova_module_kit::message!("An assumption must be true or false, not {0}"),
                     [Arg::from(other.kind())],
                 ))
                 .at(condition.span));
@@ -883,7 +889,7 @@ pub fn stopped(stop: Stop) -> EvalError {
     match stop {
         Stop::Failed(error) => error,
         Stop::Refused(refusal) => EvalError::internal(Message::with(
-            crate::message!("A test's own statements refused: {0}"),
+            trenova_module_kit::message!("A test's own statements refused: {0}"),
             [Arg::from(refusal.message.text())],
         ))
         .at(refusal.span),
@@ -909,7 +915,7 @@ fn set_path(record: &Value, path: &[Name], value: Value) -> Result<Value, EvalEr
 
 fn not_a_field(name: &str) -> EvalError {
     EvalError::internal(Message::with(
-        crate::message!("{0} is not a field a test can give a value to"),
+        trenova_module_kit::message!("{0} is not a field a test can give a value to"),
         [Arg::from(name)],
     ))
 }

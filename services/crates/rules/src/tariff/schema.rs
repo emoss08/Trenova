@@ -13,9 +13,9 @@
 use super::docs::Doc;
 use super::types::{EnumType, FieldDef, RecordType, Type};
 use super::units::{Base, Dim, Unit};
-use crate::message;
 use serde::Deserialize;
 use std::sync::Arc;
+use trenova_module_kit::message;
 
 /// The doc of `tables`, the root that holds the organisation's active rate matrices.
 pub const TABLES_DOC: &str = message!("The organisation's active rate matrices, by code.");

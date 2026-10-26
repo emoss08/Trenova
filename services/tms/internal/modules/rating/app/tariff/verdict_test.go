@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
 	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +21,7 @@ func TestFailingTests_DescribesEachFailureWithItsCounterexample(t *testing.T) {
 		{
 			Name:   "divides",
 			Status: rules.TariffTestError,
-			Error:  &rules.TariffEvalError{Message: rules.Message{Template: "Division by zero"}},
+			Error:  &rules.TariffEvalError{Message: wasmmodule.Message{Template: "Division by zero"}},
 		},
 		{
 			Name:   "heavier never bills less",

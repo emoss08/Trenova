@@ -22,7 +22,6 @@
 //! keys in order. The
 //! checker writes input defaults in this same form, and the bill and the trace use it.
 
-use crate::message::{Arg, Message};
 use crate::tariff::eval::time::{Date, DateTime, Time};
 use crate::tariff::eval::value::{Record, Value, format_decimal};
 use crate::tariff::types::{RecordType, Type};
@@ -30,6 +29,7 @@ use crate::tariff::units::Unit;
 use rust_decimal::Decimal;
 use serde_json::{Map, Value as Json};
 use std::rc::Rc;
+use trenova_module_kit::message::{Arg, Message};
 
 /// Why a wire value does not fit its type.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -66,7 +66,7 @@ fn decode_at(json: &Json, ty: &Type, path: &str, depth: usize) -> Result<Value, 
     if depth > MAX_DEPTH {
         return Err(WireError::new(
             path,
-            crate::message!("The value nests deeper than {0} levels"),
+            trenova_module_kit::message!("The value nests deeper than {0} levels"),
             [Arg::from(MAX_DEPTH)],
         ));
     }
@@ -94,7 +94,7 @@ fn decode_at(json: &Json, ty: &Type, path: &str, depth: usize) -> Result<Value, 
             if !value.fract().is_zero() {
                 return Err(WireError::new(
                     path,
-                    crate::message!("{0} is not a whole number"),
+                    trenova_module_kit::message!("{0} is not a whole number"),
                     [Arg::from(format_decimal(value))],
                 ));
             }
@@ -106,7 +106,9 @@ fn decode_at(json: &Json, ty: &Type, path: &str, depth: usize) -> Result<Value, 
             if unit.to_string() != "%" {
                 return Err(WireError::new(
                     path,
-                    crate::message!("A percent is written with the unit \"%\", not \"{0}\""),
+                    trenova_module_kit::message!(
+                        "A percent is written with the unit \"%\", not \"{0}\""
+                    ),
                     [Arg::from(unit.to_string())],
                 ));
             }
@@ -117,7 +119,7 @@ fn decode_at(json: &Json, ty: &Type, path: &str, depth: usize) -> Result<Value, 
             if unit.dim() != expected_type.dim || unit.dim().is_none() {
                 return Err(WireError::new(
                     path,
-                    crate::message!("{0} is not a unit of {1}"),
+                    trenova_module_kit::message!("{0} is not a unit of {1}"),
                     [Arg::from(unit.to_string()), Arg::from(ty.to_string())],
                 ));
             }
@@ -133,7 +135,7 @@ fn decode_at(json: &Json, ty: &Type, path: &str, depth: usize) -> Result<Value, 
             } else {
                 Err(WireError::new(
                     path,
-                    crate::message!("\"{0}\" is not a {1}"),
+                    trenova_module_kit::message!("\"{0}\" is not a {1}"),
                     [Arg::from(text), Arg::from(ty.to_string())],
                 ))
             }
@@ -152,7 +154,7 @@ fn decode_at(json: &Json, ty: &Type, path: &str, depth: usize) -> Result<Value, 
         Type::Record(record) => decode_record(json, ty, record, path, depth),
         Type::Optional(_) | Type::Never | Type::Error => Err(WireError::new(
             path,
-            crate::message!("No value has the type {0}"),
+            trenova_module_kit::message!("No value has the type {0}"),
             [Arg::from(ty.to_string())],
         )),
     }
@@ -169,7 +171,7 @@ fn decode_record(
     if let Some(unknown) = object.keys().find(|key| record.field(key).is_none()) {
         return Err(WireError::new(
             &join(path, unknown),
-            crate::message!("{0} is not a field of {1}"),
+            trenova_module_kit::message!("{0} is not a field of {1}"),
             [Arg::from(unknown.clone()), Arg::from(ty.to_string())],
         ));
     }
@@ -182,7 +184,7 @@ fn decode_record(
             None => {
                 return Err(WireError::new(
                     &at,
-                    crate::message!("The required field {0} is missing"),
+                    trenova_module_kit::message!("The required field {0} is missing"),
                     [Arg::from(field.name.clone())],
                 ));
             }
@@ -203,22 +205,28 @@ fn join(path: &str, field: &str) -> String {
 /// What a JSON value is, as a phrase.
 fn json_kind(json: &Json) -> Message {
     Message::new(match json {
-        Json::Null => crate::message!("null"),
-        Json::Bool(_) => crate::message!("true or false"),
-        Json::Number(_) => crate::message!("a JSON number"),
-        Json::String(_) => crate::message!("text"),
-        Json::Array(_) => crate::message!("a list"),
-        Json::Object(object) if object.contains_key("$n") => crate::message!("a number"),
-        Json::Object(object) if object.contains_key("$q") => crate::message!("a quantity"),
-        Json::Object(object) if object.contains_key("$date") => crate::message!("a date"),
-        Json::Object(_) => crate::message!("a record"),
+        Json::Null => trenova_module_kit::message!("null"),
+        Json::Bool(_) => trenova_module_kit::message!("true or false"),
+        Json::Number(_) => trenova_module_kit::message!("a JSON number"),
+        Json::String(_) => trenova_module_kit::message!("text"),
+        Json::Array(_) => trenova_module_kit::message!("a list"),
+        Json::Object(object) if object.contains_key("$n") => {
+            trenova_module_kit::message!("a number")
+        }
+        Json::Object(object) if object.contains_key("$q") => {
+            trenova_module_kit::message!("a quantity")
+        }
+        Json::Object(object) if object.contains_key("$date") => {
+            trenova_module_kit::message!("a date")
+        }
+        Json::Object(_) => trenova_module_kit::message!("a record"),
     })
 }
 
 fn expected(path: &str, ty: &Type, json: &Json) -> WireError {
     WireError::new(
         path,
-        crate::message!("Expected {0}, got {1}"),
+        trenova_module_kit::message!("Expected {0}, got {1}"),
         [Arg::from(ty.to_string()), Arg::from(json_kind(json))],
     )
 }
@@ -241,7 +249,7 @@ fn tagged<'a>(
     {
         return Err(WireError::new(
             path,
-            crate::message!("{0} does not belong in this value"),
+            trenova_module_kit::message!("{0} does not belong in this value"),
             [Arg::from(unknown.clone())],
         ));
     }
@@ -252,14 +260,16 @@ fn decimal_text(text: &Json, path: &str) -> Result<Decimal, WireError> {
     let Some(text) = text.as_str() else {
         return Err(WireError::new(
             path,
-            crate::message!("A number is written as a decimal string, such as \"12.5\""),
+            trenova_module_kit::message!(
+                "A number is written as a decimal string, such as \"12.5\""
+            ),
             [],
         ));
     };
     parse_plain_decimal(text).ok_or_else(|| {
         WireError::new(
             path,
-            crate::message!("\"{0}\" is not a decimal number"),
+            trenova_module_kit::message!("\"{0}\" is not a decimal number"),
             [Arg::from(text)],
         )
     })
@@ -292,14 +302,14 @@ fn quantity(json: &Json, ty: &Type, path: &str) -> Result<(Decimal, Unit), WireE
     let Some(text) = object.get("u").and_then(Json::as_str) else {
         return Err(WireError::new(
             path,
-            crate::message!("A quantity needs its unit under \"u\""),
+            trenova_module_kit::message!("A quantity needs its unit under \"u\""),
             [],
         ));
     };
     let unit = Unit::parse(text).map_err(|_| {
         WireError::new(
             path,
-            crate::message!("\"{0}\" is not a unit"),
+            trenova_module_kit::message!("\"{0}\" is not a unit"),
             [Arg::from(text)],
         )
     })?;
@@ -319,7 +329,7 @@ fn date(json: &Json, ty: &Type, path: &str) -> Result<Date, WireError> {
     Date::parse(text).ok_or_else(|| {
         WireError::new(
             path,
-            crate::message!("\"{0}\" is not a date (YYYY-MM-DD)"),
+            trenova_module_kit::message!("\"{0}\" is not a date (YYYY-MM-DD)"),
             [Arg::from(text)],
         )
     })
@@ -330,7 +340,7 @@ fn date_time(json: &Json, ty: &Type, path: &str) -> Result<DateTime, WireError> 
     DateTime::parse(text).ok_or_else(|| {
         WireError::new(
             path,
-            crate::message!(
+            trenova_module_kit::message!(
                 "\"{0}\" is not a date-time with its offset (YYYY-MM-DDTHH:MM:SS±HH:MM)"
             ),
             [Arg::from(text)],
@@ -347,7 +357,9 @@ fn time(json: &Json, ty: &Type, path: &str) -> Result<Time, WireError> {
     Time::parse(text).ok_or_else(|| {
         WireError::new(
             path,
-            crate::message!("\"{0}\" is not a time of day (HH:MM:SS, from 00:00:00 to 23:59:59)"),
+            trenova_module_kit::message!(
+                "\"{0}\" is not a time of day (HH:MM:SS, from 00:00:00 to 23:59:59)"
+            ),
             [Arg::from(text)],
         )
     })

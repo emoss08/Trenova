@@ -18,10 +18,10 @@ use crate::allocation::split::PERCENT_PLACES;
 use crate::allocation::split::SHARE_PLACES;
 use crate::allocation::split::checked_sum;
 use crate::allocation::split::ordered;
-use crate::ops::RequestError;
 use crate::report::fixed::div_round;
 use crate::report::fixed::round_bank;
 use rust_decimal::Decimal;
+use trenova_module_kit::ops::RequestError;
 
 const HUNDRED: Decimal = Decimal::ONE_HUNDRED;
 
