@@ -140,7 +140,8 @@ func TestUserHandler_List_Success(t *testing.T) {
 				Status:                domaintypes.StatusActive,
 			},
 		},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
@@ -184,8 +185,9 @@ func TestUserHandler_List_WithPagination(t *testing.T) {
 	repo.On("List", mock.Anything, mock.MatchedBy(func(req *tenantports.ListUsersRequest) bool {
 		return req.Filter.Pagination.Limit == requestedLimit+1
 	})).Return(&pagination.ListResult[*tenant.User]{
-		Items: items,
-		Total: 50,
+		Items:      items,
+		Total:      50,
+		TotalExact: true,
 	}, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
@@ -553,7 +555,8 @@ func TestUserHandler_SelectOptions_Success(t *testing.T) {
 					Name: "User One",
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})

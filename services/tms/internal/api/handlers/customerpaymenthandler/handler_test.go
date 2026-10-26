@@ -1,16 +1,16 @@
 package customerpaymenthandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/customerpaymenthandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -68,8 +68,9 @@ func TestHandlerListCustomerPayments(t *testing.T) {
 			assert.Equal(t, sharedtestutil.TestBuID, req.Filter.TenantInfo.BuID)
 			assert.Equal(t, sharedtestutil.TestUserID, req.Filter.TenantInfo.UserID)
 			return &pagination.ListResult[*customerpayment.Payment]{
-				Items: []*customerpayment.Payment{payment},
-				Total: 1,
+				Items:      []*customerpayment.Payment{payment},
+				Total:      1,
+				TotalExact: true,
 			}, nil
 		}).
 		Once()

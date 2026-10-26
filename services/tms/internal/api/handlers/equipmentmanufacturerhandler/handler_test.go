@@ -414,8 +414,9 @@ func TestEquipmentManufacturerHandler_SelectOptions_Success(t *testing.T) {
 	repo := equipmentmanufacturerportsmock.NewMockEquipmentManufacturerRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
-			Items: []*equipmentmanufacturer.EquipmentManufacturer{},
-			Total: 0,
+			Items:      []*equipmentmanufacturer.EquipmentManufacturer{},
+			Total:      0,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupEquipManufacturerHandler(t, repo)

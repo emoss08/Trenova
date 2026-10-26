@@ -1,18 +1,18 @@
 package equipmenttypehandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
 	"context"
 	"errors"
+	"github.com/emoss08/trenova/internal/testutil/mocks/equipmenttypeportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttypehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -371,8 +371,9 @@ func TestEquipmentTypeHandler_SelectOptions_Success(t *testing.T) {
 	repo := equipmenttypeportsmock.NewMockEquipmentTypeRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*equipmenttype.EquipmentType]{
-			Items: []*equipmenttype.EquipmentType{{ID: pulid.MustNew("et_"), Code: "TRK"}},
-			Total: 1,
+			Items:      []*equipmenttype.EquipmentType{{ID: pulid.MustNew("et_"), Code: "TRK"}},
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupEquipTypeHandler(t, repo)
@@ -480,7 +481,8 @@ func TestEquipmentTypeHandler_SelectOptions_WithClassFilter(t *testing.T) {
 			Items: []*equipmenttype.EquipmentType{
 				{ID: pulid.MustNew("et_"), Code: "TRK", Class: equipmenttype.ClassTractor},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupEquipTypeHandler(t, repo)

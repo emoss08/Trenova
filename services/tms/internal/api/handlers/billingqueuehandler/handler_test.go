@@ -163,8 +163,9 @@ func TestBillingQueueHandler_List_HidesFormulaContentWithoutFormulaRead(t *testi
 	service.EXPECT().
 		List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*billingqueue.BillingQueueItem]{
-			Items: []*billingqueue.BillingQueueItem{ratedItem(), {ID: pulid.MustNew("bqi_")}},
-			Total: 2,
+			Items:      []*billingqueue.BillingQueueItem{ratedItem(), {ID: pulid.MustNew("bqi_")}},
+			Total:      2,
+			TotalExact: true,
 		}, nil).
 		Once()
 

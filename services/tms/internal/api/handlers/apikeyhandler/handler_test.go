@@ -1,8 +1,8 @@
 package apikeyhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"net/http"
 	"testing"
 	"time"
@@ -10,10 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/apikeyhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -98,7 +98,8 @@ func TestAPIKeyHandlerListSuccess(t *testing.T) {
 					Status:         apikey.StatusActive,
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	ginCtx := sharedtestutil.NewGinTestContext().

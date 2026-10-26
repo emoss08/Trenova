@@ -1,18 +1,18 @@
 package edihandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/edihandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -82,7 +82,8 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 				Name:           "X12 204 Outbound Partner Settings",
 				Status:         edi.PartnerSettingStatusActive,
 			}},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 	repo.On(
@@ -112,7 +113,8 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 			Required: true,
 			Status:   edi.PartnerSettingStatusActive,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 	repo.On(
 		"SearchPartnerSettingFields",
@@ -121,8 +123,9 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 			return req.Filter.Query == "referenceQualifiers" && req.PathPrefix == "carrier."
 		}),
 	).Return(&pagination.ListResult[*edi.EDIPartnerSettingField]{
-		Items: []*edi.EDIPartnerSettingField{},
-		Total: 0,
+		Items:      []*edi.EDIPartnerSettingField{},
+		Total:      0,
+		TotalExact: true,
 	}, nil).Once()
 	repo.On(
 		"SearchPartnerSettingFields",
@@ -138,7 +141,8 @@ func TestEDIHandler_PartnerSettingRoutes(t *testing.T) {
 			DataType: edi.PartnerSettingDataTypeString,
 			Status:   edi.PartnerSettingStatusActive,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 
 	handler := setupEDIHandler(t, repo)
@@ -216,7 +220,8 @@ func TestEDIHandler_ValidatePartnerSettings(t *testing.T) {
 			MaxLength: 4,
 			Status:    edi.PartnerSettingStatusActive,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 
 	handler := setupEDIHandler(t, repo)
@@ -264,7 +269,8 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 			DefaultVersion: edi.DefaultX12204Version,
 			Status:         edi.DocumentStatusActive,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 	repo.On(
 		"SelectTemplateOptions",
@@ -283,7 +289,8 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 			Direction:      edi.DocumentDirectionOutbound,
 			Status:         edi.TemplateStatusDraft,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 	repo.On(
 		"SelectPartnerDocumentProfileOptions",
@@ -302,7 +309,8 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 			TransactionSet: edi.TransactionSet204,
 			Direction:      edi.DocumentDirectionOutbound,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 	repo.On(
 		"SelectSourceContextFieldOptions",
@@ -319,7 +327,8 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 			DataType:    edi.SourceContextDataTypeString,
 			Status:      edi.SourceContextFieldStatusActive,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 	repo.On(
 		"SelectPartnerSettingFieldOptions",
@@ -336,7 +345,8 @@ func TestEDIHandler_SelectOptionsRoutes(t *testing.T) {
 			DataType: edi.PartnerSettingDataTypeString,
 			Status:   edi.PartnerSettingStatusActive,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 
 	handler := setupEDIHandler(t, repo)
@@ -416,8 +426,9 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 				len(req.IDs) == 0
 		}),
 	).Return(&pagination.ListResult[*edi.EDITransactionSet]{
-		Items: []*edi.EDITransactionSet{tender},
-		Total: 1,
+		Items:      []*edi.EDITransactionSet{tender},
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 	repo.On(
 		"SelectTransactionSetOptions",
@@ -429,8 +440,9 @@ func TestEDIHandler_TransactionSetCatalogRoutes(t *testing.T) {
 				req.SelectQueryRequest.Pagination.Limit == 1
 		}),
 	).Return(&pagination.ListResult[*edi.EDITransactionSet]{
-		Items: []*edi.EDITransactionSet{tender},
-		Total: 1,
+		Items:      []*edi.EDITransactionSet{tender},
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 	repo.On(
 		"SelectTransactionSetOptions",
@@ -541,7 +553,8 @@ func TestEDIHandler_DocumentProfileSelectOptionsReturnsProfiles(t *testing.T) {
 			TransactionSet: edi.TransactionSet204,
 			Direction:      edi.DocumentDirectionOutbound,
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil).Once()
 
 	handler := setupEDIHandler(t, repo)
@@ -589,7 +602,8 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 				Status:       "Active",
 				Name:         "Carrier SFTP",
 			}},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 	mappingProfileRepo.EXPECT().
@@ -602,7 +616,8 @@ func TestEDIHandler_ProfileSelectOptionsRoutes(t *testing.T) {
 				EDIPartnerID: partnerID,
 				Name:         "Carrier Mapping",
 			}},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 
@@ -646,13 +661,21 @@ func TestEDIHandler_TransferListDirectionRoutes(t *testing.T) {
 		ListInbound(mock.Anything, mock.MatchedBy(func(req *ediports.ListEDITransfersRequest) bool {
 			return req.Filter != nil
 		})).
-		Return(&pagination.ListResult[*edi.EDITransfer]{Items: []*edi.EDITransfer{}, Total: 0}, nil).
+		Return(&pagination.ListResult[*edi.EDITransfer]{
+			Items:      []*edi.EDITransfer{},
+			Total:      0,
+			TotalExact: true,
+		}, nil).
 		Once()
 	transferRepo.EXPECT().
 		ListOutbound(mock.Anything, mock.MatchedBy(func(req *ediports.ListEDITransfersRequest) bool {
 			return req.Filter != nil
 		})).
-		Return(&pagination.ListResult[*edi.EDITransfer]{Items: []*edi.EDITransfer{}, Total: 0}, nil).
+		Return(&pagination.ListResult[*edi.EDITransfer]{
+			Items:      []*edi.EDITransfer{},
+			Total:      0,
+			TotalExact: true,
+		}, nil).
 		Once()
 
 	handler := setupEDIHandler(t, repo, func(params *ediservice.Params) {

@@ -1,18 +1,18 @@
 package customfieldhandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"context"
 	"errors"
+	"github.com/emoss08/trenova/internal/testutil/mocks/customfieldportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/customfieldservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -85,7 +85,8 @@ func TestCustomFieldHandler_List_Success(t *testing.T) {
 					ResourceType:   "trailer",
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	valueRepo := customfieldportsmock.NewMockCustomFieldValueRepository(t)

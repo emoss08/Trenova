@@ -82,7 +82,8 @@ func TestRoleHandler_List_Success(t *testing.T) {
 				Description:    "Administrator role",
 			},
 		},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil)
 
 	deps := setupRoleHandler(t, repo)
@@ -123,8 +124,9 @@ func TestRoleHandler_List_WithPagination(t *testing.T) {
 	repo.On("List", mock.Anything, mock.MatchedBy(func(req *permissionports.ListRolesRequest) bool {
 		return req.Filter.Pagination.Limit == requestedLimit+1
 	})).Return(&pagination.ListResult[*permission.Role]{
-		Items: items,
-		Total: 25,
+		Items:      items,
+		Total:      25,
+		TotalExact: true,
 	}, nil)
 
 	deps := setupRoleHandler(t, repo)

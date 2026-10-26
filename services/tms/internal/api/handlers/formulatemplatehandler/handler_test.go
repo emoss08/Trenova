@@ -55,7 +55,8 @@ func TestList_ReturnsTheTemplatesWithTheirSource(t *testing.T) {
 				Source:         perMileSource,
 				Status:         formulatemplate.StatusActive,
 			}},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	ginCtx := f.serve(http.MethodGet, "/api/v1/formula-templates/", nil)
