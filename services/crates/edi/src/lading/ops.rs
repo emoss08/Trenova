@@ -605,7 +605,7 @@ struct FlowInput {
 pub fn flow_step(raw: &RawValue) -> OpResult {
     let program = program(raw)?;
     let input: FlowInput = decode(raw)?;
-    if program.has_errors() {
+    if program.has_code_errors() {
         return Err(RequestError::invalid_input("the project has errors"));
     }
     let now = input

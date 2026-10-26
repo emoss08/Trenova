@@ -131,7 +131,10 @@ impl Interp<'_> {
                 None => Value::None,
             }
         } else {
-            self.eval(frame, value)?
+            let asking = frame.asking.replace(path.clone());
+            let value = self.eval(frame, value);
+            frame.asking = asking;
+            value?
         };
         if result.is_none() {
             match otherwise {

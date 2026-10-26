@@ -246,6 +246,27 @@ impl Program {
         })
     }
 
+    /// Whether any file has an error outside its tests and properties: such a project does not
+    /// run, while one whose only errors are in tests (a sample the host left out of a run, say)
+    /// runs as it would in production.
+    #[must_use]
+    pub fn has_code_errors(&self) -> bool {
+        self.units.iter().any(|unit| {
+            let tests: Vec<Span> = unit
+                .items()
+                .iter()
+                .filter(|item| matches!(item, Item::Test(_) | Item::Property(_)))
+                .map(Item::span)
+                .collect();
+            unit.diagnostics.iter().any(|diagnostic| {
+                diagnostic.severity == trenova_module_kit::diagnostic::Severity::Error
+                    && !tests.iter().any(|test| {
+                        test.start <= diagnostic.span.start && diagnostic.span.end <= test.end
+                    })
+            })
+        })
+    }
+
     /// A file by its header's name.
     #[must_use]
     pub fn unit_named(&self, name: &str) -> Option<usize> {

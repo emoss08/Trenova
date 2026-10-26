@@ -246,7 +246,7 @@ pub fn run(program: &Program, request: &RunRequest) -> RunResult {
             [Arg::from(request.map.as_str())],
         ));
     };
-    if program.has_errors() {
+    if program.has_code_errors() {
         return failed(Message::new(message!(
             "The project has errors; fix them before running a map"
         )));

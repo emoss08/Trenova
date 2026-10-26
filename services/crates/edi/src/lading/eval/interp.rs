@@ -168,6 +168,9 @@ pub struct Frame {
     pub filter: Option<Value>,
     /// The output path assignments are made under (`stops[1]`).
     pub path: String,
+    /// The field being assigned (`stops[1].location`), which a lookup reports as where an
+    /// unmapped code was asked for.
+    pub asking: Option<String>,
     /// The document path a name was read from, for `for` items.
     pub origins: Vec<(String, String)>,
 }
@@ -1046,7 +1049,7 @@ impl<'p> Interp<'p> {
                         kind: kind.to_owned(),
                         code: code_text,
                         hint: super::json::to_json(hint),
-                        path: frame.path.clone(),
+                        path: frame.asking.clone().unwrap_or_else(|| frame.path.clone()),
                     });
                 }
                 Value::None

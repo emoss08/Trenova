@@ -1060,6 +1060,33 @@ mod tests {
     }
 
     #[test]
+    fn a_project_runs_without_the_samples_its_tests_read() {
+        let built = starter(&request("carrier"));
+        let sample = built.samples[0].content.clone();
+        let project = Project {
+            files: built.files.into_iter().map(Into::into).collect(),
+            samples: Vec::new(),
+        };
+        let program = check(&project, &Context::default());
+        assert!(program.has_errors());
+        assert!(!program.has_code_errors());
+        let result = crate::lading::eval::run::run(
+            &program,
+            &crate::lading::eval::run::RunRequest {
+                map: "tenderIn".into(),
+                input: crate::lading::eval::run::RunInput::X12(sample),
+                settings: std::collections::BTreeMap::new(),
+                lookups: Vec::new(),
+                now: None,
+                control: crate::lading::eval::run::Control::default(),
+                rules: true,
+            },
+        );
+        assert!(result.error.is_none(), "{:?}", result.error);
+        assert_eq!(result.transactions.len(), 1);
+    }
+
+    #[test]
     fn names_become_lading_names() {
         assert_eq!(sanitize("Swift Logistics"), "swiftLogistics");
         assert_eq!(sanitize("3M Co"), "mCo");
