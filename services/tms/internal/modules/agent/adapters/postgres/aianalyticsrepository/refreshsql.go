@@ -712,12 +712,13 @@ func providerHoursSource(fromHour, toHour int64) *keel.Query[*keel.Row] {
 			group("error_class"),
 			group("calls"),
 			group("fell_to_next"),
-			keel.DynCase().
+			keel.CaseInt64Array().
 				When(
 					group("error_class").Eq(string(aianalytics.ProviderErrorNone)),
-					keel.DynOf(arrays.Col("first_token_hist")).Coalesce(keel.DynConst("{}")),
+					keel.Int64ArrayOf(arrays.Col("first_token_hist")).
+						Coalesce(keel.Int64Array(nil)),
 				).
-				Else(keel.DynConst("{}")),
+				Else(keel.Int64Array(nil)),
 		)
 }
 

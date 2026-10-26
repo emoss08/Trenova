@@ -545,7 +545,7 @@ func (r *repository) removeDelegate(ctx context.Context, id pulid.ID) error {
 		ctx,
 		r.db.Keel(ctx),
 		d.DelegateIDs.ToExpr(
-			keel.DynOf(d.DelegateIDs.Without(keel.Text(id.String()))).NullIf([]string{}),
+			d.DelegateIDs.Without(keel.Text(id.String())).NullIf(keel.TextArray(nil)),
 		),
 	)
 	if err != nil {
