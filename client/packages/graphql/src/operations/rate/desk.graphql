@@ -76,6 +76,7 @@ query DeskRateAgreementCard($id: ID!) {
       changeMessage
     }
     laneCount
+    laneCountExact
     lanes(first: 50) {
       id
       label

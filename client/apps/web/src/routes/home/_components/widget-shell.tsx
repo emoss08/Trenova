@@ -2,6 +2,8 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { cn } from "@trenova/shared/lib/utils";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { ArrowRightIcon, type IconComponent, Inbox01Icon } from "@trenova/shared/components/icons";
 import { createContext, useContext, type ReactNode } from "react";
 import { Link } from "react-router";
@@ -94,12 +96,17 @@ export function WidgetShell({
 
 export function WidgetCount({
   value,
+  exact = true,
   tone = "muted",
 }: {
   value: number | undefined;
+  /** False when value is the server's estimate of a list too large to count. */
+  exact?: boolean;
   tone?: "muted" | "danger" | "warning" | "brand" | "success";
 }) {
+  const t = useT();
   if (value === undefined) return null;
+  const estimate = exact ? undefined : t("About {0}", formatRowTotal(value, false));
 
   const toneClass = {
     muted: "bg-muted text-muted-foreground",
@@ -115,8 +122,9 @@ export function WidgetCount({
         "font-table inline-flex min-w-4.5 shrink-0 justify-center rounded-md px-1 text-3xs tabular-nums",
         toneClass,
       )}
+      title={estimate}
     >
-      {value > 999 ? "999+" : value}
+      {!exact || value > 999 ? "999+" : value}
     </span>
   );
 }

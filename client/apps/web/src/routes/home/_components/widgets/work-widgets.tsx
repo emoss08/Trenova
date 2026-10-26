@@ -1,6 +1,9 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { ExceptionsList } from "@/components/work-modules/exceptions-list";
-import { UnassignedQueueList } from "@/components/work-modules/unassigned-queue-list";
+import {
+  UnassignedQueueList,
+  type UnassignedQueueSummary,
+} from "@/components/work-modules/unassigned-queue-list";
 import {
   ATTENTION_ROWS,
   ATTENTION_TONE_DOT_CLASSES,
@@ -75,8 +78,9 @@ export function UnassignedWidget({ widget }: WidgetProps) {
   const t = useT();
 
   const navigate = useNavigate();
-  const [summary, setSummary] = useState({
-    totalCount: undefined as number | undefined,
+  const [summary, setSummary] = useState<UnassignedQueueSummary>({
+    totalCount: undefined,
+    totalCountExact: true,
     pendingRevenue: 0,
   });
 
@@ -88,7 +92,13 @@ export function UnassignedWidget({ widget }: WidgetProps) {
   return (
     <WidgetShell
       title={widget.title || "Unassigned Loads"}
-      badge={<WidgetCount value={summary.totalCount} tone="warning" />}
+      badge={
+        <WidgetCount
+          value={summary.totalCount}
+          exact={summary.totalCountExact}
+          tone="warning"
+        />
+      }
       actions={
         summary.pendingRevenue > 0 ? (
           <span className="font-table text-muted-foreground shrink-0 text-3xs tabular-nums">

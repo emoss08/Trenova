@@ -359,7 +359,9 @@ export type RateAgreementRule = z.infer<typeof rateAgreementRuleSchema>;
 export const rateAgreementLanePageSchema = z.object({
   results: z.array(rateAgreementRuleSchema).default([]),
   count: z.number().int().min(0),
+  countExact: z.boolean().default(true),
   retired: z.number().int().min(0).default(0),
+  retiredExact: z.boolean().default(true),
   limit: z.number().int().min(0),
   offset: z.number().int().min(0),
 });

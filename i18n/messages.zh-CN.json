@@ -1556,6 +1556,7 @@
   "About {0} per carrier per month at this depth. Pulling the same carrier again this month is not billed twice.": "在此深度下,每个承运商每月约 {0}。本月再次查询同一承运商不会重复计费。",
   "About {0} per matched lookup at this depth.": "在此深度下,每次匹配的查询约 {0}。",
   "About {0} previous rates found": "找到约 {0} 条先前费率",
+  "About {0} retired": "约 {0} 条已停用",
   "About {0} runs today": "今日约 {0} 次运行",
   "About {0} settlements": "约 {0} 笔结算",
   "About {0} shipments": "约 {0} 笔运单",

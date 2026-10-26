@@ -1556,6 +1556,7 @@
   "About {0} per carrier per month at this depth. Pulling the same carrier again this month is not billed twice.": "在此深度下,每個承運業者每月約 {0}。本月再次查詢同一承運業者不會重複計費。",
   "About {0} per matched lookup at this depth.": "在此深度下,每次符合的查詢約 {0}。",
   "About {0} previous rates found": "找到約 {0} 筆先前費率",
+  "About {0} retired": "約 {0} 條已停用",
   "About {0} runs today": "今日約 {0} 次執行",
   "About {0} settlements": "約 {0} 筆結算",
   "About {0} shipments": "約 {0} 筆運單",
