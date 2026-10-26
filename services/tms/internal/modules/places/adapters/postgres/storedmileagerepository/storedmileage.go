@@ -117,7 +117,7 @@ func (r *repository) Lookup(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*storedmileage.StoredMileage, error) {
 		sm := storedmileagedb.StoredMileages
 		entity, err := sm.Where(
-			sm.Status.EqCol(keel.DynConst(storedmileage.StatusActive)),
+			sm.Status.EqCol(keel.ConstText(storedmileage.StatusActive)),
 			sm.RouteHash.Eq(req.RouteHash),
 			sm.DistanceUnits.Eq(req.DistanceUnits),
 			sm.RoutingType.Eq(req.RoutingType),
@@ -161,7 +161,7 @@ func (r *repository) BulkUpsert(
 				sm.DistanceProfileID,
 				sm.HazmatSignature,
 			).
-				Where(sm.Status.EqCol(keel.DynConst(storedmileage.StatusActive))).
+				Where(sm.Status.EqCol(keel.ConstText(storedmileage.StatusActive))).
 				Update(
 					sm.Distance,
 					sm.Provider,
