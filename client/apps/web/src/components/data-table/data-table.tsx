@@ -1018,13 +1018,12 @@ export function DataTable<TData extends Record<string, any>>({
   });
 
   const restoreView = useLatestCallback(async (id: string) => {
-    try {
-      const view = await queryClient.fetchQuery({
-        ...tableConfiguration.detail(id),
-        staleTime: 60_000,
-      });
-      if (view) setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
-    } catch {
+    const view = await queryClient
+      .fetchQuery({ ...tableConfiguration.detail(id), staleTime: 60_000 })
+      .catch(() => null);
+    if (view) {
+      setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
+    } else {
       setActiveView((current) => (current?.id === id ? null : current));
     }
   });
