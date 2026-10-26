@@ -121,6 +121,12 @@ type ListFlowInstancesRequest struct {
 	Statuses   []edi.FlowInstanceStatus `json:"statuses"`
 }
 
+type ListShipmentFlowInstancesRequest struct {
+	TenantInfo pagination.TenantInfo `json:"-"`
+	ShipmentID pulid.ID              `json:"shipmentId"`
+	TransferID pulid.ID              `json:"transferId"`
+}
+
 type ListFlowEventsRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 	InstanceID pulid.ID              `json:"instanceId"`
@@ -139,6 +145,10 @@ type FlowRepository interface {
 	OpenInstance(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error)
 	SaveInstance(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error)
 	AppendEvent(ctx context.Context, event *edi.FlowEvent) error
+	ListOpenInstances(
+		ctx context.Context,
+		req *ListShipmentFlowInstancesRequest,
+	) ([]*edi.FlowInstance, error)
 	ListInstancesCursor(
 		ctx context.Context,
 		req *ListFlowInstancesRequest,

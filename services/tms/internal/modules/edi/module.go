@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/app/editransport"
 	"github.com/emoss08/trenova/internal/modules/edi/app/referencedataguard"
+	"github.com/emoss08/trenova/internal/modules/edi/jobs/edijobs/edijobscontract"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"go.uber.org/fx"
 )
@@ -54,6 +55,11 @@ func SharedOptions() fx.Option {
 			edilading.NewFlows,
 			edilading.NewProjects,
 			edilading.NewReplayer,
+			edijobscontract.NewTimerScheduler,
+			fx.Annotate(
+				edijobscontract.NewShipmentObserver,
+				fx.ResultTags(`group:"shipment_event_observers"`),
+			),
 			ediinboundfilerepository.New,
 			edicarrierinvoicerepository.New,
 			edishipmenttenderrepository.New,

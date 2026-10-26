@@ -606,7 +606,6 @@ func (g *generator) csInvoice(
 		TransactionSet:           edi.TransactionSet210,
 		X12Version:               docType.DefaultVersion,
 		Status:                   edi.MessageStatusGenerated,
-		ValidationMode:           edi.ValidationModeDisabled,
 		InterchangeControlNumber: fmt.Sprintf("%09d", control),
 		GroupControlNumber:       fmt.Sprintf("%d", control),
 		TransactionControlNumber: "0001",

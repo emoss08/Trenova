@@ -58,7 +58,7 @@ var deadLetterActivityOptions = workflow.ActivityOptions{
 }
 
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
-	return []temporaltype.WorkflowDefinition{
+	return append(ladingWorkflows(), []temporaltype.WorkflowDefinition{
 		{
 			Name:        temporaltype.ApproveLoadTenderTransferWorkflowName,
 			Fn:          ApproveLoadTenderTransferWorkflow,
@@ -89,7 +89,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.EDITaskQueue,
 			Description: "Purge raw EDI payloads past each organization's retention window",
 		},
-	}
+	}...)
 }
 
 func ApproveLoadTenderTransferWorkflow(

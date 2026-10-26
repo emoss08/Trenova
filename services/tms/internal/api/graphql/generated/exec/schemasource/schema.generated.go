@@ -22192,7 +22192,8 @@ type InvoiceEDISendPlan {
   autoSend: Boolean!
   partnerId: ID
   partnerName: String!
-  documentProfileId: ID
+  "The version of the partner's Lading project that would write the 210."
+  ladingVersionId: ID
   communicationMethod: String!
   status: InvoiceEDISendStatus!
   lastMessageId: ID

@@ -17,7 +17,10 @@ import (
 	"go.uber.org/zap"
 )
 
-const maxFlowEventsListed = 200
+const (
+	maxFlowEventsListed    = 200
+	maxOpenInstancesListed = 50
+)
 
 var (
 	instanceErrors = dberror.Mapping{Entity: "FlowInstance"}
@@ -180,6 +183,28 @@ func (r *flows) ListInstances(
 			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 		},
 	)
+}
+
+// ListOpenInstances is every flow instance not closed that follows a shipment or a transfer,
+// at most a page of them.
+func (r *flows) ListOpenInstances(
+	ctx context.Context,
+	req *ediports.ListShipmentFlowInstancesRequest,
+) ([]*edi.FlowInstance, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.FlowInstance, error) {
+		if req.ShipmentID.IsNil() && req.TransferID.IsNil() {
+			return []*edi.FlowInstance{}, nil
+		}
+		i := edidb.FlowInstances
+		return i.Where(
+			keel.When(req.ShipmentID.IsNotNil(), i.ShipmentID.Eq(req.ShipmentID)),
+			keel.When(req.TransferID.IsNotNil(), i.TransferID.Eq(req.TransferID)),
+			i.Status.Ne(edi.FlowInstanceStatusClosed),
+		).
+			Order(i.CreatedAt.Asc()).
+			Limit(maxOpenInstancesListed).
+			List(ctx, r.db.Keel(ctx))
+	})
 }
 
 func (r *flows) ListInstancesCursor(

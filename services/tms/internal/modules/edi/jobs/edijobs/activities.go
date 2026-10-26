@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -15,6 +16,7 @@ type ActivitiesParams struct {
 	fx.In
 
 	EDIService        *ediservice.Service
+	Replayer          *edilading.Replayer
 	InboundService    *ediinboundservice.Service
 	DataRetentionRepo tenantports.DataRetentionRepository
 	InboundFileRepo   ediports.EDIInboundFileRepository
@@ -24,6 +26,7 @@ type ActivitiesParams struct {
 
 type Activities struct {
 	ediService        *ediservice.Service
+	replayer          *edilading.Replayer
 	inboundService    *ediinboundservice.Service
 	dataRetentionRepo tenantports.DataRetentionRepository
 	inboundFileRepo   ediports.EDIInboundFileRepository
@@ -34,6 +37,7 @@ type Activities struct {
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		ediService:        p.EDIService,
+		replayer:          p.Replayer,
 		inboundService:    p.InboundService,
 		dataRetentionRepo: p.DataRetentionRepo,
 		inboundFileRepo:   p.InboundFileRepo,
