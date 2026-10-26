@@ -110,9 +110,9 @@ func (r *repository) UpsertTenderRecipient(
 			tr.BusinessUnitID,
 			tr.SourceOrganizationID,
 			tr.RecipientKind,
-			tr.RecipientOrganizationID.Coalesce(keel.DynConst("")),
-			tr.EDIPartnerID.Coalesce(keel.DynConst("")),
-			tr.PartnerDocumentProfileID.Coalesce(keel.DynConst("")),
+			tr.RecipientOrganizationID.Coalesce(keel.ConstText("")),
+			tr.EDIPartnerID.Coalesce(keel.ConstText("")),
+			tr.PartnerDocumentProfileID.Coalesce(keel.ConstText("")),
 		).
 			Update(
 				tr.LatestBaselinePayload,
