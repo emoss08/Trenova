@@ -106,6 +106,7 @@
   "Latest adjustment": "最新調整",
   "Leave a field empty to use the customer's email profile and your invoice email template. Anything entered here applies to this invoice only.": "欄位留空即使用客戶的電子郵件設定檔與您的發票電子郵件範本。在此輸入的內容僅適用於這張發票。",
   "Ledger entry": "總帳分錄",
+  "Lineage": "來源譜系",
   "Link - {0}": "連結 - {0}",
   "Link clicked": "已點擊連結",
   "Loading the invoice": "正在載入發票",

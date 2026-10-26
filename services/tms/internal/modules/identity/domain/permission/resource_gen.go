@@ -20,7 +20,6 @@ const (
 	ResourceAPIKey                Resource = "api_key"
 	ResourceDataEntryControl      Resource = "data_entry_control"
 	ResourcePlatformCatalog       Resource = "platform_catalog"
-	ResourceDocumentOperation     Resource = "document_operation"
 	ResourceIdentityProvider      Resource = "identity_provider"
 	ResourceSCIMDirectory         Resource = "scim_directory"
 	ResourceProvisioningAudit     Resource = "provisioning_audit"
@@ -207,14 +206,13 @@ const (
 	ResourceDriverPortal       Resource = "driver_portal"
 
 	// Compliance
-	ResourceQualification       Resource = "qualification"
-	ResourceDocument            Resource = "document"
-	ResourceDocumentType        Resource = "document_type"
-	ResourceDocumentControl     Resource = "document_control"
-	ResourceDocumentParsingRule Resource = "document_parsing_rule"
-	ResourceCaptureBatch        Resource = "capture_batch"
-	ResourceCaptureDevice       Resource = "capture_device"
-	ResourceCaptureProfile      Resource = "capture_profile"
+	ResourceQualification   Resource = "qualification"
+	ResourceDocument        Resource = "document"
+	ResourceDocumentType    Resource = "document_type"
+	ResourceDocumentControl Resource = "document_control"
+	ResourceCaptureBatch    Resource = "capture_batch"
+	ResourceCaptureDevice   Resource = "capture_device"
+	ResourceCaptureProfile  Resource = "capture_profile"
 
 	// Reference Data
 	ResourceShipmentType Resource = "shipment_type"

@@ -266,34 +266,6 @@ func (r *repository) ListActive(
 	)
 }
 
-func (r *repository) ListRelated(
-	ctx context.Context,
-	req *documentuploadports.ListRelatedDocumentUploadSessionsRequest,
-) ([]*documentupload.DocumentUploadSession, error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) ([]*documentupload.DocumentUploadSession, error) {
-			if req.DocumentID.IsNil() && req.LineageID.IsNil() {
-				return []*documentupload.DocumentUploadSession{}, nil
-			}
-
-			s := documentuploaddb.DocumentUploadSessions
-			sessions, err := s.Where(keel.Or(
-				keel.When(!req.DocumentID.IsNil(), s.DocumentID.Eq(req.DocumentID)),
-				keel.When(!req.LineageID.IsNil(), s.LineageID.Eq(req.LineageID)),
-			)).
-				Order(s.CreatedAt.Desc()).
-				All(ctx, r.db.Keel(ctx))
-			if err != nil {
-				return nil, err
-			}
-
-			return orEmpty(sessions), nil
-		},
-	)
-}
-
 func needsReconciliation(
 	s *documentuploaddb.DocumentUploadSessionsTable,
 	req *documentuploadports.ListDocumentUploadReconciliationRequest,

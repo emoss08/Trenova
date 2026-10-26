@@ -386,18 +386,6 @@ func (r *Registry) registerAdministrationResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceDocumentOperation.String(),
-		DisplayName: "Document Operation",
-		Description: "Document diagnostics, extraction, preview, and search operations",
-		Category:    "Documents",
-		Operations: []OperationDefinition{
-			{Operation: OpRead, DisplayName: "View", Description: "View document diagnostics"},
-			{Operation: OpUpdate, DisplayName: "Run", Description: "Run document operations"},
-		},
-		DefaultSensitivity: SensitivityRestricted,
-	})
-
-	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceIdentityProvider.String(),
 		DisplayName:        "Identity Provider",
 		Description:        "OIDC identity provider configuration",

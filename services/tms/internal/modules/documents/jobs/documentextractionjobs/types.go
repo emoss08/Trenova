@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentintelligencecontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -245,7 +244,6 @@ type DocumentIntelligenceAnalysis struct {
 	ClassifierSource     string
 	ProviderFingerprint  string
 	ClassificationReason string
-	ParsingRuleMetadata  *documentparsingruleports.DocumentParsingRuleMetadata
 	Conflicts            []*ReviewConflict
 	Fields               map[string]*ReviewField
 	Stops                []*IntelligenceStop
@@ -311,7 +309,6 @@ func (a *DocumentIntelligenceAnalysis) ToMap() map[string]any {
 		"classifierSource":     a.ClassifierSource,
 		"providerFingerprint":  a.ProviderFingerprint,
 		"classificationReason": a.ClassificationReason,
-		"parsingRuleMetadata":  a.ParsingRuleMetadata,
 		"conflicts":            conflicts,
 		"fields":               fields,
 		"stops":                stops,

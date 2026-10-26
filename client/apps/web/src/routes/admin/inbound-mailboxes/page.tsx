@@ -1,7 +1,11 @@
 import { PageLayout } from "@/components/navigation/sidebar-layout";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
-import { rotateInboundMailboxToken, type InboundMailbox } from "@/lib/graphql/inbox";
+import {
+  rotateInboundMailboxToken,
+  sendInboundMailboxTest,
+  type InboundMailbox,
+} from "@/lib/graphql/inbox";
 import { inbox } from "@/lib/queries/inbox";
 import type { RoutePrefetch } from "@/lib/route-prefetch";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -17,7 +21,6 @@ import {
 } from "@trenova/shared/components/ui/alert-dialog";
 import { Button } from "@trenova/shared/components/ui/button";
 import { EmptySheet, GhostLine } from "@trenova/shared/components/ui/empty-sheet";
-import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { PlusIcon } from "@trenova/shared/components/icons";
@@ -25,6 +28,7 @@ import { useCallback, useState } from "react";
 import { ApiKeyDialog } from "./_components/api-key-dialog";
 import { CredentialsDialog } from "./_components/credentials-dialog";
 import { MailboxCard } from "./_components/mailbox-card";
+import { MailboxCardsSkeleton } from "./_components/mailbox-card-skeleton";
 import { MailboxFormDialog, type MailboxCreated } from "./_components/mailbox-form-dialog";
 import { SecretDialog } from "./_components/secret-dialog";
 
@@ -69,6 +73,16 @@ export function InboundMailboxesPage() {
     resourceName: "Mailbox",
   });
 
+  const testMutation = useApiMutation({
+    mutationFn: (id: string) => sendInboundMailboxTest(id),
+    onSuccess: (updated) => {
+      queryClient.setQueryData<InboundMailbox[]>(inbox.mailboxes().queryKey, (rows) =>
+        rows?.map((row) => (row.id === updated.id ? updated : row)),
+      );
+    },
+    resourceName: "Mailbox",
+  });
+
   return (
     <PageLayout
       pageHeaderProps={{
@@ -90,10 +104,7 @@ export function InboundMailboxesPage() {
       }}
     >
       {mailboxesQuery.isLoading ? (
-        <div className="grid gap-3 lg:grid-cols-2">
-          <Skeleton className="h-44" />
-          <Skeleton className="h-44" />
-        </div>
+        <MailboxCardsSkeleton />
       ) : mailboxes.length === 0 ? (
         <EmptySheet
           className="my-10"
@@ -130,6 +141,7 @@ export function InboundMailboxesPage() {
               onRotate={() => setRotating(mailbox)}
               onSecret={() => setSecretFor(mailbox)}
               onApiKey={() => setApiKeyFor(mailbox)}
+              onSendTest={() => testMutation.mutateAsync(mailbox.id)}
             />
           ))}
         </div>

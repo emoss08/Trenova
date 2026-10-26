@@ -48,6 +48,11 @@ fails it, fix it in the same change if it is small, or name it in your report.
   ([jobs.md](jobs.md)).
 - **Idempotent everywhere.** HTTP writes take `Idempotency-Key`; activities and webhook
   receivers tolerate replay through unique keys and conditional updates.
+- **Throttle a per-record side effect with a conditional claim.** One `UPDATE … WHERE last_at IS
+  NULL OR last_at <= now - cooldown RETURNING` stamps the record and claims the right to act; no
+  row back is a `RateLimitError` with `RetryAfter`. Never read-then-write, never an in-process
+  limiter (replicas do not share it). Release the claim if the side effect fails
+  (`ClaimTestSend` in `inboundmessagerepository/mailbox.go`).
 - **Fair across tenants.** Fan-out passes a tenant fairness key; per-tenant work is batched so one
   large organization cannot starve the rest; public endpoints are rate limited.
 - **Realtime is invalidation, not payload.** Publish that a record changed

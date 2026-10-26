@@ -86,34 +86,34 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 282 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 274 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 56 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 53 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 108 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
-| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 57 |
+| `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
 | `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 50 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1184 writes: 640 GraphQL mutations and 544 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1172 writes: 640 GraphQL mutations and 532 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
 | Covered by a tool | 459 |
-| Exempt | 725 |
+| Exempt | 713 |
 | — Security | 87 |
-| — Configuration | 282 |
+| — Configuration | 274 |
 | — User preference | 40 |
-| — Infrastructure | 56 |
+| — Infrastructure | 53 |
 | — Agent administration | 108 |
 | — Counterparty | 35 |
-| — Read-only | 57 |
+| — Read-only | 56 |
 | — Attestation | 50 |
 | — Duplicate | 10 |
 | **Pending** | **0** |
-| Total | 1184 |
+| Total | 1172 |
 
 Of the 459 writes an agent should be able to make, 459 have a tool (100%).
 
@@ -188,9 +188,7 @@ The writes no tool performs yet, and what the tool would do.
 | distanceprofile | 5 | 0 | 5 | 0 |
 | document | 16 | 4 | 12 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
-| documentoperations | 3 | 0 | 3 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |
-| documentparsingrule | 9 | 0 | 9 | 0 |
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
@@ -967,14 +965,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `PUT /api/v1/document-controls/`<br>documentcontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
-### documentoperations
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/admin/document-operations/:documentID/reextract/`<br>documentoperationshandler.reextract | Exempt, infrastructure: A repair operation for when processing failed; the platform retries on its own. |
-| `POST /api/v1/admin/document-operations/:documentID/regenerate-preview/`<br>documentoperationshandler.regeneratePreview | Exempt, infrastructure: A repair operation for when processing failed; the platform retries on its own. |
-| `POST /api/v1/admin/document-operations/:documentID/resync-search/`<br>documentoperationshandler.resyncSearch | Exempt, infrastructure: A repair operation for when processing failed; the platform retries on its own. |
-
 ### documentpacketrule
 
 | Write | Decision |
@@ -982,20 +972,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/document-packet-rules/:ruleID/`<br>documentpacketrulehandler.delete | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `POST /api/v1/document-packet-rules/`<br>documentpacketrulehandler.create | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `PUT /api/v1/document-packet-rules/:ruleID/`<br>documentpacketrulehandler.update | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-
-### documentparsingrule
-
-| Write | Decision |
-| --- | --- |
-| `DELETE /api/v1/document-parsing-rules/:ruleSetID/`<br>documentparsingrulehandler.deleteRuleSet | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `DELETE /api/v1/document-parsing-rules/fixtures/:fixtureID/`<br>documentparsingrulehandler.deleteFixture | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/`<br>documentparsingrulehandler.createRuleSet | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/:ruleSetID/fixtures/`<br>documentparsingrulehandler.saveFixture<br>also `PUT /api/v1/document-parsing-rules/fixtures/:fixtureID/` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/:ruleSetID/versions/`<br>documentparsingrulehandler.createVersion | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/versions/:versionID/publish/`<br>documentparsingrulehandler.publishVersion | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/versions/:versionID/simulate/`<br>documentparsingrulehandler.simulateVersion | Exempt, read-only: Runs a parsing rule version against a sample and saves nothing. |
-| `PUT /api/v1/document-parsing-rules/:ruleSetID/`<br>documentparsingrulehandler.updateRuleSet | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `PUT /api/v1/document-parsing-rules/versions/:versionID/`<br>documentparsingrulehandler.updateVersion | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### documenttemplate
 

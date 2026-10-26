@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs"
@@ -61,7 +59,6 @@ type ActivitiesParams struct {
 	AgentEvents         agentports.AgentEventPublisher                 `optional:"true"`
 	ShadowSampler       extractionshadowports.ExtractionShadowSampler  `optional:"true"`
 	Rollout             extractionrolloutports.ExtractionRolloutRouter `optional:"true"`
-	ParsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
 	Imaging             kernelports.Imaging
 	Converter           kernelports.DocumentConverter       `optional:"true"`
 	Triage              inboundmessageports.TriageEventSink `optional:"true"`
@@ -81,7 +78,6 @@ type Activities struct {
 	aiDocumentService   documentaiextractionports.AIDocumentService
 	searchProjection    documentsearchprojectionports.DocumentSearchProjectionService
 	storage             kernelports.Client
-	parsingRuleRuntime  documentparsingruleports.DocumentParsingRuleRuntime
 	workflowStarter     kernelports.WorkflowStarter
 	encryption          *encryptionservice.Service
 	agentEvents         agentports.AgentEventPublisher
@@ -132,7 +128,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		triage:              p.Triage,
 		realtime:            p.Realtime,
 		imaging:             p.Imaging,
-		parsingRuleRuntime:  parsingRuleRuntimeOrNoop(p.ParsingRuleRuntime),
 		converter:           p.Converter,
 		conversionCfg:       p.Config.GetDocumentConversionConfig(),
 	}

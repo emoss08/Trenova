@@ -594,7 +594,7 @@ Tenant-defined fields on core entities.
 
 ### Document intelligence
 
-Automated document parsing rules.
+How uploaded documents are read, classified and extracted.
 
 ![Document intelligence](light/document-intelligence.png)
 

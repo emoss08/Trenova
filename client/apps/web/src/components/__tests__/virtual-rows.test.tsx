@@ -1,5 +1,5 @@
 import { stubLayout } from "@/test/layout";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { useEffect, useRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { VirtualRows, type VirtualRowsHandle } from "../virtual-rows";
@@ -48,6 +48,26 @@ describe("VirtualRows", () => {
     render(<VirtualRows rows={[]} empty={<p>Nothing here</p>} />);
 
     expect(screen.getByText("Nothing here")).toBeInTheDocument();
+  });
+
+  it("windows its rows inside a masked scroll area when given a mask", () => {
+    const { container } = render(
+      <VirtualRows
+        rows={rows(200)}
+        estimateSize={40}
+        initialHeight={320}
+        overscan={4}
+        mask="card"
+        aria-label="Resources"
+      />,
+    );
+
+    const area = container.querySelector('[data-slot="scroll-area"]');
+    expect(area).not.toBeNull();
+    expect(container.querySelectorAll('[data-slot="scroll-area-mask"]').length).toBeGreaterThan(0);
+    expect(within(area as HTMLElement).getByLabelText("Resources")).toBeInTheDocument();
+    expect(screen.getAllByTestId("row").length).toBeLessThan(40);
+    expect(screen.queryByText("Row 199")).not.toBeInTheDocument();
   });
 });
 

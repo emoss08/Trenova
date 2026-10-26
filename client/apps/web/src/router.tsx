@@ -1997,18 +1997,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 },
               },
               {
-                path: "document-parsing-rules",
-                loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
-                  createPermissionLoader(Resource.DocumentParsingRule, Operation.Read),
-                ),
-                async lazy() {
-                  const { DocumentParsingRulesPage } =
-                    await import("@/routes/admin/document-parsing-rules/page");
-                  return { Component: DocumentParsingRulesPage };
-                },
-              },
-              {
                 path: "sequence-configs",
                 loader: createPermissionLoader(Resource.SequenceConfig, Operation.Read),
                 async lazy() {
@@ -2219,18 +2207,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 async lazy() {
                   const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
                   return { Component: APIKeysPage };
-                },
-              },
-              {
-                path: "document-operations",
-                loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
-                  createPermissionLoader(Resource.DocumentOperation, Operation.Read),
-                ),
-                async lazy() {
-                  const { DocumentOperationsPage } =
-                    await import("@/routes/admin/document-operations/page");
-                  return { Component: DocumentOperationsPage };
                 },
               },
               {

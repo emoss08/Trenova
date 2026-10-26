@@ -65,7 +65,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentaiextraction/documentaiextractiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentpacketrule/documentpacketruledb"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule/documentparsingruledb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection/documentsearchprojectiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentupload/documentuploaddb"
@@ -344,9 +343,6 @@ func All() []*schema.Table {
 		documentcontentdb.ContentsSchema(),
 		tenantdb.DocumentControlsSchema(),
 		documentpacketruledb.DocumentPacketRulesSchema(),
-		documentparsingruledb.FixturesSchema(),
-		documentparsingruledb.RuleSetsSchema(),
-		documentparsingruledb.RuleVersionsSchema(),
 		documentsearchprojectiondb.ProjectionsSchema(),
 		documentshipmentdraftdb.DocumentShipmentDraftsSchema(),
 		documenttemplatedb.DocumentTemplateAssignmentsSchema(),

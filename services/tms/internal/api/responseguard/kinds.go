@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/documentparsingrule"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -54,7 +53,6 @@ var namedKinds = map[reflect.Type]permission.Resource{
 	reflect.TypeFor[email.Profile]():                       permission.ResourceEmailProfile,
 	reflect.TypeFor[email.Message]():                       permission.ResourceEmailLog,
 	reflect.TypeFor[glaccount.GLAccount]():                 permission.ResourceGeneralLedgerAccount,
-	reflect.TypeFor[documentparsingrule.RuleSet]():         permission.ResourceDocumentParsingRule,
 	reflect.TypeFor[worker.WorkerLeaveCase]():              permission.ResourceWorkerLeave,
 	reflect.TypeFor[worker.WorkerLeaveEntry]():             permission.ResourceWorkerLeave,
 	reflect.TypeFor[worker.WorkerDOTViolation]():           permission.ResourceWorkerDOTTest,

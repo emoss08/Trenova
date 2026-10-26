@@ -23,7 +23,6 @@ func mergeAIAnalysis(
 	merged.ClassifierSource = fallback.ClassifierSource
 	merged.ProviderFingerprint = fallback.ProviderFingerprint
 	merged.ClassificationReason = fallback.ClassificationReason
-	merged.ParsingRuleMetadata = fallback.ParsingRuleMetadata
 	merged.RawExcerpt = fallback.RawExcerpt
 	return merged, true, ""
 }
