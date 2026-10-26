@@ -250,7 +250,13 @@ var EdiCommunicationProfileSpec TypeSpec
 
 var EdiConnectionSpec TypeSpec
 
+var EdiFlowInstanceSpec TypeSpec
+
 var EdiInboundFileSpec TypeSpec
+
+var EdiLadingProjectSpec TypeSpec
+
+var EdiLadingVersionSpec TypeSpec
 
 var EdiMappingProfileSpec TypeSpec
 
@@ -264,17 +270,9 @@ var EdiPartnerSpec TypeSpec
 
 var EdiPartnerCustomerSpec TypeSpec
 
-var EdiPartnerDocumentProfileSpec TypeSpec
-
-var EdiTemplateSpec TypeSpec
-
-var EdiTemplateVersionSpec TypeSpec
-
 var EdiTenderChargeSpec TypeSpec
 
 var EdiTenderCommoditySpec TypeSpec
-
-var EdiTestCaseSpec TypeSpec
 
 var EdiTransferSpec TypeSpec
 
@@ -12243,6 +12241,87 @@ func init() {
 		},
 	}
 
+	EdiFlowInstanceSpec = TypeSpec{
+		TypeName: "EdiFlowInstance",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
+			},
+			{
+				Name:   "projectId",
+				Column: "project_id",
+			},
+			{
+				Name:   "versionId",
+				Column: "version_id",
+			},
+			{
+				Name:   "flow",
+				Column: "flow",
+			},
+			{
+				Name:   "key",
+				Column: "key",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "reason",
+				Column: "reason",
+			},
+			{
+				Name:   "wakeAt",
+				Column: "wake_at",
+			},
+			{
+				Name:   "shipmentId",
+				Column: "shipment_id",
+			},
+			{
+				Name:   "transferId",
+				Column: "transfer_id",
+			},
+			{
+				Name:   "lastEventAt",
+				Column: "last_event_at",
+			},
+			{
+				Name:   "heldAt",
+				Column: "held_at",
+			},
+			{
+				Name:   "resolvedAt",
+				Column: "resolved_at",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name:   "partner",
+				Column: "edi_partner_id",
+				Relation: &RelationSpec{
+					Target: &EdiPartnerSpec,
+				},
+			},
+		},
+	}
+
 	EdiInboundFileSpec = TypeSpec{
 		TypeName: "EdiInboundFile",
 		AlwaysColumns: []string{
@@ -12352,6 +12431,126 @@ func init() {
 			{
 				Name:   "rawPurgedAt",
 				Column: "raw_purged_at",
+			},
+		},
+	}
+
+	EdiLadingProjectSpec = TypeSpec{
+		TypeName: "EdiLadingProject",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
+			},
+			{
+				Name:   "activeVersionId",
+				Column: "active_version_id",
+			},
+			{
+				Name:   "shadowVersionId",
+				Column: "shadow_version_id",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	EdiLadingVersionSpec = TypeSpec{
+		TypeName: "EdiLadingVersion",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "projectId",
+				Column: "project_id",
+			},
+			{
+				Name:   "number",
+				Column: "number",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "parentVersionId",
+				Column: "parent_version_id",
+			},
+			{
+				Name:   "readiness",
+				Column: "readiness",
+			},
+			{
+				Name:   "notes",
+				Column: "notes",
+			},
+			{
+				Name:   "errorCount",
+				Column: "error_count",
+			},
+			{
+				Name:   "warningCount",
+				Column: "warning_count",
+			},
+			{
+				Name:   "shadowUntil",
+				Column: "shadow_until",
+			},
+			{
+				Name:   "certifiedAt",
+				Column: "certified_at",
+			},
+			{
+				Name:   "activatedAt",
+				Column: "activated_at",
+			},
+			{
+				Name:   "supersededAt",
+				Column: "superseded_at",
+			},
+			{
+				Name:   "archivedAt",
+				Column: "archived_at",
+			},
+			{
+				Name:   "interchange",
+				Column: "manifest",
+			},
+			{
+				Name:   "exchanges",
+				Column: "manifest",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
@@ -12505,16 +12704,12 @@ func init() {
 				Column: "document_type_id",
 			},
 			{
-				Name:   "partnerDocumentProfileId",
-				Column: "partner_document_profile_id",
+				Name:   "ladingVersionId",
+				Column: "lading_version_id",
 			},
 			{
-				Name:   "templateId",
-				Column: "template_id",
-			},
-			{
-				Name:   "templateVersionId",
-				Column: "template_version_id",
+				Name:   "flowInstanceId",
+				Column: "flow_instance_id",
 			},
 			{
 				Name:   "shipmentId",
@@ -12813,243 +13008,6 @@ func init() {
 		},
 	}
 
-	EdiPartnerDocumentProfileSpec = TypeSpec{
-		TypeName: "EdiPartnerDocumentProfile",
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:   "id",
-				Column: "id",
-			},
-			{
-				Name:   "ediPartnerId",
-				Column: "edi_partner_id",
-			},
-			{
-				Name:   "name",
-				Column: "name",
-			},
-			{
-				Name:   "status",
-				Column: "status",
-			},
-			{
-				Name:   "direction",
-				Column: "direction",
-			},
-			{
-				Name:   "transactionSet",
-				Column: "transaction_set",
-			},
-			{
-				Name:   "functionalGroupId",
-				Column: "functional_group_id",
-			},
-			{
-				Name:   "x12VersionOverride",
-				Column: "x12_version_override",
-			},
-			{
-				Name:   "envelope",
-				Column: "envelope",
-			},
-			{
-				Name:   "acknowledgment",
-				Column: "acknowledgment",
-			},
-			{
-				Name:   "partner",
-				Column: "edi_partner_id",
-				Relation: &RelationSpec{
-					Target: &EdiPartnerSpec,
-				},
-			},
-		},
-	}
-
-	EdiTemplateSpec = TypeSpec{
-		TypeName: "EdiTemplate",
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:   "id",
-				Column: "id",
-			},
-			{
-				Name:   "businessUnitId",
-				Column: "business_unit_id",
-			},
-			{
-				Name:   "organizationId",
-				Column: "organization_id",
-			},
-			{
-				Name:   "documentTypeId",
-				Column: "document_type_id",
-			},
-			{
-				Name:   "name",
-				Column: "name",
-			},
-			{
-				Name:   "description",
-				Column: "description",
-			},
-			{
-				Name:   "direction",
-				Column: "direction",
-			},
-			{
-				Name:   "standard",
-				Column: "standard",
-			},
-			{
-				Name:   "transactionSet",
-				Column: "transaction_set",
-			},
-			{
-				Name:   "status",
-				Column: "status",
-			},
-			{
-				Name:   "version",
-				Column: "version",
-			},
-			{
-				Name:   "createdAt",
-				Column: "created_at",
-			},
-			{
-				Name:   "updatedAt",
-				Column: "updated_at",
-			},
-			{
-				Name: "activeVersion",
-				Relation: &RelationSpec{
-					Target: &EdiTemplateVersionSpec,
-				},
-			},
-			{
-				Name: "versions",
-				Relation: &RelationSpec{
-					Target: &EdiTemplateVersionSpec,
-				},
-			},
-		},
-	}
-
-	EdiTemplateVersionSpec = TypeSpec{
-		TypeName: "EdiTemplateVersion",
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:   "id",
-				Column: "id",
-			},
-			{
-				Name:   "businessUnitId",
-				Column: "business_unit_id",
-			},
-			{
-				Name:   "organizationId",
-				Column: "organization_id",
-			},
-			{
-				Name:   "templateId",
-				Column: "template_id",
-			},
-			{
-				Name:   "sourceVersionId",
-				Column: "source_version_id",
-			},
-			{
-				Name:   "versionNumber",
-				Column: "version_number",
-			},
-			{
-				Name:   "x12Version",
-				Column: "x12_version",
-			},
-			{
-				Name:   "functionalGroupId",
-				Column: "functional_group_id",
-			},
-			{
-				Name:   "status",
-				Column: "status",
-			},
-			{
-				Name:   "isActive",
-				Column: "is_active",
-			},
-			{
-				Name:   "notes",
-				Column: "notes",
-			},
-			{
-				Name:   "certificationNotes",
-				Column: "certification_notes",
-			},
-			{
-				Name:   "activationNotes",
-				Column: "activation_notes",
-			},
-			{
-				Name:   "archiveNotes",
-				Column: "archive_notes",
-			},
-			{
-				Name:   "deprecatedNotes",
-				Column: "deprecated_notes",
-			},
-			{
-				Name:   "supersededNotes",
-				Column: "superseded_notes",
-			},
-			{
-				Name:   "certifiedAt",
-				Column: "certified_at",
-			},
-			{
-				Name:   "activatedAt",
-				Column: "activated_at",
-			},
-			{
-				Name:   "archivedAt",
-				Column: "archived_at",
-			},
-			{
-				Name:   "deprecatedAt",
-				Column: "deprecated_at",
-			},
-			{
-				Name:   "supersededAt",
-				Column: "superseded_at",
-			},
-			{
-				Name:   "version",
-				Column: "version",
-			},
-			{
-				Name:   "createdAt",
-				Column: "created_at",
-			},
-			{
-				Name:   "updatedAt",
-				Column: "updated_at",
-			},
-		},
-	}
-
 	EdiTenderChargeSpec = TypeSpec{
 		TypeName: "EdiTenderCharge",
 		AlwaysColumns: []string{
@@ -13090,67 +13048,6 @@ func init() {
 			{
 				Name:   "pieces",
 				Column: "pieces",
-			},
-		},
-	}
-
-	EdiTestCaseSpec = TypeSpec{
-		TypeName: "EdiTestCase",
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:   "id",
-				Column: "id",
-			},
-			{
-				Name:   "businessUnitId",
-				Column: "business_unit_id",
-			},
-			{
-				Name:   "organizationId",
-				Column: "organization_id",
-			},
-			{
-				Name:   "partnerDocumentProfileId",
-				Column: "partner_document_profile_id",
-			},
-			{
-				Name:   "name",
-				Column: "name",
-			},
-			{
-				Name:   "description",
-				Column: "description",
-			},
-			{
-				Name:   "expectedWarnings",
-				Column: "expected_warnings",
-			},
-			{
-				Name:   "expectedErrors",
-				Column: "expected_errors",
-			},
-			{
-				Name:   "version",
-				Column: "version",
-			},
-			{
-				Name:   "createdAt",
-				Column: "created_at",
-			},
-			{
-				Name:   "updatedAt",
-				Column: "updated_at",
-			},
-			{
-				Name:   "documentProfile",
-				Column: "partner_document_profile_id",
-				Relation: &RelationSpec{
-					Target: &EdiPartnerDocumentProfileSpec,
-				},
 			},
 		},
 	}

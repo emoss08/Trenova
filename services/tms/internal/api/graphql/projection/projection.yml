@@ -1,4 +1,7 @@
 aliases:
+  EdiLadingVersion:
+    interchange: manifest
+    exchanges: manifest
   EdiTransfer:
     direction: targetOrganizationId
     canDecide: status

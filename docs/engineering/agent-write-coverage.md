@@ -86,34 +86,34 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 274 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 267 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
 | `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 53 |
 | `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 108 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 50 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 52 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1172 writes: 640 GraphQL mutations and 532 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1167 writes: 640 GraphQL mutations and 527 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 459 |
-| Exempt | 713 |
+| Covered by a tool | 458 |
+| Exempt | 708 |
 | — Security | 87 |
-| — Configuration | 274 |
+| — Configuration | 267 |
 | — User preference | 40 |
 | — Infrastructure | 53 |
 | — Agent administration | 108 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
-| — Attestation | 50 |
+| — Attestation | 52 |
 | — Duplicate | 10 |
-| **Pending** | **0** |
-| Total | 1172 |
+| **Pending** | **1** |
+| Total | 1167 |
 
 Of the 459 writes an agent should be able to make, 458 have a tool (99%).
 
