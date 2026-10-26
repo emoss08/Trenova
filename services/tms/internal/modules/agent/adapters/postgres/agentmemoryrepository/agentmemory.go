@@ -706,14 +706,14 @@ func replaceableStatuses() []agent.MemoryStatus {
 func taintsLast() keel.Order {
 	m := agentdb.Memories
 
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(keel.And(keel.BoolOf(m.Tainted), m.ReviewedAt.IsNull()), orderRank(1)).
 		Else(orderRank(0)).
 		Asc()
 }
 
 func activeFirst() keel.Order {
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(agentdb.Memories.Status.Eq(agent.MemoryStatusActive), orderRank(0)).
 		Else(orderRank(1)).
 		Asc()
@@ -724,7 +724,7 @@ func activeFirst() keel.Order {
 func kindOrder() keel.Order {
 	kind := agentdb.Memories.Kind
 
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(kind.Eq(agent.MemoryKindInstruction), orderRank(0)).
 		When(kind.Eq(agent.MemoryKindCorrection), orderRank(1)).
 		When(kind.Eq(agent.MemoryKindProcedure), orderRank(2)).
@@ -735,7 +735,7 @@ func kindOrder() keel.Order {
 func candidateOrder() keel.Order {
 	m := agentdb.Memories
 
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(m.SubjectType.IsNotNull(), orderRank(0)).
 		When(keel.And(m.ToolName.IsNull(), m.Kind.Eq(agent.MemoryKindInstruction)), orderRank(1)).
 		When(m.ToolName.IsNotNull(), orderRank(2)).

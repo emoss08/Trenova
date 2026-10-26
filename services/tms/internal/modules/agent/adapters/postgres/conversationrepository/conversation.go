@@ -188,7 +188,7 @@ func threadListScope(userID pulid.ID, includeUnlisted bool) keel.Pred {
 
 func threadPositionPred(
 	touchedAt keel.Expr,
-	compare func(keel.DynExpr, any) keel.DynExpr,
+	compare func(keel.TupleExpr, keel.TupleExpr) keel.Pred,
 	cursor *threadCursor,
 ) keel.Pred {
 	if cursor == nil {
@@ -198,8 +198,8 @@ func threadPositionPred(
 	th := conversationdb.Threads
 
 	return compare(
-		keel.DynRow(th.Pinned, touchedAt, th.ID),
-		keel.DynRow(cursor.pinned, cursor.touchedAt, cursor.id.String()),
+		keel.Tuple(th.Pinned, touchedAt, th.ID),
+		keel.Tuple(cursor.pinned, cursor.touchedAt, cursor.id.String()),
 	)
 }
 
@@ -220,8 +220,8 @@ func threadPageQuery(
 		pinned,
 		keel.When(req.TouchedFrom > 0, touchedAt.Gte(req.TouchedFrom)),
 		keel.When(req.TouchedBefore > 0, touchedAt.Lt(req.TouchedBefore)),
-		threadPositionPred(touchedAt, keel.DynExpr.Lt, window.after),
-		threadPositionPred(touchedAt, keel.DynExpr.Gte, window.until),
+		threadPositionPred(touchedAt, keel.TupleExpr.Lt, window.after),
+		threadPositionPred(touchedAt, keel.TupleExpr.Gte, window.until),
 	).
 		Order(th.Pinned.Desc(), keel.Desc(touchedAt), th.ID.Desc()).
 		Limit(window.limit + 1)
@@ -235,7 +235,7 @@ type threadShelfBand struct {
 func threadShelfBandExpr(edges []int64) keel.Expr {
 	th := conversationdb.Threads
 	touchedAt := threadTouchedAt()
-	band := keel.DynCase().When(keel.BoolOf(th.Pinned), keel.Int64(-1))
+	band := keel.CaseInt64().When(keel.BoolOf(th.Pinned), keel.Int64(-1))
 	for index, edge := range edges {
 		band = band.When(touchedAt.Gte(edge), keel.Int64(int64(index)))
 	}
@@ -468,7 +468,7 @@ func messagesQuery(req *agentports.ListMessagesRequest) *keel.Query[*conversatio
 func afterLatestCompaction(threadID pulid.ID) keel.Pred {
 	m := conversationdb.Messages
 	c := conversationdb.Messages.As("compacted")
-	through := c.Pick(keel.DynOf(c.Compaction.Text("through")).Cast(keel.TypeInt64)).
+	through := c.Pick(keel.CastInt64(c.Compaction.Text("through"))).
 		Where(c.ThreadID.Eq(threadID), c.Kind.Eq(conversation.MessageKindCompaction)).
 		Order(c.Sequence.Desc()).
 		Limit(1)

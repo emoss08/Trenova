@@ -437,9 +437,9 @@ func (r *repository) SetToolTier(
 		).Update(
 			ctx,
 			r.db.Keel(ctx),
-			d.ToolTiers.ToExpr(keel.JSONBOf(keel.DynCase().
+			d.ToolTiers.ToExpr(keel.CaseJSONB().
 				When(d.ToolTiers.TypeOf().Eq("object"), d.ToolTiers).
-				Else(keel.JSONBuildObject())).
+				Else(keel.JSONBuildObject()).
 				Concat(keel.JSONBuildObject(keel.Pair(req.ToolName, string(req.Tier))))),
 		)
 		if err != nil {
@@ -544,11 +544,9 @@ func (r *repository) removeDelegate(ctx context.Context, id pulid.ID) error {
 	_, err := d.Where(d.DelegateIDs.Has(id.String())).Update(
 		ctx,
 		r.db.Keel(ctx),
-		d.DelegateIDs.ToExpr(keel.DynFunc(
-			"array_remove",
-			d.DelegateIDs,
-			keel.DynLit(id.String()).Cast(keel.TypeString),
-		).NullIf([]string{})),
+		d.DelegateIDs.ToExpr(
+			keel.DynOf(d.DelegateIDs.Without(keel.Text(id.String()))).NullIf([]string{}),
+		),
 	)
 	if err != nil {
 		return fmt.Errorf("remove a deleted agent from the agents that delegate to it: %w", err)

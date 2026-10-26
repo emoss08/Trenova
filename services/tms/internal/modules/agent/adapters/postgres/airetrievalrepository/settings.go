@@ -464,8 +464,8 @@ func (r *repository) ListIndexedTenants(
 			Limit(limit)
 		if req.After != nil {
 			q.Where(
-				keel.DynRow(s.OrganizationID, s.BusinessUnitID).
-					Gt(keel.DynRow(req.After.OrgID, req.After.BuID)),
+				keel.Tuple(s.OrganizationID, s.BusinessUnitID).
+					Gt(keel.Tuple(req.After.OrgID, req.After.BuID)),
 			)
 		}
 

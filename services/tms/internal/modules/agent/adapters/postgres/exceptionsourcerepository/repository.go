@@ -169,7 +169,7 @@ func exhaustedTendersQuery(
 
 	newerTender := newer.Where(
 		newer.ShipmentMoveID.EqCol(tc.ShipmentMoveID),
-		keel.DynRow(newer.CreatedAt, newer.ID).Gt(keel.DynRow(tc.CreatedAt, tc.ID)),
+		keel.Tuple(newer.CreatedAt, newer.ID).Gt(keel.Tuple(tc.CreatedAt, tc.ID)),
 	)
 	covered := ca.Where(
 		ca.ShipmentMoveID.EqCol(sm.ID),

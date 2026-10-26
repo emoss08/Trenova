@@ -72,7 +72,7 @@ func identityOf(artifact *assistantartifact.Artifact) (identity, error) {
 	case artifact.SourceToolCallID != "":
 		return identity{
 			conflict: keel.OnConflict(a.ThreadID, a.SourceToolCallID, a.Kind).
-				Where(keel.DynOf(a.SourceToolCallID).Ne(keel.DynConst(""))),
+				Where(a.SourceToolCallID.NeCol(keel.ConstText(""))),
 			match: []keel.Pred{
 				a.SourceToolCallID.Eq(artifact.SourceToolCallID),
 				a.Kind.Eq(artifact.Kind),

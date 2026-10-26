@@ -377,7 +377,7 @@ func (r *repository) ListSamplingCases(
 		ev := agentdb.Evaluations
 
 		lastFailure := keel.Scalar(ev.
-			Pick(keel.DynCase().
+			Pick(keel.CaseInt64().
 				When(
 					keel.Or(
 						ev.Status.Eq(agent.EvaluationStatusFailed),

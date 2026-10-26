@@ -160,12 +160,12 @@ func trendBucket(w *aianalyticsdb.WorkUnitsTable, starts []int64) keel.Expr {
 	if len(starts) == 1 {
 		return keel.Int64(starts[0])
 	}
-	bucket := keel.DynCase()
+	bucket := keel.CaseInt64()
 	for index := len(starts) - 1; index > 0; index-- {
-		bucket = bucket.When(w.FinishedAt.Gte(starts[index]), starts[index])
+		bucket = bucket.When(w.FinishedAt.Gte(starts[index]), keel.Int64(starts[index]))
 	}
 
-	return bucket.Else(starts[0])
+	return bucket.Else(keel.Int64(starts[0]))
 }
 
 func trendQuery(req *aianalyticsports.TrendRequest) *keel.Query[*aianalytics.WorkUnit] {
@@ -176,7 +176,7 @@ func trendQuery(req *aianalyticsports.TrendRequest) *keel.Query[*aianalytics.Wor
 		keel.Count(),
 		keel.Count().Filter(completedUnit(w)),
 		summed(w.ToolCalls),
-		summed(keel.DynOf(w.ToolFailuresModel).Add(w.ToolFailuresTool)),
+		summed(w.ToolFailuresModel.Add(w.ToolFailuresTool)),
 		keel.PercentileCont(0.5, w.DurationMs.Asc()).Filter(completedUnit(w)),
 	)...).
 		Where(append(unitWindow(w, &req.Filter), w.FinishedAt.Gte(req.BucketStarts[0]))...).
@@ -288,12 +288,12 @@ func providerCallsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytic
 
 func firstTokenQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.ProviderHour] {
 	h := aianalyticsdb.ProviderHours
+	hist := keel.Int64ArrayOf(h.FirstTokenHist)
 	b := keel.Rows("b", []string{"v", "idx"},
-		keel.DynFunc("unnest", h.FirstTokenHist),
-		keel.DynFunc("generate_series", keel.DynConst(1),
-			keel.DynFunc("cardinality", h.FirstTokenHist)),
+		hist.Unnest(),
+		keel.GenerateSeries(keel.ConstInt64(1), keel.Int64Of(hist.Len())),
 	)
-	bucket := keel.DynOf(b.Col("idx")).Sub(keel.DynConst(1))
+	bucket := keel.Int64Of(b.Col("idx")).Sub(keel.ConstInt64(1))
 
 	return h.JoinLateral(b).
 		Pick(h.ModelKey, h.ProviderID, bucket, keel.Sum(b.Col("v"))).
@@ -332,7 +332,7 @@ func providerVersionsQuery(
 		v.Version,
 		v.Snapshot.Text("name").Coalesce(""),
 		v.Snapshot.Text("model").Coalesce(""),
-		keel.DynOf(v.Snapshot.Text("enabled")).Cast(keel.TypeBool).Coalesce(false),
+		keel.CastBool(v.Snapshot.Text("enabled")).Coalesce(false),
 		v.CreatedAt,
 	).
 		Where(
@@ -386,7 +386,7 @@ func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*ke
 				Coalesce(outcome.Text("reason").Coalesce("")).
 				Left(300),
 			w.AgentDefinitionID.Coalesce(""),
-			keel.Int64Of(keel.DynOf(s.SettledAtMs).Div(1000)).Coalesce(s.UpdatedAt),
+			s.SettledAtMs.Div(keel.Int64(1000)).Coalesce(s.UpdatedAt),
 		).
 		Where(
 			s.Kind.Eq(string(agentports.RunStepTool)),

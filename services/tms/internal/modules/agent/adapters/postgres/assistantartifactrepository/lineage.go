@@ -77,7 +77,7 @@ func decodeCursor(raw string) (lineageCursor, error) {
 // own table so the server filters on the families the Desk draws.
 func familyExpr() keel.Expr {
 	a := assistantartifactdb.Artifacts
-	family := keel.DynCase()
+	family := keel.CaseString()
 	for _, f := range assistantartifact.AllFamilies() {
 		kinds, viewPath := assistantartifact.FamilyKinds(f)
 		if len(kinds) == 0 {
@@ -276,8 +276,8 @@ func pageQuery(
 		window.Where(keel.BoolOf(pinned))
 	}
 	if cursor != nil {
-		window.Where(keel.DynRow(pinned, last, root).Lt(
-			keel.DynRow(cursor.pinned, cursor.last, cursor.root),
+		window.Where(keel.Tuple(pinned, last, root).Lt(
+			keel.Tuple(cursor.pinned, cursor.last, cursor.root),
 		))
 	}
 
@@ -345,9 +345,9 @@ func summaryQuery(req *versionsRequest) *keel.Query[*assistantartifact.Artifact]
 func summaryPayloadOf(payload keel.JSONBCol) keel.JSONBExpr {
 	summary := keel.JSONBuildObject()
 	for _, key := range assistantartifact.SummaryPayloadKeys() {
-		summary = summary.Concat(keel.JSONBOf(keel.DynCase().
+		summary = summary.Concat(keel.CaseJSONB().
 			When(payload.HasKey(key), keel.JSONBuildObject(keel.Pair(key, payload.Path(key)))).
-			Else(keel.JSONBuildObject())))
+			Else(keel.JSONBuildObject()))
 	}
 
 	return summary

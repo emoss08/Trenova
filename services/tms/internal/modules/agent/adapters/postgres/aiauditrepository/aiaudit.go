@@ -425,7 +425,7 @@ func (r *repository) ListPage(
 		e := aiauditdb.AIAuditEvents
 		q := scoped(&req.Scope)
 		if req.HasAfterCursor {
-			q.Where(keel.DynRow(e.OccurredAt, e.ID).Gt(keel.DynRow(req.AfterOccurred, req.AfterID)))
+			q.Where(keel.Tuple(e.OccurredAt, e.ID).Gt(keel.Tuple(req.AfterOccurred, req.AfterID)))
 		}
 
 		events, err := q.

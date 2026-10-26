@@ -219,7 +219,7 @@ var sources = map[permission.Resource]source{
 		paidOn := keel.ToTimestamp(t.PaymentDate).AtTimeZone(keel.Text("UTC")).ToChar("YYYY-MM-DD")
 		label := t.ReferenceNumber.
 			NullIf("").
-			Coalesce(keel.DynLit("Payment of ").Cast(keel.TypeString).Concat(paidOn))
+			Coalesce(keel.Text("Payment of ").Cat(paidOn))
 		return t.Pick(t.ID, labelText(label)).
 			Where(t.ID.In(ids...))
 	},

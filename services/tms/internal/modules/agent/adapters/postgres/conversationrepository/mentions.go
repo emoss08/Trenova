@@ -163,7 +163,7 @@ func carrierMentions(terms mentionTerms) keel.Projection {
 		c.Name,
 		keel.ConcatWS(
 			" · ",
-			keel.DynLit("MC ").Concat(c.MCNumber.NullIf("")),
+			keel.Text("MC ").Cat(c.MCNumber.NullIf("")),
 			humanize(c.ComplianceStatus),
 		),
 	).

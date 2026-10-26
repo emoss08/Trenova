@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentrosterports"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 )
 
@@ -160,7 +161,10 @@ func (r *repository) AgentRoster(
 		p := agentdb.AgentProposals
 		decidedRun := agentdb.AgentRuns.As("decided_run")
 		day := keel.CastInt64(
-			keel.Float64Of(keel.DynOf(run.CreatedAt).Sub(req.RunsSince).Div(86400)).Floor(),
+			keel.Float64Of(
+				run.CreatedAt.Sub(keel.Int64(req.RunsSince)).
+					Div(keel.Int64(timeutils.SecondsPerDay)),
+			).Floor(),
 		)
 
 		var (

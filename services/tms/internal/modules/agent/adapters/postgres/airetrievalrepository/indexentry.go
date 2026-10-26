@@ -418,12 +418,12 @@ func applyOutcome(
 	}
 	if status == airetrieval.IndexStatusFailed {
 		sets = append(sets,
-			e.Status.ToExpr(keel.DynCase().
+			e.Status.ToExpr(keel.CaseString().
 				When(
 					keel.Int64Of(outcome.Col("next_attempt_at")).Eq(0),
-					string(airetrieval.IndexStatusFailed),
+					keel.Text(string(airetrieval.IndexStatusFailed)),
 				).
-				Else(string(airetrieval.IndexStatusPending))),
+				Else(keel.Text(string(airetrieval.IndexStatusPending)))),
 			e.NextAttemptAt.ToExpr(keel.Int64Of(outcome.Col("next_attempt_at")).NullIf(0)),
 		)
 	} else {

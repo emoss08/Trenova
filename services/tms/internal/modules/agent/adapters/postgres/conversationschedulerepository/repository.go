@@ -111,7 +111,7 @@ func (r *repository) create(
 	th := conversationdb.Threads
 	if _, err = th.Where(th.ID.Eq(schedule.ThreadID)).Update(ctx, db,
 		th.LastMessageAt.To(now),
-		th.Title.ToExpr(keel.DynCase().
+		th.Title.ToExpr(keel.CaseString().
 			When(
 				th.Title.Trim().NullIf("").IsNull(),
 				keel.Text(threadTitle).NullIf(""),

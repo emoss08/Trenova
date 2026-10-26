@@ -177,16 +177,16 @@ func verdictsQuery(req *agentports.ScorecardRequest) *keel.Query[*keel.Row] {
 	labelled := keel.CTE("labelled", []string{"tool_name", "verdict", "reason"}, step.
 		Pick(
 			step.ToolName,
-			step.Outcome.Text("verdict").NullIf("").Coalesce(keel.DynCase().
+			step.Outcome.Text("verdict").NullIf("").Coalesce(keel.CaseString().
 				When(
 					step.Status.Eq(string(agentports.RunStepStarted)),
-					string(aitrace.OutcomeUnknown),
+					keel.Text(string(aitrace.OutcomeUnknown)),
 				).
 				When(
 					step.Status.Eq(string(agentports.RunStepFailed)),
-					string(aitrace.OutcomeFailed),
+					keel.Text(string(aitrace.OutcomeFailed)),
 				).
-				Else(string(aitrace.OutcomeRan))),
+				Else(keel.Text(string(aitrace.OutcomeRan)))),
 			step.Outcome.Text("reason").Coalesce(""),
 		).
 		Where(

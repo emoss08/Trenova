@@ -48,7 +48,7 @@ func severityRank() keel.Expr {
 	severity := insightdb.Insights.Severity
 	rank := keel.Int64
 
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(severity.Eq(insight.SeverityCritical), rank(3)).
 		When(severity.Eq(insight.SeverityWarning), rank(2)).
 		When(severity.Eq(insight.SeverityInfo), rank(1)).

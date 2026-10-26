@@ -273,8 +273,8 @@ func (r *repository) weeklyTotals(
 ) ([]aicorrection.WeekTotal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aicorrection.WeekTotal, error) {
 		c := aicorrectiondb.Corrections
-		week := keel.DynOf(c.CapturedAt).Sub(
-			keel.DynOf(c.CapturedAt).Sub(int64(firstMondayEpoch)).Mod(int64(secondsPerWeek)),
+		week := c.CapturedAt.Sub(
+			c.CapturedAt.Sub(keel.Int64(firstMondayEpoch)).Mod(keel.Int64(secondsPerWeek)),
 		)
 		totals, err := keel.Into[aicorrection.WeekTotal](ctx, r.db.Keel(ctx), q.
 			Where(
