@@ -13,21 +13,20 @@ func TestBuildPartnerReadiness(t *testing.T) {
 	t.Parallel()
 
 	ready := buildPartnerReadiness(&ediports.EDIPartnerReadinessRow{
-		PartnerID:             pulid.MustNew("edip_"),
-		ContactEmail:          "ops@partner.example",
-		Timezone:              "America/Chicago",
-		HasActiveProfile:      true,
-		HasMappingProfile:     true,
-		HasInboundDocProfile:  true,
-		HasOutboundDocProfile: true,
-		HasPassingTestCase:    true,
-		EnabledForInbound:     true,
-		EnabledForOutbound:    true,
-		Kind:                  "External",
+		PartnerID:          pulid.MustNew("edip_"),
+		ContactEmail:       "ops@partner.example",
+		Timezone:           "America/Chicago",
+		HasActiveProfile:   true,
+		HasMappingProfile:  true,
+		HasLadingProject:   true,
+		HasActiveVersion:   true,
+		EnabledForInbound:  true,
+		EnabledForOutbound: true,
+		Kind:               "External",
 	})
 	assert.True(t, ready.Ready)
 	assert.Equal(t, ready.TotalCount, ready.CompletedCount)
-	assert.Len(t, ready.Items, 6)
+	assert.Len(t, ready.Items, 5)
 
 	partial := buildPartnerReadiness(&ediports.EDIPartnerReadinessRow{
 		PartnerID:          pulid.MustNew("edip_"),
@@ -49,6 +48,7 @@ func TestBuildPartnerReadiness(t *testing.T) {
 	})
 	require.NotEmpty(t, internal.Items)
 	for _, item := range internal.Items {
-		assert.NotEqual(t, "test-case", item.Key)
+		assert.NotEqual(t, "lading-project", item.Key)
+		assert.NotEqual(t, "lading-active-version", item.Key)
 	}
 }

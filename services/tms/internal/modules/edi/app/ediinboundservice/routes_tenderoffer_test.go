@@ -1,15 +1,17 @@
 package ediinboundservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -146,13 +148,28 @@ func rawTenderResponse990(offerRef, reservationCode, remarks string) string {
 	return raw
 }
 
-func parse990Transaction(t *testing.T, raw string) *parsedTransaction {
+// parse990Transaction reads a test 990 and what it answers, as a partner's response map would
+// read B1, L11 and K1.
+func parse990Transaction(t *testing.T, raw string) (*parsedTransaction, *tenderResponseDetails) {
 	t.Helper()
 	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
-	require.Equal(t, edi.TransactionSet990, interchange.transactions[0].set)
-	return &interchange.transactions[0]
+	transaction := &interchange.transactions[0]
+	require.Equal(t, edi.TransactionSet990, transaction.set)
+	details := &tenderResponseDetails{}
+	if b1 := findSegment(transaction.segments, "B1"); b1 != nil {
+		details.scac = elementValue(b1, 1)
+		details.shipmentRef = elementValue(b1, 2)
+		details.reservationCode = elementValue(b1, 4)
+	}
+	for _, l11 := range findSegmentsByID(transaction.segments, "L11") {
+		details.references = append(details.references, elementValue(&l11, 1))
+	}
+	if k1 := findSegment(transaction.segments, "K1"); k1 != nil {
+		details.remarks = elementValue(k1, 1)
+	}
+	return transaction, details
 }
 
 func TestRouteTenderResponse_OfferFirstAccept(t *testing.T) {
@@ -161,13 +178,14 @@ func TestRouteTenderResponse_OfferFirstAccept(t *testing.T) {
 	fixture := newTenderOfferRouteFixture(t)
 	offerID := pulid.MustNew("tof_")
 	fixture.tenderRepo.offer = fixture.newOffer(offerID)
-	transaction := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -191,7 +209,7 @@ func TestRouteTenderResponse_OfferFirstDeclineCarriesReason(t *testing.T) {
 	fixture := newTenderOfferRouteFixture(t)
 	offerID := pulid.MustNew("tof_")
 	fixture.tenderRepo.offer = fixture.newOffer(offerID)
-	transaction := parse990Transaction(
+	transaction, details := parse990Transaction(
 		t,
 		rawTenderResponse990(offerID.String(), "D", "No capacity"),
 	)
@@ -201,6 +219,7 @@ func TestRouteTenderResponse_OfferFirstDeclineCarriesReason(t *testing.T) {
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -221,13 +240,14 @@ func TestRouteTenderResponse_OfferDeclineCodesRecordDecline(t *testing.T) {
 			fixture := newTenderOfferRouteFixture(t)
 			offerID := pulid.MustNew("tof_")
 			fixture.tenderRepo.offer = fixture.newOffer(offerID)
-			transaction := parse990Transaction(t, rawTenderResponse990(offerID.String(), code, ""))
+			transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), code, ""))
 
 			warnings, err := fixture.service.routeTenderResponse(
 				t.Context(),
 				fixture.file,
 				fixture.partner,
 				transaction,
+				details,
 			)
 
 			require.NoError(t, err)
@@ -246,13 +266,14 @@ func TestRouteTenderResponse_OfferMissingReservationCodeIsNotApplied(t *testing.
 	fixture := newTenderOfferRouteFixture(t)
 	offerID := pulid.MustNew("tof_")
 	fixture.tenderRepo.offer = fixture.newOffer(offerID)
-	transaction := parse990Transaction(t, rawTenderResponse990(offerID.String(), "", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -268,13 +289,14 @@ func TestRouteTenderResponse_OfferUnknownReservationCodeIsNotApplied(t *testing.
 	fixture := newTenderOfferRouteFixture(t)
 	offerID := pulid.MustNew("tof_")
 	fixture.tenderRepo.offer = fixture.newOffer(offerID)
-	transaction := parse990Transaction(t, rawTenderResponse990(offerID.String(), "Q", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "Q", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -290,13 +312,14 @@ func TestRouteTenderResponse_OfferBusinessErrorIsHandled(t *testing.T) {
 	offerID := pulid.MustNew("tof_")
 	fixture.tenderRepo.offer = fixture.newOffer(offerID)
 	fixture.recorder.err = errortypes.NewBusinessError("This offer is no longer available")
-	transaction := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -312,13 +335,14 @@ func TestRouteTenderResponse_OfferInfrastructureErrorFailsTransaction(t *testing
 	offerID := pulid.MustNew("tof_")
 	fixture.tenderRepo.offer = fixture.newOffer(offerID)
 	fixture.recorder.err = errors.New("temporal unavailable")
-	transaction := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
 
 	_, err := fixture.service.routeTenderResponse(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.Error(t, err)
@@ -334,13 +358,14 @@ func TestRouteTenderResponse_PartnerMismatchDoesNotRecord(t *testing.T) {
 	otherPartnerID := pulid.MustNew("edip_")
 	offer.EDIPartnerID = &otherPartnerID
 	fixture.tenderRepo.offer = offer
-	transaction := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
 
 	warnings, err := fixture.service.routeTenderResponse(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -353,7 +378,7 @@ func TestRouteTenderResponse_NoOfferReferenceFallsThroughToLegacy(t *testing.T) 
 	t.Parallel()
 
 	fixture := newTenderOfferRouteFixture(t)
-	transaction := parse990Transaction(t, rawTenderResponse990("", "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990("", "A", ""))
 
 	fixture.recipientRepo.EXPECT().
 		GetActiveExternalRecipientByShipmentReference(
@@ -372,6 +397,7 @@ func TestRouteTenderResponse_NoOfferReferenceFallsThroughToLegacy(t *testing.T) 
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -387,7 +413,7 @@ func TestRouteTenderResponse_UnknownOfferFallsThroughToLegacy(t *testing.T) {
 	fixture := newTenderOfferRouteFixture(t)
 	offerID := pulid.MustNew("tof_")
 	fixture.tenderRepo.err = errortypes.NewNotFoundError("TenderOffer")
-	transaction := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
+	transaction, details := parse990Transaction(t, rawTenderResponse990(offerID.String(), "A", ""))
 
 	fixture.recipientRepo.EXPECT().
 		GetActiveExternalRecipientByShipmentReference(mock.Anything, mock.Anything).
@@ -399,6 +425,7 @@ func TestRouteTenderResponse_UnknownOfferFallsThroughToLegacy(t *testing.T) {
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -419,4 +446,17 @@ func TestTenderOfferReference_IgnoresNonOfferReferences(t *testing.T) {
 	offerID := pulid.MustNew("tof_")
 	details.references = append(details.references, offerID.String())
 	require.Equal(t, offerID, tenderOfferReference(details))
+}
+
+func findSegmentsByID(
+	segments []edix12inspect.X12Segment,
+	segmentID string,
+) []edix12inspect.X12Segment {
+	result := make([]edix12inspect.X12Segment, 0, 4)
+	for index := range segments {
+		if segments[index].SegmentID == segmentID {
+			result = append(result, segments[index])
+		}
+	}
+	return result
 }

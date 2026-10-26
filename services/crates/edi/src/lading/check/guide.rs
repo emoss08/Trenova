@@ -190,11 +190,7 @@ fn segment_paths(nodes: &[Node], id: &str, prefix: &mut Vec<String>, found: &mut
 
 /// The path a segment line names: as written, or, for a bare segment ID the top level does not
 /// have, the one loop that does.
-fn resolve_segment(
-    nodes: &[Node],
-    path: &[Ident],
-    span: Span,
-) -> Result<Vec<String>, Diagnostic> {
+fn resolve_segment(nodes: &[Node], path: &[Ident], span: Span) -> Result<Vec<String>, Diagnostic> {
     let written: Vec<String> = path.iter().map(|ident| ident.name.clone()).collect();
     let [only] = path else {
         return Ok(written);

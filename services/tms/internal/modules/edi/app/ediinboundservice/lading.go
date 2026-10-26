@@ -180,16 +180,33 @@ func (r *readTransaction) payload(set edi.TransactionSet) (edi.DocumentPayload, 
 	return payload, nil
 }
 
-func outcomeInputs(outcomes []lading.Outcome) []lading.OutcomeInput {
-	inputs := make([]lading.OutcomeInput, 0, len(outcomes))
-	for _, outcome := range outcomes {
+func outcomeInputs(result *lading.TransactionResult) []lading.OutcomeInput {
+	inputs := make([]lading.OutcomeInput, 0, len(result.Outcomes)+1)
+	rejected := false
+	for _, outcome := range result.Outcomes {
+		rejected = rejected || outcome.Kind == lading.OutcomeReject
 		inputs = append(inputs, lading.OutcomeInput{
 			Kind:    outcome.Kind,
 			Message: outcome.Message,
 			Code:    outcome.Code,
 		})
 	}
+	if result.Status == lading.TransactionRejected && !rejected {
+		inputs = append(inputs, lading.OutcomeInput{
+			Kind:    lading.OutcomeReject,
+			Message: rejectionMessage(result.Findings),
+		})
+	}
 	return inputs
+}
+
+func rejectionMessage(findings []x12.Finding) string {
+	for index := range findings {
+		if findings[index].IsError() {
+			return findings[index].Message.String()
+		}
+	}
+	return "The transaction breaks the partner's guide"
 }
 
 type received struct {
@@ -220,7 +237,7 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 			Kind:     lading.EventReceived,
 			Set:      string(in.transaction.set),
 			Document: in.read.result.Document,
-			Outcomes: outcomeInputs(in.read.result.Outcomes),
+			Outcomes: outcomeInputs(in.read.result),
 		},
 		MessageID: in.message.ID,
 	})

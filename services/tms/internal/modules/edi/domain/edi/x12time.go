@@ -18,7 +18,7 @@ type x12Zone struct {
 }
 
 const (
-	x12TimeCodeLocal   = "LT"
+	X12TimeCodeLocal   = "LT"
 	secondsPerHour     = 3600
 	secondsPerHalfHour = 1800
 	x12ClockSeconds    = "150405"
@@ -59,7 +59,7 @@ func NormalizeX12TimeCode(code string) string {
 
 func IsKnownX12TimeCode(code string) bool {
 	code = NormalizeX12TimeCode(code)
-	if code == x12TimeCodeLocal {
+	if code == X12TimeCodeLocal {
 		return true
 	}
 	_, ok := x12Zones[code]
@@ -72,7 +72,7 @@ func (d X12DateTime) IsZero() bool {
 
 func (d X12DateTime) IsLocal() bool {
 	code := NormalizeX12TimeCode(d.TimeCode)
-	return code == "" || code == x12TimeCodeLocal || !IsKnownX12TimeCode(code)
+	return code == "" || code == X12TimeCodeLocal || !IsKnownX12TimeCode(code)
 }
 
 func (d X12DateTime) Location(local *time.Location) *time.Location {

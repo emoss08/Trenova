@@ -143,19 +143,6 @@ func findSegment(segments []edix12inspect.X12Segment, segmentID string) *edix12i
 	return nil
 }
 
-func findSegmentsByID(
-	segments []edix12inspect.X12Segment,
-	segmentID string,
-) []edix12inspect.X12Segment {
-	result := make([]edix12inspect.X12Segment, 0, 4)
-	for index := range segments {
-		if segments[index].SegmentID == segmentID {
-			result = append(result, segments[index])
-		}
-	}
-	return result
-}
-
 func elementValue(segment *edix12inspect.X12Segment, position int) string {
 	if segment == nil {
 		return ""

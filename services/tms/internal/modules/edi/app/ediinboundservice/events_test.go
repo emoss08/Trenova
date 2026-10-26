@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -79,8 +79,9 @@ func TestProcessInboundFile_WakesIntakeOnlyOnQuarantine(t *testing.T) {
 func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing.T) {
 	t.Parallel()
 
-	raw := partnerTender
-	fixture := newInboundFixture(t, raw)
+	fixture := newInboundFixture(t, "")
+	starter := fixture.expectActiveVersion(t)
+	fixture.file.RawContent = starterSample(t, starter, "samples/tender-original.x12")
 	publisher := &recordingPublisher{}
 	fixture.service.publisher = publisher
 
@@ -88,12 +89,11 @@ func TestProcessInboundFile_RaisesTheTenderItCarriedAndNotAQuarantine(t *testing
 	fixture.expectPartnerLoad()
 	fixture.expectInboundDocumentType(edi.TransactionSet204)
 	fixture.expectMessageCreate()
-	fixture.expectNoInboundAckProfile(edi.TransactionSet204)
+	fixture.expectFlows()
 
 	fixture.mappingProfileRepo.EXPECT().
 		GetMappingItems(mock.Anything, mock.Anything).
-		Return([]*edi.EDIMappingProfileItem{}, nil).
-		Once()
+		Return([]*edi.EDIMappingProfileItem{}, nil)
 	fixture.transferRepo.EXPECT().
 		CreateTransfer(mock.Anything, mock.Anything).
 		RunAndReturn(func(_ context.Context, transfer *edi.EDITransfer) (*edi.EDITransfer, error) {

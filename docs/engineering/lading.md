@@ -453,6 +453,7 @@ by an inbound map.
 | `kind` | `EventKind`: `Dispatched`, `ArrivedPickup`, `Loaded`, `DepartedPickup`, `EnRoute`, `ArrivedDelivery`, `Delivered`, `DepartedDelivery`, `Delayed`, `AppointmentSet`, `EtaChanged`, `Exception` |
 | `reason` | `Text?`: the partner's reason code, kept as sent |
 | `at` | `DateTime` |
+| `local` | `Bool?`: the time is the clock where it happened (AT707 `LT` or none); Trenova reads it again in the matched stop's zone |
 | `stop` | `Int?`: the stop sequence |
 | `city`, `state`, `country` | `Text?` |
 | `latitude`, `longitude` | `Decimal?` |

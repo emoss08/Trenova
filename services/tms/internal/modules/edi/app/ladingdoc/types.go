@@ -133,6 +133,7 @@ type StatusEvent struct {
 	Kind      string    `json:"kind"`
 	Reason    string    `json:"reason,omitempty"`
 	At        DateTime  `json:"at"`
+	Local     bool      `json:"local,omitempty"`
 	Stop      *int64    `json:"stop,omitempty"`
 	City      string    `json:"city,omitempty"`
 	State     string    `json:"state,omitempty"`

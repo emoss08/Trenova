@@ -54,6 +54,24 @@ func unix(value DateTime) int64 {
 	return instant.Unix()
 }
 
+func localDateTime(event *StatusEvent) edi.X12DateTime {
+	if !event.Local {
+		return edi.X12DateTime{}
+	}
+	instant, err := time.Parse(time.RFC3339, event.At.At)
+	if err != nil {
+		return edi.X12DateTime{}
+	}
+	if zone, zoneErr := time.LoadLocation(event.At.Zone); event.At.Zone != "" && zoneErr == nil {
+		instant = instant.In(zone)
+	}
+	return edi.X12DateTime{
+		Date:     instant.Format("20060102"),
+		Time:     instant.Format("150405"),
+		TimeCode: edi.X12TimeCodeLocal,
+	}
+}
+
 func unixDay(value string) int64 {
 	instant, err := time.Parse(time.DateOnly, value)
 	if err != nil {
@@ -375,6 +393,7 @@ func ToShipmentStatus(raw jsonutils.RawJSON) (*edi.ShipmentStatusPayload, error)
 			StatusCode:      StatusCodeOf(event.Kind),
 			ReasonCode:      event.Reason,
 			EventAt:         unix(event.At),
+			DateTime:        localDateTime(event),
 			StopSequence:    event.Stop,
 			City:            event.City,
 			StateCode:       event.State,

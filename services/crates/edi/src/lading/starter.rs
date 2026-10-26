@@ -431,6 +431,8 @@ events <- each 0205 as item {
   reason  <- status.AT702
   at      <- at(status.AT705, status.AT706, zoneFromCode(status.AT707 ?? "") ?? partner.zone)
     else reject "A status has no date"
+  local   <- not exists zoneFromCode(status.AT707 ?? "")
+  stop    <- int(item.L11[02 == "QN"].01)
   city    <- status.MS101
   state   <- status.MS102
   country <- status.MS103

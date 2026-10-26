@@ -630,6 +630,12 @@ const STATUS_EVENT: &[Field] = &[
         message!("The partner's reason code, as sent"),
     ),
     field("at", Spec::DateTime, true, message!("When it happened")),
+    field(
+        "local",
+        Spec::Bool,
+        false,
+        message!("Whether the time is the clock where it happened, read in the stop's zone"),
+    ),
     field("stop", Spec::Int, false, message!("The stop's sequence")),
     field(
         "city",
