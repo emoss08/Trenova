@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -170,7 +171,10 @@ func (r *repository) GetByID(
 	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
-		entity, err := agentdefinitiondb.Definitions.Get(ctx, r.db.Keel(ctx), req.ID)
+		d := agentdefinitiondb.Definitions
+		entity, err := d.Where(d.ID.Eq(req.ID)).
+			Cache(resultcache.Reference()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, definitionErrors.Map(err, req.ID.String())
 		}
