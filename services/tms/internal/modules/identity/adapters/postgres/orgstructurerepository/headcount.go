@@ -75,7 +75,7 @@ func (r *repository) HeadcountByFleet(
 		fc := w.FleetCode()
 		return r.rosterCount(ctx, "fleet", &headcountGroup{
 			key:   orEmpty(w.FleetCodeID),
-			label: fc.Description.Coalesce(fc.Code.Coalesce("No terminal")),
+			label: fc.Description.Coalesce(fc.Code, "No terminal"),
 			code:  orEmpty(fc.Code),
 			color: orEmpty(fc.Color),
 			group: []keel.Expr{w.FleetCodeID, fc.Code, fc.Description, fc.Color},
