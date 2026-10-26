@@ -22,7 +22,6 @@ const (
 	DiagnosticSourceRender         = DiagnosticSource("render")
 	DiagnosticSourceValidation     = DiagnosticSource("validation")
 	DiagnosticSourceTransform      = DiagnosticSource("transform")
-	DiagnosticSourceStarlark       = DiagnosticSource("starlark")
 	DiagnosticSourceCondition      = DiagnosticSource("condition")
 	DiagnosticSourceSourceContext  = DiagnosticSource("source_context")
 	DiagnosticSourcePartnerSetting = DiagnosticSource("partner_setting")

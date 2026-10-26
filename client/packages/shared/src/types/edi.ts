@@ -687,7 +687,6 @@ export const ediInspectionDiagnosticSourceSchema = z.enum([
   "render",
   "validation",
   "transform",
-  "starlark",
   "condition",
   "source_context",
   "partner_setting",

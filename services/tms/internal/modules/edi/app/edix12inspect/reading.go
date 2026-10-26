@@ -237,8 +237,6 @@ func sourceForDiagnostic(diagnostic *edi.Diagnostic) DiagnosticSource {
 		return DiagnosticSourceSourceContext
 	case strings.Contains(code, "partner_setting") || strings.Contains(path, "partnersettings"):
 		return DiagnosticSourcePartnerSetting
-	case strings.Contains(code, "starlark"):
-		return DiagnosticSourceStarlark
 	case strings.Contains(code, "condition"):
 		return DiagnosticSourceCondition
 	case strings.Contains(code, "transform"):
