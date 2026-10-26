@@ -22,6 +22,7 @@ export const singletonPackages = [
   "@tanstack/react-query",
   "@tanstack/query-core",
   "@tanstack/react-table",
+  "@tanstack/table-core",
   "react-router",
   "react-hook-form",
   "react-error-boundary",
