@@ -61,9 +61,7 @@ func TestTheCensusGroupsOpenMailByParkingOwnerAndLateness(t *testing.T) {
 			`coalesce(im."due_at" < $7, $8), count(*) FROM "inbound_messages" im `+
 			`WHERE im."business_unit_id" = $1 AND im."organization_id" = $2 `+
 			`AND im."status" IN ('Received', 'Processing', 'Classified', 'InReview', 'Quarantined') `+
-			`GROUP BY im."status", coalesce(im."classification", $3), im."mailbox_id", `+
-			`coalesce(im."parked", $4), coalesce(im."owner_id" = $5::text, $6), `+
-			`coalesce(im."due_at" < $7, $8)`,
+			`GROUP BY im."status", 2, im."mailbox_id", 4, 5, 6`,
 		sqlText,
 	)
 	assert.Equal(t, []any{
