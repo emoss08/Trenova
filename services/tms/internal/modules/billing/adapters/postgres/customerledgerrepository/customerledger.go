@@ -72,7 +72,7 @@ func nonRecourseFactoredEntry(cle *customerledgerdb.CustomerLedgerEntriesTable) 
 	inv := invoicedb.Invoices.As("inv")
 	return keel.Exists(inv.Where(
 		inv.ID.EqCol(cle.RelatedInvoiceID.Coalesce(
-			keel.DynCase().When(cle.SourceObjectType.Eq("Invoice"), cle.SourceObjectID).End(),
+			keel.CaseString().When(cle.SourceObjectType.Eq("Invoice"), cle.SourceObjectID).End(),
 		)),
 		receivablesql.SoldWithoutRecourse(inv),
 	))

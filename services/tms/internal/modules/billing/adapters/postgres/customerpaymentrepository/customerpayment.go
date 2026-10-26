@@ -185,11 +185,11 @@ func (r *repository) FindSuggestedMatchCandidates(
 			)),
 			keel.When(req.AmountMinor > 0, keel.Or(
 				cp.AmountMinor.Eq(req.AmountMinor),
-				keel.Int64Of(keel.DynOf(cp.AmountMinor).Sub(req.AmountMinor)).Abs().Lte(100),
+				cp.AmountMinor.Sub(keel.Int64(req.AmountMinor)).Abs().Lte(100),
 			)),
 			keel.When(
 				req.ReceiptDate > 0,
-				keel.Int64Of(keel.DynOf(cp.PaymentDate).Sub(req.ReceiptDate)).Abs().Lte(604800),
+				cp.PaymentDate.Sub(keel.Int64(req.ReceiptDate)).Abs().Lte(604800),
 			),
 		).
 			Order(cp.CreatedAt.Desc()).

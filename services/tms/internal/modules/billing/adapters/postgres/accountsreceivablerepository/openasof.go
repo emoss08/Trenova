@@ -46,10 +46,10 @@ func (w openAsOfWindow) build() openAsOf {
 		[]string{"n"},
 		keel.GenerateSeries(keel.Int64(0), keel.Int64(int64(w.points-1))),
 	))
-	seriesN := keel.DynOf(series.Col("n"))
+	seriesN := keel.Int64Of(series.Col("n"))
 	points := keel.CTE("points", []string{"n", colPeriodEnd}, series.Query().Pick(
 		seriesN,
-		keel.DynOf(keel.Int64(w.asOf)).Sub(seriesN.Mul(w.step)),
+		keel.Int64(w.asOf).Sub(seriesN.Mul(keel.Int64(w.step))),
 	))
 
 	moved := w.movedInvoices()
@@ -139,7 +139,7 @@ func settlementsOf(candidates *keel.CTETable) *keel.CTETable {
 					due,
 					cpa.CreatedAt,
 					cp.ReversedAt,
-					keel.DynOf(cpa.AppliedAmountMinor).Add(cpa.ShortPayAmountMinor),
+					cpa.AppliedAmountMinor.Add(cpa.ShortPayAmountMinor),
 				),
 			cma.
 				Join(candidates, id.EqCol(cma.InvoiceID)).
@@ -150,7 +150,7 @@ func settlementsOf(candidates *keel.CTETable) *keel.CTETable {
 					id.EqCol(cle.RelatedInvoiceID),
 					cle.SourceObjectType.Eq(customerledger.SourceFactoringItem),
 				).
-				Pick(id, due, cle.CreatedAt, keel.DynLit(nil), keel.DynOf(cle.AmountMinor).Neg()),
+				Pick(id, due, cle.CreatedAt, keel.NullInt64(), cle.AmountMinor.Neg()),
 		),
 	)
 }
@@ -174,7 +174,7 @@ func changesOf(candidates, settlements *keel.CTETable) *keel.CTETable {
 				settlements.Col(colInvoiceID),
 				settlements.Col(colDueDate),
 				settledAt,
-				keel.DynOf(amount).Neg(),
+				keel.Int64Of(amount).Neg(),
 			),
 			settlements.Query().
 				Pick(
@@ -211,18 +211,18 @@ func segmentsOf(changes *keel.CTETable) *keel.CTETable {
 }
 
 func (w openAsOfWindow) openItems(segments *keel.CTETable) *keel.CTETable {
-	startsAt := keel.DynOf(segments.Col("starts_at"))
-	endsAt := keel.DynOf(segments.Col("ends_at"))
-	periodsBefore := func(at keel.DynExpr) keel.Int64Expr {
+	startsAt := keel.Int64Of(segments.Col("starts_at"))
+	endsAt := keel.Int64Of(segments.Col("ends_at"))
+	periodsBefore := func(at keel.Int64Value) keel.Int64Expr {
 		return keel.CastInt64(
-			keel.NumericOf(keel.DynLit(w.asOf).Sub(at).Cast(keel.TypeNumeric).Div(w.step)).Floor(),
+			keel.CastNumeric(keel.Int64(w.asOf).Sub(at)).Div(keel.Numeric(w.step)).Floor(),
 		)
 	}
-	firstOffset := keel.DynCase().
-		When(endsAt.IsNull(), 0).
-		Else(keel.Int64(0).Greatest(keel.Int64Of(keel.DynOf(periodsBefore(endsAt)).Add(1))))
+	firstOffset := keel.CaseInt64().
+		When(endsAt.IsNull(), keel.Int64(0)).
+		Else(keel.Int64(0).Greatest(periodsBefore(endsAt).Add(keel.Int64(1))))
 	offsets := keel.Rows("offsets", []string{"n"}, keel.GenerateSeries(
-		keel.Int64Of(firstOffset),
+		firstOffset,
 		keel.Int64(int64(w.points-1)).Least(periodsBefore(startsAt)),
 	))
 

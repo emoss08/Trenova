@@ -186,8 +186,8 @@ func (r *repository) ListActivities(
 
 		var before keel.Pred
 		if req.Before != nil {
-			before = keel.DynRow(cact.CreatedAt, cact.ID).
-				Lt(keel.DynRow(req.Before.CreatedAt, req.Before.ID))
+			before = keel.Tuple(cact.CreatedAt, cact.ID).
+				Lt(keel.Tuple(req.Before.CreatedAt, req.Before.ID))
 		}
 
 		records, err := keel.Into[activityRecord](ctx, r.db.Keel(ctx), cact.
@@ -268,7 +268,7 @@ func openInvoicesByCustomer(asOf int64) *keel.CTETable {
 	inv := invoicedb.Invoices
 	open := receivablesql.OpenMinor(inv)
 	overdue := keel.And(inv.DueDate.IsNotNull(), inv.DueDate.Lt(asOf))
-	daysPastDue := keel.DynLit(asOf).Sub(inv.DueDate).Div(receivablesql.SecondsPerDay)
+	daysPastDue := keel.Int64(asOf).Sub(inv.DueDate).Div(keel.Int64(receivablesql.SecondsPerDay))
 	return keel.CTE(
 		"open_invoices",
 		[]string{
@@ -283,8 +283,8 @@ func openInvoicesByCustomer(asOf int64) *keel.CTETable {
 			Pick(
 				inv.CustomerID,
 				open.Sum(),
-				keel.DynCase().When(overdue, open).Else(0).Sum(),
-				keel.DynCase().When(overdue, daysPastDue).Else(0).Max(),
+				keel.CaseInt64().When(overdue, open).Else(keel.Int64(0)).Sum(),
+				keel.CaseInt64().When(overdue, daysPastDue).Else(keel.Int64(0)).Max(),
 				keel.Count(),
 				keel.Count().Filter(inv.DisputeStatus.Eq(invoice.DisputeStatusDisputed)),
 			).
@@ -346,8 +346,8 @@ func worklistStatement(q *worklistQuery) *keel.Query[*customer.Customer] {
 			prm.PromisedOn,
 			prm.CreatedAt,
 			pby.Name.Coalesce(""),
-			keel.DynCase().
-				When(prm.ID.IsNull(), 0).
+			keel.CaseNumeric().
+				When(prm.ID.IsNull(), keel.Numeric(0)).
 				Else(keel.NumericOf(paidSincePromise).Coalesce(0)),
 		).
 		Where(
@@ -490,7 +490,7 @@ func (r *repository) ListAwaitingPromise(
 			Pick(acc.CustomerID).
 			Where(
 				acc.CustomerID.In(req.CustomerIDs...),
-				keel.DynOf(prm.PromisedOn).Add(86400).Gt(req.AsOf),
+				prm.PromisedOn.Add(keel.Int64(86400)).Gt(req.AsOf),
 				keel.NumericOf(prm.PromisedAmountMinor).GtExpr(keel.NumericOf(paid).Coalesce(0)),
 			))
 		if err != nil {

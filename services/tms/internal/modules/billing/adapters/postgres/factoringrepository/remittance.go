@@ -319,7 +319,7 @@ func lineOutcomes(
 		line.SubmissionItemID.ToExpr(orNull("submission_item_id")),
 		line.Score.ToExpr(outcome.Col("score")),
 		line.Reason.ToExpr(orNull("reason")),
-		line.Suggestions.ToExpr(keel.DynOf(outcome.Col("suggestions")).Cast(keel.TypeJSON)),
+		line.Suggestions.ToExpr(keel.CastJSONB(outcome.Col("suggestions"))),
 		line.IgnoredReason.ToExpr(orNull("ignored_reason")),
 		line.ReserveEntryID.ToExpr(orNull("reserve_entry_id")),
 	}, nil
@@ -392,20 +392,20 @@ func candidateMatch(invoices []string, amounts []int64) (invoiceMatch, amountMat
 	tolerance := keel.Int64(minCandidateTolerance).Greatest(item.ExpectedFeeMinor)
 	amt := keel.Unnest("amt", []string{"v"}, amounts)
 	amount := keel.Int64Of(amt.Col("v")).Abs()
-	near := func(target keel.Expr) keel.Pred {
-		return keel.Int64Of(keel.DynOf(amount).Sub(target)).Abs().LteExpr(tolerance)
+	near := func(target keel.Int64Value) keel.Pred {
+		return amount.Sub(target).Abs().LteExpr(tolerance)
 	}
 	amountMatch = keel.Exists(amt.Query().With(amt).Where(keel.Or(
 		near(item.ExpectedAdvanceMinor),
 		near(item.FaceMinor),
 		near(item.ReserveMinor.Coalesce(-1)),
-		near(keel.DynOf(item.AdvanceMinor.Coalesce(0)).Add(item.FeeMinor.Coalesce(0))),
+		near(item.AdvanceMinor.Coalesce(0).Add(item.FeeMinor.Coalesce(0))),
 	)))
 
 	ref := keel.Unnest("ref", []string{"v"}, invoices)
 	text := keel.StringOf(ref.Col("v"))
-	contains := func(needle keel.Expr) keel.DynExpr {
-		return keel.DynConst("%").Concat(needle).Concat(keel.DynConst("%"))
+	contains := func(needle keel.StringValue) keel.StringExpr {
+		return keel.ConstText("%").Cat(needle, keel.ConstText("%"))
 	}
 	invoiceMatch = keel.Exists(ref.Query().With(ref).Where(keel.Or(
 		normalized.EqExpr(text),

@@ -64,11 +64,11 @@ func consolidationCandidates(
 		[]shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery},
 		false,
 	)
-	totalLegs := keel.DynCase().
-		When(sp.OrderID.IsNull(), 0).
-		Else(keel.Scalar(sib.
+	totalLegs := keel.CaseInt64().
+		When(sp.OrderID.IsNull(), keel.Int64(0)).
+		Else(keel.Int64Of(keel.Scalar(sib.
 			Pick(keel.Count()).
-			Where(sib.OrderID.EqCol(sp.OrderID), sib.Status.Ne(shipment.StatusCanceled))))
+			Where(sib.OrderID.EqCol(sp.OrderID), sib.Status.Ne(shipment.StatusCanceled)))))
 
 	return bqi.
 		Join(sp, sp.ID.EqCol(bqi.ShipmentID)).

@@ -365,7 +365,7 @@ func batchQueue(
 	return b.Where(preds...).
 		Compute(
 			b.PendingCount,
-			keel.Int64Of(keel.DynOf(b.TotalCount).Sub(b.ProcessedCount)).Greatest(keel.Int64(0)),
+			b.TotalCount.Sub(b.ProcessedCount).Greatest(keel.Int64(0)),
 		).
 		Compute(b.SubmittedByName, submitter.Name.Coalesce("")).
 		Compute(b.LastFailure, keel.StringOf(lastFailure).Coalesce("")).

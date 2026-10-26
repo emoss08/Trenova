@@ -28,8 +28,8 @@ func Open(inv *invoicedb.InvoicesTable) keel.Pred {
 	)
 }
 
-func OpenMinor(inv *invoicedb.InvoicesTable) keel.DynExpr {
-	return keel.DynOf(inv.TotalAmountMinor).Sub(inv.AppliedAmountMinor)
+func OpenMinor(inv *invoicedb.InvoicesTable) keel.Int64Expr {
+	return inv.TotalAmountMinor.Sub(inv.AppliedAmountMinor)
 }
 
 func SoldWithoutRecourse(inv *invoicedb.InvoicesTable) keel.Pred {

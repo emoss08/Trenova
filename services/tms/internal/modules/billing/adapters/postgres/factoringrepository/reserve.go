@@ -170,7 +170,7 @@ func reserveBalance(
 		keel.NumericOf(re.LiabilityMinor.Sum()).Coalesce(0),
 		keel.NumericOf(cash(factoring.ReserveEntryFunding)).Coalesce(0),
 		keel.NumericOf(cash(factoring.ReserveEntryRelease)).Coalesce(0),
-		keel.DynOf(cash(
+		keel.NumericOf(cash(
 			factoring.ReserveEntryChargeback,
 			factoring.ReserveEntryChargebackReversal,
 		)).Neg().Coalesce(0),

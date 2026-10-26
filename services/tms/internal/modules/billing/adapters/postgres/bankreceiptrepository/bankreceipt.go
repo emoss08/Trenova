@@ -142,7 +142,7 @@ func summaryQuery(asOf int64) *keel.Query[*bankreceipt.BankReceipt] {
 	workItems := func(statuses ...bankreceiptworkitem.Status) keel.Expr {
 		return keel.Scalar(wi.Pick(keel.Count()).Where(wi.Status.In(statuses...)))
 	}
-	days := keel.DynLit(asOf).Sub(br.ReceiptDate).Div(86400)
+	days := keel.Int64(asOf).Sub(br.ReceiptDate).Div(keel.Int64(86400))
 	exception := br.Status.Eq(bankreceipt.StatusException)
 	aged := func(band keel.Pred) keel.Pred {
 		return keel.And(exception, band)

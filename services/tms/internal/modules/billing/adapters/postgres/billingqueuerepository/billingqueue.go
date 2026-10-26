@@ -521,7 +521,7 @@ var transferStatusRanks = []struct {
 
 func transferStatusRank(status keel.Expr) keel.Order {
 	value := keel.StringOf(status)
-	rank := keel.DynCase()
+	rank := keel.CaseInt64()
 	for _, r := range transferStatusRanks {
 		rank = rank.When(value.Eq(string(r.status)), keel.Int64(r.rank))
 	}

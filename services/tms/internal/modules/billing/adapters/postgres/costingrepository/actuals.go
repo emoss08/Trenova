@@ -56,16 +56,12 @@ func (r *actualsRepository) SumExpenseByAccounts(
 
 		gb := glbalancedb.GLAccountPeriodBalances
 		fp := fiscalperioddb.FiscalPeriods
+		net := keel.NumericOf(gb.PeriodDebitMinor.Sub(gb.PeriodCreditMinor).Sum()).Coalesce(0)
 		rows, err := keel.Into[expenseRow](ctx, r.db.Keel(ctx), gb.
 			Join(fp, fp.ID.EqCol(gb.FiscalPeriodID)).
 			Pick(
 				gb.GLAccountID,
-				keel.DynOf(gb.PeriodDebitMinor).
-					Sub(gb.PeriodCreditMinor).
-					Sum().
-					Coalesce(0).
-					Div(100.0).
-					Cast(keel.TypeNumeric),
+				keel.CastNumeric(net.Div(keel.Numeric(int64(100)))),
 			).
 			Where(
 				gb.GLAccountID.In(req.GLAccountIDs...),
@@ -237,7 +233,7 @@ func (r *actualsRepository) FleetCostAggregates(
 					keel.Count().Filter(keel.And(
 						moving,
 						keel.NumericOf(totals.Col("revenue")).LtExpr(
-							keel.NumericOf(keel.DynOf(keel.Numeric(req.CostPerMile)).Mul(costMiles)),
+							keel.Numeric(req.CostPerMile).Mul(costMiles),
 						),
 					)),
 					keel.CastNumeric(keel.NumericOf(keel.Sum(totals.Col("revenue")).Filter(moving)).Coalesce(0)),
