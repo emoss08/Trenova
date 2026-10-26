@@ -608,7 +608,7 @@ export function DataTable<TData extends Record<string, any>>({
       ? cursorPageInfo.totalCountExact !== false
       : cursorPageInfo
         ? scopedCursorState.totalCountExact
-        : true;
+        : dataQuery.data?.totalCountExact !== false;
   const rowCount =
     totalCount ??
     (cursorPageInfo

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_FILTERS,
   hasActiveFilters,
+  insightPaging,
   pageCount,
   parseFilters,
   serializeFilters,
@@ -221,5 +222,27 @@ describe("pageCount", () => {
 
   it("does not divide by a page size of zero", () => {
     expect(pageCount(10, 0)).toBe(1);
+  });
+});
+
+describe("insightPaging", () => {
+  it("counts the pages of a counted total", () => {
+    expect(
+      insightPaging({ page: 2, pageSize: 20, read: 20, total: 45, totalExact: true }),
+    ).toEqual({ pages: 3, hasNext: true });
+    expect(
+      insightPaging({ page: 3, pageSize: 20, read: 5, total: 45, totalExact: true }),
+    ).toEqual({ pages: 3, hasNext: false });
+  });
+
+  // An estimate can sit above or below the rows that match, so it never says how many pages
+  // there are: a full page is followed by another, a short one ends the list.
+  it("pages past an estimated total by full pages", () => {
+    expect(
+      insightPaging({ page: 600, pageSize: 20, read: 20, total: 10_001, totalExact: false }),
+    ).toEqual({ pages: null, hasNext: true });
+    expect(
+      insightPaging({ page: 2, pageSize: 20, read: 7, total: 1_250_000, totalExact: false }),
+    ).toEqual({ pages: null, hasNext: false });
   });
 });

@@ -17,11 +17,12 @@ import { InsightFilterBar } from "./_components/insight-filter-bar";
 import {
   DEFAULT_FILTERS,
   hasActiveFilters,
-  pageCount,
+  insightPaging,
   parseFilters,
   serializeFilters,
   statusesFor,
   type InsightFilterState,
+  type InsightPaging,
 } from "./_components/insight-filters";
 
 const PAGE_SIZE = 20;
@@ -55,7 +56,14 @@ export function InsightsPage() {
   const insightsQuery = useQuery(insightQueries.browse(browseParams));
   const insights = insightsQuery.data?.results ?? [];
   const total = insightsQuery.data?.total ?? 0;
-  const pages = pageCount(total, PAGE_SIZE);
+  const totalExact = insightsQuery.data?.totalExact ?? true;
+  const paging = insightPaging({
+    page: filters.page,
+    pageSize: PAGE_SIZE,
+    read: insights.length,
+    total,
+    totalExact,
+  });
 
   const applyFilters = useCallback(
     (next: InsightFilterState) => setSearchParams(serializeFilters(next)),
@@ -75,7 +83,12 @@ export function InsightsPage() {
         ),
       }}
     >
-      <InsightFilterBar filters={filters} total={total} onChange={applyFilters} />
+      <InsightFilterBar
+        filters={filters}
+        total={total}
+        totalExact={totalExact}
+        onChange={applyFilters}
+      />
 
       {insightsQuery.isLoading ? (
         <div className="flex flex-col gap-3">
@@ -108,10 +121,10 @@ export function InsightsPage() {
         />
       )}
 
-      {pages > 1 && (
+      {(filters.page > 1 || paging.hasNext) && (
         <Pager
           page={filters.page}
-          pages={pages}
+          paging={paging}
           onPage={(page) => applyFilters({ ...filters, page })}
         />
       )}
@@ -152,11 +165,11 @@ function EmptyState({ filtered, onClear }: { filtered: boolean; onClear: () => v
 
 function Pager({
   page,
-  pages,
+  paging,
   onPage,
 }: {
   page: number;
-  pages: number;
+  paging: InsightPaging;
   onPage: (page: number) => void;
 }) {
   const t = useT();
@@ -173,12 +186,14 @@ function Pager({
         <ChevronLeftIcon className="size-4" />
       </Button>
       <span className="text-muted-foreground text-xs tabular-nums">
-        {t("Page {0} of {1}", String(page), String(pages))}
+        {paging.pages === null
+          ? t("Page {0}", String(page))
+          : t("Page {0} of {1}", String(page), String(paging.pages))}
       </span>
       <Button
         variant="outline"
         size="sm"
-        disabled={page >= pages}
+        disabled={!paging.hasNext}
         onClick={() => onPage(page + 1)}
         aria-label={t("Next page")}
       >

@@ -1049,6 +1049,7 @@ query ShipmentPreviousRates($input: ShipmentPreviousRatesInput!) {
       createdAt
     }
     total
+    totalExact
   }
 }
 

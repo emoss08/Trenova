@@ -158,6 +158,32 @@ export function pageCount(total: number, pageSize: number): number {
   return Math.ceil(total / pageSize);
 }
 
+/** Where one page of findings sits in the whole list. */
+export type InsightPaging = {
+  /** How many pages there are, or null when the total is the server's estimate. */
+  pages: number | null;
+  hasNext: boolean;
+};
+
+/**
+ * The pager's view of a page. A counted total says how many pages there are; an estimated one
+ * says nothing about where the list ends, so the next page follows a full page instead.
+ */
+export function insightPaging(input: {
+  page: number;
+  pageSize: number;
+  read: number;
+  total: number;
+  totalExact: boolean;
+}): InsightPaging {
+  if (!input.totalExact) {
+    return { pages: null, hasNext: input.pageSize > 0 && input.read >= input.pageSize };
+  }
+
+  const pages = pageCount(input.total, input.pageSize);
+  return { pages, hasNext: input.page < pages };
+}
+
 function isStatusFilter(value: string | null): value is InsightStatusFilter {
   return value !== null && (STATUS_FILTERS as string[]).includes(value);
 }

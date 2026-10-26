@@ -276,6 +276,7 @@ query MySettlements($limit: Int, $offset: Int) {
       paymentReference
     }
     total
+    totalExact
   }
 }
 

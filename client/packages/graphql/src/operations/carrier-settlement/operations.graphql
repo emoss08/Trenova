@@ -338,6 +338,7 @@ query CarrierInvoiceMatches(
       }
     }
     totalCount
+    totalCountExact
   }
 }
 
@@ -366,6 +367,7 @@ query EdiCarrierInvoices($reconciliationStatus: String, $limit: Int, $offset: In
       updatedAt
     }
     totalCount
+    totalCountExact
   }
 }
 

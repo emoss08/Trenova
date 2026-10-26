@@ -57,9 +57,16 @@ export function DataTablePagination<TData extends RowData>({
   const rowCount = table.getRowCount();
   const cursorMode = mode === "cursor";
   const visibleRowCount = currentPageRowCount ?? table.getRowModel().rows.length;
+  // An estimated total says nothing about where the list ends, so offset paging over one
+  // follows full pages and never jumps to a last page computed from it.
+  const offsetEstimate = !cursorMode && !totalCountExact;
 
   const canPreviousPage = pageIndex > 0;
-  const canNextPage = cursorMode ? Boolean(hasNextPage) : pageIndex < pageCount - 1;
+  const canNextPage = cursorMode
+    ? Boolean(hasNextPage)
+    : offsetEstimate
+      ? visibleRowCount >= pageSize
+      : pageIndex < pageCount - 1;
 
   const handlePageChange = (newPageIndex: number) => {
     onPageChange?.(newPageIndex);
@@ -70,9 +77,10 @@ export function DataTablePagination<TData extends RowData>({
   };
 
   const startRow = visibleRowCount > 0 ? pageIndex * pageSize + 1 : 0;
-  const endRow = cursorMode
-    ? pageIndex * pageSize + visibleRowCount
-    : Math.min((pageIndex + 1) * pageSize, rowCount);
+  const endRow =
+    cursorMode || offsetEstimate
+      ? pageIndex * pageSize + visibleRowCount
+      : Math.min((pageIndex + 1) * pageSize, rowCount);
 
   if (visibleRowCount < 1 && pageIndex === 0) {
     return null;
@@ -82,7 +90,7 @@ export function DataTablePagination<TData extends RowData>({
   const start = formatNumber(startRow);
   const end = formatNumber(endRow);
   const total = cursorMode ? totalCount : rowCount;
-  const exact = !cursorMode || totalCountExact;
+  const exact = totalCountExact;
   const shownTotal = total != null ? formatRowTotal(total, exact) : null;
   const shownPages = formatRowTotal(pageCount || 1, exact);
 
@@ -157,7 +165,7 @@ export function DataTablePagination<TData extends RowData>({
             <ChevronLeftIcon className="size-4" />
           </Button>
           <div className="text-muted-foreground px-2 text-sm">
-            {shownTotal === null
+            {shownTotal === null || offsetEstimate
               ? rt("Page <b>{0}</b>", figure, formatNumber(pageIndex + 1))
               : exact
                 ? rt(
@@ -182,7 +190,7 @@ export function DataTablePagination<TData extends RowData>({
           >
             <ChevronRightIcon className="size-4" />
           </Button>
-          {!cursorMode && (
+          {!cursorMode && !offsetEstimate && (
             <Button
               variant="outline"
               size="icon-sm"
