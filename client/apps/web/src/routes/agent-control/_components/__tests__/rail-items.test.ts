@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildRailItems,
   resolveRailView,
+  tabCounts,
   type RailCounts,
   type RailPermissions,
 } from "../rail-items";
@@ -36,9 +37,9 @@ const counts = {
   providersTotal: 2,
   agentsEnabled: 3,
   agentsTotal: 4,
-  pendingProposals: 0,
-  runsLast24h: 12,
-  memoriesActive: 3,
+  pendingProposals: { count: 0, exact: true },
+  runsLast24h: { count: 12, exact: true },
+  memoriesActive: { count: 3, exact: true },
   extensionsOn: 1,
   extensionsTotal: 1,
   qualityRegressions: 0,
@@ -84,10 +85,35 @@ describe("buildRailItems", () => {
   // A proposal waiting on a person outranks a run count: it is the one thing
   // on the page somebody has to do.
   it("calls for attention when proposals wait on a person", () => {
-    const items = buildRailItems({ ...counts, pendingProposals: 2 }, all, t);
+    const items = buildRailItems(
+      { ...counts, pendingProposals: { count: 2, exact: true } },
+      all,
+      t,
+    );
 
     expect(items[9].status).toBe("2 awaiting decision");
     expect(items[9].attention).toBe(true);
+  });
+
+  // Past ten thousand the server estimates a count, and the rail says so.
+  it("shows an estimated count as approximate", () => {
+    const estimate = { count: 1_250_000, exact: false };
+    const items = buildRailItems(
+      { ...counts, pendingProposals: estimate, memoriesActive: estimate },
+      all,
+      t,
+    );
+
+    expect(items[9].status).toBe("About 1.3M awaiting decision");
+    expect(items[9].children.find((child) => child.view === "proposals")?.label).toBe(
+      "Proposals · about 1.3M",
+    );
+    expect(items[4].status).toBe("About 1.3M active");
+    expect(
+      buildRailItems({ ...counts, runsLast24h: estimate }, all, t).find(
+        (item) => item.tab === "activity",
+      )?.status,
+    ).toBe("About 1.3M runs today");
   });
 
   it("calls for attention when no provider is on", () => {
@@ -149,7 +175,7 @@ describe("buildRailItems", () => {
   // An empty memory is worth saying: the section exists so someone records
   // the first instruction, and "0 active" reads like a count nobody set.
   it("says when nothing has been recorded for agents yet", () => {
-    const items = buildRailItems({ ...counts, memoriesActive: 0 }, all, t);
+    const items = buildRailItems({ ...counts, memoriesActive: { count: 0, exact: true } }, all, t);
 
     expect(items[4].status).toBe("Nothing recorded");
     expect(items[4].attention).toBe(false);
@@ -231,10 +257,12 @@ describe("buildRailItems", () => {
   });
 
   it("counts the proposals waiting on the Proposals view", () => {
-    const activity = (pendingProposals: number) =>
-      buildRailItems({ ...counts, pendingProposals }, all, t).find(
-        (item) => item.tab === "activity",
-      );
+    const activity = (pending: number) =>
+      buildRailItems(
+        { ...counts, pendingProposals: { count: pending, exact: true } },
+        all,
+        t,
+      ).find((item) => item.tab === "activity");
 
     expect(activity(3)?.children.find((child) => child.view === "proposals")?.label).toBe(
       "Proposals · 3",
@@ -371,5 +399,22 @@ describe("resolveRailView", () => {
   it("has no view for a row without views", () => {
     expect(resolveRailView(item("memory"), "runs")).toBeNull();
     expect(resolveRailView(undefined, "runs")).toBeNull();
+  });
+});
+
+describe("tabCounts", () => {
+  it("writes a counted figure in full and an estimate as approximate", () => {
+    expect(tabCounts(counts, t)).toMatchObject({
+      memory: { text: "3" },
+      activity: { text: "0 waiting", tone: "w" },
+    });
+
+    const estimate = { count: 48_200, exact: false };
+    expect(
+      tabCounts({ ...counts, memoriesActive: estimate, pendingProposals: estimate }, t),
+    ).toMatchObject({
+      memory: { text: "about 48.2K" },
+      activity: { text: "About 48.2K waiting", tone: "w" },
+    });
   });
 });

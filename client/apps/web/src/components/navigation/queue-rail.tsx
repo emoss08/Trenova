@@ -1,3 +1,5 @@
+import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import type { IconComponent } from "@trenova/shared/components/icons";
 import type { ReactNode } from "react";
@@ -35,6 +37,7 @@ export function RailItem({
   label,
   hint,
   count,
+  countExact = true,
   loud = false,
   muted = false,
   active,
@@ -44,11 +47,14 @@ export function RailItem({
   label: string;
   hint?: string;
   count?: number;
+  /** False when count is the server's estimate of a list too large to count. */
+  countExact?: boolean;
   loud?: boolean;
   muted?: boolean;
   active: boolean;
   onClick: () => void;
 }) {
+  const t = useT();
   return (
     <button
       type="button"
@@ -74,7 +80,7 @@ export function RailItem({
             loud ? "text-foreground font-medium" : "text-foreground-subtle",
           )}
         >
-          {count}
+          {countExact ? count : t("about {0}", formatRowTotal(count, false))}
         </span>
       )}
     </button>

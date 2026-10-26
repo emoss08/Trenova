@@ -14,6 +14,7 @@ import {
   SheetTitle,
 } from "@trenova/shared/components/ui/sheet";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal, type RowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import { ScanIcon, Sliders01Icon } from "@trenova/shared/components/icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -34,6 +35,7 @@ import {
 const nowInSeconds = () => Math.floor(Date.now() / 1000);
 const SEARCH_DEBOUNCE_MS = 250;
 const CLOCK_TICK_MS = 60_000;
+const NO_TOTAL: RowTotal = { count: 0, exact: true };
 
 function countFilter(filter: IntakeFilter) {
   const { sort: _sort, ...rest } = batchFilter(filter);
@@ -233,7 +235,7 @@ export function IntakePage() {
           className={cn("min-w-0 flex-1 flex-col", openId === null ? "hidden lg:flex" : "flex")}
         >
           {openId === null ? (
-            <NothingOpen waiting={waitingQuery.data ?? 0} />
+            <NothingOpen waiting={waitingQuery.data ?? NO_TOTAL} />
           ) : (
             <BatchWorkspace
               key={openId}
@@ -269,19 +271,24 @@ export function IntakePage() {
   );
 }
 
-function NothingOpen({ waiting }: { waiting: number }) {
+function NothingOpen({ waiting }: { waiting: RowTotal }) {
   const t = useT();
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-3 p-8 text-center">
       <ScanIcon className="text-foreground-subtle size-8" aria-hidden />
       <p className="text-sm font-medium">
-        {waiting > 0
-          ? t(
-              "{0, plural, one {# stack is waiting to be filed} other {# stacks are waiting to be filed}}",
-              waiting,
-            )
-          : t("Choose a stack to file")}
+        {waiting.count === 0
+          ? t("Choose a stack to file")
+          : waiting.exact
+            ? t(
+                "{0, plural, one {# stack is waiting to be filed} other {# stacks are waiting to be filed}}",
+                waiting.count,
+              )
+            : t(
+                "About {0} stacks are waiting to be filed",
+                formatRowTotal(waiting.count, false),
+              )}
       </p>
       <p className="text-foreground-subtle max-w-xs text-xs leading-relaxed">
         {t(

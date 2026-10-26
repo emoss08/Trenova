@@ -13,3 +13,14 @@ const ESTIMATE_FORMAT: Intl.NumberFormatOptions = {
 export function formatRowTotal(total: number, exact: boolean): string {
   return exact ? formatNumber(total) : formatNumber(total, ESTIMATE_FORMAT);
 }
+
+/** A count a connection returned, and whether it was counted (`totalCountExact`). */
+export type RowTotal = { count: number; exact: boolean };
+
+/** The total a connection returned; no total is none counted, which is exact. */
+export function rowTotalOf(
+  totalCount: number | null | undefined,
+  totalCountExact: boolean | null | undefined,
+): RowTotal {
+  return { count: totalCount ?? 0, exact: totalCount == null || totalCountExact !== false };
+}
