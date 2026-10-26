@@ -444,8 +444,13 @@ A new column, relation or table needs `task keel-gen` in the same change, and
   written by GTC (`deploy/gtc/sinks.yaml`), never by Go. Go reads them (decoding rows by their
   keel column names with `pkg/columnmap`), falls back to Postgres on a miss, and skips them when a
   read scope narrows the result.
-- `pkg/redishelpers` for Redis JSON; `shared/lrucache` and `shared/ttlcache` in process. A cache
-  never holds data a narrower permission or read scope could not see.
+- `pkg/redishelpers` for Redis JSON; `shared/lrucache` and `shared/ttlcache` in process, only for
+  what Postgres does not hold: an external provider's answer (routed legs in
+  `routeestimateservice`, model prices, embeddings), a computation across reads (a person's
+  agent match pool, a permission verdict) or a deliberately stale rollup over a table written on
+  every request (`aiproviderspendservice`). A row read through keel is cached with the
+  [result cache](#result-cache), never in a map or a Redis key with its own invalidation calls.
+  A cache never holds data a narrower permission or read scope could not see.
 
 ### Result cache
 
@@ -473,6 +478,10 @@ hand-rolled map: this one is invalidated by every process's writes and bounded.
   no-search select options of a dropdown. Never a list a person filters or scrolls, a table
   written on most requests (an entry would never be hit), or a read that compares with `now()`
   in SQL (`rbacrepository.GetAuthorizedRoles`).
+- **Ask per tenant, not across tenants.** A system-scope read bypasses the cache, so a hot check
+  that once listed every tenant asks one tenant under its own scope
+  (`customertrackingrepository.HasNotifyingCustomers` with `dbscope.WithTenant`), and a service
+  reading another tenant's settings scopes the call to that tenant (`watchtowerservice.Router`).
 - **Never cache a table whose row-level security policy reads `trenova_rls.user_id()`**:
   `users`, `user_organization_memberships`, `organizations`, `mfa_authenticators`,
   `mfa_recovery_codes`, and `shipments`, `orders`, `invoices`, `workers` (their read-scope
@@ -497,10 +506,10 @@ hand-rolled map: this one is invalidated by every process's writes and bounded.
 
 | TTL class | Reads |
 |---|---|
-| `Settings` (5 min) | identity: shipment, billing, accounting, invoice adjustment, document, dash, agent, settlement and carrier settlement controls, data retention, sequence configs (`sequenceconfigrepository`, `seqgen` format provider), organization access settings; operations: dispatch control; places: distance control, default distance profile; parties: carrier intel control; workspace: data entry control, active custom field definitions by resource; billing: costing control with its categories and GL links; workforce: leave control; agent: AI retrieval settings, agent quality control; documents: extraction shadow settings, triage settings and response targets |
-| `Access` (5 min) | `rolerepository.GetUserRoleAssignments`, `GetRolesWithInheritance` (behind the Redis permission cache, so an organization's epoch bump recomputes from memory) |
-| `Reference` (30 min) | by id, by ids, by code or name, and select options: accessorial charges (and `ListCatalog`), document types, hold reasons, service types, shipment types, hazardous materials, commodities (by id and ids), active hazmat segregation rules, distance profiles by id, exchange rates by date |
-| `Catalog` (1 h) | global seeded tables: US states (by id, ids, abbreviation, select options), DOT hazmat references by id |
+| `Settings` (5 min) | identity: shipment, billing, accounting, invoice adjustment, document, dash, agent, settlement and carrier settlement controls, data retention, sequence configs (`sequenceconfigrepository`, `seqgen` format provider), organization access settings; operations: dispatch control; places: distance control, default distance profile; parties: carrier intel control; workspace: data entry control, active custom field definitions by resource; billing: costing control with its categories and GL links; workforce: leave control; agent: AI retrieval settings, agent quality control; documents: extraction shadow settings, triage settings and response targets; reference: active mode profiles with their capability rules; operations: whether any customer has status emails on (`HasNotifyingCustomers`); workspace: an integration by type (absence cached too); agent: tool rule overrides |
+| `Access` (5 min) | `rolerepository.GetUserRoleAssignments`, `GetRolesWithInheritance` (behind the Redis permission cache, so an organization's epoch bump recomputes from memory), `iamrepository.ListEnabledTenantAccessPolicies` |
+| `Reference` (30 min) | by id, by ids, by code or name, and select options: accessorial charges (and `ListCatalog`), document types, hold reasons, service types, shipment types, hazardous materials, commodities (by id and ids), active hazmat segregation rules, distance profiles by id, exchange rates by date, agent definitions by id |
+| `Catalog` (1 h) | global seeded tables: US states (by id, ids, abbreviation, select options), DOT hazmat references by id, IFTA jurisdictions (one read every lookup filters) |
 
 No cached query reads a table only through `keel.Raw` today, so none needs `AlsoReads`.
 
