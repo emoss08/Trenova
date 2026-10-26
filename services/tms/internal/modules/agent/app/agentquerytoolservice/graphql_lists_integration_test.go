@@ -273,9 +273,7 @@ func convertedListCases(
 	libraryVersions := formulalibraryversionrepository.New(
 		formulalibraryversionrepository.Params{DB: conn, Logger: logger})
 	fuel := fuelpurchaserepository.New(fuelpurchaserepository.Params{DB: conn, Logger: logger})
-	iftaRepo := iftarepository.New(iftarepository.Params{
-		DB: conn, Logger: logger, JurisdictionCache: jurisdictionCacheMiss{},
-	})
+	iftaRepo := iftarepository.New(iftarepository.Params{DB: conn, Logger: logger})
 	fuelParts := &fuelParts{parts: parts, tractors: tractors}
 
 	services := agentread.ResolverParams{
@@ -739,18 +737,6 @@ var (
 	taxPaidTyped  = map[string]any{"taxPaid": true}
 	loadedTyped   = map[string]any{"loaded": true}
 )
-
-// jurisdictionCacheMiss is a jurisdiction cache that holds nothing, so every
-// read loads the global list.
-type jurisdictionCacheMiss struct{}
-
-func (jurisdictionCacheMiss) GetAll(context.Context) ([]*ifta.Jurisdiction, error) {
-	return nil, nil
-}
-
-func (jurisdictionCacheMiss) Set(context.Context, []*ifta.Jurisdiction) error { return nil }
-
-func (jurisdictionCacheMiss) Invalidate(context.Context) error { return nil }
 
 // fuelParts writes what a fuel purchase or a mileage entry names: a tractor,
 // with its type, make and driver, beside the tenant's own jurisdiction.

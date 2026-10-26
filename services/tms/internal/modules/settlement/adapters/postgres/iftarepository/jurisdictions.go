@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -18,22 +19,14 @@ const jurisdictionKeySeparator = "_"
 
 func (r *repository) allJurisdictions(ctx context.Context) ([]*ifta.Jurisdiction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ifta.Jurisdiction, error) {
-		cached, err := r.jurisdictionCache.GetAll(ctx)
-		if err == nil && len(cached) > 0 {
-			return cached, nil
-		}
-
 		j := iftadb.Jurisdictions
 		entities, err := j.Query().
 			Order(j.SortOrder.Asc(), j.CountryCode.Asc(), j.Code.Asc()).
+			Cache(resultcache.Catalog()...).
 			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to load ifta jurisdictions", zap.Error(err))
 			return nil, fmt.Errorf("load ifta jurisdictions: %w", err)
-		}
-
-		if cacheErr := r.jurisdictionCache.Set(ctx, entities); cacheErr != nil {
-			r.l.Warn("failed to populate ifta jurisdiction cache", zap.Error(cacheErr))
 		}
 
 		return entities, nil
@@ -49,6 +42,13 @@ func (r *repository) ListJurisdictions(
 		return nil, err
 	}
 
+	return filterJurisdictions(all, req), nil
+}
+
+func filterJurisdictions(
+	all []*ifta.Jurisdiction,
+	req *iftaports.ListJurisdictionsRequest,
+) []*ifta.Jurisdiction {
 	countryCode := strings.ToUpper(strings.TrimSpace(req.CountryCode))
 	statuses := make(map[ifta.JurisdictionStatus]struct{}, len(req.Statuses))
 	for _, status := range req.Statuses {
@@ -71,7 +71,7 @@ func (r *repository) ListJurisdictions(
 		out = append(out, entity)
 	}
 
-	return out, nil
+	return out
 }
 
 func (r *repository) GetJurisdictionByID(
@@ -83,6 +83,10 @@ func (r *repository) GetJurisdictionByID(
 		return nil, err
 	}
 
+	return jurisdictionByID(all, id)
+}
+
+func jurisdictionByID(all []*ifta.Jurisdiction, id pulid.ID) (*ifta.Jurisdiction, error) {
 	for _, entity := range all {
 		if entity.ID == id {
 			return entity, nil
@@ -105,6 +109,10 @@ func (r *repository) GetJurisdictionsByIDs(
 		return nil, err
 	}
 
+	return jurisdictionsByIDs(all, ids), nil
+}
+
+func jurisdictionsByIDs(all []*ifta.Jurisdiction, ids []pulid.ID) []*ifta.Jurisdiction {
 	wanted := make(map[pulid.ID]struct{}, len(ids))
 	for _, id := range ids {
 		wanted[id] = struct{}{}
@@ -117,7 +125,7 @@ func (r *repository) GetJurisdictionsByIDs(
 		}
 	}
 
-	return out, nil
+	return out
 }
 
 func (r *repository) GetJurisdictionByCode(
@@ -129,6 +137,13 @@ func (r *repository) GetJurisdictionByCode(
 		return nil, err
 	}
 
+	return jurisdictionByCode(all, countryCode, code)
+}
+
+func jurisdictionByCode(
+	all []*ifta.Jurisdiction,
+	countryCode, code string,
+) (*ifta.Jurisdiction, error) {
 	wantedCountry := strings.ToUpper(strings.TrimSpace(countryCode))
 	wantedCode := strings.ToUpper(strings.TrimSpace(code))
 	for _, entity := range all {
@@ -165,11 +180,20 @@ func (r *repository) FindJurisdictionsByCodes(
 	ctx context.Context,
 	keys []string,
 ) (map[string]*ifta.Jurisdiction, error) {
-	out := make(map[string]*ifta.Jurisdiction, len(keys))
-	if len(keys) == 0 {
-		return out, nil
+	normalised := normaliseJurisdictionKeys(keys)
+	if len(normalised) == 0 {
+		return make(map[string]*ifta.Jurisdiction), nil
 	}
 
+	all, err := r.allJurisdictions(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return jurisdictionsByKeys(all, normalised), nil
+}
+
+func normaliseJurisdictionKeys(keys []string) map[string]string {
 	normalised := make(map[string]string, len(keys))
 	for _, key := range keys {
 		countryCode, code, ok := splitJurisdictionKey(key)
@@ -178,24 +202,25 @@ func (r *repository) FindJurisdictionsByCodes(
 		}
 		normalised[key] = ifta.JurisdictionKey(countryCode, code)
 	}
-	if len(normalised) == 0 {
-		return out, nil
-	}
 
-	all, err := r.allJurisdictions(ctx)
-	if err != nil {
-		return nil, err
-	}
+	return normalised
+}
 
+func jurisdictionsByKeys(
+	all []*ifta.Jurisdiction,
+	normalised map[string]string,
+) map[string]*ifta.Jurisdiction {
 	byKey := make(map[string]*ifta.Jurisdiction, len(all))
 	for _, entity := range all {
 		byKey[entity.Key()] = entity
 	}
+
+	out := make(map[string]*ifta.Jurisdiction, len(normalised))
 	for key, canonical := range normalised {
 		if entity, ok := byKey[canonical]; ok {
 			out[key] = entity
 		}
 	}
 
-	return out, nil
+	return out
 }
