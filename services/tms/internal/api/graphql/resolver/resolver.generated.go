@@ -260,6 +260,7 @@ type Resolver struct {
 	drugAlcoholStanding                *workerdrugalcoholresolver.DrugAlcoholStandingResolver
 	ediCarrierInvoice                  *carriersettlementresolver.EdiCarrierInvoiceResolver
 	ediFlowInstance                    *ediresolver.EdiFlowInstanceResolver
+	ediLadingVersion                   *ediresolver.EdiLadingVersionResolver
 	ediMessage                         *ediresolver.EdiMessageResolver
 	ediTransfer                        *ediresolver.EdiTransferResolver
 	equipmentContinuity                *equipmentcontinuityresolver.EquipmentContinuityResolver
@@ -1299,6 +1300,7 @@ func FromServices(s *Services) *Resolver {
 		drugAlcoholStanding:          &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps},
 		ediCarrierInvoice:            &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps},
 		ediFlowInstance:              &ediresolver.EdiFlowInstanceResolver{Deps: ediDeps},
+		ediLadingVersion:             &ediresolver.EdiLadingVersionResolver{Deps: ediDeps},
 		ediMessage:                   &ediresolver.EdiMessageResolver{Deps: ediDeps},
 		ediTransfer:                  &ediresolver.EdiTransferResolver{Deps: ediDeps},
 		equipmentContinuity:          &equipmentcontinuityresolver.EquipmentContinuityResolver{Deps: equipmentcontinuityDeps},
@@ -2203,6 +2205,10 @@ func (r *Resolver) EdiCarrierInvoice() generated.EdiCarrierInvoiceResolver {
 
 func (r *Resolver) EdiFlowInstance() generated.EdiFlowInstanceResolver {
 	return r.ediFlowInstance
+}
+
+func (r *Resolver) EdiLadingVersion() generated.EdiLadingVersionResolver {
+	return r.ediLadingVersion
 }
 
 func (r *Resolver) EdiMessage() generated.EdiMessageResolver {

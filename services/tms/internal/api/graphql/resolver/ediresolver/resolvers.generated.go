@@ -16,6 +16,8 @@ type Deps struct {
 
 type EdiFlowInstanceResolver struct{ *Deps }
 
+type EdiLadingVersionResolver struct{ *Deps }
+
 type EdiMessageResolver struct{ *Deps }
 
 type EdiTransferResolver struct{ *Deps }

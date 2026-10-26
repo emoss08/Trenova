@@ -16198,8 +16198,38 @@ type EdiLadingVersion @kind(resource: "edi") {
   activatedAt: Timestamp
   supersededAt: Timestamp
   archivedAt: Timestamp
+  "Who the partner and Trenova are in the X12 envelope, as the version's partner file says."
+  interchange: EdiLadingInterchange
+  "Each set the version reads or writes, and the map that does it."
+  exchanges: [EdiLadingExchange!]!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"The X12 envelope a Lading version writes and expects."
+type EdiLadingInterchange {
+  theirQualifier: String
+  theirId: String
+  ourQualifier: String
+  ourId: String
+  theirGroupCode: String
+  ourGroupCode: String
+  version: String
+  "test or production."
+  usage: String
+  "Element, segment, component and repetition separators, in that order."
+  separators: [String!]!
+}
+
+"A set a Lading version exchanges with the partner."
+type EdiLadingExchange {
+  transactionSet: String!
+  direction: EdiDocumentDirection!
+  map: String!
+  "The acknowledgment that answers it: the one Trenova sends back for an inbound set, the one the flow expects for an outbound set. Null when none is."
+  acknowledgment: String
+  "Seconds the flow waits for that acknowledgment, for an outbound set."
+  acknowledgmentWithin: Int
 }
 
 "A partner's Lading project: its maps, rules, guides and flows, kept as versions."

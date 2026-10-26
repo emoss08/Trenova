@@ -102,6 +102,7 @@ type Clause struct {
 	Events      []string `json:"events,omitempty"`
 	Until       string   `json:"until,omitempty"`
 	Batched     bool     `json:"batched,omitempty"`
+	Within      int64    `json:"within,omitempty"`
 }
 
 type Flow struct {

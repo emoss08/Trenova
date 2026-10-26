@@ -32,7 +32,6 @@ import type {
   ReadinessCheck,
   TransportEnds,
   TransportLine,
-  UsageReading,
 } from "./edi-partner-card";
 
 /**
@@ -381,7 +380,7 @@ export function CredentialChips({ chips }: { chips: readonly CredentialChip[] })
  * ISA ids with their qualifiers, production or test, the GS codes, and the
  * separators the X12 is written with.
  */
-export function AddressLabel({ address, usage }: { address: PartnerAddress; usage: UsageReading }) {
+export function AddressLabel({ address }: { address: PartnerAddress }) {
   const t = useT();
   const production = address.usage === "P";
   return (
@@ -442,16 +441,6 @@ export function AddressLabel({ address, usage }: { address: PartnerAddress; usag
           </li>
         )}
       </ul>
-      {(address.differing > 0 || usage === "mixed") && (
-        <p className="dk-edp-differs">
-          {address.differing > 0
-            ? t(
-                "{0, plural, one {# other set is addressed differently} other {# other sets are addressed differently}}; each is on the partner's page.",
-                address.differing,
-              )
-            : t("Some sets still go out marked for test.")}
-        </p>
-      )}
     </div>
   );
 }

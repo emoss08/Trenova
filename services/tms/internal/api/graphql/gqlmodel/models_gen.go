@@ -4342,6 +4342,32 @@ type EDIInboundFileEdge struct {
 	Cursor string              `json:"cursor"`
 }
 
+// A set a Lading version exchanges with the partner.
+type EDILadingExchange struct {
+	TransactionSet string                `json:"transactionSet"`
+	Direction      edi.DocumentDirection `json:"direction"`
+	Map            string                `json:"map"`
+	// The acknowledgment that answers it: the one Trenova sends back for an inbound set, the one the flow expects for an outbound set. Null when none is.
+	Acknowledgment *string `json:"acknowledgment,omitempty"`
+	// Seconds the flow waits for that acknowledgment, for an outbound set.
+	AcknowledgmentWithin *int `json:"acknowledgmentWithin,omitempty"`
+}
+
+// The X12 envelope a Lading version writes and expects.
+type EDILadingInterchange struct {
+	TheirQualifier *string `json:"theirQualifier,omitempty"`
+	TheirID        *string `json:"theirId,omitempty"`
+	OurQualifier   *string `json:"ourQualifier,omitempty"`
+	OurID          *string `json:"ourId,omitempty"`
+	TheirGroupCode *string `json:"theirGroupCode,omitempty"`
+	OurGroupCode   *string `json:"ourGroupCode,omitempty"`
+	Version        *string `json:"version,omitempty"`
+	// test or production.
+	Usage *string `json:"usage,omitempty"`
+	// Element, segment, component and repetition separators, in that order.
+	Separators []string `json:"separators"`
+}
+
 type EDIMappingCount struct {
 	EntityType edi.MappingEntityType `json:"entityType"`
 	Count      int                   `json:"count"`

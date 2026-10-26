@@ -531,3 +531,17 @@ func (r *QueryResolver) EDIAckHealth(ctx context.Context, partnerID *string, tra
 
 	return ediAckHealthToModel(health), nil
 }
+
+func (r *EdiLadingVersionResolver) Interchange(
+	_ context.Context,
+	obj *edi.LadingVersion,
+) (*gqlmodel.EDILadingInterchange, error) {
+	return ladingInterchangeToModel(&obj.Manifest), nil
+}
+
+func (r *EdiLadingVersionResolver) Exchanges(
+	_ context.Context,
+	obj *edi.LadingVersion,
+) ([]*gqlmodel.EDILadingExchange, error) {
+	return ladingExchangesToModel(&obj.Manifest), nil
+}

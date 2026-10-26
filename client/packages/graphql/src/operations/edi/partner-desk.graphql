@@ -67,6 +67,24 @@ query DeskEdiPartnerCard($id: ID!) {
           failing
           ready
         }
+        interchange {
+          theirQualifier
+          theirId
+          ourQualifier
+          ourId
+          theirGroupCode
+          ourGroupCode
+          version
+          usage
+          separators
+        }
+        exchanges {
+          transactionSet
+          direction
+          map
+          acknowledgment
+          acknowledgmentWithin
+        }
       }
       shadow {
         id

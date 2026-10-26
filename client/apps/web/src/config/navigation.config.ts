@@ -818,9 +818,9 @@ const ediModule: NavModule = {
       badge: "edi-attention",
     },
     {
-      id: "edi-designer",
-      label: "Template designer",
-      path: "/edi/designer",
+      id: "edi-lading",
+      label: "Lading studio",
+      path: "/edi/lading",
       resource: Resource.EDI,
     },
     {
@@ -848,9 +848,9 @@ const ediModule: NavModule = {
       resource: Resource.EDI,
     },
     {
-      id: "edi-test-cases",
-      label: "Test cases",
-      path: "/edi/test-cases",
+      id: "edi-flows",
+      label: "Flow instances",
+      path: "/edi/flows",
       resource: Resource.EDI,
     },
     {

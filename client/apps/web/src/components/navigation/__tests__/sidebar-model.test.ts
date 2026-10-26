@@ -311,7 +311,7 @@ describe("module ownership of its own pages", () => {
   });
 
   it("keeps a module's deeper pages inside the module", () => {
-    expect(findModuleForPath(modules, "/edi/designer")?.id).toBe("edi");
+    expect(findModuleForPath(modules, "/edi/lading")?.id).toBe("edi");
     expect(findModuleForPath(modules, "/edi/partners/prt_01")?.id).toBe("edi");
   });
 });

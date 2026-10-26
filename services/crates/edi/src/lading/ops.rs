@@ -29,7 +29,7 @@ use super::editor::navigate::{
 use super::editor::session::Session;
 use super::eval::interp::Given;
 use super::eval::run::{RunRequest, run as run_map};
-use super::flow::{FlowEvent, FlowState, route, step};
+use super::flow::{DEFAULT_ACK_WITHIN, FlowEvent, FlowState, route, step};
 use super::project::{Context, Project};
 use super::replay::{MAX_INPUTS, ReplayRequest, replay as replay_versions};
 use super::schema;
@@ -270,7 +270,11 @@ fn check_json(program: &Program) -> Json {
                             "until": send.until.as_ref().map(|event| event.name.clone()),
                             "batched": send.batch.is_some(),
                         }),
-                        super::syntax::ast::FlowDecl::Expect(expect) => json!({ "kind": "expect", "set": expect.set.name }),
+                        super::syntax::ast::FlowDecl::Expect(expect) => json!({
+                            "kind": "expect",
+                            "set": expect.set.name,
+                            "within": expect.within.as_ref().map_or(DEFAULT_ACK_WITHIN, |within| seconds_of(program, *unit, within)),
+                        }),
                     }),
                     _ => None,
                 })
@@ -302,6 +306,17 @@ fn check_json(program: &Program) -> Json {
         "errors": errors,
         "warnings": warnings,
     })
+}
+
+/// A duration expression's seconds, 0 when it is not a duration.
+fn seconds_of(program: &Program, unit: usize, expr: &super::syntax::ast::Expr) -> i64 {
+    let given = Given::default();
+    let mut interp = super::eval::interp::Interp::new(program, &given, 10_000);
+    let mut frame = super::eval::interp::Frame::new(unit);
+    match interp.eval(&mut frame, expr) {
+        Ok(super::eval::value::Value::Duration(seconds)) => seconds,
+        _ => 0,
+    }
 }
 
 fn default_value(program: &Program, name: &str) -> Json {

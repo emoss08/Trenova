@@ -162,7 +162,7 @@ export const invoiceEdiSendPlanSchema = z.object({
   autoSend: z.boolean(),
   partnerId: nullableStringSchema,
   partnerName: z.string().default(""),
-  documentProfileId: nullableStringSchema,
+  ladingVersionId: nullableStringSchema,
   communicationMethod: z.string().default(""),
   status: invoiceEdiSendStatusSchema,
   lastMessageId: nullableStringSchema,

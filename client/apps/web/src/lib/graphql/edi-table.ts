@@ -1,10 +1,10 @@
 import {
   EdiCommunicationProfileTableDocument,
+  EdiFlowInstanceTableDocument,
   EdiInboundFileTableDocument,
   EdiMappingProfileTableDocument,
   EdiMessageTableDocument,
   EdiPartnerTableDocument,
-  EdiTestCaseTableDocument,
   EdiTransferTableDocument,
   type EdiTransferDirection,
 } from "@trenova/graphql/generated/graphql";
@@ -69,10 +69,10 @@ export const ediTableGraphQLConfigs = {
     operationName: "EdiMappingProfileTable",
     connectionKey: "ediMappingProfiles",
   }),
-  testCases: defineDataTableGraphQLConfig({
-    document: EdiTestCaseTableDocument,
-    operationName: "EdiTestCaseTable",
-    connectionKey: "ediTestCases",
+  flowInstances: defineDataTableGraphQLConfig({
+    document: EdiFlowInstanceTableDocument,
+    operationName: "EdiFlowInstanceTable",
+    connectionKey: "ediFlowInstances",
   }),
 } as const;
 
@@ -85,4 +85,4 @@ export type EDICommunicationProfileRow = DataTableConfigRow<
 export type EDITransferRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.inboundTransfers>;
 export type EDIMessageRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.messages>;
 export type EDIInboundFileRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.inboundFiles>;
-export type EDITestCaseTableRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.testCases>;
+export type EDIFlowInstanceRow = DataTableConfigRow<typeof ediTableGraphQLConfigs.flowInstances>;

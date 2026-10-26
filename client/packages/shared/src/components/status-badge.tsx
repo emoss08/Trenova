@@ -47,6 +47,7 @@ import type {
   EDIMessageDeliveryStatus,
   EDITransferStatus,
 } from "@trenova/shared/types/edi";
+import type { FlowInstanceStatus, LadingVersionStatus } from "@trenova/shared/types/lading";
 import type { TenderOfferStatus, TenderStatus } from "@trenova/shared/types/tender";
 import type {
   FuelCardStatus,
@@ -890,24 +891,6 @@ export function EDIPartnerReadinessBadge({
   );
 }
 
-export function EDITestCaseVerdictBadge({ passed }: { passed: boolean }) {
-  const t = useT();
-
-  return (
-    <Badge
-      variant={passed ? "success" : "danger"}
-      className="max-h-5"
-      title={
-        passed
-          ? "The preview diagnostics match the expected warning and error counts."
-          : "The preview diagnostics do not match the expected warning and error counts."
-      }
-    >
-      {passed ? t("Pass") : t("Fail")}
-    </Badge>
-  );
-}
-
 export function EDIMessageDeliveryStatusBadge({
   status,
 }: {
@@ -1057,6 +1040,100 @@ export function EDIInboundFileStatusBadge({ status }: { status?: EDIInboundFileS
     },
   };
   const attr = attrs[status as EDIInboundFileStatus];
+  if (!attr) {
+    return (
+      <Badge variant="neutral" appearance="outline">
+        {status}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
+      {attr.text}
+    </Badge>
+  );
+}
+
+export function LadingVersionStatusBadge({ status }: { status?: LadingVersionStatus | string }) {
+  const t = useT();
+
+  if (!status) return null;
+
+  const attrs: Record<LadingVersionStatus, BadgeAttrProps> = {
+    Draft: {
+      phase: "draft",
+      text: t("Draft"),
+      description: t("Being written; it runs only in the studio."),
+    },
+    Certified: {
+      phase: "awaiting",
+      text: t("Certified"),
+      description: t("Passed its tests and replays, and is frozen. Activate it to run it."),
+    },
+    Active: {
+      phase: "complete",
+      text: t("Active"),
+      description: t("The version Trenova reads and writes this partner's EDI with."),
+    },
+    Shadow: {
+      phase: "active",
+      text: t("Shadow"),
+      description: t("Runs beside the active version on live traffic, sending nothing."),
+    },
+    Superseded: {
+      phase: "draft",
+      text: t("Superseded"),
+      description: t("Was active until a newer version replaced it."),
+    },
+    Archived: {
+      phase: "draft",
+      text: t("Archived"),
+      description: t("Kept for its history; it never runs."),
+    },
+  };
+  const attr = attrs[status as LadingVersionStatus];
+  if (!attr) {
+    return (
+      <Badge variant="neutral" appearance="outline">
+        {status}
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant={phaseTone(attr.phase)} className="max-h-5" title={t(attr.description)}>
+      {attr.text}
+    </Badge>
+  );
+}
+
+export function FlowInstanceStatusBadge({ status }: { status?: FlowInstanceStatus | string }) {
+  const t = useT();
+
+  if (!status) return null;
+
+  const attrs: Record<FlowInstanceStatus, BadgeAttrProps> = {
+    Open: {
+      phase: "active",
+      text: t("Open"),
+      description: t("The flow is following this load and waiting for its next event."),
+    },
+    Held: {
+      phase: "awaiting",
+      text: t("Held"),
+      description: t("The flow stopped for a planner. Release it once the cause is fixed."),
+    },
+    Escalated: {
+      phase: "failed",
+      text: t("Escalated"),
+      description: t("An answer or acknowledgment was not received in time."),
+    },
+    Closed: {
+      phase: "complete",
+      text: t("Closed"),
+      description: t("The flow has nothing left to do for this load."),
+    },
+  };
+  const attr = attrs[status as FlowInstanceStatus];
   if (!attr) {
     return (
       <Badge variant="neutral" appearance="outline">

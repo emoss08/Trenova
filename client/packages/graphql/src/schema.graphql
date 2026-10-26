@@ -14227,6 +14227,34 @@ enum EdiInboundFileStatus {
   Received
 }
 
+"""A set a Lading version exchanges with the partner."""
+type EdiLadingExchange {
+  """
+  The acknowledgment that answers it: the one Trenova sends back for an inbound set, the one the flow expects for an outbound set. Null when none is.
+  """
+  acknowledgment: String
+  """Seconds the flow waits for that acknowledgment, for an outbound set."""
+  acknowledgmentWithin: Int
+  direction: EdiDocumentDirection!
+  map: String!
+  transactionSet: String!
+}
+
+"""The X12 envelope a Lading version writes and expects."""
+type EdiLadingInterchange {
+  ourGroupCode: String
+  ourId: String
+  ourQualifier: String
+  """Element, segment, component and repetition separators, in that order."""
+  separators: [String!]!
+  theirGroupCode: String
+  theirId: String
+  theirQualifier: String
+  """test or production."""
+  usage: String
+  version: String
+}
+
 """
 A partner's Lading project: its maps, rules, guides and flows, kept as versions.
 """
@@ -14257,7 +14285,13 @@ type EdiLadingVersion @kind(resource: "edi") {
   certifiedAt: Timestamp
   createdAt: Timestamp!
   errorCount: Int!
+  """Each set the version reads or writes, and the map that does it."""
+  exchanges: [EdiLadingExchange!]!
   id: ID!
+  """
+  Who the partner and Trenova are in the X12 envelope, as the version's partner file says.
+  """
+  interchange: EdiLadingInterchange
   notes: String
   number: Int!
   parentVersionId: ID

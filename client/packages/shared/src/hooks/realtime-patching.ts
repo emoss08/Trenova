@@ -62,7 +62,7 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
     "edi-mapping-profile-list",
     "edi-message-list",
     "edi-partner-list",
-    "edi-test-case-list",
+    "edi-flow-instance-list",
   ],
   equipment_manufacturer: ["equipment-manufacturer-list"],
   equipment_type: ["equipment-type-list"],

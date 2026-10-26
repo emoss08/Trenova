@@ -111,14 +111,14 @@ describe("the head", () => {
     );
   });
 
-  it("reads production or test from the active sets' envelopes", () => {
-    expect(partnerUsage(tyson.documentProfiles)).toBe("production");
-    expect(partnerUsage(kroger.documentProfiles)).toBe("test");
-    const mixed = withCard(tyson, (copy) => {
-      copy.documentProfiles[0].envelope.interchangeUsageIndicator = "T";
+  it("reads production or test from the active Lading version's interchange", () => {
+    expect(partnerUsage(tyson)).toBe("production");
+    expect(partnerUsage(kroger)).toBe("test");
+    expect(partnerUsage(lonestar)).toBeNull();
+    const noVersion = withCard(tyson, (copy) => {
+      copy.lading.active = null;
     });
-    expect(partnerUsage(mixed.documentProfiles)).toBe("mixed");
-    expect(partnerUsage(lonestar.documentProfiles)).toBeNull();
+    expect(partnerUsage(noVersion)).toBeNull();
   });
 
   it("lists production, the latest message and the line under the head", () => {
@@ -202,24 +202,38 @@ describe("partnerExchange", () => {
 });
 
 describe("partnerAddress", () => {
-  it("turns an inbound envelope round so it reads from us to them", () => {
-    const inboundOnly = kroger.documentProfiles.filter(
-      (profile) => profile.direction === "Inbound",
-    );
-    expect(partnerAddress(inboundOnly)).toMatchObject({
+  it("reads the envelope from us to them out of the active version's partner file", () => {
+    expect(partnerAddress(kroger)).toMatchObject({
       us: { qualifier: "ZZ", id: "TRENOVA" },
       them: { qualifier: "ZZ", id: "KROGERTMS" },
       usage: "T",
-      differing: 0,
     });
+    expect(partnerAddress(tyson)?.usage).toBe("P");
   });
 
-  it("counts the active sets addressed otherwise than the one drawn", () => {
-    const split = withCard(tyson, (copy) => {
-      copy.documentProfiles[1].envelope.interchangeReceiverId = "TYSONINVOICE";
+  it("has nothing to draw without an active version that names both ends", () => {
+    expect(partnerAddress(lonestar)).toBeNull();
+    const unnamed = withCard(tyson, (copy) => {
+      if (copy.lading.active?.interchange) copy.lading.active.interchange.theirId = null;
     });
-    expect(partnerAddress(split.documentProfiles)?.differing).toBe(1);
-    expect(partnerAddress([])).toBeNull();
+    expect(partnerAddress(unnamed)).toBeNull();
+  });
+});
+
+describe("partnerExchange outside the active version", () => {
+  it("marks a set that still has traffic but is no longer in the active version", () => {
+    const dropped = withCard(tyson, (copy) => {
+      if (copy.lading.active) {
+        copy.lading.active.exchanges = copy.lading.active.exchanges.filter(
+          (exchange) => exchange.transactionSet !== "990",
+        );
+      }
+    });
+    expect(partnerExchange(dropped, t).outbound.find((set) => set.set === "990")).toMatchObject({
+      note: "Not in the active Lading version",
+      off: true,
+      test: false,
+    });
   });
 });
 

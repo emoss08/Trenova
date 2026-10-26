@@ -199,8 +199,8 @@ function PartnerCard({
   const standing = partnerStanding(card, items.length, t);
   const figure = deliveryFigure(card, t);
   const neighbors = neighborsIn(order, id);
-  const usage = partnerUsage(card.documentProfiles);
-  const address = internal ? null : partnerAddress(card.documentProfiles);
+  const usage = partnerUsage(card);
+  const address = internal ? null : partnerAddress(card);
   const exchange = internal ? connectionExchange(card, t) : partnerExchange(card, t);
   const traded = card.activity.sets.length > 0;
   const checks = readinessChecks(card, t);
@@ -396,7 +396,7 @@ function PartnerCard({
 
       {address && (
         <CardSection title={t("How it's addressed")}>
-          <AddressLabel address={address} usage={usage} />
+          <AddressLabel address={address} />
         </CardSection>
       )}
 

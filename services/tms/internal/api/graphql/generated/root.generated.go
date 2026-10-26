@@ -412,6 +412,7 @@ type ResolverRoot interface {
 	DrugAlcoholStanding() DrugAlcoholStandingResolver
 	EdiCarrierInvoice() EdiCarrierInvoiceResolver
 	EdiFlowInstance() EdiFlowInstanceResolver
+	EdiLadingVersion() EdiLadingVersionResolver
 	EdiMessage() EdiMessageResolver
 	EdiTransfer() EdiTransferResolver
 	EquipmentContinuity() EquipmentContinuityResolver
@@ -1297,6 +1298,11 @@ type EdiCarrierInvoiceResolver interface {
 
 type EdiFlowInstanceResolver interface {
 	Reason(ctx context.Context, obj *edi.FlowInstance) (*string, error)
+}
+
+type EdiLadingVersionResolver interface {
+	Interchange(ctx context.Context, obj *edi.LadingVersion) (*gqlmodel.EDILadingInterchange, error)
+	Exchanges(ctx context.Context, obj *edi.LadingVersion) ([]*gqlmodel.EDILadingExchange, error)
 }
 
 type EdiMessageResolver interface {
@@ -4150,6 +4156,7 @@ func NewExecutableSchema(cfg Config) graphql.ExecutableSchema {
 			"DrugAlcoholStanding":                func() any { return r.DrugAlcoholStanding() },
 			"EdiCarrierInvoice":                  func() any { return r.EdiCarrierInvoice() },
 			"EdiFlowInstance":                    func() any { return r.EdiFlowInstance() },
+			"EdiLadingVersion":                   func() any { return r.EdiLadingVersion() },
 			"EdiMessage":                         func() any { return r.EdiMessage() },
 			"EdiTransfer":                        func() any { return r.EdiTransfer() },
 			"EquipmentContinuity":                func() any { return r.EquipmentContinuity() },

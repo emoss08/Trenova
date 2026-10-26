@@ -19,6 +19,9 @@ use super::syntax::ast::{Action, Expr, FlowDecl, Item, Otherwise, Receive, Respo
 use super::types::Type;
 use super::values::ZoneValue;
 
+/// How long a flow waits for an acknowledgment when its expect clause names no window.
+pub const DEFAULT_ACK_WITHIN: i64 = 1800;
+
 /// The step budget of one flow step.
 pub const FLOW_STEPS: u64 = 1_000_000;
 
@@ -746,10 +749,9 @@ impl Stepper<'_> {
             });
         if let Some(expect) = expect {
             let mut frame = self.frame();
-            let within = expect
-                .within
-                .as_ref()
-                .map_or(1800, |within| self.duration(&mut frame, within));
+            let within = expect.within.as_ref().map_or(DEFAULT_ACK_WITHIN, |within| {
+                self.duration(&mut frame, within)
+            });
             self.state.pending.push(Pending {
                 id: id.clone(),
                 set: set.clone(),

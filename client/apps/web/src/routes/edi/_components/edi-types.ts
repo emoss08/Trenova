@@ -3,9 +3,8 @@ export type EDIPageKind =
   | "partners"
   | "communication-profiles"
   | "mapping-profiles"
-  | "designer"
   | "inbound"
   | "outbound"
   | "messages"
   | "inbound-files"
-  | "test-cases";
+  | "flows";

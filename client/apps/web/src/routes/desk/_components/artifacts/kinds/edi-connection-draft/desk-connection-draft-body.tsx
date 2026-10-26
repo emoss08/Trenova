@@ -24,7 +24,8 @@ import {
   proposeQuestion,
   resolutionQuestion,
   type ConnectionDraft,
-  type DraftDocumentProfile,
+  type DraftProject,
+  type DraftSet,
   type DraftMapping,
   type DraftSample,
 } from "./connection-draft";
@@ -75,58 +76,43 @@ function proposalFor(
     .at(-1);
 }
 
-function ProfileBlock({ profile }: { profile: DraftDocumentProfile }) {
+function SetBlock({ set }: { set: DraftSet }) {
   const t = useT();
-  const template = profile.template;
+  const met = Math.max(0, set.requirements - set.unmet.length);
   return (
     <div className="dk-ecd-prof">
       <div className="dk-ecd-prof-h">
-        <SetStamp transactionSet={profile.transactionSet} direction={profile.direction} />
+        <SetStamp transactionSet={set.transactionSet} direction={set.direction} />
         <span className="dk-ecd-prof-n">
-          <b>{profile.name}</b>
-          <span>
-            {template.name
-              ? template.starter
-                ? t("Starter template {0}", template.name)
-                : t("Template {0}", template.name)
-              : t("No template chosen")}
-            {template.change === "Change" && template.current !== "" && (
-              <s title={template.current}>{template.current}</s>
-            )}
-          </span>
+          <b>
+            {set.direction === "Inbound"
+              ? t("{0} from the partner", set.transactionSet)
+              : t("{0} to the partner", set.transactionSet)}
+          </b>
         </span>
-        <ChangeMark change={profile.change} />
+        <ChangeMark change={set.change} />
       </div>
       <div className="dk-ecd-prof-m">
-        <span>{t("{0, plural, one {# rule met} other {# rules met}}", template.met)}</span>
-        {template.unmet.length > 0 && (
+        <span>{t("{0, plural, one {# rule met} other {# rules met}}", met)}</span>
+        {set.unmet.length > 0 && (
           <span className="dk-warn">
-            {t("{0, plural, one {# rule unmet} other {# rules unmet}}", template.unmet.length)}
+            {t("{0, plural, one {# rule unmet} other {# rules unmet}}", set.unmet.length)}
           </span>
         )}
-        {template.unverified.length > 0 && (
+        {set.unverified.length > 0 && (
           <span>
             {t(
               "{0, plural, one {# rule not checked} other {# rules not checked}}",
-              template.unverified.length,
-            )}
-          </span>
-        )}
-        {template.considered.length > 1 && (
-          <span>
-            {t(
-              "{0, plural, one {# template weighed} other {# templates weighed}}",
-              template.considered.length,
+              set.unverified.length,
             )}
           </span>
         )}
       </div>
-      {template.note !== "" && <p className="dk-ecd-note">{template.note}</p>}
-      {template.unmet.length > 0 && <RequirementList requirements={template.unmet} />}
-      {profile.fields.length > 0 && <ValueRows values={profile.fields} />}
-      {profile.controlNumbers.length > 0 && (
+      {set.unmet.length > 0 && <RequirementList requirements={set.unmet} />}
+      {set.fields.length > 0 && <ValueRows values={set.fields} />}
+      {set.controlNumbers.length > 0 && (
         <div className="dk-ecd-ctl">
-          {profile.controlNumbers.map((control) => (
+          {set.controlNumbers.map((control) => (
             <span key={control.kind} className={control.problem ? "dk-warn" : undefined}>
               <em>{control.kind}</em>
               <b>{control.start}</b>
@@ -138,6 +124,52 @@ function ProfileBlock({ profile }: { profile: DraftDocumentProfile }) {
             </span>
           ))}
         </div>
+      )}
+    </div>
+  );
+}
+
+/** The Lading project the draft writes: its files, what changes in each, and what still fails. */
+function ProjectBlock({ project }: { project: DraftProject }) {
+  const t = useT();
+  return (
+    <div className="dk-ecd-prof">
+      <div className="dk-ecd-prof-m">
+        <span>
+          {project.role === "broker" ? t("Broker starter") : t("Carrier starter")}
+        </span>
+        {project.errors > 0 ? (
+          <span className="dk-warn">
+            {t("{0, plural, one {# error to fix} other {# errors to fix}}", project.errors)}
+          </span>
+        ) : (
+          <span>{t("Checks clean")}</span>
+        )}
+        {project.warnings > 0 && (
+          <span>{t("{0, plural, one {# warning} other {# warnings}}", project.warnings)}</span>
+        )}
+      </div>
+      <ul className="dk-ecd-kept">
+        {project.files.map((file) => (
+          <li key={file.path}>
+            <code>{file.path}</code>
+            <ChangeMark change={file.change} />
+          </li>
+        ))}
+      </ul>
+      {project.diagnostics.length > 0 && (
+        <ul className="dk-ecd-kept">
+          {project.diagnostics.map((diagnostic, index) => (
+            <li
+              // oxlint-disable-next-line react/no-array-index-key -- two findings may read the same
+              key={`${diagnostic.path}-${diagnostic.code}-${index}`}
+              className={diagnostic.severity === "error" ? "dk-warn" : undefined}
+            >
+              <code>{diagnostic.path}</code>
+              <span>{diagnostic.message}</span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );
@@ -395,7 +427,7 @@ export function DeskConnectionDraftBody({ artifact }: { artifact: AssistantArtif
         </CardSection>
       )}
 
-      {draft.documentProfiles.length > 0 && (
+      {draft.sets.length > 0 && (
         <CardSection
           title={t("Document types")}
           aside={
@@ -406,12 +438,18 @@ export function DeskConnectionDraftBody({ artifact }: { artifact: AssistantArtif
             ) : undefined
           }
         >
-          {draft.documentProfiles.map((profile) => (
-            <ProfileBlock
-              key={`${profile.transactionSet}-${profile.direction}`}
-              profile={profile}
-            />
+          {draft.sets.map((set) => (
+            <SetBlock key={`${set.transactionSet}-${set.direction}`} set={set} />
           ))}
+        </CardSection>
+      )}
+
+      {draft.project && (
+        <CardSection
+          title={t("Lading project")}
+          aside={<ChangeMark change={draft.project.change} />}
+        >
+          <ProjectBlock project={draft.project} />
         </CardSection>
       )}
 

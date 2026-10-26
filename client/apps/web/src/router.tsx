@@ -361,15 +361,27 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
-            path: "/edi/designer",
+            path: "/edi/lading",
             loader: combineLoaders(
               protectedLoader,
               createPlanCapabilityLoader(PlanCapability.Integrations),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
-              const { EDIDesignerPage } = await import("@/routes/edi/page");
-              return { Component: EDIDesignerPage };
+              const { LadingProjectsPage } = await import("@/routes/edi/lading/page");
+              return { Component: LadingProjectsPage };
+            },
+          },
+          {
+            path: "/edi/lading/:partnerId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
+            async lazy() {
+              const { LadingStudioPage } = await import("@/routes/edi/lading/[partnerId]/page");
+              return { Component: LadingStudioPage };
             },
           },
           {
@@ -432,15 +444,15 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
-            path: "/edi/test-cases",
+            path: "/edi/flows",
             loader: combineLoaders(
               protectedLoader,
               createPlanCapabilityLoader(PlanCapability.Integrations),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
-              const { EDITestCasesPage } = await import("@/routes/edi/page");
-              return { Component: EDITestCasesPage };
+              const { EDIFlowInstancesPage } = await import("@/routes/edi/page");
+              return { Component: EDIFlowInstancesPage };
             },
           },
           {
