@@ -17,12 +17,12 @@ type CarrierEDIChannel struct {
 	CarrierID      pulid.ID `json:"carrierId"      keel:"carrier_id"`
 	EDIPartnerID   pulid.ID `json:"ediPartnerId"   keel:"edi_partner_id"`
 
-	CommunicationProfileID *pulid.ID `json:"communicationProfileId"   keel:"communication_profile_id"`
-	SCACOverride           string    `json:"scacOverride"             keel:"scac_override,nullzero"`
-	IsDefault              bool      `json:"isDefault"                keel:"is_default"`
-	Version                int64     `json:"version"                  keel:"version,version"`
-	CreatedAt              int64     `json:"createdAt"                keel:"created_at,autocreate"`
-	UpdatedAt              int64     `json:"updatedAt"                keel:"updated_at,autoupdate"`
+	CommunicationProfileID *pulid.ID `json:"communicationProfileId" keel:"communication_profile_id"`
+	SCACOverride           string    `json:"scacOverride"           keel:"scac_override,nullzero"`
+	IsDefault              bool      `json:"isDefault"              keel:"is_default"`
+	Version                int64     `json:"version"                keel:"version,version"`
+	CreatedAt              int64     `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64     `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
 	Carrier    *Carrier        `json:"carrier,omitempty"    keel:"belongs:carrier_id"`
 	EDIPartner *edi.EDIPartner `json:"ediPartner,omitempty" keel:"belongs:edi_partner_id"`

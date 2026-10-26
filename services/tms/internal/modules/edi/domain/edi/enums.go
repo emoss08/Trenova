@@ -533,4 +533,3 @@ func (s TenderChangeStatus) IsValid() bool {
 		return false
 	}
 }
-

@@ -135,7 +135,12 @@ func (m mapped) require(entity edi.MappingEntityType, id pulid.ID) {
 
 // source is the mapping source of a reference: the partner's code, from the reference or from
 // the unmapped code its path asked for.
-func source(reference *Ref, unmapped Unmapped, path string, fallbacks ...string) (pulid.ID, string) {
+func source(
+	reference *Ref,
+	unmapped Unmapped,
+	path string,
+	fallbacks ...string,
+) (pulid.ID, string) {
 	code := ""
 	label := ""
 	if reference != nil {
@@ -176,7 +181,10 @@ var paymentCodes = map[string]string{
 // mappings when it is approved.
 //
 //nolint:funlen // One pass over the document keeps each field's mapping beside its source.
-func ToLoadTender(raw jsonutils.RawJSON, unmapped Unmapped) (*edi.LoadTenderPayload, string, error) {
+func ToLoadTender(
+	raw jsonutils.RawJSON,
+	unmapped Unmapped,
+) (*edi.LoadTenderPayload, string, error) {
 	var document LoadTender
 	if err := decode(raw, &document); err != nil {
 		return nil, "", err
@@ -206,10 +214,29 @@ func ToLoadTender(raw jsonutils.RawJSON, unmapped Unmapped) (*edi.LoadTenderPayl
 		payload.TemperatureMax = wholeDegrees(document.Temperature.Max)
 	}
 	need := mapped{payload: payload}
-	payload.CustomerID, payload.CustomerLabel = source(document.Customer, unmapped, "customer", defaultMappingKey)
-	payload.ServiceTypeID, payload.ServiceTypeLabel = source(document.ServiceType, unmapped, "serviceType", defaultMappingKey)
-	payload.FormulaTemplateID, payload.FormulaTemplateLabel = source(document.Rating, unmapped, "rating", defaultMappingKey)
-	payload.ShipmentTypeID, payload.ShipmentTypeLabel = source(document.ShipmentType, unmapped, "shipmentType")
+	payload.CustomerID, payload.CustomerLabel = source(
+		document.Customer,
+		unmapped,
+		"customer",
+		defaultMappingKey,
+	)
+	payload.ServiceTypeID, payload.ServiceTypeLabel = source(
+		document.ServiceType,
+		unmapped,
+		"serviceType",
+		defaultMappingKey,
+	)
+	payload.FormulaTemplateID, payload.FormulaTemplateLabel = source(
+		document.Rating,
+		unmapped,
+		"rating",
+		defaultMappingKey,
+	)
+	payload.ShipmentTypeID, payload.ShipmentTypeLabel = source(
+		document.ShipmentType,
+		unmapped,
+		"shipmentType",
+	)
 	need.require(edi.MappingEntityTypeCustomer, payload.CustomerID)
 	need.require(edi.MappingEntityTypeServiceType, payload.ServiceTypeID)
 	need.require(edi.MappingEntityTypeFormulaTemplate, payload.FormulaTemplateID)

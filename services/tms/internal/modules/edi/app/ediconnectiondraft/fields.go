@@ -66,10 +66,10 @@ const (
 	fieldComponentSep     = "separators.component"
 	fieldRepetitionSep    = "separators.repetition"
 
-	setAttrSupported         = "supported"
-	setAttrVersion           = "version"
-	setAttrAck               = "ack"
-	setAttrAckWindowMinutes  = "ackWindowMinutes"
+	setAttrSupported        = "supported"
+	setAttrVersion          = "version"
+	setAttrAck              = "ack"
+	setAttrAckWindowMinutes = "ackWindowMinutes"
 
 	controlNumberAttrStart = "start"
 

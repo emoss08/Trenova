@@ -94,14 +94,14 @@ type EDIPartnerLading struct {
 }
 
 type EDIPartnerCard struct {
-	Partner          *edi.EDIPartner
-	Lading           *EDIPartnerLading
-	Transports       []*EDIPartnerTransport
-	Readiness        *EDIPartnerReadiness
-	Mappings         *ediports.EDIMappingSummary
-	Activity         *EDIPartnerActivity
-	Attention        *EDIPartnerAttention
-	Carriers         []*carrier.CarrierEDIChannel
+	Partner    *edi.EDIPartner
+	Lading     *EDIPartnerLading
+	Transports []*EDIPartnerTransport
+	Readiness  *EDIPartnerReadiness
+	Mappings   *ediports.EDIMappingSummary
+	Activity   *EDIPartnerActivity
+	Attention  *EDIPartnerAttention
+	Carriers   []*carrier.CarrierEDIChannel
 }
 
 func (s *Service) GetPartnerCard(

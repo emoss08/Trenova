@@ -58,7 +58,12 @@ func (s *Service) ExecuteFlowActions(
 			}
 			sent = append(sent, message)
 		case lading.ActionResend:
-			if err := s.resendFlowMessage(ctx, tenantInfo, dispatched.Instance, action.ID); err != nil {
+			if err := s.resendFlowMessage(
+				ctx,
+				tenantInfo,
+				dispatched.Instance,
+				action.ID,
+			); err != nil {
 				failures = append(failures, fmt.Errorf("resend %s: %w", action.ID, err))
 			}
 		case lading.ActionEscalate:
@@ -103,7 +108,10 @@ func (s *Service) SendFlowMessage(
 		payload:      edi.DocumentPayload{TransactionSet: set},
 	}
 	if dispatched.Program.Manifest.Map(action.Map) == nil {
-		return nil, errortypes.NewBusinessError("The flow sends with map {0}, which the version lacks", action.Map)
+		return nil, errortypes.NewBusinessError(
+			"The flow sends with map {0}, which the version lacks",
+			action.Map,
+		)
 	}
 	if actionCtx.Payload != nil && actionCtx.Payload.TransactionSet == set {
 		o.payload = *actionCtx.Payload

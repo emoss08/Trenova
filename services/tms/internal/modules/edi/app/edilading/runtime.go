@@ -26,7 +26,7 @@ import (
 const (
 	// maxLookupRounds bounds how often a run is repeated to answer the lookups it needs: one
 	// round answers every code the map reached, a second the codes a lookup's answer led to.
-	maxLookupRounds = 3
+	maxLookupRounds  = 3
 	programCacheSize = 256
 	programCacheTTL  = 5 * time.Minute
 	customFieldScope = "shipment"
@@ -125,12 +125,22 @@ func (r *Runtime) Load(
 	}
 	programs := &Programs{Project: runnable.Project}
 	if runnable.Active != nil {
-		if programs.Active, err = r.program(ctx, tenantInfo, runnable.Project, runnable.Active); err != nil {
+		if programs.Active, err = r.program(
+			ctx,
+			tenantInfo,
+			runnable.Project,
+			runnable.Active,
+		); err != nil {
 			return nil, err
 		}
 	}
 	if runnable.Shadow != nil && shadowing(runnable.Shadow) {
-		if programs.Shadow, err = r.program(ctx, tenantInfo, runnable.Project, runnable.Shadow); err != nil {
+		if programs.Shadow, err = r.program(
+			ctx,
+			tenantInfo,
+			runnable.Project,
+			runnable.Shadow,
+		); err != nil {
 			return nil, err
 		}
 	}
@@ -188,7 +198,12 @@ func (r *Runtime) program(
 		return nil, err
 	}
 	r.cache.put(key, encoded)
-	return &Program{Project: project, Version: version, Encoded: encoded, Manifest: &version.Manifest}, nil
+	return &Program{
+		Project:  project,
+		Version:  version,
+		Encoded:  encoded,
+		Manifest: &version.Manifest,
+	}, nil
 }
 
 // Context is what a check or a run is told about the organisation.

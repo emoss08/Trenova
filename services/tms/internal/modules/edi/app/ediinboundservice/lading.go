@@ -89,7 +89,11 @@ func (s *Service) readFile(
 		}
 		result := resolved.Result
 		if result.Error != nil {
-			r.skipped[set] = fmt.Sprintf("map %s could not read the file: %s", clause.Map, result.Error)
+			r.skipped[set] = fmt.Sprintf(
+				"map %s could not read the file: %s",
+				clause.Map,
+				result.Error,
+			)
 			continue
 		}
 		unmapped := ladingdoc.UnmappedOf(result.Unmapped)
@@ -228,11 +232,14 @@ func (s *Service) receive(ctx context.Context, in *received) transactionOutcome 
 		key, _ = in.message.PayloadSnapshot.LoadTender.RatingDetail["externalShipmentId"].(string)
 	}
 	dispatched, err := s.flows.Dispatch(ctx, &edilading.DispatchRequest{
-		TenantInfo:  tenantInfo,
-		PartnerID:   in.partner.ID,
-		Program:     in.programs.Active,
-		Flow:        in.read.flow,
-		FallbackKey: firstNonEmpty(key, string(in.transaction.set)+"-"+in.transaction.controlNumber),
+		TenantInfo: tenantInfo,
+		PartnerID:  in.partner.ID,
+		Program:    in.programs.Active,
+		Flow:       in.read.flow,
+		FallbackKey: firstNonEmpty(
+			key,
+			string(in.transaction.set)+"-"+in.transaction.controlNumber,
+		),
 		Event: lading.FlowEvent{
 			Kind:     lading.EventReceived,
 			Set:      string(in.transaction.set),
@@ -308,13 +315,16 @@ func (s *Service) act(
 		if tender := in.message.PayloadSnapshot.LoadTender; tender != nil {
 			key, _ = tender.RatingDetail["externalShipmentId"].(string)
 		}
-		warnings, err := s.ediService.CancelInboundTender(ctx, &ediservice.CancelInboundTenderRequest{
-			TenantInfo: inboundFileTenant(in.file),
-			Partner:    in.partner,
-			Key:        key,
-			ShipmentID: dispatched.Instance.ShipmentID,
-			Control:    in.transaction.controlNumber,
-		})
+		warnings, err := s.ediService.CancelInboundTender(
+			ctx,
+			&ediservice.CancelInboundTenderRequest{
+				TenantInfo: inboundFileTenant(in.file),
+				Partner:    in.partner,
+				Key:        key,
+				ShipmentID: dispatched.Instance.ShipmentID,
+				Control:    in.transaction.controlNumber,
+			},
+		)
 		return nil, warnings, err
 	case lading.ActionApply:
 		warnings, err := s.applyReceived(ctx, in)
@@ -341,13 +351,19 @@ func (s *Service) applyReceived(ctx context.Context, in *received) ([]string, er
 		if err != nil {
 			return nil, err
 		}
-		return s.routeTenderResponse(ctx, in.file, in.partner, in.transaction, &tenderResponseDetails{
-			scac:            answer.SCAC,
-			shipmentRef:     answer.Key,
-			reservationCode: answer.ReservationCode,
-			remarks:         answer.Reason,
-			references:      answer.References,
-		})
+		return s.routeTenderResponse(
+			ctx,
+			in.file,
+			in.partner,
+			in.transaction,
+			&tenderResponseDetails{
+				scac:            answer.SCAC,
+				shipmentRef:     answer.Key,
+				reservationCode: answer.ReservationCode,
+				remarks:         answer.Reason,
+				references:      answer.References,
+			},
+		)
 	case edi.TransactionSet214:
 		if payload.ShipmentStatus == nil {
 			return nil, nil

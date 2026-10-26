@@ -263,61 +263,65 @@ func (r *projects) ActivateVersion(
 	ctx context.Context,
 	req ediports.ActivateLadingVersionRequest,
 ) (*ediports.ActivatedLadingVersion, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ediports.ActivatedLadingVersion, error) {
-		db := r.db.Keel(ctx)
-		p := edidb.LadingProjects
-		v := edidb.LadingVersions
-		project, err := p.Where(p.ID.Eq(req.ProjectID)).Lock(keel.ForUpdate).One(ctx, db)
-		if err != nil {
-			return nil, projectErrors.Map(err, req.ProjectID.String())
-		}
-		now := timeutils.NowUnix()
-		result := &ediports.ActivatedLadingVersion{}
-		if project.ActiveVersionID.IsNotNil() && project.ActiveVersionID != req.VersionID {
-			previous, getErr := v.Omit(v.Files, v.Samples, v.Manifest).
-				Where(v.ID.Eq(project.ActiveVersionID)).
+	return dbtx.Write(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ediports.ActivatedLadingVersion, error) {
+			db := r.db.Keel(ctx)
+			p := edidb.LadingProjects
+			v := edidb.LadingVersions
+			project, err := p.Where(p.ID.Eq(req.ProjectID)).Lock(keel.ForUpdate).One(ctx, db)
+			if err != nil {
+				return nil, projectErrors.Map(err, req.ProjectID.String())
+			}
+			now := timeutils.NowUnix()
+			result := &ediports.ActivatedLadingVersion{}
+			if project.ActiveVersionID.IsNotNil() && project.ActiveVersionID != req.VersionID {
+				previous, getErr := v.Omit(v.Files, v.Samples, v.Manifest).
+					Where(v.ID.Eq(project.ActiveVersionID)).
+					One(ctx, db)
+				if getErr != nil {
+					return nil, versionErrors.Map(getErr, project.ActiveVersionID.String())
+				}
+				previous.Status = edi.LadingVersionStatusSuperseded
+				previous.SupersededAt = &now
+				if err = v.Save(ctx, db, previous, v.Status, v.SupersededAt); err != nil {
+					return nil, versionErrors.Map(err, previous.ID.String())
+				}
+				result.Superseded = previous
+			}
+			version, err := v.Omit(v.Files, v.Samples, v.Manifest).
+				Where(v.ID.Eq(req.VersionID), v.ProjectID.Eq(req.ProjectID)).
 				One(ctx, db)
-			if getErr != nil {
-				return nil, versionErrors.Map(getErr, project.ActiveVersionID.String())
+			if err != nil {
+				return nil, versionErrors.Map(err, req.VersionID.String())
 			}
-			previous.Status = edi.LadingVersionStatusSuperseded
-			previous.SupersededAt = &now
-			if err = v.Save(ctx, db, previous, v.Status, v.SupersededAt); err != nil {
-				return nil, versionErrors.Map(err, previous.ID.String())
+			version.Status = edi.LadingVersionStatusActive
+			version.ActivatedAt = &now
+			version.ActivatedByID = req.ActorID
+			version.ShadowUntil = nil
+			if err = v.Save(
+				ctx,
+				db,
+				version,
+				v.Status,
+				v.ActivatedAt,
+				v.ActivatedByID,
+				v.ShadowUntil,
+			); err != nil {
+				return nil, versionErrors.Map(err, version.ID.String())
 			}
-			result.Superseded = previous
-		}
-		version, err := v.Omit(v.Files, v.Samples, v.Manifest).
-			Where(v.ID.Eq(req.VersionID), v.ProjectID.Eq(req.ProjectID)).
-			One(ctx, db)
-		if err != nil {
-			return nil, versionErrors.Map(err, req.VersionID.String())
-		}
-		version.Status = edi.LadingVersionStatusActive
-		version.ActivatedAt = &now
-		version.ActivatedByID = req.ActorID
-		version.ShadowUntil = nil
-		if err = v.Save(
-			ctx,
-			db,
-			version,
-			v.Status,
-			v.ActivatedAt,
-			v.ActivatedByID,
-			v.ShadowUntil,
-		); err != nil {
-			return nil, versionErrors.Map(err, version.ID.String())
-		}
-		project.ActiveVersionID = version.ID
-		if project.ShadowVersionID == version.ID {
-			project.ShadowVersionID = ""
-		}
-		if err = p.Save(ctx, db, project, p.ActiveVersionID, p.ShadowVersionID); err != nil {
-			return nil, projectErrors.Map(err, project.ID.String())
-		}
-		result.Version = version
-		return result, nil
-	})
+			project.ActiveVersionID = version.ID
+			if project.ShadowVersionID == version.ID {
+				project.ShadowVersionID = ""
+			}
+			if err = p.Save(ctx, db, project, p.ActiveVersionID, p.ShadowVersionID); err != nil {
+				return nil, projectErrors.Map(err, project.ID.String())
+			}
+			result.Version = version
+			return result, nil
+		},
+	)
 }
 
 func (r *projects) GetSamples(
@@ -339,42 +343,46 @@ func (r *projects) GetRunnableVersions(
 	ctx context.Context,
 	req ediports.GetRunnableLadingVersionRequest,
 ) (*ediports.RunnableLadingVersions, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.RunnableLadingVersions, error) {
-		db := r.db.Keel(ctx)
-		p := edidb.LadingProjects
-		project, err := p.Where(p.EDIPartnerID.Eq(req.PartnerID)).One(ctx, db)
-		if err != nil {
-			return nil, projectErrors.Map(err, req.PartnerID.String())
-		}
-		result := &ediports.RunnableLadingVersions{Project: project}
-		ids := make([]pulid.ID, 0, 2)
-		if project.ActiveVersionID.IsNotNil() {
-			ids = append(ids, project.ActiveVersionID)
-		}
-		if project.ShadowVersionID.IsNotNil() {
-			ids = append(ids, project.ShadowVersionID)
-		}
-		if len(ids) == 0 {
-			return result, nil
-		}
-		v := edidb.LadingVersions
-		versions, err := v.Omit(v.Samples).
-			Where(v.ProjectID.Eq(project.ID), v.ID.In(ids...)).
-			Limit(len(ids)).
-			List(ctx, db)
-		if err != nil {
-			return nil, versionErrors.Map(err, project.ID.String())
-		}
-		for _, version := range versions {
-			switch version.ID {
-			case project.ActiveVersionID:
-				result.Active = version
-			case project.ShadowVersionID:
-				result.Shadow = version
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*ediports.RunnableLadingVersions, error) {
+			db := r.db.Keel(ctx)
+			p := edidb.LadingProjects
+			project, err := p.Where(p.EDIPartnerID.Eq(req.PartnerID)).One(ctx, db)
+			if err != nil {
+				return nil, projectErrors.Map(err, req.PartnerID.String())
 			}
-		}
-		return result, nil
-	})
+			result := &ediports.RunnableLadingVersions{Project: project}
+			ids := make([]pulid.ID, 0, 2)
+			if project.ActiveVersionID.IsNotNil() {
+				ids = append(ids, project.ActiveVersionID)
+			}
+			if project.ShadowVersionID.IsNotNil() {
+				ids = append(ids, project.ShadowVersionID)
+			}
+			if len(ids) == 0 {
+				return result, nil
+			}
+			v := edidb.LadingVersions
+			versions, err := v.Omit(v.Samples).
+				Where(v.ProjectID.Eq(project.ID), v.ID.In(ids...)).
+				Limit(len(ids)).
+				List(ctx, db)
+			if err != nil {
+				return nil, versionErrors.Map(err, project.ID.String())
+			}
+			for _, version := range versions {
+				switch version.ID {
+				case project.ActiveVersionID:
+					result.Active = version
+				case project.ShadowVersionID:
+					result.Shadow = version
+				}
+			}
+			return result, nil
+		},
+	)
 }
 
 func (r *projects) putSamples(

@@ -179,7 +179,11 @@ func validateCreate(req *CreateProjectRequest) error {
 	switch req.Acknowledge {
 	case "", "997", "999", lading.AcknowledgeNone:
 	default:
-		multiErr.Add("acknowledge", errortypes.ErrInvalid, "Acknowledgment must be 997, 999 or none")
+		multiErr.Add(
+			"acknowledge",
+			errortypes.ErrInvalid,
+			"Acknowledgment must be 997, 999 or none",
+		)
 	}
 	if multiErr.HasErrors() {
 		return multiErr
@@ -261,7 +265,11 @@ func (s *Projects) samples(
 	for _, ref := range version.Samples {
 		content, ok := contents[ref.Digest]
 		if !ok {
-			return nil, fmt.Errorf("lading sample %s of version %s is missing", ref.Path, version.ID)
+			return nil, fmt.Errorf(
+				"lading sample %s of version %s is missing",
+				ref.Path,
+				version.ID,
+			)
 		}
 		samples = append(samples, lading.Sample{Path: ref.Path, Content: content})
 	}
@@ -652,7 +660,11 @@ func (s *Projects) NewDraft(
 		Actor:     actor,
 		Operation: permission.OpCreate,
 		Current:   versionSummary(created),
-		Comment:   fmt.Sprintf("Lading draft %d started from version %d", created.Number, from.Number),
+		Comment: fmt.Sprintf(
+			"Lading draft %d started from version %d",
+			created.Number,
+			from.Number,
+		),
 	})
 	return created, nil
 }
@@ -874,7 +886,12 @@ func (s *Projects) Certify(
 func notReady(readiness *edi.LadingReadiness) error {
 	multiErr := errortypes.NewMultiError()
 	if readiness.Errors > 0 {
-		multiErr.Add("files", errortypes.ErrInvalid, "{0} errors remain in the files", readiness.Errors)
+		multiErr.Add(
+			"files",
+			errortypes.ErrInvalid,
+			"{0} errors remain in the files",
+			readiness.Errors,
+		)
 	}
 	if readiness.Failing > 0 {
 		multiErr.Add("tests", errortypes.ErrInvalid, "{0} tests fail", readiness.Failing)
@@ -907,7 +924,8 @@ func (s *Projects) requireReplays(
 	}
 	latest := map[string]*edi.LadingReplay{}
 	for _, replay := range replays {
-		if replay.Status != edi.LadingReplayStatusCompleted || replay.CreatedAt < version.UpdatedAt {
+		if replay.Status != edi.LadingReplayStatusCompleted ||
+			replay.CreatedAt < version.UpdatedAt {
 			continue
 		}
 		if current, ok := latest[replay.Map]; !ok || replay.CreatedAt > current.CreatedAt {
@@ -1299,7 +1317,12 @@ func ValidateSettings(manifest *lading.Check, values map[string]any) (map[string
 		}
 		declared := manifest.Setting(name)
 		if declared == nil {
-			multiErr.Add("settings."+name, errortypes.ErrInvalid, "The partner file declares no setting {0}", name)
+			multiErr.Add(
+				"settings."+name,
+				errortypes.ErrInvalid,
+				"The partner file declares no setting {0}",
+				name,
+			)
 			continue
 		}
 		if value == nil {
@@ -1377,10 +1400,18 @@ func (s *Projects) StartReplay(
 	actor *permissionports.RequestActor,
 ) (*edi.LadingReplay, error) {
 	if req.From <= 0 || req.To <= req.From {
-		return nil, errortypes.NewValidationError("to", errortypes.ErrInvalid, "The period ends after it starts")
+		return nil, errortypes.NewValidationError(
+			"to",
+			errortypes.ErrInvalid,
+			"The period ends after it starts",
+		)
 	}
 	if req.To-req.From > MaxReplayDays*24*60*60 {
-		return nil, errortypes.NewValidationError("from", errortypes.ErrInvalid, "A replay covers at most 90 days")
+		return nil, errortypes.NewValidationError(
+			"from",
+			errortypes.ErrInvalid,
+			"A replay covers at most 90 days",
+		)
 	}
 	version, err := s.projects.GetVersion(ctx, ediports.GetLadingVersionRequest{
 		TenantInfo: req.TenantInfo,
@@ -1390,7 +1421,12 @@ func (s *Projects) StartReplay(
 		return nil, err
 	}
 	if version.Manifest.Map(req.Map) == nil {
-		return nil, errortypes.NewValidationError("map", errortypes.ErrInvalid, "The version has no map {0}", req.Map)
+		return nil, errortypes.NewValidationError(
+			"map",
+			errortypes.ErrInvalid,
+			"The version has no map {0}",
+			req.Map,
+		)
 	}
 	if version.ErrorCount > 0 {
 		return nil, errortypes.NewBusinessError("Fix the version's errors before replaying it")
@@ -1407,10 +1443,16 @@ func (s *Projects) StartReplay(
 		against = project.ActiveVersionID
 	}
 	if against.IsNil() {
-		return nil, errortypes.NewBusinessError("The project has no active version to replay against")
+		return nil, errortypes.NewBusinessError(
+			"The project has no active version to replay against",
+		)
 	}
 	if against == version.ID {
-		return nil, errortypes.NewValidationError("againstVersionId", errortypes.ErrInvalid, "A version is not replayed against itself")
+		return nil, errortypes.NewValidationError(
+			"againstVersionId",
+			errortypes.ErrInvalid,
+			"A version is not replayed against itself",
+		)
 	}
 	replay, err := s.replays.CreateReplay(ctx, &edi.LadingReplay{
 		OrganizationID:   req.TenantInfo.OrgID,
@@ -1428,13 +1470,18 @@ func (s *Projects) StartReplay(
 		return nil, err
 	}
 	if s.workflows == nil || !s.workflows.Enabled() {
-		return nil, errortypes.NewBusinessError("Replays need the workflow service, which is not configured")
+		return nil, errortypes.NewBusinessError(
+			"Replays need the workflow service, which is not configured",
+		)
 	}
 	if _, err = s.workflows.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                                       "edi-lading-replay:" + replay.ID.String(),
 		TaskQueue:                                temporaltype.EDITaskQueue,
 		WorkflowExecutionErrorWhenAlreadyStarted: true,
-		StaticSummary:                            fmt.Sprintf("Replay Lading version %d", version.Number),
+		StaticSummary: fmt.Sprintf(
+			"Replay Lading version %d",
+			version.Number,
+		),
 	}, temporaltype.RunLadingReplayWorkflowName, &ReplayWorkflowPayload{
 		ReplayID:   replay.ID,
 		TenantInfo: req.TenantInfo,

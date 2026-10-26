@@ -169,7 +169,11 @@ func (s *Service) resolveOutbound(
 	if o.key, o.document, err = s.documentFor(ctx, req.TenantInfo, o); err != nil {
 		return nil, err
 	}
-	if o.documentType, err = s.documentTypeFor(ctx, set, edi.DocumentDirectionOutbound); err != nil {
+	if o.documentType, err = s.documentTypeFor(
+		ctx,
+		set,
+		edi.DocumentDirectionOutbound,
+	); err != nil {
 		return nil, err
 	}
 	return o, nil
@@ -327,7 +331,11 @@ func (s *Service) documentFor(
 		)
 	case payload.ShipmentStatus != nil:
 		status := payload.ShipmentStatus
-		key = stringutils.FirstNonEmpty(status.ShipperReference, status.BOL, status.ShipmentID.String())
+		key = stringutils.FirstNonEmpty(
+			status.ShipperReference,
+			status.BOL,
+			status.ShipmentID.String(),
+		)
 		document, err = ladingdoc.FromShipmentStatus(status, key, zones)
 	case payload.FreightInvoice != nil:
 		invoicePayload := payload.FreightInvoice
@@ -367,7 +375,8 @@ func (s *Service) tenderKey(
 	if err != nil {
 		return transferID.String()
 	}
-	if key, ok := transfer.TenderPayload.RatingDetail["externalShipmentId"].(string); ok && key != "" {
+	if key, ok := transfer.TenderPayload.RatingDetail["externalShipmentId"].(string); ok &&
+		key != "" {
 		return key
 	}
 	return transferID.String()

@@ -112,7 +112,7 @@ type InspectX12Request struct {
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	X12Version     string                   `json:"x12Version"`
 	Envelope       *edi.X12EnvelopeSettings `json:"envelope"`
-	Diagnostics    []edi.Diagnostic      `json:"diagnostics"`
+	Diagnostics    []edi.Diagnostic         `json:"diagnostics"`
 }
 
 type EDIMessageInspection struct {

@@ -69,7 +69,10 @@ func NewTimerScheduler(p TimerSchedulerParams) ediports.FlowTimerScheduler {
 }
 
 // Schedule starts the instance's timer workflow, or moves the one already waiting.
-func (s *TimerScheduler) Schedule(ctx context.Context, req *ediports.ScheduleFlowTimerRequest) error {
+func (s *TimerScheduler) Schedule(
+	ctx context.Context,
+	req *ediports.ScheduleFlowTimerRequest,
+) error {
 	if s.signals == nil {
 		return nil
 	}
@@ -121,7 +124,10 @@ func (o *ShipmentObserver) OnShipmentEvent(ctx context.Context, event *shipmente
 	tenant := pagination.TenantInfo{OrgID: event.OrganizationID, BuID: event.BusinessUnitID}
 	instances, err := o.flows.ListOpenInstances(
 		dbscope.WithTenant(ctx, tenant.DBTenant()),
-		&ediports.ListShipmentFlowInstancesRequest{TenantInfo: tenant, ShipmentID: event.ShipmentID},
+		&ediports.ListShipmentFlowInstancesRequest{
+			TenantInfo: tenant,
+			ShipmentID: event.ShipmentID,
+		},
 	)
 	if err != nil || len(instances) == 0 {
 		return err

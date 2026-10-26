@@ -6,8 +6,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/jobs/edijobs/edijobscontract"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/jobs/edijobs/edijobscontract"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
@@ -131,11 +131,15 @@ func EDIFlowTimerWorkflow(ctx workflow.Context, input *edijobscontract.FlowTimer
 		}
 		wakeAt = next
 	}
-	return workflow.NewContinueAsNewError(ctx, EDIFlowTimerWorkflow, &edijobscontract.FlowTimerInput{
-		TenantInfo: input.TenantInfo,
-		InstanceID: input.InstanceID,
-		WakeAt:     wakeAt,
-	})
+	return workflow.NewContinueAsNewError(
+		ctx,
+		EDIFlowTimerWorkflow,
+		&edijobscontract.FlowTimerInput{
+			TenantInfo: input.TenantInfo,
+			InstanceID: input.InstanceID,
+			WakeAt:     wakeAt,
+		},
+	)
 }
 
 // DispatchFlowTimerActivity wakes the instance if it is due and returns when it is next due, or
@@ -148,13 +152,17 @@ func (a *Activities) DispatchFlowTimerActivity(
 	if err != nil {
 		return 0, err
 	}
-	if instance == nil || instance.WakeAt == nil || instance.Status == edi.FlowInstanceStatusClosed {
+	if instance == nil || instance.WakeAt == nil ||
+		instance.Status == edi.FlowInstanceStatusClosed {
 		return 0, nil
 	}
 	return *instance.WakeAt, nil
 }
 
-func EDIFlowShipmentEventWorkflow(ctx workflow.Context, input *edijobscontract.FlowEventInput) error {
+func EDIFlowShipmentEventWorkflow(
+	ctx workflow.Context,
+	input *edijobscontract.FlowEventInput,
+) error {
 	ctx = workflow.WithActivityOptions(ctx, flowActivityOptions)
 	var a *Activities
 	return workflow.ExecuteActivity(ctx, a.NotifyFlowShipmentEventActivity, input).Get(ctx, nil)

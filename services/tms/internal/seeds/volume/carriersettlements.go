@@ -219,7 +219,10 @@ func (g *generator) csBrokeredMoves() []*csMove {
 			})
 		}
 	}
-	sort.SliceStable(moves, func(i, j int) bool { return moves[i].assignedAt < moves[j].assignedAt })
+	sort.SliceStable(
+		moves,
+		func(i, j int) bool { return moves[i].assignedAt < moves[j].assignedAt },
+	)
 	return moves
 }
 
@@ -274,7 +277,9 @@ func (g *generator) csLoadSetup(ctx context.Context) (*csSetup, error) {
 	setup.canPost = hasPeriods && setup.expense.IsNotNil() && setup.payable.IsNotNil()
 	setup.canPay = setup.canPost && billing.cash.IsNotNil()
 	if !setup.canPost {
-		g.opts.Logf("  ! carrier settlements stop at Approved: no open fiscal period or AP/expense account")
+		g.opts.Logf(
+			"  ! carrier settlements stop at Approved: no open fiscal period or AP/expense account",
+		)
 	}
 
 	return setup, nil
@@ -701,7 +706,13 @@ func (g *generator) csInvoice(
 		switch match.Status { //nolint:exhaustive // only open match states are resolved here
 		case carriersettlement.InvoiceMatchStatusMatched:
 			if (age > 5*csDay && g.fake.chance(0.92)) || g.fake.chance(0.45) {
-				g.csResolveMatch(match, carriersettlement.InvoiceMatchStatusResolved, "", matcher, resolveAt)
+				g.csResolveMatch(
+					match,
+					carriersettlement.InvoiceMatchStatusResolved,
+					"",
+					matcher,
+					resolveAt,
+				)
 				invoice.ReconciliationStatus = edi.CarrierInvoiceReconciliationStatusMatched
 				invoiceUpdated, matchUpdated = resolveAt, resolveAt
 			}
@@ -828,7 +839,10 @@ func (g *generator) csAccrue(rows *csRows, setup *csSetup, moves []*csMove) []*c
 	}
 
 	events := rows.events
-	sort.SliceStable(events, func(i, j int) bool { return events[i].createdAt < events[j].createdAt })
+	sort.SliceStable(
+		events,
+		func(i, j int) bool { return events[i].createdAt < events[j].createdAt },
+	)
 	return events
 }
 
@@ -941,7 +955,13 @@ func (g *generator) csSettle(
 		}
 		var batch *carriersettlement.CarrierSettlementBatch
 		for _, carrierID := range carrierIDs {
-			pool := g.csTake(pending, carrierID, period.end, genAt, setup.control.HoldUntilInvoiceMatched)
+			pool := g.csTake(
+				pending,
+				carrierID,
+				period.end,
+				genAt,
+				setup.control.HoldUntilInvoiceMatched,
+			)
 			if len(pool) == 0 {
 				continue
 			}
@@ -984,10 +1004,13 @@ func (g *generator) csTake(
 	var take, keep []*csEvent
 	for _, ev := range pending[carrierID] {
 		eligible := ev.entity.EventDate < periodEnd && ev.createdAt <= genAt
-		if eligible && holdUntilMatched && ev.entity.EventType != carriersettlement.CostEventTypeAdjustment {
+		if eligible && holdUntilMatched &&
+			ev.entity.EventType != carriersettlement.CostEventTypeAdjustment {
 			match := ev.move.match
-			eligible = match != nil && match.Status == carriersettlement.InvoiceMatchStatusResolved &&
-				match.ResolvedAt != nil && *match.ResolvedAt <= genAt
+			eligible = match != nil &&
+				match.Status == carriersettlement.InvoiceMatchStatusResolved &&
+				match.ResolvedAt != nil &&
+				*match.ResolvedAt <= genAt
 		}
 		if eligible {
 			take = append(take, ev)
@@ -1075,7 +1098,10 @@ func (g *generator) csNewSettlement(
 		Version:        1,
 	}
 
-	sort.SliceStable(pool, func(i, j int) bool { return pool[i].entity.EventDate < pool[j].entity.EventDate })
+	sort.SliceStable(
+		pool,
+		func(i, j int) bool { return pool[i].entity.EventDate < pool[j].entity.EventDate },
+	)
 	shipments := make(map[pulid.ID]struct{}, len(pool))
 	for _, ev := range pool {
 		e := ev.entity
@@ -1156,7 +1182,10 @@ func (g *generator) csLifecycle(
 		voidAt := genAt + g.fake.between64(csHour, 30*csHour)
 		if voidAt <= now-5*csMinute {
 			if g.fake.chance(0.5) {
-				submitAt := g.fake.between64(genAt+10*csMinute, max(voidAt-5*csMinute, genAt+10*csMinute))
+				submitAt := g.fake.between64(
+					genAt+10*csMinute,
+					max(voidAt-5*csMinute, genAt+10*csMinute),
+				)
 				entity.SubmittedByID = g.bilPick(users)
 				entity.SubmittedAt = &submitAt
 			}
@@ -1409,20 +1438,54 @@ func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) erro
 		table string
 		run   func() error
 	}{
-		{csTablePartners, func() error { return insertRows(ctx, tx, edidb.EDIPartners.Handle, rows.partners) }},
-		{csTableChannels, func() error { return insertRows(ctx, tx, carrierdb.CarrierEDIChannels.Handle, rows.channels) }},
-		{csTableMessages, func() error { return insertRows(ctx, tx, edidb.EDIMessages.Handle, rows.messages) }},
-		{csTableInvoices, func() error { return insertRows(ctx, tx, edidb.CarrierInvoices.Handle, rows.invoices) }},
-		{csTableRateCons, func() error { return insertRows(ctx, tx, rateconfirmationdb.RateConfirmations.Handle, rows.rateCons) }},
+		{
+			csTablePartners,
+			func() error { return insertRows(ctx, tx, edidb.EDIPartners.Handle, rows.partners) },
+		},
+		{
+			csTableChannels,
+			func() error { return insertRows(ctx, tx, carrierdb.CarrierEDIChannels.Handle, rows.channels) },
+		},
+		{
+			csTableMessages,
+			func() error { return insertRows(ctx, tx, edidb.EDIMessages.Handle, rows.messages) },
+		},
+		{
+			csTableInvoices,
+			func() error { return insertRows(ctx, tx, edidb.CarrierInvoices.Handle, rows.invoices) },
+		},
+		{
+			csTableRateCons,
+			func() error { return insertRows(ctx, tx, rateconfirmationdb.RateConfirmations.Handle, rows.rateCons) },
+		},
 		{csTableBatches, func() error {
-			return insertRows(ctx, tx, carriersettlementdb.CarrierSettlementBatches.Handle, rows.batches)
+			return insertRows(
+				ctx,
+				tx,
+				carriersettlementdb.CarrierSettlementBatches.Handle,
+				rows.batches,
+			)
 		}},
-		{csTableSettlements, func() error { return insertRows(ctx, tx, carriersettlementdb.CarrierSettlements.Handle, settlements) }},
-		{csTableEvents, func() error { return insertRows(ctx, tx, carriersettlementdb.CostEvents.Handle, events) }},
+		{
+			csTableSettlements,
+			func() error { return insertRows(ctx, tx, carriersettlementdb.CarrierSettlements.Handle, settlements) },
+		},
+		{
+			csTableEvents,
+			func() error { return insertRows(ctx, tx, carriersettlementdb.CostEvents.Handle, events) },
+		},
 		{csTableLines, func() error {
-			return insertRows(ctx, tx, carriersettlementdb.CarrierSettlementLines.Handle, rows.lines)
+			return insertRows(
+				ctx,
+				tx,
+				carriersettlementdb.CarrierSettlementLines.Handle,
+				rows.lines,
+			)
 		}},
-		{csTableMatches, func() error { return insertRows(ctx, tx, carriersettlementdb.InvoiceMatches.Handle, rows.matches) }},
+		{
+			csTableMatches,
+			func() error { return insertRows(ctx, tx, carriersettlementdb.InvoiceMatches.Handle, rows.matches) },
+		},
 	}
 	for _, step := range steps {
 		if err := step.run(); err != nil {
@@ -1433,7 +1496,12 @@ func (g *generator) csWrite(ctx context.Context, tx *keel.DB, rows *csRows) erro
 	if err := g.bilWrite(ctx, tx, rows.billing); err != nil {
 		return err
 	}
-	if err := insertRows(ctx, tx, carriersettlementdb.LedgerEntries.Handle, rows.ledger); err != nil {
+	if err := insertRows(
+		ctx,
+		tx,
+		carriersettlementdb.LedgerEntries.Handle,
+		rows.ledger,
+	); err != nil {
 		return fmt.Errorf("insert %s: %w", csTableLedger, err)
 	}
 

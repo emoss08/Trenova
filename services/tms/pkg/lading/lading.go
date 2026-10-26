@@ -84,7 +84,12 @@ func (c *Client) FlowStep(
 	req *FlowRequest,
 ) (*FlowStep, error) {
 	var out FlowStep
-	if err := c.call(ctx, OpFlowStep, flowRequest{Encoded: project, FlowRequest: req}, &out); err != nil {
+	if err := c.call(
+		ctx,
+		OpFlowStep,
+		flowRequest{Encoded: project, FlowRequest: req},
+		&out,
+	); err != nil {
 		return nil, err
 	}
 	return &out, nil
@@ -94,7 +99,12 @@ func (c *Client) FlowKey(ctx context.Context, project *Encoded, req *FlowRequest
 	var out struct {
 		Key *string `json:"key"`
 	}
-	if err := c.call(ctx, OpFlowKey, flowRequest{Encoded: project, FlowRequest: req}, &out); err != nil {
+	if err := c.call(
+		ctx,
+		OpFlowKey,
+		flowRequest{Encoded: project, FlowRequest: req},
+		&out,
+	); err != nil {
 		return "", err
 	}
 	if out.Key == nil {

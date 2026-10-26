@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/keel"
-	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,10 +70,10 @@ type EDIMessage struct {
 
 	DiagnosticCount int64 `json:"diagnosticCount" keel:"diagnostic_count,computed"`
 
-	Partner                *EDIPartner                  `json:"partner,omitempty"                keel:"belongs:edi_partner_id"`
-	DocumentType           *EDIDocumentType             `json:"documentType,omitempty"           keel:"belongs:document_type_id"`
-	LadingVersion          *LadingVersion               `json:"ladingVersion,omitempty"          keel:"belongs:lading_version_id"`
-	ValidationErrors       []*EDIMessageValidationError `json:"validationErrors,omitempty"       keel:"many:message_id"`
+	Partner          *EDIPartner                  `json:"partner,omitempty"          keel:"belongs:edi_partner_id"`
+	DocumentType     *EDIDocumentType             `json:"documentType,omitempty"     keel:"belongs:document_type_id"`
+	LadingVersion    *LadingVersion               `json:"ladingVersion,omitempty"    keel:"belongs:lading_version_id"`
+	ValidationErrors []*EDIMessageValidationError `json:"validationErrors,omitempty" keel:"many:message_id"`
 }
 
 func (m *EDIMessage) BeforeUpdate(ctx context.Context) error {
@@ -115,7 +115,6 @@ type EDIMessageValidationError struct {
 	SuggestedFix    string             `json:"suggestedFix"    keel:"suggested_fix,nullzero"`
 	CreatedAt       int64              `json:"createdAt"       keel:"created_at,autocreate"`
 }
-
 
 func (m *EDIMessage) GetID() pulid.ID {
 	return m.ID

@@ -193,7 +193,8 @@ func draftFindings(draft *ediports.ConnectionDraft) []string {
 	if draft.Project != nil && draft.Project.Errors > 0 {
 		findings = append(findings, fmt.Sprintf(
 			"the drafted Lading project has %d errors to fix in the studio before it can be certified",
-			draft.Project.Errors))
+			draft.Project.Errors,
+		))
 	}
 	for index := range draft.Gaps {
 		gap := &draft.Gaps[index]

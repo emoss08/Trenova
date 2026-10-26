@@ -346,8 +346,14 @@ func seed214(at time.Time, control int, load *shipment.Shipment, status string) 
 	group := fmt.Sprintf("%d", 5000+control)
 	set := fmt.Sprintf("%04d", control)
 	segments := []string{
-		fmt.Sprintf("ISA*00*          *00*          *ZZ*%-15s*ZZ*%-15s*%s*%s*^*00401*%s*0*P*>",
-			seedEDISenderID, seedEDIReceiverID, at.Format("060102"), at.Format("1504"), interchange),
+		fmt.Sprintf(
+			"ISA*00*          *00*          *ZZ*%-15s*ZZ*%-15s*%s*%s*^*00401*%s*0*P*>",
+			seedEDISenderID,
+			seedEDIReceiverID,
+			at.Format("060102"),
+			at.Format("1504"),
+			interchange,
+		),
 		fmt.Sprintf("GS*QM*%s*%s*%s*%s*%s*X*004010",
 			seedEDISenderID, seedEDIReceiverID, at.Format("20060102"), at.Format("1504"), group),
 		"ST*214*" + set,

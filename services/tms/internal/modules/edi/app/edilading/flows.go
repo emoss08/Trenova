@@ -312,15 +312,15 @@ func (f *Flows) journal(
 }
 
 type flowEventDetail struct {
-	Set      string               `json:"set,omitempty"`
-	Event    string               `json:"event,omitempty"`
-	Decision string               `json:"decision,omitempty"`
-	Reason   string               `json:"reason,omitempty"`
-	ID       string               `json:"id,omitempty"`
-	Control  string               `json:"control,omitempty"`
-	Accepted *bool                `json:"accepted,omitempty"`
+	Set      string                `json:"set,omitempty"`
+	Event    string                `json:"event,omitempty"`
+	Decision string                `json:"decision,omitempty"`
+	Reason   string                `json:"reason,omitempty"`
+	ID       string                `json:"id,omitempty"`
+	Control  string                `json:"control,omitempty"`
+	Accepted *bool                 `json:"accepted,omitempty"`
 	Outcomes []lading.OutcomeInput `json:"outcomes,omitempty"`
-	Load     *lading.LoadState    `json:"load,omitempty"`
+	Load     *lading.LoadState     `json:"load,omitempty"`
 }
 
 func eventDetail(event *lading.FlowEvent) flowEventDetail {

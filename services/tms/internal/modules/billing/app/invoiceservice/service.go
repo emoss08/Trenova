@@ -104,14 +104,14 @@ type Params struct {
 	AccountingPolicy     *accountingcontrolpolicyservice.Service
 	BillingPolicy        *billingcontrolpolicyservice.Service
 
-	EDIPartnerRepo              ediports.EDIPartnerRepository                `optional:"true"`
-	EDILadingProjects           ediports.LadingProjectRepository             `optional:"true"`
-	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository   `optional:"true"`
-	LateChargeRepo              latechargeports.LateChargeRepository         `optional:"true"`
-	AccountingSync              accountingsyncports.AccountingSyncEnqueuer   `optional:"true"`
-	EmailSenders                emailports.EmailSenderResolver               `optional:"true"`
-	GLAccounts                  glaccountports.GLAccountRepository           `optional:"true"`
-	Config                      *config.Config                               `optional:"true"`
+	EDIPartnerRepo              ediports.EDIPartnerRepository              `optional:"true"`
+	EDILadingProjects           ediports.LadingProjectRepository           `optional:"true"`
+	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository `optional:"true"`
+	LateChargeRepo              latechargeports.LateChargeRepository       `optional:"true"`
+	AccountingSync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	EmailSenders                emailports.EmailSenderResolver             `optional:"true"`
+	GLAccounts                  glaccountports.GLAccountRepository         `optional:"true"`
+	Config                      *config.Config                             `optional:"true"`
 	Permissions                 permissionports.PermissionEngine
 }
 

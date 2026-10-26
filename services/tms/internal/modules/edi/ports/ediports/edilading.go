@@ -71,7 +71,10 @@ type LadingProjectRepository interface {
 		req *ListLadingProjectsRequest,
 	) (*pagination.ListResult[*edi.LadingProject], error)
 	CreateProject(ctx context.Context, req *CreateLadingProjectRequest) (*edi.LadingProject, error)
-	UpdateProjectSettings(ctx context.Context, project *edi.LadingProject) (*edi.LadingProject, error)
+	UpdateProjectSettings(
+		ctx context.Context,
+		project *edi.LadingProject,
+	) (*edi.LadingProject, error)
 	SetShadowVersion(
 		ctx context.Context,
 		project *edi.LadingProject,
@@ -141,7 +144,10 @@ type GetFlowSendMessageRequest struct {
 
 type FlowRepository interface {
 	GetInstance(ctx context.Context, req GetFlowInstanceRequest) (*edi.FlowInstance, error)
-	GetInstanceByKey(ctx context.Context, req GetFlowInstanceByKeyRequest) (*edi.FlowInstance, error)
+	GetInstanceByKey(
+		ctx context.Context,
+		req GetFlowInstanceByKeyRequest,
+	) (*edi.FlowInstance, error)
 	OpenInstance(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error)
 	SaveInstance(ctx context.Context, instance *edi.FlowInstance) (*edi.FlowInstance, error)
 	AppendEvent(ctx context.Context, event *edi.FlowEvent) error

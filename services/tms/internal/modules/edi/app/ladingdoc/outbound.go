@@ -16,8 +16,10 @@ import (
 )
 
 var (
-	ErrNoKey    = errors.New("ladingdoc: the document has no key the partner knows the load by")
-	ErrNoStops  = errors.New("ladingdoc: a load tender needs at least one stop with a scheduled time")
+	ErrNoKey   = errors.New("ladingdoc: the document has no key the partner knows the load by")
+	ErrNoStops = errors.New(
+		"ladingdoc: a load tender needs at least one stop with a scheduled time",
+	)
 	ErrNoEvents = errors.New("ladingdoc: a shipment status needs at least one event with a time")
 	ErrNoNumber = errors.New("ladingdoc: a freight invoice needs a number and a date")
 )
@@ -136,7 +138,11 @@ func stopTypeOf(stopType string) string {
 }
 
 // FromLoadTender is the loadTender document of a tender Trenova offers.
-func FromLoadTender(payload *edi.LoadTenderPayload, key string, zones Zones) (jsonutils.RawJSON, error) {
+func FromLoadTender(
+	payload *edi.LoadTenderPayload,
+	key string,
+	zones Zones,
+) (jsonutils.RawJSON, error) {
 	if strings.TrimSpace(key) == "" {
 		return nil, ErrNoKey
 	}
@@ -221,7 +227,11 @@ func FromLoadTender(payload *edi.LoadTenderPayload, key string, zones Zones) (js
 	for index := range payload.AdditionalCharges {
 		charge := &payload.AdditionalCharges[index]
 		document.Charges = append(document.Charges, Charge{
-			Accessorial: ref(charge.AccessorialChargeID, charge.AccessorialCode, charge.AccessorialLabel),
+			Accessorial: ref(
+				charge.AccessorialChargeID,
+				charge.AccessorialCode,
+				charge.AccessorialLabel,
+			),
 			Code:        charge.AccessorialCode,
 			Description: charge.AccessorialDescription,
 			Amount:      moneyOf(charge.Amount, ""),
@@ -254,7 +264,11 @@ func FromTenderResponse(
 }
 
 // FromShipmentStatus is the shipmentStatus document of what happened to a load.
-func FromShipmentStatus(payload *edi.ShipmentStatusPayload, key string, zones Zones) (jsonutils.RawJSON, error) {
+func FromShipmentStatus(
+	payload *edi.ShipmentStatusPayload,
+	key string,
+	zones Zones,
+) (jsonutils.RawJSON, error) {
 	if strings.TrimSpace(key) == "" {
 		return nil, ErrNoKey
 	}
@@ -276,7 +290,9 @@ func FromShipmentStatus(payload *edi.ShipmentStatusPayload, key string, zones Zo
 				continue
 			}
 			written := StatusEvent{
-				Kind:      EventKindOf(stringutils.FirstNonEmpty(event.StatusCode, event.AppointmentCode)),
+				Kind: EventKindOf(
+					stringutils.FirstNonEmpty(event.StatusCode, event.AppointmentCode),
+				),
 				Reason:    stringutils.FirstNonEmpty(event.ReasonCode, event.AppointmentReasonCode),
 				At:        at(event.EventAt, zone),
 				Stop:      event.StopSequence,
@@ -313,7 +329,10 @@ func FromShipmentStatus(payload *edi.ShipmentStatusPayload, key string, zones Zo
 }
 
 // FromFreightInvoice is the freightInvoice document of an invoice Trenova bills.
-func FromFreightInvoice(payload *edi.FreightInvoicePayload, key, zone string) (jsonutils.RawJSON, error) {
+func FromFreightInvoice(
+	payload *edi.FreightInvoicePayload,
+	key, zone string,
+) (jsonutils.RawJSON, error) {
 	if payload.InvoiceNumber == "" || payload.InvoiceDate == 0 || !payload.TotalAmount.Valid {
 		return nil, ErrNoNumber
 	}

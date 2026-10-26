@@ -110,7 +110,8 @@ func (r *repository) ListMessagesCursor(
 			return listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				m.Omit(m.RawX12, m.PayloadSnapshot, m.Document, m.Lineage, m.Outcomes).Where(messageListFilters(req)...),
+				m.Omit(m.RawX12, m.PayloadSnapshot, m.Document, m.Lineage, m.Outcomes).
+					Where(messageListFilters(req)...),
 				&listquery.Request[edi.EDIMessage]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,

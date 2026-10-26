@@ -65,7 +65,8 @@ func buildPartnerReadiness(row *ediports.EDIPartnerReadinessRow) *EDIPartnerRead
 			Complete: row.HasMappingProfile,
 		},
 	}
-	if row.Kind != string(edi.PartnerKindInternal) && (row.EnabledForInbound || row.EnabledForOutbound) {
+	if row.Kind != string(edi.PartnerKindInternal) &&
+		(row.EnabledForInbound || row.EnabledForOutbound) {
 		items = append(items,
 			EDIPartnerReadinessItem{
 				Key:      "lading-project",

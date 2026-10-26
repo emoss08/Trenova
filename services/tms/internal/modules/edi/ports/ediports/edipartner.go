@@ -41,16 +41,16 @@ type ListEDIPartnersByCustomerIDsRequest struct {
 }
 
 type EDIPartnerReadinessRow struct {
-	PartnerID             pulid.ID
-	ContactEmail          string
-	Timezone              string
-	HasActiveProfile      bool
-	HasMappingProfile     bool
-	HasLadingProject      bool
-	HasActiveVersion      bool
-	EnabledForInbound     bool
-	EnabledForOutbound    bool
-	Kind                  string
+	PartnerID          pulid.ID
+	ContactEmail       string
+	Timezone           string
+	HasActiveProfile   bool
+	HasMappingProfile  bool
+	HasLadingProject   bool
+	HasActiveVersion   bool
+	EnabledForInbound  bool
+	EnabledForOutbound bool
+	Kind               string
 }
 
 type GetEDIPartnerReadinessRequest struct {

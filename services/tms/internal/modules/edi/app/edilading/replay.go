@@ -117,16 +117,19 @@ func (r *Replayer) run(
 	result := &replayResult{summary: lading.ReplaySummary{Fields: map[string]int{}}}
 	cursor := pulid.Nil
 	for done := 0; done < maxReplayMessages; {
-		messages, listErr := r.messages.ListReplayMessages(ctx, &ediports.ListEDIReplayMessagesRequest{
-			TenantInfo:     tenantInfo,
-			PartnerID:      project.EDIPartnerID,
-			TransactionSet: edi.TransactionSet(target.Set),
-			Direction:      direction,
-			From:           replay.PeriodStart,
-			To:             replay.PeriodEnd,
-			AfterID:        cursor,
-			Limit:          replayBatch,
-		})
+		messages, listErr := r.messages.ListReplayMessages(
+			ctx,
+			&ediports.ListEDIReplayMessagesRequest{
+				TenantInfo:     tenantInfo,
+				PartnerID:      project.EDIPartnerID,
+				TransactionSet: edi.TransactionSet(target.Set),
+				Direction:      direction,
+				From:           replay.PeriodStart,
+				To:             replay.PeriodEnd,
+				AfterID:        cursor,
+				Limit:          replayBatch,
+			},
+		)
 		if listErr != nil {
 			return nil, listErr
 		}
@@ -141,7 +144,16 @@ func (r *Replayer) run(
 				inputs = append(inputs, input)
 			}
 		}
-		if err = r.batch(ctx, tenantInfo, project, before, after, replay.Map, inputs, result); err != nil {
+		if err = r.batch(
+			ctx,
+			tenantInfo,
+			project,
+			before,
+			after,
+			replay.Map,
+			inputs,
+			result,
+		); err != nil {
 			return nil, err
 		}
 		done += len(messages)
@@ -171,7 +183,10 @@ func (r *Replayer) program(
 	return r.runtime.Version(ctx, tenantInfo, project, version)
 }
 
-func replayInput(message *edi.EDIMessage, direction edi.DocumentDirection) (lading.ReplayInput, bool) {
+func replayInput(
+	message *edi.EDIMessage,
+	direction edi.DocumentDirection,
+) (lading.ReplayInput, bool) {
 	input := lading.ReplayInput{
 		ID:  message.ID.String(),
 		Now: time.Unix(message.GeneratedAt, 0).UTC().Format(time.RFC3339),

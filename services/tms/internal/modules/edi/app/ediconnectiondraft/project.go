@@ -587,7 +587,9 @@ func (p *planner) guides(
 				guide.name,
 				base,
 				exchanged.set,
-				quoteLading(fmt.Sprintf("%s %s, from %s", label, exchanged.set, p.req.Document.FileName)),
+				quoteLading(
+					fmt.Sprintf("%s %s, from %s", label, exchanged.set, p.req.Document.FileName),
+				),
 			)}
 			bySet[exchanged.set] = guide
 			order = append(order, exchanged.set)
@@ -633,13 +635,21 @@ func guideRule(input *ediports.DraftRequirementInput) (string, bool) {
 	if usage != "" {
 		rules = append(rules, usage)
 	}
-	if codes := guideCodes(input.Codes); codes != "" && input.Usage != ediports.RequirementUsageNotUsed {
+	if codes := guideCodes(
+		input.Codes,
+	); codes != "" &&
+		input.Usage != ediports.RequirementUsageNotUsed {
 		rules = append(rules, "codes "+codes)
 	}
 	if len(rules) == 0 {
 		return "", false
 	}
-	return fmt.Sprintf("%s { %02d %s }", segment, input.ElementPosition, strings.Join(rules, " ")), true
+	return fmt.Sprintf(
+		"%s { %02d %s }",
+		segment,
+		input.ElementPosition,
+		strings.Join(rules, " "),
+	), true
 }
 
 func guideCodes(codes []string) string {
@@ -657,7 +667,20 @@ func guideCodes(codes []string) string {
 }
 
 func quoteLading(text string) string {
-	replacer := strings.NewReplacer(`\`, `\\`, `"`, `\"`, "{", "{{", "}", "}}", "\n", " ", "\r", " ")
+	replacer := strings.NewReplacer(
+		`\`,
+		`\\`,
+		`"`,
+		`\"`,
+		"{",
+		"{{",
+		"}",
+		"}}",
+		"\n",
+		" ",
+		"\r",
+		" ",
+	)
 	return `"` + replacer.Replace(text) + `"`
 }
 
@@ -958,7 +981,10 @@ func (p *planner) sampleUnmapped(
 		return out
 	}
 	for _, need := range result.Needs {
-		request.Lookups = append(request.Lookups, lading.LookupAnswer{Kind: need.Kind, Code: need.Code})
+		request.Lookups = append(
+			request.Lookups,
+			lading.LookupAnswer{Kind: need.Kind, Code: need.Code},
+		)
 	}
 	if len(request.Lookups) > 0 {
 		if result, err = p.s.lading.Client().Run(ctx, p.encoded, request); err != nil ||
@@ -968,7 +994,10 @@ func (p *planner) sampleUnmapped(
 	}
 	unmapped := ladingdoc.UnmappedOf(result.Unmapped)
 	for index := range result.Transactions {
-		tender, _, convertErr := ladingdoc.ToLoadTender(result.Transactions[index].Document, unmapped)
+		tender, _, convertErr := ladingdoc.ToLoadTender(
+			result.Transactions[index].Document,
+			unmapped,
+		)
 		if convertErr != nil {
 			continue
 		}
