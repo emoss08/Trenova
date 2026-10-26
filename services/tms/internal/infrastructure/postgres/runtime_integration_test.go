@@ -5,6 +5,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -15,11 +16,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/internal/testutil/keeltest/keeltestdb"
+	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/readscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/fx/fxtest"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest/observer"
@@ -209,6 +212,54 @@ func TestRuntime_ACachedReadWhoseReadScopeReadsTheDatabaseFinishes(t *testing.T)
 		t.Fatal("a cached read whose read scope resolves through the database never finished")
 	}
 	assert.Equal(t, 1, resolved, "the read scope resolves once per request")
+}
+
+func TestRuntime_AWaitForATenantSlotLogsWhoHoldsIt(t *testing.T) {
+	f := newRLSFixture(t, config.RLSModeEnforce)
+	f.cfg.Database.TenantConcurrency = 1
+	f.cfg.Database.SlowWaitWarning = 50 * time.Millisecond
+	core, logs := observer.New(zapcore.WarnLevel)
+	conn, err := newConnection(ConnectionParams{
+		Lifecycle: fxtest.NewLifecycle(t),
+		Config:    f.cfg,
+		Logger:    zap.New(core),
+		Observers: shapetest.Observers(t),
+	}, oltpSettings(f.cfg))
+	require.NoError(t, err)
+	require.NoError(t, conn.connect(t.Context()))
+	t.Cleanup(func() { _ = conn.shutdown(context.Background()) })
+
+	slotWaits := func() []observer.LoggedEntry {
+		return logs.FilterMessageSnippet("concurrency slot").All()
+	}
+	tenantA := dbscope.WithTenant(t.Context(), f.tenantA)
+	waited := make(chan error, 1)
+	_, err = dbtx.Read(tenantA, conn, func(ctx context.Context) ([]string, error) {
+		codes, readErr := fleetCodes(ctx, conn)
+		go func() {
+			_, waitErr := fleetCodes(tenantA, conn)
+			waited <- waitErr
+		}()
+		require.Eventually(t, func() bool { return len(slotWaits()) > 0 },
+			5*time.Second, 10*time.Millisecond, "a wait past the threshold logs a warning")
+		return codes, readErr
+	})
+	require.NoError(t, err)
+	require.NoError(t, <-waited)
+
+	fields := slotWaits()[0].ContextMap()
+	assert.Equal(t, "tenant_slot", fields["kind"])
+	assert.Equal(t, "tenant", fields["pool"])
+	assert.Equal(t, int64(1), fields["limit"])
+	holders, ok := fields["holders"].([]any)
+	require.True(t, ok, "holders: %T", fields["holders"])
+	require.Len(t, holders, 1, "the transaction holding the only slot is named")
+	holder, ok := holders[0].(map[string]any)
+	require.True(t, ok)
+	stack, ok := holder["stack"].([]any)
+	require.True(t, ok)
+	assert.Contains(t, fmt.Sprint(stack), "TestRuntime_AWaitForATenantSlotLogsWhoHoldsIt",
+		"the holder's stack reaches the code that opened the transaction")
 }
 
 func TestRuntime_ConnectionReportsTenantConcurrencyAndCacheStats(t *testing.T) {

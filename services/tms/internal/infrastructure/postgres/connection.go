@@ -198,6 +198,7 @@ func (c *Connection) connect(ctx context.Context) error {
 		Guard:             guard,
 		TenantConcurrency: c.settings.tenantConcurrency,
 		Cache:             cache,
+		SlowWaits:         c.slowWaits(scopePoolTenant),
 	})
 	if err != nil {
 		return err

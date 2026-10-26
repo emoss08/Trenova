@@ -42,12 +42,19 @@ Registered by the tenant pool (`postgres.Connection.runtimeStats`) beside the
 - `trenova_db_pool_read_commit_failures_total`: connections closed because the
   reply to a read transaction's unawaited `COMMIT` failed (tenant and system
   pools).
+- `trenova_db_slow_waits_total{component,pool,kind}`: waits past
+  `database.slowWaitWarning` for an organization's slot (`tenant_slot`), a pool
+  connection (`connection`) or another request's read of the same cache entry
+  (`cache_fill`). Each also logs a warning on the `slow-wait` logger with the
+  waiter's stack and, for a slot, every holder's.
 
 A hit ratio (`hits / (hits + misses)`) that falls after a deploy names a read
 that stopped matching its entries; `listening` at 0 for more than a few
 seconds names a listener that cannot reach PostgreSQL (behind a
 transaction-mode pooler, set `database.cache.listenHost`); a rising
-`tenant_waits_total` names a tenant at its bound.
+`tenant_waits_total` names a tenant at its bound; any `slow_waits_total` names
+work stuck behind a holder that is slow or never lets go, and its warning names
+the holder.
 
 ## GraphQL Metrics
 
