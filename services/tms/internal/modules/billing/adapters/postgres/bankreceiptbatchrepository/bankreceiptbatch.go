@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -98,39 +99,41 @@ func (r *repository) DistinctSources(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption], error) {
-			b := bankreceiptbatchdb.BankReceiptBatches
-			search := strings.TrimSpace(req.Query)
-			q := b.Group(b.Source).
-				Pick(b.Source).
-				Where(b.Source.Ne(""), keel.When(search != "", b.Source.ContainsFold(search))).
-				Order(b.Source.Asc())
+			q := sourceOptions(req.Query)
+			counted := q.Clone()
+			page := q.Order(bankreceiptbatchdb.BankReceiptBatches.Source.Asc()).
+				Limit(req.Pagination.SafeLimit()).
+				Offset(req.Pagination.SafeOffset())
 
-			sources, err := keel.Into[string](ctx, r.db.Keel(ctx), q)
-			if err != nil {
+			var sources []string
+			var total keel.RowCount
+			if err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoSlice(page, &sources),
+				keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total),
+			); err != nil {
 				return nil, fmt.Errorf("distinct sources: %w", err)
 			}
 
 			options := make([]*bankreceiptbatchports.BankReceiptBatchSourceOption, len(sources))
-			for i, s := range sources {
-				options[i] = &bankreceiptbatchports.BankReceiptBatchSourceOption{Value: s, Label: s}
+			for i, source := range sources {
+				options[i] = &bankreceiptbatchports.BankReceiptBatchSourceOption{
+					Value: source,
+					Label: source,
+				}
 			}
 
-			limit := req.Pagination.SafeLimit()
-			offset := req.Pagination.SafeOffset()
-			total := len(options)
-
-			if offset > total {
-				offset = total
-			}
-			end := min(offset+limit, total)
-
-			return &pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption]{
-				Items:      options[offset:end],
-				Total:      total,
-				TotalExact: true,
-			}, nil
+			return listquery.Result(options, total), nil
 		},
 	)
+}
+
+func sourceOptions(query string) *keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	b := bankreceiptbatchdb.BankReceiptBatches
+	search := strings.TrimSpace(query)
+
+	return b.Group(b.Source).
+		Pick(b.Source).
+		Where(b.Source.Ne(""), keel.When(search != "", b.Source.ContainsFold(search)))
 }
 
 func (r *repository) Update(
