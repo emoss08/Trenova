@@ -220,7 +220,7 @@ func (s *candidateSource) build(
 	if req.AfterAt > 0 || !req.AfterID.IsNil() {
 		preds = append(
 			preds,
-			keel.DynRow(s.at, s.id).Gt(keel.DynRow(req.AfterAt, req.AfterID.String())),
+			keel.Tuple(s.at, s.id).Gt(keel.Tuple(req.AfterAt, req.AfterID.String())),
 		)
 	}
 
@@ -262,12 +262,11 @@ func journalDayQueued(
 		timezone = time.UTC.String()
 	}
 	return []keel.Pred{
-		keel.DynOf(rec.ObjectID).
-			Eq(keel.DynLit(accountingsync.JournalDayPrefix).Cast(keel.TypeString).Concat(
-				keel.ToTimestamp(je.AccountingDate).
-					AtTimeZone(keel.Text(timezone)).
-					ToChar(accountingsync.JournalDaySQLLayout),
-			)),
+		rec.ObjectID.EqCol(keel.Text(accountingsync.JournalDayPrefix).Cat(
+			keel.ToTimestamp(je.AccountingDate).
+				AtTimeZone(keel.Text(timezone)).
+				ToChar(accountingsync.JournalDaySQLLayout),
+		)),
 		keel.Int64Of(rec.QueuedAt).GteExpr(je.PostedAt),
 	}
 }

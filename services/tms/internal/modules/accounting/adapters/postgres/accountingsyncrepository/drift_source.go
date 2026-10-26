@@ -303,7 +303,7 @@ func driverStates(req *accountingsyncports.ListAccountingDriftStatesRequest) kee
 			ds.ID,
 			ds.SettlementNumber,
 			ds.WorkerID,
-			keel.StringOf(keel.DynOf(wrk.FirstName).Concat(" ").Concat(wrk.LastName)).Trim(),
+			wrk.FirstName.Cat(keel.Text(" "), wrk.LastName).Trim(),
 			ds.CurrencyCode,
 			ds.NetPayMinor.Abs(),
 			keel.Int64(0),
@@ -373,10 +373,10 @@ func (s *driftSource) ListBalances(
 						sr.ObjectType,
 						inv.ID,
 						inv.Number,
-						keel.DynOf(inv.BalanceDueMinor).Add(reflectedMemos(
+						inv.BalanceDueMinor.Add(keel.Int64Of(reflectedMemos(
 							req.ConnectionID,
 							func(memo *invoicedb.InvoicesTable) keel.Expr { return memo.BalanceDueMinor },
-						)),
+						))),
 						sr.ExternalID,
 					).
 					Where(inv.CustomerID.In(ids...)).

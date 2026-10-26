@@ -190,12 +190,12 @@ func (s *ledgerSource) SumLines(
 				includeClosing: req.IncludeClosing,
 			})
 
-			var customer keel.Expr = keel.Text("")
+			customer := keel.Text("")
 			sourceEntry := customer
 			if len(req.PartyAccountIDs) > 0 {
 				party := jel.GLAccountID.In(req.PartyAccountIDs...)
-				customer = keel.DynCase().When(party, jel.CustomerID).End().Coalesce("")
-				sourceEntry = keel.DynCase().
+				customer = keel.CaseString().When(party, jel.CustomerID).End().Coalesce("")
+				sourceEntry = keel.CaseString().
 					When(party, je.ReversalOfID.Coalesce(je.ID)).
 					End().
 					Coalesce("")

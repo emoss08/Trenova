@@ -81,7 +81,7 @@ func dueRecords(sr *accountingsyncdb.AccountingSyncRecordsTable, now int64) keel
 }
 
 func dispatchRankOrder(sr *accountingsyncdb.AccountingSyncRecordsTable) keel.Order {
-	rank := keel.DynCase()
+	rank := keel.CaseInt64()
 	for _, typ := range accountingsync.AllSyncObjectTypes() {
 		rank = rank.When(sr.ObjectType.Eq(typ), keel.Int64(int64(typ.DispatchRank())))
 	}
