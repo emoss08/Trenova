@@ -176,17 +176,7 @@ func keepStored(col keel.Col) keel.StringExpr {
 
 func visibleTo(tr *edidb.TenderRecipientsTable, tenant pagination.TenantInfo) keel.Pred {
 	return keel.Or(
-		keel.And(
-			tr.SourceOrganizationID.Eq(tenant.OrgID),
-			tr.SourceBusinessUnitID.Eq(tenant.BuID),
-		),
-		keel.And(
-			tr.RecipientOrganizationID.Eq(tenant.OrgID),
-			keel.Or(
-				tr.RecipientBusinessUnitID.Eq(tenant.BuID),
-				tr.RecipientBusinessUnitID.IsNull(),
-				tr.BusinessUnitID.Eq(tenant.BuID),
-			),
-		),
+		tr.SourceOrganizationID.Eq(tenant.OrgID),
+		tr.RecipientOrganizationID.Eq(tenant.OrgID),
 	)
 }
