@@ -6,7 +6,7 @@ use trenova_module_kit::span::Span;
 
 use super::Parser;
 use crate::lading::syntax::ast::{
-    Doc, Ident, PropertyDecl, TestDecl, TestStep, TextLit, Vary, VarySource,
+    Doc, Expr, ExprKind, Ident, PropertyDecl, TestDecl, TestStep, TextLit, Vary, VarySource,
 };
 use crate::lading::syntax::token::Tok;
 
@@ -256,6 +256,10 @@ impl Parser<'_> {
             };
             let detail = if self.at_line_end() {
                 None
+            } else if what.name == "sent" && matches!(self.current_text(), "accept" | "decline") {
+                let token = self.advance();
+                let word = self.text_of(token.span).to_owned();
+                Some(Expr::new(ExprKind::Name(word), token.span))
             } else {
                 Some(self.expr())
             };

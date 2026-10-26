@@ -945,12 +945,7 @@ impl<'p> Runner<'p> {
     fn receive(&mut self, flow: &str, text: &str) -> Option<FlowEvent> {
         let program = self.program;
         let unit = *program.flows.get(flow)?;
-        let set = text
-            .split("ST")
-            .nth(1)
-            .and_then(|rest| rest.get(1..4))
-            .unwrap_or_default()
-            .to_owned();
+        let set = transaction_set(text);
         let receive = program.units[unit]
             .items()
             .iter()
@@ -983,6 +978,27 @@ impl<'p> Runner<'p> {
         let _ = route(program, flow, &event, self.given.now);
         Some(event)
     }
+}
+
+/// The set of the first transaction in an interchange: ST01, read with the separators ISA
+/// declares.
+fn transaction_set(text: &str) -> String {
+    let trimmed = text.trim_start();
+    let element = trimmed.chars().nth(3).unwrap_or('*');
+    let terminator = trimmed
+        .char_indices()
+        .filter(|(_, c)| *c == element)
+        .nth(15)
+        .and_then(|(at, _)| trimmed[at..].chars().nth(2))
+        .unwrap_or('~');
+    trimmed
+        .split(terminator)
+        .map(str::trim)
+        .find_map(|segment| {
+            let mut elements = segment.split(element);
+            (elements.next() == Some("ST")).then(|| elements.next().unwrap_or_default().to_owned())
+        })
+        .unwrap_or_default()
 }
 
 /// Whether a flow action is what a test expects.
