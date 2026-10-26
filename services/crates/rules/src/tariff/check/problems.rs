@@ -6,14 +6,14 @@ use super::checker::{Body, Checker, Global, Want};
 use super::describe::{quote, quote_span, unit_text, words, zero};
 use super::fixes::{changes, indentation, replace};
 use super::operators::{Problem, arithmetic};
-use trenova_module_kit::span::Span;
-use trenova_module_kit::diagnostic::nearest;
-use trenova_module_kit::diagnostic::{Change, Diagnostic, Fix};
 use crate::tariff::syntax::ast::{BinaryOp, Expr, ExprKind};
 use crate::tariff::types::Type;
 use crate::tariff::units::Dim;
+use trenova_module_kit::diagnostic::nearest;
+use trenova_module_kit::diagnostic::{Change, Diagnostic, Fix};
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 impl Checker<'_> {
     /// Reports `expr`, of type `actual`, where `expected` is needed.

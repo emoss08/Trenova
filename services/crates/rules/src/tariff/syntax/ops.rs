@@ -27,16 +27,16 @@ use super::format::format as format_source;
 use super::parse;
 use super::token::Token;
 use super::token::TokenKind;
-use trenova_module_kit::span::Range;
-use trenova_module_kit::span::Span;
-use trenova_module_kit::span::Utf16Index;
-use trenova_module_kit::diagnostic::WireDiagnostic;
 use serde::Deserialize;
 use serde::Serialize;
 use serde_json::value::RawValue;
+use trenova_module_kit::diagnostic::WireDiagnostic;
 use trenova_module_kit::ops::OpResult;
 use trenova_module_kit::ops::decode;
 use trenova_module_kit::ops::encode;
+use trenova_module_kit::span::Range;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::span::Utf16Index;
 
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]

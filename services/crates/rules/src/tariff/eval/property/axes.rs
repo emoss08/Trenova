@@ -25,7 +25,6 @@ use super::super::operators;
 use super::super::tables::Tables;
 use super::super::time::{Date, DateTime, Time};
 use super::super::value::Value;
-use trenova_module_kit::span::Span;
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{Expr, ExprKind, Input, ItemKind, Name, Stmt, StmtKind, UnaryOp};
 use crate::tariff::syntax::program::ModuleId;
@@ -36,6 +35,7 @@ use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use std::collections::BTreeMap;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// The values a range axis is filled to.
 pub const POINTS: usize = 24;

@@ -19,11 +19,11 @@ use super::consts::{Value, wire};
 use super::decls::FoldedConstraint;
 use super::describe::{quote, words};
 use super::operators::{ordered_enums, ranged, text_range};
-use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::eval::value::Value as RunValue;
 use crate::tariff::syntax::ast::{Expr, ExprKind};
 use crate::tariff::types::Type;
 use std::cmp::Ordering;
+use trenova_module_kit::diagnostic::Diagnostic;
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
 

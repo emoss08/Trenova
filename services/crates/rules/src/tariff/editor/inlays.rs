@@ -19,13 +19,13 @@ use super::names::parameters;
 use super::session::Session;
 use super::values::Values;
 use super::vary::{varied, vary_type};
-use trenova_module_kit::span::Span;
 use crate::tariff::check::describe::snippet;
 use crate::tariff::check::{Callee, HintKind};
 use crate::tariff::syntax::ast::{Expr, ExprKind};
 use crate::tariff::syntax::program::ModuleId;
 use crate::tariff::types::Type;
 use std::collections::BTreeMap;
+use trenova_module_kit::span::Span;
 
 /// What a hint shows.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

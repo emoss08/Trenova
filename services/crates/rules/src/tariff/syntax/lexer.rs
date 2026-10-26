@@ -26,18 +26,18 @@
 
 use super::token::Token;
 use super::token::TokenKind;
-use trenova_module_kit::span::Span;
-use trenova_module_kit::diagnostic::Change;
-use trenova_module_kit::diagnostic::Diagnostic;
-use trenova_module_kit::diagnostic::Fix;
 use crate::tariff::syntax::ast::DateLit;
 use crate::tariff::syntax::ast::DateTimeLit;
 use crate::tariff::syntax::ast::TimeLit;
 use crate::tariff::units;
 use rust_decimal::Decimal;
+use trenova_module_kit::diagnostic::Change;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Fix;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Arg;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// The largest source the lexer reads, in bytes.
 pub const MAX_SOURCE_BYTES: usize = 256 * 1024;

@@ -2428,112 +2428,6 @@
       ]
     },
     {
-      "path": "/admin/document-operations",
-      "name": "Document operations",
-      "requires": [
-        {
-          "resource": "document_operation",
-          "operation": "read"
-        }
-      ],
-      "operations": [],
-      "rest": [
-        {
-          "method": "GET",
-          "path": "/admin/document-operations/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/admin/document-operations/:param/reextract/"
-        },
-        {
-          "method": "POST",
-          "path": "/admin/document-operations/:param/regenerate-preview/"
-        },
-        {
-          "method": "POST",
-          "path": "/admin/document-operations/:param/resync-search/"
-        }
-      ]
-    },
-    {
-      "path": "/admin/document-parsing-rules",
-      "name": "Parsing rules",
-      "requires": [
-        {
-          "resource": "document_parsing_rule",
-          "operation": "read"
-        }
-      ],
-      "operations": [],
-      "rest": [
-        {
-          "method": "POST",
-          "path": "/document-parsing-rules/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-parsing-rules/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/document-parsing-rules/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-parsing-rules/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/document-parsing-rules/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-parsing-rules/:param/fixtures/"
-        },
-        {
-          "method": "POST",
-          "path": "/document-parsing-rules/:param/fixtures/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-parsing-rules/:param/versions/"
-        },
-        {
-          "method": "POST",
-          "path": "/document-parsing-rules/:param/versions/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/document-parsing-rules/fixtures/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-parsing-rules/fixtures/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/document-parsing-rules/fixtures/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/document-parsing-rules/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/document-parsing-rules/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/document-parsing-rules/versions/:param/publish/"
-        },
-        {
-          "method": "POST",
-          "path": "/document-parsing-rules/versions/:param/simulate/"
-        }
-      ]
-    },
-    {
       "path": "/admin/hazmat-segregation-rules",
       "name": "Hazmat seg. rules",
       "requires": [
@@ -7588,7 +7482,6 @@
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
-        "EdiTemplateList",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
         "InvoiceArContext",
@@ -8163,10 +8056,6 @@
         },
         {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "GET",
           "path": "/edi/inbound-files/:param/"
         },
         {
@@ -8187,27 +8076,11 @@
         },
         {
           "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/edi/partners/:param/mapping-profile/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
         },
         {
           "method": "GET",
@@ -8399,7 +8272,6 @@
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
-        "EdiTemplateList",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
         "InvoiceArContext",
@@ -8952,10 +8824,6 @@
         },
         {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "GET",
           "path": "/edi/inbound-files/:param/"
         },
         {
@@ -8976,27 +8844,11 @@
         },
         {
           "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/edi/partners/:param/mapping-profile/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
         },
         {
           "method": "GET",
@@ -9271,7 +9123,6 @@
         "DriverSettlementDetail",
         "EdiPartnerScorecards",
         "EdiSummary",
-        "EdiTemplateList",
         "EdiVolumeSeries",
         "ExportCarrierSettlementBatchCsv",
         "InvoiceArContext",
@@ -9850,10 +9701,6 @@
         },
         {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "GET",
           "path": "/edi/inbound-files/:param/"
         },
         {
@@ -9874,27 +9721,11 @@
         },
         {
           "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
+          "method": "GET",
           "path": "/edi/partners/:param/mapping-profile/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
         },
         {
           "method": "GET",
@@ -10620,6 +10451,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -10627,8 +10459,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -10675,24 +10505,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -10709,6 +10527,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -10747,6 +10589,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -10765,78 +10611,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -10871,10 +10645,6 @@
           "path": "/edi/transfers/bulk-reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
-        },
-        {
           "method": "GET",
           "path": "/tables/"
         },
@@ -10885,8 +10655,8 @@
       ]
     },
     {
-      "path": "/edi/designer",
-      "name": "Template designer",
+      "path": "/edi/flows",
+      "name": "Flow instances",
       "requires": [
         {
           "resource": "edi",
@@ -10901,6 +10671,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -10908,8 +10679,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -10956,24 +10725,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -10990,6 +10747,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -11028,6 +10809,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -11046,78 +10831,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -11150,10 +10863,6 @@
         {
           "method": "POST",
           "path": "/edi/transfers/bulk-reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
         },
         {
           "method": "GET",
@@ -11182,6 +10891,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -11189,8 +10899,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -11237,24 +10945,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -11271,6 +10967,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -11309,6 +11029,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -11327,78 +11051,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -11433,9 +11085,48 @@
           "path": "/edi/transfers/bulk-reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
+          "method": "GET",
+          "path": "/tables/"
         },
+        {
+          "method": "POST",
+          "path": "/tables/:param/compose/"
+        }
+      ]
+    },
+    {
+      "path": "/edi/lading",
+      "name": "Lading studio",
+      "requires": [
+        {
+          "resource": "edi",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "BulkEditFields",
+        "DataTableAggregates",
+        "DataTableFacets",
+        "DataTableInsightFields",
+        "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
+        "EdiInboundFileTable",
+        "EdiMappingProfileTable",
+        "EdiMessageTable",
+        "EdiPartnerReadiness",
+        "EdiPartnerTable",
+        "EdiTransferTable",
+        "ExportTableView",
+        "MyBulkEdit",
+        "MyTableLayout",
+        "PreviewBulkEdit",
+        "ResetMyTableLayout",
+        "SaveMyTableLayout",
+        "ScheduleTableView",
+        "StartBulkEdit",
+        "UndoMyBulkEdit"
+      ],
+      "rest": [
         {
           "method": "GET",
           "path": "/tables/"
@@ -11443,6 +11134,141 @@
         {
           "method": "POST",
           "path": "/tables/:param/compose/"
+        }
+      ]
+    },
+    {
+      "path": "/edi/lading/:partnerId",
+      "name": "",
+      "requires": [
+        {
+          "resource": "edi",
+          "operation": "read"
+        }
+      ],
+      "operations": [
+        "DeskEdiPartnerCard",
+        "DeskEdiPartnerMessages",
+        "EdiPartnerScorecards",
+        "EdiSummary",
+        "EdiVolumeSeries"
+      ],
+      "rest": [
+        {
+          "method": "GET",
+          "path": "/edi/connections/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/flows/instances/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/inbound-files/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/lading/projects/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/lading/projects/:param/drafts/"
+        },
+        {
+          "method": "PUT",
+          "path": "/edi/lading/projects/:param/settings/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "PUT",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/lading/versions/:param/activate/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/lading/versions/:param/archive/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/lading/versions/:param/certify/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/lading/versions/:param/run/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
+        },
+        {
+          "method": "DELETE",
+          "path": "/edi/lading/versions/:param/shadow/"
+        },
+        {
+          "method": "POST",
+          "path": "/edi/lading/versions/:param/shadow/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/messages/:param/inspect/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/partners/:param/mapping-profile/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/transfers/:param/mapping-preview/"
         }
       ]
     },
@@ -11463,6 +11289,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -11470,8 +11297,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -11518,24 +11343,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -11552,6 +11365,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -11590,6 +11427,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -11608,78 +11449,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -11712,10 +11481,6 @@
         {
           "method": "POST",
           "path": "/edi/transfers/bulk-reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
         },
         {
           "method": "GET",
@@ -11744,6 +11509,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -11751,8 +11517,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -11799,24 +11563,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -11833,6 +11585,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -11871,6 +11647,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -11889,78 +11669,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -11993,10 +11701,6 @@
         {
           "method": "POST",
           "path": "/edi/transfers/bulk-reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
         },
         {
           "method": "GET",
@@ -12025,6 +11729,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -12032,8 +11737,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -12080,24 +11783,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -12114,6 +11805,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -12152,6 +11867,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -12170,78 +11889,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -12274,10 +11921,6 @@
         {
           "method": "POST",
           "path": "/edi/transfers/bulk-reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
         },
         {
           "method": "GET",
@@ -12306,6 +11949,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -12313,8 +11957,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -12361,24 +12003,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -12395,6 +12025,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -12433,6 +12087,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -12451,78 +12109,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -12555,291 +12141,6 @@
         {
           "method": "POST",
           "path": "/edi/transfers/bulk-reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
-        },
-        {
-          "method": "GET",
-          "path": "/tables/"
-        },
-        {
-          "method": "POST",
-          "path": "/tables/:param/compose/"
-        }
-      ]
-    },
-    {
-      "path": "/edi/test-cases",
-      "name": "Test cases",
-      "requires": [
-        {
-          "resource": "edi",
-          "operation": "read"
-        }
-      ],
-      "operations": [
-        "BulkEditFields",
-        "DataTableAggregates",
-        "DataTableFacets",
-        "DataTableInsightFields",
-        "DeskEdiPartnerCard",
-        "DeskEdiPartnerMessages",
-        "EdiCommunicationProfileTable",
-        "EdiInboundFileTable",
-        "EdiMappingProfileTable",
-        "EdiMessageTable",
-        "EdiPartnerReadiness",
-        "EdiPartnerScorecards",
-        "EdiPartnerTable",
-        "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
-        "EdiTransferTable",
-        "EdiVolumeSeries",
-        "ExportTableView",
-        "MyBulkEdit",
-        "MyTableLayout",
-        "PreviewBulkEdit",
-        "ResetMyTableLayout",
-        "SaveMyTableLayout",
-        "ScheduleTableView",
-        "StartBulkEdit",
-        "UndoMyBulkEdit"
-      ],
-      "rest": [
-        {
-          "method": "POST",
-          "path": "/edi/communication-profiles/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/communication-profiles/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/communication-profiles/:param/test-connection/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/communication-profiles/inspect-certificate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/connections/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/connections/:param"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/connections/:param/accept/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/connections/:param/reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/inbound-files/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/inbound-files/:param/inspect/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/inbound-files/:param/reprocess/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/inbound-files/bulk-reprocess/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/mapping-profiles/:param/items/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/mapping-profiles/:param/items/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/messages/:param/inspect/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/messages/:param/replay/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/messages/:param/retry-delivery/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/messages/bulk-retry-delivery/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/partners/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/partners/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/partners/:param/mapping-profile/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/partners/:param/mapping-profile/"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/partners/:param/mapping-profile/items/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/transfers/:param/approve/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/transfers/:param/cancel/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/transfers/:param/mapping-preview/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/transfers/:param/reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/transfers/bulk-approve/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/transfers/bulk-reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
         },
         {
           "method": "GET",
@@ -12868,6 +12169,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -12875,8 +12177,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -12923,24 +12223,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -12957,6 +12245,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -12995,6 +12307,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -13013,78 +12329,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -13117,10 +12361,6 @@
         {
           "method": "POST",
           "path": "/edi/transfers/bulk-reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
         },
         {
           "method": "GET",
@@ -13149,6 +12389,7 @@
         "DeskEdiPartnerCard",
         "DeskEdiPartnerMessages",
         "EdiCommunicationProfileTable",
+        "EdiFlowInstanceTable",
         "EdiInboundFileTable",
         "EdiMappingProfileTable",
         "EdiMessageTable",
@@ -13156,8 +12397,6 @@
         "EdiPartnerScorecards",
         "EdiPartnerTable",
         "EdiSummary",
-        "EdiTemplateList",
-        "EdiTestCaseTable",
         "EdiTransferTable",
         "EdiVolumeSeries",
         "ExportTableView",
@@ -13204,24 +12443,12 @@
           "path": "/edi/connections/:param/reject/"
         },
         {
-          "method": "POST",
-          "path": "/edi/document-profiles/"
-        },
-        {
           "method": "GET",
-          "path": "/edi/document-profiles/:param"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/document-profiles/:param/"
+          "path": "/edi/flows/instances/:param/"
         },
         {
           "method": "POST",
-          "path": "/edi/documents/generate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/documents/preview/"
+          "path": "/edi/flows/instances/:param/release/"
         },
         {
           "method": "GET",
@@ -13238,6 +12465,30 @@
         {
           "method": "POST",
           "path": "/edi/inbound-files/bulk-reprocess/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/context/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/:param/versions/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/projects/by-partner/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/replays/"
+        },
+        {
+          "method": "GET",
+          "path": "/edi/lading/versions/:param/shadow-results/:param"
         },
         {
           "method": "PUT",
@@ -13276,6 +12527,10 @@
           "path": "/edi/partners/"
         },
         {
+          "method": "GET",
+          "path": "/edi/partners/:param/"
+        },
+        {
           "method": "PUT",
           "path": "/edi/partners/:param/"
         },
@@ -13294,78 +12549,6 @@
         {
           "method": "GET",
           "path": "/edi/partners/:param/readiness/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/draft/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/activate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/archive/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/certify/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/script-libraries/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/templates/:param/versions/:param/segments/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/templates/:param/versions/:param/validate/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param"
-        },
-        {
-          "method": "DELETE",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "GET",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "PUT",
-          "path": "/edi/test-cases/:param/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/test-cases/:param/preview/"
         },
         {
           "method": "GET",
@@ -13398,10 +12581,6 @@
         {
           "method": "POST",
           "path": "/edi/transfers/bulk-reject/"
-        },
-        {
-          "method": "POST",
-          "path": "/edi/x12/inspect/"
         },
         {
           "method": "GET",

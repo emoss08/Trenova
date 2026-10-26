@@ -19,7 +19,6 @@
 
 use super::cursor::{Scoped, Scopes, body_at, locate, statements};
 use super::session::Session;
-use trenova_module_kit::span::Span;
 use crate::tariff::check::{Callee, ModuleAnalysis, SymbolId, SymbolKind};
 use crate::tariff::syntax::ast::{
     Expect, ExprKind, File, ItemKind, Name, NodeId, Pattern, PatternKind, StmtKind,
@@ -27,6 +26,7 @@ use crate::tariff::syntax::ast::{
 use crate::tariff::syntax::program::ModuleId;
 use crate::tariff::types::Type;
 use std::collections::BTreeSet;
+use trenova_module_kit::span::Span;
 
 /// Where a name is written: its module and span.
 type Place = (ModuleId, Span);

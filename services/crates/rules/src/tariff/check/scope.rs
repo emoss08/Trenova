@@ -7,8 +7,8 @@
 //! rather than "unknown".
 
 use super::SymbolId;
-use trenova_module_kit::span::Span;
 use crate::tariff::types::Type;
+use trenova_module_kit::span::Span;
 
 /// What declared a local name.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

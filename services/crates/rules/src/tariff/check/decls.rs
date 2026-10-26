@@ -9,7 +9,6 @@ use super::lower::{Lowerer, TypeScope};
 use super::scope::Scopes;
 use super::{HintKind, ModuleAnalysis, ModuleId, Reference, Symbol, SymbolId, SymbolKind};
 use crate::tariff::context::Context;
-use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::docs::Doc;
 use crate::tariff::schema::Schema;
 use crate::tariff::syntax::ast::{
@@ -20,6 +19,7 @@ use crate::tariff::syntax::program::{Decl, Module, Program};
 use crate::tariff::types::{EnumType, RecordType, Type};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
+use trenova_module_kit::diagnostic::Diagnostic;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Message;
 
@@ -364,7 +364,12 @@ impl Declarer<'_> {
     /// Lowers the module's record types, each once every type it names is known; the ones left
     /// refer to each other in a cycle.
     fn records(&self, state: &mut State, globals: &mut Globals, out: &mut ModuleAnalysis) {
-        let mut pending: Vec<(&String, &TypeDecl, Option<Doc>, trenova_module_kit::span::Span)> = Vec::new();
+        let mut pending: Vec<(
+            &String,
+            &TypeDecl,
+            Option<Doc>,
+            trenova_module_kit::span::Span,
+        )> = Vec::new();
         for (name, symbol) in &self.module.symbols {
             if let (
                 Decl::Type(_),
@@ -565,7 +570,13 @@ impl Declarer<'_> {
     }
 
     fn constants(&self, state: &mut State, globals: &mut Globals, out: &mut ModuleAnalysis) {
-        let mut consts: Vec<(&String, &Const, Option<Doc>, bool, trenova_module_kit::span::Span)> = Vec::new();
+        let mut consts: Vec<(
+            &String,
+            &Const,
+            Option<Doc>,
+            bool,
+            trenova_module_kit::span::Span,
+        )> = Vec::new();
         for (name, symbol) in &self.module.symbols {
             if let (
                 Decl::Const(_),
@@ -659,7 +670,8 @@ impl Declarer<'_> {
     }
 
     fn inputs(&self, state: &mut State, globals: &mut Globals, out: &mut ModuleAnalysis) {
-        let mut inputs: Vec<(&String, &Input, Option<Doc>, trenova_module_kit::span::Span)> = Vec::new();
+        let mut inputs: Vec<(&String, &Input, Option<Doc>, trenova_module_kit::span::Span)> =
+            Vec::new();
         for (name, symbol) in &self.module.symbols {
             if let (
                 Decl::Input(_),

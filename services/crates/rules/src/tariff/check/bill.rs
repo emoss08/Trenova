@@ -20,15 +20,15 @@ use super::Callee;
 use super::checker::{Body, Checker};
 use super::describe::quote;
 use super::fixes::replace;
-use trenova_module_kit::span::Span;
-use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::schema::bill_type;
 use crate::tariff::syntax::ast::{
     Arg as CallArg, ArmBody, Block, Choose, Expr, ExprKind, FileKind, Name, Stmt, StmtKind,
 };
 use crate::tariff::types::Type;
+use trenova_module_kit::diagnostic::Diagnostic;
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// A `charge` of the root file and where it is written.
 #[derive(Debug, Clone)]

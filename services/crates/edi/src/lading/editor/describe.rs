@@ -114,9 +114,9 @@ pub fn node(program: &Program, reference: NodeRef) -> (String, Doc) {
     let used = Arg::from(usage(node.usage));
     let max = Arg::from(node.max as usize);
     let message = match guide_note(program, reference.guide, &path) {
-        Some(note) => Message::with(
+        Some(remark) => Message::with(
             message!("{0}: {1}, at most {2}. The partner's guide says: {3}"),
-            [Arg::from(name), used, max, Arg::from(note)],
+            [Arg::from(name), used, max, Arg::from(remark)],
         ),
         None => Message::with(
             message!("{0}: {1}, at most {2}"),

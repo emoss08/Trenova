@@ -29,7 +29,6 @@ use super::cursor::{self, Body, Bracket, Located, Scopes, line_start, previous, 
 use super::describe::{function_signature, method_signature, type_text};
 use super::names;
 use super::session::Session;
-use trenova_module_kit::span::Span;
 use crate::tariff::check::describe::snippet as source_text;
 use crate::tariff::check::lower::BUILTIN_TYPES;
 use crate::tariff::check::methods::{self, ParamKind, Receiver};
@@ -45,6 +44,7 @@ use crate::tariff::types::Type;
 use crate::tariff::units::{Dim, SIMPLE_UNITS, Simple};
 use std::collections::BTreeSet;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// What a completion item is, for its icon.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

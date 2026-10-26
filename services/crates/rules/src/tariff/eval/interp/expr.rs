@@ -1,7 +1,6 @@
 //! Expressions.
 
 use super::{Env, Interp, refusal, unknown_name};
-use trenova_module_kit::span::Span;
 use crate::tariff::eval::bill::{Sums, Wanted};
 use crate::tariff::eval::error::{EvalError, Stop};
 use crate::tariff::eval::operators::{self, scales_a_percent};
@@ -18,6 +17,7 @@ use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
 use std::rc::Rc;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// The roots a file's own code may read.
 const ROOTS: [&str; 5] = ["shipment", "lane", "customer", "fuel", "rating"];

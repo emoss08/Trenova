@@ -4,7 +4,6 @@
 
 use super::expr::{internal, unit_argument};
 use super::{Env, Flow, Interp};
-use trenova_module_kit::span::Span;
 use crate::tariff::eval::bill::Wanted;
 use crate::tariff::eval::error::Stop;
 use crate::tariff::eval::lists::{self, Host};
@@ -14,6 +13,7 @@ use crate::tariff::eval::{methods, text};
 use crate::tariff::syntax::ast::{Arg as CallArg, Expr, ExprKind, FnBody, FnDecl};
 use rust_decimal::Decimal;
 use trenova_module_kit::message::Arg;
+use trenova_module_kit::span::Span;
 
 /// The record constructors tests may call, with the stop kind each builds.
 const STOP_CONSTRUCTORS: [(&str, &str); 4] = [

@@ -7,9 +7,9 @@
 
 use super::cursor::{Scopes, statements};
 use super::session::Session;
-use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::{ChoiceOption, Choose, Expr, ExprKind, File, StmtKind};
 use crate::tariff::syntax::program::ModuleId;
+use trenova_module_kit::span::Span;
 
 /// The test function that reads a choice's outcome.
 pub const CHOSEN: &str = "chosen";

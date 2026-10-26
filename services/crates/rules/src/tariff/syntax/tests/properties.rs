@@ -3,8 +3,6 @@
 //! nothing panics on any input.
 
 use super::reference_blocks;
-use trenova_module_kit::span::Utf16Index;
-use trenova_module_kit::diagnostic::Severity;
 use crate::tariff::syntax::ast::File;
 use crate::tariff::syntax::format::format;
 use crate::tariff::syntax::lexer::MAX_SOURCE_BYTES;
@@ -17,6 +15,8 @@ use crate::tariff::syntax::shape;
 use crate::tariff::syntax::token::TokenKind;
 use crate::tariff::syntax::walk;
 use proptest::prelude::*;
+use trenova_module_kit::diagnostic::Severity;
+use trenova_module_kit::span::Utf16Index;
 
 /// Every corpus source and every reference example.
 fn samples() -> Vec<String> {

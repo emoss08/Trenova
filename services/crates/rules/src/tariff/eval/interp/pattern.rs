@@ -9,11 +9,11 @@
 
 use super::expr::{in_range, internal};
 use super::{Env, Flow, Interp};
-use trenova_module_kit::span::Span;
 use crate::tariff::eval::error::Stop;
 use crate::tariff::eval::trace::Event;
 use crate::tariff::eval::value::Value;
 use crate::tariff::syntax::ast::{Arm, ArmBody, Pattern, PatternKind};
+use trenova_module_kit::span::Span;
 
 impl<'a> Interp<'_, 'a> {
     /// Whether `pattern` matches `value`, collecting the names it binds.

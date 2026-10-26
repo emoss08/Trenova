@@ -2,7 +2,6 @@
 //! `lb/ft3`), record types and `?` optionals.
 
 use super::Parser;
-use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::FieldType;
 use crate::tariff::syntax::ast::Name;
 use crate::tariff::syntax::ast::TypeExpr;
@@ -11,6 +10,7 @@ use crate::tariff::syntax::lexer;
 use crate::tariff::syntax::token::TokenKind;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 impl Parser<'_> {
     /// A type.

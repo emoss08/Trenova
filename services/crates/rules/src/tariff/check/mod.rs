@@ -95,13 +95,13 @@ pub use tables::{TABLE_METHODS, cell_type};
 /// What a condition's tests read as its result: `expect applies`.
 pub const APPLIES: &str = "applies";
 
-use trenova_module_kit::span::Span;
-use trenova_module_kit::diagnostic::{Diagnostic, Severity};
 use crate::tariff::docs::Doc;
 use crate::tariff::syntax::ast::NodeId;
 use crate::tariff::types::{EnumType, Type};
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
+use trenova_module_kit::diagnostic::{Diagnostic, Severity};
+use trenova_module_kit::span::Span;
 
 pub use crate::tariff::syntax::program::{ModuleId, Program};
 

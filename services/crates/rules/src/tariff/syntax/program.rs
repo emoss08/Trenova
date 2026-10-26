@@ -28,16 +28,16 @@ use super::ast;
 use super::ast::FileKind;
 use super::ast::ItemKind;
 use super::parse;
-use trenova_module_kit::span::Span;
-use trenova_module_kit::span::Utf16Index;
 use crate::tariff::context::Context;
-use trenova_module_kit::diagnostic::Diagnostic;
-use trenova_module_kit::diagnostic::nearest;
 use crate::tariff::stdlib;
 use std::collections::BTreeMap;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::nearest;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Arg;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
+use trenova_module_kit::span::Utf16Index;
 
 /// The most modules one program may load, the root included.
 pub const MAX_MODULES: usize = 64;

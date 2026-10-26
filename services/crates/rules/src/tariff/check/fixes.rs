@@ -1,8 +1,8 @@
 //! Building the fixes the checker offers: replacements and insertions on the module's source.
 
-use trenova_module_kit::span::Span;
 use trenova_module_kit::diagnostic::{Change, Fix};
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// A fix that replaces one span with text.
 #[must_use]

@@ -9,15 +9,15 @@ use super::describe::{quote, quote_span, words};
 use super::fixes::replace;
 use super::operators;
 use super::scope::LocalKind;
-use trenova_module_kit::span::Span;
-use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     ArmBody, AssignOp, BinaryOp, Binding, Block, Charge, Expect, Expr, ExprKind, FileKind, ForStmt,
     IfStmt, Name, RoundTo, Stmt, StmtKind, TotalClause,
 };
 use crate::tariff::types::Type;
+use trenova_module_kit::diagnostic::Diagnostic;
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 impl Checker<'_> {
     /// A block: a scope of its own.

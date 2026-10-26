@@ -3,10 +3,6 @@
 //! indexes on a primary. Text literals and their interpolations are read here too.
 
 use super::Parser;
-use trenova_module_kit::span::Span;
-use trenova_module_kit::diagnostic::Change;
-use trenova_module_kit::diagnostic::Diagnostic;
-use trenova_module_kit::diagnostic::Fix;
 use crate::tariff::syntax::ast::Arg as CallArg;
 use crate::tariff::syntax::ast::BinaryOp;
 use crate::tariff::syntax::ast::ChooseKind;
@@ -22,9 +18,13 @@ use crate::tariff::syntax::ast::UnitExpr;
 use crate::tariff::syntax::lexer;
 use crate::tariff::syntax::lexer::DateLiteral;
 use crate::tariff::syntax::token::TokenKind;
+use trenova_module_kit::diagnostic::Change;
+use trenova_module_kit::diagnostic::Diagnostic;
+use trenova_module_kit::diagnostic::Fix;
 use trenova_module_kit::message;
 use trenova_module_kit::message::Arg;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 fn comparison(text: &str) -> Option<BinaryOp> {
     Some(match text {

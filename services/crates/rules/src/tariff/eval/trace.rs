@@ -17,10 +17,10 @@
 use super::bill::Limited;
 use super::tables::Lookup;
 use super::value::Value;
-use trenova_module_kit::span::{Span, Utf16Index};
 use crate::tariff::wire::encode;
 use rust_decimal::Decimal;
 use serde_json::{Map, Value as Json};
+use trenova_module_kit::span::{Span, Utf16Index};
 
 /// The most events a trace keeps.
 pub const MAX_EVENTS: usize = 2_000;

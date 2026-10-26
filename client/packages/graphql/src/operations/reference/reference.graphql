@@ -183,7 +183,21 @@ fragment EdiCommunicationProfileReference on EdiCommunicationProfile {
   name
 }
 
+fragment EdiFlowInstanceReference on EdiFlowInstance {
+  id
+  status
+}
+
 fragment EdiInboundFileReference on EdiInboundFile {
+  id
+  status
+}
+
+fragment EdiLadingProjectReference on EdiLadingProject {
+  id
+}
+
+fragment EdiLadingVersionReference on EdiLadingVersion {
   id
   status
 }

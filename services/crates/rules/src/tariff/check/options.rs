@@ -5,14 +5,14 @@
 use super::ModuleAnalysis;
 use super::describe::quote;
 use super::fixes::replace;
-use trenova_module_kit::span::Span;
-use trenova_module_kit::diagnostic::{Diagnostic, nearest};
 use crate::tariff::syntax::ast::{BinaryOp, Choose, Expr, ExprKind, Stmt, StmtKind};
 use crate::tariff::syntax::program::Module;
 use crate::tariff::syntax::walk::{self, Visit};
 use std::collections::BTreeMap;
+use trenova_module_kit::diagnostic::{Diagnostic, nearest};
 use trenova_module_kit::message;
 use trenova_module_kit::message::Message;
+use trenova_module_kit::span::Span;
 
 /// The function a test reads a choice's kept option with.
 const CHOSEN: &str = "chosen";

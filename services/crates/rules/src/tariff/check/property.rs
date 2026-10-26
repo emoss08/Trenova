@@ -37,17 +37,17 @@ use super::describe::{quote, quote_span, words, zero};
 use super::fixes::replace;
 use super::scope::LocalKind;
 use super::{HintKind, ModuleAnalysis};
-use trenova_module_kit::span::Span;
 use crate::tariff::constraint::admits;
-use trenova_module_kit::diagnostic::Diagnostic;
 use crate::tariff::syntax::ast::{
     Block, Expr, ExprKind, FileKind, ItemKind, Name, Property, StmtKind,
 };
 use crate::tariff::types::Type;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
+use trenova_module_kit::diagnostic::Diagnostic;
 use trenova_module_kit::message;
 use trenova_module_kit::message::{Arg, Message};
+use trenova_module_kit::span::Span;
 
 /// An input's folded constraint and where its parts are written, for the messages that quote
 /// them.

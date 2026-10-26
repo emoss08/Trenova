@@ -16,13 +16,13 @@
 //!   besides its locals (the record, inputs, the file's bindings) follows the body's kind
 //!   ([`Body`]), the same rules the checker applies.
 
-use trenova_module_kit::span::Span;
 use crate::tariff::syntax::ast::{
     Arg, Arm, ArmBody, Binding, Block, Condition, Expect, Expr, ExprKind, File, FnBody, Item,
     ItemKind, Name, Param, Pattern, PatternKind, RoundTo, Stmt, StmtKind, Text, TextPart,
     TotalClause, TypeExpr, TypeExprKind,
 };
 use crate::tariff::syntax::token::{Token, TokenKind};
+use trenova_module_kit::span::Span;
 
 /// What kind of body a position is in, which decides what it can name.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

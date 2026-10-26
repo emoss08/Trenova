@@ -17,7 +17,6 @@
 
 use super::expr::internal;
 use super::{Env, Flow, Interp};
-use trenova_module_kit::span::Span;
 use crate::tariff::eval::bill::{Bill, ChoiceRecord, OptionOutcome, OptionRecord};
 use crate::tariff::eval::error::Stop;
 use crate::tariff::eval::trace::Event;
@@ -25,6 +24,7 @@ use crate::tariff::eval::value::Value;
 use crate::tariff::syntax::ast::{Arg as CallArg, Choose, ChooseKind};
 use rust_decimal::Decimal;
 use trenova_module_kit::message::Arg;
+use trenova_module_kit::span::Span;
 
 impl<'a> Interp<'_, 'a> {
     /// Runs a `best` or `worst` and bills the option it keeps.

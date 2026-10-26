@@ -30,7 +30,6 @@ use super::run::{Outcome, Request, run_program};
 use super::tables::Tables;
 use super::trace::Trace;
 use super::value::{Record, Value, format_decimal, format_quantity, money_digits};
-use trenova_module_kit::span::Utf16Index;
 use crate::tariff::check::Analysis;
 use crate::tariff::context::Context;
 use crate::tariff::schema::{Axis, ENUMS, Schema, TableShape};
@@ -46,6 +45,7 @@ use std::fmt::Write as _;
 use std::rc::Rc;
 use trenova_module_kit::message::Message;
 use trenova_module_kit::ops::{OpResult, decode, encode};
+use trenova_module_kit::span::Utf16Index;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
