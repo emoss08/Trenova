@@ -87,7 +87,7 @@ fragment InvoiceEdiSendPlanFields on InvoiceEDISendPlan {
   autoSend
   partnerId
   partnerName
-  documentProfileId
+  ladingVersionId
   communicationMethod
   status
   lastMessageId

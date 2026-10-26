@@ -2,5 +2,5 @@
 import type { TypedDocumentString, DeskEdiPartnerCardQuery, DeskEdiPartnerCardQueryVariables, DeskEdiPartnerMessageFieldsFragment, DeskEdiPartnerMessagesQuery, DeskEdiPartnerMessagesQueryVariables } from "../../graphql";
 
 export const DeskEdiPartnerMessageFieldsFragmentDoc = {"__meta__":{"fragmentName":"DeskEdiPartnerMessageFields"}} as unknown as TypedDocumentString<DeskEdiPartnerMessageFieldsFragment, unknown>;
-export const DeskEdiPartnerCardDocument = {"__meta__":{"kind":"query","name":"DeskEdiPartnerCard","hash":"sha256:df78682c8a19f34ee150dffef975f96c446ae4d960a3d2715ad0d240ac303230"}} as unknown as TypedDocumentString<DeskEdiPartnerCardQuery, DeskEdiPartnerCardQueryVariables>;
+export const DeskEdiPartnerCardDocument = {"__meta__":{"kind":"query","name":"DeskEdiPartnerCard","hash":"sha256:76e84b415d791a504f33cffea402818d45b54abef024c66480eeced4eb9b7380"}} as unknown as TypedDocumentString<DeskEdiPartnerCardQuery, DeskEdiPartnerCardQueryVariables>;
 export const DeskEdiPartnerMessagesDocument = {"__meta__":{"kind":"query","name":"DeskEdiPartnerMessages","hash":"sha256:2dbe6a97144c12a48473eed564ef3da0f2d411d82021e2f9ea8adffa8e9a744b"}} as unknown as TypedDocumentString<DeskEdiPartnerMessagesQuery, DeskEdiPartnerMessagesQueryVariables>;
