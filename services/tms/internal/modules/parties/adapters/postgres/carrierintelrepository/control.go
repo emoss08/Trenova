@@ -119,8 +119,8 @@ func (r *controlRepository) ListConfigured(
 				Limit(limit)
 			if !req.After.OrganizationID.IsNil() {
 				q = q.Where(
-					keel.DynRow(c.OrganizationID, c.BusinessUnitID).
-						Gt(keel.DynRow(req.After.OrganizationID.String(), req.After.BusinessUnitID.String())),
+					keel.Tuple(c.OrganizationID, c.BusinessUnitID).
+						Gt(keel.Tuple(req.After.OrganizationID.String(), req.After.BusinessUnitID.String())),
 				)
 			}
 
