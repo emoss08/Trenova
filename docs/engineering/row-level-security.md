@@ -202,10 +202,21 @@ deny, make sure the scope is the tenant the question is about.
   handed (the watchtower projector, the agent event publisher, the AI audit
   projector's per-tenant pass) binds that record's tenant itself, so a caller
   that holds only a system scope or none cannot make it fail or write elsewhere.
-- **Two organizations, one transaction.** An internal EDI approval or transfer
-  change writes both organizations atomically. Those transactions run under the
-  system scope, with the tenant filters still written in Go; a read of the other
-  organization alone binds that organization's tenant instead. Replacing a user's
+- **Two organizations, one transaction.** A transfer change review writes both
+  organizations' linked shipments atomically, under the system scope, with the
+  tenant filters still written in Go; a read of the other organization alone
+  binds that organization's tenant instead. A write whose only other-tenant rows
+  are rows both parties' policies admit (an EDI transfer, shipment link or tender
+  recipient) runs under the tenant that owns the rest: rejecting or expiring an
+  internal tender runs under the source organization's scope (`ediservice.transferSourceContext`),
+  since it changes the source shipment. Work that must create rows in one
+  organization through another module's service and change rows of the other
+  cannot share a transaction (a system scope would need every repository it
+  reaches to be system-aware): the load tender approval activity commits the
+  receiving side under the target's scope, then accepts the source shipment's
+  tender under the source's scope in a second transaction that skips what is
+  already done, so a retried activity converges
+  (`ediservice.ProcessLoadTenderApproval`). Replacing a user's
   organization memberships is the same shape: the user repository lists and rewrites
   them under the system scope, filtered to that user and business unit, and the user
   service first checks the caller holds `user:update` in every organization it adds or

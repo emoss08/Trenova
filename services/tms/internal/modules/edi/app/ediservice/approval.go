@@ -73,12 +73,8 @@ func (s *Service) ApproveTransfer(
 	var original *edi.EDITransfer
 	var updated *edi.EDITransfer
 	var preview *MappingPreview
-	approvalCtx := dbscope.WithSystem(
-		ctx,
-		"approve an internal load tender, writing both organizations' shipments in one transaction",
-	)
 	err := s.db.Transact(
-		approvalCtx,
+		ctx,
 		kernelports.TxOptions{},
 		func(txCtx context.Context) error {
 			transfer, err := s.transferRepo.GetTransferForUpdate(
@@ -248,9 +244,11 @@ func (s *Service) ProcessLoadTenderApproval(
 	ctx context.Context,
 	payload *ApproveLoadTenderTransferWorkflowPayload,
 ) (*ApproveLoadTenderTransferWorkflowResult, error) {
+	ctx = dbscope.WithValidTenant(ctx, payload.TenantInfo.DBTenant())
 	result := new(ApproveLoadTenderTransferWorkflowResult)
 	var processingErr error
 	var approvedTransfer *edi.EDITransfer
+	var acceptedInternalTransfer *edi.EDITransfer
 
 	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
@@ -273,6 +271,9 @@ func (s *Service) ProcessLoadTenderApproval(
 			result.TransferID = transfer.ID
 			result.TargetShipmentID = transfer.TargetShipmentID
 			result.ProcessedAt = processedAt
+			if transfer.InboundMessageID.IsNil() {
+				acceptedInternalTransfer = transfer
+			}
 			return nil
 		}
 
@@ -381,18 +382,6 @@ func (s *Service) ProcessLoadTenderApproval(
 			return nil
 		}
 
-		if err = s.setShipmentTenderStatus(
-			txCtx,
-			transfer.SourceShipmentID,
-			pagination.TenantInfo{
-				OrgID: transfer.SourceOrganizationID,
-				BuID:  transfer.SourceBusinessUnitID,
-			},
-			shipment.TenderStatusAccepted,
-		); err != nil {
-			return err
-		}
-
 		updated, err := s.transferRepo.UpdateTransfer(txCtx, transfer)
 		if err != nil {
 			return err
@@ -421,33 +410,20 @@ func (s *Service) ProcessLoadTenderApproval(
 			return err
 		}
 
-		sourceTenant := pagination.TenantInfo{
-			OrgID: transfer.SourceOrganizationID,
-			BuID:  transfer.SourceBusinessUnitID,
-		}
-		targetTenant := pagination.TenantInfo{
-			OrgID: transfer.TargetOrganizationID,
-			BuID:  transfer.TargetBusinessUnitID,
-		}
-		if err = s.createSystemShipmentComment(
-			txCtx,
-			transfer.SourceShipmentID,
-			sourceTenant,
-			"EDI load tender accepted by receiving organization.",
-			map[string]any{"transferId": transfer.ID, "shipmentLinkId": link.ID},
-		); err != nil {
-			return err
-		}
 		if err = s.createSystemShipmentComment(
 			txCtx,
 			createdShipment.ID,
-			targetTenant,
+			pagination.TenantInfo{
+				OrgID: transfer.TargetOrganizationID,
+				BuID:  transfer.TargetBusinessUnitID,
+			},
 			"Shipment created from accepted EDI load tender.",
 			map[string]any{"transferId": transfer.ID, "shipmentLinkId": link.ID},
 		); err != nil {
 			return err
 		}
 
+		acceptedInternalTransfer = updated
 		result.TransferID = updated.ID
 		result.TargetShipmentID = updated.TargetShipmentID
 		result.ProcessedAt = now
@@ -459,11 +435,76 @@ func (s *Service) ProcessLoadTenderApproval(
 	if processingErr != nil {
 		return nil, processingErr
 	}
+	if acceptedInternalTransfer != nil {
+		if err = s.acceptSourceTender(ctx, acceptedInternalTransfer); err != nil {
+			return nil, err
+		}
+	}
 	if approvedTransfer != nil {
 		s.generateExternalTenderResponse(ctx, approvedTransfer, payload.Actor.UserID)
 	}
 
 	return result, nil
+}
+
+func (s *Service) acceptSourceTender(ctx context.Context, transfer *edi.EDITransfer) error {
+	if transfer.SourceShipmentID.IsNil() {
+		return nil
+	}
+
+	sourceTenant := pagination.TenantInfo{
+		OrgID: transfer.SourceOrganizationID,
+		BuID:  transfer.SourceBusinessUnitID,
+	}
+
+	return s.db.Transact(
+		dbscope.WithTenant(ctx, sourceTenant.DBTenant()),
+		kernelports.TxOptions{},
+		func(txCtx context.Context) error {
+			source, err := s.lockShipment(txCtx, transfer.SourceShipmentID, sourceTenant)
+			if err != nil {
+				return err
+			}
+			if source.TenderStatus != nil &&
+				*source.TenderStatus == shipment.TenderStatusAccepted {
+				return nil
+			}
+
+			if err = s.setShipmentTenderStatus(
+				txCtx,
+				source.ID,
+				sourceTenant,
+				shipment.TenderStatusAccepted,
+			); err != nil {
+				return err
+			}
+
+			links, err := s.shipmentLinkRepo.GetShipmentLinksByShipmentID(
+				txCtx,
+				ediports.GetEDIShipmentLinksByShipmentIDRequest{
+					ShipmentID: source.ID,
+					TenantInfo: sourceTenant,
+				},
+			)
+			if err != nil {
+				return err
+			}
+			metadata := map[string]any{"transferId": transfer.ID}
+			for _, link := range links {
+				if link.TenderTransferID == transfer.ID {
+					metadata["shipmentLinkId"] = link.ID
+				}
+			}
+
+			return s.createSystemShipmentComment(
+				txCtx,
+				source.ID,
+				sourceTenant,
+				"EDI load tender accepted by receiving organization.",
+				metadata,
+			)
+		},
+	)
 }
 
 func (s *Service) failTransferInTransaction(
@@ -491,9 +532,14 @@ func (s *Service) RejectTransfer(
 		return nil, err
 	}
 
+	sourceCtx, err := s.transferSourceContext(ctx, req.TransferID, req.TenantInfo, "inbound")
+	if err != nil {
+		return nil, err
+	}
+
 	var original edi.EDITransfer
 	var updated *edi.EDITransfer
-	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+	err = s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			ediports.GetEDITransferForUpdateRequest{
@@ -622,9 +668,14 @@ func (s *Service) ExpireTransfer(
 	req *ExpireTransferRequest,
 	actor *permissionports.RequestActor,
 ) (*edi.EDITransfer, error) {
+	sourceCtx, err := s.transferSourceContext(ctx, req.TransferID, req.TenantInfo, "")
+	if err != nil {
+		return nil, err
+	}
+
 	var original edi.EDITransfer
 	var updated *edi.EDITransfer
-	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+	err = s.db.Transact(sourceCtx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		transfer, err := s.transferRepo.GetTransferForUpdate(
 			txCtx,
 			ediports.GetEDITransferForUpdateRequest{
@@ -679,4 +730,31 @@ func (s *Service) ExpireTransfer(
 
 	s.logAction(updated, actor, permission.OpUpdate, &original, updated, "EDI load tender expired")
 	return updated, nil
+}
+
+func (s *Service) transferSourceContext(
+	ctx context.Context,
+	transferID pulid.ID,
+	tenantInfo pagination.TenantInfo,
+	direction string,
+) (context.Context, error) {
+	transfer, err := s.transferRepo.GetTransferByID(ctx, ediports.GetEDITransferByIDRequest{
+		ID:         transferID,
+		TenantInfo: tenantInfo,
+		Direction:  direction,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if transfer.SourceOrganizationID == tenantInfo.OrgID &&
+		transfer.SourceBusinessUnitID == tenantInfo.BuID {
+		return ctx, nil
+	}
+
+	source := pagination.TenantInfo{
+		OrgID: transfer.SourceOrganizationID,
+		BuID:  transfer.SourceBusinessUnitID,
+	}
+	return dbscope.WithTenant(ctx, source.DBTenant()), nil
 }
