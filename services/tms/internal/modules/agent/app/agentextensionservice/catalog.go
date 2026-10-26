@@ -9,7 +9,6 @@ import (
 var categoryLabels = map[agentextension.Category]string{
 	agentextension.CategoryWebResearch:       "Web research",
 	agentextension.CategoryBrowserAutomation: "Browser automation",
-	agentextension.CategoryDataAnalysis:      "Data analysis",
 }
 
 type capabilityDefinition struct {
@@ -19,17 +18,6 @@ type capabilityDefinition struct {
 }
 
 var capabilityDefinitions = map[agentextension.Capability]capabilityDefinition{
-	agentextension.CapabilityDataAnalysis: {
-		Label: "Data analysis",
-		Plan:  platformplan.CapabilityAgentDataAnalysis,
-		Tools: []agentextensionports.AgentExtensionTool{
-			{
-				Name:        agentextension.ToolAnalyzeData,
-				Label:       "Analyze data",
-				Description: "Runs Python over report results and attached spreadsheets, and returns the figures and charts.",
-			},
-		},
-	},
 	agentextension.CapabilityPortalAutomation: {
 		Label: "Portal work",
 		Plan:  platformplan.CapabilityAgentPortalAutomation,
@@ -195,35 +183,6 @@ var definitions = []definition{
 			"always does.",
 		SortOrder:  30,
 		ReleasedAt: 1_792_108_800,
-	},
-	{
-		Type:    agentextension.TypeE2B,
-		Name:    "Data analysis",
-		Vendor:  "E2B",
-		Summary: "Let agents work out figures and charts from your reports and spreadsheets with Python.",
-		Description: "Agents answer questions a report alone does not — margin by lane over a " +
-			"quarter, which customers drift past their payment terms, where detention clusters " +
-			"by facility and hour — by running Python over the report results and spreadsheets " +
-			"they were given, and show the figures and charts beside the reply. The code runs " +
-			"in a sandbox that cannot reach the internet.",
-		Category:    agentextension.CategoryDataAnalysis,
-		BrandDomain: "e2b.dev",
-		DocsURL:     "https://e2b.dev/docs",
-		WebsiteURL:  "https://e2b.dev",
-		PricingURL:  "https://e2b.dev/pricing",
-		Capabilities: []string{
-			"Runs Python with pandas, numpy and matplotlib over report runs and attached files",
-			"Shows the charts it draws beside the reply and in AI control",
-			"Runs every analysis in a fresh sandbox with no internet access, stopped when it ends",
-			"Reads only report runs the person ran and files they attached",
-			"Records every analysis, its code and its output, in AI control",
-		},
-		DataNotice: "The rows of the report runs and the files an analysis reads, and the " +
-			"code an agent writes, are sent to E2B for as long as the analysis runs. The " +
-			"sandbox cannot reach the internet, so nothing it reads can be sent anywhere " +
-			"else, and it is stopped when the analysis ends.",
-		SortOrder:  40,
-		ReleasedAt: 1_792_195_200,
 	},
 }
 

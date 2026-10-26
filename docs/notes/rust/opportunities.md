@@ -281,20 +281,12 @@ is not about speed.
 **Alternative.** Go's native fuzzing covers part of the robustness gap without a port. Typed loop
 modeling and copy-free parsing are where Rust is clearly better.
 
-### R7. A local sandbox for code mode
+### R7. A local sandbox for code mode (done)
 
-**Today.** Every `agent_run_script` call starts a remote E2B sandbox (`shared/e2b/client.go`). Reads and
-answers pass through files the script polls every 10 ms (`docs/engineering/agent-code-mode.md`, §5.2),
-and each script spends part of the vendor's daily limit.
-
-**With Rust.** Code mode is read-only and talks over stdout, which maps directly onto CPython built for
-WASI. Run it in a small Rust sidecar on `wasmtime`, whose fuel metering and epoch interruption give hard
-CPU and time limits, or under wazero inside the process. Self-hosters would no longer need an E2B
-account, and each read skips the remote round trip.
-
-**Limits.** Data analysis (`report_analyze_data`) needs pandas, numpy and matplotlib, which do not run
-under plain WASI, so it stays on E2B. The win comes from WASM, so wazero alone (no Rust) is also an
-option.
+Scripts and data analysis run in Monty, compiled to WebAssembly by the `trenova-scripts` crate and
+run in wazero inside the worker (`docs/engineering/agent-code-mode.md`, §5). E2B is gone: no vendor
+account, no remote round trip per read, and no pandas, numpy or matplotlib, whose place the SDK's
+datasets, statistics helpers and chart specs take.
 
 ### R8. `capture-imaging` in the Dash driver portal
 
@@ -380,7 +372,7 @@ only if it shows up in a profile.
 | R4 | pgrx `claims()` | Per-statement overhead under RLS | Postgres extension | Medium | Measure; SQL fixes |
 | R5 | `pg_search` | Search under RLS, one fewer service | Postgres extension | Medium | — |
 | R6 | X12 core crate | Robust, guide-driven parsing | wazero plus browser WASM | Medium | — |
-| R7 | Local code-mode sandbox | No vendor, lower latency | wasmtime sidecar or wazero | Medium | — |
+| R7 | Local code-mode sandbox | No vendor, lower latency | wazero (done) | Medium | — |
 | R8 | Imaging in Dash | Small uploads over cellular | Browser WASM | Small–medium | PWA basics |
 | R9 | Spreadsheet parsing | Memory, sandboxing | wazero | Small | Go limits and streaming first |
 | R10 | i18n extractor | One parse, real ICU checks | CLI | Small | Try `oxc-parser` first |
@@ -424,7 +416,7 @@ output. Trimming the spec to the endpoints used would cut compile time more than
    the formula language as its anchor.
 4. **Database:** run the R4 measurements and SQL fixes, then decide on pgrx. Evaluate R5 at the same time,
    since both rule out managed Postgres.
-5. **As needs arise:** R6 when EDI onboarding volume grows, R7 when the E2B cost or dependency bites, R11
+5. **As needs arise:** R6 when EDI onboarding volume grows, R11
    only at scale, the rest when a profile points at them.
 
 ## 6. What to measure before porting

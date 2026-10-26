@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -215,4 +216,100 @@ func TestScriptsTheRunnerRefusesBeforeRunning(t *testing.T) {
 		_, err := testRunner().Run(t.Context(), req)
 		assert.True(t, errortypes.IsBusinessError(err), "%s: %v", name, err)
 	}
+}
+
+func arDataset(rows int) scriptports.Dataset {
+	dataset := scriptports.Dataset{
+		Name:   "ar",
+		Source: analysis.DatasetReportRun,
+		Label:  "AR aging",
+		Columns: []scriptports.DatasetColumn{
+			{Name: "Customer", Kind: analysis.ValueText},
+			{Name: "Open Balance", Kind: analysis.ValueMoney, Currency: "USD"},
+			{Name: "Due", Kind: analysis.ValueDate},
+		},
+	}
+	for idx := range rows {
+		customer := "Acme"
+		if idx%3 == 0 {
+			customer = "Bolt"
+		}
+		dataset.Rows = append(dataset.Rows, []any{customer, float64(idx), "2026-10-01"})
+	}
+
+	return dataset
+}
+
+func TestADatasetIsReadAsRowsAndWhatTheScriptShowsComesBack(t *testing.T) {
+	t.Parallel()
+
+	outcome, err := testRunner().Run(t.Context(), &scriptports.Request{
+		Code: `
+totals = {}
+for row in ar:
+    totals[row["Customer"]] = totals.get(row["Customer"], 0) + row["Open Balance"]
+show_figure("Open AR", sum(totals.values()), "money")
+show_table([{"Customer": c, "Open Balance": v} for c, v in sorted(totals.items())], title="By customer")
+show_chart("bar", list(totals), list(totals.values()), title="Open AR by customer", value_kind="money")
+print(len(ar), ar[0]["Due"].year)
+`,
+		Timezone: "UTC",
+		Broker:   newBroker(),
+		Datasets: []scriptports.Dataset{arDataset(12_000)},
+	})
+	require.NoError(t, err)
+	require.Equal(t, scriptports.Succeeded, outcome.Status, "%+v", outcome.Error)
+	assert.Equal(t, "12000 2026\n", outcome.Output)
+
+	shown := outcome.Shown
+	require.Len(t, shown.Figures, 1)
+	assert.Equal(t, analysis.ValueMoney, shown.Figures[0].Kind)
+	assert.InDelta(t, 71994000.0, shown.Figures[0].Value, 0.001)
+	require.Len(t, shown.Tables, 1)
+	assert.Equal(t, analysis.ValueMoney, shown.Tables[0].Columns[1].Kind,
+		"a column named after the report's money column is shown as money")
+	assert.Equal(t, "USD", shown.Tables[0].Columns[1].Currency)
+	assert.Equal(t, analysis.ValueText, shown.Tables[0].Columns[0].Kind)
+	require.Len(t, shown.Charts, 1)
+	assert.Equal(t, analysis.ChartBar, shown.Charts[0].Kind)
+	assert.Equal(t, []analysis.Block{
+		{Kind: analysis.BlockTable, Index: 0},
+		{Kind: analysis.BlockChart, Index: 0},
+	}, shown.Layout)
+}
+
+func TestPastWhatARunMayShowTheScriptIsToldAndCarriesOn(t *testing.T) {
+	t.Parallel()
+
+	outcome, err := testRunner().Run(t.Context(), &scriptports.Request{
+		Code: `
+for i in range(10):
+    show_figure("Figure " + str(i), i)
+show_chart("radar", ["a"], [1])
+print("done")
+`,
+		Timezone: "UTC",
+		Broker:   newBroker(),
+	})
+	require.NoError(t, err)
+	require.Equal(t, scriptports.Succeeded, outcome.Status, "%+v", outcome.Error)
+	assert.Len(t, outcome.Shown.Figures, analysis.MaxFigures)
+	assert.Equal(t, 3, outcome.NotShown, "two figures past the limit and a chart of no kind")
+	assert.Contains(t, outcome.Output, "[not shown] not shown: a run shows at most 8 figures")
+	assert.True(t, strings.HasSuffix(outcome.Output, "done\n"))
+}
+
+func TestATextFileIsReadAsItsText(t *testing.T) {
+	t.Parallel()
+
+	text := "Lane notes\nDallas to Austin runs late on Fridays."
+	outcome, err := testRunner().Run(t.Context(), &scriptports.Request{
+		Code:     `print(notes.splitlines()[1])`,
+		Timezone: "UTC",
+		Broker:   newBroker(),
+		Datasets: []scriptports.Dataset{{Name: "notes", Text: &text}},
+	})
+	require.NoError(t, err)
+	require.Equal(t, scriptports.Succeeded, outcome.Status, "%+v", outcome.Error)
+	assert.Equal(t, "Dallas to Austin runs late on Fridays.\n", outcome.Output)
 }

@@ -79,6 +79,7 @@ describe("buildRailItems", () => {
       "plans",
       "evaluations",
       "exceptions",
+      "analyses",
     ]);
   });
 
@@ -148,6 +149,7 @@ describe("buildRailItems", () => {
       "proposals",
       "plans",
       "evaluations",
+      "analyses",
     ]);
   });
 
@@ -160,6 +162,7 @@ describe("buildRailItems", () => {
       "runs",
       "evaluations",
       "exceptions",
+      "analyses",
     ]);
   });
 

@@ -219,7 +219,7 @@ export const aiProviderSchema = z.object({
     .nullish()
     .transform((value) => value ?? ""),
   advisorRefusal: aiProviderAdvisorRefusalSchema.nullable().optional().default(null),
-  scripts: z.boolean().default(false),
+  scripts: z.boolean().default(true),
   scriptWrites: z.boolean().default(false),
   extraBody: extraBodySchema,
   inputCostPerMillion: pricePerMillionSchema,
@@ -270,7 +270,7 @@ export const saveAIProviderRequestSchema = z.object({
   platformSettings: aiProviderPlatformSettingsSchema.nullable().default(null),
   advisorEnabled: z.boolean().default(false),
   advisorModel: z.string().trim().default(""),
-  scripts: z.boolean().default(false),
+  scripts: z.boolean().default(true),
   scriptWrites: z.boolean().default(false),
   extraBody: extraBodySchema,
   inputCostPerMillion: z.number().min(0).nullable().default(null),

@@ -35,6 +35,8 @@ const (
 	FunctionRead   = Function("read")
 	FunctionGather = Function("gather")
 	FunctionResult = Function("result")
+	FunctionRows   = Function("rows")
+	FunctionShow   = Function("show")
 )
 
 type Status string
@@ -73,8 +75,12 @@ type Program struct {
 	Code   string
 	Index  []byte
 	Inputs []byte
-	Clock  Clock
-	Limits Limits
+	// Datasets is the JSON list the SDK binds a global to each of:
+	// [{name, label, rows, columns: [{name, kind}], text?}]. The rows are paged
+	// in through FunctionRows.
+	Datasets []byte
+	Clock    Clock
+	Limits   Limits
 }
 
 type Host interface {

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/accountingwebhookhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentanalysishandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentdefinitionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentexceptionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentextensionhandler"
@@ -210,6 +211,7 @@ type RouterParams struct {
 	TableQueryHandler               *tablequeryhandler.Handler
 	AIProviderHandler               *aiproviderhandler.Handler
 	AgentExtensionHandler           *agentextensionhandler.Handler
+	AgentAnalysisHandler            *agentanalysishandler.Handler
 	AgentDefinitionHandler          *agentdefinitionhandler.Handler
 	AssistantHandler                *assistanthandler.Handler
 	InsightHandler                  *insighthandler.Handler
@@ -370,6 +372,7 @@ type Router struct {
 	tableQueryHandler               *tablequeryhandler.Handler
 	aiProviderHandler               *aiproviderhandler.Handler
 	agentExtensionHandler           *agentextensionhandler.Handler
+	agentAnalysisHandler            *agentanalysishandler.Handler
 	agentDefinitionHandler          *agentdefinitionhandler.Handler
 	assistantHandler                *assistanthandler.Handler
 	insightHandler                  *insighthandler.Handler
@@ -521,6 +524,7 @@ func NewRouter(p RouterParams) *Router {
 		tableQueryHandler:               p.TableQueryHandler,
 		aiProviderHandler:               p.AIProviderHandler,
 		agentExtensionHandler:           p.AgentExtensionHandler,
+		agentAnalysisHandler:            p.AgentAnalysisHandler,
 		agentDefinitionHandler:          p.AgentDefinitionHandler,
 		assistantHandler:                p.AssistantHandler,
 		insightHandler:                  p.InsightHandler,
@@ -729,6 +733,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.tableQueryHandler.RegisterRoutes(protected)
 	r.aiProviderHandler.RegisterRoutes(protected)
 	r.agentExtensionHandler.RegisterRoutes(protected)
+	r.agentAnalysisHandler.RegisterRoutes(protected)
 	r.agentDefinitionHandler.RegisterRoutes(protected)
 	r.assistantHandler.RegisterRoutes(protected)
 	r.insightHandler.RegisterRoutes(protected)

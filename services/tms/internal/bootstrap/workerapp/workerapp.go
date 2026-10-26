@@ -75,7 +75,10 @@ func OptionsFor(e *edition.Edition) fx.Option {
 }
 
 func UnscheduledOptions() fx.Option {
-	return temporaljobs.UnscheduledWorkerModule
+	return fx.Options(
+		apimodule.AgentReadWorkerModule,
+		temporaljobs.UnscheduledWorkerModule,
+	)
 }
 
 type RunParams struct {

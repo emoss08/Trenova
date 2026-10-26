@@ -11,6 +11,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -88,6 +89,10 @@ func (s *Service) Run(
 	if err != nil {
 		return nil, fmt.Errorf("encode the script's reads: %w", err)
 	}
+	datasets, err := sonic.Marshal(datasetIndex(req.Datasets))
+	if err != nil {
+		return nil, fmt.Errorf("encode the script's datasets: %w", err)
+	}
 
 	limits := codemode.DefaultLimits()
 	req.Broker.Bound(&limits)
@@ -96,11 +101,13 @@ func (s *Service) Run(
 	defer cancel()
 
 	host := newHost(req.Broker, &limits)
+	host.datasets = req.Datasets
 	result, err := s.vm.Run(runCtx, &scriptvm.Program{
-		Code:   req.Code,
-		Index:  index,
-		Inputs: inputs,
-		Clock:  scriptvm.Clock{Now: time.Now(), Location: location(req.Timezone)},
+		Code:     req.Code,
+		Index:    index,
+		Inputs:   inputs,
+		Datasets: datasets,
+		Clock:    scriptvm.Clock{Now: time.Now(), Location: location(req.Timezone)},
 		Limits: scriptvm.Limits{
 			OutputChars: limits.OutputChars,
 			MemoryBytes: int(limits.MemoryBytes),
@@ -181,14 +188,17 @@ func location(timezone string) *time.Location {
 }
 
 type host struct {
-	broker codemode.Broker
-	limits *codemode.Limits
-	seq    atomic.Int64
+	broker   codemode.Broker
+	limits   *codemode.Limits
+	datasets []scriptports.Dataset
+	seq      atomic.Int64
 
 	mu       sync.Mutex
 	result   sonic.NoCopyRawMessage
 	resultIn bool
 	limit    codemode.Limit
+	shown    analysis.Display
+	notShown int
 }
 
 func newHost(broker codemode.Broker, limits *codemode.Limits) *host {
@@ -220,6 +230,10 @@ func (h *host) Call(
 		return sonic.Marshal(h.gather(ctx, calls))
 	case scriptvm.FunctionResult:
 		return sonic.Marshal(h.keepResult(payload))
+	case scriptvm.FunctionRows:
+		return h.rows(payload)
+	case scriptvm.FunctionShow:
+		return sonic.Marshal(h.show(payload))
 	default:
 		return nil, fmt.Errorf("a script asked for an unknown function %q", function)
 	}
@@ -319,6 +333,8 @@ func (h *host) outcome(
 		Limits:          *limits,
 		DurationMs:      result.Duration.Milliseconds(),
 		Limit:           h.limit,
+		Shown:           h.shown,
+		NotShown:        h.notShown,
 	}
 	if result.Error != nil {
 		outcome.Error = &codemode.ScriptError{

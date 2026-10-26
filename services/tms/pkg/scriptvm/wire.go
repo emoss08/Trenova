@@ -13,6 +13,7 @@ const (
 	stepDone   = "done"
 	emptyIndex = "[]"
 	emptyInput = "{}"
+	emptyList  = "[]"
 )
 
 type wireClock struct {
@@ -30,12 +31,13 @@ type wireLimits struct {
 }
 
 type wireStart struct {
-	Op     string     `json:"op"`
-	Code   string     `json:"code"`
-	Index  string     `json:"index"`
-	Inputs string     `json:"inputs"`
-	Clock  wireClock  `json:"clock"`
-	Limits wireLimits `json:"limits"`
+	Op       string     `json:"op"`
+	Code     string     `json:"code"`
+	Index    string     `json:"index"`
+	Inputs   string     `json:"inputs"`
+	Datasets string     `json:"datasets"`
+	Clock    wireClock  `json:"clock"`
+	Limits   wireLimits `json:"limits"`
 }
 
 type wireResume struct {
@@ -67,11 +69,12 @@ func (s *wireStep) outcome() *Outcome {
 func startRequest(program *Program) ([]byte, error) {
 	limits := program.Limits.withDefaults()
 	request := wireStart{
-		Op:     opStart,
-		Code:   program.Code,
-		Index:  rawOr(program.Index, emptyIndex),
-		Inputs: rawOr(program.Inputs, emptyInput),
-		Clock:  clockOf(program.Clock),
+		Op:       opStart,
+		Code:     program.Code,
+		Index:    rawOr(program.Index, emptyIndex),
+		Inputs:   rawOr(program.Inputs, emptyInput),
+		Datasets: rawOr(program.Datasets, emptyList),
+		Clock:    clockOf(program.Clock),
 		Limits: wireLimits{
 			OutputChars: limits.OutputChars,
 			MemoryBytes: limits.MemoryBytes,

@@ -1951,14 +1951,6 @@ Its answer said to call `shipment_create` next, and the model went looking for i
 with `find_tools` first. A lookup many held recipes start from (`shipment_list`,
 `shipment_get`) brings none of them.
 
-A tool that works on what other tools return names them as the tools it follows
-(`agentports.FollowerTool`, `Catalog.Followers`), and loads whenever one of them loads, but only
-for an agent that already holds it and a person who may use it: following grants nothing, so an
-administrator who gave an extension's tool to chosen agents keeps that choice. `report_analyze_data`
-follows `report_run`, `report_get_run` and `agent_read_attachment`. Before it did, a turn from Ask
-loaded `report_run` without it, read the report's twenty sample rows and compared periods by
-paging `shipment_list`, and never asked `find_tools` for the tool that reads every row.
-
 A prerequisite only ever grants a read. A write a tool cannot finish its job without is
 declared instead as a companion (`agentports.CompanionTool`): `shipment_create` names
 `customer_create`, `location_create` and `masterdata_create_commodity`, because a load from a broker
@@ -2066,13 +2058,13 @@ each of them read, is shown working rather than worked in the agent's head (`num
 for filed changes too): "$6,050,147.60 is open,
 $50,147.60 without the $6,000,000 invoice" and "112 gallons at $3.89 come to $435.68" were each
 rewritten after an analysis nobody needed, while a wrong result is still unsupported, and a share
-whose two sides the reply leaves out still goes to `report_analyze_data`. The person's own figures are
+whose two sides the reply leaves out still goes to a script. The person's own figures are
 paired the same way. The reply is read twice, and the second reading only narrows the first: a
 figure the separated reading (`ReadSeparated`) found read stays read and is an operand of the
 working (`narrowed`). The stricter reading leaves out a bare year, and a 2,000 lb unit weight in a
 tool's JSON looked like one, so "2,000 lb, so 20 of them come to 40,000 lb" was rewritten. A percentage is supported by the fraction it renders (52.3% by 0.523), and
 rounding and thousands are read as for a filed change. A hit is discarded once with a correction
-naming the figures: an agent holding `report_analyze_data` is told to work them out there, any other to
+naming the figures: an agent holding `agent_run_script` is told to work them out with a script, any other to
 leave out what the tools do not give. A rewrite that still states one ends with a sentence naming
 the figures to check. The bench fails a step whose reply either guard corrected ("reply grounded
 without a correction").

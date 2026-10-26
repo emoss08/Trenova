@@ -64,7 +64,14 @@ export const agentNewParser = parseAsStringLiteral(BUILDER_STARTS).withOptions({
   shallow: true,
 });
 
-export const activityViews = ["runs", "proposals", "plans", "evaluations", "exceptions"] as const;
+export const activityViews = [
+  "runs",
+  "proposals",
+  "plans",
+  "evaluations",
+  "exceptions",
+  "analyses",
+] as const;
 export type ActivityView = (typeof activityViews)[number];
 
 export const ACTIVITY_VIEW_PARAM = "activity";
@@ -223,7 +230,7 @@ export const extensionOpenParser = parseAsString.withOptions(dialogOptions);
 export const PORTAL_RUN_PARAM = "portalRun";
 export const portalRunParser = parseAsString.withOptions(dialogOptions);
 
-/** The analysis open in the data analysis extension's history, from a link to it. */
+/** The analysis open in Activity's analyses, from a link to it. */
 export const ANALYSIS_RUN_PARAM = "analysisRun";
 export const analysisRunParser = parseAsString.withOptions(dialogOptions);
 

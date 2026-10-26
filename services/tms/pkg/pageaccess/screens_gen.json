@@ -4439,14 +4439,6 @@
       ],
       "rest": [
         {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/"
-        },
-        {
           "method": "POST",
           "path": "/agent-definitions/"
         },
@@ -4832,14 +4824,6 @@
         "UndoMyDecision"
       ],
       "rest": [
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/"
-        },
         {
           "method": "POST",
           "path": "/agent-definitions/"
@@ -5262,14 +5246,6 @@
       ],
       "rest": [
         {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/"
-        },
-        {
           "method": "POST",
           "path": "/agent-definitions/"
         },
@@ -5654,14 +5630,6 @@
         "UndoMyDecision"
       ],
       "rest": [
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/"
-        },
         {
           "method": "POST",
           "path": "/agent-definitions/"
@@ -7695,10 +7663,6 @@
         },
         {
           "method": "GET",
-          "path": "/agent-analysis/runs/:param"
-        },
-        {
-          "method": "GET",
           "path": "/agent-analysis/runs/:param/"
         },
         {
@@ -8501,10 +8465,6 @@
         {
           "method": "POST",
           "path": "/accounting/manual-journals/:param/submit/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param"
         },
         {
           "method": "GET",
@@ -9383,10 +9343,6 @@
         {
           "method": "POST",
           "path": "/accounting/manual-journals/:param/submit/"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param"
         },
         {
           "method": "GET",
@@ -17519,14 +17475,6 @@
       ],
       "rest": [
         {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/"
-        },
-        {
           "method": "POST",
           "path": "/agent-definitions/"
         },
@@ -17989,14 +17937,6 @@
         "UndoMyDecision"
       ],
       "rest": [
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param"
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/"
-        },
         {
           "method": "POST",
           "path": "/agent-definitions/"

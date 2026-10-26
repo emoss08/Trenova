@@ -139,7 +139,6 @@ export const Resource = {
   AgentExtension: "agent_extension",
   WebResearch: "web_research",
   PortalAutomation: "portal_automation",
-  DataAnalysis: "data_analysis",
   CodeMode: "code_mode",
   AgentDefinition: "agent_definition",
   AgentMemory: "agent_memory",

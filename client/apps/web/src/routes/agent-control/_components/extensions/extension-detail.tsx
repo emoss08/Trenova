@@ -14,7 +14,6 @@ import {
 } from "@/types/agent-extension";
 import { lazyComponent } from "@/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
-import { AnalysisRunsSkeleton } from "./analysis-runs-skeleton";
 import { PortalRunsSkeleton } from "./portal-runs-skeleton";
 import { PortalSitesSkeleton } from "./portal-sites-skeleton";
 import { WebWatchesSkeleton } from "./web-watches-skeleton";
@@ -47,10 +46,6 @@ const portalSites = lazyComponent(
 const portalRuns = lazyComponent(
   () => import("./portal-runs"),
   (module) => module.PortalRuns,
-);
-const analysisRuns = lazyComponent(
-  () => import("./analysis-runs"),
-  (module) => module.AnalysisRuns,
 );
 const webWatches = lazyComponent(
   () => import("./web-watches"),
@@ -439,13 +434,6 @@ export function ExtensionDetail({
         <div className="flex flex-col gap-6 px-5 pb-5">
           <LazyComponent fallback={<WebWatchesSkeleton />}>
             <webWatches.Component canUpdate={canUpdate} />
-          </LazyComponent>
-        </div>
-      )}
-      {item.capability === AgentExtensionCapability.DataAnalysis && (
-        <div className="flex flex-col gap-6 px-5 pb-5">
-          <LazyComponent fallback={<AnalysisRunsSkeleton />}>
-            <analysisRuns.Component />
           </LazyComponent>
         </div>
       )}

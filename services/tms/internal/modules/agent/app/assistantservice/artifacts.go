@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
@@ -1017,7 +1018,7 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return draftEditArtifact(observation.Call.ID, result)
 	case name == toolDraftEDIConnection:
 		return connectionDraftArtifact(observation.Call.ID, result)
-	case name == agentextension.ToolAnalyzeData:
+	case name == codemode.ToolRunScript:
 		return analysisArtifact(observation.Call.ID, result, observation.Call.Arguments)
 	case name == agentextension.ToolReadPortal:
 		return portalTaskArtifact(observation.Call.ID, result)

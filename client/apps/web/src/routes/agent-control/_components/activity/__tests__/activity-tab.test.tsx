@@ -21,6 +21,7 @@ vi.mock("../agent-proposal-table", () => ({ default: () => <p>Proposals table</p
 vi.mock("../agent-plan-table", () => ({ default: () => <p>Plans table</p> }));
 vi.mock("../agent-evaluation-table", () => ({ default: () => <p>Evaluations table</p> }));
 vi.mock("../agent-exception-table", () => ({ default: () => <p>Exceptions table</p> }));
+vi.mock("../analysis-runs", () => ({ AnalysisRuns: () => <p>Analysis history</p> }));
 
 const { default: ActivityTab } = await import("../activity-tab");
 
@@ -145,6 +146,14 @@ describe("ActivityTab", () => {
     expect(await screen.findByText(/Nothing waits on a person\./)).toBeTruthy();
     expect(screen.queryByRole("button", { name: /^Decide/ })).toBeNull();
     expect(screen.getByText("Proposals table")).toBeTruthy();
+  });
+
+  it("shows the analyses agents' scripts showed people in place of a table", async () => {
+    fetchAgentActivitySummary.mockResolvedValue(summary);
+    renderTab("analyses");
+
+    expect(await screen.findByText("Analysis history")).toBeTruthy();
+    expect(screen.queryByText("Runs table")).toBeNull();
   });
 
   it("says when the day could not be loaded, and still shows the table", async () => {

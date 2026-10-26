@@ -248,7 +248,7 @@ export const RECORD_LINKS = {
   analysis_run: {
     label: "Analysis",
     path: "/admin/agent-control",
-    params: { tab: "extensions", analysisRun: "{id}" },
+    params: { tab: "activity", activity: "analyses", analysisRun: "{id}" },
   },
   web_watch: {
     label: "Web watch",

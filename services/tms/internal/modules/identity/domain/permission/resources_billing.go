@@ -622,30 +622,15 @@ func (r *Registry) registerBillingResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
-		Resource:    ResourceDataAnalysis.String(),
-		DisplayName: "Data Analysis",
-		Description: "Agents running code over the report results and files a person gave them, through an enabled extension",
-		Category:    "Desk",
-		Operations: []OperationDefinition{
-			{
-				Operation:   OpRead,
-				DisplayName: "View",
-				Description: "Let agents analyze this person's report results and attached files",
-			},
-		},
-		DefaultSensitivity: SensitivityInternal,
-	})
-
-	_ = r.Register(&ResourceDefinition{
 		Resource:    ResourceCodeMode.String(),
-		DisplayName: "Read-only scripts",
-		Description: "Agents answering a question that needs many reads with one short read-only script",
+		DisplayName: "Scripts and analysis",
+		Description: "Agents answering questions across many records, and analyzing report results and attached files, with short read-only scripts",
 		Category:    "Desk",
 		Operations: []OperationDefinition{
 			{
 				Operation:   OpRead,
 				DisplayName: "View",
-				Description: "Let agents run read-only scripts over what this person may read",
+				Description: "Let agents run read-only scripts over what this person may read, the reports they ran and the files they attached",
 			},
 		},
 		DefaultSensitivity: SensitivityInternal,

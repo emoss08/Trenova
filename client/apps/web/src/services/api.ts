@@ -60,6 +60,7 @@ import { HazardousMaterialService } from "./hazardous-material";
 import { HazmatSegregationRuleService } from "./hazmat-segregation-rule";
 import { HoldReasonService } from "./hold-reason";
 import { RecurringShipmentService } from "@/services/recurring-shipment";
+import { AgentAnalysisService } from "./agent-analysis";
 import { AgentExtensionService } from "./agent-extension";
 import { IntegrationService } from "./integration";
 import { InvoiceService } from "./invoice";
@@ -164,6 +165,7 @@ class APIService {
   public analyticService: AnalyticsService;
   public apiKeyService: APIKeyService;
   public aiProviderService: AIProviderService;
+  public agentAnalysisService: AgentAnalysisService;
   public agentExtensionService: AgentExtensionService;
   public assistantService: AssistantService;
   public tableQueryService: TableQueryService;
@@ -260,6 +262,7 @@ class APIService {
     this.integrationService = new IntegrationService();
     this.apiKeyService = new APIKeyService();
     this.aiProviderService = new AIProviderService();
+    this.agentAnalysisService = new AgentAnalysisService();
     this.agentExtensionService = new AgentExtensionService();
     this.assistantService = new AssistantService();
     this.tableQueryService = new TableQueryService();

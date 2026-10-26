@@ -1,4 +1,4 @@
-import type { AnalysisValueKind } from "@/types/agent-extension";
+import type { AnalysisValueKind } from "@/types/analysis";
 import { dateTimeFormatter, formatNumber, numberFormatter } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { formatISODateMedium } from "@trenova/shared/lib/date";
@@ -67,4 +67,31 @@ export function formatAnalysisValue(
   }
 
   return text;
+}
+
+/**
+ * A value on a chart's axis or bar, in a few characters: money keeps its currency and numbers
+ * drop to compact notation ("$12K", "1.2M"), a percent reads from its fraction.
+ */
+export function formatAnalysisAxisValue(
+  value: unknown,
+  kind: AnalysisValueKind,
+  currency = "",
+): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return MISSING;
+  }
+  switch (kind) {
+    case "money":
+      return numberFormatter({
+        style: "currency",
+        currency: currency || "USD",
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }).format(value);
+    case "percent":
+      return numberFormatter({ style: "percent", maximumFractionDigits: 0 }).format(value);
+    default:
+      return numberFormatter({ notation: "compact", maximumFractionDigits: 1 }).format(value);
+  }
 }

@@ -685,7 +685,6 @@ var enumPermissionResource = [...]schema.EnumValue{
 	{Value: `agent_extension`, Label: `Agent Extension`},
 	{Value: `web_research`, Label: `Web Research`},
 	{Value: `portal_automation`, Label: `Portal Automation`},
-	{Value: `data_analysis`, Label: `Data Analysis`},
 	{Value: `code_mode`, Label: `Code Mode`},
 	{Value: `agent_definition`, Label: `Agent Definition`},
 	{Value: `agent_memory`, Label: `Agent Memory`},

@@ -263,14 +263,10 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpRead:   {},
 		OpUpdate: {},
 	},
-	// Running code over report results and files the person already read, in
-	// a sandbox that cannot reach the network. It changes nothing.
-	ResourceDataAnalysis: {
-		OpRead: {},
-	},
 	// Running a short script whose every read is one of the agent's own reads,
-	// checked as the person, in an interpreter that reaches no file or network.
-	// It changes nothing.
+	// checked as the person, over the reports they ran and the files they
+	// attached, in an interpreter that reaches no file or network. It changes
+	// nothing.
 	ResourceCodeMode: {
 		OpRead: {},
 	},

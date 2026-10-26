@@ -9,11 +9,9 @@ import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQueryStates } from "nuqs";
 import { useMemo, useRef, useState } from "react";
 import {
-  ANALYSIS_RUN_PARAM,
   EXTENSION_OPEN_PARAM,
   PORTAL_RUN_PARAM,
   WEB_WATCH_PARAM,
-  analysisRunParser,
   extensionOpenParser,
   portalRunParser,
   webWatchParser,
@@ -69,21 +67,18 @@ export default function ExtensionsTab() {
     {
       [EXTENSION_OPEN_PARAM]: openType,
       [PORTAL_RUN_PARAM]: portalRun,
-      [ANALYSIS_RUN_PARAM]: analysisRun,
       [WEB_WATCH_PARAM]: webWatch,
     },
     setOpenState,
   ] = useQueryStates({
     [EXTENSION_OPEN_PARAM]: extensionOpenParser,
     [PORTAL_RUN_PARAM]: portalRunParser,
-    [ANALYSIS_RUN_PARAM]: analysisRunParser,
     [WEB_WATCH_PARAM]: webWatchParser,
   });
   const setOpenType = (type: string | null) =>
     setOpenState({
       [EXTENSION_OPEN_PARAM]: type,
       [PORTAL_RUN_PARAM]: null,
-      [ANALYSIS_RUN_PARAM]: null,
       [WEB_WATCH_PARAM]: null,
     });
   const [now] = useState(() => Math.floor(Date.now() / 1000));
@@ -117,11 +112,7 @@ export default function ExtensionsTab() {
   );
   const onCount = items.filter((item) => extensionState(item) === "on").length;
   const featured = items.find((item) => item.featured) ?? null;
-  const linkedCapability = portalRun
-    ? AgentExtensionCapability.PortalAutomation
-    : analysisRun
-      ? AgentExtensionCapability.DataAnalysis
-      : null;
+  const linkedCapability = portalRun ? AgentExtensionCapability.PortalAutomation : null;
   const open =
     items.find((item) => item.type === openType) ??
     (linkedCapability ? capabilityServer(items, linkedCapability) : null) ??

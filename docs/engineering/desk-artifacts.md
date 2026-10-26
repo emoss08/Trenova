@@ -94,12 +94,13 @@ button, which stretched every warn pill to the button's width.
 
 ## The analysis
 
-`analysis` is what `report_analyze_data` ran (see [agent-data-analysis.md](agent-data-analysis.md)):
-the purpose as its title, then the charts, the figures it returned, the error it raised,
-what it printed and the code, folded. `kinds/analysis/` only reads the payload
-(`analysisFrom`); the drawing is `AnalysisResult` in `components/assistant/`, which AI
-control's analysis history draws too, and each chart is read from the run by
-`AnalysisChartImage` under the session's credentials. An analysis is made on purpose, so it
+`analysis` is what an `agent_run_script` showed (see "Kept analyses and the Desk card" in
+[agent-code-mode.md](agent-code-mode.md)): its title, then the headline figures, each chart and
+table in the order the script showed them, the error it raised, and what it printed and the
+code, folded. `kinds/analysis/` only reads the payload (`analysisFrom`) and reads the run for a
+table longer than the agent was shown; the drawing is `AnalysisResult` in
+`components/assistant/`, which AI control's analysis history draws too. A chart is a spec drawn
+with Recharts (`AnalysisChartView`, loaded with the chart). An analysis is made on purpose, so it
 is not a lookup: it is kept whether or not the reply names it, and the reply must name it.
 
 ## The portal task

@@ -3,15 +3,22 @@ package agentquerytoolservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
+	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
+	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -31,6 +38,7 @@ const (
 	maxScriptTitleRunes   = 80
 	maxScriptPurposeRunes = 500
 	maxScriptTraceback    = 3000
+	maxAnswerTableRows    = 25
 
 	scriptDoneNote = "Each read the script made ran as the person, exactly as the tool would " +
 		"have run on its own. Answer from output and result; say what a refused read means " +
@@ -45,32 +53,58 @@ const (
 	scriptBatchDroppedNote = " The script did not finish, so none of the changes it prepared " +
 		"was proposed. Fix it and run it again."
 	scriptBatchRefusedNote = " None of the changes it prepared was proposed: "
+	scriptShownNote        = " What it showed with show_figure, show_table and show_chart is " +
+		"beside your reply under the script's title; say what it means and what to do about " +
+		"it, without listing it again or describing how it was drawn."
+	scriptNotShownNote = " Some of what it showed was past what a script may show and is " +
+		"not beside your reply: notShown counts it."
+	scriptPlainNote = " Nothing was shown with show_figure, show_table or show_chart, so " +
+		"the person sees nothing of this script; show what they should see when the answer " +
+		"is figures, a table or a chart."
 )
 
 var errScriptBrokerMissing = errors.New("agent_run_script runs only through the agent runtime")
 
 type runScriptTool struct {
-	runner scriptports.Runner
+	runner   scriptports.Runner
+	datasets *scriptDatasets
+	analyses analysisports.RunRecorder
 }
 
-func newRunScriptTool(runner scriptports.Runner) agentports.AgentQueryTool {
-	return &runScriptTool{runner: runner}
+type runScriptToolParams struct {
+	Runner      scriptports.Runner
+	Reports     reportRunner
+	Files       documentports.ConversationFileReader
+	Permissions permissionports.PermissionEngine
+	Analyses    analysisports.RunRecorder
+}
+
+func newRunScriptTool(p *runScriptToolParams) agentports.AgentQueryTool {
+	return &runScriptTool{
+		runner: p.Runner,
+		datasets: &scriptDatasets{
+			reports:     p.Reports,
+			files:       p.Files,
+			permissions: p.Permissions,
+		},
+		analyses: p.Analyses,
+	}
 }
 
 func (t *runScriptTool) Name() string { return codemode.ToolRunScript }
 
 func (t *runScriptTool) Description() string {
-	return "Run a short Python script that calls the reads you hold, for questions " +
-		"that need many reads joined, compared or totalled. Use it for every record of a list, " +
-		"two sources reconciled, or a report over many records; for one or two reads in a row, " +
-		"call the reads themselves. Call a read as trenova.<namespace>.<the rest of its " +
-		"name>(**parameters), as trenova.shipment.list(status=[\"InTransit\"]) for " +
-		"shipment_list; parameters and results are exactly the tool's. trenova.tools() lists " +
-		"what you may call, help(trenova.shipment.list) gives one's parameters, " +
+	return "Run a short Python script that calls the reads you hold and works out, " +
+		"totals, compares or charts what they return. Use it for every record of a list, two " +
+		"sources reconciled, a report run or attached spreadsheet analyzed, or any figure no " +
+		"read gives; for one or two reads in a row, call the reads themselves. Call a read as " +
+		"trenova.<namespace>.<the rest of its name>(**parameters), as " +
+		"trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters and " +
+		"results are exactly the tool's. trenova.tools() lists what you may call, " +
 		"trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call " +
-		"raises trenova.Refused. Only what you print and one trenova.result(value) come back. " +
-		"A script changes nothing: a call to a change trenova.tools() lists prepares it, and " +
-		"what it prepared is proposed as one batch for a person to approve."
+		"raises trenova.Refused. Only what you print, one trenova.result(value) and what you " +
+		"show come back. A script changes nothing: a change it calls is proposed as one batch " +
+		"for a person to approve."
 }
 
 func (t *runScriptTool) ParamSchema() map[string]any {
@@ -95,7 +129,12 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 					"trenova is already there; json, datetime, math, re, collections and " +
 					"itertools import as usual; date.today() is the organization's today; " +
 					"classes cannot inherit; there are no files, packages or network. print() " +
-					"what you need to answer and pass one summary to trenova.result().",
+					"what you need to answer and pass one summary to trenova.result(). Show " +
+					"the person the answer with show_figure(label, value, kind), " +
+					"show_table(rows, title) and show_chart(kind, x, y, title, value_kind), " +
+					"kind bar, line, area, scatter or pie and y a list or {series: list}; " +
+					"value kinds are money, count, percent (a fraction) and number. mean, " +
+					"median, percentile, stdev and group_by are built in.",
 				toolschema.KeyMaxLength: codemode.MaxCodeChars,
 			},
 			paramScriptInputs: map[string]any{
@@ -122,6 +161,7 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 					toolschema.KeyAdditionalProperties: false,
 				},
 			},
+			paramScriptDatasets: datasetsSchema(),
 		},
 		toolschema.KeyRequired: []string{
 			paramScriptTitle, paramScriptPurpose, paramScriptCode,
@@ -151,7 +191,42 @@ func (t *runScriptTool) Policy() agentports.ToolPolicy {
 func (t *runScriptTool) SearchTerms() []string {
 	return []string{
 		"for each", "every one of", "each of them", "reconcile", "cross-check", "across all",
-		"script", "batch read", "go through all",
+		"script", "batch read", "go through all", "analyze", "analysis", "chart", "graph",
+		"plot", "trend", "python", "spreadsheet", "calculate", "statistics", "compare periods",
+	}
+}
+
+func datasetsSchema() map[string]any {
+	return map[string]any{
+		toolschema.KeyType: toolschema.TypeArray,
+		toolschema.KeyDescription: "Tables the script reads in full, at most five, each " +
+			"bound to its name as a list of row dicts keyed by its column labels, numbers as " +
+			"numbers and times as dates; a text file is its text. Give each a name and " +
+			"exactly one of reportRunId or documentId.",
+		toolschema.KeyMaxItems: analysis.MaxDatasets,
+		toolschema.KeyItems: map[string]any{
+			toolschema.KeyType: toolschema.TypeObject,
+			toolschema.KeyProperties: map[string]any{
+				paramDatasetName: map[string]any{
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "The name the script reads it by: lower-case " +
+						"letters, digits and underscores, starting with a letter, such as lanes.",
+					toolschema.KeyMaxLength: analysis.MaxDatasetName,
+				},
+				paramDatasetRun: agenttoolschema.OfKinds(map[string]any{
+					toolschema.KeyType: toolschema.TypeString,
+					toolschema.KeyDescription: "A finished report run you ran for this person, " +
+						"from report_run.",
+				}, permission.KindReportRun),
+				paramDatasetDocument: agenttoolschema.RecordIDText(
+					permission.ResourceDocument,
+					"A CSV, XLSX or text file the person attached to this conversation, "+
+						"from agent_read_attachment.",
+				),
+			},
+			toolschema.KeyRequired:             []string{paramDatasetName},
+			toolschema.KeyAdditionalProperties: false,
+		},
 	}
 }
 
@@ -191,8 +266,31 @@ type scriptAnswer struct {
 	DurationMs       int64                     `json:"durationMs"`
 	WithheldByAccess []string                  `json:"withheldByAccess,omitempty"`
 	Changes          []codemode.PreparedChange `json:"changes,omitempty"`
+	AnalysisRunID    string                    `json:"analysisRunId,omitempty"`
+	Purpose          string                    `json:"purpose,omitempty"`
+	Datasets         []scriptDatasetAnswer     `json:"datasets,omitempty"`
+	Figures          []analysis.Figure         `json:"figures,omitempty"`
+	Tables           []analysis.Table          `json:"tables,omitempty"`
+	Charts           []analysis.Chart          `json:"charts,omitempty"`
+	Layout           []analysis.Block          `json:"layout,omitempty"`
+	NotShown         int                       `json:"notShown,omitempty"`
 	Note             string                    `json:"note"`
+
+	attachments []agent.RecordRef
 }
+
+type scriptDatasetAnswer struct {
+	Name    string                      `json:"name"`
+	Source  string                      `json:"source"`
+	Label   string                      `json:"label,omitempty"`
+	Rows    int                         `json:"rows"`
+	Columns []scriptports.DatasetColumn `json:"columns,omitempty"`
+	Text    bool                        `json:"text,omitempty"`
+}
+
+// TaintedRecords names the attached files the script read: what the person
+// attached may have been written outside the organization.
+func (a *scriptAnswer) TaintedRecords() []agent.RecordRef { return a.attachments }
 
 // ScriptCompleted reports a script that ran to its end, the only one whose
 // prepared changes are proposed.
@@ -212,7 +310,16 @@ func (t *runScriptTool) Query(
 	purpose := optionalString(params.Params, paramScriptPurpose)
 	code, _ := params.Params[paramScriptCode].(string)
 	inputs := scriptInputs(params.Params[paramScriptInputs])
+	requests, err := datasetsFrom(params.Params[paramScriptDatasets])
+	if err != nil {
+		return nil, err
+	}
+	resolved, err := t.datasets.resolve(ctx, params, requests)
+	if err != nil {
+		return nil, err
+	}
 
+	started := time.Now()
 	outcome, err := t.runner.Run(ctx, &scriptports.Request{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  params.OrganizationID,
@@ -223,6 +330,7 @@ func (t *runScriptTool) Query(
 		Purpose:  stringutils.TruncateRunes(purpose, maxScriptPurposeRunes),
 		Code:     code,
 		Inputs:   inputs,
+		Datasets: resolved.datasets,
 		Timezone: params.Timezone,
 		Broker:   params.Broker,
 		StepKey:  params.StepKey,
@@ -234,7 +342,138 @@ func (t *runScriptTool) Query(
 	}
 	markScriptSpan(ctx, &summary, outcome)
 
-	return scriptAnswerOf(title, outcome, &summary), nil
+	answer := scriptAnswerOf(title, outcome, &summary)
+	answer.attachments = resolved.attachments
+	answer.Datasets = datasetAnswers(resolved.datasets)
+	if err = t.keepAnalysis(ctx, &analysisRecord{
+		params:   params,
+		answer:   answer,
+		outcome:  outcome,
+		purpose:  purpose,
+		code:     code,
+		datasets: resolved.datasets,
+		started:  started,
+	}); err != nil {
+		return nil, err
+	}
+
+	return answer, nil
+}
+
+type analysisRecord struct {
+	params   *agentports.QueryToolParams
+	answer   *scriptAnswer
+	outcome  *scriptports.Outcome
+	purpose  string
+	code     string
+	datasets []scriptports.Dataset
+	started  time.Time
+}
+
+// keepAnalysis records a script that showed the person something, so the
+// Desk's card can read its tables past the rows the agent is shown, and tells
+// the agent what the person sees. A script that only printed is the agent
+// looking at the data and is not kept.
+func (t *runScriptTool) keepAnalysis(ctx context.Context, r *analysisRecord) error {
+	shown := r.outcome.Shown
+	if shown.Empty() {
+		if r.outcome.Status == scriptports.Succeeded {
+			r.answer.Note += scriptPlainNote
+		}
+		return nil
+	}
+
+	run := &analysis.Run{
+		BusinessUnitID:    r.params.BusinessUnitID,
+		OrganizationID:    r.params.OrganizationID,
+		Status:            analysis.Status(r.outcome.Status),
+		Title:             r.answer.Title,
+		Purpose:           r.purpose,
+		Code:              r.code,
+		Datasets:          datasetRecords(r.datasets),
+		Output:            r.outcome.Output,
+		Tables:            shown.Tables,
+		Figures:           shown.Figures,
+		Charts:            shown.Charts,
+		Layout:            shown.Layout,
+		Failure:           r.outcome.Failure,
+		DurationMs:        r.outcome.DurationMs,
+		AgentDefinitionID: r.params.AgentDefinitionID,
+		AgentRunID:        r.params.RunID,
+		ThreadID:          r.params.ThreadID,
+		RequestedByID:     personOf(r.params.Actor),
+		StartedAt:         r.started.Unix(),
+		FinishedAt:        time.Now().Unix(),
+	}
+	if r.outcome.Error != nil {
+		run.ErrorName = r.outcome.Error.Name
+		run.ErrorValue = r.outcome.Error.Value
+		run.Traceback = r.outcome.Error.Traceback
+	}
+	recorded, err := t.analyses.Record(ctx, run)
+	if err != nil {
+		return fmt.Errorf("record the analysis: %w", err)
+	}
+
+	r.answer.AnalysisRunID = recorded.ID.String()
+	r.answer.Purpose = recorded.Purpose
+	r.answer.Figures = recorded.Figures
+	r.answer.Tables = answerTables(recorded.Tables)
+	r.answer.Charts = recorded.Charts
+	r.answer.Layout = recorded.Layout
+	r.answer.NotShown = r.outcome.NotShown
+	r.answer.Note += scriptShownNote
+	if r.outcome.NotShown > 0 {
+		r.answer.Note += scriptNotShownNote
+	}
+
+	return nil
+}
+
+// answerTables are the tables as the agent reads them: each with its first
+// rows, and how many it has in all.
+func answerTables(tables []analysis.Table) []analysis.Table {
+	answers := make([]analysis.Table, 0, len(tables))
+	for idx := range tables {
+		table := tables[idx]
+		table.Rows = table.Rows[:min(len(table.Rows), maxAnswerTableRows)]
+		answers = append(answers, table)
+	}
+
+	return answers
+}
+
+func datasetAnswers(datasets []scriptports.Dataset) []scriptDatasetAnswer {
+	answers := make([]scriptDatasetAnswer, 0, len(datasets))
+	for idx := range datasets {
+		dataset := &datasets[idx]
+		answers = append(answers, scriptDatasetAnswer{
+			Name:    dataset.Name,
+			Source:  dataset.Source.String(),
+			Label:   dataset.Label,
+			Rows:    len(dataset.Rows),
+			Columns: dataset.Columns,
+			Text:    dataset.Text != nil,
+		})
+	}
+
+	return answers
+}
+
+func datasetRecords(datasets []scriptports.Dataset) []analysis.Dataset {
+	records := make([]analysis.Dataset, 0, len(datasets))
+	for idx := range datasets {
+		dataset := &datasets[idx]
+		records = append(records, analysis.Dataset{
+			Name:     dataset.Name,
+			Source:   dataset.Source,
+			SourceID: dataset.SourceID,
+			Label:    dataset.Label,
+			Rows:     len(dataset.Rows),
+		})
+	}
+
+	return records
 }
 
 func scriptInputs(raw any) map[string]any {

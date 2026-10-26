@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait/agentwaitdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis/analysisdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
@@ -253,7 +254,7 @@ var kindMinters = map[permission.RecordKind]minter{
 	permission.KindWait:                     prefixed(agentwaitdb.WaitsSchema()),
 	permission.KindPortalSite:               prefixed(agentextensiondb.PortalSitesSchema()),
 	permission.KindPortalRun:                prefixed(agentextensiondb.PortalRunsSchema()),
-	permission.KindAnalysisRun:              prefixed(agentextensiondb.AnalysisRunsSchema()),
+	permission.KindAnalysisRun:              prefixed(analysisdb.RunsSchema()),
 	permission.KindWebWatch:                 prefixed(agentextensiondb.WebWatchesSchema()),
 	permission.KindWatchtowerItem:           prefixed(watchtowerdb.ItemsSchema()),
 	permission.KindAccountingConnection:     prefixed(accountingsyncdb.AccountingConnectionsSchema()),

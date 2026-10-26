@@ -66,8 +66,31 @@ fn host(function: HostFunction, payload: &Value) -> Value {
                     .collect(),
             )
         }
-        HostFunction::Result => json!({"status": "ok"}),
+        HostFunction::Result | HostFunction::Show => json!({"status": "ok"}),
+        HostFunction::Rows => {
+            let rows = [
+                json!(["Acme", 120.5, "2026-10-01"]),
+                json!(["Bolt", 80, "2026-09-12"]),
+                json!(["Acme", 40, null]),
+            ];
+            let offset = usize::try_from(payload["offset"].as_u64().unwrap_or(0)).unwrap_or(0);
+            let page: Vec<Value> = rows.iter().skip(offset).take(2).cloned().collect();
+            json!({"rows": page, "done": offset + 2 >= rows.len()})
+        }
     }
+}
+
+fn ar_dataset() -> Value {
+    json!({"datasets": json!([{
+        "name": "ar",
+        "label": "AR aging",
+        "rows": 3,
+        "columns": [
+            {"name": "Customer", "kind": "text"},
+            {"name": "Open Balance", "kind": "money"},
+            {"name": "Due", "kind": "date"}
+        ]
+    }]).to_string()})
 }
 
 fn run(code: &str) -> Run {
@@ -364,4 +387,124 @@ fn the_sdk_names_no_tool() {
             "the SDK is generic; reads come from the index, but it names {name}"
         );
     }
+}
+
+#[test]
+fn a_dataset_is_paged_in_and_bound_to_its_name_as_rows() {
+    let run = run_with(
+        r#"
+totals = {}
+for row in ar:
+    totals[row["Customer"]] = totals.get(row["Customer"], 0) + row["Open Balance"]
+print(len(ar), totals, trenova.datasets["ar"]["label"])
+print(type(ar[0]["Due"]).__name__, ar[0]["Due"].year, ar[2]["Due"])
+"#,
+        &ar_dataset(),
+    );
+    ok(&run);
+    assert_eq!(
+        run.done.output,
+        "3 {'Acme': 160.5, 'Bolt': 80} AR aging\ndate 2026 None\n"
+    );
+    let pages: Vec<&Value> = run
+        .calls
+        .iter()
+        .filter(|(function, _)| *function == HostFunction::Rows)
+        .map(|(_, payload)| payload)
+        .collect();
+    assert_eq!(
+        pages,
+        [
+            &json!({"dataset": "ar", "offset": 0}),
+            &json!({"dataset": "ar", "offset": 2})
+        ]
+    );
+}
+
+#[test]
+fn paging_a_dataset_in_and_showing_spend_none_of_the_reads() {
+    let limited = json!({"outputChars": 8000, "memoryBytes": 256 << 20, "cpuMs": 5000, "recursion": 200, "calls": 1});
+    let mut overrides = ar_dataset();
+    overrides["limits"] = limited;
+    let run = run_with(
+        r#"
+show_figure("Open AR", 240.5, "money")
+show_table([{"a": 1}], title="One")
+trenova.shipment.list(status="Delayed")
+print("read once")
+"#,
+        &overrides,
+    );
+    ok(&run);
+    assert_eq!(run.done.output, "read once\n");
+}
+
+#[test]
+fn figures_tables_and_charts_reach_the_host_as_they_were_shown() {
+    let run = run(r#"
+import datetime
+show_figure("Open AR", 240.5, "money", note="as of today")
+show_table([{"Customer": "Acme", "Due": datetime.date(2026, 10, 1)}], title="Oldest")
+show_table({"Acme": 2, "Bolt": 1}, columns=["Customer", "Loads"])
+show_chart("bar", ["Acme", "Bolt"], {"Open": [160.5, 80], "Late": [1, None]}, title="By customer", value_kind="money")
+"#);
+    ok(&run);
+    let shown: Vec<&Value> = run
+        .calls
+        .iter()
+        .filter(|(function, _)| *function == HostFunction::Show)
+        .map(|(_, payload)| payload)
+        .collect();
+    assert_eq!(shown.len(), 4);
+    assert_eq!(
+        shown[0],
+        &json!({"type": "figure", "label": "Open AR", "value": 240.5, "kind": "money", "note": "as of today", "currency": ""})
+    );
+    assert_eq!(shown[1]["rows"], json!([["Acme", "2026-10-01"]]));
+    assert_eq!(
+        shown[1]["columns"],
+        json!([{"name": "Customer", "kind": ""}, {"name": "Due", "kind": ""}])
+    );
+    assert_eq!(shown[2]["rows"], json!([["Acme", 2], ["Bolt", 1]]));
+    assert_eq!(shown[2]["columns"][1]["name"], "Loads");
+    assert_eq!(
+        shown[3]["series"][1],
+        json!({"name": "Late", "values": [1, null]})
+    );
+    assert_eq!(shown[3]["x"]["values"], json!(["Acme", "Bolt"]));
+    assert_eq!(shown[3]["valueKind"], "money");
+}
+
+#[test]
+fn the_statistics_helpers_skip_what_is_not_a_number() {
+    let run = run(r#"
+values = [1, 2, 3, 4, None, "x"]
+print(mean(values), median(values), percentile(values, 25), round(stdev(values), 4))
+print(sorted(group_by([{"c": "a"}, {"c": "b"}, {"c": "a"}], "c")))
+"#);
+    ok(&run);
+    assert_eq!(run.done.output, "2.5 2.5 1.75 1.291\n['a', 'b']\n");
+}
+
+#[test]
+fn a_dataset_cannot_take_a_name_the_sdk_uses() {
+    for name in ["trenova", "show_table", "Bad", "1st", "a-b"] {
+        let run = run_with(
+            "print(1)",
+            &json!({"datasets": json!([{"name": name, "rows": 0, "columns": []}]).to_string()}),
+        );
+        assert_eq!(run.done.status, EndStatus::Failed, "{name}");
+    }
+}
+
+#[test]
+fn with_datasets_bound_a_traceback_still_names_the_script() {
+    let run = run_with("x = ar[0]\nx['Missing']\n", &ar_dataset());
+    assert_eq!(run.done.status, EndStatus::Raised);
+    let error = run.done.error.expect("the KeyError");
+    assert!(
+        error.traceback.contains("File \"script.py\", line 2"),
+        "{}",
+        error.traceback
+    );
 }

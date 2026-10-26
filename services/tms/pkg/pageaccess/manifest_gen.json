@@ -1,5 +1,5 @@
 {
-  "version": "sha256:4d872ea5dfcea01ddfc1523d6e0f52b0b897b106eaf7fa6779267f0200c4359d",
+  "version": "sha256:4fe8072991f66a750d11149fe2d2752fc0dbf64f48f6e378dd33af5470259faa",
   "screens": [
     {
       "path": "/",
@@ -7311,16 +7311,6 @@
       ],
       "endpoints": [
         {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/",
-          "requires": []
-        },
-        {
           "method": "POST",
           "path": "/agent-definitions/",
           "requires": [
@@ -8041,16 +8031,6 @@
         "UndoMyDecision"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/",
-          "requires": []
-        },
         {
           "method": "POST",
           "path": "/agent-definitions/",
@@ -8815,16 +8795,6 @@
       ],
       "endpoints": [
         {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/",
-          "requires": []
-        },
-        {
           "method": "POST",
           "path": "/agent-definitions/",
           "requires": [
@@ -9544,16 +9514,6 @@
         "UndoMyDecision"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/",
-          "requires": []
-        },
         {
           "method": "POST",
           "path": "/agent-definitions/",
@@ -13433,11 +13393,6 @@
         },
         {
           "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
           "path": "/agent-analysis/runs/:param/",
           "requires": []
         },
@@ -15077,11 +15032,6 @@
               "operation": "submit"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
         },
         {
           "method": "GET",
@@ -16787,11 +16737,6 @@
               "operation": "submit"
             }
           ]
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
         },
         {
           "method": "GET",
@@ -32465,16 +32410,6 @@
       ],
       "endpoints": [
         {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/",
-          "requires": []
-        },
-        {
           "method": "POST",
           "path": "/agent-definitions/",
           "requires": [
@@ -33359,16 +33294,6 @@
         "UndoMyDecision"
       ],
       "endpoints": [
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param",
-          "requires": []
-        },
-        {
-          "method": "GET",
-          "path": "/agent-analysis/runs/:param/",
-          "requires": []
-        },
         {
           "method": "POST",
           "path": "/agent-definitions/",
