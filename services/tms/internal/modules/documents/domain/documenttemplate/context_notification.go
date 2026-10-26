@@ -457,6 +457,9 @@ type ReportNotificationContext struct {
 	ConsecutiveFailures int
 
 	ExpiresAt string
+
+	ReportCount  int
+	OtherReports int
 }
 
 func newReportNotificationSampleContext() any {
@@ -470,6 +473,8 @@ func newReportNotificationSampleContext() any {
 		Disabled:            false,
 		ConsecutiveFailures: 3,
 		ExpiresAt:           "2026-07-22",
+		ReportCount:         3,
+		OtherReports:        2,
 	}
 }
 
@@ -512,6 +517,16 @@ func reportNotificationVariables() []VariableDefinition {
 			Path:        expiresAtPath,
 			Type:        VariableDate,
 			Description: "When the download stops being available.",
+		},
+		{
+			Path:        "ReportCount",
+			Type:        VariableInt,
+			Description: "How many reports the notice is about, ReportName among them.",
+		},
+		{
+			Path:        "OtherReports",
+			Type:        VariableInt,
+			Description: "How many reports besides ReportName the notice is about.",
 		},
 	}
 }
@@ -726,6 +741,11 @@ var reportNotificationKinds = []notificationKind{
 		kind:        KindNotificationReportScheduleSkipped,
 		displayName: "Report Schedule Skipped",
 		description: "Tells a schedule owner a run was skipped. Branch on Disabled: the same event covers a schedule that has now been turned off after repeated failures.",
+	},
+	{
+		kind:        KindNotificationReportNeedsAttention,
+		displayName: "Report Needs Attention",
+		description: "Tells a report owner that a deploy removed or renamed fields their saved reports use, so they cannot run until repaired. One notice covers every report of theirs the check found; ReportCount says how many.",
 	},
 }
 

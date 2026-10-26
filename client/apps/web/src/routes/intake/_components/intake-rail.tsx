@@ -1,4 +1,5 @@
 import { RailItem, RailSection } from "@/components/navigation/queue-rail";
+import type { RowTotal } from "@trenova/shared/lib/row-total";
 import type { CaptureSource } from "@/lib/graphql/capture";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Switch } from "@trenova/shared/components/ui/switch";
@@ -42,7 +43,7 @@ export function IntakeRail({
   onChange,
 }: {
   filter: IntakeFilter;
-  waiting: number | undefined;
+  waiting: RowTotal | undefined;
   onChange: (filter: IntakeFilter) => void;
 }) {
   const t = useT();
@@ -62,8 +63,9 @@ export function IntakeRail({
                 icon={VIEW_ICON[view]}
                 label={viewLabel(t, view)}
                 active={filter.view === view}
-                count={view === "waiting" ? waiting : undefined}
-                loud={view === "waiting" && (waiting ?? 0) > 0}
+                count={view === "waiting" ? waiting?.count : undefined}
+                countExact={waiting?.exact ?? true}
+                loud={view === "waiting" && (waiting?.count ?? 0) > 0}
                 onClick={() => onChange({ ...filter, view })}
               />
             ))}

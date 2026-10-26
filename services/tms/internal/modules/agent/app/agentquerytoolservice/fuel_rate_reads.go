@@ -18,6 +18,7 @@ const (
 	paramFuelIndexID    = "fuelIndexId"
 	fieldTractorID      = "tractorId"
 	fieldJurisdictionID = "jurisdictionId"
+	rateImportsKey      = "imports"
 )
 
 func fuelRateReadProviders() []any {
@@ -130,5 +131,9 @@ func (t *listRateImportsTool) Query(
 		rows = append(rows, row)
 	}
 
-	return map[string]any{"imports": rows, "total": result.Total}, nil
+	return map[string]any{
+		rateImportsKey:   rows,
+		"total":          result.Total,
+		"totalEstimated": !result.TotalExact,
+	}, nil
 }

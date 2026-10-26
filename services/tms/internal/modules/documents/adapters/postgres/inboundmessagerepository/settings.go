@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +35,10 @@ func (r *targetRepository) List(
 ) ([]*triage.ResponseTarget, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triage.ResponseTarget, error) {
 		t := triagedb.ResponseTargets
-		targets, err := t.Query().Order(t.Classification.Asc()).All(ctx, r.db.Keel(ctx))
+		targets, err := t.Query().
+			Order(t.Classification.Asc()).
+			Cache(resultcache.Settings()...).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, err
 		}
@@ -91,15 +95,17 @@ func (r *settingsRepository) Get(
 	tenantInfo pagination.TenantInfo,
 ) (*triage.Settings, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.Settings, error) {
-		settings, err := triagedb.Settingses.Query().One(ctx, r.db.Keel(ctx))
-		if dberror.IsNotFoundError(err) {
-			return triage.DefaultSettings(tenantInfo.OrgID, tenantInfo.BuID), nil
-		}
+		rows, err := triagedb.Settingses.Limit(1).
+			Cache(resultcache.Settings()...).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, err
 		}
+		if len(rows) == 0 {
+			return triage.DefaultSettings(tenantInfo.OrgID, tenantInfo.BuID), nil
+		}
 
-		return settings, nil
+		return rows[0], nil
 	})
 }
 

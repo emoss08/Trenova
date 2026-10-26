@@ -244,12 +244,9 @@ func patchAssignments(patch inboundmessageports.QueuePatch, now int64) []keel.As
 		sets = append(sets, m.HandledByRuleID.ToNull(), m.HandledAction.ToNull())
 	}
 	if patch.HandOff != nil {
-		sets = append(sets, m.ActionState.ToExpr(keel.DynOf(m.ActionState).Concat(keel.DynFunc(
-			"jsonb_build_object",
-			keel.DynConst("handedOffTo"),
-			keel.DynLit(patch.HandOff.To.String()),
-			keel.DynConst("handedOffAt"),
-			keel.DynLit(now).Cast(keel.TypeInt64),
+		sets = append(sets, m.ActionState.ToExpr(m.ActionState.Concat(keel.JSONBuildObject(
+			keel.Pair("handedOffTo", patch.HandOff.To.String()),
+			keel.Pair("handedOffAt", now),
 		))))
 	}
 	if patch.ClearShipment {
@@ -280,7 +277,7 @@ func reviewAssignments(review *inboundmessageports.ReviewPatch, now int64) []kee
 	return []keel.Assignment{
 		m.ReviewedBy.To(review.ReviewerID),
 		m.ReviewedAt.To(now),
-		m.ReviewNote.ToExpr(keel.DynLit(review.Note).NullIf("").Coalesce(m.ReviewNote)),
+		m.ReviewNote.ToExpr(keel.Text(review.Note).NullIf("").Coalesce(m.ReviewNote)),
 	}
 }
 
@@ -348,21 +345,21 @@ func dueAssignments(patch inboundmessageports.QueuePatch) []keel.Assignment {
 	}
 }
 
-func dueFromTargetsExpr(targets triage.Targets) keel.Expr {
+func dueFromTargetsExpr(targets triage.Targets) keel.Int64Expr {
 	m := inboundmessagedb.InboundMessages
 	kinds := inboundmessage.AllClassifications()
 
-	classification := keel.DynOf(m.Classification).Coalesce(string(inboundmessage.ClassificationOther))
-	minutes := keel.DynCase()
+	classification := m.Classification.Coalesce(string(inboundmessage.ClassificationOther))
+	minutes := keel.CaseInt64()
 	for _, kind := range kinds {
 		minutes = minutes.When(
 			classification.Eq(string(kind)),
-			keel.DynLit(int64(targets.For(kind))).Cast(keel.TypeInt64),
+			keel.Int64(int64(targets.For(kind))),
 		)
 	}
-	fallback := keel.DynLit(int64(targets.For(inboundmessage.ClassificationOther))).Cast(keel.TypeInt64)
+	fallback := keel.Int64(int64(targets.For(inboundmessage.ClassificationOther)))
 
-	return keel.DynOf(m.ReceivedAt).Add(keel.DynLit(60).Mul(minutes.Else(fallback)))
+	return m.ReceivedAt.Add(keel.Int64(60).Mul(minutes.Else(fallback)))
 }
 
 func (r *repository) ListByIDs(
@@ -592,7 +589,7 @@ func (r *repository) RecomputeDue(
 		return m.Where(m.Status.In(needsReviewStatuses...), classification).Update(
 			ctx,
 			r.db.Keel(ctx),
-			m.DueAt.ToExpr(keel.DynOf(m.ReceivedAt).Add(keel.DynLit(int64(req.Minutes)*60).Cast(keel.TypeInt64))),
+			m.DueAt.ToExpr(m.ReceivedAt.Add(keel.Int64(int64(req.Minutes)*60))),
 			m.Version.ToExpr(m.Version),
 			m.UpdatedAt.ToExpr(m.UpdatedAt),
 		)
@@ -655,7 +652,7 @@ func handOffCandidatesQuery(
 		Where(
 			m.Status.In(needsReviewStatuses...),
 			m.Parked.IsNull(),
-			keel.DynOf(m.OwnerID).IsDistinctFrom(req.To.String()),
+			m.OwnerID.IsDistinctFrom(req.To),
 		).
 		Order(m.DueAt.Asc().NullsLast(), m.ID.Asc()).
 		Limit(req.Limit)

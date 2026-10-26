@@ -164,18 +164,15 @@ func autoCancelableShipments(
 func controlledAutoCancelIDs(currentTime int64, t tenancy) *keel.Query[*shipment.Shipment] {
 	sp := shipmentdb.Shipments.As("cancel_sp")
 	sc := tenantdb.ShipmentControls.As("cancel_sc")
+	days := sc.AutoCancelShipmentsThreshold.Coalesce(shipmentstate.DefaultAutoCancelThresholdDays)
 
 	q := sp.Pick(sp.ID).
 		Join(sc, sc.OrganizationID.EqCol(sp.OrganizationID), sc.BusinessUnitID.EqCol(sp.BusinessUnitID)).
 		Where(
 			sc.AutoCancelShipments.IsTrue(),
 			sp.Status.Eq(shipment.StatusNew),
-			keel.DynOf(sp.CreatedAt).Lte(
-				keel.DynLit(currentTime).Sub(
-					keel.DynOf(sc.AutoCancelShipmentsThreshold).
-						Coalesce(shipmentstate.DefaultAutoCancelThresholdDays).
-						Mul(keel.DynLit(secondsPerDay).Cast(keel.TypeInt64)),
-				),
+			keel.Int64Of(sp.CreatedAt).LteExpr(
+				keel.Int64(currentTime).Sub(keel.CastInt64(days).Mul(keel.Int64(secondsPerDay))),
 			),
 		).
 		Order(sp.ID.Asc())

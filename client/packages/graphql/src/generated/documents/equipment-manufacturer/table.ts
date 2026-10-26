@@ -2,4 +2,4 @@
 import type { TypedDocumentString, EquipmentManufacturerTableQuery, EquipmentManufacturerTableQueryVariables, EquipmentManufacturerTableRowFieldsFragment } from "../../graphql";
 
 export const EquipmentManufacturerTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"EquipmentManufacturerTableRowFields"}} as unknown as TypedDocumentString<EquipmentManufacturerTableRowFieldsFragment, unknown>;
-export const EquipmentManufacturerTableDocument = {"__meta__":{"kind":"query","name":"EquipmentManufacturerTable","hash":"sha256:1ad59b9754cf4b8c511c8cf3af0762a6da6adf252d5bb3fd05b50b349bcdaec7"}} as unknown as TypedDocumentString<EquipmentManufacturerTableQuery, EquipmentManufacturerTableQueryVariables>;
+export const EquipmentManufacturerTableDocument = {"__meta__":{"kind":"query","name":"EquipmentManufacturerTable","hash":"sha256:22cf7903ac1f555f7aba344af3e36c72abfa5ae920cbe4770359580bc3cec1fa"}} as unknown as TypedDocumentString<EquipmentManufacturerTableQuery, EquipmentManufacturerTableQueryVariables>;

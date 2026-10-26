@@ -311,7 +311,8 @@ func (s *Service) accessorialTargets(
 		for _, charge := range page.Items {
 			targets = append(targets, accessorialTarget(charge))
 		}
-		if len(page.Items) < targetPageSize || offset+len(page.Items) >= page.Total {
+		if len(page.Items) < targetPageSize ||
+			(page.TotalExact && offset+len(page.Items) >= page.Total) {
 			return targets, nil
 		}
 	}
@@ -342,7 +343,8 @@ func (s *Service) customerTargets(
 		for _, cus := range page.Items {
 			targets = append(targets, customerTarget(cus))
 		}
-		if len(page.Items) < targetPageSize || offset+len(page.Items) >= page.Total {
+		if len(page.Items) < targetPageSize ||
+			(page.TotalExact && offset+len(page.Items) >= page.Total) {
 			return targets, nil
 		}
 	}
@@ -374,7 +376,8 @@ func (s *Service) carrierTargets(
 		for _, carr := range page.Items {
 			targets = append(targets, carrierTarget(carr))
 		}
-		if len(page.Items) < targetPageSize || offset+len(page.Items) >= page.Total {
+		if len(page.Items) < targetPageSize ||
+			(page.TotalExact && offset+len(page.Items) >= page.Total) {
 			return targets, nil
 		}
 	}
@@ -494,7 +497,8 @@ func (s *Service) activeGLAccounts(
 			return nil, err
 		}
 		accounts = append(accounts, page.Items...)
-		if len(page.Items) < targetPageSize || offset+len(page.Items) >= page.Total {
+		if len(page.Items) < targetPageSize ||
+			(page.TotalExact && offset+len(page.Items) >= page.Total) {
 			return accounts, nil
 		}
 	}

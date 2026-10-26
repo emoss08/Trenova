@@ -337,9 +337,10 @@ func carrierIntelEventConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.CarrierIntelEventConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -357,9 +358,10 @@ func carrierMonitoringEnrollmentConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.CarrierMonitoringEnrollmentConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

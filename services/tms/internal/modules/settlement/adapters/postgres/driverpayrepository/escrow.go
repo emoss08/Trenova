@@ -159,10 +159,8 @@ func (r *escrowAccountRepository) ListDueForInterest(
 		items, err := ea.Where(
 			ea.Status.Eq(driverpay.EscrowAccountStatusActive),
 			ea.BalanceMinor.Gt(0),
-			keel.DynOf(ea.AnnualInterestRate).Gt(0),
-			keel.DynOf(ea.LastInterestAccrualDate).
-				Coalesce(ea.OpenedDate).
-				Lte(req.AccrueOnOrBefore),
+			keel.NumericOf(ea.AnnualInterestRate).Gt(0),
+			ea.LastInterestAccrualDate.Coalesce(ea.OpenedDate).Lte(req.AccrueOnOrBefore),
 		).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list escrow accounts due for interest: %w", err)

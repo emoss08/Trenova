@@ -3,4 +3,4 @@ import type { TypedDocumentString, FiscalPeriodFieldsFragment, FiscalYearTableQu
 
 export const FiscalPeriodFieldsFragmentDoc = {"__meta__":{"fragmentName":"FiscalPeriodFields"}} as unknown as TypedDocumentString<FiscalPeriodFieldsFragment, unknown>;
 export const FiscalYearTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"FiscalYearTableRowFields"}} as unknown as TypedDocumentString<FiscalYearTableRowFieldsFragment, unknown>;
-export const FiscalYearTableDocument = {"__meta__":{"kind":"query","name":"FiscalYearTable","hash":"sha256:fdd52a3673d11ef70e11bdcf079a9d0f0a3658a4607831bf8f3f06d34377f4eb"}} as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;
+export const FiscalYearTableDocument = {"__meta__":{"kind":"query","name":"FiscalYearTable","hash":"sha256:ba2868a1534c83b2503cc857385fda5b22b48283f052ce8358cf52434e8060f6"}} as unknown as TypedDocumentString<FiscalYearTableQuery, FiscalYearTableQueryVariables>;

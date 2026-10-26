@@ -33,6 +33,7 @@ import (
 type harness struct {
 	ctx           context.Context
 	db            *keel.DB
+	dsn           string
 	tenant        pagination.TenantInfo
 	data          *seedtest.TestData
 	fixture       *testutil.ShipmentIntegrationFixture
@@ -46,7 +47,7 @@ type harness struct {
 func newHarness(t *testing.T) *harness {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
@@ -58,6 +59,7 @@ func newHarness(t *testing.T) *harness {
 	return &harness{
 		ctx:           dbscope.WithTenant(ctx, tenant.DBTenant()),
 		db:            db,
+		dsn:           dsn,
 		tenant:        tenant,
 		data:          data,
 		fixture:       testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenant),

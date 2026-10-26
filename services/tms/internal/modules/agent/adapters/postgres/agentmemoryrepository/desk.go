@@ -101,7 +101,8 @@ func listDeskQuery(req *agentports.ListDeskMemoriesQuery) *keel.Query[*agent.Mem
 
 	var after keel.Pred
 	if req.After != nil {
-		after = keel.DynRow(m.CreatedAt, m.ID).Lt(keel.DynRow(req.After.CreatedAt, req.After.ID.String()))
+		after = keel.Tuple(m.CreatedAt, m.ID).
+			Lt(keel.Tuple(req.After.CreatedAt, req.After.ID.String()))
 	}
 
 	return deskSelect().

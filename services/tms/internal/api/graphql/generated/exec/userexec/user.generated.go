@@ -110,6 +110,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.UserConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "UserEdge", Fields: []*gqlexec.Field{
 			{
@@ -126,7 +136,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "cursor",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.UserEdge)
 					return obj.Cursor, nil
@@ -157,7 +167,8 @@ type resolverQuery interface {
 
 var (
 	errNoChild0 = errors.New("field of type Int does not have child fields")
-	errNoChild1 = errors.New("field of type String does not have child fields")
+	errNoChild1 = errors.New("field of type Boolean does not have child fields")
+	errNoChild2 = errors.New("field of type String does not have child fields")
 )
 
 func field_Mutation_createUser_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -476,6 +487,14 @@ func unmarshalOTimeFormat2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi�
 	var res = new(gqlmodel.TimeFormat)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
 }
 
 func marshalNPageInfo2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐPageInfo(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.PageInfo) graphql.Marshaler {

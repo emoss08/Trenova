@@ -42,8 +42,9 @@ func featureConnection(
 	}
 	total := page.Total
 	return &gqlmodel.AIUsageFeatureConnection{
-		Edges:      edges,
-		PageInfo:   base.PageInfo(page.HasNext, page.EndCursor),
-		TotalCount: &total,
+		Edges:           edges,
+		PageInfo:        base.PageInfo(page.HasNext, page.EndCursor),
+		TotalCount:      &total,
+		TotalCountExact: true,
 	}, nil
 }

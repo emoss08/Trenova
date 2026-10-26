@@ -242,6 +242,8 @@ type AgentToolPolicyConnection {
   pageInfo: PageInfo!
   "Every tool matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentToolSafetyEdge {
@@ -254,6 +256,8 @@ type AgentToolSafetyConnection {
   pageInfo: PageInfo!
   "Every held tool matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "The figures that head the safety section, counted over every tool and agent."

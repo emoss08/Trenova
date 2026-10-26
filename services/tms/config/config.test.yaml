@@ -18,6 +18,14 @@ database:
   lockTimeout: 5s
   idleInTransactionSessionTimeout: 30s
   queryLog: "off"
+  tenantConcurrency: 0
+  cache:
+    enabled: true
+    localBytes: 16777216
+    shared:
+      enabled: false
+  budget:
+    maxRepeats: 10
 
 cache:
   host: localhost

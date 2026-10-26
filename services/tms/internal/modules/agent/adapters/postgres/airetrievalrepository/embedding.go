@@ -465,7 +465,7 @@ func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Que
 		Where(
 			e.SourceType.In(plan.sourceTypes...),
 			e.ModelKey.Eq(req.ModelKey),
-			keel.DynOf(e.Dimensions).Eq(keel.DynConst(plan.dimensions)),
+			e.Dimensions.EqCol(keel.ConstInt64(int64(plan.dimensions))),
 		).
 		Pick(e.SourceType, e.SourceID, e.ChunkIndex, distance()).
 		Order(keel.Asc(distance())).
@@ -485,7 +485,7 @@ func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Que
 			candidate.Col("distance").Asc(),
 		))
 
-	similarity := keel.DynLit(1).Sub(best.Col("distance"))
+	similarity := keel.Float64(1).Sub(keel.Float64Of(best.Col("distance")))
 	outer := best.Query().
 		With(candidate, best).
 		Pick(best.Col(colSourceType), best.Col(colSourceID), best.Col("chunk_index"), similarity).

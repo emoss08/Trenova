@@ -176,8 +176,12 @@ export function useTablePages({
     : !remote
       ? agentRows.length
       : (first?.total ?? (fromStart ? null : (paging?.total ?? null)));
+  const totalEstimated =
+    !filtering &&
+    remote &&
+    (first?.total != null ? first.totalEstimated : !fromStart && (paging?.totalEstimated ?? false));
   const count = pageCount({
-    total: locked ? null : total,
+    total: locked || totalEstimated ? null : total,
     read: view.length,
     hasMore: !filtering && (hasMore || (locked && remote)),
     size,
@@ -209,6 +213,7 @@ export function useTablePages({
     exact: count.exact,
     lastPage,
     total,
+    totalEstimated: total !== null && totalEstimated,
     readRows: buffer.length,
     shownRows: view.length,
     agentRows: heldRows,

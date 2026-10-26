@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 )
 
@@ -36,7 +37,10 @@ func (r *repository) List(
 ) ([]*agent.ToolRuleOverride, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolRuleOverride, error) {
 		o := agentdb.ToolRuleOverrides
-		overrides, err := o.Query().Order(o.ToolName.Asc()).All(ctx, r.db.Keel(ctx))
+		overrides, err := o.Query().
+			Order(o.ToolName.Asc()).
+			Cache(resultcache.Settings()...).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list tool rule overrides: %w", err)
 		}

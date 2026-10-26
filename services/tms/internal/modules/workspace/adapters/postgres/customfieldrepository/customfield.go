@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -127,6 +128,7 @@ func (r *repository) GetActiveByResourceType(
 			d := customfielddb.CustomFieldDefinitions
 			entities, err := d.Where(d.ResourceType.Eq(req.ResourceType), d.IsActive.IsTrue()).
 				Order(d.DisplayOrder.Asc()).
+				Cache(resultcache.Settings()...).
 				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error(

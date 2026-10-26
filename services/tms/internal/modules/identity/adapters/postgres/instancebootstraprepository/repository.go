@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
@@ -65,7 +64,7 @@ func (r *repository) GetState(
 
 			u := tenantdb.Users
 			count, err := u.AllTenants().
-				Where(keel.DynFunc("lower", u.Username).Ne(tenant.SystemUsername)).
+				Where(u.Username.Lower().Ne(tenant.SystemUsername)).
 				Count(ctx, db)
 			if err != nil {
 				return nil, fmt.Errorf("count users: %w", err)

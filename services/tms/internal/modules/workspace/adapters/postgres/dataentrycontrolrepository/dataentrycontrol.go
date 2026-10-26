@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/dataentrycontrol/dataentrycontroldb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/dataentrycontrolports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -152,5 +153,6 @@ func (r *repository) GetOrCreate(
 }
 
 func (r *repository) find(ctx context.Context) (*dataentrycontrol.DataEntryControl, error) {
-	return dataentrycontroldb.DataEntryControls.Query().One(ctx, r.db.Keel(ctx))
+	return dataentrycontroldb.DataEntryControls.Cache(resultcache.Settings()...).
+		One(ctx, r.db.Keel(ctx))
 }

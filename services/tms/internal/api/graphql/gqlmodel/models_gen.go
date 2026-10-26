@@ -465,6 +465,8 @@ type AIAuditEventConnection struct {
 	Edges      []*AIAuditEventEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIAuditEventEdge struct {
@@ -476,6 +478,8 @@ type AIAuditExportConnection struct {
 	Edges      []*AIAuditExportEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIAuditExportEdge struct {
@@ -487,6 +491,8 @@ type AICorrectionConnection struct {
 	Edges      []*AICorrectionEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AICorrectionEdge struct {
@@ -498,6 +504,8 @@ type AIFeedbackConnection struct {
 	Edges      []*AIFeedbackEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIFeedbackEdge struct {
@@ -516,6 +524,8 @@ type AIProviderConnection struct {
 	Edges      []*AIProviderEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIProviderDraftTestInput struct {
@@ -603,6 +613,8 @@ type AIRetrievalFailedEntryConnection struct {
 	Edges      []*AIRetrievalFailedEntryEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIRetrievalFailedEntryEdge struct {
@@ -653,6 +665,8 @@ type AIUsageFeatureConnection struct {
 	Edges      []*AIUsageFeatureEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIUsageFeatureEdge struct {
@@ -664,6 +678,8 @@ type AccessorialChargeConnection struct {
 	Edges      []*AccessorialChargeEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccessorialChargeEdge struct {
@@ -675,6 +691,8 @@ type AccountTypeConnection struct {
 	Edges      []*AccountTypeEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccountTypeEdge struct {
@@ -686,6 +704,8 @@ type AccountingDriftFindingConnection struct {
 	Edges      []*AccountingDriftFindingEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccountingDriftFindingEdge struct {
@@ -697,6 +717,8 @@ type AccountingInboundChangeConnection struct {
 	Edges      []*AccountingInboundChangeEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccountingInboundChangeEdge struct {
@@ -708,6 +730,8 @@ type AccountingMappingConnection struct {
 	Edges      []*AccountingMappingEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One mapping, and the accounting system records it could be set to.
@@ -739,6 +763,8 @@ type AccountingSyncRecordConnection struct {
 	Edges      []*AccountingSyncRecordEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccountingSyncRecordEdge struct {
@@ -953,6 +979,8 @@ type AgentDefinitionConnection struct {
 	Edges      []*AgentDefinitionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentDefinitionEdge struct {
@@ -976,6 +1004,8 @@ type AgentEvalCaseConnection struct {
 	Edges      []*AgentEvalCaseEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentEvalCaseCuratedInput struct {
@@ -1020,6 +1050,8 @@ type AgentEvaluationConnection struct {
 	Edges      []*AgentEvaluationEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentEvaluationEdge struct {
@@ -1031,6 +1063,8 @@ type AgentExceptionConnection struct {
 	Edges      []*AgentExceptionEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentExceptionEdge struct {
@@ -1070,6 +1104,8 @@ type AgentMemoryConnection struct {
 	Edges      []*AgentMemoryEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentMemoryEdge struct {
@@ -1093,6 +1129,8 @@ type AgentPlanConnection struct {
 	Edges      []*AgentPlanEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentPlanDecisionInput struct {
@@ -1130,6 +1168,8 @@ type AgentProposalConnection struct {
 	Edges      []*AgentProposalEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentProposalDecisionInput struct {
@@ -1167,6 +1207,8 @@ type AgentQualityAgentConnection struct {
 	Edges      []*AgentQualityAgentEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentQualityAgentEdge struct {
@@ -1186,6 +1228,8 @@ type AgentReflectionConnection struct {
 	Edges      []*AgentReflectionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentReflectionEdge struct {
@@ -1197,6 +1241,8 @@ type AgentRunConnection struct {
 	Edges      []*AgentRunEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentRunEdge struct {
@@ -1208,6 +1254,8 @@ type AgentRunEventConnection struct {
 	Edges      []*AgentRunEventEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentRunEventEdge struct {
@@ -1262,6 +1310,8 @@ type AgentSuiteRunCaseConnection struct {
 	Edges      []*AgentSuiteRunCaseEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One case of a suite run: its replay, with the checks, scores and judge's note.
@@ -1274,6 +1324,8 @@ type AgentSuiteRunConnection struct {
 	Edges      []*AgentSuiteRunEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentSuiteRunEdge struct {
@@ -1337,6 +1389,8 @@ type AgentToolPolicyConnection struct {
 	PageInfo *PageInfo              `json:"pageInfo"`
 	// Every tool matching the filters. Counted only when selected.
 	TotalCount *int `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentToolPolicyEdge struct {
@@ -1369,6 +1423,8 @@ type AgentToolSafetyConnection struct {
 	PageInfo *PageInfo              `json:"pageInfo"`
 	// Every held tool matching the filters. Counted only when selected.
 	TotalCount *int `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentToolSafetyEdge struct {
@@ -1401,6 +1457,8 @@ type AgentWorstRatedAnswerConnection struct {
 	PageInfo *PageInfo                    `json:"pageInfo"`
 	// Every answer matching the filters. Counted only when selected.
 	TotalCount *int `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentWorstRatedAnswerEdge struct {
@@ -1422,6 +1480,8 @@ type APIKeyConnection struct {
 	Edges      []*APIKeyEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount *int          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type APIKeyEdge struct {
@@ -1552,6 +1612,8 @@ type AuditEntryConnection struct {
 	Edges      []*AuditEntryEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AuditEntryEdge struct {
@@ -1563,6 +1625,8 @@ type AuthEventConnection struct {
 	Edges      []*AuthEventEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AuthEventEdge struct {
@@ -1724,6 +1788,8 @@ type BillingTransferRunItemConnection struct {
 	Edges      []*BillingTransferRunItemEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount int                           `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type BillingTransferRunItemEdge struct {
@@ -1934,6 +2000,8 @@ type CaptureBatchConnection struct {
 	Edges      []*CaptureBatchEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CaptureBatchEdge struct {
@@ -2017,6 +2085,8 @@ type CarrierCapacityPostingConnection struct {
 	Edges      []*CarrierCapacityPostingEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierCapacityPostingEdge struct {
@@ -2053,12 +2123,16 @@ type CarrierConnection struct {
 	Edges      []*CarrierEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierCostEventConnection struct {
 	Edges      []*CarrierCostEventEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierCostEventEdge struct {
@@ -2132,6 +2206,8 @@ type CarrierIntelEventConnection struct {
 	Edges      []*CarrierIntelEventEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierIntelEventCounts struct {
@@ -2254,12 +2330,16 @@ type CarrierInvoiceMatchActionInput struct {
 type CarrierInvoiceMatchList struct {
 	Items      []*carriersettlement.InvoiceMatch `json:"items"`
 	TotalCount int                               `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierMonitoringEnrollmentConnection struct {
 	Edges      []*CarrierMonitoringEnrollmentEdge `json:"edges"`
 	PageInfo   *PageInfo                          `json:"pageInfo"`
 	TotalCount *int                               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierMonitoringEnrollmentEdge struct {
@@ -2281,6 +2361,8 @@ type CarrierSettlementBatchConnection struct {
 	Edges      []*CarrierSettlementBatchEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierSettlementBatchEdge struct {
@@ -2292,6 +2374,8 @@ type CarrierSettlementConnection struct {
 	Edges      []*CarrierSettlementEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierSettlementEdge struct {
@@ -2376,6 +2460,8 @@ type CommodityConnection struct {
 	Edges      []*CommodityEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CommodityEdge struct {
@@ -2717,6 +2803,8 @@ type CustomFieldDefinitionConnection struct {
 	Edges      []*CustomFieldDefinitionEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CustomFieldDefinitionEdge struct {
@@ -2728,6 +2816,8 @@ type CustomerConnection struct {
 	Edges      []*CustomerEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CustomerDetentionStat struct {
@@ -2760,6 +2850,8 @@ type CustomerPaymentConnection struct {
 	Edges      []*CustomerPaymentEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CustomerPaymentEdge struct {
@@ -2771,6 +2863,8 @@ type DOTRandomPoolConnection struct {
 	Edges      []*DOTRandomPoolEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DOTRandomPoolEdge struct {
@@ -3333,6 +3427,8 @@ type DetentionPolicyConnection struct {
 	Edges      []*DetentionPolicyEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DetentionPolicyEdge struct {
@@ -3900,6 +3996,8 @@ type DistanceOverrideConnection struct {
 	Edges      []*DistanceOverrideEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DistanceOverrideEdge struct {
@@ -3911,6 +4009,8 @@ type DistanceProfileConnection struct {
 	Edges      []*DistanceProfileEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DistanceProfileEdge struct {
@@ -3922,6 +4022,8 @@ type DocumentPacketRuleConnection struct {
 	Edges      []*DocumentPacketRuleEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DocumentPacketRuleEdge struct {
@@ -3933,6 +4035,8 @@ type DocumentTemplateAssignmentConnection struct {
 	Edges      []*DocumentTemplateAssignmentEdge `json:"edges"`
 	PageInfo   *PageInfo                         `json:"pageInfo"`
 	TotalCount *int                              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DocumentTemplateAssignmentEdge struct {
@@ -3944,6 +4048,8 @@ type DocumentTemplateConnection struct {
 	Edges      []*DocumentTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One finding from parsing or rendering a template. Severity is advisory in a
@@ -4048,6 +4154,8 @@ type DocumentTypeConnection struct {
 	Edges      []*DocumentTypeEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DocumentTypeEdge struct {
@@ -4084,6 +4192,8 @@ type DriverExpenseConnection struct {
 	Edges      []*DriverExpenseEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DriverExpenseEdge struct {
@@ -4111,6 +4221,8 @@ type DriverPayEventConnection struct {
 	Edges      []*DriverPayEventEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DriverPayEventEdge struct {
@@ -4127,6 +4239,8 @@ type DriverSettlementConnection struct {
 	Edges      []*DriverSettlementEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DriverSettlementEdge struct {
@@ -4173,12 +4287,16 @@ type EDIAckStatusCount struct {
 type EDICarrierInvoiceList struct {
 	Items      []*edi.CarrierInvoice `json:"items"`
 	TotalCount int                   `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDICommunicationProfileConnection struct {
 	Edges      []*EDICommunicationProfileEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDICommunicationProfileEdge struct {
@@ -4190,6 +4308,8 @@ type EDIInboundFileConnection struct {
 	Edges      []*EDIInboundFileEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One inbound EDI file as its detail reads it, with the transaction sets parsed from it.
@@ -4218,6 +4338,8 @@ type EDIMappingProfileConnection struct {
 	Edges      []*EDIMappingProfileEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDIMappingProfileEdge struct {
@@ -4229,6 +4351,8 @@ type EDIMessageConnection struct {
 	Edges      []*EDIMessageEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One EDI message as its detail reads it: the document it decoded to and every finding.
@@ -4334,6 +4458,8 @@ type EDIPartnerConnection struct {
 	Edges      []*EDIPartnerEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDIPartnerCustomer struct {
@@ -4440,6 +4566,8 @@ type EDITemplateConnection struct {
 	Edges      []*EDITemplateEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDITemplateEdge struct {
@@ -4485,6 +4613,8 @@ type EDITestCaseConnection struct {
 	Edges      []*EDITestCaseEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDITestCaseEdge struct {
@@ -4496,6 +4626,8 @@ type EDITransferConnection struct {
 	Edges      []*EDITransferEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One load tender as its card reads it, with what accepting it still waits on.
@@ -4559,6 +4691,8 @@ type EmailProfileConnection struct {
 	Edges      []*EmailProfileEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EmailProfileEdge struct {
@@ -4618,6 +4752,8 @@ type EquipmentManufacturerConnection struct {
 	Edges      []*EquipmentManufacturerEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EquipmentManufacturerEdge struct {
@@ -4647,6 +4783,8 @@ type EquipmentTypeConnection struct {
 	Edges      []*EquipmentTypeEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EquipmentTypeEdge struct {
@@ -4685,6 +4823,8 @@ type EscrowAccountConnection struct {
 	Edges      []*EscrowAccountEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EscrowAccountEdge struct {
@@ -4703,6 +4843,8 @@ type ExternalIdentityConnection struct {
 	Edges      []*ExternalIdentityEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExternalIdentityEdge struct {
@@ -4714,6 +4856,8 @@ type ExtractionEvalCaseConnection struct {
 	Edges      []*ExtractionEvalCaseEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExtractionEvalCaseEdge struct {
@@ -4725,6 +4869,8 @@ type ExtractionEvalResultConnection struct {
 	Edges      []*ExtractionEvalResultEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExtractionEvalResultEdge struct {
@@ -4736,6 +4882,8 @@ type ExtractionEvalRunConnection struct {
 	Edges      []*ExtractionEvalRunEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExtractionEvalRunEdge struct {
@@ -4747,6 +4895,8 @@ type ExtractionShadowResultConnection struct {
 	Edges      []*ExtractionShadowResultEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExtractionShadowResultEdge struct {
@@ -4802,6 +4952,8 @@ type FactoringCompanyConnection struct {
 	Edges      []*FactoringCompanyEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringCompanyEdge struct {
@@ -4849,6 +5001,8 @@ type FactoringInvoiceStateConnection struct {
 	Edges      []*FactoringInvoiceStateEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringInvoiceStateEdge struct {
@@ -4867,6 +5021,8 @@ type FactoringNoaConnection struct {
 	Edges      []*FactoringNoaEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringNoaEdge struct {
@@ -4897,6 +5053,8 @@ type FactoringRemittanceConnection struct {
 	Edges      []*FactoringRemittanceEdge `json:"edges"`
 	PageInfo   *PageInfo                  `json:"pageInfo"`
 	TotalCount *int                       `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringRemittanceEdge struct {
@@ -4908,6 +5066,8 @@ type FactoringRemittanceLineConnection struct {
 	Edges      []*FactoringRemittanceLineEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringRemittanceLineEdge struct {
@@ -4937,6 +5097,8 @@ type FactoringReserveEntryConnection struct {
 	Edges      []*FactoringReserveEntryEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringReserveEntryEdge struct {
@@ -4969,6 +5131,8 @@ type FactoringSubmissionConnection struct {
 	Edges      []*FactoringSubmissionEdge `json:"edges"`
 	PageInfo   *PageInfo                  `json:"pageInfo"`
 	TotalCount *int                       `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringSubmissionEdge struct {
@@ -5027,6 +5191,8 @@ type FiscalPeriodConnection struct {
 	Edges      []*FiscalPeriodEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FiscalPeriodEdge struct {
@@ -5038,6 +5204,8 @@ type FiscalYearConnection struct {
 	Edges      []*FiscalYearEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FiscalYearEdge struct {
@@ -5049,6 +5217,8 @@ type FleetCodeConnection struct {
 	Edges      []*FleetCodeEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FleetCodeEdge struct {
@@ -5114,6 +5284,8 @@ type FormulaLibraryConnection struct {
 	Edges      []*FormulaLibraryEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FormulaLibraryEdge struct {
@@ -5125,6 +5297,8 @@ type FormulaTemplateConnection struct {
 	Edges      []*FormulaTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FormulaTemplateEdge struct {
@@ -5136,6 +5310,8 @@ type FuelCardConnection struct {
 	Edges      []*FuelCardEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelCardEdge struct {
@@ -5223,6 +5399,8 @@ type FuelIndexConnection struct {
 	Edges      []*FuelIndexEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelIndexEdge struct {
@@ -5287,6 +5465,8 @@ type FuelPurchaseConnection struct {
 	Edges      []*FuelPurchaseEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelPurchaseEdge struct {
@@ -5298,6 +5478,8 @@ type FuelPurchaseImportBatchConnection struct {
 	Edges      []*FuelPurchaseImportBatchEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelPurchaseImportBatchEdge struct {
@@ -5343,6 +5525,8 @@ type FuelPurchaseImportRowConnection struct {
 	Edges      []*FuelPurchaseImportRowEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelPurchaseImportRowEdge struct {
@@ -5454,6 +5638,8 @@ type FuelSurchargeProgramConnection struct {
 	Edges      []*FuelSurchargeProgramEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelSurchargeProgramEdge struct {
@@ -5577,6 +5763,8 @@ type HazardousMaterialConnection struct {
 	Edges      []*HazardousMaterialEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type HazardousMaterialEdge struct {
@@ -5588,6 +5776,8 @@ type HazmatSegregationRuleConnection struct {
 	Edges      []*HazmatSegregationRuleEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type HazmatSegregationRuleEdge struct {
@@ -5605,6 +5795,8 @@ type HoldReasonConnection struct {
 	Edges      []*HoldReasonEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type HoldReasonEdge struct {
@@ -5742,6 +5934,8 @@ type IFTAJurisdictionMileageEntryConnection struct {
 	Edges      []*IFTAJurisdictionMileageEntryEdge `json:"edges"`
 	PageInfo   *PageInfo                           `json:"pageInfo"`
 	TotalCount *int                                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type IFTAJurisdictionMileageEntryEdge struct {
@@ -5788,6 +5982,8 @@ type IFTAReturnConnection struct {
 	Edges      []*IFTAReturnEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type IFTAReturnEdge struct {
@@ -5810,6 +6006,8 @@ type IFTATaxRateConnection struct {
 	Edges      []*IFTATaxRateEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type IFTATaxRateEdge struct {
@@ -5875,6 +6073,8 @@ type InboundMessageConnection struct {
 	Edges      []*InboundMessageEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type InboundMessageEdge struct {
@@ -5915,6 +6115,8 @@ type InvoiceAdjustmentApprovalQueueConnection struct {
 	Edges      []*InvoiceAdjustmentApprovalQueueEdge `json:"edges"`
 	PageInfo   *PageInfo                             `json:"pageInfo"`
 	TotalCount *int                                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type InvoiceAdjustmentApprovalQueueEdge struct {
@@ -5936,6 +6138,8 @@ type InvoiceConnection struct {
 	Edges      []*InvoiceEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type InvoiceEdge struct {
@@ -6012,6 +6216,8 @@ type JournalEntryConnection struct {
 	Edges      []*JournalEntryEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type JournalEntryEdge struct {
@@ -6029,6 +6235,8 @@ type JournalReversalConnection struct {
 	Edges      []*JournalReversalEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type JournalReversalEdge struct {
@@ -6054,6 +6262,8 @@ type JurisdictionRuleConnection struct {
 	Edges      []*JurisdictionRuleEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type JurisdictionRuleEdge struct {
@@ -6065,6 +6275,8 @@ type JurisdictionRuleOverrideConnection struct {
 	Edges      []*JurisdictionRuleOverrideEdge `json:"edges"`
 	PageInfo   *PageInfo                       `json:"pageInfo"`
 	TotalCount *int                            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type JurisdictionRuleOverrideEdge struct {
@@ -6114,6 +6326,8 @@ type LocationCategoryConnection struct {
 	Edges      []*LocationCategoryEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type LocationCategoryEdge struct {
@@ -6125,6 +6339,8 @@ type LocationConnection struct {
 	Edges      []*LocationEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type LocationEdge struct {
@@ -6177,6 +6393,8 @@ type MFAAuthenticatorConnection struct {
 	Edges      []*MFAAuthenticatorEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type MFAAuthenticatorEdge struct {
@@ -6188,6 +6406,8 @@ type ManualJournalConnection struct {
 	Edges      []*ManualJournalEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ManualJournalEdge struct {
@@ -6245,6 +6465,8 @@ type MyAgentConnection struct {
 	Edges      []*MyAgentEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type MyAgentEdge struct {
@@ -6293,6 +6515,8 @@ type MyCarrierIntelligence struct {
 type MySettlementList struct {
 	Items []*driversettlement.Settlement `json:"items"`
 	Total int                            `json:"total"`
+	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
+	TotalExact bool `json:"totalExact"`
 }
 
 type NextUncoveredPickup struct {
@@ -6306,6 +6530,8 @@ type NotificationConnection struct {
 	Edges      []*NotificationEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type NotificationEdge struct {
@@ -6378,6 +6604,8 @@ type OrderConnection struct {
 	Edges      []*OrderEdge `json:"edges"`
 	PageInfo   *PageInfo    `json:"pageInfo"`
 	TotalCount *int         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type OrderEdge struct {
@@ -6471,6 +6699,8 @@ type PTOPolicyConnection struct {
 	Edges      []*PTOPolicyEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PTOPolicyEdge struct {
@@ -6598,6 +6828,8 @@ type PayAdvanceConnection struct {
 	Edges      []*PayAdvanceEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PayAdvanceEdge struct {
@@ -6609,6 +6841,8 @@ type PayCodeConnection struct {
 	Edges      []*PayCodeEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PayCodeEdge struct {
@@ -6646,6 +6880,8 @@ type PayProfileConnection struct {
 	Edges      []*PayProfileEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PayProfileEdge struct {
@@ -6680,6 +6916,8 @@ type PendingDecisionConnection struct {
 	Edges      []*PendingDecisionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PendingDecisionEdge struct {
@@ -6729,6 +6967,8 @@ type PerformanceReviewTemplateConnection struct {
 	Edges      []*PerformanceReviewTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo                        `json:"pageInfo"`
 	TotalCount *int                             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PerformanceReviewTemplateEdge struct {
@@ -6884,6 +7124,8 @@ type RateAgreement struct {
 	Lanes []*RateAgreementLane `json:"lanes"`
 	// How many live lanes the agreement holds.
 	LaneCount int `json:"laneCount"`
+	// Whether laneCount was counted; false when it is the planner's estimate of more lanes than it counts.
+	LaneCountExact bool `json:"laneCountExact"`
 	// The accessorial schedule. Read by rateAgreement only.
 	Accessorials []*RateAgreementAccessorial `json:"accessorials,omitempty"`
 	// The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only.
@@ -6916,6 +7158,8 @@ type RateAgreementConnection struct {
 	Edges      []*RateAgreementEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RateAgreementEdge struct {
@@ -7031,6 +7275,8 @@ type RateMatrixConnection struct {
 	Edges      []*RateMatrixEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One axis of a rate matrix: what it keys on and how a value matches it.
@@ -7083,6 +7329,8 @@ type RateQuoteConnection struct {
 	Edges      []*RateQuoteEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RateQuoteEdge struct {
@@ -7110,6 +7358,8 @@ type RateZoneConnection struct {
 	Edges      []*RateZoneEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RateZoneEdge struct {
@@ -7336,6 +7586,8 @@ type RecurringDeductionConnection struct {
 	Edges      []*RecurringDeductionEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RecurringDeductionEdge struct {
@@ -7347,6 +7599,8 @@ type RecurringEarningConnection struct {
 	Edges      []*RecurringEarningEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RecurringEarningEdge struct {
@@ -7358,6 +7612,8 @@ type RecurringShipmentConnection struct {
 	Edges      []*RecurringShipmentEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RecurringShipmentEdge struct {
@@ -7603,6 +7859,8 @@ type ReportDefinitionConnection struct {
 	Edges      []*ReportDefinitionEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount int                     `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ReportDefinitionEdge struct {
@@ -7679,8 +7937,6 @@ type ReportPreview struct {
 	Timezone string  `json:"timezone"`
 	// The rollup that answered the report instead of the base tables, when one did.
 	Rollup *string `json:"rollup,omitempty"`
-	// Whether the rows came from the result cache.
-	Cached bool `json:"cached"`
 }
 
 type ReportPreviewColumn struct {
@@ -7711,18 +7967,21 @@ type ReportRun struct {
 	RowsStored        bool            `json:"rowsStored"`
 	Error             *ReportRunError `json:"error,omitempty"`
 	ArtifactExpiresAt *int            `json:"artifactExpiresAt,omitempty"`
-	CacheHit          bool            `json:"cacheHit"`
-	QueuedAt          *int            `json:"queuedAt,omitempty"`
-	StartedAt         *int            `json:"startedAt,omitempty"`
-	CompletedAt       *int            `json:"completedAt,omitempty"`
-	Version           int             `json:"version"`
-	CreatedAt         int             `json:"createdAt"`
+	// Whether the run's rows came from the report result cache rather than a statement.
+	CacheHit    bool `json:"cacheHit"`
+	QueuedAt    *int `json:"queuedAt,omitempty"`
+	StartedAt   *int `json:"startedAt,omitempty"`
+	CompletedAt *int `json:"completedAt,omitempty"`
+	Version     int  `json:"version"`
+	CreatedAt   int  `json:"createdAt"`
 }
 
 type ReportRunConnection struct {
 	Edges      []*ReportRunEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount int              `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ReportRunEdge struct {
@@ -7970,6 +8229,8 @@ type RiskDecisionConnection struct {
 	Edges      []*RiskDecisionEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RiskDecisionEdge struct {
@@ -7981,6 +8242,8 @@ type RoleConnection struct {
 	Edges      []*RoleEdge `json:"edges"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
 	TotalCount *int        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RoleEdge struct {
@@ -8075,6 +8338,8 @@ type RoutingGuideConnection struct {
 	Edges      []*RoutingGuideEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RoutingGuideEdge struct {
@@ -8109,6 +8374,8 @@ type SCIMDirectoryConnection struct {
 	Edges      []*SCIMDirectoryEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SCIMDirectoryEdge struct {
@@ -8120,6 +8387,8 @@ type SCIMGroupRoleMappingConnection struct {
 	Edges      []*SCIMGroupRoleMappingEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SCIMGroupRoleMappingEdge struct {
@@ -8243,6 +8512,8 @@ type SelectOptionConnection struct {
 	Edges      []*SelectOptionEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SelectOptionEdge struct {
@@ -8290,6 +8561,8 @@ type ServiceFailureConnection struct {
 	Edges      []*ServiceFailureEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ServiceFailureEdge struct {
@@ -8301,6 +8574,8 @@ type ServiceFailureReasonCodeConnection struct {
 	Edges      []*ServiceFailureReasonCodeEdge `json:"edges"`
 	PageInfo   *PageInfo                       `json:"pageInfo"`
 	TotalCount *int                            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ServiceFailureReasonCodeEdge struct {
@@ -8312,6 +8587,8 @@ type ServiceTypeConnection struct {
 	Edges      []*ServiceTypeEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ServiceTypeEdge struct {
@@ -8389,6 +8666,8 @@ type SettlementBatchConnection struct {
 	Edges      []*SettlementBatchEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SettlementBatchEdge struct {
@@ -8400,6 +8679,8 @@ type SettlementDisputeConnection struct {
 	Edges      []*SettlementDisputeEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SettlementDisputeEdge struct {
@@ -9021,6 +9302,8 @@ type ShipmentCommentConnection struct {
 	Edges      []*ShipmentCommentEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ShipmentCommentCountResponse struct {
@@ -9188,6 +9471,8 @@ type ShipmentConnection struct {
 	Edges      []*ShipmentEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // What the rate agreements charge for a shipment, either as a preview of what
@@ -9855,6 +10140,8 @@ type ShipmentPreviousRatesInput struct {
 type ShipmentPreviousRatesResponse struct {
 	Items []*ShipmentPreviousRateSummary `json:"items"`
 	Total int                            `json:"total"`
+	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
+	TotalExact bool `json:"totalExact"`
 }
 
 type ShipmentProfitability struct {
@@ -10196,6 +10483,8 @@ type ShipmentTypeConnection struct {
 	Edges      []*ShipmentTypeEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ShipmentTypeEdge struct {
@@ -10416,6 +10705,8 @@ type StoredMileageConnection struct {
 	Edges      []*StoredMileageEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type StoredMileageEdge struct {
@@ -10435,6 +10726,8 @@ type TCASubscriptionConnection struct {
 	Edges      []*TCASubscriptionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TCASubscriptionEdge struct {
@@ -10446,6 +10739,8 @@ type TableConfigurationConnection struct {
 	Edges      []*TableConfigurationEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TableConfigurationEdge struct {
@@ -10718,6 +11013,8 @@ type TractorConnection struct {
 	Edges      []*TractorEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TractorEdge struct {
@@ -10795,6 +11092,8 @@ type TrailerConnection struct {
 	Edges      []*TrailerEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TrailerEdge struct {
@@ -10866,6 +11165,8 @@ type TrainingCourseConnection struct {
 	Edges      []*TrainingCourseEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TrainingCourseEdge struct {
@@ -11517,6 +11818,8 @@ type UserConnection struct {
 	Edges      []*UserEdge `json:"edges"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
 	TotalCount *int        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type UserEdge struct {
@@ -11721,6 +12024,8 @@ type WorkerChecklistTemplateConnection struct {
 	Edges      []*WorkerChecklistTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerChecklistTemplateEdge struct {
@@ -11767,6 +12072,8 @@ type WorkerConnection struct {
 	Edges      []*WorkerEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount *int          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerCredentialInput struct {
@@ -11787,6 +12094,8 @@ type WorkerCredentialTypeConnection struct {
 	Edges      []*WorkerCredentialTypeEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerCredentialTypeEdge struct {
@@ -11919,6 +12228,8 @@ type WorkerPTOConnection struct {
 	Edges      []*WorkerPTOEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerPTOEdge struct {
@@ -11947,6 +12258,8 @@ type WorkerPTOLedgerConnection struct {
 	Edges      []*WorkerPTOLedgerEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerPTOLedgerEdge struct {

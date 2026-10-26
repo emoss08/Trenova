@@ -159,6 +159,7 @@ func TestRetryAccountingSync_CapsAPinnedSelectionAndSaysWhatIsLeft(t *testing.T)
 	assert.True(t, preview.Partial, "the selection was cut to what one retry takes")
 	assert.Contains(t, preview.Summary, "Would send 50 documents to QuickBooks Online again")
 	assert.Contains(t, preview.Summary, "2 other records that last failed as Transient")
+	assert.NotContains(t, preview.Summary, "about", "a counted total is stated as counted")
 	assert.Empty(t, preview.Warnings)
 }
 

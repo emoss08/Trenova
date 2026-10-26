@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
@@ -65,42 +66,37 @@ func (r *repository) GetControl(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*worker.LeaveControl, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.LeaveControl, error) {
-		db := r.db.Keel(ctx)
-		lc := workerdb.LeaveControls
-		entity, err := lc.Query().First(ctx, db)
-		if err == nil {
-			return entity, nil
-		}
-		if !dberror.IsNotFoundError(err) {
-			r.l.Error("failed to read leave control", zap.Error(err))
-			return nil, fmt.Errorf("read leave control: %w", err)
-		}
-
+	lc := workerdb.LeaveControls
+	newDefault := func() *worker.LeaveControl {
 		created := worker.DefaultLeaveControl()
 		created.OrganizationID = tenantInfo.OrgID
 		created.BusinessUnitID = tenantInfo.BuID
-		inserted, err := lc.CreateOrSkip(
-			ctx,
-			db,
-			[]*worker.LeaveControl{created},
-			lc.OrganizationID,
-			lc.BusinessUnitID,
-		)
-		if err != nil {
-			r.l.Error("failed to seed leave control", zap.Error(err))
-			return nil, fmt.Errorf("seed leave control: %w", err)
-		}
-		if inserted > 0 {
-			return created, nil
-		}
+		return created
+	}
 
-		entity, err = lc.Query().First(ctx, db)
-		if err != nil {
-			return nil, controlErrors.Map(err, "")
-		}
+	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*worker.LeaveControl]{
+		Find: func(ctx context.Context) (*worker.LeaveControl, error) {
+			return lc.Cache(resultcache.Settings()...).First(ctx, r.db.Keel(ctx))
+		},
+		Create: func(ctx context.Context) error {
+			if _, err := lc.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*worker.LeaveControl{newDefault()},
+				lc.OrganizationID,
+				lc.BusinessUnitID,
+			); err != nil {
+				r.l.Error("failed to seed leave control", zap.Error(err))
+				return fmt.Errorf("seed leave control: %w", err)
+			}
 
-		return entity, nil
+			return nil
+		},
+		Default: newDefault,
+		MapError: func(err error) error {
+			r.l.Error("failed to read leave control", zap.Error(err))
+			return controlErrors.Map(err, "")
+		},
 	})
 }
 

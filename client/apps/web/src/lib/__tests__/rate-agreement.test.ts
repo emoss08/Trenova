@@ -91,9 +91,11 @@ describe("orderedAgreements", () => {
 });
 
 describe("nextLaneOffset", () => {
-  const page = (offset: number, rows: number, count: number) => ({
+  const page = (offset: number, rows: number, count: number, countExact = true) => ({
     offset,
+    limit: 8,
     count,
+    countExact,
     results: Array.from({ length: rows }, (_, index) => index),
   });
 
@@ -107,5 +109,12 @@ describe("nextLaneOffset", () => {
   // an empty page ends the reading rather than asking for the same page again.
   it("stops at an empty page even when the count says there are more", () => {
     expect(nextLaneOffset(page(24, 0, 30))).toBeUndefined();
+  });
+
+  // An estimate can sit below the lanes there are, so it never ends the reading:
+  // a full page asks for the next, a short one is the last.
+  it("pages past an estimated count by full pages", () => {
+    expect(nextLaneOffset(page(16_000, 8, 10_001, false))).toBe(16_008);
+    expect(nextLaneOffset(page(16_008, 3, 10_001, false))).toBeUndefined();
   });
 });

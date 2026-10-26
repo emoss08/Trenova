@@ -55,9 +55,9 @@ func withOccurrenceNames(q *occurrenceQuery) *occurrenceQuery {
 		LeftJoin(loc, loc.ID.EqCol(o.LocationID)).
 		LeftJoin(cus, cus.ID.EqCol(o.CustomerID)).
 		LeftJoin(sp, sp.ID.EqCol(o.ShipmentID)).
-		Compute(o.LocationName, keel.DynOf(loc.Name).Coalesce("")).
-		Compute(o.CustomerName, keel.DynOf(cus.Name).Coalesce("")).
-		Compute(o.ShipmentProNumber, keel.DynOf(sp.ProNumber).Coalesce(""))
+		Compute(o.LocationName, loc.Name.Coalesce("")).
+		Compute(o.CustomerName, cus.Name.Coalesce("")).
+		Compute(o.ShipmentProNumber, sp.ProNumber.Coalesce(""))
 }
 
 func namedOccurrences() *occurrenceQuery {

@@ -24,12 +24,12 @@ func Receivable(inv *invoicedb.InvoicesTable) keel.Pred {
 func Open(inv *invoicedb.InvoicesTable) keel.Pred {
 	return keel.And(
 		Receivable(inv),
-		keel.DynOf(inv.TotalAmountMinor).Gt(inv.AppliedAmountMinor),
+		keel.Int64Of(inv.TotalAmountMinor).GtExpr(inv.AppliedAmountMinor),
 	)
 }
 
-func OpenMinor(inv *invoicedb.InvoicesTable) keel.DynExpr {
-	return keel.DynOf(inv.TotalAmountMinor).Sub(inv.AppliedAmountMinor)
+func OpenMinor(inv *invoicedb.InvoicesTable) keel.Int64Expr {
+	return inv.TotalAmountMinor.Sub(inv.AppliedAmountMinor)
 }
 
 func SoldWithoutRecourse(inv *invoicedb.InvoicesTable) keel.Pred {
@@ -40,7 +40,7 @@ func SoldWithoutRecourse(inv *invoicedb.InvoicesTable) keel.Pred {
 			LeftJoin(agr, agr.ID.EqCol(inv.FactoringAgreementID)).
 			Where(
 				fac.ID.EqCol(inv.FactoringCompanyID),
-				keel.DynOf(agr.Recourse.Eq(factoring.RecourseNone)).Coalesce(fac.NonRecourse),
+				keel.BoolOf(agr.Recourse.Eq(factoring.RecourseNone)).Coalesce(fac.NonRecourse),
 			)),
 		keel.Not(factoringsql.ChargedBackInvoicePred(inv)),
 	)

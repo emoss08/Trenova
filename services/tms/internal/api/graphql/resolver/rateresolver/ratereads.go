@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
@@ -19,27 +21,35 @@ const (
 	defaultAgreementLanes = 50
 )
 
-// agreementLanes is one page of an agreement's live lanes, most specific
-// first, with how many it holds.
-func (r *RateAgreementResolver) agreementLanes(
+func (r *RateAgreementResolver) firstLanes(
 	ctx context.Context,
 	obj *gqlmodel.RateAgreement,
-	limit int,
-) (*rateagreementports.RateAgreementLanePage, error) {
-	authCtx, err := r.RequirePermission(ctx, permission.ResourceRateAgreement, permission.OpRead)
-	if err != nil {
-		return nil, err
-	}
-	agreementID, err := base.ParseIDField("id", obj.ID)
-	if err != nil {
+	first int,
+) ([]*rateagreement.RateAgreementRule, error) {
+	if _, err := r.RequirePermission(
+		ctx,
+		permission.ResourceRateAgreement,
+		permission.OpRead,
+	); err != nil {
 		return nil, err
 	}
 
-	return r.RateAgreementService.ListLanes(ctx, &rateagreementports.ListRateAgreementLanesRequest{
-		TenantInfo:      base.TenantInfo(authCtx),
-		RateAgreementID: agreementID,
-		Limit:           limit,
-	})
+	return loaders.RateAgreementLanes(ctx, obj.ID, first)
+}
+
+func (r *RateAgreementResolver) laneCount(
+	ctx context.Context,
+	obj *gqlmodel.RateAgreement,
+) (rateagreementports.LaneCount, error) {
+	if _, err := r.RequirePermission(
+		ctx,
+		permission.ResourceRateAgreement,
+		permission.OpRead,
+	); err != nil {
+		return rateagreementports.LaneCount{}, err
+	}
+
+	return loaders.RateAgreementLaneCount(ctx, obj.ID)
 }
 
 type cellPageRequest struct {

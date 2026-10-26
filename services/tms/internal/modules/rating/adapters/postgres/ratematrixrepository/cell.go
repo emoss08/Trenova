@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
@@ -41,12 +42,12 @@ func (r *repository) ListCells(
 				Offset(page.SafeOffset())
 
 			var items []*ratematrix.RateMatrixCell
-			var total int64
+			var total keel.RowCount
 			err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.ListInto(rows, &items),
-				keel.CountInto(cellsQuery(req), &total),
+				keel.CountEstimateInto(cellsQuery(req), pagination.ExactTotalUpTo, &total),
 			)
 			if err != nil {
 				r.l.Error("failed to list rate matrix cells",
@@ -56,10 +57,7 @@ func (r *repository) ListCells(
 				return nil, err
 			}
 
-			return &pagination.ListResult[*ratematrix.RateMatrixCell]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }
@@ -158,20 +156,15 @@ func copyVersion(
 	return copyCells(ctx, db, req)
 }
 
-func copiedID(prefix string) keel.Expr {
-	uuid := keel.DynFunc("gen_random_uuid").Cast(keel.TypeString)
-
-	return keel.DynLit(prefix).Concat(keel.DynFunc("upper", keel.DynFunc(
-		"substr",
-		keel.DynFunc("replace", uuid, keel.DynConst("-"), keel.DynConst("")),
-		keel.DynConst(1),
-		keel.DynConst(26),
-	)))
+func copiedID(prefix string) keel.StringExpr {
+	return keel.Concat(
+		keel.Text(prefix),
+		keel.GenRandomUUID().Replace("-", "").Substr(1, 26).Upper(),
+	)
 }
 
-func copiedNow() keel.Expr {
-	return keel.DynFunc("date_part", keel.DynLit("epoch").Cast(keel.TypeString), keel.DynFunc("now")).
-		Cast(keel.TypeInt64)
+func copiedNow() keel.Int64Expr {
+	return keel.NowEpoch()
 }
 
 func copyDimensions(
@@ -294,6 +287,6 @@ func (r *repository) CountMisfitCells(
 	})
 }
 
-func versionNumber(n int64) keel.Expr {
-	return keel.DynLit(n).Cast(keel.TypeInt64)
+func versionNumber(n int64) keel.Int64Expr {
+	return keel.Int64(n)
 }

@@ -38,6 +38,7 @@ query PayProfileTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -183,6 +184,7 @@ query RecurringDeductionTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -221,6 +223,7 @@ query RecurringEarningTable($input: DataTableConnectionInput!, $includeTotalCoun
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -253,6 +256,7 @@ query PayCodeTable($input: DataTableConnectionInput!, $includeTotalCount: Boolea
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -287,6 +291,7 @@ query PayAdvanceTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -318,6 +323,7 @@ query EscrowAccountTable($input: DataTableConnectionInput!, $includeTotalCount: 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -390,6 +396,7 @@ query DriverSettlementTable($input: DataTableConnectionInput!, $includeTotalCoun
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -496,6 +503,7 @@ query SettlementBatchTable($input: DataTableConnectionInput!, $includeTotalCount
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -540,6 +548,7 @@ query DriverPayEventTable($input: DataTableConnectionInput!, $includeTotalCount:
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

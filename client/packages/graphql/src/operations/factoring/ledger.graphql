@@ -89,6 +89,7 @@ query FactoringReserveEntries($input: FactoringReserveEntryListInput!) {
       }
     }
     totalCount
+    totalCountExact
   }
 }
 

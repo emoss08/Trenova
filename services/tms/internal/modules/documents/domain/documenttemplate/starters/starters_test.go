@@ -527,6 +527,7 @@ func TestNotificationKindsAreKeyedByEventType(t *testing.T) {
 		"report_run_delivered",
 		"report_delivery_email_failed",
 		"report_schedule_skipped",
+		"report_needs_attention",
 		"dash.load_assigned",
 		"dash.load_unassigned",
 		"dash.pto_reviewed",
@@ -674,4 +675,38 @@ func TestTenderOfferSubjectDropsEmptyLane(t *testing.T) {
 	data.DestinationSummary = ""
 	halfLane := renderChannel(t, engine, registry, starter, documenttemplate.ChannelSubject, data)
 	assert.NotContains(t, halfLane, "Dallas, TX")
+}
+
+// One notice covers every report of the owner's that the catalog check found, so
+// the wording has to hold for one report and for many.
+func TestNeedsAttentionNamesTheReportAndCountsTheRest(t *testing.T) {
+	engine := newEngine(t)
+	registry := documenttemplate.NewRegistry()
+
+	starter, err := For(documenttemplate.KindNotificationReportNeedsAttention)
+	require.NoError(t, err)
+
+	render := func(count int) (title, body string) {
+		data := documenttemplate.ReportNotificationContext{
+			ReportName:   "Revenue by Customer",
+			ReportCount:  count,
+			OtherReports: count - 1,
+		}
+
+		return renderChannel(t, engine, registry, starter,
+				documenttemplate.ChannelNotificationTitle, data),
+			renderChannel(t, engine, registry, starter,
+				documenttemplate.ChannelNotificationBody, data)
+	}
+
+	oneTitle, oneBody := render(1)
+	manyTitle, manyBody := render(3)
+
+	assert.Equal(t, "1 report needs attention", oneTitle)
+	assert.Equal(t, "3 reports need attention", manyTitle)
+	assert.Equal(t, "Revenue by Customer uses a field that no longer exists and cannot run "+
+		"until it is repaired. Open the report builder to see what changed.", oneBody)
+	assert.Equal(t, "Revenue by Customer and 2 other reports use fields that no longer exist "+
+		"and cannot run until they are repaired. Open the report builder to see what changed.",
+		manyBody)
 }

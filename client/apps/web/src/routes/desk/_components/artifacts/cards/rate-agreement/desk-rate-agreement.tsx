@@ -10,6 +10,7 @@ import { agreementTypeLabel, agreementWindow } from "@/lib/rate-agreement";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Button } from "@trenova/shared/components/ui/button";
 import { formatNumber } from "@trenova/shared/i18n/format";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useRules } from "@trenova/shared/hooks/use-rules";
 import { laneDisplayLabel, laneEndDisplay } from "@trenova/shared/lib/rate";
@@ -237,7 +238,9 @@ function AgreementCard({
   const neighbors = neighborsIn(order, recordId);
   const priced = access.pricing ? pricing.data : undefined;
   const laneCount = firstLanes?.count ?? null;
+  const laneCountExact = firstLanes?.countExact ?? true;
   const retired = firstLanes?.retired ?? 0;
+  const retiredExact = firstLanes?.retiredExact ?? true;
   const agreementPath = recordPath("rate_agreement", recordId);
 
   return (
@@ -271,10 +274,17 @@ function AgreementCard({
               <span>{t("lanes priced")}</span>
             </>
           ) : (
-            <>
-              <b key={laneCount}>{formatNumber(laneCount)}</b>
-              <span>{t("{0, plural, one {lane priced} other {lanes priced}}", laneCount)}</span>
-            </>
+            laneCountExact ? (
+              <>
+                <b key={laneCount}>{formatNumber(laneCount)}</b>
+                <span>{t("{0, plural, one {lane priced} other {lanes priced}}", laneCount)}</span>
+              </>
+            ) : (
+              <>
+                <b key={laneCount}>{t("about {0}", formatRowTotal(laneCount, false))}</b>
+                <span>{t("lanes priced")}</span>
+              </>
+            )
           )
         }
         meta={
@@ -375,9 +385,19 @@ function AgreementCard({
             <span>
               {[
                 laneCount > lanes.length
-                  ? t("{0} of {1} shown", formatNumber(lanes.length), formatNumber(laneCount))
+                  ? laneCountExact
+                    ? t("{0} of {1} shown", formatNumber(lanes.length), formatNumber(laneCount))
+                    : t(
+                        "{0} of about {1} shown",
+                        formatNumber(lanes.length),
+                        formatRowTotal(laneCount, false),
+                      )
                   : "",
-                retired > 0 ? t("{0, plural, one {# retired} other {# retired}}", retired) : "",
+                retired > 0
+                  ? retiredExact
+                    ? t("{0, plural, one {# retired} other {# retired}}", retired)
+                    : t("About {0} retired", formatRowTotal(retired, false))
+                  : "",
               ]
                 .filter(Boolean)
                 .join(" · ")}
@@ -426,7 +446,7 @@ function AgreementCard({
                   ? t("Reading more lanes…")
                   : t(
                       "{0, plural, one {Show # more lane} other {Show # more lanes}}",
-                      Math.min(LANE_PAGE, laneCount - lanes.length),
+                      laneCountExact ? Math.min(LANE_PAGE, laneCount - lanes.length) : LANE_PAGE,
                     )}
               </Button>
             )}

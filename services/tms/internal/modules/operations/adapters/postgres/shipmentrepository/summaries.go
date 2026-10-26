@@ -35,9 +35,9 @@ func (r *repository) ListSummariesByIDs(
 			q := dest.join(origin.join(sp.LeftJoin(ord, ord.ID.EqCol(sp.OrderID)))).
 				Pick(
 					sp.ID,
-					keel.DynOf(sp.ProNumber).Coalesce(""),
-					keel.DynOf(sp.BOL).Coalesce(""),
-					keel.DynOf(ord.PONumber).Coalesce(""),
+					sp.ProNumber.Coalesce(""),
+					sp.BOL.Coalesce(""),
+					ord.PONumber.Coalesce(""),
 					sp.ActualDeliveryDate,
 					origin.city(),
 					origin.stateCode(),

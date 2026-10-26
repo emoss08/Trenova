@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/reference/ports/exchangerateports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -52,7 +53,7 @@ func (r *repository) GetRate(
 			er.ToCurrency.Eq(req.ToCurrency),
 			er.RateType.Eq(req.RateType),
 			er.Date.Eq(req.Date.Format(time.DateOnly)),
-		).One(ctx, r.db.Keel(ctx))
+		).Cache(resultcache.Reference()...).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, exchangeRateErrors.Map(err, "")
 		}

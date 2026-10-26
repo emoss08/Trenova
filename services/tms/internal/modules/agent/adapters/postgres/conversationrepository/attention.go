@@ -41,7 +41,7 @@ func threadAttentionQuery(
 			run.SubjectType.Eq(agent.SubjectAssistantThread),
 			run.SubjectID.EqCol(th.ID),
 		))
-	lastTurnStatus := keel.DynOf(keel.Scalar(tr.Pick(tr.Status).
+	lastTurnStatus := keel.StringOf(keel.Scalar(tr.Pick(tr.Status).
 		Where(tr.ThreadID.EqCol(th.ID)).
 		Order(tr.CreatedAt.Desc(), tr.ID.Desc()).
 		Limit(1))).Coalesce("")
@@ -53,14 +53,17 @@ func threadAttentionQuery(
 func pendingProposalRunsQuery(threadIDs []pulid.ID) *keel.Query[*agent.AgentProposal] {
 	p := agentdb.AgentProposals
 	run := agentdb.AgentRuns
-	now := keel.DynFunc("date_part", "epoch", keel.DynFunc("now")).Cast(keel.TypeInt64)
 
 	return p.Join(run, run.ID.EqCol(p.RunID)).
 		Pick(run.SubjectID, p.RunID).
 		Where(
 			p.Status.Eq(agent.ProposalStatusPending),
 			p.PlanID.IsNull(),
-			keel.Or(p.ExpiresAt.IsNull(), p.ExpiresAt.Eq(0), keel.DynOf(p.ExpiresAt).Gt(now)),
+			keel.Or(
+				p.ExpiresAt.IsNull(),
+				p.ExpiresAt.Eq(0),
+				keel.Int64Of(p.ExpiresAt).GtExpr(keel.NowEpoch()),
+			),
 			run.SubjectType.Eq(agent.SubjectAssistantThread),
 			run.SubjectID.In(threadIDs...),
 		)
@@ -122,7 +125,7 @@ func (r *repository) MarkThreadRead(
 		n, err := th.Where(th.ID.Eq(req.ThreadID), th.UserID.Eq(req.UserID)).Update(
 			ctx,
 			r.db.Keel(ctx),
-			th.LastReadAt.ToExpr(keel.DynFunc("greatest", th.LastReadAt, req.ReadAt)),
+			th.LastReadAt.ToExpr(th.LastReadAt.Greatest(keel.Int64(req.ReadAt))),
 			keepThreadVersion(),
 			keepThreadUpdatedAt(),
 		)

@@ -994,6 +994,9 @@ func describePageView(view *agent.PageView, surface agent.Surface) string {
 	}
 	if view.RowCount != nil {
 		builder.WriteString("\nrows matching: ")
+		if view.RowCountEstimated {
+			builder.WriteString("about ")
+		}
 		builder.WriteString(strconv.Itoa(*view.RowCount))
 	}
 	if view.Selection != nil && view.Selection.Count > 0 {

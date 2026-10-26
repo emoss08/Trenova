@@ -88,7 +88,7 @@ func (r *repository) ListBoardMoves(
 				sp.TemperatureMax,
 				hasHazmat(sm),
 				hasActiveHold(sm),
-				keel.DynOf(sp.TotalChargeAmount).Cast(keel.TypeFloat64),
+				keel.CastFloat64(sp.TotalChargeAmount),
 				text(orig.stop.ID),
 				text(orig.stop.LocationID),
 				text(orig.loc.Name),
@@ -110,14 +110,9 @@ func (r *repository) ListBoardMoves(
 				dest.stop.ScheduledWindowEnd,
 				text(asn.ID),
 				text(asn.PrimaryWorkerID),
-				keel.DynCase().
-					When(keel.DynOf(assignedWorkers.ID).IsNull(), keel.DynLit("").Cast(keel.TypeString)).
-					Else(keel.DynFunc(
-						"concat",
-						assignedWorkers.FirstName,
-						keel.DynLit(" "),
-						assignedWorkers.LastName,
-					)),
+				keel.CaseString().
+					When(assignedWorkers.ID.IsNull(), keel.Text("")).
+					Else(keel.Concat(assignedWorkers.FirstName, " ", assignedWorkers.LastName)),
 				text(asn.TractorID),
 				text(assignedTractors.Code),
 				text(asn.TrailerID),
@@ -128,7 +123,7 @@ func (r *repository) ListBoardMoves(
 				text(ca.ID),
 				text(ca.CarrierID),
 				text(assignedCarriers.Name),
-				keel.DynOf(ca.TotalCost).Cast(keel.TypeFloat64),
+				keel.CastFloat64(ca.TotalCost),
 			).
 			Where(moveFilters(filter)...).
 			Where(
@@ -193,7 +188,7 @@ func previousTrailer(sm *shipmentdb.ShipmentMovesTable) keel.Expr {
 		Pick(pa.TrailerID).
 		Where(
 			pm.ShipmentID.EqCol(sm.ShipmentID),
-			keel.DynOf(pm.Sequence).Lt(sm.Sequence),
+			keel.Int64Of(pm.Sequence).LtExpr(sm.Sequence),
 			pa.TrailerID.IsNotNull(),
 		).
 		Order(pm.Sequence.Desc()).

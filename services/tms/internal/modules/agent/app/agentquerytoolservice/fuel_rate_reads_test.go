@@ -47,7 +47,8 @@ func (f *fakeRateImports) List(
 			Status:          rateimport.StatusParsed,
 			Summary:         &pkgrateimport.Summary{Added: 2, Changed: 5},
 		}},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil
 }
 

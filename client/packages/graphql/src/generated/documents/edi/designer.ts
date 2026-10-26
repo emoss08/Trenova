@@ -3,4 +3,4 @@ import type { TypedDocumentString, EdiTemplateListFieldsFragment, EdiTemplateLis
 
 export const EdiTemplateVersionSummaryFieldsFragmentDoc = {"__meta__":{"fragmentName":"EdiTemplateVersionSummaryFields"}} as unknown as TypedDocumentString<EdiTemplateVersionSummaryFieldsFragment, unknown>;
 export const EdiTemplateListFieldsFragmentDoc = {"__meta__":{"fragmentName":"EdiTemplateListFields"}} as unknown as TypedDocumentString<EdiTemplateListFieldsFragment, unknown>;
-export const EdiTemplateListDocument = {"__meta__":{"kind":"query","name":"EdiTemplateList","hash":"sha256:a702460c84a4357ec9a9f0c021d1cd597b922e7a244abe96babeb696645b5b12"}} as unknown as TypedDocumentString<EdiTemplateListQuery, EdiTemplateListQueryVariables>;
+export const EdiTemplateListDocument = {"__meta__":{"kind":"query","name":"EdiTemplateList","hash":"sha256:caef72bea211e5935f4b38dad942cfc50140e2a5770f3b890535adc739f2a8c9"}} as unknown as TypedDocumentString<EdiTemplateListQuery, EdiTemplateListQueryVariables>;

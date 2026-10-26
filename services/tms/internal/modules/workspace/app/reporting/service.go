@@ -357,7 +357,7 @@ func defaultVisibility(v report.Visibility) report.Visibility {
 }
 
 func defaultStatus(s report.DefinitionStatus) report.DefinitionStatus {
-	if !s.IsValid() {
+	if !s.IsValid() || s == report.DefinitionStatusNeedsAttention {
 		return report.DefinitionStatusActive
 	}
 	return s

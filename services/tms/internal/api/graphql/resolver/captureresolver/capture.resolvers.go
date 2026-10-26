@@ -486,7 +486,7 @@ func (r *QueryResolver) CaptureBatches(ctx context.Context, input gqlmodel.Captu
 	if err != nil {
 		return nil, err
 	}
-	cursor.IncludeTotalCount = base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField)
+	cursor.IncludeTotalCount = base.ConnectionTotalRequested(ctx)
 
 	tenant := base.TenantInfo(authCtx)
 	in := &captureservice.ListBatchesInput{

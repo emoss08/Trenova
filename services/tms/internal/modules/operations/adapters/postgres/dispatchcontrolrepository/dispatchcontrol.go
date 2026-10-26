@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -39,7 +40,8 @@ func New(p Params) dispatchcontrolports.DispatchControlRepository {
 }
 
 func (r *repository) find(ctx context.Context) (*dispatchcontrol.DispatchControl, error) {
-	return dispatchcontroldb.DispatchControls.Query().One(ctx, r.db.Keel(ctx))
+	return dispatchcontroldb.DispatchControls.Cache(resultcache.Settings()...).
+		One(ctx, r.db.Keel(ctx))
 }
 
 func (r *repository) GetByOrgID(

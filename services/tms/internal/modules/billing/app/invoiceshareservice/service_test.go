@@ -655,8 +655,9 @@ func TestListCandidatesOffersOnlyTeammatesWhoCanOpenTheLink(t *testing.T) {
 		return req.TenantInfo == h.tenant && req.Query == "a" && req.Pagination.Offset == 0
 	})).
 		Return(&pagination.ListResult[*tenant.User]{
-			Items: []*tenant.User{h.sharer, dana, normal, locked},
-			Total: 4,
+			Items:      []*tenant.User{h.sharer, dana, normal, locked},
+			Total:      4,
+			TotalExact: true,
 		}, nil)
 	h.expectPermission(dana, true)
 	h.expectPermission(normal, false)
@@ -687,7 +688,11 @@ func TestListCandidatesPagesThroughTheEligibleTeammates(t *testing.T) {
 	}
 	h.expectInvoice()
 	h.users.On("SelectOptions", mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*tenant.User]{Items: users, Total: len(users)}, nil)
+		Return(&pagination.ListResult[*tenant.User]{
+			Items:      users,
+			Total:      len(users),
+			TotalExact: true,
+		}, nil)
 
 	result, err := h.svc.ListCandidates(t.Context(), &invoiceports.ListShareCandidatesRequest{
 		TenantInfo: h.tenant,

@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/keel/seed"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/seeds/fixtures"
 
 	"github.com/emoss08/trenova/schema"
@@ -104,4 +105,25 @@ func TestDevelopmentAppAddsTheFixtures(t *testing.T) {
 	}
 	assert.Positive(t, kinds[seed.Reference])
 	assert.Positive(t, kinds[seed.Fixture])
+}
+
+func TestTheDatabaseToolRecordsDataVersionsForItsWrites(t *testing.T) {
+	t.Parallel()
+
+	settings := &Settings{name: "trenova-db", load: func() (*config.Config, error) {
+		return &config.Config{Database: config.DatabaseConfig{
+			Host:     "localhost",
+			Port:     5432,
+			Name:     "trenova",
+			User:     "trenova",
+			Password: "secret",
+			SSLMode:  "disable",
+		}}, nil
+	}}
+
+	cfg, err := DatabaseConfig(ConfigParams{Name: "trenova-db", Settings: settings})()
+
+	require.NoError(t, err)
+	assert.True(t, cfg.DataVersions.Enabled,
+		"seed writes must move the data versions the API's result cache reads")
 }

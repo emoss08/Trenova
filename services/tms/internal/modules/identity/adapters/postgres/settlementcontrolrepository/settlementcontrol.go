@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
@@ -85,7 +86,7 @@ func (r *repository) GetOrCreate(
 
 func (r *repository) selectControl(ctx context.Context) (*tenant.SettlementControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.SettlementControl, error) {
-		return tenantdb.SettlementControls.Query().One(ctx, r.db.Keel(ctx))
+		return tenantdb.SettlementControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
 	})
 }
 

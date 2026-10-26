@@ -133,9 +133,15 @@ type CursorState = {
   scopeKey: string;
   cursors: Record<number, string | null>;
   totalCount: number | null;
+  totalCountExact: boolean;
 };
 
-const EMPTY_CURSOR_STATE: CursorState = { scopeKey: "", cursors: { 0: null }, totalCount: null };
+const EMPTY_CURSOR_STATE: CursorState = {
+  scopeKey: "",
+  cursors: { 0: null },
+  totalCount: null,
+  totalCountExact: true,
+};
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 const EMPTY_GROUP_KEYS: DataTableGroupKey[] = [];
 const NO_ROW_ACTIONS: never[] = [];
@@ -455,12 +461,19 @@ export function DataTable<TData extends Record<string, any>>({
     const nextPageIndex = zeroBasedPageIndex + 1;
     const nextCursor = pageInfo.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : null;
     const pageTotalCount = pageInfo.totalCount ?? null;
+    const pageTotalExact = pageInfo.totalCountExact !== false;
     setCursorState((current) => {
       const inScope = current.scopeKey === cursorScopeKey;
       const scoped = inScope ? current : EMPTY_CURSOR_STATE;
       const totalCount = pageTotalCount ?? scoped.totalCount;
+      const totalCountExact = pageTotalCount !== null ? pageTotalExact : scoped.totalCountExact;
       const cursorKnown = nextCursor === null || scoped.cursors[nextPageIndex] === nextCursor;
-      if (inScope && cursorKnown && totalCount === scoped.totalCount) {
+      if (
+        inScope &&
+        cursorKnown &&
+        totalCount === scoped.totalCount &&
+        totalCountExact === scoped.totalCountExact
+      ) {
         return current;
       }
 
@@ -473,6 +486,7 @@ export function DataTable<TData extends Record<string, any>>({
               [nextPageIndex]: nextCursor,
             },
         totalCount,
+        totalCountExact,
       };
     });
   }, [cursorScopeKey, dataQuery.data?.pageInfo, zeroBasedPageIndex]);
@@ -589,6 +603,12 @@ export function DataTable<TData extends Record<string, any>>({
   const totalCount = cursorPageInfo
     ? (cursorPageInfo.totalCount ?? scopedCursorState.totalCount)
     : (dataQuery.data?.count ?? null);
+  const totalCountExact =
+    cursorPageInfo?.totalCount != null
+      ? cursorPageInfo.totalCountExact !== false
+      : cursorPageInfo
+        ? scopedCursorState.totalCountExact
+        : dataQuery.data?.totalCountExact !== false;
   const rowCount =
     totalCount ??
     (cursorPageInfo
@@ -1388,6 +1408,7 @@ export function DataTable<TData extends Record<string, any>>({
         columnVisibility={liveColumnVisibility}
         columnIds={table.getAllLeafColumns().map((column) => column.id)}
         rowCount={totalCount}
+        rowCountExact={totalCountExact}
       />
       <DataTablePanelWrapper>
         <DataTablePanelContent>
@@ -1452,6 +1473,7 @@ export function DataTable<TData extends Record<string, any>>({
                 selection={selectionAtom}
                 pageRowIds={pageRowIds}
                 totalCount={totalCount}
+                totalCountExact={totalCountExact}
                 maxSelectable={BULK_SELECT_MAX}
                 onEditAllMatching={canBulkEdit ? editAllMatching : undefined}
                 isSelectingAll={isSelectingAll}
@@ -1500,7 +1522,9 @@ export function DataTable<TData extends Record<string, any>>({
                     role="grid"
                     aria-label={name}
                     aria-rowcount={
-                      totalCount != null ? totalCount + 1 + table.getTopRows().length : -1
+                      totalCount != null && totalCountExact
+                        ? totalCount + 1 + table.getTopRows().length
+                        : -1
                     }
                     aria-colcount={visibleLeafColumns.length}
                     aria-multiselectable
@@ -1597,6 +1621,7 @@ export function DataTable<TData extends Record<string, any>>({
                 hasNextPage={cursorPageInfo?.hasNextPage}
                 currentPageRowCount={currentPageRowCount}
                 totalCount={totalCount}
+                totalCountExact={totalCountExact}
                 pageSizeOptions={pageSizeOptions}
                 leading={footerLeading}
               />

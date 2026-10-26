@@ -55,20 +55,19 @@ type permissionResultRequest struct {
 type Params struct {
 	fx.In
 
-	RoleRepository        permissionports.RoleRepository
-	RBACRepository        permissionports.RBACRepository
-	IAMRepository         iamports.IAMRepository
-	APIKeyRepository      apikeyports.APIKeyRepository
-	PermissionCacheRepo   permissionports.PermissionCacheRepository
-	AccessPolicyCacheRepo iamports.AccessPolicyCacheRepository
-	UserRepository        tenantports.UserRepository
-	AgentGrants           permissionports.RoleAgentGrantRepository  `optional:"true"`
-	AgentRoles            permissionports.AgentRoleSource           `optional:"true"`
-	Delegated             permissionports.DelegatedPermissionSource `optional:"true"`
-	Registry              *permission.Registry
-	RouteRegistry         *permission.RouteRegistry
-	Metrics               *metrics.Registry
-	Logger                *zap.Logger
+	RoleRepository      permissionports.RoleRepository
+	RBACRepository      permissionports.RBACRepository
+	IAMRepository       iamports.IAMRepository
+	APIKeyRepository    apikeyports.APIKeyRepository
+	PermissionCacheRepo permissionports.PermissionCacheRepository
+	UserRepository      tenantports.UserRepository
+	AgentGrants         permissionports.RoleAgentGrantRepository  `optional:"true"`
+	AgentRoles          permissionports.AgentRoleSource           `optional:"true"`
+	Delegated           permissionports.DelegatedPermissionSource `optional:"true"`
+	Registry            *permission.Registry
+	RouteRegistry       *permission.RouteRegistry
+	Metrics             *metrics.Registry
+	Logger              *zap.Logger
 }
 
 type engine struct {
@@ -77,7 +76,6 @@ type engine struct {
 	iamRepo       iamports.IAMRepository
 	apiKeyRepo    apikeyports.APIKeyRepository
 	cacheRepo     permissionports.PermissionCacheRepository
-	policyCache   iamports.AccessPolicyCacheRepository
 	userRepo      tenantports.UserRepository
 	agentGrants   permissionports.RoleAgentGrantRepository
 	agentRoles    permissionports.AgentRoleSource
@@ -96,7 +94,6 @@ func NewEngine(p Params) permissionports.PermissionEngine {
 		iamRepo:       p.IAMRepository,
 		apiKeyRepo:    p.APIKeyRepository,
 		cacheRepo:     p.PermissionCacheRepo,
-		policyCache:   p.AccessPolicyCacheRepo,
 		userRepo:      p.UserRepository,
 		agentGrants:   p.AgentGrants,
 		agentRoles:    p.AgentRoles,
@@ -240,9 +237,7 @@ func (e *engine) newAccessPolicySource(orgID, buID pulid.ID) accessPolicySource 
 		return nil
 	}
 	return &tenantAccessPolicySource{
-		repo:  e.iamRepo,
-		cache: e.policyCache,
-		log:   e.l,
+		repo: e.iamRepo,
 		req: iamports.IAMTenantPolicyLookupRequest{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
@@ -265,8 +260,6 @@ type accessPolicyKey struct {
 
 type tenantAccessPolicySource struct {
 	repo   iamports.IAMRepository
-	cache  iamports.AccessPolicyCacheRepository
-	log    *zap.Logger
 	req    iamports.IAMTenantPolicyLookupRequest
 	loaded bool
 	byKey  map[accessPolicyKey][]*iam.AccessPolicy
@@ -286,7 +279,7 @@ func (s *tenantAccessPolicySource) enabledPolicies(
 }
 
 func (s *tenantAccessPolicySource) load(ctx context.Context) error {
-	policies, err := s.fetch(ctx)
+	policies, err := s.repo.ListEnabledTenantAccessPolicies(ctx, s.req)
 	if err != nil {
 		return err
 	}
@@ -298,29 +291,6 @@ func (s *tenantAccessPolicySource) load(ctx context.Context) error {
 	}
 	s.loaded = true
 	return nil
-}
-
-func (s *tenantAccessPolicySource) fetch(ctx context.Context) ([]*iam.AccessPolicy, error) {
-	if s.cache != nil {
-		cached, found, err := s.cache.GetEnabled(ctx, s.req)
-		if err != nil {
-			s.log.Warn("access policy cache lookup failed, reading from database", zap.Error(err))
-		} else if found {
-			return cached, nil
-		}
-	}
-
-	policies, err := s.repo.ListEnabledTenantAccessPolicies(ctx, s.req)
-	if err != nil {
-		return nil, err
-	}
-
-	if s.cache != nil {
-		if err = s.cache.SetEnabled(ctx, s.req, policies); err != nil {
-			s.log.Warn("failed to cache access policies", zap.Error(err))
-		}
-	}
-	return policies, nil
 }
 
 func evaluateAccessPolicies(

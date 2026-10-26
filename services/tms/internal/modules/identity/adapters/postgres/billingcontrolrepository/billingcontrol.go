@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -44,7 +45,9 @@ func (r *repository) GetByOrgID(
 ) (*tenant.BillingControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.BillingControl, error) {
 		bc := tenantdb.BillingControls
-		entity, err := bc.Where(bc.OrganizationID.Eq(orgID)).One(ctx, r.db.Keel(ctx))
+		entity, err := bc.Where(bc.OrganizationID.Eq(orgID)).
+			Cache(resultcache.Settings()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error(
 				"failed to get billing control",

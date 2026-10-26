@@ -1,6 +1,6 @@
 SELECT a.primary_worker_id, ((a.created_at / 86400) * 86400), count(*)
 FROM assignments a
-WHERE a.business_unit_id = $1 AND a.organization_id = $2 AND a.archived_at IS NULL AND (((a.created_at / 86400) * 86400) >= $3) AND (((a.created_at / 86400) * 86400) < $4) AND a.primary_worker_id IN (
+WHERE a.business_unit_id = $1 AND a.organization_id = $2 AND a.archived_at IS NULL AND ((a.created_at / 86400) * 86400) >= $3 AND ((a.created_at / 86400) * 86400) < $4 AND a.primary_worker_id IN (
   SELECT w.id
   FROM workers w
   WHERE w.business_unit_id = $1 AND w.organization_id = $2 AND w.status = 'Active' AND w.fleet_code_id = $5 AND w.id IN (

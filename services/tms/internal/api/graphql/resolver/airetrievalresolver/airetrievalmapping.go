@@ -76,8 +76,9 @@ func aiRetrievalFailedEntriesToModel(
 	page *agentports.AIRetrievalFailedEntryPage,
 ) *gqlmodel.AIRetrievalFailedEntryConnection {
 	out := &gqlmodel.AIRetrievalFailedEntryConnection{
-		Edges:      make([]*gqlmodel.AIRetrievalFailedEntryEdge, 0, len(page.Edges)),
-		TotalCount: page.TotalCount,
+		Edges:           make([]*gqlmodel.AIRetrievalFailedEntryEdge, 0, len(page.Edges)),
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	last := ""
 	for _, edge := range page.Edges {

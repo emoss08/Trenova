@@ -94,7 +94,8 @@ func checklistTemplateCursorConnectionToModel(
 				func(edge *gqlmodel.WorkerChecklistTemplateEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

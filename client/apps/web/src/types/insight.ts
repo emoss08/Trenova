@@ -120,6 +120,7 @@ export const insightDetailSchema = z.object({
 export const insightPageSchema = z.object({
   results: z.array(insightSchema),
   total: z.number().default(0),
+  totalExact: z.boolean().default(true),
 });
 
 export type InsightCategory = z.infer<typeof insightCategorySchema>;

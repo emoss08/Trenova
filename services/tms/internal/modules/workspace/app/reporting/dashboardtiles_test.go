@@ -84,11 +84,16 @@ func (s *stubDefinitionRepo) Update(
 	return e, nil
 }
 
-func (s *stubDefinitionRepo) UpdateStatus(
-	_ context.Context, _ *reportports.GetReportDefinitionRequest,
-	_ report.DefinitionStatus, _ []string,
-) error {
-	return nil
+func (s *stubDefinitionRepo) ListCatalogStale(
+	_ context.Context, _ *reportports.ListCatalogStaleReportDefinitionsRequest,
+) ([]*report.ReportDefinition, error) {
+	return nil, nil
+}
+
+func (s *stubDefinitionRepo) RecordCatalogCheck(
+	_ context.Context, _ *reportports.RecordReportCatalogCheckRequest,
+) (bool, error) {
+	return false, nil
 }
 
 func (s *stubDefinitionRepo) List(

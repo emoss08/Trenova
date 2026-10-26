@@ -98,7 +98,7 @@ func (r *enrollmentRepository) GetByCarrierIDs(
 			en := carrierinteldb.CarrierMonitoringEnrollments
 			entities, err := en.Where(en.CarrierID.In(carrierIDs...)).
 				Order(
-					keel.Desc(keel.DynOf(en.DesiredState).Eq(string(carrierintel.DesiredStateEnrolled))),
+					keel.Desc(en.DesiredState.Eq(carrierintel.DesiredStateEnrolled)),
 					en.UpdatedAt.Desc(),
 				).
 				All(ctx, r.db.Keel(ctx))

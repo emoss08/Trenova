@@ -44,7 +44,7 @@ func withCustomerName() *keel.Query[*deskcase.ChecklistTemplate] {
 	cus := customerdb.Customers.As("cus")
 
 	return t.LeftJoin(cus, cus.ID.EqCol(t.CustomerID)).
-		Compute(t.CustomerName, keel.DynOf(cus.Name).Coalesce(""))
+		Compute(t.CustomerName, cus.Name.Coalesce(""))
 }
 
 func listTemplatesQuery(
@@ -81,7 +81,7 @@ func listTicksQuery(
 	usr := tenantdb.Users.As("usr")
 
 	return tk.LeftJoin(usr, usr.ID.EqCol(tk.TickedByID)).
-		Compute(tk.TickedByName, keel.DynOf(usr.Name).Coalesce("")).
+		Compute(tk.TickedByName, usr.Name.Coalesce("")).
 		Where(tk.SubjectType.Eq(req.SubjectType), tk.SubjectID.Eq(req.SubjectID)).
 		Limit(maxTemplateRows)
 }

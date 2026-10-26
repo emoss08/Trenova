@@ -45,6 +45,8 @@ type FormulaLibraryConnection {
   edges: [FormulaLibraryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A snapshot of a library. An Active version is approved, and is what templates pin."

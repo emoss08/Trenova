@@ -239,7 +239,7 @@ func (r *repository) SetBalanceAfter(
 			ctx,
 			r.db.Keel(ctx),
 			p.BalanceAfterDays.To(decimal.NewNullDecimal(req.BalanceAfterDays)),
-			p.Version.Add(0),
+			p.Version.Increment(0),
 		)
 		if err != nil {
 			r.l.Error("failed to set PTO balance after", zap.Error(err))
@@ -621,32 +621,20 @@ type chartDaysParams struct {
 func chartDaysQuery(p *chartDaysParams) *keel.Query[*worker.WorkerPTO] {
 	pto := workerdb.WorkerPTOs
 	wrk := workerdb.Workers
-	localDay := func(ts any) keel.DynExpr {
-		return keel.DynFunc(
-			"date_trunc",
-			keel.DynConst(chartTruncUnit),
-			keel.DynFunc("timezone", p.timezone, keel.DynFunc("to_timestamp", ts)),
-		)
+	zone := keel.Text(p.timezone)
+	localDay := func(ts keel.NumberValue) keel.TimeExpr {
+		return keel.DateTrunc(chartTruncUnit, keel.ToTimestamp(ts).AtTimeZone(zone))
 	}
 	series := keel.Rows(
 		chartDaySeries,
 		[]string{chartDaySeriesDay},
-		keel.DynFunc(
-			"generate_series",
-			keel.DynFunc(
-				"greatest",
-				localDay(pto.StartDate),
-				localDay(keel.DynLit(p.from).Cast(keel.TypeInt64)),
-			),
-			keel.DynFunc(
-				"least",
-				localDay(pto.EndDate),
-				localDay(keel.DynLit(p.to).Cast(keel.TypeInt64)),
-			),
-			keel.DynConst(chartDayStep),
+		keel.GenerateTimeSeries(
+			localDay(pto.StartDate).Greatest(localDay(keel.Int64(p.from))),
+			localDay(pto.EndDate).Least(localDay(keel.Int64(p.to))),
+			chartDayStep,
 		),
 	)
-	day := keel.DynFunc("to_char", series.Col(chartDaySeriesDay), chartDayFormat)
+	day := keel.TimeOf(series.Col(chartDaySeriesDay)).ToChar(chartDayFormat)
 
 	return pto.
 		Join(wrk, wrk.ID.EqCol(pto.WorkerID)).

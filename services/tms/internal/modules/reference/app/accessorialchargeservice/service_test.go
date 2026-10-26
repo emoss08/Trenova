@@ -197,8 +197,9 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*accessorialcharge.AccessorialCharge]{
-		Items: []*accessorialcharge.AccessorialCharge{newTestEntity()},
-		Total: 1,
+		Items:      []*accessorialcharge.AccessorialCharge{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &accessorialchargeports.ListAccessorialChargeRequest{
 		Filter: &pagination.QueryOptions{},
@@ -243,8 +244,9 @@ func TestSelectOptions_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*accessorialcharge.AccessorialCharge]{
-		Items: []*accessorialcharge.AccessorialCharge{newTestEntity()},
-		Total: 1,
+		Items:      []*accessorialcharge.AccessorialCharge{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &pagination.SelectQueryRequest{
 		Query: "FUEL",

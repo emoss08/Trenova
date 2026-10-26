@@ -12,6 +12,8 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -111,6 +113,37 @@ func TestCreate_StoresTheCommentWithDefaultsMentionsAndReplies(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 2, count)
+}
+
+func TestCreate_UnderASystemScopeReReadsTheCommentInItsOwnTenant(t *testing.T) {
+	h := newHarness(t)
+	systemCtx := dbscope.WithSystem(h.ctx, "test a system-scoped shipment comment")
+
+	root, err := h.repo.Create(systemCtx, h.comment("Synced from the linked organization", nil))
+	require.NoError(t, err)
+	assert.Equal(t, h.tenant.OrgID, root.OrganizationID)
+	require.Len(t, root.MentionedUsers, 1)
+
+	reply, err := h.repo.Create(systemCtx, h.comment("Reply", &root.ID))
+	require.NoError(t, err)
+	assert.Equal(t, h.tenant.OrgID, reply.OrganizationID)
+
+	reread, err := h.repo.GetByID(systemCtx, &shipmentports.GetShipmentCommentByIDRequest{
+		CommentID:  root.ID,
+		ShipmentID: h.entity.ID,
+		TenantInfo: h.tenant,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), reread.ReplyCount)
+
+	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: h.tenant.BuID}
+	_, err = h.repo.GetByID(systemCtx, &shipmentports.GetShipmentCommentByIDRequest{
+		CommentID:  root.ID,
+		ShipmentID: h.entity.ID,
+		TenantInfo: stranger,
+	})
+	require.Error(t, err)
+	assert.True(t, errortypes.IsNotFoundError(err), "a system read is still held to the named tenant")
 }
 
 func TestPinAcknowledgeAndSoftDelete(t *testing.T) {

@@ -153,8 +153,8 @@ func (r *batchRepository) RecalculateAggregates(
 				[]string{"settlement_count", "total_gross_minor", "total_net_minor"},
 				s.Pick(
 					keel.Count().Filter(live),
-					keel.DynOf(s.GrossCostMinor.Sum().Filter(live)).Coalesce(0),
-					keel.DynOf(s.NetPayableMinor.Sum().Filter(live)).Coalesce(0),
+					keel.Int64Of(s.GrossCostMinor.Sum().Filter(live)).Coalesce(0),
+					keel.Int64Of(s.NetPayableMinor.Sum().Filter(live)).Coalesce(0),
 				).Where(s.BatchID.Eq(batchID)),
 			)
 

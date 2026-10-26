@@ -21,6 +21,7 @@ type GraphQLConnection<TNode> = {
     endCursor?: string | null;
   };
   totalCount?: number | null;
+  totalCountExact?: boolean | null;
 };
 
 type DataTableGraphQLVariables = Record<string, unknown> & {
@@ -99,6 +100,7 @@ export async function fetchGraphQLData<TData extends Record<string, unknown>>(
       hasNextPage: connection.pageInfo?.hasNextPage ?? false,
       endCursor: connection.pageInfo?.endCursor ?? null,
       totalCount,
+      totalCountExact: totalCount === null || connection.totalCountExact !== false,
     },
   };
 }

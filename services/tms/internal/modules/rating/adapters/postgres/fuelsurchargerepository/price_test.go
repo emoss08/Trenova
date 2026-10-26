@@ -16,7 +16,7 @@ func TestLatestPerIndexQuery_KeepsTheNewestPricesOfEachIndex(t *testing.T) {
 	assert.Contains(t, sql, `FROM "fuel_index_prices" newer`)
 	assert.Contains(t, sql, `newer."price_date" > fip."price_date"`)
 	assert.Contains(t, args, "2026-10-19")
-	assert.Contains(t, args, 2)
+	assert.Contains(t, args, int64(2))
 }
 
 func TestLastPricePerKey_KeepsTheLastPriceOfARepeatedWeek(t *testing.T) {

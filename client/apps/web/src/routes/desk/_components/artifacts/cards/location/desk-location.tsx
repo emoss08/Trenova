@@ -14,6 +14,7 @@ import type {
 import { location as locationQueries } from "@/lib/queries/location";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
@@ -267,11 +268,17 @@ function LocationCard({
           aside={
             policies.data && policies.data.total > policies.data.rows.length ? (
               <span>
-                {t(
-                  "{0} of {1, plural, one {# policy} other {# policies}}",
-                  policies.data.rows.length,
-                  policies.data.total,
-                )}
+                {policies.data.totalExact === false
+                  ? t(
+                      "{0} of about {1} policies",
+                      policies.data.rows.length,
+                      formatRowTotal(policies.data.total, false),
+                    )
+                  : t(
+                      "{0} of {1, plural, one {# policy} other {# policies}}",
+                      policies.data.rows.length,
+                      policies.data.total,
+                    )}
               </span>
             ) : undefined
           }
@@ -296,7 +303,9 @@ function LocationCard({
           aside={
             failures.total ? (
               <span className="dk-warn">
-                {t("{0, plural, one {# failure} other {# failures}}", failures.total)}
+                {failures.totalExact
+                  ? t("{0, plural, one {# failure} other {# failures}}", failures.total)
+                  : t("About {0} failures", formatRowTotal(failures.total, false))}
               </span>
             ) : undefined
           }

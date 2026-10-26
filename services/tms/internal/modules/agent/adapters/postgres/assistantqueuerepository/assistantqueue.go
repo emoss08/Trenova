@@ -73,7 +73,7 @@ func getQuery(req *agentports.QueuedMessageRequest) *keel.Query[*conversation.Qu
 func tallyQuery(threadID pulid.ID) *keel.Query[*conversation.QueuedMessage] {
 	q := conversationdb.QueuedMessages
 
-	return q.Pick(keel.Count(), keel.DynOf(q.Position).Max().Coalesce(0)).
+	return q.Pick(keel.Count(), keel.Int64Of(q.Position.Max()).Coalesce(0)).
 		Where(inScope(&agentports.AssistantQueueScope{ThreadID: threadID}))
 }
 
@@ -101,8 +101,7 @@ func reorderQuery(
 func reorderPosition(ids []pulid.ID) keel.Assignment {
 	q := conversationdb.QueuedMessages
 
-	return q.Position.ToExpr(keel.DynFunc(
-		"array_position",
+	return q.Position.ToExpr(keel.ArrayPosition(
 		pulid.Map(ids, func(id pulid.ID) string { return id.String() }),
 		q.ID,
 	))

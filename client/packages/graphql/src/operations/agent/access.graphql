@@ -28,6 +28,7 @@ query MyAgents($input: MyAgentsInput!, $includeTotalCount: Boolean = false) {
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

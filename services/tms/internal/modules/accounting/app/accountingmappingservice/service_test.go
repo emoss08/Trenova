@@ -1,22 +1,22 @@
 package accountingmappingservice
 
 import (
+	"errors"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/glaccountportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"errors"
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -121,7 +121,8 @@ func newHarness(t *testing.T) *harness {
 				Code:        "DET",
 				Description: "Detention",
 			}},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).Maybe()
 	charges.EXPECT().GetByID(mock.Anything, mock.Anything).
 		Return(&accessorialcharge.AccessorialCharge{
@@ -134,7 +135,11 @@ func newHarness(t *testing.T) *harness {
 	h.customer = cus
 	customers := customerportsmock.NewMockCustomerRepository(t)
 	customers.EXPECT().List(mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*customer.Customer]{Items: []*customer.Customer{cus}, Total: 1}, nil).
+		Return(&pagination.ListResult[*customer.Customer]{
+			Items:      []*customer.Customer{cus},
+			Total:      1,
+			TotalExact: true,
+		}, nil).
 		Maybe()
 	customers.EXPECT().GetByIDs(mock.Anything, mock.Anything).
 		Return([]*customer.Customer{cus}, nil).Maybe()
@@ -142,7 +147,11 @@ func newHarness(t *testing.T) *harness {
 	carr := &carrier.Carrier{ID: h.carrierID, Name: "Roadrunner Freight", SCAC: "RRFT"}
 	carriers := carrierportsmock.NewMockCarrierRepository(t)
 	carriers.EXPECT().List(mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*carrier.Carrier]{Items: []*carrier.Carrier{carr}, Total: 1}, nil).
+		Return(&pagination.ListResult[*carrier.Carrier]{
+			Items:      []*carrier.Carrier{carr},
+			Total:      1,
+			TotalExact: true,
+		}, nil).
 		Maybe()
 	carriers.EXPECT().GetByIDs(mock.Anything, mock.Anything).
 		Return([]*carrier.Carrier{carr}, nil).Maybe()

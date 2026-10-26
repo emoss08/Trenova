@@ -431,7 +431,7 @@ func (r *repository) GetEmailWebhookConfig(
 				Pick(
 					i.OrganizationID,
 					i.BusinessUnitID,
-					keel.DynOf(i.Configuration.Text("webhookSigningSecret")).Coalesce(""),
+					i.Configuration.Text("webhookSigningSecret").Coalesce(""),
 				).
 				Where(
 					i.Type.Eq(req.IntegrationType),
@@ -503,7 +503,7 @@ func (r *repository) ListEventRecipients(
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
 		e := emaildb.Events
-		recipient := keel.DynFunc("lower", e.Recipient)
+		recipient := e.Recipient.Lower()
 		recipients, err := keel.Into[string](
 			ctx,
 			r.db.Keel(ctx),
@@ -537,17 +537,17 @@ func (r *repository) ListSuppressions(
 			rows := s.Order(s.CreatedAt.Desc()).Limit(page.SafeLimit()).Offset(page.SafeOffset())
 
 			var items []*email.Suppression
-			var total int64
+			var total keel.RowCount
 			if err := keel.Batch(
 				ctx,
 				r.db.Keel(ctx),
 				keel.ListInto(rows, &items),
-				keel.CountInto(s.Query(), &total),
+				keel.CountEstimateInto(s.Query(), pagination.ExactTotalUpTo, &total),
 			); err != nil {
 				return nil, err
 			}
 
-			return &pagination.ListResult[*email.Suppression]{Items: items, Total: int(total)}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }

@@ -33,6 +33,7 @@ query ReportDefinitionsTable(
       cursor
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

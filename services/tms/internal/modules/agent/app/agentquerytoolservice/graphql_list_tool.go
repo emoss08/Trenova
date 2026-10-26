@@ -33,6 +33,7 @@ const (
 	connectionNode       = "node"
 	connectionPageInfo   = "pageInfo"
 	connectionTotalCount = "totalCount"
+	connectionTotalExact = "totalCountExact"
 	pageHasNext          = "hasNextPage"
 	pageEndCursor        = "endCursor"
 	typenameField        = "__typename"
@@ -858,6 +859,7 @@ type graphQLListOutcome struct {
 	HasMore          bool             `json:"hasMore"`
 	NextCursor       string           `json:"nextCursor,omitempty"`
 	Total            *int             `json:"total,omitempty"`
+	TotalEstimated   bool             `json:"totalEstimated,omitempty"`
 	WithheldByAccess []string         `json:"withheldByAccess,omitempty"`
 	WithheldNote     string           `json:"withheldNote,omitempty"`
 
@@ -988,6 +990,7 @@ func (t *graphQLListTool) Query(
 		Columns:          selectedColumns(t.read.Fields, page.items),
 		HasMore:          page.hasMore,
 		Total:            page.total,
+		TotalEstimated:   page.total != nil && !page.totalExact,
 		WithheldByAccess: page.withheld,
 		outside:          markedRows(&t.spec, page.items),
 	}
@@ -1047,12 +1050,13 @@ type pageRequest struct {
 }
 
 type graphQLPage struct {
-	items     []map[string]any
-	hasMore   bool
-	endCursor string
-	withheld  []string
-	first     bool
-	total     *int
+	items      []map[string]any
+	hasMore    bool
+	endCursor  string
+	withheld   []string
+	first      bool
+	total      *int
+	totalExact bool
 }
 
 func (t *graphQLListTool) page(
@@ -1107,6 +1111,7 @@ func (t *graphQLListTool) page(
 	if req.total {
 		if total, counted := typeutils.IntOf(connection[connectionTotalCount]); counted {
 			page.total = &total
+			page.totalExact, _ = connection[connectionTotalExact].(bool)
 		}
 	}
 

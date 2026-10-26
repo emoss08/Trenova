@@ -139,8 +139,8 @@ func (r *repository) RotaLeaveRanges(
 
 func (r *repository) assignedDaysQuery(req *workerports.RotaQuery) *keel.Query[*keel.Row] {
 	a := r.assignments
-	secondsPerDay := keel.DynConst(int64(86400))
-	day := keel.DynOf(a.CreatedAt).Div(secondsPerDay).Mul(secondsPerDay)
+	secondsPerDay := keel.ConstInt64(86400)
+	day := a.CreatedAt.Div(secondsPerDay).Mul(secondsPerDay)
 
 	return keel.Handle[*keel.Row]{Ref: a.WorkerID.Ref}.
 		Pick(a.WorkerID, day, keel.Count()).

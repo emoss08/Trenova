@@ -25,7 +25,7 @@ export function AccountingDashboardPage() {
 
   const { allowed: canRecordPayment } = usePermission(Resource.CustomerPayment, Operation.Create);
   const { data: kpis, errorUpdatedAt } = useQuery(ar.dashboardKpis());
-  const answered = kpis !== undefined || errorUpdatedAt > 0;
+  const deciding = kpis === undefined && errorUpdatedAt === 0;
   const neverInvoiced = kpis !== undefined && !receivablesHaveActivity(kpis.overview);
 
   return (
@@ -41,7 +41,11 @@ export function AccountingDashboardPage() {
         ) : undefined,
       }}
     >
-      {!answered ? (
+      {/* The KPIs decide between the empty state and the dashboard, so the
+          other cards (and their reads) wait for them. A failed read keeps
+          the dashboard: errorUpdatedAt outlives the KPI row's refetch, which
+          resets isError. */}
+      {deciding ? (
         <AccountingDashboardSkeleton />
       ) : neverInvoiced ? (
         <AccountingDashboardEmpty

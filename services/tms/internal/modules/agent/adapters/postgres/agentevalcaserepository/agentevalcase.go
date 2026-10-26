@@ -377,15 +377,15 @@ func (r *repository) ListSamplingCases(
 		ev := agentdb.Evaluations
 
 		lastFailure := keel.Scalar(ev.
-			Pick(keel.DynCase().
+			Pick(keel.CaseInt64().
 				When(
 					keel.Or(
 						ev.Status.Eq(agent.EvaluationStatusFailed),
-						keel.DynOf(ev.Checks.Text("passed")).Eq("false"),
+						ev.Checks.Text("passed").Eq("false"),
 					),
-					keel.DynOf(ev.CompletedAt).Coalesce(ev.UpdatedAt),
+					ev.CompletedAt.Coalesce(ev.UpdatedAt),
 				).
-				Else(keel.DynLit(0).Cast(keel.TypeInt64))).
+				Else(keel.Int64(0))).
 			Where(
 				ev.EvalCaseID.EqCol(c.ID),
 				ev.Status.In(agent.EvaluationStatusCompleted, agent.EvaluationStatusFailed),
@@ -399,9 +399,9 @@ func (r *repository) ListSamplingCases(
 				c.Source,
 				c.Version,
 				c.Trigger,
-				keel.DynOf(c.SubjectType).Coalesce(""),
+				c.SubjectType.Coalesce(""),
 				c.SubjectID,
-				keel.DynOf(lastFailure).Coalesce(0),
+				keel.Int64Of(lastFailure).Coalesce(0),
 			).
 			Where(
 				c.AgentDefinitionID.Eq(req.AgentDefinitionID),

@@ -70,10 +70,10 @@ func shipmentEndpoints(filter []keel.Pred) *keel.Query[*shipment.Shipment] {
 		Where(filter...).
 		Group(s.ID).
 		Pick(
-			keel.DynOf(keel.ArrayAgg(st.LocationID).
+			keel.StringArrayOf(keel.ArrayAgg(st.LocationID).
 				OrderBy(m.Sequence.Asc(), st.Sequence.Asc()).
 				Filter(st.Type.In(shipment.PickupStopTypes()...))).At(1),
-			keel.DynOf(keel.ArrayAgg(st.LocationID).
+			keel.StringArrayOf(keel.ArrayAgg(st.LocationID).
 				OrderBy(m.Sequence.Desc(), st.Sequence.Desc()).
 				Filter(st.Type.In(shipment.DeliveryStopTypes()...))).At(1),
 		)

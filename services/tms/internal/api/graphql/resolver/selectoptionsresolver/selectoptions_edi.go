@@ -45,7 +45,7 @@ func (r *Deps) resolveEDICommunicationProfileSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediCommunicationProfileSelectOptionItem,
 	)
 }
@@ -85,7 +85,7 @@ func (r *Deps) resolveEDIDocumentTypeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediDocumentTypeSelectOptionItem,
 	)
 }
@@ -126,7 +126,7 @@ func (r *Deps) resolveEDITransactionSetSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediTransactionSetSelectOptionItem,
 	)
 }
@@ -166,7 +166,7 @@ func (r *Deps) resolveEDIMappingProfileSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediMappingProfileSelectOptionItem,
 	)
 }
@@ -206,7 +206,7 @@ func (r *Deps) resolveEDIPartnerSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediPartnerSelectOptionItem,
 	)
 }
@@ -253,7 +253,7 @@ func (r *Deps) resolveEDIPartnerDocumentProfileSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediPartnerDocumentProfileSelectOptionItem,
 	)
 }
@@ -299,7 +299,7 @@ func (r *Deps) resolveEDITemplateSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediTemplateSelectOptionItem,
 	)
 }
@@ -341,7 +341,7 @@ func (r *Deps) resolveEDIConnectionSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediConnectionSelectOptionItem,
 	)
 }
@@ -383,7 +383,7 @@ func (r *Deps) resolveEDITransferSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediTransferSelectOptionItemFor(req.TenantInfo.OrgID),
 	)
 }

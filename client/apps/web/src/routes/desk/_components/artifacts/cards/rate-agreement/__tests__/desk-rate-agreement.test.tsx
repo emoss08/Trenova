@@ -151,7 +151,9 @@ function lanePages(live: readonly RateAgreementRule[], retired = 0) {
   return async (_id: string, page: { limit: number; offset: number }) => ({
     results: live.slice(page.offset, page.offset + page.limit),
     count: live.length,
+    countExact: true,
     retired,
+    retiredExact: true,
     limit: page.limit,
     offset: page.offset,
   });
@@ -502,17 +504,37 @@ describe("DeskRateAgreement", () => {
   it("writes a count in the thousands as a number a person reads", async () => {
     service.listLanes.mockImplementation(async () => ({
       results: manyLanes(8),
-      count: 12_500,
+      count: 9_500,
+      countExact: true,
       retired: 0,
+      retiredExact: true,
       limit: 8,
       offset: 0,
     }));
     const { container } = draw();
 
     await waitFor(() =>
-      expect(container.querySelector(".dk-rec-amt")).toHaveTextContent("12,500lanes priced"),
+      expect(container.querySelector(".dk-rec-amt")).toHaveTextContent("9,500lanes priced"),
     );
-    expect(await screen.findByText("8 of 12,500 shown")).toBeInTheDocument();
+    expect(await screen.findByText("8 of 9,500 shown")).toBeInTheDocument();
+  });
+
+  it("says an estimated lane count is approximate", async () => {
+    service.listLanes.mockImplementation(async () => ({
+      results: manyLanes(8),
+      count: 1_250_000,
+      countExact: false,
+      retired: 40_000,
+      retiredExact: false,
+      limit: 8,
+      offset: 0,
+    }));
+    const { container } = draw();
+
+    await waitFor(() =>
+      expect(container.querySelector(".dk-rec-amt")).toHaveTextContent("about 1.3Mlanes priced"),
+    );
+    expect(await screen.findByText("8 of about 1.3M shown · About 40K retired")).toBeInTheDocument();
   });
 
   it("says the lanes could not be read in their own place, and the rest of the card stands", async () => {

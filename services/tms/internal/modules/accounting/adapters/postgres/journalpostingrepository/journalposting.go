@@ -247,9 +247,9 @@ func upsertPeriodBalance(
 			gb.FiscalYearID,
 			gb.FiscalPeriodID,
 		).Set(
-			gb.PeriodDebitMinor.Add(aggregate.debit),
-			gb.PeriodCreditMinor.Add(aggregate.credit),
-			gb.NetChangeMinor.Add(aggregate.net),
+			gb.PeriodDebitMinor.Increment(aggregate.debit),
+			gb.PeriodCreditMinor.Increment(aggregate.credit),
+			gb.NetChangeMinor.Increment(aggregate.net),
 			gb.LastJournalEntryID.ToExpr(gb.LastJournalEntryID.Excluded()),
 		),
 	)
@@ -269,9 +269,9 @@ func updateGLAccountRunningBalance(
 	_, err := gla.Where(gla.ID.Eq(aggregate.glAccountID)).Update(
 		ctx,
 		db,
-		gla.CurrentBalance.Add(aggregate.net),
-		gla.DebitBalance.Add(aggregate.debit),
-		gla.CreditBalance.Add(aggregate.credit),
+		gla.CurrentBalance.Increment(aggregate.net),
+		gla.DebitBalance.Increment(aggregate.debit),
+		gla.CreditBalance.Increment(aggregate.credit),
 		gla.Version.ToExpr(gla.Version),
 	)
 	if err != nil {

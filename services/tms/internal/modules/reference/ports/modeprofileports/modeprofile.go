@@ -19,24 +19,6 @@ type GetModeProfileByIDRequest struct {
 	IncludeRules  bool
 }
 
-type ModeProfileCacheRepository interface {
-	GetActiveProfiles(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-	) ([]*modeprofile.Profile, error)
-
-	SetActiveProfiles(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-		profiles []*modeprofile.Profile,
-	) error
-
-	Invalidate(
-		ctx context.Context,
-		tenantInfo pagination.TenantInfo,
-	) error
-}
-
 type ModeProfileRepository interface {
 	List(
 		ctx context.Context,

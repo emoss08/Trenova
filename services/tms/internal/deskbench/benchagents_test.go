@@ -32,8 +32,9 @@ func (p *pagedDefinitions) List(
 	limit := min(req.Filter.Pagination.Limit, p.pageSize)
 
 	return &pagination.ListResult[*agentdefinition.Definition]{
-		Items: sliceutils.Page(p.all, req.Filter.Pagination.Offset, limit),
-		Total: len(p.all),
+		Items:      sliceutils.Page(p.all, req.Filter.Pagination.Offset, limit),
+		Total:      len(p.all),
+		TotalExact: true,
 	}, nil
 }
 

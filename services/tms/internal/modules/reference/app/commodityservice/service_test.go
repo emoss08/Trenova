@@ -401,8 +401,9 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*commodity.Commodity]{
-		Items: []*commodity.Commodity{newTestEntity()},
-		Total: 1,
+		Items:      []*commodity.Commodity{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &commodityports.ListCommodityRequest{
 		Filter: &pagination.QueryOptions{},
@@ -488,8 +489,9 @@ func TestSelectOptions_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*commodity.Commodity]{
-		Items: []*commodity.Commodity{newTestEntity()},
-		Total: 1,
+		Items:      []*commodity.Commodity{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &commodityports.CommoditySelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{

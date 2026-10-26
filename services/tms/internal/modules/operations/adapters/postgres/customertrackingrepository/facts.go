@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -57,6 +58,23 @@ func (r *factRepository) ListNotifyingTenants(
 			return nil, fmt.Errorf("list organizations with customer status emails: %w", err)
 		}
 		return tenantsOf(rows), nil
+	})
+}
+
+func (r *factRepository) HasNotifyingCustomers(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) (bool, error) {
+	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		p := customertrackingdb.Profiles
+		notifying, err := p.Where(p.NotificationsEnabledAt.IsNotNull()).
+			Cache(resultcache.Settings()...).
+			Exists(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return false, fmt.Errorf("check for customers with status emails: %w", err)
+		}
+		return notifying, nil
 	})
 }
 
@@ -187,7 +205,7 @@ func (r *factRepository) CustomerVisibleHolds(
 				LeftJoin(hr, hr.ID.EqCol(hc.HoldReasonID)).
 				Pick(
 					hc.Type,
-					keel.DynOf(hr.Label).Coalesce(hc.ReasonCode, ""),
+					hr.Label.Coalesce(hc.ReasonCode, ""),
 					hc.StartedAt,
 				).
 				Where(
@@ -302,14 +320,14 @@ func (r *factRepository) Descriptors(
 				Limit(1)
 
 			equipment := et.
-				Pick(keel.DynOf(et.Description).NullIf("").Coalesce(et.Code)).
+				Pick(et.Description.NullIf("").Coalesce(et.Code)).
 				Where(et.ID.EqCol(sp.TrailerTypeID)).
 				Limit(1)
 
 			row, err := keel.IntoOne[descriptorRow](ctx, r.db.Keel(ctx), sp.
 				Pick(
-					keel.DynOf(keel.Scalar(carrierName)).Coalesce(""),
-					keel.DynOf(keel.Scalar(equipment)).Coalesce(""),
+					keel.StringOf(keel.Scalar(carrierName)).Coalesce(""),
+					keel.StringOf(keel.Scalar(equipment)).Coalesce(""),
 				).
 				Where(sp.ID.Eq(shipmentID)))
 			if err != nil {

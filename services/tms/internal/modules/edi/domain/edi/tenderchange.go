@@ -18,11 +18,9 @@ type TenderRecipient struct {
 	ID                       pulid.ID                      `json:"id"                       keel:"id,pk,autoid:editr_"`
 	BusinessUnitID           pulid.ID                      `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
 	SourceOrganizationID     pulid.ID                      `json:"sourceOrganizationId"     keel:"source_organization_id"`
-	SourceBusinessUnitID     pulid.ID                      `json:"sourceBusinessUnitId"     keel:"source_business_unit_id"`
 	SourceShipmentID         pulid.ID                      `json:"sourceShipmentId"         keel:"source_shipment_id"`
 	RecipientKind            TenderRecipientKind           `json:"recipientKind"            keel:"recipient_kind"`
 	RecipientOrganizationID  pulid.ID                      `json:"recipientOrganizationId"  keel:"recipient_organization_id,nullzero"`
-	RecipientBusinessUnitID  pulid.ID                      `json:"recipientBusinessUnitId"  keel:"recipient_business_unit_id,nullzero"`
 	EDIPartnerID             pulid.ID                      `json:"ediPartnerId"             keel:"edi_partner_id,nullzero"`
 	PartnerDocumentProfileID pulid.ID                      `json:"partnerDocumentProfileId" keel:"partner_document_profile_id,nullzero"`
 	CommunicationProfileID   pulid.ID                      `json:"communicationProfileId"   keel:"communication_profile_id,nullzero"`
@@ -64,7 +62,6 @@ type TenderChange struct {
 	ID                      pulid.ID            `json:"id"                      keel:"id,pk,autoid:editcg_"`
 	BusinessUnitID          pulid.ID            `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
 	SourceOrganizationID    pulid.ID            `json:"sourceOrganizationId"    keel:"source_organization_id"`
-	SourceBusinessUnitID    pulid.ID            `json:"sourceBusinessUnitId"    keel:"source_business_unit_id"`
 	SourceShipmentID        pulid.ID            `json:"sourceShipmentId"        keel:"source_shipment_id"`
 	RecipientID             pulid.ID            `json:"recipientId"             keel:"recipient_id"`
 	RecipientKind           TenderRecipientKind `json:"recipientKind"           keel:"recipient_kind"`
@@ -182,9 +179,6 @@ func (r *TenderRecipient) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&r.SourceOrganizationID,
 			validation.Required.Error("Source organization is required"),
 		),
-		validation.Field(&r.SourceBusinessUnitID,
-			validation.Required.Error("Source business unit is required"),
-		),
 		validation.Field(&r.SourceShipmentID,
 			validation.Required.Error("Source shipment is required"),
 		),
@@ -240,9 +234,6 @@ func (c *TenderChange) Validate(multiErr *errortypes.MultiError) {
 		),
 		validation.Field(&c.SourceOrganizationID,
 			validation.Required.Error("Source organization is required"),
-		),
-		validation.Field(&c.SourceBusinessUnitID,
-			validation.Required.Error("Source business unit is required"),
 		),
 		validation.Field(&c.SourceShipmentID,
 			validation.Required.Error("Source shipment is required"),

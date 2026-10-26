@@ -61,16 +61,55 @@ func TestBaseCandidateQuery_ASimulationRelaxesTheServiceWindow(t *testing.T) {
 	assert.Contains(t, args, "rag_sim")
 }
 
-func TestLaneCountQuery_CountsLiveAndRetiredInOnePass(t *testing.T) {
+func TestLaneCountQueries_SplitTheAgreementsRulesIntoLiveAndRetired(t *testing.T) {
 	t.Parallel()
 
-	sql, _ := keeltest.Render(t, laneCountQuery(&rateagreementports.ListRateAgreementLanesRequest{
-		RateAgreementID: "rag_1",
-	}, 1_000))
+	req := &rateagreementports.ListRateAgreementLanesRequest{RateAgreementID: "rag_1"}
+	live, _ := keeltest.Render(t, liveLaneQuery(req, 1_000))
+	retired, _ := keeltest.Render(t, retiredLaneQuery(req, 1_000))
 
-	assert.Contains(t, sql, "count(*) FILTER (WHERE")
+	assert.Contains(t, live, `"rate_agreement_id" = `)
+	assert.NotContains(t, live, "NOT (")
+	assert.Contains(t, retired, `"rate_agreement_id" = `)
+	assert.Contains(t, retired, "NOT (", "retired is every rule that is not live")
 }
 
 func countOf(text, needle string) int {
 	return strings.Count(text, needle)
+}
+
+func TestCappedLaneCounts_CountsEveryAgreementInOneBoundedStatement(t *testing.T) {
+	t.Parallel()
+
+	sql, args := keeltest.Render(t, cappedLaneCounts([]pulid.ID{"ragr_1", "ragr_2"}, 1_000, 100))
+
+	assert.Contains(t, sql, "LEFT JOIN LATERAL")
+	assert.Contains(t, sql, "LIMIT 101", "each agreement reads at most one row past its cap")
+	assert.Contains(t, sql, "GROUP BY")
+	assert.Equal(t, 1, countOf(sql, "count("))
+	assert.Contains(t, args, []string{"ragr_1", "ragr_2"}, "the agreements bind as one array")
+}
+
+func TestLaneCountExactUpTo_SharesTheExactBudgetAcrossTheAgreementsRead(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, int64(10_000), laneCountExactUpTo(1))
+	assert.Equal(t, int64(1_000), laneCountExactUpTo(10))
+	assert.Equal(t, int64(100), laneCountExactUpTo(100))
+	assert.Equal(t, minLaneCountExactUpTo, laneCountExactUpTo(1_000))
+	assert.Equal(t, int64(10_000), laneCountExactUpTo(0))
+}
+
+func TestFirstLanes_ReadsEveryAgreementsFirstLanesInOneStatement(t *testing.T) {
+	t.Parallel()
+
+	sql, args := keeltest.Render(t, firstLanes([]pulid.ID{"ragr_1", "ragr_2"}, 1_000, 50))
+
+	assert.Contains(t, sql, " IN (SELECT ")
+	assert.Contains(t, sql, "CROSS JOIN LATERAL")
+	assert.Contains(t, sql, "LIMIT 50)", "each agreement reads at most first lanes")
+	assert.Contains(t, sql, "LIMIT 100", "the whole read is bounded by agreements times first")
+	assert.Contains(t, sql, `"specificity_score" DESC`)
+	assert.NotContains(t, sql, "count(", "a lane list counts nothing")
+	assert.Contains(t, args, []string{"ragr_1", "ragr_2"})
 }

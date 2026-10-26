@@ -27,7 +27,11 @@ func (f *fakeInvoiceRepo) List(
 ) (*pagination.ListResult[*invoice.Invoice], error) {
 	f.captured = req
 
-	return &pagination.ListResult[*invoice.Invoice]{Items: f.items, Total: len(f.items)}, nil
+	return &pagination.ListResult[*invoice.Invoice]{
+		Items:      f.items,
+		Total:      len(f.items),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeInvoiceRepo) GetByID(

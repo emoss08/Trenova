@@ -5,12 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/narrator"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,14 +21,14 @@ import (
 )
 
 type stubDetector struct {
-	key      string
-	category insight.Category
+	key       string
+	category  insight.Category
 	resources []permission.Resource
 	surfaces  []insight.Surface
-	findings []detector.Finding
-	err      error
-	lastRun  detector.Params
-	runs     int
+	findings  []detector.Finding
+	err       error
+	lastRun   detector.Params
+	runs      int
 }
 
 func (d *stubDetector) Key() string                     { return d.key }
@@ -111,7 +111,11 @@ func (r *stubRepo) List(
 ) (*pagination.ListResult[*insight.Insight], error) {
 	r.lastBrowse = req
 
-	return &pagination.ListResult[*insight.Insight]{Items: r.active, Total: len(r.active)}, r.err
+	return &pagination.ListResult[*insight.Insight]{
+		Items:      r.active,
+		Total:      len(r.active),
+		TotalExact: true,
+	}, r.err
 }
 
 func (r *stubRepo) Restore(
@@ -507,19 +511,19 @@ func TestListActive_RestrictsASurfaceToWhatTheReaderMaySee(t *testing.T) {
 
 	svc := newService(repo, perms,
 		&stubDetector{
-			key:      "unbilled-aging",
+			key:       "unbilled-aging",
 			resources: []permission.Resource{permission.ResourceShipment},
-			surfaces: []insight.Surface{insight.SurfaceAccounting},
+			surfaces:  []insight.Surface{insight.SurfaceAccounting},
 		},
 		&stubDetector{
-			key:      "empty-miles",
+			key:       "empty-miles",
 			resources: []permission.Resource{permission.ResourceShipment},
-			surfaces: []insight.Surface{insight.SurfaceDispatch},
+			surfaces:  []insight.Surface{insight.SurfaceDispatch},
 		},
 		&stubDetector{
-			key:      "credential-expiry",
+			key:       "credential-expiry",
 			resources: []permission.Resource{permission.ResourceWorker},
-			surfaces: []insight.Surface{insight.SurfaceAccounting, insight.SurfaceDispatch},
+			surfaces:  []insight.Surface{insight.SurfaceAccounting, insight.SurfaceDispatch},
 		},
 	)
 

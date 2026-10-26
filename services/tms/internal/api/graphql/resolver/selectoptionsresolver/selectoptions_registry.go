@@ -353,7 +353,7 @@ func equipmentTypeClassesFilter(filters map[string]any) []string {
 
 func selectOptionListConnection[T any](
 	result *pagination.ListResult[T],
-	offset int,
+	page pagination.Info,
 	mapper func(T) selectOptionConnectionItem,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	items := make([]selectOptionConnectionItem, 0, len(result.Items))
@@ -361,7 +361,11 @@ func selectOptionListConnection[T any](
 		items = append(items, mapper(item))
 	}
 
-	return selectOptionConnection(items, result.Total, offset)
+	return selectOptionPage(items, selectOptionTotal{
+		count:       result.Total,
+		exact:       result.TotalExact,
+		hasNextPage: pagination.HasMore(result, page),
+	})
 }
 
 func selectOptionConnection(
@@ -369,8 +373,23 @@ func selectOptionConnection(
 	total int,
 	offset int,
 ) (*gqlmodel.SelectOptionConnection, error) {
-	hasNextPage := offset+len(items) < total
+	return selectOptionPage(items, selectOptionTotal{
+		count:       total,
+		exact:       true,
+		hasNextPage: offset+len(items) < total,
+	})
+}
 
+type selectOptionTotal struct {
+	count       int
+	exact       bool
+	hasNextPage bool
+}
+
+func selectOptionPage(
+	items []selectOptionConnectionItem,
+	total selectOptionTotal,
+) (*gqlmodel.SelectOptionConnection, error) {
 	edges := make([]*gqlmodel.SelectOptionEdge, len(items))
 	for i, item := range items {
 		cursor, err := pagination.EncodePositionCursor(item.cursor)
@@ -386,12 +405,13 @@ func selectOptionConnection(
 	return &gqlmodel.SelectOptionConnection{
 		Edges: edges,
 		PageInfo: base.PageInfo(
-			hasNextPage,
+			total.hasNextPage,
 			base.LastEdgeCursor(edges, func(edge *gqlmodel.SelectOptionEdge) string {
 				return edge.Cursor
 			}),
 		),
-		TotalCount: new(total),
+		TotalCount:      new(total.count),
+		TotalCountExact: total.exact,
 	}, nil
 }
 

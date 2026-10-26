@@ -1,15 +1,15 @@
 package ediservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"context"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -39,7 +39,6 @@ func TestPreviewTenderChanges_NamesTheRecipientsAfterShipmentUpdateReaches(t *te
 		ID:                    pulid.MustNew("etr_"),
 		BusinessUnitID:        buID,
 		SourceOrganizationID:  orgID,
-		SourceBusinessUnitID:  buID,
 		SourceShipmentID:      original.ID,
 		RecipientKind:         edi.TenderRecipientKindInternal,
 		LatestBaselinePayload: baseline,

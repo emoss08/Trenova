@@ -95,11 +95,11 @@ func shipmentRecordsQuery(ids []pulid.ID) *keel.Query[*shipment.Shipment] {
 	return sp.LeftJoinLateral(next).
 		Pick(
 			sp.ID,
-			keel.DynOf(sp.ProNumber).Coalesce(""),
+			sp.ProNumber.Coalesce(""),
 			sp.Status,
 			sp.CustomerID,
-			keel.DynOf(sp.BillToCustomerID).Coalesce(sp.CustomerID),
-			keel.DynOf(nxt.ID).Coalesce(""),
+			sp.BillToCustomerID.Coalesce(sp.CustomerID),
+			nxt.ID.Coalesce(""),
 			nxt.ScheduledWindowStart,
 			carrierIDs,
 		).
@@ -309,7 +309,7 @@ func shipmentFactsQuery(
 		Pick(doc.ID).
 		Where(append(
 			currentDocuments(),
-			keel.DynFunc("upper", dt.Code).Eq(keel.DynFunc("upper", req.PODCode)),
+			dt.Code.Upper().EqExpr(keel.Text(req.PODCode).Upper()),
 		)...))
 	documentTypeIDs := keel.ArrayOf(doc.Pick(doc.DocumentTypeID).
 		Where(append(currentDocuments(), doc.DocumentTypeID.IsNotNull())...).
@@ -321,17 +321,16 @@ func shipmentFactsQuery(
 			rc.Status.Eq(rateconfirmation.StatusConfirmed),
 		)),
 	)
-	rateCons := keel.DynOf(keel.Scalar(casn.Join(smv, smv.ID.EqCol(casn.ShipmentMoveID)).
+	rateCons := keel.JSONBOf(keel.Scalar(casn.Join(smv, smv.ID.EqCol(casn.ShipmentMoveID)).
 		LeftJoin(car, car.ID.EqCol(casn.CarrierID)).
-		Pick(keel.DynFunc("jsonb_agg", keel.DynFunc(
-			"jsonb_build_object",
-			"carrierName", keel.DynOf(car.Name).Coalesce(""),
-			"confirmed", confirmed,
+		Pick(keel.JSONBAgg(keel.JSONBuildObject(
+			keel.Pair("carrierName", car.Name.Coalesce("")),
+			keel.Pair("confirmed", confirmed),
 		)).OrderBy(smv.Sequence.Asc())).
 		Where(
 			smv.ShipmentID.EqCol(sp.ID),
 			casn.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
-		))).Coalesce(keel.DynFunc("jsonb_build_array"))
+		))).Coalesce(keel.JSONBuildArray())
 	openChargeIssues := keel.ArrayOf(bqis.Join(bqi, bqi.ID.EqCol(bqis.ItemID)).
 		Pick(bqis.Code).
 		Where(
@@ -490,10 +489,10 @@ func disputeRecordsQuery(ids []pulid.ID) *keel.Query[*invoice.InvoiceDispute] {
 	return d.Pick(
 		d.ID,
 		d.Status,
-		keel.DynOf(d.Resolution).Coalesce(""),
+		d.Resolution.Coalesce(""),
 		d.CustomerID,
 		d.InvoiceID,
-		keel.DynOf(d.Invoice().Number).Coalesce(""),
+		d.Invoice().Number.Coalesce(""),
 	).Where(d.ID.In(ids...))
 }
 

@@ -35,8 +35,9 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 				req.ServiceTypeID == serviceTypeID
 		})).
 		Return(&pagination.ListResult[*shipmentports.PreviousRateSummary]{
-			Items: []*shipmentports.PreviousRateSummary{{ShipmentID: pulid.MustNew("shp_")}},
-			Total: 1,
+			Items:      []*shipmentports.PreviousRateSummary{{ShipmentID: pulid.MustNew("shp_")}},
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 

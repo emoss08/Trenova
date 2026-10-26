@@ -426,7 +426,7 @@ func carrierSummaryUpdate(
 		c.ID.Eq(req.CarrierID),
 		keel.Or(
 			c.IntelRiskLevel.IsDistinctFrom(req.RiskLevel),
-			keel.DynOf(c.IntelReviewRequired).IsDistinctFrom(req.ReviewRequired),
+			c.IntelReviewRequired.IsDistinctFrom(req.ReviewRequired),
 			c.IntelBlockingCount.IsDistinctFrom(int64(req.BlockingCount)),
 		),
 	)

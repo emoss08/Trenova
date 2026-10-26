@@ -197,16 +197,11 @@ func servedStampQuery() *keel.Query[*ratematrix.RateMatrix] {
 	rm := ratematrixdb.RateMatrixes
 
 	stamps := keel.StringAgg(
-		keel.DynOf(rm.ID).Concat(keel.DynConst("@")).Concat(rm.PublishedVersionNumber),
+		rm.ID.Cat(keel.ConstText("@"), keel.CastText(rm.PublishedVersionNumber)),
 		",",
 	).OrderBy(rm.ID.Asc())
 
-	return rm.Pick(keel.DynFunc(
-		"concat_ws",
-		":",
-		keel.Count(),
-		keel.DynFunc("md5", keel.DynOf(stamps).Coalesce("")),
-	)).
+	return rm.Pick(keel.ConcatWS(":", keel.Count(), keel.StringOf(stamps).Coalesce("").MD5())).
 		Where(servedMatrices()...)
 }
 

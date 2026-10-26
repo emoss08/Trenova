@@ -56,9 +56,10 @@ func documentTemplateConnectionToModel(
 	}
 
 	return &gqlmodel.DocumentTemplateConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -80,9 +81,10 @@ func documentTemplateAssignmentConnectionToModel(
 	}
 
 	return &gqlmodel.DocumentTemplateAssignmentConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

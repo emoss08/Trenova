@@ -251,7 +251,7 @@ func (r *repository) distinctByMessage(
 			).
 			Order(
 				rp.MessageID.Asc(),
-				keel.DynCase().
+				keel.CaseInt64().
 					When(rp.Status.Eq(triage.ReplySent), statusRank(statusRankSent)).
 					When(rp.Status.Eq(triage.ReplySending), statusRank(statusRankSending)).
 					Else(statusRank(statusRankOther)).
@@ -316,6 +316,6 @@ func (r *repository) ThreadKeyForMessageKeys(
 	})
 }
 
-func statusRank(rank int64) keel.DynExpr {
-	return keel.DynLit(rank).Cast(keel.TypeInt64)
+func statusRank(rank int64) keel.Int64Expr {
+	return keel.Int64(rank)
 }

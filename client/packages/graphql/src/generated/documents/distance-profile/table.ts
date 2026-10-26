@@ -2,4 +2,4 @@
 import type { TypedDocumentString, DistanceProfileTableQuery, DistanceProfileTableQueryVariables, DistanceProfileTableRowFieldsFragment } from "../../graphql";
 
 export const DistanceProfileTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"DistanceProfileTableRowFields"}} as unknown as TypedDocumentString<DistanceProfileTableRowFieldsFragment, unknown>;
-export const DistanceProfileTableDocument = {"__meta__":{"kind":"query","name":"DistanceProfileTable","hash":"sha256:c662d2be53498bf094b24c0593f9815cc76f9bb76dfa5b0de3e750eaf3ca15f7"}} as unknown as TypedDocumentString<DistanceProfileTableQuery, DistanceProfileTableQueryVariables>;
+export const DistanceProfileTableDocument = {"__meta__":{"kind":"query","name":"DistanceProfileTable","hash":"sha256:e1700a45ef14beff9f5a96f317af2c4692ef7a7f951d8c6e31578fa609757ef6"}} as unknown as TypedDocumentString<DistanceProfileTableQuery, DistanceProfileTableQueryVariables>;

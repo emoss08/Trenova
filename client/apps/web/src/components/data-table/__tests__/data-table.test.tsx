@@ -260,6 +260,7 @@ describe("DataTable", () => {
 type CursorPage = {
   results: TestRow[];
   totalCount: number | null;
+  totalCountExact?: boolean;
   endCursor: string | null;
 };
 
@@ -275,6 +276,7 @@ function cursorQueryResult(page: CursorPage) {
         hasNextPage: page.endCursor != null,
         endCursor: page.endCursor,
         totalCount: page.totalCount,
+        totalCountExact: page.totalCountExact ?? true,
       },
     },
     isLoading: false,
@@ -310,6 +312,12 @@ const secondPageWithoutTotal: CursorPage = {
   ],
   totalCount: null,
   endCursor: "cursor-page-3",
+};
+
+const estimatedFirstPage: CursorPage = {
+  ...firstPage,
+  totalCount: 1_250_000,
+  totalCountExact: false,
 };
 
 describe("DataTable cursor total count", () => {
@@ -354,6 +362,40 @@ describe("DataTable cursor total count", () => {
     });
 
     expect(screen.getByText("Select all 150 matching")).toBeInTheDocument();
+  });
+
+  it("shows an estimated total as approximate", () => {
+    mockCursorPages({ "": estimatedFirstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    const { container } = renderDataTable();
+
+    expect(container).toHaveTextContent("Showing 1 to 2 of about 1.3M results");
+    expect(container).toHaveTextContent(/Page\s*1\s*of about\s*25K/);
+  });
+
+  it("keeps an estimated total approximate on a later page that omits it", async () => {
+    mockCursorPages({ "": estimatedFirstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    const { container } = renderDataTable();
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Go to next page"));
+    });
+
+    expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
+    expect(container).toHaveTextContent("Showing 51 to 52 of about 1.3M results");
+  });
+
+  it("offers selecting up to the bulk limit when the total is an estimate", () => {
+    mockCursorPages({ "": estimatedFirstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    renderDataTable({ enableRowSelection: true });
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Select all"));
+    });
+
+    expect(screen.getByText("Select all 1,000 matching")).toBeInTheDocument();
   });
 
   it("keeps the remembered total when returning to a first page that omits it", async () => {
@@ -874,6 +916,7 @@ describe("DataTablePagination", () => {
     const view = within(container);
 
     expect(container).toHaveTextContent("Showing 11 to 12 results");
+    expect(container).toHaveTextContent(/Page\s*2/);
     expect(view.queryByLabelText("Go to first page")).not.toBeInTheDocument();
     expect(view.queryByLabelText("Go to last page")).not.toBeInTheDocument();
     expect(view.getByLabelText("Go to next page")).not.toBeDisabled();

@@ -1,9 +1,9 @@
 package fiscalyearservice
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalyearportsmock"
-	"context"
 	"testing"
 	"time"
 
@@ -224,8 +224,9 @@ func TestList_EmptyWithExistingHistoryReturnsEmptyWithoutError(t *testing.T) {
 	}
 
 	emptyResult := &pagination.ListResult[*fiscalyear.FiscalYear]{
-		Items: []*fiscalyear.FiscalYear{},
-		Total: 0,
+		Items:      []*fiscalyear.FiscalYear{},
+		Total:      0,
+		TotalExact: true,
 	}
 
 	fyRepo.EXPECT().List(ctx, req).Return(emptyResult, nil).Once()
@@ -274,8 +275,9 @@ func TestList_EmptyBootstrapsAndReloads(t *testing.T) {
 	}
 
 	emptyResult := &pagination.ListResult[*fiscalyear.FiscalYear]{
-		Items: []*fiscalyear.FiscalYear{},
-		Total: 0,
+		Items:      []*fiscalyear.FiscalYear{},
+		Total:      0,
+		TotalExact: true,
 	}
 	created := &fiscalyear.FiscalYear{
 		ID:             pulid.MustNew("fyr_"),
@@ -285,8 +287,9 @@ func TestList_EmptyBootstrapsAndReloads(t *testing.T) {
 		IsCurrent:      true,
 	}
 	finalResult := &pagination.ListResult[*fiscalyear.FiscalYear]{
-		Items: []*fiscalyear.FiscalYear{created},
-		Total: 1,
+		Items:      []*fiscalyear.FiscalYear{created},
+		Total:      1,
+		TotalExact: true,
 	}
 
 	fyRepo.EXPECT().List(ctx, req).Return(emptyResult, nil).Once()

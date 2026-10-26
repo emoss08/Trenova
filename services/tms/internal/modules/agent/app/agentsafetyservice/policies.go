@@ -104,9 +104,10 @@ func (s *Service) ListToolPolicies(
 	}
 
 	out := &agentports.AgentToolPolicyPage{
-		Edges:       make([]agentports.AgentToolPolicyEdge, 0, len(page.Items)),
-		HasNextPage: page.HasNextPage,
-		TotalCount:  page.TotalCount,
+		Edges:           make([]agentports.AgentToolPolicyEdge, 0, len(page.Items)),
+		HasNextPage:     page.HasNextPage,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	for idx, row := range page.Items {
 		edge := agentports.AgentToolPolicyEdge{

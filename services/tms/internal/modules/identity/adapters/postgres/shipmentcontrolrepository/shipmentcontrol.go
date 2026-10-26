@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -41,7 +42,8 @@ func (r *repository) Get(
 	req tenantports.GetShipmentControlRequest,
 ) (*tenant.ShipmentControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.ShipmentControl, error) {
-		entity, err := tenantdb.ShipmentControls.Query().One(ctx, r.db.Keel(ctx))
+		entity, err := tenantdb.ShipmentControls.Cache(resultcache.Settings()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, shipmentControlErrors.Map(err, req.TenantInfo.OrgID.String())
 		}

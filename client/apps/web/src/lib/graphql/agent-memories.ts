@@ -17,6 +17,7 @@ import {
 } from "@trenova/graphql/generated/graphql";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { defineDataTableGraphQLConfig } from "@trenova/shared/lib/graphql/data-table";
+import { rowTotalOf, type RowTotal } from "@trenova/shared/lib/row-total";
 import type { DataTableConfigRow } from "@trenova/shared/types/data-table";
 
 export const agentMemoryTableGraphQLConfig = defineDataTableGraphQLConfig({
@@ -112,7 +113,7 @@ export async function fetchTaintingAgentMemories(options?: {
 /** How many memories agents are currently reading, for the rail. */
 export async function fetchActiveAgentMemoryCount(options?: {
   signal?: AbortSignal;
-}): Promise<number> {
+}): Promise<RowTotal> {
   return countAgentMemories([{ field: "status", operator: "eq", value: "Active" }], options);
 }
 
@@ -120,13 +121,13 @@ export const agentMemoryTotalQueryKey = [AGENT_MEMORY_LIST_KEY, "total"] as cons
 
 /** How many memories the organization keeps in any state, to tell an empty list apart. */
 export async function fetchAgentMemoryTotal(options?: { signal?: AbortSignal }): Promise<number> {
-  return countAgentMemories([], options);
+  return (await countAgentMemories([], options)).count;
 }
 
 async function countAgentMemories(
   fieldFilters: { field: string; operator: string; value: string }[],
   options?: { signal?: AbortSignal },
-): Promise<number> {
+): Promise<RowTotal> {
   const data = await requestGraphQL({
     document: AgentMemoryCountDocument,
     operationName: "AgentMemoryCount",
@@ -134,7 +135,7 @@ async function countAgentMemories(
     signal: options?.signal,
   });
 
-  return data.agentMemories.totalCount ?? 0;
+  return rowTotalOf(data.agentMemories.totalCount, data.agentMemories.totalCountExact);
 }
 
 /**

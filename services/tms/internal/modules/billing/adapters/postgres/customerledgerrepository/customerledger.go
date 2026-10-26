@@ -57,7 +57,7 @@ func (r *repository) SumBalanceAsOf(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
 		cle := customerledgerdb.CustomerLedgerEntries
 		total, err := keel.IntoOne[int64](ctx, r.db.Keel(ctx), cle.
-			Pick(keel.DynOf(keel.Sum(cle.AmountMinor)).Coalesce(0)).
+			Pick(keel.NumericOf(cle.AmountMinor.Sum()).Coalesce(0)).
 			Where(cle.TransactionDate.Lte(req.AsOfDate)))
 		if err != nil {
 			r.l.Error("failed to sum customer ledger balance", zap.Error(err))
@@ -71,8 +71,8 @@ func (r *repository) SumBalanceAsOf(
 func nonRecourseFactoredEntry(cle *customerledgerdb.CustomerLedgerEntriesTable) keel.Pred {
 	inv := invoicedb.Invoices.As("inv")
 	return keel.Exists(inv.Where(
-		inv.ID.EqCol(keel.DynOf(cle.RelatedInvoiceID).Coalesce(
-			keel.DynCase().When(cle.SourceObjectType.Eq("Invoice"), cle.SourceObjectID).End(),
+		inv.ID.EqCol(cle.RelatedInvoiceID.Coalesce(
+			keel.CaseString().When(cle.SourceObjectType.Eq("Invoice"), cle.SourceObjectID).End(),
 		)),
 		receivablesql.SoldWithoutRecourse(inv),
 	))
@@ -94,7 +94,7 @@ func (r *repository) SumCustomerBalances(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int64, error) {
 		cle := customerledgerdb.CustomerLedgerEntries
 		rows, err := keel.Into[customerBalance](ctx, r.db.Keel(ctx), cle.
-			Pick(cle.CustomerID, keel.DynOf(keel.Sum(cle.AmountMinor)).Coalesce(0)).
+			Pick(cle.CustomerID, keel.NumericOf(cle.AmountMinor.Sum()).Coalesce(0)).
 			Where(
 				cle.CustomerID.In(req.CustomerIDs...),
 				keel.When(req.ExcludeNonRecourseFactored, keel.Not(nonRecourseFactoredEntry(cle))),

@@ -4,7 +4,6 @@ package iftarepository_test
 
 import (
 	"context"
-	"errors"
 
 	"testing"
 	"time"
@@ -22,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/internal/testutil/cachetest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -40,6 +40,7 @@ type fixture struct {
 	ctxA       context.Context
 	ctxB       context.Context
 	db         *keel.DB
+	dsn        string
 	repo       iftaports.IFTARepository
 	tenantA    pagination.TenantInfo
 	tenantB    pagination.TenantInfo
@@ -57,7 +58,7 @@ type fixture struct {
 func setup(t *testing.T) *fixture {
 	t.Helper()
 
-	ctx, db, cleanup := seededtest.SetupTestDB(t)
+	ctx, db, dsn, cleanup := seededtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
 	orgs, err := keel.QueryAll(
@@ -78,10 +79,10 @@ func setup(t *testing.T) *fixture {
 		ctxA: dbscope.WithTenant(ctx, tenantA.DBTenant()),
 		ctxB: dbscope.WithTenant(ctx, tenantB.DBTenant()),
 		db:   db,
+		dsn:  dsn,
 		repo: iftarepository.New(iftarepository.Params{
-			DB:                postgres.NewTestConnection(db),
-			Logger:            zap.NewNop(),
-			JurisdictionCache: &FakeJurisdictionCache{},
+			DB:     postgres.NewTestConnection(db),
+			Logger: zap.NewNop(),
 		}),
 		tenantA: tenantA,
 		tenantB: tenantB,
@@ -786,43 +787,36 @@ func TestJurisdictions_LookupByCode(t *testing.T) {
 	}
 }
 
-func TestListJurisdictions_ColdCacheLoadsOnceThenServesFromCache(t *testing.T) {
+func TestJurisdictionLookupsShareOneCachedCatalogRead(t *testing.T) {
 	f := setup(t)
 
-	cache := &FakeJurisdictionCache{}
+	cached := cachetest.Open(t, f.ctx, f.dsn)
 	repo := iftarepository.New(iftarepository.Params{
-		DB:                postgres.NewTestConnection(f.db),
-		Logger:            zap.NewNop(),
-		JurisdictionCache: cache,
+		DB:     postgres.NewTestConnection(cached),
+		Logger: zap.NewNop(),
 	})
 
-	first, err := repo.ListJurisdictions(f.ctxA, &iftaports.ListJurisdictionsRequest{})
-	require.NoError(t, err)
-	require.NotEmpty(t, first)
-	assert.Equal(t, 1, cache.setCalls, "a cold read must populate the cache")
-
-	second, err := repo.GetJurisdictionByCode(f.ctxA, "us", " tx ")
-	require.NoError(t, err)
-	assert.Equal(t, "TX", second.Code)
-	assert.Equal(t, 1, cache.setCalls, "a warm cache must not be rewritten")
-}
-
-func TestListJurisdictions_CacheFailureFallsThroughToPostgres(t *testing.T) {
-	f := setup(t)
-
-	cache := &FakeJurisdictionCache{
-		getErr: errors.New("redis is down"),
-		setErr: errors.New("redis is down"),
-	}
-	repo := iftarepository.New(iftarepository.Params{
-		DB:                postgres.NewTestConnection(f.db),
-		Logger:            zap.NewNop(),
-		JurisdictionCache: cache,
+	var all []*ifta.Jurisdiction
+	cachetest.RequireMiss(t, cached, func() error {
+		var err error
+		all, err = repo.ListJurisdictions(f.ctxA, &iftaports.ListJurisdictionsRequest{})
+		return err
 	})
+	require.NotEmpty(t, all)
 
-	out, err := repo.ListJurisdictions(f.ctxA, &iftaports.ListJurisdictionsRequest{})
-	require.NoError(t, err)
+	var texas *ifta.Jurisdiction
+	cachetest.RequireHit(t, cached, func() error {
+		var err error
+		texas, err = repo.GetJurisdictionByCode(f.ctxA, "us", " tx ")
+		return err
+	})
+	assert.Equal(t, "TX", texas.Code)
 
-	assert.NotEmpty(t, out)
-	assert.Equal(t, 1, cache.setCalls, "a failed Set must not fail the read")
+	cachetest.RequireHit(t, cached, func() error {
+		found, err := repo.GetJurisdictionsByIDs(f.ctxA, []pulid.ID{texas.ID})
+		if err == nil {
+			assert.Len(t, found, 1)
+		}
+		return err
+	})
 }

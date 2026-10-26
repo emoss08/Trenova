@@ -48,9 +48,10 @@ func (s *Service) ListAgentTools(
 	}
 
 	out := &agentports.AgentToolSafetyPage{
-		Edges:       make([]agentports.AgentToolSafetyEdge, 0, len(page.Items)),
-		HasNextPage: page.HasNextPage,
-		TotalCount:  page.TotalCount,
+		Edges:           make([]agentports.AgentToolSafetyEdge, 0, len(page.Items)),
+		HasNextPage:     page.HasNextPage,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	for idx, row := range page.Items {
 		out.Edges = append(out.Edges, agentports.AgentToolSafetyEdge{

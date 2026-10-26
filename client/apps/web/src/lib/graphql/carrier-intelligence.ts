@@ -76,6 +76,7 @@ export type CarrierIntelRuleDefinition = CarrierIntelSettings["carrierIntelRuleC
 export type CarrierIntelEventPage = {
   events: CarrierIntelEvent[];
   totalCount: number | null;
+  totalCountExact: boolean;
   hasNextPage: boolean;
   endCursor: string | null;
 };
@@ -215,6 +216,7 @@ export async function fetchCarrierIntelEvents(
   return {
     events: connection.edges.map((edge) => edge.node),
     totalCount: connection.totalCount,
+    totalCountExact: connection.totalCount == null || connection.totalCountExact !== false,
     hasNextPage: connection.pageInfo.hasNextPage,
     endCursor: connection.pageInfo.endCursor,
   };

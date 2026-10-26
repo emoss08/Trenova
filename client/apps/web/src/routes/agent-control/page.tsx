@@ -2,6 +2,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { lazyComponent } from "@/lib/lazy-component";
 import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
+import type { RowTotal } from "@trenova/shared/lib/row-total";
 import { Operation, Resource } from "@trenova/shared/types/permission";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryState } from "nuqs";
@@ -41,6 +42,8 @@ import { agentExtension } from "@/lib/queries/agent-extension";
 import { agentQuality } from "@/lib/queries/agent-quality";
 import { aiAudit } from "@/lib/queries/ai-audit";
 import { aiRetrieval } from "@/lib/queries/ai-retrieval";
+
+const NO_TOTAL: RowTotal = { count: 0, exact: true };
 
 const overviewModule = lazyComponent(
   () => import("./_components/overview/overview-tab"),
@@ -188,9 +191,9 @@ export function AgentControlPage() {
               providersTotal: stats.providersTotal,
               agentsEnabled: stats.counts?.agentsEnabled ?? 0,
               agentsTotal: stats.counts?.agentsTotal ?? 0,
-              pendingProposals: stats.counts?.pendingProposals ?? 0,
-              runsLast24h: stats.counts?.runsLast24h ?? 0,
-              memoriesActive: stats.counts?.memoriesActive ?? 0,
+              pendingProposals: stats.counts?.pendingProposals ?? NO_TOTAL,
+              runsLast24h: stats.counts?.runsLast24h ?? NO_TOTAL,
+              memoriesActive: stats.counts?.memoriesActive ?? NO_TOTAL,
               extensionsOn,
               extensionsTotal: extensionItems?.length ?? 0,
               qualityRegressions,
@@ -222,9 +225,9 @@ export function AgentControlPage() {
               providersTotal: stats.providersTotal,
               agentsEnabled: stats.counts?.agentsEnabled ?? 0,
               agentsTotal: stats.counts?.agentsTotal ?? 0,
-              pendingProposals: stats.counts?.pendingProposals ?? 0,
-              runsLast24h: stats.counts?.runsLast24h ?? 0,
-              memoriesActive: stats.counts?.memoriesActive ?? 0,
+              pendingProposals: stats.counts?.pendingProposals ?? NO_TOTAL,
+              runsLast24h: stats.counts?.runsLast24h ?? NO_TOTAL,
+              memoriesActive: stats.counts?.memoriesActive ?? NO_TOTAL,
               extensionsOn,
               extensionsTotal: extensionItems?.length ?? 0,
               qualityRegressions,

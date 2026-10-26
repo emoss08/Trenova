@@ -645,9 +645,10 @@ func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) *keel.Query[*watch
 	switch {
 	case req.BeforeID.IsNil():
 	case req.OrderByDue:
-		before = keel.DynRow(dueSort, it.ID).Gt(keel.DynRow(req.BeforeDueAt, req.BeforeID.String()))
+		before = keel.Tuple(dueSort, it.ID).Gt(keel.Tuple(req.BeforeDueAt, req.BeforeID.String()))
 	case req.BeforeOccurredAt > 0:
-		before = keel.DynRow(it.OccurredAt, it.ID).Lt(keel.DynRow(req.BeforeOccurredAt, req.BeforeID.String()))
+		before = keel.Tuple(it.OccurredAt, it.ID).
+			Lt(keel.Tuple(req.BeforeOccurredAt, req.BeforeID.String()))
 	}
 
 	q := it.Where(
@@ -670,8 +671,8 @@ func listQuery(req *watchtowerports.ListWatchtowerItemsQuery) *keel.Query[*watch
 	return q.Limit(limit)
 }
 
-func dueSortExpr() keel.Expr {
-	return keel.DynOf(watchtowerdb.Items.DueAt).Coalesce(keel.DynConst(watchtower.NoDueSortKey))
+func dueSortExpr() keel.Int64Expr {
+	return watchtowerdb.Items.DueAt.Coalesce(keel.ConstInt64(watchtower.NoDueSortKey))
 }
 
 type countTotals struct {
@@ -811,7 +812,7 @@ func (r *repository) SetCursor(
 		c := watchtowerdb.Cursors
 		if _, err := c.Upsert(ctx, db, []*watchtower.Cursor{cursor},
 			keel.OnConflict(c.UserID, c.BusinessUnitID, c.OrganizationID).Set(
-				c.SeenAt.ToExpr(keel.DynFunc("greatest", c.SeenAt, c.SeenAt.Excluded())),
+				c.SeenAt.ToExpr(c.SeenAt.Greatest(keel.Int64Of(c.SeenAt.Excluded()))),
 			),
 		); err != nil {
 			return nil, fmt.Errorf("set watchtower cursor: %w", err)

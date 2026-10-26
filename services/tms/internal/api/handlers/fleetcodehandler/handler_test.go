@@ -420,8 +420,9 @@ func TestFleetCodeHandler_SelectOptions_Success(t *testing.T) {
 	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*fleetcode.FleetCode]{
-			Items: []*fleetcode.FleetCode{},
-			Total: 0,
+			Items:      []*fleetcode.FleetCode{},
+			Total:      0,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupFleetCodeHandler(t, repo)

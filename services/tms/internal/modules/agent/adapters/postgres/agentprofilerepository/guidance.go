@@ -84,16 +84,16 @@ func (r *guidanceRepository) List(
 				keel.When(!req.IncludeRetired, g.Status.In(openGuidanceStatuses()...)),
 			).
 			Order(
-				keel.DynCase().
+				keel.CaseInt64().
 					When(
 						g.Status.Eq(agentprofile.GuidanceStatusActive),
-						keel.DynLit(0),
+						keel.Int64(0),
 					).
 					When(
 						g.Status.Eq(agentprofile.GuidanceStatusSuggested),
-						keel.DynLit(1),
+						keel.Int64(1),
 					).
-					Else(keel.DynLit(2)).
+					Else(keel.Int64(2)).
 					Asc(),
 				g.CreatedAt.Desc(),
 				g.ID.Desc(),

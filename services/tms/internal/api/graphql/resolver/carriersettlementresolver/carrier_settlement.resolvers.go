@@ -469,8 +469,9 @@ func (r *QueryResolver) CarrierInvoiceMatches(ctx context.Context, status *carri
 		return nil, err
 	}
 	return &gqlmodel.CarrierInvoiceMatchList{
-		Items:      result.Items,
-		TotalCount: result.Total,
+		Items:           result.Items,
+		TotalCount:      result.Total,
+		TotalCountExact: result.TotalExact,
 	}, nil
 }
 
@@ -494,8 +495,9 @@ func (r *QueryResolver) EDICarrierInvoices(ctx context.Context, reconciliationSt
 		return nil, err
 	}
 	return &gqlmodel.EDICarrierInvoiceList{
-		Items:      result.Items,
-		TotalCount: result.Total,
+		Items:           result.Items,
+		TotalCount:      result.Total,
+		TotalCountExact: result.TotalExact,
 	}, nil
 }
 

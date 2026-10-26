@@ -560,6 +560,7 @@ func All() []*schema.Table {
 		driverpaydb.RecurringEarningsSchema(),
 		recurringshipmentdb.RecurringShipmentRunsSchema(),
 		recurringshipmentdb.RecurringShipmentsSchema(),
+		reportdb.ReportCatalogVersionsSchema(),
 		reportdb.DashboardsSchema(),
 		reportdb.ReportDefinitionRevisionsSchema(),
 		reportdb.ReportDefinitionsSchema(),

@@ -596,8 +596,9 @@ func TestList_Success(t *testing.T) {
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
 	expected := &pagination.ListResult[*audit.Entry]{
-		Items: []*audit.Entry{{ID: pulid.MustNew("ae_")}},
-		Total: 1,
+		Items:      []*audit.Entry{{ID: pulid.MustNew("ae_")}},
+		Total:      1,
+		TotalExact: true,
 	}
 
 	req := &auditports.ListAuditEntriesRequest{
@@ -653,8 +654,9 @@ func TestList_NormalizesNumericOperationFilter(t *testing.T) {
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
 	expected := &pagination.ListResult[*audit.Entry]{
-		Items: []*audit.Entry{{ID: pulid.MustNew("ae_")}},
-		Total: 1,
+		Items:      []*audit.Entry{{ID: pulid.MustNew("ae_")}},
+		Total:      1,
+		TotalExact: true,
 	}
 
 	req := &auditports.ListAuditEntriesRequest{
@@ -692,8 +694,9 @@ func TestList_NormalizesNumericOperationFilterGroupValues(t *testing.T) {
 	srv := newTestService(repo, bufferRepo, &noopRealtimeService{})
 
 	expected := &pagination.ListResult[*audit.Entry]{
-		Items: []*audit.Entry{{ID: pulid.MustNew("ae_")}},
-		Total: 1,
+		Items:      []*audit.Entry{{ID: pulid.MustNew("ae_")}},
+		Total:      1,
+		TotalExact: true,
 	}
 
 	req := &auditports.ListAuditEntriesRequest{
@@ -743,8 +746,9 @@ func TestListByResourceID_Success(t *testing.T) {
 
 	resourceID := pulid.MustNew("res_")
 	expected := &pagination.ListResult[*audit.Entry]{
-		Items: []*audit.Entry{{ID: pulid.MustNew("ae_")}},
-		Total: 1,
+		Items:      []*audit.Entry{{ID: pulid.MustNew("ae_")}},
+		Total:      1,
+		TotalExact: true,
 	}
 
 	req := &auditports.ListByResourceIDRequest{

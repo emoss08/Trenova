@@ -348,7 +348,8 @@ func TestDocumentHandler_List_Success(t *testing.T) {
 				ResourceType:   "trailer",
 			},
 		},
-		Total: 1,
+		Total:      1,
+		TotalExact: true,
 	}, nil)
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
@@ -374,8 +375,9 @@ func TestDocumentHandler_List_WithFilters(t *testing.T) {
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*document.Document]{
-		Items: []*document.Document{},
-		Total: 0,
+		Items:      []*document.Document{},
+		Total:      0,
+		TotalExact: true,
 	}, nil)
 
 	deps := setupHandler(t, repo, &mockStorageClient{})
@@ -1888,8 +1890,9 @@ func TestDocumentHandler_List_WithResourceIDFilter(t *testing.T) {
 
 	repo := documentportsmock.NewMockDocumentRepository(t)
 	repo.On("List", mock.Anything, mock.Anything).Return(&pagination.ListResult[*document.Document]{
-		Items: []*document.Document{},
-		Total: 0,
+		Items:      []*document.Document{},
+		Total:      0,
+		TotalExact: true,
 	}, nil)
 
 	deps := setupHandler(t, repo, &mockStorageClient{})

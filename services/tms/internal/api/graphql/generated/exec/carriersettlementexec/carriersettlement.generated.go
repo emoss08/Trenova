@@ -295,6 +295,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierCostEventConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "CarrierCostEventEdge", Fields: []*gqlexec.Field{
 			{
@@ -427,7 +437,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild6,
+				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.InvoiceMatch)
 					return obj.Status, nil
@@ -437,7 +447,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "matchedVia",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.InvoiceMatch)
 					return obj.MatchedVia, nil
@@ -595,6 +605,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierInvoiceMatchList)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "CarrierLedgerEntry", Fields: []*gqlexec.Field{
 			{
@@ -640,7 +660,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "entryType",
 				NonNull:  true,
-				ChildErr: errNoChild8,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.LedgerEntry)
 					return obj.EntryType, nil
@@ -819,7 +839,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild9,
+				ChildErr: errNoChild10,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
 					return obj.Status, nil
@@ -910,7 +930,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "exchangeRate",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild10,
+				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
 					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").ExchangeRate(ctx, obj)
@@ -930,7 +950,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "paidExchangeRate",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild10,
+				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlement)
 					return gqlexec.Resolver[resolverCarrierSettlement](ec, "CarrierSettlement").PaidExchangeRate(ctx, obj)
@@ -1284,7 +1304,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild11,
+				ChildErr: errNoChild12,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CarrierSettlementBatch)
 					return obj.Status, nil
@@ -1499,6 +1519,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierSettlementBatchConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "CarrierSettlementBatchEdge", Fields: []*gqlexec.Field{
 			{
@@ -1555,6 +1585,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.CarrierSettlementConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "CarrierSettlementControl", Fields: []*gqlexec.Field{
 			{
@@ -1590,7 +1630,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payTrigger",
 				NonNull:  true,
-				ChildErr: errNoChild12,
+				ChildErr: errNoChild13,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.CarrierSettlementControl)
 					return obj.PayTrigger, nil
@@ -1600,7 +1640,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "payPeriodFrequency",
 				NonNull:  true,
-				ChildErr: errNoChild13,
+				ChildErr: errNoChild14,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.CarrierSettlementControl)
 					return obj.PayPeriodFrequency, nil
@@ -1630,7 +1670,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoGenerateBatches",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.CarrierSettlementControl)
 					return obj.AutoGenerateBatches, nil
@@ -1640,7 +1680,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoPostOnApprove",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.CarrierSettlementControl)
 					return obj.AutoPostOnApprove, nil
@@ -1660,7 +1700,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoMatchInboundInvoices",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.CarrierSettlementControl)
 					return obj.AutoMatchInboundInvoices, nil
@@ -1670,7 +1710,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "autoAcceptWithinTolerance",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.CarrierSettlementControl)
 					return obj.AutoAcceptWithinTolerance, nil
@@ -1680,7 +1720,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "holdUntilInvoiceMatched",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*tenant.CarrierSettlementControl)
 					return obj.HoldUntilInvoiceMatched, nil
@@ -1921,7 +1961,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "manual",
 				NonNull:  true,
-				ChildErr: errNoChild14,
+				ChildErr: errNoChild6,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*carriersettlement.CostGroup)
 					return obj.Manual, nil
@@ -2284,7 +2324,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "totalAmount",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild10,
+				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*edi.CarrierInvoice)
 					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").TotalAmount(ctx, obj)
@@ -2295,7 +2335,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "expectedAmount",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild10,
+				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*edi.CarrierInvoice)
 					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").ExpectedAmount(ctx, obj)
@@ -2306,7 +2346,7 @@ var Shard = &gqlexec.Shard{
 				Name:       "varianceAmount",
 				IsResolver: true,
 				Concurrent: true,
-				ChildErr:   errNoChild10,
+				ChildErr:   errNoChild11,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*edi.CarrierInvoice)
 					return gqlexec.Resolver[resolverEdiCarrierInvoice](ec, "EdiCarrierInvoice").VarianceAmount(ctx, obj)
@@ -2408,6 +2448,16 @@ var Shard = &gqlexec.Shard{
 					return obj.TotalCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.EDICarrierInvoiceList)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
 		{Object: "Mutation", Fields: []*gqlexec.Field{
@@ -2878,15 +2928,15 @@ var (
 	errNoChild3  = errors.New("field of type Timestamp does not have child fields")
 	errNoChild4  = errors.New("field of type Int does not have child fields")
 	errNoChild5  = errors.New("field of type String does not have child fields")
-	errNoChild6  = errors.New("field of type CarrierInvoiceMatchStatus does not have child fields")
-	errNoChild7  = errors.New("field of type CarrierInvoiceMatchVia does not have child fields")
-	errNoChild8  = errors.New("field of type CarrierLedgerEntryType does not have child fields")
-	errNoChild9  = errors.New("field of type CarrierSettlementStatus does not have child fields")
-	errNoChild10 = errors.New("field of type Decimal does not have child fields")
-	errNoChild11 = errors.New("field of type CarrierSettlementBatchStatus does not have child fields")
-	errNoChild12 = errors.New("field of type SettlementPayTrigger does not have child fields")
-	errNoChild13 = errors.New("field of type PayPeriodFrequency does not have child fields")
-	errNoChild14 = errors.New("field of type Boolean does not have child fields")
+	errNoChild6  = errors.New("field of type Boolean does not have child fields")
+	errNoChild7  = errors.New("field of type CarrierInvoiceMatchStatus does not have child fields")
+	errNoChild8  = errors.New("field of type CarrierInvoiceMatchVia does not have child fields")
+	errNoChild9  = errors.New("field of type CarrierLedgerEntryType does not have child fields")
+	errNoChild10 = errors.New("field of type CarrierSettlementStatus does not have child fields")
+	errNoChild11 = errors.New("field of type Decimal does not have child fields")
+	errNoChild12 = errors.New("field of type CarrierSettlementBatchStatus does not have child fields")
+	errNoChild13 = errors.New("field of type SettlementPayTrigger does not have child fields")
+	errNoChild14 = errors.New("field of type PayPeriodFrequency does not have child fields")
 )
 
 func field_Mutation_generateCarrierSettlementBatch_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {

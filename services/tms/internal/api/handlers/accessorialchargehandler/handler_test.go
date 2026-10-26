@@ -1,19 +1,19 @@
 package accessorialchargehandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialchargehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -86,7 +86,8 @@ func TestAccessorialChargeHandler_List_Success(t *testing.T) {
 					Status:         domaintypes.StatusActive,
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupAccessorialChargeHandler(t, repo)
@@ -131,8 +132,9 @@ func TestAccessorialChargeHandler_List_WithPagination(t *testing.T) {
 			return req.Filter.Pagination.Limit == requestedLimit+1
 		},
 	)).Return(&pagination.ListResult[*accessorialcharge.AccessorialCharge]{
-		Items: items,
-		Total: 50,
+		Items:      items,
+		Total:      50,
+		TotalExact: true,
 	}, nil)
 
 	handler := setupAccessorialChargeHandler(t, repo)
@@ -435,7 +437,8 @@ func TestAccessorialChargeHandler_SelectOptions_Success(t *testing.T) {
 					Code: "ACC01",
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupAccessorialChargeHandler(t, repo)

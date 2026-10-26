@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
@@ -45,9 +46,9 @@ func New(p Params) insightports.InsightRepository {
 
 func severityRank() keel.Expr {
 	severity := insightdb.Insights.Severity
-	rank := func(n int64) keel.DynExpr { return keel.DynLit(n).Cast(keel.TypeInt64) }
+	rank := keel.Int64
 
-	return keel.DynCase().
+	return keel.CaseInt64().
 		When(severity.Eq(insight.SeverityCritical), rank(3)).
 		When(severity.Eq(insight.SeverityWarning), rank(2)).
 		When(severity.Eq(insight.SeverityInfo), rank(1)).
@@ -106,8 +107,8 @@ func (r *repository) List(
 		func(ctx context.Context) (*pagination.ListResult[*insight.Insight], error) {
 			if len(req.AllowedDetectorKeys) == 0 {
 				return &pagination.ListResult[*insight.Insight]{
-					Items: []*insight.Insight{},
-					Total: 0,
+					Items:      []*insight.Insight{},
+					TotalExact: true,
 				}, nil
 			}
 
@@ -116,14 +117,14 @@ func (r *repository) List(
 
 			var (
 				entities []*insight.Insight
-				total    int64
+				total    keel.RowCount
 			)
 			if err := keel.Batch(ctx, r.db.Keel(ctx),
 				keel.ListInto(
 					filtered.Clone().Order(urgentFirst()...).Limit(limit).Offset(offset),
 					&entities,
 				),
-				keel.CountInto(filtered, &total),
+				keel.CountEstimateInto(filtered, pagination.ExactTotalUpTo, &total),
 			); err != nil {
 				r.l.Error("failed to scan and count insights",
 					zap.String("operation", "List"),
@@ -135,7 +136,7 @@ func (r *repository) List(
 				entities = []*insight.Insight{}
 			}
 
-			return &pagination.ListResult[*insight.Insight]{Items: entities, Total: int(total)}, nil
+			return listquery.Result(entities, total), nil
 		},
 	)
 }

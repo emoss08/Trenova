@@ -108,3 +108,70 @@ func TestBatchGroupFunc_RepositoryErrorFillsValidResults(t *testing.T) {
 	require.Len(t, errs, 1)
 	require.ErrorIs(t, errs[0], repoErr)
 }
+
+func TestBatchFirstFunc_ReadsEachWindowOnceForEveryParentInIt(t *testing.T) {
+	t.Parallel()
+
+	a := pulid.MustNew("ragr_")
+	b := pulid.MustNew("ragr_")
+	type call struct {
+		ids   []pulid.ID
+		first int
+	}
+	var calls []call
+	batch := batchFirstFunc[string](
+		func(_ context.Context, ids []pulid.ID, first int) (map[pulid.ID][]string, error) {
+			calls = append(calls, call{ids: ids, first: first})
+			rows := map[pulid.ID][]string{a: {"a1", "a2"}}
+			if first == 1 {
+				rows = map[pulid.ID][]string{a: {"a1"}}
+			}
+			return rows, nil
+		},
+	)
+
+	values, errs := batch(t.Context(), []string{
+		firstKey(a.String(), 2),
+		firstKey(b.String(), 2),
+		firstKey(a.String(), 1),
+		firstKey(a.String(), 2),
+		"2:bad",
+		"x:" + a.String(),
+	})
+
+	assert.Equal(
+		t,
+		[]call{{ids: []pulid.ID{a, b}, first: 2}, {ids: []pulid.ID{a}, first: 1}},
+		calls,
+		"one read per first, every parent of that first in it, and different firsts never mixed",
+	)
+	require.NoError(t, errs[0])
+	assert.Equal(t, []string{"a1", "a2"}, values[0])
+	require.NoError(t, errs[1])
+	assert.Equal(t, []string{}, values[1], "a parent with no rows reads as an empty list")
+	assert.Equal(t, []string{"a1"}, values[2])
+	assert.Equal(t, values[0], values[3])
+	require.Error(t, errs[4])
+	require.Error(t, errs[5])
+}
+
+func TestBatchFirstFunc_AFailedWindowFailsOnlyItsKeys(t *testing.T) {
+	t.Parallel()
+
+	a := pulid.MustNew("ragr_")
+	readErr := errors.New("read failed")
+	batch := batchFirstFunc[string](
+		func(_ context.Context, _ []pulid.ID, first int) (map[pulid.ID][]string, error) {
+			if first == 5 {
+				return nil, readErr
+			}
+			return map[pulid.ID][]string{a: {"a1"}}, nil
+		},
+	)
+
+	values, errs := batch(t.Context(), []string{firstKey(a.String(), 5), firstKey(a.String(), 1)})
+
+	require.ErrorIs(t, errs[0], readErr)
+	require.NoError(t, errs[1])
+	assert.Equal(t, []string{"a1"}, values[1])
+}

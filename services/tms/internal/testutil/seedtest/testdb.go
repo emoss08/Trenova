@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/keel/migrate"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/keeltables"
+	"github.com/emoss08/trenova/internal/testutil/shapetest"
 	"github.com/emoss08/trenova/schema/migrations"
 	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
@@ -100,13 +101,14 @@ func chdirToServiceRoot(t *testing.T) {
 	t.Fatal("could not find TMS service root directory")
 }
 
-func openDB(dsn string, maxOpen int) (*keel.DB, error) {
+func openDB(dsn string, maxOpen int, observers []keel.Observer) (*keel.DB, error) {
 	db, err := dbpool.Open(context.Background(), &dbpool.Options{
 		DSN:             dsn,
 		MaxConns:        maxOpen,
 		MaxConnIdleTime: 30 * time.Second,
 		MaxConnLifetime: 2 * time.Minute,
 		Tables:          keeltables.All(),
+		Observers:       observers,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("open test database: %w", err)
@@ -263,7 +265,7 @@ func SetupFromTemplate(t *testing.T, kind Template) (context.Context, *keel.DB, 
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
-	db, err := openDB(dsn, 4)
+	db, err := openDB(dsn, 4, shapetest.Observers(t))
 	if err == nil {
 		err = db.Ping(ctx)
 	}

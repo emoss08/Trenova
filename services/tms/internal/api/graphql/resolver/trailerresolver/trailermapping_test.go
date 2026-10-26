@@ -263,6 +263,7 @@ func TestTrailerConnectionToModel_PropagatesTotalCount(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, connection.TotalCount)
 	assert.Equal(t, total, *connection.TotalCount)
+	assert.False(t, connection.TotalCountExact, "a total the result does not mark exact is an estimate")
 	assert.Len(t, connection.Edges, 1)
 }
 

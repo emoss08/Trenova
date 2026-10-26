@@ -48,8 +48,9 @@ func (w withoutBenchAgents) List(
 	}
 
 	return &pagination.ListResult[*agentdefinition.Definition]{
-		Items: sliceutils.Page(kept, window.Offset, window.Limit),
-		Total: len(kept),
+		Items:      sliceutils.Page(kept, window.Offset, window.Limit),
+		Total:      len(kept),
+		TotalExact: true,
 	}, nil
 }
 
@@ -77,7 +78,7 @@ func (w withoutBenchAgents) organizationAgents(
 			}
 		}
 		offset += len(result.Items)
-		if len(result.Items) == 0 || offset >= result.Total {
+		if len(result.Items) == 0 || (result.TotalExact && offset >= result.Total) {
 			return kept, nil
 		}
 	}

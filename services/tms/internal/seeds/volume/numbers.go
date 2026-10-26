@@ -80,7 +80,7 @@ func (s *sequenceStore) GetNextSequenceBatch(
 			sq.BusinessUnitID,
 			sq.Year,
 			sq.Month,
-		).Set(sq.CurrentSequence.Add(int64(req.Count)))); err != nil {
+		).Set(sq.CurrentSequence.Increment(int64(req.Count)))); err != nil {
 			return 0, err
 		}
 

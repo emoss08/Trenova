@@ -143,7 +143,8 @@ func workerCredentialTypeCursorConnectionToModel(
 				func(edge *gqlmodel.WorkerCredentialTypeEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

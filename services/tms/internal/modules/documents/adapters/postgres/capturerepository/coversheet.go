@@ -75,7 +75,7 @@ func (r *coverSheetRepository) MarkUsed(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		c := capturedb.CaptureCoverSheets
 		_, err := c.Where(c.ID.Eq(req.ID)).
-			Update(ctx, r.db.Keel(ctx), c.LastUsedAt.To(req.UsedAt), c.UseCount.Add(1))
+			Update(ctx, r.db.Keel(ctx), c.LastUsedAt.To(req.UsedAt), c.UseCount.Increment(1))
 
 		return err
 	})

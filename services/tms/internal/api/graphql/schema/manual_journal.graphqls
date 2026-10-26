@@ -48,6 +48,8 @@ type ManualJournalConnection {
   edges: [ManualJournalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ManualJournalCard @kind(resource: "manual_journal") {

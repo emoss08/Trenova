@@ -14,6 +14,7 @@ import { carrier as carrierQueries } from "@/lib/queries/carrier";
 import { carrierSettlementsQuery } from "@/lib/queries/carrier";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { formatSecondsAgo } from "@trenova/shared/lib/date";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo, useState } from "react";
@@ -307,7 +308,9 @@ function CarrierCard({
           aside={
             settlements.total ? (
               <span>
-                {t("{0, plural, one {# settlement} other {# settlements}}", settlements.total)}
+                {settlements.totalExact
+                  ? t("{0, plural, one {# settlement} other {# settlements}}", settlements.total)
+                  : t("About {0} settlements", formatRowTotal(settlements.total, false))}
               </span>
             ) : undefined
           }

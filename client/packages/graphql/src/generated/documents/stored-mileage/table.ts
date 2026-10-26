@@ -3,4 +3,4 @@ import type { TypedDocumentString, StoredMileageStopKeyFieldsFragment, StoredMil
 
 export const StoredMileageStopKeyFieldsFragmentDoc = {"__meta__":{"fragmentName":"StoredMileageStopKeyFields"}} as unknown as TypedDocumentString<StoredMileageStopKeyFieldsFragment, unknown>;
 export const StoredMileageTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"StoredMileageTableRowFields"}} as unknown as TypedDocumentString<StoredMileageTableRowFieldsFragment, unknown>;
-export const StoredMileageTableDocument = {"__meta__":{"kind":"query","name":"StoredMileageTable","hash":"sha256:a66d19788a7328a4776edf7ee5612af9fa8663d1019f8c20f700fbc321945678"}} as unknown as TypedDocumentString<StoredMileageTableQuery, StoredMileageTableQueryVariables>;
+export const StoredMileageTableDocument = {"__meta__":{"kind":"query","name":"StoredMileageTable","hash":"sha256:87a90d8d1f508a70288397703172bf731f301a528dfe7df82c13372741c471b9"}} as unknown as TypedDocumentString<StoredMileageTableQuery, StoredMileageTableQueryVariables>;

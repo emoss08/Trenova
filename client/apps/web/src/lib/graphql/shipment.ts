@@ -80,6 +80,7 @@ type ShipmentConnection = {
     endCursor?: string | null;
   };
   totalCount?: number | null;
+  totalCountExact?: boolean | null;
 };
 
 type ShipmentPageRequest = {
@@ -660,12 +661,14 @@ export async function acknowledgeShipmentCommentGraphQL(
 function connectionToLimitOffset<T>(connection: ShipmentConnection): GenericLimitOffsetResponse<T> {
   const results = (connection.edges ?? []).map((edge) => edge.node as T);
   const totalCount = connection.totalCount ?? results.length;
+  const totalCountExact = connection.totalCount == null || connection.totalCountExact !== false;
   const hasNextPage = connection.pageInfo?.hasNextPage ?? false;
   const endCursor = connection.pageInfo?.endCursor ?? null;
 
   return {
     results,
     count: totalCount,
+    totalCountExact,
     next: hasNextPage ? endCursor : null,
     prev: null,
     pageInfo: {
@@ -673,6 +676,7 @@ function connectionToLimitOffset<T>(connection: ShipmentConnection): GenericLimi
       hasNextPage,
       endCursor,
       totalCount,
+      totalCountExact,
     },
   };
 }

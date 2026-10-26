@@ -190,7 +190,7 @@ func TestRouteShipmentStatus_RecipientHitDoesNotUseOfferFallback(t *testing.T) {
 	recipient := &edi.TenderRecipient{
 		ID:                   pulid.MustNew("editr_"),
 		SourceOrganizationID: fixture.file.OrganizationID,
-		SourceBusinessUnitID: fixture.file.BusinessUnitID,
+		BusinessUnitID:       fixture.file.BusinessUnitID,
 		SourceShipmentID:     shipmentID,
 	}
 	fixture.recipientRepo.EXPECT().

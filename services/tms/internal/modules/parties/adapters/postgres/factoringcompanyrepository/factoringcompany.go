@@ -254,7 +254,7 @@ func (r *repository) FindByEmail(
 			f := factoringcompanydb.FactoringCompanies
 			entities, err := f.Where(
 				f.Status.Eq(domaintypes.StatusActive),
-				keel.DynFunc("split_part", keel.DynFunc("lower", f.Email), "@", 2).Eq(domain),
+				f.Email.Lower().SplitPart("@", 2).Eq(domain),
 			).
 				Order(f.ID.Asc()).
 				Limit(maxFactorsByEmail).

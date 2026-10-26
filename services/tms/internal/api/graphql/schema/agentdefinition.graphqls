@@ -197,6 +197,8 @@ type AgentDefinitionConnection {
   edges: [AgentDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -236,6 +238,8 @@ type MyAgentConnection {
   edges: [MyAgentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "Where an agent came from."

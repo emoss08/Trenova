@@ -205,13 +205,13 @@ func (r *RateAgreementResolver) Lanes(ctx context.Context, obj *gqlmodel.RateAgr
 		limit = min(max(*first, 1), rateagreementports.MaxLaneLimit)
 	}
 
-	page, err := r.agreementLanes(ctx, obj, limit)
+	rules, err := r.firstLanes(ctx, obj, limit)
 	if err != nil {
 		return nil, err
 	}
 
-	lanes := make([]*gqlmodel.RateAgreementLane, 0, len(page.Lanes))
-	for _, lane := range page.Lanes {
+	lanes := make([]*gqlmodel.RateAgreementLane, 0, len(rules))
+	for _, lane := range rules {
 		if lane == nil {
 			continue
 		}
@@ -226,12 +226,21 @@ func (r *RateAgreementResolver) Lanes(ctx context.Context, obj *gqlmodel.RateAgr
 }
 
 func (r *RateAgreementResolver) LaneCount(ctx context.Context, obj *gqlmodel.RateAgreement) (int, error) {
-	page, err := r.agreementLanes(ctx, obj, 1)
+	count, err := r.laneCount(ctx, obj)
 	if err != nil {
 		return 0, err
 	}
 
-	return page.Count, nil
+	return count.Count, nil
+}
+
+func (r *RateAgreementResolver) LaneCountExact(ctx context.Context, obj *gqlmodel.RateAgreement) (bool, error) {
+	count, err := r.laneCount(ctx, obj)
+	if err != nil {
+		return false, err
+	}
+
+	return count.Exact, nil
 }
 
 func (r *QueryResolver) RateMatrixVersions(ctx context.Context, rateMatrixID string, first *int) ([]*ratematrix.RateMatrixVersion, error) {

@@ -92,6 +92,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.ReportTaskQueue,
 			Description: "Fail report runs whose workflows are no longer running",
 		},
+		{
+			Name:        "CheckReportDefinitionsAgainstCatalogWorkflow",
+			Fn:          CheckReportDefinitionsAgainstCatalogWorkflow,
+			TaskQueue:   temporaltype.ReportTaskQueue,
+			Description: "Mark saved reports that no longer validate against the report catalog",
+		},
 	}
 }
 
@@ -292,6 +298,22 @@ func ReconcileZombieReportRunsWorkflow(
 	var result *ReconcileZombiesResult
 	if err := workflow.ExecuteActivity(
 		ctx, a.ReconcileZombieRunsActivity,
+	).Get(ctx, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func CheckReportDefinitionsAgainstCatalogWorkflow(
+	ctx workflow.Context,
+) (*CheckCatalogResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, cleanupActivityOptions)
+
+	var a *Activities
+	var result *CheckCatalogResult
+	if err := workflow.ExecuteActivity(
+		ctx, a.CheckDefinitionsAgainstCatalogActivity,
 	).Get(ctx, &result); err != nil {
 		return nil, err
 	}

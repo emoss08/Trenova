@@ -3,7 +3,6 @@ package accesssettingsservice
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -23,7 +22,10 @@ type memoryRepo struct {
 	reads    int
 }
 
-func (r *memoryRepo) Get(_ context.Context, tenant pagination.TenantInfo) (*iam.AccessSettings, error) {
+func (r *memoryRepo) Get(
+	_ context.Context,
+	tenant pagination.TenantInfo,
+) (*iam.AccessSettings, error) {
 	r.reads++
 	if s, ok := r.settings[tenant]; ok {
 		copied := *s
@@ -59,7 +61,6 @@ type fixture struct {
 	notifier *permchangetest.Recorder
 	tenant   pagination.TenantInfo
 	actor    *permissionports.RequestActor
-	clock    time.Time
 }
 
 func newFixture() *fixture {
@@ -69,7 +70,6 @@ func newFixture() *fixture {
 		audit:    &securityaudittest.Recorder{},
 		notifier: &permchangetest.Recorder{},
 		tenant:   pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		clock:    time.Unix(1_800_000_000, 0),
 	}
 	f.actor = &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
@@ -85,7 +85,6 @@ func newFixture() *fixture {
 		Auditor:  f.audit,
 		Notifier: f.notifier,
 	})
-	f.svc.now = func() time.Time { return f.clock }
 	return f
 }
 
@@ -100,20 +99,21 @@ func TestRoleActivationRequired_IsOffUntilAnOrganizationTurnsItOn(t *testing.T) 
 	assert.False(t, required)
 }
 
-func TestRoleActivationRequired_ReadsOnceAWhile(t *testing.T) {
+func TestRoleActivationRequired_ReadsTheSettingEachTime(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture()
-	for range 5 {
+	for range 3 {
 		_, err := f.svc.RoleActivationRequired(t.Context(), f.tenant)
 		require.NoError(t, err)
 	}
-	assert.Equal(t, 1, f.repo.reads)
 
-	f.clock = f.clock.Add(policyTTL + time.Second)
-	_, err := f.svc.RoleActivationRequired(t.Context(), f.tenant)
-	require.NoError(t, err)
-	assert.Equal(t, 2, f.repo.reads)
+	assert.Equal(
+		t,
+		3,
+		f.repo.reads,
+		"the repository's result cache answers repeats, not the service",
+	)
 }
 
 func TestUpdate_TurningActivationOnTakesEffectAndIsAudited(t *testing.T) {
@@ -133,7 +133,7 @@ func TestUpdate_TurningActivationOnTakesEffectAndIsAudited(t *testing.T) {
 
 	required, err := f.svc.RoleActivationRequired(t.Context(), f.tenant)
 	require.NoError(t, err)
-	assert.True(t, required, "this instance does not wait out its cache")
+	assert.True(t, required, "the change takes effect at once")
 	assert.Len(t, f.audit.Changes(), 1)
 	assert.Len(t, f.notifier.Organizations(), 1)
 }

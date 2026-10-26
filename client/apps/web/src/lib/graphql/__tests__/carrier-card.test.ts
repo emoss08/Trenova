@@ -99,6 +99,7 @@ describe("fetchCarrierSettlements", () => {
         edges: [{ node: { id: "cs_1" } }],
         pageInfo: { hasNextPage: true, endCursor: "c1" },
         totalCount: 12,
+        totalCountExact: true,
       },
     } as never);
 
@@ -107,6 +108,7 @@ describe("fetchCarrierSettlements", () => {
     expect(first).toEqual({
       rows: [{ id: "cs_1" }],
       total: 12,
+      totalExact: true,
       endCursor: "c1",
       hasNextPage: true,
     });

@@ -172,6 +172,8 @@ type ReportDefinitionConnection {
   edges: [ReportDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ReportDefinitionRevision {
@@ -211,6 +213,7 @@ type ReportRun @kind(resource: "report") {
   rowsStored: Boolean!
   error: ReportRunError
   artifactExpiresAt: Timestamp
+  "Whether the run's rows came from the report result cache rather than a statement."
   cacheHit: Boolean!
   queuedAt: Timestamp
   startedAt: Timestamp
@@ -228,6 +231,8 @@ type ReportRunConnection {
   edges: [ReportRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 # --- Report schedules --------------------------------------------------------
@@ -347,8 +352,6 @@ type ReportPreview {
   timezone: String!
   "The rollup that answered the report instead of the base tables, when one did."
   rollup: String
-  "Whether the rows came from the result cache."
-  cached: Boolean!
 }
 
 input ReportDrillValueInput {

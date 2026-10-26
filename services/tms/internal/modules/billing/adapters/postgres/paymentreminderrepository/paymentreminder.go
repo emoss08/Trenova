@@ -70,7 +70,7 @@ func (r *repository) ListOverdueInvoices(
 					inv.DueDate,
 					receivablesql.OpenMinor(inv),
 					inv.DisputeStatus.Eq(invoice.DisputeStatusDisputed),
-					keel.DynOf(lastStep).Coalesce(0),
+					keel.Int32Of(lastStep).Coalesce(0),
 				).
 				Where(
 					receivablesql.Open(inv),

@@ -79,7 +79,7 @@ func OtherUsableAgents(
 			out = append(out, definition)
 		}
 		offset += len(result.Items)
-		if len(result.Items) == 0 || offset >= result.Total {
+		if len(result.Items) == 0 || (result.TotalExact && offset >= result.Total) {
 			break
 		}
 	}

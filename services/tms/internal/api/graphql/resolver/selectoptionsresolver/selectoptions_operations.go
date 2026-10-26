@@ -54,7 +54,7 @@ func (r *Deps) resolveFleetCodeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		fleetCodeSelectOptionItem,
 	)
 }
@@ -94,7 +94,7 @@ func (r *Deps) resolveShipmentTypeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		shipmentTypeSelectOptionItem,
 	)
 }
@@ -134,7 +134,7 @@ func (r *Deps) resolveServiceTypeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		serviceTypeSelectOptionItem,
 	)
 }
@@ -174,7 +174,7 @@ func (r *Deps) resolveDistanceProfileSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		distanceProfileSelectOptionItem,
 	)
 }
@@ -214,7 +214,7 @@ func (r *Deps) resolveCommoditySelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		commoditySelectOptionItem,
 	)
 }
@@ -254,7 +254,7 @@ func (r *Deps) resolveHazardousMaterialSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		hazardousMaterialSelectOptionItem,
 	)
 }
@@ -293,7 +293,7 @@ func (r *Deps) resolveOrderSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		orderSelectOptionItem,
 	)
 }
@@ -357,7 +357,7 @@ func (r *Deps) resolveShipmentSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		shipmentSelectOptionItem,
 	)
 }

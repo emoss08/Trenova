@@ -78,7 +78,7 @@ func (r *repository) NextSequence(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
 		e := agentdb.AgentRunEvents
 		highest, err := keel.IntoOne[int](ctx, r.db.Keel(ctx), e.
-			Pick(keel.DynOf(e.Sequence).Max().Coalesce(0)).
+			Pick(keel.Int64Of(e.Sequence.Max()).Coalesce(0)).
 			Where(e.OwnerKind.Eq(ownerKind), e.OwnerID.Eq(ownerID)))
 		if err != nil {
 			r.l.Error("failed to read the next event sequence",

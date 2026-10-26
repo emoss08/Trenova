@@ -52,10 +52,10 @@ func (r *repository) rosterCount(
 			workers,
 			keel.Count().Filter(keel.And(
 				active,
-				keel.DynOf(jp.IsDrivingPosition).Coalesce(true),
+				jp.IsDrivingPosition.Coalesce(true),
 			)),
 			keel.Count().Filter(w.Status.Ne(domaintypes.StatusActive)),
-			keel.DynLit(0),
+			keel.Int64(0),
 		).
 		Order(workers.Desc(), keel.Asc(g.label)))
 	if err != nil {
@@ -75,7 +75,7 @@ func (r *repository) HeadcountByFleet(
 		fc := w.FleetCode()
 		return r.rosterCount(ctx, "fleet", &headcountGroup{
 			key:   orEmpty(w.FleetCodeID),
-			label: keel.DynOf(fc.Description).Coalesce(fc.Code, "No terminal"),
+			label: fc.Description.Coalesce(fc.Code, "No terminal"),
 			code:  orEmpty(fc.Code),
 			color: orEmpty(fc.Color),
 			group: []keel.Expr{w.FleetCodeID, fc.Code, fc.Description, fc.Color},
@@ -92,9 +92,9 @@ func (r *repository) HeadcountByPosition(
 		jp := w.Position()
 		return r.rosterCount(ctx, "position", &headcountGroup{
 			key:   orEmpty(w.PositionID),
-			label: keel.DynOf(jp.Title).Coalesce("No position"),
+			label: jp.Title.Coalesce("No position"),
 			code:  orEmpty(jp.Code),
-			color: keel.DynLit(""),
+			color: keel.Text(""),
 			group: []keel.Expr{w.PositionID, jp.Title, jp.Code},
 		})
 	})
@@ -107,10 +107,10 @@ func (r *repository) HeadcountByDepartment(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]workerports.HeadcountRow, error) {
 		jp := workerdb.Workers.Position()
 		return r.rosterCount(ctx, "department", &headcountGroup{
-			key:   asText(jp.Department).Coalesce(""),
-			label: asText(jp.Department).Coalesce("Unassigned"),
-			code:  keel.DynLit(""),
-			color: keel.DynLit(""),
+			key:   keel.CastText(jp.Department).Coalesce(""),
+			label: keel.CastText(jp.Department).Coalesce("Unassigned"),
+			code:  keel.Text(""),
+			color: keel.Text(""),
 			group: []keel.Expr{jp.Department},
 		})
 	})
@@ -138,7 +138,7 @@ func (r *repository) TeamMembers(
 		fc := w.FleetCode()
 		jp := w.Position()
 		p := w.Profile()
-		direct := keel.DynOf(w.ManagerID.In(req.ManagerIDs...))
+		direct := keel.BoolOf(w.ManagerID.In(req.ManagerIDs...))
 
 		rows, err := keel.Into[workerports.TeamMemberRow](ctx, r.db.Keel(ctx), w.
 			Where(
@@ -150,7 +150,7 @@ func (r *repository) TeamMembers(
 				w.ID,
 				w.FirstName,
 				w.LastName,
-				asText(w.Status),
+				keel.CastText(w.Status),
 				orEmpty(w.FleetCodeID),
 				orEmpty(fc.Code),
 				orEmpty(fc.Color),
@@ -158,13 +158,13 @@ func (r *repository) TeamMembers(
 				orEmpty(jp.Title),
 				orEmpty(w.ManagerID),
 				direct,
-				asText(p.ComplianceStatus),
-				asText(p.TrainingHealth),
-				asText(p.SafetyRating),
+				keel.CastText(p.ComplianceStatus),
+				keel.CastText(p.TrainingHealth),
+				keel.CastText(p.SafetyRating),
 				p.HireDate,
 				p.TerminationDate,
 			).
-			Order(keel.Desc(direct), w.LastName.Asc(), w.FirstName.Asc()).
+			Order(direct.Desc(), w.LastName.Asc(), w.FirstName.Asc()).
 			Limit(limitOr(req.Limit, defaultTeamPageSize)))
 		if err != nil {
 			r.l.Error("failed to read team members", zap.Error(err))

@@ -384,6 +384,6 @@ func (s *WorkerCredentialSeed) mirror(
 		wp.WorkerID.Eq(wrk.ID),
 		wp.OrganizationID.Eq(refs.orgID),
 		wp.BusinessUnitID.Eq(refs.buID),
-	).Update(ctx, db, column.ToExpr(keel.DynLit(entity.ExpiresAt)))
+	).Update(ctx, db, column.ToExpr(keel.Int64Ptr(entity.ExpiresAt)))
 	return err
 }

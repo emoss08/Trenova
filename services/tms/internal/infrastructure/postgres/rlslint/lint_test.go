@@ -1,8 +1,8 @@
 package rlslint
 
 import (
+	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -15,10 +15,10 @@ const editionDir = "internal/cloud/"
 func serviceRoot(t *testing.T) string {
 	t.Helper()
 
-	_, thisFile, _, ok := runtime.Caller(0)
-	require.True(t, ok)
+	dir, err := os.Getwd()
+	require.NoError(t, err)
 
-	return filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "..")
+	return filepath.Join(dir, "..", "..", "..", "..")
 }
 
 func TestEverySystemScopeIsReviewed(t *testing.T) {

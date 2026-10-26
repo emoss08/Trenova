@@ -54,7 +54,7 @@ func settlementSearch(s *driversettlementdb.SettlementsTable, query string) keel
 	return keel.Or(
 		s.SettlementNumber.ILike(pattern),
 		s.PayProfileName.ILike(pattern),
-		keel.DynFunc("concat_ws", " ", w.FirstName, w.LastName).ILike(pattern),
+		keel.ConcatWS(" ", w.FirstName, w.LastName).ILike(pattern),
 	)
 }
 

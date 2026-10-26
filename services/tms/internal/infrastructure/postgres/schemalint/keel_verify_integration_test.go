@@ -34,3 +34,18 @@ func TestEveryKeelModelMatchesTheMigratedSchema(t *testing.T) {
 	require.Empty(t, lines, "models and migrations disagree; fix the model's keel tag or "+
 		"add a migration, then run task keel-gen:\n%s", strings.Join(lines, "\n"))
 }
+
+func TestEveryDeclaredDatabaseFunctionMatchesTheMigratedSchema(t *testing.T) {
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
+
+	drifts, err := keel.VerifyFuncs(ctx, db, postgres.RLSFuncs()...)
+	require.NoError(t, err)
+
+	lines := make([]string, 0, len(drifts))
+	for _, d := range drifts {
+		lines = append(lines, d.String())
+	}
+	require.Empty(t, lines, "declared database functions and migrations disagree; fix the "+
+		"keel.DeclareFunc declaration or add a migration:\n%s", strings.Join(lines, "\n"))
+}

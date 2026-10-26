@@ -134,6 +134,8 @@ type ShipmentConnection {
   edges: [ShipmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "Who is expected to pay the carrier, as printed on the bill of lading."
@@ -951,6 +953,8 @@ type ShipmentPreviousRateSummary {
 type ShipmentPreviousRatesResponse {
   items: [ShipmentPreviousRateSummary!]!
   total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
 }
 
 "Why a shipment in a bulk transfer did not reach the billing queue."
@@ -1058,6 +1062,8 @@ type ShipmentCommentConnection {
   edges: [ShipmentCommentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ShipmentCommentCountResponse {

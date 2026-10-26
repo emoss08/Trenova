@@ -160,7 +160,7 @@ func (f *tenderChangeReviewFixture) pendingChange() *edi.TenderChange {
 			ID:                      recipientID,
 			RecipientKind:           edi.TenderRecipientKindInternal,
 			RecipientOrganizationID: f.recipientOrgID,
-			RecipientBusinessUnitID: f.buID,
+			BusinessUnitID:          f.buID,
 		},
 	}
 }

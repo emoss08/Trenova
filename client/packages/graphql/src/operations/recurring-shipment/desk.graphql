@@ -32,5 +32,6 @@ query DeskRecurringShipments($input: DataTableConnectionInput!, $includeTotalCou
       endCursor
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }

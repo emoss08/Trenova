@@ -376,8 +376,9 @@ func TestEveryRecordOfAListIsARootRecord(t *testing.T) {
 	t.Parallel()
 
 	page := &pagination.ListResult[*shipment.Shipment]{
-		Items: []*shipment.Shipment{dispatchedShipment(), dispatchedShipment()},
-		Total: 2,
+		Items:      []*shipment.Shipment{dispatchedShipment(), dispatchedShipment()},
+		Total:      2,
+		TotalExact: true,
 	}
 
 	body, header := serve(t, []permission.Resource{permission.ResourceCustomer}, page, guarded)

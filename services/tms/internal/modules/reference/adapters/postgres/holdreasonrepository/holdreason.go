@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -94,7 +95,10 @@ func (r *repository) GetByID(
 	req holdreasonports.GetHoldReasonByIDRequest,
 ) (*holdreason.HoldReason, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*holdreason.HoldReason, error) {
-		entity, err := holdreasondb.HoldReasons.Get(ctx, r.db.Keel(ctx), req.ID)
+		hr := holdreasondb.HoldReasons
+		entity, err := hr.Where(hr.ID.Eq(req.ID)).
+			Cache(resultcache.Reference()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, holdReasonErrors.Map(err, req.ID.String())
 		}
@@ -148,7 +152,9 @@ func (r *repository) SelectOptions(
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*holdreason.HoldReason], error) {
 			hr := holdreasondb.HoldReasons
-			q := hr.Pick(hr.ID, hr.Code, hr.Label, hr.Type).Where(hr.Active.IsTrue())
+			q := hr.Pick(hr.ID, hr.Code, hr.Label, hr.Type).
+				Where(hr.Active.IsTrue()).
+				Cache(resultcache.Reference()...)
 
 			return listquery.SelectOptions(
 				ctx,

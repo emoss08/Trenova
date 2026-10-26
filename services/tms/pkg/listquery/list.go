@@ -53,18 +53,31 @@ func Connection[T any](
 
 	limit := cursorLimit(req.Filter, &req.Cursor)
 	var page keel.Page[*T]
-	var total int64
+	var total keel.RowCount
 	items := []keel.BatchItem{
 		keel.PageInto(rows, keel.After(after, limit), &page),
 	}
 	if req.Cursor.IncludeTotalCount {
-		items = append(items, keel.CountInto(counted, &total))
+		items = append(items, keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total))
 	}
 	if err = keel.Batch(ctx, db, items...); err != nil {
 		return nil, err
 	}
 
-	return connectionResult(&page, shape, totalOf(req.Cursor.IncludeTotalCount, total))
+	result, err := connectionResult(&page, shape)
+	if err != nil {
+		return nil, err
+	}
+	if req.Cursor.IncludeTotalCount {
+		withTotal(result, total)
+	}
+
+	return result, nil
+}
+
+func withTotal[T any](result *pagination.CursorListResult[T], total keel.RowCount) {
+	result.TotalCount = new(int(total.N))
+	result.TotalCountExact = total.Exact
 }
 
 func connectionOrder[T any](
@@ -130,13 +143,20 @@ func listAndCount[T any](
 	rows, counted *keel.Query[*T],
 ) (*pagination.ListResult[*T], error) {
 	var items []*T
-	var total int64
-	err := keel.Batch(ctx, db, keel.ListInto(rows, &items), keel.CountInto(counted, &total))
+	var total keel.RowCount
+	err := keel.Batch(ctx, db,
+		keel.ListInto(rows, &items),
+		keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &pagination.ListResult[*T]{Items: items, Total: int(total)}, nil
+	return Result(items, total), nil
+}
+
+func Result[T any](items []T, total keel.RowCount) *pagination.ListResult[T] {
+	return &pagination.ListResult[T]{Items: items, Total: int(total.N), TotalExact: total.Exact}
 }
 
 func Pick[T any](q *keel.Query[*T], columns []string) (*keel.Query[*T], error) {
@@ -191,7 +211,6 @@ func keysetAfter(
 func connectionResult[T any](
 	page *keel.Page[*T],
 	shape []pagination.CursorSortField,
-	total *int,
 ) (*pagination.CursorListResult[*T], error) {
 	cursors := make([]string, len(page.Items))
 	for i := range page.Items {
@@ -205,18 +224,8 @@ func connectionResult[T any](
 	return &pagination.CursorListResult[*T]{
 		Items:       page.Items,
 		HasNextPage: page.Next != "",
-		TotalCount:  total,
 		EdgeCursors: cursors,
 	}, nil
-}
-
-func totalOf(include bool, total int64) *int {
-	if !include {
-		return nil
-	}
-
-	n := int(total)
-	return &n
 }
 
 func sortsOf(filter *pagination.QueryOptions) []domaintypes.SortField {

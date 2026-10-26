@@ -30,6 +30,7 @@ query DistanceProfileTable($input: DataTableConnectionInput!, $includeTotalCount
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

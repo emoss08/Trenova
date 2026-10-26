@@ -128,7 +128,7 @@ func (r *viewRepository) RecordRun(
 			ctx,
 			r.db.Keel(ctx),
 			v.LastRunAt.To(req.RanAt),
-			v.RunCount.Add(1),
+			v.RunCount.Increment(1),
 			v.Version.ToExpr(v.Version),
 			v.UpdatedAt.ToExpr(v.UpdatedAt),
 		)

@@ -3,4 +3,4 @@ import type { TypedDocumentString, DistanceOverrideLocationFieldsFragment, Dista
 
 export const DistanceOverrideLocationFieldsFragmentDoc = {"__meta__":{"fragmentName":"DistanceOverrideLocationFields"}} as unknown as TypedDocumentString<DistanceOverrideLocationFieldsFragment, unknown>;
 export const DistanceOverrideTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"DistanceOverrideTableRowFields"}} as unknown as TypedDocumentString<DistanceOverrideTableRowFieldsFragment, unknown>;
-export const DistanceOverrideTableDocument = {"__meta__":{"kind":"query","name":"DistanceOverrideTable","hash":"sha256:0ab0bbef6f74978c45d192e5ed2e6f7b07941548322077947145a3361de0f8f0"}} as unknown as TypedDocumentString<DistanceOverrideTableQuery, DistanceOverrideTableQueryVariables>;
+export const DistanceOverrideTableDocument = {"__meta__":{"kind":"query","name":"DistanceOverrideTable","hash":"sha256:f654737610f67744311bb919475feb16613c3ae07c7590054395880fbfd1c603"}} as unknown as TypedDocumentString<DistanceOverrideTableQuery, DistanceOverrideTableQueryVariables>;

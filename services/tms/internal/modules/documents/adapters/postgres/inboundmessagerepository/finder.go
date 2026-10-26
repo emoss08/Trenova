@@ -73,8 +73,8 @@ func referenceForms(reference string) []string {
 	return []string{reference, upper}
 }
 
-func lowerLike(col keel.Expr, pattern string) keel.Pred {
-	return keel.DynFunc("lower", col).Like(pattern)
+func lowerLike(col keel.StringCol, pattern string) keel.Pred {
+	return col.Lower().Like(pattern)
 }
 
 func (f *RecordFinder) FindCustomerByEmail(
@@ -99,7 +99,7 @@ func (f *RecordFinder) FindCustomerByEmail(
 
 		c := customerdb.Customers
 		customers, err := keel.Into[customerRecipients](ctx, db, c.
-			Pick(c.ID, keel.DynOf(c.StatusUpdateRecipients).Coalesce("")).
+			Pick(c.ID, c.StatusUpdateRecipients.Coalesce("")).
 			Where(lowerLike(c.StatusUpdateRecipients, pattern)).
 			Limit(maxPartyCandidates))
 		if err != nil {
@@ -121,8 +121,8 @@ func (f *RecordFinder) FindCustomerByEmail(
 		profiles, err := keel.Into[profileRecipients](ctx, db, p.
 			Pick(
 				p.CustomerID,
-				keel.DynOf(p.ToRecipients).Coalesce(""),
-				keel.DynOf(p.CCRecipients).Coalesce(""),
+				p.ToRecipients.Coalesce(""),
+				p.CCRecipients.Coalesce(""),
 			).
 			Where(keel.Or(lowerLike(p.ToRecipients, pattern), lowerLike(p.CCRecipients, pattern))).
 			Limit(maxPartyCandidates))

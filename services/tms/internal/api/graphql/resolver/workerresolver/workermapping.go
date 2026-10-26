@@ -36,7 +36,8 @@ func workerCursorConnectionToModel(
 				return edge.Cursor
 			}),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -65,7 +66,8 @@ func workerPTOCursorConnectionToModel(
 				return edge.Cursor
 			}),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

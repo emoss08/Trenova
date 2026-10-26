@@ -7,6 +7,7 @@ function list(overrides: Partial<PagedRows<string>> = {}): PagedRows<string> {
   return {
     rows: ["one", "two"],
     total: 5,
+    totalExact: true,
     hasMore: true,
     loadingMore: false,
     loadMore: vi.fn(),
@@ -45,6 +46,12 @@ describe("CardPagedList", () => {
     expect(screen.getByText("2 of 5 shown")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Show more" }));
     expect(paged.loadMore).toHaveBeenCalled();
+  });
+
+  it("says how many there are about when the total is an estimate", () => {
+    draw(list({ total: 1_250_000, totalExact: false }));
+
+    expect(screen.getByText("2 of about 1.3M shown")).toBeInTheDocument();
   });
 
   it("says it is reading the next page, and leaves the button off once there is none", () => {

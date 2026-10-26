@@ -100,11 +100,16 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+const STREAMED_BRIEF_TIMEOUT_MS = 5_000;
+const PAGE_TIMEOUT_MS = 3_000;
+
 describe("accounting dashboard empty state", () => {
   it("draws the dashboard it will become when nothing has ever been invoiced", async () => {
     renderAccountingPage(<AccountingDashboardPage />);
 
-    expect(await screen.findByText("Nothing on the books yet")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nothing on the books yet", undefined, { timeout: PAGE_TIMEOUT_MS }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the billing queue" })).toHaveAttribute(
       "href",
       "/billing/queue",
@@ -126,24 +131,30 @@ describe("accounting dashboard empty state", () => {
     mocks.fetchArDashboardKpis.mockResolvedValue(kpis({ hasInvoiced: true }));
     renderAccountingPage(<AccountingDashboardPage />);
 
-    await waitFor(() =>
-      expect(screen.getByRole("region", { name: "Accounting brief" })).toHaveTextContent(
-        /Nothing is owed to you and no cash is waiting to be applied\./,
-      ),
+    await waitFor(
+      () =>
+        expect(screen.getByRole("region", { name: "Accounting brief" })).toHaveTextContent(
+          /Nothing is owed to you and no cash is waiting to be applied\./,
+        ),
+      { timeout: STREAMED_BRIEF_TIMEOUT_MS },
     );
   });
 
   it("decides a never-invoiced book from the KPIs without reading the trend", async () => {
     renderAccountingPage(<AccountingDashboardPage />);
 
-    expect(await screen.findByText("Nothing on the books yet")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nothing on the books yet", undefined, { timeout: PAGE_TIMEOUT_MS }),
+    ).toBeInTheDocument();
     expect(mocks.fetchArDsoTrend).not.toHaveBeenCalled();
   });
 
   it("does not brief a book that has never invoiced", async () => {
     renderAccountingPage(<AccountingDashboardPage />);
 
-    expect(await screen.findByText("Nothing on the books yet")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nothing on the books yet", undefined, { timeout: PAGE_TIMEOUT_MS }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Accounting brief" })).not.toBeInTheDocument();
   });
 

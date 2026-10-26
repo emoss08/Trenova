@@ -67,8 +67,9 @@ func TestService_List_Success(t *testing.T) {
 
 	def := newServiceDefinition()
 	expected := &pagination.ListResult[*customfield.CustomFieldDefinition]{
-		Items: []*customfield.CustomFieldDefinition{def},
-		Total: 1,
+		Items:      []*customfield.CustomFieldDefinition{def},
+		Total:      1,
+		TotalExact: true,
 	}
 
 	req := &customfieldports.ListCustomFieldDefinitionsRequest{

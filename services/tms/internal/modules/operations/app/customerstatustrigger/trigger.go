@@ -2,7 +2,6 @@ package customerstatustrigger
 
 import (
 	"context"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
@@ -10,12 +9,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/ttlcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-const notifyingCacheTTL = time.Minute
 
 type Params struct {
 	fx.In
@@ -31,7 +27,7 @@ type Params struct {
 // customer rule on are skipped without starting anything.
 type Trigger struct {
 	requester customertrackingports.EvaluationRequester
-	notifying tenantSet
+	facts     customertrackingports.FactRepository
 	l         *zap.Logger
 }
 
@@ -43,7 +39,7 @@ var (
 func New(p Params) *Trigger {
 	return &Trigger{
 		requester: p.Requester,
-		notifying: newNotifyingTenants(p.Facts),
+		facts:     p.Facts,
 		l:         p.Logger.Named("customer-status-trigger"),
 	}
 }
@@ -96,7 +92,7 @@ func (t *Trigger) OnShipmentEvent(ctx context.Context, event *shipmentevent.Even
 		return nil
 	}
 	tenant := pagination.TenantInfo{OrgID: event.OrganizationID, BuID: event.BusinessUnitID}
-	if !t.notifying.has(ctx, tenant) {
+	if !t.notifies(ctx, tenant) {
 		return nil
 	}
 	t.requester.RequestEvaluation(ctx, tenant, event.ShipmentID)
@@ -108,7 +104,7 @@ func (t *Trigger) StopEtasRefreshed(
 	tenantInfo pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
 ) {
-	if len(shipmentIDs) == 0 || !t.notifying.has(ctx, tenantInfo) {
+	if len(shipmentIDs) == 0 || !t.notifies(ctx, tenantInfo) {
 		return
 	}
 	for _, shipmentID := range shipmentIDs {
@@ -116,46 +112,13 @@ func (t *Trigger) StopEtasRefreshed(
 	}
 }
 
-type tenantSet interface {
-	has(ctx context.Context, tenant pagination.TenantInfo) bool
-}
-
-type tenantKey struct {
-	orgID pulid.ID
-	buID  pulid.ID
-}
-
-type notifyingTenants struct {
-	facts customertrackingports.FactRepository
-	cache *ttlcache.Cache[struct{}, map[tenantKey]struct{}]
-}
-
-func newNotifyingTenants(facts customertrackingports.FactRepository) tenantSet {
-	return &notifyingTenants{
-		facts: facts,
-		cache: ttlcache.New[struct{}, map[tenantKey]struct{}](ttlcache.Options{
-			TTL:        notifyingCacheTTL,
-			MaxEntries: 1,
-		}),
+func (t *Trigger) notifies(ctx context.Context, tenant pagination.TenantInfo) bool {
+	notifying, err := t.facts.HasNotifyingCustomers(ctx, tenant)
+	if err != nil {
+		t.l.Debug("could not read whether the organization sends status emails",
+			zap.String("organizationId", tenant.OrgID.String()),
+			zap.Error(err))
+		return true
 	}
-}
-
-// has reports whether any customer in the organization has a status email rule
-// on. When the answer cannot be read it says yes: a wasted evaluation is cheap,
-// a missed email is not.
-func (n *notifyingTenants) has(ctx context.Context, tenant pagination.TenantInfo) bool {
-	set, ok := n.cache.Get(struct{}{})
-	if !ok {
-		tenants, err := n.facts.ListNotifyingTenants(ctx)
-		if err != nil {
-			return true
-		}
-		set = make(map[tenantKey]struct{}, len(tenants))
-		for _, t := range tenants {
-			set[tenantKey{orgID: t.OrgID, buID: t.BuID}] = struct{}{}
-		}
-		n.cache.Set(struct{}{}, set)
-	}
-	_, found := set[tenantKey{orgID: tenant.OrgID, buID: tenant.BuID}]
-	return found
+	return notifying
 }

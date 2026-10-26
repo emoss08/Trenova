@@ -185,6 +185,7 @@ func TestArtifactRows_ReadsTheNextPageWithThePersonsAccess(t *testing.T) {
 	assert.Equal(t, "c-2", rows.NextCursor)
 	require.NotNil(t, rows.Total)
 	assert.Equal(t, 128, *rows.Total)
+	assert.False(t, rows.TotalEstimated)
 	assert.Nil(t, rows.NextOffset)
 	assert.Equal(t, []string{"freightCharge"}, rows.Withheld)
 	assert.True(t, rows.Searchable)

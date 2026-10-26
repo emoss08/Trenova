@@ -93,6 +93,7 @@ func (r *Registry) registerRateResources() {
 			"id":                      SensitivityInternal,
 			"label":                   SensitivityInternal,
 			"laneCount":               SensitivityInternal,
+			"laneCountExact":          SensitivityInternal,
 			"laneKey":                 SensitivityInternal,
 			"lanes":                   SensitivityInternal,
 			"maxDistance":             SensitivityInternal,

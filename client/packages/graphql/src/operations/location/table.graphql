@@ -39,6 +39,7 @@ query LocationTable($input: DataTableConnectionInput!, $includeTotalCount: Boole
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

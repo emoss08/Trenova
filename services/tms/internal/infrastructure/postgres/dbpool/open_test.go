@@ -56,3 +56,15 @@ func TestKeelConfigSetsOnBeginOnlyWithAGuard(t *testing.T) {
 	assert.NotNil(t, cfg.Now)
 	assert.NotNil(t, cfg.NewID)
 }
+
+func TestKeelConfigReadsOneSnapshotAndBoundsStatementsByTheDeadline(t *testing.T) {
+	t.Parallel()
+
+	for _, cfg := range []keel.Config{KeelConfig(nil, nil), KeelConfig(nopGuard{}, nil)} {
+		assert.Equal(t, keel.RepeatableRead, cfg.ReadIsolation)
+		assert.True(t, cfg.DeadlineTimeouts)
+		assert.False(t, cfg.AwaitReadCommit)
+		assert.Nil(t, cfg.Cache, "only Open sets the result cache, from Options.Cache")
+		assert.Zero(t, cfg.TenantConcurrency)
+	}
+}

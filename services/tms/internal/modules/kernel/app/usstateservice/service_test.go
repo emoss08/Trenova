@@ -95,7 +95,8 @@ func TestService_SelectOptions_Success(t *testing.T) {
 				CountryIso3:  "USA",
 			},
 		},
-		Total: 2,
+		Total:      2,
+		TotalExact: true,
 	}
 
 	req := &pagination.SelectQueryRequest{}

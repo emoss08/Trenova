@@ -138,16 +138,16 @@ func (r *assignmentRepository) Totals(
 		r.db,
 		func(ctx context.Context) ([]extractionrolloutports.RolloutAssignmentTotal, error) {
 			ra := extractionrolloutdb.RolloutAssignments
-			servedBy := keel.DynCase().
+			servedBy := keel.CaseString().
 				When(
-					keel.DynOf(ra.ServedProviderID).IsNull(),
-					keel.DynLit(string(extractionrollout.ServedByNone)),
+					ra.ServedProviderID.IsNull(),
+					keel.Text(string(extractionrollout.ServedByNone)),
 				).
 				When(
-					keel.DynOf(ra.ServedProviderID).Eq(ra.CandidateProviderID),
-					keel.DynLit(string(extractionrollout.ServedByCandidate)),
+					ra.ServedProviderID.EqCol(ra.CandidateProviderID),
+					keel.Text(string(extractionrollout.ServedByCandidate)),
 				).
-				Else(keel.DynLit(string(extractionrollout.ServedByOther)))
+				Else(keel.Text(string(extractionrollout.ServedByOther)))
 
 			totals, err := keel.Into[extractionrolloutports.RolloutAssignmentTotal](
 				ctx,

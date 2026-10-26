@@ -159,7 +159,7 @@ func (r *submissionRepository) SetDocuments(
 			Join(packets, packets.Col("id").EqCol(item.ID)).
 			Where(item.SubmissionID.Eq(req.SubmissionID)).
 			Update(ctx, db,
-				item.PacketDocumentID.ToExpr(keel.DynOf(packets.Col("document_id")).NullIf("")),
+				item.PacketDocumentID.ToExpr(keel.StringOf(packets.Col("document_id")).NullIf("")),
 				item.UpdatedAt.ToExpr(item.UpdatedAt),
 			)
 

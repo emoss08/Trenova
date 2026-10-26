@@ -226,7 +226,7 @@ func (r *repository) Dismiss(
 			"dismiss notifications",
 			r.action(ctx, req, n.DismissedAt.IsNull()),
 			n.DismissedAt.To(now),
-			n.ReadAt.ToExpr(keel.DynOf(n.ReadAt).Coalesce(now)),
+			n.ReadAt.ToExpr(n.ReadAt.Coalesce(now)),
 		)
 	})
 }

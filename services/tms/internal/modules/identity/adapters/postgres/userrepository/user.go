@@ -525,7 +525,7 @@ func (ur *repository) replaceMemberships(
 		newDefaultOrgID = req.OrganizationIDs[0]
 	}
 
-	isDefault := keel.DynOf(m.OrganizationID).Eq(newDefaultOrgID.String())
+	isDefault := m.OrganizationID.Eq(newDefaultOrgID)
 	if _, err = m.AllTenants().
 		Where(m.UserID.Eq(req.UserID), m.BusinessUnitID.Eq(req.BusinessUnitID)).
 		Update(ctx, db, m.IsDefault.ToExpr(isDefault)); err != nil {

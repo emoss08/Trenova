@@ -1,5 +1,6 @@
 import type { ActivityEntry } from "@/lib/graphql/record-activity";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { CardPagedList } from "./card-paged-list";
 import type { PagedRows } from "./paged-rows";
 import { CardSection, CardTimeline } from "./record-card";
@@ -31,7 +32,11 @@ export function CardActivity({
       title={t("Activity")}
       aside={
         activity.total ? (
-          <span>{t("{0, plural, one {# change} other {# changes}}", activity.total)}</span>
+          <span>
+            {activity.totalExact
+              ? t("{0, plural, one {# change} other {# changes}}", activity.total)
+              : t("About {0} changes", formatRowTotal(activity.total, false))}
+          </span>
         ) : undefined
       }
     >

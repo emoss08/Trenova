@@ -333,7 +333,11 @@ func (f *fakeEDICarrierInvoiceRepo) ListCarrierInvoices(
 		items = items[:limit]
 	}
 
-	return &pagination.ListResult[*edi.CarrierInvoice]{Items: items, Total: len(items)}, nil
+	return &pagination.ListResult[*edi.CarrierInvoice]{
+		Items:      items,
+		Total:      len(items),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeEDICarrierRepo) FindByIdentity(

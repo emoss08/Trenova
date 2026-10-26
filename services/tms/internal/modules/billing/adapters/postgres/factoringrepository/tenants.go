@@ -51,7 +51,7 @@ func sweepTenants() keel.Compound {
 			Where(
 				inv.Status.Eq(invoice.StatusPosted),
 				inv.FactoringCompanyID.IsNotNull(),
-				keel.DynOf(inv.TotalAmountMinor).Gt(inv.AppliedAmountMinor),
+				keel.Int64Of(inv.TotalAmountMinor).GtExpr(inv.AppliedAmountMinor),
 			),
 		noa.AllTenants().
 			Pick(noa.OrganizationID, noa.BusinessUnitID).

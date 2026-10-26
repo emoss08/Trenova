@@ -440,9 +440,10 @@ func reportDefinitionConnectionToModel(
 	}
 
 	return &gqlmodel.ReportDefinitionConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: base.DerefInt(page.TotalCount),
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -461,9 +462,10 @@ func reportRunConnectionToModel(
 	}
 
 	return &gqlmodel.ReportRunConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: base.DerefInt(page.TotalCount),
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -654,7 +656,6 @@ func reportPreviewToModel(result *reportingservice.PreviewResult) *gqlmodel.Repo
 		Cursor:    nilIfEmpty(result.Cursor),
 		Timezone:  result.Timezone,
 		Rollup:    nilIfEmpty(result.Rollup),
-		Cached:    result.Cached,
 	}
 	if result.Totals != nil {
 		preview.Totals = result.Totals

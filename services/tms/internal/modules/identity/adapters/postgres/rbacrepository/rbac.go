@@ -192,10 +192,7 @@ func (r *repository) GetAuthorizedRoles(
 			ura.OrganizationID.Eq(orgID),
 			keel.Or(
 				ura.ExpiresAt.IsNull(),
-				keel.DynOf(ura.ExpiresAt).Gt(
-					keel.DynFunc("date_part", keel.DynLit("epoch").Cast(keel.TypeString), keel.DynFunc("now")).
-						Cast(keel.TypeInt64),
-				),
+				keel.NowEpoch().LtExpr(ura.ExpiresAt),
 			),
 		).
 			Order(ro.Name.Asc()).
@@ -214,18 +211,18 @@ func rolePermissionCounts(ctx context.Context, roleIDs []pulid.ID) keel.Projecti
 	closure.Recurse(forTenant(
 		ctx,
 		parent.Pick(closure.Col("root_id"), parent.ID, parent.ParentRoleIDs).
-			Join(closure, keel.DynOf(parent.ID).In(closure.Col("parent_role_ids"))),
+			Join(closure, parent.ID.InArray(keel.StringArrayOf(closure.Col("parent_role_ids")))),
 	)).Distinct()
 
 	rp := permissiondb.ResourcePermissions
-	op := keel.Rows("op", []string{"op"}, keel.DynFunc("unnest", rp.Operations))
+	op := keel.Rows("op", []string{"op"}, rp.Operations.Unnest())
 	root := closure.Col("root_id")
 
 	return forTenant(ctx, closure.Query().
 		With(closure).
 		LeftJoin(rp, rp.RoleID.EqCol(closure.Col("role_id"))).
 		LeftJoinLateral(op).
-		Pick(root, keel.DynOf(rp.Resource).Concat(":").Concat(op.Col("op")).CountDistinct()).
+		Pick(root, keel.CountOf(rp.Resource.Cat(keel.Text(":"), keel.StringOf(op.Col("op")))).Distinct()).
 		Group(root))
 }
 

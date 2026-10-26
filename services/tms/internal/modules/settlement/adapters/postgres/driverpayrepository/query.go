@@ -30,7 +30,7 @@ func searchPred(query string, cols ...keel.StringCol) keel.Pred {
 func openAfterNow(col keel.Int64Col) keel.Pred {
 	return keel.Or(
 		col.IsNull(),
-		keel.DynOf(col).Gt(keel.DynFunc("date_part", "epoch", keel.DynFunc("now")).Cast(keel.TypeInt64)),
+		keel.NowEpoch().LtExpr(col),
 	)
 }
 

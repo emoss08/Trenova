@@ -104,6 +104,8 @@ type IFTATaxRateConnection {
   edges: [IFTATaxRateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -145,6 +147,8 @@ type IFTAJurisdictionMileageEntryConnection {
   edges: [IFTAJurisdictionMileageEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -318,6 +322,8 @@ type IFTAReturnConnection {
   edges: [IFTAReturnEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """

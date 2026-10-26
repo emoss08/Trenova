@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -170,7 +171,10 @@ func (r *repository) GetByID(
 	req agentdefinitionports.GetAgentDefinitionByIDRequest,
 ) (*agentdefinition.Definition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentdefinition.Definition, error) {
-		entity, err := agentdefinitiondb.Definitions.Get(ctx, r.db.Keel(ctx), req.ID)
+		d := agentdefinitiondb.Definitions
+		entity, err := d.Where(d.ID.Eq(req.ID)).
+			Cache(resultcache.Reference()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, definitionErrors.Map(err, req.ID.String())
 		}
@@ -433,17 +437,10 @@ func (r *repository) SetToolTier(
 		).Update(
 			ctx,
 			r.db.Keel(ctx),
-			d.ToolTiers.ToExpr(keel.DynCase().
-				When(
-					keel.DynFunc("jsonb_typeof", d.ToolTiers).Eq(keel.DynConst("object")),
-					d.ToolTiers,
-				).
-				Else(keel.DynFunc("jsonb_build_object")).
-				Concat(keel.DynFunc(
-					"jsonb_build_object",
-					keel.DynLit(req.ToolName).Cast(keel.TypeString),
-					keel.DynLit(string(req.Tier)),
-				))),
+			d.ToolTiers.ToExpr(keel.CaseJSONB().
+				When(d.ToolTiers.TypeOf().Eq("object"), d.ToolTiers).
+				Else(keel.JSONBuildObject()).
+				Concat(keel.JSONBuildObject(keel.Pair(req.ToolName, string(req.Tier))))),
 		)
 		if err != nil {
 			return fmt.Errorf("set agent definition tool tier: %w", err)
@@ -547,11 +544,9 @@ func (r *repository) removeDelegate(ctx context.Context, id pulid.ID) error {
 	_, err := d.Where(d.DelegateIDs.Has(id.String())).Update(
 		ctx,
 		r.db.Keel(ctx),
-		d.DelegateIDs.ToExpr(keel.DynFunc(
-			"array_remove",
-			d.DelegateIDs,
-			keel.DynLit(id.String()).Cast(keel.TypeString),
-		).NullIf([]string{})),
+		d.DelegateIDs.ToExpr(
+			d.DelegateIDs.Without(keel.Text(id.String())).NullIf(keel.TextArray(nil)),
+		),
 	)
 	if err != nil {
 		return fmt.Errorf("remove a deleted agent from the agents that delegate to it: %w", err)
@@ -601,7 +596,7 @@ func (r *repository) StatsByIDs(
 					Group(run.AgentDefinitionID).
 					Pick(
 						run.AgentDefinitionID,
-						keel.DynLit(0),
+						keel.Int64(0),
 						keel.Count().Filter(run.Status.In(openRunStatuses()...)),
 						run.StartedAt.Max(),
 					).

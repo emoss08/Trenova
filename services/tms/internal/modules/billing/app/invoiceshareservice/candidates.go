@@ -44,8 +44,9 @@ func (s *Service) ListCandidates(
 	end := min(offset+limit, len(eligible))
 
 	return &pagination.ListResult[*invoiceports.ShareCandidate]{
-		Items: eligible[offset:end],
-		Total: len(eligible),
+		Items:      eligible[offset:end],
+		Total:      len(eligible),
+		TotalExact: true,
 	}, nil
 }
 
@@ -76,7 +77,8 @@ func (s *Service) eligibleCandidates(
 			}
 		}
 
-		if len(page.Items) < candidateScanPageSize || offset+candidateScanPageSize >= page.Total {
+		if len(page.Items) < candidateScanPageSize ||
+			(page.TotalExact && offset+candidateScanPageSize >= page.Total) {
 			break
 		}
 	}

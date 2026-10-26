@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -340,6 +341,7 @@ func (r *repository) ListEnabledTenantAccessPolicies(
 			ap.Enabled.IsTrue(),
 		).
 			Order(ap.Priority.Desc(), ap.Effect.Desc(), ap.CreatedAt.Asc()).
+			Cache(resultcache.Access()...).
 			All(ctx, r.db.Keel(ctx))
 	})
 }

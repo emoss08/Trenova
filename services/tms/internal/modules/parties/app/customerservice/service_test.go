@@ -1,10 +1,10 @@
 package customerservice
 
 import (
+	"errors"
 	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
-	"errors"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
@@ -473,8 +473,9 @@ func TestList_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*customer.Customer]{
-		Items: []*customer.Customer{newTestEntity()},
-		Total: 1,
+		Items:      []*customer.Customer{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &customerports.ListCustomerRequest{
 		Filter: &pagination.QueryOptions{},
@@ -568,8 +569,9 @@ func TestSelectOptions_Success(t *testing.T) {
 	ctx := t.Context()
 
 	expected := &pagination.ListResult[*customer.Customer]{
-		Items: []*customer.Customer{newTestEntity()},
-		Total: 1,
+		Items:      []*customer.Customer{newTestEntity()},
+		Total:      1,
+		TotalExact: true,
 	}
 	req := &customerports.CustomerSelectOptionsRequest{
 		SelectQueryRequest: &pagination.SelectQueryRequest{

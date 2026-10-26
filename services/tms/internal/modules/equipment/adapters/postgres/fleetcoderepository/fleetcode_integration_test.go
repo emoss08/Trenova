@@ -248,6 +248,7 @@ func TestFleetCodeRepository(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 5, result.Total)
+		assert.True(t, result.TotalExact)
 		assert.Equal(t, []string{"FC3", "FC2"}, codesOf(result.Items))
 		assert.NotNil(t, result.Items[0].Manager)
 	})
@@ -259,6 +260,7 @@ func TestFleetCodeRepository(t *testing.T) {
 		})
 		require.NoError(t, err)
 		assert.Equal(t, 1, result.Total)
+		assert.True(t, result.TotalExact)
 		assert.Equal(t, []string{"FC3"}, codesOf(result.Items))
 	})
 

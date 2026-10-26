@@ -75,8 +75,9 @@ func (s *Service) ListAPIKeys(
 	}
 
 	return &pagination.ListResult[apikeyports.APIKeyResponse]{
-		Items: items,
-		Total: keys.Total,
+		Items:      items,
+		Total:      keys.Total,
+		TotalExact: keys.TotalExact,
 	}, nil
 }
 

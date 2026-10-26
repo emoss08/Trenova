@@ -619,7 +619,8 @@ and compares them.
 A person's table pages the same list again through the Desk's rows endpoint (see "A table that
 pages" in [desk-artifacts.md](desk-artifacts.md)), with the cursors the tool handed out. Only that
 read sets `QueryToolParams.IncludeTotal`, which sends `includeTotalCount: true` and returns the
-connection's `totalCount` as `total`; the model's reads never pay for the count, and the
+connection's `totalCount` as `total`, with `totalEstimated: true` when `totalCountExact` says
+it is the planner's estimate; the model's reads never pay for the count, and the
 parameter is not in any tool's schema.
 
 A root that takes neither a table input nor its own `first` and `after`, but a bespoke input that

@@ -1113,6 +1113,7 @@ export type PreviousRateSummary = z.infer<typeof previousRateSummarySchema>;
 export const previousRatesResponseSchema = z.object({
   items: z.array(previousRateSummarySchema),
   total: z.number(),
+  totalExact: z.boolean().default(true),
 });
 export type PreviousRatesResponse = z.infer<typeof previousRatesResponseSchema>;
 

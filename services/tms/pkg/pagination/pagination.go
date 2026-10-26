@@ -30,13 +30,21 @@ func buildPageURL(req *http.Request, offset, limit int) string {
 	return fmt.Sprintf("%s://%s%s?%s", scheme, req.Host, req.URL.Path, query.Encode())
 }
 
-func GetNextPageURL(c *gin.Context, limit, offset, totalRows int) string {
-	// if the next page is the last page, return an empty string
-	if offset+limit >= totalRows {
+func GetNextPageURL(c *gin.Context, limit, offset int, hasNextPage bool) string {
+	if !hasNextPage {
 		return ""
 	}
 
 	return buildPageURL(c.Request, offset+limit, limit)
+}
+
+func HasMore[T any](result *ListResult[T], page Info) bool {
+	read := len(result.Items)
+	if result.TotalExact {
+		return page.SafeOffset()+read < result.Total
+	}
+
+	return read >= page.SafeLimit()
 }
 
 func GetPreviousPageURL(c *gin.Context, limit, offset int) string {

@@ -26,7 +26,11 @@ func (f *fakeInsights) List(
 ) (*pagination.ListResult[*insight.Insight], error) {
 	f.browsed = req
 
-	return &pagination.ListResult[*insight.Insight]{Items: f.items, Total: len(f.items)}, nil
+	return &pagination.ListResult[*insight.Insight]{
+		Items:      f.items,
+		Total:      len(f.items),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeInsights) GetDetail(

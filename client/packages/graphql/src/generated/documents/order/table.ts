@@ -2,4 +2,4 @@
 import type { TypedDocumentString, OrderTableQuery, OrderTableQueryVariables, OrderTableRowFieldsFragment } from "../../graphql";
 
 export const OrderTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"OrderTableRowFields"}} as unknown as TypedDocumentString<OrderTableRowFieldsFragment, unknown>;
-export const OrderTableDocument = {"__meta__":{"kind":"query","name":"OrderTable","hash":"sha256:da5fb471366bc747111feec70ba55fc514d137062a3b58f107ab9ea8ec017c1a"}} as unknown as TypedDocumentString<OrderTableQuery, OrderTableQueryVariables>;
+export const OrderTableDocument = {"__meta__":{"kind":"query","name":"OrderTable","hash":"sha256:96ae44b28159963712f5492d618dcefbf5dde95a20b7ff795e3f47c7ade29aa5"}} as unknown as TypedDocumentString<OrderTableQuery, OrderTableQueryVariables>;

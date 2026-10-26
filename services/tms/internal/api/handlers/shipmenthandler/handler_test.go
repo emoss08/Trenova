@@ -987,7 +987,8 @@ func TestShipmentHandler_GetPreviousRates_Success(t *testing.T) {
 				ProNumber:  "PRO-100",
 				CreatedAt:  1710000000,
 			}},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 

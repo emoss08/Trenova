@@ -72,7 +72,8 @@ func TestRoleAssignmentHandler_List_Success(t *testing.T) {
 					RoleID:         pulid.MustNew("rol_"),
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupRoleAssignmentHandler(t, repo)
@@ -115,8 +116,9 @@ func TestRoleAssignmentHandler_List_WithPagination(t *testing.T) {
 			req.Filter.Pagination.Limit == requestedLimit+1
 	})).
 		Return(&pagination.ListResult[*permission.UserRoleAssignment]{
-			Items: items,
-			Total: 30,
+			Items:      items,
+			Total:      30,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupRoleAssignmentHandler(t, repo)

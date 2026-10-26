@@ -276,6 +276,8 @@ type InboundMessageConnection {
   edges: [InboundMessageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A folder of the queue: a question about state rather than a filter."

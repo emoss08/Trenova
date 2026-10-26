@@ -20,8 +20,8 @@ repository method ──▶ dbtx.Read / dbtx.Write (one keel transaction per met
                                │
 scope guard ──▶ keel (Config.OnBegin): BEGIN [READ ONLY]; SELECT set_config('trenova.scope', 'v1.<key>.<org>.<bu>.<user>.<exp>.<hmac>', true)
                                │
-PostgreSQL ──▶ policy: organization_id = (SELECT trenova_rls.org_id())
-                       AND business_unit_id = (SELECT trenova_rls.bu_id())
+PostgreSQL ──▶ policy: (organization_id, business_unit_id)
+                       = (SELECT t.org_id, t.bu_id FROM trenova_rls.tenant() AS t)
                                │
                trenova_rls.claims() verifies the HMAC and expiry, or raises 42501
 ```
@@ -135,7 +135,10 @@ func (r *repository) GetByID(ctx context.Context, req GetRequest) (*thing.Thing,
 applied a migration, so the migration does not call it (`task db-lint` warns when one does).
 Any other shape (nullable tenant, two parties, owned through a parent) calls
 `trenova_rls.apply_policy('public.t', '<read expr>', '<write expr>')` with
-expressions that consult `trenova_rls.org_id()` / `bu_id()` / `user_id()`. A table
+expressions that consult `trenova_rls.tenant()`, `org_id()`, `bu_id()` or `user_id()`. Each
+`(SELECT …)` over one of them is an InitPlan that verifies the signed scope once per table per
+statement, about 60 µs each: compare a row with `(SELECT t.org_id, t.bu_id FROM
+trenova_rls.tenant() AS t)` rather than writing two subqueries, as `standard_expr()` does. A table
 with no tenant data is added to `trenova_rls.global_tables` with its reason. A table
 the application may only read and append to (an audit log) is added to
 `trenova_rls.append_only_tables`, and `reconcile()` keeps `UPDATE` and `DELETE`
@@ -199,10 +202,21 @@ deny, make sure the scope is the tenant the question is about.
   handed (the watchtower projector, the agent event publisher, the AI audit
   projector's per-tenant pass) binds that record's tenant itself, so a caller
   that holds only a system scope or none cannot make it fail or write elsewhere.
-- **Two organizations, one transaction.** An internal EDI approval or transfer
-  change writes both organizations atomically. Those transactions run under the
-  system scope, with the tenant filters still written in Go; a read of the other
-  organization alone binds that organization's tenant instead. Replacing a user's
+- **Two organizations, one transaction.** A transfer change review writes both
+  organizations' linked shipments atomically, under the system scope, with the
+  tenant filters still written in Go; a read of the other organization alone
+  binds that organization's tenant instead. A write whose only other-tenant rows
+  are rows both parties' policies admit (an EDI transfer, shipment link or tender
+  recipient) runs under the tenant that owns the rest: rejecting or expiring an
+  internal tender runs under the source organization's scope (`ediservice.transferSourceContext`),
+  since it changes the source shipment. Work that must create rows in one
+  organization through another module's service and change rows of the other
+  cannot share a transaction (a system scope would need every repository it
+  reaches to be system-aware): the load tender approval activity commits the
+  receiving side under the target's scope, then accepts the source shipment's
+  tender under the source's scope in a second transaction that skips what is
+  already done, so a retried activity converges
+  (`ediservice.ProcessLoadTenderApproval`). Replacing a user's
   organization memberships is the same shape: the user repository lists and rewrites
   them under the system scope, filtered to that user and business unit, and the user
   service first checks the caller holds `user:update` in every organization it adds or

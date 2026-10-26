@@ -53,12 +53,14 @@ function normalizeSelectOptionConnection(
   const connection = data.selectOptions;
   const results = connection.edges.map((edge) => normalizeSelectOption(edge.node));
   const count = connection.totalCount ?? results.length;
+  const totalCountExact = connection.totalCount == null || connection.totalCountExact !== false;
   const nextOffset = offset + limit;
   const previousOffset = Math.max(offset - limit, 0);
 
   return {
     results,
     count,
+    totalCountExact,
     next: connection.pageInfo.hasNextPage
       ? `graphql-select-options://${nextOffset.toString()}`
       : null,
@@ -71,6 +73,7 @@ function normalizeSelectOptionConnection(
       // the query is a missing cursor rather than a parse failure at the call site.
       endCursor: connection.pageInfo.endCursor ?? null,
       totalCount: count,
+      totalCountExact,
     },
   };
 }

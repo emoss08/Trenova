@@ -2,4 +2,4 @@
 import type { TypedDocumentString, DeskRecordFailuresQuery, DeskRecordFailuresQueryVariables, DeskServiceFailureCardQuery, DeskServiceFailureCardQueryVariables } from "../../graphql";
 
 export const DeskServiceFailureCardDocument = {"__meta__":{"kind":"query","name":"DeskServiceFailureCard","hash":"sha256:7d4323708bcb3efbf221681a901f21a94388b1449b2fc0223369ad3e425cc422"}} as unknown as TypedDocumentString<DeskServiceFailureCardQuery, DeskServiceFailureCardQueryVariables>;
-export const DeskRecordFailuresDocument = {"__meta__":{"kind":"query","name":"DeskRecordFailures","hash":"sha256:73202f49b3a51561641b75de0472e21508dfd5b2b9b2befbce2a1e2bcda6977c"}} as unknown as TypedDocumentString<DeskRecordFailuresQuery, DeskRecordFailuresQueryVariables>;
+export const DeskRecordFailuresDocument = {"__meta__":{"kind":"query","name":"DeskRecordFailures","hash":"sha256:0a21824ce19e628d3c67269c7fffc9c3e76229000a71df70f6f91f0a3ffe0a2d"}} as unknown as TypedDocumentString<DeskRecordFailuresQuery, DeskRecordFailuresQueryVariables>;

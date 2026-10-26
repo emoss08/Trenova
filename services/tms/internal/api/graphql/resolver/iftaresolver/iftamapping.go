@@ -37,7 +37,8 @@ func iftaTaxRateCursorConnectionToModel(
 				func(edge *gqlmodel.IFTATaxRateEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -67,7 +68,8 @@ func iftaMileageEntryCursorConnectionToModel(
 				func(edge *gqlmodel.IFTAJurisdictionMileageEntryEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -94,7 +96,8 @@ func iftaReturnCursorConnectionToModel(
 				func(edge *gqlmodel.IFTAReturnEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

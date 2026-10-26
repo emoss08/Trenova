@@ -250,7 +250,7 @@ func readinessQuery(req *ediports.GetEDIPartnerReadinessRequest) *keel.Query[*ed
 		)),
 		ep.EnabledForInbound,
 		ep.EnabledForOutbound,
-		keel.DynOf(ep.Kind).Cast(keel.TypeString),
+		keel.CastText(ep.Kind),
 	).Where(ep.ID.In(req.PartnerIDs...))
 }
 

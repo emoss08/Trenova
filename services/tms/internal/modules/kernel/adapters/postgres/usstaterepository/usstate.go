@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -45,7 +46,10 @@ func (r *repository) GetByID(
 	req usstateports.GetUsStateByIDRequest,
 ) (*usstate.UsState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*usstate.UsState, error) {
-		entity, err := usstatedb.UsStates.Get(ctx, r.db.Keel(ctx), req.StateID)
+		us := usstatedb.UsStates
+		entity, err := us.Where(us.ID.Eq(req.StateID)).
+			Cache(resultcache.Catalog()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error(
 				"failed to get us state",
@@ -71,7 +75,8 @@ func (r *repository) SelectOptions(
 			return listquery.SelectOptions(
 				ctx,
 				r.db.Keel(ctx),
-				us.Pick(us.ID, us.CreatedAt, us.Name, us.Abbreviation, us.CountryIso3),
+				us.Pick(us.ID, us.CreatedAt, us.Name, us.Abbreviation, us.CountryIso3).
+					Cache(resultcache.Catalog()...),
 				req,
 				func(s string) keel.Pred {
 					return keel.Or(us.Name.ContainsFold(s), us.Abbreviation.ContainsFold(s))
@@ -88,7 +93,9 @@ func (r *repository) GetByAbbreviation(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*usstate.UsState, error) {
 		us := usstatedb.UsStates
 		normalized := strings.ToUpper(strings.TrimSpace(abbreviation))
-		entity, err := us.Where(us.Abbreviation.Eq(normalized)).One(ctx, r.db.Keel(ctx))
+		entity, err := us.Where(us.Abbreviation.Eq(normalized)).
+			Cache(resultcache.Catalog()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Debug("failed to get us state by abbreviation",
 				zap.String("abbreviation", abbreviation),
@@ -108,7 +115,10 @@ func (r *repository) GetByIDs(ctx context.Context, ids []pulid.ID) ([]*usstate.U
 		}
 
 		us := usstatedb.UsStates
-		entities, err := us.Where(us.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
+		entities, err := us.Where(us.ID.In(ids...)).
+			Limit(len(ids)).
+			Cache(resultcache.Catalog()...).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get us states by ids", zap.Error(err))
 			return nil, fmt.Errorf("get us states by ids: %w", err)

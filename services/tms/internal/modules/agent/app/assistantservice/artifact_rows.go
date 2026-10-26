@@ -188,13 +188,14 @@ func (s *Service) ArtifactRows(
 			typeutils.StringOfTrimmed(source.artifact.Payload["recordEntity"]),
 			recordsOf(rowsFrom(page[resultItems])),
 		),
-		HasMore:    typeutils.BoolOf(page[resultHasMore]),
-		NextCursor: typeutils.StringOfTrimmed(page[resultNextCursor]),
-		NextOffset: optionalInt(page[resultNextOffset]),
-		Total:      optionalInt(page[resultTotal]),
-		Withheld:   withheldColumns(columns, stringsOf(page["withheldByAccess"])),
-		Searchable: searchable,
-		Sortable:   slices.Sorted(maps.Keys(sortable)),
+		HasMore:        typeutils.BoolOf(page[resultHasMore]),
+		NextCursor:     typeutils.StringOfTrimmed(page[resultNextCursor]),
+		NextOffset:     optionalInt(page[resultNextOffset]),
+		Total:          optionalInt(page[resultTotal]),
+		TotalEstimated: typeutils.BoolOf(page[resultTotalEstimated]),
+		Withheld:       withheldColumns(columns, stringsOf(page["withheldByAccess"])),
+		Searchable:     searchable,
+		Sortable:       slices.Sorted(maps.Keys(sortable)),
 	}, nil
 }
 

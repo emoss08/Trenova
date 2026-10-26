@@ -2,6 +2,6 @@
 import type { TypedDocumentString, AgentPlanDetailQuery, AgentPlanDetailQueryVariables, AgentPlanTableQuery, AgentPlanTableQueryVariables, AgentPlanTableRowFieldsFragment, DecideAgentPlanMutation, DecideAgentPlanMutationVariables } from "../../graphql";
 
 export const AgentPlanTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"AgentPlanTableRowFields"}} as unknown as TypedDocumentString<AgentPlanTableRowFieldsFragment, unknown>;
-export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:8459fabb87620ba7f09da395287ae9afa28a460a14ecee094ce8afa3c8743c54"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
+export const AgentPlanTableDocument = {"__meta__":{"kind":"query","name":"AgentPlanTable","hash":"sha256:050847443c7e70fb344328e79c6e1d4ccf7e63c322fdc03f09ee87ed03a89696"}} as unknown as TypedDocumentString<AgentPlanTableQuery, AgentPlanTableQueryVariables>;
 export const AgentPlanDetailDocument = {"__meta__":{"kind":"query","name":"AgentPlanDetail","hash":"sha256:a7305a48d87a1a2380088bebef4291889b95d77dc9383c1be563cbda617f2ab0"}} as unknown as TypedDocumentString<AgentPlanDetailQuery, AgentPlanDetailQueryVariables>;
 export const DecideAgentPlanDocument = {"__meta__":{"kind":"mutation","name":"DecideAgentPlan","hash":"sha256:02fe6372570cb2a9670be9181a6bf9f17d284166286bf1fbe9b15abb0fec8958"}} as unknown as TypedDocumentString<DecideAgentPlanMutation, DecideAgentPlanMutationVariables>;
