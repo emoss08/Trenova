@@ -1246,6 +1246,17 @@ func TestProductionConfigFileLoads(t *testing.T) {
 	)
 	assert.Equal(t, 10, cfg.Database.Budget.GetMaxRepeats())
 	assert.Equal(t, 75/4, cfg.Database.GetTenantConcurrency(cfg.Database.MaxOpenConns))
+	assert.True(t, cfg.Reporting.ResultCache.Enabled)
+	assert.Equal(
+		t,
+		DefaultReportResultCacheLocalBytes,
+		cfg.Reporting.ResultCache.GetLocalBytes(),
+	)
+	assert.False(
+		t,
+		cfg.Reporting.ResultCache.SharedEnabled(),
+		"the Redis tier copies tenant report rows; it stays opt-in",
+	)
 }
 
 // stageProductionBase fills in the sections config.test.yaml leaves out but a

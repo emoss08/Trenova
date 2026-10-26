@@ -349,6 +349,16 @@ logging:
 reporting:
   deliveryLinkBaseUrl: "" # Public app URL used in scheduled-report emails, e.g. https://app.example.com
   emailMaxAttachmentBytes: 10485760 # Max artifact size attached to scheduled-report emails (10 MiB)
+  # Results of report runs (at most 50,000 rows each), keyed by statement, tenant and the data
+  # version of every table read, so a write to one of them misses at once.
+  resultCache:
+    enabled: true
+    localBytes: 134217728 # In-process tier per worker (128 MiB)
+    ttl: 15m # Backstop for writes keel does not see
+    # A tier every worker shares in Redis (the cache section). Off by default: it copies tenant
+    # report rows into Redis; turn it on only where Redis is protected like PostgreSQL.
+    shared:
+      enabled: false
 
 # HTML-to-PDF rendering. Points at a Gotenberg sidecar that owns the browser.
 # Leave gotenbergUrl empty to disable PDF generation; documents then surface a

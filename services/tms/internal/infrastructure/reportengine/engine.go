@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	cachePrefix = "report:analytics:"
-	slotWait    = 2 * time.Second
+	cachePrefix      = "report:analytics:"
+	slotWait         = 2 * time.Second
+	localCacheShards = 8
 )
 
 var (
@@ -76,23 +77,39 @@ func (e *Engine) start(ctx context.Context) error {
 		return err
 	}
 
-	runners := []*analytics.Runner{interactive, interactive}
-	if e.redis != nil {
-		store := cache.NewRedis(
-			trenovaredis.NewBytesClient(e.redis),
-			cache.RedisOptions{Prefix: cachePrefix},
-		)
-		cached, cacheErr := analytics.NewRunner(db, e.catalog, e.options(store))
-		if cacheErr != nil {
-			return cacheErr
+	cached := interactive
+	if store := e.resultStore(); store != nil {
+		if cached, err = analytics.NewRunner(db, e.catalog, e.options(store)); err != nil {
+			return err
 		}
-		runners[1] = cached
 	}
 
 	e.mu.Lock()
-	e.interactive, e.cached = runners[0], runners[1]
+	e.interactive, e.cached = interactive, cached
 	e.mu.Unlock()
 	return nil
+}
+
+func (e *Engine) resultStore() analytics.Cache {
+	cfg := &e.cfg.ResultCache
+	if !cfg.Enabled {
+		return nil
+	}
+	local := cache.NewMemory(cache.MemoryOptions{
+		MaxBytes: cfg.GetLocalBytes(),
+		Shards:   localCacheShards,
+	})
+	if !cfg.SharedEnabled() || e.redis == nil {
+		return local
+	}
+	return &tieredStore{
+		local: local,
+		shared: cache.NewRedis(
+			trenovaredis.NewBytesClient(e.redis),
+			cache.RedisOptions{Prefix: cachePrefix},
+		),
+		ttl: cfg.GetTTL(),
+	}
 }
 
 func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
@@ -116,7 +133,7 @@ func (e *Engine) options(store analytics.Cache) analytics.RunnerOptions {
 	}
 	if store != nil {
 		opts.Cache = store
-		opts.CacheTTL = cfg.GetResultCacheTTL()
+		opts.CacheTTL = cfg.ResultCache.GetTTL()
 	}
 	return opts
 }
@@ -138,6 +155,9 @@ func ComplexityLimits(cfg *config.ReportingConfig) analytics.ComplexityLimits {
 }
 
 func (e *Engine) report(err error) {
+	if errors.Is(err, cache.ErrTooLarge) {
+		return
+	}
 	e.l.Warn("report engine", zap.Error(err))
 }
 

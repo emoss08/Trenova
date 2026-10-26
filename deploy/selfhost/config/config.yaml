@@ -270,6 +270,11 @@ portal:
 
 reporting:
   deliveryLinkBaseUrl: https://localhost # from .env (https://DOMAIN)
+  resultCache:
+    enabled: true
+    localBytes: 134217728
+    shared:
+      enabled: false # copies tenant report rows into Redis
 
 system:
   systemUserPassword: change-me # from .env

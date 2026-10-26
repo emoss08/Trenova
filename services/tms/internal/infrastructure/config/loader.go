@@ -379,6 +379,10 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("database.cache.shared.enabled", false)
 	l.viper.SetDefault("database.cache.shared.prefix", DefaultDatabaseCacheSharedPrefix)
 	l.viper.SetDefault("database.budget.maxRepeats", DefaultDatabaseBudgetMaxRepeats)
+	l.viper.SetDefault("reporting.resultCache.enabled", true)
+	l.viper.SetDefault("reporting.resultCache.localBytes", DefaultReportResultCacheLocalBytes)
+	l.viper.SetDefault("reporting.resultCache.ttl", "15m")
+	l.viper.SetDefault("reporting.resultCache.shared.enabled", false)
 
 	// Session defaults
 	l.viper.SetDefault("security.session.name", "trv-session-id")
