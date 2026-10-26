@@ -32,7 +32,6 @@ type catalogHeartbeat struct {
 	l        *zap.Logger
 }
 
-//nolint:gocritic // fx.In parameter structs must be passed by value
 func StartCatalogHeartbeat(p CatalogHeartbeatParams) {
 	h := &catalogHeartbeat{
 		versions: p.Versions,

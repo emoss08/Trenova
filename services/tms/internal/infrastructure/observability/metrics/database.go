@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	rlsLabelPool    = "pool"
-	rlsLabelEvent   = "event"
-	rlsLabelOutcome = "outcome"
+	dbCacheSubsystem = "db_cache"
+	rlsLabelPool     = "pool"
+	rlsLabelEvent    = "event"
+	rlsLabelOutcome  = "outcome"
 )
 
 type Database struct {
@@ -146,7 +147,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 		m.mustRegister(
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
 				Namespace: Namespace,
-				Subsystem: "db_cache",
+				Subsystem: dbCacheSubsystem,
 				Name:      "hits_total",
 				Help:      "Total number of database reads served from the result cache.",
 			}, func() float64 {
@@ -154,7 +155,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
 				Namespace: Namespace,
-				Subsystem: "db_cache",
+				Subsystem: dbCacheSubsystem,
 				Name:      "misses_total",
 				Help:      "Total number of cacheable database reads that read the database.",
 			}, func() float64 {
@@ -162,7 +163,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
 				Namespace: Namespace,
-				Subsystem: "db_cache",
+				Subsystem: dbCacheSubsystem,
 				Name:      "bypasses_total",
 				Help:      "Total number of cacheable database reads where the result cache did not apply.",
 			}, func() float64 {
@@ -170,7 +171,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 			}),
 			prometheus.NewCounterFunc(prometheus.CounterOpts{
 				Namespace: Namespace,
-				Subsystem: "db_cache",
+				Subsystem: dbCacheSubsystem,
 				Name:      "errors_total",
 				Help:      "Total number of result cache store, listener and decoder failures.",
 			}, func() float64 {
@@ -178,7 +179,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: Namespace,
-				Subsystem: "db_cache",
+				Subsystem: dbCacheSubsystem,
 				Name:      "bytes",
 				Help:      "Bytes held by the in-process result cache.",
 			}, func() float64 {
@@ -186,7 +187,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: Namespace,
-				Subsystem: "db_cache",
+				Subsystem: dbCacheSubsystem,
 				Name:      "versions",
 				Help:      "Number of (tenant, table) data versions the result cache holds.",
 			}, func() float64 {
@@ -194,7 +195,7 @@ func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: Namespace,
-				Subsystem: "db_cache",
+				Subsystem: dbCacheSubsystem,
 				Name:      "listening",
 				Help:      "1 while the result cache's data version listener is connected; the cache is bypassed at 0.",
 			}, func() float64 {

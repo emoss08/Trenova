@@ -14,12 +14,12 @@ type tieredStore struct {
 	ttl    time.Duration
 }
 
-func (t *tieredStore) Get(ctx context.Context, key string) ([]byte, bool, error) {
-	if value, ok, err := t.local.Get(ctx, key); err == nil && ok {
-		return value, true, nil
+func (t *tieredStore) Get(ctx context.Context, key string) (value []byte, found bool, err error) {
+	if local, ok, localErr := t.local.Get(ctx, key); localErr == nil && ok {
+		return local, true, nil
 	}
-	value, ok, err := t.shared.Get(ctx, key)
-	if err != nil || !ok {
+	value, found, err = t.shared.Get(ctx, key)
+	if err != nil || !found {
 		return nil, false, err
 	}
 	_ = t.local.Set(ctx, key, value, t.ttl)

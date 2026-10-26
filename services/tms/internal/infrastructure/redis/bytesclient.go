@@ -16,8 +16,8 @@ func NewBytesClient(client *redis.Client) BytesClient {
 	return BytesClient{client: client}
 }
 
-func (c BytesClient) Get(ctx context.Context, key string) ([]byte, bool, error) {
-	value, err := c.client.Get(ctx, key).Bytes()
+func (c BytesClient) Get(ctx context.Context, key string) (value []byte, found bool, err error) {
+	value, err = c.client.Get(ctx, key).Bytes()
 	if errors.Is(err, redis.Nil) {
 		return nil, false, nil
 	}
