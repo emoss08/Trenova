@@ -186,6 +186,7 @@ func (c *Connection) connectSystem(ctx context.Context) error {
 		MaxConnIdleTime: c.settings.connMaxIdleTime,
 		RuntimeParams:   c.settings.connParams,
 		Guard:           c.rls.guard(scopePoolSystem, false),
+		SlowWaits:       c.slowWaits(scopePoolSystem),
 	})
 	if err != nil {
 		return err

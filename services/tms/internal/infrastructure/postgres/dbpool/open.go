@@ -33,6 +33,7 @@ type Options struct {
 	VersionErrors     func(error)
 	TenantConcurrency int
 	Cache             *keel.CacheConfig
+	SlowWaits         keel.SlowWaitConfig
 }
 
 type Guard interface {
@@ -69,6 +70,7 @@ func Open(ctx context.Context, opts *Options) (*keel.DB, error) {
 	}
 	cfg.TenantConcurrency = opts.TenantConcurrency
 	cfg.Cache = opts.Cache
+	cfg.SlowWaits = opts.SlowWaits
 
 	db, err := keel.Open(ctx, cfg)
 	if err != nil {

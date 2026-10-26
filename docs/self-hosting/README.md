@@ -282,7 +282,9 @@ has room beyond `REDIS_MAXMEMORY`'s other uses. If you put PgBouncer in transact
 front of PostgreSQL, set `database.cache.listenHost` (and `listenPort`) to PostgreSQL itself:
 the cache follows changes over `LISTEN`, which needs a session connection.
 `database.tenantConcurrency` (a quarter of `database.maxOpenConns` when 0) is how many
-transactions one organization may run at once.
+transactions one organization may run at once. Work that waits longer than
+`database.slowWaitWarning` (5s; 0 turns it off) for one of those slots or for a connection logs
+a warning naming what holds them, with stacks, and counts in `trenova_db_slow_waits_total`.
 
 ## Upgrades
 

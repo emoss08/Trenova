@@ -737,6 +737,7 @@ type DatabaseConfig struct {
 	Migrator         DatabaseRole  `mapstructure:"migrator"`
 
 	TenantConcurrency int                  `mapstructure:"tenantConcurrency" validate:"min=0,max=1000"`
+	SlowWaitWarning   time.Duration        `mapstructure:"slowWaitWarning"   validate:"min=0"`
 	Cache             DatabaseCacheConfig  `mapstructure:"cache"`
 	Budget            DatabaseBudgetConfig `mapstructure:"budget"`
 }

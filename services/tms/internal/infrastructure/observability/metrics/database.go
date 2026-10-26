@@ -22,6 +22,7 @@ type Database struct {
 	concurrencyTotal *prometheus.CounterVec
 	operatorActions  *prometheus.CounterVec
 	rlsScopeEvents   *prometheus.CounterVec
+	slowWaits        *prometheus.CounterVec
 	stats            func() PoolStats
 }
 
@@ -64,7 +65,17 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 		[]string{rlsLabelPool, rlsLabelEvent, rlsLabelOutcome},
 	)
 
-	m.mustRegister(m.concurrencyTotal, m.operatorActions, m.rlsScopeEvents)
+	m.slowWaits = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: "db",
+			Name:      "slow_waits_total",
+			Help:      "Total number of waits for a tenant slot, a connection or a cache fill past database.slowWaitWarning, by component, pool and kind",
+		},
+		[]string{"component", "pool", "kind"},
+	)
+
+	m.mustRegister(m.concurrencyTotal, m.operatorActions, m.rlsScopeEvents, m.slowWaits)
 
 	return m
 }
@@ -267,6 +278,16 @@ func (m *Database) RecordRLSScopeEvent(pool, event, outcome string) {
 			normalizeMetricLabel(pool),
 			normalizeMetricLabel(event),
 			normalizeMetricLabel(outcome),
+		).Inc()
+	})
+}
+
+func (m *Database) RecordSlowWait(component, pool, kind string) {
+	m.ifEnabled(func() {
+		m.slowWaits.WithLabelValues(
+			normalizeMetricLabel(component),
+			normalizeMetricLabel(pool),
+			normalizeMetricLabel(kind),
 		).Inc()
 	})
 }

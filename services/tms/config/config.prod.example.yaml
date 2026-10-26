@@ -56,6 +56,7 @@ database:
   idleInTransactionSessionTimeout: 30s
   queryLog: "off"
   tenantConcurrency: 0 # 0 takes a quarter of maxOpenConns
+  slowWaitWarning: 5s # Warn, with stacks, about work waiting this long for a slot or connection; 0 is off
   cache:
     enabled: true
     localBytes: 268435456

@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
@@ -28,12 +29,14 @@ type Params struct {
 	fx.In
 
 	Config   *config.Config
+	DB       kernelports.Detacher
 	Engine   permissionports.PermissionEngine
 	Teams    TeamDirectory
 	Registry *permission.Registry
 }
 
 type Service struct {
+	db                kernelports.Detacher
 	engine            permissionports.PermissionEngine
 	teams             TeamDirectory
 	registry          *permission.Registry
@@ -43,6 +46,7 @@ type Service struct {
 
 func New(p Params) *Service {
 	return &Service{
+		db:                p.DB,
 		engine:            p.Engine,
 		teams:             p.Teams,
 		registry:          p.Registry,
@@ -89,6 +93,23 @@ func (s *Service) Grants(
 		return readscope.Grants{}, nil
 	}
 
+	var grants readscope.Grants
+	err := s.db.RunDetached(ctx, true, func(ctx context.Context) error {
+		var resolveErr error
+		grants, resolveErr = s.resolve(ctx, principal)
+		return resolveErr
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return grants, nil
+}
+
+func (s *Service) resolve(
+	ctx context.Context,
+	principal *permissionports.PermissionCheckRequest,
+) (readscope.Grants, error) {
 	checks := make([]permissionports.ResourceOperationCheck, 0, len(s.kinds))
 	for _, kind := range s.kinds {
 		checks = append(checks, permissionports.ResourceOperationCheck{

@@ -19,6 +19,7 @@ database:
   idleInTransactionSessionTimeout: 30s
   queryLog: "off"
   tenantConcurrency: 0
+  slowWaitWarning: 5s
   cache:
     enabled: true
     localBytes: 16777216

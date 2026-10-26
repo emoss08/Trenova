@@ -135,6 +135,11 @@ database:
   # the tenant pool, so one busy organization cannot hold every connection.
   # 0 takes a quarter of maxOpenConns.
   tenantConcurrency: 0
+  # Work that waits longer than this for an organization's slot, a pool
+  # connection or another request's read of the same cache entry logs a warning
+  # naming the waiter and, for a slot, the work holding the organization's
+  # slots, with their stacks. 0 turns the warnings off.
+  slowWaitWarning: 5s
   # The result cache serves a repository read that asks for it (keel's Query.Cache)
   # without a round trip while no table it read has changed for the organization.
   # See "Caching" in docs/engineering/backend/data-access.md.

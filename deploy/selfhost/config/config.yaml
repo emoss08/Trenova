@@ -75,6 +75,9 @@ database:
   queryLog: "off"
   # A quarter of maxOpenConns per organization at once when 0.
   tenantConcurrency: 0
+  # Warn, with stacks, about work waiting this long for an organization's slot
+  # or a connection; 0 turns the warnings off.
+  slowWaitWarning: 5s
   # The result cache keeps repository reads in memory until a table they read
   # changes. The shared tier puts it in Redis for every process; it copies
   # tenant rows into Redis, so it stays off unless you choose it.
