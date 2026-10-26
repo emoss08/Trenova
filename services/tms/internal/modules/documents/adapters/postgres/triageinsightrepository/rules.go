@@ -143,7 +143,7 @@ func manualOutcomesQuery(
 	outcomes := keel.CTE("manual_outcomes", []string{"message_id", "outcome"}, act.
 		Pick(
 			act.MessageID,
-			keel.DynCase().
+			keel.CaseString().
 				When(
 					keel.BoolOf(keel.BoolOr(act.Kind.Eq(triage.ActivityIgnored))),
 					keel.Text(string(triage.ActivityIgnored)),

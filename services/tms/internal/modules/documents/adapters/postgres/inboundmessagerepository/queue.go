@@ -345,12 +345,12 @@ func dueAssignments(patch inboundmessageports.QueuePatch) []keel.Assignment {
 	}
 }
 
-func dueFromTargetsExpr(targets triage.Targets) keel.Expr {
+func dueFromTargetsExpr(targets triage.Targets) keel.Int64Expr {
 	m := inboundmessagedb.InboundMessages
 	kinds := inboundmessage.AllClassifications()
 
 	classification := m.Classification.Coalesce(string(inboundmessage.ClassificationOther))
-	minutes := keel.DynCase()
+	minutes := keel.CaseInt64()
 	for _, kind := range kinds {
 		minutes = minutes.When(
 			classification.Eq(string(kind)),
@@ -359,7 +359,7 @@ func dueFromTargetsExpr(targets triage.Targets) keel.Expr {
 	}
 	fallback := keel.Int64(int64(targets.For(inboundmessage.ClassificationOther)))
 
-	return keel.DynOf(m.ReceivedAt).Add(keel.DynLit(60).Mul(minutes.Else(fallback)))
+	return m.ReceivedAt.Add(keel.Int64(60).Mul(minutes.Else(fallback)))
 }
 
 func (r *repository) ListByIDs(
@@ -589,7 +589,7 @@ func (r *repository) RecomputeDue(
 		return m.Where(m.Status.In(needsReviewStatuses...), classification).Update(
 			ctx,
 			r.db.Keel(ctx),
-			m.DueAt.ToExpr(keel.DynOf(m.ReceivedAt).Add(int64(req.Minutes)*60)),
+			m.DueAt.ToExpr(m.ReceivedAt.Add(keel.Int64(int64(req.Minutes)*60))),
 			m.Version.ToExpr(m.Version),
 			m.UpdatedAt.ToExpr(m.UpdatedAt),
 		)

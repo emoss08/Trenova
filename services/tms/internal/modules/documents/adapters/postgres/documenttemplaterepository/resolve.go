@@ -223,7 +223,7 @@ func resolveQuery(
 		// No customer in scope: the assignment tier cannot apply, so the join is
 		// left out rather than made harmless. NULL keeps the projection stable.
 		return q.Where(t.IsOrgDefault.IsTrue()).
-			Pick(resolveColumns(v, t, keel.DynLit(nil).Cast(keel.TypeString))...).
+			Pick(resolveColumns(v, t, keel.NullText())...).
 			Limit(1)
 	}
 

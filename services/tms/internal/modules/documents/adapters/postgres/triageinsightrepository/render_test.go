@@ -69,13 +69,13 @@ func TestArrivalsAreBucketedByHourSinceMidnight(t *testing.T) {
 	sqlText, args := keeltest.Render(t, arrivalsQuery(window()))
 
 	assertTenant(t, sqlText)
-	hour := `CAST(floor(((im."received_at" - $5::bigint) / $6::bigint)) AS bigint)`
+	hour := `((im."received_at" - $5::bigint) / $6::bigint)`
 	assert.Contains(t, sqlText, "SELECT "+hour, sqlText)
 	assert.Contains(t, sqlText, `im."received_at" <= $4`, sqlText)
-	assert.Contains(t, sqlText, "GROUP BY 1 ORDER BY 1 ASC", sqlText)
+	assert.Contains(t, sqlText, "GROUP BY "+hour+" ORDER BY "+hour+" ASC", sqlText)
 	assert.Equal(t, int64(1_760_290_000), args[3])
 	assert.Equal(t, int64(1_760_245_200), args[4])
-	assert.Equal(t, 3600, args[5])
+	assert.Equal(t, int64(3600), args[5])
 }
 
 func TestRiverBoundsEachLane(t *testing.T) {

@@ -104,7 +104,7 @@ func senderSummaryQuery(
 
 	return messages().
 		Pick(
-			keel.PercentileCont(0.5, keel.DynOf(m.ReviewedAt).Sub(m.ReceivedAt).Asc()).Filter(
+			keel.PercentileCont(0.5, m.ReviewedAt.Sub(m.ReceivedAt).Asc()).Filter(
 				keel.And(settledByPerson(), keel.Int64Of(m.ReviewedAt).GteExpr(m.ReceivedAt)),
 			),
 			text(keel.Mode(m.MatchedCustomerID.Asc())),

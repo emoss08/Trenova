@@ -120,7 +120,7 @@ func newerInFolder(
 
 	probe := nwr.Pick(nwr.ID).Where(
 		nwr.ThreadKey.EqCol(m.ThreadKey),
-		keel.DynRow(nwr.ReceivedAt, nwr.ID).Gt(keel.DynRow(m.ReceivedAt, m.ID)),
+		keel.Tuple(nwr.ReceivedAt, nwr.ID).Gt(keel.Tuple(m.ReceivedAt, m.ID)),
 	).Where(applyFolder(nwr, req)...)
 	if req.Filter != nil && strings.TrimSpace(req.Filter.Query) != "" {
 		probe = searchPredicate(probe, req.Filter.Query)

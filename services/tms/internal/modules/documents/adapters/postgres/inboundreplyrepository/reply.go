@@ -251,7 +251,7 @@ func (r *repository) distinctByMessage(
 			).
 			Order(
 				rp.MessageID.Asc(),
-				keel.DynCase().
+				keel.CaseInt64().
 					When(rp.Status.Eq(triage.ReplySent), statusRank(statusRankSent)).
 					When(rp.Status.Eq(triage.ReplySending), statusRank(statusRankSending)).
 					Else(statusRank(statusRankOther)).

@@ -138,7 +138,7 @@ func (r *assignmentRepository) Totals(
 		r.db,
 		func(ctx context.Context) ([]extractionrolloutports.RolloutAssignmentTotal, error) {
 			ra := extractionrolloutdb.RolloutAssignments
-			servedBy := keel.DynCase().
+			servedBy := keel.CaseString().
 				When(
 					ra.ServedProviderID.IsNull(),
 					keel.Text(string(extractionrollout.ServedByNone)),

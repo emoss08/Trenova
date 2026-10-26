@@ -157,15 +157,14 @@ func (r *repository) Arrivals(
 
 func arrivalsQuery(req triageports.BriefingWindow) *keel.Query[*inboundmessage.InboundMessage] {
 	m := inboundmessagedb.InboundMessages
-	hour := keel.DynFunc("floor", keel.DynOf(m.ReceivedAt).Sub(req.DayStart).Div(3600)).
-		Cast(keel.TypeInt64)
+	hour := m.ReceivedAt.Sub(keel.Int64(req.DayStart)).Div(keel.Int64(3600))
 	nova := settledByRule()
 
 	return messages().
 		Pick(hour, keel.Count().Filter(nova), keel.Count().Filter(keel.Not(nova))).
 		Where(m.ReceivedAt.Gte(req.DayStart), m.ReceivedAt.Lte(req.Now)).
 		Group(hour).
-		Order(keel.Asc(hour))
+		Order(hour.Asc())
 }
 
 func (r *repository) River(

@@ -80,7 +80,7 @@ var sourceTables = map[airetrieval.SourceType]sourceTable{
 		},
 		sample: func(limit int) *keel.CTETable {
 			m := inboundmessagedb.InboundMessages
-			return charsSample(m.Pick(keel.DynOf(charCount(m.Subject)).Add(charCount(m.TextBody))).
+			return charsSample(m.Pick(charCount(m.Subject).Add(charCount(m.TextBody))).
 				Order(m.ID.Desc()).
 				Limit(limit))
 		},

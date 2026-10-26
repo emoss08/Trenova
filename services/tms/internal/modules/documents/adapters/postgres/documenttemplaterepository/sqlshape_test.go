@@ -31,7 +31,7 @@ func TestResolveWithoutACustomerReadsOnlyTheLiveOrgDefault(t *testing.T) {
 	)
 	assert.Contains(t, sqlText, `coalesce(CAST(dtv."subject" AS text), $3)`, sqlText)
 	assert.Contains(t, sqlText, `coalesce(CAST(dt."description" AS text), $13)`, sqlText)
-	assert.Contains(t, sqlText, `CAST(NULL AS text) FROM`, sqlText)
+	assert.Contains(t, sqlText, `NULL::text FROM`, sqlText)
 	assert.NotContains(t, sqlText, "document_template_assignments", sqlText)
 	require.Len(t, args, 13)
 	assert.Equal(t, []any{"bu_1", "org_1"}, args[:2])

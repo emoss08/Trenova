@@ -91,7 +91,7 @@ func (r *viewRepository) Create(
 
 		v := triagedb.Views
 		stats, err := keel.IntoOne[viewStats](ctx, db, v.
-			Pick(keel.Count(), keel.DynOf(v.Position).Max().Add(1).Coalesce(0)).
+			Pick(keel.Count(), keel.Int64Of(v.Position.Max()).Add(keel.Int64(1)).Coalesce(0)).
 			Where(v.UserID.Eq(view.UserID)))
 		if err != nil {
 			return nil, err

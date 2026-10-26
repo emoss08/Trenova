@@ -78,10 +78,10 @@ func (r *repository) CorrectClassification(
 			m.UpdatedAt.To(req.At),
 		}
 		if req.TargetSeconds > 0 {
-			sets = append(sets, m.DueAt.ToExpr(keel.DynCase().
+			sets = append(sets, m.DueAt.ToExpr(keel.CaseInt64().
 				When(
 					m.Status.In(inboundmessage.StatusInReview, inboundmessage.StatusQuarantined),
-					keel.DynOf(m.ReceivedAt).Add(req.TargetSeconds),
+					m.ReceivedAt.Add(keel.Int64(req.TargetSeconds)),
 				).
 				Else(m.DueAt)))
 		}

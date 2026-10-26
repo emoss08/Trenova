@@ -82,7 +82,7 @@ func (r *repository) SavePending(
 					Set(
 						ex.ResponseID.ToExpr(keel.StringOf(ex.ResponseID.Excluded()).NullIf("").Coalesce(ex.ResponseID)),
 						ex.Model.ToExpr(keel.StringOf(ex.Model.Excluded()).NullIf("").Coalesce(ex.Model)),
-						ex.Status.ToExpr(keel.DynCase().
+						ex.Status.ToExpr(keel.CaseString().
 							When(
 								ex.Status.In(
 									documentaiextraction.StatusApplied,
@@ -90,7 +90,7 @@ func (r *repository) SavePending(
 								),
 								ex.Status,
 							).
-							Else(ex.Status.Excluded())),
+							Else(keel.StringOf(ex.Status.Excluded()))),
 						ex.SubmittedAt.ToExpr(keel.Int64Of(ex.SubmittedAt.Excluded()).Coalesce(ex.SubmittedAt)),
 					),
 			)
