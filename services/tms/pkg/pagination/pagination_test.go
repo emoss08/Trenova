@@ -293,7 +293,7 @@ func TestGetNextPageURL_MiddlePage(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	result := GetNextPageURL(c, 10, 20, 100)
+	result := GetNextPageURL(c, 10, 20, true)
 
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, "offset=30")
@@ -308,7 +308,7 @@ func TestGetNextPageURL_LastPage(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	result := GetNextPageURL(c, 10, 90, 100)
+	result := GetNextPageURL(c, 10, 90, false)
 
 	assert.Empty(t, result)
 }
@@ -321,7 +321,7 @@ func TestGetNextPageURL_ExactlyAtEnd(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	result := GetNextPageURL(c, 10, 100, 100)
+	result := GetNextPageURL(c, 10, 100, false)
 
 	assert.Empty(t, result)
 }
@@ -334,7 +334,7 @@ func TestGetNextPageURL_FirstPage(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	result := GetNextPageURL(c, 10, 0, 100)
+	result := GetNextPageURL(c, 10, 0, true)
 
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, "offset=10")
@@ -348,7 +348,7 @@ func TestGetNextPageURL_SingleItem(t *testing.T) {
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
 
-	result := GetNextPageURL(c, 10, 0, 1)
+	result := GetNextPageURL(c, 10, 0, false)
 
 	assert.Empty(t, result)
 }
