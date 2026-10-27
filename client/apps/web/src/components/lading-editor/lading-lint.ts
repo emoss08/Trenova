@@ -1,10 +1,10 @@
 // lading-lint.ts draws `lading.check`'s findings for the file being edited, checked with the text
 // as the editor holds it: the underline, the translated message with its code, the places it
 // relates to (each one a link that moves there), and each fix as an action that applies the
-// module's own edits. F8 and Shift-F8 move between findings, as in VS Code, and Mod-Shift-M
-// opens them all in a panel.
+// module's own edits. F8 and Shift-F8 move between findings, as in VS Code; every finding in the
+// project is the studio's Problems tab, which Mod-Shift-M opens (`LadingEditor`).
 
-import { linter, openLintPanel, type Action, type Diagnostic } from "@codemirror/lint";
+import { linter, type Action, type Diagnostic } from "@codemirror/lint";
 import type { Extension } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import type { LadingDiagnostic, LadingFix } from "@trenova/shared/edi/lading";
@@ -104,7 +104,6 @@ export function ladingLinter(service: LadingLanguageService): Extension {
     keymap.of([
       { key: "F8", run: (view) => jumpToDiagnostic(view, 1) },
       { key: "Shift-F8", run: (view) => jumpToDiagnostic(view, -1) },
-      { key: "Mod-Shift-m", run: openLintPanel },
     ]),
     EditorView.baseTheme({
       ".cm-lading-message": { display: "flex", flexDirection: "column", gap: "2px" },

@@ -6,8 +6,6 @@ import { apiService } from "@/services/api";
 import {
   ArrowNarrowRightIcon,
   Database01Icon,
-  Dataflow03Icon,
-  File06Icon,
   PlayIcon,
   XCircleIcon,
 } from "@trenova/shared/components/icons";
@@ -40,12 +38,14 @@ import {
   CodeBlock,
   DiffList,
   MetaList,
-  PanelEmpty,
+  PanelFailure,
   PanelHeading,
+  PanelSheet,
   PanelToolbar,
   SeverityIcon,
   StatusIcon,
 } from "./lading-panel-kit";
+import { RunSketch } from "./lading-panel-sketches";
 import { runValues, sampleInput } from "./studio-model";
 
 type RunOutcome = { result: LadingRunResult | null; where: "browser" | "server" };
@@ -116,8 +116,8 @@ export function LadingRunPanel({
 
   if (check.maps.length === 0 || working.samples.length === 0) {
     return (
-      <PanelEmpty
-        icon={check.maps.length === 0 ? Dataflow03Icon : File06Icon}
+      <PanelSheet
+        sketch={<RunSketch />}
         title={
           check.maps.length === 0
             ? t("The project has no maps to run")
@@ -196,15 +196,15 @@ export function LadingRunPanel({
         </Select>
       </PanelToolbar>
       {outcome === undefined ? (
-        <PanelEmpty
-          icon={PlayIcon}
+        <PanelSheet
+          sketch={<RunSketch />}
           title={t("Run a map on a sample")}
           description={t(
             "Run here to try the files as they are now. Run with live data to try the saved version with lookups answered from your records.",
           )}
         />
       ) : outcome.result === null ? (
-        <PanelEmpty
+        <PanelFailure
           icon={XCircleIcon}
           tone="danger"
           title={t("The map could not run")}

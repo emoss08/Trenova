@@ -1,8 +1,4 @@
 "use no memo";
-import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
-import type { SelectOption } from "@trenova/shared/types/fields";
-import type { EquipmentStatus } from "@trenova/shared/types/helpers";
 import {
   CheckDoubleIcon,
   CheckIcon,
@@ -10,9 +6,6 @@ import {
   ClockIcon,
   XCloseIcon,
 } from "@trenova/shared/components/icons";
-import type React from "react";
-import { useCallback, useState } from "react";
-import { toast } from "@trenova/shared/components/ui/toast";
 import { StatusBadge } from "@trenova/shared/components/status-badge";
 import { Badge, type BadgeVariant } from "@trenova/shared/components/ui/badge";
 import {
@@ -23,7 +16,14 @@ import {
 } from "@trenova/shared/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@trenova/shared/components/ui/popover";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { defineLabels } from "@trenova/shared/i18n/labels";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { cn } from "@trenova/shared/lib/utils";
+import type { SelectOption } from "@trenova/shared/types/fields";
+import type { EquipmentStatus } from "@trenova/shared/types/helpers";
+import type React from "react";
+import { useCallback, useState } from "react";
 
 const EQUIPMENT_STATUS_VARIANTS: Record<EquipmentStatus, BadgeVariant> = {
   Available: "success",
@@ -125,6 +125,7 @@ export function EditableEquipmentStatusBadge({
                   description={t(option.description)}
                   icon={option.icon}
                   disabled={option.disabled}
+                  removeCheckElement={true}
                 />
               ))}
             </CommandGroup>

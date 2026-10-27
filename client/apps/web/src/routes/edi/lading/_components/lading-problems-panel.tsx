@@ -1,7 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { translateMessage } from "@trenova/shared/i18n/message";
 import {
-  CheckCircleIcon,
   ChevronRightIcon,
   CornerDownRightIcon,
   FileCode01Icon,
@@ -14,7 +13,13 @@ import type {
 } from "@trenova/shared/edi/lading";
 import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
-import { FilterChips, PanelEmpty, PanelToolbar, SeverityIcon } from "./lading-panel-kit";
+import {
+  FilterChips,
+  PanelSheet,
+  PanelToolbar,
+  SeverityIcon,
+} from "./lading-panel-kit";
+import { ProblemsSketch } from "./lading-panel-sketches";
 import { byFile, lineOf, type Problem } from "./studio-model";
 
 type Filter = "all" | LadingSeverity;
@@ -38,11 +43,12 @@ export function LadingProblemsPanel({
 
   if (problems.length === 0) {
     return (
-      <PanelEmpty
-        icon={CheckCircleIcon}
-        tone="success"
+      <PanelSheet
+        sketch={<ProblemsSketch clean />}
         title={t("No problems")}
-        description={t("The project checks clean.")}
+        description={t(
+          "Every file checks clean. Findings show here as you type, under the file they are in.",
+        )}
       />
     );
   }

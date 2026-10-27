@@ -2,8 +2,9 @@ import type { LadingCheck, LadingContext } from "@trenova/shared/edi/lading";
 import type { LadingProject, LadingVersion } from "@trenova/shared/types/lading";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { LadingPanels } from "../lading-panels";
+import { LadingPanels, type PanelTab } from "../lading-panels";
 
 // Each tab's body is a stand-in that keeps a count in its own state, so the test sees whether a
 // tab's state outlives a visit to another tab. Mock factories run before the module's imports,
@@ -29,9 +30,13 @@ vi.mock("../lading-run-panel", () => ({ LadingRunPanel: counter("Run") }));
 vi.mock("../lading-release-panel", () => ({ LadingReleasePanel: counter("Release") }));
 vi.mock("../lading-settings-panel", () => ({ LadingSettingsPanel: counter("Settings") }));
 
-function renderPanels() {
-  return render(
+// The workbench holds which tab is open; the harness does the same.
+function Panels() {
+  const [tab, setTab] = useState<PanelTab>("problems");
+  return (
     <LadingPanels
+      tab={tab}
+      onTabChange={setTab}
       project={{} as LadingProject}
       version={{} as LadingVersion}
       versions={[]}
@@ -46,8 +51,12 @@ function renderPanels() {
       onOpen={() => {}}
       onValues={() => {}}
       onCoverage={() => {}}
-    />,
+    />
   );
+}
+
+function renderPanels() {
+  return render(<Panels />);
 }
 
 describe("LadingPanels", () => {

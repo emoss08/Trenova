@@ -1,5 +1,3 @@
-import { api } from "@trenova/shared/lib/api";
-import { safeParse } from "@trenova/shared/lib/parse";
 import {
   bulkUpdateTractorStatusResponseSchema,
   tractorSchema,
@@ -7,10 +5,12 @@ import {
   type BulkUpdateTractorStatusResponse,
   type Tractor,
 } from "@/types/tractor";
+import { api } from "@trenova/shared/lib/api";
+import { safeParse } from "@trenova/shared/lib/parse";
 
 export class TractorService {
   public async patch(id: Tractor["id"], data: Partial<Tractor>) {
-    const response = await api.patch<Tractor>(`/tractors/${id}`, data);
+    const response = await api.patch<Tractor>(`/tractors/${id}/`, data);
 
     return safeParse(tractorSchema, response, "Tractor");
   }

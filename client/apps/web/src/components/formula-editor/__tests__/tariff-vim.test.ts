@@ -135,6 +135,7 @@ describe("leader keys", () => {
     const rename = vi.fn(() => true);
     const references = vi.fn(() => true);
     const actions = vi.fn(() => true);
+    const problems = vi.fn(() => true);
     const view = mount("let a = 1\n", [
       tariffEditorCommands.of({
         format: vi.fn(() => true),
@@ -143,6 +144,7 @@ describe("leader keys", () => {
         rename,
         references,
         actions,
+        problems,
       }),
     ]);
     press(view, "g", "d");
@@ -150,11 +152,13 @@ describe("leader keys", () => {
     press(view, "<Space>", "l", "r");
     press(view, "g", "r", "r");
     press(view, "g", "r", "a");
+    press(view, "<Space>", "l", "D");
     expect(definition).toHaveBeenCalledWith(view);
     expect(hover).toHaveBeenCalledWith(view);
     expect(rename).toHaveBeenCalledWith(view);
     expect(references).toHaveBeenCalledWith(view);
     expect(actions).toHaveBeenCalledWith(view);
+    expect(problems).toHaveBeenCalledWith(view);
   });
 
   it("asks the page to save on Space w and on :w", () => {
@@ -292,6 +296,26 @@ describe("diagnostics", () => {
     expect(card?.querySelector("p")?.textContent).toBe("Second warning");
     expect(card?.querySelector(".cm-tariff-diagnostic-warning")).not.toBeNull();
     expect(card?.querySelector("button")?.textContent).toBe("Fix it");
+  });
+
+  it("shows the cursor line's fixes on gra and Space l a when the editor gives no actions", () => {
+    for (const keys of [
+      ["g", "r", "a"],
+      ["<Space>", "l", "a"],
+    ]) {
+      const view = withFindings();
+      cursorAt(view, 11);
+      press(view, ...keys);
+      const card = view.dom.querySelector(".cm-tariff-diagnostics");
+      expect(card?.querySelector("button")?.textContent).toBe("Fix it");
+      expect(view.dom.querySelector(".cm-panel-lint")).toBeNull();
+    }
+  });
+
+  it("opens no panel of its own on Space l D when the editor has no problems list", () => {
+    const view = withFindings();
+    press(view, "<Space>", "l", "D");
+    expect(view.dom.querySelector(".cm-panel-lint")).toBeNull();
   });
 
   it("opens nothing on gl when the line has no finding", () => {

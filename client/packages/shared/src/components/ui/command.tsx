@@ -1,6 +1,7 @@
 "use client";
 
 import Highlight from "@trenova/shared/components/highlight";
+import { CheckIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +11,6 @@ import {
 } from "@trenova/shared/components/ui/dialog";
 import { cn } from "@trenova/shared/lib/utils";
 import { Command as CommandPrimitive } from "cmdk";
-import { CheckIcon, SearchLgIcon } from "@trenova/shared/components/icons";
 import * as React from "react";
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
@@ -180,6 +180,7 @@ function SelectCommandItem({
   checked,
   searchValue,
   icon,
+  removeCheckElement = false,
   ...props
 }: Omit<React.ComponentProps<typeof CommandPrimitive.Item>, "children"> & {
   checked?: boolean;
@@ -188,6 +189,7 @@ function SelectCommandItem({
   description?: string;
   color?: string;
   searchValue?: string;
+  removeCheckElement?: boolean;
 }) {
   return (
     <CommandPrimitive.Item
@@ -226,7 +228,7 @@ function SelectCommandItem({
           </span>
         )}
       </div>
-      <CommandItemCheck checked={Boolean(checked)} />
+      {!removeCheckElement && <CommandItemCheck checked={Boolean(checked)} />}
     </CommandPrimitive.Item>
   );
 }

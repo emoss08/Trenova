@@ -890,8 +890,7 @@ The studio (`/edi/lading/:partnerId`, `client/apps/web/src/routes/edi/lading/`) 
 partner's project: the version picker and its actions above, the file tree, one editor per file
 (`components/lading-editor/`), and the panels below. The file tree arranges the project by what uses what (`projectMap`): the partner file, each
 flow with the maps and rules its clauses name (from `lading.check`'s flows), the shared guides
-and libraries, the files no flow reaches, and the samples. Its header says whether the project
-checks clean, each file shows its error and warning counts, a map's set and direction and the map
+and libraries, the files no flow reaches, and the samples. Each file shows its error and warning counts, a map's set and direction and the map
 a rules file checks, Mod-P filters by path, and rows rename in place (a sample's rename rewrites
 the quoted paths tests read it by). Adding opens a palette of every kind of file and sample (type
 to filter, or a kind's letter), then that kind's form; a source file's options (a map's
@@ -913,7 +912,7 @@ against the organisation and custom fields from `GET /edi/lading/context/`:
   files); Find references (Shift-F12); rename (F2); the line's quick fixes and the refactorings
   (Mod-.: *Extract crosswalk*, *Extract function*, *Promote to setting*, *Move to library*),
   whose edits may reach other files and land in the working copy; F8 and Shift-F8 between
-  problems and Mod-Shift-M for all of them; folding from the outline; formatting (Shift-Alt-F);
+  problems and Mod-Shift-M (or the status bar's counts) for all of them in the Problems tab; folding from the outline; formatting (Shift-Alt-F);
   Mod-S (`:w` in Vim) saves the draft. The status bar under it shows the file's errors and
   warnings, the cursor's line and column, Format and the Vim switch; with Vim keys on, the
   Tariff editor's mappings (`gd`, `K`, `gl`, `]d`, `grn`, `grr`, `gra`, Space as the leader) run

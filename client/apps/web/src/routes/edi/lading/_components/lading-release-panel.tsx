@@ -6,7 +6,6 @@ import { apiService } from "@/services/api";
 import {
   ChevronRightIcon,
   ClockRewindIcon,
-  EyeIcon,
   InfoCircleIcon,
   MinusCircleIcon,
   XCircleIcon,
@@ -39,12 +38,14 @@ import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-q
 import { Fragment, useId, useState, type ReactNode } from "react";
 import {
   DiffList,
-  PanelEmpty,
+  PanelFailure,
+  PanelSheet,
   PanelToolbar,
   ProportionBar,
   StatusIcon,
   type Status,
 } from "./lading-panel-kit";
+import { ReplaysSketch, ShadowSketch } from "./lading-panel-sketches";
 import { releaseStages, type ReleaseStage, type StageState } from "./studio-model";
 
 const DAY = 86_400;
@@ -441,10 +442,10 @@ function Replays({
           <Skeleton className="h-7 w-full" />
         </div>
       ) : replays.isError ? (
-        <PanelEmpty icon={XCircleIcon} tone="danger" title={t("The replays could not be loaded")} />
+        <PanelFailure icon={XCircleIcon} tone="danger" title={t("The replays could not be loaded")} />
       ) : list.length === 0 ? (
-        <PanelEmpty
-          icon={ClockRewindIcon}
+        <PanelSheet
+          sketch={<ReplaysSketch />}
           title={t("This version has not been replayed")}
           description={t(
             "A replay reads the partner's past messages through this version and the active one, and lists every difference.",
@@ -782,8 +783,8 @@ function Shadow({
     return (
       <>
         {toolbar}
-        <PanelEmpty
-          icon={EyeIcon}
+        <PanelSheet
+          sketch={<ShadowSketch />}
           title={t("Not shadowed")}
           description={
             version.status === "Certified"
@@ -811,7 +812,7 @@ function Shadow({
           <Skeleton className="h-7 w-full" />
         </div>
       ) : results.isError || !report ? (
-        <PanelEmpty
+        <PanelFailure
           icon={XCircleIcon}
           tone="danger"
           title={t("The shadow results could not be loaded")}
@@ -820,13 +821,18 @@ function Shadow({
         <TableWithDetail
           table={
             list.length === 0 ? (
-              <PanelEmpty
+              <PanelSheet
                 compact
-                icon={EyeIcon}
+                sketch={<ShadowSketch />}
                 title={
                   onlyDiffering
                     ? t("No message has differed so far")
                     : t("No message has arrived during the shadow so far")
+                }
+                description={
+                  onlyDiffering
+                    ? t("Every message so far read the same in both versions.")
+                    : t("Messages the partner sends while the shadow runs show here.")
                 }
               />
             ) : (

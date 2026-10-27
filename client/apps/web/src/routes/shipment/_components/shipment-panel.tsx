@@ -27,13 +27,16 @@ import {
   ClockRewindIcon,
   File06Icon,
   MessageSquare01Icon,
+  PhoneCall01Icon,
   Share07Icon,
   ShippingContainerIcon,
 } from "@trenova/shared/components/icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { NEW_SHIPMENT_CUSTOMER_PARAM } from "@/lib/shipment-links";
+import { shipment as shipmentQueries } from "@/lib/queries/shipment";
 import { lazy } from "react";
 import { type Resolver, useForm } from "react-hook-form";
+import { CheckCallsSkeleton } from "./check-calls/check-calls-skeleton";
 import { ShipmentBillingActionsMenu } from "./shipment-billing-actions-menu";
 import { ShipmentForm } from "./shipment-form";
 
@@ -42,6 +45,7 @@ const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 const ShipmentCommentsTab = lazy(() => import("./comments"));
 const ShipmentServiceFailuresTab = lazy(() => import("./shipment-service-failures"));
 const ShipmentCustomerTrackingTab = lazy(() => import("./shipment-customer-tracking"));
+const ShipmentCheckCallsTab = lazy(() => import("./check-calls/shipment-check-calls"));
 
 function OwnerDisplay({ ownerId }: { ownerId?: string | null }) {
   const t = useT();
@@ -190,8 +194,24 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
     staleTime: 30_000,
   });
   const serviceFailureCount = serviceFailures?.count ?? 0;
+  const { data: checkCalls } = useQuery({
+    ...shipmentQueries.checkCalls(row?.id ?? ""),
+    enabled: !!row?.id && mode === "edit",
+  });
+  const checkCallCount = checkCalls?.length ?? 0;
 
   const extraTabs = [
+    {
+      value: "documents",
+      label: t("Documents"),
+      icon: File06Icon,
+      hideFooter: true,
+      content: DocumentsTab,
+      contentProps: {
+        resourceType: "shipment",
+        resourceId: row?.id,
+      },
+    },
     {
       value: "service-failures",
       label:
@@ -216,14 +236,14 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       },
     },
     {
-      value: "documents",
-      label: t("Documents"),
-      icon: File06Icon,
+      value: "check-calls",
+      label: checkCallCount > 0 ? t("Check Calls ({0})", checkCallCount) : t("Check Calls"),
+      icon: PhoneCall01Icon,
       hideFooter: true,
-      content: DocumentsTab,
+      content: ShipmentCheckCallsTab,
+      fallback: <CheckCallsSkeleton />,
       contentProps: {
-        resourceType: "shipment",
-        resourceId: row?.id,
+        shipment: row,
       },
     },
     {

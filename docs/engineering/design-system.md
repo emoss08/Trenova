@@ -509,6 +509,18 @@ A titled block on a dashboard or workspace is `SectionPanel`
 the title at `text-sm` semibold, an optional `help` note, a `count`, and `action`
 on the right. Do not hand-write `<header className="… border-b px-3 py-2">`.
 
+### Resizable panes
+
+Split workspaces use `ResizablePanelGroup`, `ResizablePanel` and `ResizableHandle`
+(`@trenova/shared/components/ui/resizable`). A group whose sizes a person sets more than once,
+such as a studio's file tree, editor and panels, takes `persistId`, and every panel in it an `id`:
+the sizes the person drags to are kept in this browser (`preferenceStorage`), and a window resize
+never overwrites them. Bound every panel with `minSize` and `maxSize`, in rem for a pane whose
+content has a natural width (a file tree, a list) and in percent for one that shares the rest, so
+no pane can be dragged until it swallows its neighbours. The handle is a hairline that turns into a 3px brand bar on hover (after
+a moment), while dragged and when focused, over the hit area the library resizes from; don't
+restyle it per page.
+
 ### Label and value: `DescriptionList`
 
 Read-only detail is `DescriptionList` + `DescriptionItem`

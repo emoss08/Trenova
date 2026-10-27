@@ -13,7 +13,7 @@ import type {
 } from "@trenova/shared/edi/lading";
 import type { LadingProject, LadingVersion } from "@trenova/shared/types/lading";
 import { cn } from "@trenova/shared/lib/utils";
-import { Activity, useId, useState, type ReactNode } from "react";
+import { Activity, useId, type ReactNode } from "react";
 import { LadingProblemsPanel } from "./lading-problems-panel";
 import { LadingReleasePanel } from "./lading-release-panel";
 import { LadingRunPanel } from "./lading-run-panel";
@@ -24,7 +24,8 @@ import type { Problem } from "./studio-model";
 const NOTES_LIMIT = 2_000;
 const NOTES_NEAR_LIMIT = 0.9;
 
-type PanelTab = "problems" | "tests" | "run" | "release" | "settings" | "notes";
+/** The tabs under the editor; the workbench holds which is open, so the editor can open Problems. */
+export type PanelTab = "problems" | "tests" | "run" | "release" | "settings" | "notes";
 
 /** The panels under the editor: problems, tests, runs, releases, settings and notes. */
 export function LadingPanels({
@@ -42,6 +43,8 @@ export function LadingPanels({
   onOpen,
   onValues,
   onCoverage,
+  tab,
+  onTabChange,
 }: {
   project: LadingProject;
   version: LadingVersion;
@@ -57,13 +60,14 @@ export function LadingPanels({
   onOpen: (location: LadingLocation) => void;
   onValues: (values: readonly LadingRunValue[]) => void;
   onCoverage: (coverage: LadingTestReport["coverage"]) => void;
+  tab: PanelTab;
+  onTabChange: (tab: PanelTab) => void;
 }) {
   const t = useT();
-  const [tab, setTab] = useState<PanelTab>("problems");
   return (
     <Tabs
       value={tab}
-      onValueChange={(next) => setTab(next as PanelTab)}
+      onValueChange={(next) => onTabChange(next as PanelTab)}
       className="flex h-full min-h-0 flex-col gap-0"
     >
       <TabsList variant="underline" className="w-full shrink-0 justify-start border-b px-2">

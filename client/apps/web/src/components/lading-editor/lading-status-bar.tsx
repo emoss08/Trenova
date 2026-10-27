@@ -45,8 +45,8 @@ export const INITIAL_LADING_STATUS: LadingEditorStatus = {
 
 /**
  * The bar under the Lading editor, as VS Code draws one: the file's problems (which open the
- * problems panel), the cursor's line and column, the language, Format, Vim keys and the editor's
- * keys.
+ * studio's Problems tab), the cursor's line and column, the language, Format, Vim keys and the
+ * editor's keys.
  */
 export function LadingStatusBar({
   status,
@@ -68,7 +68,7 @@ export function LadingStatusBar({
         variant="ghost"
         size="xs"
         onClick={onProblems}
-        aria-label={t("Open the problems panel")}
+        aria-label={t("Show the problems")}
         className="gap-2"
       >
         <span className={cn("flex items-center gap-1.5", errors > 0 && "text-danger")}>

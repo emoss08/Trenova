@@ -57,6 +57,8 @@ interface TabConfig {
   manageScroll?: boolean;
   hideFooter?: boolean;
   content: LazyExoticComponent<React.ComponentType<any>>;
+  /** The tab's own skeleton while its chunk loads; a generic loader otherwise. */
+  fallback?: React.ReactNode;
   contentProps?: Record<string, unknown>;
 }
 
@@ -459,7 +461,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
                   .filter((tab) => !tab.manageScroll)
                   .map((tab) => (
                     <TabsContent key={tab.value} value={tab.value} className="p-4">
-                      <Suspense fallback={<TabFallback />}>
+                      <Suspense fallback={tab.fallback ?? <TabFallback />}>
                         <tab.content {...(tab.contentProps || {})} />
                       </Suspense>
                     </TabsContent>
@@ -474,7 +476,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
                     value={tab.value}
                     className="flex min-h-0 flex-1 flex-col overflow-hidden"
                   >
-                    <Suspense fallback={<TabFallback />}>
+                    <Suspense fallback={tab.fallback ?? <TabFallback />}>
                       <tab.content {...(tab.contentProps || {})} />
                     </Suspense>
                   </TabsContent>
