@@ -1,5 +1,5 @@
 {
-  "version": "sha256:f3afb3c2e16a246604325a66702184857f07c008ef79f05d357c06b29f96fae0",
+  "version": "sha256:5943af05ff420c3e4d36e1a9b57cd174df22d960e8bd74b89f03cdff608f341d",
   "screens": [
     {
       "path": "/",
@@ -23725,7 +23725,6 @@
         "InvoiceArContext",
         "IssueCarrierTrackingLink",
         "LateChargePreview",
-        "LogCheckCall",
         "MyActiveBillingTransferRun",
         "MyBulkEdit",
         "MyCaptureAccess",
@@ -24354,7 +24353,7 @@
         },
         {
           "method": "PATCH",
-          "path": "/tractors/:param",
+          "path": "/tractors/:param/",
           "requires": [
             {
               "resource": "tractor",
@@ -24472,7 +24471,6 @@
         "InvoiceArContext",
         "IssueCarrierTrackingLink",
         "LateChargePreview",
-        "LogCheckCall",
         "MyActiveBillingTransferRun",
         "MyBulkEdit",
         "MyCaptureAccess",
@@ -25482,7 +25480,6 @@
         "InvoiceArContext",
         "IssueCarrierTrackingLink",
         "LateChargePreview",
-        "LogCheckCall",
         "MyActiveBillingTransferRun",
         "MyBulkEdit",
         "MyCaptureAccess",
@@ -26859,7 +26856,6 @@
         "IssueCarrierTrackingLink",
         "IssueDisciplinaryAction",
         "LateChargePreview",
-        "LogCheckCall",
         "MarkEmploymentVerificationRequested",
         "MarkWorkerChecklistItemNotApplicable",
         "MyActiveBillingTransferRun",
