@@ -463,6 +463,27 @@ export function ladingTest(edi: EdiRuntime, request: ProjectRequest): LadingTest
   return edi.call("lading.test", head(request)) as LadingTestReport;
 }
 
+/** A starter sample of what a map reads, in the format its name will carry. */
+export type LadingSampleStarter = {
+  format: LadingMap["source"];
+  content: string;
+};
+
+/**
+ * A starter sample for a map of the project: its set in the partner's envelope, its CSV columns
+ * with a row of examples, or an example of the document an outbound map reads. Null for a map
+ * the project lacks or a set Lading has no message of.
+ */
+export function ladingSample(
+  edi: EdiRuntime,
+  request: ProjectRequest & { map: string },
+): LadingSampleStarter | null {
+  return edi.call("lading.sample", {
+    ...head(request),
+    map: request.map,
+  }) as LadingSampleStarter | null;
+}
+
 export function ladingStarter(edi: EdiRuntime, request: LadingStarterRequest): LadingProjectInput {
   return edi.call("lading.starter", request) as LadingProjectInput;
 }

@@ -455,6 +455,16 @@ export function sampleInput(sample: LadingSample): LadingRunInput {
   return { x12: sample.content };
 }
 
+/** Where a new map's starter sample goes: named after the map's file, in its format. */
+export function starterSamplePath(
+  mapPath: string,
+  format: SampleFormat,
+  taken: readonly string[],
+): string {
+  const stem = mapPath.replace(/^.*\//, "").replace(/\.lading$/, "");
+  return entryPath(format, freeName(format, stem, taken));
+}
+
 /**
  * Whether a map reads a sample: an X12 map one holding its transaction set, a CSV or JSON map a
  * file of that format, an outbound map a Trenova document.

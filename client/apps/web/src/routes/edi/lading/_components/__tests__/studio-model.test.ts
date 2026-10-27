@@ -24,6 +24,7 @@ import {
   sampleFormat,
   sampleInput,
   samplesFor,
+  starterSamplePath,
   starterSource,
   settingDraft,
   settingUnit,
@@ -856,5 +857,20 @@ describe("samplesFor", () => {
   it("says a sample holding another set does not fit", () => {
     expect(sampleFits(map("x12", "204"), invoice)).toBe(false);
     expect(sampleFits(map("x12", "210"), invoice)).toBe(true);
+  });
+});
+
+describe("starterSamplePath", () => {
+  it("names a new map's sample after its file, in the sample's format, and never takes a path", () => {
+    expect(starterSamplePath("maps/invoice-in.lading", "x12", [])).toBe("samples/invoice-in.x12");
+    expect(starterSamplePath("maps/invoice-out.lading", "document", [])).toBe(
+      "samples/invoice-out.document.json",
+    );
+    expect(
+      starterSamplePath("maps/orders.lading", "csv", [
+        "samples/orders.csv",
+        "samples/orders-2.csv",
+      ]),
+    ).toBe("samples/orders-3.csv");
   });
 });

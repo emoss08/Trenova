@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LadingEditor } from "@/components/lading-editor/lading-editor";
 import { SampleEditor } from "@/components/lading-editor/sample-editor";
-import { checkProject } from "@/components/lading-editor/lading-service";
+import { checkProject, unlessRefused } from "@/components/lading-editor/lading-service";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import {
   ResizableHandle,
@@ -9,14 +9,15 @@ import {
   ResizablePanelGroup,
 } from "@trenova/shared/components/ui/resizable";
 import { toast } from "@trenova/shared/components/ui/toast";
-import type {
-  LadingContext,
-  LadingFile,
-  LadingLocation,
-  LadingRange,
-  LadingRunValue,
-  LadingSample,
-  LadingTestReport,
+import {
+  ladingSample,
+  type LadingContext,
+  type LadingFile,
+  type LadingLocation,
+  type LadingRange,
+  type LadingRunValue,
+  type LadingSample,
+  type LadingTestReport,
 } from "@trenova/shared/edi/lading";
 import { useEdi } from "@trenova/shared/hooks/use-edi";
 import type {
@@ -33,9 +34,11 @@ import {
   applyFileEdits,
   isDirty,
   isEditable,
+  ladingName,
   PARTNER_FILE,
   projectProblems,
   renameEntry,
+  starterSamplePath,
 } from "./studio-model";
 
 type Reveal = { path: string; range: LadingRange };
@@ -110,16 +113,38 @@ export function LadingWorkbench({
   };
 
   const addEntries = (entries: NewEntry[]) => {
-    const added = entries.filter((entry) => entry.kind === "file");
-    const addedSamples = entries.filter((entry) => entry.kind === "sample");
-    setFiles((current) => [
-      ...current,
-      ...added.map((entry) => ({ path: entry.path, source: entry.content })),
-    ]);
-    setSamples((current) => [
-      ...current,
-      ...addedSamples.map((entry) => ({ path: entry.path, content: entry.content })),
-    ]);
+    const nextFiles: LadingFile[] = [
+      ...files,
+      ...entries
+        .filter((entry) => entry.kind === "file")
+        .map((entry) => ({ path: entry.path, source: entry.content })),
+    ];
+    const nextSamples: LadingSample[] = [
+      ...samples,
+      ...entries
+        .filter((entry) => entry.kind === "sample")
+        .map((entry) => ({ path: entry.path, content: entry.content })),
+    ];
+    for (const entry of entries) {
+      if (entry.kind !== "file" || !entry.withSample) continue;
+      const starter = unlessRefused(
+        () =>
+          ladingSample(edi, {
+            project: { files: nextFiles, samples: nextSamples },
+            context,
+            map: ladingName(entry.path),
+          }),
+        null,
+      );
+      if (!starter) continue;
+      const taken = [...nextFiles, ...nextSamples].map((item) => item.path);
+      nextSamples.push({
+        path: starterSamplePath(entry.path, starter.format, taken),
+        content: starter.content,
+      });
+    }
+    setFiles(nextFiles);
+    setSamples(nextSamples);
     if (entries[0]) setOpenPath(entries[0].path);
   };
 

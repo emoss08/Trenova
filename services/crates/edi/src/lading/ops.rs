@@ -33,7 +33,7 @@ use super::flow::{DEFAULT_ACK_WITHIN, FlowEvent, FlowState, route, step};
 use super::project::{Context, Project};
 use super::replay::{MAX_INPUTS, ReplayRequest, replay as replay_versions};
 use super::schema;
-use super::starter::{StarterRequest, starter as build_starter};
+use super::starter::{StarterRequest, document_sample, set_sample, starter as build_starter};
 use super::stdlib;
 use super::syntax::ast::{Endpoint, Header, Item};
 use super::syntax::format::format as format_source;
@@ -41,6 +41,7 @@ use super::syntax::highlight::highlights;
 use super::syntax::outline::{folds, outline};
 use super::syntax::parser::parse;
 use super::testing::run_tests;
+use super::types::Type;
 
 /// The most files a project holds.
 pub const MAX_FILES: usize = 200;
@@ -712,6 +713,87 @@ pub fn starter(input: &RawValue) -> OpResult {
     encode(&build_starter(&input))
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SampleInput {
+    map: String,
+}
+
+/// `lading.sample`: a starter sample of what a map reads, so a new map has something to run:
+/// an X12 map's set in the partner's envelope, a CSV map's columns with a row of examples, an
+/// outbound map's document. Null for a map the project has not or a set Lading has no message of.
+pub fn sample(raw: &RawValue) -> OpResult {
+    let program = program(raw)?;
+    let input: SampleInput = decode(raw)?;
+    let Some(info) = program.maps.get(&input.map) else {
+        return encode(&Json::Null);
+    };
+    let sample = match &info.source {
+        Source::X12(guide) => {
+            let set = program.guides[*guide]
+                .compiled
+                .guide()
+                .transaction_set
+                .clone();
+            set_sample(&partner_request(&program), &set)
+                .map(|content| json!({ "format": "x12", "content": content }))
+        }
+        Source::Csv(columns) => Some(json!({ "format": "csv", "content": csv_sample(columns) })),
+        Source::Json => Some(json!({ "format": "json", "content": "{}\n" })),
+        Source::Document(document) => document_sample(document)
+            .map(|content| json!({ "format": "document", "content": content })),
+    };
+    encode(&sample)
+}
+
+fn partner_request(program: &Program) -> StarterRequest {
+    let interchange = program.interchange();
+    let party = |party: Option<&super::syntax::ast::InterchangeParty>| {
+        party.map(|party| (party.qualifier.name.clone(), party.id.value.clone()))
+    };
+    StarterRequest {
+        name: program
+            .partner
+            .as_ref()
+            .map_or_else(String::new, |partner| partner.name.clone()),
+        them: interchange.and_then(|interchange| party(interchange.them.as_ref())),
+        us: interchange.and_then(|interchange| party(interchange.us.as_ref())),
+        group: interchange
+            .and_then(|interchange| interchange.group.as_ref())
+            .map(|(theirs, ours)| (theirs.value.clone(), ours.value.clone())),
+        version: interchange
+            .and_then(|interchange| interchange.version.as_ref())
+            .map(|version| version.name.clone()),
+        separators: Some(
+            program
+                .partner_separators()
+                .into_iter()
+                .map(String::from)
+                .collect(),
+        ),
+        usage: interchange
+            .and_then(|interchange| interchange.usage.as_ref())
+            .map(|usage| usage.name.clone()),
+        ..StarterRequest::default()
+    }
+}
+
+fn csv_sample(columns: &[(String, Type)]) -> String {
+    let header: Vec<&str> = columns.iter().map(|(name, _)| name.as_str()).collect();
+    let row: Vec<&str> = columns
+        .iter()
+        .map(|(_, ty)| match ty.unwrapped() {
+            Type::Int => "1",
+            Type::Decimal | Type::Money => "1250.00",
+            Type::Bool => "true",
+            Type::Date => "2026-01-10",
+            Type::DateTime => "2026-01-10T14:00:00Z",
+            _ => "A-1001",
+        })
+        .collect();
+    format!("{}\n{}\n", header.join(","), row.join(","))
+}
+
 /// `lading.catalog`.
 pub fn catalog(_: &RawValue) -> OpResult {
     let record = |record: &schema::Record| {
@@ -1026,6 +1108,62 @@ mod tests {
             .filter_map(|item| item["id"].as_str())
             .collect();
         assert!(ids.contains(&"promote-to-setting"), "{out}");
+    }
+
+    #[test]
+    fn a_new_maps_sample_is_written_in_the_partners_envelope_and_runs() {
+        let tender = call("lading.sample", json!({ "map": "tenderIn" }));
+        assert_eq!(tender["format"], "x12", "{tender}");
+        let content = tender["content"].as_str().expect("content");
+        assert!(content.starts_with("ISA*00*"), "{content}");
+        assert!(
+            content.contains("*ZZ*ACMERETAIL     *ZZ*TRNV-ACME      *"),
+            "{content}"
+        );
+        assert!(content.contains("GS*SM*ACME*TRENOVA*"), "{content}");
+        assert!(content.contains("ST*204*0001~"), "{content}");
+        let run = call(
+            "lading.run",
+            json!({ "map": "tenderIn", "input": { "x12": content } }),
+        );
+        assert!(run["error"].is_null(), "{run}");
+
+        let invoice = call("lading.sample", json!({ "map": "invoiceOut" }));
+        assert_eq!(invoice["format"], "document", "{invoice}");
+        let document: Json =
+            serde_json::from_str(invoice["content"].as_str().expect("content")).expect("json");
+        let run = call(
+            "lading.run",
+            json!({ "map": "invoiceOut", "input": { "document": document } }),
+        );
+        assert!(run["error"].is_null(), "{run}");
+
+        assert!(call("lading.sample", json!({ "map": "nothing" })).is_null());
+    }
+
+    #[test]
+    fn every_example_document_reads_as_its_record() {
+        let program = crate::lading::check::check(&acme(), &context());
+        for document in [
+            "loadTender",
+            "tenderResponse",
+            "shipmentStatus",
+            "freightInvoice",
+        ] {
+            let text = crate::lading::starter::document_sample(document).expect(document);
+            let json: Json = serde_json::from_str(text).expect(document);
+            let read = crate::lading::eval::json::from_json(
+                &program,
+                &json,
+                &crate::lading::types::Type::Record(
+                    crate::lading::schema::record(document)
+                        .expect(document)
+                        .name,
+                ),
+                "",
+            );
+            assert!(read.is_ok(), "{document}: {read:?}");
+        }
     }
 
     #[test]
