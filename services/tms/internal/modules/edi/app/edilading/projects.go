@@ -371,7 +371,7 @@ func (s *Projects) checkedDraft(
 	if err != nil {
 		return nil, nil, err
 	}
-	encoded, err := lading.Encode(&lading.Project{Files: files}, ladingContext)
+	encoded, err := lading.Encode(&lading.Project{Files: files, Samples: samples}, ladingContext)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -626,11 +626,18 @@ func (s *Projects) NewDraft(
 			"The version belongs to another project",
 		)
 	}
+	samples, err := s.Samples(ctx, req.TenantInfo, from)
+	if err != nil {
+		return nil, err
+	}
 	ladingContext, err := s.runtime.Context(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
-	encoded, err := lading.Encode(&lading.Project{Files: from.Files}, ladingContext)
+	encoded, err := lading.Encode(
+		&lading.Project{Files: from.Files, Samples: samples},
+		ladingContext,
+	)
 	if err != nil {
 		return nil, err
 	}
