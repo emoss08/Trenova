@@ -229,7 +229,6 @@
   "Void invoice": "Anular factura",
   "Void invoice {0}": "Anular la factura {0}",
   "Void requested; awaiting reversal approval": "Anulación solicitada; a la espera de aprobación de la reversión",
-  "Warnings": "Advertencias",
   "What each person can do comes from their role. Sharing never grants access.": "Lo que cada persona puede hacer depende de su rol. Compartir nunca otorga acceso.",
   "What happens to the billing queue items and shipments this invoice billed.": "Qué sucede con los elementos de la cola de facturación y los envíos que facturó esta factura.",
   "What the customer is contesting": "Lo que el cliente está impugnando",

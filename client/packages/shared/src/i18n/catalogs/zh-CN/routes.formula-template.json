@@ -291,7 +291,6 @@
   "{0, plural, one {# pinned library changed} other {# pinned libraries changed}}": "{0, plural, other {# 个已锁定的公式库有更改}}",
   "{0, plural, one {# pinned library} other {# pinned libraries}}": "{0, plural, other {# 个已锁定的公式库}}",
   "{0, plural, one {# shipment} other {# shipments}} re-rated. Click a Pro # to open the shipment.": "已重新计价 {0, plural, other {# 笔运单}}。点击 PRO 号即可打开该运单。",
-  "{0, plural, one {# test} other {# tests}}": "{0, plural, other {# 个测试}}",
   "{0, plural, one {Archive # formula template?} other {Archive # formula templates?}}": "{0, plural, other {要归档 # 个公式模板吗？}}",
   "{0, plural, one {Imported # template} other {Imported # templates}}": "{0, plural, other {已导入 # 个模板}}",
   "{0, plural, one {Installed # standard template} other {Installed # standard templates}}": "{0, plural, other {已安装 # 个标准模板}}",

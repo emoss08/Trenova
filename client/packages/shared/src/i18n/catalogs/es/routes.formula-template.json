@@ -291,7 +291,6 @@
   "{0, plural, one {# pinned library changed} other {# pinned libraries changed}}": "{0, plural, one {Cambió # biblioteca fijada} other {Cambiaron # bibliotecas fijadas}}",
   "{0, plural, one {# pinned library} other {# pinned libraries}}": "{0, plural, one {# biblioteca fijada} other {# bibliotecas fijadas}}",
   "{0, plural, one {# shipment} other {# shipments}} re-rated. Click a Pro # to open the shipment.": "{0, plural, one {# envío vuelto a tarifar} other {# envíos vueltos a tarifar}}. Haga clic en un número PRO para abrir el envío.",
-  "{0, plural, one {# test} other {# tests}}": "{0, plural, one {# prueba} other {# pruebas}}",
   "{0, plural, one {Archive # formula template?} other {Archive # formula templates?}}": "{0, plural, one {¿Archivar # plantilla de fórmula?} other {¿Archivar # plantillas de fórmula?}}",
   "{0, plural, one {Imported # template} other {Imported # templates}}": "{0, plural, one {# plantilla importada} other {# plantillas importadas}}",
   "{0, plural, one {Installed # standard template} other {Installed # standard templates}}": "{0, plural, one {# plantilla estándar instalada} other {# plantillas estándar instaladas}}",
