@@ -65,7 +65,10 @@ function renderLadingMessage(diagnostic: LadingDiagnostic, message: string) {
   };
 }
 
-/** A finding as CodeMirror draws it, clamped to the text it is about. */
+/**
+ * A finding as CodeMirror draws it, clamped to the text it is about. Its code is drawn by the
+ * message itself, so it has no `source`: the problems panel would print the code twice.
+ */
 export function toLadingLint(diagnostic: LadingDiagnostic, length: number): Diagnostic {
   const actions: Action[] = diagnostic.fixes.map((fix) => ({
     name: translateMessage(fix.label),
@@ -75,7 +78,6 @@ export function toLadingLint(diagnostic: LadingDiagnostic, length: number): Diag
   return {
     ...clamp(diagnostic.range, length),
     severity: diagnostic.severity,
-    source: diagnostic.code,
     message,
     renderMessage: renderLadingMessage(diagnostic, message),
     ...(actions.length > 0 ? { actions } : {}),

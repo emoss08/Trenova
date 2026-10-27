@@ -7,6 +7,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@trenova/shared/components/ui/resizable";
+import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type {
@@ -25,6 +26,7 @@ import type {
   LadingVersionDetail,
 } from "@trenova/shared/types/lading";
 import { useMemo, useState } from "react";
+import type { NewEntry } from "./lading-add-entry-dialog";
 import { LadingFileTree } from "./lading-file-tree";
 import { LadingPanels } from "./lading-panels";
 import { LadingVersionToolbar } from "./lading-version-toolbar";
@@ -32,8 +34,8 @@ import {
   applyFileEdits,
   isDirty,
   isEditable,
-  problemCounts,
   projectProblems,
+  renameEntry,
 } from "./studio-model";
 
 type Reveal = { path: string; range: LadingRange };
@@ -83,7 +85,6 @@ export function LadingWorkbench({
   const working = useMemo(() => ({ files, samples }), [files, samples]);
   const check = checkProject(edi, working, context);
   const problems = projectProblems(check);
-  const counts = problemCounts(check);
   const dirty =
     isDirty({ files: version.files, samples: detail.samples }, working) ||
     notes !== (version.notes ?? "");
@@ -107,13 +108,26 @@ export function LadingWorkbench({
     }
   };
 
-  const addEntry = (kind: "file" | "sample", path: string, content: string) => {
-    if (kind === "file") {
-      setFiles((current) => [...current, { path, source: content }]);
-    } else {
-      setSamples((current) => [...current, { path, content }]);
-    }
-    setOpenPath(path);
+  const addEntries = (entries: NewEntry[]) => {
+    const added = entries.filter((entry) => entry.kind === "file");
+    const addedSamples = entries.filter((entry) => entry.kind === "sample");
+    setFiles((current) => [
+      ...current,
+      ...added.map((entry) => ({ path: entry.path, source: entry.content })),
+    ]);
+    setSamples((current) => [
+      ...current,
+      ...addedSamples.map((entry) => ({ path: entry.path, content: entry.content })),
+    ]);
+    if (entries[0]) setOpenPath(entries[0].path);
+  };
+
+  const moveEntry = (from: string, to: string) => {
+    const moved = renameEntry({ files, samples }, from, to);
+    setFiles(moved.files);
+    setSamples(moved.samples);
+    if (openPath === from) setOpenPath(to);
+    setReveal((current) => (current?.path === from ? { ...current, path: to } : current));
   };
 
   const removeEntry = (path: string) => {
@@ -147,12 +161,14 @@ export function LadingWorkbench({
           <LadingFileTree
             files={files}
             samples={samples}
-            counts={counts}
+            check={check}
             openPath={openPath}
             editable={editable}
-            partnerName={check.partner?.name ?? partnerName}
+            partnerLabel={check.partner?.label ?? partnerName}
+            zone={context.org.zone}
             onOpen={(path) => setOpenPath(path)}
-            onAdd={addEntry}
+            onAdd={addEntries}
+            onRename={moveEntry}
             onRemove={removeEntry}
           />
         </ResizablePanel>
@@ -186,25 +202,27 @@ export function LadingWorkbench({
                   readOnly={!editable}
                 />
               ) : openSample ? (
-                <div className="h-full overflow-auto p-3">
-                  <Textarea
-                    key={openSample.path}
-                    bare
-                    aria-label={openSample.path}
-                    className="min-h-full w-full resize-none font-mono text-xs"
-                    value={openSample.content}
-                    readOnly={!editable}
-                    spellCheck={false}
-                    onChange={(event) => {
-                      const content = event.target.value;
-                      setSamples((current) =>
-                        current.map((sample) =>
-                          sample.path === openSample.path ? { ...sample, content } : sample,
-                        ),
-                      );
-                    }}
-                  />
-                </div>
+                <ScrollArea className="h-full">
+                  <div className="flex min-h-full flex-col p-3">
+                    <Textarea
+                      key={openSample.path}
+                      bare
+                      aria-label={openSample.path}
+                      className="w-full grow resize-none font-mono text-xs"
+                      value={openSample.content}
+                      readOnly={!editable}
+                      spellCheck={false}
+                      onChange={(event) => {
+                        const content = event.target.value;
+                        setSamples((current) =>
+                          current.map((sample) =>
+                            sample.path === openSample.path ? { ...sample, content } : sample,
+                          ),
+                        );
+                      }}
+                    />
+                  </div>
+                </ScrollArea>
               ) : (
                 <p className="text-muted-foreground p-4 text-sm">
                   {t("Pick a file or a sample to open it")}

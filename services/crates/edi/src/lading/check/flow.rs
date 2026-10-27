@@ -263,6 +263,26 @@ impl Checker<'_> {
         false
     }
 
+    /// Reports a map no file declares, offering the nearest of `names`. A map that is declared
+    /// but whose header failed is reported in its own file, not at each use.
+    pub(crate) fn unknown_map(&mut self, unit: usize, map: &Ident, names: Vec<&str>) {
+        if self.program.declares_map(&map.name) {
+            return;
+        }
+        let mut diagnostic = Diagnostic::error(
+            "unknown-map",
+            map.span,
+            Message::with(
+                message!("There is no map named {0}"),
+                [Arg::from(map.name.as_str())],
+            ),
+        );
+        if let Some(close) = nearest(&map.name, names) {
+            diagnostic = diagnostic.with_fix(super::replace_fix(map.span, close));
+        }
+        self.report(unit, diagnostic);
+    }
+
     /// The map a clause names, checked for its direction and set.
     fn flow_map(
         &mut self,
@@ -285,24 +305,13 @@ impl Checker<'_> {
             return None;
         };
         let Some(info) = program.maps.get(&map.name).cloned() else {
-            let names: Vec<&str> = program
+            let names = program
                 .maps
                 .iter()
                 .filter(|(_, info)| info.inbound() == inbound)
                 .map(|(name, _)| name.as_str())
                 .collect();
-            let mut diagnostic = Diagnostic::error(
-                "unknown-map",
-                map.span,
-                Message::with(
-                    message!("There is no map named {0}"),
-                    [Arg::from(map.name.as_str())],
-                ),
-            );
-            if let Some(close) = nearest(&map.name, names) {
-                diagnostic = diagnostic.with_fix(super::replace_fix(map.span, close));
-            }
-            self.report(env.unit, diagnostic);
+            self.unknown_map(env.unit, map, names);
             return None;
         };
         self.occurrence(

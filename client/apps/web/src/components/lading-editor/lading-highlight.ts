@@ -12,11 +12,12 @@ import {
 } from "@codemirror/view";
 import { ladingTokens, type LadingToken } from "@trenova/shared/edi/lading";
 import type { EdiRuntime } from "@trenova/shared/edi/runtime";
+import type { CodeRole, CodeSpan } from "@trenova/shared/lib/highlight/code";
 import { syntaxHighlightTheme } from "../formula-editor/tariff-highlight";
 import { unlessRefused } from "./lading-service";
 
 /** The syntax role each token kind is drawn in. */
-export const LADING_TOKEN_ROLES: Record<string, string> = {
+export const LADING_TOKEN_ROLES: Record<string, CodeRole> = {
   keyword: "keyword",
   type: "type",
   x12: "property",
@@ -40,6 +41,15 @@ function markFor(kind: string): Decoration | null {
     marks.set(kind, mark);
   }
   return mark;
+}
+
+/** The module's tokens as spans `HighlightedCode` draws. */
+export function ladingCodeSpans(tokens: readonly LadingToken[]): CodeSpan[] {
+  return tokens.map((token) => ({
+    from: token.range.from,
+    to: token.range.to,
+    role: LADING_TOKEN_ROLES[token.kind],
+  }));
 }
 
 /** The decorations for the tokens that fall inside the visible ranges. */

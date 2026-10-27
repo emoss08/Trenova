@@ -168,23 +168,23 @@ describe("toLadingLint", () => {
     related: [{ range: { from: 10, to: 13 }, message: { message: "Received here" } }],
   };
 
-  it("clamps the range, keeps the code and offers the fixes", () => {
+  it("clamps the range and offers the fixes", () => {
     const lint = toLadingLint(diagnostic, 20);
     expect(lint).toMatchObject({
       from: 4,
       to: 20,
       severity: "error",
-      source: "flow-receive-taken",
       message: "Flow tenders already receives 204",
     });
     expect(lint.actions?.map((action) => action.name)).toEqual(["Remove it"]);
   });
 
-  it("shows the code and links each related place, which moves the cursor there", () => {
+  it("shows the code once and links each related place, which moves the cursor there", () => {
     const view = mount("first line\nsecond line\n");
     const lint = toLadingLint(diagnostic, view.state.doc.length);
     const dom = lint.renderMessage!(view) as HTMLElement;
-    expect(dom.textContent).toContain("flow-receive-taken");
+    expect(dom.textContent?.split("flow-receive-taken")).toHaveLength(2);
+    expect(lint.source).toBeUndefined();
     const link = dom.querySelector("button");
     expect(link?.textContent).toBe("Line 1: Received here");
     link!.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));

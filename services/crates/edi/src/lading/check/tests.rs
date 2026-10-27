@@ -67,6 +67,9 @@ impl Checker<'_> {
                 _ => continue,
             };
             if subject == Subject::None {
+                if !matches!(program.units[unit].header(), Header::Partner { .. }) {
+                    continue;
+                }
                 self.report(
                     unit,
                     Diagnostic::error(
