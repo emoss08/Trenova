@@ -814,7 +814,7 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	protected.Use(r.authMiddleware.RequireAuth())
 	protected.Use(r.responseGuard.Install())
 	protected.Use(r.readScopeMiddleware.Install())
-	protected.Use(r.rateLimiter.ByPrincipal())
+	protected.Use(r.rateLimiter.ByAPIKey())
 	protected.Use(middleware.NewLocaleMiddleware().Resolve())
 	protected.Use(middleware.NewCSRFMiddleware(r.cfg, r.errorHandler).RequireToken())
 	// After RequireAuth, which is what puts the flag in the context, and before any
@@ -828,14 +828,13 @@ func (r *Router) protectedGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 }
 
 // captureDeviceGroup is where a paired Trenova Capture device calls. It takes
-// a device credential and nothing else, then applies the same per-person rate
-// limit and entitlement checks a signed-in session gets. There is no CSRF check
-// because nothing here is reachable with a cookie.
+// a device credential and nothing else, then applies the same entitlement
+// checks a signed-in session gets. Like a session it is first-party and not
+// request-rate limited: a scanned batch uploads one page per request. There is
+// no CSRF check because nothing here is reachable with a cookie.
 func (r *Router) captureDeviceGroup(rg *gin.RouterGroup) *gin.RouterGroup {
 	device := rg.Group("")
-	device.Use(r.rateLimiter.ByClientIP())
 	device.Use(r.captureHandler.RequireDevice())
-	device.Use(r.rateLimiter.ByPrincipal())
 	r.editionRoutes.UseProtectedMiddleware(device)
 	device.Use(r.readOnlyGuard.Guard())
 	return device

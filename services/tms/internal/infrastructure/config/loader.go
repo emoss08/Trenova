@@ -412,8 +412,6 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 
 	// Rate limit defaults
 	l.viper.SetDefault("security.rateLimit.enabled", true)
-	l.viper.SetDefault("security.rateLimit.requestsPerMinute", 60)
-	l.viper.SetDefault("security.rateLimit.burstSize", 10)
 	l.viper.SetDefault("security.rateLimit.cleanupInterval", "1m")
 	l.viper.SetDefault("security.rateLimit.store", RateLimitStoreRedis)
 	l.viper.SetDefault("security.rateLimit.failureMode", RateLimitFailureModeLocal)
@@ -422,7 +420,6 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("security.rateLimit.exemptPathPrefixes", []string{})
 	for _, scope := range []RateLimitScope{
 		RateLimitScopeAnonymous,
-		RateLimitScopeUser,
 		RateLimitScopeAPIKey,
 		RateLimitScopeTenant,
 		RateLimitScopePublicToken,

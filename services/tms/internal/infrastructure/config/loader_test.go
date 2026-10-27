@@ -143,10 +143,6 @@ func newValidConfig() *Config {
 					Mode: "report",
 				},
 			},
-			RateLimit: RateLimitConfig{
-				RequestsPerMinute: 60,
-				BurstSize:         10,
-			},
 			Encryption: EncryptionConfig{
 				Key: "a-very-long-encryption-key-that-is-at-least-32-chars",
 			},

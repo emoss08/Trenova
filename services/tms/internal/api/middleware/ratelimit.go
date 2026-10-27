@@ -74,7 +74,6 @@ func NewRateLimiter(p RateLimiterParams) *RateLimiter {
 
 	scopes := []config.RateLimitScope{
 		config.RateLimitScopeAnonymous,
-		config.RateLimitScopeUser,
 		config.RateLimitScopeAPIKey,
 		config.RateLimitScopeTenant,
 		config.RateLimitScopePublicToken,
@@ -123,14 +122,14 @@ func (m *RateLimiter) ByClientIP() gin.HandlerFunc {
 	}
 }
 
-func (m *RateLimiter) ByPrincipal() gin.HandlerFunc {
+func (m *RateLimiter) ByAPIKey() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if m.skip(c) {
 			c.Next()
 			return
 		}
 
-		if m.enforce(c, m.principalRequests(c)) {
+		if m.enforce(c, m.apiKeyRequests(c)) {
 			c.Next()
 		}
 	}
@@ -177,37 +176,23 @@ func (m *RateLimiter) anonymousRequests(c *gin.Context) []scopedRequest {
 	}}
 }
 
-func (m *RateLimiter) principalRequests(c *gin.Context) []scopedRequest {
+func (m *RateLimiter) apiKeyRequests(c *gin.Context) []scopedRequest {
 	authCtx := authctx.GetAuthContext(c)
-	if authCtx.OrganizationID.IsNil() {
-		return m.anonymousRequests(c)
+	if !authCtx.IsAPIKey() || authCtx.APIKeyID.IsNil() || authCtx.OrganizationID.IsNil() {
+		return nil
 	}
 
 	orgTag := "{" + authCtx.OrganizationID.String() + "}"
 	requests := make([]scopedRequest, 0, 2)
-
-	if authCtx.IsAPIKey() && authCtx.APIKeyID.IsNotNil() {
-		if policy, ok := m.policies[config.RateLimitScopeAPIKey]; ok {
-			requests = append(requests, scopedRequest{
-				scope: config.RateLimitScopeAPIKey,
-				request: kernelports.RateLimitRequest{
-					Key:    orgTag + ":apikey:" + authCtx.APIKeyID.String(),
-					Policy: policy,
-					Cost:   1,
-				},
-			})
-		}
-	} else if authCtx.UserID.IsNotNil() {
-		if policy, ok := m.policies[config.RateLimitScopeUser]; ok {
-			requests = append(requests, scopedRequest{
-				scope: config.RateLimitScopeUser,
-				request: kernelports.RateLimitRequest{
-					Key:    orgTag + ":user:" + authCtx.UserID.String(),
-					Policy: policy,
-					Cost:   1,
-				},
-			})
-		}
+	if policy, ok := m.policies[config.RateLimitScopeAPIKey]; ok {
+		requests = append(requests, scopedRequest{
+			scope: config.RateLimitScopeAPIKey,
+			request: kernelports.RateLimitRequest{
+				Key:    orgTag + ":apikey:" + authCtx.APIKeyID.String(),
+				Policy: policy,
+				Cost:   1,
+			},
+		})
 	}
 
 	if policy, ok := m.policies[config.RateLimitScopeTenant]; ok {

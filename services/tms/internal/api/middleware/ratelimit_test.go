@@ -71,7 +71,7 @@ func serve(router *gin.Engine, method, path, remoteAddr string) *httptest.Respon
 	return w
 }
 
-func principalRouter(
+func apiKeyRouter(
 	limiter *RateLimiter,
 	principal func(c *gin.Context),
 ) *gin.Engine {
@@ -80,7 +80,7 @@ func principalRouter(
 	router.GET("/test", func(c *gin.Context) {
 		principal(c)
 		c.Next()
-	}, limiter.ByPrincipal(), func(c *gin.Context) {
+	}, limiter.ByAPIKey(), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 	return router
@@ -91,9 +91,8 @@ func TestRateLimiter_AllowsRequestsWhenDisabled(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	limiter := newTestRateLimiter(config.RateLimitConfig{
-		Enabled:           false,
-		RequestsPerMinute: 1,
-		BurstSize:         1,
+		Enabled:   false,
+		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 1, BurstSize: 1},
 	}, newMemoryStore())
 
 	router := gin.New()
@@ -116,9 +115,8 @@ func TestRateLimiter_ByClientIP_ThrottlesAfterBurst(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	limiter := newTestRateLimiter(config.RateLimitConfig{
-		Enabled:           true,
-		RequestsPerMinute: 60,
-		BurstSize:         2,
+		Enabled:   true,
+		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 2},
 	}, newMemoryStore())
 
 	router := gin.New()
@@ -145,7 +143,7 @@ func TestRateLimiter_ByClientIP_ThrottlesAfterBurst(t *testing.T) {
 	assert.Equal(t, http.StatusOK, other.Code, "buckets are per client IP")
 }
 
-func TestRateLimiter_ByPrincipal_KeysAPIKeysSeparately(t *testing.T) {
+func TestRateLimiter_ByAPIKey_KeysAPIKeysSeparately(t *testing.T) {
 	t.Parallel()
 
 	store := &recordingStore{inner: newMemoryStore()}
@@ -160,10 +158,10 @@ func TestRateLimiter_ByPrincipal_KeysAPIKeysSeparately(t *testing.T) {
 	keyA := pulid.MustNew("ak_")
 	keyB := pulid.MustNew("ak_")
 
-	routerA := principalRouter(limiter, func(c *gin.Context) {
+	routerA := apiKeyRouter(limiter, func(c *gin.Context) {
 		authctx.SetAPIKeyContext(c, keyA, buID, orgID)
 	})
-	routerB := principalRouter(limiter, func(c *gin.Context) {
+	routerB := apiKeyRouter(limiter, func(c *gin.Context) {
 		authctx.SetAPIKeyContext(c, keyB, buID, orgID)
 	})
 
@@ -183,46 +181,47 @@ func TestRateLimiter_ByPrincipal_KeysAPIKeysSeparately(t *testing.T) {
 	assert.Equal(t, "{"+orgID.String()+"}:tenant", last[1].Key)
 }
 
-func TestRateLimiter_ByPrincipal_KeysUsersByOrganization(t *testing.T) {
+func TestRateLimiter_ByAPIKey_LeavesFirstPartyPrincipalsUnmetered(t *testing.T) {
 	t.Parallel()
 
 	store := &recordingStore{inner: newMemoryStore()}
 	limiter := newTestRateLimiter(config.RateLimitConfig{
-		Enabled: true,
-		User:    config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
-		Tenant:  config.RateLimitScopeConfig{Disabled: true},
+		Enabled:   true,
+		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		APIKey:    config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+		Tenant:    config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
 	}, store)
 
-	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
-	orgA := pulid.MustNew("org_")
-	orgB := pulid.MustNew("org_")
+	userID := pulid.MustNew("usr_")
 
-	routerA := principalRouter(limiter, func(c *gin.Context) {
-		authctx.SetAuthContext(c, userID, buID, orgA)
-	})
-	routerB := principalRouter(limiter, func(c *gin.Context) {
-		authctx.SetAuthContext(c, userID, buID, orgB)
-	})
+	principals := map[string]func(c *gin.Context){
+		"session": func(c *gin.Context) {
+			authctx.SetAuthContext(c, userID, buID, orgID)
+		},
+		"capture device": func(c *gin.Context) {
+			authctx.SetCaptureDeviceContext(c, pulid.MustNew("cdev_"), userID, buID, orgID)
+		},
+		"no principal": func(*gin.Context) {},
+	}
 
-	assert.Equal(t, http.StatusOK, serve(routerA, http.MethodGet, "/test", "10.0.0.1:1").Code)
-	assert.Equal(t, http.StatusTooManyRequests,
-		serve(routerA, http.MethodGet, "/test", "10.0.0.1:1").Code)
-	assert.Equal(t, http.StatusOK, serve(routerB, http.MethodGet, "/test", "10.0.0.1:1").Code,
-		"the same user in another organization has its own bucket")
-
-	require.NotEmpty(t, store.requests)
-	last := store.requests[len(store.requests)-1]
-	require.Len(t, last, 1, "the tenant scope is disabled")
-	assert.Equal(t, "{"+orgB.String()+"}:user:"+userID.String(), last[0].Key)
+	for name, principal := range principals {
+		router := apiKeyRouter(limiter, principal)
+		for range 5 {
+			w := serve(router, http.MethodGet, "/test", "10.0.0.1:1")
+			assert.Equal(t, http.StatusOK, w.Code, name)
+			assert.Empty(t, w.Header().Get(HeaderRateLimitLimit), name)
+		}
+	}
+	assert.Empty(t, store.requests, "only API keys reach the rate limit store")
 }
 
-func TestRateLimiter_ByPrincipal_TenantCeilingSpansPrincipals(t *testing.T) {
+func TestRateLimiter_ByAPIKey_TenantCeilingSpansKeys(t *testing.T) {
 	t.Parallel()
 
 	limiter := newTestRateLimiter(config.RateLimitConfig{
 		Enabled: true,
-		User:    config.RateLimitScopeConfig{RequestsPerMinute: 600, BurstSize: 100},
 		APIKey:  config.RateLimitScopeConfig{RequestsPerMinute: 600, BurstSize: 100},
 		Tenant:  config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 2},
 	}, newMemoryStore())
@@ -230,37 +229,25 @@ func TestRateLimiter_ByPrincipal_TenantCeilingSpansPrincipals(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	userRouter := principalRouter(limiter, func(c *gin.Context) {
-		authctx.SetAuthContext(c, pulid.MustNew("usr_"), buID, orgID)
-	})
-	keyRouter := principalRouter(limiter, func(c *gin.Context) {
+	keyA := apiKeyRouter(limiter, func(c *gin.Context) {
 		authctx.SetAPIKeyContext(c, pulid.MustNew("ak_"), buID, orgID)
 	})
+	keyB := apiKeyRouter(limiter, func(c *gin.Context) {
+		authctx.SetAPIKeyContext(c, pulid.MustNew("ak_"), buID, orgID)
+	})
+	session := apiKeyRouter(limiter, func(c *gin.Context) {
+		authctx.SetAuthContext(c, pulid.MustNew("usr_"), buID, orgID)
+	})
 
-	assert.Equal(t, http.StatusOK, serve(userRouter, http.MethodGet, "/test", "10.0.0.1:1").Code)
-	assert.Equal(t, http.StatusOK, serve(keyRouter, http.MethodGet, "/test", "10.0.0.1:1").Code)
+	assert.Equal(t, http.StatusOK, serve(keyA, http.MethodGet, "/test", "10.0.0.1:1").Code)
+	assert.Equal(t, http.StatusOK, serve(keyB, http.MethodGet, "/test", "10.0.0.1:1").Code)
 
-	limited := serve(userRouter, http.MethodGet, "/test", "10.0.0.1:1")
+	limited := serve(keyA, http.MethodGet, "/test", "10.0.0.1:1")
 	assert.Equal(t, http.StatusTooManyRequests, limited.Code)
 	assert.Equal(t, "tenant", limited.Header().Get(HeaderRateLimitScope))
-}
 
-func TestRateLimiter_ByPrincipal_FallsBackToClientIPWithoutTenant(t *testing.T) {
-	t.Parallel()
-
-	store := &recordingStore{inner: newMemoryStore()}
-	limiter := newTestRateLimiter(config.RateLimitConfig{
-		Enabled:           true,
-		RequestsPerMinute: 60,
-		BurstSize:         5,
-	}, store)
-
-	router := principalRouter(limiter, func(*gin.Context) {})
-	assert.Equal(t, http.StatusOK, serve(router, http.MethodGet, "/test", "10.0.0.9:1").Code)
-
-	require.Len(t, store.requests, 1)
-	require.Len(t, store.requests[0], 1)
-	assert.Equal(t, "anon:10.0.0.9", store.requests[0][0].Key)
+	assert.Equal(t, http.StatusOK, serve(session, http.MethodGet, "/test", "10.0.0.1:1").Code,
+		"sessions in a tenant whose API keys are throttled keep working")
 }
 
 func TestRateLimiter_ByPublicToken_HashesTokenAndIsolatesBuckets(t *testing.T) {
@@ -305,8 +292,7 @@ func TestRateLimiter_ExemptPathPrefixesSkipTheStore(t *testing.T) {
 	store := &recordingStore{inner: newMemoryStore()}
 	limiter := newTestRateLimiter(config.RateLimitConfig{
 		Enabled:            true,
-		RequestsPerMinute:  60,
-		BurstSize:          1,
+		Anonymous:          config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
 		ExemptPathPrefixes: []string{"/api/v1/webhooks/"},
 	}, store)
 
@@ -328,9 +314,8 @@ func TestRateLimiter_StoreDeniedRespondsTooManyRequests(t *testing.T) {
 
 	store := &recordingStore{inner: newMemoryStore(), err: ratelimit.ErrStoreDenied}
 	limiter := newTestRateLimiter(config.RateLimitConfig{
-		Enabled:           true,
-		RequestsPerMinute: 60,
-		BurstSize:         10,
+		Enabled:   true,
+		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 10},
 	}, store)
 
 	router := gin.New()
@@ -349,9 +334,8 @@ func TestRateLimiter_UnexpectedStoreErrorAllowsRequest(t *testing.T) {
 
 	store := &recordingStore{inner: newMemoryStore(), err: errors.New("boom")}
 	limiter := newTestRateLimiter(config.RateLimitConfig{
-		Enabled:           true,
-		RequestsPerMinute: 60,
-		BurstSize:         1,
+		Enabled:   true,
+		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
 	}, store)
 
 	router := gin.New()
@@ -373,9 +357,8 @@ func TestRateLimiter_RetryAfterRoundsUpToWholeSeconds(t *testing.T) {
 		Now: func() time.Time { return current },
 	})
 	limiter := newTestRateLimiter(config.RateLimitConfig{
-		Enabled:           true,
-		RequestsPerMinute: 4,
-		BurstSize:         1,
+		Enabled:   true,
+		Anonymous: config.RateLimitScopeConfig{RequestsPerMinute: 4, BurstSize: 1},
 	}, store)
 
 	router := gin.New()

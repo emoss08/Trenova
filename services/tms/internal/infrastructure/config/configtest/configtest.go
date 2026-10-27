@@ -30,9 +30,6 @@ security:
   csrf:
     tokenName: "csrf_token"
     headerName: "X-CSRF-Token"
-  rateLimit:
-    requestsPerMinute: 60
-    burstSize: 10
   encryption:
     mode: envelope
     keyManager: gcp-autokey
