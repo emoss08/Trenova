@@ -139,9 +139,8 @@ func (r *runRepository) LatestComparable(
 			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID).Where(cols.CannedKey.IsNull())
 		}
 
-		err := q.Order(cols.CompletedAt.OrderDesc()).Limit(1).Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ReportRun")
+		if scanErr := q.Order(cols.CompletedAt.OrderDesc()).Limit(1).Scan(ctx); scanErr != nil {
+			return nil, dberror.HandleNotFoundError(scanErr, "ReportRun")
 		}
 
 		return entity, nil

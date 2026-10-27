@@ -114,50 +114,60 @@ func (s *Service) runCardReport(
 	ctx context.Context,
 	req *GetRunRequest,
 	card *RunCard,
-) (*report.Definition, error) {
+) (definition *report.Definition, err error) {
 	run := card.Run
 	switch {
 	case !run.DefinitionID.IsNil():
 		card.Report.DefinitionID = run.DefinitionID
-		entity, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
-			TenantInfo:   req.TenantInfo,
-			DefinitionID: run.DefinitionID,
-		})
-		if err != nil && !errortypes.IsNotFoundError(err) {
-			return nil, err
-		}
-		if entity != nil {
-			card.Report.Name = entity.Name
-			card.Report.Description = entity.Description
-			card.Report.Category = entity.Category
-		}
-		if run.RevisionID.IsNil() {
-			return nil, nil
-		}
-		revision, err := s.defRepo.GetRevision(ctx, &reportports.GetReportRevisionRequest{
-			TenantInfo: req.TenantInfo,
-			RevisionID: run.RevisionID,
-		})
-		if err != nil {
-			if errortypes.IsNotFoundError(err) {
-				return nil, nil
-			}
-			return nil, err
-		}
-		return revision.Definition, nil
+		return s.savedRunCardReport(ctx, req, card)
 	case run.CannedKey != "":
 		card.Report.CannedKey = run.CannedKey
 		entry, ok := s.canned.Get(run.CannedKey)
-		if !ok {
-			return nil, nil
+		if ok {
+			card.Report.Name = entry.Name
+			card.Report.Description = entry.Description
+			card.Report.Category = entry.Category
+			definition = entry.Definition
 		}
-		card.Report.Name = entry.Name
-		card.Report.Description = entry.Description
-		card.Report.Category = entry.Category
-		return entry.Definition, nil
-	default:
-		return nil, nil
 	}
+
+	return definition, nil
+}
+
+func (s *Service) savedRunCardReport(
+	ctx context.Context,
+	req *GetRunRequest,
+	card *RunCard,
+) (definition *report.Definition, err error) {
+	run := card.Run
+	entity, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
+		TenantInfo:   req.TenantInfo,
+		DefinitionID: run.DefinitionID,
+	})
+	switch {
+	case err == nil:
+		card.Report.Name = entity.Name
+		card.Report.Description = entity.Description
+		card.Report.Category = entity.Category
+	case !errortypes.IsNotFoundError(err):
+		return nil, err
+	}
+	if run.RevisionID.IsNil() {
+		return definition, nil
+	}
+
+	revision, err := s.defRepo.GetRevision(ctx, &reportports.GetReportRevisionRequest{
+		TenantInfo: req.TenantInfo,
+		RevisionID: run.RevisionID,
+	})
+	switch {
+	case err == nil:
+		definition = revision.Definition
+	case !errortypes.IsNotFoundError(err):
+		return nil, err
+	}
+
+	return definition, nil
 }
 
 func (s *Service) runCardSchedule(

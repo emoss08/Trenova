@@ -16,7 +16,10 @@ import (
 	"github.com/emoss08/trenova/shared/typeutils"
 )
 
-const payloadRanByPerson = "ranByPerson"
+const (
+	payloadRanByPerson = "ranByPerson"
+	payloadStatus      = "status"
+)
 
 type reportRerunner interface {
 	GetRun(ctx context.Context, req *reporting.GetRunRequest) (*report.ReportRun, error)
@@ -39,6 +42,7 @@ var errPreviewNotSaved = errortypes.NewBusinessError(
 	"This preview is of a report that is not saved, so it cannot be run in full. Save it in Reports first",
 )
 
+//nolint:gocritic // AssistantService methods take the thread request by value
 func (s *Service) RunArtifactReport(
 	ctx context.Context,
 	req agentports.GetThreadRequest,
@@ -74,7 +78,7 @@ func (s *Service) RunArtifactReport(
 
 	actor := permissionports.UserActor(req.TenantInfo)
 	request := agentquerytoolservice.ReportingRequestFor(actor)
-	runReq, name, err := s.rerunOf(ctx, request, actor, shown)
+	runReq, name, err := s.rerunOf(ctx, &request, actor, shown)
 	if err != nil {
 		return nil, err
 	}
@@ -84,15 +88,16 @@ func (s *Service) RunArtifactReport(
 		return nil, err
 	}
 
-	return s.appendRunVersion(ctx, req, latestOf(versions), run, name)
+	return s.appendRunVersion(ctx, &req, latestOf(versions), run, name)
 }
 
 func (s *Service) rerunOf(
 	ctx context.Context,
-	request reporting.Request,
+	request *reporting.Request,
 	actor *permissionports.RequestActor,
 	shown *assistantartifact.Artifact,
 ) (*reporting.RunReportRequest, string, error) {
+	//nolint:exhaustive // only a report's run or preview names a report to run
 	switch shown.Kind {
 	case assistantartifact.KindReportRun:
 		runID, err := pulid.MustParse(typeutils.StringOfTrimmed(shown.Payload["runId"]))
@@ -100,7 +105,7 @@ func (s *Service) rerunOf(
 			return nil, "", errNotRunnable
 		}
 		previous, err := s.reportRuns.GetRun(ctx, &reporting.GetRunRequest{
-			Request: request,
+			Request: *request,
 			RunID:   runID,
 		})
 		if err != nil {
@@ -108,7 +113,7 @@ func (s *Service) rerunOf(
 		}
 
 		return &reporting.RunReportRequest{
-			Request:      request,
+			Request:      *request,
 			DefinitionID: previous.DefinitionID,
 			CannedKey:    previous.CannedKey,
 			Format:       previous.Format,
@@ -135,7 +140,7 @@ func (s *Service) rerunOf(
 		}
 
 		return &reporting.RunReportRequest{
-			Request:      request,
+			Request:      *request,
 			DefinitionID: previewed.DefinitionID,
 			CannedKey:    previewed.Key,
 			Format:       format,
@@ -149,20 +154,20 @@ func (s *Service) rerunOf(
 
 func (s *Service) appendRunVersion(
 	ctx context.Context,
-	req agentports.GetThreadRequest,
+	req *agentports.GetThreadRequest,
 	latest *assistantartifact.Artifact,
 	run *report.ReportRun,
 	name string,
 ) (*agentports.AssistantArtifact, error) {
 	result := map[string]any{
-		"runId":      run.ID.String(),
-		"reportKey":  run.CannedKey,
-		"reportName": name,
-		"status":     string(run.Status),
-		"finished":   run.Status.IsTerminal(),
-		"format":     string(run.Format),
-		"rowCount":   run.RowCount,
-		"truncated":  run.Truncated,
+		"runId":          run.ID.String(),
+		"reportKey":      run.CannedKey,
+		"reportName":     name,
+		payloadStatus:    string(run.Status),
+		"finished":       run.Status.IsTerminal(),
+		"format":         string(run.Format),
+		payloadRowCount:  run.RowCount,
+		payloadTruncated: run.Truncated,
 	}
 	if !run.DefinitionID.IsNil() {
 		result["definitionId"] = run.DefinitionID.String()
