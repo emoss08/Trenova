@@ -14,7 +14,7 @@ use super::x12 as nav;
 use super::{Checker, MapInfo, Program};
 use crate::lading::facts::Target;
 use crate::lading::syntax::ast::{Block, ElementAssign, Expr, ExprKind, Ident, Item, Stmt};
-use crate::lading::types::{NodeRef, Type};
+use crate::lading::types::{NodeRef, Place, Type};
 use crate::x12::guide::compiled::NodeKind;
 use crate::x12::guide::model::Usage;
 
@@ -50,7 +50,7 @@ fn writable(value: &Type, element: &Type) -> bool {
         (_, Type::List(item)) => writable(value, item),
         (Type::Any, _)
         | (_, Type::Any)
-        | (Type::Text | Type::Code(_), Type::Text | Type::Code(_))
+        | (Type::Text | Type::Code(..), Type::Text | Type::Code(..))
         | (Type::Int | Type::Decimal, Type::Text)
         | (Type::Date | Type::DateTime, Type::Date)
         | (Type::Time | Type::DateTime, Type::Time)
@@ -201,6 +201,7 @@ impl Checker<'_> {
                 ("key".into(), Type::Text),
                 ("value".into(), value.as_ref().clone()),
             ]),
+            Type::Json => Type::Json,
             Type::Any => Type::Any,
             other => {
                 self.report(
@@ -378,7 +379,7 @@ impl Checker<'_> {
                     ),
                 );
             }
-            let element_ty = nav::element_type(&id.name, position, def);
+            let element_ty = nav::element_type(&id.name, position, def, Place(Some(reference)));
             let target_ty = match (component, &element_ty) {
                 (Some(component), Type::Struct(fields)) => {
                     let key = format!("{component:02}");

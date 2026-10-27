@@ -1,4 +1,5 @@
 import { useT } from "@trenova/shared/i18n/use-t";
+import { EDITOR_SAVE_EVENT } from "@/components/formula-editor/tariff-commands";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { lading } from "@/lib/queries/lading";
@@ -33,7 +34,9 @@ import type {
   LadingVersion,
   LadingVersionDetail,
 } from "@trenova/shared/types/lading";
+import { useLatestCallback } from "@trenova/shared/hooks/use-latest-callback";
 import { useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 /** How many days a shadow can be asked to run from the toolbar; the server allows 1 to 30. */
 const SHADOW_DAYS = [7, 14, 30] as const;
@@ -41,7 +44,8 @@ const SHADOW_DAYS = [7, 14, 30] as const;
 /**
  * The open version and what can be done with it: pick another version, save or discard a
  * draft's changes, certify a draft, activate or shadow a certified version, stop a shadow,
- * archive, or start a new draft from any version.
+ * archive, or start a new draft from any version. Ctrl+S in the editor (`:w` in Vim) saves the
+ * draft, as the Save button does.
  */
 export function LadingVersionToolbar({
   project,
@@ -122,6 +126,13 @@ export function LadingVersionToolbar({
     stopShadow.isPending ||
     newDraft.isPending;
   const status = version.status;
+  const saveFromEditor = useLatestCallback(() => {
+    if (status === "Draft" && canUpdate && dirty && !busy) save.mutate(undefined);
+  });
+  useEffect(() => {
+    window.addEventListener(EDITOR_SAVE_EVENT, saveFromEditor);
+    return () => window.removeEventListener(EDITOR_SAVE_EVENT, saveFromEditor);
+  }, [saveFromEditor]);
   const canArchive = status !== "Active" && status !== "Shadow" && status !== "Archived";
   const canShadow = status === "Certified" && Boolean(project.activeVersionId);
 

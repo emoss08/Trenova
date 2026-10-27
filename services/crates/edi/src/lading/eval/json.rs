@@ -79,7 +79,7 @@ pub fn from_json(program: &Program, json: &Json, ty: &Type, path: &str) -> Resul
     match ty {
         Type::Optional(inner) => from_json(program, json, inner, path),
         Type::Any | Type::Json => Ok(Value::Json(Rc::new(json.clone()))),
-        Type::Text | Type::Code(_) => match json {
+        Type::Text | Type::Code(..) => match json {
             Json::String(text) => Ok(Value::text(text)),
             Json::Number(number) => Ok(Value::text(number.to_string())),
             _ => wrong("text"),

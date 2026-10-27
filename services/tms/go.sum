@@ -564,10 +564,8 @@ github.com/emoss08/go-redis/extra/redisotel/v9 v9.0.0-20261016021426-01e29e5f58f
 github.com/emoss08/go-redis/extra/redisotel/v9 v9.0.0-20261016021426-01e29e5f58fd/go.mod h1:naPrhggd4Eg8F8MD5i9uQZyZFfz7XMN3bl66z6L9RTE=
 github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd h1:czVtU38p6zeQImwwXB37konNd45hFBytdCtYo+UICx8=
 github.com/emoss08/go-redis/v9 v9.0.0-20261016021426-01e29e5f58fd/go.mod h1:P+AahU/A8xicUEwF20voqpQB1GC9z6XeSbxBPtnxMOI=
-github.com/emoss08/keel v0.4.0 h1:1An/CL6x3hhsb/30Ip58VTttFwhRX0KXPmyAl6cQKAM=
-github.com/emoss08/keel v0.4.0/go.mod h1:RuJN3FRMGND/Vqder0l6u4Tct/x4fWRMlflpqaOc+Kk=
-github.com/emoss08/keel v0.4.2-0.20261027000533-89b018e42b4b h1:+UyYcD1fYKW0K6mChAuc2sFe5Q3hWupRnBS2qnOoR9E=
-github.com/emoss08/keel v0.4.2-0.20261027000533-89b018e42b4b/go.mod h1:y8x1WuYhN94atvmKY/ZUpJMAHnuqviCeXf6e+RDMdnU=
+github.com/emoss08/keel v0.4.3 h1:nEAhXcZ50PgAJ8u3VlxOLf7kqAZ8RpA30sFVfNBrW3g=
+github.com/emoss08/keel v0.4.3/go.mod h1:ih+p0qHYPv8Xbr3lfshPe4aOXGR1llxPtyXLzNBq5Xs=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
@@ -1307,8 +1305,6 @@ go.opentelemetry.io/proto/otlp v0.19.0/go.mod h1:H7XAot3MsfNsj7EXtrA2q5xSNQ10UqI
 go.opentelemetry.io/proto/otlp v1.0.0/go.mod h1:Sy6pihPLfYHkr3NkUbEhGHFhINUSI/v80hjKIs5JXpM=
 go.opentelemetry.io/proto/otlp v1.11.1 h1:SCrPqH9NE5CmBrOqpjNCiT0X5mGwMyGERXdogfR7Yjw=
 go.opentelemetry.io/proto/otlp v1.11.1/go.mod h1:wq8W4aSf6bOy8RZyESOeQFr9Pu7wydWX/TY4sgvrTPg=
-go.starlark.net v0.0.0-20261005163335-bcb1a1a55bf9 h1:4VVDUeX0KRm+NfetZh9/JNrFQLzTS+jZiVMzhnt5/dg=
-go.starlark.net v0.0.0-20261005163335-bcb1a1a55bf9/go.mod h1:Iue6g6iirlfLoVi/DYCi5/x0h/bAOuWF3dULTKpt2Vo=
 go.temporal.io/api v1.63.6 h1:LoV2ubLM9M5uiGeBcYCSCTmHAPGQPy18dC8Vcw8TciQ=
 go.temporal.io/api v1.63.6/go.mod h1:acM0I9WPuYg8W3Pd9jOZvEgi7mRUttUQ4+e7fowKVnM=
 go.temporal.io/sdk v1.49.0 h1:CtGI0BUe/SCo3eoqTwuWWtXKueii9GBVus7KrKKH1Vo=

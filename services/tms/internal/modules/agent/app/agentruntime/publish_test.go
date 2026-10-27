@@ -211,7 +211,10 @@ func TestRun_RefusesAnAnalysisThatIsNotAnID(t *testing.T) {
 		textTurn("Sorry."),
 	)
 
-	assert.Empty(t, observer.seen)
+	for _, seen := range observer.seen {
+		_, kept := seen.Data.(agentports.PublishedDocument)
+		assert.False(t, kept, "no document is handed over to keep")
+	}
 	assert.True(t, result.Messages[2].ToolFailed)
 	assert.Contains(t, result.Messages[2].Content, "artifactId an analysis_run result kept")
 }

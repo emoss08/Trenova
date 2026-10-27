@@ -1,0 +1,63 @@
+// Backhauls: Trenova tenders loads to Acme's private fleet, which answers, reports and bills
+// like any carrier.
+flow backhaul with acmeManufacturing
+
+send 204 via tenderOut on TenderOffered, TenderCancelled key tender.key
+
+receive 990 as response
+  via responseIn
+  key response.key
+  acknowledge with 997
+  -> apply
+
+receive 214 as status
+  via statusIn
+  key status.key
+  acknowledge with 997
+  -> apply
+
+receive 210 as invoice
+  via invoiceIn
+  key invoice.key ?? invoice.number
+  acknowledge with none
+  -> hold "Backhaul invoices from Acme's fleet are checked by hand"
+
+expect 997 for every send within 1 h else escalate "Acme's fleet has not acknowledged {message.set} {message.control}"
+
+test "an offered backhaul is tendered to the fleet" {
+  event TenderOffered {
+    key: "BH-7001"
+    stops: [
+      { sequence: 1, type: Pickup, name: "Toledo Steel", window: { start: @2026-03-06T07:00[America/New_York] } },
+      { sequence: 2, type: Delivery, name: "Akron Yard", window: { start: @2026-03-06T16:00[America/New_York] } }
+    ]
+  }
+  expect sent 204
+}
+
+test "the fleet's answer, statuses and invoice are handled" {
+  receive file "samples/backhaul-response.x12"
+  expect applied
+  receive file "samples/backhaul-status.x12"
+  expect applied
+  receive file "samples/backhaul-invoice.x12"
+  expect held "Backhaul invoices from Acme's fleet are checked by hand"
+}
+
+test "an unacknowledged backhaul tender escalates" {
+  event TenderOffered {
+    key: "BH-7002"
+    stops: [
+      { sequence: 1, type: Pickup, window: { start: @2026-03-06T07:00[America/New_York] } },
+      { sequence: 2, type: Delivery, window: { start: @2026-03-06T16:00[America/New_York] } }
+    ]
+  }
+  advance 1 h
+  expect escalated "Acme's fleet has not acknowledged 204 0001"
+}
+
+test "a decline typed in from the fleet's email is applied" {
+  receive text "ISA*00*          *00*          *01*007912345      *ZZ*TRNVLOGISTICS  *260305*1000*^*00401*000000901*0*T*>~GS*GF*ACMEMFG*TRENOVA*20260305*1000*901*X*004010~ST*990*0001~B1*ACMF*BH-7003*20260305*D~N9*ZZ*No driver in Toledo~SE*4*0001~GE*1*901~IEA*1*000000901~"
+  expect applied
+  expect sent 997
+}

@@ -1,7 +1,7 @@
 //! Finding one's way around a guide's structure: the segments and loops under a node, an
 //! element's type and code list, and how a written reference (`N104`, `0310`) names them.
 
-use crate::lading::types::{NodeRef, Type};
+use crate::lading::types::{NodeRef, Place, Type};
 use crate::x12::guide::compiled::{CompiledGuide, NodeKind};
 use crate::x12::guide::model::{ElementDef, ElementType, SegmentDef, Usage};
 
@@ -102,10 +102,10 @@ pub fn segment_id(guide: &CompiledGuide, node: usize) -> &str {
 
 /// The type of one element.
 #[must_use]
-pub fn element_type(segment: &str, position: u32, element: &ElementDef) -> Type {
+pub fn element_type(segment: &str, position: u32, element: &ElementDef, place: Place) -> Type {
     let base = match element.kind {
         ElementType::Alphanumeric | ElementType::Binary => Type::Text,
-        ElementType::Identifier => Type::Code(format!("{segment}{position:02}")),
+        ElementType::Identifier => Type::Code(format!("{segment}{position:02}"), place),
         ElementType::Date => Type::Date,
         ElementType::Time => Type::Time,
         ElementType::Numeric(0) => Type::Int,
@@ -119,7 +119,7 @@ pub fn element_type(segment: &str, position: u32, element: &ElementDef) -> Type 
                 .enumerate()
                 .map(|(index, component)| {
                     let position = u32::try_from(index + 1).unwrap_or(1);
-                    let ty = element_type(segment, position, component);
+                    let ty = element_type(segment, position, component, place);
                     (
                         format!("{position:02}"),
                         if component.usage == Usage::Mandatory {
@@ -139,12 +139,18 @@ pub fn element_type(segment: &str, position: u32, element: &ElementDef) -> Type 
     }
 }
 
-/// The type of reading element `position` of the segment at `node`.
+/// The type of reading element `position` of the segment at `reference`.
 #[must_use]
-pub fn read_element(guide: &CompiledGuide, node: usize, position: u32) -> Option<Type> {
+pub fn read_element(guide: &CompiledGuide, reference: NodeRef, position: u32) -> Option<Type> {
+    let node = reference.node;
     let definition = definition(guide, node)?;
     let element = definition.elements.get(position.checked_sub(1)? as usize)?;
-    let ty = element_type(segment_id(guide, node), position, element);
+    let ty = element_type(
+        segment_id(guide, node),
+        position,
+        element,
+        Place(Some(reference)),
+    );
     Some(if element.usage == Usage::Mandatory {
         ty
     } else {
@@ -173,11 +179,16 @@ pub fn child_type(guide: &CompiledGuide, guide_index: usize, child: usize) -> Ty
     }
 }
 
-/// The codes an element may hold under a guide: the first use of its segment, or the
-/// dictionary's.
+/// The codes an element may hold under a guide: at `node` when it is known, else at the first
+/// use of its segment, or the dictionary's.
 #[must_use]
-pub fn codes(guide: &CompiledGuide, segment: &str, position: u32) -> Option<Vec<(String, String)>> {
-    let node = first_use(guide, segment);
+pub fn codes(
+    guide: &CompiledGuide,
+    node: Option<usize>,
+    segment: &str,
+    position: u32,
+) -> Option<Vec<(String, String)>> {
+    let node = node.or_else(|| first_use(guide, segment));
     let definition = guide.definition(node, segment)?;
     let element = definition.elements.get(position.checked_sub(1)? as usize)?;
     element.codes.as_ref().map(|codes| {

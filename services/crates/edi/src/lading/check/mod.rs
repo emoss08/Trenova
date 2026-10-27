@@ -627,6 +627,69 @@ fn collect_headers(program: &mut Program) {
 }
 
 /// A fix that writes `with` over `span`.
+impl Checker<'_> {
+    /// The library, unused by `unit`, that declares `name` as the kind `wanted` matches: what a
+    /// missing function or crosswalk is usually missing.
+    pub(crate) fn unused_library_with(
+        &self,
+        unit: usize,
+        name: &str,
+        wanted: fn(&Decl) -> bool,
+    ) -> Option<String> {
+        let program: &Program = self.program;
+        let used = program.units[unit].header().uses();
+        program
+            .libraries
+            .iter()
+            .filter(|(library, _)| !used.iter().any(|ident| ident.name == **library))
+            .find(|(_, library_unit)| {
+                program.units[**library_unit]
+                    .decls
+                    .get(name)
+                    .is_some_and(wanted)
+            })
+            .map(|(library, _)| library.clone())
+    }
+
+    /// A fix that adds `use library` to `unit`'s header.
+    pub(crate) fn use_fix(
+        &self,
+        unit: usize,
+        library: &str,
+    ) -> trenova_module_kit::diagnostic::Fix {
+        let program: &Program = self.program;
+        let source = &program.units[unit].source;
+        let header = program.units[unit].header();
+        let (at, insert) = if let Some(last) = header.uses().last() {
+            (last.span.end, format!(", {library}"))
+        } else {
+            let name_end = header.name().map_or(0, |name| name.span.end as usize);
+            let line_end = source[name_end..]
+                .find('\n')
+                .map_or(source.len(), |at| name_end + at);
+            let header_end = source[line_end..]
+                .find("\n\n")
+                .map_or(source.len(), |at| line_end + at);
+            let word = if matches!(header, Header::Map { .. }) {
+                "use "
+            } else {
+                "use"
+            };
+            (
+                u32::try_from(header_end).unwrap_or(0),
+                format!("\n  {word} {library}"),
+            )
+        };
+        trenova_module_kit::diagnostic::Fix {
+            label: Message::with(message!("Use {0}"), [Arg::from(library)]),
+            changes: vec![trenova_module_kit::diagnostic::Change {
+                span: Span::new(at, at),
+                insert,
+            }],
+        }
+    }
+}
+
 pub(crate) fn replace_fix(span: Span, with: &str) -> trenova_module_kit::diagnostic::Fix {
     trenova_module_kit::diagnostic::Fix {
         label: Message::with(message!("Change to {0}"), [Arg::from(with)]),
@@ -879,6 +942,7 @@ impl<'p> Checker<'p> {
             }
             self.check_tests(unit);
         }
+        self.check_flow_routing();
         self.check_call_cycles();
     }
 
@@ -996,7 +1060,7 @@ impl<'p> Checker<'p> {
 pub(crate) mod corpus {
     use std::path::Path;
 
-    use crate::lading::project::{Context, Org, Project, Sample, SourceFile};
+    use crate::lading::project::{Context, CustomField, Org, Project, Sample, SourceFile};
 
     fn walk(root: &Path, dir: &Path, project: &mut Project) {
         let mut entries: Vec<_> = std::fs::read_dir(dir).expect("corpus").flatten().collect();
@@ -1027,12 +1091,50 @@ pub(crate) mod corpus {
         }
     }
 
-    /// The project.
-    pub fn acme() -> Project {
-        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("testdata/lading/acme");
+    fn load(name: &str) -> Project {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("testdata/lading")
+            .join(name);
         let mut project = Project::default();
         walk(&root, &root, &mut project);
         project
+    }
+
+    /// The project.
+    pub fn acme() -> Project {
+        load("acme")
+    }
+
+    /// The project that uses every feature of the language, for Acme Manufacturing.
+    pub fn acme_mfg() -> Project {
+        load("acme-mfg")
+    }
+
+    /// The organisation Acme Manufacturing's project runs for, with the shipment custom fields
+    /// its maps write.
+    pub fn acme_mfg_context() -> Context {
+        let field = |name: &str, ty: &str, label: &str| CustomField {
+            name: name.into(),
+            ty: ty.into(),
+            label: label.into(),
+        };
+        Context {
+            org: Org {
+                name: "Trenova Logistics".into(),
+                scac: "TRNV".into(),
+                zone: "America/Chicago".into(),
+            },
+            custom_fields: [(
+                "shipment".to_owned(),
+                vec![
+                    field("poNumber", "Text", "PO number"),
+                    field("declaredValue", "Decimal", "Declared value"),
+                    field("appointmentRequired", "Bool", "Appointment required"),
+                ],
+            )]
+            .into_iter()
+            .collect(),
+        }
     }
 
     /// The organisation it runs for.
@@ -1050,15 +1152,52 @@ pub(crate) mod corpus {
 
 #[cfg(test)]
 mod check_tests {
-    use super::check;
-    use super::corpus::{acme, context};
+    use super::corpus::{acme, acme_mfg, acme_mfg_context, context};
+    use trenova_module_kit::diagnostic::Severity;
+
+    use super::{Program, check};
+    use crate::lading::testing::run_tests;
 
     #[test]
     fn the_acme_project_checks_clean() {
-        let program = check(&acme(), &context());
+        assert_clean(&check(&acme(), &context()), Severity::Info);
+    }
+
+    #[test]
+    fn the_project_using_every_feature_checks_clean_and_passes_its_tests() {
+        let program = check(&acme_mfg(), &acme_mfg_context());
+        assert_clean(&program, Severity::Warning);
+        let report = run_tests(&program);
+        let failed: Vec<String> = report
+            .tests
+            .iter()
+            .filter(|test| !test.passed)
+            .map(|test| {
+                let failures: Vec<String> = test
+                    .failures
+                    .iter()
+                    .map(|failure| failure.message.english())
+                    .collect();
+                format!(
+                    "{} {}: {}",
+                    program.units[test.unit].path,
+                    test.name,
+                    failures.join("; ")
+                )
+            })
+            .collect();
+        assert!(failed.is_empty(), "{}", failed.join("\n"));
+        assert_eq!(report.tests.len(), 53);
+    }
+
+    /// Asserts the program has no finding as severe as `least`, or more.
+    fn assert_clean(program: &Program, least: Severity) {
         let mut found = Vec::new();
         for unit in &program.units {
             for diagnostic in &unit.diagnostics {
+                if rank(diagnostic.severity) < rank(least) {
+                    continue;
+                }
                 let line = unit.source[..diagnostic.span.start as usize]
                     .matches('\n')
                     .count()
@@ -1074,12 +1213,21 @@ mod check_tests {
         }
         assert!(found.is_empty(), "{}", found.join("\n"));
     }
+
+    fn rank(severity: Severity) -> u8 {
+        match severity {
+            Severity::Info => 0,
+            Severity::Warning => 1,
+            Severity::Error => 2,
+        }
+    }
 }
 
 #[cfg(test)]
 mod findings {
     use super::check;
     use super::corpus::{acme, context};
+    use crate::lading::project::SourceFile;
 
     /// The finding codes after replacing `old` with `new` in the file at `path`.
     fn codes(path: &str, old: &str, new: &str) -> Vec<&'static str> {
@@ -1228,6 +1376,18 @@ mod findings {
                 "N1 {",
                 "guide-ambiguous-path",
             ),
+            (
+                "flows/tender.lading",
+                "send 210 via invoiceOut on InvoicePosted",
+                "send 210 via invoiceOut on InvoicePosted\nsend 210 via invoiceOut on InvoicePosted",
+                "duplicate-send",
+            ),
+            (
+                "flows/tender.lading",
+                "respond 990 via responseOut",
+                "respond 990 via responseOut\n  otherwise accept\n\nrespond 990 via responseOut",
+                "flow-respond-taken",
+            ),
         ];
         let mut failures = Vec::new();
         for (path, old, new, code) in cases {
@@ -1240,6 +1400,67 @@ mod findings {
         }
         assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
+    #[test]
+    fn a_set_or_event_a_second_flow_would_take_is_found_there() {
+        let mut project = acme();
+        project.files.push(SourceFile {
+            path: "flows/second.lading".into(),
+            source: "flow second with acme\n\nreceive 204 as tender\n  via tenderIn\n  key tender.key\n  on Original -> create\n\nsend 214 via statusOut on Delivered\n".into(),
+        });
+        let program = check(&project, &context());
+        let second: Vec<&str> = program
+            .units
+            .iter()
+            .filter(|unit| unit.path == "flows/second.lading")
+            .flat_map(|unit| unit.diagnostics.iter().map(|found| found.code))
+            .collect();
+        assert!(second.contains(&"flow-receive-taken"), "{second:?}");
+        assert!(second.contains(&"flow-event-taken"), "{second:?}");
+        let first: Vec<&str> = program
+            .units
+            .iter()
+            .filter(|unit| unit.path == "flows/tender.lading")
+            .flat_map(|unit| unit.diagnostics.iter().map(|found| found.code))
+            .collect();
+        assert!(first.is_empty(), "the first flow keeps its sets: {first:?}");
+    }
+
+    #[test]
+    fn a_function_from_an_unused_library_names_it_and_offers_to_use_it() {
+        let mut project = acme();
+        let rules = project
+            .files
+            .iter_mut()
+            .find(|file| file.path == "rules/tender-checks.lading")
+            .expect("rules");
+        rules.source = rules.source.replacen(
+            "rule \"hazmat needs eyes\" {",
+            "rule \"hazmat needs eyes\" {\n  let opens = window([], partner.zone)",
+            1,
+        );
+        let program = check(&project, &context());
+        let unit = program
+            .units
+            .iter()
+            .find(|unit| unit.path == "rules/tender-checks.lading")
+            .expect("unit");
+        let found = unit
+            .diagnostics
+            .iter()
+            .find(|found| found.code == "unknown-function")
+            .expect("unknown-function");
+        assert_eq!(
+            found.message.english(),
+            "window is in the library common, which this file does not use"
+        );
+        let change = &found.fixes[0].changes[0];
+        assert_eq!(change.insert, "\n  use common");
+        assert_eq!(
+            &unit.source[..change.span.start as usize],
+            "rules tenderChecks for tenderIn"
+        );
+    }
+
     #[test]
     fn a_guide_line_names_a_segment_found_in_one_loop_by_its_id() {
         let found = codes("guides/acme-204.lading", "0300.S5 {", "S5 {");

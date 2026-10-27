@@ -408,25 +408,31 @@ scenarios:
 
   - name: analysis-trend-chart
     description: >
-      A trend asked for over too short a history. The seeded loads span about two weeks, so the
-      right answer says so instead of calling a trend; a first run did exactly that from a
-      complete weekly preview. A chart of two weeks is fine; a claimed trend is not.
+      A trend asked for from weekly volume. On the volume seed (task db-seed-volume, twelve months
+      of loads) the weeks run at about 180 to 270 shipments and drift up slightly, and the current
+      week stands far above the rest; the right answer charts the weeks, says the direction they
+      show and names the outlying week rather than reading the trend off it. On the standard seed
+      the loads span about two weeks, too short to call a trend, and the right answer says so. The
+      rubric holds on either, so the case no longer fails a correct answer on the volume seed.
     agent: Report analyst
     steps:
       - say: "chart our shipment volume by week so i can see if were trending up"
         expect:
-          calls: ["report_preview|report_run|analysis_run"]
+          calls: ["analysis_run"]
           noCalls: [report_create_schedule]
           maxFailedCalls: 2
           noRecordIds: true
-          replyIncludes:
-            - "two weeks|2 weeks|too short|not enough|only two|only 2|no history|can't tell|cannot tell|too few"
           rubric: >
-            Finds the shipments per week, from a preview of a weekly definition, a report run or
-            an analysis, and says the history is too short to call a trend. Charts it only if it
-            ran an analysis; never claims volume is rising or falling. Saving a private weekly
-            report to run and chart is fine (a proposal the case rejects at the end); scheduling
-            one is not asked for.
+            Finds the shipments per week from a report run or a preview of a weekly definition
+            covering the weeks the data holds, and charts them with analysis_run (show_chart, one
+            line or bar chart of shipments by week, titled). Then says what the weeks show from the
+            figures the analysis returned: whether volume is rising, falling or flat across them,
+            and any week far off the rest, such as a partial current week or a spike, named as
+            such rather than read as the trend. With only a few weeks of history it says that is
+            too short to call a trend. It never claims a direction the figures do not show. A
+            reply whose analysis drew no chart of the weeks fails, however it describes them.
+            Saving a private weekly report to run and chart is fine (a proposal the case rejects
+            at the end); scheduling one is not asked for.
 
   - name: analysis-attached-workbook
     description: >

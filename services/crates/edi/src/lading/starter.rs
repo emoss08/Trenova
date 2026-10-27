@@ -520,6 +520,16 @@ test "a carrier's invoice is applied" {
 }
 "#;
 
+/// The ISA ID a partner gets when the request names none: its name's letters and digits,
+/// uppercased, cut to the 15 characters ISA06 holds.
+fn default_interchange_id(name: &str) -> String {
+    name.chars()
+        .filter(char::is_ascii_alphanumeric)
+        .take(15)
+        .collect::<String>()
+        .to_ascii_uppercase()
+}
+
 /// The envelope a starter writes, from the request with Trenova's defaults.
 struct Envelope {
     them: (String, String),
@@ -536,7 +546,7 @@ impl Envelope {
     fn of(request: &StarterRequest, name: &str) -> Self {
         let clean = |text: &str| text.replace('"', "");
         let them = request.them.clone().map_or_else(
-            || ("ZZ".to_owned(), name.to_uppercase()),
+            || ("ZZ".to_owned(), default_interchange_id(name)),
             |(qualifier, id)| (qualifier, clean(&id)),
         );
         let us = request.us.clone().map_or_else(
@@ -1086,6 +1096,22 @@ mod tests {
         );
         assert!(result.error.is_none(), "{:?}", result.error);
         assert_eq!(result.transactions.len(), 1);
+    }
+
+    #[test]
+    fn a_long_partner_name_still_makes_an_interchange_id_that_fits() {
+        let mut long = request("carrier");
+        long.name = "Acme Manufacturing".into();
+        long.label = "Acme Manufacturing".into();
+        checked(&long);
+        let built = starter(&long);
+        assert!(
+            built.files[0]
+                .source
+                .contains("them ZZ \"ACMEMANUFACTURI\""),
+            "{}",
+            built.files[0].source
+        );
     }
 
     #[test]

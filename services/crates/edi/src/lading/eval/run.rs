@@ -257,7 +257,7 @@ pub fn run(program: &Program, request: &RunRequest) -> RunResult {
         }
         (Source::Csv(_), RunInput::Csv(text)) => run_rows(program, &given, request, info, text),
         (Source::Json, RunInput::Json(json)) => {
-            let input = Value::Json(Rc::new(json.clone()));
+            let input = Value::json(json);
             run_document_input(program, &given, request, info, ("input", input))
         }
         (Source::Document(document), RunInput::Document(json)) => {

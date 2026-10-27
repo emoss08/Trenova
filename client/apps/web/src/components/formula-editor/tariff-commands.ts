@@ -1,6 +1,7 @@
 // tariff-commands.ts holds what the editor's key bindings share without importing each other:
-// the format command the editor owns (so the keyboard and Vim report a refusal the same way), the
-// request to save the page the editor is on, and the comment syntax line commenting reads.
+// the commands the editor owns (format, so the keyboard and Vim report a refusal the same way, and
+// the language commands of an editor whose language is not Tariff), the request to save the page
+// the editor is on, and the comment syntax line commenting reads.
 
 import { EditorState, Facet } from "@codemirror/state";
 import type { Command, EditorView } from "@codemirror/view";
@@ -8,6 +9,16 @@ import type { Command, EditorView } from "@codemirror/view";
 export type TariffEditorCommands = {
   /** Formats the document and tells the page what happened. */
   format: Command;
+  /**
+   * The language commands Vim's keys run. An editor of another language (Lading) gives its own;
+   * left out, they are Tariff's.
+   */
+  definition?: Command;
+  hover?: Command;
+  lineProblems?: Command;
+  rename?: Command;
+  references?: Command;
+  actions?: Command;
 };
 
 export const tariffEditorCommands = Facet.define<TariffEditorCommands, TariffEditorCommands | null>(

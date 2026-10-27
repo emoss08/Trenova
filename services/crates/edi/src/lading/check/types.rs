@@ -6,7 +6,7 @@ use trenova_module_kit::message::{Arg, Message};
 
 use crate::lading::schema;
 use crate::lading::syntax::ast::{TypeExpr, TypeExprKind};
-use crate::lading::types::Type;
+use crate::lading::types::{Place, Type};
 
 /// Every type name a file may write.
 const BUILT_IN: &[&str] = &[
@@ -47,7 +47,7 @@ fn resolve_into(ty: &TypeExpr, diagnostics: &mut Vec<Diagnostic>) -> Type {
         TypeExprKind::Optional(inner) => resolve_into(inner, diagnostics).optional(),
         TypeExprKind::Named(name, args) => {
             match (name.as_str(), args.as_slice()) {
-                ("Code", [element]) => return Type::Code(element.clone()),
+                ("Code", [element]) => return Type::Code(element.clone(), Place::default()),
                 ("Segment", [segment]) => return Type::SegmentId(segment.clone()),
                 ("Loop", [id]) => return Type::LoopId(id.clone()),
                 ("Code" | "Segment" | "Loop", _) => {

@@ -110314,6 +110314,15 @@
       "go/other"
     ]
   },
+  "Fixes and refactorings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Fixes the quarter the miles belong to. Cannot be in the future.": {
     "sites": 1,
     "scope": [
@@ -110820,6 +110829,39 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Flow {0} already receives {1}, and each {1} goes to the first flow that receives it: receive it in one flow": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
+  "Flow {0} already responds with {1}: respond in one flow": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
+  "Flow {0} already sends on {1}, and each event goes to the first flow that sends on it: send on it from one flow": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
     ]
   },
   "Flush audit buffer from Redis for batch processing": {
@@ -111633,7 +111675,7 @@
     ]
   },
   "Format": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -111670,6 +111712,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Format the file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Format the source": {
@@ -134905,6 +134956,15 @@
       "routes/worker"
     ]
   },
+  "Lading": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Lading project": {
     "sites": 2,
     "scope": [
@@ -139204,6 +139264,15 @@
       "go/other"
     ]
   },
+  "Line {0}: {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
+    ]
+  },
   "Line-level credit and rebill values that created the exception.": {
     "sites": 1,
     "scope": [
@@ -140470,6 +140539,15 @@
     "areas": [
       "apps/web/components",
       "routes/formula-template"
+    ]
+  },
+  "Ln {0}, Col {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Load": {
@@ -170577,7 +170655,7 @@
       "routes/intake"
     ]
   },
-  "Nothing here can be promoted to an input": {
+  "Nothing here can be fixed or refactored": {
     "sites": 1,
     "scope": [
       "ts"
@@ -170586,7 +170664,7 @@
       "apps/web/components"
     ]
   },
-  "Nothing here can be refactored": {
+  "Nothing here can be promoted to an input": {
     "sites": 1,
     "scope": [
       "ts"
@@ -181064,6 +181142,15 @@
     ],
     "areas": [
       "apps/web/config"
+    ]
+  },
+  "Open the problems panel": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Open the promises in collections": {
@@ -211901,7 +211988,7 @@
     ]
   },
   "Refactorings": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -266816,6 +266903,28 @@
       "edi/lading"
     ]
   },
+  "The flow already responds with {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
+  "The flow already sends {0} on {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
   "The flow has nothing left to do for this load.": {
     "sites": 1,
     "scope": [
@@ -300860,11 +300969,14 @@
     ]
   },
   "Use {0}": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "apps/web/edi",
+      "edi/lading",
       "routes/agent-control",
       "routes/desk"
     ]
@@ -334923,7 +335035,7 @@
     ]
   },
   "{0, plural, one {# error} other {# errors}}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -337953,7 +338065,7 @@
     ]
   },
   "{0, plural, one {# warning} other {# warnings}}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -345868,6 +345980,17 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0} is in the library {1}, which this file does not use": {
+    "sites": 4,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
     ]
   },
   "{0} is inactive": {

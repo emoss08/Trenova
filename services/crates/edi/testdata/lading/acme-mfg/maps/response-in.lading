@@ -1,0 +1,17 @@
+map responseIn
+  from x12.004010.990
+  to   tenderResponse
+  use  common
+
+key         <- B102
+decision    <- B104 via decisions else reject "Acme's fleet sent a response with no decision"
+scac        <- B101
+respondedAt <- at(B103, none, partner.zone) ?? now()
+reason      <- N902
+
+test "the fleet accepts a backhaul" {
+  given file "samples/backhaul-response.x12"
+  expect key == "BH-7001"
+  expect decision == Accept
+  expect reason == "Driver Lopez assigned"
+}

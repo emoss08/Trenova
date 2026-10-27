@@ -195,6 +195,17 @@ impl Value {
         Self::List(Rc::new(items))
     }
 
+    /// A JSON value read by a path: an array is a list of its items, so `each`, `[0]` and the
+    /// list functions walk it; null is none.
+    #[must_use]
+    pub fn json(value: &serde_json::Value) -> Self {
+        match value {
+            serde_json::Value::Null => Self::None,
+            serde_json::Value::Array(items) => Self::list(items.iter().map(Self::json).collect()),
+            other => Self::Json(Rc::new(other.clone())),
+        }
+    }
+
     /// Whether it is none.
     #[must_use]
     pub fn is_none(&self) -> bool {

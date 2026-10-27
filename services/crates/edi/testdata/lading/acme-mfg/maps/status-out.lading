@@ -1,0 +1,40 @@
+map statusOut
+  from shipmentStatus
+  to   acme.214
+  use  common
+
+B10 { 01 <- proNumber ?? key, 02 <- key, 03 <- org.scac }
+L11 when exists bol { 01 <- bol, 02 <- "BM" }
+L11 when exists shipperReference { 01 <- shipperReference, 02 <- "PO" }
+
+0205 <- each events as event {
+  LX { 01 <- index + 1 }
+  0210 {
+    AT7 {
+      01 <- event.kind via statusCodes
+      02 <- event.reason ?? "NS"
+      05 <- event.at
+      06 <- event.at
+      07 <- event.at.zoneCode()
+    }
+    MS1 when exists event.city { 01 <- event.city.upper(), 02 <- event.state, 03 <- event.country ?? "US" }
+  }
+  L11 when exists event.stop { 01 <- text(event.stop), 02 <- "QN" }
+}
+
+test "an arrival at the consignee writes the AT7 and MS1" {
+  given shipmentStatus {
+    key: "AM-48213"
+    proNumber: "PRO-1001"
+    bol: "BOL-77120"
+    events: [{ kind: ArrivedDelivery, at: @2026-03-04T13:52[America/New_York], stop: 2, city: "Columbus", state: "OH" }]
+  }
+  expect x12 contains "B10*PRO-1001*AM-48213*TRNV~"
+  expect x12 contains "LX*1~AT7*X1*NS***20260304*1352*ET~MS1*COLUMBUS*OH*US~L11*2*QN~"
+}
+
+property "every event writes a status code" {
+  vary kind in EventKind
+  given shipmentStatus { key: "AM-1", events: [{ kind: kind, at: @2026-03-04T14:30Z }] }
+  expect x12 contains "AT7*"
+}
