@@ -45,7 +45,7 @@ Keywords: rename EDI file, move sample, delete file
 ### Try a map on a sample
 Keywords: run EDI map, test X12, preview mapping
 1. In the studio, open the **Run** tab.
-2. Pick a map and a sample.
+2. Pick a map and a sample. The samples the map reads come first, and picking a map picks one of them; a new map comes with one unless you clear **Add a sample of what it reads, to run it on**.
 3. Select **Run here** to run the files as they are now, or **Run with live data** to run the saved version with lookups answered from your records.
 4. Read each transaction's findings and outcomes, the document it produced and the X12 it wrote. Hover a field in the editor to see the value it came to.
 

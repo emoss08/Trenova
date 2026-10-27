@@ -618,14 +618,17 @@ fn unknown_field(path: &str, name: &str, names: &[&str]) -> Message {
             [Arg::from(name), Arg::from(names.join(", "))],
         );
     }
-    let mut named: Vec<&str> = nearest(name, names.iter().copied()).into_iter().collect();
-    named.extend(
-        names
-            .iter()
-            .copied()
-            .filter(|candidate| !named.contains(candidate))
-            .take(NAMED_CUSTOM_FIELDS - named.len()),
-    );
+    let closest = nearest(name, names.iter().copied());
+    let named: Vec<&str> = closest
+        .into_iter()
+        .chain(
+            names
+                .iter()
+                .copied()
+                .filter(|candidate| Some(*candidate) != closest),
+        )
+        .take(NAMED_CUSTOM_FIELDS)
+        .collect();
     Message::with(
         message!(
             "There is no custom field {0}; the organization has {1, plural, one {# custom field} other {# custom fields}}, such as {2}"

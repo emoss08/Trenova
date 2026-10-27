@@ -337,10 +337,13 @@ when B2A01 == "05" {
 - **`let name = expr`** binds a value for the rest of its block. **`when cond { ... }`** assigns
   only when `cond` is true.
 - **`refs["PO"] <- ...`** sets one entry of a `[Text: Text]` field.
-- **`custom.<field>`** is the organisation's custom fields on the target's record (a shipment's,
-  an invoice's), named as their definitions name them (`custom.po_number`) and typed from them.
-  Completion after `custom.` lists them; a name the organisation has not defined is an error
-  that lists the ones it has, or says where to add one.
+- **`custom.<field>`** is the organisation's shipment custom fields, named as their definitions
+  name them (`custom.po_number`) and typed from them (a multi-select is `[Text]`). Completion
+  after `custom.` lists them with their labels; a name the organisation has not defined is an
+  error that names the closest of the ones it has, or says where to add one. A tender's custom
+  fields are saved on the shipment its approval creates, through the custom field values
+  service's validation (`customfieldports.NamedValues`); the load tender, shipment status and
+  freight invoice an outbound map reads carry the load's.
 
 ### Outbound maps
 
@@ -446,6 +449,8 @@ by an inbound map.
 | `commodities` | `[CommodityLine]`: `commodity: Commodity?`, `description: Text`, `weight: Weight?`, `pieces: Int?`, `hazmat: Bool` |
 | `charges` | `[Charge]`: `accessorial: Accessorial?`, `code: Text?`, `description: Text?`, `amount: Money` |
 | `custom` | the organisation's shipment custom fields |
+
+`shipmentStatus` and `freightInvoice` carry the load's `custom` fields too.
 
 **`tenderResponse`** (990): `key: Text`, `decision: Decision` (`Accept`, `Decline`),
 `reason: Text?` (at most 200 characters), `scac: Text?`, `respondedAt: DateTime`, `refs`.
@@ -895,7 +900,10 @@ a rules file checks, Mod-P filters by path, and rows rename in place (a sample's
 the quoted paths tests read it by). Adding opens a palette of every kind of file and sample (type
 to filter, or a kind's letter), then that kind's form; a source file's options (a map's
 direction, input, document and guide; the map rules check; the base a guide narrows) shape a
-starter it previews, and the partner file is the module's own starter's (`lading.starter`).
+starter it previews, and the partner file is the module's own starter's (`lading.starter`). A
+new map comes with a starter sample of what it reads unless the form says otherwise
+(`lading.sample`): its set in the partner's envelope, its CSV columns with a row of examples, or
+an example of the document an outbound map reads.
 A partner without a project gets the start form, which writes the starter for the chosen role
 and sets as the first draft. Everything about the text is computed by the module in the browser,
 against the organisation and custom fields from `GET /edi/lading/context/`:
@@ -922,7 +930,9 @@ against the organisation and custom fields from `GET /edi/lading/context/`:
   failures that open their range, a property's counterexample, the elements the samples carry
   that no map reads, and the lines no test reached marked in the editor;
 - **run:** one map on one sample, either here (the working copy, no lookups answered) or with
-  live data (the saved version on the server, lookups answered from the organisation's records);
+  live data (the saved version on the server, lookups answered from the organisation's records).
+  The samples a map reads (its set for X12, its format otherwise) come first and are picked when
+  the map changes; a sample holding none of the map's set is refused with the sets it holds;
   the transactions, findings, outcomes, the document, the written X12, the lookups asked for and
   the unmapped codes; its values feed hover and inlays;
 - **release:** the steps to live traffic (saved, replayed, certified, shadow, live) worked out
