@@ -16,7 +16,13 @@ import { ReasonDialog } from "@/components/reason-dialog";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { decideMyPlan, undoMyDecision } from "@/lib/graphql/agent-decisions";
-import { invalidateProposalViews, markPlanDecided, markPlanStatus } from "@/lib/proposal-cache";
+import { announceRefusal } from "@/lib/approval-outcome";
+import {
+  invalidateProposalViews,
+  markPlanDecided,
+  markPlanFailed,
+  markPlanStatus,
+} from "@/lib/proposal-cache";
 import { assistant } from "@/lib/queries/assistant";
 import { useDeskStore } from "@/stores/desk-store";
 import type {
@@ -190,8 +196,13 @@ function PlanCard({
         reasonCode: "approved_from_plan_card",
         previewDigest: gateDigest(approval.gate),
       }),
-    onSuccess: (decided) => {
-      if ((decided.commitsAt ?? 0) > 0) {
+    onSuccess: ({ plan: decided, refused }) => {
+      // Refused because a record a step changes moved on, or stopped at a
+      // step that failed: the card reads as failed at once, not approved.
+      if (decided.status === "Failed") {
+        markPlanFailed(queryClient, decided);
+        if (refused) announceRefusal(t, decided.failureError);
+      } else if ((decided.commitsAt ?? 0) > 0) {
         markPlanStatus(queryClient, plan.id, "Approving");
       } else {
         markPlanDecided(queryClient, plan.id, "Accepted");

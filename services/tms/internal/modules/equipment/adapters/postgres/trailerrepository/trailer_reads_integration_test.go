@@ -27,6 +27,7 @@ func TestTrailerRepository(t *testing.T) {
 		DB:        db.Conn,
 		Logger:    zap.NewNop(),
 		Locations: crossref.LocationColumns(),
+		Moves:     crossref.MoveColumns(),
 	})
 
 	trailerID := pulid.ID(equipmenttest.Value[string](
@@ -199,6 +200,77 @@ func TestTrailerRepository(t *testing.T) {
 		assert.Equal(t, "Updated model", updated.Model)
 		assert.Equal(t, current.Version, updated.Version)
 	})
+
+	t.Run("a trailer on a move in progress says which, and is left out of the free ones",
+		func(t *testing.T) {
+			moveID := equipmenttest.Value[string](t, db,
+				`SELECT sm.id FROM shipment_moves sm
+				 WHERE sm.organization_id = $1 AND sm.business_unit_id = $2
+				 AND EXISTS (SELECT 1 FROM stops st WHERE st.shipment_move_id = sm.id)
+				 ORDER BY sm.id LIMIT 1`,
+				a.Info.OrgID.String(), a.Info.BuID.String())
+			pro := equipmenttest.Value[string](t, db,
+				`SELECT sp.pro_number FROM shipments sp
+				 JOIN shipment_moves sm ON sm.shipment_id = sp.id WHERE sm.id = $1`, moveID)
+			due := equipmenttest.Value[int64](t, db,
+				`SELECT COALESCE(scheduled_window_end, scheduled_window_start) FROM stops
+				 WHERE shipment_move_id = $1 ORDER BY sequence DESC LIMIT 1`, moveID)
+			db.Exec(t, "UPDATE assignments SET archived_at = 1 WHERE trailer_id = $1",
+				trailerID.String())
+			db.Exec(t, "UPDATE assignments SET archived_at = 1 WHERE shipment_move_id = $1", moveID)
+			db.Exec(t, "UPDATE shipment_moves SET status = 'InTransit' WHERE id = $1", moveID)
+			db.Exec(t,
+				`INSERT INTO assignments
+				(id, organization_id, business_unit_id, shipment_move_id, trailer_id, status)
+				VALUES ($1, $2, $3, $4, $5, 'InProgress')`,
+				pulid.MustNew("asn_").String(), a.Info.OrgID.String(), a.Info.BuID.String(),
+				moveID, trailerID.String())
+
+			list := func(operator dbtype.Operator) []*trailer.Trailer {
+				cursor, err := pagination.NewCursorInfo(100, "")
+				require.NoError(t, err)
+				result, err := repo.List(a.Ctx, &trailerports.ListTrailersRequest{
+					Filter: &pagination.QueryOptions{FieldFilters: []domaintypes.FieldFilter{
+						{Field: "inProgressMoveId", Operator: operator},
+					}},
+					Cursor: cursor,
+					TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
+						IncludeInProgressMove: true,
+					},
+				})
+				require.NoError(t, err)
+
+				return result.Items
+			}
+
+			var busy *trailer.Trailer
+			for _, item := range list(dbtype.OpIsNotNull) {
+				assert.False(t, item.InProgressMoveID.IsNil())
+				if item.ID == trailerID {
+					busy = item
+				}
+			}
+			require.NotNil(t, busy, "the trailer on the move in progress is listed as on one")
+			assert.Equal(t, pulid.ID(moveID), busy.InProgressMoveID)
+			assert.Equal(t, pro, busy.InProgressProNumber)
+			require.NotNil(t, busy.InProgressDueAt)
+			assert.Equal(t, due, *busy.InProgressDueAt)
+
+			for _, item := range list(dbtype.OpIsNull) {
+				assert.NotEqual(t, trailerID, item.ID, "a busy trailer is not free now")
+				assert.True(t, item.InProgressMoveID.IsNil())
+				assert.Empty(t, item.InProgressProNumber)
+			}
+
+			got, err := repo.GetByID(a.Ctx, trailerports.GetTrailerByIDRequest{
+				ID: trailerID,
+				TrailerRelationIncludes: trailerports.TrailerRelationIncludes{
+					IncludeInProgressMove: true,
+				},
+			})
+			require.NoError(t, err)
+			assert.Equal(t, pro, got.InProgressProNumber)
+		})
 
 	t.Run("a duplicate code is a validation error on the code", func(t *testing.T) {
 		existing, err := repo.GetByID(a.Ctx, trailerports.GetTrailerByIDRequest{ID: trailerID})

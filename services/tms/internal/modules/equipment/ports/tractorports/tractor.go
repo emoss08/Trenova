@@ -31,6 +31,7 @@ type TractorRelationIncludes struct {
 	IncludeSecondaryWorkerManager bool     `json:"includeSecondaryWorkerManager"`
 	IncludeOwnerWorker            bool     `json:"includeOwnerWorker"`
 	IncludeLastKnownLocation      bool     `json:"includeLastKnownLocation"`
+	IncludeInProgressMove         bool     `json:"includeInProgressMove"`
 	IncludeCustomFields           bool     `json:"includeCustomFields"`
 	TractorColumns                []string `json:"-"`
 	EquipmentTypeColumns          []string `json:"-"`
@@ -63,6 +64,7 @@ func FullTractorRelationIncludes() TractorRelationIncludes {
 		IncludeSecondaryWorkerManager: true,
 		IncludeOwnerWorker:            true,
 		IncludeLastKnownLocation:      true,
+		IncludeInProgressMove:         true,
 		IncludeCustomFields:           true,
 	}
 }

@@ -32,6 +32,7 @@ func TestTractorRepository(t *testing.T) {
 			Logger:    zap.NewNop(),
 			Quota:     guard,
 			Locations: crossref.LocationColumns(),
+			Moves:     crossref.MoveColumns(),
 		},
 	)
 

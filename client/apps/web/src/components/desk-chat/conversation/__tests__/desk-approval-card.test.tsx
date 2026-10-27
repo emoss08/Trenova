@@ -9,8 +9,10 @@ import type { AssistantPlan, AssistantProposal } from "@/types/assistant";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import { Operation } from "@trenova/shared/types/permission";
+import { assistant } from "@/lib/queries/assistant";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskApprovalCard } from "../desk-approval-card";
 
 const fetchProposalPreview =
@@ -45,8 +47,58 @@ vi.mock("@/hooks/use-permission", () => ({
   }),
 }));
 
+/* AgentDecision as DecideMyProposal selects it. */
+function decisionOf(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "adec_1",
+    proposalId: "aprop_1",
+    decision: "Accepted",
+    reasonCode: "",
+    decidedByUserId: "usr_1",
+    previewDigest: "sha256:shown",
+    previewReviewed: true,
+    commitsAt: null,
+    version: 1,
+    createdAt: 1_000,
+    ...overrides,
+  };
+}
+
+/* AgentProposalDecisionResult as DecideMyProposal selects it: recorded, nothing failed. */
+function proposalResult(overrides: Record<string, unknown> = {}) {
+  return {
+    proposalId: "aprop_1",
+    executed: false,
+    refused: false,
+    error: null,
+    decision: decisionOf(),
+    ...overrides,
+  };
+}
+
+/* AgentPlanDecisionResult as DecideMyPlan selects it. */
+function planResult(plan: Record<string, unknown> = {}, refused = false) {
+  return {
+    refused,
+    plan: {
+      id: "apl_1",
+      status: "Approving",
+      stepCount: 2,
+      completedSteps: 0,
+      failedStep: null,
+      failureError: "",
+      decidedByUserId: "usr_1",
+      decidedAt: 1_000,
+      commitsAt: 1_030,
+      version: 2,
+      updatedAt: 1_000,
+      ...plan,
+    },
+  };
+}
+
 beforeEach(() => {
-  decideMyProposal.mockResolvedValue({ commitsAt: null });
+  decideMyProposal.mockResolvedValue(proposalResult());
 });
 
 afterEach(() => {
@@ -138,7 +190,7 @@ function renderCard(proposals: AssistantProposal[] = [proposal()], plans: Assist
     </QueryClientProvider>,
   );
 
-  return { approveRef, undo, onDecided, onReview };
+  return { approveRef, undo, onDecided, onReview, client };
 }
 
 const approve = () => screen.getByRole("button", { name: /^Approve/ });
@@ -474,7 +526,7 @@ describe("DeskApprovalCard and changes that must be reviewed", () => {
           release = resolve;
         }),
     );
-    decideMyPlan.mockResolvedValue({ commitsAt: null });
+    decideMyPlan.mockResolvedValue(planResult({ status: "Approved", commitsAt: null }));
     renderCard(
       [
         proposal({ id: "aprop_1", planId: "apl_1", planStep: 1, reviewRequired: true }),
@@ -602,5 +654,131 @@ describe("DeskApprovalCard for a held change", () => {
     expect(card.textContent).toContain("Reprice two loads");
     expect(card.textContent).toContain("2 steps");
     expect(fetchPlanPreview).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * An approval of a change whose record moved on since it was proposed is
+ * recorded but refused: the server runs nothing, closes the proposal as
+ * ExecutionFailed with its reason, starts a turn in the conversation and
+ * answers with `refused` and that reason rather than an error. The card
+ * holds nothing for undoing, never reads as accepted, and says so at once.
+ */
+describe("DeskApprovalCard when the server refuses the approval", () => {
+  const why =
+    "the record changed since this was proposed: the shipment move SM-1 was at version 3 when this was proposed and is at version 4 now, so nothing was changed";
+  let info: MockInstance;
+
+  beforeEach(() => {
+    info = vi.spyOn(toast, "info");
+  });
+
+  afterEach(() => {
+    info.mockRestore();
+  });
+
+  it("clears the undo hold, marks the change failed with the reason and says nothing changed", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
+    decideMyProposal.mockResolvedValue(
+      proposalResult({ refused: true, error: why, decision: decisionOf({ commitsAt: null }) }),
+    );
+    const { undo, onDecided, client } = renderCard();
+    client.setQueryData(assistant.proposals("athr_1").queryKey, { results: [proposal()] });
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+
+    await waitFor(() => expect(onDecided).toHaveBeenCalledTimes(1));
+    expect(undo.clear).toHaveBeenCalledWith(entryOf([proposal()]).key);
+    expect(undo.scheduled).not.toHaveBeenCalled();
+    expect(info).toHaveBeenCalledTimes(1);
+    expect(info).toHaveBeenCalledWith("This changed since you opened it", { description: why });
+    expect(client.getQueryData(assistant.proposals("athr_1").queryKey)).toEqual({
+      results: [
+        expect.objectContaining({ id: "aprop_1", status: "ExecutionFailed", executionError: why }),
+      ],
+    });
+  });
+
+  it("marks a write that failed as it ran failed too, without calling it a refusal", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
+    decideMyProposal.mockResolvedValue(
+      proposalResult({ error: "The customer is on credit hold", decision: decisionOf() }),
+    );
+    const { undo, onDecided, client } = renderCard();
+    client.setQueryData(assistant.proposals("athr_1").queryKey, { results: [proposal()] });
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+
+    await waitFor(() => expect(onDecided).toHaveBeenCalledTimes(1));
+    expect(undo.clear).toHaveBeenCalledWith(entryOf([proposal()]).key);
+    expect(undo.scheduled).not.toHaveBeenCalled();
+    expect(info).not.toHaveBeenCalled();
+    expect(client.getQueryData(assistant.proposals("athr_1").queryKey)).toEqual({
+      results: [
+        expect.objectContaining({
+          status: "ExecutionFailed",
+          executionError: "The customer is on credit hold",
+        }),
+      ],
+    });
+  });
+
+  it("holds an approval that was not refused for its undo window", async () => {
+    fetchProposalPreview.mockResolvedValue(preview({ digest: "sha256:shown" }));
+    decideMyProposal.mockResolvedValue(
+      proposalResult({ decision: decisionOf({ commitsAt: 1_030 }) }),
+    );
+    const { undo, client } = renderCard();
+    client.setQueryData(assistant.proposals("athr_1").queryKey, { results: [proposal()] });
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+
+    await waitFor(() =>
+      expect(undo.scheduled).toHaveBeenCalledWith(entryOf([proposal()]).key, 1_030),
+    );
+    expect(undo.clear).not.toHaveBeenCalled();
+    expect(info).not.toHaveBeenCalled();
+    expect(client.getQueryData(assistant.proposals("athr_1").queryKey)).toEqual({
+      results: [expect.objectContaining({ status: "Approving", executionError: "" })],
+    });
+  });
+
+  it("clears the hold on a refused plan, marks it failed at its step and says nothing ran", async () => {
+    const planWhy =
+      "nothing ran, because a record the plan changes moved on after it was proposed; step 2: the record changed since this was proposed: the shipment move SM-2 was at version 3 when this was proposed and is at version 4 now, so nothing was changed";
+    const steps = [
+      proposal({ id: "aprop_1", planId: "apl_1", planStep: 1, reviewRequired: false }),
+      proposal({ id: "aprop_2", planId: "apl_1", planStep: 2, reviewRequired: false }),
+    ];
+    fetchPlanPreview.mockResolvedValue(planPreview({ digest: "sha256:plan" }));
+    decideMyPlan.mockResolvedValue(
+      planResult({ status: "Failed", failedStep: 2, failureError: planWhy, commitsAt: null }, true),
+    );
+    const { undo, onDecided, client } = renderCard(steps, [plan()]);
+    client.setQueryData(assistant.plans("athr_1").queryKey, { results: [plan()] });
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+
+    await waitFor(() => expect(onDecided).toHaveBeenCalledTimes(1));
+    expect(undo.clear).toHaveBeenCalledWith(entryOf(steps, [plan()]).key);
+    expect(undo.scheduled).not.toHaveBeenCalled();
+    expect(info).toHaveBeenCalledWith("This changed since you opened it", {
+      description: planWhy,
+    });
+    expect(client.getQueryData(assistant.plans("athr_1").queryKey)).toEqual({
+      results: [
+        expect.objectContaining({
+          id: "apl_1",
+          status: "Failed",
+          completedSteps: 0,
+          failedStep: 2,
+          failureError: planWhy,
+        }),
+      ],
+    });
   });
 });

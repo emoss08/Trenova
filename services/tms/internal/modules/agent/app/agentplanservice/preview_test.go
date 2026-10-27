@@ -15,8 +15,9 @@ import (
 type fakePreviews struct {
 	agentports.ProposalPreviewService
 
-	stale bool
-	asked int
+	stale     bool
+	staleStep int
+	asked     int
 }
 
 func (f *fakePreviews) ForPlan(
@@ -26,28 +27,82 @@ func (f *fakePreviews) ForPlan(
 	f.asked++
 	preview := &agent.PlanPreview{PlanID: req.Plan.ID, Stale: f.stale, Digest: "plan-digest"}
 	for _, step := range req.Steps {
+		stepPreview := &agent.ProposalPreview{ProposalID: step.ID, Digest: "step-" + step.ID.String()}
+		if f.stale && (f.staleStep == 0 || f.staleStep == step.PlanStep) {
+			stepPreview.Staleness = &agent.PreviewStaleness{
+				Pinned: true, ProposedVersion: 3, CurrentVersion: 4,
+			}
+		}
 		preview.Steps = append(preview.Steps, agent.PlanStepPreview{
 			ProposalID: step.ID,
 			Step:       step.PlanStep,
-			Preview:    &agent.ProposalPreview{ProposalID: step.ID, Digest: "step-" + step.ID.String()},
+			Preview:    stepPreview,
 		})
 	}
 
 	return preview, nil
 }
 
-func TestDecide_AStalePlanIsRefusedBeforeAnythingRuns(t *testing.T) {
+type recordedFollowUps struct {
+	requests []agentports.DecisionFollowUpRequest
+}
+
+func (r *recordedFollowUps) FollowUp(_ context.Context, req agentports.DecisionFollowUpRequest) {
+	r.requests = append(r.requests, req)
+}
+
+func TestDecide_AStalePlanIsRefusedAsApprovedAndNothingRuns(t *testing.T) {
+	t.Parallel()
+
+	h := newHarness(t, 3, false)
+	h.svc.previews = &fakePreviews{stale: true, staleStep: 2}
+	followUps := &recordedFollowUps{}
+	h.svc.followUps = followUps
+	h.req.PreviewDigest = "the-digest-the-person-reviewed"
+
+	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
+	require.NoError(t, err, "a refused plan is the plan's outcome, not an error to the caller")
+
+	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	assert.Equal(t, 0, plan.CompletedSteps)
+	require.NotNil(t, plan.FailedStep)
+	assert.Equal(t, 2, *plan.FailedStep)
+	assert.Contains(t, plan.FailureError, "nothing ran")
+	assert.Contains(t, plan.FailureError, "step 2: the record changed since this was proposed")
+	assert.True(t, agent.PlanTargetChanged(plan),
+		"the plan reads as refused over a changed record, not as a step that failed")
+
+	require.Len(t, h.decider.decided, 1, "only the stale step is decided, and it runs nothing")
+	refused := h.decider.decided[0]
+	assert.Equal(t, h.steps.steps[1].ID, refused.ProposalID)
+	assert.True(t, refused.WithinPlan)
+	assert.True(t, refused.StepPreview.IsStale(), "the step is refused on the preview it moved on in")
+	assert.Equal(t, 1, h.steps.skipped, "the steps that were not stale are skipped, never run")
+
+	require.Len(t, h.plans.statuses, 1)
+	assert.Equal(t, agent.PlanStatusApproved, h.plans.statuses[0].Status)
+	assert.Equal(t, agent.PlanStatusPending, h.plans.statuses[0].FromStatus,
+		"the claim is conditional, so a second decision cannot refuse it again")
+	assert.Equal(t, 1, h.decider.signals, "the run hears the plan is no longer waiting")
+	require.Len(t, followUps.requests, 1, "the conversation is told why nothing ran")
+	assert.Equal(t, plan.ID, followUps.requests[0].PlanID)
+}
+
+func TestDecide_AStalePlanDecidedAgainIsNotRefusedTwice(t *testing.T) {
 	t.Parallel()
 
 	h := newHarness(t, 2, false)
 	h.svc.previews = &fakePreviews{stale: true}
+	followUps := &recordedFollowUps{}
+	h.svc.followUps = followUps
 
 	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
+	require.NoError(t, err)
 
-	var business *errortypes.BusinessError
-	require.True(t, errors.As(err, &business), "%v", err)
-	assert.Empty(t, h.plans.statuses, "the plan stays pending")
-	assert.Empty(t, h.decider.decided)
+	_, err = h.svc.Decide(t.Context(), h.req, h.actor)
+	require.ErrorContains(t, err, "already been decided")
+	assert.Len(t, h.decider.decided, 2, "each stale step is refused once")
+	assert.Len(t, followUps.requests, 1, "one decision, one follow-up")
 }
 
 func TestDecide_APlanDigestThatNoLongerMatchesIsAConflict(t *testing.T) {

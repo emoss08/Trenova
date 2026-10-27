@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
@@ -70,8 +71,9 @@ func (t *getShipmentTool) Description() string {
 		"it and with what equipment, the holds on it now and its newest comments. Pass " +
 		"detail full only " +
 		"for a field the summary leaves out. Each hold carries the holdId " +
-		"shipment_update_hold and shipment_release_hold take. Find it with shipment_list " +
-		"when you have only a customer, a place or a BOL."
+		"shipment_update_hold and shipment_release_hold take. leftOutForAccess says when " +
+		"the holds or comments could not be read. Find it with shipment_list when you have " +
+		"only a customer, a place, a PO or a BOL."
 }
 
 func (t *getShipmentTool) SearchTerms() []string {
@@ -125,17 +127,19 @@ func (t *getShipmentTool) Query(
 		return nil, err
 	}
 
-	comments, err := t.recentComments(ctx, params, tenant, entity.ID)
+	readable := t.readableActivity(ctx, params)
+	comments, err := t.recentComments(ctx, readable, tenant, entity.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	holds, err := t.activeHolds(ctx, params, tenant, entity.ID)
+	holds, err := t.activeHolds(ctx, readable, tenant, entity.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	activity := newShipmentActivity(comments, holds)
+	activity.LeftOutForAccess = readable.leftOutNote(params)
 	people := t.access.redactor(ctx, params)
 
 	if detail == shipmentDetailFull {
@@ -162,13 +166,65 @@ func shipmentDetailOf(params map[string]any) (shipmentDetail, error) {
 	return shipmentDetail(value), nil
 }
 
-func (t *getShipmentTool) activeHolds(
+type shipmentActivityAccess struct {
+	comments         bool
+	holds            bool
+	commentsWithheld bool
+	holdsWithheld    bool
+}
+
+func (t *getShipmentTool) readableActivity(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
+) shipmentActivityAccess {
+	var access shipmentActivityAccess
+	if t.comments != nil {
+		access.comments = t.access.mayRead(ctx, params, permission.ResourceShipmentComment)
+		access.commentsWithheld = !access.comments
+	}
+	if t.holds != nil {
+		access.holds = t.access.mayRead(ctx, params, permission.ResourceShipmentHold)
+		access.holdsWithheld = !access.holds
+	}
+
+	return access
+}
+
+func (a shipmentActivityAccess) leftOutNote(params *agentports.QueryToolParams) string {
+	switch {
+	case a.commentsWithheld && a.holdsWithheld:
+		return fmt.Sprintf("Comments and holds are left out: %s does not include reading "+
+			"shipment comments or shipment holds. A note a dispatcher left or a hold on this "+
+			"load would not appear here, so the empty lists do not mean there are none; say "+
+			"so rather than concluding the record is silent.", accessHolder(params))
+	case a.commentsWithheld:
+		return fmt.Sprintf("Comments are left out: %s does not include reading shipment "+
+			"comments. A note a dispatcher left on this load would not appear here, so do "+
+			"not conclude the record says nothing about why; say the comments could not be "+
+			"read.", accessHolder(params))
+	case a.holdsWithheld:
+		return fmt.Sprintf("Holds are left out: %s does not include reading shipment holds, "+
+			"so the empty activeHolds does not mean the load is not held.", accessHolder(params))
+	default:
+		return ""
+	}
+}
+
+func accessHolder(params *agentports.QueryToolParams) string {
+	if params.Actor != nil && params.Actor.IsAgent() {
+		return "this agent's unattended access"
+	}
+
+	return "the access of the person you are working for"
+}
+
+func (t *getShipmentTool) activeHolds(
+	ctx context.Context,
+	readable shipmentActivityAccess,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*shipment.ShipmentHold, error) {
-	if t.holds == nil || !t.access.mayRead(ctx, params, permission.ResourceShipmentHold) {
+	if !readable.holds {
 		return nil, nil
 	}
 
@@ -198,12 +254,11 @@ func (t *getShipmentTool) activeHolds(
 
 func (t *getShipmentTool) recentComments(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
+	readable shipmentActivityAccess,
 	tenant pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*shipment.ShipmentComment, error) {
-	if t.comments == nil ||
-		!t.access.mayRead(ctx, params, permission.ResourceShipmentComment) {
+	if !readable.comments {
 		return nil, nil
 	}
 
@@ -228,11 +283,16 @@ func (t *getShipmentTool) recentComments(
 const (
 	shipmentListName         = "shipment_list"
 	defaultShipmentWordLimit = 10
+	paramOnHold              = "onHold"
+	paramHoldReasonCodes     = "holdReasonCodes"
+	maxHoldReasonCodes       = 10
 )
 
 type shipmentListTool struct {
 	repo         shipmentports.ShipmentRepository
 	parties      shipmentPartySources
+	holds        shipmentports.ActiveHoldReader
+	access       fieldAccess
 	list         *listTool
 	filterFields agenttoolschema.EnumSource[string]
 }
@@ -244,6 +304,9 @@ func provideShipmentListTool(
 	workers workerports.WorkerRepository,
 	commodities commodityports.CommodityRepository,
 	types shipmenttypeports.ShipmentTypeRepository,
+	orders shipmentports.OrderReferenceMatcher,
+	holds shipmentports.ActiveHoldReader,
+	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
 	return newShipmentListTool(repo, shipmentPartySources{
 		customers:   customers,
@@ -251,7 +314,8 @@ func provideShipmentListTool(
 		workers:     workers,
 		commodities: commodities,
 		types:       types,
-	})
+		orders:      orders,
+	}).withHolds(holds, permissions)
 }
 
 func newShipmentListTool(
@@ -275,20 +339,32 @@ func newShipmentListTool(
 	}
 }
 
+func (t *shipmentListTool) withHolds(
+	holds shipmentports.ActiveHoldReader,
+	permissions permissionports.PermissionEngine,
+) *shipmentListTool {
+	t.holds = holds
+	t.access = newFieldAccess(permissions)
+
+	return t
+}
+
 func (t *shipmentListTool) Name() string { return shipmentListName }
 
 func (t *shipmentListTool) Description() string {
-	return "Find shipments (loads) by the words people use for them, by status, or by " +
-		"filters on dates, charges and transfer status. Words match a pro number or BOL, a " +
-		"customer's name or code, a stop's place or city, the driver or what it carries; " +
-		"several words each narrow, so \"sunbelt chicago\" finds Sunbelt's loads through " +
-		"Chicago. With no words and no filters it lists the newest. Each row has the first " +
-		"pickup, the final stop and who drives each move; open one with shipment_get only " +
-		"for more."
+	return "Find shipments (loads) by the words people use for them, by status, by holds, or " +
+		"by filters on dates, charges and transfer status. Words match a pro number, BOL, " +
+		"the customer's PO or reference number, a customer's name or code, a stop's place or " +
+		"city, the driver or what it carries; several words each narrow, so \"sunbelt " +
+		"chicago\" finds Sunbelt's loads through Chicago, and a word that names several " +
+		"things narrows to any of them. With no words and no filters it lists the newest. " +
+		"Each row has the first pickup, the final stop, who drives each move, what it carries " +
+		"and the holds in force with the holdId shipment_release_hold takes, so onHold lists " +
+		"held loads in one call; open one with shipment_get only for more."
 }
 
 func (t *shipmentListTool) SearchTerms() []string {
-	return []string{"pro number", "bol number", "reference number"}
+	return []string{"pro number", "bol number", "po number", "reference number", "held loads"}
 }
 
 func (t *shipmentListTool) ParamSchema() map[string]any {
@@ -297,8 +373,10 @@ func (t *shipmentListTool) ParamSchema() map[string]any {
 		toolschema.KeyProperties: map[string]any{
 			paramQuery: map[string]any{
 				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "Words to match: a pro number, BOL, customer, stop " +
-					"place or city, driver or commodity. Omit to list by status and filters alone.",
+				toolschema.KeyDescription: "Words to match: a pro number, BOL, the customer's " +
+					"PO or reference number (the number alone, such as 77Q-4182, not \"PO " +
+					"77Q-4182\"), customer, stop place or city, driver or commodity. Omit to " +
+					"list by status, holds and filters alone.",
 			},
 			paramStatus: map[string]any{
 				toolschema.KeyType:  toolschema.TypeArray,
@@ -308,6 +386,19 @@ func (t *shipmentListTool) ParamSchema() map[string]any {
 					"Assigned; on the road is InTransit and Delayed. A load the person calls " +
 					"late or running behind is Delayed. There is no Delivered: a delivered load " +
 					"is Completed, ReadyToInvoice or Invoiced.",
+			},
+			paramOnHold: map[string]any{
+				toolschema.KeyType: toolschema.TypeBoolean,
+				toolschema.KeyDescription: "true lists only shipments with a hold in force, " +
+					"false only those with none; omit for both.",
+			},
+			paramHoldReasonCodes: map[string]any{
+				toolschema.KeyType:     toolschema.TypeArray,
+				toolschema.KeyItems:    map[string]any{toolschema.KeyType: toolschema.TypeString},
+				toolschema.KeyMaxItems: maxHoldReasonCodes,
+				toolschema.KeyDescription: "Only shipments held for one of these hold reason " +
+					"codes, such as CREDIT_HOLD, from a row's reasonCode or " +
+					"masterdata_list_hold_reasons; implies onHold.",
 			},
 			paramFilters:       t.filtersSchema(),
 			paramSortBy:        t.list.sortSchema(),
@@ -365,12 +456,208 @@ func (t *shipmentListTool) Query(
 		return nil, err
 	}
 
-	query := optionalString(params.Params, "query")
-	if query == "" {
-		return t.list.Query(ctx, withStatusFilter(params, statuses))
+	held, err := shipmentHoldFilterOf(params.Params)
+	if err != nil {
+		return nil, err
 	}
 
-	return t.searchWords(ctx, params, query, statuses)
+	readsHolds := t.readsHolds(ctx, params)
+	if held.set() && !readsHolds {
+		return nil, &agentports.ReadRefusedError{
+			Resource: permission.ResourceShipmentHold,
+			Message:  "listing shipments by their holds needs read access to shipment holds",
+		}
+	}
+
+	var result any
+	query := optionalString(params.Params, paramQuery)
+	if query == "" && !held.set() {
+		result, err = t.list.Query(ctx, withStatusFilter(params, statuses))
+	} else {
+		result, err = t.searchWords(ctx, &wordSearch{
+			params:   params,
+			query:    query,
+			statuses: statuses,
+			held:     held,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return t.withActiveHolds(ctx, params, result, readsHolds)
+}
+
+func (t *shipmentListTool) readsHolds(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+) bool {
+	return t.holds != nil && t.access.mayRead(ctx, params, permission.ResourceShipmentHold)
+}
+
+type shipmentHoldFilter struct {
+	active *bool
+	codes  []string
+}
+
+func shipmentHoldFilterOf(params map[string]any) (shipmentHoldFilter, error) {
+	filter := shipmentHoldFilter{
+		active: optionalBoolPointer(params, paramOnHold),
+		codes:  sliceutils.DedupeStrings(optionalStrings(params, paramHoldReasonCodes)),
+	}
+	if len(filter.codes) > maxHoldReasonCodes {
+		return shipmentHoldFilter{}, fmt.Errorf(
+			"parameter %q takes at most %d codes", paramHoldReasonCodes, maxHoldReasonCodes)
+	}
+	if len(filter.codes) > 0 && filter.active != nil && !*filter.active {
+		return shipmentHoldFilter{}, fmt.Errorf(
+			"parameter %q lists held shipments, so it cannot go with %q false; leave %q out",
+			paramHoldReasonCodes, paramOnHold, paramOnHold)
+	}
+
+	return filter, nil
+}
+
+func (f shipmentHoldFilter) set() bool {
+	return f.active != nil || len(f.codes) > 0
+}
+
+func (f shipmentHoldFilter) apply(options *shipmentports.ShipmentOptions) {
+	options.ActiveHold = f.active
+	options.HoldReasonCodes = f.codes
+}
+
+func (f shipmentHoldFilter) describe(criteria *filtercatalog.Criteria) {
+	switch {
+	case len(f.codes) > 0:
+		criteria.Field("with a hold in force for", stringutils.JoinAlternatives(f.codes))
+	case f.active != nil && *f.active:
+		criteria.Field("with a hold in force", "for any reason")
+	case f.active != nil:
+		criteria.Field("with no hold", "in force")
+	}
+}
+
+type shipmentRowHold struct {
+	HoldID     string `json:"holdId"`
+	Reason     string `json:"reason"`
+	ReasonCode string `json:"reasonCode,omitempty"`
+	Severity   string `json:"severity,omitempty"`
+	Blocks     string `json:"blocks,omitempty"`
+}
+
+func rowHoldOf(hold *shipment.ShipmentHold) shipmentRowHold {
+	row := shipmentRowHold{
+		HoldID:     hold.ID.String(),
+		Reason:     string(hold.Type),
+		ReasonCode: hold.ReasonCode,
+		Severity:   string(hold.Severity),
+	}
+	switch {
+	case hold.HoldReason != nil && strings.TrimSpace(hold.HoldReason.Label) != "":
+		row.Reason = strings.TrimSpace(hold.HoldReason.Label)
+	case hold.ReasonCode != "":
+		row.Reason = hold.ReasonCode
+	}
+
+	blocks := make([]string, 0, 3)
+	if hold.BlocksDispatch {
+		blocks = append(blocks, "dispatch")
+	}
+	if hold.BlocksDelivery {
+		blocks = append(blocks, "delivery")
+	}
+	if hold.BlocksBilling {
+		blocks = append(blocks, "billing")
+	}
+	row.Blocks = strings.Join(blocks, ", ")
+
+	return row
+}
+
+func (t *shipmentListTool) withActiveHolds(
+	ctx context.Context,
+	params *agentports.QueryToolParams,
+	result any,
+	readsHolds bool,
+) (any, error) {
+	outcome, ok := result.(searchOutcome)
+	if !ok || outcome.Count == 0 {
+		return result, nil
+	}
+	if !readsHolds {
+		if t.holds != nil {
+			outcome.Note = strings.TrimSpace(outcome.Note + " " + fmt.Sprintf(
+				"Holds are left out of these rows: %s does not include reading shipment "+
+					"holds, so a row without activeHolds may still be held.",
+				accessHolder(params)))
+		}
+		return outcome, nil
+	}
+
+	ids := shipmentRowIDs(outcome.Items)
+	if len(ids) == 0 {
+		return outcome, nil
+	}
+	holds, err := t.holds.ActiveHolds(ctx, &shipmentports.ActiveHoldsRequest{ShipmentIDs: ids})
+	if err != nil {
+		return nil, fmt.Errorf("read the holds on these shipments: %w", err)
+	}
+
+	byShipment := make(map[string][]shipmentRowHold, len(holds))
+	for _, hold := range holds {
+		if hold != nil {
+			key := hold.ShipmentID.String()
+			byShipment[key] = append(byShipment[key], rowHoldOf(hold))
+		}
+	}
+	outcome.Items = withRowHolds(outcome.Items, byShipment)
+
+	return outcome, nil
+}
+
+func shipmentRowIDs(items any) []pulid.ID {
+	var rows []shipmentRow
+	switch typed := items.(type) {
+	case []shipmentRow:
+		rows = typed
+	case []any:
+		rows = make([]shipmentRow, 0, len(typed))
+		for _, item := range typed {
+			if row, ok := item.(shipmentRow); ok {
+				rows = append(rows, row)
+			}
+		}
+	}
+
+	ids := make([]pulid.ID, 0, len(rows))
+	for idx := range rows {
+		if id, err := pulid.Parse(rows[idx].ID); err == nil && id.IsNotNil() {
+			ids = append(ids, id)
+		}
+	}
+
+	return ids
+}
+
+func withRowHolds(items any, holds map[string][]shipmentRowHold) any {
+	switch typed := items.(type) {
+	case []shipmentRow:
+		for idx := range typed {
+			typed[idx].ActiveHolds = holds[typed[idx].ID]
+		}
+		return typed
+	case []any:
+		for idx, item := range typed {
+			if row, ok := item.(shipmentRow); ok {
+				row.ActiveHolds = holds[row.ID]
+				typed[idx] = row
+			}
+		}
+		return typed
+	default:
+		return items
+	}
 }
 
 func withStatusFilter(
@@ -406,17 +693,29 @@ type wordSearch struct {
 	params   *agentports.QueryToolParams
 	query    string
 	statuses []shipment.Status
+	held     shipmentHoldFilter
 	window   cursorWindow
 	filters  []domaintypes.FieldFilter
 	sorting  []domaintypes.SortField
 }
 
+func (s *wordSearch) options() shipmentports.ShipmentOptions {
+	options := shipmentports.ShipmentOptions{
+		Statuses:           s.statuses,
+		IncludeCustomer:    true,
+		IncludeRoute:       true,
+		IncludeCommodities: true,
+	}
+	s.held.apply(&options)
+
+	return options
+}
+
 func (t *shipmentListTool) searchWords(
 	ctx context.Context,
-	params *agentports.QueryToolParams,
-	query string,
-	statuses []shipment.Status,
+	search *wordSearch,
 ) (any, error) {
+	params := search.params
 	criteria := filtercatalog.NewCriteria("shipments").At(clockFor(params))
 	filters, err := t.list.buildFilters(params.Params, criteria)
 	if err != nil {
@@ -427,39 +726,34 @@ func (t *shipmentListTool) searchWords(
 		return nil, err
 	}
 
-	window, err := readCursorWindow(
-		t.Name(),
-		params.Params,
-		defaultShipmentWordLimit,
-		maxListLimit,
-	)
+	defaultLimit := defaultShipmentWordLimit
+	if search.query == "" {
+		defaultLimit = defaultListLimit
+	}
+	window, err := readCursorWindow(t.Name(), params.Params, defaultLimit, maxListLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	search := &wordSearch{
-		params:   params,
-		query:    query,
-		statuses: statuses,
-		window:   window,
-		filters:  filters,
-		sorting:  sorting,
-	}
+	search.window = window
+	search.filters = filters
+	search.sorting = sorting
 	found, err := t.search(ctx, search, criteria)
 	if err != nil {
 		return nil, err
 	}
-	if len(found.rows) > 0 || len(statuses) == 0 || !search.window.first() {
+	if len(found.rows) > 0 || len(search.statuses) == 0 || !search.window.first() ||
+		search.query == "" {
 		return t.wordOutcome(ctx, search, found)
 	}
 
-	relaxed, err := t.search(ctx, &wordSearch{
-		params:  params,
-		query:   query,
-		window:  search.window,
-		filters: filters,
-		sorting: sorting,
-	}, filtercatalog.NewCriteria("shipments").At(clockFor(params)))
+	anyStatus := *search
+	anyStatus.statuses = nil
+	relaxed, err := t.search(
+		ctx,
+		&anyStatus,
+		filtercatalog.NewCriteria("shipments").At(clockFor(params)),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -471,7 +765,7 @@ func (t *shipmentListTool) searchWords(
 	outcome.Note = fmt.Sprintf(
 		"None of the shipments these words match is %s. These are the ones they match in any "+
 			"status; read each row's status rather than searching status by status.",
-		statusNames(statuses))
+		statusNames(search.statuses))
 
 	return outcome, nil
 }
@@ -501,11 +795,15 @@ func (t *shipmentListTool) wordOutcome(
 				"asking the person to choose from this page.", search.window.limit)
 	case found.hasMore:
 		outcome.cursorPaged(&search.window, true, found.nextCursor)
+		options := search.options()
+		options.IncludeCustomer = false
+		options.IncludeRoute = false
+		options.IncludeCommodities = false
 		if total, exact, err := countShipments(ctx, t.repo, &pagination.QueryOptions{
 			TenantInfo:   tenantOf(search.params),
 			Query:        search.query,
 			FieldFilters: search.filters,
-		}, shipmentports.ShipmentOptions{Statuses: search.statuses}); err == nil &&
+		}, options); err == nil &&
 			total > len(rows) {
 			outcome.Total = &total
 			outcome.TotalEstimated = !exact
@@ -582,6 +880,7 @@ func (t *shipmentListTool) search(
 ) (*shipmentSearch, error) {
 	criteria.Text(search.query)
 	criteria.Field(paramStatus, statusNames(search.statuses))
+	search.held.describe(criteria)
 
 	result, err := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
 		Filter: &pagination.QueryOptions{
@@ -591,12 +890,8 @@ func (t *shipmentListTool) search(
 			FieldFilters: search.filters,
 			Sort:         search.sorting,
 		},
-		Cursor: search.window.info,
-		ShipmentOptions: shipmentports.ShipmentOptions{
-			Statuses:        search.statuses,
-			IncludeCustomer: true,
-			IncludeRoute:    true,
-		},
+		Cursor:          search.window.info,
+		ShipmentOptions: search.options(),
 	})
 	if err != nil {
 		return nil, refuseStaleCursor(err)
@@ -612,16 +907,8 @@ func (t *shipmentListTool) search(
 	}
 
 	direct := len(rows)
-	if search.window.first() && len(rows) < search.window.limit {
-		rows, err = t.addPartyMatches(ctx, &partySearch{
-			params:   search.params,
-			query:    search.query,
-			statuses: search.statuses,
-			limit:    search.window.limit,
-			filters:  search.filters,
-			sorting:  search.sorting,
-			criteria: criteria,
-		}, rows)
+	if search.query != "" && search.window.first() && len(rows) < search.window.limit {
+		rows, err = t.addPartyMatches(ctx, search, criteria, rows)
 		if err != nil {
 			return nil, err
 		}
@@ -636,19 +923,10 @@ func (t *shipmentListTool) search(
 	}, nil
 }
 
-type partySearch struct {
-	params   *agentports.QueryToolParams
-	query    string
-	statuses []shipment.Status
-	limit    int
-	filters  []domaintypes.FieldFilter
-	sorting  []domaintypes.SortField
-	criteria *filtercatalog.Criteria
-}
-
 func (t *shipmentListTool) addPartyMatches(
 	ctx context.Context,
-	search *partySearch,
+	search *wordSearch,
+	criteria *filtercatalog.Criteria,
 	rows []shipmentRow,
 ) ([]shipmentRow, error) {
 	tenant := tenantOf(search.params)
@@ -657,124 +935,38 @@ func (t *shipmentListTool) addPartyMatches(
 		return rows, err
 	}
 
-	return t.appendPartyRows(ctx, search, tenant, partyLookups(parties, search.criteria), rows)
-}
-
-func partyLookups(
-	parties *shipmentParties,
-	criteria *filtercatalog.Criteria,
-) []shipmentports.ShipmentOptions {
-	lookups := make([]shipmentports.ShipmentOptions, 0, 5)
-	if parties.allFromDifferentWords() || parties.onlyPlacesFromDifferentWords() {
-		places := partiesByTerm(parties.locations)
-		combined := shipmentports.ShipmentOptions{
-			CustomerIDs:     partyIDs(parties.customers),
-			WorkerIDs:       partyIDs(parties.workers),
-			CommodityIDs:    partyIDs(parties.commodities),
-			ShipmentTypeIDs: partyIDs(parties.types),
-		}
-		if len(places) > 1 {
-			combined.StopEachOf = make([][]pulid.ID, 0, len(places))
-			for _, place := range places {
-				combined.StopEachOf = append(combined.StopEachOf, partyIDs(place))
-			}
-		} else {
-			combined.StopLocationIDs = partyIDs(parties.locations)
-		}
-		lookups = append(lookups, combined)
-		if len(parties.customers) > 0 {
-			criteria.Field("customer", partyNames(parties.customers))
-		}
-		for _, place := range places {
-			criteria.Field("with a stop at", partyNames(place))
-		}
-		if len(parties.workers) > 0 {
-			criteria.Field("driven by", partyNames(parties.workers))
-		}
-		if len(parties.commodities) > 0 {
-			criteria.Field("carrying", partyNames(parties.commodities))
-		}
-		if len(parties.types) > 0 {
-			criteria.Field("of type", partyNames(parties.types))
-		}
-	} else {
-		if len(parties.customers) > 0 {
-			lookups = append(
-				lookups,
-				shipmentports.ShipmentOptions{CustomerIDs: partyIDs(parties.customers)},
-			)
-			criteria.Field("or customer", partyNames(parties.customers))
-		}
-		if len(parties.locations) > 0 {
-			lookups = append(lookups, shipmentports.ShipmentOptions{
-				StopLocationIDs: partyIDs(parties.locations),
-			})
-			criteria.Field("or a stop at", partyNames(parties.locations))
-		}
-		if len(parties.workers) > 0 {
-			lookups = append(
-				lookups,
-				shipmentports.ShipmentOptions{WorkerIDs: partyIDs(parties.workers)},
-			)
-			criteria.Field("or driven by", partyNames(parties.workers))
-		}
-		if len(parties.commodities) > 0 {
-			lookups = append(lookups, shipmentports.ShipmentOptions{
-				CommodityIDs: partyIDs(parties.commodities),
-			})
-			criteria.Field("or carrying", partyNames(parties.commodities))
-		}
-		if len(parties.types) > 0 {
-			lookups = append(lookups, shipmentports.ShipmentOptions{
-				ShipmentTypeIDs: partyIDs(parties.types),
-			})
-			criteria.Field("or of type", partyNames(parties.types))
-		}
+	options := search.options()
+	options.PartyGroups = partyGroups(parties, criteria)
+	if len(options.PartyGroups) == 0 {
+		return rows, nil
 	}
 
-	return lookups
-}
+	result, err := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
+		Filter: &pagination.QueryOptions{
+			TenantInfo:   tenant,
+			Pagination:   pagination.Info{Limit: search.window.limit},
+			FieldFilters: search.filters,
+			Sort:         search.sorting,
+		},
+		ShipmentOptions: options,
+	})
+	if err != nil {
+		return nil, err
+	}
 
-func (t *shipmentListTool) appendPartyRows(
-	ctx context.Context,
-	search *partySearch,
-	tenant pagination.TenantInfo,
-	lookups []shipmentports.ShipmentOptions,
-	rows []shipmentRow,
-) ([]shipmentRow, error) {
-	seen := make(map[string]struct{}, search.limit)
+	seen := make(map[string]struct{}, search.window.limit)
 	for idx := range rows {
 		seen[rows[idx].ID] = struct{}{}
 	}
-	for _, options := range lookups {
-		if len(rows) >= search.limit {
+	for _, item := range result.Items {
+		if len(rows) >= search.window.limit {
 			break
 		}
-		options.Statuses = search.statuses
-		options.IncludeCustomer = true
-		options.IncludeRoute = true
-		result, listErr := t.repo.List(ctx, &shipmentports.ListShipmentsRequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo:   tenant,
-				Pagination:   pagination.Info{Limit: search.limit},
-				FieldFilters: search.filters,
-				Sort:         search.sorting,
-			},
-			ShipmentOptions: options,
-		})
-		if listErr != nil {
-			return nil, listErr
+		if _, dup := seen[item.ID.String()]; dup {
+			continue
 		}
-		for _, item := range result.Items {
-			if len(rows) >= search.limit {
-				break
-			}
-			if _, dup := seen[item.ID.String()]; dup {
-				continue
-			}
-			seen[item.ID.String()] = struct{}{}
-			rows = append(rows, toShipmentRow(item))
-		}
+		seen[item.ID.String()] = struct{}{}
+		rows = append(rows, toShipmentRow(item))
 	}
 
 	return rows, nil

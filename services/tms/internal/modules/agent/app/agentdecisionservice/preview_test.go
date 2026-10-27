@@ -92,22 +92,116 @@ func decideWith(
 	}, h.actor)
 }
 
-// An approval of a change whose record moved on used to be recorded as
-// approved and then reported as "approved, but it did not run". It is now
-// refused before anything is written.
-func TestDecide_AStaleApprovalIsRefusedBeforeItIsRecorded(t *testing.T) {
+func TestDecide_AStaleApprovalIsRecordedAsRefusedAndReported(t *testing.T) {
 	t.Parallel()
 
-	h, recorder := previewHarness(t, &fakePreviews{stale: true, digest: strings.Repeat("a", 64)})
+	digest := strings.Repeat("a", 64)
+	h, recorder := previewHarness(t, &fakePreviews{stale: true, digest: digest})
+	followUps := &recordedFollowUps{}
+	h.service.followUps = followUps
+
+	outcome, err := decideWith(t, h, agent.DecisionAccepted, "")
+	require.NoError(t, err, "the refusal is the decision's outcome, not an error to the caller")
+
+	require.ErrorIs(t, outcome.ExecutionError, agent.ErrTargetChanged)
+	assert.Contains(t, outcome.ExecutionError.Error(),
+		"was at version 3 when this was proposed and is at version 5 now, so nothing was changed")
+	assert.Nil(t, outcome.ExecutedTargetVersion)
+
+	created := h.decisions.created
+	require.NotNil(t, created, "the approval is recorded")
+	assert.Equal(t, agent.DecisionAccepted, created.Decision)
+	require.NotNil(t, created.Preview)
+	assert.True(t, created.Preview.IsStale(), "with the preview it was refused on")
+	assert.Equal(t, digest, created.PreviewDigest)
+	assert.False(t, created.PreviewReviewed)
+	assert.Nil(t, created.CommitsAt)
+
+	assert.Equal(t, 1, recorder.updated, "the proposal leaves Pending once, conditionally")
+	require.Len(t, h.proposals.executed, 1)
+	refused := h.proposals.executed[0]
+	assert.Equal(t, agent.ProposalStatusExecutionFailed, refused.Status,
+		"the proposal is closed as not carried out")
+	assert.True(t, agent.TargetChanged(refused.ExecutionError))
+	assert.True(t, refused.ExecutedByUserID.IsNil(), "no write ran as anyone")
+
+	require.Len(t, followUps.requests, 1, "the conversation is told why nothing happened")
+	assert.Equal(t, h.proposals.proposal.ID, followUps.requests[0].ProposalID)
+}
+
+func TestDecide_AStaleApprovalIsRefusedWhateverDigestItWasReviewedOn(t *testing.T) {
+	t.Parallel()
+
+	h, _ := previewHarness(t, &fakePreviews{stale: true, digest: strings.Repeat("a", 64)})
+
+	outcome, err := decideWith(t, h, agent.DecisionAccepted, strings.Repeat("b", 64))
+	require.NoError(t, err, "a record that moved on is a refusal, not a preview conflict")
+	require.ErrorIs(t, outcome.ExecutionError, agent.ErrTargetChanged)
+}
+
+func TestDecide_AStaleRefusalLeavesTheTrustLedgerAlone(t *testing.T) {
+	t.Parallel()
+
+	h, _ := previewHarness(t, &fakePreviews{stale: true, digest: strings.Repeat("a", 64)})
+	trust := &recordedTrust{}
+	h.service.trust = trust
 
 	_, err := decideWith(t, h, agent.DecisionAccepted, "")
+	require.NoError(t, err)
+	assert.Zero(t, trust.decisions)
+	assert.Zero(t, trust.failures, "a record someone else moved is not the tool's failure")
+}
 
-	require.Error(t, err)
-	var business *errortypes.BusinessError
-	require.True(t, errors.As(err, &business), "a stale approval is a business refusal: %v", err)
-	assert.Nil(t, h.decisions.created, "no decision is recorded")
-	assert.Zero(t, recorder.updated, "the proposal stays pending")
-	assert.Empty(t, h.proposals.executed, "nothing runs")
+type recordedTrust struct {
+	agentports.AgentTrustService
+
+	decisions int
+	failures  int
+}
+
+func (r *recordedTrust) RecordDecision(
+	context.Context,
+	*agent.AgentProposal,
+	*agent.AgentDecision,
+) error {
+	r.decisions++
+
+	return nil
+}
+
+func (r *recordedTrust) RecordExecutionFailure(context.Context, *agent.AgentProposal) error {
+	r.failures++
+
+	return nil
+}
+
+func TestDecide_AStalePlanStepIsRefusedEvenWhereItWouldNeedReview(t *testing.T) {
+	t.Parallel()
+
+	h, _ := previewHarness(t, &fakePreviews{})
+	h.proposals.proposal.EgressClass = agent.EgressMoney
+	version := int64(5)
+	step := &agent.ProposalPreview{
+		ProposalID:    h.proposals.proposal.ID,
+		TargetVersion: &version,
+		Staleness:     &agent.PreviewStaleness{Pinned: true, ProposedVersion: 3, CurrentVersion: 5},
+	}
+
+	outcome, err := h.service.DecideWithOutcome(t.Context(), &agentports.DecideAgentProposalRequest{
+		ProposalID:  h.proposals.proposal.ID,
+		Decision:    agent.DecisionAccepted,
+		ReasonCode:  "decided_as_plan",
+		WithinPlan:  true,
+		StepPreview: step,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: h.actor.OrganizationID,
+			BuID:  h.actor.BusinessUnitID,
+		},
+	}, h.actor)
+	require.NoError(t, err)
+	require.ErrorIs(t, outcome.ExecutionError, agent.ErrTargetChanged)
+	require.Len(t, h.proposals.executed, 1)
+	assert.Equal(t, agent.ProposalStatusExecutionFailed, h.proposals.executed[0].Status)
 }
 
 func TestDecide_ADigestThatNoLongerMatchesIsAConflictAndWritesNothing(t *testing.T) {

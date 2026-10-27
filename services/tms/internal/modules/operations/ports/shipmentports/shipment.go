@@ -20,12 +20,15 @@ type ShipmentOptions struct {
 	BillingTransferEligible bool   `form:"billingTransferEligible" json:"billingTransferEligible" query:"billingTransferEligible"`
 	IncludeCustomer         bool   `form:"includeCustomer"         json:"includeCustomer"         query:"includeCustomer"`
 	IncludeRoute            bool   `form:"-"                       json:"-"                       query:"-"`
+	IncludeCommodities      bool   `form:"-"                       json:"-"                       query:"-"`
 
 	IDs              []pulid.ID                 `form:"-" json:"-" query:"-"`
 	Statuses         []shipment.Status          `form:"-" json:"-" query:"-"`
 	CustomerIDs      []pulid.ID                 `form:"-" json:"-" query:"-"`
 	StopLocationIDs  []pulid.ID                 `form:"-" json:"-" query:"-"`
-	StopEachOf       [][]pulid.ID               `form:"-" json:"-" query:"-"`
+	PartyGroups      []ShipmentPartyGroup       `form:"-" json:"-" query:"-"`
+	ActiveHold       *bool                      `form:"-" json:"-" query:"-"`
+	HoldReasonCodes  []string                   `form:"-" json:"-" query:"-"`
 	WorkerIDs        []pulid.ID                 `form:"-" json:"-" query:"-"`
 	TractorIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
 	TrailerIDs       []pulid.ID                 `form:"-" json:"-" query:"-"`
@@ -43,6 +46,24 @@ func (o *ShipmentOptions) HasActivityWindow() bool {
 
 func (o *ShipmentOptions) HasQuickFilters() bool {
 	return len(o.QuickFilters) > 0
+}
+
+func (o *ShipmentOptions) FiltersOnHolds() bool {
+	return o.ActiveHold != nil || len(o.HoldReasonCodes) > 0
+}
+
+type ShipmentPartyGroup struct {
+	CustomerIDs     []pulid.ID
+	StopLocationIDs []pulid.ID
+	WorkerIDs       []pulid.ID
+	CommodityIDs    []pulid.ID
+	ShipmentTypeIDs []pulid.ID
+	OrderIDs        []pulid.ID
+}
+
+func (g *ShipmentPartyGroup) Empty() bool {
+	return len(g.CustomerIDs) == 0 && len(g.StopLocationIDs) == 0 && len(g.WorkerIDs) == 0 &&
+		len(g.CommodityIDs) == 0 && len(g.ShipmentTypeIDs) == 0 && len(g.OrderIDs) == 0
 }
 
 type ShipmentMarginBasis struct {

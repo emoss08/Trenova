@@ -124,6 +124,7 @@ func (l *Location) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "loc",
 		UseSearchVector: true,
+		FuzzyFields:     []domaintypes.FuzzyField{{"name"}, {"city"}},
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightA},
 			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},

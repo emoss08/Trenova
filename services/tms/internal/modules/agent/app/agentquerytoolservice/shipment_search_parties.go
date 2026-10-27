@@ -2,14 +2,17 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/commodityports"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/shipmenttypeports"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -41,79 +44,155 @@ type shipmentPartySources struct {
 	workers     workerports.WorkerRepository
 	commodities commodityports.CommodityRepository
 	types       shipmenttypeports.ShipmentTypeRepository
+	orders      shipmentports.OrderReferenceMatcher
 }
 
 func (s shipmentPartySources) none() bool {
 	return s.customers == nil && s.locations == nil && s.workers == nil &&
-		s.commodities == nil && s.types == nil
+		s.commodities == nil && s.types == nil && s.orders == nil
 }
 
 type shipmentParties struct {
+	terms       []string
 	customers   []partyMatch
 	locations   []partyMatch
 	workers     []partyMatch
 	commodities []partyMatch
 	types       []partyMatch
+	orders      []partyMatch
 }
 
 func (p *shipmentParties) empty() bool {
-	return len(p.kinds()) == 0
+	return len(p.customers) == 0 && len(p.locations) == 0 && len(p.workers) == 0 &&
+		len(p.commodities) == 0 && len(p.types) == 0 && len(p.orders) == 0
 }
 
-func (p *shipmentParties) kinds() [][]partyMatch {
-	kinds := make([][]partyMatch, 0, 5)
-	for _, matches := range [][]partyMatch{
-		p.customers, p.locations, p.workers, p.commodities, p.types,
-	} {
-		if len(matches) > 0 {
-			kinds = append(kinds, matches)
-		}
-	}
-
-	return kinds
+type partyKind struct {
+	label   string
+	matches func(p *shipmentParties) []partyMatch
+	into    func(group *shipmentports.ShipmentPartyGroup, ids []pulid.ID)
 }
 
-func (p *shipmentParties) allFromDifferentWords() bool {
-	kinds := p.kinds()
-	if len(kinds) < 2 {
-		return false
-	}
-	for idx, matches := range kinds {
-		for _, other := range kinds[idx+1:] {
-			for _, match := range matches {
-				for _, candidate := range other {
-					if match.term == candidate.term {
-						return false
-					}
-				}
+var partyKinds = []partyKind{
+	{
+		label:   "customer",
+		matches: func(p *shipmentParties) []partyMatch { return p.customers },
+		into: func(g *shipmentports.ShipmentPartyGroup, ids []pulid.ID) {
+			g.CustomerIDs = append(g.CustomerIDs, ids...)
+		},
+	},
+	{
+		label:   "with a stop at",
+		matches: func(p *shipmentParties) []partyMatch { return p.locations },
+		into: func(g *shipmentports.ShipmentPartyGroup, ids []pulid.ID) {
+			g.StopLocationIDs = append(g.StopLocationIDs, ids...)
+		},
+	},
+	{
+		label:   "driven by",
+		matches: func(p *shipmentParties) []partyMatch { return p.workers },
+		into: func(g *shipmentports.ShipmentPartyGroup, ids []pulid.ID) {
+			g.WorkerIDs = append(g.WorkerIDs, ids...)
+		},
+	},
+	{
+		label:   "carrying",
+		matches: func(p *shipmentParties) []partyMatch { return p.commodities },
+		into: func(g *shipmentports.ShipmentPartyGroup, ids []pulid.ID) {
+			g.CommodityIDs = append(g.CommodityIDs, ids...)
+		},
+	},
+	{
+		label:   "of type",
+		matches: func(p *shipmentParties) []partyMatch { return p.types },
+		into: func(g *shipmentports.ShipmentPartyGroup, ids []pulid.ID) {
+			g.ShipmentTypeIDs = append(g.ShipmentTypeIDs, ids...)
+		},
+	},
+	{
+		label:   "on order",
+		matches: func(p *shipmentParties) []partyMatch { return p.orders },
+		into: func(g *shipmentports.ShipmentPartyGroup, ids []pulid.ID) {
+			g.OrderIDs = append(g.OrderIDs, ids...)
+		},
+	},
+}
+
+const stopKind = 1
+
+type wordReading struct {
+	kind    int
+	matches []partyMatch
+}
+
+func (p *shipmentParties) readingsOf(term string) []wordReading {
+	readings := make([]wordReading, 0, len(partyKinds))
+	for kind := range partyKinds {
+		var found []partyMatch
+		for _, match := range partyKinds[kind].matches(p) {
+			if match.term == term {
+				found = append(found, match)
 			}
 		}
+		if len(found) > 0 {
+			readings = append(readings, wordReading{kind: kind, matches: found})
+		}
 	}
 
-	return true
+	return readings
 }
 
-// onlyPlacesFromDifferentWords reports a query naming two or more places and
-// nothing else, such as "denver phoenix": a load through both, not either.
-func (p *shipmentParties) onlyPlacesFromDifferentWords() bool {
-	return len(p.kinds()) == 1 && len(partiesByTerm(p.locations)) > 1
-}
+func partyGroups(
+	parties *shipmentParties,
+	criteria *filtercatalog.Criteria,
+) []shipmentports.ShipmentPartyGroup {
+	byKind := make([][]partyMatch, len(partyKinds))
+	stops := make([][]partyMatch, 0, partyTokenLimit)
+	several := make([][]wordReading, 0, partyTokenLimit)
+	terms := make([]string, 0, partyTokenLimit)
+	for _, term := range parties.terms {
+		readings := parties.readingsOf(term)
+		switch {
+		case len(readings) > 1:
+			several = append(several, readings)
+			terms = append(terms, term)
+		case len(readings) == 1 && readings[0].kind == stopKind:
+			stops = append(stops, readings[0].matches)
+		case len(readings) == 1:
+			byKind[readings[0].kind] = append(byKind[readings[0].kind], readings[0].matches...)
+		}
+	}
 
-// partiesByTerm groups matches by the word that found them, in the order the
-// words came. "peak denver phoenix" names two places, and a load must stop at
-// both: matching either filled the page with Peak's newest loads into Denver
-// and left out the one load from Denver to Phoenix.
-func partiesByTerm(matches []partyMatch) [][]partyMatch {
-	groups := make([][]partyMatch, 0, partyTokenLimit)
-	for _, match := range matches {
-		idx := slices.IndexFunc(groups, func(group []partyMatch) bool {
-			return group[0].term == match.term
-		})
-		if idx < 0 {
-			groups = append(groups, []partyMatch{match})
+	groups := make(
+		[]shipmentports.ShipmentPartyGroup,
+		0,
+		len(partyKinds)+len(stops)+len(several),
+	)
+	for kind, matches := range byKind {
+		if len(matches) == 0 {
 			continue
 		}
-		groups[idx] = append(groups[idx], match)
+		var group shipmentports.ShipmentPartyGroup
+		partyKinds[kind].into(&group, partyIDs(matches))
+		groups = append(groups, group)
+		criteria.Field(partyKinds[kind].label, partyNames(matches))
+	}
+	for _, matches := range stops {
+		groups = append(groups, shipmentports.ShipmentPartyGroup{
+			StopLocationIDs: partyIDs(matches),
+		})
+		criteria.Field(partyKinds[stopKind].label, partyNames(matches))
+	}
+	for idx, readings := range several {
+		var group shipmentports.ShipmentPartyGroup
+		described := make([]string, 0, len(readings))
+		for _, reading := range readings {
+			partyKinds[reading.kind].into(&group, partyIDs(reading.matches))
+			described = append(described,
+				partyKinds[reading.kind].label+" "+partyNames(reading.matches))
+		}
+		groups = append(groups, group)
+		criteria.Field(fmt.Sprintf("%q as", terms[idx]), strings.Join(described, "; or "))
 	}
 
 	return groups
@@ -192,6 +271,9 @@ func (t *shipmentListTool) partySources(parties *shipmentParties) []partySource 
 	if t.parties.types != nil {
 		sources = append(sources, partySource{into: &parties.types, lookup: t.typeParties})
 	}
+	if t.parties.orders != nil {
+		sources = append(sources, partySource{into: &parties.orders, lookup: t.orderParties})
+	}
 
 	return sources
 }
@@ -213,14 +295,19 @@ func (t *shipmentListTool) resolveParties(
 			Pagination: pagination.Info{Limit: partyMatchLimit},
 			Query:      term,
 		}
+		named := false
 		for _, source := range sources {
 			found, err := source.lookup(ctx, filter, term)
 			if err != nil {
 				return nil, err
 			}
 			*source.into = append(*source.into, found...)
+			named = named || len(found) > 0
 		}
-		if term == query && !parties.empty() {
+		if named {
+			parties.terms = append(parties.terms, term)
+		}
+		if term == query && named {
 			break
 		}
 	}
@@ -324,4 +411,40 @@ func (t *shipmentListTool) typeParties(
 	}
 
 	return matches, nil
+}
+
+func (t *shipmentListTool) orderParties(
+	ctx context.Context,
+	filter *pagination.QueryOptions,
+	term string,
+) ([]partyMatch, error) {
+	found, err := t.parties.orders.MatchOrderReferences(
+		ctx,
+		&shipmentports.MatchOrderReferencesRequest{
+			Query: filter.Query,
+			Limit: filter.Pagination.Limit,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	matches := make([]partyMatch, 0, len(found))
+	for idx := range found {
+		matches = append(matches, partyMatch{
+			term: term,
+			id:   found[idx].OrderID,
+			name: orderReferenceName(&found[idx]),
+		})
+	}
+
+	return matches, nil
+}
+
+func orderReferenceName(match *shipmentports.OrderReferenceMatch) string {
+	if match.PONumber == "" {
+		return match.OrderNumber
+	}
+
+	return match.OrderNumber + " (PO " + match.PONumber + ")"
 }

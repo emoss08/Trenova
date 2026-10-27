@@ -208,3 +208,61 @@ export function markProposalEdits(
           },
   );
 }
+
+/**
+ * Writes an approval whose write did not go through into every cached list
+ * that holds the proposal: refused because the record it changes moved on, or
+ * failed when it ran. The card says so, with the server's reason, the moment
+ * the server answers rather than showing it accepted until a refetch.
+ */
+export function markProposalFailed(
+  queryClient: QueryClient,
+  proposalId: string,
+  executionError: string,
+) {
+  queryClient.setQueriesData<{ results: AssistantProposal[] }>(
+    { queryKey: scopeOf(assistant.proposals) },
+    (data) =>
+      data === undefined
+        ? data
+        : {
+            ...data,
+            results: data.results.map((proposal) =>
+              proposal.id === proposalId
+                ? { ...proposal, status: "ExecutionFailed", executionError }
+                : proposal,
+            ),
+          },
+  );
+}
+
+/**
+ * Writes a plan that failed as it was decided into every cached list of
+ * plans: refused because a record a step changes moved on, or stopped at a
+ * step that failed, with the server's reason and how far it got.
+ */
+export function markPlanFailed(
+  queryClient: QueryClient,
+  failed: Pick<AssistantPlan, "id" | "completedSteps" | "failedStep" | "failureError">,
+) {
+  queryClient.setQueriesData<{ results: AssistantPlan[] }>(
+    { queryKey: scopeOf(assistant.plans) },
+    (data) =>
+      data === undefined
+        ? data
+        : {
+            ...data,
+            results: data.results.map((plan) =>
+              plan.id === failed.id
+                ? {
+                    ...plan,
+                    status: "Failed",
+                    completedSteps: failed.completedSteps,
+                    failedStep: failed.failedStep,
+                    failureError: failed.failureError,
+                  }
+                : plan,
+            ),
+          },
+  );
+}

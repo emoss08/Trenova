@@ -16,6 +16,7 @@ import {
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { usePermission } from "@/hooks/use-permission";
 import { decideAgentPlan, decideAgentProposal } from "@/lib/graphql/agent-decisions";
+import { announceRefusal, approvalFailure } from "@/lib/approval-outcome";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { formatTimeAgo } from "@/lib/time-utils";
 import {
@@ -249,10 +250,14 @@ export function DecisionFlow() {
     }
   }, [decidedRows, t]);
 
-  /** Takes decided cards off the queue, the way the design does, then reads it again. */
+  /**
+   * Takes decided cards off the queue, the way the design does, then reads it
+   * again. The approvals in `watch` are still to run, so a failure is said
+   * when the decisions are read again.
+   */
   const finish = useCallback(
-    (ids: readonly string[], ok: boolean) => {
-      if (ok) ids.forEach((id) => approved.current.add(id));
+    (ids: readonly string[], ok: boolean, watch: readonly string[] = ok ? ids : []) => {
+      watch.forEach((id) => approved.current.add(id));
       const next = cursor.after(ids);
       leave(ok ? "ok" : "no", () => {
         setGone((previous) => new Set([...previous, ...ids]));
@@ -263,6 +268,29 @@ export function DecisionFlow() {
       });
     },
     [cursor, leave, queryClient, setCurrentId],
+  );
+
+  /**
+   * Takes an approved card off the queue. One recorded but not carried out,
+   * refused because its record moved on or failed as it ran, says so now
+   * rather than when the decisions are read again.
+   */
+  const settle = useCallback(
+    (item: Item, notRun: { refused: boolean; why: string } | null) => {
+      if (notRun === null) {
+        finish([item.id], true);
+        return;
+      }
+      if (notRun.refused) {
+        announceRefusal(t, notRun.why);
+      } else {
+        toast.error(t("Approved, but {0} didn't go through", item.title.toLowerCase()), {
+          description: notRun.why || undefined,
+        });
+      }
+      finish([item.id], false);
+    },
+    [finish, t],
   );
 
   const approve = useCallback(async () => {
@@ -288,7 +316,12 @@ export function DecisionFlow() {
           );
         }
         const done = results.filter((result) => !result.error).map((result) => result.proposalId);
-        if (done.length > 0) finish(done, true);
+        // A change recorded as approved but refused or failed is decided too;
+        // it leaves the queue, and its failure was just said.
+        const notRun = failed
+          .filter((result) => result.decision)
+          .map((result) => result.proposalId);
+        if (done.length + notRun.length > 0) finish([...done, ...notRun], done.length > 0, done);
         return;
       }
       const input = {
@@ -297,11 +330,13 @@ export function DecisionFlow() {
         previewDigest: gate?.digest,
       };
       if (isPendingPlan(current.node)) {
-        await decideAgentPlan(current.id, input);
+        const { plan, refused } = await decideAgentPlan(current.id, input);
+        settle(current, plan.status === "Failed" ? { refused, why: plan.failureError } : null);
       } else {
-        await decideAgentProposal(current.id, input);
+        const result = await decideAgentProposal(current.id, input);
+        const failure = approvalFailure(result);
+        settle(current, failure === null ? null : { refused: result.refused, why: failure });
       }
-      finish([current.id], true);
     } catch (error) {
       if (gate?.handleError(error)) {
         toast.info(t("This changed since you opened it"), {
@@ -313,7 +348,18 @@ export function DecisionFlow() {
     } finally {
       setBusy(false);
     }
-  }, [batch, batchUnreviewed.length, busy, canDecide, current, finish, gate, shownDigests, t]);
+  }, [
+    batch,
+    batchUnreviewed.length,
+    busy,
+    canDecide,
+    current,
+    finish,
+    gate,
+    settle,
+    shownDigests,
+    t,
+  ]);
 
   const decline = useCallback(
     (initialReason?: string) => {
@@ -372,17 +418,18 @@ export function DecisionFlow() {
         withReason: { label: t("Reason"), required: false },
         preview: { scope: "approver", proposalId: node.id },
         onConfirm: async (modifications, reason, previewDigest) => {
-          await decideAgentProposal(node.id, {
+          const result = await decideAgentProposal(node.id, {
             decision: "Modified",
             modifications,
             reasonCode: reason || "modified_from_desk",
             previewDigest,
           });
-          finish([node.id], true);
+          const failure = approvalFailure(result);
+          settle(current, failure === null ? null : { refused: result.refused, why: failure });
         },
       });
     },
-    [current, editable, finish, t],
+    [current, editable, settle, t],
   );
 
   const toggleBatch = useCallback(() => {

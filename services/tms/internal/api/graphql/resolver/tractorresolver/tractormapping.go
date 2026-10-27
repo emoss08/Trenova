@@ -73,6 +73,7 @@ func tractorRelationIncludesForFields(
 		IncludeSecondaryWorkerManager: secondaryWorkerSelection.Selection.HasRelation("manager"),
 		IncludeOwnerWorker:            ownerWorkerSelected,
 		IncludeLastKnownLocation:      selection.HasSpecial("lastKnownLocation"),
+		IncludeInProgressMove:         selection.HasSpecial("inProgressMove"),
 		IncludeCustomFields:           selection.HasSpecial("customFields"),
 		TractorColumns:                selection.Columns,
 	}

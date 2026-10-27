@@ -294,6 +294,7 @@ func (c *Customer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "cus",
 		UseSearchVector: true,
+		FuzzyFields:     []domaintypes.FuzzyField{{"name"}},
 		SearchableFields: []domaintypes.SearchableField{
 			{
 				Name:   "code",

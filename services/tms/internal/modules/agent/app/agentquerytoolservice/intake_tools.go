@@ -658,7 +658,7 @@ func (t *shopCarriersTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
 				"The saved shipment to price, from shipment_list or "+
-					"shipment_list, or the page you are on."),
+					"the page you are on."),
 			"strategy": agenttoolschema.Enum(
 				"How to rank the options. Defaults to the organization's own choice.",
 				shopStrategies,

@@ -224,6 +224,9 @@ func (s *Service) prepareTurn(
 		}
 		content = followed.note +
 			s.showWritten(ctx, thread, actor, req.TenantInfo, followed.decided)
+		checks.anchors = s.anchorChanged(
+			ctx, checks.anchors, followed.changed, actor, req.TenantInfo,
+		)
 	}
 
 	s.keepProviderChoice(ctx, thread, req, actor)

@@ -35,8 +35,9 @@ type searchOutcome struct {
 	// which the model otherwise infers from whichever fields happened to be
 	// populated in the first row.
 	Columns []string `json:"columns,omitempty"`
-	// Note is set only when nothing matched, because a full result speaks for
-	// itself and an extra sentence in front of it is noise in a context window.
+	// Note is set only when nothing matched, or when the rows matched only as a
+	// close spelling of the query, because a full result speaks for itself and
+	// an extra sentence in front of it is noise in a context window.
 	Note string `json:"note,omitempty"`
 	// Offset, HasMore and NextOffset say where this page sits in the whole,
 	// so a full page is never mistaken for the whole set.

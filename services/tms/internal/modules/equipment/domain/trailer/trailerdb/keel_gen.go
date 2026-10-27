@@ -65,6 +65,9 @@ var trailersTable = schema.Table{
 		{Name: "last_known_location_name", Quoted: `"last_known_location_name"`, Field: "LastKnownLocationName", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Last Known Location Name`, JSON: `lastKnownLocationName`, Report: &reportDimStringHidden},
 		{Name: "last_known_location_latitude", Quoted: `"last_known_location_latitude"`, Field: "LastKnownLocationLatitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Latitude`, JSON: `lastKnownLocationLatitude`, Report: &reportMeasureFloatHidden},
 		{Name: "last_known_location_longitude", Quoted: `"last_known_location_longitude"`, Field: "LastKnownLocationLongitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Longitude`, JSON: `lastKnownLocationLongitude`, Report: &reportMeasureFloatHidden},
+		{Name: "in_progress_move_id", Quoted: `"in_progress_move_id"`, Field: "InProgressMoveID", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `In Progress Move ID`, JSON: `inProgressMoveId`, Report: &reportDimStringHidden},
+		{Name: "in_progress_pro_number", Quoted: `"in_progress_pro_number"`, Field: "InProgressProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `In Progress PRO Number`, JSON: `inProgressProNumber`, Report: &reportDimStringHidden},
+		{Name: "in_progress_due_at", Quoted: `"in_progress_due_at"`, Field: "InProgressDueAt", Kind: schema.KindInt64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `In Progress Due At`, JSON: `inProgressDueAt`, Report: &reportDimEpochHidden},
 		{Name: "search_vector", Quoted: `"search_vector"`, Field: "SearchVector", Kind: schema.KindTSVector, Flags: schema.FlagReadOnly | schema.FlagNoSelect, Label: `Search Vector`, Report: &reportDimTsvectorHidden},
 		{Name: "rank", Quoted: `"rank"`, Field: "Rank", Kind: schema.KindString, Flags: schema.FlagComputed, Label: `Rank`, Report: &reportDimStringHidden},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
@@ -82,14 +85,14 @@ var trailersTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 30, 31, 32},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 30, 31, 32},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 32},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 33, 34, 35},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 33, 34, 35},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 35},
 	Returning:    nil,
-	Version:      30,
+	Version:      33,
 	AutoID:       0,
-	AutoCreate:   31,
-	AutoUpdate:   32,
+	AutoCreate:   34,
+	AutoUpdate:   35,
 	IDPrefix:     "tr_",
 	New:          newTrailer,
 	NewN:         newNTrailer,
@@ -133,6 +136,9 @@ type TrailersTable struct {
 	LastKnownLocationName      keel.StringCol
 	LastKnownLocationLatitude  keel.Float64Col
 	LastKnownLocationLongitude keel.Float64Col
+	InProgressMoveID           keelkinds.PulidIDCol
+	InProgressProNumber        keel.StringCol
+	InProgressDueAt            keel.Int64Col
 	SearchVector               keel.TSVectorCol
 	Rank                       keel.StringCol
 	Version                    keel.Int64Col
@@ -171,11 +177,14 @@ var Trailers = &TrailersTable{
 	LastKnownLocationName:      keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 25}},
 	LastKnownLocationLatitude:  keel.Float64Col{Col: keel.Col{Ref: &trailersRef, Index: 26}},
 	LastKnownLocationLongitude: keel.Float64Col{Col: keel.Col{Ref: &trailersRef, Index: 27}},
-	SearchVector:               keel.TSVectorCol{Col: keel.Col{Ref: &trailersRef, Index: 28}},
-	Rank:                       keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 29}},
-	Version:                    keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 30}},
-	CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 31}},
-	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 32}},
+	InProgressMoveID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 28}}},
+	InProgressProNumber:        keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 29}},
+	InProgressDueAt:            keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 30}},
+	SearchVector:               keel.TSVectorCol{Col: keel.Col{Ref: &trailersRef, Index: 31}},
+	Rank:                       keel.StringCol{Col: keel.Col{Ref: &trailersRef, Index: 32}},
+	Version:                    keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 33}},
+	CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 34}},
+	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &trailersRef, Index: 35}},
 }
 
 // BuildTrailers builds the handle of trailers for ref. Generated relation and alias methods call it.
@@ -210,11 +219,14 @@ func BuildTrailers(r *keel.Ref) *TrailersTable {
 		LastKnownLocationName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 25}},
 		LastKnownLocationLatitude:  keel.Float64Col{Col: keel.Col{Ref: r, Index: 26}},
 		LastKnownLocationLongitude: keel.Float64Col{Col: keel.Col{Ref: r, Index: 27}},
-		SearchVector:               keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 28}},
-		Rank:                       keel.StringCol{Col: keel.Col{Ref: r, Index: 29}},
-		Version:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
-		CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
+		InProgressMoveID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 28}}},
+		InProgressProNumber:        keel.StringCol{Col: keel.Col{Ref: r, Index: 29}},
+		InProgressDueAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
+		SearchVector:               keel.TSVectorCol{Col: keel.Col{Ref: r, Index: 31}},
+		Rank:                       keel.StringCol{Col: keel.Col{Ref: r, Index: 32}},
+		Version:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
+		CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
+		UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
 	}
 }
 
@@ -332,14 +344,20 @@ func ptrTrailer(p unsafe.Pointer, c int32) any {
 	case 27:
 		return &r.LastKnownLocationLongitude
 	case 28:
-		return &r.SearchVector
+		return (*string)(unsafe.Pointer(&r.InProgressMoveID))
 	case 29:
-		return &r.Rank
+		return &r.InProgressProNumber
 	case 30:
-		return &r.Version
+		return &r.InProgressDueAt
 	case 31:
-		return &r.CreatedAt
+		return &r.SearchVector
 	case 32:
+		return &r.Rank
+	case 33:
+		return &r.Version
+	case 34:
+		return &r.CreatedAt
+	case 35:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -465,14 +483,29 @@ func valueTrailer(p unsafe.Pointer, c int32) any {
 		}
 		return *r.LastKnownLocationLongitude
 	case 28:
-		return r.SearchVector
+		if r.InProgressMoveID == "" {
+			return nil
+		}
+		return string(r.InProgressMoveID)
 	case 29:
-		return r.Rank
+		if r.InProgressProNumber == "" {
+			return nil
+		}
+		return r.InProgressProNumber
 	case 30:
-		return r.Version
+		if r.InProgressDueAt == nil {
+			return nil
+		}
+		return *r.InProgressDueAt
 	case 31:
-		return r.CreatedAt
+		return r.SearchVector
 	case 32:
+		return r.Rank
+	case 33:
+		return r.Version
+	case 34:
+		return r.CreatedAt
+	case 35:
 		return r.UpdatedAt
 	}
 	return nil
@@ -531,6 +564,8 @@ var enumDomaintypesOwnershipType = [...]schema.EnumValue{
 var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
 
 var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimEpochHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
 
 var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 

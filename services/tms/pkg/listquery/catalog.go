@@ -31,6 +31,7 @@ type catalog struct {
 	relations map[string]relation
 	vector    int32
 	search    []searchColumn
+	fuzzy     [][]int32
 	strings   []int32
 }
 
@@ -113,8 +114,41 @@ func buildCatalog(
 			c.search = append(c.search, searchColumn{index: index, kind: field.Type})
 		}
 	}
+	c.fuzzy = fuzzyColumns(table, config.FuzzyFields)
 
 	return c
+}
+
+func fuzzyColumns(table *schema.Table, fields []domaintypes.FuzzyField) [][]int32 {
+	out := make([][]int32, 0, len(fields))
+	for _, field := range fields {
+		if columns, ok := textColumns(table, field); ok {
+			out = append(out, columns)
+		}
+	}
+
+	return out
+}
+
+func textColumns(table *schema.Table, names []string) ([]int32, bool) {
+	if len(names) == 0 {
+		return nil, false
+	}
+
+	columns := make([]int32, 0, len(names))
+	for _, name := range names {
+		index := table.Column(name)
+		if index < 0 {
+			return nil, false
+		}
+		col := &table.Columns[index]
+		if !col.Stored() || col.Kind != schema.KindString || len(col.Enum) > 0 {
+			return nil, false
+		}
+		columns = append(columns, index)
+	}
+
+	return columns, true
 }
 
 func vectorColumn(table *schema.Table, name string) int32 {

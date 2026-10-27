@@ -67,6 +67,9 @@ var tractorsTable = schema.Table{
 		{Name: "last_known_location_name", Quoted: `"last_known_location_name"`, Field: "LastKnownLocationName", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `Last Known Location Name`, JSON: `lastKnownLocationName`, Report: &reportDimStringHidden},
 		{Name: "last_known_location_latitude", Quoted: `"last_known_location_latitude"`, Field: "LastKnownLocationLatitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Latitude`, JSON: `lastKnownLocationLatitude`, Report: &reportMeasureFloatHidden},
 		{Name: "last_known_location_longitude", Quoted: `"last_known_location_longitude"`, Field: "LastKnownLocationLongitude", Kind: schema.KindFloat64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `Last Known Location Longitude`, JSON: `lastKnownLocationLongitude`, Report: &reportMeasureFloatHidden},
+		{Name: "in_progress_move_id", Quoted: `"in_progress_move_id"`, Field: "InProgressMoveID", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `In Progress Move ID`, JSON: `inProgressMoveId`, Report: &reportDimStringHidden},
+		{Name: "in_progress_pro_number", Quoted: `"in_progress_pro_number"`, Field: "InProgressProNumber", Kind: schema.KindString, Flags: schema.FlagNullZero | schema.FlagComputed, Label: `In Progress PRO Number`, JSON: `inProgressProNumber`, Report: &reportDimStringHidden},
+		{Name: "in_progress_due_at", Quoted: `"in_progress_due_at"`, Field: "InProgressDueAt", Kind: schema.KindInt64, Flags: schema.FlagNullable | schema.FlagComputed, Label: `In Progress Due At`, JSON: `inProgressDueAt`, Report: &reportDimEpochHidden},
 		{Name: "version", Quoted: `"version"`, Field: "Version", Kind: schema.KindInt64, Flags: schema.FlagVersion, Label: `Version`, JSON: `version`, Report: &reportMeasureIntegerHidden},
 		{Name: "created_at", Quoted: `"created_at"`, Field: "CreatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoCreate, Label: `Created At`, JSON: `createdAt`, Report: &reportDimEpoch},
 		{Name: "updated_at", Quoted: `"updated_at"`, Field: "UpdatedAt", Kind: schema.KindInt64, Flags: schema.FlagAutoUpdate, Label: `Updated At`, JSON: `updatedAt`, Report: &reportDimEpoch},
@@ -84,14 +87,14 @@ var tractorsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30, 31, 32},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 30, 31, 32},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 32},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 33, 34, 35},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 33, 34, 35},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 35},
 	Returning:    nil,
-	Version:      30,
+	Version:      33,
 	AutoID:       0,
-	AutoCreate:   31,
-	AutoUpdate:   32,
+	AutoCreate:   34,
+	AutoUpdate:   35,
 	IDPrefix:     "trac_",
 	New:          newTractor,
 	NewN:         newNTractor,
@@ -138,6 +141,9 @@ type TractorsTable struct {
 	LastKnownLocationName      keel.StringCol
 	LastKnownLocationLatitude  keel.Float64Col
 	LastKnownLocationLongitude keel.Float64Col
+	InProgressMoveID           keelkinds.PulidIDCol
+	InProgressProNumber        keel.StringCol
+	InProgressDueAt            keel.Int64Col
 	Version                    keel.Int64Col
 	CreatedAt                  keel.Int64Col
 	UpdatedAt                  keel.Int64Col
@@ -176,9 +182,12 @@ var Tractors = &TractorsTable{
 	LastKnownLocationName:      keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 27}},
 	LastKnownLocationLatitude:  keel.Float64Col{Col: keel.Col{Ref: &tractorsRef, Index: 28}},
 	LastKnownLocationLongitude: keel.Float64Col{Col: keel.Col{Ref: &tractorsRef, Index: 29}},
-	Version:                    keel.Int64Col{Col: keel.Col{Ref: &tractorsRef, Index: 30}},
-	CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &tractorsRef, Index: 31}},
-	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &tractorsRef, Index: 32}},
+	InProgressMoveID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 30}}},
+	InProgressProNumber:        keel.StringCol{Col: keel.Col{Ref: &tractorsRef, Index: 31}},
+	InProgressDueAt:            keel.Int64Col{Col: keel.Col{Ref: &tractorsRef, Index: 32}},
+	Version:                    keel.Int64Col{Col: keel.Col{Ref: &tractorsRef, Index: 33}},
+	CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &tractorsRef, Index: 34}},
+	UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: &tractorsRef, Index: 35}},
 }
 
 // BuildTractors builds the handle of tractors for ref. Generated relation and alias methods call it.
@@ -215,9 +224,12 @@ func BuildTractors(r *keel.Ref) *TractorsTable {
 		LastKnownLocationName:      keel.StringCol{Col: keel.Col{Ref: r, Index: 27}},
 		LastKnownLocationLatitude:  keel.Float64Col{Col: keel.Col{Ref: r, Index: 28}},
 		LastKnownLocationLongitude: keel.Float64Col{Col: keel.Col{Ref: r, Index: 29}},
-		Version:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
-		CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 31}},
-		UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
+		InProgressMoveID:           keelkinds.PulidIDCol{StringCol: keel.StringCol{Col: keel.Col{Ref: r, Index: 30}}},
+		InProgressProNumber:        keel.StringCol{Col: keel.Col{Ref: r, Index: 31}},
+		InProgressDueAt:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 32}},
+		Version:                    keel.Int64Col{Col: keel.Col{Ref: r, Index: 33}},
+		CreatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 34}},
+		UpdatedAt:                  keel.Int64Col{Col: keel.Col{Ref: r, Index: 35}},
 	}
 }
 
@@ -349,10 +361,16 @@ func ptrTractor(p unsafe.Pointer, c int32) any {
 	case 29:
 		return &r.LastKnownLocationLongitude
 	case 30:
-		return &r.Version
+		return (*string)(unsafe.Pointer(&r.InProgressMoveID))
 	case 31:
-		return &r.CreatedAt
+		return &r.InProgressProNumber
 	case 32:
+		return &r.InProgressDueAt
+	case 33:
+		return &r.Version
+	case 34:
+		return &r.CreatedAt
+	case 35:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -479,10 +497,25 @@ func valueTractor(p unsafe.Pointer, c int32) any {
 		}
 		return *r.LastKnownLocationLongitude
 	case 30:
-		return r.Version
+		if r.InProgressMoveID == "" {
+			return nil
+		}
+		return string(r.InProgressMoveID)
 	case 31:
-		return r.CreatedAt
+		if r.InProgressProNumber == "" {
+			return nil
+		}
+		return r.InProgressProNumber
 	case 32:
+		if r.InProgressDueAt == nil {
+			return nil
+		}
+		return *r.InProgressDueAt
+	case 33:
+		return r.Version
+	case 34:
+		return r.CreatedAt
+	case 35:
 		return r.UpdatedAt
 	}
 	return nil
@@ -573,6 +606,8 @@ var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Ty
 var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
 
 var reportDimEpoch = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
+
+var reportDimEpochHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueEpoch, Aggs: schema.AggsOrdered}
 
 var reportDimInteger = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueInt, Aggs: schema.AggsNumeric}
 

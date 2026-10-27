@@ -349,12 +349,7 @@ func (s *Service) DecideMany(
 				zap.Error(decideErr),
 			)
 		default:
-			result.Decision = outcome.Decision
-			if outcome.ExecutionError != nil {
-				result.Error = outcome.ExecutionError.Error()
-			} else {
-				result.Executed = req.Decision == agent.DecisionAccepted
-			}
+			result = outcome.Result(id)
 		}
 		results = append(results, result)
 	}
@@ -562,7 +557,11 @@ func (s *Service) approveDeferred(
 				zap.Error(approval.Err),
 			)
 		} else {
-			result.Decision = approval.Decision
+			outcome := agentports.DecisionOutcome{
+				Decision:       approval.Decision,
+				ExecutionError: approval.ExecutionError,
+			}
+			result = outcome.Result(approval.ProposalID)
 		}
 		results = append(results, result)
 	}

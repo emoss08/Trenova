@@ -58,6 +58,9 @@ type Trailer struct {
 	LastKnownLocationName      string                      `json:"lastKnownLocationName"      keel:"last_known_location_name,computed,nullzero"`
 	LastKnownLocationLatitude  *float64                    `json:"lastKnownLocationLatitude"  keel:"last_known_location_latitude,computed"`
 	LastKnownLocationLongitude *float64                    `json:"lastKnownLocationLongitude" keel:"last_known_location_longitude,computed"`
+	InProgressMoveID           pulid.ID                    `json:"inProgressMoveId"           keel:"in_progress_move_id,computed,nullzero"`
+	InProgressProNumber        string                      `json:"inProgressProNumber"        keel:"in_progress_pro_number,computed,nullzero"`
+	InProgressDueAt            *int64                      `json:"inProgressDueAt"            keel:"in_progress_due_at,computed"`
 	SearchVector               string                      `json:"-"                          keel:"search_vector,tsvector,readonly,noselect"`
 	Rank                       string                      `json:"-"                          keel:"rank,computed"`
 	Version                    int64                       `json:"version"                    keel:"version,version"`
@@ -179,7 +182,7 @@ func (t *Trailer) GetResourceID() string {
 func (t *Trailer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "tr",
-		ComputedFilters: []string{"lastKnownLocationId"},
+		ComputedFilters: []string{"lastKnownLocationId", "inProgressMoveId"},
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},

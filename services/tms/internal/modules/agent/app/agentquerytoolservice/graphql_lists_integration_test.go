@@ -244,11 +244,13 @@ func convertedListCases(
 		DB:        conn,
 		Logger:    logger,
 		Locations: crossref.LocationColumns(),
+		Moves:     crossref.MoveColumns(),
 	})
 	trailers := trailerrepository.New(trailerrepository.Params{
 		DB:        conn,
 		Logger:    logger,
 		Locations: crossref.LocationColumns(),
+		Moves:     crossref.MoveColumns(),
 	})
 	customFields := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
 		Logger: logger,

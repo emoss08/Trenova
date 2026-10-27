@@ -2,6 +2,7 @@ package agentproposalhandler_test
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -24,21 +25,25 @@ import (
 type recordingDecisions struct {
 	agentports.AgentDecisionService
 
-	sent *agentports.DecideAgentProposalRequest
-	err  error
+	sent    *agentports.DecideAgentProposalRequest
+	err     error
+	execErr error
 }
 
-func (d *recordingDecisions) Decide(
+func (d *recordingDecisions) DecideWithOutcome(
 	_ context.Context,
 	req *agentports.DecideAgentProposalRequest,
 	_ *permissionports.RequestActor,
-) (*agent.AgentDecision, error) {
+) (*agentports.DecisionOutcome, error) {
 	d.sent = req
 	if d.err != nil {
 		return nil, d.err
 	}
 
-	return &agent.AgentDecision{ID: pulid.MustNew("adec_"), Decision: req.Decision}, nil
+	return &agentports.DecisionOutcome{
+		Decision:       &agent.AgentDecision{ID: pulid.MustNew("adec_"), Decision: req.Decision},
+		ExecutionError: d.execErr,
+	}, nil
 }
 
 type storedProposals struct {
@@ -122,6 +127,57 @@ func TestResolve_EchoesThePreviewDigestAndNote(t *testing.T) {
 	assert.Equal(t, proposalID, decisions.sent.ProposalID)
 	assert.Equal(t, digest, decisions.sent.PreviewDigest)
 	assert.Equal(t, "Matches the remittance", decisions.sent.Note)
+}
+
+func TestResolve_AnApprovalThatRanSaysSo(t *testing.T) {
+	t.Parallel()
+
+	proposalID := pulid.MustNew("ap_")
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/agent-proposals/" + proposalID.String() + "/resolve/").
+		WithJSONBody(map[string]any{"decision": agent.DecisionAccepted, "reasonCode": "ok"}).
+		WithDefaultAuthContext()
+	newHandler(&recordingDecisions{}, &storedProposals{}, nil).
+		RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode(), string(ginCtx.ResponseBody()))
+	var body map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&body))
+	assert.Equal(t, proposalID.String(), body["proposalId"])
+	assert.Equal(t, true, body["executed"])
+	assert.Equal(t, false, body["refused"])
+	assert.NotContains(t, body, "error")
+	decision, ok := body["decision"].(map[string]any)
+	require.True(t, ok, "the recorded decision is returned: %v", body["decision"])
+	assert.Equal(t, string(agent.DecisionAccepted), decision["decision"])
+}
+
+func TestResolve_AnApprovalRefusedOverAChangedRecordIsTheOutcomeNotAnError(t *testing.T) {
+	t.Parallel()
+
+	refusal := fmt.Errorf(
+		"%w: the shipment S-1 was at version 3 when this was proposed and is at version 5 now, "+
+			"so nothing was changed",
+		agent.ErrTargetChanged,
+	)
+	ginCtx := testutil.NewGinTestContext().
+		WithMethod(http.MethodPost).
+		WithPath("/api/v1/agent-proposals/" + pulid.MustNew("ap_").String() + "/resolve/").
+		WithJSONBody(map[string]any{"decision": agent.DecisionAccepted, "reasonCode": "ok"}).
+		WithDefaultAuthContext()
+	newHandler(&recordingDecisions{execErr: refusal}, &storedProposals{}, nil).
+		RegisterRoutes(ginCtx.Engine.Group("/api/v1"))
+	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
+
+	require.Equal(t, http.StatusOK, ginCtx.ResponseCode(), string(ginCtx.ResponseBody()))
+	var body map[string]any
+	require.NoError(t, ginCtx.ResponseJSON(&body))
+	assert.Equal(t, false, body["executed"])
+	assert.Equal(t, true, body["refused"])
+	assert.Equal(t, refusal.Error(), body["error"])
+	assert.NotNil(t, body["decision"], "the approval is still recorded")
 }
 
 func TestResolve_AGatedApprovalWithoutADigestIsRefused(t *testing.T) {

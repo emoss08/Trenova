@@ -179,6 +179,7 @@ func (w *Worker) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "wrk",
 		UseSearchVector: true,
+		FuzzyFields:     []domaintypes.FuzzyField{{"first_name", "last_name"}},
 		SearchableFields: []domaintypes.SearchableField{
 			{
 				Name:   "first_name",

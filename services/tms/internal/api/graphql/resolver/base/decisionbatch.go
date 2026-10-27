@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -50,19 +51,34 @@ func BatchDecisionResults(
 ) []*gqlmodel.AgentProposalDecisionResult {
 	out := make([]*gqlmodel.AgentProposalDecisionResult, 0, len(results))
 	for i := range results {
-		result := &gqlmodel.AgentProposalDecisionResult{
-			ProposalID: results[i].ProposalID.String(),
-			Decision:   results[i].Decision,
-			Executed:   results[i].Executed,
-		}
-		if results[i].Error != "" {
-			message := results[i].Error
-			result.Error = &message
-		}
-		out = append(out, result)
+		out = append(out, DecisionResult(&results[i]))
 	}
 
 	return out
+}
+
+func DecisionResult(
+	result *agentports.AgentProposalDecisionResult,
+) *gqlmodel.AgentProposalDecisionResult {
+	out := &gqlmodel.AgentProposalDecisionResult{
+		ProposalID: result.ProposalID.String(),
+		Decision:   result.Decision,
+		Executed:   result.Executed,
+		Refused:    result.Refused,
+	}
+	if result.Error != "" {
+		message := result.Error
+		out.Error = &message
+	}
+
+	return out
+}
+
+func PlanDecisionResult(plan *agent.AgentPlan) *gqlmodel.AgentPlanDecisionResult {
+	return &gqlmodel.AgentPlanDecisionResult{
+		Plan:    plan,
+		Refused: agent.PlanTargetChanged(plan),
+	}
 }
 
 func previewDigestsByProposal(

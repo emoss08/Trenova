@@ -536,6 +536,18 @@ func TestSystemPrompt_TellsTheAgentToReportWhatIsMissing(t *testing.T) {
 	assert.Contains(t, prompt, "has not been checked")
 }
 
+func TestSystemPrompt_SaysWhichWayPushingATimeBackMovesIt(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{})
+
+	assert.Contains(t, prompt, "Pushing a time back or out, moving it back or bumping it "+
+		"makes it later")
+	assert.Contains(t, prompt, "bringing it forward makes it earlier")
+	assert.Contains(t, prompt, "say in the reply which way and how far it moves")
+}
+
 // Memory is read into the prompt fenced, grouped by what it is about, with a
 // line saying how each kind is to be read: an instruction is followed, a fact is
 // weighed. Without it a model treats a fact about last month as an order.

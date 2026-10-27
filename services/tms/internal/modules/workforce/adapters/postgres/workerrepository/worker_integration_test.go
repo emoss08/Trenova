@@ -246,3 +246,62 @@ func TestGetByID_LoadsTheManagerFleetAndLicenseStateItIsAskedFor(t *testing.T) {
 	assert.Nil(t, bare.Manager)
 	assert.Nil(t, bare.Profile)
 }
+
+func TestListFindsWorkersByACloseSpellingAndPagesThem(t *testing.T) {
+	repo, data, cleanup := setupRepo(t)
+	t.Cleanup(cleanup)
+	ctx := data.Ctx(t.Context())
+
+	for _, first := range []string{"Johnathan", "Marisol", "Teodoro"} {
+		w := newTestWorker(data)
+		w.FirstName = first
+		w.LastName = "Smithers"
+		_, err := repo.Create(ctx, w)
+		require.NoError(t, err)
+	}
+
+	list := func(query, after string) *pagination.CursorListResult[*worker.Worker] {
+		t.Helper()
+
+		cursor, err := pagination.NewCursorInfo(2, after)
+		require.NoError(t, err)
+		result, err := repo.List(ctx, &workerports.ListWorkersRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: data.Organization.ID,
+					BuID:  data.BusinessUnit.ID,
+				},
+				Pagination: pagination.Info{Limit: 2},
+				Query:      query,
+			},
+			Cursor: cursor,
+		})
+		require.NoError(t, err)
+
+		return result
+	}
+
+	exact := list("smithers", "")
+	assert.Len(t, exact.Items, 2)
+	assert.False(t, exact.Fuzzy)
+
+	first := list("smithrs", "")
+	require.Len(t, first.Items, 2)
+	assert.True(t, first.Fuzzy)
+	assert.True(t, first.HasNextPage)
+	require.NotNil(t, first.TotalCount)
+	assert.Equal(t, 3, *first.TotalCount)
+
+	next, err := first.NextCursor()
+	require.NoError(t, err)
+	second := list("smithrs", next)
+	require.Len(t, second.Items, 1, "the close spelling pages on with the same cursor")
+	assert.True(t, second.Fuzzy)
+	assert.False(t, second.HasNextPage)
+	assert.Equal(t, "Smithers", second.Items[0].LastName)
+
+	named := list("jonathan smithrs", "")
+	require.Len(t, named.Items, 1)
+	assert.Equal(t, "Johnathan", named.Items[0].FirstName)
+	assert.True(t, named.Fuzzy)
+}

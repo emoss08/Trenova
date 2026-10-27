@@ -352,6 +352,36 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:       "inProgressMoveId",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tractor.Tractor)
+					return gqlexec.Resolver[resolverTractor](ec, "Tractor").InProgressMoveID(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "inProgressProNumber",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tractor.Tractor)
+					return obj.InProgressProNumber, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "inProgressDueAt",
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*tractor.Tractor)
+					return obj.InProgressDueAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint64),
+			},
+			{
 				Name:     "fuelType",
 				NonNull:  true,
 				ChildErr: errNoChild5,
@@ -660,6 +690,7 @@ type resolverTractor interface {
 	SecondaryWorkerID(ctx context.Context, obj *tractor.Tractor) (*string, error)
 	EquipmentStatus(ctx context.Context, obj *tractor.Tractor) (domaintypes.EquipmentStatus, error)
 	LastKnownLocationID(ctx context.Context, obj *tractor.Tractor) (*string, error)
+	InProgressMoveID(ctx context.Context, obj *tractor.Tractor) (*string, error)
 	LastKnownLocation(ctx context.Context, obj *tractor.Tractor) (*gqlmodel.LocationReference, error)
 }
 

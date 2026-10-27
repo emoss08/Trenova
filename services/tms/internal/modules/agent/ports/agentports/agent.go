@@ -301,26 +301,44 @@ type DecisionOutcome struct {
 	ExecutedTargetVersion *int64
 }
 
+// Result is the outcome as its decider is told it: the decision, whether
+// the approved write ran, and why it did not. An approval waiting out its
+// undo window has not run yet; one refused because its record moved on ran
+// nothing.
+func (o *DecisionOutcome) Result(proposalID pulid.ID) AgentProposalDecisionResult {
+	result := AgentProposalDecisionResult{ProposalID: proposalID, Decision: o.Decision}
+	if o.ExecutionError != nil {
+		result.Error = o.ExecutionError.Error()
+		result.Refused = errors.Is(o.ExecutionError, agent.ErrTargetChanged)
+
+		return result
+	}
+
+	result.Executed = o.Decision != nil && o.Decision.CommitsAt == nil &&
+		(o.Decision.Decision == agent.DecisionAccepted ||
+			o.Decision.Decision == agent.DecisionModified)
+
+	return result
+}
+
 type AgentDecisionService interface {
-	Decide(
-		ctx context.Context,
-		req *DecideAgentProposalRequest,
-		actor *permissionports.RequestActor,
-	) (*agent.AgentDecision, error)
-	// DecideWithOutcome is Decide for a caller that must know whether the
-	// approved write went through, such as a plan deciding where to stop.
+	// DecideWithOutcome records a decision, runs what an approval approved
+	// and reports whether it went through. A write that failed, or an
+	// approval refused because its record moved on, is the outcome, not an
+	// error: the decision is recorded either way.
 	DecideWithOutcome(
 		ctx context.Context,
 		req *DecideAgentProposalRequest,
 		actor *permissionports.RequestActor,
 	) (*DecisionOutcome, error)
-	// DecideOwn is Decide for a proposal raised in one of the actor's own
-	// conversations; any other is not found.
+	// DecideOwn is DecideWithOutcome for a proposal raised in one of the
+	// actor's own conversations; any other is not found. Its approval waits
+	// out the undo window, unless it is refused at once.
 	DecideOwn(
 		ctx context.Context,
 		req *DecideAgentProposalRequest,
 		actor *permissionports.RequestActor,
-	) (*agent.AgentDecision, error)
+	) (*DecisionOutcome, error)
 	// AssertOwnProposal refuses a proposal not raised in one of the actor's
 	// own conversations, as not found.
 	AssertOwnProposal(
@@ -344,9 +362,10 @@ type AgentDecisionService interface {
 // DeferredApproval is one proposal of an approval made in the undo window:
 // the decision recorded for it, or why it was refused.
 type DeferredApproval struct {
-	ProposalID pulid.ID
-	Decision   *agent.AgentDecision
-	Err        error
+	ProposalID     pulid.ID
+	Decision       *agent.AgentDecision
+	Err            error
+	ExecutionError error
 }
 
 type UpdateAgentControlRequest struct {
@@ -588,14 +607,16 @@ type DecideAgentProposalsRequest struct {
 	PreviewDigests map[pulid.ID]string
 }
 
-// AgentProposalDecisionResult is what became of one proposal in a batch.
-// Error is written for the person; Executed says the approved write went
-// through.
+// AgentProposalDecisionResult is what became of one decided proposal. Error
+// is written for the person; Executed says the approved write went through;
+// Refused says the approval was recorded but refused because the record it
+// changes moved on since it was proposed, so nothing was changed.
 type AgentProposalDecisionResult struct {
-	ProposalID pulid.ID
-	Decision   *agent.AgentDecision
-	Error      string
-	Executed   bool
+	ProposalID pulid.ID             `json:"proposalId"`
+	Decision   *agent.AgentDecision `json:"decision"`
+	Error      string               `json:"error,omitempty"`
+	Executed   bool                 `json:"executed"`
+	Refused    bool                 `json:"refused"`
 }
 
 type AgentDecisionQueueService interface {

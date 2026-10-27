@@ -256,8 +256,11 @@ func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet
 	set.disclosed = true
 	set.held = len(selected)
 	set.query = s.vectorize(ctx, &req.query)
+	for _, name := range req.definition.Template.StandingTools() {
+		s.load(set, name)
+	}
 	for _, descriptor := range s.catalog.RankHybrid(agenttoolcatalog.Query{
-		Allowed:  selected,
+		Allowed:  slices.DeleteFunc(slices.Clone(selected), set.offers),
 		Text:     text,
 		Limit:    preselectedTools,
 		Semantic: s.toolSemantic(ctx, req.query.TenantInfo, set.query),

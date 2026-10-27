@@ -458,7 +458,7 @@ export const DESK_PLAN_HANDLERS = {
       }
       state.scenario.deskPlan = "approving";
     }
-    return { decideMyPlan: decided(state) };
+    return { decideMyPlan: { refused: false, plan: decided(state) } };
   },
   UndoMyDecision: (state, variables) => {
     ownPlan(variables.planId);

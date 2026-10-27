@@ -24,6 +24,7 @@ type TrailerRelationIncludes struct {
 	IncludeRegistrationState     bool     `json:"includeRegistrationState"`
 	IncludeOwnerWorker           bool     `json:"includeOwnerWorker"`
 	IncludeLastKnownLocation     bool     `json:"includeLastKnownLocation"`
+	IncludeInProgressMove        bool     `json:"includeInProgressMove"`
 	IncludeCustomFields          bool     `json:"includeCustomFields"`
 	TrailerColumns               []string `json:"-"`
 	EquipmentTypeColumns         []string `json:"-"`
@@ -47,6 +48,7 @@ func FullTrailerRelationIncludes() TrailerRelationIncludes {
 		IncludeRegistrationState:     true,
 		IncludeOwnerWorker:           true,
 		IncludeLastKnownLocation:     true,
+		IncludeInProgressMove:        true,
 		IncludeCustomFields:          true,
 	}
 }

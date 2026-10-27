@@ -9907,7 +9907,7 @@ export type DecideMyPlanMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyPlanMutation = { decideMyPlan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, commitsAt: number | null, version: number, updatedAt: number } };
+export type DecideMyPlanMutation = { decideMyPlan: { refused: boolean, plan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, commitsAt: number | null, version: number, updatedAt: number } } };
 
 export type DecideMyProposalMutationVariables = Exact<{
   id: string | number;
@@ -9915,7 +9915,7 @@ export type DecideMyProposalMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyProposalMutation = { decideMyProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, commitsAt: number | null, version: number, createdAt: number } };
+export type DecideMyProposalMutation = { decideMyProposal: { proposalId: string, executed: boolean, refused: boolean, error: string | null, decision: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, commitsAt: number | null, version: number, createdAt: number } | null } };
 
 export type AgentAccessRoleFieldsFragment = { id: string, name: string, isSystem: boolean } & { ' $fragmentName'?: 'AgentAccessRoleFieldsFragment' };
 
@@ -9981,7 +9981,7 @@ export type DecideMyProposalsMutationVariables = Exact<{
 }>;
 
 
-export type DecideMyProposalsMutation = { decideMyProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, commitsAt: number | null, createdAt: number } | null }> };
+export type DecideMyProposalsMutation = { decideMyProposals: Array<{ proposalId: string, executed: boolean, refused: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, commitsAt: number | null, createdAt: number } | null }> };
 
 export type UndoMyDecisionMutationVariables = Exact<{
   proposalId?: string | number | null | undefined;
@@ -10313,7 +10313,7 @@ export type DecideAgentProposalsMutationVariables = Exact<{
 }>;
 
 
-export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, createdAt: number } | null }> };
+export type DecideAgentProposalsMutation = { decideAgentProposals: Array<{ proposalId: string, executed: boolean, refused: boolean, error: string | null, decision: { id: string, decision: AgentDecisionType, reasonCode: string, previewDigest: string, previewReviewed: boolean, createdAt: number } | null }> };
 
 export type RecentDecisionsQueryVariables = Exact<{
   since: number;
@@ -10643,7 +10643,7 @@ export type DecideAgentPlanMutationVariables = Exact<{
 }>;
 
 
-export type DecideAgentPlanMutation = { decideAgentPlan: { ' $fragmentRefs'?: { 'AgentPlanTableRowFieldsFragment': AgentPlanTableRowFieldsFragment } } };
+export type DecideAgentPlanMutation = { decideAgentPlan: { refused: boolean, plan: { id: string, status: AgentPlanStatus, stepCount: number, completedSteps: number, failedStep: number | null, failureError: string, decidedByUserId: string | null, decidedAt: number | null, version: number, updatedAt: number } } };
 
 export type AgentProposalPreviewFieldsFragment = { proposalId: string, tool: string, summary: string, coverage: AgentPreviewCoverage, stale: boolean, targetVersion: number | null, withheldCount: number, omittedRecords: number, recorded: boolean, computedAt: number, digest: string, reviewRequired: boolean, changes: Array<{ resource: string, entityId: string | null, label: string, operation: AgentPreviewOperation, version: number | null, withheld: boolean, dependsOnStep: number, omittedFields: number, record: { entityType: string, id: string } | null, fields: Array<{ path: string, label: string, valueType: string, before: unknown, after: unknown, withheld: boolean, volatile: boolean, truncated: boolean, changedSinceProposed: boolean, proposedBefore: unknown, projectedFromStep: number, beforeRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null, afterRef: { resource: string, id: string, label: string | null, withheld: boolean, record: { entityType: string, id: string } | null } | null }>, message: { channel: AgentPreviewMessageChannel, from: string, to: Array<string>, cc: Array<string>, bcc: Array<string>, attachments: Array<string>, subject: string, body: string, bodyTruncated: boolean, visibility: string, cadence: string, templateVersionId: string | null } | null, money: { currency: string, totalBefore: string | null, totalAfter: string | null, delta: string | null, withheld: boolean, lines: Array<{ label: string, before: string | null, after: string | null }> } | null }>, warnings: Array<{ code: string, args: Array<string>, message: string, reasons: Array<{ field: string, label: string, message: string, param: string }> }>, staleness: { pinned: boolean, proposedVersion: number, currentVersion: number, missing: boolean } | null } & { ' $fragmentName'?: 'AgentProposalPreviewFieldsFragment' };
 
@@ -10784,7 +10784,7 @@ export type DecideAgentProposalMutationVariables = Exact<{
 }>;
 
 
-export type DecideAgentProposalMutation = { decideAgentProposal: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, version: number, createdAt: number } };
+export type DecideAgentProposalMutation = { decideAgentProposal: { proposalId: string, executed: boolean, refused: boolean, error: string | null, decision: { id: string, proposalId: string | null, decision: AgentDecisionType, reasonCode: string, decidedByUserId: string, previewDigest: string, previewReviewed: boolean, version: number, createdAt: number } | null } };
 
 export type AgentSuiteRunFieldsFragment = { id: string, agentDefinitionId: string, agentName: string, trigger: AgentSuiteRunTrigger, fingerprintHash: string, changeSummary: string, suiteRevision: string, status: AgentSuiteRunStatus, casesTotal: number, casesPassed: number, casesFailed: number, casesSkipped: number, hardFailures: number, deterministicScore: number | null, judgeScore: number | null, qualityScore: number | null, baselineScore: number | null, baselineRunId: string | null, regression: boolean, costUsd: string, startedAt: number, finishedAt: number | null, comments: string, requestedByUserId: string | null, fingerprintChanges: Array<{ field: string, from: string, to: string }> } & { ' $fragmentName'?: 'AgentSuiteRunFieldsFragment' };
 
@@ -13742,9 +13742,9 @@ export type WorkerTableReferenceFieldsFragment = { id: string, firstName: string
 
 export type DataTablePageInfoFieldsFragment = { hasNextPage: boolean, endCursor: string | null } & { ' $fragmentName'?: 'DataTablePageInfoFieldsFragment' };
 
-export type TractorTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, primaryWorkerId: string, equipmentTypeId: string, equipmentManufacturerId: string, stateId: string | null, fleetCodeId: string | null, secondaryWorkerId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, vin: string, externalId: string, lastKnownLocationId: string | null, lastKnownLocationName: string, fuelType: IftaFuelType, iftaQualified: boolean, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null } & { ' $fragmentName'?: 'TractorTableRowFieldsFragment' };
+export type TractorTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, primaryWorkerId: string, equipmentTypeId: string, equipmentManufacturerId: string, stateId: string | null, fleetCodeId: string | null, secondaryWorkerId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, registrationNumber: string, registrationExpiry: number | null, vin: string, externalId: string, lastKnownLocationId: string | null, lastKnownLocationName: string, inProgressMoveId: string | null, inProgressProNumber: string, inProgressDueAt: number | null, fuelType: IftaFuelType, iftaQualified: boolean, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, state: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null, primaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null, secondaryWorker: { ' $fragmentRefs'?: { 'WorkerTableReferenceFieldsFragment': WorkerTableReferenceFieldsFragment } } | null } & { ' $fragmentName'?: 'TractorTableRowFieldsFragment' };
 
-export type TrailerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, equipmentTypeId: string, equipmentManufacturerId: string, registrationStateId: string | null, fleetCodeId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, vin: string, externalId: string, registrationNumber: string, maxLoadWeight: number | null, lastInspectionDate: number | null, registrationExpiry: number | null, lastKnownLocationId: string | null, lastKnownLocationName: string, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, registrationState: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null } & { ' $fragmentName'?: 'TrailerTableRowFieldsFragment' };
+export type TrailerTableRowFieldsFragment = { id: string, businessUnitId: string, organizationId: string, equipmentTypeId: string, equipmentManufacturerId: string, registrationStateId: string | null, fleetCodeId: string | null, status: EquipmentStatus, code: string, model: string, make: string, year: number | null, licensePlateNumber: string, vin: string, externalId: string, registrationNumber: string, maxLoadWeight: number | null, lastInspectionDate: number | null, registrationExpiry: number | null, lastKnownLocationId: string | null, lastKnownLocationName: string, inProgressMoveId: string | null, inProgressProNumber: string, inProgressDueAt: number | null, version: number, createdAt: number, updatedAt: number, customFields: unknown, equipmentType: { ' $fragmentRefs'?: { 'EquipmentTypeTableFieldsFragment': EquipmentTypeTableFieldsFragment } } | null, equipmentManufacturer: { ' $fragmentRefs'?: { 'EquipmentManufacturerTableFieldsFragment': EquipmentManufacturerTableFieldsFragment } } | null, fleetCode: { ' $fragmentRefs'?: { 'FleetCodeTableFieldsFragment': FleetCodeTableFieldsFragment } } | null, registrationState: { ' $fragmentRefs'?: { 'UsStateTableFieldsFragment': UsStateTableFieldsFragment } } | null } & { ' $fragmentName'?: 'TrailerTableRowFieldsFragment' };
 
 export type TractorTableQueryVariables = Exact<{
   input: DataTableConnectionInput;
@@ -18893,7 +18893,10 @@ export type DeskWorkerCredentialListQueryVariables = Exact<{
 }>;
 
 
-export type DeskWorkerCredentialListQuery = { workerCredentials: Array<{ id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, daysUntilExpiry: number | null, health: WorkerCredentialHealth, verifiedAt: number | null, documentId: string | null, credentialType: { ' $fragmentRefs'?: { 'WorkerCredentialTypeReferenceFragment': WorkerCredentialTypeReferenceFragment } } | null, worker: { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } } | null }> };
+export type DeskWorkerCredentialListQuery = { workerCredentials: Array<{ id: string, workerId: string, credentialTypeId: string, status: WorkerCredentialStatus, issuingAuthority: string | null, issuedAt: number | null, expiresAt: number | null, daysUntilExpiry: number | null, health: WorkerCredentialHealth, verifiedAt: number | null, documentId: string | null, credentialType: { ' $fragmentRefs'?: { 'WorkerCredentialTypeReferenceFragment': WorkerCredentialTypeReferenceFragment } } | null, worker: (
+      { canBeAssigned: boolean, assignmentBlocked: string, profile: { complianceStatus: ComplianceStatus } | null }
+      & { ' $fragmentRefs'?: { 'WorkerReferenceFragment': WorkerReferenceFragment } }
+    ) | null }> };
 
 export type DeskWorkerCredentialTypesQueryVariables = Exact<{
   input: WorkerCredentialTypesInput;

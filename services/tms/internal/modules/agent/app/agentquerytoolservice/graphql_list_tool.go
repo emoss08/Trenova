@@ -45,6 +45,8 @@ const (
 	inputSort         = "sort"
 	includeTotalCount = "includeTotalCount"
 
+	filterGroupFilters = "filters"
+
 	// maxNearMissProbes bounds the reads an empty first page may spend asking
 	// which condition to loosen; each is charged to the caller's budget.
 	maxNearMissProbes = 4
@@ -136,6 +138,60 @@ type graphQLListSpec struct {
 	// decimal a person reads, and filters it by that decimal (graphql_money.go).
 	amounts bool
 	marks   func(row map[string]any) (agent.RecordRef, bool)
+
+	conditions []listCondition
+}
+
+type listCondition struct {
+	name        string
+	description string
+	when        []domaintypes.FieldFilter
+	unless      []domaintypes.FieldFilter
+}
+
+func (c *listCondition) compile(yes bool) (filters, groups []map[string]any) {
+	if yes {
+		return fieldFilterMaps(c.when), nil
+	}
+
+	return nil, []map[string]any{{filterGroupFilters: fieldFilterMaps(c.unless)}}
+}
+
+func fieldFilterMaps(filters []domaintypes.FieldFilter) []map[string]any {
+	out := make([]map[string]any, 0, len(filters))
+	for _, filter := range filters {
+		entry := map[string]any{
+			paramField:     filter.Field,
+			filterOperator: string(filter.Operator),
+		}
+		if filter.Value != nil {
+			entry[filterValue] = filter.Value
+		}
+		out = append(out, entry)
+	}
+
+	return out
+}
+
+func (t *graphQLListTool) conditionFilters(
+	args map[string]any,
+) (filters, groups []map[string]any, err error) {
+	for idx := range t.spec.conditions {
+		condition := &t.spec.conditions[idx]
+		raw, present := args[condition.name]
+		if !present || raw == nil {
+			continue
+		}
+		yes, ok := raw.(bool)
+		if !ok {
+			return nil, nil, fmt.Errorf("parameter %q must be true or false", condition.name)
+		}
+		all, oneOf := condition.compile(yes)
+		filters = append(filters, all...)
+		groups = append(groups, oneOf...)
+	}
+
+	return filters, groups, nil
 }
 
 // idReference is where a list's id parameter points: the resource, what the
@@ -281,6 +337,10 @@ func newGraphQLListTool(
 		return nil, err
 	}
 
+	if err = checkConditions(spec, tabled, params); err != nil {
+		return nil, err
+	}
+
 	tool := &graphQLListTool{
 		spec:     *spec,
 		read:     read,
@@ -312,6 +372,27 @@ func newGraphQLListTool(
 	}
 
 	return tool, nil
+}
+
+func checkConditions(spec *graphQLListSpec, tabled bool, params []graphQLParam) error {
+	if len(spec.conditions) == 0 {
+		return nil
+	}
+	if !tabled {
+		return fmt.Errorf("%s: conditions need a table input to filter", spec.name)
+	}
+	for idx := range spec.conditions {
+		name := spec.conditions[idx].name
+		if slices.ContainsFunc(params, func(p graphQLParam) bool { return p.Name == name }) {
+			return fmt.Errorf("%s: condition %s is already a parameter", spec.name, name)
+		}
+		if len(spec.conditions[idx].when) == 0 || len(spec.conditions[idx].unless) == 0 {
+			return fmt.Errorf("%s: condition %s says neither what yes nor no keeps",
+				spec.name, name)
+		}
+	}
+
+	return nil
 }
 
 // confidential marks a parameter on a Confidential field, which no reader's
@@ -621,6 +702,9 @@ func (t *graphQLListTool) Description() string {
 		nested[parent] = append(nested[parent],
 			stringutils.LowerFirst(strings.TrimPrefix(name, parent)))
 	}
+	for idx := range t.spec.conditions {
+		own = append(own, t.spec.conditions[idx].name)
+	}
 	if len(own) == 0 && len(holders) == 0 {
 		return t.spec.summary
 	}
@@ -738,6 +822,13 @@ func (t *graphQLListTool) ParamSchema() map[string]any {
 	}
 	for _, param := range t.params {
 		properties[param.Name] = param.Schema
+	}
+	for idx := range t.spec.conditions {
+		condition := &t.spec.conditions[idx]
+		properties[condition.name] = map[string]any{
+			toolschema.KeyType:        toolschema.TypeBoolean,
+			toolschema.KeyDescription: condition.description,
+		}
 	}
 	for idx := range t.instead {
 		for _, param := range t.instead[idx].params {
@@ -939,6 +1030,11 @@ func (t *graphQLListTool) Query(
 	if err != nil {
 		return nil, err
 	}
+	conditioned, groups, err := t.conditionFilters(args)
+	if err != nil {
+		return nil, err
+	}
+	filters = append(filters, conditioned...)
 	inputs, err := compileInputs(t.params, args, clk)
 	if err != nil {
 		return nil, err
@@ -954,12 +1050,18 @@ func (t *graphQLListTool) Query(
 	}
 	query := strings.TrimSpace(optionalString(params.Params, graphQLParamQuery))
 	criteria := describeCriteria(t.spec.entityPlural, t.params, args, query)
+	for idx := range t.spec.conditions {
+		if raw, present := args[t.spec.conditions[idx].name]; present && raw != nil {
+			criteria.Field(t.spec.conditions[idx].name, fmt.Sprint(raw))
+		}
+	}
 
 	page, err := t.page(ctx, params, &pageRequest{
 		query:   query,
 		inputs:  inputs,
 		args:    rootArgs,
 		filters: filters,
+		groups:  groups,
 		sort:    t.sort(params.Params),
 		limit:   window.limit,
 		after:   window.info.After,
@@ -1003,7 +1105,9 @@ func (t *graphQLListTool) Query(
 	notes := besideNotes
 	if len(page.items) == 0 && page.first {
 		note := criteria.EmptyNote()
-		if near := t.nearMiss(ctx, params, query, inputs, rootArgs, filters); near != "" {
+		if near := t.nearMiss(ctx, params, &pageRequest{
+			query: query, inputs: inputs, args: rootArgs, filters: filters, groups: groups,
+		}); near != "" {
 			note = near
 		}
 		notes = append([]string{note}, notes...)
@@ -1043,6 +1147,7 @@ type pageRequest struct {
 	// args are the root variables the call's argument parameters set.
 	args    map[string]any
 	filters []map[string]any
+	groups  []map[string]any
 	sort    []map[string]any
 	limit   int
 	after   string
@@ -1150,6 +1255,9 @@ func (t *graphQLListTool) variables(req *pageRequest) map[string]any {
 	}
 	if len(req.filters) > 0 {
 		input[inputFieldFilters] = req.filters
+	}
+	if len(req.groups) > 0 {
+		input[inputFilterGroups] = req.groups
 	}
 	if len(req.sort) > 0 {
 		input[inputSort] = req.sort
@@ -1311,6 +1419,15 @@ func (t *graphQLListTool) refuseWithheld(
 	if sortBy := optionalString(params.Params, paramSortBy); sortBy != "" {
 		fields = append(fields, sortBy)
 	}
+	for idx := range t.spec.conditions {
+		condition := &t.spec.conditions[idx]
+		if raw, present := params.Params[condition.name]; !present || raw == nil {
+			continue
+		}
+		for _, filter := range condition.when {
+			fields = append(fields, filter.Field)
+		}
+	}
 	if err := t.refuseFields(ctx, params, fields); err != nil {
 		return err
 	}
@@ -1400,17 +1517,18 @@ func (t *graphQLListTool) fieldOwner(field string) (resource permission.Resource
 func (t *graphQLListTool) nearMiss(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
-	query string,
-	inputs, args map[string]any,
-	filters []map[string]any,
+	asked *pageRequest,
 ) string {
+	query, inputs, args, filters := asked.query, asked.inputs, asked.args, asked.filters
+	probe := func(req pageRequest) bool {
+		req.groups, req.limit = asked.groups, 1
+		page, err := t.page(ctx, params, &req)
+		return err == nil && len(page.items) > 0
+	}
 	probes := 0
 	if query != "" {
 		probes++
-		if page, err := t.page(ctx, params, &pageRequest{
-			inputs: inputs, args: args, filters: filters, limit: 1,
-		}); err == nil &&
-			len(page.items) > 0 {
+		if probe(pageRequest{inputs: inputs, args: args, filters: filters}) {
 			return fmt.Sprintf("Nothing matched the text %q, but %s do match the other "+
 				"conditions. Try different words, or drop the text.", query, t.spec.entityPlural)
 		}
@@ -1421,10 +1539,7 @@ func (t *graphQLListTool) nearMiss(
 		}
 		probes++
 		rest := slices.Delete(slices.Clone(filters), idx, idx+1)
-		page, err := t.page(ctx, params, &pageRequest{
-			query: query, inputs: inputs, args: args, filters: rest, limit: 1,
-		})
-		if err == nil && len(page.items) > 0 {
+		if probe(pageRequest{query: query, inputs: inputs, args: args, filters: rest}) {
 			return t.keptOut(filters[idx][paramField])
 		}
 	}
@@ -1438,10 +1553,7 @@ func (t *graphQLListTool) nearMiss(
 		probes++
 		rest := maps.Clone(inputs)
 		delete(rest, name)
-		page, err := t.page(ctx, params, &pageRequest{
-			query: query, inputs: rest, args: args, filters: filters, limit: 1,
-		})
-		if err == nil && len(page.items) > 0 {
+		if probe(pageRequest{query: query, inputs: rest, args: args, filters: filters}) {
 			return t.keptOut(name)
 		}
 	}
@@ -1459,10 +1571,7 @@ func (t *graphQLListTool) nearMiss(
 		narrower := maps.Clone(filter)
 		delete(narrower, param.ArgField)
 		rest[param.Arg] = narrower
-		page, err := t.page(ctx, params, &pageRequest{
-			query: query, inputs: inputs, args: rest, filters: filters, limit: 1,
-		})
-		if err == nil && len(page.items) > 0 {
+		if probe(pageRequest{query: query, inputs: inputs, args: rest, filters: filters}) {
 			return t.keptOut(param.Name)
 		}
 	}

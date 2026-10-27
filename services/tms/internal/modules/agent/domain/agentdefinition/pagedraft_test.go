@@ -67,6 +67,8 @@ func TestBuildSystemPrompt_WritesTheFormulaInTheEditor(t *testing.T) {
 	assert.Contains(t, prompt, "source: \ntariff \"Per Mile\"\n\ninput rate: Money/mi")
 	assert.NotContains(t, prompt, "\nname: ")
 	assert.Contains(t, prompt, "check and test it before you say what it charges")
+	assert.Contains(t, prompt, "\"The load\" or \"a load\" is the shipment this formula "+
+		"prices, not a record to look up")
 }
 
 func TestBuildSystemPrompt_WritesTheTemplatesNameAndDescription(t *testing.T) {

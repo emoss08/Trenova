@@ -179,7 +179,7 @@ func (h *Handler) resolve(c *gin.Context) {
 	}
 
 	actor := requestActorFromAuthContext(authCtx)
-	decision, err := h.decisionService.Decide(
+	outcome, err := h.decisionService.DecideWithOutcome(
 		c.Request.Context(),
 		&agentports.DecideAgentProposalRequest{
 			ProposalID:    proposalID,
@@ -197,5 +197,5 @@ func (h *Handler) resolve(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, decision)
+	helpers.JSON(c, http.StatusOK, outcome.Result(proposalID))
 }

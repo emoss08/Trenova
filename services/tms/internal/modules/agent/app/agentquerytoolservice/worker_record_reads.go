@@ -70,13 +70,14 @@ const (
 		"cards and endorsements, or those falling due across the organization. With a worker " +
 		"and no expiry window it returns every credential the worker holds, with its dates " +
 		"and whether it is verified, and the credential types the organization tracks; a " +
-		"required type with nothing on file was never recorded, which is worse than expiring " +
+		"required type with nothing on file was never recorded, worse than expiring " +
 		"soon. Without a worker, or with expiringWithinDays or includeExpired, it lists " +
 		"active credentials expiring within that many days from now, soonest first, a page " +
 		"at a time: the tool for any " +
-		"question about who is expiring, lapsed or out of compliance by a date. Narrow to one " +
-		"kind with credentialTypeCode, such as MED_CARD for a medical card or CDL for a " +
-		"licence. It yields the credentialId and credentialTypeId the credential tools take."
+		"question about who is expiring, lapsed or out of compliance by a date. Narrow by " +
+		"credentialTypeCode, such as MED_CARD or CDL. Each row's worker says if dispatchable; " +
+		"canBeAssigned false is already off dispatch, so no hold. It yields the credentialId " +
+		"and credentialTypeId the credential tools take."
 	noteFallingDue   = "Leave it out for the credentials falling due across the organization."
 	noteEveryWorker  = "Leave it out for every worker's."
 	fieldPrivacyCase = "privacyCase"
@@ -204,6 +205,7 @@ func workerRecordReadSpecs() []graphQLListSpec {
 				paramLimit:           graphQLListLimit,
 				paramIncludeArchived: false,
 			},
+			shape: shapeCredentialWorker,
 			alongside: []alongsideSpec{{
 				key:       "credentialTypes",
 				operation: opDeskCredentialTypes,
@@ -231,5 +233,11 @@ func workerRecordReadSpecs() []graphQLListSpec {
 func withholdPrivacyCaseNames(row map[string]any, _ map[string]struct{}, _ clock) {
 	if private, _ := row[fieldPrivacyCase].(bool); private {
 		delete(row, fieldWorker)
+	}
+}
+
+func shapeCredentialWorker(row map[string]any, _ map[string]struct{}, _ clock) {
+	if held, ok := row[fieldWorker].(map[string]any); ok {
+		dispatchStanding(held)
 	}
 }

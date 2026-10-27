@@ -23,6 +23,9 @@ func (s *Snapshot) Facts() []Fact {
 		status += " for " + s.Customer
 	}
 	facts = append(facts, Fact{Name: "status", Value: status})
+	if s.Canceled != nil {
+		facts = append(facts, Fact{Name: "canceled", Value: s.Canceled.text(), SeenAt: s.Canceled.At})
+	}
 	if s.Freight != "" {
 		facts = append(facts, Fact{Name: "freight", Value: s.Freight})
 	}
@@ -165,4 +168,17 @@ func freightText(weight, pieces *int64) string {
 	}
 
 	return strings.Join(parts, ", ")
+}
+
+func (c *CanceledSnapshot) text() string {
+	switch {
+	case c.By != "" && c.Reason != "":
+		return "by " + c.By + ": " + c.Reason
+	case c.By != "":
+		return "by " + c.By + ", no reason given"
+	case c.Reason != "":
+		return c.Reason
+	default:
+		return "no reason given"
+	}
 }

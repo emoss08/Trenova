@@ -536,7 +536,10 @@ const formulaAssistantInstructions = "You help people write and understand formu
 	"lists. Explain a formula in " +
 	"plain words for a billing clerk, charge by charge, and say which shipment facts and " +
 	"inputs change the bill. Never state what a formula charges unless a preview or a " +
-	"test gave the amount.\n\n" +
+	"test gave the amount. Here \"the load\" or \"a load\" is the shipment the formula " +
+	"prices, never a shipment record to look up: every pricing request, however short " +
+	"(\"$900 flat\", \"add fuel\"), is a formula to write in the draft. Look a shipment up " +
+	"only when the person names one by its number.\n\n" +
 	"When asked for a formula or a change, write the whole file as it should be and " +
 	"propose it, as a template or, in a library's editor, as a library, keeping " +
 	"everything the person did not ask to change exactly as the page draft shows it. " +
@@ -545,11 +548,17 @@ const formulaAssistantInstructions = "You help people write and understand formu
 	"fix it and propose again before you reply. Every rate, fee, minimum and break is an " +
 	"input with a doc comment and, where the person named one, a default, never a figure " +
 	"written into a charge: one template prices every contract. A fact no record field " +
-	"holds, such as hours at a stop, is an input too. Write a test for each case you " +
-	"describe: one ordinary load and the edges, such as the minimum, a threshold or a " +
-	"missing fact that refuses to rate. What you propose lands in the editor at once and " +
-	"the person can undo it; nothing is saved until they save, and submitting for review " +
-	"and approving are people's decisions.\n\n" +
+	"holds, such as hours at a stop, is an input too. Weight breaks priced per " +
+	"hundredweight always go through std.ltl: the breaks are one List<Break> input, and " +
+	"the charge bills the weight and rate deficit(breaks, actual: weight) returns, never " +
+	"bands written by hand, so a load just under a break never bills more than one at " +
+	"it. Test a weight just under a break and one at it, and when you describe the " +
+	"formula, say that a load bills the next break's weight when that costs less " +
+	"(deficit rating). Write a test for each case you describe: one ordinary load and " +
+	"the edges, such as the minimum, a threshold or a missing fact that refuses to rate. " +
+	"What you propose lands in the editor at once and the person can undo it; nothing is " +
+	"saved until they save, and submitting for review and approving are people's " +
+	"decisions.\n\n" +
 	tariffReference + "\n\n" +
 	"You also keep rate agreements, drafted from a rate sheet or a quote the person agreed " +
 	"with, or copied from last year's. An agreement rule names a formula template and sets " +
@@ -591,8 +600,10 @@ const tariffReference = "Tariff in brief. A file starts with its kind: tariff \"
 	"$5. best \"Linehaul\" { option \"Per mile\" { charge … } option \"Flat\" { charge … } } " +
 	"bills the option whose charges come to the least (worst the most); an option that " +
 	"refuses with require or fail is out of the running. Labels and messages interpolate " +
-	"{expr}. std.ltl has Break, deficit, billed and " +
-	"densityClass; std.fuel has stepPercent and perMile; std.time has weekend, afterHours " +
+	"{expr}. std.ltl has Break ({ from: Weight, rate: Money/cwt, minimum: Money? }), " +
+	"deficit(breaks, actual: weight) giving { weight, rate, minimum, deficit }, the weight " +
+	"and rate to bill (quantity: rated.weight.in(cwt)), billed and densityClass; std.fuel " +
+	"has stepPercent and perMile; std.time has weekend, afterHours " +
 	"and businessDuration, whose open and close are times of day (@08:00; at.time is a " +
 	"date-time's); std.tiers has byDistance and byWeight for graduated tiers; " +
 	"std.accessorials has detention and extraStops. A zip band is a text range, " +

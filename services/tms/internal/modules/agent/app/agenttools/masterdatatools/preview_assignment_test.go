@@ -25,6 +25,7 @@ type savingAssignments struct {
 	shipment *shipment.Shipment
 	existing *shipment.Assignment
 	saved    *shipment.Assignment
+	inUse    []shipmentports.EquipmentInUse
 	guard    agenttoolstest.WriteGuard
 }
 
@@ -46,6 +47,7 @@ func (f *savingAssignments) plan(
 		Assignment:     assignment,
 		ShipmentBefore: f.shipment,
 		ShipmentAfter:  after,
+		EquipmentInUse: f.inUse,
 	}, nil
 }
 
@@ -185,6 +187,45 @@ func TestAssignMove_PreviewWarnsWhenDispatchRulesBlockTheDriver(t *testing.T) {
 
 	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningWouldFail)
 	assert.Contains(t, preview.Warnings[0].Message, "Driver is out of drive time")
+}
+
+/*
+equipment_list_trailers listed TRL-001 as Available while it ran SEED-DET-001,
+and the preview said so only at the end of a long summary, cut off where the
+consequence was. The assignment was approved and the next stop actual was
+refused. Equipment on a load in progress is a warning of its own, naming the
+load, and the assignment still files: a planner books a unit's next load
+while it runs the current one.
+*/
+func TestAssignMove_PreviewWarnsForEquipmentOnALoadInProgress(t *testing.T) {
+	t.Parallel()
+
+	entity := uncoveredShipment()
+	assignments := &savingAssignments{
+		shipment: entity,
+		inUse: []shipmentports.EquipmentInUse{{
+			Kind:           "trailer",
+			EquipmentID:    pulid.MustNew("tr_"),
+			ShipmentMoveID: pulid.MustNew("smv_"),
+			ProNumber:      "SEED-DET-001",
+		}},
+	}
+	tool := NewAssignMoveTool(assignments, nil).(*AssignMoveTool)
+	params, _, _ := assignParams(entity)
+
+	preview := agenttoolstest.PreviewWithoutWrites(t, &assignments.guard, func() (*agent.ToolPreview, error) {
+		return tool.Preview(t.Context(), params)
+	})
+
+	agenttoolstest.RequireWarning(t, preview, agent.PreviewWarningEquipmentInUse)
+	assert.Nil(t, preview.Refusal(), "booking a unit's next load while it runs this one is allowed")
+	require.Len(t, preview.Warnings, 1)
+	warning := preview.Warnings[0]
+	assert.Equal(t, []string{"SEED-DET-001"}, warning.Args)
+	assert.Contains(t, warning.Message, "the trailer is on SEED-DET-001, a load still in progress")
+	assert.Contains(t, warning.Message, "until the other load is done")
+	assert.NotContains(t, preview.Summary, "SEED-DET-001")
+	assert.NotEmpty(t, preview.Changes)
 }
 
 func TestAssignMove_PreviewWarnsForAMoveAlreadyCovered(t *testing.T) {

@@ -42,6 +42,16 @@ type Tractor {
   lastKnownLocationId: ID
   lastKnownLocationName: String!
   """
+  The move this tractor is on that is in progress now, when it is on one. A stop on
+  another move cannot be started with it until that move is done, though a later
+  move may be booked with it.
+  """
+  inProgressMoveId: ID
+  "The PRO number of the shipment whose move this tractor is on now."
+  inProgressProNumber: String!
+  "When the move this tractor is on now is due at its last stop."
+  inProgressDueAt: Timestamp
+  """
   The fuel the tractor burns. Its miles land on this fuel type's lines of an
   IFTA return.
   """

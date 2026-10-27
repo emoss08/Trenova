@@ -376,6 +376,19 @@ type AgentPlan {
   updatedAt: Timestamp!
 }
 
+"What came of deciding a plan."
+type AgentPlanDecisionResult {
+  "The plan as the decision left it: waiting out its undo window, run, failed at a step, or rejected."
+  plan: AgentPlan!
+  """
+  The approval was recorded but refused before any step ran, because a
+  record a step changes moved on since the plan was proposed. Nothing was
+  changed; the plan's failureError says what moved, and the conversation that
+  raised it is told.
+  """
+  refused: Boolean!
+}
+
 "The script a batch of changes came from, as the model asked for it."
 type AgentPlanScript {
   title: String!
@@ -972,13 +985,26 @@ type AgentToolPromotion {
 }
 
 extend type Mutation {
-  decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
-  decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  """
+  Decides any proposal, as an approver, and says what came of it: whether
+  the approved write ran, and why not when it did not. An approval of a
+  change whose record moved on since it was proposed is recorded but
+  refused, runs nothing, and starts a turn in the conversation that raised it.
+  """
+  decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentProposalDecisionResult!
+  """
+  Decides any plan, as an approver, and says what came of it. An approval of
+  a plan a record of which moved on since it was proposed is recorded but
+  refused: no step runs and the plan fails at the first step that moved.
+  """
+  decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlanDecisionResult!
   """
   Decides a proposal raised in one of the caller's own conversations. The
-  approved write still runs only if the caller may make it.
+  approved write still runs only if the caller may make it; an approval
+  waits out the undo window, unless it is refused at once because its record
+  moved on, which the result says.
   """
-  decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentProposalDecisionResult!
   """
   Decides several proposals of one tool raised in the caller's own
   conversations the same way, each as proposed, with the digest of the
@@ -992,9 +1018,11 @@ extend type Mutation {
   Decides a plan raised in one of the caller's own conversations, by an agent
   they may still use. Each step's write still runs only if the caller may
   make it. Steps that each change a different record of one kind all run and
-  each reports its outcome; otherwise the first that fails stops the rest.
+  each reports its outcome; otherwise the first that fails stops the rest. An
+  approval waits out the undo window, unless it is refused at once because a
+  record a step changes moved on, which the result says.
   """
-  decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlanDecisionResult!
   """
   Takes back the caller's approval of a proposal (with every proposal
   approved with it in one batch) or of a plan, while it is in its undo window;

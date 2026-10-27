@@ -137,6 +137,8 @@ func SharedOptions() fx.Option {
 			shipmentrepository.New,
 			shipmentrepository.NewRatingReviewRepository,
 			shipmentrepository.NewSearchCardReader,
+			shipmentrepository.NewOrderReferenceMatcher,
+			shipmentrepository.NewActiveHoldReader,
 			shipmentboardrepository.New,
 			shipmentboardrepository.NewBoardRepository,
 			shipmentboardrepository.NewWatchlistRepository,

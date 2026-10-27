@@ -50,8 +50,8 @@ func TestPointToTables_ReplacesAReprintWithAPointer(t *testing.T) {
 
 	require.NotNil(t, table)
 	assert.Equal(t, kept.ID, table.ID)
-	assert.Equal(t, "Here they are:\n"+tablePointerLead+ArtifactRef(&kept)+".\n"+
-		"\nCall the carriers first.", got)
+	assert.Equal(t, "Here they are: "+ArtifactRef(&kept)+"\n\nCall the carriers first.", got)
+	assert.Empty(t, StrayArtifactLinks(got))
 }
 
 // A few rows are an answer, a table of something else is not a reprint, and
@@ -228,8 +228,9 @@ func TestPointToTables_PointsEveryReprintToItsOwnTable(t *testing.T) {
 
 	require.NotNil(t, first)
 	assert.Equal(t, late.ID, first.ID, "the first table pointed to is reported")
-	assert.Contains(t, got, tablePointerLead+ArtifactRef(&late)+".")
-	assert.Contains(t, got, tablePointerLead+ArtifactRef(&carriers)+".")
+	assert.Contains(t, got, "Here they are: "+ArtifactRef(&late))
+	assert.Contains(t, got, "Call the carriers first ("+ArtifactRef(&carriers)+").")
+	assert.Empty(t, StrayArtifactLinks(got))
 	assert.NotContains(t, got, "| PRO-1")
 	assert.NotContains(t, got, "| Acme |")
 	assert.Contains(t, got, "Call the carriers first.")

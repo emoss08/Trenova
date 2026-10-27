@@ -22,6 +22,13 @@ const (
 	toolSendCustomerEmail      = "customer_send_email"
 	toolRateQuote              = "rate_quote"
 	toolListFormulaTemplates   = "formula_list_templates"
+
+	toolDescribeFormulaLanguage = "formula_describe_language"
+	toolCheckFormula            = "formula_check"
+	toolRunFormulaTests         = "formula_run_tests"
+	toolPreviewFormula          = "formula_preview"
+	toolProposeFormula          = "formula_propose"
+	toolProposeFormulaLibrary   = "formula_library_propose"
 )
 
 func (t Template) StarterTools() []string {
@@ -589,12 +596,12 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateFormulaAssistant:
 		return []string{
-			"formula_describe_language",
-			"formula_check",
-			"formula_run_tests",
-			"formula_preview",
-			"formula_propose",
-			"formula_library_propose",
+			toolDescribeFormulaLanguage,
+			toolCheckFormula,
+			toolRunFormulaTests,
+			toolPreviewFormula,
+			toolProposeFormula,
+			toolProposeFormulaLibrary,
 			toolListFormulaTemplates,
 			toolGetFormulaTemplate,
 			"formula_list_libraries",
@@ -639,6 +646,21 @@ func (t Template) StarterTools() []string {
 		return reportAnalystTools()
 	default:
 		return nil
+	}
+}
+
+func (t Template) StandingTools() []string {
+	if t != TemplateFormulaAssistant {
+		return nil
+	}
+
+	return []string{
+		toolDescribeFormulaLanguage,
+		toolCheckFormula,
+		toolRunFormulaTests,
+		toolPreviewFormula,
+		toolProposeFormula,
+		toolProposeFormulaLibrary,
 	}
 }
 

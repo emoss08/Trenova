@@ -3,6 +3,8 @@ package agentdecisionservice
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/app/proposalexecutor"
@@ -26,14 +28,16 @@ type shownPreview struct {
 	digest        string
 	reviewed      bool
 	targetVersion *int64
+	refusal       error
 }
 
 // settlePreview works out what an approval approves: the write previewed as
 // the decider would see it, with their changes, as the world is now.
 //
-//   - A change whose pinned record has moved on, or is gone, is refused
-//     before anything is recorded. The executor would refuse it anyway, after
-//     the decision said "approved"; refusing here keeps the record honest.
+//   - A change whose pinned record has moved on, or is gone, is refused as
+//     approved: the approval is recorded with the preview it was refused on,
+//     its proposal is closed as not carried out, nothing runs, and the
+//     conversation that raised it is told why.
 //   - A digest the decider sent that no longer matches is a conflict, and
 //     nothing is recorded: a person only approves what they were shown.
 //   - An approval without a digest is recorded, with the preview it ran
@@ -66,7 +70,8 @@ func (s *Service) settlePreview(
 
 	if req.StepPreview != nil {
 		reviewed := req.StepPreviewReviewed && req.StepPreview.Digest != ""
-		if needsReview && !reviewed {
+		refusal := staleRefusal(proposal, req.StepPreview)
+		if needsReview && !reviewed && refusal == nil {
 			return nil, agent.ReviewRequiredError()
 		}
 
@@ -75,6 +80,7 @@ func (s *Service) settlePreview(
 			digest:        req.StepPreview.Digest,
 			reviewed:      reviewed,
 			targetVersion: req.StepPreview.TargetVersion,
+			refusal:       refusal,
 		}, nil
 	}
 
@@ -106,11 +112,13 @@ func (s *Service) settlePreview(
 		return nil, err
 	}
 
-	if preview.IsStale() {
-		return nil, errortypes.NewBusinessError(
-			"The record this change is for has changed since it was proposed, so it cannot be " +
-				"approved as it stands. Reject it, or ask the agent again for a current one",
-		)
+	if refusal := staleRefusal(proposal, preview); refusal != nil {
+		return &shownPreview{
+			preview:       preview,
+			digest:        preview.Digest,
+			targetVersion: preview.TargetVersion,
+			refusal:       refusal,
+		}, nil
 	}
 
 	if req.PreviewDigest != "" && req.PreviewDigest != preview.Digest {
@@ -138,6 +146,46 @@ func (s *Service) needsReview(proposal *agent.AgentProposal, modifications map[s
 	return s.executor.ReviewRequired(proposal, modifications)
 }
 
+func staleRefusal(proposal *agent.AgentProposal, preview *agent.ProposalPreview) error {
+	if !preview.IsStale() {
+		return nil
+	}
+
+	record := targetName(proposal, preview)
+	if preview.Staleness.Missing {
+		return fmt.Errorf(
+			"%w: %s no longer exists, so nothing was changed",
+			agent.ErrTargetChanged, record,
+		)
+	}
+
+	return fmt.Errorf(
+		"%w: %s was at version %d when this was proposed and is at version %d now, "+
+			"so nothing was changed",
+		agent.ErrTargetChanged,
+		record,
+		preview.Staleness.ProposedVersion,
+		preview.Staleness.CurrentVersion,
+	)
+}
+
+func targetName(proposal *agent.AgentProposal, preview *agent.ProposalPreview) string {
+	noun := "the record"
+	if resource := strings.TrimSpace(proposal.TargetResource); resource != "" {
+		noun = "the " + strings.ReplaceAll(resource, "_", " ")
+	}
+
+	for i := range preview.Changes {
+		change := &preview.Changes[i]
+		if change.EntityID == proposal.TargetID && proposal.TargetID.IsNotNil() &&
+			strings.TrimSpace(change.Label) != "" {
+			return noun + " " + strings.TrimSpace(change.Label)
+		}
+	}
+
+	return noun
+}
+
 func previewRefusal(err error) string {
 	if agent.IsReviewRequired(err) {
 		return previewRefusalRequired
@@ -146,11 +194,6 @@ func previewRefusal(err error) string {
 	var conflict *errortypes.ConflictError
 	if errors.As(err, &conflict) {
 		return previewRefusalConflict
-	}
-
-	var business *errortypes.BusinessError
-	if errors.As(err, &business) {
-		return previewRefusalStale
 	}
 
 	return aitrace.OutcomeFailed

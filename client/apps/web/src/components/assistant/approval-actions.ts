@@ -1,7 +1,9 @@
 import { decideMyProposals } from "@/lib/graphql/agent-decisions";
+import { approvalFailure } from "@/lib/approval-outcome";
 import {
   invalidateProposalViews,
   markProposalDecided,
+  markProposalFailed,
   markProposalsStatus,
 } from "@/lib/proposal-cache";
 import type { AssistantProposal } from "@/types/assistant";
@@ -81,7 +83,12 @@ export async function decideBatch(
   let commitsAt: number | null = null;
   for (const result of results) {
     const waits = result.decision?.commitsAt ?? null;
-    if (waits !== null) {
+    const failure = result.decision ? approvalFailure(result) : null;
+    if (failure !== null) {
+      // Recorded, but its write did not go through: refused because its
+      // record moved on, or failed as it ran. It never reads as accepted.
+      markProposalFailed(queryClient, result.proposalId, failure);
+    } else if (waits !== null) {
       commitsAt = Math.max(commitsAt ?? 0, waits);
       markProposalsStatus(queryClient, [result.proposalId], "Approving");
     } else if ((result.error ?? "") === "" || result.decision) {

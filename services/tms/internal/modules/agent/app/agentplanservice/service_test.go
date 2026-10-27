@@ -3,6 +3,7 @@ package agentplanservice
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentshadow"
@@ -104,6 +105,9 @@ func (f *fakeDecider) DecideWithOutcome(
 	outcome := &agentports.DecisionOutcome{Decision: &agent.AgentDecision{ID: pulid.MustNew("ad_")}}
 	if req.ProposalID == f.failAt {
 		outcome.ExecutionError = errors.New("the record changed since this was proposed")
+	}
+	if req.StepPreview.IsStale() {
+		outcome.ExecutionError = fmt.Errorf("%w: the shipment moved on", agent.ErrTargetChanged)
 	}
 
 	return outcome, nil

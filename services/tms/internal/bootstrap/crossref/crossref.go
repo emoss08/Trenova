@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
@@ -51,5 +52,27 @@ func LocationColumns() equipmentcontinuityports.LocationColumns {
 		Name:      l.Name,
 		Latitude:  l.Latitude,
 		Longitude: l.Longitude,
+	}
+}
+
+func MoveColumns() equipmentcontinuityports.MoveColumns {
+	a := shipmentdb.Assignments
+	sm := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+	st := shipmentdb.Stops
+	return equipmentcontinuityports.MoveColumns{
+		AssignmentMoveID:     a.ShipmentMoveID,
+		AssignmentTractorID:  a.TractorID,
+		AssignmentTrailerID:  a.TrailerID,
+		AssignmentArchivedAt: a.ArchivedAt,
+		MoveID:               sm.ID,
+		MoveShipmentID:       sm.ShipmentID,
+		MoveInProgress:       sm.Status.Eq(shipment.MoveStatusInTransit),
+		ShipmentID:           sp.ID,
+		ShipmentProNumber:    sp.ProNumber,
+		StopMoveID:           st.ShipmentMoveID,
+		StopSequence:         st.Sequence,
+		StopWindowStart:      st.ScheduledWindowStart,
+		StopWindowEnd:        st.ScheduledWindowEnd,
 	}
 }

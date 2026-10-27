@@ -46,9 +46,10 @@ type shipmentHoldRow struct {
 }
 
 type shipmentActivity struct {
-	ActiveHolds    []shipmentHoldRow    `json:"activeHolds"`
-	RecentComments []shipmentCommentRow `json:"recentComments,omitempty"`
-	CommentsNote   string               `json:"commentsNote,omitempty"`
+	ActiveHolds      []shipmentHoldRow    `json:"activeHolds"`
+	RecentComments   []shipmentCommentRow `json:"recentComments,omitempty"`
+	CommentsNote     string               `json:"commentsNote,omitempty"`
+	LeftOutForAccess string               `json:"leftOutForAccess,omitempty"`
 
 	outside []agent.RecordRef
 }

@@ -48,9 +48,12 @@ type SearchableField struct {
 	Weight SearchWeight
 }
 
+type FuzzyField []string
+
 type PostgresSearchConfig struct {
 	TableAlias         string
 	SearchableFields   []SearchableField
+	FuzzyFields        []FuzzyField
 	Relationships      []*RelationshipDefintion
 	ComputedFilters    []string
 	UseSearchVector    bool   // whether to use "search_vector" column for text search

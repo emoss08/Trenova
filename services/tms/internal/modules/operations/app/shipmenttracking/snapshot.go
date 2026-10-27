@@ -63,8 +63,15 @@ type Snapshot struct {
 	Estimate *ArrivalEstimate  `json:"estimate,omitempty"`
 	// Flags are the things a person would want said first: a stop already
 	// late, a position too old to trust, a move nobody is covering.
-	Flags   []string `json:"flags"`
-	Summary string   `json:"summary"`
+	Flags    []string          `json:"flags"`
+	Summary  string            `json:"summary"`
+	Canceled *CanceledSnapshot `json:"canceled,omitempty"`
+}
+
+type CanceledSnapshot struct {
+	At     int64  `json:"at,omitempty"`
+	By     string `json:"by,omitempty"`
+	Reason string `json:"reason,omitempty"`
 }
 
 type MoveSnapshot struct {
@@ -106,11 +113,12 @@ type StopSnapshot struct {
 	ActualDeparture    int64  `json:"actualDeparture,omitempty"`
 	// Late is set when the arrival came after the window closed; Overdue
 	// when the window has closed and nothing has arrived. LateMinutes is
-	// how far past in either case.
-	Late        bool  `json:"late"`
-	Overdue     bool  `json:"overdue"`
-	LateMinutes int64 `json:"lateMinutes,omitempty"`
-	Next        bool  `json:"next"`
+	// how far past in either case, and LateBy says it as a person does.
+	Late        bool   `json:"late"`
+	Overdue     bool   `json:"overdue"`
+	LateMinutes int64  `json:"lateMinutes,omitempty"`
+	LateBy      string `json:"lateBy,omitempty"`
+	Next        bool   `json:"next"`
 	// The projected arrival from the stored ETA, for a stop not yet reached.
 	EstimatedArrival     int64  `json:"estimatedArrival,omitempty"`
 	EstimatedArrivalText string `json:"estimatedArrivalText,omitempty"`
@@ -192,6 +200,7 @@ func Build(in Input) *Snapshot {
 	if sp.Customer != nil {
 		snapshot.Customer = sp.Customer.Name
 	}
+	snapshot.Canceled = canceledOf(sp)
 	snapshot.Freight = freightText(sp.Weight, sp.Pieces)
 
 	moves := append([]*shipment.ShipmentMove(nil), sp.Moves...)
@@ -213,14 +222,14 @@ func Build(in Input) *Snapshot {
 			stop := &ms.Stops[j]
 			if stop.Late {
 				snapshot.Flags = append(snapshot.Flags, fmt.Sprintf(
-					"Stop %d (%s at %s) arrived %d minutes late",
-					stop.Sequence, stop.Type, stopPlace(stop), stop.LateMinutes,
+					"Stop %d (%s at %s) arrived %s late",
+					stop.Sequence, stop.Type, stopPlace(stop), stop.LateBy,
 				))
 			}
 			if stop.Overdue {
 				snapshot.Flags = append(snapshot.Flags, fmt.Sprintf(
-					"Stop %d (%s at %s) is %d minutes past its window with no arrival recorded",
-					stop.Sequence, stop.Type, stopPlace(stop), stop.LateMinutes,
+					"Stop %d (%s at %s) is %s past its window with no arrival recorded",
+					stop.Sequence, stop.Type, stopPlace(stop), stop.LateBy,
 				))
 			}
 			if nextStop == nil && stop.Status != string(shipment.StopStatusCompleted) &&
@@ -360,6 +369,9 @@ func buildStop(stop *shipment.Stop, moveID pulid.ID, in Input) StopSnapshot {
 	case stop.ActualArrival == nil && !stop.IsCompleted() && !stop.IsCanceled() && in.Now > cutoff:
 		ss.Overdue = true
 		ss.LateMinutes = (in.Now - cutoff) / minutesPerHour
+	}
+	if ss.LateMinutes > 0 {
+		ss.LateBy = timeutils.FormatLongDurationMs(ss.LateMinutes * msPerMinute)
 	}
 
 	return ss
@@ -587,4 +599,20 @@ func verdictText(e *ArrivalEstimate) string {
 	default:
 		return fmt.Sprintf("%d minutes of slack", e.SlackMinutes)
 	}
+}
+
+func canceledOf(sp *shipment.Shipment) *CanceledSnapshot {
+	if !sp.IsCanceled() {
+		return nil
+	}
+
+	canceled := &CanceledSnapshot{Reason: strings.TrimSpace(sp.CancelReason)}
+	if sp.CanceledAt != nil {
+		canceled.At = *sp.CanceledAt
+	}
+	if sp.CanceledBy != nil {
+		canceled.By = strings.TrimSpace(sp.CanceledBy.Name)
+	}
+
+	return canceled
 }

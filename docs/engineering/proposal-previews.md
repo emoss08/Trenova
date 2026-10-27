@@ -187,7 +187,17 @@ preview. A retried activity mints a new id and leaves an orphan, which
 before anything is written, for `Accepted` and `Modified`:
 
 - the write is previewed as the decider sees it, with their changes;
-- **stale → refused**, nothing recorded ("reject it, or ask the agent again");
+- **stale → refused as approved**: the approval is recorded with the stale preview, the
+  proposal moves to `ExecutionFailed` with an `agent.ErrTargetChanged` reason naming the
+  record and both versions, nothing runs, the trust ledger is left alone and the
+  conversation's follow-up says why (not held for an undo window; commit-now on it is a
+  no-op). The caller is not sent an error: every decide mutation answers with what came
+  of it (`AgentProposalDecisionResult` for a proposal, alone or in a batch, with
+  `refused` and the reason in `error`; `AgentPlanDecisionResult` for a plan, with
+  `refused` and the failed `plan`), built by `DecisionOutcome.Result` and
+  `agent.PlanTargetChanged`. Clients clear any undo hold, mark the proposal or plan failed
+  in the cache and say "This changed since you opened it" with the server's reason
+  (`lib/approval-outcome.ts`);
 - a `previewDigest` that no longer matches → **`ConflictError`**, nothing recorded; the
   client refetches the preview and says it changed;
 - otherwise the decision records `preview`, `preview_digest`, `preview_target_version` and
@@ -244,8 +254,10 @@ decision's preview.
 A plan's steps may be filed by several agents of one turn (the conversation's agent and
 an agent it handed a task to); each step keeps the run of the agent that filed it, and
 the plan is refused while any of those agents is behind a shadow switch. A plan
-(`agentplanservice.Decide`) previews its steps once, refuses a stale plan and a plan
-digest that no longer matches, and hands each step the preview it was approved on
+(`agentplanservice.Decide`) previews its steps once, refuses a plan digest that no longer
+matches, refuses a stale plan as approved (each stale step recorded `ExecutionFailed` as
+above, the other steps `Skipped`, the plan `Failed` at the first stale step, nothing run, one
+follow-up; the same at the close of its undo window), and hands each step the preview it was approved on
 (`StepPreview`, `StepPreviewReviewed`, server-only fields). A later step on a record an
 earlier step changed runs against the version that step left
 (`ExpectedTargetVersion`, from `DecisionOutcome.ExecutedTargetVersion`); a record moved by

@@ -10,6 +10,7 @@ import { decideAgentPlan } from "@/lib/graphql/agent-decisions";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import type { Row, RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import { announceRefusal } from "@/lib/approval-outcome";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, XCloseIcon } from "@trenova/shared/components/icons";
@@ -65,11 +66,16 @@ export default function AgentPlanTable() {
       destructive: !accepting,
       preview: { kind: "plan", scope: "approver", id: plan.id, approving: accepting },
       onConfirm: async (reason, previewDigest) => {
-        await decideAgentPlan(plan.id, {
+        const result = await decideAgentPlan(plan.id, {
           decision,
           reasonCode: reason || (accepting ? "approved_from_activity" : "rejected_from_activity"),
           previewDigest,
         });
+        // A plan refused because a record a step changes moved on ran
+        // nothing; the table shows it failed once it is read again.
+        if (result.refused) {
+          announceRefusal(t, result.plan.failureError);
+        }
         await afterDecision();
       },
     });

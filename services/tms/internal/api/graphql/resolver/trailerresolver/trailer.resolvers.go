@@ -233,6 +233,10 @@ func (r *TrailerResolver) LastKnownLocationID(ctx context.Context, obj *trailer.
 	return base.IDPtr(obj.LastKnownLocationID), nil
 }
 
+func (r *TrailerResolver) InProgressMoveID(ctx context.Context, obj *trailer.Trailer) (*string, error) {
+	return base.IDPtr(obj.InProgressMoveID), nil
+}
+
 func (r *TrailerResolver) LastKnownLocation(ctx context.Context, obj *trailer.Trailer) (*gqlmodel.LocationReference, error) {
 	return lastKnownLocationReference(obj), nil
 }

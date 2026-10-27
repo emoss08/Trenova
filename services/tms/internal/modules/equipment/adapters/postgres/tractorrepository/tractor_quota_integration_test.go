@@ -30,6 +30,7 @@ func TestCreateRefusesATractorPastTheQuota(t *testing.T) {
 		Logger:    zap.NewNop(),
 		Quota:     guard,
 		Locations: crossref.LocationColumns(),
+		Moves:     crossref.MoveColumns(),
 	})
 	entity := &tractor.Tractor{
 		OrganizationID: a.Info.OrgID,

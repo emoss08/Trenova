@@ -262,3 +262,27 @@ func TestTractorRelationIncludesForFields_LoadsOwnerOperatorOnlyWhenSelected(t *
 	assert.False(t, without.IncludeOwnerWorker)
 	assert.Nil(t, without.OwnerWorkerColumns)
 }
+
+func TestTractorRelationIncludesForFields_ReadsTheMoveInProgressOnlyWhenSelected(t *testing.T) {
+	t.Parallel()
+
+	with := tractorRelationIncludesForFields(
+		func(path string) bool { return path == "id" || path == "inProgressProNumber" },
+		"",
+		nil,
+		nil,
+		nil,
+	)
+	without := tractorRelationIncludesForFields(
+		func(path string) bool { return path == "id" },
+		"",
+		nil,
+		nil,
+		nil,
+	)
+
+	assert.True(t, with.IncludeInProgressMove)
+	assert.NotContains(t, with.TractorColumns, "in_progress_pro_number",
+		"a computed field is filled by the query, never read as a column")
+	assert.False(t, without.IncludeInProgressMove)
+}

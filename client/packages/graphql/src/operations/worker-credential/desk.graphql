@@ -63,6 +63,11 @@ query DeskWorkerCredentialList(
     }
     worker {
       ...WorkerReference
+      canBeAssigned
+      assignmentBlocked
+      profile {
+        complianceStatus
+      }
     }
   }
 }

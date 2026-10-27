@@ -362,6 +362,21 @@ func TestTemplates_TheFormulaAssistantIsAChatAgentThatOnlyProposes(t *testing.T)
 	require.NotEmpty(t, assistant.StarterTools())
 }
 
+func TestTemplates_StandingToolsAreTheTemplatesOwnTools(t *testing.T) {
+	t.Parallel()
+
+	for _, template := range agentdefinition.AllTemplates() {
+		standing := template.StandingTools()
+		if template != agentdefinition.TemplateFormulaAssistant {
+			require.Emptyf(t, standing, "%s", template.Label())
+			continue
+		}
+		require.Contains(t, standing, "formula_propose")
+		require.Contains(t, standing, "formula_library_propose")
+		require.Subset(t, template.StarterTools(), standing)
+	}
+}
+
 /*
 A template's instructions say who the agent is, what it puts first, the rules
 it keeps and what is a person's to decide. The order of the work is on the

@@ -340,3 +340,59 @@ func TestGetBillingProfileStaysInsideTheTenant(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, created.ID, profile.CustomerID)
 }
+
+func TestListFallsBackToACloseSpellingOnlyWhenNothingMatchesAsWritten(t *testing.T) {
+	f := newCustomerFixture(t)
+
+	for _, named := range []struct {
+		tenant customerTenant
+		code   string
+		name   string
+	}{
+		{f.a, "FRESH", "FreshHaul Foods"},
+		{f.a, "ACMEMF", "Acme Manufacturing"},
+		{f.a, "JORDMF", "Jordan Foods Manufacturing"},
+		{f.b, "FRESHB", "FreshHaul Foods"},
+	} {
+		entity := newCustomer(named.tenant, named.code)
+		entity.Name = named.name
+		_, err := f.repo.Create(named.tenant.ctx, entity)
+		require.NoError(t, err)
+	}
+
+	list := func(query string) *pagination.ListResult[*customer.Customer] {
+		t.Helper()
+
+		result, err := f.repo.List(f.a.ctx, &customerports.ListCustomerRequest{
+			Filter: &pagination.QueryOptions{
+				TenantInfo: f.a.info,
+				Pagination: pagination.Info{Limit: 10},
+				Query:      query,
+			},
+		})
+		require.NoError(t, err)
+
+		return result
+	}
+
+	exact := list("freshhaul")
+	require.Len(t, exact.Items, 1)
+	assert.Equal(t, "FreshHaul Foods", exact.Items[0].Name)
+	assert.False(t, exact.Fuzzy)
+
+	typo := list("frshhaul")
+	require.Len(t, typo.Items, 1, "a dropped letter finds the customer, in this tenant only")
+	assert.Equal(t, "FreshHaul Foods", typo.Items[0].Name)
+	assert.Equal(t, f.a.info.OrgID, typo.Items[0].OrganizationID)
+	assert.Equal(t, 1, typo.Total)
+	assert.True(t, typo.Fuzzy)
+
+	phrase := list("acme manufacuring")
+	require.Len(t, phrase.Items, 1, "every word must be close, so other manufacturers stay out")
+	assert.Equal(t, "Acme Manufacturing", phrase.Items[0].Name)
+	assert.True(t, phrase.Fuzzy)
+
+	nothing := list("zqxwvjkp")
+	assert.Empty(t, nothing.Items)
+	assert.False(t, nothing.Fuzzy)
+}

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"go.opentelemetry.io/otel/trace"
 	"go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -70,16 +71,22 @@ func (s *Service) ApproveDeferred(
 	recordedDecisions := make([]pulid.ID, 0, len(reqs))
 	for i, req := range reqs {
 		results[i].ProposalID = req.ProposalID
-		_, rec, span, err := s.record(ctx, req, actor, window)
-		if span != nil {
-			span.End()
-		}
+		recordCtx, rec, span, err := s.record(ctx, req, actor, window)
 		if err != nil {
+			endSpan(span)
 			results[i].Err = err
 
 			continue
 		}
 		results[i].Decision = rec.decision
+		if rec.refusal != nil {
+			outcome := s.carryOut(recordCtx, rec, actor)
+			endSpan(span)
+			results[i].ExecutionError = outcome.ExecutionError
+
+			continue
+		}
+		endSpan(span)
 		recordedProposals = append(recordedProposals, rec.proposal)
 		recordedDecisions = append(recordedDecisions, rec.decision.ID)
 	}
@@ -103,6 +110,12 @@ func (s *Service) ApproveDeferred(
 	}
 
 	return results, nil
+}
+
+func endSpan(span trace.Span) {
+	if span != nil {
+		span.End()
+	}
 }
 
 func (s *Service) startCommit(
@@ -341,6 +354,9 @@ func (s *Service) UndoOwnApproval(
 	if err != nil {
 		return err
 	}
+	if len(window) == 0 {
+		return errAlreadyCommitted()
+	}
 
 	open := make([]pulid.ID, 0, len(window))
 	for _, decision := range window {
@@ -401,7 +417,7 @@ func (s *Service) CommitOwnApprovalNow(
 	actor *permissionports.RequestActor,
 ) error {
 	window, err := s.ownWindow(ctx, req, actor)
-	if err != nil {
+	if err != nil || len(window) == 0 {
 		return err
 	}
 
@@ -480,23 +496,15 @@ func (s *Service) ownWindow(
 
 	latest := decisions[0]
 	if latest.CommitWorkflowID == "" || latest.CommitsAt == nil {
-		return nil, errAlreadyCommitted()
+		return nil, nil
 	}
 
-	window, err := s.windowDecisions(
+	return s.windowDecisions(
 		ctx,
 		req.TenantInfo,
 		latest.CommitWorkflowID,
 		*latest.CommitsAt,
 	)
-	if err != nil {
-		return nil, err
-	}
-	if len(window) == 0 {
-		return nil, errAlreadyCommitted()
-	}
-
-	return window, nil
 }
 
 func errAlreadyCommitted() error {

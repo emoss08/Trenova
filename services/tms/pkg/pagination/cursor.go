@@ -75,6 +75,7 @@ type CursorListResult[T any] struct {
 	TotalCount      *int
 	TotalCountExact bool
 	EdgeCursors     []string
+	Fuzzy           bool
 }
 
 func (r *CursorListResult[T]) EdgeCursorAt(index int) (string, bool) {

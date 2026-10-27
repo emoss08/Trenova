@@ -712,3 +712,116 @@ func TestDecision_OnAHeldProposalIsRefusedAndRecordsNothing(t *testing.T) {
 	assert.Contains(t, err.Error(), "while all agents are paused")
 	assert.Empty(t, h.decisions.rows)
 }
+
+func TestApproval_AStaleApprovalIsRefusedAtOnceAndNeverHeldForAWindow(t *testing.T) {
+	t.Parallel()
+
+	h := newWindowHarness(t, 2)
+	stale := h.ids[0]
+	h.service.previews = &stalePreviews{stale: stale}
+	followUps := &recordedFollowUps{}
+	h.service.followUps = followUps
+
+	approved := h.approve(t)
+	require.Len(t, approved, 2)
+
+	require.NoError(t, approved[0].Err)
+	require.NotNil(t, approved[0].Decision, "the refused approval is recorded")
+	assert.Nil(t, approved[0].Decision.CommitsAt, "it waits on no window")
+	require.ErrorIs(t, approved[0].ExecutionError, agent.ErrTargetChanged)
+	assert.Equal(t, agent.ProposalStatusExecutionFailed, h.proposals.status(stale))
+	require.Len(t, followUps.requests, 1, "the refusal is reported as it is made")
+	assert.Equal(t, stale, followUps.requests[0].ProposalID)
+
+	require.NoError(t, approved[1].Err)
+	require.NoError(t, approved[1].ExecutionError)
+	require.NotNil(t, approved[1].Decision.CommitsAt, "the other approval still waits out its window")
+	assert.Equal(t, agent.ProposalStatusApproving, h.proposals.status(h.ids[1]))
+	require.Len(t, h.workflows.payloads, 1)
+
+	require.NoError(t, h.service.CommitOwnApprovalNow(t.Context(), h.settle(stale), h.actor),
+		"committing a refused approval now leaves it as it is")
+	assert.Equal(t, agent.ProposalStatusExecutionFailed, h.proposals.status(stale))
+	assert.Len(t, followUps.requests, 1)
+	require.Error(t, h.service.UndoOwnApproval(t.Context(), h.settle(stale), h.actor),
+		"a refused approval has nothing left to undo")
+
+	h.closeWindow(t)
+	assert.Equal(t, agent.ProposalStatusExecuted, h.proposals.status(h.ids[1]))
+	assert.Equal(t, agent.ProposalStatusExecutionFailed, h.proposals.status(stale),
+		"closing the window does not touch the refused approval")
+}
+
+func TestDecideOwn_AStaleApprovalTellsItsDeciderAtOnceThatNothingChanged(t *testing.T) {
+	t.Parallel()
+
+	h := newWindowHarness(t, 1)
+	stale := h.ids[0]
+	h.service.previews = &stalePreviews{stale: stale}
+	h.service.followUps = &recordedFollowUps{}
+
+	outcome, err := h.service.DecideOwn(t.Context(), &agentports.DecideAgentProposalRequest{
+		ProposalID: stale,
+		Decision:   agent.DecisionAccepted,
+		TenantInfo: h.tenant,
+	}, h.actor)
+	require.NoError(t, err, "the refusal is the decision's outcome, not an error")
+
+	result := outcome.Result(stale)
+	assert.Equal(t, stale, result.ProposalID)
+	assert.True(t, result.Refused)
+	assert.False(t, result.Executed)
+	assert.Contains(t, result.Error,
+		"was at version 3 when this was proposed and is at version 4 now, so nothing was changed")
+	require.NotNil(t, result.Decision, "the approval is recorded")
+	assert.Nil(t, result.Decision.CommitsAt, "it waits on no undo window")
+	assert.Equal(t, agent.ProposalStatusExecutionFailed, h.proposals.status(stale))
+	assert.Empty(t, h.workflows.payloads)
+}
+
+func TestDecideOwn_AnApprovalInItsUndoWindowHasNotRunAndIsNotRefused(t *testing.T) {
+	t.Parallel()
+
+	h := newWindowHarness(t, 1)
+	id := h.ids[0]
+
+	outcome, err := h.service.DecideOwn(t.Context(), &agentports.DecideAgentProposalRequest{
+		ProposalID: id,
+		Decision:   agent.DecisionAccepted,
+		TenantInfo: h.tenant,
+	}, h.actor)
+	require.NoError(t, err)
+
+	result := outcome.Result(id)
+	assert.False(t, result.Refused)
+	assert.False(t, result.Executed, "nothing runs until the window closes")
+	assert.Empty(t, result.Error)
+	require.NotNil(t, result.Decision)
+	assert.NotNil(t, result.Decision.CommitsAt)
+	assert.Equal(t, agent.ProposalStatusApproving, h.proposals.status(id))
+}
+
+type stalePreviews struct {
+	agentports.ProposalPreviewService
+
+	stale pulid.ID
+}
+
+func (p *stalePreviews) ForProposal(
+	_ context.Context,
+	req *agentports.ProposalPreviewRequest,
+) (*agent.ProposalPreview, error) {
+	current := int64(3)
+	if req.Proposal.ID == p.stale {
+		current = 4
+	}
+
+	return &agent.ProposalPreview{
+		Schema:        agent.PreviewSchemaVersion,
+		ProposalID:    req.Proposal.ID,
+		Tool:          req.Proposal.ToolName,
+		Coverage:      agent.PreviewCoverageFull,
+		TargetVersion: &current,
+		Staleness:     &agent.PreviewStaleness{Pinned: true, ProposedVersion: 3, CurrentVersion: current},
+	}, nil
+}

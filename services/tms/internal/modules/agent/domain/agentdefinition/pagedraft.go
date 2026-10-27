@@ -22,7 +22,9 @@ func describePageDraft(draft *pagedraft.Draft) string {
 	case draft.Formula != nil:
 		builder.WriteString(
 			"- The formula template in the person's editor, which may not be saved yet. Answer " +
-				"about this source, and check and test it before you say what it charges:\n",
+				"about this source, and check and test it before you say what it charges. " +
+				"\"The load\" or \"a load\" is the shipment this formula prices, not a record " +
+				"to look up, and a request for a price is a change to write into this source:\n",
 		)
 		builder.WriteString(pageDraftOpenTag)
 		writeSourceDraft(&builder, &sourceDraft{

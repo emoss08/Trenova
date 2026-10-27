@@ -97,7 +97,7 @@ func executeFailure(err error) string {
 		return executeTenant
 	case errors.Is(err, ErrToolMissing):
 		return aitrace.OutcomeInvalid
-	case errors.Is(err, ErrTargetChanged):
+	case errors.Is(err, agent.ErrTargetChanged):
 		return executeStaleTarget
 	case errors.Is(err, ErrTaintedNeedsPerson):
 		return aitrace.OutcomeDenied

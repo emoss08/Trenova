@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/inprogressmove"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/lastknownlocation"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
@@ -34,6 +35,7 @@ type Params struct {
 	Logger    *zap.Logger
 	Quota     platformplanports.QuotaGuard `optional:"true"`
 	Locations equipmentcontinuityports.LocationColumns
+	Moves     equipmentcontinuityports.MoveColumns
 }
 
 type repository struct {
@@ -41,6 +43,7 @@ type repository struct {
 	l         *zap.Logger
 	quota     platformplanports.QuotaGuard
 	locations equipmentcontinuityports.LocationColumns
+	moves     equipmentcontinuityports.MoveColumns
 }
 
 func New(p Params) tractorports.TractorRepository {
@@ -49,6 +52,7 @@ func New(p Params) tractorports.TractorRepository {
 		l:         p.Logger.Named("postgres.tractor-repository"),
 		quota:     quotaservice.OrUnlimited(p.Quota),
 		locations: p.Locations,
+		moves:     p.Moves,
 	}
 }
 
@@ -92,10 +96,15 @@ func (r *repository) List(
 							tractordb.Tractors.ID,
 							equipmentcontinuity.EquipmentTypeTractor,
 						),
+						inProgressMoveFilter: inprogressmove.MoveID(
+							r.moves,
+							r.moves.AssignmentTractorID,
+							tractordb.Tractors.ID,
+						),
 					},
 					Shape: func(q *keel.Query[*tractor.Tractor]) *keel.Query[*tractor.Tractor] {
-						return r.withLastKnownLocation(
-							q.Load(loads...),
+						return r.withInProgressMove(
+							r.withLastKnownLocation(q.Load(loads...), &req.TractorRelationIncludes),
 							&req.TractorRelationIncludes,
 						)
 					},
@@ -259,7 +268,9 @@ func (r *repository) tractorQuery(
 		return nil, err
 	}
 
-	return r.withLastKnownLocation(q.Load(loads...), includes), nil
+	q = r.withLastKnownLocation(q.Load(loads...), includes)
+
+	return r.withInProgressMove(q, includes), nil
 }
 
 func tractorLoads(includes *tractorports.TractorRelationIncludes) ([]keel.Loader, error) {
@@ -335,7 +346,27 @@ func tractorLoads(includes *tractorports.TractorRelationIncludes) ([]keel.Loader
 	return loads.Result()
 }
 
-const lastKnownLocationFilter = "lastKnownLocationId"
+const (
+	lastKnownLocationFilter = "lastKnownLocationId"
+	inProgressMoveFilter    = "inProgressMoveId"
+)
+
+func (r *repository) withInProgressMove(
+	q *keel.Query[*tractor.Tractor],
+	includes *tractorports.TractorRelationIncludes,
+) *keel.Query[*tractor.Tractor] {
+	if !includes.IncludeInProgressMove {
+		return q
+	}
+
+	t := tractordb.Tractors
+	move := inprogressmove.Of(r.moves, r.moves.AssignmentTractorID, t.ID)
+
+	return q.
+		Compute(t.InProgressMoveID, move.MoveID).
+		Compute(t.InProgressProNumber, move.ProNumber).
+		Compute(t.InProgressDueAt, move.DueAt)
+}
 
 func (r *repository) withLastKnownLocation(
 	q *keel.Query[*tractor.Tractor],

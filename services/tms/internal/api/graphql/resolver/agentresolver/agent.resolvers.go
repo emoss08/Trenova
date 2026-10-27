@@ -166,7 +166,7 @@ func (r *AgentRunResolver) ParentOwnerKind(ctx context.Context, obj *agent.Agent
 	return &kind, nil
 }
 
-func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {
+func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -177,7 +177,7 @@ func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 		return nil, err
 	}
 
-	return r.AgentDecisionService.Decide(ctx, &agentports.DecideAgentProposalRequest{
+	outcome, err := r.AgentDecisionService.DecideWithOutcome(ctx, &agentports.DecideAgentProposalRequest{
 		ProposalID:    proposalID,
 		Decision:      input.Decision,
 		Modifications: input.Modifications,
@@ -186,9 +186,16 @@ func (r *MutationResolver) DecideAgentProposal(ctx context.Context, id string, i
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result := outcome.Result(proposalID)
+
+	return base.DecisionResult(&result), nil
 }
 
-func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error) {
+func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAgentProposal, permission.OpUpdate)
 	if err != nil {
 		return nil, err
@@ -199,7 +206,7 @@ func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		return nil, err
 	}
 
-	return r.AgentPlanService.Decide(ctx, &agentports.DecideAgentPlanRequest{
+	plan, err := r.AgentPlanService.Decide(ctx, &agentports.DecideAgentPlanRequest{
 		PlanID:        planID,
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
@@ -207,9 +214,14 @@ func (r *MutationResolver) DecideAgentPlan(ctx context.Context, id string, input
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return base.PlanDecisionResult(plan), nil
 }
 
-func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error) {
+func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -220,7 +232,7 @@ func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 		return nil, err
 	}
 
-	return r.AgentDecisionService.DecideOwn(ctx, &agentports.DecideAgentProposalRequest{
+	outcome, err := r.AgentDecisionService.DecideOwn(ctx, &agentports.DecideAgentProposalRequest{
 		ProposalID:    proposalID,
 		Decision:      input.Decision,
 		Modifications: input.Modifications,
@@ -229,6 +241,13 @@ func (r *MutationResolver) DecideMyProposal(ctx context.Context, id string, inpu
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	result := outcome.Result(proposalID)
+
+	return base.DecisionResult(&result), nil
 }
 
 func (r *MutationResolver) DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error) {
@@ -250,7 +269,7 @@ func (r *MutationResolver) DecideMyProposals(ctx context.Context, ids []string, 
 	return base.BatchDecisionResults(results), nil
 }
 
-func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error) {
+func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceAssistant, permission.OpCreate)
 	if err != nil {
 		return nil, err
@@ -261,7 +280,7 @@ func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 		return nil, err
 	}
 
-	return r.AgentPlanService.DecideOwn(ctx, &agentports.DecideAgentPlanRequest{
+	plan, err := r.AgentPlanService.DecideOwn(ctx, &agentports.DecideAgentPlanRequest{
 		PlanID:        planID,
 		Decision:      input.Decision,
 		ReasonCode:    input.ReasonCode,
@@ -269,6 +288,11 @@ func (r *MutationResolver) DecideMyPlan(ctx context.Context, id string, input gq
 		TenantInfo:    base.TenantInfo(authCtx),
 		PreviewDigest: stringutils.FromPtr(input.PreviewDigest),
 	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return base.PlanDecisionResult(plan), nil
 }
 
 func (r *MutationResolver) UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error) {

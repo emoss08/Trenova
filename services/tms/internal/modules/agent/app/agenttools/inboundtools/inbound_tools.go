@@ -168,7 +168,7 @@ func (t *LinkInboundMessageTool) ParamSchema() map[string]any {
 			paramMessageID: agenttoolschema.RecordIDText(permission.ResourceInboundMessage,
 				"The message, from the run's subject or inbox_list_inbound_messages."),
 			"shipmentId": agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"Optional: the shipment the message is about, from shipment_list or "+
+				"Optional: the shipment the message is about, from "+
 					"shipment_list."),
 			"customerId": agenttoolschema.RecordIDText(permission.ResourceCustomer,
 				"Optional: the customer who sent it or who it concerns, from customer_list."),

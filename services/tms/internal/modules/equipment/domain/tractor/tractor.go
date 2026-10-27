@@ -61,6 +61,9 @@ type Tractor struct {
 	LastKnownLocationName      string                      `json:"lastKnownLocationName"      keel:"last_known_location_name,computed,nullzero"`
 	LastKnownLocationLatitude  *float64                    `json:"lastKnownLocationLatitude"  keel:"last_known_location_latitude,computed"`
 	LastKnownLocationLongitude *float64                    `json:"lastKnownLocationLongitude" keel:"last_known_location_longitude,computed"`
+	InProgressMoveID           pulid.ID                    `json:"inProgressMoveId"           keel:"in_progress_move_id,computed,nullzero"`
+	InProgressProNumber        string                      `json:"inProgressProNumber"        keel:"in_progress_pro_number,computed,nullzero"`
+	InProgressDueAt            *int64                      `json:"inProgressDueAt"            keel:"in_progress_due_at,computed"`
 	Version                    int64                       `json:"version"                    keel:"version,version"`
 	CreatedAt                  int64                       `json:"createdAt"                  keel:"created_at,autocreate"`
 	UpdatedAt                  int64                       `json:"updatedAt"                  keel:"updated_at,autoupdate"`
@@ -202,7 +205,7 @@ func (t *Tractor) GetResourceID() string {
 func (t *Tractor) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "trac",
-		ComputedFilters: []string{"lastKnownLocationId"},
+		ComputedFilters: []string{"lastKnownLocationId", "inProgressMoveId"},
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},

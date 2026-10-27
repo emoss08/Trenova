@@ -84,6 +84,7 @@ func TestBuild_ReadsStopsInOrderAndFlagsTheLateOne(t *testing.T) {
 	assert.Equal(t, "Pickup", stops[0].Type, "stops come back in sequence order")
 	assert.True(t, stops[0].Late)
 	assert.EqualValues(t, 60, stops[0].LateMinutes)
+	assert.Equal(t, "1h 00m", stops[0].LateBy)
 	assert.False(t, stops[1].Late)
 	assert.True(t, stops[1].Next)
 
@@ -92,7 +93,7 @@ func TestBuild_ReadsStopsInOrderAndFlagsTheLateOne(t *testing.T) {
 	assert.Contains(
 		t,
 		snapshot.Flags,
-		"Stop 0 (Pickup at Dallas Yard in Dallas, TX) arrived 60 minutes late",
+		"Stop 0 (Pickup at Dallas Yard in Dallas, TX) arrived 1h 00m late",
 	)
 	assert.Contains(t, snapshot.Summary, "PRO S12345 is InTransit for Acme.")
 	assert.Contains(t, snapshot.Summary, "Next: delivery Houston DC in Houston, TX")
@@ -256,11 +257,12 @@ func TestBuild_FlagsAnOverdueStopAndAnUncoveredMove(t *testing.T) {
 	require.NotNil(t, next)
 	assert.True(t, next.Overdue)
 	assert.EqualValues(t, 45, next.LateMinutes)
+	assert.Equal(t, "45m", next.LateBy)
 	assert.Contains(t, snapshot.Flags, "Move 0 has no driver or carrier")
 	assert.Contains(
 		t,
 		snapshot.Flags,
-		"Stop 1 (Delivery at Houston DC in Houston, TX) is 45 minutes past its window with no arrival recorded",
+		"Stop 1 (Delivery at Houston DC in Houston, TX) is 45m past its window with no arrival recorded",
 	)
 	require.NotNil(t, snapshot.Estimate)
 	assert.Equal(

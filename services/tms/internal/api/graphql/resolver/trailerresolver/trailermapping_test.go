@@ -319,3 +319,25 @@ func TestLastKnownLocationReference_CarriesTheLocationsCoordinates(t *testing.T)
 	assert.Nil(t, ungeocoded.Latitude)
 	assert.Nil(t, lastKnownLocationReference(&trailer.Trailer{}))
 }
+
+func TestTrailerRelationIncludesForFields_ReadsTheMoveInProgressOnlyWhenSelected(t *testing.T) {
+	t.Parallel()
+
+	with := trailerRelationIncludesForFields(
+		func(path string) bool { return path == "id" || path == "inProgressProNumber" },
+		"",
+		nil,
+		nil,
+	)
+	without := trailerRelationIncludesForFields(
+		func(path string) bool { return path == "id" },
+		"",
+		nil,
+		nil,
+	)
+
+	assert.True(t, with.IncludeInProgressMove)
+	assert.NotContains(t, with.TrailerColumns, "in_progress_pro_number",
+		"a computed field is filled by the query, never read as a column")
+	assert.False(t, without.IncludeInProgressMove)
+}

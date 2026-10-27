@@ -893,6 +893,19 @@ func (f *recordingShipmentRepo) List(
 	return &pagination.CursorListResult[*shipment.Shipment]{}, nil
 }
 
+func partyGroupsOf(
+	requests []*shipmentports.ListShipmentsRequest,
+) []shipmentports.ShipmentPartyGroup {
+	var groups []shipmentports.ShipmentPartyGroup
+	for _, req := range requests {
+		if len(req.ShipmentOptions.PartyGroups) > 0 {
+			groups = req.ShipmentOptions.PartyGroups
+		}
+	}
+
+	return groups
+}
+
 type namedCommodities struct {
 	commodityports.CommodityRepository
 
@@ -931,13 +944,8 @@ func TestSearchShipments_MatchesWhatALoadCarries(t *testing.T) {
 		permission.SensitivityRestricted))
 	require.NoError(t, err)
 
-	var carried []pulid.ID
-	for _, req := range repo.requests {
-		if len(req.ShipmentOptions.CommodityIDs) > 0 {
-			carried = req.ShipmentOptions.CommodityIDs
-		}
-	}
-	assert.Equal(t, []pulid.ID{steel.ID}, carried)
+	assert.Equal(t, []shipmentports.ShipmentPartyGroup{{CommodityIDs: []pulid.ID{steel.ID}}},
+		partyGroupsOf(repo.requests))
 }
 
 type namedShipmentTypes struct {
@@ -975,13 +983,8 @@ func TestSearchShipments_MatchesTheShipmentType(t *testing.T) {
 		permission.SensitivityRestricted))
 	require.NoError(t, err)
 
-	var typed []pulid.ID
-	for _, req := range repo.requests {
-		if len(req.ShipmentOptions.ShipmentTypeIDs) > 0 {
-			typed = req.ShipmentOptions.ShipmentTypeIDs
-		}
-	}
-	assert.Equal(t, []pulid.ID{ltl.ID}, typed)
+	assert.Equal(t, []shipmentports.ShipmentPartyGroup{{ShipmentTypeIDs: []pulid.ID{ltl.ID}}},
+		partyGroupsOf(repo.requests))
 }
 
 type namedLocations struct {
@@ -1026,15 +1029,10 @@ func TestSearchShipments_RequiresAStopAtEachPlaceNamed(t *testing.T) {
 		permission.SensitivityRestricted))
 	require.NoError(t, err)
 
-	var each [][]pulid.ID
-	for _, req := range repo.requests {
-		if len(req.ShipmentOptions.StopEachOf) > 0 {
-			each = req.ShipmentOptions.StopEachOf
-		}
-		assert.Empty(t, req.ShipmentOptions.StopLocationIDs,
-			"either place alone is not the load meant")
-	}
-	assert.Equal(t, [][]pulid.ID{{denver.ID}, {phoenix.ID}}, each)
+	assert.Equal(t, []shipmentports.ShipmentPartyGroup{
+		{StopLocationIDs: []pulid.ID{denver.ID}},
+		{StopLocationIDs: []pulid.ID{phoenix.ID}},
+	}, partyGroupsOf(repo.requests), "either place alone is not the load meant")
 }
 
 type statusShipmentRepo struct {

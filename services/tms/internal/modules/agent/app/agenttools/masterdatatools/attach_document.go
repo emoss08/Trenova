@@ -67,7 +67,7 @@ func (t *AttachDocumentTool) ParamSchema() map[string]any {
 			),
 			"shipmentId": agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
-				"The shipment it belongs to, from the page, shipment_list or "+
+				"The shipment it belongs to, from the page or "+
 					"shipment_list.",
 			),
 		},

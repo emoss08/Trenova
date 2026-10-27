@@ -214,6 +214,8 @@ models:
         resolver: true
       lastKnownLocation:
         resolver: true
+      inProgressMoveId:
+        resolver: true
   Tractor:
     model:
       - github.com/emoss08/trenova/internal/modules/equipment/domain/tractor.Tractor
@@ -229,6 +231,8 @@ models:
       lastKnownLocationId:
         resolver: true
       lastKnownLocation:
+        resolver: true
+      inProgressMoveId:
         resolver: true
   Worker:
     model:

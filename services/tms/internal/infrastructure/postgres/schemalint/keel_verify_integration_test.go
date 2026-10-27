@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/keeltables"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,7 +40,8 @@ func TestEveryDeclaredDatabaseFunctionMatchesTheMigratedSchema(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	drifts, err := keel.VerifyFuncs(ctx, db, postgres.RLSFuncs()...)
+	funcs := append(postgres.RLSFuncs(), listquery.SearchFuncs()...)
+	drifts, err := keel.VerifyFuncs(ctx, db, funcs...)
 	require.NoError(t, err)
 
 	lines := make([]string, 0, len(drifts))

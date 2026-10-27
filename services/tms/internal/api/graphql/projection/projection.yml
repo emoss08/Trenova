@@ -595,11 +595,19 @@ specials:
       - lastKnownLocation
       - lastKnownLocationId
       - lastKnownLocationName
+    inProgressMove:
+      - inProgressMoveId
+      - inProgressProNumber
+      - inProgressDueAt
   Trailer:
     lastKnownLocation:
       - lastKnownLocation
       - lastKnownLocationId
       - lastKnownLocationName
+    inProgressMove:
+      - inProgressMoveId
+      - inProgressProNumber
+      - inProgressDueAt
 
 gates:
   Tractor:

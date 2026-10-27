@@ -11,8 +11,10 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agentruntime"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -58,9 +60,19 @@ const (
 		"again. " + continueTheWork
 )
 
+const refusedInstruction = "A change approved here was refused because its record changed " +
+	"after it was proposed, so that change was not made. Tell the person in one or two " +
+	"sentences what was not done and why, and what did run if this note says any did, with " +
+	"what this note and the records in play say the record is now, such as its status; where " +
+	"they do not say what changed, say you do not know. Do not retry the refused proposal and " +
+	"do not file the same change again on your own. If it still makes sense for the record as " +
+	"it is now, offer to propose it again against its current version; if it no longer does, " +
+	"as on a canceled or delivered record, say so instead."
+
 type decisionFollowUp struct {
 	note    string
 	decided []*agent.AgentProposal
+	changed []agent.EntityRef
 }
 
 type decisionNoteParams struct {
@@ -133,14 +145,94 @@ func (s *Service) decisionNote(
 		return decisionFollowUp{}, err
 	}
 	note := noteFrom(decisions, []pulid.ID{proposal.ID})
+	ask := followUpAsk(proposal.Status == agent.ProposalStatusRejected, note)
+	refused := refusedOverChange([]*agent.AgentProposal{proposal})
+	if len(refused) > 0 {
+		ask = refusedAsk(note)
+	}
 
 	return decisionFollowUp{
 		note: fmt.Sprintf("%s%s\nDecision on proposal %s (%s). %s%s",
 			decisionLine(proposal), ranWith(proposal, decisions), proposal.ID, proposal.ToolName,
-			producedNote(proposal),
-			followUpAsk(proposal.Status == agent.ProposalStatusRejected, note)),
+			producedNote(proposal), ask),
 		decided: []*agent.AgentProposal{proposal},
+		changed: changedTargets(refused),
 	}, nil
+}
+
+func refusedOverChange(proposals []*agent.AgentProposal) []*agent.AgentProposal {
+	refused := make([]*agent.AgentProposal, 0, 1)
+	for _, proposal := range proposals {
+		if proposal != nil && proposal.Status == agent.ProposalStatusExecutionFailed &&
+			agent.TargetChanged(proposal.ExecutionError) {
+			refused = append(refused, proposal)
+		}
+	}
+
+	return refused
+}
+
+func changedTargets(refused []*agent.AgentProposal) []agent.EntityRef {
+	refs := make([]agent.EntityRef, 0, len(refused))
+	for _, proposal := range refused {
+		if proposal.TargetID.IsNil() {
+			continue
+		}
+		refs = append(refs, agent.EntityRef{
+			Type: proposal.TargetResource,
+			ID:   proposal.TargetID.String(),
+		})
+	}
+
+	return refs
+}
+
+func refusedAsk(note string) string {
+	if note == "" {
+		return refusedInstruction
+	}
+
+	return agentruntime.FenceUntrusted(
+		decisionNoteHeader,
+		stringutils.TruncateRunes(note, agent.MaxDecisionNoteLength),
+	) + "\n" + personNoteGuard + " Answer what they said as well. " + refusedInstruction
+}
+
+func (s *Service) anchorChanged(
+	ctx context.Context,
+	anchors []agentdefinition.RuntimeAnchor,
+	changed []agent.EntityRef,
+	actor *permissionports.RequestActor,
+	tenant pagination.TenantInfo,
+) []agentdefinition.RuntimeAnchor {
+	if s.anchors == nil || len(changed) == 0 {
+		return anchors
+	}
+
+	unread := make([]agent.EntityRef, 0, len(changed))
+	anchored := func(id string) bool {
+		return slices.ContainsFunc(anchors, func(a agentdefinition.RuntimeAnchor) bool {
+			return a.ID == id
+		}) || slices.ContainsFunc(unread, func(r agent.EntityRef) bool { return r.ID == id })
+	}
+	for _, ref := range changed {
+		if anchored(ref.ID) {
+			continue
+		}
+		unread = append(unread, ref)
+		if len(unread) == conversation.MaxWorkingSet {
+			break
+		}
+	}
+	if len(unread) == 0 {
+		return anchors
+	}
+
+	return append(anchors, s.anchors.Anchor(ctx, &agentports.RecordAnchorRequest{
+		TenantInfo: tenant,
+		Actor:      actor,
+		Records:    unread,
+	})...)
 }
 
 func (s *Service) personNote(
@@ -279,6 +371,9 @@ func decisionLine(proposal *agent.AgentProposal) string {
 		return fmt.Sprintf("Approved %s, and it ran.", tool)
 	case agent.ProposalStatusExecutionFailed:
 		reason := executionFailureReason(proposal.ExecutionError)
+		if agent.TargetChanged(proposal.ExecutionError) {
+			return fmt.Sprintf("Approved %s, but it was not carried out: %s", tool, reason)
+		}
 		if reason == "" {
 			return fmt.Sprintf("Approved %s, but it failed when it ran.", tool)
 		}
@@ -388,13 +483,45 @@ func (s *Service) planDecisionNote(
 	if err != nil {
 		return decisionFollowUp{}, err
 	}
+	line := planDecisionLine(plan, steps)
+	ask := followUpAsk(plan.Status == agent.PlanStatusRejected, note)
+	refused := refusedOverChange(steps)
+	if len(refused) > 0 {
+		ask = refusedAsk(note)
+		if plan.Status == agent.PlanStatusFailed && noneRan(steps) {
+			line = planRefusedLine(plan, refused)
+		}
+	}
 
 	return decisionFollowUp{
 		note: fmt.Sprintf("%s\nDecision on plan %s (%d steps). %s%s",
-			planDecisionLine(plan, steps), plan.ID, plan.StepCount, stepsProducedNote(steps),
-			followUpAsk(plan.Status == agent.PlanStatusRejected, note)),
+			line, plan.ID, plan.StepCount, stepsProducedNote(steps), ask),
 		decided: steps,
+		changed: changedTargets(refused),
 	}, nil
+}
+
+func noneRan(steps []*agent.AgentProposal) bool {
+	return !slices.ContainsFunc(steps, func(step *agent.AgentProposal) bool {
+		return step.Status == agent.ProposalStatusExecuted
+	})
+}
+
+func planRefusedLine(plan *agent.AgentPlan, refused []*agent.AgentProposal) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Approved the plan %q, but nothing ran: a record it changes moved on "+
+		"after it was proposed.", plan.Title)
+	for idx, step := range refused {
+		if idx == maxFollowUpDetailLines {
+			fmt.Fprintf(&b, " And %d more.", len(refused)-idx)
+
+			break
+		}
+		fmt.Fprintf(&b, " Step %d (%s): %s.", step.PlanStep, step.ToolName,
+			executionFailureReason(step.ExecutionError))
+	}
+
+	return b.String()
 }
 
 func (s *Service) planSteps(

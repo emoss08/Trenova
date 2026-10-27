@@ -24,7 +24,7 @@ func describedTool(name, description string) *agenttest.StubQueryTool {
 
 // a catalog big enough to cross the disclosure threshold, with descriptions
 // worth ranking against.
-func wideRuntime(t *testing.T) (*Service, []string) {
+func wideRuntime(t *testing.T, extra ...*agenttest.StubQueryTool) (*Service, []string) {
 	t.Helper()
 
 	tools := []*agenttest.StubQueryTool{
@@ -47,6 +47,7 @@ func wideRuntime(t *testing.T) (*Service, []string) {
 		describedTool("report_list", "List the reports this organization can run."),
 		describedTool("report_run", "Start a report run."),
 	}
+	tools = append(tools, extra...)
 
 	registryTools := make([]agentports.AgentQueryTool, 0, len(tools))
 	names := make([]string, 0, len(tools))
@@ -182,6 +183,39 @@ func TestNewToolSet_PreselectsOnTheOperatorsWords(t *testing.T) {
 		).specs,
 	)
 	assert.Contains(t, billing, "invoice_list")
+}
+
+func TestNewToolSet_AFormulaAssistantAlwaysHoldsItsFormulaTools(t *testing.T) {
+	t.Parallel()
+
+	standing := agentdefinition.TemplateFormulaAssistant.StandingTools()
+	require.NotEmpty(t, standing)
+	formulaTools := make([]*agenttest.StubQueryTool, 0, len(standing))
+	for _, name := range standing {
+		formulaTools = append(formulaTools, describedTool(name, "Work on a Tariff formula."))
+	}
+	service, names := wideRuntime(t, formulaTools...)
+	definition := testDefinition(names...)
+	definition.Template = agentdefinition.TemplateFormulaAssistant
+
+	set := service.newToolSet(
+		t.Context(),
+		toolSetRequest{
+			definition: definition,
+			actor:      testActor(),
+			input:      "flat 1250 for the load",
+			unattended: false,
+		},
+	)
+
+	require.True(t, set.disclosed)
+	offered := specNames(set.specs)
+	for _, name := range standing {
+		assert.Contains(t, offered, name)
+		assert.NotContains(t, set.preselected, name,
+			"a standing tool takes no preselection slot")
+	}
+	assert.Len(t, set.preselected, preselectedTools)
 }
 
 // The recovery path: pre-selection guessed wrong, and the model says what it

@@ -99,8 +99,7 @@ func (t *AssignMoveTool) Preview(
 			map[string]string{common.FieldPrimaryWorkerID: check.Score.WorkerName},
 		)
 	}
-	summary += ". The driver sees the assignment." + findingsSentence(check) + note +
-		equipmentInUseSentence(plan.EquipmentInUse)
+	summary += ". The driver sees the assignment." + findingsSentence(check) + note
 
 	preview := toolpreview.Build(summary, changes...)
 	if check.RequiresOverride {
@@ -109,6 +108,14 @@ func (t *AssignMoveTool) Preview(
 			agent.PreviewWarningWouldFail,
 			"The organization's dispatch rules block this driver for this move: "+
 				blockingFindings(check),
+		)
+	}
+	if len(plan.EquipmentInUse) > 0 {
+		toolpreview.Warn(
+			preview,
+			agent.PreviewWarningEquipmentInUse,
+			equipmentInUseWarning(plan.EquipmentInUse),
+			equipmentInUseLoads(plan.EquipmentInUse)...,
 		)
 	}
 
@@ -171,11 +178,7 @@ func (t *AssignMoveTool) check(
 	return check, "", nil
 }
 
-func equipmentInUseSentence(inUse []shipmentports.EquipmentInUse) string {
-	if len(inUse) == 0 {
-		return ""
-	}
-
+func equipmentInUseWarning(inUse []shipmentports.EquipmentInUse) string {
 	parts := make([]string, 0, len(inUse))
 	for _, item := range inUse {
 		where := "another move still in progress"
@@ -185,9 +188,21 @@ func equipmentInUseSentence(inUse []shipmentports.EquipmentInUse) string {
 		parts = append(parts, "the "+item.Kind+" is on "+where)
 	}
 
-	return " Equipment in use: " + strings.Join(parts, "; ") + ". This move cannot be " +
-		"started with it until that one is done, so pick other equipment unless that is the " +
-		"plan, and say so."
+	return "Equipment in use: " + strings.Join(parts, "; ") + ". The assignment can be " +
+		"saved, but no stop on this move can be started with that equipment until the " +
+		"other load is done. Pick free equipment unless this load is booked for after it, " +
+		"and say which."
+}
+
+func equipmentInUseLoads(inUse []shipmentports.EquipmentInUse) []string {
+	loads := make([]string, 0, len(inUse))
+	for _, item := range inUse {
+		if item.ProNumber != "" {
+			loads = append(loads, item.ProNumber)
+		}
+	}
+
+	return loads
 }
 
 func findingsSentence(check *dispatchconsoleservice.AssignmentPreview) string {

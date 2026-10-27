@@ -230,18 +230,20 @@ func workerGatedField(field string) string {
 }
 
 type shipmentRow struct {
-	ID                 string       `json:"id"`
-	ProNumber          string       `json:"proNumber"`
-	BOL                string       `json:"bol,omitempty"`
-	Status             string       `json:"status"`
-	Customer           string       `json:"customer,omitempty"`
-	Pickup             string       `json:"pickup,omitempty"`
-	Delivery           string       `json:"delivery,omitempty"`
-	Drivers            string       `json:"drivers,omitempty"`
-	TotalCharge        string       `json:"totalCharge,omitempty"`
-	ActualShipDate     optionalDate `json:"actualShipDate"`
-	ActualDeliveryDate optionalDate `json:"actualDeliveryDate"`
-	BillingStatus      string       `json:"billingStatus,omitempty"`
+	ID                 string            `json:"id"`
+	ProNumber          string            `json:"proNumber"`
+	BOL                string            `json:"bol,omitempty"`
+	Status             string            `json:"status"`
+	Customer           string            `json:"customer,omitempty"`
+	Pickup             string            `json:"pickup,omitempty"`
+	Delivery           string            `json:"delivery,omitempty"`
+	Drivers            string            `json:"drivers,omitempty"`
+	Carrying           string            `json:"carrying,omitempty"`
+	TotalCharge        string            `json:"totalCharge,omitempty"`
+	ActualShipDate     optionalDate      `json:"actualShipDate"`
+	ActualDeliveryDate optionalDate      `json:"actualDeliveryDate"`
+	BillingStatus      string            `json:"billingStatus,omitempty"`
+	ActiveHolds        []shipmentRowHold `json:"activeHolds,omitempty"`
 }
 
 func shipmentListSpec(repo shipmentports.ShipmentRepository) listSpec {
@@ -288,8 +290,9 @@ func shipmentListSpec(repo shipmentports.ShipmentRepository) listSpec {
 				Filter: opts,
 				Cursor: cursor,
 				ShipmentOptions: shipmentports.ShipmentOptions{
-					IncludeCustomer: true,
-					IncludeRoute:    true,
+					IncludeCustomer:    true,
+					IncludeRoute:       true,
+					IncludeCommodities: true,
 				},
 			})
 			if err != nil {
@@ -355,8 +358,24 @@ func toShipmentRow(item *shipment.Shipment) shipmentRow {
 	row.Pickup = route.pickup
 	row.Delivery = route.delivery
 	row.Drivers = route.coverage
+	row.Carrying = carriedCommodities(item.Commodities)
 
 	return row
+}
+
+func carriedCommodities(commodities []*shipment.ShipmentCommodity) string {
+	names := make([]string, 0, len(commodities))
+	for _, line := range commodities {
+		if line == nil || line.Commodity == nil {
+			continue
+		}
+		if name := strings.TrimSpace(line.Commodity.Name); name != "" &&
+			!slices.Contains(names, name) {
+			names = append(names, name)
+		}
+	}
+
+	return strings.Join(names, ", ")
 }
 
 type equipmentRow struct {
@@ -557,7 +576,7 @@ func newListCustomersTool(repo customerports.CustomerRepository) agentports.Agen
 				return listPage{}, err
 			}
 
-			return offsetListPage(result.Items, func(item *customer.Customer) any {
+			return offsetResultPage(result, func(item *customer.Customer) any {
 				return customerRow{
 					ID:        item.ID.String(),
 					Code:      item.Code,
@@ -602,7 +621,7 @@ func newListLocationsTool(repo locationports.LocationRepository) agentports.Agen
 				return listPage{}, err
 			}
 
-			return offsetListPage(result.Items, func(item *location.Location) any {
+			return offsetResultPage(result, func(item *location.Location) any {
 				return locationRow{
 					ID:      item.ID.String(),
 					Code:    item.Code,

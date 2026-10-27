@@ -62,7 +62,7 @@ func TestExecute_RefusesWhenTheRecordChangedSinceTheProposal(t *testing.T) {
 		testActor(proposal.OrganizationID, proposal.BusinessUnitID),
 	)
 
-	require.ErrorIs(t, err, ErrTargetChanged)
+	require.ErrorIs(t, err, agent.ErrTargetChanged)
 	assert.Contains(t, err.Error(), "version 5")
 	assert.Contains(t, err.Error(), "was at 3")
 	assert.Zero(t, tool.calls, "the tool never runs against a record that moved on")
@@ -120,7 +120,7 @@ func TestExecute_RefusesWhenTheRecordCannotBeRead(t *testing.T) {
 		testActor(proposal.OrganizationID, proposal.BusinessUnitID),
 	)
 
-	require.ErrorIs(t, err, ErrTargetChanged)
+	require.ErrorIs(t, err, agent.ErrTargetChanged)
 	assert.Zero(t, tool.calls)
 }
 

@@ -111,6 +111,7 @@ type listPage struct {
 	hasMore    bool
 	nextCursor string
 	cursored   bool
+	fuzzy      bool
 }
 
 type listTool struct {
@@ -382,6 +383,9 @@ func (t *listTool) Query(
 	}
 
 	outcome, more := window.outcome(criteria, fetched)
+	if fetched.fuzzy && outcome.Count > 0 {
+		outcome.Note = closeSpellingNote(t.spec.entityPlural, query)
+	}
 	if more && t.spec.count != nil {
 		if total, exact, countErr := t.spec.count(ctx, opts); countErr == nil {
 			outcome.Total = &total
@@ -690,11 +694,25 @@ func cursorListPage[T any](
 		hasMore:    result.HasNextPage,
 		nextCursor: next,
 		cursored:   true,
+		fuzzy:      result.Fuzzy,
 	}, nil
 }
 
 func offsetListPage[T any](items []T, row func(T) any) listPage {
 	return listPage{rows: listRows(items, row)}
+}
+
+func offsetResultPage[T any](result *pagination.ListResult[T], row func(T) any) listPage {
+	return listPage{rows: listRows(result.Items, row), fuzzy: result.Fuzzy}
+}
+
+func closeSpellingNote(entityPlural, query string) string {
+	return fmt.Sprintf(
+		"No %s matched %q as written; these matched as a close spelling of it. Say which one "+
+			"you took it to mean, or ask, before acting on one.",
+		entityPlural,
+		query,
+	)
 }
 
 // listRows projects repository entities into the compact shapes the catalog

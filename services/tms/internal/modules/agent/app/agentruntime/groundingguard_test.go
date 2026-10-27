@@ -673,3 +673,117 @@ func TestGroundingGuard_AFigureNoReadingSupportsIsStillCaught(t *testing.T) {
 	require.Len(t, run.fx.regrounded(), 1)
 	assert.Equal(t, []string{"41,500"}, run.fx.regrounded()[0].Figures)
 }
+
+func transferSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"shipmentIds": map[string]any{
+				"type":  "array",
+				"items": map[string]any{"type": "string"},
+			},
+			"deliveredFrom":               map[string]any{"type": "string"},
+			"deliveredTo":                 map[string]any{"type": "string"},
+			"markCompletedReadyToInvoice": map[string]any{"type": "boolean"},
+		},
+	}
+}
+
+// runTransfer reads a delivered shipment, files a billing_transfer of it
+// holding only the shipment, then answers with the replies given.
+func runTransfer(t *testing.T, replies ...string) groundingRun {
+	t.Helper()
+
+	turns := []*agentports.ChatCompletionResult{
+		{
+			ToolCalls: []agentports.ToolCall{{
+				ID:        "call_read",
+				Name:      "shipment_get",
+				Arguments: map[string]any{"id": "shp_1"},
+			}},
+			ModelIdentifier: "test-model",
+		},
+		{
+			ToolCalls: []agentports.ToolCall{{
+				ID:   "call_file",
+				Name: "billing_transfer",
+				Arguments: map[string]any{
+					"shipmentIds":                 []any{"shp_1"},
+					"markCompletedReadyToInvoice": true,
+				},
+			}},
+			ModelIdentifier: "test-model",
+		},
+	}
+	for _, reply := range replies {
+		turns = append(turns, textTurn(reply))
+	}
+	completion := &scriptedCompletion{Turns: turns}
+	rt := newRuntime(completion, &stubQueryRegistry{Tools: []agentports.AgentQueryTool{
+		queryTool("shipment_get", map[string]any{
+			"id":         "shp_1",
+			"proNumber":  "SEED-DET-010",
+			"status":     "Completed",
+			"pickup":     "Los Angeles Terminal, Los Angeles CA",
+			"delivery":   "Chicago Distribution Center, Chicago IL",
+			"drivers":    "John Smith on TRC-001",
+			"customer":   "Acme Manufacturing",
+			"deliveryAt": "2026-10-23",
+		}, nil),
+	}}, &stubActionRegistry{Tools: []agentports.AgentTool{&agenttest.StubActionTool{
+		ToolName: "billing_transfer",
+		Tier:     agent.TierPropose,
+		Schema:   transferSchema(),
+	}}}, nil)
+	fx := &groundingEffects{}
+	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
+
+	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
+		Definition: testDefinition("shipment_get", "billing_transfer"),
+		Actor:      testActor(),
+		Input:      "acme's last delivered load that hasn't gone to billing yet, send it over",
+	}), fx)
+	require.NoError(t, err)
+
+	return groundingRun{result: result, completion: completion, fx: fx}
+}
+
+// DB-244: the reply said where the load was delivered, read from the
+// shipment, and the guard took "delivered to" for the transfer's deliveredTo
+// filter, which the filed call does not hold, and rewrote a correct reply. A
+// claim a tool result the conversation read holds is grounded.
+func TestGroundingGuard_AcceptsAFactTheConversationReadBesideAFiledChange(t *testing.T) {
+	t.Parallel()
+
+	reply := "I've filed a proposal to send **SEED-DET-010** to billing for Acme " +
+		"Manufacturing. It was picked up in Los Angeles on 2026-10-22 and delivered to the " +
+		"**Chicago Distribution Center** on 2026-10-23, driven by John Smith on TRC-001."
+
+	run := runTransfer(t, reply)
+
+	assert.Equal(t, 3, run.completion.CallCount, "the reply is not asked for again")
+	assert.Empty(t, run.fx.regrounded())
+	assert.Equal(t, reply, run.result.Reply)
+}
+
+// What the proposal will do is still held to what was filed, even where a
+// read holds the value, and a value nothing read gives is still caught.
+func TestGroundingGuard_HoldsClaimsAboutTheChangeToWhatWasFiled(t *testing.T) {
+	t.Parallel()
+
+	drifted := map[string]string{
+		"a read value said of the proposal": "I've filed a proposal that will send the " +
+			"shipment delivered to the Chicago Distribution Center.",
+		"a value nothing read gives": "Sent for review. It was delivered to the Denver " +
+			"Drop Point on 2026-10-23.",
+		"no value at all": "It was delivered to, and now waits on the card.",
+	}
+	for name, reply := range drifted {
+		run := runTransfer(t, reply, "I've filed a proposal to send SEED-DET-010 to billing.")
+
+		assert.Equal(t, 4, run.completion.CallCount, name)
+		regrounded := run.fx.regrounded()
+		require.Len(t, regrounded, 1, name)
+		assert.Equal(t, []string{"delivered to"}, regrounded[0].Fields, name)
+	}
+}

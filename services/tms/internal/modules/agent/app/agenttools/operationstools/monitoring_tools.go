@@ -718,7 +718,7 @@ func (t *EmailCustomerTool) ParamSchema() map[string]any {
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(
 				permission.ResourceShipment,
-				"The shipment the update is about, from shipment_list, "+
+				"The shipment the update is about, from "+
 					"shipment_list or this run's subject. Its customer is who receives it.",
 			),
 			"profileId": agenttoolschema.RecordIDText(

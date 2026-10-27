@@ -2204,6 +2204,19 @@ type AgentPlan {
   updatedAt: Timestamp!
 }
 
+"What came of deciding a plan."
+type AgentPlanDecisionResult {
+  "The plan as the decision left it: waiting out its undo window, run, failed at a step, or rejected."
+  plan: AgentPlan!
+  """
+  The approval was recorded but refused before any step ran, because a
+  record a step changes moved on since the plan was proposed. Nothing was
+  changed; the plan's failureError says what moved, and the conversation that
+  raised it is told.
+  """
+  refused: Boolean!
+}
+
 "The script a batch of changes came from, as the model asked for it."
 type AgentPlanScript {
   title: String!
@@ -2800,13 +2813,26 @@ type AgentToolPromotion {
 }
 
 extend type Mutation {
-  decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
-  decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  """
+  Decides any proposal, as an approver, and says what came of it: whether
+  the approved write ran, and why not when it did not. An approval of a
+  change whose record moved on since it was proposed is recorded but
+  refused, runs nothing, and starts a turn in the conversation that raised it.
+  """
+  decideAgentProposal(id: ID!, input: AgentProposalDecisionInput!): AgentProposalDecisionResult!
+  """
+  Decides any plan, as an approver, and says what came of it. An approval of
+  a plan a record of which moved on since it was proposed is recorded but
+  refused: no step runs and the plan fails at the first step that moved.
+  """
+  decideAgentPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlanDecisionResult!
   """
   Decides a proposal raised in one of the caller's own conversations. The
-  approved write still runs only if the caller may make it.
+  approved write still runs only if the caller may make it; an approval
+  waits out the undo window, unless it is refused at once because its record
+  moved on, which the result says.
   """
-  decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentDecision!
+  decideMyProposal(id: ID!, input: AgentProposalDecisionInput!): AgentProposalDecisionResult!
   """
   Decides several proposals of one tool raised in the caller's own
   conversations the same way, each as proposed, with the digest of the
@@ -2820,9 +2846,11 @@ extend type Mutation {
   Decides a plan raised in one of the caller's own conversations, by an agent
   they may still use. Each step's write still runs only if the caller may
   make it. Steps that each change a different record of one kind all run and
-  each reports its outcome; otherwise the first that fails stops the rest.
+  each reports its outcome; otherwise the first that fails stops the rest. An
+  approval waits out the undo window, unless it is refused at once because a
+  record a step changes moved on, which the result says.
   """
-  decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlan!
+  decideMyPlan(id: ID!, input: AgentPlanDecisionInput!): AgentPlanDecisionResult!
   """
   Takes back the caller's approval of a proposal (with every proposal
   approved with it in one batch) or of a plan, while it is in its undo window;
@@ -3748,7 +3776,7 @@ Something the person deciding should know. The code is translated by the
 client; the message is the English fallback, with its arguments in order.
 """
 type AgentPreviewWarning {
-  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned, rate_coverage or recipient_skipped."
+  "would_fail, already_told_customer, driver_unreachable, depends_on_step, target_changed, record_missing, tool_removed, preview_failed, withheld, sensitive_content, retarget_refused, unpinned, rate_coverage, recipient_skipped or equipment_in_use."
   code: String!
   args: [String!]!
   message: String!
@@ -11395,14 +11423,21 @@ input DecideAgentProposalsInput {
   note: String
 }
 
-"What became of one proposal in a batch decision."
+"What came of deciding one proposal, on its own or in a batch."
 type AgentProposalDecisionResult {
   proposalId: ID!
+  "The decision recorded; absent when this one could not be decided."
   decision: AgentDecision
-  "Why this one could not be decided or its write failed, written for the person; absent when it went through."
+  "Why this one could not be decided, its write failed or its approval was refused, written for the person; absent when it went through."
   error: String
-  "The approved write ran."
+  "The approved write ran. False for a rejection and for an approval still in its undo window."
   executed: Boolean!
+  """
+  The approval was recorded but refused, because the record the change is
+  for moved on since it was proposed. Nothing was changed; error says what
+  moved, and the conversation that raised it is told.
+  """
+  refused: Boolean!
 }
 
 "A decision on a proposal, with the proposal and the person who made it."
@@ -30614,6 +30649,16 @@ type Tractor {
   lastKnownLocationId: ID
   lastKnownLocationName: String!
   """
+  The move this tractor is on that is in progress now, when it is on one. A stop on
+  another move cannot be started with it until that move is done, though a later
+  move may be booked with it.
+  """
+  inProgressMoveId: ID
+  "The PRO number of the shipment whose move this tractor is on now."
+  inProgressProNumber: String!
+  "When the move this tractor is on now is due at its last stop."
+  inProgressDueAt: Timestamp
+  """
   The fuel the tractor burns. Its miles land on this fuel type's lines of an
   IFTA return.
   """
@@ -30786,6 +30831,16 @@ type Trailer {
   registrationExpiry: Timestamp
   lastKnownLocationId: ID
   lastKnownLocationName: String!
+  """
+  The move this trailer is on that is in progress now, when it is on one. A stop on
+  another move cannot be started with it until that move is done, though a later
+  move may be booked with it.
+  """
+  inProgressMoveId: ID
+  "The PRO number of the shipment whose move this trailer is on now."
+  inProgressProNumber: String!
+  "When the move this trailer is on now is due at its last stop."
+  inProgressDueAt: Timestamp
   "Who owns the trailer: the company, a lessor, or an owner-operator."
   ownershipType: EquipmentOwnershipType!
   "The owner-operator who owns the trailer, when it is theirs."

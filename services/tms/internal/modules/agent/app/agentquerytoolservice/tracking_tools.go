@@ -86,7 +86,9 @@ func (t *getShipmentTrackingTool) Description() string {
 	return "Where a shipment is and whether it will be on time: each stop's window, actual " +
 		"arrival and lateness, the tractor's last position, and an arrival estimate. It " +
 		"also shows who is on each move with what truck and the driver's remaining " +
-		"hours. Each open stop carries its projected arrival, slack and verdict, worked out " +
+		"hours. A late or overdue stop's lateBy says how far past its window it is the way " +
+		"to say it (\"22h 00m\", \"3d 0h\"), not in minutes. " +
+		"Each open stop carries its projected arrival, slack and verdict, worked out " +
 		"from the truck's position, the carrier's check calls or the last departure with " +
 		"routed drive time, dwell and the driver's hours; estimate.basis says what it rests " +
 		"on and estimate.inputStale says when that is old. Call it an estimate and never a " +

@@ -1,6 +1,8 @@
 package trailerrepository
 
 import (
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
@@ -63,6 +65,26 @@ func TestTrailerQuery_LeavesTheLocationOutWhenUnselected(t *testing.T) {
 	assert.NotContains(t, sql, "equipment_continuity")
 }
 
+func TestTrailerQuery_ReadsTheMoveInProgressInTheSameStatement(t *testing.T) {
+	t.Parallel()
+
+	sql, args := renderTrailers(
+		t,
+		trailerports.TrailerRelationIncludes{IncludeInProgressMove: true},
+	)
+	without, _ := renderTrailers(t, trailerports.TrailerRelationIncludes{})
+
+	assert.Contains(t, sql, `FROM "assignments"`)
+	assert.Contains(t, sql, `."trailer_id" = t."id"`)
+	assert.Contains(t, sql, `."archived_at" IS NULL`)
+	assert.Contains(t, sql, `."pro_number"`)
+	assert.Contains(t, sql, `."sequence" DESC`)
+	assert.True(t, strings.Contains(sql, `'InTransit'`) || slices.Contains(args, any("InTransit")),
+		"only a move in transit counts")
+	assert.NotContains(t, sql, `"tractor_id"`)
+	assert.NotContains(t, without, `"assignments"`)
+}
+
 func TestTrailerQuery_LoadsTheOwnerOperatorOnlyWhenAsked(t *testing.T) {
 	t.Parallel()
 
@@ -96,5 +118,5 @@ func TestTrailerStatusFilter(t *testing.T) {
 }
 
 func testRepository() *repository {
-	return &repository{locations: crossref.LocationColumns()}
+	return &repository{locations: crossref.LocationColumns(), moves: crossref.MoveColumns()}
 }

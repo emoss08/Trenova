@@ -8,7 +8,8 @@ import type { AssistantArtifact, AssistantPlan, AssistantProposal } from "@/type
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
+import { toast } from "@trenova/shared/components/ui/toast";
 import { DeskDecisionBody } from "../desk-decision-body";
 
 const fetchProposalPreview =
@@ -242,7 +243,10 @@ describe("DeskDecisionBody approving a plan", () => {
     fetchPlanPreview.mockResolvedValue(
       planPreview({ digest: "sha256:plan", reviewRequired: true }),
     );
-    decideMyPlan.mockResolvedValue({});
+    decideMyPlan.mockResolvedValue({
+      refused: false,
+      plan: { id: "apl_1", status: "Approving", commitsAt: 1_030, failureError: "" },
+    });
     renderBody([], "apl_1");
 
     await waitFor(() => expect(approve()).toBeEnabled());
@@ -271,6 +275,63 @@ describe("DeskDecisionBody approving a plan", () => {
     );
     expect(approve()).toBeDisabled();
     expect(decideMyPlan).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * A plan approval the server refuses because a record a step changes moved on
+ * since it was proposed is recorded, runs nothing, and comes back `refused`
+ * with the plan failed at that step. The card says at once that nothing
+ * changed, and reads as not carried out rather than approved.
+ */
+describe("DeskDecisionBody when the server refuses a plan approval", () => {
+  const why =
+    "nothing ran, because a record the plan changes moved on after it was proposed; step 1: the record changed since this was proposed: the customer payment CP-1 was at version 2 when this was proposed and is at version 3 now, so nothing was changed";
+  let info: MockInstance;
+
+  beforeEach(() => {
+    info = vi.spyOn(toast, "info");
+  });
+
+  afterEach(() => {
+    info.mockRestore();
+  });
+
+  it("says nothing changed and reads as not carried out", async () => {
+    listedPlans = [plan()];
+    listed = [
+      proposal({ id: "aprop_1", planId: "apl_1", planStep: 1, reviewRequired: false }),
+      proposal({ id: "aprop_2", planId: "apl_1", planStep: 2, reviewRequired: false }),
+    ];
+    fetchPlanPreview.mockResolvedValue(planPreview({ digest: "sha256:plan" }));
+    decideMyPlan.mockImplementation(async () => {
+      listedPlans = [plan({ status: "Failed", failedStep: 1, failureError: why })];
+      return {
+        refused: true,
+        plan: {
+          id: "apl_1",
+          status: "Failed",
+          stepCount: 2,
+          completedSteps: 0,
+          failedStep: 1,
+          failureError: why,
+          decidedByUserId: "usr_1",
+          decidedAt: 1_000,
+          commitsAt: null,
+          version: 2,
+          updatedAt: 1_000,
+        },
+      };
+    });
+    renderBody([], "apl_1");
+
+    await waitFor(() => expect(approve()).toBeEnabled());
+    fireEvent.click(approve());
+
+    await waitFor(() => expect(info).toHaveBeenCalledTimes(1));
+    expect(info).toHaveBeenCalledWith("This changed since you opened it", { description: why });
+    expect(await screen.findByText("Not carried out")).toBeInTheDocument();
+    expect(screen.queryByText("Approved")).toBeNull();
   });
 });
 

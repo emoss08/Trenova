@@ -27860,6 +27860,18 @@ func init() {
 				Special: "lastKnownLocation",
 			},
 			{
+				Name:    "inProgressMoveId",
+				Special: "inProgressMove",
+			},
+			{
+				Name:    "inProgressProNumber",
+				Special: "inProgressMove",
+			},
+			{
+				Name:    "inProgressDueAt",
+				Special: "inProgressMove",
+			},
+			{
 				Name:   "fuelType",
 				Column: "fuel_type",
 			},
@@ -28072,6 +28084,18 @@ func init() {
 			{
 				Name:    "lastKnownLocationName",
 				Special: "lastKnownLocation",
+			},
+			{
+				Name:    "inProgressMoveId",
+				Special: "inProgressMove",
+			},
+			{
+				Name:    "inProgressProNumber",
+				Special: "inProgressMove",
+			},
+			{
+				Name:    "inProgressDueAt",
+				Special: "inProgressMove",
 			},
 			{
 				Name:   "ownershipType",

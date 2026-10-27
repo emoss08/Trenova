@@ -284,7 +284,10 @@ describe("DeskPlanBody while the plan waits", () => {
   it("approves against the digest of the preview it shows, with no toast", async () => {
     listedPlans = [plan()];
     listedSteps = steps(["Pending", "Pending"]);
-    decideMyPlan.mockResolvedValue({ id: "apl_1", status: "Approving", commitsAt: NOW + 10 });
+    decideMyPlan.mockResolvedValue({
+      refused: false,
+      plan: { id: "apl_1", status: "Approving", commitsAt: NOW + 10, failureError: "" },
+    });
     renderPlan();
 
     await waitFor(() => expect(approveButton()).toBeEnabled());
@@ -330,7 +333,10 @@ describe("DeskPlanBody while the plan waits", () => {
   it("declines with the note the person wrote, which the agent receives", async () => {
     listedPlans = [plan()];
     listedSteps = steps(["Pending", "Pending"]);
-    decideMyPlan.mockResolvedValue({ id: "apl_1", status: "Rejected" });
+    decideMyPlan.mockResolvedValue({
+      refused: false,
+      plan: { id: "apl_1", status: "Rejected", commitsAt: null, failureError: "" },
+    });
     renderPlan();
 
     await waitFor(() => expect(declineButton()).toBeEnabled());
@@ -352,7 +358,10 @@ describe("DeskPlanBody while the plan waits", () => {
   it("declines without a note when the person leaves it empty", async () => {
     listedPlans = [plan()];
     listedSteps = steps(["Pending", "Pending"]);
-    decideMyPlan.mockResolvedValue({ id: "apl_1", status: "Rejected" });
+    decideMyPlan.mockResolvedValue({
+      refused: false,
+      plan: { id: "apl_1", status: "Rejected", commitsAt: null, failureError: "" },
+    });
     renderPlan();
 
     await waitFor(() => expect(declineButton()).toBeEnabled());

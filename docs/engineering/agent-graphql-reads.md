@@ -353,6 +353,14 @@ out. Being arguments the screen sends, they are not judged by a record field's s
 near-miss probes drop one field filter at a time and then one input field at a time (never a
 switch), so an empty page names the status or the window that kept every row out.
 
+**Conditions.** A yes-or-no question a person asks that no single field answers is a spec
+`condition`: a boolean parameter whose yes compiles to `fieldFilters` every row must pass and
+whose no compiles to one `filterGroups` entry any of whose filters is enough (`worker_list`'s
+`dispatchable` is on dispatch, not blocked or marked unavailable, active and compliant; no is
+any one of those failing). Its fields are held to the caller's ceiling like any filter's, and a
+condition needs a table input. Prefer a filterable field when the record has one: a nullable id
+already gives `has<Thing>` (`hasInProgressMove`, the equipment lists' "free now").
+
 **Defaults.** A spec's `defaults` are the values a call that omits a parameter reads with, named
 in that parameter's note: `worker_list_training_courses` reads the active courses unless the call
 names a status, as its repository tool always did. `defaultsAt` are defaults that depend on the

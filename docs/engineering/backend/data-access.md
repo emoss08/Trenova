@@ -219,6 +219,19 @@ struct.
   column under the `simple` and `english` configurations (`websearch` plus prefix matching while
   typing), or its configured searchable fields with `ILIKE`. Never build a `WHERE` or `ORDER BY`
   from input.
+- **Close spellings.** An entity whose search config lists `FuzzyFields` (customers, locations,
+  workers, commodities) falls back, only when its search matches nothing, to the rows where every
+  query word of four or more letters is a close spelling of one of those fields: pg_trgm
+  `word_similarity` of at least 0.5 through `<%`, so "frshhaul" finds FreshHaul Foods and "acme
+  manufacuring" finds Acme Manufacturing without every other manufacturer. A field of several
+  columns is their values joined by a space (`{"first_name", "last_name"}`). `List` ranks the
+  fallback by similarity; `Connection` keeps its keyset order and cursors, and on a later page an
+  empty page checks that the search really matches nothing before paging the fallback. The
+  result says so (`ListResult.Fuzzy`, `CursorListResult.Fuzzy`), and the agent's list tools tell
+  the model the rows matched as a close spelling. Each fuzzy field needs a GIN `gin_trgm_ops`
+  index on exactly its expression (`(first_name || ' ' || last_name)`), and the threshold is set
+  for the transaction with `set_config`, one round trip paid only when the search missed
+  (`pkg/listquery/fuzzy.go`).
 - **Filtering through another kind's record** (a column showing a linked record's number): a
   pick or belongs relation the entity lists as queryable. A belongs relation makes every column of
   the target filterable, which answers questions about fields outside the target's reference view;

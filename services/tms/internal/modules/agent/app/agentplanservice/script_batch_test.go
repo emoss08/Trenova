@@ -66,15 +66,20 @@ func TestDecide_AScriptBatchWithAStepThatMovedIsRefusedWhole(t *testing.T) {
 	t.Parallel()
 
 	h := newScriptHarness(t, 3)
-	h.svc.previews = &fakePreviews{stale: true}
+	h.svc.previews = &fakePreviews{stale: true, staleStep: 2}
+	followUps := &recordedFollowUps{}
+	h.svc.followUps = followUps
 	h.req.PreviewDigest = "plan-digest"
 
-	_, err := h.svc.Decide(t.Context(), h.req, h.actor)
+	plan, err := h.svc.Decide(t.Context(), h.req, h.actor)
+	require.NoError(t, err)
 
-	var business *errortypes.BusinessError
-	require.True(t, errors.As(err, &business), "%v", err)
-	assert.Empty(t, h.decider.decided, "no step commits on stale authority")
-	assert.Empty(t, h.plans.statuses)
+	assert.Equal(t, agent.PlanStatusFailed, plan.Status)
+	require.Len(t, h.decider.decided, 1, "no step commits on stale authority")
+	assert.Equal(t, h.steps.steps[1].ID, h.decider.decided[0].ProposalID,
+		"only the moved step is recorded, as refused")
+	assert.Equal(t, 1, h.steps.skipped, "the batch's other steps are skipped")
+	require.Len(t, followUps.requests, 1)
 }
 
 func TestDecide_AScriptBatchApprovedOnAnOlderPreviewIsAConflict(t *testing.T) {

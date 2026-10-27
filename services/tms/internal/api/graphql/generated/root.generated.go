@@ -1962,11 +1962,11 @@ type MutationResolver interface {
 	ResolveAccountingDrift(ctx context.Context, input gqlmodel.ResolveAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
 	DismissAccountingDrift(ctx context.Context, input gqlmodel.DismissAccountingDriftInput) (*accountingsync.AccountingDriftFinding, error)
 	CheckAccountingDrift(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingDriftOverview, error)
-	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
-	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
-	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
+	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
+	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
+	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
 	DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
-	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
+	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
 	UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error)
@@ -3528,6 +3528,7 @@ type TractorResolver interface {
 	SecondaryWorkerID(ctx context.Context, obj *tractor.Tractor) (*string, error)
 	EquipmentStatus(ctx context.Context, obj *tractor.Tractor) (domaintypes.EquipmentStatus, error)
 	LastKnownLocationID(ctx context.Context, obj *tractor.Tractor) (*string, error)
+	InProgressMoveID(ctx context.Context, obj *tractor.Tractor) (*string, error)
 	LastKnownLocation(ctx context.Context, obj *tractor.Tractor) (*gqlmodel.LocationReference, error)
 }
 
@@ -3536,6 +3537,7 @@ type TrailerResolver interface {
 	FleetCodeID(ctx context.Context, obj *trailer.Trailer) (*string, error)
 	EquipmentStatus(ctx context.Context, obj *trailer.Trailer) (domaintypes.EquipmentStatus, error)
 	LastKnownLocationID(ctx context.Context, obj *trailer.Trailer) (*string, error)
+	InProgressMoveID(ctx context.Context, obj *trailer.Trailer) (*string, error)
 	LastKnownLocation(ctx context.Context, obj *trailer.Trailer) (*gqlmodel.LocationReference, error)
 }
 

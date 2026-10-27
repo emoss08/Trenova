@@ -147,8 +147,8 @@ func TestDrive_PlacesALinkTheRewriteStillLeftOutsideASentence(t *testing.T) {
 	result, events, completion := placementRun(t, &card, nil, stray, "**"+ArtifactRef(&card)+
 		"**\n\nIt is active. It charges the base rate for each 100 lb, rounded up.")
 
-	assert.Equal(t, "It is active. It charges the base rate for each 100 lb, rounded up.\n\n"+
-		"The full record is in "+ArtifactRef(&card)+".", result.Reply)
+	assert.Equal(t, "It is active. It charges the base rate for each 100 lb, rounded up ("+
+		ArtifactRef(&card)+").", result.Reply)
 	assert.Empty(t, StrayArtifactLinks(result.Reply))
 	assert.Len(t, completion.Requests, 3, "the model is asked once more, not twice")
 	assert.Equal(t, []agentports.RegroundAction{
@@ -168,8 +168,7 @@ func TestDrive_NamesATableTheReplyLeftOutWithoutAskingAgain(t *testing.T) {
 
 	result, events, completion := placementRun(t, &table, nil, "Fifteen loads are late.")
 
-	assert.Equal(t, "Fifteen loads are late.\n\n"+tablePointerLead+ArtifactRef(&table)+".",
-		result.Reply)
+	assert.Equal(t, "Fifteen loads are late ("+ArtifactRef(&table)+").", result.Reply)
 	assert.False(t, retried(events))
 	assert.Len(t, completion.Requests, 2)
 	assert.Equal(t, []agentports.RegroundAction{agentports.RegroundPlaceArtifacts},
@@ -244,14 +243,104 @@ func TestNameArtifactLinks(t *testing.T) {
 	assert.Equal(t, "[Shipments](artifact:art_2)", NameArtifactLinks("[](artifact:art_2)", titleOf))
 }
 
-func TestPointerLead(t *testing.T) {
+// DB-237: asked in Spanish, the agent answered in Spanish and the reply then
+// ended in English, "The full table is in [Shipments](artifact:…).", because
+// the fallback wrote its own sentence. It now writes no words: the link joins
+// the reply's own sentence, in whatever language the model wrote it.
+func TestDrive_NamesALeftOutTableInTheRepliesOwnLanguage(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, tablePointerLead, pointerLead([]string{"table_view"}))
-	assert.Equal(t, "The full record is in ", pointerLead([]string{"entity_card"}))
-	assert.Equal(t, detailsPointerLead, pointerLead([]string{"entity_card", "table_view"}))
-	assert.Equal(t, detailsPointerLead, pointerLead([]string{""}))
-	assert.Equal(t, "A, B and C", joinRefs([]string{"A", "B", "C"}))
+	table := keptShipments(15)
+	reply := "Hay quince cargas retrasadas. La más antigua es de Acme.\n\n" +
+		"¿Quieres que llame a los transportistas?"
+
+	result, events, completion := placementRun(t, &table, nil, reply)
+
+	assert.Equal(t, "Hay quince cargas retrasadas. La más antigua es de Acme ("+
+		ArtifactRef(&table)+").\n\n¿Quieres que llame a los transportistas?", result.Reply)
+	assert.NotContains(t, result.Reply, "The full table")
+	assert.Empty(t, StrayArtifactLinks(result.Reply))
+	assert.False(t, retried(events))
+	assert.Len(t, completion.Requests, 2)
+	assert.Equal(t, []agentports.RegroundAction{agentports.RegroundPlaceArtifacts},
+		regroundedActions(events))
+}
+
+func TestWithRefs(t *testing.T) {
+	t.Parallel()
+
+	a := "[Shipments](artifact:art_1)"
+	b := "[Invoices](artifact:art_2)"
+	cases := []struct {
+		name string
+		text string
+		refs []string
+		want string
+	}{
+		{
+			name: "before the closing punctuation of the first sentence line",
+			text: "Fifteen loads are late.\n\nWant me to call the carriers?",
+			refs: []string{a},
+			want: "Fifteen loads are late (" + a + ").\n\nWant me to call the carriers?",
+		},
+		{
+			name: "after a colon that introduces it",
+			text: "Aquí están las cargas:\n\n- PRO-1\n- PRO-2",
+			refs: []string{a},
+			want: "Aquí están las cargas: " + a + "\n\n- PRO-1\n- PRO-2",
+		},
+		{
+			name: "after the markup round a colon",
+			text: "**Late loads:**",
+			refs: []string{a},
+			want: "**Late loads:** " + a,
+		},
+		{
+			name: "inside the markup round a sentence",
+			text: "**Fifteen loads are late.**",
+			refs: []string{a},
+			want: "**Fifteen loads are late (" + a + ").**",
+		},
+		{
+			name: "before a full-width stop",
+			text: "有十五批货物延误。",
+			refs: []string{a},
+			want: "有十五批货物延误 (" + a + ")。",
+		},
+		{
+			name: "several, in one parenthesis",
+			text: "Fifteen loads are late and three invoices are open!",
+			refs: []string{a, b},
+			want: "Fifteen loads are late and three invoices are open (" + a + ", " + b + ")!",
+		},
+		{
+			name: "past a label, a table, a heading and a fence",
+			text: "## Late\n\n**Summary**\n\n| A |\n| - |\n| 1 |\n\n```\nnot this.\n```\n" +
+				"Fifteen loads are late.",
+			refs: []string{a},
+			want: "## Late\n\n**Summary**\n\n| A |\n| - |\n| 1 |\n\n```\nnot this.\n```\n" +
+				"Fifteen loads are late (" + a + ").",
+		},
+		{
+			name: "to a line with no closing punctuation when none has one",
+			text: "**Summary**",
+			refs: []string{a},
+			want: "**Summary** (" + a + ")",
+		},
+		{
+			name: "on a line of its own when the reply has no prose",
+			text: "| A |\n| - |\n| 1 |",
+			refs: []string{a},
+			want: "| A |\n| - |\n| 1 |\n\n" + a,
+		},
+		{name: "as the reply when it is empty", text: "", refs: []string{a}, want: a},
+		{name: "unchanged with nothing to name", text: "It is active.", want: "It is active."},
+	}
+	for _, tc := range cases {
+		got := withRefs(tc.text, tc.refs)
+		assert.Equal(t, tc.want, got, tc.name)
+		assert.NotContains(t, got, "The full", tc.name)
+	}
 }
 
 func draftVersions(lineage bool) (first, second agentports.ShownArtifact) {
@@ -333,7 +422,8 @@ func TestDrive_AsksForEachArtifactOutsideALineage(t *testing.T) {
 
 	result, events := redraftRun(t, &first, &second, reply)
 
-	assert.Equal(t, reply+"\n\n"+detailsPointerLead+ArtifactRef(&first)+".", result.Reply,
+	assert.Equal(t, "The connection is drafted in "+ArtifactRef(&second)+
+		", waiting for approval ("+ArtifactRef(&first)+").", result.Reply,
 		"a draft of another partner is not replaced by this one, so it is named too")
 	assert.False(t, retried(events))
 }

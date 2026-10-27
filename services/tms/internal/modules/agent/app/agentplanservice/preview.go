@@ -18,6 +18,10 @@ type shownPlan struct {
 	reviewed bool
 }
 
+func (p *shownPlan) stale() bool {
+	return p != nil && p.preview != nil && p.preview.Stale
+}
+
 // annotate hands a step the preview the plan was approved on, so its
 // decision records the step as the decider saw it, projected from the steps
 // before it, rather than as it reads once they have run.
@@ -48,9 +52,10 @@ func (p *shownPlan) digest() string {
 
 // settlePreview works out what approving a plan approves: every pending
 // step previewed as the decider would see it, each projected from the steps
-// before it. A plan with a step whose record moved on is refused, and a plan
-// digest that no longer matches is a conflict; either way nothing is
-// recorded and nothing runs. A rejection needs no preview.
+// before it. A plan digest that no longer matches is a conflict, and nothing
+// is recorded. A plan with a step whose record moved on is settled stale,
+// whatever digest it was reviewed on: its approval is refused as made, and
+// nothing runs. A rejection needs no preview.
 func (s *Service) settlePreview(
 	ctx context.Context,
 	req *agentports.DecideAgentPlanRequest,
@@ -79,11 +84,7 @@ func (s *Service) settlePreview(
 	}
 
 	if preview.Stale {
-		return nil, errortypes.NewBusinessError(
-			"A step of this plan changes a record that has changed since the plan was " +
-				"proposed, so it cannot be approved as it stands. Reject it, or ask the agent " +
-				"again for a current plan",
-		)
+		return &shownPlan{preview: preview, reviewed: req.PreviewDigest != ""}, nil
 	}
 
 	if req.PreviewDigest != "" && req.PreviewDigest != preview.Digest {

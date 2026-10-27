@@ -173,7 +173,8 @@ func (c *Commodity) GetBusinessUnitID() pulid.ID {
 
 func (c *Commodity) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
-		TableAlias: "com",
+		TableAlias:  "com",
+		FuzzyFields: []domaintypes.FuzzyField{{"name"}},
 		SearchableFields: []domaintypes.SearchableField{
 			{
 				Name:   "name",

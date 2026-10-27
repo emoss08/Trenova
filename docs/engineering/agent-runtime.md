@@ -1629,6 +1629,15 @@ person declined:"; the agent answers it and may propose a different change.
 That turn is the rejection's own follow-up, so the note is never also sent as
 a message and the agent answers once.
 
+An approval refused because its record moved on (`agent.TargetChanged` on the
+proposal's execution error, from the decision service or the executor) is followed up
+like any other: its note says it was not carried out and why, asks the agent not to
+retry it and to offer a proposal against the record as it is now when that still makes
+sense, and the refused records are added to the turn's records in play
+(`anchorChanged`), so the agent reads their current state (a shipment's `canceled`
+fact names who canceled it, when and why). A plan refused before any step ran says so
+in its headline (`planRefusedLine`).
+
 A follow-up is admitted without the scope guard: its input is a note Trenova wrote
 (`TrenovaWritten`, stage `Trenova`), and the classifier once read a decision note as an attempt
 to change the assistant's instructions and refused the turn that should have proposed the
@@ -2035,7 +2044,15 @@ value in some filed call, or be named in its filing result, before the reply
 may say it is part of the change. A sentence that says the thing was left out
 is not a claim, and neither is one that offers to add it ("If you have the receipt, I can add the
 vendor and transaction reference": `offerPhrases`);
-a field the reply also states in a sentence that is not an offer is still held to the filed call. A one-word name counts only at the top of a call: the `codes` of
+a field the reply also states in a sentence that is not an offer is still held to the filed call.
+A field named where the reply reports what the conversation read is not a claim about the change
+either: when every such sentence leaves the change alone (no `changeSpeak` word: proposal, filed,
+would, will, approve, change, update, set) and the words after the field's name begin with a value
+a successful lookup result in the conversation holds (`readResults`, never the filed calls' own
+results), the field is grounded. "Delivered to the Chicago Distribution Center", read from
+`shipment_get`, was taken for `billing_transfer`'s `deliveredTo` filter and a correct reply was
+rewritten (DB-244); "the proposal will send the load delivered to Chicago" is still held to the
+filed call. A one-word name counts only at the top of a call: the `codes` of
 each requirement in `edi_apply_connection_draft` is a word an EDI reply spends
 on a guide's charge codes and status codes, and holding it to the filed
 requirements rewrote replies that never said the change carried any. A hit discards the reply once, the way a looping reply is (a
@@ -2095,8 +2112,9 @@ delegate's included, before it is recorded (`replypass.go`): internal record
 ids are taken out the way the web client's `withoutRecordIds` takes them out
 (`shared/recordids`, the same cases; an `artifact:` link's address is left
 alone), and a markdown table of six or more rows that reprints a table the
-turn kept beside the conversation, and does not point to, is replaced by one
-sentence pointing to it with `ArtifactRef`. A reprint is recognised when at
+turn kept beside the conversation, and does not point to, is taken out and the table is
+linked with `ArtifactRef` from the reply's own line nearest above it (or, failing that, the first
+below it), the way placement links a left-out artifact, with no words of the server's own. A reprint is recognised when at
 least half its first column is the kept table's first column
 (`ShownArtifact.Labels`, read from the artifact's rows by the observer and
 carried to the loop on `ToolOutcome.Shown`), or when the line above it and its
@@ -2120,16 +2138,20 @@ when the reply forgets it; only the newest version of each lineage the turn show
 later version takes the earlier one's place in `Turn.keepShown`), or names an id the
 conversation never held is discarded once, the way
 the grounding guard does it, unless leaving out an artifact it must name is its only fault: that
-reply is not asked again but ends with one sentence naming what it left out (`reply_regrounded`
-`place_artifacts`, then `reply_replaced`).
+reply is not asked again; what it left out is linked from its own first sentence
+(`reply_regrounded` `place_artifacts`, then `reply_replaced`).
 Leaving out a table it searched (Shipments, Invoices, Time offs) was 14 of the 16 placement
 restarts in a run over every scenario, and each one showed the person a finished answer starting
 over to add a link. Otherwise the reply is discarded once: a `retrying` event, a `reply_regrounded` `relink_artifacts`, and a
 correction naming each link as it should be written. A rewrite that still breaks the contract, or
 a reply written after the tool budget was spent, is not asked again: each stray link is cut from
-where it stood, an id nobody holds is left as its words, and one sentence at the end of the reply
-names what was cut or left out (`The full table is in …`, `The full record is in …`), sent as a
-`reply_replaced` after a `reply_regrounded` `place_artifacts`. A clean reply costs one pass over
+where it stood, an id nobody holds is left as its words, and what was cut or left out is linked
+from the reply's first line that ends a sentence (`withRefs`), sent as a `reply_replaced` after a
+`reply_regrounded` `place_artifacts`. The server writes no words of its own there: it does not
+know the turn's language, and an English "The full table is in …" closed a Spanish reply
+(DB-237). The links go in parentheses before the sentence's closing punctuation ("Hay quince
+cargas retrasadas ([Shipments](artifact:…)).") or after a colon that introduces them, so they
+stand inside a sentence; only a reply with no prose at all gets them on a line of their own. A clean reply costs one pass over
 its text; only a broken one costs a model call, and never more than one. A version
 replaces the one before it only when the activity's result carries its lineage, which a result
 recorded before the field existed does not, so no `GetVersion` gate.
@@ -2291,7 +2313,8 @@ conversation is the same from the first call of the turn to the last.
   SDK's encoder for Anthropic); a map in Go's random order made every request
   different. `TestRequests_AreTheSameBytesEveryTime` holds every protocol to it.
 - **One tool array per turn.** `newToolSet` opens the set (the core tools, the
-  eight preselected with their companions, what recent turns used, the runtime
+  template's standing tools (`Template.StandingTools`), the eight preselected
+  with their companions, what recent turns used, the runtime
   tools, a command's tools) and `freeze` declares it: what is loaded is sent in
   full, sorted by name, and every other tool the turn holds or reaches is
   declared **deferred** (`toolSet.deferred`, `ChatCompletionRequest.DeferredTools`).
@@ -2607,6 +2630,20 @@ test counts. A proposal is shown only when its source checks clean and has at le
 one test, all passing; otherwise the model gets the findings or failures and fixes
 them. Proposing requires create or update on the formula template or the formula
 library. The model never states an amount the engine did not produce.
+
+**The formula tools ride on every studio turn.** The formula assistant holds its
+rate agreement tools too, past the disclosure threshold, so its turns are
+disclosed, and preselection ranks on the person's words: "flat 1250 for the load"
+ranked no formula tool, and the studio asked which shipment to change.
+`Template.StandingTools` names what a template's agent opens every turn with,
+outside preselection: for `FormulaAssistant`, `formula_describe_language`,
+`formula_check`, `formula_run_tests`, `formula_preview`, `formula_propose` and
+`formula_library_propose`. `openToolSet` loads them first and ranks the eight
+preselected slots over the rest. The draft's line in the runtime context says
+"the load" is the shipment the formula prices, not a record to look up, and that a
+request for a price is a change to the source; it is written on every turn, so it
+reaches an organization whose formula assistant was created with older
+instructions.
 
 **In the web app.** Both pages mount `PageAssistant`
 (`components/assistant/page-assistant.tsx`), which opens the page thread and

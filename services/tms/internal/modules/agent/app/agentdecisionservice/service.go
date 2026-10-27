@@ -2,6 +2,7 @@ package agentdecisionservice
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
@@ -108,30 +109,18 @@ func previewMetrics(registry *metrics.Registry) *metrics.ProposalPreview {
 	return registry.ProposalPreview
 }
 
-func (s *Service) Decide(
-	ctx context.Context,
-	req *agentports.DecideAgentProposalRequest,
-	actor *permissionports.RequestActor,
-) (*agent.AgentDecision, error) {
-	outcome, err := s.DecideWithOutcome(ctx, req, actor)
-	if err != nil {
-		return nil, err
-	}
-
-	return outcome.Decision, nil
-}
-
 func (s *Service) DecideOwn(
 	ctx context.Context,
 	req *agentports.DecideAgentProposalRequest,
 	actor *permissionports.RequestActor,
-) (*agent.AgentDecision, error) {
+) (*agentports.DecisionOutcome, error) {
 	if err := s.AssertOwnProposal(ctx, req.ProposalID, req.TenantInfo, actor); err != nil {
 		return nil, err
 	}
 
 	// An approval from the person's own conversation waits out the undo
-	// window; nothing it approved runs until the window closes.
+	// window; nothing it approved runs until the window closes. One refused
+	// because its record moved on is refused at once, and says so.
 	if s.Defers(req.Decision) {
 		results, err := s.ApproveDeferred(ctx, []*agentports.DecideAgentProposalRequest{req}, actor)
 		if err != nil {
@@ -141,10 +130,13 @@ func (s *Service) DecideOwn(
 			return nil, results[0].Err
 		}
 
-		return results[0].Decision, nil
+		return &agentports.DecisionOutcome{
+			Decision:       results[0].Decision,
+			ExecutionError: results[0].ExecutionError,
+		}, nil
 	}
 
-	return s.Decide(ctx, req, actor)
+	return s.DecideWithOutcome(ctx, req, actor)
 }
 
 // AssertOwnProposal refuses a proposal not raised in one of the actor's own
@@ -224,7 +216,8 @@ type recorded struct {
 	decision *agent.AgentDecision
 	// req is the request as settled: an approval with nothing changed is
 	// an approval as proposed.
-	req *agentports.DecideAgentProposalRequest
+	req     *agentports.DecideAgentProposalRequest
+	refusal error
 }
 
 // record checks a decision, writes it down and moves its proposal out of
@@ -293,8 +286,9 @@ func (s *Service) record(
 	})
 
 	// What the decider approves is what they were shown, as the world is now:
-	// a change whose record moved on, or whose preview no longer matches the
-	// one they reviewed, is refused before anything is recorded.
+	// a change whose preview no longer matches the one they reviewed is
+	// refused before anything is recorded, and one whose record moved on is
+	// recorded as refused and runs nothing.
 	shown, err := s.settlePreview(ctx, proposal, req, actor)
 	if err != nil {
 		aitrace.MarkFailed(span, previewRefusal(err))
@@ -302,6 +296,9 @@ func (s *Service) record(
 		return ctx, nil, span, err
 	}
 	aitrace.RecordDecidedPreview(span, shown.digest, shown.reviewed)
+	if shown.refusal != nil {
+		aitrace.MarkFailed(span, previewRefusalStale)
+	}
 
 	decision := &agent.AgentDecision{
 		OrganizationID:       req.TenantInfo.OrgID,
@@ -319,7 +316,7 @@ func (s *Service) record(
 	}
 	decision.TraceID, _ = aitrace.IDs(ctx)
 	status := proposalStatusFor(req.Decision)
-	if window != nil {
+	if window != nil && shown.refusal == nil {
 		commitsAt := window.commitsAt
 		decision.CommitsAt = &commitsAt
 		decision.CommitWorkflowID = window.workflowID
@@ -354,7 +351,12 @@ func (s *Service) record(
 		return ctx, nil, span, err
 	}
 
-	return ctx, &recorded{proposal: proposal, decision: created, req: req}, span, nil
+	return ctx, &recorded{
+		proposal: proposal,
+		decision: created,
+		req:      req,
+		refusal:  shown.refusal,
+	}, span, nil
 }
 
 // carryOut does what a recorded decision decided: it tells the run, runs the
@@ -380,7 +382,7 @@ func (s *Service) carryOut(
 
 	// An approval that does not act is worse than no approval: the audit trail
 	// would say a person authorized something that never happened.
-	executed, execErr := s.executeIfApproved(ctx, proposal, req, actor)
+	executed, execErr := s.executeIfApproved(ctx, rec, actor)
 
 	// The ledger learns from the outcome, not the intent: an approval whose
 	// write failed is a setback for the tool, whatever the person decided.
@@ -403,7 +405,7 @@ func (s *Service) carryOut(
 		OrganizationID: created.OrganizationID,
 		BusinessUnitID: created.BusinessUnitID,
 		Critical:       true,
-	}, auditservice.WithComment("Human decision recorded for agent proposal")); err != nil {
+	}, auditservice.WithComment(decisionAuditComment(rec))); err != nil {
 		s.l.Error("failed to log agent decision audit", zap.Error(err))
 	}
 
@@ -539,12 +541,17 @@ func decidable(proposal *agent.AgentProposal) error {
 // Rolling the decision back would lose the one durable fact in the exchange.
 func (s *Service) executeIfApproved(
 	ctx context.Context,
-	proposal *agent.AgentProposal,
-	req *agentports.DecideAgentProposalRequest,
+	rec *recorded,
 	actor *permissionports.RequestActor,
 ) (*int64, error) {
+	proposal, req := rec.proposal, rec.req
 	if req.Decision != agent.DecisionAccepted && req.Decision != agent.DecisionModified {
 		return nil, nil //nolint:nilnil // a rejection runs nothing and leaves no version
+	}
+	if rec.refusal != nil {
+		s.recordRefusal(ctx, proposal, req.TenantInfo, rec.refusal)
+
+		return nil, rec.refusal
 	}
 
 	outcome, err := s.executor.Run(ctx, &proposalexecutor.Approval{
@@ -566,6 +573,33 @@ func (s *Service) executeIfApproved(
 	return outcome.TargetVersion, nil
 }
 
+func (s *Service) recordRefusal(
+	ctx context.Context,
+	proposal *agent.AgentProposal,
+	tenant pagination.TenantInfo,
+	refusal error,
+) {
+	if _, err := s.proposalRepo.RecordExecution(ctx, agentports.RecordAgentProposalExecutionRequest{
+		ID:             proposal.ID,
+		Status:         agent.ProposalStatusExecutionFailed,
+		ExecutionError: refusal.Error(),
+		TenantInfo:     tenant,
+	}); err != nil {
+		s.l.Error("an approval refused over a changed record could not be recorded",
+			zap.String("proposal", proposal.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func decisionAuditComment(rec *recorded) string {
+	if rec.refusal != nil {
+		return "Approval refused for agent proposal: " + rec.refusal.Error()
+	}
+
+	return "Human decision recorded for agent proposal"
+}
+
 // recordTrust is best effort: the decision is the durable fact, and a ledger
 // that could not be written is logged rather than allowed to fail it.
 func (s *Service) recordTrust(
@@ -574,7 +608,7 @@ func (s *Service) recordTrust(
 	decision *agent.AgentDecision,
 	execErr error,
 ) {
-	if s.trust == nil {
+	if s.trust == nil || errors.Is(execErr, agent.ErrTargetChanged) {
 		return
 	}
 

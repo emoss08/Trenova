@@ -22,14 +22,12 @@ const (
 	minReprintOverlap = 0.5
 	minTitleWordRunes = 3
 
-	tablePointerLead = "The full table is in "
-
 	replyPassReplacedReason = "The reply wrote out what is kept beside the conversation, so " +
 		"it is shown as recorded."
 	stripIDsReason = "The reply named internal record ids, which a person never reads; " +
 		"they were taken out."
 	pointToTableReason = "The reply reprinted a table kept beside the conversation; the " +
-		"reprint was replaced by a sentence pointing to it."
+		"reprint was taken out and the reply's own sentence points to it."
 )
 
 // passReply holds a final reply to two rules the prompt already gives, in
@@ -161,9 +159,11 @@ func (t *Turn) keptTables() []agentports.ShownArtifact {
 	return tables
 }
 
-// pointToTables replaces each markdown table in the reply that reprints a
-// kept table the reply does not already point to with one sentence that
-// points to it, and reports the first table it pointed to. A reply that
+// pointToTables takes out each markdown table in the reply that reprints a
+// kept table the reply does not already point to, links the table from the
+// reply's own sentence nearest the reprint, and reports the first table it
+// pointed to. The server writes no words of its own: it cannot know the
+// language the person and the model are using (DB-237). A reply that
 // wrote out a list of late loads and then the same loads by customer used to
 // keep the second copy, because only the first reprint was replaced; each
 // kept table is now pointed to once, wherever its reprint stands.
@@ -204,17 +204,40 @@ func pointToTables(
 		return reply, nil
 	}
 
-	out := reply
-	for idx := len(replacements) - 1; idx >= 0; idx-- {
-		table, match := replacements[idx].table, replacements[idx].match
-		sentence := tablePointerLead + ArtifactRef(match) + "."
-		if table.End < len(out) {
-			sentence += "\n"
+	gaps := make([]string, len(replacements)+1)
+	last := 0
+	for idx := range replacements {
+		gaps[idx] = reply[last:replacements[idx].table.Start]
+		last = replacements[idx].table.End
+	}
+	gaps[len(replacements)] = reply[last:]
+	for idx := range replacements {
+		refs := []string{ArtifactRef(replacements[idx].match)}
+		if lines := proseLines(gaps[idx]); len(lines) > 0 {
+			gaps[idx] = attachAt(gaps[idx], lines[len(lines)-1], refs)
+			continue
 		}
-		out = out[:table.Start] + sentence + out[table.End:]
+		if lines := proseLines(gaps[idx+1]); len(lines) > 0 {
+			gaps[idx+1] = attachAt(gaps[idx+1], lines[0], refs)
+			continue
+		}
+		gaps[idx] += "\n\n" + refs[0]
 	}
 
-	return out, replacements[0].match
+	var b strings.Builder
+	b.Grow(len(reply))
+	for _, gap := range gaps {
+		gap = strings.Trim(gap, "\n")
+		if strings.TrimSpace(gap) == "" {
+			continue
+		}
+		if b.Len() > 0 {
+			b.WriteString("\n\n")
+		}
+		b.WriteString(gap)
+	}
+
+	return b.String(), replacements[0].match
 }
 
 // reprinted is the kept table, not yet pointed to, that the markdown table

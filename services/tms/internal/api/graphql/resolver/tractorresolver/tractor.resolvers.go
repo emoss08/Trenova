@@ -242,6 +242,10 @@ func (r *TractorResolver) LastKnownLocationID(ctx context.Context, obj *tractor.
 	return base.IDPtr(obj.LastKnownLocationID), nil
 }
 
+func (r *TractorResolver) InProgressMoveID(ctx context.Context, obj *tractor.Tractor) (*string, error) {
+	return base.IDPtr(obj.InProgressMoveID), nil
+}
+
 func (r *TractorResolver) LastKnownLocation(ctx context.Context, obj *tractor.Tractor) (*gqlmodel.LocationReference, error) {
 	return tractorLastKnownLocationReference(obj), nil
 }

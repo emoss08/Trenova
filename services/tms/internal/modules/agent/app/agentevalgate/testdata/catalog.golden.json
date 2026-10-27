@@ -6713,7 +6713,7 @@
             "x-clamp": true
           },
           "shipmentId": {
-            "description": "The saved shipment to price, from shipment_list or shipment_list, or the page you are on.",
+            "description": "The saved shipment to price, from shipment_list or the page you are on.",
             "type": "string",
             "x-recordOf": "shipment"
           },
@@ -7682,7 +7682,7 @@
             "x-recordOf": "email_profile"
           },
           "shipmentId": {
-            "description": "The shipment the update is about, from shipment_list, shipment_list or this run's subject. Its customer is who receives it.",
+            "description": "The shipment the update is about, from shipment_list or this run's subject. Its customer is who receives it.",
             "type": "string",
             "x-recordOf": "shipment"
           },
@@ -23443,7 +23443,7 @@
             "type": "string"
           },
           "shipmentId": {
-            "description": "Optional: the shipment the message is about, from shipment_list or shipment_list.",
+            "description": "Optional: the shipment the message is about, from shipment_list.",
             "type": "string",
             "x-recordOf": "shipment"
           }
@@ -48052,7 +48052,7 @@
             "x-enumOf": "shipment.commentPriority"
           },
           "shipmentId": {
-            "description": "The shipment to comment on, from the page, shipment_list or shipment_list.",
+            "description": "The shipment to comment on, from the page or shipment_list.",
             "type": "string",
             "x-recordOf": "shipment"
           },
@@ -48111,7 +48111,7 @@
             "x-recordOf": "document"
           },
           "shipmentId": {
-            "description": "The shipment it belongs to, from the page, shipment_list or shipment_list.",
+            "description": "The shipment it belongs to, from the page or shipment_list.",
             "type": "string",
             "x-recordOf": "shipment"
           }
@@ -49792,7 +49792,7 @@
             "x-recordOf": "shipment_hold"
           },
           "shipmentId": {
-            "description": "The shipment the hold is on, from the page, shipment_list or shipment_list.",
+            "description": "The shipment the hold is on, from the page or shipment_list.",
             "type": "string",
             "x-recordOf": "shipment"
           }
@@ -50075,7 +50075,7 @@
         "additionalProperties": false,
         "properties": {
           "shipmentId": {
-            "description": "The shipment whose links to revoke, from the page, shipment_list or shipment_list.",
+            "description": "The shipment whose links to revoke, from the page or shipment_list.",
             "type": "string",
             "x-recordOf": "shipment"
           }

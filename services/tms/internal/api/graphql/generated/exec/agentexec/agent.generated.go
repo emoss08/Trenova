@@ -37,6 +37,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AgentMemoryUsage", Implementors: []string{"AgentMemoryUsage"}},
 		{Name: "AgentPlan", Implementors: []string{"AgentPlan", "PendingDecision"}},
 		{Name: "AgentPlanConnection", Implementors: []string{"AgentPlanConnection"}},
+		{Name: "AgentPlanDecisionResult", Implementors: []string{"AgentPlanDecisionResult"}},
 		{Name: "AgentPlanEdge", Implementors: []string{"AgentPlanEdge"}},
 		{Name: "AgentPlanScript", Implementors: []string{"AgentPlanScript"}},
 		{Name: "AgentProposal", Implementors: []string{"AgentProposal", "PendingDecision"}},
@@ -2055,6 +2056,29 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "AgentPlanDecisionResult", Fields: []*gqlexec.Field{
+			{
+				Name:      "plan",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AgentPlan",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AgentPlanDecisionResult)
+					return obj.Plan, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentPlan),
+			},
+			{
+				Name:     "refused",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AgentPlanDecisionResult)
+					return obj.Refused, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "AgentPlanEdge", Fields: []*gqlexec.Field{
 			{
 				Name:      "node",
@@ -3752,39 +3776,39 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				HasChild:   true,
-				ChildType:  "AgentDecision",
+				ChildType:  "AgentProposalDecisionResult",
 				Args:       field_Mutation_decideAgentProposal_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideAgentProposal(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentProposalDecisionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentDecision),
+				Marshal: gqlexec.Marshal(marshalNAgentProposalDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResult),
 			},
 			{
 				Name:       "decideAgentPlan",
 				NonNull:    true,
 				IsResolver: true,
 				HasChild:   true,
-				ChildType:  "AgentPlan",
+				ChildType:  "AgentPlanDecisionResult",
 				Args:       field_Mutation_decideAgentPlan_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideAgentPlan(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentPlanDecisionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentPlan),
+				Marshal: gqlexec.Marshal(marshalNAgentPlanDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentPlanDecisionResult),
 			},
 			{
 				Name:       "decideMyProposal",
 				NonNull:    true,
 				IsResolver: true,
 				HasChild:   true,
-				ChildType:  "AgentDecision",
+				ChildType:  "AgentProposalDecisionResult",
 				Args:       field_Mutation_decideMyProposal_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideMyProposal(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentProposalDecisionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentDecision),
+				Marshal: gqlexec.Marshal(marshalNAgentProposalDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentProposalDecisionResult),
 			},
 			{
 				Name:       "decideMyProposals",
@@ -3804,13 +3828,13 @@ var Shard = &gqlexec.Shard{
 				NonNull:    true,
 				IsResolver: true,
 				HasChild:   true,
-				ChildType:  "AgentPlan",
+				ChildType:  "AgentPlanDecisionResult",
 				Args:       field_Mutation_decideMyPlan_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
 					return gqlexec.Resolver[resolverMutation](ec, "Mutation").DecideMyPlan(ctx, fc.Args["id"].(string), fc.Args["input"].(gqlmodel.AgentPlanDecisionInput))
 				},
-				Marshal: gqlexec.Marshal(marshalNAgentPlan2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentPlan),
+				Marshal: gqlexec.Marshal(marshalNAgentPlanDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentPlanDecisionResult),
 			},
 			{
 				Name:       "undoMyDecision",
@@ -4264,11 +4288,11 @@ type resolverAgentRun interface {
 }
 
 type resolverMutation interface {
-	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
-	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
-	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*agent.AgentDecision, error)
+	DecideAgentProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
+	DecideAgentPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
+	DecideMyProposal(ctx context.Context, id string, input gqlmodel.AgentProposalDecisionInput) (*gqlmodel.AgentProposalDecisionResult, error)
 	DecideMyProposals(ctx context.Context, ids []string, input gqlmodel.DecideAgentProposalsInput) ([]*gqlmodel.AgentProposalDecisionResult, error)
-	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*agent.AgentPlan, error)
+	DecideMyPlan(ctx context.Context, id string, input gqlmodel.AgentPlanDecisionInput) (*gqlmodel.AgentPlanDecisionResult, error)
 	UndoMyDecision(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	CommitMyDecisionNow(ctx context.Context, proposalID *string, planID *string) (bool, error)
 	ReplayAgentRun(ctx context.Context, runID string) (*agent.Evaluation, error)
@@ -5479,14 +5503,6 @@ func marshalNAgentControl2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodul
 	return ec.MarshalType(ctx, sel, "AgentControl", v)
 }
 
-func marshalNAgentDecision2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐAgentDecision(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *agent.AgentDecision) graphql.Marshaler {
-	if v == nil {
-		gqlexec.NullViolation(ctx)
-		return graphql.Null
-	}
-	return ec.MarshalType(ctx, sel, "AgentDecision", v)
-}
-
 func marshalNAgentDecisionType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋagentᚋdomainᚋagentᚐDecisionType(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v agent.DecisionType) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
 	if res == graphql.Null {
@@ -5673,6 +5689,14 @@ func marshalNAgentPlanConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AgentPlanConnection", v)
+}
+
+func marshalNAgentPlanDecisionResult2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentPlanDecisionResult(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AgentPlanDecisionResult) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AgentPlanDecisionResult", v)
 }
 
 func marshalNAgentPlanEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAgentPlanEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AgentPlanEdge) graphql.Marshaler {

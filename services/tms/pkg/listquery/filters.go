@@ -19,6 +19,19 @@ const (
 )
 
 func (p *plan) where(filter *pagination.QueryOptions) []keel.Pred {
+	preds := p.filters(filter)
+	if filter == nil {
+		return preds
+	}
+
+	if search := p.search(filter.Query); search != nil {
+		preds = append(preds, search)
+	}
+
+	return preds
+}
+
+func (p *plan) filters(filter *pagination.QueryOptions) []keel.Pred {
 	if filter == nil {
 		return nil
 	}
@@ -40,10 +53,6 @@ func (p *plan) where(filter *pagination.QueryOptions) []keel.Pred {
 		if pred, ok := p.aggregate(af); ok {
 			preds = append(preds, pred)
 		}
-	}
-
-	if search := p.search(filter.Query); search != nil {
-		preds = append(preds, search)
 	}
 
 	return preds

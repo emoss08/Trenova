@@ -112,6 +112,7 @@ const (
 	PreviewWarningUnpinned            = PreviewWarningCode("unpinned")
 	PreviewWarningRateCoverage        = PreviewWarningCode("rate_coverage")
 	PreviewWarningRecipientSkipped    = PreviewWarningCode("recipient_skipped")
+	PreviewWarningEquipmentInUse      = PreviewWarningCode("equipment_in_use")
 )
 
 func AllPreviewWarningCodes() []PreviewWarningCode {
@@ -130,6 +131,7 @@ func AllPreviewWarningCodes() []PreviewWarningCode {
 		PreviewWarningUnpinned,
 		PreviewWarningRateCoverage,
 		PreviewWarningRecipientSkipped,
+		PreviewWarningEquipmentInUse,
 	}
 }
 

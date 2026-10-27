@@ -39,6 +39,11 @@ const (
 	amountsNoteReason = "The rewritten reply still stated a figure nothing this conversation " +
 		"read, so it ends by naming the figures to check."
 	minLabelWords = 2
+
+	minReadValueRunes = 3
+	maxReadValueWords = 8
+	readValueMarks    = "*_`\"'()“”‘’"
+	readValueClauses  = ",;:"
 )
 
 var (
@@ -50,7 +55,14 @@ var (
 		"i can", "i could", "i'd be happy to", "happy to", "want me to", "would you like",
 		"shall i", "should i", "let me know",
 	}
-	negationWords = []string{
+	changeSpeak = []string{
+		"proposal", "proposals", "propose", "proposed", "proposing", "file", "filed",
+		"filing", "would", "will", "i'll", "it'll", "we'll", "going to", "approve",
+		"approved", "approval", "approving", "change", "changes", "changed", "update",
+		"updates", "updated", "set", "sets",
+	}
+	leadingArticles = []string{"the", "a", "an"}
+	negationWords   = []string{
 		"no", "not", "none", "never", "without", "nor", "omit", "omitted", "omitting",
 		"excluded", "exclude", "excluding", "skip", "skipped", "missing", "left",
 		"cannot", "unable",
@@ -384,6 +396,7 @@ func (s *Service) groundingFindings(t *Turn, reply string) groundingFinding {
 
 	claims := claimedPhrases(reply)
 	stated := claims.withoutOffers()
+	reads := t.readResults()
 	for _, tool := range filedTools(t.result.Actions) {
 		spec, ok := s.specFor(tool)
 		if !ok {
@@ -391,7 +404,8 @@ func (s *Service) groundingFindings(t *Turn, reply string) groundingFinding {
 		}
 		filed := filedFor(t, tool)
 		for _, label := range schemaLabels(spec.Parameters) {
-			if !claims.names(label.words) || filed.holds(label) {
+			if !claims.names(label.words) || filed.holds(label) ||
+				stated.readFrom(label.words, reads) {
 				continue
 			}
 			switch {
@@ -487,6 +501,67 @@ func filedTools(actions []agentports.PendingAction) []string {
 	}
 
 	return tools
+}
+
+type readResults []string
+
+func (t *Turn) readResults() readResults {
+	filed := make(map[string]bool, len(t.result.Actions))
+	for idx := range t.result.Actions {
+		filed[t.result.Actions[idx].ToolCallID] = true
+	}
+	reads := make(readResults, 0, 4)
+	for idx := range t.messages {
+		message := &t.messages[idx]
+		if message.Role != agentports.RoleTool || message.IsError || filed[message.ToolCallID] {
+			continue
+		}
+		reads = append(reads, strings.ToLower(message.Content))
+	}
+
+	return reads
+}
+
+func (r readResults) hold(after string) bool {
+	tokens := strings.Fields(after)
+	for len(tokens) > 0 &&
+		slices.Contains(leadingArticles, strings.Trim(tokens[0], readValueMarks)) {
+		tokens = tokens[1:]
+	}
+	value := make([]string, 0, maxReadValueWords)
+	for _, token := range tokens {
+		bare := strings.TrimRight(token, readValueMarks)
+		word := strings.Trim(strings.TrimRight(bare, readValueClauses), readValueMarks)
+		if word != "" {
+			value = append(value, word)
+		}
+		ends := bare != "" && strings.IndexByte(readValueClauses, bare[len(bare)-1]) >= 0
+		if ends || len(value) == maxReadValueWords {
+			break
+		}
+	}
+	for n := len(value); n > 0; n-- {
+		phrase := strings.Join(value[:n], " ")
+		if valueRunes(phrase) < minReadValueRunes {
+			return false
+		}
+		if slices.ContainsFunc(r, func(read string) bool { return containsWords(read, phrase) }) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func valueRunes(text string) int {
+	count := 0
+	for _, r := range text {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			count++
+		}
+	}
+
+	return count
 }
 
 type filedCalls struct {
@@ -628,6 +703,35 @@ func (c replyClaims) withoutOffers() replyClaims {
 	})
 }
 
+func (c replyClaims) readFrom(words string, reads readResults) bool {
+	if len(reads) == 0 {
+		return false
+	}
+	singular := stringutils.SingularNoun(words)
+	named := false
+	for _, sentence := range c {
+		at, size := indexWords(sentence, words), len(words)
+		if at < 0 && singular != words {
+			at, size = indexWords(sentence, singular), len(singular)
+		}
+		if at < 0 {
+			continue
+		}
+		named = true
+		if speaksOfChange(sentence) || !reads.hold(sentence[at+size:]) {
+			return false
+		}
+	}
+
+	return named
+}
+
+func speaksOfChange(sentence string) bool {
+	return slices.ContainsFunc(changeSpeak, func(words string) bool {
+		return containsWords(sentence, words)
+	})
+}
+
 func (c replyClaims) names(words string) bool {
 	singular := stringutils.SingularNoun(words)
 	for _, sentence := range c {
@@ -653,20 +757,23 @@ func negated(sentence string) bool {
 }
 
 func containsWords(text, words string) bool {
+	return indexWords(text, words) >= 0
+}
+
+func indexWords(text, words string) int {
 	for offset := 0; offset < len(text); {
 		idx := strings.Index(text[offset:], words)
 		if idx < 0 {
-			return false
+			return -1
 		}
 		start := offset + idx
-		end := start + len(words)
-		if boundary(text, start-1) && boundary(text, end) {
-			return true
+		if boundary(text, start-1) && boundary(text, start+len(words)) {
+			return start
 		}
 		offset = start + 1
 	}
 
-	return false
+	return -1
 }
 
 func boundary(text string, idx int) bool {

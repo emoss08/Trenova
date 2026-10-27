@@ -338,14 +338,21 @@ func (s *Service) claimAndRun(
 		return plan, nil
 	}
 
-	plan = s.runSteps(ctx, &stepRun{
+	run := &stepRun{
 		req:     req,
 		plan:    plan,
 		steps:   prepared.steps,
 		actor:   actor,
 		preview: prepared.shown,
-	})
-	s.logDecision(plan, prepared.steps, actor, "Agent plan approved and executed")
+	}
+	comment := "Agent plan approved and executed"
+	if prepared.shown.stale() {
+		plan = s.refuseStale(ctx, run)
+		comment = "Agent plan approval refused: a record it changes moved on since it was proposed"
+	} else {
+		plan = s.runSteps(ctx, run)
+	}
+	s.logDecision(plan, prepared.steps, actor, comment)
 	action := agentports.ActivityUpdated
 	if from == agent.PlanStatusApproving {
 		action = agentports.ActivityCommitted
@@ -728,6 +735,72 @@ func (s *Service) runSteps(ctx context.Context, r *stepRun) *agent.AgentPlan {
 type stepFailure struct {
 	step  int
 	cause error
+}
+
+func (s *Service) refuseStale(ctx context.Context, r *stepRun) *agent.AgentPlan {
+	var last *agent.AgentDecision
+	var lastReq *agentports.DecideAgentProposalRequest
+	refusals := make([]stepFailure, 0, 1)
+	firstPending := 0
+
+	for _, step := range r.steps {
+		if step.Status != agent.ProposalStatusPending {
+			continue
+		}
+		if firstPending == 0 {
+			firstPending = step.PlanStep
+		}
+		if !r.preview.preview.StepFor(step.ID).IsStale() {
+			continue
+		}
+
+		stepReq := &agentports.DecideAgentProposalRequest{
+			ProposalID: step.ID,
+			Decision:   agent.DecisionAccepted,
+			ReasonCode: planReason(r.req.ReasonCode, r.plan.ID),
+			Note:       r.req.Note,
+			TenantInfo: r.req.TenantInfo,
+			WithinPlan: true,
+		}
+		r.preview.annotate(stepReq, step.ID)
+
+		cause := agent.ErrTargetChanged
+		outcome, err := s.decisions.DecideWithOutcome(ctx, stepReq, r.actor)
+		switch {
+		case err != nil:
+			s.l.Error("a plan step refused over a changed record could not be recorded",
+				zap.String("proposal", step.ID.String()), zap.Error(err))
+		case outcome.ExecutionError != nil:
+			cause = outcome.ExecutionError
+			last, lastReq = outcome.Decision, stepReq
+		default:
+			last, lastReq = outcome.Decision, stepReq
+		}
+		refusals = append(refusals, stepFailure{step: step.PlanStep, cause: cause})
+	}
+	if len(refusals) == 0 {
+		refusals = append(refusals, stepFailure{step: firstPending, cause: agent.ErrTargetChanged})
+	}
+
+	s.signal(ctx, r.plan, last, lastReq)
+
+	return s.failAt(ctx, r.req, r.plan, refusals[0].step, r.plan.CompletedSteps,
+		staleFailure(refusals))
+}
+
+func staleFailure(refusals []stepFailure) error {
+	var b strings.Builder
+	b.WriteString(agent.ErrPlanTargetChanged.Error())
+	for idx, refusal := range refusals {
+		if idx == maxReportedStepFailures {
+			fmt.Fprintf(&b, "; and %d more", len(refusals)-idx)
+
+			break
+		}
+		fmt.Fprintf(&b, "; step %d: %s", refusal.step, refusal.cause.Error())
+	}
+
+	return errors.New(b.String())
 }
 
 func (s *Service) runIndependent(ctx context.Context, r *stepRun) *agent.AgentPlan {

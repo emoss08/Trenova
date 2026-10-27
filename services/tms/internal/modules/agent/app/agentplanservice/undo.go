@@ -42,6 +42,9 @@ func (s *Service) approveDeferred(
 	if err != nil {
 		return nil, err
 	}
+	if prepared.shown.stale() {
+		return s.claimAndRun(ctx, req, actor, prepared, agent.PlanStatusPending)
+	}
 
 	now := time.Now()
 	commitsAt := decisioncommitcontract.CommitsAt(now)
@@ -97,9 +100,10 @@ func (s *Service) approveDeferred(
 
 // CommitApproval runs a plan whose undo window has closed, as the person who
 // approved it. A plan undone in the window, or approved again since in a
-// later window, is left alone. A plan that can no longer be approved as it
-// stands, because a record it changes moved on in the window, goes back to
-// waiting on its decider instead of running.
+// later window, is left alone. A plan a record of which moved on in the
+// window is refused as approved: nothing runs, the plan fails at that step
+// and its conversation is told why. A plan that can no longer be approved as
+// it stands for any other reason goes back to waiting on its decider.
 func (s *Service) CommitApproval(ctx context.Context, req *agentports.CommitApprovalRequest) error {
 	tenant := req.TenantInfo()
 	actor := permissionports.UserActor(tenant)

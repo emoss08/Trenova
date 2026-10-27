@@ -32,7 +32,7 @@ func Connection[T any](
 	req *Request[T],
 ) (*pagination.CursorListResult[*T], error) {
 	p := newPlan(q, req.Computed)
-	q.Where(p.where(req.Filter)...)
+	read := narrow(p, q, req)
 
 	orders, shape, err := connectionOrder(p, req)
 	if err != nil {
@@ -44,18 +44,73 @@ func Connection[T any](
 		return nil, err
 	}
 
+	page := keysetPage{orders: orders, shape: shape, after: after}
+	var matched *keel.Query[*T]
+	if read != nil && after != "" {
+		matched = q.Clone()
+	}
+
+	result, err := connectionPage(ctx, db, q, req, page)
+	if err != nil {
+		return nil, err
+	}
+	if read == nil || len(result.Items) > 0 {
+		return result, nil
+	}
+
+	if matched != nil {
+		exists, existsErr := matched.Exists(ctx, db)
+		if existsErr != nil {
+			return nil, existsErr
+		}
+		if exists {
+			return result, nil
+		}
+	}
+
+	return fuzzyConnection(ctx, db, read, page)
+}
+
+func narrow[T any](p *plan, q *keel.Query[*T], req *Request[T]) *fuzzyRead[T] {
+	q.Where(p.filters(req.Filter)...)
+
+	var read *fuzzyRead[T]
+	if match, ok := p.fuzzy(req.Filter); ok {
+		read = &fuzzyRead[T]{match: match, unmatched: q.Clone(), req: req}
+	}
+
+	if search := p.search(queryOf(req.Filter)); search != nil {
+		q.Where(search)
+	}
+
+	return read
+}
+
+type keysetPage struct {
+	orders []keel.Order
+	shape  []pagination.CursorSortField
+	after  string
+}
+
+func connectionPage[T any](
+	ctx context.Context,
+	db *keel.DB,
+	q *keel.Query[*T],
+	req *Request[T],
+	kp keysetPage,
+) (*pagination.CursorListResult[*T], error) {
 	counted := q.Clone()
 	rows, err := shapeRows(q, req)
 	if err != nil {
 		return nil, err
 	}
-	rows.Order(orders...)
+	rows.Order(kp.orders...)
 
 	limit := cursorLimit(req.Filter, &req.Cursor)
 	var page keel.Page[*T]
 	var total keel.RowCount
 	items := []keel.BatchItem{
-		keel.PageInto(rows, keel.After(after, limit), &page),
+		keel.PageInto(rows, keel.After(kp.after, limit), &page),
 	}
 	if req.Cursor.IncludeTotalCount {
 		items = append(items, keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total))
@@ -64,7 +119,7 @@ func Connection[T any](
 		return nil, err
 	}
 
-	result, err := connectionResult(&page, shape)
+	result, err := connectionResult(&page, kp.shape)
 	if err != nil {
 		return nil, err
 	}
@@ -98,18 +153,38 @@ func List[T any](
 	req *Request[T],
 ) (*pagination.ListResult[*T], error) {
 	p := newPlan(q, req.Computed)
-	q.Where(p.where(req.Filter)...)
+	read := narrow(p, q, req)
 
-	counted := q.Clone()
-	rows, err := shapeRows(q, req)
+	rows, counted, err := listRows(p, q, req, p.rank(queryOf(req.Filter)))
 	if err != nil {
 		return nil, err
 	}
 
-	if req.Filter != nil {
-		if rank := p.rank(req.Filter.Query); rank != nil {
-			rows.Order(keel.Desc(rank).NullsLast())
-		}
+	result, err := listAndCount(ctx, db, rows, counted)
+	if err != nil {
+		return nil, err
+	}
+	if read == nil || result.Total > 0 {
+		return result, nil
+	}
+
+	return fuzzyList(ctx, db, p, read)
+}
+
+func listRows[T any](
+	p *plan,
+	q *keel.Query[*T],
+	req *Request[T],
+	rank keel.Expr,
+) (rows, counted *keel.Query[*T], err error) {
+	counted = q.Clone()
+	rows, err = shapeRows(q, req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if rank != nil {
+		rows.Order(keel.Desc(rank).NullsLast())
 	}
 	rows.Order(p.orders(sortsOf(req.Filter))...)
 	rows.Order(req.Then...)
@@ -117,7 +192,7 @@ func List[T any](
 	info := paginationOf(req.Filter)
 	rows.Limit(info.SafeLimit()).Offset(info.SafeOffset())
 
-	return listAndCount(ctx, db, rows, counted)
+	return rows, counted, nil
 }
 
 func SelectOptions[T any](

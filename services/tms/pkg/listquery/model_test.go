@@ -46,6 +46,7 @@ func (t *testTruck) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "code", Type: domaintypes.FieldTypeText},
 		},
+		FuzzyFields: []domaintypes.FuzzyField{{"code"}, {"code", "description"}},
 		Relationships: []*domaintypes.RelationshipDefintion{
 			{Field: "Owner", Queryable: true},
 			{Field: "loads", Queryable: true},

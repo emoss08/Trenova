@@ -117,7 +117,7 @@ func newGraphQLUnpagedListTool(
 			read.Operation)
 	}
 	if spec.rank != nil || spec.defaultsAt != nil || len(spec.instead) > 0 ||
-		(spec.queryNote == "") != (len(spec.matches) == 0) {
+		len(spec.conditions) > 0 || (spec.queryNote == "") != (len(spec.matches) == 0) {
 		return nil, fmt.Errorf("%s: %w", spec.name, errUnpagedSpec)
 	}
 

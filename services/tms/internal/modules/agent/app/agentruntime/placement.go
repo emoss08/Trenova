@@ -3,8 +3,8 @@ package agentruntime
 import (
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 )
@@ -15,11 +15,13 @@ const (
 		"being written again."
 	placementPlacedReason = "The rewritten reply still named an artifact outside a sentence, " +
 		"so it was moved into one."
-	placementNamedReason = "The reply left out an artifact the person needs, so a sentence " +
-		"naming it was added."
-	detailsPointerLead = "The details are in "
+	placementNamedReason = "The reply left out an artifact the person needs, so it was " +
+		"named in the reply's own words."
 	cutMarkup          = "*_"
 	cutTrailers        = ".,;:!?"
+	closingPunctuation = ".!?;,…。！？；，"
+	introducingColons  = ":："
+	refSeparator       = ", "
 )
 
 type placementState struct {
@@ -44,7 +46,8 @@ func (p *placementProblems) empty() bool {
 }
 
 // onlyLeftOut reports whether the reply's one fault is an artifact it never
-// named, which a closing sentence repairs as well as a rewrite does.
+// named, which linking it from the reply's own sentence repairs as well as a
+// rewrite does.
 func (p *placementProblems) onlyLeftOut() bool {
 	return len(p.missing) > 0 && len(p.stray) == 0 && len(p.invented) == 0
 }
@@ -66,8 +69,10 @@ func (s *Service) placeArtifacts(
 
 	// A reply that only left out a table it searched (Shipments, Invoices,
 	// Time offs) was asked again in about one turn in ten, and the person
-	// watched a finished answer restart to add a link. The sentence the
-	// fallback writes names it without asking the model again.
+	// watched a finished answer restart to add a link. The fallback links it
+	// from the reply's own first sentence without asking the model again, and
+	// writes no words of its own, since the turn's language is the model's
+	// (DB-237).
 	if !state.retried && problems.onlyLeftOut() {
 		state.retried = true
 		placed := t.placed(completion.Text, &problems)
@@ -242,7 +247,6 @@ func (t *Turn) placed(reply string, problems *placementProblems) string {
 	}
 
 	refs := make([]string, 0, len(problems.stray)+len(problems.missing))
-	kinds := make([]string, 0, cap(refs))
 	seen := make(map[string]bool, cap(refs))
 	for _, link := range problems.stray {
 		if seen[link.id] {
@@ -250,7 +254,6 @@ func (t *Turn) placed(reply string, problems *placementProblems) string {
 		}
 		seen[link.id] = true
 		refs = append(refs, t.refFor(link))
-		kinds = append(kinds, t.kindOf(link.id))
 	}
 	for idx := range problems.missing {
 		shown := &problems.missing[idx]
@@ -259,19 +262,9 @@ func (t *Turn) placed(reply string, problems *placementProblems) string {
 		}
 		seen[shown.ID.String()] = true
 		refs = append(refs, ArtifactRef(shown))
-		kinds = append(kinds, shown.Kind)
 	}
 
-	out := strings.TrimRight(collapseBlankLines(b.String()), " \t\n")
-	if len(refs) == 0 {
-		return out
-	}
-	sentence := pointerLead(kinds) + joinRefs(refs) + "."
-	if out == "" {
-		return sentence
-	}
-
-	return out + "\n\n" + sentence
+	return withRefs(strings.TrimRight(collapseBlankLines(b.String()), " \t\n"), refs)
 }
 
 func cutLinks(
@@ -318,43 +311,86 @@ func widenCut(reply string, link strayLink) strayLink {
 	return link
 }
 
-func (t *Turn) kindOf(id string) string {
-	if shown, ok := t.shownArtifact(id); ok {
-		return shown.Kind
-	}
-
-	return ""
+type textLine struct {
+	start int
+	end   int
 }
 
-var pointerLeads = map[assistantartifact.Kind]string{
-	assistantartifact.KindTableView:       tablePointerLead,
-	assistantartifact.KindReportPreview:   tablePointerLead,
-	assistantartifact.KindEntityCard:      "The full record is in ",
-	assistantartifact.KindDocument:        "The full write-up is in ",
-	assistantartifact.KindReportRun:       "The report is in ",
-	assistantartifact.KindRateExplanation: "How the rate was reached is in ",
+func proseLines(text string) []textLine {
+	lines := make([]textLine, 0, 4)
+	fenced := false
+	for start := 0; start <= len(text); {
+		end := strings.IndexByte(text[start:], '\n')
+		if end < 0 {
+			end = len(text)
+		} else {
+			end += start
+		}
+		line := text[start:end]
+		trimmed := strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~"):
+			fenced = !fenced
+		case !fenced && proseLine(line) && hasWord(artifactLink.ReplaceAllString(line, "")):
+			lines = append(lines, textLine{start: start, end: end})
+		}
+		start = end + 1
+	}
+
+	return lines
 }
 
-func pointerLead(kinds []string) string {
-	if len(kinds) != 1 {
-		return detailsPointerLead
+func withRefs(text string, refs []string) string {
+	if len(refs) == 0 {
+		return text
 	}
-	if lead, ok := pointerLeads[assistantartifact.Kind(kinds[0])]; ok {
-		return lead
+	if lines := proseLines(text); len(lines) > 0 {
+		return attachAt(text, firstSentenceLine(text, lines), refs)
+	}
+	joined := strings.Join(refs, refSeparator)
+	if text == "" {
+		return joined
 	}
 
-	return detailsPointerLead
+	return text + "\n\n" + joined
 }
 
-func joinRefs(refs []string) string {
-	switch len(refs) {
-	case 0:
-		return ""
-	case 1:
-		return refs[0]
-	default:
-		return strings.Join(refs[:len(refs)-1], ", ") + " and " + refs[len(refs)-1]
+func firstSentenceLine(text string, lines []textLine) textLine {
+	for _, line := range lines {
+		bare := strings.TrimRight(text[line.start:line.end], " \t"+cutMarkup)
+		last, _ := utf8.DecodeLastRuneInString(bare)
+		if strings.ContainsRune(closingPunctuation+introducingColons, last) {
+			return line
+		}
 	}
+
+	return lines[0]
+}
+
+func attachAt(text string, line textLine, refs []string) string {
+	return text[:line.start] + attachRefs(text[line.start:line.end], refs) + text[line.end:]
+}
+
+func attachRefs(line string, refs []string) string {
+	joined := strings.Join(refs, refSeparator)
+	body := strings.TrimRight(line, " \t")
+	bare := strings.TrimRight(body, cutMarkup)
+	if last, _ := utf8.DecodeLastRuneInString(bare); strings.ContainsRune(introducingColons, last) {
+		return body + " " + joined
+	}
+	cut := len(bare)
+	for cut > 0 {
+		last, size := utf8.DecodeLastRuneInString(bare[:cut])
+		if !strings.ContainsRune(closingPunctuation, last) {
+			break
+		}
+		cut -= size
+	}
+	if cut == len(bare) {
+		return body + " (" + joined + ")"
+	}
+
+	return body[:cut] + " (" + joined + ")" + body[cut:]
 }
 
 func collapseBlankLines(text string) string {

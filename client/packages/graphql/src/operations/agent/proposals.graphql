@@ -82,14 +82,20 @@ query AgentProposalDetail($id: ID!) {
 
 mutation DecideAgentProposal($id: ID!, $input: AgentProposalDecisionInput!) {
   decideAgentProposal(id: $id, input: $input) {
-    id
     proposalId
-    decision
-    reasonCode
-    decidedByUserId
-    previewDigest
-    previewReviewed
-    version
-    createdAt
+    executed
+    refused
+    error
+    decision {
+      id
+      proposalId
+      decision
+      reasonCode
+      decidedByUserId
+      previewDigest
+      previewReviewed
+      version
+      createdAt
+    }
   }
 }

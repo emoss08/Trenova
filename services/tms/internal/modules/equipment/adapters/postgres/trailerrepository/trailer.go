@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/quotatx"
+	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/inprogressmove"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/lastknownlocation"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
@@ -34,6 +35,7 @@ type Params struct {
 	Logger    *zap.Logger
 	Quota     platformplanports.QuotaGuard `optional:"true"`
 	Locations equipmentcontinuityports.LocationColumns
+	Moves     equipmentcontinuityports.MoveColumns
 }
 
 type repository struct {
@@ -41,6 +43,7 @@ type repository struct {
 	l         *zap.Logger
 	quota     platformplanports.QuotaGuard
 	locations equipmentcontinuityports.LocationColumns
+	moves     equipmentcontinuityports.MoveColumns
 }
 
 func New(p Params) trailerports.TrailerRepository {
@@ -49,6 +52,7 @@ func New(p Params) trailerports.TrailerRepository {
 		l:         p.Logger.Named("postgres.trailer-repository"),
 		quota:     quotaservice.OrUnlimited(p.Quota),
 		locations: p.Locations,
+		moves:     p.Moves,
 	}
 }
 
@@ -92,10 +96,15 @@ func (r *repository) List(
 							trailerdb.Trailers.ID,
 							equipmentcontinuity.EquipmentTypeTrailer,
 						),
+						inProgressMoveFilter: inprogressmove.MoveID(
+							r.moves,
+							r.moves.AssignmentTrailerID,
+							trailerdb.Trailers.ID,
+						),
 					},
 					Shape: func(q *keel.Query[*trailer.Trailer]) *keel.Query[*trailer.Trailer] {
-						return r.withLastKnownLocation(
-							q.Load(loads...),
+						return r.withInProgressMove(
+							r.withLastKnownLocation(q.Load(loads...), &req.TrailerRelationIncludes),
 							&req.TrailerRelationIncludes,
 						)
 					},
@@ -260,7 +269,9 @@ func (r *repository) trailerQuery(
 		return nil, err
 	}
 
-	return r.withLastKnownLocation(q.Load(loads...), includes), nil
+	q = r.withLastKnownLocation(q.Load(loads...), includes)
+
+	return r.withInProgressMove(q, includes), nil
 }
 
 func trailerLoads(includes *trailerports.TrailerRelationIncludes) ([]keel.Loader, error) {
@@ -316,7 +327,27 @@ func trailerLoads(includes *trailerports.TrailerRelationIncludes) ([]keel.Loader
 	return loads.Result()
 }
 
-const lastKnownLocationFilter = "lastKnownLocationId"
+const (
+	lastKnownLocationFilter = "lastKnownLocationId"
+	inProgressMoveFilter    = "inProgressMoveId"
+)
+
+func (r *repository) withInProgressMove(
+	q *keel.Query[*trailer.Trailer],
+	includes *trailerports.TrailerRelationIncludes,
+) *keel.Query[*trailer.Trailer] {
+	if !includes.IncludeInProgressMove {
+		return q
+	}
+
+	tr := trailerdb.Trailers
+	move := inprogressmove.Of(r.moves, r.moves.AssignmentTrailerID, tr.ID)
+
+	return q.
+		Compute(tr.InProgressMoveID, move.MoveID).
+		Compute(tr.InProgressProNumber, move.ProNumber).
+		Compute(tr.InProgressDueAt, move.DueAt)
+}
 
 func (r *repository) withLastKnownLocation(
 	q *keel.Query[*trailer.Trailer],

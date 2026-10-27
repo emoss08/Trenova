@@ -728,12 +728,6 @@ func (s *Service) simulate(ctx context.Context, r *approvedRun) error {
 	return nil
 }
 
-// ErrTargetChanged reports a record that moved on since the change to it was
-// proposed. It is a business outcome, not a transport failure: the approval
-// was for the record as described, and that record no longer exists in that
-// form.
-var ErrTargetChanged = errors.New("the record changed since this was proposed")
-
 // assertTargetUnchanged compares the pinned version with the record's current
 // one. A proposal without a pin — an older one, or a tool with no single
 // target — passes; only a pin that no longer matches refuses. An expected
@@ -763,7 +757,7 @@ func (s *Service) assertTargetUnchanged(
 	if err != nil {
 		return fmt.Errorf(
 			"%w: the %s could not be read (%w)",
-			ErrTargetChanged,
+			agent.ErrTargetChanged,
 			proposal.TargetResource,
 			err,
 		)
@@ -773,7 +767,7 @@ func (s *Service) assertTargetUnchanged(
 		return fmt.Errorf(
 			"%w: the %s is at version %d and was at %d when this was proposed. "+
 				"Review the current record and ask again",
-			ErrTargetChanged, proposal.TargetResource, current, pinned,
+			agent.ErrTargetChanged, proposal.TargetResource, current, pinned,
 		)
 	}
 

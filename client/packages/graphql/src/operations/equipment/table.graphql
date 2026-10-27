@@ -70,6 +70,9 @@ fragment TractorTableRowFields on Tractor {
   externalId
   lastKnownLocationId
   lastKnownLocationName
+  inProgressMoveId
+  inProgressProNumber
+  inProgressDueAt
   fuelType
   iftaQualified
   version
@@ -118,6 +121,9 @@ fragment TrailerTableRowFields on Trailer {
   registrationExpiry
   lastKnownLocationId
   lastKnownLocationName
+  inProgressMoveId
+  inProgressProNumber
+  inProgressDueAt
   version
   createdAt
   updatedAt

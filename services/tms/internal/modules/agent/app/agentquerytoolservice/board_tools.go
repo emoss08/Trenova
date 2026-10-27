@@ -40,6 +40,7 @@ type boardMoveRow struct {
 	MoveStatus      string  `json:"moveStatus"`
 	Urgency         string  `json:"urgency"`
 	LateTo          string  `json:"lateTo,omitempty"`
+	LateBy          string  `json:"lateBy,omitempty"`
 	MinutesToPickup int64   `json:"minutesToPickup"`
 	Covered         bool    `json:"covered"`
 	Coverage        string  `json:"coverage"`
@@ -112,7 +113,8 @@ func (t *getDispatchBoardTool) Description() string {
 		"is Late, Now, Today, Tomorrow or Planned, and each move shows who covers it and " +
 		"its pickup and delivery windows. This is the one call for \"what is late\", " +
 		"\"what is uncovered\" and \"who is free\". Urgency follows the pickup window, " +
-		"so each late move's lateTo says whether it is late to pick up or to deliver; " +
+		"so each late move's lateTo says whether it is late to pick up or to deliver, " +
+		"and lateBy how long past the window's close it is, the way to say it; " +
 		"check shipment_get_tracking on a late move " +
 		"before acting on it, since arrivals are sometimes recorded late. A rundown or " +
 		"a list answers from the board as it stands, saying what each is late to do, " +
@@ -212,7 +214,7 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 		}
 		view.Counts[string(move.Urgency)]++
 		row := toBoardMoveRow(move, timezone)
-		row.LateTo = lateTo(move.BoardMove, board.WindowStart)
+		row.LateTo, row.LateBy = lateness(move.BoardMove, board.WindowStart)
 		late.add(&row)
 		view.Moves = append(view.Moves, row)
 	}
@@ -238,32 +240,49 @@ func boardViewOf(board *dispatchconsoleservice.Board, timezone string) boardView
 }
 
 const (
-	lateToPickUp  = "pick up"
-	lateToDeliver = "deliver"
+	lateToPickUp    = "pick up"
+	lateToDeliver   = "deliver"
+	millisPerSecond = 1000
 )
 
-// lateTo is what a move is late to do at now: pick up, when its pickup
-// window has opened with no arrival recorded, or deliver, when it was picked
-// up and its delivery window has closed. A move picked up and still inside
-// its delivery window is not late, whatever its pickup-based urgency says.
-func lateTo(move *shipmentports.BoardMove, now int64) string {
+// lateness is what a move is late to do at now, and how long past the
+// window's close it is: pick up, when its pickup window has opened with no
+// arrival recorded, or deliver, when it was picked up and its delivery
+// window has closed. A move picked up and still inside its delivery window
+// is not late, whatever its pickup-based urgency says. A pickup window still
+// open has no lateBy yet.
+func lateness(move *shipmentports.BoardMove, now int64) (lateTo, lateBy string) {
 	if move.OriginActualArrive == nil || *move.OriginActualArrive <= 0 {
 		if move.OriginWindowStart > 0 && move.OriginWindowStart < now {
-			return lateToPickUp
+			pickupClose := closeOf(move.OriginWindowStart, move.OriginWindowEnd)
+			return lateToPickUp, lateFor(now - pickupClose)
 		}
 
+		return "", ""
+	}
+
+	deadline := closeOf(move.DestinationWindowStart, move.DestinationWindowEnd)
+	if deadline > 0 && deadline < now {
+		return lateToDeliver, lateFor(now - deadline)
+	}
+
+	return "", ""
+}
+
+func closeOf(start int64, end *int64) int64 {
+	if end != nil && *end > 0 {
+		return *end
+	}
+
+	return start
+}
+
+func lateFor(seconds int64) string {
+	if seconds <= 0 {
 		return ""
 	}
 
-	deadline := move.DestinationWindowStart
-	if move.DestinationWindowEnd != nil && *move.DestinationWindowEnd > 0 {
-		deadline = *move.DestinationWindowEnd
-	}
-	if deadline > 0 && deadline < now {
-		return lateToDeliver
-	}
-
-	return ""
+	return timeutils.FormatLongDurationMs(seconds * millisPerSecond)
 }
 
 // lateRank orders the agent's board by what a move is late to do: a load

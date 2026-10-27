@@ -1,6 +1,8 @@
 package shipmentrepository
 
 import (
+	"strings"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
@@ -8,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 )
 
 func shipmentLoads(opts *shipmentports.ShipmentOptions) []keel.Loader {
@@ -31,15 +34,25 @@ func shipmentLoads(opts *shipmentports.ShipmentOptions) []keel.Loader {
 			},
 			chargeLoads()...,
 		)
-	case opts.IncludeRoute && opts.IncludeCustomer:
-		return []keel.Loader{sp.Customer(), sp.BillToCustomer(), movesWithRoute()}
-	case opts.IncludeRoute:
-		return []keel.Loader{movesWithRoute()}
-	case opts.IncludeCustomer:
-		return []keel.Loader{sp.Customer(), sp.BillToCustomer()}
 	default:
-		return nil
+		loads := make([]keel.Loader, 0, 4)
+		if opts.IncludeCustomer {
+			loads = append(loads, sp.Customer(), sp.BillToCustomer())
+		}
+		if opts.IncludeRoute {
+			loads = append(loads, movesWithRoute())
+		}
+		if opts.IncludeCommodities {
+			loads = append(loads, commodityNames())
+		}
+		return loads
 	}
+}
+
+func commodityNames() keel.Loader {
+	sc := shipmentdb.Shipments.Commodities()
+
+	return sc.Order(sc.CreatedAt.Asc(), sc.ID.Asc()).Load(sc.Commodity())
 }
 
 func commoditiesWithHazmat() keel.Loader {
@@ -117,19 +130,16 @@ func shipmentOptionPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 	if len(opts.StopLocationIDs) > 0 {
 		preds = append(preds, stopLocationPredicate(opts.StopLocationIDs))
 	}
-	for _, group := range opts.StopEachOf {
-		if len(group) > 0 {
-			preds = append(preds, stopLocationPredicate(group))
+	for idx := range opts.PartyGroups {
+		if pred := partyGroupPredicate(&opts.PartyGroups[idx]); pred != nil {
+			preds = append(preds, pred)
 		}
 	}
+	if opts.FiltersOnHolds() {
+		preds = append(preds, activeHoldPredicate(opts))
+	}
 	if len(opts.WorkerIDs) > 0 {
-		a := sp.Moves().Assignment()
-		preds = append(preds, liveAssignmentPredicate(
-			keel.Or(
-				a.PrimaryWorkerID.In(opts.WorkerIDs...),
-				a.SecondaryWorkerID.In(opts.WorkerIDs...),
-			),
-		))
+		preds = append(preds, workerPredicate(opts.WorkerIDs))
 	}
 	if len(opts.TractorIDs) > 0 {
 		a := sp.Moves().Assignment()
@@ -143,14 +153,86 @@ func shipmentOptionPredicates(opts *shipmentports.ShipmentOptions) []keel.Pred {
 		preds = append(preds, assignedCarrierPredicate(opts.CarrierIDs))
 	}
 	if len(opts.CommodityIDs) > 0 {
-		sc := sp.Commodities()
-		preds = append(preds, sc.Any(sc.CommodityID.In(opts.CommodityIDs...)))
+		preds = append(preds, commodityPredicate(opts.CommodityIDs))
 	}
 	if len(opts.ShipmentTypeIDs) > 0 {
 		preds = append(preds, sp.ShipmentTypeID.In(opts.ShipmentTypeIDs...))
 	}
 
 	return preds
+}
+
+func partyGroupPredicate(group *shipmentports.ShipmentPartyGroup) keel.Pred {
+	sp := shipmentdb.Shipments
+	readings := make([]keel.Pred, 0, 6)
+	if len(group.CustomerIDs) > 0 {
+		readings = append(readings, sp.CustomerID.In(group.CustomerIDs...))
+	}
+	if len(group.StopLocationIDs) > 0 {
+		readings = append(readings, stopLocationPredicate(group.StopLocationIDs))
+	}
+	if len(group.WorkerIDs) > 0 {
+		readings = append(readings, workerPredicate(group.WorkerIDs))
+	}
+	if len(group.CommodityIDs) > 0 {
+		readings = append(readings, commodityPredicate(group.CommodityIDs))
+	}
+	if len(group.ShipmentTypeIDs) > 0 {
+		readings = append(readings, sp.ShipmentTypeID.In(group.ShipmentTypeIDs...))
+	}
+	if len(group.OrderIDs) > 0 {
+		readings = append(readings, sp.OrderID.In(group.OrderIDs...))
+	}
+
+	switch len(readings) {
+	case 0:
+		return nil
+	case 1:
+		return readings[0]
+	default:
+		return keel.Or(readings...)
+	}
+}
+
+func workerPredicate(workerIDs []pulid.ID) keel.Pred {
+	a := shipmentdb.Shipments.Moves().Assignment()
+
+	return liveAssignmentPredicate(
+		keel.Or(
+			a.PrimaryWorkerID.In(workerIDs...),
+			a.SecondaryWorkerID.In(workerIDs...),
+		),
+	)
+}
+
+func commodityPredicate(commodityIDs []pulid.ID) keel.Pred {
+	sc := shipmentdb.Shipments.Commodities()
+
+	return sc.Any(sc.CommodityID.In(commodityIDs...))
+}
+
+func activeHoldPredicate(opts *shipmentports.ShipmentOptions) keel.Pred {
+	sh := shipmentdb.ShipmentHolds
+	held := sh.Pick(sh.ShipmentID).Where(sh.ReleasedAt.IsNull())
+	if codes := holdReasonCodes(opts.HoldReasonCodes); len(codes) > 0 {
+		held = held.Where(sh.ReasonCode.Lower().In(codes...))
+	}
+
+	id := shipmentdb.Shipments.ID
+	if opts.ActiveHold != nil && !*opts.ActiveHold {
+		return id.NotInQuery(held)
+	}
+
+	return id.InQuery(held)
+}
+
+func holdReasonCodes(codes []string) []string {
+	lowered := make([]string, 0, len(codes))
+	for _, code := range codes {
+		lowered = append(lowered, strings.ToLower(code))
+	}
+
+	return sliceutils.DedupeStrings(lowered)
 }
 
 func liveAssignmentPredicate(match keel.Pred) keel.Pred {

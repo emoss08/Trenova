@@ -45,6 +45,18 @@ query AgentPlanDetail($id: ID!) {
 
 mutation DecideAgentPlan($id: ID!, $input: AgentPlanDecisionInput!) {
   decideAgentPlan(id: $id, input: $input) {
-    ...AgentPlanTableRowFields
+    refused
+    plan {
+      id
+      status
+      stepCount
+      completedSteps
+      failedStep
+      failureError
+      decidedByUserId
+      decidedAt
+      version
+      updatedAt
+    }
   }
 }

@@ -19,6 +19,7 @@ type ListResult[T any] struct {
 	Items      []T  `json:"items"`
 	Total      int  `json:"total"`
 	TotalExact bool `json:"totalExact"`
+	Fuzzy      bool `json:"fuzzy,omitempty"`
 }
 
 type SelectQueryRequest struct {

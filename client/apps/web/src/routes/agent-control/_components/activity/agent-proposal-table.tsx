@@ -10,6 +10,11 @@ import { decideAgentProposal } from "@/lib/graphql/agent-decisions";
 import { invalidateAIControlCounts } from "../overview/use-ai-control-stats";
 import type { RowAction } from "@trenova/shared/types/data-table";
 import { Operation, Resource } from "@trenova/shared/types/permission";
+import {
+  announceRefusal,
+  approvalFailure,
+  type ProposalDecisionOutcome,
+} from "@/lib/approval-outcome";
 import { invalidateProposalViews } from "@/lib/proposal-cache";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckIcon, Edit02Icon, XCloseIcon } from "@trenova/shared/components/icons";
@@ -36,6 +41,15 @@ export default function AgentProposalTable() {
       invalidateProposalViews(queryClient),
       invalidateAIControlCounts(queryClient),
     ]);
+  };
+
+  // The approval is recorded either way. One refused because its record
+  // moved on ran nothing, which the dialog closing would not say; a write
+  // that failed as it ran shows in the table once it is read again.
+  const sayIfNotRun = (result: ProposalDecisionOutcome) => {
+    if (result.refused) {
+      announceRefusal(t, approvalFailure(result));
+    }
   };
 
   const decide = (
@@ -73,11 +87,12 @@ export default function AgentProposalTable() {
         reviewRequired: proposal.reviewRequired,
       },
       onConfirm: async (reason, previewDigest) => {
-        await decideAgentProposal(proposal.id, {
+        const result = await decideAgentProposal(proposal.id, {
           decision,
           reasonCode: reason || (accepting ? "approved_from_activity" : "rejected_from_activity"),
           previewDigest,
         });
+        sayIfNotRun(result);
         await afterDecision();
       },
     });
@@ -98,12 +113,13 @@ export default function AgentProposalTable() {
       withReason: { label: t("Reason"), required: false },
       preview: { scope: "approver", proposalId: proposal.id },
       onConfirm: async (modifications, reason, previewDigest) => {
-        await decideAgentProposal(proposal.id, {
+        const result = await decideAgentProposal(proposal.id, {
           decision: "Modified",
           modifications,
           reasonCode: reason || "modified_from_activity",
           previewDigest,
         });
+        sayIfNotRun(result);
         await afterDecision();
       },
     });

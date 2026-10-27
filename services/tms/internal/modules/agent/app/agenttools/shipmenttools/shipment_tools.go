@@ -37,7 +37,7 @@ func (t *AddShipmentCommentTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment to comment on, from the page, shipment_list or "+
+				"The shipment to comment on, from the page or "+
 					"shipment_list."),
 			"comment": map[string]any{
 				"type":        "string",
@@ -313,7 +313,7 @@ func (t *ReleaseShipmentHoldTool) ParamSchema() map[string]any {
 		"type": "object",
 		"properties": map[string]any{
 			common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-				"The shipment the hold is on, from the page, shipment_list or "+
+				"The shipment the hold is on, from the page or "+
 					"shipment_list."),
 			"holdId": agenttoolschema.RecordIDText(permission.ResourceShipmentHold,
 				"The hold to release, from the holds shipment_get lists, the page or the "+

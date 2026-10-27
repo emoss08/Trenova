@@ -16,13 +16,15 @@ const (
 
 	tractorsSummary = "List tractors (power units) narrowed by status, ownership, or a " +
 		"registration or lease date. Use it for questions about which units are out " +
-		"of service or coming due for plates."
+		"of service, coming due for plates, or free now (hasInProgressMove false)."
 	trailersSummary = "List trailers narrowed by status, ownership, or a registration, " +
 		"lease or inspection date, each with its equipment type (dry van, reefer, " +
-		"flatbed). Use it for questions about which trailers are out of service or " +
-		"overdue for inspection."
-	noteEquipmentStatus = "Available means it can be dispatched, OutOfService means it " +
-		"cannot, AtMaintenance means it is in the shop, and Sold means it has left the fleet."
+		"flatbed). Use it for questions about which trailers are out of service, " +
+		"overdue for inspection, or free now (hasInProgressMove false)."
+	noteEquipmentStatus = "The unit's standing, not whether it is free now: Available means " +
+		"it may be dispatched, OutOfService means it cannot, AtMaintenance means it is in " +
+		"the shop, and Sold means it has left the fleet. An Available unit may still be on " +
+		"a move in progress."
 	notePlateLapses    = "When the plate lapses."
 	noteLastInspection = "The last annual inspection."
 

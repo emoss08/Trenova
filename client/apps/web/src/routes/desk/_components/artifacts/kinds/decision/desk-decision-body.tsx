@@ -3,7 +3,8 @@ import { decisionRequestOf } from "@/components/assistant/decision-requests";
 import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { decideMyPlan, decideMyProposal, decideMyProposals } from "@/lib/graphql/agent-decisions";
-import { invalidateProposalViews } from "@/lib/proposal-cache";
+import { announceRefusal, approvalFailure } from "@/lib/approval-outcome";
+import { invalidateProposalViews, markPlanFailed, markProposalFailed } from "@/lib/proposal-cache";
 import { assistant } from "@/lib/queries/assistant";
 import type { AssistantArtifact, AssistantProposal } from "@/types/assistant";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,17 +25,39 @@ import {
   useReviewReports,
 } from "@/components/assistant/proposal-preview/reviewed-change";
 
-/** Where a decision stands, read from the proposals or plan behind it. */
-function decisionState(statuses: readonly string[]): "pending" | "approved" | "dismissed" {
+type DecisionState = "pending" | "approved" | "failed" | "dismissed";
+
+/**
+ * Where a decision stands, read from the proposals or plan behind it. An
+ * approval whose write did not go through, refused because its record moved
+ * on or failed as it ran, is not carried out rather than approved.
+ */
+function decisionState(statuses: readonly string[]): DecisionState {
   if (statuses.length === 0 || statuses.some((status) => status === "Pending")) {
     return "pending";
   }
-  return statuses.some((status) => status === "Rejected" || status === "Expired")
-    ? "dismissed"
-    : "approved";
+  if (statuses.some((status) => status === "Rejected" || status === "Expired")) {
+    return "dismissed";
+  }
+  return statuses.some((status) => status === "ExecutionFailed") ? "failed" : "approved";
 }
 
 const DECISION_ROWS = 8;
+
+/** What deciding from this card came to: done, or recorded but not carried out. */
+type DecidedHere =
+  | { kind: "done" }
+  | {
+      kind: "plan-failed";
+      plan: {
+        id: string;
+        completedSteps: number;
+        failedStep?: number | null;
+        failureError: string;
+      };
+      refused: boolean;
+    }
+  | { kind: "proposal-failed"; id: string; error: string; refused: boolean };
 
 /**
  * A decision the agent asked for: what it covers, each change, and the way to
@@ -71,13 +94,15 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
         : request.proposalIds
             .map((id) => all.find((candidate) => candidate.id === id))
             .filter((proposal): proposal is AssistantProposal => proposal !== undefined);
-  const state =
+  const state: DecisionState =
     plan !== null
       ? plan.status === "Pending"
         ? "pending"
         : plan.status === "Rejected" || plan.status === "Expired"
           ? "dismissed"
-          : "approved"
+          : plan.status === "Failed"
+            ? "failed"
+            : "approved"
       : decisionState(proposals.map((proposal) => proposal.status));
   const pending = proposals.filter((proposal) => proposal.status === "Pending");
   const ids = pending.map((proposal) => proposal.id);
@@ -96,27 +121,46 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
   const unseen = tally.loading + tally.failed + tally.stale;
 
   const decide = useApiMutation({
-    mutationFn: async (decision: "Accepted" | "Rejected") => {
+    mutationFn: async (decision: "Accepted" | "Rejected"): Promise<DecidedHere> => {
       const approving = decision === "Accepted";
       const input = { decision, reasonCode: approving ? "" : "not_now" };
       if (plan !== null) {
-        await decideMyPlan(plan.id, {
+        const result = await decideMyPlan(plan.id, {
           ...input,
           previewDigest: approving ? shown.get(plan.id) : undefined,
         });
-      } else if (ids.length === 1) {
-        await decideMyProposal(ids[0], {
+        return result.plan.status === "Failed"
+          ? { kind: "plan-failed", plan: result.plan, refused: result.refused }
+          : { kind: "done" };
+      }
+      if (ids.length === 1) {
+        const result = await decideMyProposal(ids[0], {
           ...input,
           previewDigest: approving ? shown.get(ids[0]) : undefined,
         });
-      } else {
-        await decideMyProposals(ids, {
-          ...input,
-          previewDigests: approving ? batchPreviewDigests(ids, shown) : undefined,
-        });
+        const failure = approvalFailure(result);
+        return failure === null
+          ? { kind: "done" }
+          : { kind: "proposal-failed", id: ids[0], error: failure, refused: result.refused };
       }
+      await decideMyProposals(ids, {
+        ...input,
+        previewDigests: approving ? batchPreviewDigests(ids, shown) : undefined,
+      });
+      return { kind: "done" };
     },
-    onSuccess: () => invalidateProposalViews(queryClient, artifact.threadId),
+    onSuccess: (decided) => {
+      // An approval recorded but not carried out reads as such at once, and
+      // one refused because its record moved on says that nothing changed.
+      if (decided.kind === "plan-failed") {
+        markPlanFailed(queryClient, decided.plan);
+        if (decided.refused) announceRefusal(t, decided.plan.failureError);
+      } else if (decided.kind === "proposal-failed") {
+        markProposalFailed(queryClient, decided.id, decided.error);
+        if (decided.refused) announceRefusal(t, decided.error);
+      }
+      return invalidateProposalViews(queryClient, artifact.threadId);
+    },
     resourceName: "Decision",
   });
 
@@ -144,7 +188,9 @@ export function DeskDecisionBody({ artifact }: { artifact: AssistantArtifact }) 
             ? t("Waiting on you")
             : state === "approved"
               ? t("Approved")
-              : t("Set aside")}
+              : state === "failed"
+                ? t("Not carried out")
+                : t("Set aside")}
         </span>
       </div>
       <p className="dk-ax-note">{scope.join(" · ")}</p>

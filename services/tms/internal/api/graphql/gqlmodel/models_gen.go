@@ -1143,6 +1143,17 @@ type AgentPlanDecisionInput struct {
 	Note *string `json:"note,omitempty"`
 }
 
+// What came of deciding a plan.
+type AgentPlanDecisionResult struct {
+	// The plan as the decision left it: waiting out its undo window, run, failed at a step, or rejected.
+	Plan *agent.AgentPlan `json:"plan"`
+	// The approval was recorded but refused before any step ran, because a
+	// record a step changes moved on since the plan was proposed. Nothing was
+	// changed; the plan's failureError says what moved, and the conversation that
+	// raised it is told.
+	Refused bool `json:"refused"`
+}
+
 type AgentPlanEdge struct {
 	Node   *agent.AgentPlan `json:"node"`
 	Cursor string           `json:"cursor"`
@@ -1182,14 +1193,19 @@ type AgentProposalDecisionInput struct {
 	Note *string `json:"note,omitempty"`
 }
 
-// What became of one proposal in a batch decision.
+// What came of deciding one proposal, on its own or in a batch.
 type AgentProposalDecisionResult struct {
-	ProposalID string               `json:"proposalId"`
-	Decision   *agent.AgentDecision `json:"decision,omitempty"`
-	// Why this one could not be decided or its write failed, written for the person; absent when it went through.
+	ProposalID string `json:"proposalId"`
+	// The decision recorded; absent when this one could not be decided.
+	Decision *agent.AgentDecision `json:"decision,omitempty"`
+	// Why this one could not be decided, its write failed or its approval was refused, written for the person; absent when it went through.
 	Error *string `json:"error,omitempty"`
-	// The approved write ran.
+	// The approved write ran. False for a rejection and for an approval still in its undo window.
 	Executed bool `json:"executed"`
+	// The approval was recorded but refused, because the record the change is
+	// for moved on since it was proposed. Nothing was changed; error says what
+	// moved, and the conversation that raised it is told.
+	Refused bool `json:"refused"`
 }
 
 type AgentProposalEdge struct {

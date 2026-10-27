@@ -64,32 +64,41 @@ mutation SettleMyAgentSuggestion($input: SettleMyAgentSuggestionInput!) {
 
 mutation DecideMyPlan($id: ID!, $input: AgentPlanDecisionInput!) {
   decideMyPlan(id: $id, input: $input) {
-    id
-    status
-    stepCount
-    completedSteps
-    failedStep
-    failureError
-    decidedByUserId
-    decidedAt
-    commitsAt
-    version
-    updatedAt
+    refused
+    plan {
+      id
+      status
+      stepCount
+      completedSteps
+      failedStep
+      failureError
+      decidedByUserId
+      decidedAt
+      commitsAt
+      version
+      updatedAt
+    }
   }
 }
 
 mutation DecideMyProposal($id: ID!, $input: AgentProposalDecisionInput!) {
   decideMyProposal(id: $id, input: $input) {
-    id
     proposalId
-    decision
-    reasonCode
-    decidedByUserId
-    previewDigest
-    previewReviewed
-    commitsAt
-    version
-    createdAt
+    executed
+    refused
+    error
+    decision {
+      id
+      proposalId
+      decision
+      reasonCode
+      decidedByUserId
+      previewDigest
+      previewReviewed
+      commitsAt
+      version
+      createdAt
+    }
   }
 }
 
@@ -190,6 +199,7 @@ mutation DecideMyProposals($ids: [ID!]!, $input: DecideAgentProposalsInput!) {
   decideMyProposals(ids: $ids, input: $input) {
     proposalId
     executed
+    refused
     error
     decision {
       id

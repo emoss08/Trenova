@@ -214,7 +214,7 @@ func newRevokeCustomerTrackingLinkTool(tracking customerTrackingLinker) agentpor
 			Target: shipmentTarget,
 			Properties: map[string]any{
 				common.ParamShipmentID: agenttoolschema.RecordIDText(permission.ResourceShipment,
-					"The shipment whose links to revoke, from the page, shipment_list or "+
+					"The shipment whose links to revoke, from the page or "+
 						"shipment_list."),
 			},
 			Required: []string{common.ParamShipmentID},

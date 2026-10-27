@@ -232,6 +232,7 @@ func screenClient(
 				DB:        conn,
 				Logger:    logger,
 				Locations: crossref.LocationColumns(),
+				Moves:     crossref.MoveColumns(),
 			}),
 			CustomFieldsValuesService: customFields,
 		}),
@@ -300,6 +301,7 @@ func writeTractorWithDriver(
 		DB:        conn,
 		Logger:    logger,
 		Locations: crossref.LocationColumns(),
+		Moves:     crossref.MoveColumns(),
 	}).
 		Create(ctx, &tractor.Tractor{
 			BusinessUnitID: bu, OrganizationID: org, Status: domaintypes.EquipmentStatusAvailable,

@@ -1,6 +1,8 @@
 package tractorrepository
 
 import (
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/bootstrap/crossref"
@@ -67,6 +69,26 @@ func TestTractorQuery_ReadsTheLastKnownLocationThroughOneLateralJoin(t *testing.
 	assert.Contains(t, sql, `SELECT l2."latitude" FROM "locations" l2`)
 	assert.Contains(t, sql, `SELECT l3."longitude" FROM "locations" l3`)
 	assert.Equal(t, []any{"bu_1", "org_1"}, args)
+}
+
+func TestTractorQuery_ReadsTheMoveInProgressInTheSameStatement(t *testing.T) {
+	t.Parallel()
+
+	sql, args := renderTractors(t, tractorports.TractorRelationIncludes{
+		TractorColumns:        []string{"id", "created_at"},
+		IncludeInProgressMove: true,
+	})
+	without, _ := renderTractors(t, tractorports.TractorRelationIncludes{})
+
+	assert.Contains(t, sql, `FROM "assignments"`)
+	assert.Contains(t, sql, `."tractor_id" = t."id"`)
+	assert.Contains(t, sql, `."archived_at" IS NULL`)
+	assert.Contains(t, sql, `."pro_number"`)
+	assert.Contains(t, sql, `."sequence" DESC`)
+	assert.True(t, strings.Contains(sql, `'InTransit'`) || slices.Contains(args, any("InTransit")),
+		"only a move in transit counts")
+	assert.NotContains(t, sql, `"trailer_id"`)
+	assert.NotContains(t, without, `"assignments"`)
 }
 
 func TestTractorQuery_LeavesTheLocationOutWhenUnselected(t *testing.T) {
@@ -144,5 +166,5 @@ func TestNormalizeLookupKeys_LowersTrimsAndDedupes(t *testing.T) {
 }
 
 func testRepository() *repository {
-	return &repository{locations: crossref.LocationColumns()}
+	return &repository{locations: crossref.LocationColumns(), moves: crossref.MoveColumns()}
 }

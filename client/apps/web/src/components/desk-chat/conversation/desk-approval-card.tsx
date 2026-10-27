@@ -1,4 +1,5 @@
 import { decideBatch } from "@/components/assistant/approval-actions";
+import { useDecisionFollowUp } from "@/components/assistant/decision-follow-up";
 import {
   holdActionText,
   holdReasonText,
@@ -27,11 +28,14 @@ import { presentProposal } from "@/components/assistant/proposal-presenters";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { decideMyPlan, decideMyProposal } from "@/lib/graphql/agent-decisions";
+import { announceRefusal, approvalFailure } from "@/lib/approval-outcome";
 import {
   invalidateProposalViews,
   markPlanDecided,
+  markPlanFailed,
   markPlanStatus,
   markProposalDecided,
+  markProposalFailed,
   markProposalsStatus,
 } from "@/lib/proposal-cache";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -123,6 +127,7 @@ function ProposalCard({
 }: CardProps & { entry: Extract<ApprovalEntry, { kind: "proposal" }> }) {
   const t = useT();
   const queryClient = useQueryClient();
+  const followUp = useDecisionFollowUp();
   const { proposal } = entry;
   const view = presentProposal(proposal);
   // Wording the person changed on the draft and sent for approval is kept on
@@ -161,8 +166,24 @@ function ProposalCard({
         proposalIds: [proposal.id],
         planId: null,
       }),
-    onSuccess: (decision) => {
-      const commitsAt = decision.commitsAt ?? null;
+    onSuccess: (result) => {
+      // The approval is recorded, but its write did not go through: refused
+      // because the record moved on, or failed as it ran. Nothing is held for
+      // undoing and nothing reads as accepted; the card shows the failure and
+      // the conversation picks up the turn the server started to say why.
+      const failure = approvalFailure(result);
+      if (failure !== null) {
+        undo.clear(entry.key);
+        markProposalFailed(queryClient, proposal.id, failure);
+        if (result.refused) {
+          announceRefusal(t, failure);
+        }
+        followUp?.(proposal.id);
+        void invalidateProposalViews(queryClient, threadId);
+        onDecided(entry);
+        return;
+      }
+      const commitsAt = result.decision?.commitsAt ?? null;
       if (commitsAt !== null) {
         markProposalsStatus(queryClient, [proposal.id], "Approving");
       } else {
@@ -223,6 +244,7 @@ function PlanCard({
 }: CardProps & { entry: Extract<ApprovalEntry, { kind: "plan" }> }) {
   const t = useT();
   const queryClient = useQueryClient();
+  const followUp = useDecisionFollowUp();
   const { plan, steps } = entry;
   const previewQuery = usePlanPreview({ scope: "mine", id: plan.id });
   const approval = useApprovalGate(previewQuery);
@@ -254,7 +276,21 @@ function PlanCard({
         proposalIds: steps.map((step) => step.id),
         planId: plan.id,
       }),
-    onSuccess: (decided) => {
+    onSuccess: ({ plan: decided, refused }) => {
+      // A plan that failed as it was decided, refused because a record a
+      // step changes moved on or stopped at a step that failed, is not held
+      // for undoing and does not read as approved.
+      if (decided.status === "Failed") {
+        undo.clear(entry.key);
+        markPlanFailed(queryClient, decided);
+        if (refused) {
+          announceRefusal(t, decided.failureError);
+        }
+        followUp?.(plan.id);
+        void invalidateProposalViews(queryClient, threadId);
+        onDecided(entry);
+        return;
+      }
       const commitsAt = decided.commitsAt ?? null;
       if (commitsAt !== null) {
         markPlanStatus(queryClient, plan.id, "Approving");

@@ -533,3 +533,36 @@ func TestListTool_NamesTheFieldKindWithoutManglingTheArticle(t *testing.T) {
 	assert.Contains(t, err.Error(), `is not an operator for the enum field "status"`)
 	assert.NotContains(t, err.Error(), "a enum")
 }
+
+func TestListTool_SaysWhenTheRowsMatchedAsACloseSpelling(t *testing.T) {
+	t.Parallel()
+
+	spec := probeSpec(&capturedList{})
+	spec.fetch = func(
+		_ context.Context,
+		_ *pagination.QueryOptions,
+		_ pagination.CursorInfo,
+	) (listPage, error) {
+		return offsetResultPage(
+			&pagination.ListResult[any]{Items: []any{"FreshHaul Foods"}, Total: 1, Fuzzy: true},
+			func(row any) any { return row },
+		), nil
+	}
+	tool := newListTool(spec)
+
+	result, err := tool.Query(t.Context(), testParams(map[string]any{"query": "frshhaul"}))
+	require.NoError(t, err)
+
+	outcome := result.(searchOutcome)
+	assert.Equal(t, 1, outcome.Count)
+	assert.Contains(t, outcome.Note, `"frshhaul"`)
+	assert.Contains(t, outcome.Note, "close spelling")
+
+	exact := probeSpec(&capturedList{rows: []any{"FreshHaul Foods"}})
+	result, err = newListTool(exact).Query(
+		t.Context(),
+		testParams(map[string]any{"query": "freshhaul"}),
+	)
+	require.NoError(t, err)
+	assert.Empty(t, result.(searchOutcome).Note)
+}

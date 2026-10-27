@@ -74,14 +74,21 @@ input DecideAgentProposalsInput {
   note: String
 }
 
-"What became of one proposal in a batch decision."
+"What came of deciding one proposal, on its own or in a batch."
 type AgentProposalDecisionResult {
   proposalId: ID!
+  "The decision recorded; absent when this one could not be decided."
   decision: AgentDecision
-  "Why this one could not be decided or its write failed, written for the person; absent when it went through."
+  "Why this one could not be decided, its write failed or its approval was refused, written for the person; absent when it went through."
   error: String
-  "The approved write ran."
+  "The approved write ran. False for a rejection and for an approval still in its undo window."
   executed: Boolean!
+  """
+  The approval was recorded but refused, because the record the change is
+  for moved on since it was proposed. Nothing was changed; error says what
+  moved, and the conversation that raised it is told.
+  """
+  refused: Boolean!
 }
 
 "A decision on a proposal, with the proposal and the person who made it."

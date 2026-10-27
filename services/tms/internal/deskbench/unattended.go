@@ -896,7 +896,7 @@ func (b *Bench) settleRun(
 			Note:       runCleanupNote,
 			TenantInfo: session.Tenant,
 		}
-		_, err := b.Decisions.Decide(session.Context(settleCtx), reject, &session.Actor)
+		_, err := b.Decisions.DecideWithOutcome(session.Context(settleCtx), reject, &session.Actor)
 		if err != nil {
 			b.live.Line(label, "could not reject %s (%s): %v", proposal.Tool, proposal.ID, err)
 		}
