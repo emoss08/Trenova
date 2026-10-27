@@ -624,6 +624,9 @@ func (c *coercer) boolean(value any, path string) (any, bool) {
 // DeclaredType is the one type a property declares, the first non-null one
 // when it declares several.
 func DeclaredType(property map[string]any) string {
+	if definition := localDefinition(property); definition != nil {
+		return DeclaredType(definition)
+	}
 	switch typed := property["type"].(type) {
 	case string:
 		return typed
@@ -642,6 +645,29 @@ func DeclaredType(property map[string]any) string {
 	}
 
 	return ""
+}
+
+// localDefinition is the definition a property's $ref names among its own
+// $defs, for a property that is a whole schema of its own, as a report
+// definition is: its root is a $ref with no type beside it. Without it a
+// report sent as JSON text was refused as "got string, want object" rather
+// than read as the object it holds.
+func localDefinition(property map[string]any) map[string]any {
+	if _, typed := property["type"]; typed {
+		return nil
+	}
+	ref, _ := property["$ref"].(string)
+	name, local := strings.CutPrefix(ref, "#/$defs/")
+	if !local {
+		return nil
+	}
+	definitions, _ := property["$defs"].(map[string]any)
+	definition, _ := definitions[name].(map[string]any)
+	if _, nested := definition["$ref"]; nested {
+		return nil
+	}
+
+	return definition
 }
 
 // EnumValues is the values a property allows, whichever way the schema lists them.

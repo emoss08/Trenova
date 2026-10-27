@@ -156,6 +156,38 @@ func TestCoerce_ReadsJSONTextAsTheListOrObjectItHolds(t *testing.T) {
 	assert.Len(t, none, 1)
 }
 
+// A report definition is a whole schema of its own, its root a $ref into its
+// own $defs. Sent as JSON text, it is read as the object it holds, as any
+// object parameter is.
+func TestCoerce_ReadsJSONTextAsTheObjectALocalRefNames(t *testing.T) {
+	t.Parallel()
+
+	schema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"definition": map[string]any{
+				"$id":  "https://trenova.test/definition.schema.json",
+				"$ref": "#/$defs/Definition",
+				"$defs": map[string]any{
+					"Definition": map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"entity": map[string]any{"type": "string"},
+						},
+						"required": []any{"entity"},
+					},
+				},
+			},
+		},
+	}
+
+	got, coercions := Coerce(schema, map[string]any{"definition": `{"entity": "invoice"}`})
+
+	assert.Equal(t, map[string]any{"definition": map[string]any{"entity": "invoice"}}, got)
+	assert.Len(t, coercions, 1)
+	require.NoError(t, Validate(schema, got))
+}
+
 func TestCoerce_ReadsAClampedNumberPastItsBoundsAsTheBound(t *testing.T) {
 	t.Parallel()
 
