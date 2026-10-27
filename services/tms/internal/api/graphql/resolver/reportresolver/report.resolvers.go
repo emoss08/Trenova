@@ -537,6 +537,28 @@ func (r *QueryResolver) ReportRun(ctx context.Context, id string) (*gqlmodel.Rep
 	return reportRunToModel(run), nil
 }
 
+func (r *QueryResolver) ReportRunDeskCard(ctx context.Context, id string) (*gqlmodel.ReportRunDeskCard, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceReport, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	runID, err := pulid.MustParse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	card, err := r.ReportingService.GetRunCard(ctx, &reportingservice.GetRunRequest{
+		Request: reportingRequest(authCtx),
+		RunID:   runID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return reportRunDeskCardToModel(card), nil
+}
+
 func (r *QueryResolver) ReportRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) (*gqlmodel.ReportRunConnection, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceReport, permission.OpRead)
 	if err != nil {

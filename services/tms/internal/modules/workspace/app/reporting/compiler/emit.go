@@ -1117,13 +1117,7 @@ func (e *emitter) relativePeriodRange(op dbtype.Operator) (start, end int64) {
 }
 
 func (e *emitter) relativeNDayRange(op dbtype.Operator, n int64) (start, end int64) {
-	now := e.now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, e.loc)
-
-	if op == dbtype.OpNextNDays {
-		return today.Unix(), today.AddDate(0, 0, int(n)+1).Unix()
-	}
-	return today.AddDate(0, 0, -int(n)).Unix(), today.AddDate(0, 0, 1).Unix()
+	return relativeNDayRange(op, n, e.now(), e.loc)
 }
 
 func appendArgs(existing []any, extra ...any) []any {
