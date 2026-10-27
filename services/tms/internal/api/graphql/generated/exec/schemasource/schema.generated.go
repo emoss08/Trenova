@@ -25673,7 +25673,8 @@ extend type Query {
   reportDefinitions(input: DataTableConnectionInput!): ReportDefinitionConnection!
   reportDefinitionRevisions(definitionId: ID!, limit: Int): [ReportDefinitionRevision!]!
   reportRun(id: ID!): ReportRun!
-  reportRunDeskCard(id: ID!): ReportRunDeskCard!
+  "A report run as the Desk card draws it; the run and its schedule are the root record."
+  reportRunDeskCard(id: ID!): ReportRunDeskCard! @authorizes(resource: "report")
   reportRuns(
     input: DataTableConnectionInput!
     filter: ReportRunsFilterInput
