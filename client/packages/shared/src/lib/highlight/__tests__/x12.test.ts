@@ -1,5 +1,10 @@
 import { highlightSpans, lineText } from "@trenova/shared/lib/highlight/code";
-import { looksLikeX12, x12Separators, x12Spans } from "@trenova/shared/lib/highlight/x12";
+import {
+  looksLikeX12,
+  X12_HIGHLIGHT_LIMIT,
+  x12Separators,
+  x12Spans,
+} from "@trenova/shared/lib/highlight/x12";
 import { describe, expect, it } from "vitest";
 
 const ISA =
@@ -27,6 +32,16 @@ describe("x12Separators", () => {
       component: ":",
       repetition: "^",
       segment: "\n",
+    });
+  });
+
+  it("reads a squeezed ISA, whose values are not padded to their width", () => {
+    const squeezed = "ISA*00**00**ZZ*PARTNER*ZZ*TRENOVA*260107*1200*U*00401*104*0*P*:!\r\nGS*QM!";
+    expect(x12Separators(squeezed)).toEqual({
+      element: "*",
+      component: ":",
+      repetition: "^",
+      segment: "!",
     });
   });
 
@@ -79,6 +94,13 @@ describe("x12Spans", () => {
       "N1*SH*ACME PLANT 3~",
       "N3*400 FOUNDRY RD~",
     ]);
+  });
+
+  it("leaves an interchange past the limit plain", () => {
+    const segment = "LX*1~";
+    const text = `${ISA}${segment.repeat(Math.ceil(X12_HIGHLIGHT_LIMIT / segment.length))}`;
+    expect(x12Spans(text)).toEqual([]);
+    expect(x12Spans(`${ISA}LX*1~`)).not.toEqual([]);
   });
 
   it("leaves text that is not X12 plain", () => {

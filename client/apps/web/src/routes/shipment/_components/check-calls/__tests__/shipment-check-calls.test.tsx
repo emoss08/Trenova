@@ -108,7 +108,7 @@ function renderTab(subject: Shipment) {
 }
 
 // Intl separates a time from its meridiem with a narrow no-break space.
-const text = (element: HTMLElement) => (element.textContent ?? "").replace(/\s+/g, " ").trim();
+const text = (element: Element) => (element.textContent ?? "").replace(/\s+/g, " ").trim();
 
 describe("ShipmentCheckCalls", () => {
   beforeEach(() => {

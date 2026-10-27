@@ -1,3 +1,4 @@
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { usePendingActions } from "@/hooks/use-pending-actions";
 import type { InboundMailbox } from "@/lib/graphql/inbox";
@@ -200,7 +201,7 @@ function setupSteps(t: Translate, mailbox: InboundMailbox, now: number): Step[] 
 export function MailboxCard({
   mailbox,
   canEdit,
-  now = Math.floor(Date.now() / 1000),
+  now: nowProp,
   onEdit,
   onRotate,
   onSecret,
@@ -217,6 +218,8 @@ export function MailboxCard({
   onSendTest: () => Promise<unknown>;
 }) {
   const t = useT();
+  const clock = useNowSeconds();
+  const now = nowProp ?? clock;
   const listening = mailbox.status === "Active";
   const readsContent = mailbox.provider === "Resend";
   const state = mailboxState(t, mailbox);

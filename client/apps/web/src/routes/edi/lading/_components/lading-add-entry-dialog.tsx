@@ -9,6 +9,7 @@ import {
   XCloseIcon,
 } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { Checkbox } from "@trenova/shared/components/ui/checkbox";
 import { Dialog, DialogContent, DialogTitle } from "@trenova/shared/components/ui/dialog";
 import { Input } from "@trenova/shared/components/ui/input";
 import { Kbd } from "@trenova/shared/components/ui/kbd";
@@ -61,8 +62,13 @@ import {
   type SampleFormat,
 } from "./studio-model";
 
-/** An entry the dialog adds to the working copy. */
-export type NewEntry = { kind: "file" | "sample"; path: string; content: string };
+/** An entry the dialog adds; a new map may ask for a starter sample of what it reads. */
+export type NewEntry = {
+  kind: "file" | "sample";
+  path: string;
+  content: string;
+  withSample?: boolean;
+};
 
 type MapDirection = "inbound" | "outbound";
 type MapInput = "x12" | "csv" | "json";
@@ -220,6 +226,7 @@ function AddEntryForm({
   const [guideTitle, setGuideTitle] = useState("");
   const [content, setContent] = useState<Partial<Record<SampleFormat, string>>>({});
   const [uploads, setUploads] = useState<Upload[]>([]);
+  const [withSample, setWithSample] = useState(true);
 
   const guidesFor = (set: string) => [
     ...check.guides.filter((item) => item.path !== null && item.set === set).map((g) => g.name),
@@ -324,6 +331,7 @@ function AddEntryForm({
         kind: "file",
         path: choice === "partner" ? PARTNER_FILE : path.trim(),
         content: source,
+        withSample: choice === "map" && withSample,
       },
     ]);
   };
@@ -455,6 +463,13 @@ function AddEntryForm({
                 <p className="text-muted-foreground text-xs">
                   {ladingDocText(picked?.doc, (message) => translateMessage(message))}
                 </p>
+                <label className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={withSample}
+                    onCheckedChange={(checked) => setWithSample(checked === true)}
+                  />
+                  {t("Add a sample of what it reads, to run it on")}
+                </label>
               </>
             ) : null}
 

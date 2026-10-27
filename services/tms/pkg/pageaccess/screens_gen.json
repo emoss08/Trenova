@@ -12765,7 +12765,6 @@
         "InvoiceArContext",
         "IssueCarrierTrackingLink",
         "LateChargePreview",
-        "LogCheckCall",
         "MyActiveBillingTransferRun",
         "MyBulkEdit",
         "MyCaptureAccess",
@@ -13052,7 +13051,7 @@
         },
         {
           "method": "PATCH",
-          "path": "/tractors/:param"
+          "path": "/tractors/:param/"
         },
         {
           "method": "POST",
@@ -13123,7 +13122,6 @@
         "InvoiceArContext",
         "IssueCarrierTrackingLink",
         "LateChargePreview",
-        "LogCheckCall",
         "MyActiveBillingTransferRun",
         "MyBulkEdit",
         "MyCaptureAccess",
@@ -13696,7 +13694,6 @@
         "InvoiceArContext",
         "IssueCarrierTrackingLink",
         "LateChargePreview",
-        "LogCheckCall",
         "MyActiveBillingTransferRun",
         "MyBulkEdit",
         "MyCaptureAccess",
@@ -14568,7 +14565,6 @@
         "IssueCarrierTrackingLink",
         "IssueDisciplinaryAction",
         "LateChargePreview",
-        "LogCheckCall",
         "MarkEmploymentVerificationRequested",
         "MarkWorkerChecklistItemNotApplicable",
         "MyActiveBillingTransferRun",

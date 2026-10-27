@@ -154,6 +154,7 @@ type ShipmentStatus struct {
 	Equipment        string            `json:"equipment,omitempty"`
 	Refs             map[string]string `json:"refs,omitempty"`
 	Events           []StatusEvent     `json:"events"`
+	Custom           map[string]any    `json:"custom,omitempty"`
 }
 
 type Party struct {
@@ -192,4 +193,5 @@ type FreightInvoice struct {
 	Lines        []InvoiceLine      `json:"lines,omitempty"`
 	Shipments    []InvoicedShipment `json:"shipments,omitempty"`
 	Refs         map[string]string  `json:"refs,omitempty"`
+	Custom       map[string]any     `json:"custom,omitempty"`
 }

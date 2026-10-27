@@ -40,6 +40,7 @@ type LoadTenderPayload struct {
 	Commodities              []LoadTenderCommodity            `json:"commodities"`
 	AdditionalCharges        []LoadTenderCharge               `json:"additionalCharges"`
 	RequiredMappingEntityIDs map[MappingEntityType][]pulid.ID `json:"requiredMappingEntityIds"`
+	CustomFields             map[string]any                   `json:"customFields,omitempty"`
 }
 
 type LoadTenderMove struct {

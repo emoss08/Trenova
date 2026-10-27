@@ -344,8 +344,11 @@ func (s *Service) ProcessLoadTenderApproval(
 		var createdShipment *shipment.Shipment
 		err = s.savepoints.Savepoint(txCtx, func(spCtx context.Context) error {
 			created, createErr := s.shipmentSvc.Create(spCtx, targetShipment, payload.Actor)
+			if createErr != nil {
+				return createErr
+			}
 			createdShipment = created
-			return createErr
+			return s.saveTenderCustomFields(spCtx, created, transfer.TenderPayload.CustomFields)
 		})
 		if err != nil {
 			processingErr = err
@@ -758,4 +761,24 @@ func (s *Service) transferSourceContext(
 		BuID:  transfer.SourceBusinessUnitID,
 	}
 	return dbscope.WithTenant(ctx, source.DBTenant()), nil
+}
+
+func (s *Service) saveTenderCustomFields(
+	ctx context.Context,
+	created *shipment.Shipment,
+	values map[string]any,
+) error {
+	if len(values) == 0 || s.customFields == nil {
+		return nil
+	}
+	if multiErr := s.customFields.SaveNamed(
+		ctx,
+		pagination.TenantInfo{OrgID: created.OrganizationID, BuID: created.BusinessUnitID},
+		created.GetResourceType(),
+		created.GetResourceID(),
+		values,
+	); multiErr != nil {
+		return multiErr
+	}
+	return nil
 }

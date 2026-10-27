@@ -7,11 +7,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -331,5 +332,16 @@ func TestSettings_EncodesEachValueForTheRun(t *testing.T) {
 
 	empty, err := Settings(&edi.LadingProject{})
 	require.NoError(t, err)
-	assert.Nil(t, empty)
+	assert.Empty(t, empty, "a project with no settings sends none")
+}
+
+func TestCustomFieldTypesAreTheOnesLadingReads(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "Decimal", customFieldType(customfield.FieldTypeNumber))
+	assert.Equal(t, "Date", customFieldType(customfield.FieldTypeDate))
+	assert.Equal(t, "Bool", customFieldType(customfield.FieldTypeBoolean))
+	assert.Equal(t, "Text", customFieldType(customfield.FieldTypeText))
+	assert.Equal(t, "Text", customFieldType(customfield.FieldTypeSelect))
+	assert.Equal(t, "Texts", customFieldType(customfield.FieldTypeMultiSelect))
 }

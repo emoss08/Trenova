@@ -21,20 +21,35 @@ const DEFAULT_SEPARATORS: X12Separators = {
 
 const ENVELOPE = new Set(["ISA", "GS", "ST", "SE", "GE", "IEA"]);
 
-/** The length of an ISA segment up to its terminator, which is fixed by the standard. */
-const ISA_LENGTH = 105;
+/** An ISA's elements: the component separator is the 16th and the terminator follows it. */
+const ISA_ELEMENTS = 16;
 
-/** The separators an interchange declares in its ISA segment, or the usual ones without one. */
+/** Past this many characters a text is shown plain: one element per span would swamp the page. */
+export const X12_HIGHLIGHT_LIMIT = 200_000;
+
+/**
+ * The separators an interchange declares in its ISA segment, or the usual ones without one. The
+ * ISA is read by its elements, not its fixed width, so a squeezed ISA reads the same.
+ */
 export function x12Separators(text: string): X12Separators {
   const start = text.search(/\S/);
   if (start < 0 || !text.startsWith("ISA", start)) return DEFAULT_SEPARATORS;
   const element = text.charAt(start + 3);
   if (element === "" || /[A-Za-z0-9\s]/.test(element)) return DEFAULT_SEPARATORS;
-  const isa = text.slice(start, start + ISA_LENGTH + 1);
-  const fields = isa.split(element);
-  const repetition = fields[11] ?? "";
-  const component = (fields[16] ?? "").charAt(0) || DEFAULT_SEPARATORS.component;
-  const segment = text.charAt(start + ISA_LENGTH) || DEFAULT_SEPARATORS.segment;
+  const fields: string[] = [];
+  let from = start + 4;
+  while (fields.length < ISA_ELEMENTS - 1) {
+    const next = text.indexOf(element, from);
+    if (next < 0) return DEFAULT_SEPARATORS;
+    fields.push(text.slice(from, next));
+    from = next + 1;
+  }
+  const component = text.charAt(from);
+  const segment = text.charAt(from + 1);
+  if (component === "" || segment === "" || /[A-Za-z0-9]/.test(segment)) {
+    return DEFAULT_SEPARATORS;
+  }
+  const repetition = fields[10] ?? "";
   return {
     element,
     component,
@@ -56,9 +71,12 @@ export function looksLikeX12(text: string): boolean {
 
 const NUMBER = /^-?\d+(\.\d+)?$/;
 
-/** The spans `HighlightedCode` and the editors colour X12 with; none when it is not X12. */
+/**
+ * The spans `HighlightedCode` and the editors colour X12 with; none when it is not X12, or is
+ * longer than `X12_HIGHLIGHT_LIMIT`.
+ */
 export function x12Spans(text: string): CodeSpan[] {
-  if (!looksLikeX12(text)) return [];
+  if (text.length > X12_HIGHLIGHT_LIMIT || !looksLikeX12(text)) return [];
   const separators = x12Separators(text);
   const breaks = new Set([
     separators.element,

@@ -19181,6 +19181,15 @@
       "routes/agent-control"
     ]
   },
+  "Add a sample of what it reads, to run it on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Add a sample to run a map against it": {
     "sites": 1,
     "scope": [
@@ -24204,6 +24213,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "All moves": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "All moves within this shipment have been completed, and the shipment is ready to be invoiced.": {
@@ -32799,6 +32817,24 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Arrivals and departures logged now won't change stop times — this load has been invoiced.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Arrivals and departures logged now won't change stop times — this load is in the billing queue.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Arrivals inside this buffer are not treated as late.": {
@@ -52540,6 +52576,24 @@
       "go/other"
     ]
   },
+  "Check Calls": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Check Calls ({0})": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Check Dash for your current loads.": {
     "sites": 1,
     "scope": [
@@ -52684,6 +52738,15 @@
       "go/other"
     ]
   },
+  "Check call history": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Check call interval cannot exceed 72 hours": {
     "sites": 2,
     "scope": [
@@ -52751,13 +52814,12 @@
     ]
   },
   "Check calls": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/customer",
-      "routes/shipment"
+      "routes/customer"
     ]
   },
   "Check calls could not be loaded.": {
@@ -53363,14 +53425,13 @@
     ]
   },
   "Checks clean": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk",
-      "routes/edi"
+      "routes/desk"
     ]
   },
   "Checks clean and every test passes.": {
@@ -97950,6 +98011,15 @@
       "apps/web/lib"
     ]
   },
+  "Every file checks clean. Findings show here as you type, under the file they are in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Every flow clause tested": {
     "sites": 1,
     "scope": [
@@ -98241,6 +98311,15 @@
     ]
   },
   "Every message read the same": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Every message so far read the same in both versions.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -101176,7 +101255,7 @@
     ]
   },
   "Expected at next stop": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -105714,7 +105793,7 @@
     ]
   },
   "Failed to fetch custom field definitions": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -105823,6 +105902,15 @@
     ]
   },
   "Failed to generate view URL": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
+  "Failed to get custom field values": {
     "sites": 1,
     "scope": [
       "go"
@@ -106412,7 +106500,7 @@
     ]
   },
   "Failed to save custom field values": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -136383,6 +136471,15 @@
       "apps/web/components"
     ]
   },
+  "Last reported": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Last reported location": {
     "sites": 1,
     "scope": [
@@ -141823,6 +141920,15 @@
       "routes/worker"
     ]
   },
+  "Loading check calls": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Loading collections performance": {
     "sites": 2,
     "scope": [
@@ -144356,6 +144462,24 @@
       "routes/inbox"
     ]
   },
+  "Log where the load is each time the driver or carrier reports in.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "Log where the load is each time the driver or carrier reports in. An arrival or departure also records the stop's actual time.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Log year": {
     "sites": 1,
     "scope": [
@@ -144363,6 +144487,15 @@
     ],
     "areas": [
       "routes/osha"
+    ]
+  },
+  "Logged": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
     ]
   },
   "Logged by hand": {
@@ -150617,6 +150750,15 @@
       "routes/inbox"
     ]
   },
+  "Messages the partner sends while the shadow runs show here.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Messages waiting to send": {
     "sites": 1,
     "scope": [
@@ -154257,7 +154399,7 @@
     ]
   },
   "Move {0}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -160920,7 +161062,16 @@
       "go/other"
     ]
   },
-  "No check calls have been logged yet.": {
+  "No check calls on this move yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
+  "No check calls yet": {
     "sites": 1,
     "scope": [
       "ts"
@@ -165995,6 +166146,15 @@
       "edi/lading"
     ]
   },
+  "No sample {0} reads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "No samples yet. Add the partner's messages to run maps against them.": {
     "sites": 1,
     "scope": [
@@ -169086,13 +169246,14 @@
     ]
   },
   "Not given": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
-      "routes/osha"
+      "routes/osha",
+      "routes/shipment"
     ]
   },
   "Not given the assistant task": {
@@ -181769,15 +181930,6 @@
       "apps/web/config"
     ]
   },
-  "Open the problems panel": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "apps/web/components"
-    ]
-  },
   "Open the promises in collections": {
     "sites": 1,
     "scope": [
@@ -184842,6 +184994,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Other samples": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Other shipments": {
@@ -211538,6 +211699,15 @@
       "packages/shared/types"
     ]
   },
+  "Record what the carrier or driver told you.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Record what the carrier or driver told you. An arrival or departure also records the stop's actual time.": {
     "sites": 1,
     "scope": [
@@ -226681,7 +226851,7 @@
     ]
   },
   "Running late": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -228166,6 +228336,15 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "Samples {0} reads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Samsara asset ID": {
@@ -244211,6 +244390,15 @@
       "routes/billing-control"
     ]
   },
+  "Show check calls for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "Show conversations · ⌘\\": {
     "sites": 1,
     "scope": [
@@ -244628,6 +244816,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Show the problems": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "apps/web/components"
     ]
   },
   "Show the results in the email": {
@@ -260516,7 +260713,18 @@
       "edi/lading"
     ]
   },
-  "The X12 holds no {0} transaction set": {
+  "The X12 holds no {0} transaction set, and no other either": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
+  "The X12 holds no {0} transaction set, only {1}: pick a sample that holds a {0}, or a map that reads what it holds": {
     "sites": 2,
     "scope": [
       "go",
@@ -272124,6 +272332,28 @@
       "edi/lading"
     ]
   },
+  "The organisation's custom fields on the load": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
+  "The organisation's custom fields on the load an invoice bills": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
   "The organisation's holidays from the year before the rating date's year to the year after, in date order.": {
     "sites": 2,
     "scope": [
@@ -273593,15 +273823,6 @@
     ]
   },
   "The project already has a file at this path": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
-  "The project checks clean.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -281148,6 +281369,15 @@
       "go/other"
     ]
   },
+  "There is no active custom field named {0}": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "There is no artifact kind by that name": {
     "sites": 1,
     "scope": [
@@ -281169,6 +281399,17 @@
     ]
   },
   "There is no crosswalk named {0}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
+  "There is no custom field {0}; the organization has {1, plural, one {# custom field} other {# custom fields}}, such as {2}": {
     "sites": 2,
     "scope": [
       "go",
@@ -287914,6 +288155,15 @@
       "routes/shipment"
     ]
   },
+  "This shipment has no active move to log a check call against.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "This shipment has no live customer tracking link": {
     "sites": 2,
     "scope": [
@@ -290984,7 +291234,7 @@
     ]
   },
   "Today": {
-    "sites": 35,
+    "sites": 36,
     "scope": [
       "go",
       "ts"
@@ -291005,6 +291255,7 @@
       "routes/late-charges",
       "routes/my-team",
       "routes/scheduling",
+      "routes/shipment",
       "routes/worker"
     ]
   },
@@ -313518,15 +313769,6 @@
       "go/other"
     ]
   },
-  "Where the load was reported to be, by dispatchers, the carrier's tracking link and agents": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/shipment"
-    ]
-  },
   "Where the money goes": {
     "sites": 1,
     "scope": [
@@ -319876,7 +320118,7 @@
     ]
   },
   "Yesterday": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -319886,7 +320128,8 @@
       "routes/carrier-monitoring",
       "routes/desk",
       "routes/inbox",
-      "routes/my-team"
+      "routes/my-team",
+      "routes/shipment"
     ]
   },
   "Yesterday {0}": {
@@ -335509,6 +335752,15 @@
       "routes/worker"
     ]
   },
+  "{0, plural, one {# check call} other {# check calls}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/shipment"
+    ]
+  },
   "{0, plural, one {# check passed} other {# checks passed}}": {
     "sites": 1,
     "scope": [
@@ -336081,7 +336333,7 @@
     ]
   },
   "{0, plural, one {# error} other {# errors}}": {
-    "sites": 9,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -336265,13 +336517,12 @@
     ]
   },
   "{0, plural, one {# file} other {# files}}": {
-    "sites": 3,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/edi",
       "routes/inbox"
     ]
   },
@@ -338338,15 +338589,6 @@
       "routes/onboarding"
     ]
   },
-  "{0, plural, one {# sample} other {# samples}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
   "{0, plural, one {# screen this affects} other {# screens this affects}}": {
     "sites": 1,
     "scope": [
@@ -339150,7 +339392,7 @@
     ]
   },
   "{0, plural, one {# warning} other {# warnings}}": {
-    "sites": 9,
+    "sites": 7,
     "scope": [
       "ts"
     ],

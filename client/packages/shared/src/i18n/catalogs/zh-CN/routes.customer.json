@@ -42,6 +42,7 @@
   "Broker vetting summary": "货运经纪核验摘要",
   "CC recipients": "抄送收件人",
   "Carbon copy recipients who receive a copy of every invoice email. Useful for the customer's management or your internal billing team.": "会收到每封发票电子邮件副本的收件人。适用于客户的管理层或贵方的内部计费团队。",
+  "Check calls": "跟踪电话",
   "Check this customer's broker authority, surety bond and insurance with the connected carrier intelligence provider, and flag it when something lapses.": "通过已连接的承运商情报服务商,查核此客户的货运经纪授权、保证金和保险,并在有任何项目失效时标记出来。",
   "Choose how fuel costs are recovered from this customer.": "选择向此客户回收燃油成本的方式。",
   "Clear shipments through the billing queue without review when every billing requirement and rate check passes, so the queue holds only the freight that needs a human. Requires automatic queue transfer.": "当所有计费条件与运价检查均通过时，运单无需审核即可通过计费队列，队列中因此只保留需要人工处理的货载。需启用自动转移至队列。",

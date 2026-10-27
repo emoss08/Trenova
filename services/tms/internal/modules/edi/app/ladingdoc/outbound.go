@@ -143,6 +143,7 @@ func FromLoadTender(
 	payload *edi.LoadTenderPayload,
 	key string,
 	zones Zones,
+	custom map[string]any,
 ) (jsonutils.RawJSON, error) {
 	if strings.TrimSpace(key) == "" {
 		return nil, ErrNoKey
@@ -155,6 +156,7 @@ func FromLoadTender(
 		ServiceType:   ref(payload.ServiceTypeID, "", payload.ServiceTypeLabel),
 		ShipmentType:  ref(payload.ShipmentTypeID, "", payload.ShipmentTypeLabel),
 		Rating:        ref(payload.FormulaTemplateID, "", payload.FormulaTemplateLabel),
+		Custom:        custom,
 		Weight:        pounds(payload.Weight),
 		Pieces:        payload.Pieces,
 		Total:         money(payload.TotalChargeAmount, ""),
@@ -269,6 +271,7 @@ func FromShipmentStatus(
 	payload *edi.ShipmentStatusPayload,
 	key string,
 	zones Zones,
+	custom map[string]any,
 ) (jsonutils.RawJSON, error) {
 	if strings.TrimSpace(key) == "" {
 		return nil, ErrNoKey
@@ -282,6 +285,7 @@ func FromShipmentStatus(
 		Pieces:           payload.Pieces,
 		Equipment:        payload.EquipmentNumber,
 		Refs:             refs(payload.References),
+		Custom:           custom,
 	}
 	zone := zones.of(payload.LocationID)
 	if len(payload.Events) > 0 {
@@ -333,6 +337,7 @@ func FromShipmentStatus(
 func FromFreightInvoice(
 	payload *edi.FreightInvoicePayload,
 	key, zone string,
+	custom map[string]any,
 ) (jsonutils.RawJSON, error) {
 	if payload.InvoiceNumber == "" || payload.InvoiceDate == 0 || !payload.TotalAmount.Valid {
 		return nil, ErrNoNumber
@@ -348,6 +353,7 @@ func FromFreightInvoice(
 		Weight:       pounds(payload.Weight),
 		Total:        moneyOf(payload.TotalAmount.Decimal, currency),
 		Refs:         refs(payload.ReferenceNumbers),
+		Custom:       custom,
 	}
 	if payload.BillToName != "" {
 		document.BillTo = &Party{Name: payload.BillToName}

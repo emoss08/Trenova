@@ -42,6 +42,7 @@ const OPERATIONS: &[(&str, Handler)] = &[
     ("lading.replay", crate::lading::ops::replay),
     ("lading.guide", crate::lading::ops::guide),
     ("lading.starter", crate::lading::ops::starter),
+    ("lading.sample", crate::lading::ops::sample),
     ("lading.catalog", crate::lading::ops::catalog),
 ];
 

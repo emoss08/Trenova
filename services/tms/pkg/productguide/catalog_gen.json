@@ -1,5 +1,5 @@
 {
-  "version": "sha256:9095401a907944df3ff2ab2cd074b2f526ecafcbd7b853f002d833752614f6db",
+  "version": "sha256:c3e2ad06f39444c2ce25074f094f3b47b86b8433fc1bb3a383e37973501a6661",
   "modules": [
     {
       "id": "home",
@@ -12440,7 +12440,7 @@
           ],
           "steps": [
             "Open [Lading studio](/edi/lading), select the partner and pick the draft in the version picker. To change a version that is not a draft, open **Version actions** and select **New draft from this version**.",
-            "Pick a file in the file tree. Its header says whether the project checks clean; below it each flow lists the maps and rules it uses, then **Shared** guides and libraries, **Not in any flow** for files no flow uses, and **Samples**. Press Ctrl+P (⌘P on a Mac) to filter by path. To start a new file, select **Add to the project** (or the add button beside **Flows**), type to find **Map**, **Rules**, **Flow**, **Guide**, **Library** or **Partner file** (or press its letter), fill in its options and **Name**, and select the add button. **Starts as** shows the text the file opens with.",
+            "Pick a file in the file tree. Under the partner file, each flow lists the maps and rules it uses, then **Shared** guides and libraries, **Not in any flow** for files no flow uses, and **Samples**. Press Ctrl+P (⌘P on a Mac) to filter by path. To start a new file, select **Add to the project** (or the add button beside **Flows**), type to find **Map**, **Rules**, **Flow**, **Guide**, **Library** or **Partner file** (or press its letter), fill in its options and **Name**, and select the add button. **Starts as** shows the text the file opens with.",
             "Edit the file. Problems show under the text as you type and in the **Problems** tab; select one to go to it.",
             "Select **Save**. Select **Discard** to go back to the saved version."
           ]
@@ -12483,7 +12483,7 @@
           ],
           "steps": [
             "In the studio, open the **Run** tab.",
-            "Pick a map and a sample.",
+            "Pick a map and a sample. The samples the map reads come first, and picking a map picks one of them; a new map comes with one unless you clear **Add a sample of what it reads, to run it on**.",
             "Select **Run here** to run the files as they are now, or **Run with live data** to run the saved version with lookups answered from your records.",
             "Read each transaction's findings and outcomes, the document it produced and the X12 it wrote. Hover a field in the editor to see the value it came to."
           ]

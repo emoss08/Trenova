@@ -1,3 +1,4 @@
+import { useNowSeconds } from "@/hooks/use-now-seconds";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { usePermission } from "@/hooks/use-permission";
@@ -40,12 +41,10 @@ const COLUMN_COUNT = 4;
  * what happens to what is older. Someone without update access reads the same
  * table with nothing to change.
  */
-export default function DataRetentionForm({
-  now = Math.floor(Date.now() / 1000),
-}: {
-  now?: number;
-}) {
+export default function DataRetentionForm({ now: nowProp }: { now?: number }) {
   const t = useT();
+  const clock = useNowSeconds();
+  const now = nowProp ?? clock;
   const { allowed: canUpdate } = usePermission(Resource.Organization, Operation.Update);
   const { data } = useSuspenseQuery(dataRetention.get());
 

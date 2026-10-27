@@ -688,6 +688,95 @@ const TENDER_BODY: &[&str] = &[
     "L3*42000*G***185000*******L",
 ];
 
+const RESPONSE_BODY: &[&str] = &["B1*SWFT*L-1001*20260110*A"];
+
+const STATUS_BODY: &[&str] = &[
+    "B10*PRO-9*L-1001*SWFT",
+    "LX*1",
+    "AT7*X1*NS***20260110*1430*CT",
+    "MS1*CHICAGO*IL*US",
+];
+
+const INVOICE_BODY: &[&str] = &[
+    "B3**INV-1*L-1001*PP**20260112*100000**20260111*035*SWFT",
+    "LX*1",
+    "L1*1***100000",
+    "L3*****100000",
+];
+
+const LOAD_TENDER_DOCUMENT: &str = r#"{
+  "key": "L-1001",
+  "purpose": "Original",
+  "bol": "BOL-55",
+  "weight": { "value": 42000, "unit": "lb" },
+  "total": { "amount": "1850.00", "currency": "USD" },
+  "refs": { "BM": "BOL-55" },
+  "stops": [
+    { "sequence": 1, "type": "Pickup", "name": "ORIGIN DC", "window": { "start": "2026-01-10T14:00:00Z" } },
+    { "sequence": 2, "type": "Delivery", "name": "DESTINATION", "window": { "start": "2026-01-11T16:00:00Z" } }
+  ]
+}
+"#;
+
+const TENDER_RESPONSE_DOCUMENT: &str = r#"{
+  "key": "L-1001",
+  "decision": "Accept",
+  "scac": "TRNV",
+  "respondedAt": "2026-01-09T18:00:00Z"
+}
+"#;
+
+const SHIPMENT_STATUS_DOCUMENT: &str = r#"{
+  "key": "L-1001",
+  "proNumber": "PRO-9",
+  "events": [
+    { "kind": "ArrivedDelivery", "at": "2026-01-11T15:30:00Z", "stop": 2, "city": "Chicago", "state": "IL", "country": "US" }
+  ]
+}
+"#;
+
+const FREIGHT_INVOICE_DOCUMENT: &str = r#"{
+  "number": "INV-1001",
+  "date": "2026-01-12",
+  "key": "L-1001",
+  "deliveryDate": "2026-01-11",
+  "total": { "amount": "2531.10", "currency": "USD" },
+  "billTo": { "name": "Acme Manufacturing Co" },
+  "lines": [
+    { "sequence": 1, "description": "Linehaul", "rate": "2.45", "amount": { "amount": "2145.00", "currency": "USD" } },
+    { "sequence": 2, "code": "FUE", "description": "Fuel surcharge", "amount": { "amount": "386.10", "currency": "USD" } }
+  ],
+  "refs": { "BM": "BOL-77120" }
+}
+"#;
+
+/// A message the partner might send of one transaction set, in the envelope the request
+/// describes: the starter's own message of the set, or none for a set it has none of.
+#[must_use]
+pub fn set_sample(request: &StarterRequest, set: &str) -> Option<String> {
+    let (group, control, body) = match set {
+        "204" => ("SM", 101, TENDER_BODY),
+        "990" => ("GF", 201, RESPONSE_BODY),
+        "214" => ("QM", 202, STATUS_BODY),
+        "210" => ("IM", 203, INVOICE_BODY),
+        _ => return None,
+    };
+    let envelope = Envelope::of(request, &sanitize(&request.name));
+    Some(envelope.sample(set, group, control, body))
+}
+
+/// An example Trenova document of a record, as an outbound map's sample holds it.
+#[must_use]
+pub fn document_sample(document: &str) -> Option<&'static str> {
+    match document {
+        "loadTender" => Some(LOAD_TENDER_DOCUMENT),
+        "tenderResponse" => Some(TENDER_RESPONSE_DOCUMENT),
+        "shipmentStatus" => Some(SHIPMENT_STATUS_DOCUMENT),
+        "freightInvoice" => Some(FREIGHT_INVOICE_DOCUMENT),
+        _ => None,
+    }
+}
+
 /// The starter project for a request.
 #[must_use]
 #[allow(clippy::too_many_lines)]
@@ -774,7 +863,7 @@ pub fn starter(request: &StarterRequest) -> Starter {
             tests.push_str(BROKER_RESPONSE_TEST);
             samples.push(StarterSample {
                 path: "samples/response.x12".into(),
-                content: envelope.sample("990", "GF", 201, &["B1*SWFT*L-1001*20260110*A"]),
+                content: envelope.sample("990", "GF", 201, RESPONSE_BODY),
             });
         }
         if wants("214") {
@@ -783,17 +872,7 @@ pub fn starter(request: &StarterRequest) -> Starter {
             tests.push_str(BROKER_STATUS_TEST);
             samples.push(StarterSample {
                 path: "samples/status.x12".into(),
-                content: envelope.sample(
-                    "214",
-                    "QM",
-                    202,
-                    &[
-                        "B10*PRO-9*L-1001*SWFT",
-                        "LX*1",
-                        "AT7*X1*NS***20260110*1430*CT",
-                        "MS1*CHICAGO*IL*US",
-                    ],
-                ),
+                content: envelope.sample("214", "QM", 202, STATUS_BODY),
             });
         }
         if wants("210") {
@@ -802,17 +881,7 @@ pub fn starter(request: &StarterRequest) -> Starter {
             tests.push_str(BROKER_INVOICE_TEST);
             samples.push(StarterSample {
                 path: "samples/invoice.x12".into(),
-                content: envelope.sample(
-                    "210",
-                    "IM",
-                    203,
-                    &[
-                        "B3**INV-1*L-1001*PP**20260112*100000**20260111*035*SWFT",
-                        "LX*1",
-                        "L1*1***100000",
-                        "L3*****100000",
-                    ],
-                ),
+                content: envelope.sample("210", "IM", 203, INVOICE_BODY),
             });
         }
     } else {

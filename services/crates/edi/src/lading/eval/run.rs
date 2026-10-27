@@ -418,9 +418,27 @@ pub fn read_x12(
         }
     }
     if found.is_empty() {
+        let held: BTreeSet<&str> = reading
+            .interchanges
+            .iter()
+            .flat_map(|interchange| &interchange.groups)
+            .flat_map(|group| &group.transactions)
+            .map(|transaction| transaction.transaction_set.as_str())
+            .collect();
+        if held.is_empty() {
+            return Err(Message::with(
+                message!("The X12 holds no {0} transaction set, and no other either"),
+                [Arg::from(set.as_str())],
+            ));
+        }
         return Err(Message::with(
-            message!("The X12 holds no {0} transaction set"),
-            [Arg::from(set.as_str())],
+            message!(
+                "The X12 holds no {0} transaction set, only {1}: pick a sample that holds a {0}, or a map that reads what it holds"
+            ),
+            [
+                Arg::from(set.as_str()),
+                Arg::from(held.into_iter().collect::<Vec<_>>().join(", ")),
+            ],
         ));
     }
     Ok(found)
