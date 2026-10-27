@@ -112,7 +112,8 @@ Vim's mappings are global to the page:
 | `K` | the hover card at the cursor |
 | `gl`, `<Space>ld` | the cursor line's findings with their fixes |
 | `]d` `[d`, `]e` `[e`, `]w` `[w` | the next or previous finding, error or warning, wrapping |
-| `<Space>la`, `gra`, `<Space>lD` | the lint panel, which lists every finding and its fixes |
+| `<Space>la`, `gra` | the code actions: Lading's menu, else the cursor line's findings with their fixes |
+| `<Space>lD` | every finding: the host's own problems list (the Lading studio's Problems tab); nothing where the host gives none |
 | `<Space>lf` | format, reported as the format key reports it |
 | `<Space>lr`, `grn` | rename |
 | `<Space>lR`, `grr` | Find references |

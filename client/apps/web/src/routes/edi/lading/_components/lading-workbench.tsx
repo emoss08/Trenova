@@ -27,7 +27,7 @@ import type {
 import { useMemo, useState } from "react";
 import type { NewEntry } from "./lading-add-entry-dialog";
 import { LadingFileTree } from "./lading-file-tree";
-import { LadingPanels } from "./lading-panels";
+import { LadingPanels, type PanelTab } from "./lading-panels";
 import { LadingVersionToolbar } from "./lading-version-toolbar";
 import {
   applyFileEdits,
@@ -81,6 +81,7 @@ export function LadingWorkbench({
   const [reveal, setReveal] = useState<Reveal | null>(null);
   const [values, setValues] = useState<readonly LadingRunValue[]>([]);
   const [coverage, setCoverage] = useState<LadingTestReport["coverage"]>([]);
+  const [panelTab, setPanelTab] = useState<PanelTab>("problems");
 
   const working = useMemo(() => ({ files, samples }), [files, samples]);
   const check = checkProject(edi, working, context);
@@ -156,8 +157,12 @@ export function LadingWorkbench({
         onDiscard={discard}
         onPickVersion={onPickVersion}
       />
-      <ResizablePanelGroup orientation="horizontal" className="min-h-0 flex-1 rounded-md border">
-        <ResizablePanel defaultSize="20%" minSize="14%">
+      <ResizablePanelGroup
+        orientation="horizontal"
+        persistId="lading-studio:files"
+        className="min-h-0 flex-1 rounded-md border"
+      >
+        <ResizablePanel id="files" defaultSize="20%" minSize="12rem" maxSize="28rem">
           <LadingFileTree
             files={files}
             samples={samples}
@@ -173,9 +178,9 @@ export function LadingWorkbench({
           />
         </ResizablePanel>
         <ResizableHandle />
-        <ResizablePanel defaultSize="80%" minSize="40%">
-          <ResizablePanelGroup orientation="vertical">
-            <ResizablePanel defaultSize="62%" minSize="25%">
+        <ResizablePanel id="work" defaultSize="80%" minSize="40%">
+          <ResizablePanelGroup orientation="vertical" persistId="lading-studio:panels">
+            <ResizablePanel id="editor" defaultSize="62%" minSize="30%">
               {openFile ? (
                 <LadingEditor
                   key={openFile.path}
@@ -197,6 +202,7 @@ export function LadingWorkbench({
                     if (reason)
                       toast.error(t("The file was not formatted"), { description: reason });
                   }}
+                  onShowProblems={() => setPanelTab("problems")}
                   reveal={reveal?.path === openFile.path ? reveal.range : null}
                   uncovered={coverage.find((entry) => entry.path === openFile.path)?.uncovered}
                   readOnly={!editable}
@@ -222,7 +228,7 @@ export function LadingWorkbench({
               )}
             </ResizablePanel>
             <ResizableHandle />
-            <ResizablePanel defaultSize="38%" minSize="15%">
+            <ResizablePanel id="panels" defaultSize="38%" minSize="8rem" maxSize="70%">
               <LadingPanels
                 project={project}
                 version={version}
@@ -238,6 +244,8 @@ export function LadingWorkbench({
                 onOpen={open}
                 onValues={setValues}
                 onCoverage={setCoverage}
+                tab={panelTab}
+                onTabChange={setPanelTab}
               />
             </ResizablePanel>
           </ResizablePanelGroup>

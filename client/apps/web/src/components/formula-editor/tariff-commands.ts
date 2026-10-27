@@ -19,6 +19,8 @@ export type TariffEditorCommands = {
   rename?: Command;
   references?: Command;
   actions?: Command;
+  /** Shows every finding in the project; the host's own problems list, as the Lading studio's. */
+  problems?: Command;
 };
 
 export const tariffEditorCommands = Facet.define<TariffEditorCommands, TariffEditorCommands | null>(

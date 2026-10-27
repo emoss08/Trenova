@@ -6,7 +6,6 @@
 // they are defined once, the first time the module is asked for the extension.
 
 import { toggleLineComment } from "@codemirror/commands";
-import { openLintPanel } from "@codemirror/lint";
 import { Prec, type Extension } from "@codemirror/state";
 import type { Command, EditorView } from "@codemirror/view";
 import { CodeMirror, Vim, vim } from "@replit/codemirror-vim";
@@ -56,9 +55,9 @@ const TARIFF_VIM_NORMAL_KEYS: ReadonlyArray<readonly [keys: string, run: Command
   ["[e", (view) => jumpToDiagnostic(view, -1, "error")],
   ["]w", (view) => jumpToDiagnostic(view, 1, "warning")],
   ["[w", (view) => jumpToDiagnostic(view, -1, "warning")],
-  ["<Space>la", own("actions", openLintPanel)],
-  ["gra", own("actions", openLintPanel)],
-  ["<Space>lD", openLintPanel],
+  ["<Space>la", own("actions", showLineDiagnostics)],
+  ["gra", own("actions", showLineDiagnostics)],
+  ["<Space>lD", own("problems", () => false)],
   ["<Space>lf", format],
   ["<Space>lr", own("rename", startRename)],
   ["grn", own("rename", startRename)],

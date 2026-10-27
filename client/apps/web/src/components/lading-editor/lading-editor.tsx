@@ -1,8 +1,8 @@
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
-import { forceLinting, lintGutter, openLintPanel } from "@codemirror/lint";
+import { forceLinting, lintGutter } from "@codemirror/lint";
 import { Compartment, Prec, type EditorState, type Extension } from "@codemirror/state";
-import { EditorView, keymap, type Command } from "@codemirror/view";
+import { EditorView, keymap, tooltips, type Command } from "@codemirror/view";
 import type {
   LadingContext,
   LadingEdit,
@@ -70,6 +70,8 @@ export type LadingEditorProps = {
   onEditFiles?: (edits: readonly LadingEdit[]) => void;
   /** Told why formatting was refused, or null when it formatted. */
   onFormat?: (reason: string | null) => void;
+  /** Shows every finding in the project: Mod-Shift-M, Vim's `<Space>lD` and the status bar's counts. */
+  onShowProblems?: () => void;
   /** A range to move to once, such as a finding picked in the problems list. */
   reveal?: { from: number; to: number } | null;
   /** What the last test run did not reach in this file; those lines are marked. */
@@ -98,6 +100,7 @@ export function LadingEditor({
   onOpenFile,
   onEditFiles,
   onFormat,
+  onShowProblems,
   reveal = null,
   uncovered = NO_RANGES,
   readOnly = false,
@@ -120,6 +123,11 @@ export function LadingEditor({
     onOpenFile(location);
   });
   const reportFormat = useLatestCallback((reason: string | null) => onFormat?.(reason));
+  const showProblems = useLatestCallback((): boolean => {
+    if (!onShowProblems) return false;
+    onShowProblems();
+    return true;
+  });
 
   const [status, setStatus] = useState<LadingEditorStatus>(INITIAL_LADING_STATUS);
   const reportStatus = useLatestCallback((state: EditorState) => {
@@ -177,6 +185,7 @@ export function LadingEditor({
         rename: startLadingRename,
         references: findLadingReferences,
         actions: showLadingActions,
+        problems: showProblems,
       }),
       tariffLanguageData,
       ladingHighlight(getEdi),
@@ -188,7 +197,15 @@ export function LadingEditor({
       lintGutter(),
       EditorView.lineWrapping,
       languageServiceTheme,
-      Prec.high(keymap.of([{ key: "Mod-s", run: requestEditorSave, preventDefault: true }])),
+      Prec.high(
+        keymap.of([
+          { key: "Mod-s", run: requestEditorSave, preventDefault: true },
+          { key: "Mod-Shift-m", run: showProblems, preventDefault: true },
+        ]),
+      ),
+      // Completion, hover and the lint card float over the studio's panels below the editor,
+      // which the editor's own stacking context (`isolate`) would put them under.
+      tooltips({ parent: document.body }),
       EditorView.updateListener.of((update) => {
         if (update.transactions.length > 0) reportStatus(update.state);
       }),
@@ -203,6 +220,7 @@ export function LadingEditor({
     applyEdits,
     reportFormat,
     reportStatus,
+    showProblems,
     vimSlot,
   ]);
 
@@ -284,9 +302,7 @@ export function LadingEditor({
       </div>
       <LadingStatusBar
         status={status}
-        onProblems={() => {
-          if (viewRef.current) openLintPanel(viewRef.current);
-        }}
+        onProblems={showProblems}
         onFormat={formatNow}
         formatDisabled={readOnly}
       />

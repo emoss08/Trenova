@@ -19,6 +19,8 @@ import {
   type LogCheckCallFormValues,
 } from "@/types/check-call";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { InfoCircleIcon } from "@trenova/shared/components/icons";
+import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
   Dialog,
@@ -49,6 +51,8 @@ type LogCheckCallDialogProps = {
   moves: LoggableMove[];
   stops: CheckCallStopOption[];
   defaultMoveId: string;
+  /** Why an arrival or departure logged now leaves the stop's times alone, if it does. */
+  stopTimesNote?: string | null;
 };
 
 export function LogCheckCallDialog({
@@ -58,6 +62,7 @@ export function LogCheckCallDialog({
   moves,
   stops,
   defaultMoveId,
+  stopTimesNote = null,
 }: LogCheckCallDialogProps) {
   const t = useT();
   const labels = useCheckCallLabels();
@@ -144,9 +149,11 @@ export function LogCheckCallDialog({
         <DialogHeader>
           <DialogTitle>{t("Log check call")}</DialogTitle>
           <DialogDescription>
-            {t(
-              "Record what the carrier or driver told you. An arrival or departure also records the stop's actual time.",
-            )}
+            {stopTimesNote
+              ? t("Record what the carrier or driver told you.")
+              : t(
+                  "Record what the carrier or driver told you. An arrival or departure also records the stop's actual time.",
+                )}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -177,6 +184,14 @@ export function LogCheckCallDialog({
                   options={kindOptions}
                 />
               </FormControl>
+              {visit && stopTimesNote ? (
+                <FormControl cols="full">
+                  <Alert size="sm" variant="info">
+                    <InfoCircleIcon />
+                    <AlertDescription>{stopTimesNote}</AlertDescription>
+                  </Alert>
+                </FormControl>
+              ) : null}
               {visit ? (
                 <FormControl cols="full">
                   <SelectField

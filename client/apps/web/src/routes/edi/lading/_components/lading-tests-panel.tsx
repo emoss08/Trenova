@@ -24,12 +24,14 @@ import { cn } from "@trenova/shared/lib/utils";
 import { useState } from "react";
 import {
   FilterChips,
-  PanelEmpty,
+  PanelFailure,
   PanelHeading,
+  PanelSheet,
   PanelToolbar,
   ProportionBar,
   StatusIcon,
 } from "./lading-panel-kit";
+import { TestsSketch } from "./lading-panel-sketches";
 import { byFile } from "./studio-model";
 
 type Filter = "all" | "failed" | "passed";
@@ -64,8 +66,8 @@ export function LadingTestsPanel({
 
   if (run === undefined) {
     return (
-      <PanelEmpty
-        icon={Beaker02Icon}
+      <PanelSheet
+        sketch={<TestsSketch />}
         title={t("Run the project's tests")}
         description={t(
           "Tests and properties run here, on the files as they are now, without saving. Certifying runs them again on the server.",
@@ -83,7 +85,7 @@ export function LadingTestsPanel({
   const report = run.report;
   if (report === null) {
     return (
-      <PanelEmpty
+      <PanelFailure
         icon={XCircleIcon}
         tone="danger"
         title={t("The tests could not run")}
@@ -135,9 +137,9 @@ export function LadingTestsPanel({
       <Readiness readiness={report.readiness} />
       <div className="flex flex-col gap-4 p-3">
         {report.tests.length === 0 ? (
-          <PanelEmpty
+          <PanelSheet
             compact
-            icon={Beaker02Icon}
+            sketch={<TestsSketch />}
             title={t("The project has no tests")}
             description={t("Add a test block to a map or flow file.")}
           />

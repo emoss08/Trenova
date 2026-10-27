@@ -1,8 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import {
-  AlertCircleIcon,
-  CheckCircleIcon,
   ChevronRightIcon,
   Copy01Icon,
   DotsHorizontalIcon,
@@ -43,9 +41,10 @@ type Counts = { errors: number; warnings: number };
 
 /**
  * The project as Lading reads it: the partner file, each flow with the maps and rules it uses,
- * the guides and libraries every file shares, the files no flow reaches, and the samples. A
- * header says whether the project checks clean; each file shows what the check knows of it and
- * its errors and warnings. A draft adds, renames and removes entries here.
+ * the guides and libraries every file shares, the files no flow reaches, and the samples. Each
+ * file shows what the check knows of it and its errors and warnings; whether the whole project
+ * checks clean is the version toolbar's and the editor status bar's to say. A draft adds,
+ * renames and removes entries here.
  */
 export function LadingFileTree({
   files,
@@ -183,7 +182,6 @@ export function LadingFileTree({
             </Tooltip>
           ) : null}
         </div>
-        <Health check={check} files={files.length} samples={samples.length} />
         <Input
           ref={filterRef}
           type="search"
@@ -345,59 +343,6 @@ function Guided({ depth, children }: { depth: number; children: ReactNode }) {
       />
       <ul className="flex flex-col">{children}</ul>
     </div>
-  );
-}
-
-/** Whether the project checks clean, and how big it is. */
-function Health({
-  check,
-  files,
-  samples,
-}: {
-  check: LadingCheck;
-  files: number;
-  samples: number;
-}) {
-  const t = useT();
-  const clean = check.errors === 0 && check.warnings === 0;
-  return (
-    <p className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
-      {clean ? (
-        <span className="text-success-foreground flex items-center gap-1">
-          <CheckCircleIcon className="size-3.5" />
-          {t("Checks clean")}
-        </span>
-      ) : (
-        <span
-          className={cn(
-            "flex items-center gap-1",
-            check.errors > 0 ? "text-danger-foreground" : "text-warning-foreground",
-          )}
-        >
-          <AlertCircleIcon className="size-3.5" />
-          {check.errors > 0
-            ? t("{0, plural, one {# error} other {# errors}}", check.errors)
-            : t("{0, plural, one {# warning} other {# warnings}}", check.warnings)}
-        </span>
-      )}
-      {check.errors > 0 && check.warnings > 0 ? (
-        <span className="text-warning-foreground">
-          {t("{0, plural, one {# warning} other {# warnings}}", check.warnings)}
-        </span>
-      ) : null}
-      <span aria-hidden className="text-muted-foreground">
-        ·
-      </span>
-      <span className="text-muted-foreground tabular-nums">
-        {t("{0, plural, one {# file} other {# files}}", files)}
-      </span>
-      <span aria-hidden className="text-muted-foreground">
-        ·
-      </span>
-      <span className="text-muted-foreground tabular-nums">
-        {t("{0, plural, one {# sample} other {# samples}}", samples)}
-      </span>
-    </p>
   );
 }
 

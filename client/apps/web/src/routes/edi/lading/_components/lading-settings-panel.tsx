@@ -3,7 +3,7 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { usePermission } from "@/hooks/use-permission";
 import { lading } from "@/lib/queries/lading";
 import { apiService } from "@/services/api";
-import { Lock01Icon, ReverseLeftIcon, Sliders01Icon } from "@trenova/shared/components/icons";
+import { Lock01Icon, ReverseLeftIcon } from "@trenova/shared/components/icons";
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Badge } from "@trenova/shared/components/ui/badge";
 import { Button } from "@trenova/shared/components/ui/button";
@@ -15,7 +15,10 @@ import type { LadingProject, LadingVersion } from "@trenova/shared/types/lading"
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { cn } from "@trenova/shared/lib/utils";
-import { PanelEmpty } from "./lading-panel-kit";
+import {
+  PanelSheet,
+} from "./lading-panel-kit";
+import { SettingsSketch } from "./lading-panel-sketches";
 import { settingDraft, settingUnit, settingValue, type SettingDraft } from "./studio-model";
 
 /**
@@ -37,8 +40,8 @@ export function LadingSettingsPanel({
 
   if (settings.length === 0) {
     return (
-      <PanelEmpty
-        icon={Sliders01Icon}
+      <PanelSheet
+        sketch={<SettingsSketch />}
         title={t("No partner settings")}
         description={t(
           "The partner file declares no settings. Add one with setting name: Type = default.",

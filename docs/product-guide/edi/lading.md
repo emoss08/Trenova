@@ -26,7 +26,7 @@ Keywords: new EDI map, set up partner EDI, starter project
 ### Change a map, rule or flow
 Keywords: edit EDI map, fix mapping, add a file, new map, new guide, new rules, new flow, library
 1. Open [Lading studio](/edi/lading), select the partner and pick the draft in the version picker. To change a version that is not a draft, open **Version actions** and select **New draft from this version**.
-2. Pick a file in the file tree. Its header says whether the project checks clean; below it each flow lists the maps and rules it uses, then **Shared** guides and libraries, **Not in any flow** for files no flow uses, and **Samples**. Press Ctrl+P (⌘P on a Mac) to filter by path. To start a new file, select **Add to the project** (or the add button beside **Flows**), type to find **Map**, **Rules**, **Flow**, **Guide**, **Library** or **Partner file** (or press its letter), fill in its options and **Name**, and select the add button. **Starts as** shows the text the file opens with.
+2. Pick a file in the file tree. Under the partner file, each flow lists the maps and rules it uses, then **Shared** guides and libraries, **Not in any flow** for files no flow uses, and **Samples**. Press Ctrl+P (⌘P on a Mac) to filter by path. To start a new file, select **Add to the project** (or the add button beside **Flows**), type to find **Map**, **Rules**, **Flow**, **Guide**, **Library** or **Partner file** (or press its letter), fill in its options and **Name**, and select the add button. **Starts as** shows the text the file opens with.
 3. Edit the file. Problems show under the text as you type and in the **Problems** tab; select one to go to it.
 4. Select **Save**. Select **Discard** to go back to the saved version.
 

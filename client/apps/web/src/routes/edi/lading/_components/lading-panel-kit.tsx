@@ -12,6 +12,7 @@ import {
   type IconComponent,
 } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
+import { EmptySheet } from "@trenova/shared/components/ui/empty-sheet";
 import { HighlightedCode } from "@trenova/shared/components/ui/highlighted-code";
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
@@ -44,8 +45,38 @@ const TILE_TONE: Record<Tone, string> = {
   info: "bg-info-subtle text-info-subtle-foreground",
 };
 
-/** What a panel shows before it has anything: what it is for, and the one thing to do. */
-export function PanelEmpty({
+/**
+ * An empty panel drawn as what it will hold (`EmptySheet`): a faint sketch of the tab's own
+ * layout over what the tab is for and the one thing to do, sized for the short panel under the
+ * editor. Each tab's sketch is in `lading-panel-sketches.tsx`.
+ */
+export function PanelSheet({
+  sketch,
+  title,
+  description,
+  action,
+  compact = false,
+}: {
+  sketch: ReactNode;
+  title: string;
+  description: string;
+  action?: ReactNode;
+  compact?: boolean;
+}) {
+  return (
+    <EmptySheet
+      sketch={sketch}
+      title={title}
+      description={description}
+      action={action}
+      className={compact ? "gap-3 py-4" : "gap-4 py-6"}
+      sketchClassName="max-w-sm"
+    />
+  );
+}
+
+/** What a panel shows when its work failed: why, and the way out. */
+export function PanelFailure({
   icon: Icon,
   title,
   description,
