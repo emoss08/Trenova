@@ -8,7 +8,6 @@
   "Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.": "以比州法更嚴格的限制要求您的車隊。覆寫只能收緊限制，絕不能放寬，且僅適用於您的組織。",
   "Leave blank to defer to the state. A value above the state limit is rejected.": "留空即依州法規定。高於州法上限的數值會被拒絕。",
   "Loading carrier override...": "正在載入承運業者覆寫...",
-  "Narrows": "更嚴格",
   "No carrier overrides yet": "尚無承運業者覆寫",
   "Our trailer fleet and insurance terms are narrower than this state allows": "我方的拖車車隊與保險條件較此州所允許者更為嚴格",
   "Permit lead time": "許可申請前置時間",

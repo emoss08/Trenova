@@ -16,6 +16,7 @@ import { HighlightedCode } from "@trenova/shared/components/ui/highlighted-code"
 import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
 import type { LadingSeverity } from "@trenova/shared/edi/lading";
+import { x12Spans } from "@trenova/shared/lib/highlight/x12";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReactNode } from "react";
 
@@ -66,9 +67,7 @@ export function PanelEmpty({
         compact ? "py-5" : "py-10",
       )}
     >
-      <span
-        className={cn("flex size-9 items-center justify-center rounded-lg", TILE_TONE[tone])}
-      >
+      <span className={cn("flex size-9 items-center justify-center rounded-lg", TILE_TONE[tone])}>
         <Icon className="size-4.5" />
       </span>
       <div className="flex max-w-md flex-col gap-1">
@@ -197,7 +196,10 @@ export function ProportionBar({
   total?: number;
   className?: string;
 }) {
-  const total = Math.max(whole ?? 0, parts.reduce((sum, part) => sum + part.value, 0));
+  const total = Math.max(
+    whole ?? 0,
+    parts.reduce((sum, part) => sum + part.value, 0),
+  );
   return (
     <div
       role="img"
@@ -251,7 +253,12 @@ export function CodeBlock({
         </Button>
       </div>
       <ScrollArea className="max-h-72">
-        <HighlightedCode code={code} language={language} className="w-max min-w-full p-3" />
+        <HighlightedCode
+          code={code}
+          language={language}
+          spans={language === "x12" ? x12Spans(code) : undefined}
+          className="w-max min-w-full p-3"
+        />
       </ScrollArea>
     </div>
   );

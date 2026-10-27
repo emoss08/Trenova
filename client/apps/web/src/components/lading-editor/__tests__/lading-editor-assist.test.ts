@@ -6,7 +6,7 @@ import type { EdiRuntime } from "@trenova/shared/edi/runtime";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ladingCompletions, opensLadingCompletion } from "../lading-complete";
 import { toLadingLint } from "../lading-lint";
-import { liveProject, type LadingLanguageService } from "../lading-service";
+import { checkProject, liveProject, type LadingLanguageService } from "../lading-service";
 import { ladingEditorStatus } from "../lading-status-bar";
 
 const PATH = "maps/tender-in.lading";
@@ -66,6 +66,37 @@ describe("liveProject", () => {
     expect(first.files).toEqual([PROJECT.files[0], { path: PATH, source: typed }]);
     expect(liveProject(languageService, typed)).toBe(first);
     expect(liveProject(languageService, `${typed}L`)).not.toBe(first);
+  });
+});
+
+describe("checkProject", () => {
+  it("checks the same project again when a new context arrives, and once per context", () => {
+    const project: LadingProjectInput = { files: [{ path: PATH, source: SAVED }], samples: [] };
+    const empty = {
+      files: [],
+      partner: null,
+      maps: [],
+      flows: [],
+      rules: [],
+      libraries: [],
+      guides: [],
+      errors: 0,
+      warnings: 0,
+    };
+    const call = vi.fn(() => empty);
+    const edi = { call } as unknown as EdiRuntime;
+    const before = { org: { name: "Trenova", scac: "TRNV", zone: "America/Chicago" } };
+    const after = {
+      ...before,
+      customFields: { shipment: [{ name: "po_number", type: "Text", label: "PO number" }] },
+    };
+    checkProject(edi, project, before);
+    checkProject(edi, project, before);
+    checkProject(edi, project, after);
+    expect(call.mock.calls.map(([, input]) => (input as { context: unknown }).context)).toEqual([
+      before,
+      after,
+    ]);
   });
 });
 

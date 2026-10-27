@@ -8,7 +8,6 @@
   "Hold your fleet to stricter limits than a state requires. An override can only tighten a limit, never loosen one, and applies to your organization alone.": "Someta a su flota a límites más estrictos que los que exige un estado. Una anulación solo puede endurecer un límite, nunca relajarlo, y se aplica únicamente a su organización.",
   "Leave blank to defer to the state. A value above the state limit is rejected.": "Déjelo en blanco para seguir lo que fije el estado. Se rechaza cualquier valor superior al límite estatal.",
   "Loading carrier override...": "Cargando la anulación del transportista...",
-  "Narrows": "Más estricto",
   "No carrier overrides yet": "Aún no hay anulaciones de transportistas",
   "Our trailer fleet and insurance terms are narrower than this state allows": "Nuestra flota de remolques y nuestras condiciones de seguro son más restrictivas de lo que permite este estado",
   "Permit lead time": "Plazo de obtención del permiso",

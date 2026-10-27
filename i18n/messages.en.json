@@ -525,6 +525,15 @@
       "routes/time-attendance"
     ]
   },
+  ".x12, .edi and .txt are read as X12; .csv and .json as named": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "0 low risk · 100 high risk": {
     "sites": 1,
     "scope": [
@@ -3077,6 +3086,15 @@
       "edi/lading"
     ]
   },
+  "A JSON document, for a map that reads JSON": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "A JSON key file for a service account allowed to call Claude.": {
     "sites": 1,
     "scope": [
@@ -3597,6 +3615,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A blank value keeps the default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "A block of statements can't be used as a value here; a record is written `'{' name: value '}'`": {
@@ -5900,6 +5927,15 @@
       "go/other"
     ]
   },
+  "A document as Trenova holds it, for an outbound map's tests": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "A document can be attached to the invoice only once": {
     "sites": 1,
     "scope": [
@@ -8051,6 +8087,15 @@
       "go/other"
     ]
   },
+  "A message the partner sent, for maps and tests to run against": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "A message with files is sent once the reply under way ends; it cannot steer it.": {
     "sites": 1,
     "scope": [
@@ -8058,6 +8103,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A message with these codes waits until someone maps them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "A metric strip holds at most {0} metrics": {
@@ -10340,7 +10394,7 @@
       "go/other"
     ]
   },
-  "A replay reads the partner's past messages through this version and the active one, and lists every difference. A version is certified only after each of its inbound maps replays without new rejections.": {
+  "A replay reads the partner's past messages through this version and the active one, and lists every difference.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -11031,6 +11085,15 @@
       "go/other"
     ]
   },
+  "A run reads one sample through one map and shows the document, the X12 it writes, and every finding along the way.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "A run that scored fewer cases is not compared with the median.": {
     "sites": 1,
     "scope": [
@@ -11078,6 +11141,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A sample's name ends in .x12, .edi, .txt, .csv or .json": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "A satisfied requirement must name the permit that satisfies it": {
@@ -13407,6 +13479,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "A version is replayed and certified as it was saved.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "A version is required": {
@@ -17785,12 +17866,13 @@
     ]
   },
   "Actions for {0}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/edi",
       "routes/fiscal-year",
       "routes/worker"
     ]
@@ -17908,6 +17990,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Activating makes this the version that reads and writes the partner's messages.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Active": {
@@ -18461,7 +18552,7 @@
     ]
   },
   "Add": {
-    "sites": 13,
+    "sites": 12,
     "scope": [
       "ts"
     ],
@@ -18471,7 +18562,6 @@
       "packages/shared/lib",
       "routes/benefits",
       "routes/desk",
-      "routes/edi",
       "routes/formula-template",
       "routes/fuel-management",
       "routes/inbox",
@@ -18627,15 +18717,6 @@
       "apps/web/config"
     ]
   },
-  "Add a file": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
   "Add a forwarding rule for every message to the address above, and keep a copy in the original inbox.": {
     "sites": 1,
     "scope": [
@@ -18652,6 +18733,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Add a guide or library": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Add a jurisdiction rule, visible to every organization": {
@@ -18697,6 +18787,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Add a map first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Add a measure column before plotting this report.": {
@@ -19146,6 +19245,15 @@
     "areas": [
       "apps/web/components",
       "routes/formula-template"
+    ]
+  },
+  "Add a test block to a map or flow file.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Add a test so a reviewer can see what it bills": {
@@ -19729,6 +19837,15 @@
       "routes/reports"
     ]
   },
+  "Add flow": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Add from your reports": {
     "sites": 1,
     "scope": [
@@ -19763,6 +19880,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Add guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Add hazardous material...": {
@@ -19838,6 +19964,15 @@
       "routes/shipment"
     ]
   },
+  "Add library": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Add line": {
     "sites": 3,
     "scope": [
@@ -19874,6 +20009,15 @@
     "areas": [
       "routes/carrier-settlement",
       "routes/driver-settlement"
+    ]
+  },
+  "Add map": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Add mapping": {
@@ -20029,6 +20173,15 @@
       "apps/web/config"
     ]
   },
+  "Add partner file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Add pay by hand and read every line on its page": {
     "sites": 1,
     "scope": [
@@ -20135,6 +20288,33 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Add rules": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Add sample": {
+    "sites": 4,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Add samples": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Add schedule": {
@@ -20507,7 +20687,7 @@
     ]
   },
   "Add to the project": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -23618,7 +23798,7 @@
     ]
   },
   "All": {
-    "sites": 23,
+    "sites": 25,
     "scope": [
       "ts"
     ],
@@ -32999,6 +33179,15 @@
       "routes/desk"
     ]
   },
+  "As the partner's guide is titled, such as ACME Load Tender Guide rev 3.2": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "As {0}": {
     "sites": 1,
     "scope": [
@@ -38798,6 +38987,15 @@
       "routes/reports"
     ]
   },
+  "Back to every kind": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Back to formula libraries": {
     "sites": 2,
     "scope": [
@@ -43698,6 +43896,15 @@
       "go/other"
     ]
   },
+  "Both versions read it the same": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Both ways": {
     "sites": 3,
     "scope": [
@@ -45374,7 +45581,7 @@
     ]
   },
   "CSV": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "go",
       "ts"
@@ -45384,7 +45591,17 @@
       "apps/web/types",
       "go/other",
       "routes/agent-control",
+      "routes/edi",
       "routes/time-attendance"
+    ]
+  },
+  "CSV file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "CSV or XLSX. Columns are matched by name.": {
@@ -50458,7 +50675,7 @@
     ]
   },
   "Certified": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -50466,6 +50683,7 @@
       "apps/dash/routes",
       "apps/web/lib",
       "packages/shared/components",
+      "routes/edi",
       "routes/osha",
       "routes/worker"
     ]
@@ -51212,7 +51430,7 @@
     ]
   },
   "Changed": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -51220,6 +51438,7 @@
       "apps/web/components",
       "apps/web/lib",
       "routes/agent-control",
+      "routes/edi",
       "routes/formula-template",
       "routes/rate-agreement"
     ]
@@ -53144,13 +53363,14 @@
     ]
   },
   "Checks clean": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "Checks clean and every test passes.": {
@@ -53187,6 +53407,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Checks the document of": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Checksum": {
@@ -58402,12 +58631,13 @@
     ]
   },
   "Collapse {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/edi"
     ]
   },
   "Collect": {
@@ -62913,6 +63143,15 @@
       "routes/table-change-alert"
     ]
   },
+  "Content": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Content hash cannot be longer than 64 characters": {
     "sites": 2,
     "scope": [
@@ -64090,7 +64329,7 @@
     ]
   },
   "Copied": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "ts"
     ],
@@ -64100,6 +64339,7 @@
       "routes/admin",
       "routes/desk",
       "routes/detention-desk",
+      "routes/edi",
       "routes/invoice",
       "routes/shipment"
     ]
@@ -64189,7 +64429,7 @@
     ]
   },
   "Copy": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "ts"
     ],
@@ -64199,6 +64439,7 @@
       "routes/carrier",
       "routes/desk",
       "routes/detention-desk",
+      "routes/edi",
       "routes/inbox",
       "routes/invoice",
       "routes/shipment"
@@ -64474,6 +64715,15 @@
     ],
     "areas": [
       "routes/invoice"
+    ]
+  },
+  "Copy path": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Copy path {0}": {
@@ -64756,12 +65006,13 @@
     ]
   },
   "Copy {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/edi"
     ]
   },
   "Copying...": {
@@ -65545,12 +65796,13 @@
     ]
   },
   "Could not be read": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "Could not bill this statement": {
@@ -75009,7 +75261,7 @@
     ]
   },
   "Default": {
-    "sites": 20,
+    "sites": 21,
     "scope": [
       "go",
       "ts"
@@ -75021,6 +75273,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
+      "routes/edi",
       "routes/pay-code",
       "routes/pto-policy",
       "routes/random-testing",
@@ -80247,6 +80500,15 @@
       "routes/cost-control"
     ]
   },
+  "Differ": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Difference": {
     "sites": 11,
     "scope": [
@@ -80500,7 +80762,7 @@
     ]
   },
   "Direction": {
-    "sites": 11,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -80741,7 +81003,7 @@
     ]
   },
   "Discard": {
-    "sites": 16,
+    "sites": 17,
     "scope": [
       "go",
       "ts"
@@ -82944,7 +83206,7 @@
     ]
   },
   "Document": {
-    "sites": 45,
+    "sites": 47,
     "scope": [
       "go",
       "ts"
@@ -82962,6 +83224,7 @@
       "routes/customer-ledger",
       "routes/customer-statement",
       "routes/desk",
+      "routes/edi",
       "routes/inbox",
       "routes/journal-review",
       "routes/shipment",
@@ -86497,6 +86760,15 @@
       "apps/web/components"
     ]
   },
+  "Drop files here, or choose them": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Drop files to add": {
     "sites": 1,
     "scope": [
@@ -88987,6 +89259,15 @@
       "go/other"
     ]
   },
+  "Each inbound map replays the partner's past messages against the active version without a new rejection.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Each invoice is emailed to the recipients on its customer's billing profile. Invoices that already went out are not sent again.": {
     "sites": 1,
     "scope": [
@@ -90697,12 +90978,13 @@
     ]
   },
   "Element": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "Element position cannot be negative": {
@@ -90723,6 +91005,15 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "Elements the partner's samples carry that no map reads": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Elevated": {
@@ -95633,7 +95924,7 @@
     ]
   },
   "Error": {
-    "sites": 15,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -95644,8 +95935,7 @@
       "apps/web/lib",
       "go/other",
       "packages/shared/components",
-      "routes/agent-control",
-      "routes/edi"
+      "routes/agent-control"
     ]
   },
   "Error 404": {
@@ -95753,13 +96043,14 @@
     ]
   },
   "Esc": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "Escalate an overdue exception every": {
@@ -97659,6 +97950,15 @@
       "apps/web/lib"
     ]
   },
+  "Every flow clause tested": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Every gallon bought for a tractor, keyed by hand or imported from a fuel card statement. Tax-paid gallons credit the jurisdiction they were bought in on the quarterly IFTA return.": {
     "sites": 1,
     "scope": [
@@ -97938,6 +98238,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Every message read the same": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Every mile attributed to a jurisdiction on a completed move in the quarter, plus manual entries.": {
@@ -98561,6 +98870,15 @@
       "routes/fleet-safety"
     ]
   },
+  "Every test passes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Every tile, filter, and parameter as you left it.": {
     "sites": 1,
     "scope": [
@@ -98622,6 +98940,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Every transaction accepted": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Every transaction in this file was processed successfully.": {
@@ -99314,6 +99641,15 @@
     "areas": [
       "apps/web/types",
       "go/other"
+    ]
+  },
+  "Example": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Exceeds eligibility by {0}": {
@@ -100035,12 +100371,13 @@
     ]
   },
   "Expand {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/edi"
     ]
   },
   "Expanded by default": {
@@ -103836,12 +104173,13 @@
     ]
   },
   "F2": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/edi"
     ]
   },
   "FCA Canadian diesel": {
@@ -104692,7 +105030,7 @@
     ]
   },
   "Failed": {
-    "sites": 77,
+    "sites": 79,
     "scope": [
       "go",
       "ts"
@@ -106637,13 +106975,12 @@
     ]
   },
   "Failing": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin",
-      "routes/edi"
+      "routes/admin"
     ]
   },
   "Failover": {
@@ -106653,6 +106990,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Fails for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Failure": {
@@ -107504,6 +107850,15 @@
       "routes/admin"
     ]
   },
+  "Fields that changed most": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Figure label is required": {
     "sites": 1,
     "scope": [
@@ -108126,13 +108481,12 @@
     ]
   },
   "Files": {
-    "sites": 5,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/edi",
       "routes/inbox"
     ]
   },
@@ -108518,6 +108872,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Filter files": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Filter operator is invalid": {
@@ -110150,6 +110513,15 @@
       "routes/formula-template"
     ]
   },
+  "Fix the project's errors and try again.": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Fix the source first; contracts are checked against its inputs": {
     "sites": 1,
     "scope": [
@@ -110276,6 +110648,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "Fixed by rules": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Fixed costs": {
@@ -110796,16 +111177,7 @@
     ]
   },
   "Flow": {
-    "sites": 2,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
-  "Flow clauses without a test": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -110862,6 +111234,15 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "Flows": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Flush audit buffer from Redis for batch processing": {
@@ -113037,6 +113418,15 @@
       "routes/desk"
     ]
   },
+  "From the guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "From the indexer's next round": {
     "sites": 1,
     "scope": [
@@ -113140,12 +113530,13 @@
     ]
   },
   "From {0} to {1}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "packages/shared/lib",
+      "routes/edi",
       "routes/inbox"
     ]
   },
@@ -114167,6 +114558,15 @@
     ],
     "areas": [
       "routes/formula-library"
+    ]
+  },
+  "Functions, crosswalks and constants other files use": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Funded": {
@@ -116350,6 +116750,15 @@
       "routes/agent-control"
     ]
   },
+  "Gone": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Gone quiet": {
     "sites": 1,
     "scope": [
@@ -117258,6 +117667,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Guide": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Guide #{0}": {
@@ -121746,6 +122164,15 @@
       "routes/customer"
     ]
   },
+  "How one message becomes a Trenova document, or the reverse": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "How partial increments above the peg count.": {
     "sites": 1,
     "scope": [
@@ -122105,6 +122532,15 @@
     ],
     "areas": [
       "routes/routing-guide"
+    ]
+  },
+  "How this partner narrows a standard X12 guide": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "How this place is named": {
@@ -124454,6 +124890,15 @@
       "routes/accounting-drift"
     ]
   },
+  "In the browser": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "In the editor": {
     "sites": 1,
     "scope": [
@@ -124604,15 +125049,6 @@
       "routes/accounting-drift",
       "routes/accounting-inbound",
       "routes/accounting-sync"
-    ]
-  },
-  "In {0} of {1} samples for {2}, such as {3}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
     ]
   },
   "In {0}, go to Setup > Integration > OAuth 2.0 Client Credentials (M2M) Setup and choose Create New.": {
@@ -132074,6 +132510,15 @@
       "apps/web/components"
     ]
   },
+  "JSON file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "JSON merged under the fields Trenova sets, for options the endpoint takes.": {
     "sites": 1,
     "scope": [
@@ -134637,6 +135082,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "Kinds to add": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Known Host Key": {
@@ -138423,12 +138877,13 @@
     ]
   },
   "Library": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "routes/edi"
     ]
   },
   "Library approved": {
@@ -140363,7 +140818,7 @@
     ]
   },
   "Live": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
@@ -140372,7 +140827,8 @@
       "apps/web/components",
       "routes/admin",
       "routes/agent-control",
-      "routes/detention-policy"
+      "routes/detention-policy",
+      "routes/edi"
     ]
   },
   "Live browser": {
@@ -140383,6 +140839,15 @@
     "areas": [
       "apps/web/components",
       "apps/web/services"
+    ]
+  },
+  "Live data": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Live dwell clocks, detention billing, and contract terms": {
@@ -140532,12 +140997,13 @@
     ]
   },
   "Ln {0}": {
-    "sites": 5,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/edi",
       "routes/formula-template"
     ]
   },
@@ -144546,6 +145012,15 @@
       "apps/web/components"
     ]
   },
+  "Lookups": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Lookups the run asked for": {
     "sites": 1,
     "scope": [
@@ -145629,6 +146104,15 @@
       "routes/org-structure"
     ]
   },
+  "Makes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Makes a field, an input or a new name take every value of a range or list.": {
     "sites": 2,
     "scope": [
@@ -146475,7 +146959,7 @@
     ]
   },
   "Map": {
-    "sites": 5,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -146750,15 +147234,6 @@
     ],
     "areas": [
       "routes/reports"
-    ]
-  },
-  "Maps, guides, rules and flows go in their folders; samples are messages to run.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
     ]
   },
   "Mar 2026": {
@@ -149849,7 +150324,7 @@
     ]
   },
   "Message": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -149861,6 +150336,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
+      "routes/edi",
       "routes/inbox",
       "routes/invoice",
       "routes/worker"
@@ -154572,7 +155048,7 @@
     ]
   },
   "Name": {
-    "sites": 152,
+    "sites": 153,
     "scope": [
       "go",
       "ts"
@@ -155632,11 +156108,12 @@
     ]
   },
   "Narrows": {
-    "sites": 2,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/edi",
       "routes/jurisdiction-rule-override"
     ]
   },
@@ -156822,7 +157299,7 @@
     ]
   },
   "New": {
-    "sites": 23,
+    "sites": 24,
     "scope": [
       "go",
       "ts"
@@ -156836,6 +157313,7 @@
       "packages/shared/components",
       "routes/agent-control",
       "routes/desk",
+      "routes/edi",
       "routes/formula-template",
       "routes/fuel-purchase",
       "routes/inbox",
@@ -157544,6 +158022,15 @@
       "go/other"
     ]
   },
+  "New path for {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "New pay advance": {
     "sites": 1,
     "scope": [
@@ -157944,15 +158431,6 @@
       "routes/desk"
     ]
   },
-  "New: {0}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
   "Newer version": {
     "sites": 1,
     "scope": [
@@ -157979,6 +158457,33 @@
     ],
     "areas": [
       "routes/intake"
+    ]
+  },
+  "Newly declined": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Newly held": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Newly rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Newly submitted by the driver and waiting for a first look.": {
@@ -161742,12 +162247,14 @@
     ]
   },
   "No errors": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
+      "go",
+      "ts"
     ],
     "areas": [
-      "go/other"
+      "go/other",
+      "routes/edi"
     ]
   },
   "No errors against the schema, the rate tables and the charge codes": {
@@ -161757,6 +162264,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "No errors, every test passing, every flow clause tested and a clean replay. Certify from the version actions.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "No escrow accounts yet": {
@@ -162025,6 +162541,15 @@
       "routes/shipment"
     ]
   },
+  "No file or sample matches {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "No filings on record.": {
     "sites": 1,
     "scope": [
@@ -162116,6 +162641,15 @@
     ]
   },
   "No flow instances yet": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "No flow's clause names these files": {
     "sites": 1,
     "scope": [
       "ts"
@@ -162443,6 +162977,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "No inbound map": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "No income-statement activity to close.": {
@@ -163252,7 +163795,7 @@
     ]
   },
   "No message has arrived during the shadow so far": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -163956,6 +164499,15 @@
       "routes/desk"
     ]
   },
+  "No partner settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "No pay advances yet": {
     "sites": 1,
     "scope": [
@@ -164380,7 +164932,7 @@
     ]
   },
   "No problems": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -165443,7 +165995,7 @@
       "edi/lading"
     ]
   },
-  "No samples yet. Add one to run a map against it.": {
+  "No samples yet. Add the partner's messages to run maps against them.": {
     "sites": 1,
     "scope": [
       "ts"
@@ -166274,6 +166826,15 @@
       "apps/web/lib"
     ]
   },
+  "No test failed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "No test is on file for this worker.": {
     "sites": 1,
     "scope": [
@@ -166290,6 +166851,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "No test passed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "No test reaches this branch of the if": {
@@ -168588,6 +169158,15 @@
       "routes/intake"
     ]
   },
+  "Not in any flow": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Not in the active Lading version": {
     "sites": 1,
     "scope": [
@@ -169094,7 +169673,7 @@
       "routes/desk"
     ]
   },
-  "Not ready to certify: fix the errors and failing tests, and test every flow clause": {
+  "Not ready to certify": {
     "sites": 1,
     "scope": [
       "ts"
@@ -169356,6 +169935,15 @@
     ],
     "areas": [
       "routes/factoring-company"
+    ]
+  },
+  "Not shadowed": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Not shared with anyone yet.": {
@@ -169650,7 +170238,7 @@
     ]
   },
   "Note": {
-    "sites": 23,
+    "sites": 22,
     "scope": [
       "go",
       "ts"
@@ -169666,7 +170254,6 @@
       "routes/collections",
       "routes/desk",
       "routes/detention-desk",
-      "routes/edi",
       "routes/fuel-purchase",
       "routes/holiday",
       "routes/ifta-return",
@@ -169846,7 +170433,7 @@
     ]
   },
   "Notes": {
-    "sites": 62,
+    "sites": 63,
     "scope": [
       "go",
       "ts"
@@ -169884,6 +170471,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Notes are written while the version is a draft.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Notes cannot be longer than 2,000 characters": {
@@ -170084,6 +170680,15 @@
     ],
     "areas": [
       "routes/auth"
+    ]
+  },
+  "Nothing at this severity": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Nothing awaiting approval": {
@@ -171868,6 +172473,15 @@
       "routes/desk"
     ]
   },
+  "Nothing to add matches {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Nothing to apply": {
     "sites": 1,
     "scope": [
@@ -171938,6 +172552,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "Nothing to compare with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Nothing to compare yet.": {
@@ -174202,7 +174825,7 @@
     ]
   },
   "Off": {
-    "sites": 36,
+    "sites": 37,
     "scope": [
       "ts"
     ],
@@ -174214,6 +174837,7 @@
       "routes/agent-control",
       "routes/carrier-invoice-matching",
       "routes/desk",
+      "routes/edi",
       "routes/scheduling",
       "routes/settings",
       "routes/shipment"
@@ -174957,7 +175581,7 @@
     ]
   },
   "On": {
-    "sites": 22,
+    "sites": 23,
     "scope": [
       "ts"
     ],
@@ -174968,6 +175592,7 @@
       "routes/agent-control",
       "routes/carrier-invoice-matching",
       "routes/desk",
+      "routes/edi",
       "routes/inbox",
       "routes/settings"
     ]
@@ -182230,7 +182855,7 @@
     ]
   },
   "Optional": {
-    "sites": 18,
+    "sites": 19,
     "scope": [
       "go",
       "ts"
@@ -182244,6 +182869,7 @@
       "routes/agent-control",
       "routes/bank-receipt-batch",
       "routes/desk",
+      "routes/edi",
       "routes/intake",
       "routes/shipment",
       "routes/worker"
@@ -182868,6 +183494,15 @@
       "template/driverportal.invitation.email",
       "template/invoice.share.email",
       "template/rateconfirmation.email"
+    ]
+  },
+  "Or press a kind's letter": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Or sign in yourself in the live browser, then tell the task to carry on.": {
@@ -188229,6 +188864,15 @@
       "routes/edi"
     ]
   },
+  "Partner file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Partner inactive": {
     "sites": 1,
     "scope": [
@@ -188310,6 +188954,15 @@
       "routes/edi"
     ]
   },
+  "Partner settings": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Partner settings and saved mapping profile.": {
     "sites": 1,
     "scope": [
@@ -188320,6 +188973,15 @@
     ]
   },
   "Partner signing certificate (PEM)": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Partner to Trenova": {
     "sites": 1,
     "scope": [
       "ts"
@@ -188438,7 +189100,7 @@
     ]
   },
   "Passed": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -188901,6 +189563,33 @@
       "routes/agent-control"
     ]
   },
+  "Paste the JSON document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Paste the document as JSON": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
+  "Paste the file, its header row first": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Paste the inbound webhook's signing secret from Resend. It starts with whsec_.": {
     "sites": 1,
     "scope": [
@@ -188908,6 +189597,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "Paste the partner's message, from ISA to IEA": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Paste the private key": {
@@ -189024,13 +189722,12 @@
     ]
   },
   "Path": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk",
-      "routes/edi"
+      "routes/desk"
     ]
   },
   "Path is required": {
@@ -191908,7 +192605,7 @@
     ]
   },
   "Period": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -199338,14 +200035,15 @@
     ]
   },
   "Problems": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other"
+      "go/other",
+      "routes/edi"
     ]
   },
   "Procedure": {
@@ -206574,6 +207272,15 @@
       "apps/web/components"
     ]
   },
+  "Read from a file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Read from an EDI 204": {
     "sites": 1,
     "scope": [
@@ -207308,6 +208015,15 @@
       "routes/rate-agreement"
     ]
   },
+  "Reading the period's messages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Reading the queue…": {
     "sites": 1,
     "scope": [
@@ -207436,13 +208152,14 @@
     ]
   },
   "Reads": {
-    "sites": 6,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/edi"
     ]
   },
   "Reads a captured batch, divides it into documents and files what needs no person.": {
@@ -208895,7 +209612,7 @@
     ]
   },
   "Received": {
-    "sites": 19,
+    "sites": 20,
     "scope": [
       "go",
       "ts"
@@ -213355,7 +214072,7 @@
     ]
   },
   "Rejected": {
-    "sites": 46,
+    "sites": 47,
     "scope": [
       "go",
       "ts"
@@ -213802,6 +214519,15 @@
     ],
     "areas": [
       "routes/factoring-submission"
+    ]
+  },
+  "Release steps": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Release the hold to continue": {
@@ -214464,7 +215190,7 @@
     ]
   },
   "Remove": {
-    "sites": 27,
+    "sites": 28,
     "scope": [
       "ts"
     ],
@@ -214475,6 +215201,7 @@
       "routes/carrier",
       "routes/detention-policy",
       "routes/dispatch-console",
+      "routes/edi",
       "routes/holiday",
       "routes/home",
       "routes/rate-agreement",
@@ -215465,12 +216192,13 @@
     ]
   },
   "Rename": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/edi",
       "routes/inbox"
     ]
   },
@@ -216400,6 +217128,15 @@
       "routes/inbox"
     ]
   },
+  "Replay": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Replay a Lading version against another on a partner's real messages": {
     "sites": 1,
     "scope": [
@@ -216509,12 +217246,13 @@
     ]
   },
   "Replayed": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/edi"
     ]
   },
   "Replayed a proposed change against history; never touches a live shipment.": {
@@ -216563,7 +217301,7 @@
     ]
   },
   "Replays": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -219168,12 +219906,13 @@
     ]
   },
   "Reset": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/edi",
       "routes/home",
       "routes/worker"
     ]
@@ -219263,6 +220002,15 @@
       "routes/desk"
     ]
   },
+  "Reset to the default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Reset two-factor authentication": {
     "sites": 1,
     "scope": [
@@ -219306,6 +220054,15 @@
     ],
     "areas": [
       "routes/formula-template"
+    ]
+  },
+  "Reset {0} to its default": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Resets at midnight": {
@@ -220659,13 +221416,14 @@
     ]
   },
   "Result": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/edi",
       "routes/worker"
     ]
   },
@@ -224938,6 +225696,15 @@
       "routes/home"
     ]
   },
+  "Rows under a header row, for a map that reads CSV": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Rubric": {
     "sites": 2,
     "scope": [
@@ -225106,12 +225873,13 @@
     ]
   },
   "Rules": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
+      "routes/edi",
       "routes/inbox",
       "routes/training-course"
     ]
@@ -225123,6 +225891,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Rules check the document a map makes. Add a map first.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Rules for {0}": {
@@ -225191,6 +225968,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Run a map on a sample": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Run a production document extraction again on the shadow AI provider and keep its answer for scoring": {
@@ -225657,6 +226443,15 @@
       "apps/web/components"
     ]
   },
+  "Run the project's tests": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Run the report {0} and show me the results.": {
     "sites": 1,
     "scope": [
@@ -225685,7 +226480,7 @@
     ]
   },
   "Run the tests again": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -225776,6 +226571,15 @@
       "routes/edi"
     ]
   },
+  "Run with live data to answer them from your records": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Run {0, plural, one {# timesheet} other {# timesheets}}": {
     "sites": 1,
     "scope": [
@@ -225840,7 +226644,7 @@
     ]
   },
   "Running": {
-    "sites": 13,
+    "sites": 14,
     "scope": [
       "go",
       "ts"
@@ -227081,7 +227885,7 @@
     ]
   },
   "Same": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -227199,7 +228003,7 @@
     ]
   },
   "Sample": {
-    "sites": 4,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -227345,7 +228149,7 @@
     ]
   },
   "Samples": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -228426,7 +229230,7 @@
     ]
   },
   "Saved": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -228435,6 +229239,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/desk",
+      "routes/edi",
       "routes/formula-library",
       "routes/formula-template",
       "routes/settings"
@@ -228465,6 +229270,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Saved as {0}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Saved dashboard": {
@@ -228619,6 +229433,15 @@
     ],
     "areas": [
       "api/graphql"
+    ]
+  },
+  "Saved with the draft. Say what changed and why, for whoever certifies it.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Saved {0}": {
@@ -232954,6 +233777,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Seen in": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Seen in {0}": {
@@ -238734,12 +239566,13 @@
     ]
   },
   "Set": {
-    "sites": 1,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/edi"
     ]
   },
   "Set API key": {
@@ -239426,6 +240259,15 @@
     ],
     "areas": [
       "routes/worker"
+    ]
+  },
+  "Setting": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Setting guardrails": {
@@ -240267,13 +241109,14 @@
     ]
   },
   "Severity": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/agent-control",
       "routes/carrier-monitoring",
+      "routes/edi",
       "routes/worker"
     ]
   },
@@ -240317,7 +241160,7 @@
     ]
   },
   "Shadow": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -240370,6 +241213,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Shadow messages": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Shadow mode": {
@@ -240738,7 +241590,7 @@
     ]
   },
   "Shared": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "go",
       "ts"
@@ -240747,6 +241599,7 @@
       "apps/web/components",
       "apps/web/types",
       "go/other",
+      "routes/edi",
       "routes/reports"
     ]
   },
@@ -243254,14 +244107,15 @@
     ]
   },
   "Show": {
-    "sites": 8,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "Show actions": {
@@ -245213,6 +246067,15 @@
       "routes/insights"
     ]
   },
+  "Since superseded": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Since {0}": {
     "sites": 10,
     "scope": [
@@ -245569,7 +246432,7 @@
     ]
   },
   "Skipped": {
-    "sites": 14,
+    "sites": 15,
     "scope": [
       "go",
       "ts"
@@ -245581,6 +246444,7 @@
       "packages/shared/components",
       "packages/shared/types",
       "routes/agent-control",
+      "routes/edi",
       "routes/shipment"
     ]
   },
@@ -247244,8 +248108,8 @@
       "go/other"
     ]
   },
-  "Source file": {
-    "sites": 1,
+  "Source files": {
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -249160,15 +250024,6 @@
       "go/other"
     ]
   },
-  "Start replay": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
   "Start report": {
     "sites": 1,
     "scope": [
@@ -249767,6 +250622,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "Starts as": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Starts as a copy of your organization's. Save it to use it for {0}'s invoices.": {
@@ -250992,14 +251856,15 @@
     ]
   },
   "Steps": {
-    "sites": 6,
+    "sites": 7,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/admin",
       "routes/agent-control",
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "Steps done": {
@@ -257989,7 +258854,7 @@
     ]
   },
   "Tests": {
-    "sites": 11,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -262223,6 +263088,15 @@
       "routes/worker"
     ]
   },
+  "The certified version reads live messages beside the active one and sends nothing.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "The chain": {
     "sites": 1,
     "scope": [
@@ -263269,6 +264143,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The conversation: what arrives, what Trenova answers and sends, and what it waits for": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "The cost estimate could not be loaded.": {
@@ -265498,6 +266381,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The envelope, time zone, currency and settings; one per project": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "The equipment could not be checked against a registration.": {
@@ -269570,7 +270462,7 @@
       "routes/trailer"
     ]
   },
-  "The map could not run. Fix the project's errors and try again.": {
+  "The map could not run": {
     "sites": 1,
     "scope": [
       "ts"
@@ -271279,6 +272171,17 @@
       "go/other"
     ]
   },
+  "The organization has no custom field {0}: add it in Settings, under Custom fields": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
   "The organization is required": {
     "sites": 1,
     "scope": [
@@ -271816,6 +272719,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "The partner's real files, each added as a sample by its name": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "The partner's reason code, as sent": {
@@ -272709,6 +273621,15 @@
       "edi/lading"
     ]
   },
+  "The project has its partner file": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "The project has no active version to replay against": {
     "sites": 2,
     "scope": [
@@ -272750,20 +273671,13 @@
     ]
   },
   "The project has no tests": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
-  "The project has no tests. Add a test block to a map or flow file.": {
-    "sites": 1,
-    "scope": [
+      "go",
       "ts"
     ],
     "areas": [
+      "go/other",
       "routes/edi"
     ]
   },
@@ -275129,6 +276043,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "The run stopped": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "The run used more than its budget of steps": {
@@ -277894,22 +278817,14 @@
     ]
   },
   "The tests could not run": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "go",
       "ts"
     ],
     "areas": [
       "apps/web/components",
-      "go/other"
-    ]
-  },
-  "The tests could not run. Fix the project's errors and try again.": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
+      "go/other",
       "routes/edi"
     ]
   },
@@ -280264,6 +281179,17 @@
       "edi/lading"
     ]
   },
+  "There is no custom field {0}; the organization's are {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
   "There is no declaration to go to here": {
     "sites": 1,
     "scope": [
@@ -280409,7 +281335,7 @@
     ]
   },
   "There is no map named {0}": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "go",
       "ts"
@@ -284396,6 +285322,15 @@
     ],
     "areas": [
       "packages/shared/components"
+    ]
+  },
+  "This is the active version": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "This is the current fiscal year.": {
@@ -289687,7 +290622,7 @@
     ]
   },
   "Title": {
-    "sites": 11,
+    "sites": 12,
     "scope": [
       "go",
       "ts"
@@ -289696,6 +290631,7 @@
       "go/other",
       "routes/agent-control",
       "routes/carrier",
+      "routes/edi",
       "routes/home",
       "routes/org-structure",
       "routes/osha",
@@ -293330,7 +294266,7 @@
     ]
   },
   "Transaction {0}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -293393,7 +294329,7 @@
     ]
   },
   "Transactions": {
-    "sites": 4,
+    "sites": 6,
     "scope": [
       "go",
       "ts"
@@ -294043,6 +294979,15 @@
       "routes/admin"
     ]
   },
+  "Trenova document": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Trenova finishes the connection Microsoft just approved.": {
     "sites": 1,
     "scope": [
@@ -294259,6 +295204,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "Trenova to partner": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Trenova writes the envelope (ISA, GS, ST, SE, GE, IEA) itself": {
@@ -298113,6 +299067,15 @@
       "go/other"
     ]
   },
+  "Unmapped codes": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Unmatch": {
     "sites": 1,
     "scope": [
@@ -298490,7 +299453,7 @@
     ]
   },
   "Unsaved changes": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -299756,6 +300719,15 @@
     "areas": [
       "apps/web/components",
       "routes/inbox"
+    ]
+  },
+  "Upload from your computer": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "Upload logo": {
@@ -301784,7 +302756,7 @@
     ]
   },
   "Value": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
@@ -301792,6 +302764,7 @@
       "apps/web/components",
       "routes/admin",
       "routes/billing-queue",
+      "routes/edi",
       "routes/reports",
       "routes/table-change-alert"
     ]
@@ -306477,7 +307450,7 @@
     ]
   },
   "Warning": {
-    "sites": 6,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -306485,8 +307458,7 @@
       "apps/web/lib",
       "routes/accounting-dashboard",
       "routes/desk",
-      "routes/dispatch-console",
-      "routes/edi"
+      "routes/dispatch-console"
     ]
   },
   "Warning days": {
@@ -306508,11 +307480,12 @@
     ]
   },
   "Warnings": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/edi",
       "routes/invoice"
     ]
   },
@@ -309421,6 +310394,15 @@
       "routes/rate-agreement"
     ]
   },
+  "What must be true of a map's document, and what happens when it is not": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "What needs attention?": {
     "sites": 1,
     "scope": [
@@ -310640,6 +311622,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "What would you like to add?": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "What you checked": {
@@ -318173,6 +319164,15 @@
       "go/other"
     ]
   },
+  "Writes with": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Writes {0}": {
     "sites": 1,
     "scope": [
@@ -318419,6 +319419,15 @@
       "routes/settings"
     ]
   },
+  "Wrote {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "Wyoming (WY)": {
     "sites": 1,
     "scope": [
@@ -318428,6 +319437,15 @@
       "apps/web/lib"
     ]
   },
+  "X12": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "X12 exception code must be at most 3 characters": {
     "sites": 1,
     "scope": [
@@ -318435,6 +319453,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "X12 message": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "X12 payload is empty.": {
@@ -327869,12 +328896,13 @@
     ]
   },
   "for {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/agent-control"
+      "routes/agent-control",
+      "routes/edi"
     ]
   },
   "fragile": {
@@ -331844,6 +332872,15 @@
       "go/other"
     ]
   },
+  "such as tender": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "sum of {0}": {
     "sites": 1,
     "scope": [
@@ -332542,6 +333579,15 @@
       "go/other"
     ]
   },
+  "to add": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "to answer": {
     "sites": 1,
     "scope": [
@@ -332596,6 +333642,15 @@
       "routes/desk"
     ]
   },
+  "to choose": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "to confirm": {
     "sites": 2,
     "scope": [
@@ -332624,12 +333679,13 @@
     ]
   },
   "to move": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "to open": {
@@ -333825,15 +334881,6 @@
       "routes/carrier-monitoring"
     ]
   },
-  "{0, plural, =0 {Problems} other {Problems (#)}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
   "{0, plural, one {# API key expires} other {# API keys expire}} within {1, plural, one {# day} other {# days}}": {
     "sites": 1,
     "scope": [
@@ -334234,13 +335281,12 @@
     ]
   },
   "{0, plural, one {# case} other {# cases}}": {
-    "sites": 2,
+    "sites": 1,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components",
-      "routes/edi"
+      "apps/web/components"
     ]
   },
   "{0, plural, one {# case} other {# cases}} asked for: {1}": {
@@ -335035,7 +336081,7 @@
     ]
   },
   "{0, plural, one {# error} other {# errors}}": {
-    "sites": 6,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -335219,12 +336265,13 @@
     ]
   },
   "{0, plural, one {# file} other {# files}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/edi",
       "routes/inbox"
     ]
   },
@@ -335937,6 +336984,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0, plural, one {# message differs} other {# messages differ}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "{0, plural, one {# message from the middle of the run was left out to keep the record bounded} other {# messages from the middle of the run were left out to keep the record bounded}}": {
@@ -336832,6 +337888,15 @@
       "apps/web/lib"
     ]
   },
+  "{0, plural, one {# quick fix} other {# quick fixes}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "{0, plural, one {# rate agreement} other {# rate agreements}}": {
     "sites": 1,
     "scope": [
@@ -337273,6 +338338,15 @@
       "routes/onboarding"
     ]
   },
+  "{0, plural, one {# sample} other {# samples}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "{0, plural, one {# screen this affects} other {# screens this affects}}": {
     "sites": 1,
     "scope": [
@@ -337371,6 +338445,15 @@
     ],
     "areas": [
       "routes/desk"
+    ]
+  },
+  "{0, plural, one {# setting needs a valid value} other {# settings need a valid value}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "{0, plural, one {# settlement approved} other {# settlements approved}}": {
@@ -337749,11 +338832,12 @@
     ]
   },
   "{0, plural, one {# test} other {# tests}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/edi",
       "routes/formula-template"
     ]
   },
@@ -337993,12 +339077,13 @@
     ]
   },
   "{0, plural, one {# unsaved change} other {# unsaved changes}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "{0, plural, one {# use} other {# uses}}. Choose one to go to it.": {
@@ -338065,7 +339150,7 @@
     ]
   },
   "{0, plural, one {# warning} other {# warnings}}": {
-    "sites": 6,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -338271,6 +339356,15 @@
     ],
     "areas": [
       "packages/shared/lib"
+    ]
+  },
+  "{0, plural, one {Add # sample} other {Add # samples}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "{0, plural, one {Adds # day} other {Adds # days}}": {
@@ -338824,6 +339918,15 @@
       "routes/formula-template"
     ]
   },
+  "{0, plural, one {In # file} other {In # files}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "{0, plural, one {Installed # standard template} other {Installed # standard templates}}": {
     "sites": 1,
     "scope": [
@@ -339248,6 +340351,15 @@
       "packages/shared/lib"
     ]
   },
+  "{0, plural, one {Property, # case} other {Property, # cases}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "{0, plural, one {Publish # rate} other {Publish # rates}}": {
     "sites": 1,
     "scope": [
@@ -339282,24 +340394,6 @@
     ],
     "areas": [
       "apps/web/components"
-    ]
-  },
-  "{0, plural, one {Ran here in # step} other {Ran here in # steps}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
-  "{0, plural, one {Ran with live data in # step} other {Ran with live data in # steps}}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
     ]
   },
   "{0, plural, one {Read # page} other {Read # pages}}": {
@@ -343748,7 +344842,7 @@
     ]
   },
   "{0} failed": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
@@ -343757,6 +344851,7 @@
       "routes/admin",
       "routes/agent-control",
       "routes/carrier-monitoring",
+      "routes/edi",
       "routes/reports",
       "routes/worker"
     ]
@@ -345021,12 +346116,13 @@
     ]
   },
   "{0} in": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/desk"
+      "routes/desk",
+      "routes/edi"
     ]
   },
   "{0} in Trenova, {1} in {2}": {
@@ -349732,6 +350828,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} of {1} failing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "{0} of {1} filed": {
     "sites": 1,
     "scope": [
@@ -349795,6 +350900,15 @@
       "routes/desk"
     ]
   },
+  "{0} of {1} maps": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "{0} of {1} matched": {
     "sites": 1,
     "scope": [
@@ -349820,6 +350934,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0} of {1} messages the same": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "{0} of {1} messages the same, {2} failed": {
@@ -349929,6 +351052,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of {1} samples": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "{0} of {1} selected": {
@@ -350060,7 +351192,7 @@
       "routes/desk"
     ]
   },
-  "{0} of {1} the same, {2} differ, {3} newly rejected": {
+  "{0} of {1} tests passed": {
     "sites": 1,
     "scope": [
       "ts"
@@ -350076,6 +351208,15 @@
     ],
     "areas": [
       "routes/agent-control"
+    ]
+  },
+  "{0} of {1} transactions rejected": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
     ]
   },
   "{0} of {1} weeks": {
@@ -350406,11 +351547,12 @@
     ]
   },
   "{0} out": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/edi",
       "routes/worker"
     ]
   },
@@ -350535,12 +351677,13 @@
     ]
   },
   "{0} passed": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/admin"
+      "routes/admin",
+      "routes/edi"
     ]
   },
   "{0} passed, {1} failed, {2} skipped": {
@@ -352494,7 +353637,7 @@
     ]
   },
   "{0} to {1}": {
-    "sites": 12,
+    "sites": 13,
     "scope": [
       "go",
       "ts"
@@ -353267,6 +354410,15 @@
       "routes/desk"
     ]
   },
+  "{0} without a test": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/edi"
+    ]
+  },
   "{0} without an expiry": {
     "sites": 1,
     "scope": [
@@ -353516,15 +354668,6 @@
     ],
     "areas": [
       "routes/agent-control"
-    ]
-  },
-  "{0} {1} at {2}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
     ]
   },
   "{0} {1} can take it": {
@@ -354905,15 +356048,6 @@
       "routes/agent-control"
     ]
   },
-  "{0}, from {1} to {2}; blank keeps {3}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
-    ]
-  },
   "{0}, measured from indexed items": {
     "sites": 1,
     "scope": [
@@ -355471,15 +356605,6 @@
     ],
     "areas": [
       "routes/shipment"
-    ]
-  },
-  "{0}; blank keeps {1}": {
-    "sites": 1,
-    "scope": [
-      "ts"
-    ],
-    "areas": [
-      "routes/edi"
     ]
   },
   "{0}; it is advisory.": {

@@ -228,7 +228,6 @@
   "Void invoice": "作废发票",
   "Void invoice {0}": "作废发票 {0}",
   "Void requested; awaiting reversal approval": "已申请作废；等待冲销审批",
-  "Warnings": "警告",
   "What each person can do comes from their role. Sharing never grants access.": "每个人能做什么取决于其角色。分享绝不会授予访问权限。",
   "What happens to the billing queue items and shipments this invoice billed.": "此发票所计费的计费队列项目与运单将会如何处理。",
   "What the customer is contesting": "客户所争议的内容",

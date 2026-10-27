@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LadingEditor } from "@/components/lading-editor/lading-editor";
+import { SampleEditor } from "@/components/lading-editor/sample-editor";
 import { checkProject } from "@/components/lading-editor/lading-service";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import {
@@ -7,8 +8,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@trenova/shared/components/ui/resizable";
-import { ScrollArea } from "@trenova/shared/components/ui/scroll-area";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type {
   LadingContext,
@@ -34,6 +33,7 @@ import {
   applyFileEdits,
   isDirty,
   isEditable,
+  PARTNER_FILE,
   projectProblems,
   renameEntry,
 } from "./studio-model";
@@ -42,7 +42,7 @@ type Reveal = { path: string; range: LadingRange };
 
 function firstPath(files: readonly LadingFile[], samples: readonly LadingSample[]): string {
   return (
-    files.find((file) => file.path === "partner.lading")?.path ??
+    files.find((file) => file.path === PARTNER_FILE)?.path ??
     files[0]?.path ??
     samples[0]?.path ??
     ""
@@ -202,27 +202,19 @@ export function LadingWorkbench({
                   readOnly={!editable}
                 />
               ) : openSample ? (
-                <ScrollArea className="h-full">
-                  <div className="flex min-h-full flex-col p-3">
-                    <Textarea
-                      key={openSample.path}
-                      bare
-                      aria-label={openSample.path}
-                      className="w-full grow resize-none font-mono text-xs"
-                      value={openSample.content}
-                      readOnly={!editable}
-                      spellCheck={false}
-                      onChange={(event) => {
-                        const content = event.target.value;
-                        setSamples((current) =>
-                          current.map((sample) =>
-                            sample.path === openSample.path ? { ...sample, content } : sample,
-                          ),
-                        );
-                      }}
-                    />
-                  </div>
-                </ScrollArea>
+                <SampleEditor
+                  key={openSample.path}
+                  path={openSample.path}
+                  value={openSample.content}
+                  readOnly={!editable}
+                  onChange={(content) =>
+                    setSamples((current) =>
+                      current.map((sample) =>
+                        sample.path === openSample.path ? { ...sample, content } : sample,
+                      ),
+                    )
+                  }
+                />
               ) : (
                 <p className="text-muted-foreground p-4 text-sm">
                   {t("Pick a file or a sample to open it")}

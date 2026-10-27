@@ -321,7 +321,11 @@ function RunResult({ result, where }: { result: LadingRunResult; where: "browser
             </ul>
           ) : null}
           <Outcomes outcomes={result.output.outcomes} />
-          <CodeBlock title={t("Writes {0}", result.output.transaction)} code={result.output.text} />
+          <CodeBlock
+            title={t("Writes {0}", result.output.transaction)}
+            code={result.output.text}
+            language="x12"
+          />
         </section>
       ) : null}
 
@@ -378,10 +382,7 @@ function RunResult({ result, where }: { result: LadingRunResult; where: "browser
   );
 }
 
-function transactionName(
-  transaction: LadingTransactionResult,
-  t: ReturnType<typeof useT>,
-): string {
+function transactionName(transaction: LadingTransactionResult, t: ReturnType<typeof useT>): string {
   return t("Transaction {0}", transaction.control ?? String(transaction.index + 1));
 }
 

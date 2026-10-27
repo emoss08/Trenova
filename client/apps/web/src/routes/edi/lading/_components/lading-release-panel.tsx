@@ -74,7 +74,6 @@ export function LadingReleasePanel({
   check: LadingCheck;
   dirty: boolean;
 }) {
-  const t = useT();
   const active = versions.find((item) => item.id === project.activeVersionId);
   const inbound = check.maps.filter((map) => map.direction === "inbound");
   const shadowed = version.status === "Shadow" || version.shadowUntil != null;

@@ -1206,7 +1206,6 @@
   "{0} of {1} required credentials are in good standing.": "{1} 项必备证照中有 {0} 项状态正常。",
   "{0} of {1} settled": "已结清 {1} 项中的 {0} 项",
   "{0} on the calendar": "日历上有 {0}",
-  "{0} out": "{0} 人请假中",
   "{0} out of service": "{0} 停用",
   "{0} posted, {1} capped, {2} already posted.": "已过账 {0} 项，已封顶 {1} 项，此前已过账 {2} 项。",
   "{0} recorded": "已记录{0}",

@@ -312,7 +312,7 @@ key      <- B204
 bol      <- L11[02 == "BM"].01 ?? L11[02 == "BL"].01
 refs     <- refs(L11)
 refs["PO"] <- N9[01 == "PO"].02
-custom.poNumber <- L11[02 == "PO"].01
+custom.po_number <- L11[02 == "PO"].01
 
 stops <- each 0300 as stop {
   let party = stop.0310
@@ -338,7 +338,9 @@ when B2A01 == "05" {
   only when `cond` is true.
 - **`refs["PO"] <- ...`** sets one entry of a `[Text: Text]` field.
 - **`custom.<field>`** is the organisation's custom fields on the target's record (a shipment's,
-  an invoice's), typed from their definitions.
+  an invoice's), named as their definitions name them (`custom.po_number`) and typed from them.
+  Completion after `custom.` lists them; a name the organisation has not defined is an error
+  that lists the ones it has, or says where to add one.
 
 ### Outbound maps
 
