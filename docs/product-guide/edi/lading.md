@@ -24,11 +24,23 @@ Keywords: new EDI map, set up partner EDI, starter project
 4. Select **Start the project**. The starter opens as a draft that sends nothing until it is certified and activated.
 
 ### Change a map, rule or flow
-Keywords: edit EDI map, fix mapping, add a file
+Keywords: edit EDI map, fix mapping, add a file, new map, new guide, new rules, new flow, library
 1. Open [Lading studio](/edi/lading), select the partner and pick the draft in the version picker. To change a version that is not a draft, open **Version actions** and select **New draft from this version**.
-2. Pick a file in **Files**, or select **Add a file**, choose **Source file** or **Sample**, enter the **Path** and select **Add**.
+2. Pick a file in the file tree. Its header says whether the project checks clean; below it each flow lists the maps and rules it uses, then **Shared** guides and libraries, **Not in any flow** for files no flow uses, and **Samples**. Press Ctrl+P (⌘P on a Mac) to filter by path. To start a new file, select **Add to the project** (or the add button beside **Flows**), type to find **Map**, **Rules**, **Flow**, **Guide**, **Library** or **Partner file** (or press its letter), fill in its options and **Name**, and select the add button. **Starts as** shows the text the file opens with.
 3. Edit the file. Problems show under the text as you type and in the **Problems** tab; select one to go to it.
 4. Select **Save**. Select **Discard** to go back to the saved version.
+
+### Add the partner's sample messages
+Keywords: upload EDI sample, add sample, test message, X12 file, CSV, JSON
+1. Open the partner's draft in [Lading studio](/edi/lading).
+2. Select **Add to the project**, then **Upload from your computer** (or press U), and drop or choose the files. Files ending in .x12, .edi or .txt are read as X12; .csv and .json as named.
+3. Select **Add samples**. To write one by hand instead, choose **X12 message**, **CSV file**, **JSON file** or **Trenova document**, paste its text under **Content**, and select **Add sample**.
+
+### Rename, move or remove a file
+Keywords: rename EDI file, move sample, delete file
+1. Open the partner's draft in [Lading studio](/edi/lading).
+2. In **Files**, open the file's actions and select **Rename** (or press F2 on it). Type the new path and press Enter; renaming a sample also changes the tests that read it.
+3. Select **Remove** in the same menu to take a file out of the draft. **Discard** brings it back until you save.
 
 ### Try a map on a sample
 Keywords: run EDI map, test X12, preview mapping
@@ -44,10 +56,11 @@ Keywords: EDI tests, certify readiness, coverage
 
 ### Release a version
 Keywords: certify EDI, activate map, go live, replay, shadow
-1. Save the draft, then in the **Release** tab pick each inbound map under **Map to replay**, choose a period and select **Start replay**. Each replay reads the partner's past messages through this version and the active one and lists every difference.
-2. Select **Certify**. A version is certified when it has no errors, its tests pass and each inbound map replays without new rejections.
-3. To try it on live messages first, open **Version actions** and pick how many days to shadow it. The shadow sends nothing and records where it differs from the active version.
-4. Select **Activate**. The previous version is superseded and every new message is read and written with this one.
+1. Save the draft and open the **Release** tab. The steps across the top (**Saved**, **Replayed**, **Certified**, **Shadow**, **Live**) show how far the version has come; hover one to see what it needs.
+2. Under **Replays**, pick each inbound map under **Map to replay**, choose a period and select **Replay**. Each replay reads the partner's past messages through this version and the active one; select a replay to see how many read the same and every field that differs.
+3. Select **Certify**. A version is certified when it has no errors, its tests pass and each inbound map replays without new rejections.
+4. To try it on live messages first, open **Version actions** and pick how many days to shadow it. The shadow sends nothing; under **Shadow**, select a message to see where it read differently from the active version.
+5. Select **Activate**. The previous version is superseded and every new message is read and written with this one.
 
 ### Change a partner setting
 Keywords: partner options, auto accept, EDI settings
