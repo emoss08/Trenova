@@ -267,6 +267,15 @@ impl Program {
         })
     }
 
+    /// Whether a file declares a map of this name, even one whose header has an error and so
+    /// was not registered: that error is reported in its own file, not at each use.
+    #[must_use]
+    pub fn declares_map(&self, name: &str) -> bool {
+        self.units.iter().any(|unit| {
+            matches!(unit.header(), Header::Map { name: declared, .. } if declared.name == name)
+        })
+    }
+
     /// A file by its header's name.
     #[must_use]
     pub fn unit_named(&self, name: &str) -> Option<usize> {
@@ -1400,6 +1409,14 @@ mod findings {
         }
         assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
+    #[test]
+    fn a_map_whose_guide_is_unknown_is_reported_once_not_at_its_tests_rules_and_flows() {
+        let found = codes("maps/tender-in.lading", "from acme.204", "from acme_204");
+        assert!(found.contains(&"unknown-guide"), "{found:?}");
+        assert!(!found.contains(&"test-here"), "{found:?}");
+        assert!(!found.contains(&"unknown-map"), "{found:?}");
+    }
+
     #[test]
     fn a_set_or_event_a_second_flow_would_take_is_found_there() {
         let mut project = acme();
