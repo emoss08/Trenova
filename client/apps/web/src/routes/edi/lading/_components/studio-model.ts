@@ -83,12 +83,35 @@ export function newPathProblem(
   return null;
 }
 
-/** The starter text of a new file, from the header its folder suggests. */
+/** The words of a file's name: `tender-in.lading` is `tender` and `in`. */
+function fileWords(path: string): string[] {
+  const base = (path.split("/").pop() ?? "file").replace(/\.lading$/, "");
+  const words = base.split(/[^A-Za-z0-9]+/).filter(Boolean);
+  return words.length > 0 ? words : ["file"];
+}
+
+/** A Lading name from a file's name, in the camelCase names take: `tender-in` is `tenderIn`. */
+function camelName(path: string): string {
+  const [first = "file", ...rest] = fileWords(path);
+  const head = /^\d/.test(first) ? `file${first}` : first.charAt(0).toLowerCase() + first.slice(1);
+  return head + rest.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join("");
+}
+
+/**
+ * The starter text of a new file, from the header its folder suggests. A guide is named with
+ * dots, as maps name it (`guides/acme-204.lading` is `acme.204`); every other file takes a
+ * camelCase name.
+ */
 export function newFileSource(path: string, partner: string): string {
-  const name = (path.split("/").pop() ?? "file").replace(/\.lading$/, "").replace(/\W+/g, "_");
+  const name = camelName(path);
   if (path.startsWith("maps/")) return `map ${name}\n  from x12.004010.204\n  to   loadTender\n`;
   if (path.startsWith("flows/")) return `flow ${name} with ${partner}\n`;
-  if (path.startsWith("guides/")) return `guide ${name} from x12.004010.204 ""\n`;
+  if (path.startsWith("guides/")) {
+    const guide = fileWords(path)
+      .map((word) => word.toLowerCase())
+      .join(".");
+    return `guide ${guide} from x12.004010.204 ""\n`;
+  }
   if (path.startsWith("rules/")) return `rules ${name} for ${name}\n`;
   return `library ${name}\n`;
 }

@@ -107,10 +107,26 @@ describe("newPathProblem", () => {
 describe("newFileSource", () => {
   it("starts a file with the header its folder suggests", () => {
     expect(newFileSource("maps/status-in.lading", "acme")).toBe(
-      "map status_in\n  from x12.004010.204\n  to   loadTender\n",
+      "map statusIn\n  from x12.004010.204\n  to   loadTender\n",
     );
     expect(newFileSource("flows/tender.lading", "acme")).toBe("flow tender with acme\n");
     expect(newFileSource("common.lading", "acme")).toBe("library common\n");
+  });
+
+  it("names a guide with dots, as a map's from names it", () => {
+    expect(newFileSource("guides/acme-204.lading", "acme")).toBe(
+      'guide acme.204 from x12.004010.204 ""\n',
+    );
+    expect(newFileSource("guides/Acme_214_Fleet.lading", "acme")).toBe(
+      'guide acme.214.fleet from x12.004010.204 ""\n',
+    );
+  });
+
+  it("gives every other file a camelCase name", () => {
+    expect(newFileSource("rules/tender-checks.lading", "acme")).toBe(
+      "rules tenderChecks for tenderChecks\n",
+    );
+    expect(newFileSource("lib/204-helpers.lading", "acme")).toBe("library file204Helpers\n");
   });
 });
 
