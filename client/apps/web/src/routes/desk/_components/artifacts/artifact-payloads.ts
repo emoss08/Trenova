@@ -126,7 +126,7 @@ export type TablePaging = {
 };
 
 /** The agent that read a table's rows in the conversation, named as it was when it read them. */
-export type TableReader = { id: string; name: string; icon: string; accent: string };
+export type ArtifactReader = { id: string; name: string; icon: string; accent: string };
 
 export type TableViewArtifact = {
   tool: string;
@@ -142,7 +142,7 @@ export type TableViewArtifact = {
   calls: number;
   paging: TablePaging;
   /** Null when the table does not say, or the agent could no longer be read when it was kept. */
-  readBy: TableReader | null;
+  readBy: ArtifactReader | null;
   /** Whether the list can be read again: the table kept the arguments it was read with. */
   rereadable: boolean;
 };
@@ -152,7 +152,7 @@ export function resumesAfterAgent(paging: TablePaging): boolean {
   return paging.nextCursor !== "" || paging.nextOffset !== null;
 }
 
-function tableReaderOf(value: unknown): TableReader | null {
+export function artifactReaderOf(value: unknown): ArtifactReader | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -283,7 +283,7 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
     truncated: rowCount > rows.length,
     calls: bunchedCallCount(payload),
     paging: tablePagingOf(payload),
-    readBy: tableReaderOf(payload.readBy),
+    readBy: artifactReaderOf(payload.readBy),
     rereadable: isRecord(payload.readWith),
   };
 }

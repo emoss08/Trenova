@@ -432,6 +432,15 @@ export class AssistantService {
     return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
   }
 
+  /** Runs the report a report run or preview shows, kept as the artifact's next version. */
+  public async runArtifactReport(threadId: AssistantThread["id"], artifactId: string) {
+    const response = await api.post(
+      `/assistant/threads/${threadId}/artifacts/${artifactId}/run/`,
+      {},
+    );
+    return safeParse(assistantArtifactSchema, response, "Assistant Artifact");
+  }
+
   public async rewriteDocument(
     threadId: AssistantThread["id"],
     artifactId: string,

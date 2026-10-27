@@ -1,0 +1,84 @@
+query DeskReportRunCard($id: ID!) {
+  reportRunDeskCard(id: $id) {
+    run {
+      ...ReportRunFields
+    }
+    report {
+      name
+      description
+      category
+      definitionId
+      cannedKey
+    }
+    parameters {
+      name
+      label
+      type
+      value
+      isDefault
+      refEntity
+      windowStart
+      windowEnd
+    }
+    timezone
+    sample {
+      columns {
+        id
+        label
+        type
+        format
+        display {
+          style
+          decimals
+          grouping
+          currency
+          negative
+          notation
+          prefix
+          suffix
+          dateStyle
+          boolStyle
+          durationUnit
+          durationStyle
+          nullText
+          rules {
+            op
+            value
+            upper
+            tone
+          }
+          band {
+            width
+            edges
+          }
+        }
+      }
+      rows
+      totals
+      more
+    }
+    withheld
+    previous {
+      runId
+      completedAt
+      rowCount
+      columnIds
+      totals
+    }
+    schedule {
+      id
+      cronExpression
+      timezone
+      nextRunAt
+    }
+    chart {
+      type
+      xColumnId
+      seriesIds
+    }
+    sort {
+      columnId
+      direction
+    }
+  }
+}

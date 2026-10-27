@@ -17,6 +17,7 @@ import {
   type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import { fetchReportRunDeskCard } from "@/lib/graphql/report-desk-card";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
 import { createQueryKeys } from "@lukemorales/query-key-factory";
 
@@ -82,6 +83,10 @@ export const reports = createQueryKeys("reports", {
         variables: { id },
         signal,
       }),
+  }),
+  deskCard: (runId: string) => ({
+    queryKey: [runId],
+    queryFn: async ({ signal }) => fetchReportRunDeskCard(runId, { signal }),
   }),
   schedules: (definitionId?: string) => ({
     queryKey: [definitionId ?? "all"],

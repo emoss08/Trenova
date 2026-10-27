@@ -20,7 +20,7 @@ import {
   reportPreviewFrom,
   tableViewFrom,
   type TablePaging,
-  type TableReader,
+  type ArtifactReader,
 } from "../../artifact-payloads";
 import {
   selectionState,
@@ -67,7 +67,7 @@ export type Grid = {
   /** Where the list goes on from the rows held; null for a table that is all there is. */
   paging: TablePaging | null;
   /** The agent that read the rows the table holds; null when the table does not say. */
-  readBy: TableReader | null;
+  readBy: ArtifactReader | null;
   /** Whether the person can read the list again, live, from its start. */
   rereadable: boolean;
 };
@@ -238,6 +238,13 @@ export function versionNote(
   previous: AssistantArtifact | null,
   t: TranslateFn,
 ): string {
+  if (current.kind === "report_run") {
+    return previous === null
+      ? t("First run")
+      : previous.kind === "report_preview"
+        ? t("Full report")
+        : t("Run again");
+  }
   if (!previous) {
     return t("First read");
   }
@@ -783,7 +790,7 @@ function ReadAgain({ pages }: { pages: TablePages }) {
 }
 
 /** While the list is read again: the agent's rows are kept, and one click away. */
-function KeptRead({ reader, pages }: { reader: TableReader | null; pages: TablePages }) {
+function KeptRead({ reader, pages }: { reader: ArtifactReader | null; pages: TablePages }) {
   const t = useT();
   if (!pages.live) {
     return null;
@@ -807,7 +814,7 @@ function KeptRead({ reader, pages }: { reader: TableReader | null; pages: TableP
 function readShare(
   t: TranslateFn,
   whole: boolean,
-  reader: TableReader | null,
+  reader: ArtifactReader | null,
   when: string,
 ): string {
   if (reader) {
@@ -831,7 +838,7 @@ function ReadMark({
   pages,
 }: {
   artifact: AssistantArtifact;
-  reader: TableReader | null;
+  reader: ArtifactReader | null;
   pages: TablePages;
 }) {
   const t = useT();

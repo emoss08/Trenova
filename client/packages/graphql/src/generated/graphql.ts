@@ -16609,6 +16609,13 @@ export type ReportDefinitionOptionsQueryVariables = Exact<{
 
 export type ReportDefinitionOptionsQuery = { reportDefinitions: { edges: Array<{ cursor: string, node: { ' $fragmentRefs'?: { 'ReportDefinitionOptionFieldsFragment': ReportDefinitionOptionFieldsFragment } } }>, pageInfo: { ' $fragmentRefs'?: { 'DataTablePageInfoFieldsFragment': DataTablePageInfoFieldsFragment } } } };
 
+export type DeskReportRunCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskReportRunCardQuery = { reportRunDeskCard: { timezone: string, withheld: string | null, run: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } }, report: { name: string, description: string, category: string, definitionId: string | null, cannedKey: string | null }, parameters: Array<{ name: string, label: string, type: string, value: unknown, isDefault: boolean, refEntity: string | null, windowStart: number | null, windowEnd: number | null }>, sample: { rows: unknown, totals: unknown, more: boolean, columns: Array<{ id: string, label: string, type: string, format: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } | null, previous: { runId: string, completedAt: number, rowCount: number, columnIds: Array<string>, totals: unknown } | null, schedule: { id: string, cronExpression: string, timezone: string, nextRunAt: number | null } | null, chart: { type: string, xColumnId: string | null, seriesIds: Array<string> } | null, sort: Array<{ columnId: string, direction: string }> } };
+
 export type ReportPreviewFieldsFragment = { rows: unknown, totals: unknown, truncated: boolean, columns: Array<{ id: string, label: string, type: string, format: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
 
 export type PreviewReportQueryVariables = Exact<{
@@ -19273,6 +19280,7 @@ export { CannedReportsDocument } from "./documents/reports/canned";
 export { ReportCatalogDocument } from "./documents/reports/catalog";
 export { ReportDashboardFieldsFragmentDoc, ReportDashboardsDocument, ReportDashboardByIdDocument, CreateReportDashboardDocument, UpdateReportDashboardDocument, DeleteReportDashboardDocument } from "./documents/reports/dashboards";
 export { ReportDefinitionFieldsFragmentDoc, ReportDefinitionOptionFieldsFragmentDoc, ReportDefinitionsTableDocument, ReportDefinitionByIdDocument, ReportDefinitionRevisionsDocument, CreateReportDefinitionDocument, UpdateReportDefinitionDocument, DeleteReportDefinitionDocument, ForkCannedReportDocument, ResetCannedForkDocument, ReportDefinitionOptionsDocument } from "./documents/reports/definitions";
+export { DeskReportRunCardDocument } from "./documents/reports/desk";
 export { ReportPreviewFieldsFragmentDoc, PreviewReportDocument, DrillThroughReportDocument } from "./documents/reports/preview";
 export { ReportRunFieldsFragmentDoc, ReportRunsTableDocument, ReportRunByIdDocument, RunReportDocument, CancelReportRunDocument } from "./documents/reports/runs";
 export { ReportScheduleFieldsFragmentDoc, ReportSchedulesDocument, CreateReportScheduleDocument, UpdateReportScheduleDocument, DeleteReportScheduleDocument } from "./documents/reports/schedules";
