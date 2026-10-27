@@ -933,6 +933,11 @@ type AssistantService interface {
 		req GetThreadRequest,
 		artifactID pulid.ID,
 	) (*AssistantArtifact, error)
+	RunArtifactReport(
+		ctx context.Context,
+		req GetThreadRequest,
+		artifactID pulid.ID,
+	) (*AssistantArtifact, error)
 	RewriteDocument(
 		ctx context.Context,
 		req GetThreadRequest,

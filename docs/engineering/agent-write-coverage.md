@@ -97,11 +97,11 @@ matches anything fails too, so the file cannot drift behind the tools.
 
 ## Totals
 
-1169 writes: 639 GraphQL mutations and 530 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1170 writes: 639 GraphQL mutations and 531 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 459 |
+| Covered by a tool | 460 |
 | Exempt | 710 |
 | — Security | 87 |
 | — Configuration | 270 |
@@ -113,9 +113,9 @@ matches anything fails too, so the file cannot drift behind the tools.
 | — Attestation | 49 |
 | — Duplicate | 10 |
 | **Pending** | **0** |
-| Total | 1169 |
+| Total | 1170 |
 
-Of the 459 writes an agent should be able to make, 459 have a tool (100%).
+Of the 460 writes an agent should be able to make, 460 have a tool (100%).
 
 ## Pending
 
@@ -148,7 +148,7 @@ The writes no tool performs yet, and what the tool would do.
 | airetrieval | 2 | 0 | 2 | 0 |
 | apikey | 4 | 0 | 4 | 0 |
 | assignment | 1 | 0 | 1 | 0 |
-| assistant | 32 | 2 | 30 | 0 |
+| assistant | 33 | 3 | 30 | 0 |
 | auth | 8 | 0 | 8 | 0 |
 | bankreceipt | 2 | 1 | 1 | 0 |
 | bankreceiptbatch | 1 | 0 | 1 | 0 |
@@ -561,6 +561,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/pin/`<br>assistanthandler.pinArtifact | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/restore/`<br>assistanthandler.restoreDocumentVersion | Exempt, agent-administration: A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself. |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/rewrite/`<br>assistanthandler.rewriteDocument | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/run/`<br>assistanthandler.runArtifactReport | Tool: `report_run` |
 | `POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/`<br>assistanthandler.saveDocumentVersion | Exempt, agent-administration: A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself. |
 | `POST /api/v1/assistant/threads/:threadID/case/await-reply/`<br>assistanthandler.awaitCaseReply | Tool: `agent_create_wait` |
 | `POST /api/v1/assistant/threads/:threadID/case/snooze/`<br>assistanthandler.snoozeCase | Exempt, agent-administration: A case is the person's own conversation: choosing which record it is about, or putting it out of sight until later, arranges their Desk and changes no record an agent acts on. |

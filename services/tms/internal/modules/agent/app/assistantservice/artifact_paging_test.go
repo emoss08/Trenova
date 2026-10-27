@@ -372,7 +372,7 @@ func TestArtifactRecorder_ATableNamesTheAgentThatReadIt(t *testing.T) {
 	}
 
 	require.Len(t, repo.upserts, 2)
-	want := tableReader{ID: agentID.String(), Name: "Dispatch Desk", Accent: "teal"}
+	want := artifactReader{ID: agentID.String(), Name: "Dispatch Desk", Accent: "teal"}
 	assert.Equal(t, want, repo.upserts[0].Payload[payloadReadBy])
 	assert.Equal(t, want, repo.upserts[1].Payload[payloadReadBy])
 	assert.Equal(t, 1, agents.listed, "the agent is read once for the turn")
@@ -394,4 +394,38 @@ func TestArtifactRecorder_ATableDoesNotNameAnAgentItCannotRead(t *testing.T) {
 
 	require.Len(t, repo.upserts, 1)
 	assert.NotContains(t, repo.upserts[0].Payload, payloadReadBy)
+}
+
+func TestArtifactRecorder_AReportRunNamesTheAgentThatRanIt(t *testing.T) {
+	t.Parallel()
+
+	agentID := pulid.MustNew("agdef_")
+	agents := &delegateDefinitions{byID: map[pulid.ID]*agentdefinition.Definition{
+		agentID: {ID: agentID, Name: "Billing Desk", Accent: "violet"},
+	}}
+	repo := &stubArtifactRepo{}
+	recorder := newReaderRecorder(t, repo, agents, agentID)
+
+	_, err := recorder.observe(agentports.ToolObservation{
+		Call: agentports.ToolCall{
+			ID:        "call_run",
+			Name:      toolRunReport,
+			Arguments: map[string]any{"reportKey": "revenue-by-customer"},
+		},
+		Data: map[string]any{
+			"runId":     pulid.MustNew("rrun_").String(),
+			"reportKey": "revenue-by-customer",
+			"status":    "queued",
+			"finished":  false,
+		},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserts, 1)
+	assert.Equal(t, assistantartifact.KindReportRun, repo.upserts[0].Kind)
+	assert.Equal(
+		t,
+		artifactReader{ID: agentID.String(), Name: "Billing Desk", Accent: "violet"},
+		repo.upserts[0].Payload[payloadReadBy],
+	)
 }

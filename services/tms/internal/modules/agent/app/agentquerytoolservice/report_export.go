@@ -8,15 +8,19 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // PreviewedReport is the report a report_preview call ran, read again from
 // the call's own arguments: the definition, its parameters as the preview
 // passed them, and its name.
 type PreviewedReport struct {
-	Name       string
-	Definition *report.Definition
-	Params     map[string]any
+	Name          string
+	Key           string
+	DefinitionID  pulid.ID
+	DefaultFormat report.Format
+	Definition    *report.Definition
+	Params        map[string]any
 }
 
 // ReportOfPreview resolves what a report_preview call previewed, the same
@@ -49,7 +53,14 @@ func ReportOfPreview(
 		return nil, err
 	}
 
-	return &PreviewedReport{Name: source.Name, Definition: source.Definition, Params: values}, nil
+	return &PreviewedReport{
+		Name:          source.Name,
+		Key:           source.Key,
+		DefinitionID:  source.DefinitionID,
+		DefaultFormat: source.DefaultFormat,
+		Definition:    source.Definition,
+		Params:        values,
+	}, nil
 }
 
 // ReportingRequestFor is the reporting request a person's actor makes.
