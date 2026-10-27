@@ -15,7 +15,10 @@ import { Button } from "@trenova/shared/components/ui/button";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "@trenova/shared/components/ui/select";
@@ -46,7 +49,7 @@ import {
   StatusIcon,
 } from "./lading-panel-kit";
 import { RunSketch } from "./lading-panel-sketches";
-import { runValues, sampleInput } from "./studio-model";
+import { runValues, sampleFits, sampleInput, samplesFor } from "./studio-model";
 
 type RunOutcome = { result: LadingRunResult | null; where: "browser" | "server" };
 
@@ -78,12 +81,24 @@ export function LadingRunPanel({
   const t = useT();
   const edi = useEdi();
   const [mapName, setMapName] = useState(() => check.maps[0]?.name ?? "");
-  const [samplePath, setSamplePath] = useState(() => working.samples[0]?.path ?? "");
+  const [samplePath, setSamplePath] = useState(
+    () =>
+      samplesFor(check.maps[0], working.samples).fitting[0]?.path ?? working.samples[0]?.path ?? "",
+  );
   const [outcome, setOutcome] = useState<ShownRun>();
 
   const map = check.maps.find((item) => item.name === mapName);
   const sample = working.samples.find((item) => item.path === samplePath);
   const ready = map !== undefined && sample !== undefined;
+  const { fitting, others } = samplesFor(map, working.samples);
+
+  const pickMap = (name: string) => {
+    setMapName(name);
+    const next = check.maps.find((item) => item.name === name);
+    if (!next || (sample && sampleFits(next, sample))) return;
+    const first = samplesFor(next, working.samples).fitting[0];
+    if (first) setSamplePath(first.path);
+  };
 
   const show = (next: RunOutcome) => {
     setOutcome((current) => ({ ...next, run: (current?.run ?? 0) + 1 }));
@@ -159,7 +174,7 @@ export function LadingRunPanel({
         <Select
           value={mapName}
           items={check.maps.map((item) => ({ value: item.name, label: item.name }))}
-          onValueChange={(next) => setMapName(next ?? "")}
+          onValueChange={(next) => pickMap(next ?? "")}
         >
           <SelectTrigger className="w-52" aria-label={t("Map")}>
             <SelectValue placeholder={t("Pick a map")} />
@@ -187,11 +202,29 @@ export function LadingRunPanel({
             <SelectValue placeholder={t("Pick a sample")} />
           </SelectTrigger>
           <SelectContent>
-            {working.samples.map((item) => (
-              <SelectItem key={item.path} value={item.path}>
-                <span className="font-mono text-xs">{item.path}</span>
-              </SelectItem>
-            ))}
+            {fitting.length > 0 ? (
+              <SelectGroup>
+                <SelectLabel>{t("Samples {0} reads", mapName)}</SelectLabel>
+                {fitting.map((item) => (
+                  <SelectItem key={item.path} value={item.path}>
+                    <span className="font-mono text-xs">{item.path}</span>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ) : null}
+            {fitting.length > 0 && others.length > 0 ? <SelectSeparator /> : null}
+            {others.length > 0 ? (
+              <SelectGroup>
+                <SelectLabel>
+                  {fitting.length > 0 ? t("Other samples") : t("No sample {0} reads", mapName)}
+                </SelectLabel>
+                {others.map((item) => (
+                  <SelectItem key={item.path} value={item.path}>
+                    <span className="text-muted-foreground font-mono text-xs">{item.path}</span>
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ) : null}
           </SelectContent>
         </Select>
       </PanelToolbar>

@@ -20,8 +20,10 @@ import {
   releaseStages,
   renameEntry,
   runValues,
+  sampleFits,
   sampleFormat,
   sampleInput,
+  samplesFor,
   starterSource,
   settingDraft,
   settingUnit,
@@ -333,7 +335,10 @@ describe("projectMap", () => {
     ["guides/acme-204.lading", "guide"],
     ["scratch.lading", ""],
   ] as const;
-  const files = [...paths.map(([path]) => ({ path, source: "" })), { path: "new.lading", source: "" }];
+  const files = [
+    ...paths.map(([path]) => ({ path, source: "" })),
+    { path: "new.lading", source: "" },
+  ];
   const samples = [
     { path: "samples/tender.x12", content: "" },
     { path: "samples/orders.csv", content: "" },
@@ -390,9 +395,7 @@ describe("projectMap", () => {
 
   it("puts under each flow the maps and rules its clauses use, in clause order", () => {
     const tree = projectMap(files, samples, project);
-    expect(
-      tree.flows.map((branch) => [branch.flow.path, pathsOf(branch.children)]),
-    ).toEqual([
+    expect(tree.flows.map((branch) => [branch.flow.path, pathsOf(branch.children)])).toEqual([
       [
         "flows/backhaul.lading",
         [
@@ -765,15 +768,16 @@ describe("releaseStages", () => {
 
   it("skips replaying with no active version, for the active version, or with no inbound map", () => {
     const base = { version: draft, dirty: false, replays: [] };
-    expect(
-      releaseStages({ ...base, activeVersionId: null, inboundMaps: ["tenderIn"] })[1],
-    ).toEqual({ key: "replayed", state: "skipped", clean: 0, total: 1, reason: "noActive" });
+    expect(releaseStages({ ...base, activeVersionId: null, inboundMaps: ["tenderIn"] })[1]).toEqual(
+      { key: "replayed", state: "skipped", clean: 0, total: 1, reason: "noActive" },
+    );
     expect(
       releaseStages({ ...base, activeVersionId: "ldv_2", inboundMaps: ["tenderIn"] })[1],
     ).toMatchObject({ state: "skipped", reason: "isActive" });
-    expect(releaseStages({ ...base, activeVersionId: "ldv_1", inboundMaps: [] })[1]).toMatchObject(
-      { state: "skipped", reason: "noInbound" },
-    );
+    expect(releaseStages({ ...base, activeVersionId: "ldv_1", inboundMaps: [] })[1]).toMatchObject({
+      state: "skipped",
+      reason: "noInbound",
+    });
   });
 
   it("follows a version from certified through shadow to live and superseded", () => {
@@ -811,5 +815,46 @@ describe("releaseStages", () => {
       ["shadow", "done"],
       ["live", "done"],
     ]);
+  });
+});
+
+describe("samplesFor", () => {
+  const map = (source: LadingMap["source"], set: string | null): LadingMap => ({
+    name: "tenderIn",
+    path: "maps/tender-in.lading",
+    direction: source === "document" ? "outbound" : "inbound",
+    from: "acme.204",
+    to: "loadTender",
+    document: "loadTender",
+    set,
+    source,
+  });
+  const tender = { path: "samples/tender.x12", content: "ST*204*0001~B2**TRNV~SE*3*0001~" };
+  const invoice = { path: "samples/invoice.x12", content: "ST*210*0001~B3**INV-1~SE*3*0001~" };
+  const orders = { path: "samples/orders.csv", content: "order,pickup" };
+  const order = { path: "samples/order.json", content: "{}" };
+  const document = { path: "samples/invoice.document.json", content: "{}" };
+  const samples = [invoice, orders, tender, order, document];
+
+  it("puts first the X12 samples holding the map's set, the rest after, in project order", () => {
+    expect(samplesFor(map("x12", "204"), samples)).toEqual({
+      fitting: [tender],
+      others: [invoice, orders, order, document],
+    });
+  });
+
+  it("matches a CSV, JSON or outbound map by the sample's format", () => {
+    expect(samplesFor(map("csv", null), samples).fitting).toEqual([orders]);
+    expect(samplesFor(map("json", null), samples).fitting).toEqual([order]);
+    expect(samplesFor(map("document", "210"), samples).fitting).toEqual([document]);
+  });
+
+  it("keeps every sample among the others when no map is picked", () => {
+    expect(samplesFor(undefined, samples)).toEqual({ fitting: [], others: samples });
+  });
+
+  it("says a sample holding another set does not fit", () => {
+    expect(sampleFits(map("x12", "204"), invoice)).toBe(false);
+    expect(sampleFits(map("x12", "210"), invoice)).toBe(true);
   });
 });

@@ -12,6 +12,7 @@ import type {
   LadingSetting,
   LadingSource,
 } from "@trenova/shared/edi/lading";
+import { x12TransactionSets } from "@trenova/shared/edi/x12-sets";
 import type { LadingReplay, LadingVersion } from "@trenova/shared/types/lading";
 
 /**
@@ -443,7 +444,7 @@ export function sampleInput(sample: LadingSample): LadingRunInput {
   const format = sampleFormat(sample.path);
   if (format === "csv") return { csv: sample.content };
   if (format === "json" || format === "document") {
-    let value: unknown = sample.content;
+    let value: unknown;
     try {
       value = JSON.parse(sample.content);
     } catch {
@@ -452,6 +453,30 @@ export function sampleInput(sample: LadingSample): LadingRunInput {
     return format === "document" ? { document: value } : { json: value };
   }
   return { x12: sample.content };
+}
+
+/**
+ * Whether a map reads a sample: an X12 map one holding its transaction set, a CSV or JSON map a
+ * file of that format, an outbound map a Trenova document.
+ */
+export function sampleFits(map: LadingMap, sample: LadingSample): boolean {
+  const format = sampleFormat(sample.path) ?? "x12";
+  if (format !== map.source) return false;
+  return (
+    map.source !== "x12" || map.set === null || x12TransactionSets(sample.content).includes(map.set)
+  );
+}
+
+/** A map's samples split into the ones it reads and the rest, each in the project's order. */
+export function samplesFor(
+  map: LadingMap | undefined,
+  samples: readonly LadingSample[],
+): { fitting: LadingSample[]; others: LadingSample[] } {
+  if (!map) return { fitting: [], others: [...samples] };
+  const fitting: LadingSample[] = [];
+  const others: LadingSample[] = [];
+  for (const sample of samples) (sampleFits(map, sample) ? fitting : others).push(sample);
+  return { fitting, others };
 }
 
 /** The 1-based line a UTF-16 offset of a source falls on. */
