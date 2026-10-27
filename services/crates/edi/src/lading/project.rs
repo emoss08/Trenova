@@ -66,7 +66,7 @@ pub struct Org {
 pub struct CustomField {
     /// Its key as Trenova names it, which maps use as written (`custom.po_number`).
     pub name: String,
-    /// `Text`, `Int`, `Decimal`, `Bool`, `Date` or `DateTime`.
+    /// `Text`, `Texts` (a multi-select), `Int`, `Decimal`, `Bool`, `Date` or `DateTime`.
     #[serde(rename = "type")]
     pub ty: String,
     /// What people call it.

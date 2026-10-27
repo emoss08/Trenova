@@ -460,27 +460,7 @@ impl Checker<'_> {
                         } else {
                             let names: Vec<&str> =
                                 fields.iter().map(|(field, _)| field.as_str()).collect();
-                            let custom = path == "custom" || path.ends_with(".custom");
-                            let message = if custom && names.is_empty() {
-                                Message::with(
-                                    message!(
-                                        "The organization has no custom field {0}: add it in Settings, under Custom fields"
-                                    ),
-                                    [Arg::from(name.name.as_str())],
-                                )
-                            } else if custom {
-                                Message::with(
-                                    message!(
-                                        "There is no custom field {0}; the organization's are {1}"
-                                    ),
-                                    [Arg::from(name.name.as_str()), Arg::from(names.join(", "))],
-                                )
-                            } else {
-                                Message::with(
-                                    message!("There is no field {0} here"),
-                                    [Arg::from(name.name.as_str())],
-                                )
-                            };
+                            let message = unknown_field(&path, &name.name, &names);
                             let mut diagnostic =
                                 Diagnostic::error("unknown-field", name.span, message);
                             if let Some(close) = nearest(&name.name, names) {
@@ -613,4 +593,47 @@ impl Checker<'_> {
         self.report_missing(env, record, &filled, binder.span);
         Type::Record(record.name).list()
     }
+}
+
+/// How many custom fields an unknown one's message names before it names only the closest.
+const NAMED_CUSTOM_FIELDS: usize = 5;
+
+/// What a field path that names no field says: a custom field's points at Settings, or names
+/// the organization's custom fields (the closest first, past a handful).
+fn unknown_field(path: &str, name: &str, names: &[&str]) -> Message {
+    if path != "custom" && !path.ends_with(".custom") {
+        return Message::with(message!("There is no field {0} here"), [Arg::from(name)]);
+    }
+    if names.is_empty() {
+        return Message::with(
+            message!(
+                "The organization has no custom field {0}: add it in Settings, under Custom fields"
+            ),
+            [Arg::from(name)],
+        );
+    }
+    if names.len() <= NAMED_CUSTOM_FIELDS {
+        return Message::with(
+            message!("There is no custom field {0}; the organization's are {1}"),
+            [Arg::from(name), Arg::from(names.join(", "))],
+        );
+    }
+    let mut named: Vec<&str> = nearest(name, names.iter().copied()).into_iter().collect();
+    named.extend(
+        names
+            .iter()
+            .copied()
+            .filter(|candidate| !named.contains(candidate))
+            .take(NAMED_CUSTOM_FIELDS - named.len()),
+    );
+    Message::with(
+        message!(
+            "There is no custom field {0}; the organization has {1, plural, one {# custom field} other {# custom fields}}, such as {2}"
+        ),
+        [
+            Arg::from(name),
+            Arg::from(names.len()),
+            Arg::from(named.join(", ")),
+        ],
+    )
 }

@@ -1,6 +1,8 @@
 //! Completion: what may be written at the cursor, read from the tokens before it and what the
 //! checker learned about the scope there.
 
+use std::collections::BTreeMap;
+
 use serde::Serialize;
 use trenova_module_kit::span::Span;
 
@@ -875,6 +877,30 @@ fn assigned_type(session: &Session, dot: u32) -> Option<Type> {
     Some(ty)
 }
 
+/// The labels of the custom fields a struct holds, by name: from the record whose custom fields
+/// have its shape, and where several records share the shape, only the labels they agree on.
+fn custom_labels(program: &Program, ty: &Type) -> BTreeMap<String, String> {
+    let mut labels: Option<BTreeMap<String, String>> = None;
+    for (record, fields) in &program.context.custom_fields {
+        if *ty != program.custom_type(record) {
+            continue;
+        }
+        let own: BTreeMap<String, String> = fields
+            .iter()
+            .filter(|field| !field.label.is_empty())
+            .map(|field| (field.name.clone(), field.label.clone()))
+            .collect();
+        labels = Some(match labels {
+            None => own,
+            Some(agreed) => agreed
+                .into_iter()
+                .filter(|(name, label)| own.get(name) == Some(label))
+                .collect(),
+        });
+    }
+    labels.unwrap_or_default()
+}
+
 /// What may follow `value.`, by the value's type.
 #[allow(clippy::too_many_lines)]
 fn members(session: &Session, dot: u32, items: &mut Vec<Item2>) {
@@ -898,20 +924,12 @@ fn members(session: &Session, dot: u32, items: &mut Vec<Item2>) {
         }
         Type::Struct(fields) => {
             let partner = program.partner_type();
-            let custom = program
-                .context
-                .custom_fields
-                .iter()
-                .find(|(record, _)| ty == program.custom_type(record))
-                .map(|(_, fields)| fields);
+            let custom = custom_labels(program, &ty);
             for (name, field_ty) in fields {
                 let doc = if ty == partner {
                     describe::setting(program, name).and_then(|(_, doc)| doc)
                 } else {
-                    custom
-                        .and_then(|fields| fields.iter().find(|field| field.name == *name))
-                        .filter(|field| !field.label.is_empty())
-                        .map(|field| Doc::Text(field.label.clone()))
+                    custom.get(name).map(|label| Doc::Text(label.clone()))
                 };
                 items.push(item(name, "field", field_ty.to_string(), doc, "0"));
             }

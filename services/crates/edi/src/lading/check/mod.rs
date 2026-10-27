@@ -358,6 +358,7 @@ impl Program {
                             "Bool" => Type::Bool,
                             "Date" => Type::Date,
                             "DateTime" => Type::DateTime,
+                            "Texts" => Type::Text.list(),
                             _ => Type::Text,
                         };
                         (field.name.clone(), ty.optional())
@@ -1450,6 +1451,24 @@ mod findings {
         assert_eq!(
             messages(&check(&project, &other)),
             ["There is no custom field po_number; the organization's are pro_ref"]
+        );
+        let mut many = context();
+        many.custom_fields.insert(
+            "shipment".to_owned(),
+            ["aa", "bb", "po_numbr", "cc", "dd", "ee"]
+                .into_iter()
+                .map(|name| crate::lading::project::CustomField {
+                    name: name.into(),
+                    ty: "Text".into(),
+                    label: String::new(),
+                })
+                .collect(),
+        );
+        assert_eq!(
+            messages(&check(&project, &many)),
+            [
+                "There is no custom field po_number; the organization has 6 custom fields, such as po_numbr, aa, bb, cc, dd"
+            ]
         );
     }
 

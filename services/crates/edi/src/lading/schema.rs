@@ -396,6 +396,12 @@ const SHIPMENT_STATUS: &[Field] = &[
         true,
         message!("What happened, in order"),
     ),
+    field(
+        "custom",
+        Spec::Custom("shipment"),
+        false,
+        message!("The organisation's custom fields on the load"),
+    ),
 ];
 
 const FREIGHT_INVOICE: &[Field] = &[
@@ -455,6 +461,12 @@ const FREIGHT_INVOICE: &[Field] = &[
         Spec::Refs,
         false,
         message!("Reference numbers by qualifier"),
+    ),
+    field(
+        "custom",
+        Spec::Custom("shipment"),
+        false,
+        message!("The organisation's custom fields on the load an invoice bills"),
     ),
 ];
 

@@ -747,7 +747,7 @@ pub fn catalog(_: &RawValue) -> OpResult {
 mod tests {
     use serde_json::{Value as Json, json};
 
-    use crate::lading::check::corpus::{acme, context};
+    use crate::lading::check::corpus::{acme, acme_mfg, context};
     use crate::ops::dispatch;
 
     fn project() -> Json {
@@ -870,6 +870,54 @@ mod tests {
     }
 
     #[test]
+    fn custom_field_labels_come_from_their_record_and_only_where_records_sharing_a_shape_agree() {
+        let mut input = project();
+        let mut offset = 0;
+        for file in input["project"]["files"].as_array_mut().expect("files") {
+            if file["path"] == "maps/tender-in.lading" {
+                let source = file["source"].as_str().expect("source").to_owned();
+                let at = source.find("use  common\n").expect("header") + "use  common\n".len();
+                offset = source[..at].encode_utf16().count() + "custom.".len();
+                file["source"] = Json::String(format!(
+                    "{}custom.po_number <- B204\n{}",
+                    &source[..at],
+                    &source[at..]
+                ));
+            }
+        }
+        input["context"]["customFields"] = json!({
+            "shipment": [
+                { "name": "po_number", "type": "Text", "label": "PO number" },
+                { "name": "seal", "type": "Text", "label": "Seal" },
+            ],
+            "trailer": [
+                { "name": "po_number", "type": "Text", "label": "PO number" },
+                { "name": "seal", "type": "Text", "label": "Trailer seal" },
+            ],
+        });
+        let out = call(
+            "lading.complete",
+            json!({
+                "project": input["project"],
+                "context": input["context"],
+                "path": "maps/tender-in.lading",
+                "offset": offset,
+            }),
+        );
+        let doc = |label: &str| {
+            out["items"]
+                .as_array()
+                .expect("items")
+                .iter()
+                .find(|item| item["label"] == label)
+                .map(|item| item["doc"].clone())
+                .expect(label)
+        };
+        assert_eq!(doc("po_number"), "PO number");
+        assert_eq!(doc("seal"), Json::Null, "the records disagree on seal");
+    }
+
+    #[test]
     fn completion_inside_a_compared_text_lists_the_element_codes() {
         let path = "maps/tender-in.lading";
         let offset = offset_of(path, "02 == \"BM\"", 7);
@@ -978,6 +1026,26 @@ mod tests {
             .filter_map(|item| item["id"].as_str())
             .collect();
         assert!(ids.contains(&"promote-to-setting"), "{out}");
+    }
+
+    #[test]
+    fn a_run_on_a_sample_without_the_maps_set_names_the_sets_it_holds() {
+        let invoice = acme_mfg()
+            .sample("samples/backhaul-invoice.x12")
+            .expect("sample")
+            .content
+            .clone();
+        let run = call(
+            "lading.run",
+            json!({ "map": "tenderIn", "input": { "x12": invoice } }),
+        );
+        assert_eq!(run["error"]["args"], json!(["204", "210"]), "{run}");
+        assert!(
+            run["error"]["message"].as_str().is_some_and(
+                |message| message.starts_with("The X12 holds no {0} transaction set, only {1}")
+            ),
+            "{run}"
+        );
     }
 
     #[test]
