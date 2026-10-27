@@ -285,6 +285,9 @@ impl Checker<'_> {
             return None;
         };
         let Some(info) = program.maps.get(&map.name).cloned() else {
+            if program.declares_map(&map.name) {
+                return None;
+            }
             let names: Vec<&str> = program
                 .maps
                 .iter()

@@ -17,6 +17,9 @@ impl Checker<'_> {
     pub(crate) fn check_rules_file(&mut self, unit: usize, map: &Ident) {
         let program: &Program = self.program;
         let Some(info) = program.maps.get(&map.name) else {
+            if program.declares_map(&map.name) {
+                return;
+            }
             let names: Vec<&str> = program.maps.keys().map(String::as_str).collect();
             let mut diagnostic = Diagnostic::error(
                 "unknown-map",
