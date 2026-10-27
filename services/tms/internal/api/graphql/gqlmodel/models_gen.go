@@ -3139,11 +3139,12 @@ type DeskBoardCompareLine struct {
 }
 
 type DeskBoardEvent struct {
-	At        int            `json:"at"`
-	Operation string         `json:"operation"`
-	Actor     string         `json:"actor"`
-	Comment   string         `json:"comment"`
-	Changes   map[string]any `json:"changes,omitempty"`
+	At            int            `json:"at"`
+	Operation     string         `json:"operation"`
+	Actor         string         `json:"actor"`
+	PrincipalType string         `json:"principalType"`
+	Comment       string         `json:"comment"`
+	Changes       map[string]any `json:"changes,omitempty"`
 }
 
 type DeskBoardFigure struct {

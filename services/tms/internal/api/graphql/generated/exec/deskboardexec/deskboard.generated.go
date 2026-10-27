@@ -515,6 +515,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
+				Name:     "principalType",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.DeskBoardEvent)
+					return obj.PrincipalType, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
 				Name:     "comment",
 				NonNull:  true,
 				ChildErr: errNoChild0,

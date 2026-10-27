@@ -83,6 +83,7 @@ func (s *Service) events(
 		event := board.Event{
 			At:        entry.Timestamp,
 			Operation: string(entry.Operation),
+			Principal: entry.PrincipalType,
 			Comment:   entry.Comment,
 			Changes:   entry.Changes,
 		}

@@ -79,11 +79,12 @@ func blockToModel(block *board.FilledBlock) *gqlmodel.DeskBoardBlock {
 	for idx := range block.Events {
 		event := &block.Events[idx]
 		model.Events = append(model.Events, &gqlmodel.DeskBoardEvent{
-			At:        int(event.At),
-			Operation: event.Operation,
-			Actor:     event.Actor,
-			Comment:   event.Comment,
-			Changes:   event.Changes,
+			At:            int(event.At),
+			Operation:     event.Operation,
+			Actor:         event.Actor,
+			PrincipalType: event.Principal,
+			Comment:       event.Comment,
+			Changes:       event.Changes,
 		})
 	}
 	for idx := range block.Checks {

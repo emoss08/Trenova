@@ -113,6 +113,7 @@ type Event struct {
 	At        int64          `json:"at"`
 	Operation string         `json:"operation"`
 	Actor     string         `json:"actor,omitempty"`
+	Principal string         `json:"principal,omitempty"`
 	Comment   string         `json:"comment,omitempty"`
 	Changes   map[string]any `json:"changes,omitempty"`
 }

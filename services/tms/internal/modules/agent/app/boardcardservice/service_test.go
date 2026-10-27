@@ -315,8 +315,17 @@ func TestFillReadsARecordsHistoryOldestFirst(t *testing.T) {
 		shipment: {Label: "S2610-0412"},
 	}
 	f.activity.entries = []*audit.Entry{
-		{Timestamp: now.Unix() - 60, Operation: permission.OpUpdate, Comment: "Out of hours"},
-		{Timestamp: now.Unix() - 3600, Operation: permission.OpCreate},
+		{
+			Timestamp:     now.Unix() - 60,
+			Operation:     permission.OpUpdate,
+			Comment:       "Out of hours",
+			PrincipalType: "api_key",
+		},
+		{
+			Timestamp: now.Unix() - 3600,
+			Operation: permission.OpCreate,
+			User:      &tenant.User{Name: "Ana Ruiz"},
+		},
 	}
 	shown := parsed(t, map[string]any{
 		"title": "One load", "verdict": "Stuck [here][1].",
@@ -329,7 +338,10 @@ func TestFillReadsARecordsHistoryOldestFirst(t *testing.T) {
 	events := filled.Blocks[0].Events
 	require.Len(t, events, 2)
 	assert.Equal(t, "create", events[0].Operation)
+	assert.Equal(t, "Ana Ruiz", events[0].Actor)
 	assert.Equal(t, "Out of hours", events[1].Comment)
+	assert.Empty(t, events[1].Actor)
+	assert.Equal(t, "api_key", events[1].Principal)
 }
 
 func TestFillDrawsTheTimelineUnreadableWithoutTheAuditLog(t *testing.T) {

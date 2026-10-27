@@ -11616,6 +11616,7 @@ type DeskBoardEvent {
   at: Timestamp!
   operation: String!
   actor: String!
+  principalType: String!
   comment: String!
   changes: JSON
 }
