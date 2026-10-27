@@ -527,7 +527,11 @@ fn a_continuation_starts_from_the_earlier_script_and_keeps_only_its_own_output()
         .filter(|(function, _)| *function == HostFunction::Result)
         .map(|(_, payload)| payload)
         .collect();
-    assert_eq!(results, [&json!(481.0)], "only the script's own result reaches the host");
+    assert_eq!(
+        results,
+        [&json!(481.0)],
+        "only the script's own result reaches the host"
+    );
     assert!(
         run.calls
             .iter()
@@ -542,12 +546,18 @@ fn a_continuation_names_the_earlier_script_and_its_own_in_a_traceback() {
     let run = run_with("print(rows)\nmissing\n", &overrides);
     assert_eq!(run.done.status, EndStatus::Raised);
     let traceback = run.done.error.expect("the NameError").traceback;
-    assert!(traceback.contains("File \"script.py\", line 2"), "{traceback}");
+    assert!(
+        traceback.contains("File \"script.py\", line 2"),
+        "{traceback}"
+    );
 
     overrides["earlier"] = json!("rows = len(ar)\nar[0]['Missing']\n");
     let run = run_with("print(rows)\n", &overrides);
     assert_eq!(run.done.status, EndStatus::Raised);
     let traceback = run.done.error.expect("the KeyError").traceback;
-    assert!(traceback.contains("File \"earlier.py\", line 2"), "{traceback}");
+    assert!(
+        traceback.contains("File \"earlier.py\", line 2"),
+        "{traceback}"
+    );
     assert_eq!(run.done.output, "", "the earlier script prints nothing");
 }
