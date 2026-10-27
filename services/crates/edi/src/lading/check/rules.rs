@@ -17,22 +17,7 @@ impl Checker<'_> {
     pub(crate) fn check_rules_file(&mut self, unit: usize, map: &Ident) {
         let program: &Program = self.program;
         let Some(info) = program.maps.get(&map.name) else {
-            if program.declares_map(&map.name) {
-                return;
-            }
-            let names: Vec<&str> = program.maps.keys().map(String::as_str).collect();
-            let mut diagnostic = Diagnostic::error(
-                "unknown-map",
-                map.span,
-                Message::with(
-                    message!("There is no map named {0}"),
-                    [Arg::from(map.name.as_str())],
-                ),
-            );
-            if let Some(close) = nearest(&map.name, names) {
-                diagnostic = diagnostic.with_fix(super::replace_fix(map.span, close));
-            }
-            self.report(unit, diagnostic);
+            self.unknown_map(unit, map, program.maps.keys().map(String::as_str).collect());
             return;
         };
         self.occurrence(unit, map.span, Target::File(map.name.clone()), false, false);
