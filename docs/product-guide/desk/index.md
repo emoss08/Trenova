@@ -321,20 +321,17 @@ Keywords: version history, what changed, earlier version, read again, changed ce
 3. Pick an earlier version to view it. Cells that changed since the version before are highlighted.
 
 ### Filter, sort and export a table
-Keywords: export CSV, download table, spreadsheet, sort rows, filter results, Excel
+Keywords: export CSV, download table, spreadsheet, sort rows, filter results, Excel, report run, run report, download report, run again, cancel report, report preview, compare runs, report totals
 1. Open the table in the workspace beside the conversation.
 2. Type in the filter box (**Filter rows**) to show only the rows that contain your text. Select a column heading to sort by it, select it again to reverse the order, and a third time to clear the sort.
 3. Select a row, or the arrow at the end of it (**Open this record**), to open the record it is about.
 4. Select **Export CSV** at the bottom of the workspace to download the table.
 5. If the table says it is showing only some of the rows, ask the agent for the rest.
-
-### Read a report an agent ran
-Keywords: report run, run report, download report, run again, cancel report, report preview, compare runs, report totals
-1. When an agent runs a report for you, it opens in the workspace. The top says what was asked: the report, the values it ran with (a window such as the last 30 days shows the dates it covered) and which agent ran it, or the schedule it came from.
-2. The box on the right follows the run: **Running** while it works, then **Finished** with how long it ran, how many rows it returned and the file's size. While it runs you can select **Cancel run**.
-3. A finished run shows its totals, each beside the same total from your previous run of the same report with the same values, then the first rows of the result. A report that ranks draws a bar in each row with its **Share** of the total; a report by month draws columns and a line.
-4. Select the download button, named for the run's format (such as XLSX), for the whole file, **Run again** for a fresh run with the same values (it becomes the item's next version) or **Open in Reports** to change the report.
-5. A report the agent only previewed shows the rows it read. Select **Run the full report** to run it whole, or **Download CSV** for the previewed rows read again.
+6. When an agent runs a report for you, it opens in the workspace. The top says what was asked: the report, the values it ran with (a window such as the last 30 days shows the dates it covered) and which agent ran it, or the schedule it came from.
+7. The box on the right follows the run: **Running** while it works, then **Finished** with how long it ran, how many rows it returned and the file's size. While it runs you can select **Cancel run**.
+8. A finished run shows its totals, each beside the same total from your previous run of the same report with the same values, then the first rows of the result. A report that ranks draws a bar in each row with its **Share** of the total; a report by month draws columns and a line.
+9. Select the download button, named for the run's format (such as XLSX), for the whole file, **Run again** for a fresh run with the same values (it becomes the item's next version) or **Open in Reports** to change the report.
+10. A report the agent only previewed shows the rows it read. Select **Run the full report** to run it whole, or **Download CSV** for the previewed rows read again.
 
 ### Read and edit a document an agent wrote
 Keywords: agent report, write-up, edit document, rewrite paragraph, shorten, simplify, restore version, document history

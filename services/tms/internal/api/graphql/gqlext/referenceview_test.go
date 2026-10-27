@@ -38,6 +38,8 @@ var notAKind = map[string]string{
 	"EdiPartnerCard.carriers": "the partner's carrier mapping rows: each carrier's name, code " +
 		"and SCAC, which the carrier reference view shows",
 	"FuelPurchaseImportBatch.document": "the import's own source file metadata",
+	"ReportRunDeskCard.report": "the run's own report: its name, description and category, " +
+		"read with the run under report read",
 	"LateChargeAssessmentResult.customers": "the result of the caller's own late-charge run, " +
 		"one row per customer it assessed",
 	"ShipmentBillingWatch.customers": "an aggregate of shipments by customer on the shipment " +

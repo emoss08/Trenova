@@ -1,5 +1,5 @@
 {
-  "version": "sha256:3c431622d774ab45274b2fdef2dea00b399243f4fc6668a9492fdc3eff73daf5",
+  "version": "sha256:c49da9c317862ce9c0ff2eef7a677ca770890f495dd451c8976fd0b6e6d760e1",
   "modules": [
     {
       "id": "home",
@@ -9849,19 +9849,7 @@
             "spreadsheet",
             "sort rows",
             "filter results",
-            "Excel"
-          ],
-          "steps": [
-            "Open the table in the workspace beside the conversation.",
-            "Type in the filter box (**Filter rows**) to show only the rows that contain your text. Select a column heading to sort by it, select it again to reverse the order, and a third time to clear the sort.",
-            "Select a row, or the arrow at the end of it (**Open this record**), to open the record it is about.",
-            "Select **Export CSV** at the bottom of the workspace to download the table.",
-            "If the table says it is showing only some of the rows, ask the agent for the rest."
-          ]
-        },
-        {
-          "title": "Read a report an agent ran",
-          "keywords": [
+            "Excel",
             "report run",
             "run report",
             "download report",
@@ -9872,6 +9860,11 @@
             "report totals"
           ],
           "steps": [
+            "Open the table in the workspace beside the conversation.",
+            "Type in the filter box (**Filter rows**) to show only the rows that contain your text. Select a column heading to sort by it, select it again to reverse the order, and a third time to clear the sort.",
+            "Select a row, or the arrow at the end of it (**Open this record**), to open the record it is about.",
+            "Select **Export CSV** at the bottom of the workspace to download the table.",
+            "If the table says it is showing only some of the rows, ask the agent for the rest.",
             "When an agent runs a report for you, it opens in the workspace. The top says what was asked: the report, the values it ran with (a window such as the last 30 days shows the dates it covered) and which agent ran it, or the schedule it came from.",
             "The box on the right follows the run: **Running** while it works, then **Finished** with how long it ran, how many rows it returned and the file's size. While it runs you can select **Cancel run**.",
             "A finished run shows its totals, each beside the same total from your previous run of the same report with the same values, then the first rows of the result. A report that ranks draws a bar in each row with its **Share** of the total; a report by month draws columns and a line.",
