@@ -42,6 +42,7 @@ struct Call<'e> {
 
 impl Checker<'_> {
     /// Types a call expression.
+    #[allow(clippy::too_many_lines)]
     pub(crate) fn call(
         &mut self,
         env: &mut Env,
