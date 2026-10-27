@@ -9,6 +9,7 @@
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
+import { cursorAt, pointAt } from "./editor-points.mjs";
 
 const MOCK = process.env.MOCK_API_URL ?? "http://localhost:8080";
 const APP = process.env.APP_URL ?? "http://localhost:5173";
@@ -37,44 +38,6 @@ const tab = (name) => async (page) => {
   await page.waitForTimeout(1500);
 };
 const pause = (page, ms = STEP_MS) => page.waitForTimeout(ms);
-
-/**
- * Where the character `delta` past the first `text` is drawn in the editor. A line's text
- * includes its inlay hints, so a needle is written as the line reads on screen.
- */
-async function pointAt(page, text, delta = 0) {
-  const point = await page.evaluate(
-    ({ needle, shift }) => {
-      for (const line of document.querySelectorAll(".cm-content .cm-line")) {
-        const start = (line.textContent ?? "").indexOf(needle.split("\n")[0]);
-        if (start < 0) continue;
-        let remaining = start + shift;
-        const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
-        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-          const length = node.textContent?.length ?? 0;
-          if (remaining <= length) {
-            const range = document.createRange();
-            range.setStart(node, remaining);
-            range.setEnd(node, Math.min(remaining + 1, length));
-            const rect = range.getBoundingClientRect();
-            return { x: rect.left + 1, y: rect.top + rect.height / 2 };
-          }
-          remaining -= length;
-        }
-      }
-      return null;
-    },
-    { needle: text, shift: delta },
-  );
-  if (!point) throw new Error(`no ${text} in the editor`);
-  return point;
-}
-
-/** Clicks the editor just before the character `delta` past the first `text` on a line. */
-async function cursorAt(page, text, delta = 0) {
-  const point = await pointAt(page, text, delta);
-  await page.mouse.click(point.x, point.y);
-}
 
 /** Scrolls the Studio's form to a section and lets it settle. */
 async function scrollToSection(page, section) {
