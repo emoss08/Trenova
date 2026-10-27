@@ -63,7 +63,7 @@ The build uses:
 
 CI rebuilds the module and fails when either committed copy differs from it.
 
-The module is 1,972,029 bytes (1.9 MiB), 741,881 bytes gzipped (`gzip -9`). The browser
+The module is 2,342,318 bytes (2.2 MiB), 879,918 bytes gzipped (`gzip -9`). The browser
 fetches it lazily, never on the startup path, and the service worker caches it as a hashed
 asset. Most of the weight is the crate's own code (Tariff's checker, interpreter, editor
 features and standard library), Rust's collections and JSON. `opt-level = "z"` would shrink it
