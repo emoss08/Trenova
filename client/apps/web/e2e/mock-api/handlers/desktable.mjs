@@ -280,7 +280,8 @@ function rows(state, query) {
   };
 }
 
-function budget(state) {
+/** The agent's spend this month, as the Desk conversation header reads it. */
+export function deskBudget(state) {
   const tomorrow = Math.floor(state.anchor / 86400) * 86400 + 86400;
   return {
     agentName: AGENT.name,
@@ -355,6 +356,6 @@ export const DESK_TABLE_ROUTES = [
   ["GET", route("/schedules"), () => ({ items: [], total: 0 })],
   ["GET", route("/waits"), () => ({ items: [] })],
   ["GET", route("/queue"), () => ({ items: [] })],
-  ["GET", route("/budget"), budget],
+  ["GET", route("/budget"), deskBudget],
   ["GET", route("/turns/active"), () => ({ turn: null })],
 ];

@@ -6,6 +6,7 @@ import { deskThread } from "../fixtures/desk-cards.mjs";
 import { deskCaseThreads } from "./deskcase.mjs";
 import { ediDraftThreads } from "./deskedidraft.mjs";
 import { deskPlanThreads } from "./deskplan.mjs";
+import { deskReportThreads } from "./deskreport.mjs";
 import { deskTableThreads } from "./desktable.mjs";
 import { extractionThreads } from "./deskextraction.mjs";
 import { formulaThreads } from "./formula-nova.mjs";
@@ -28,6 +29,7 @@ function threads(state) {
     ...ediDraftThreads(state),
     ...deskPlanThreads(state),
     ...deskTableThreads(state),
+    ...deskReportThreads(state),
     ...extractionThreads(state),
     ...triage,
     ...formulaThreads(state),

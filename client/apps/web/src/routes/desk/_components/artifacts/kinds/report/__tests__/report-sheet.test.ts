@@ -107,8 +107,14 @@ describe("pictureOf", () => {
     });
   });
 
-  it("draws bars on the first measure, without claiming a ranking, when nothing sorts it", () => {
+  it("draws bars on the first money measure, without claiming a ranking, when nothing sorts it", () => {
     expect(pictureOf(source(), NO_HINTS)).toEqual({
+      kind: "ranked",
+      label: 0,
+      measure: 2,
+      ranked: false,
+    });
+    expect(pictureOf(source({ columns: [customer, shipments, share, share] }), NO_HINTS)).toEqual({
       kind: "ranked",
       label: 0,
       measure: 1,
@@ -146,7 +152,7 @@ describe("pictureOf", () => {
       pictureOf(
         source({
           rows: [
-            ["Acme", -4, "1", "0"],
+            ["Acme", 4, "-1", "0"],
             ["Globex", 2, "1", "0"],
           ],
         }),

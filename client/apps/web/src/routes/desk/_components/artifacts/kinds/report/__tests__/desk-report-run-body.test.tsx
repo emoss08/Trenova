@@ -105,7 +105,7 @@ describe("DeskReportRunBody", () => {
     expect(kpis[1]).toHaveTextContent("$1,284,310.42");
     expect(kpis[1].querySelector(".dk-rr-delta")).toHaveAttribute("data-direction", "up");
     expect(kpis[1]).toHaveTextContent("8.2%");
-    expect(kpis[1]).toHaveTextContent(/vs Oct \d+, 2026/u);
+    expect(kpis[1]).toHaveTextContent(/vs Oct \d+$/u);
     expect(kpis[2]).toHaveTextContent("214");
     expect(kpis[2]).toHaveTextContent("2.9%");
   });

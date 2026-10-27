@@ -18,8 +18,12 @@ function preview(payload: Record<string, unknown> = {}): AssistantArtifact {
   return {
     id: "art_2",
     threadId: "athr_1",
+    messageId: "amsg_1",
+    runId: "",
+    proposalId: "",
+    planId: "",
     kind: "report_preview",
-    status: "ready",
+    status: "Ready",
     title: "Revenue by customer",
     payload: {
       name: "Revenue by customer",
@@ -81,7 +85,7 @@ describe("DeskReportPreviewBody", () => {
     const rows = within(table).getAllByRole("row");
     expect(rows).toHaveLength(4);
     expect(rows[1]).toHaveTextContent("Acme Foods");
-    expect(rows[1]).toHaveTextContent("75%");
+    expect(rows[1]).toHaveTextContent("75.0%");
     expect(rows[3]).toHaveTextContent("All 2 rows");
     expect(table.querySelectorAll(".dk-rr-cbar i")).toHaveLength(2);
   });

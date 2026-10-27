@@ -20,7 +20,7 @@ import { Suspense, useMemo, type ReactNode } from "react";
 import { Link } from "react-router";
 import { artifactReaderOf, reportRunFrom, type ArtifactReader } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
-import { cardDate, cardMoment, cardTime } from "../../record-card/record-card-values";
+import { cardDate, cardDay, cardMoment, cardTime } from "../../record-card/record-card-values";
 import { Notice } from "../artifact-body-parts";
 import {
   durationText,
@@ -99,9 +99,7 @@ export function ReportRunCardView({
   const active = isRunActive(status);
   const expired =
     status === "expired" ||
-    (status === "succeeded" &&
-      run.artifactExpiresAt != null &&
-      run.artifactExpiresAt < now);
+    (status === "succeeded" && run.artifactExpiresAt != null && run.artifactExpiresAt < now);
 
   return (
     <div className="dkrr">
@@ -402,7 +400,7 @@ function RunResult({ card, source }: { card: ReportRunDeskCard; source: SheetSou
           source={source}
           kpis={kpis}
           text={text}
-          since={card.previous ? cardDate(card.previous.completedAt) : ""}
+          since={card.previous ? cardDay(card.previous.completedAt) : ""}
         />
       )}
       <ReportSheet
@@ -464,7 +462,7 @@ function RunningSheet({ card }: { card: ReportRunDeskCard }) {
             <div key={width} className="dk-rr-bar">
               <span className="ui-shimmer dk-rr-shim-line" />
               <span className="dk-rr-tr">
-                <i className="ui-shimmer" style={{ width: `${width}%` }} />
+                <i className="dk-rr-shim-bar" style={{ width: `${width}%` }} />
               </span>
               <span className="ui-shimmer dk-rr-shim-line" />
               <span />

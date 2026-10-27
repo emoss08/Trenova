@@ -4,6 +4,7 @@ import { AI_ANALYTICS_HANDLERS } from "./aianalytics.mjs";
 import { DESK_HANDLERS, TRIAGE_HANDLERS } from "./triage.mjs";
 import { TriageError } from "./triage-model.mjs";
 import { DESK_CARD_HANDLERS } from "./deskcards.mjs";
+import { DESK_REPORT_HANDLERS } from "./deskreport.mjs";
 import { EDI_DRAFT_HANDLERS } from "./deskedidraft.mjs";
 import { DESK_PLAN_HANDLERS } from "./deskplan.mjs";
 import {
@@ -1167,6 +1168,7 @@ const HANDLERS = {
   ...DESK_HANDLERS,
   ...TRIAGE_HANDLERS,
   ...DESK_CARD_HANDLERS,
+  ...DESK_REPORT_HANDLERS,
   ...EDI_DRAFT_HANDLERS,
   ...DESK_PLAN_HANDLERS,
   ...FORMULA_HANDLERS,

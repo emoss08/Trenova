@@ -17259,8 +17259,7 @@ button.dk-fcd-buy:hover {
   border-radius: 3px;
   background: var(--dsk-sunken);
 }
-.dk-rr-cbar i,
-.dk-rr-bar .dk-rr-tr i:not(.ui-shimmer) {
+.dk-rr-cbar i {
   display: block;
   height: 100%;
   border-radius: 3px;
@@ -17334,6 +17333,15 @@ button.dk-fcd-buy:hover {
   color: var(--dsk-fg);
   font-weight: 500;
   font-size: 13px;
+}
+.dk-rr-shim-line,
+.dk-rr-shim-chip,
+.dk-rr-shim-figure {
+  background-color: var(--dsk-b);
+}
+.dk-rr-tr .dk-rr-shim-bar {
+  background: var(--dsk-b-strong);
+  animation: dk-rr-breathe 1.6s ease-in-out infinite;
 }
 .dk-rr-shim-line {
   display: block;
@@ -17414,6 +17422,7 @@ button.dk-fcd-buy:hover {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .dk-rr-tr .dk-rr-shim-bar,
   .dk-rr-stamp.dk-run .dk-rr-stamp-s i {
     animation: none;
   }

@@ -17,7 +17,7 @@ export function ReportSheetSkeleton() {
             <div key={width} className="dk-rr-bar">
               <span className="ui-shimmer dk-rr-shim-line" />
               <span className="dk-rr-tr">
-                <i className="ui-shimmer" style={{ width: `${width}%` }} />
+                <i className="dk-rr-shim-bar" style={{ width: `${width}%` }} />
               </span>
               <span className="ui-shimmer dk-rr-shim-line" />
               <span />

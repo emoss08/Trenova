@@ -127,7 +127,7 @@ export function runArtifact(payload: Record<string, unknown> = {}): AssistantArt
     proposalId: "",
     planId: "",
     kind: "report_run",
-    status: "ready",
+    status: "Ready",
     title: "Revenue by customer",
     payload: {
       runId: "rrun_1",

@@ -96,7 +96,7 @@ const TABLE_CHARTS = new Set(["map", "scatter", "kpi"]);
  * has one: bars, pies and donuts rank, lines and areas trend, and a map, a
  * scatter or a lone figure leaves the table. Without one, a result led by
  * dates trends and a result led by a label ranks by its sorted measure, or
- * its first.
+ * else its first money measure, or else its first.
  */
 export function pictureOf(source: SheetSource, hints: SheetHints): Picture {
   const { columns } = source;
@@ -151,7 +151,14 @@ export function pictureOf(source: SheetSource, hints: SheetHints): Picture {
   if (lead >= 0 && columns[lead].dated) {
     return trendsOn(lead) ?? { kind: "table" };
   }
-  return ranksOn(lead, sortedMeasure >= 0 ? sortedMeasure : measures[0]) ?? { kind: "table" };
+  const money = measures.find((at) => isMoney(columns[at]));
+  return (
+    ranksOn(lead, sortedMeasure >= 0 ? sortedMeasure : (money ?? measures[0])) ?? { kind: "table" }
+  );
+}
+
+function isMoney(column: SheetColumn): boolean {
+  return column.display ? column.display.style === "currency" : column.hint === "money";
 }
 
 /** The columns a sheet shows: the picture's own first, then the rest in order, up to the cap. */

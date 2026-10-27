@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { formatReportColumns, reportCellText } from "@trenova/shared/rules/report";
 import type { CSSProperties, ReactNode } from "react";
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { ArtIcon } from "../../desk-art-kinds";
 import {
   numberAt,
@@ -89,7 +89,9 @@ export function ReportKpis({
         if (kpi.kind === "peak") {
           return (
             <div key="peak" className="dk-rr-kpi">
-              <span>{t("Highest {0}", source.columns[kpi.measure]?.label ?? "")}</span>
+              <span>
+                {t("Highest {0}", (source.columns[kpi.measure]?.label ?? "").toLocaleLowerCase())}
+              </span>
               <b>{text.cell(kpi.row, kpi.period)}</b>
               <span className="dk-rr-delta">{text.cell(kpi.row, kpi.measure)}</span>
             </div>
@@ -209,10 +211,11 @@ function SheetTable({
   const fades = source.more || source.rowCount > shown.length;
   const hasTotals = source.totals !== null && source.totals.some((value) => value != null);
 
+  const sharesAfter = (column: number) => total !== null && ranked?.measure === column;
   const cellClass = (column: number) =>
     cn(
       source.columns[column]?.numeric && "dk-rr-num",
-      columns.indexOf(column) >= 4 && "dk-rr-wide",
+      columns.indexOf(column) >= 3 && "dk-rr-wide",
     );
 
   return (
@@ -220,14 +223,13 @@ function SheetTable({
       <thead>
         <tr>
           {columns.map((column) => (
-            <th
-              key={source.columns[column]?.id}
-              className={cn(cellClass(column), ranked?.measure === column && "dk-rr-rank")}
-            >
-              {source.columns[column]?.label}
-            </th>
+            <Fragment key={source.columns[column]?.id}>
+              <th className={cn(cellClass(column), ranked?.measure === column && "dk-rr-rank")}>
+                {source.columns[column]?.label}
+              </th>
+              {sharesAfter(column) && <th className="dk-rr-num">{t("Share")}</th>}
+            </Fragment>
           ))}
-          {total !== null && <th className="dk-rr-num">{t("Share")}</th>}
         </tr>
       </thead>
       <tbody>
@@ -235,31 +237,33 @@ function SheetTable({
           <tr key={at}>
             {columns.map((column) =>
               ranked?.measure === column ? (
-                <td key={column}>
-                  <span
-                    className="dk-rr-cbar"
-                    style={{ "--dk-rr-figw": `${widest + 1}ch` } as CSSProperties}
-                  >
-                    <span className="dk-rr-tr">
-                      <i
-                        style={{
-                          width: `${max > 0 ? ((numberAt(row, column) ?? 0) / max) * 100 : 0}%`,
-                        }}
-                      />
+                <Fragment key={column}>
+                  <td>
+                    <span
+                      className="dk-rr-cbar"
+                      style={{ "--dk-rr-figw": `${widest + 1}ch` } as CSSProperties}
+                    >
+                      <span className="dk-rr-tr">
+                        <i
+                          style={{
+                            width: `${max > 0 ? ((numberAt(row, column) ?? 0) / max) * 100 : 0}%`,
+                          }}
+                        />
+                      </span>
+                      <span className="dk-rr-num">{text.cell(at, column)}</span>
                     </span>
-                    <span className="dk-rr-num">{text.cell(at, column)}</span>
-                  </span>
-                </td>
+                  </td>
+                  {sharesAfter(column) && (
+                    <td className="dk-rr-num dk-rr-mut">
+                      {shareText(shareOf(numberAt(row, column), total))}
+                    </td>
+                  )}
+                </Fragment>
               ) : (
                 <td key={column} className={cellClass(column)}>
                   {text.cell(at, column)}
                 </td>
               ),
-            )}
-            {total !== null && ranked && (
-              <td className="dk-rr-num dk-rr-mut">
-                {shareText(shareOf(numberAt(row, ranked.measure), total))}
-              </td>
             )}
           </tr>
         ))}
@@ -269,15 +273,18 @@ function SheetTable({
           <tr>
             {columns.map((column, place) =>
               ranked?.measure === column ? (
-                <td key={column}>
-                  <span
-                    className="dk-rr-cbar"
-                    style={{ "--dk-rr-figw": `${widest + 1}ch` } as CSSProperties}
-                  >
-                    <span />
-                    <span className="dk-rr-num">{text.total(column)}</span>
-                  </span>
-                </td>
+                <Fragment key={column}>
+                  <td>
+                    <span
+                      className="dk-rr-cbar"
+                      style={{ "--dk-rr-figw": `${widest + 1}ch` } as CSSProperties}
+                    >
+                      <span />
+                      <span className="dk-rr-num">{text.total(column)}</span>
+                    </span>
+                  </td>
+                  {sharesAfter(column) && <td className="dk-rr-num">{percentText(1)}</td>}
+                </Fragment>
               ) : (
                 <td key={column} className={cellClass(column)}>
                   {place === 0 && !source.columns[column]?.numeric
@@ -288,7 +295,6 @@ function SheetTable({
                 </td>
               ),
             )}
-            {total !== null && <td className="dk-rr-num">{percentText(1)}</td>}
           </tr>
         </tfoot>
       )}
@@ -296,8 +302,14 @@ function SheetTable({
   );
 }
 
-function shareText(share: number | null): string {
-  return share === null ? "" : percentText(share);
+const share = new Intl.NumberFormat(undefined, {
+  style: "percent",
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+function shareText(value: number | null): string {
+  return value === null ? "" : share.format(value);
 }
 
 const TREND_W = 1000;
