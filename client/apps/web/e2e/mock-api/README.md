@@ -287,7 +287,8 @@ state, the editor's problems, completion, hover, signature help, rename and defi
 preview on a real shipment and "Save as test", the tests panel failing and fixed, Nova's
 suggested tests and its reading of a failing test, the reference, formatting, Nova's proposals
 (on the active template) and a refused one (on the draft), the review dialogs, the backtest, the
-narrow layouts, and every library page and pane; and on `fmt_studio_ltl`, the tests panel with the failing
+narrow layouts, and every library page and pane; and on `fmt_studio_ltl`, a per-pound rate multiplied by a
+distance (`ltl-unit-mismatch`, the checker's unit error), the tests panel with the failing
 property's counterexample and "Save as test", coverage (the unreached list, the gutter and its
 tooltip), the marks at the cursor and Find references, the editor's menu, Promote to input (the
 menu, rename after it, and nothing to promote), the hover's bounds, the preview's choices on the
