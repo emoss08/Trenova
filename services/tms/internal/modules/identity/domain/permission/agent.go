@@ -55,9 +55,11 @@ var agentAllowedPermissions = map[Resource]map[Operation]struct{}{
 		OpCreate: {},
 	},
 	ResourceShipmentComment: {
+		OpRead:   {},
 		OpCreate: {},
 	},
 	ResourceShipmentHold: {
+		OpRead:   {},
 		OpCreate: {},
 		OpUpdate: {},
 	},

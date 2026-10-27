@@ -137,6 +137,12 @@ func TestTheAllowListGrantsNothingNoToolClaims(t *testing.T) {
 		permission.ResourceShipmentMove: {
 			permission.OpRead: "agentsubjectservice loads the move a run is about",
 		},
+		permission.ResourceShipmentComment: {
+			permission.OpRead: "shipment_get folds in the shipment's newest comments",
+		},
+		permission.ResourceShipmentHold: {
+			permission.OpRead: "shipment_get and shipment_list carry the active holds",
+		},
 		permission.ResourceWorker: {
 			permission.OpRead: "agentsubjectservice loads the driver a run is about",
 		},
