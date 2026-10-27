@@ -13,12 +13,16 @@ export type LadingFile = { path: string; source: string };
 export type LadingSample = { path: string; content: string };
 export type LadingProjectInput = { files: LadingFile[]; samples: LadingSample[] };
 
-export type LadingCustomField = { name: string; type: string; options?: string[] };
+/** One of the organisation's custom fields, named as its definition names it (`po_number`). */
+export type LadingCustomField = { name: string; type: string; label: string };
 
-/** What a project is checked against: the organisation and its shipment custom fields. */
+/**
+ * What a project is checked against: the organisation and its custom fields by the record they
+ * are on (`shipment`), as `GET /edi/lading/context/` sends them.
+ */
 export type LadingContext = {
   org: { name: string; scac: string; zone: string };
-  customFields?: LadingCustomField[];
+  customFields?: Record<string, LadingCustomField[]>;
 };
 
 export type LadingChange = { range: LadingRange; insert: string };
@@ -170,7 +174,12 @@ export type LadingLookupAnswer = {
 };
 
 export type LadingSource = { path: string; segment?: string; position?: number; element?: number };
-export type LadingLineage = { path: string; sources: LadingSource[]; steps: string[]; value: string };
+export type LadingLineage = {
+  path: string;
+  sources: LadingSource[];
+  steps: string[];
+  value: string;
+};
 
 export type LadingOutcome = {
   kind: "reject" | "decline" | "hold" | "warn";

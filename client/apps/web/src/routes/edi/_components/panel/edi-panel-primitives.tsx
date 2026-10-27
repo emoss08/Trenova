@@ -1,5 +1,7 @@
 import { KpiStripItem } from "@/components/kpi/kpi-strip";
 import { DescriptionItem, DescriptionList } from "@trenova/shared/components/ui/description-list";
+import { HighlightedCode } from "@trenova/shared/components/ui/highlighted-code";
+import { x12Spans } from "@trenova/shared/lib/highlight/x12";
 import { cn } from "@trenova/shared/lib/utils";
 
 export function EDIEmptyState({ message, className }: { message: string; className?: string }) {
@@ -86,10 +88,14 @@ export function InfoTile({
   );
 }
 
+/** A message or file as received or sent, coloured as X12 when it is X12. */
 export function EDIRawContent({ content }: { content: string }) {
   return (
-    <pre className="bg-muted/30 max-h-72 overflow-auto rounded-md border p-3 font-mono text-xs whitespace-pre-wrap">
-      {content}
-    </pre>
+    <HighlightedCode
+      code={content}
+      language="x12"
+      spans={x12Spans(content)}
+      className="bg-muted/30 max-h-72 overflow-auto rounded-md border p-3 text-xs break-all whitespace-pre-wrap"
+    />
   );
 }

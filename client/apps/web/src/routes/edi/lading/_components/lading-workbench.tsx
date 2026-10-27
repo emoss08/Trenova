@@ -1,5 +1,6 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { LadingEditor } from "@/components/lading-editor/lading-editor";
+import { SampleEditor } from "@/components/lading-editor/sample-editor";
 import { checkProject } from "@/components/lading-editor/lading-service";
 import { UnsavedChangesGuard } from "@/components/unsaved-changes-guard";
 import {
@@ -7,7 +8,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@trenova/shared/components/ui/resizable";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
 import { toast } from "@trenova/shared/components/ui/toast";
 import type {
   LadingContext,
@@ -186,25 +186,19 @@ export function LadingWorkbench({
                   readOnly={!editable}
                 />
               ) : openSample ? (
-                <div className="h-full overflow-auto p-3">
-                  <Textarea
-                    key={openSample.path}
-                    bare
-                    aria-label={openSample.path}
-                    className="min-h-full w-full resize-none font-mono text-xs"
-                    value={openSample.content}
-                    readOnly={!editable}
-                    spellCheck={false}
-                    onChange={(event) => {
-                      const content = event.target.value;
-                      setSamples((current) =>
-                        current.map((sample) =>
-                          sample.path === openSample.path ? { ...sample, content } : sample,
-                        ),
-                      );
-                    }}
-                  />
-                </div>
+                <SampleEditor
+                  key={openSample.path}
+                  path={openSample.path}
+                  value={openSample.content}
+                  readOnly={!editable}
+                  onChange={(content) =>
+                    setSamples((current) =>
+                      current.map((sample) =>
+                        sample.path === openSample.path ? { ...sample, content } : sample,
+                      ),
+                    )
+                  }
+                />
               ) : (
                 <p className="text-muted-foreground p-4 text-sm">
                   {t("Pick a file or a sample to open it")}

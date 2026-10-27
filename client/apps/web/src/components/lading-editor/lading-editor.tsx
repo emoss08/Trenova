@@ -1,6 +1,6 @@
 import { useResolvedTheme } from "@/hooks/use-resolved-theme";
 import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
-import { lintGutter, openLintPanel } from "@codemirror/lint";
+import { forceLinting, lintGutter, openLintPanel } from "@codemirror/lint";
 import { Compartment, Prec, type EditorState, type Extension } from "@codemirror/state";
 import { EditorView, keymap, type Command } from "@codemirror/view";
 import type {
@@ -213,6 +213,10 @@ export function LadingEditor({
   useEffect(() => {
     viewRef.current?.dispatch({ effects: setLadingCoverage.of(uncovered) });
   }, [uncovered]);
+
+  useEffect(() => {
+    if (viewRef.current) forceLinting(viewRef.current);
+  }, [context]);
 
   useEffect(() => {
     if (reveal && viewRef.current) revealLadingRange(viewRef.current, reveal);

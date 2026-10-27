@@ -49,18 +49,26 @@ const EMPTY_CHECK: LadingCheck = {
   warnings: 0,
 };
 
-const checks = new WeakMap<LadingProjectInput, LadingCheck>();
+const checks = new WeakMap<LadingProjectInput, WeakMap<LadingContext, LadingCheck>>();
 
-/** The module's check of a project, asked once per project object and context. */
+/**
+ * The module's check of a project, asked once per project object and context object: a context
+ * that arrives later (custom fields added since the studio opened) checks the same text again.
+ */
 export function checkProject(
   edi: EdiRuntime,
   project: LadingProjectInput,
   context: LadingContext,
 ): LadingCheck {
-  const cached = checks.get(project);
+  let byContext = checks.get(project);
+  if (!byContext) {
+    byContext = new WeakMap();
+    checks.set(project, byContext);
+  }
+  const cached = byContext.get(context);
   if (cached) return cached;
   const check = unlessRefused(() => ladingCheck(edi, { project, context }), EMPTY_CHECK);
-  checks.set(project, check);
+  byContext.set(context, check);
   return check;
 }
 

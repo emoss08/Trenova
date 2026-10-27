@@ -6,6 +6,7 @@ import { apiService } from "@/services/api";
 import { PlayIcon } from "@trenova/shared/components/icons";
 import { Button } from "@trenova/shared/components/ui/button";
 import { HighlightedCode } from "@trenova/shared/components/ui/highlighted-code";
+import { x12Spans } from "@trenova/shared/lib/highlight/x12";
 import {
   Select,
   SelectContent,
@@ -253,7 +254,9 @@ function RunResult({ result, where }: { result: LadingRunResult; where: "browser
           ))}
           <HighlightedCode
             code={result.output.text}
-            className="max-h-72 overflow-auto rounded-md border p-2 text-xs"
+            language="x12"
+            spans={x12Spans(result.output.text)}
+            className="max-h-72 overflow-auto rounded-md border p-2 text-xs break-all whitespace-pre-wrap"
           />
         </div>
       ) : null}
