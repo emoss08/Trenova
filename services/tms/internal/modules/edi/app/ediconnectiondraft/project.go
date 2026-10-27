@@ -391,9 +391,9 @@ func (p *planner) buildProject(ctx context.Context, exchanges []*exchange) error
 }
 
 func (p *planner) starterRequest(exchanges []*exchange) *lading.StarterRequest {
-	partner := p.partnerEntity()
+	partner := p.plannedPartner()
 	request := &lading.StarterRequest{
-		Name:  firstNonEmpty(partner.Code, partner.Name),
+		Name:  firstNonEmpty(strings.ToLower(partner.Code), partner.Name),
 		Label: firstNonEmpty(partner.Name, partner.Code),
 		Role:  roleFor(exchanges),
 		Zone:  partner.Timezone,
@@ -424,6 +424,13 @@ func (p *planner) starterRequest(exchanges []*exchange) *lading.StarterRequest {
 		}
 	}
 	return request
+}
+
+func (p *planner) plannedPartner() *edi.EDIPartner {
+	if p.writes.partner != nil {
+		return p.writes.partner
+	}
+	return p.partnerEntity()
 }
 
 func (p *planner) pair(first, second string) *[2]string {
@@ -571,7 +578,7 @@ func (p *planner) guides(
 ) []*guideFile {
 	bySet := map[edi.TransactionSet]*guideFile{}
 	order := make([]edi.TransactionSet, 0)
-	label := firstNonEmpty(p.partnerEntity().Name, name)
+	label := firstNonEmpty(p.plannedPartner().Name, name)
 	for _, exchanged := range exchanges {
 		if _, ok := kept[string(exchanged.set)]; ok {
 			continue

@@ -66,6 +66,17 @@ func TestApply_WritesANewConnectionInactive(t *testing.T) {
 	}
 	assert.Contains(t, partnerFile, "007912345", "the partner's interchange ID is in the project")
 	assert.Contains(t, partnerFile, "TRNV")
+	assert.Contains(t, partnerFile, "partner acmeretail", "the starter is named for the new partner")
+	guides := map[string]string{}
+	for _, file := range imported.Files {
+		if strings.HasPrefix(file.Path, guideDirectory) {
+			guides[file.Path] = file.Source
+		}
+	}
+	require.NotEmpty(t, guides)
+	for path, source := range guides {
+		assert.Contains(t, source, `"Acme Retail Group `, "%s names the new partner", path)
+	}
 	var project *ediports.DraftWrite
 	for index := range applied.Writes {
 		if applied.Writes[index].Record == projectRecord {
