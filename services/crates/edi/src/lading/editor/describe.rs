@@ -241,6 +241,7 @@ pub fn decl(program: &Program, unit: usize, name: &str) -> Option<(String, Optio
         _ => None,
     }
     .map(Doc::Text);
+    let doc = doc.or_else(|| same_sides(program, unit, name, decl));
     let detail = match decl {
         Decl::Fn(_) => program
             .fns
@@ -264,6 +265,20 @@ pub fn decl(program: &Program, unit: usize, name: &str) -> Option<(String, Optio
         }
     };
     Some((detail, doc))
+}
+
+/// What a crosswalk with the same type on both sides reads which way, for one with no doc.
+fn same_sides(program: &Program, unit: usize, name: &str, decl: &Decl) -> Option<Doc> {
+    let Decl::Crosswalk(_) = decl else {
+        return None;
+    };
+    let (left, right) = program.crosswalks.get(&(unit, name.to_owned()))?;
+    (left == right && !matches!(left, Type::Any)).then(|| {
+        Doc::Message(Message::with(
+            message!("Both sides are {0}: via {1} reads left to right, via {1}.back right to left"),
+            [Arg::from(left.to_string()), Arg::from(name)],
+        ))
+    })
 }
 
 fn const_value_span(

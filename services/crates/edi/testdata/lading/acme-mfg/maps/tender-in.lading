@@ -39,9 +39,9 @@ total         <- money(L305, partner.currency)
 otherCharges  <- total * partner.fuelSurcharge
 freightCharge <- total - total * partner.fuelSurcharge
 
-custom.poNumber            <- poNumber
-custom.declaredValue       <- L314
-custom.appointmentRequired <- 0300.any(s => exists s.L11[02 == "AO"])
+custom.po_number            <- poNumber
+custom.declared_value       <- L314
+custom.appointment_required <- 0300.any(s => exists s.L11[02 == "AO"])
 
 // A replacement (05) is read as a change, with a note saying so.
 when B2A01 == "05" {

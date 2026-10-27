@@ -841,14 +841,52 @@ fn expression(session: &Session, offset: u32, items: &mut Vec<Item2>) {
     }
 }
 
+/// The type of the field path left of `dot` on a line that assigns to it (`custom.` in
+/// `custom.po_number <- ...`), read from the record the scope builds: an assignment's target is
+/// not an expression, so the checker records no type for it.
+fn assigned_type(session: &Session, dot: u32) -> Option<Type> {
+    let before = session.before(dot);
+    let mut names = Vec::new();
+    let mut expect_name = true;
+    for token in before.iter().rev() {
+        match token.kind {
+            Tok::Name if expect_name => {
+                names.push(session.text(token.span));
+                expect_name = false;
+            }
+            Tok::Dot if !expect_name => expect_name = true,
+            Tok::Newline | Tok::LBrace | Tok::Semi if !expect_name => break,
+            _ => return None,
+        }
+    }
+    if expect_name {
+        return None;
+    }
+    let mut ty = session.scope(dot)?.builds.clone()?;
+    for name in names.into_iter().rev() {
+        ty = match ty.unwrapped() {
+            Type::Record(record) => session
+                .program
+                .field_type(schema::record(record)?.field(name)?),
+            Type::Struct(fields) => fields.iter().find(|(field, _)| field == name)?.1.clone(),
+            _ => return None,
+        };
+    }
+    Some(ty)
+}
+
 /// What may follow `value.`, by the value's type.
 #[allow(clippy::too_many_lines)]
 fn members(session: &Session, dot: u32, items: &mut Vec<Item2>) {
     let program = &session.program;
-    let Some(typed) = program.facts.type_ending_at(session.unit, dot) else {
+    let Some(ty) = program
+        .facts
+        .type_ending_at(session.unit, dot)
+        .map(|typed| typed.ty.unwrapped().clone())
+        .or_else(|| assigned_type(session, dot).map(|ty| ty.unwrapped().clone()))
+    else {
         return;
     };
-    let ty = typed.ty.unwrapped().clone();
     match &ty {
         Type::Record(name) => {
             if let Some(record) = schema::record(name) {
@@ -860,11 +898,20 @@ fn members(session: &Session, dot: u32, items: &mut Vec<Item2>) {
         }
         Type::Struct(fields) => {
             let partner = program.partner_type();
+            let custom = program
+                .context
+                .custom_fields
+                .iter()
+                .find(|(record, _)| ty == program.custom_type(record))
+                .map(|(_, fields)| fields);
             for (name, field_ty) in fields {
                 let doc = if ty == partner {
                     describe::setting(program, name).and_then(|(_, doc)| doc)
                 } else {
-                    None
+                    custom
+                        .and_then(|fields| fields.iter().find(|field| field.name == *name))
+                        .filter(|field| !field.label.is_empty())
+                        .map(|field| Doc::Text(field.label.clone()))
                 };
                 items.push(item(name, "field", field_ty.to_string(), doc, "0"));
             }

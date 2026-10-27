@@ -460,14 +460,29 @@ impl Checker<'_> {
                         } else {
                             let names: Vec<&str> =
                                 fields.iter().map(|(field, _)| field.as_str()).collect();
-                            let mut diagnostic = Diagnostic::error(
-                                "unknown-field",
-                                name.span,
+                            let custom = path == "custom" || path.ends_with(".custom");
+                            let message = if custom && names.is_empty() {
+                                Message::with(
+                                    message!(
+                                        "The organization has no custom field {0}: add it in Settings, under Custom fields"
+                                    ),
+                                    [Arg::from(name.name.as_str())],
+                                )
+                            } else if custom {
+                                Message::with(
+                                    message!(
+                                        "There is no custom field {0}; the organization's are {1}"
+                                    ),
+                                    [Arg::from(name.name.as_str()), Arg::from(names.join(", "))],
+                                )
+                            } else {
                                 Message::with(
                                     message!("There is no field {0} here"),
                                     [Arg::from(name.name.as_str())],
-                                ),
-                            );
+                                )
+                            };
+                            let mut diagnostic =
+                                Diagnostic::error("unknown-field", name.span, message);
                             if let Some(close) = nearest(&name.name, names) {
                                 diagnostic =
                                     diagnostic.with_fix(super::replace_fix(name.span, close));

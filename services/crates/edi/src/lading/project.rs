@@ -64,7 +64,7 @@ pub struct Org {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CustomField {
-    /// Its key, the name maps use (`poNumber`).
+    /// Its key as Trenova names it, which maps use as written (`custom.po_number`).
     pub name: String,
     /// `Text`, `Int`, `Decimal`, `Bool`, `Date` or `DateTime`.
     #[serde(rename = "type")]

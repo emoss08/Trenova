@@ -1136,9 +1136,9 @@ pub(crate) mod corpus {
             custom_fields: [(
                 "shipment".to_owned(),
                 vec![
-                    field("poNumber", "Text", "PO number"),
-                    field("declaredValue", "Decimal", "Declared value"),
-                    field("appointmentRequired", "Bool", "Appointment required"),
+                    field("po_number", "Text", "PO number"),
+                    field("declared_value", "Decimal", "Declared value"),
+                    field("appointment_required", "Bool", "Appointment required"),
                 ],
             )]
             .into_iter()
@@ -1175,7 +1175,7 @@ mod check_tests {
     #[test]
     fn the_project_using_every_feature_checks_clean_and_passes_its_tests() {
         let program = check(&acme_mfg(), &acme_mfg_context());
-        assert_clean(&program, Severity::Warning);
+        assert_clean(&program, Severity::Info);
         let report = run_tests(&program);
         let failed: Vec<String> = report
             .tests
@@ -1409,6 +1409,50 @@ mod findings {
         }
         assert!(failures.is_empty(), "{}", failures.join("\n"));
     }
+    #[test]
+    fn an_unknown_custom_field_says_where_custom_fields_come_from() {
+        let mut project = acme();
+        let file = project
+            .files
+            .iter_mut()
+            .find(|file| file.path == "maps/tender-in.lading")
+            .expect("map");
+        file.source = file.source.replacen(
+            "use  common\n",
+            "use  common\n\ncustom.po_number <- B204\n",
+            1,
+        );
+        let messages = |program: &super::Program| -> Vec<String> {
+            program
+                .units
+                .iter()
+                .flat_map(|unit| unit.diagnostics.iter())
+                .filter(|found| found.code == "unknown-field")
+                .map(|found| found.message.english())
+                .collect()
+        };
+        let none = messages(&check(&project, &context()));
+        assert_eq!(
+            none,
+            [
+                "The organization has no custom field po_number: add it in Settings, under Custom fields"
+            ]
+        );
+        let mut other = context();
+        other.custom_fields.insert(
+            "shipment".to_owned(),
+            vec![crate::lading::project::CustomField {
+                name: "pro_ref".into(),
+                ty: "Text".into(),
+                label: "PRO reference".into(),
+            }],
+        );
+        assert_eq!(
+            messages(&check(&project, &other)),
+            ["There is no custom field po_number; the organization's are pro_ref"]
+        );
+    }
+
     #[test]
     fn a_map_whose_guide_is_unknown_is_reported_once_not_at_its_tests_rules_and_flows() {
         let found = codes("maps/tender-in.lading", "from acme.204", "from acme_204");

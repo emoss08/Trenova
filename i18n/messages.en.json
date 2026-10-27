@@ -270980,6 +270980,17 @@
       "go/other"
     ]
   },
+  "The organization has no custom field {0}: add it in Settings, under Custom fields": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
   "The organization is required": {
     "sites": 1,
     "scope": [
@@ -279901,6 +279912,17 @@
       "edi/lading"
     ]
   },
+  "There is no custom field {0}; the organization's are {1}": {
+    "sites": 2,
+    "scope": [
+      "go",
+      "ts"
+    ],
+    "areas": [
+      "apps/web/edi",
+      "edi/lading"
+    ]
+  },
   "There is no declaration to go to here": {
     "sites": 1,
     "scope": [
@@ -280046,7 +280068,7 @@
     ]
   },
   "There is no map named {0}": {
-    "sites": 6,
+    "sites": 4,
     "scope": [
       "go",
       "ts"

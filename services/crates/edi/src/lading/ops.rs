@@ -824,6 +824,52 @@ mod tests {
     }
 
     #[test]
+    fn completion_after_custom_on_an_assigned_line_lists_the_custom_fields() {
+        let mut input = project();
+        let line = "custom.po_number <- B204\n";
+        let mut offset = 0;
+        for file in input["project"]["files"].as_array_mut().expect("files") {
+            if file["path"] == "maps/tender-in.lading" {
+                let source = file["source"].as_str().expect("source").to_owned();
+                let at = source.find("use  common\n").expect("header") + "use  common\n".len();
+                offset = source[..at].encode_utf16().count() + "custom.".len();
+                file["source"] = Json::String(format!("{}{line}{}", &source[..at], &source[at..]));
+            }
+        }
+        input["context"]["customFields"] = json!({
+            "shipment": [
+                { "name": "po_number", "type": "Text", "label": "PO number" },
+                { "name": "declared_value", "type": "Decimal", "label": "Declared value" },
+            ],
+        });
+        let out = call(
+            "lading.complete",
+            json!({
+                "project": input["project"],
+                "context": input["context"],
+                "path": "maps/tender-in.lading",
+                "offset": offset,
+            }),
+        );
+        let labels = labels(&out);
+        assert!(
+            labels.iter().any(|label| label == "po_number"),
+            "{labels:?}"
+        );
+        assert!(
+            labels.iter().any(|label| label == "declared_value"),
+            "{labels:?}"
+        );
+        let po_number = out["items"]
+            .as_array()
+            .expect("items")
+            .iter()
+            .find(|item| item["label"] == "po_number")
+            .expect("po_number");
+        assert_eq!(po_number["doc"], "PO number", "{po_number}");
+    }
+
+    #[test]
     fn completion_inside_a_compared_text_lists_the_element_codes() {
         let path = "maps/tender-in.lading";
         let offset = offset_of(path, "02 == \"BM\"", 7);

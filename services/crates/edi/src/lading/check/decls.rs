@@ -149,22 +149,6 @@ impl Checker<'_> {
             }
             self.crosswalk_value(&mut env, value, target);
         }
-        if left == right && !matches!(left, Type::Any) {
-            self.report(
-                unit,
-                Diagnostic {
-                    severity: trenova_module_kit::diagnostic::Severity::Info,
-                    ..Diagnostic::error(
-                        "crosswalk-same-type",
-                        decl.name.span,
-                        Message::with(
-                            message!("Both sides are {0}: via {1} reads left to right, via {1}.back right to left"),
-                            [Arg::from(left.to_string()), Arg::from(decl.name.name.as_str())],
-                        ),
-                    )
-                },
-            );
-        }
     }
 
     fn crosswalk_value(&mut self, env: &mut Env, value: &Expr, ty: &Type) {
