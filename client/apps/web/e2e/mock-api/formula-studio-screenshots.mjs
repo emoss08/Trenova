@@ -329,6 +329,25 @@ function shotsFor(colorScheme) {
     // tariff: its weight break inverts at 1,000 lb, a hazmat fee no test reaches and a `best` of
     // three linehaul methods.
     { name: "ltl-edit", path: LTL },
+    {
+      name: "ltl-unit-mismatch",
+      path: LTL,
+      act: async (page) => {
+        await cursorAt(page, "weight * breakRate");
+        await page.keyboard.down("Shift");
+        for (let i = 0; i < "weight".length; i += 1) await page.keyboard.press("ArrowRight");
+        await page.keyboard.up("Shift");
+        await page.keyboard.type("shipment.distance");
+        await page.keyboard.press("Escape");
+        await page.mouse.move(800, 150);
+        await pause(page);
+        await page
+          .getByText(/multiply a rate by the quantity it is priced per/)
+          .first()
+          .scrollIntoViewIfNeeded();
+        await pause(page, 600);
+      },
+    },
     { name: "ltl-tests", path: LTL, act: tab(/^Tests/) },
     {
       name: "ltl-coverage-unreached",
