@@ -66,6 +66,8 @@ type scriptGate struct {
 	provider   aiprovider.Kind
 	providerID pulid.ID
 	position   int
+	// continues is the arguments of the script the call continues.
+	continues map[string]any
 }
 
 // guardedDispatch runs one tool call at most once across every attempt of a

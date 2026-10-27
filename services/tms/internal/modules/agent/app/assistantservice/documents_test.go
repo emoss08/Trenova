@@ -118,3 +118,67 @@ func TestArtifactRecorder_RefusesARevisionOfSomethingElse(t *testing.T) {
 	}
 	assert.Empty(t, repo.upserts)
 }
+
+// Asked to publish an analysis, a model retyped its figures into the text. A
+// document that names the analysis gets it added after its text from what the
+// analysis kept, so the figures in it are the analysis's own.
+func TestArtifactRecorder_PublishesTheAnalysesADocumentNames(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubArtifactRepo{}
+	recorder, thread := documentRecorder(t, repo)
+	kept := &assistantartifact.Artifact{
+		ID:       pulid.MustNew("art_"),
+		ThreadID: thread.ID,
+		Kind:     assistantartifact.KindAnalysis,
+		Title:    "Lane performance, 90 days",
+		Payload: map[string]any{
+			"figures": []any{map[string]any{
+				"label": "Revenue", "value": 12517479.24, "kind": "money", "currency": "USD",
+			}},
+		},
+	}
+	repo.stored = map[pulid.ID]*assistantartifact.Artifact{kept.ID: kept}
+	document := published("Lane brief", "Revenue is spread thin.", pulid.Nil)
+	brief, ok := document.Data.(agentports.PublishedDocument)
+	require.True(t, ok)
+	brief.Analyses = []pulid.ID{kept.ID}
+	document.Data = brief
+
+	_, err := recorder.observe(document)
+	require.NoError(t, err)
+
+	require.Len(t, repo.upserts, 1)
+	assert.Equal(t, "Revenue is spread thin.\n\n## Lane performance, 90 days\n\n"+
+		"- **Revenue:** $12,517,479.24\n", repo.upserts[0].Payload["body"])
+}
+
+// Only an analysis of this conversation is added: another thread's, or an
+// artifact that is not an analysis, is refused and nothing is kept.
+func TestArtifactRecorder_RefusesAnAnalysisFromElsewhere(t *testing.T) {
+	t.Parallel()
+
+	repo := &stubArtifactRepo{}
+	recorder, thread := documentRecorder(t, repo)
+	elsewhere := &assistantartifact.Artifact{
+		ID: pulid.MustNew("art_"), ThreadID: pulid.MustNew("athr_"),
+		Kind: assistantartifact.KindAnalysis,
+	}
+	table := &assistantartifact.Artifact{
+		ID: pulid.MustNew("art_"), ThreadID: thread.ID, Kind: assistantartifact.KindTableView,
+	}
+	repo.stored = map[pulid.ID]*assistantartifact.Artifact{elsewhere.ID: elsewhere, table.ID: table}
+
+	for _, target := range []pulid.ID{elsewhere.ID, table.ID, pulid.MustNew("art_")} {
+		document := published("Brief", "# Brief", pulid.Nil)
+		brief, ok := document.Data.(agentports.PublishedDocument)
+		require.True(t, ok)
+		brief.Analyses = []pulid.ID{target}
+		document.Data = brief
+
+		shown, err := recorder.observe(document)
+		require.ErrorIs(t, err, errUnknownAnalysis)
+		assert.Nil(t, shown)
+	}
+	assert.Empty(t, repo.upserts)
+}

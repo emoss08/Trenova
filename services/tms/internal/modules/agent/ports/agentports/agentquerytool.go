@@ -32,7 +32,13 @@ type QueryToolParams struct {
 	Broker codemode.Broker
 	// StepKey is the step the call is claimed under, for the tool that runs a
 	// script to name its sandbox.
-	StepKey      string
+	StepKey string
+	// CallID is the model's id for the call, which a script's answer gives
+	// back as the script a later call may continue.
+	CallID string
+	// Continues is the arguments of the script of the turn this one
+	// continues, set only once the runtime has found it may be continued.
+	Continues    map[string]any
 	IncludeTotal bool
 }
 

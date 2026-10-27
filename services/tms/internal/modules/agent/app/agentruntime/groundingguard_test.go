@@ -585,7 +585,7 @@ func TestGroundingGuard_AnOfferBesideAClaimStillChecksTheClaim(t *testing.T) {
 }
 
 // A share whose two sides the reply gives is shown working: the guard checks
-// the division instead of sending the agent to agent_run_script for it.
+// the division instead of sending the agent to analysis_run for it.
 func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
 	t.Parallel()
 

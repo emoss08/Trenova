@@ -54,7 +54,7 @@ func TestCodeModeScenariosArePaired(t *testing.T) {
 		for _, half := range found {
 			step := half.Steps[0].Expect
 			if half.Mode == deskbench.ModeDiscrete || slices.Contains(half.Tags, "control") {
-				assert.Containsf(t, step.NoCalls, "agent_run_script",
+				assert.Containsf(t, step.NoCalls, "analysis_run",
 					"%s never runs a script", half.Name)
 			}
 		}

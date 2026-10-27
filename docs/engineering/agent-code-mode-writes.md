@@ -27,7 +27,7 @@ Background is in [docs/desk-harness-review.md](../desk-harness-review.md):
 
 5b plugs into the places §13 of that page reserves for it, and inherits these 5a decisions:
 
-- **One tool runs the script.** The model calls `agent_run_script`, which is one step in
+- **One tool runs the script.** The model calls `analysis_run`, which is one step in
   `agent_run_steps`. Each broker call is a step of its own (`caller=script`,
   `parent_step_key`, `Scope: "script:<script step key>"`).
 - **The SDK is generated.** It is a generic SDK plus a per-call index built from the turn's
@@ -64,7 +64,7 @@ dispatch runs before it files a proposal:
 A call that passes is kept as an **intent** in the script's outbox (`scriptoutbox.Outbox`), held
 by the broker in Go. A call that fails raises in the script with the reason. When the script
 ends cleanly, every intent is decided again with the whole script's taint and returned with the
-`agent_run_script` outcome, and the proposal recorder files them in the turn's transaction as one
+`analysis_run` outcome, and the proposal recorder files them in the turn's transaction as one
 plan, with one proposal per intent. The plan machinery already decides plans, and it does the
 rest:
 
@@ -91,8 +91,9 @@ all of these hold:
 - it is an action tool whose effect is not a lookup;
 - its policy says `Script: ScriptCallable` and its scope is the tenant's records;
 - its policy does not `Escalates` and has no `TaintHold`;
-- it is not a runtime-control tool (no `agent_` name: `agent_run_script`, `agent_create_wait`,
-  `agent_create_memory`, delegation and the ask-the-person tools) and not an extension tool
+- it is not a runtime-control tool (no `agent_` name: `agent_create_wait`,
+  `agent_create_memory`, delegation and the ask-the-person tools), not the script tool itself
+  (`analysis_run`) and not an extension tool
   (`web_*`, the portal tools);
 - it implements both `ToolPreviewer` and `TargetedTool`, so its own preview shows the person what
   it would do and pins the version of the record it names.
@@ -155,7 +156,7 @@ command changes, so the replay histories under `agentjobs/testdata/replay*` repl
 
 ### The outbox
 
-The outbox lives for one `agent_run_script` call: an ordered list of `PendingAction`s and their
+The outbox lives for one `analysis_run` call: an ordered list of `PendingAction`s and their
 baselines. It is never handed to the interpreter and never sent back to the script; the script
 holds only intent numbers. The broker asks it to `Admit` each call before dispatch and to `Hold`
 the decided action after, and the SDK call raises in each of these cases:
@@ -175,17 +176,17 @@ happens. It counts against 5a's per-script call budget.
 
 **A script that ends badly files nothing.** That covers an exception, a timeout, an interpreter
 failure, a broker error, or a script killed by the 5a limits (`TestScriptWrites_AScriptThatDidNotFinishFilesNothing`).
-The `agent_run_script` result says so: its batch note says what was filed, what was dropped
+The `analysis_run` result says so: its batch note says what was filed, what was dropped
 because the script did not finish, or why the batch was refused. Intents are a plan the script
 finished writing, never a part of one.
 
 ### Taint is the script's, not the step's
 
 Statements inside the interpreter run in an order the host cannot verify. The broker therefore taints
-every intent with the taint **of the whole `agent_run_script` call**, applied when the script
+every intent with the taint **of the whole `analysis_run` call**, applied when the script
 settles, never with the taint the turn had when that intent was prepared:
 
-- the turn's taint when `agent_run_script` began;
+- the turn's taint when `analysis_run` began;
 - every mark added by a read the script ran (5a §8);
 - `ExternalContent` if any read in the script, or earlier in the turn, read the web or pasted
   partner text.
@@ -199,7 +200,7 @@ after an intent, inside the same script, still holds that intent
 
 ### Filing
 
-The settled batch rides the `agent_run_script` outcome (`toolOutcome.batch`, and
+The settled batch rides the `analysis_run` outcome (`toolOutcome.batch`, and
 `RunStepOutcome.Batch` on its ledger step, so a replayed activity returns the same batch and
 files it once). `recordToolResult` appends it to the turn's actions, and
 `proposalrecorder` files it as it files a turn's pending writes, kept apart from any plan of the
@@ -224,7 +225,7 @@ logged; the batch is still filed, because the steps' own previews are what the p
 GraphQL serves `AgentProposal.fromScript` and `AgentPlan.script { title purpose code }`. Both are
 additive, so `task gqlschema-diff` reports no breaking change.
 
-The `agent_run_script` result tells the model that one batch of N changes was prepared and gives
+The `analysis_run` result tells the model that one batch of N changes was prepared and gives
 each step's summary. It also says that nothing has happened, and that the person decides the
 batch as a whole.
 
@@ -292,11 +293,11 @@ step's parameters through the plan's step forms, exactly as for a discrete plan.
 | Permission | `authorize` when prepared, as the person, and the write index lists only permitted tools; `admit` at commit as the approver, unchanged. | `TestScriptWrites_AWriteThePersonMayNotMakeIsNeverPrepared`; `TestDispatch_AScriptsWriteTheActorMayNotMakeIsRefused` |
 | Write coverage | No new write route or mutation: decisions use `agentPlanDecide` and the plan resolve route, which are already covered. `writecoverage.yml` is unchanged. Every intent is a call to a registered tool, which coverage already maps. | `TestCoverageIsCurrent` (unchanged) |
 | Security audit | `agentplanservice.logDecision` records the critical `agent_proposal` audit row. Its state is the plan, with `scriptStepKey`, and, when any step was tainted, `tainted: true` and the union of the steps' taint marks. Each step's `ProposalDecided` row in the AI audit trail is unchanged in form, so there is no `hash_version` change. | `TestDecide_AScriptBatchsDecisionIsAuditedAsTheScriptsBatch`; `TestDecide_AScriptBatchThatReadOutsideContentNamesItInTheAudit`; `TestDecide_AnUntaintedBatchRecordsNoTaint` |
-| Step ledger | The `agent_run_script` call is one ledger step, and the script is never run twice (5a §9). Its settled outcome carries the batch, so a retried activity replays it and the batch is filed once. A retried *commit* is safe because the plan's claim is a conditional move out of Pending, and each step's executor run uses its proposal id as the idempotency key. | `TestScriptWrites_AReplayedScriptFilesTheSameBatchOnce`; `TestDecide_AScriptBatchDecidedTwiceCommitsOnce` |
+| Step ledger | The `analysis_run` call is one ledger step, and the script is never run twice (5a §9). Its settled outcome carries the batch, so a retried activity replays it and the batch is filed once. A retried *commit* is safe because the plan's claim is a conditional move out of Pending, and each step's executor run uses its proposal id as the idempotency key. | `TestScriptWrites_AReplayedScriptFilesTheSameBatchOnce`; `TestDecide_AScriptBatchDecidedTwiceCommitsOnce` |
 | Pending duplicate | The outbox folds identical intents and refuses conflicting ones within the script; dispatch's existing check refuses a duplicate of a pending proposal. | `TestOutbox_FoldsAnIdenticalIntentIntoTheFirst`; `TestOutbox_RefusesTheBatchForTwoDifferentChangesToOneRecord`; `TestScriptWrites_IdenticalIntentsFoldAndConflictingOnesRefuseTheBatch` |
 | Change size | 50 intents, or the agent's `ChangeLimit()` when smaller. | `TestOutbox_RefusesAnIntentPastTheBatchsSize`; `TestOutbox_HoldsTheAgentsChangeLimitWhenItIsSmaller`; `TestScriptWrites_AnOversizedBatchIsRefusedPastItsSize` |
 
-The safety doc (`ai-tool-safety.md`) says, on `agent_run_script`'s row, that a script changes
+The safety doc (`ai-tool-safety.md`) says, on `analysis_run`'s row, that a script changes
 nothing itself and that what it prepares is proposed as a batch. It is regenerated with
 `go generate`, and `TestCommittedDocumentIsCurrent` keeps it current.
 

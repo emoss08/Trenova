@@ -89,6 +89,8 @@ const (
 	AICodeModeStatus       = attribute.Key("trenova.ai.codemode.status")
 	AICodeModeBrokerMs     = attribute.Key("trenova.ai.codemode.broker_ms")
 	AICodeModeReplyMs      = attribute.Key("trenova.ai.codemode.reply_ms")
+	AICodeModeUnshown      = attribute.Key("trenova.ai.codemode.unshown")
+	AICodeModeContinues    = attribute.Key("trenova.ai.codemode.continues")
 	AITier                 = attribute.Key("trenova.ai.tier")
 	AITierSource           = attribute.Key("trenova.ai.tier.source")
 	AIHeldBy               = attribute.Key("trenova.ai.held_by")

@@ -296,7 +296,7 @@ func (o *ProposalOutcome) Pending() bool {
 
 // ToolObservation is one tool call as it finished.
 type ToolObservation struct {
-	Call ToolCall
+	Call    ToolCall
 	RanWith map[string]any
 	// Data is what a query tool returned; nil for a write, a refusal or a
 	// failure.
@@ -391,7 +391,19 @@ type PublishedDocument struct {
 	DocType string
 	Basis   string
 	Sources []PublishedSource
+	// Analyses are the analyses the document includes, by artifact id, added
+	// after its text from what each one kept rather than copied by the model.
+	Analyses []pulid.ID
 }
+
+// PublishMistake is a publish the model can fix and send again, such as an
+// id that names nothing in the conversation it may publish from. Any other
+// error is a document that could not be kept.
+type PublishMistake struct {
+	Reason string
+}
+
+func (e *PublishMistake) Error() string { return e.Reason }
 
 // PublishedSource is one source a document cites as [^N]: the tool that
 // found it, what it is, and the artifact that shows it when there is one.

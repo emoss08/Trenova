@@ -1,8 +1,10 @@
 //! One script's run: the SDK, then the script, paused at every host call.
 //!
-//! A run feeds two snippets to one Monty REPL. The first is the SDK (`sdk.py`), which builds the
-//! `trenova` object from the index and inputs the host sent; the second is the script, so it
-//! sees `trenova`, `inputs` and `help` as globals. Neither can reach a file, the environment,
+//! A run feeds snippets to one Monty REPL. The first is the SDK (`sdk.py`), which builds the
+//! `trenova` object from the index and inputs the host sent; the last is the script, so it
+//! sees `trenova`, `inputs` and `help` as globals. Between them come the dataset bindings, and
+//! the earlier script a continuation picks up from, fed quietly: what it prints is discarded
+//! and its `result()` is answered here and forgotten, so only the script's own reach the host. Neither can reach a file, the environment,
 //! a module Monty does not ship or the network: the only way out is the SDK's host functions,
 //! and each one pauses the run and hands the host a [`Step::Call`].
 //!
@@ -26,10 +28,10 @@ pub const SDK_SOURCE: &str = include_str!("sdk.py");
 
 const SDK_FILE: &str = "trenova.py";
 const SCRIPT_FILE: &str = "script.py";
-const SDK_SNIPPET: &str = "<python-input-0>";
-const SCRIPT_SNIPPET: &str = "<python-input-1>";
-const BOUND_SCRIPT_SNIPPET: &str = "<python-input-2>";
 const BINDINGS_FILE: &str = "datasets.py";
+const EARLIER_FILE: &str = "earlier.py";
+/// Lets the script call `result()` the earlier script already called.
+const FORGET_RESULT: &str = "_state[\"result\"] = False\n";
 const NO_OUTSIDE: &str = "scripts cannot reach files, the environment or the network";
 
 const READ: &str = "_trenova_read";
@@ -60,9 +62,52 @@ pub struct Session {
     output: Tail,
     calls: Calls,
     limits: Limits,
-    /// The snippets still to feed, in reverse order: the dataset bindings and the script,
-    /// while the SDK is still paging datasets in before them.
-    pending: Vec<String>,
+    feed: Feed,
+}
+
+/// One snippet to feed: its code, the file a traceback names it by, and whether what it prints
+/// and returns is kept from the host.
+#[derive(Debug)]
+struct Snippet {
+    code: String,
+    file: &'static str,
+    quiet: bool,
+}
+
+/// The snippets of a run: those still to feed, in reverse order, and the file of each one fed so
+/// far, in order, which is how Monty numbers them in a traceback (`<python-input-N>`).
+#[derive(Debug)]
+struct Feed {
+    pending: Vec<Snippet>,
+    files: Vec<&'static str>,
+    quiet: bool,
+}
+
+impl Feed {
+    fn next(&mut self) -> Option<String> {
+        let snippet = self.pending.pop()?;
+        self.files.push(snippet.file);
+        self.quiet = snippet.quiet;
+        Some(snippet.code)
+    }
+
+    /// Names each snippet in a traceback by its file, the latest first so `<python-input-1>`
+    /// never matches inside `<python-input-12>`.
+    fn name_files(&self, traceback: &str) -> String {
+        let mut named = traceback.to_owned();
+        for (index, file) in self.files.iter().enumerate().rev() {
+            named = named.replace(&format!("<python-input-{index}>"), file);
+        }
+        named
+    }
+}
+
+fn writer(output: &mut Tail, quiet: bool) -> PrintWriter<'_> {
+    if quiet {
+        PrintWriter::Disabled
+    } else {
+        PrintWriter::Callback(output)
+    }
 }
 
 /// The host calls a script has made: its reads, and everything else.
@@ -121,13 +166,39 @@ pub fn start(start: &Start) -> Progress {
         Ok(bindings) => bindings,
         Err(why) => return failed(output, &why),
     };
-    // The SDK pauses before the script only to page a dataset in; the bindings and the script
-    // are fed when the SDK's snippet completes, however many pages that took.
-    let mut pending = vec![start.code.clone()];
-    if !bindings.is_empty() {
-        pending.push(bindings);
+    // The SDK pauses before the script only to page a dataset in; the bindings, the earlier
+    // script and the script are fed when the SDK's snippet completes, however many pages that
+    // took.
+    let mut pending = vec![Snippet {
+        code: start.code.clone(),
+        file: SCRIPT_FILE,
+        quiet: false,
+    }];
+    if !start.earlier.is_empty() {
+        pending.push(Snippet {
+            code: FORGET_RESULT.to_owned(),
+            file: SDK_FILE,
+            quiet: true,
+        });
+        pending.push(Snippet {
+            code: start.earlier.clone(),
+            file: EARLIER_FILE,
+            quiet: true,
+        });
     }
-    drive(progress, output, Calls::default(), limits, pending)
+    if !bindings.is_empty() {
+        pending.push(Snippet {
+            code: bindings,
+            file: BINDINGS_FILE,
+            quiet: false,
+        });
+    }
+    let feed = Feed {
+        pending,
+        files: vec![SDK_FILE],
+        quiet: false,
+    };
+    drive(progress, output, Calls::default(), limits, feed)
 }
 
 /// Names a dataset may take: a Python name that is not one the SDK defines.
@@ -184,13 +255,10 @@ pub fn resume(session: Session, reply: String) -> Progress {
         mut output,
         calls,
         limits,
-        pending,
+        feed,
     } = session;
-    let progress = paused.resume(
-        MontyObject::string(reply),
-        PrintWriter::Callback(&mut output),
-    );
-    drive(progress, output, calls, limits, pending)
+    let progress = paused.resume(MontyObject::string(reply), writer(&mut output, feed.quiet));
+    drive(progress, output, calls, limits, feed)
 }
 
 fn tracker(limits: &Limits) -> ResourceTracker {
@@ -227,24 +295,24 @@ fn drive(
     mut output: Tail,
     mut calls: Calls,
     limits: Limits,
-    mut pending: Vec<String>,
+    mut feed: Feed,
 ) -> Progress {
     loop {
         progress = match progress {
             Ok(ReplProgress::Complete { repl, .. }) => {
-                let Some(code) = pending.pop() else {
+                let Some(code) = feed.next() else {
                     return finished(output, EndStatus::Ok, None, None);
                 };
                 repl.feed_start(
                     &code,
                     Vec::<(String, MontyObject)>::new(),
-                    PrintWriter::Callback(&mut output),
+                    writer(&mut output, feed.quiet),
                 )
             }
             Ok(ReplProgress::FunctionCall(call)) => {
                 let Some(function) = host_function(&call.function_name) else {
                     let name = call.function_name.clone();
-                    let print = PrintWriter::Callback(&mut output);
+                    let print = writer(&mut output, feed.quiet);
                     progress = call.resume(ExtFunctionResult::NotFound(name), print);
                     continue;
                 };
@@ -252,10 +320,15 @@ fn drive(
                     Ok(payload) => payload,
                     Err(message) => {
                         let error = MontyException::new(ExcType::TypeError, Some(message));
-                        progress = call.resume(error, PrintWriter::Callback(&mut output));
+                        progress = call.resume(error, writer(&mut output, feed.quiet));
                         continue;
                     }
                 };
+                if feed.quiet && function == HostFunction::Result {
+                    let reply = MontyObject::string(r#"{"status": "ok"}"#.to_owned());
+                    progress = call.resume(reply, PrintWriter::Disabled);
+                    continue;
+                }
                 if function.is_read() {
                     calls.reads += 1;
                     if calls.reads > limits.calls {
@@ -274,7 +347,7 @@ fn drive(
                         output,
                         calls,
                         limits,
-                        pending,
+                        feed,
                     }),
                     step,
                 );
@@ -285,23 +358,23 @@ fn drive(
                 } else {
                     NameLookupResult::Undefined
                 };
-                lookup.resume(answer, PrintWriter::Callback(&mut output))
+                lookup.resume(answer, writer(&mut output, feed.quiet))
             }
             Ok(ReplProgress::OsCall(call)) => {
                 let answer = match &call.function_call {
                     OsFunctionCall::Import(name) => ExtFunctionResult::NotFound(name.clone()),
                     _ => MontyException::new(ExcType::OSError, Some(NO_OUTSIDE.to_owned())).into(),
                 };
-                call.resume(answer, PrintWriter::Callback(&mut output))
+                call.resume(answer, writer(&mut output, feed.quiet))
             }
             Ok(ReplProgress::ResolveFutures(futures)) => {
                 let error = MontyException::new(
                     ExcType::RuntimeError,
                     Some("a script's reads are not awaited; call them, or use gather()".to_owned()),
                 );
-                futures.abort(error, PrintWriter::Callback(&mut output))
+                futures.abort(error, writer(&mut output, feed.quiet))
             }
-            Err(error) => return ended(output, &error.error),
+            Err(error) => return ended(output, &error.error, &feed),
         };
     }
 }
@@ -316,7 +389,7 @@ fn single_string(call: &ReplFunctionCall) -> Result<String, String> {
         .ok_or_else(|| format!("{}() takes one string", call.function_name))
 }
 
-fn ended(output: Tail, error: &MontyException) -> Progress {
+fn ended(output: Tail, error: &MontyException, feed: &Feed) -> Progress {
     let message = error.message().unwrap_or_default();
     let limit = match error.exc_type() {
         ExcType::MemoryError if message.contains("memory limit exceeded") => Some(Limit::Memory),
@@ -328,23 +401,14 @@ fn ended(output: Tail, error: &MontyException) -> Progress {
     } else {
         EndStatus::Raised
     };
-    finished(output, status, limit, Some(script_error(error)))
+    finished(output, status, limit, Some(script_error(error, feed)))
 }
 
-fn script_error(error: &MontyException) -> ScriptError {
-    let traceback = error.to_string();
-    // With datasets bound, the bindings are the second snippet and the script the third.
-    let traceback = if traceback.contains(BOUND_SCRIPT_SNIPPET) {
-        traceback
-            .replace(BOUND_SCRIPT_SNIPPET, SCRIPT_FILE)
-            .replace(SCRIPT_SNIPPET, BINDINGS_FILE)
-    } else {
-        traceback.replace(SCRIPT_SNIPPET, SCRIPT_FILE)
-    };
+fn script_error(error: &MontyException, feed: &Feed) -> ScriptError {
     ScriptError {
         name: error.exc_type().to_string(),
         value: error.message().unwrap_or_default().to_owned(),
-        traceback: traceback.replace(SDK_SNIPPET, SDK_FILE),
+        traceback: feed.name_files(&error.to_string()),
     }
 }
 

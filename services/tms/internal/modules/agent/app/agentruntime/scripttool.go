@@ -4,6 +4,7 @@ import (
 	"context"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
@@ -32,6 +33,13 @@ func (s *Service) runScriptTool(
 			"Tool %q was not run: %s. Answer with the reads you hold, one call at a time.",
 			call.Name, decision.Reason)
 	}
+	continues := strings.TrimSpace(stringArg(call.Arguments, codemode.ParamScriptContinues))
+	if continues != "" && p.gate.continues == nil {
+		return refusedOutcome(aitrace.OutcomeFailed, "it continues no script it may",
+			"Tool %q was not run: continues names no script of this turn that read a dataset "+
+				"and showed nothing, or one another call already continued. Send the whole "+
+				"script without continues.", call.Name)
+	}
 	if p.gate.position > codemode.ScriptsPerTurn {
 		return refusedOutcome(aitrace.OutcomeOverBudget, "the turn ran every script it may",
 			"Tool %q was not run: a turn runs at most %d scripts. Answer with what the scripts "+
@@ -51,8 +59,9 @@ func (s *Service) runScriptTool(
 		req,
 		tool,
 		call,
-		&queryExtras{broker: broker, stepKey: p.stepKey},
+		&queryExtras{broker: broker, stepKey: p.stepKey, continues: p.gate.continues},
 	)
+	outcome.continuable = !outcome.failed && scriptContinuable(outcome.data)
 	marks := broker.taintMarks()
 	outcome.taint = append(outcome.taint, marks...)
 
@@ -131,6 +140,35 @@ func (s *Service) withoutScripts(
 
 func isScriptRunner(name string) bool {
 	return name == codemode.ToolRunScript
+}
+
+// inheritScriptName gives a continuation the title and purpose of the script
+// it continues when it leaves them out, before its arguments are checked: it
+// finishes that script, under its name. Sonnet sent continuations with only
+// continues and code, as the parameter asks, and the required title refused
+// them.
+func inheritScriptName(arguments, continues map[string]any) map[string]any {
+	if continues == nil {
+		return arguments
+	}
+	inherited := make(map[string]any, len(arguments)+2)
+	maps.Copy(inherited, arguments)
+	for _, key := range []string{codemode.ParamScriptTitle, codemode.ParamScriptPurpose} {
+		if strings.TrimSpace(stringArg(inherited, key)) != "" {
+			continue
+		}
+		if earlier := stringArg(continues, key); earlier != "" {
+			inherited[key] = earlier
+		}
+	}
+
+	return inherited
+}
+
+func scriptContinuable(data any) bool {
+	continuable, ok := data.(codemode.Continuable)
+
+	return ok && continuable.ScriptContinuable()
 }
 
 func scriptCompleted(data any) bool {

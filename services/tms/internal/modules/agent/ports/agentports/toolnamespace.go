@@ -38,6 +38,11 @@ var toolNamespaces = []ToolNamespace{
 		Summary: "The agent's own work: memories, waits, runs, profiles and finding things in Trenova.",
 	},
 	{
+		Name:    "analysis",
+		Title:   "Analysis",
+		Summary: "Analyzing the organization's data: a script over its records, report runs and attached files that works out and shows figures, tables and charts.",
+	},
+	{
 		Name:    "billing",
 		Title:   "Billing queue",
 		Summary: "The billing queue: transferring shipments into it and reviewing, assigning, holding and approving its items.",

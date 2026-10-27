@@ -698,7 +698,7 @@ func TestScriptsCallOnlyReads(t *testing.T) {
 		assert.Equal(t, agent.ToolEffectLookup, policy.EffectiveEffect(), tool.Name())
 		assert.NotEqual(t, agent.ToolScopeSelf, policy.Scope, tool.Name())
 	}
-	assert.Equal(t, 1, runners, "agent_run_script is the one tool that runs scripts")
+	assert.Equal(t, 1, runners, "analysis_run is the one tool that runs scripts")
 	for _, tool := range tools.Actions {
 		policy := tool.Policy()
 		assert.False(t, policy.CallableFromScript(), "%s is a write", tool.Name())

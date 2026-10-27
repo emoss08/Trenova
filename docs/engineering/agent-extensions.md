@@ -132,7 +132,7 @@ the organization, which may have been written to steer an agent. It is declared 
 capability: `web_read_portal` returns a portal's page, while `web_list_portal_sites` returns what
 administrators wrote and `web_use_portal` returns only that the task started. A tool whose
 result is outside content only when it read something a person brought in declares
-`ReadsExternal: marked` instead and names what it read: `agent_run_script` taints the run with
+`ReadsExternal: marked` instead and names what it read: `analysis_run` taints the run with
 each attached file it read as a dataset and caps nothing, because a report run is the
 organization's own data. Once a turn has a
 successful result from such a tool, every write it asks for afterwards is capped at `Propose`, whatever the tier,

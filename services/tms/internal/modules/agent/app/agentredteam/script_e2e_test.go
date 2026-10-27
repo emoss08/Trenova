@@ -49,7 +49,7 @@ trenova.result({"customers": len(counts)})
 /*
 Every runtime test of code mode stood a stub in for the script tool, so nothing
 held the real tool, runner and interpreter together. When moving scripts off
-E2B dropped the grant that gave agents agent_run_script, no test failed and no
+E2B dropped the grant that gave agents analysis_run, no test failed and no
 agent was offered a script. This one runs a whole turn through the real
 registry, script tool, runner and Monty: an agent configured with list tools
 alone is offered the script, and the script reads, groups and counts.

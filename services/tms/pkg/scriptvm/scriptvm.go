@@ -79,8 +79,11 @@ type Program struct {
 	// [{name, label, rows, columns: [{name, kind}], text?}]. The rows are paged
 	// in through FunctionRows.
 	Datasets []byte
-	Clock    Clock
-	Limits   Limits
+	// Earlier is the script this one continues, run first with its printing
+	// discarded and its result dropped, so Code starts from the names it left.
+	Earlier string
+	Clock   Clock
+	Limits  Limits
 }
 
 type Host interface {

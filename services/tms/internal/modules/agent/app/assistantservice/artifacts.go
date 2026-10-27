@@ -245,6 +245,11 @@ func (r *artifactRecorder) publish(
 	callID string,
 	document agentports.PublishedDocument,
 ) (*agentports.ShownArtifact, error) {
+	body, err := r.withAnalyses(document.Body, document.Analyses)
+	if err != nil {
+		return nil, err
+	}
+	document.Body = body
 	artifact := documentArtifact(callID, document, r.author())
 
 	if !document.ArtifactID.IsNil() {
@@ -925,11 +930,15 @@ var (
 )
 
 var (
-	errUnknownDocument = errors.New(
-		"there is no document with that artifactId in this conversation; leave artifactId " +
-			"out to publish a new one",
-	)
-	errDocumentNotKept = errors.New("it could not be saved")
+	errUnknownDocument error = &agentports.PublishMistake{
+		Reason: "there is no document with that artifactId in this conversation; leave " +
+			"artifactId out to publish a new one",
+	}
+	errDocumentNotKept       = errors.New("it could not be saved")
+	errUnknownAnalysis error = &agentports.PublishMistake{
+		Reason: "an analysis it names is not one an analysis_run result kept in this " +
+			"conversation; name each by the artifactId of its analysis",
+	}
 )
 
 // documentArtifact is a write-up the model published, kept as markdown with

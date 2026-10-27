@@ -472,7 +472,7 @@ The tools are a schema over `reporting.Service`; none of them builds a query or 
 | `report_create`, `report_update`, `report_fork`, `report_delete`, `report_reset_fork`, `report_cancel_run`, `report_update_schedule`, `report_delete_schedule`, `report_delete_dashboard` | `agenttools/reporttools` |
 | `report_create_schedule` | `agenttools/alerttools` |
 | `report_create_dashboard`, `report_add_dashboard_tile`, `report_save_table_view` | `agenttools/masterdatatools` |
-| Analysis of a run's rows (`agent_run_script` with `datasets`) | [agent-code-mode.md](agent-code-mode.md) |
+| Analysis of a run's rows (`analysis_run` with `datasets`) | [agent-code-mode.md](agent-code-mode.md) |
 
 - **Definitions.** `report_create` and `report_update` take the definition as JSON constrained by
   keel's JSON Schema (`report.DefinitionToolSchema`) and check it with `ValidateDefinition`, as

@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -19,6 +20,7 @@ const (
 	maxDocumentBasisRunes = 120
 	maxDocumentSources    = 30
 	maxSourceTextRunes    = 160
+	maxDocumentAnalyses   = 4
 )
 
 // publishArtifactDescription is a constant for the same reason
@@ -30,10 +32,13 @@ const publishArtifactDescription = "Publish a written document beside the conver
 	"a screen: put the full text here in markdown and reply with two or three sentences " +
 	"pointing to it. Not for a list or a single record you looked up (those are shown to " +
 	"the person already, and the tool result says so), nor for what was read off a file " +
-	"the person attached: intake_get_draft shows it as the file's extraction card. To revise a document you published, " +
-	"pass its artifactId with the whole new text; the earlier text is kept as a version. " +
-	"Cite what a sentence rests on with a footnote mark like [^1] and list each mark " +
-	"under sources."
+	"the person attached: intake_get_draft shows it as the file's extraction card. To " +
+	"publish an analysis a script showed, name it under analyses and write only what it " +
+	"means: its figures, tables and charts are added to the document exactly as the " +
+	"analysis kept them, so never copy them into the text. To revise a document you " +
+	"published, pass its artifactId with the whole new text and its analyses again; the " +
+	"earlier text is kept as a version. Cite what a sentence rests on with a footnote mark " +
+	"like [^1] and list each mark under sources."
 
 // publishArtifactSpec is the third tool the runtime answers itself. It is
 // offered only where there is somewhere to publish to: a conversation with a
@@ -104,6 +109,14 @@ func publishArtifactSpec() kernelports.ToolSpec {
 						"conversation, from its publish_artifact result, to replace its text. " +
 						"Leave it out to publish a new document.",
 				},
+				"analyses": map[string]any{
+					"type": "array",
+					"description": "The analyses the document includes, each by the " +
+						"artifactId of the analysis an analysis_run result kept in this " +
+						"conversation. Each is added after the text under its title.",
+					"items":    map[string]any{"type": "string"},
+					"maxItems": maxDocumentAnalyses,
+				},
 			},
 			"required":             []string{"title", "body"},
 			"additionalProperties": false,
@@ -151,6 +164,8 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 
 	sources, sourceProblems := publishedSources(arguments["sources"])
 	problems = append(problems, sourceProblems...)
+	analyses, analysisProblems := publishedAnalyses(arguments["analyses"])
+	problems = append(problems, analysisProblems...)
 
 	if len(problems) > 0 {
 		return failedOutcome(
@@ -169,6 +184,7 @@ func publishOutcome(arguments map[string]any) toolOutcome {
 			DocType:    clipRunes(stringArg(arguments, "docType"), maxDocumentTypeRunes),
 			Basis:      clipRunes(stringArg(arguments, "basis"), maxDocumentBasisRunes),
 			Sources:    sources,
+			Analyses:   analyses,
 		},
 	}
 }
@@ -218,6 +234,33 @@ func publishedSources(raw any) ([]agentports.PublishedSource, []string) {
 	}
 
 	return sources, nil
+}
+
+// publishedAnalyses reads the analyses a document includes, each once.
+func publishedAnalyses(raw any) ([]pulid.ID, []string) {
+	entries, ok := raw.([]any)
+	if !ok || len(entries) == 0 {
+		return nil, nil
+	}
+	if len(entries) > maxDocumentAnalyses {
+		return nil, []string{fmt.Sprintf("at most %d analyses", maxDocumentAnalyses)}
+	}
+
+	analyses := make([]pulid.ID, 0, len(entries))
+	for _, entry := range entries {
+		text, _ := entry.(string)
+		id, err := pulid.Parse(strings.TrimSpace(text))
+		if err != nil {
+			return nil, []string{
+				"each analysis is the artifactId an analysis_run result kept",
+			}
+		}
+		if !slices.Contains(analyses, id) {
+			analyses = append(analyses, id)
+		}
+	}
+
+	return analyses, nil
 }
 
 func clipRunes(text string, most int) string {

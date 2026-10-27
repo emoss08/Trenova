@@ -15,7 +15,7 @@ function artifactOf(payload: Record<string, unknown>): AssistantArtifact {
   } as unknown as AssistantArtifact;
 }
 
-// What agent_run_script answers when its script showed something, less what only the model
+// What analysis_run answers when its script showed something, less what only the model
 // reads (scriptAnswer in script_tool.go, analysisArtifact in analysis_artifact.go).
 const shownChart = {
   kind: "bar",
@@ -30,7 +30,7 @@ const shownChart = {
 };
 
 describe("analysisFrom", () => {
-  it("reads what agent_run_script showed and the datasets it read", () => {
+  it("reads what analysis_run showed and the datasets it read", () => {
     expect(
       analysisFrom(
         artifactOf({

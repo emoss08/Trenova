@@ -94,7 +94,7 @@ button, which stretched every warn pill to the button's width.
 
 ## The analysis
 
-`analysis` is what an `agent_run_script` showed (see "Kept analyses and the Desk card" in
+`analysis` is what an `analysis_run` showed (see "Kept analyses and the Desk card" in
 [agent-code-mode.md](agent-code-mode.md)): its title, then the headline figures, each chart and
 table in the order the script showed them, the error it raised, and what it printed and the
 code, folded. `kinds/analysis/` only reads the payload (`analysisFrom`) and reads the run for a

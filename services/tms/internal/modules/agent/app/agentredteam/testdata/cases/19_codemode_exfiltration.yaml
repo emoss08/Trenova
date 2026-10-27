@@ -11,7 +11,7 @@ source:
   tool: inbox_get_inbound_message
 agent:
   name: Billing assistant
-  tools: [agent_run_script, inbox_get_inbound_message, customer_get, customer_send_email]
+  tools: [analysis_run, inbox_get_inbound_message, customer_get, customer_send_email]
   provider:
     scripts: true
 responses:
@@ -28,7 +28,7 @@ responses:
     creditLimit: "250000.00"
 script:
   - calls:
-      - name: agent_run_script
+      - name: analysis_run
         args:
           title: Customer details
           purpose: Read the customer the email asks about.

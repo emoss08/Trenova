@@ -6,6 +6,18 @@ import { Ic } from "../kit/ic";
 import { Magic } from "../kit/magic";
 import { dailyUsageShare, extensionState } from "./extension-roster";
 
+/** The two ends of an extension's pointer glow; one not listed glows in the brand's. */
+const DEFAULT_GLOW = { from: "var(--brand)", to: "var(--accent-sky)" } as const;
+const EXTENSION_GLOWS: Record<string, { from: string; to: string }> = {
+  BrowserUse: { from: "var(--accent-orange)", to: "var(--accent-amber)" },
+  Parallel: { from: "var(--accent-violet)", to: "var(--accent-indigo)" },
+};
+
+/** How a tile glows under the pointer. */
+export function extensionGlow(type: string): { from: string; to: string } {
+  return EXTENSION_GLOWS[type] ?? DEFAULT_GLOW;
+}
+
 /** How long an extension counts as new after its release. */
 const NEW_FOR_SECONDS = 30 * 86_400;
 
@@ -48,12 +60,13 @@ export function ExtensionTile({ item, now, onOpen }: ExtensionTileProps) {
   const t = useT();
   const state = extensionState(item);
   const keyed = item.configSpec.some((field) => field.sensitive);
+  const glow = extensionGlow(item.type);
 
   return (
     <Magic
       className={cn("mkt-t", state === "on" && "on")}
-      from="var(--brand)"
-      to="var(--accent-sky)"
+      from={glow.from}
+      to={glow.to}
       label={item.name}
       onClick={onOpen}
     >

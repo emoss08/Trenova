@@ -2064,7 +2064,7 @@ figure the separated reading (`ReadSeparated`) found read stays read and is an o
 working (`narrowed`). The stricter reading leaves out a bare year, and a 2,000 lb unit weight in a
 tool's JSON looked like one, so "2,000 lb, so 20 of them come to 40,000 lb" was rewritten. A percentage is supported by the fraction it renders (52.3% by 0.523), and
 rounding and thousands are read as for a filed change. A hit is discarded once with a correction
-naming the figures: an agent holding `agent_run_script` is told to work them out with a script, any other to
+naming the figures: an agent holding `analysis_run` is told to work them out with a script, any other to
 leave out what the tools do not give. A rewrite that still states one ends with a sentence naming
 the figures to check. The bench fails a step whose reply either guard corrected ("reply grounded
 without a correction").

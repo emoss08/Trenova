@@ -85,7 +85,7 @@ query-tool registry filtered by policy (§3), never a hand-kept list.
 ## 2. How a script runs
 
 ```
-model ──tool call──▶ dispatch(agent_run_script) ─ gate ─▶ runScriptTool ─▶ tool.Query(broker)
+model ──tool call──▶ dispatch(analysis_run) ─ gate ─▶ runScriptTool ─▶ tool.Query(broker)
                                                                              │
                                                  scriptrunner.Service.Run ◀──┘
                                                     │ new instance of scripts.wasm (wazero)
@@ -100,7 +100,7 @@ model ──tool call──▶ dispatch(agent_run_script) ─ gate ─▶ runScr
           ToolOutcome: output, result, calls, refusals, limits; taint = every read's marks
 ```
 
-1. The model calls `agent_run_script` (§4). The call goes through `dispatch` like any read:
+1. The model calls `analysis_run` (§4). The call goes through `dispatch` like any read:
    - held or reached;
    - the person may read `code_mode`;
    - the schema.
@@ -171,7 +171,7 @@ the same schemas the model reads for discrete calls, and anything that becomes a
 the SDK the moment it is registered. The cached prefix does not change, because the index is
 sent with the script, not put into the prompt.
 
-## 4. The tool: `agent_run_script`
+## 4. The tool: `analysis_run`
 
 The tool is named under [agent-tool-conventions.md](agent-tool-conventions.md):
 
@@ -289,7 +289,38 @@ A script that showed something is kept as an analysis (`analysis.Run`, table
 `agent_analysis_runs`, ids `aanr_`), whatever its status: its title, purpose, code, the datasets
 it read (names, sources and row counts, never rows), its output, what it showed in the order it
 showed it (`layout`), and how it ended. A script that only printed is not kept: its reads are
-in the run's steps.
+in the run's steps. One that read a dataset and only printed is an analysis the person never
+saw. Its answer carries a `scriptId` (the call's id) and tells the agent to show it
+(`scriptUnshownAnalysisNote`) by **continuing** it: a call with `continues` set to that id
+sends only the `show_*` lines. The runtime finds the earlier call's arguments in the turn
+(`Turn.continueScript`), and the runner feeds its code to the interpreter as a quiet snippet
+before the new one (`Start.earlier` in `trenova-scripts`): what it prints is discarded, its
+`result()` is answered in the module and forgotten, and a traceback names it `earlier.py`. So
+the new lines see every name it left, over its datasets and inputs, and the analysis keeps the
+whole code under the earlier title. A continuation is not counted against the scripts a turn may
+run; each script is continued once, a continuation is never continued, and a script that
+prepared changes is never continuable, since running it again would propose them twice. Its
+reads run again as the person and count against its own limits. Each script's span says whether
+it read a dataset and showed nothing (`trenova.ai.codemode.unshown`) and whether it continued
+one (`trenova.ai.codemode.continues`), which is how often models forget to show and how often
+the continuation recovers it.
+
+What a script shows is told to the model where it decides, never in the shared system prompt:
+the tool's description says the person sees only what is shown and that `print()` is for the
+agent, and the answer to a script that showed nothing says how to continue it. Two rules tried
+in the prompt's Artifacts section and calculation rule cost the `analysis-two-reports-together`
+case (6 of 16 against 6 of 6 without them) and were taken out.
+
+The analysis card is drawn, not shareable: a document is what downloads as PDF or Word. So a
+person who asks to publish or share an analysis gets a document that includes it.
+`publish_artifact` takes `analyses`, the artifact ids of analyses this conversation kept, and the
+recorder (`artifactRecorder.withAnalyses`) adds each after the document's text from what it kept
+(`analysis.Display.Markdown`): the figures as a list, then each table and chart in the order
+shown, a chart as the table of what it plots, at most 25 rows of each with how many it holds.
+The model writes only what the analysis means, so nothing in the document is copied by hand. A
+named id that is not an analysis of this conversation is a `PublishMistake`, which the model is
+told to fix and send again rather than to put the text in its reply. The
+`analysis-shown-not-printed` bench case holds both halves.
 
 The tool answers with the analysis id and what was shown, tables cut to their first 25 rows.
 A kept analysis that ran to the end becomes the Desk's `analysis` artifact
@@ -380,7 +411,7 @@ cannot raise one. The values are `codemode.DefaultLimits()` and the constants in
 | Result | 64 KB | the runner | dropped and refused, `result` |
 | Memory | 256 MiB | Monty's memory limit (`MemoryError`, which a script cannot catch); past a margin, `monty-alloc` exits the module; the instance's pages are capped at 1 GiB | `Stopped`, `memory` |
 | Host calls | the read limit for reads; 20,000 for paging datasets in and showing | the module | `Stopped`, `calls` |
-| Scripts per turn | 3 | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
+| Scripts per turn | 3, not counting continuations (§4.3) | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
 | Scripts running at once | 8 per worker | `pkg/scriptvm`'s slots (`DefaultMaxConcurrent`), so a worker's script memory stays near 8 × 256 MiB | the script waits up to 10 s for a slot (`DefaultQueueWait`), then `Failed`: too many scripts are running |
 
 One script spends one call of the turn's tool budget, and its reads are counted against its own
@@ -510,7 +541,7 @@ Each broker read is a step of its own, claimed and settled by the same `guardedD
 never run twice. The reads a dead attempt settled stay in the ledger as the record of what was
 read.
 
-**Spans.** The script's span is `execute_tool agent_run_script`, under the turn's
+**Spans.** The script's span is `execute_tool analysis_run`, under the turn's
 `invoke_agent` root. Each broker read opens its own `execute_tool <tool>` through the same
 `startToolSpan`. That span is a child of the script's span, because the read runs on the
 script call's context and `aitrace.Parent` keeps a span already in the anchor's trace. Every
@@ -598,7 +629,7 @@ Logistics loads that the first scenario's setup writes and every case puts back.
 batch-write and stale-approval scenarios that session wrote belong to 5b and are not here.
 Scenario steps take `setup` statements, run before the step, as in that branch.
 
-Every discrete half, and both halves of every control, expect `agent_run_script` not to be
+Every discrete half, and both halves of every control, expect `analysis_run` not to be
 called. The checks are otherwise the same in both halves (`facts`, `db`, `proposals`, the
 rubric), and `TestCodeModeScenariosArePaired` holds the file to that. The script halves of the
 Range/Denver pairs do not require a script: they are outcome-graded, and how often script mode
@@ -703,14 +734,14 @@ Desk bundle grants `code_mode`. Answers 2 and 3 above are superseded where they 
 the poll interval no longer exists.
 
 2026-10-26, the owner: E2B is gone entirely. Data analysis moved onto the same interpreter:
-`report_analyze_data` folded into `agent_run_script` (datasets, `show_*`, kept analyses), the
+`report_analyze_data` folded into `analysis_run` (datasets, `show_*`, kept analyses), the
 `data_analysis` resource and `agent.data_analysis` plan capability went with it, and charts are
 specs the client draws. Migration `20261231020500_analysis_on_the_script_interpreter` dropped
 the E2B runs, their chart images and the extension, and renamed the tool in saved agents.
 
 ## 15. Known limits
 
-- **The tool's embedding.** `agent_run_script`'s vector in the eval gate's fixture
+- **The tool's embedding.** `analysis_run`'s vector in the eval gate's fixture
   (`agentevalgate/evals/embeddings/nomic-embed-text.json`) was recorded from a local Ollama
   `nomic-embed-text`. With it, every floor holds unchanged from master: keyword recall@5 1.00 and
   top-1 0.96 over 557 development cases (0.99 and 0.95 over 145 held-out), hybrid 0.92 and 0.79

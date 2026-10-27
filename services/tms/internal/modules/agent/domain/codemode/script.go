@@ -7,11 +7,13 @@ import (
 )
 
 const (
-	ToolRunScript = "agent_run_script"
+	ToolRunScript = "analysis_run"
 	// The run-script tool's parameters a batch reads its origin back from.
 	ParamScriptTitle   = "title"
 	ParamScriptPurpose = "purpose"
 	ParamScriptCode    = "code"
+	// ParamScriptContinues names the script of the turn a call continues.
+	ParamScriptContinues = "continues"
 )
 
 type ScriptError struct {
@@ -106,4 +108,11 @@ type PreparedChange struct {
 // script ran to its end, the only way its prepared changes are proposed.
 type Completion interface {
 	ScriptCompleted() bool
+}
+
+// Continuable is what the tool that ran a script answers with when another
+// call of the turn may continue the script: it read a dataset and showed
+// nothing, so the person saw none of it.
+type Continuable interface {
+	ScriptContinuable() bool
 }
