@@ -150,6 +150,7 @@ func TestRunCard_ReadsTheReportItsParametersAndTheRunItIsComparedWith(t *testing
 	previous := &report.ReportRun{
 		ID:          pulid.MustNew("rrun_"),
 		CompletedAt: run.CompletedAt - 7*24*3600,
+		RowCount:    208,
 		Sample:      cardSample("3100"),
 	}
 	runs := &cardRuns{run: run, previous: previous}
@@ -193,6 +194,7 @@ func TestRunCard_ReadsTheReportItsParametersAndTheRunItIsComparedWith(t *testing
 	require.NotNil(t, card.Previous)
 	assert.Equal(t, previous.ID, card.Previous.RunID)
 	assert.Equal(t, previous.CompletedAt, card.Previous.CompletedAt)
+	assert.Equal(t, int64(208), card.Previous.RowCount)
 	assert.Equal(t, []any{nil, "3100"}, card.Previous.Totals)
 
 	require.NotNil(t, runs.asked)

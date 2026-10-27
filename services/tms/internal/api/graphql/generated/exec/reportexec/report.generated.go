@@ -2113,6 +2113,16 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
 			{
+				Name:     "rowCount",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskPrevious)
+					return obj.RowCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
 				Name:     "columnIds",
 				NonNull:  true,
 				ChildErr: errNoChild0,

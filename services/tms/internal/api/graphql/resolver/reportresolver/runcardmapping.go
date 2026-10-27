@@ -48,6 +48,7 @@ func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRu
 		model.Previous = &gqlmodel.ReportRunDeskPrevious{
 			RunID:       card.Previous.RunID.String(),
 			CompletedAt: int(card.Previous.CompletedAt),
+			RowCount:    int(card.Previous.RowCount),
 			ColumnIds:   columnIDs,
 			Totals:      card.Previous.Totals,
 		}

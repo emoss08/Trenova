@@ -58,6 +58,7 @@ type RunCardParameter struct {
 type RunCardPrevious struct {
 	RunID       pulid.ID
 	CompletedAt int64
+	RowCount    int64
 	Schema      []reportrows.Column
 	Totals      []any
 }
@@ -222,6 +223,7 @@ func (s *Service) runCardPrevious(
 	return &RunCardPrevious{
 		RunID:       previous.ID,
 		CompletedAt: previous.CompletedAt,
+		RowCount:    previous.RowCount,
 		Schema:      previous.Sample.Schema,
 		Totals:      previous.Sample.Totals,
 	}

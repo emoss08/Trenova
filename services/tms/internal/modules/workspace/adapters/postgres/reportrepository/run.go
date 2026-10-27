@@ -124,7 +124,7 @@ func (r *runRepository) LatestComparable(
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(entity).
-			Column(cols.ID.Bare(), cols.CompletedAt.Bare(), cols.Sample.Bare()).
+			Column(cols.ID.Bare(), cols.CompletedAt.Bare(), cols.RowCount.Bare(), cols.Sample.Bare()).
 			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo)).
 			Where(cols.RequestedByID.Eq(), req.RequestedBy).
 			Where(cols.Status.Eq(), report.RunStatusSucceeded).

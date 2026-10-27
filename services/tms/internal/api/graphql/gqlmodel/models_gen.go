@@ -7409,6 +7409,7 @@ type ReportRunDeskParameter struct {
 type ReportRunDeskPrevious struct {
 	RunID       string `json:"runId"`
 	CompletedAt int    `json:"completedAt"`
+	RowCount    int    `json:"rowCount"`
 	// The column each total belongs to, so totals are compared by column and not by position.
 	ColumnIds []string `json:"columnIds"`
 	Totals    any      `json:"totals"`

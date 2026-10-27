@@ -256,6 +256,7 @@ func TestLatestComparableFindsTheRequestersPreviousRunOfTheSameReportAndParamete
 	require.NoError(t, err)
 	assert.Equal(t, previous.ID, got.ID)
 	assert.Equal(t, int64(200), got.CompletedAt)
+	assert.Equal(t, int64(20), got.RowCount)
 	require.NotNil(t, got.Sample)
 
 	_, err = repo.LatestComparable(ctx, &reportports.GetComparableReportRunRequest{
@@ -316,6 +317,7 @@ func finishedRun(
 		Status:         report.RunStatusSucceeded,
 		Params:         params,
 		CompletedAt:    completedAt,
+		RowCount:       completedAt / 10,
 		Sample: &reportrows.Sample{
 			Schema: []reportrows.Column{
 				{ID: "customer", Label: "Customer"},

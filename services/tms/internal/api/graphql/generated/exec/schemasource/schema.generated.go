@@ -24266,6 +24266,7 @@ type ReportRunSample {
 type ReportRunDeskPrevious {
   runId: ID!
   completedAt: Timestamp!
+  rowCount: Int!
   "The column each total belongs to, so totals are compared by column and not by position."
   columnIds: [String!]!
   totals: Any!

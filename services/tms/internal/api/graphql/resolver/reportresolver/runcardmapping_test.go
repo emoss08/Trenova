@@ -89,6 +89,7 @@ func TestReportRunDeskCardCarriesTheSampleAndComparesTotalsByColumn(t *testing.T
 		Previous: &reportingservice.RunCardPrevious{
 			RunID:       previousID,
 			CompletedAt: 1_790_000_000,
+			RowCount:    208,
 			Schema:      []reportrows.Column{{ID: "revenue"}, {ID: "customer"}},
 			Totals:      []any{"990", nil},
 		},
@@ -119,6 +120,7 @@ func TestReportRunDeskCardCarriesTheSampleAndComparesTotalsByColumn(t *testing.T
 
 	require.NotNil(t, model.Previous)
 	assert.Equal(t, previousID.String(), model.Previous.RunID)
+	assert.Equal(t, 208, model.Previous.RowCount)
 	assert.Equal(t, []string{"revenue", "customer"}, model.Previous.ColumnIds)
 	assert.Equal(t, []any{"990", nil}, model.Previous.Totals)
 
