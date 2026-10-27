@@ -34,6 +34,12 @@ func (s *Service) ExportDocument(
 	artifactID pulid.ID,
 	format string,
 ) (*agentports.ArtifactFile, error) {
+	if doc, isBoard, err := s.boardDocument(ctx, req, artifactID); isBoard {
+		if err != nil {
+			return nil, err
+		}
+		return s.renderDocument(ctx, doc, format)
+	}
 	versions, err := s.documentLineage(ctx, req, artifactID)
 	if err != nil {
 		return nil, err
@@ -44,8 +50,15 @@ func (s *Service) ExportDocument(
 			version = candidate
 		}
 	}
-	doc := renderableDocument(version)
-	name := assistantartifact.SlugBase(version.Title)
+	return s.renderDocument(ctx, renderableDocument(version), format)
+}
+
+func (s *Service) renderDocument(
+	ctx context.Context,
+	doc *docrender.Document,
+	format string,
+) (*agentports.ArtifactFile, error) {
+	name := assistantartifact.SlugBase(doc.Title)
 
 	switch format {
 	case DocumentExportPDF:
@@ -54,7 +67,7 @@ func (s *Service) ExportDocument(
 		}
 		body, renderErr := s.pdfs.Render(ctx, &documenttemplateports.PDFRenderRequest{
 			HTML:  docrender.HTML(doc),
-			Title: version.Title,
+			Title: doc.Title,
 		})
 		if renderErr != nil {
 			if errors.Is(renderErr, documenttemplateports.ErrPDFRendererUnavailable) {

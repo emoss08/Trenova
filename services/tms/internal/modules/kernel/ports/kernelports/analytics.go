@@ -16,6 +16,8 @@ const DedicatedLaneSuggestionsPage = AnalyticsPage("dedicated-lane-suggestions")
 
 const APIKeyAnalyticsPage = AnalyticsPage("api-key-management")
 
+const AnalyticsIncludeMetrics = "metrics"
+
 type AnaltyicsRequest struct {
 	Page       AnalyticsPage `form:"page"       json:"page"`
 	StartDate  int64         `form:"startDate"  json:"startDate"`

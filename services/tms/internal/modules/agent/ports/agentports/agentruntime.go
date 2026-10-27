@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/board"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -350,6 +351,7 @@ type ShownArtifact struct {
 	Written  string     `json:"written,omitempty"`
 	Lineage  pulid.ID   `json:"lineage,omitempty"`
 	Replaces []pulid.ID `json:"replaces,omitempty"`
+	Brief    string     `json:"-"`
 }
 
 const InlineTableRows = 12
@@ -369,6 +371,7 @@ func (a *ShownArtifact) MustBeLinked() bool {
 		a.Kind == string(assistantartifact.KindEDIConnectionDraft),
 		a.Kind == string(assistantartifact.KindAnalysis),
 		a.Kind == string(assistantartifact.KindPortalTask),
+		a.Kind == string(assistantartifact.KindBoard),
 		a.Written != "":
 		return true
 	case a.Tabular():
@@ -394,6 +397,11 @@ type PublishedDocument struct {
 	// Analyses are the analyses the document includes, by artifact id, added
 	// after its text from what each one kept rather than copied by the model.
 	Analyses []pulid.ID
+}
+
+type BoardRequest struct {
+	Board      board.Board
+	ArtifactID pulid.ID
 }
 
 // PublishMistake is a publish the model can fix and send again, such as an

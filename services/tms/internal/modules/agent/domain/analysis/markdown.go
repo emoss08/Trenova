@@ -51,6 +51,20 @@ func (d *Display) Markdown(title string) string {
 	return sb.String()
 }
 
+func (t *Table) Markdown() string {
+	var sb strings.Builder
+	writeTable(&sb, t)
+
+	return sb.String()
+}
+
+func (c *Chart) Markdown() string {
+	var sb strings.Builder
+	writeChart(&sb, c)
+
+	return sb.String()
+}
+
 // layout is the order to write the tables and charts in: the one the script
 // showed them in, or tables then charts for a display kept without it.
 func (d *Display) layout() []Block {

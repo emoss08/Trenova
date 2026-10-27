@@ -167,6 +167,10 @@ func (p *Provider) analyticsData(
 		}, nil
 	}
 
+	if opts.Include == kernelports.AnalyticsIncludeMetrics {
+		return p.getMetricCards(ctx, opts, tz, log)
+	}
+
 	laneHeatmap, err := p.getLaneHeatmap(ctx, opts.WindowDays)
 	if err != nil {
 		log.Error("failed to get lane heatmap", zap.Error(err))
@@ -187,6 +191,46 @@ func (p *Provider) getFullAnalyticsData(
 	opts *kernelports.AnalyticsRequestOptions,
 	tz string,
 	laneHeatmap *LaneHeatmapCard,
+	log *zap.Logger,
+) (kernelports.AnalyticsData, error) {
+	data, err := p.getMetricCards(ctx, opts, tz, log)
+	if err != nil {
+		return nil, err
+	}
+
+	detentionWatchlist, err := p.getDetentionWatchlist(ctx)
+	if err != nil {
+		log.Error("failed to get detention watchlist", zap.Error(err))
+		return nil, err
+	}
+
+	customerMix, err := p.getCustomerMix(ctx)
+	if err != nil {
+		log.Error("failed to get customer mix", zap.Error(err))
+		return nil, err
+	}
+
+	tomorrowsPickups, err := p.getTomorrowsPickups(ctx, tomorrowsPickupsRequest{
+		tz:    tz,
+		limit: defaultTomorrowsPickupsLimit,
+	})
+	if err != nil {
+		log.Error("failed to get tomorrow's pickups", zap.Error(err))
+		return nil, err
+	}
+
+	data["detentionWatchlist"] = detentionWatchlist
+	data["customerMix"] = customerMix
+	data["tomorrowsPickups"] = tomorrowsPickups
+	data["laneHeatmap"] = laneHeatmap
+
+	return data, nil
+}
+
+func (p *Provider) getMetricCards(
+	ctx context.Context,
+	opts *kernelports.AnalyticsRequestOptions,
+	tz string,
 	log *zap.Logger,
 ) (kernelports.AnalyticsData, error) {
 	activeShipments, err := p.getActiveShipments(ctx, tz)
@@ -231,49 +275,22 @@ func (p *Provider) getFullAnalyticsData(
 		return nil, err
 	}
 
-	detentionWatchlist, err := p.getDetentionWatchlist(ctx)
-	if err != nil {
-		log.Error("failed to get detention watchlist", zap.Error(err))
-		return nil, err
-	}
-
-	customerMix, err := p.getCustomerMix(ctx)
-	if err != nil {
-		log.Error("failed to get customer mix", zap.Error(err))
-		return nil, err
-	}
-
-	tomorrowsPickups, err := p.getTomorrowsPickups(ctx, tomorrowsPickupsRequest{
-		tz:    tz,
-		limit: defaultTomorrowsPickupsLimit,
-	})
-	if err != nil {
-		log.Error("failed to get tomorrow's pickups", zap.Error(err))
-		return nil, err
-	}
-
 	profitability, err := p.getProfitability(ctx, opts.OrgID, opts.BuID)
 	if err != nil {
 		log.Error("failed to get profitability summary", zap.Error(err))
 		return nil, err
 	}
 
-	data := kernelports.AnalyticsData{
-		"activeShipments":    activeShipments,
-		"onTimePercent":      onTime,
-		"revenueToday":       revenue,
-		"emptyMilePercent":   emptyMile,
-		"atRisk":             atRisk,
-		"unassigned":         unassigned,
-		"readyToDispatch":    readyToDispatch,
-		"detentionWatchlist": detentionWatchlist,
-		"customerMix":        customerMix,
-		"tomorrowsPickups":   tomorrowsPickups,
-		"laneHeatmap":        laneHeatmap,
-		"profitability":      profitability,
-	}
-
-	return data, nil
+	return kernelports.AnalyticsData{
+		"activeShipments":  activeShipments,
+		"onTimePercent":    onTime,
+		"revenueToday":     revenue,
+		"emptyMilePercent": emptyMile,
+		"atRisk":           atRisk,
+		"unassigned":       unassigned,
+		"readyToDispatch":  readyToDispatch,
+		"profitability":    profitability,
+	}, nil
 }
 
 func (p *Provider) getProfitability(

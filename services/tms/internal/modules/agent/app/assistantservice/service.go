@@ -79,6 +79,7 @@ type Params struct {
 	Reports *reporting.Service                `optional:"true"`
 	Queries agentports.AgentQueryToolRegistry `optional:"true"`
 	PDFs    documenttemplateports.PDFRenderer `optional:"true"`
+	Boards  agentports.BoardFiller            `optional:"true"`
 	// Memories describes the memories a reply used or saved, as the thread
 	// is served.
 	Memories agentports.AgentMemoryService `optional:"true"`
@@ -144,6 +145,7 @@ type Service struct {
 	reportRuns    reportRerunner
 	queries       agentports.AgentQueryToolRegistry
 	pdfs          documenttemplateports.PDFRenderer
+	boards        agentports.BoardFiller
 	memories      agentports.AgentMemoryService
 	quota         platformplanports.QuotaGuard
 	waits         agentwaitports.AgentWaitRepository
@@ -189,6 +191,7 @@ func New(p Params) *Service {
 		completion:    p.Completion,
 		queries:       p.Queries,
 		pdfs:          p.PDFs,
+		boards:        p.Boards,
 		reports:       p.Reports,
 		reportRuns:    reportRerunnerOf(p.Reports),
 		memories:      p.Memories,

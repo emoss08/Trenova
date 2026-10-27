@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalyearports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
+	"github.com/emoss08/trenova/internal/modules/agent/app/boardcardservice"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/accountingbriefports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -295,6 +296,7 @@ type Params struct {
 	JournalEntryService          *journalentryservice.Service
 	JournalCards                 *journalcardservice.Service
 	FuelDeskCards                *fueldeskcardservice.Service
+	BoardCards                   *boardcardservice.Service
 	JournalReview                journalentryports.JournalReviewService
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 auditports.AuditService
@@ -531,6 +533,7 @@ type Services struct {
 	JournalEntryService          *journalentryservice.Service
 	JournalCards                 *journalcardservice.Service
 	FuelDeskCards                *fueldeskcardservice.Service
+	BoardCards                   *boardcardservice.Service
 	JournalReview                journalentryports.JournalReviewService
 	JournalReversalService       *journalreversalservice.Service
 	AuditService                 auditports.AuditService
@@ -773,6 +776,7 @@ func newServices(p *Params) *Services {
 		JournalEntryService:          p.JournalEntryService,
 		JournalCards:                 p.JournalCards,
 		FuelDeskCards:                p.FuelDeskCards,
+		BoardCards:                   p.BoardCards,
 		JournalReview:                p.JournalReview,
 		JournalReversalService:       p.JournalReversalService,
 		AuditService:                 p.AuditService,

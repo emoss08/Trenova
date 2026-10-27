@@ -515,6 +515,17 @@ func (s *Service) Drive(t *Turn, fx TurnEffects) (*agentports.RunResult, error) 
 				continue
 			}
 
+			if call.Name == showBoardName {
+				outcome := refusedOutcome(aitrace.OutcomeDenied,
+					"the turn is not offered boards", "%s", unboardableRefusal)
+				if tools.offers(showBoardName) {
+					outcome = t.showBoard(call.Arguments)
+				}
+				result.ToolCallsUsed++
+				s.recordToolResult(t, fx, call, outcome)
+				continue
+			}
+
 			// Only a turn that holds delegate_task hands out work, and a turn
 			// working for another agent is told why it cannot. Any other turn
 			// that names it is answered as for any tool it does not hold, as
@@ -939,6 +950,9 @@ func (s *Service) observe(
 		return decisionRequested(observe, &call, request)
 	}
 	if observe == nil {
+		if _, boards := outcome.data.(agentports.BoardRequest); boards {
+			return failedOutcome("%s", unboardableRefusal)
+		}
 		if outcome.publishes {
 			return failedOutcome("%s", unpublishableRefusal)
 		}
@@ -958,8 +972,18 @@ func (s *Service) observe(
 		outcome.shown = shown
 	}
 
+	_, boards := outcome.data.(agentports.BoardRequest)
 	mistake, fixable := errors.AsType[*agentports.PublishMistake](err)
 	switch {
+	case boards && fixable:
+		return failedOutcome("Tool %q did not show the board: %s. Fix the call and send it "+
+			"again.", showBoardName, mistake.Reason)
+	case boards && (err != nil || shown == nil):
+		return failedOutcome("Tool %q could not show the board just now. Answer in your "+
+			"reply instead.", showBoardName)
+	case boards:
+		outcome.content = boardContent(shown)
+		outcome.summary = summaryLine(shown.Title)
 	case outcome.publishes && fixable:
 		return failedOutcome("Tool %q did not keep the document: %s. Fix the call and send "+
 			"it again.", publishArtifactName, mistake.Reason)

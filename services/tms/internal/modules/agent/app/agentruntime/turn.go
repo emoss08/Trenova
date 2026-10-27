@@ -1017,6 +1017,9 @@ func (s *Service) PublishStep(
 	if call.Name == requestDecisionName {
 		return s.observe(observe, *call, decisionStepOutcome(call.Arguments), nil).exported()
 	}
+	if call.Name == showBoardName {
+		return s.observe(observe, *call, boardStepOutcome(call.Arguments), nil).exported()
+	}
 
 	return s.observe(observe, *call, publishOutcome(call.Arguments), nil).exported()
 }

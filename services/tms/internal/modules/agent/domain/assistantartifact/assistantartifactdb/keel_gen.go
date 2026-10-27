@@ -308,6 +308,7 @@ var enumKind = [...]schema.EnumValue{
 	{Value: `edi_connection_draft`, Label: `EDI Connection Draft`, Doc: `KindEDIConnectionDraft is an EDI connection drafted from a trading partner's implementation guide: every value with the page it came from, what was held for a person, and what the guide asks that nothing meets.`},
 	{Value: `analysis`, Label: `Analysis`, Doc: `KindAnalysis is code an agent ran over report results and attached files: what it answers, the figures, the charts it drew and the code.`},
 	{Value: `portal_task`, Label: `Portal Task`, Doc: `KindPortalTask is a portal task an agent ran in a cloud browser: the site, what it was asked, and the run as it goes, with the way to enter a sign-in code or sign in in the live browser while it waits.`},
+	{Value: `board`, Label: `Board`, Doc: `KindBoard is an agent's answer to a question across records, laid out as a short page: its words, and blocks that each read their figures, rows and checks live from the records, analyses and metrics they name.`},
 }
 
 var enumStatus = [...]schema.EnumValue{

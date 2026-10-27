@@ -350,6 +350,13 @@ func UnkeptOutcome(name string) ToolOutcome {
 			Failed: true,
 		}
 	}
+	if name == showBoardName {
+		return ToolOutcome{
+			Content: fmt.Sprintf("Tool %q could not show the board just now. Answer in your "+
+				"reply instead.", name),
+			Failed: true,
+		}
+	}
 
 	return ToolOutcome{
 		Content: fmt.Sprintf("Tool %q could not keep the document just now. "+
