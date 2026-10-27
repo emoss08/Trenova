@@ -3,6 +3,8 @@ package reportrepository
 import (
 	"context"
 
+	"github.com/bytedance/sonic"
+
 	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -106,6 +108,54 @@ func (r *runRepository) GetByID(
 	})
 }
 
+func (r *runRepository) LatestComparable(
+	ctx context.Context,
+	req *reportports.GetComparableReportRunRequest,
+) (*report.ReportRun, error) {
+	params, err := comparableParams(req.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportRun, error) {
+		cols := reportcol.ReportRunColumns
+
+		entity := new(report.ReportRun)
+		q := r.db.DBForContext(ctx).
+			NewSelect().
+			Model(entity).
+			Column(cols.ID.Bare(), cols.CompletedAt.Bare(), cols.Sample.Bare()).
+			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo)).
+			Where(cols.RequestedByID.Eq(), req.RequestedBy).
+			Where(cols.Status.Eq(), report.RunStatusSucceeded).
+			Where(cols.Sample.IsNotNull()).
+			Where(cols.Params.Expr("COALESCE({}, jsonb_build_object()) = ?::jsonb"), params).
+			Where(cols.ID.NotEq(), req.ExcludeRunID).
+			Where(cols.CompletedAt.Lt(), req.CompletedBefore)
+
+		if req.DefinitionID.IsNil() {
+			q = q.Where(cols.DefinitionID.IsNull()).Where(cols.CannedKey.Eq(), req.CannedKey)
+		} else {
+			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID).Where(cols.CannedKey.IsNull())
+		}
+
+		err := q.Order(cols.CompletedAt.OrderDesc()).Limit(1).Scan(ctx)
+		if err != nil {
+			return nil, dberror.HandleNotFoundError(err, "ReportRun")
+		}
+
+		return entity, nil
+	})
+}
+
+func comparableParams(params map[string]any) (string, error) {
+	if len(params) == 0 {
+		return "{}", nil
+	}
+
+	return sonic.MarshalString(params)
+}
+
 func (r *runRepository) List(
 	ctx context.Context,
 	req *reportports.ListReportRunsRequest,
@@ -117,6 +167,7 @@ func (r *runRepository) List(
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
+			ExcludeColumn(cols.Sample.Bare()).
 			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo))
 
 		if !req.DefinitionID.IsNil() {
@@ -190,6 +241,7 @@ func (r *runRepository) ListStale(
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
+			ExcludeColumn(cols.Sample.Bare()).
 			Where(cols.Status.In(), bun.List(req.Statuses)).
 			Where(cols.UpdatedAt.Lt(), req.UpdatedBeforeUnix).
 			Order(cols.UpdatedAt.OrderAsc())
@@ -219,6 +271,7 @@ func (r *runRepository) ListExpired(
 		q := r.db.DBForContext(ctx).
 			NewSelect().
 			Model(&entities).
+			ExcludeColumn(cols.Sample.Bare()).
 			Where(cols.Status.Eq(), report.RunStatusSucceeded).
 			Where(cols.ArtifactExpiresAt.IsNotNull()).
 			Where(cols.ArtifactExpiresAt.Lt(), req.CutoffUnix).

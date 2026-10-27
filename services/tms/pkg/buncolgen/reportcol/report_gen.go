@@ -745,6 +745,7 @@ var ReportRunColumns = struct {
 	Error              buncolgen.Column // "error" → qualified: "rrun.error"
 	ArtifactKey        buncolgen.Column // "artifact_key" → qualified: "rrun.artifact_key"
 	RowsKey            buncolgen.Column // "rows_key" → qualified: "rrun.rows_key"
+	Sample             buncolgen.Column // "sample" → qualified: "rrun.sample"
 	ArtifactExpiresAt  buncolgen.Column // "artifact_expires_at" → qualified: "rrun.artifact_expires_at"
 	CacheHit           buncolgen.Column // "cache_hit" → qualified: "rrun.cache_hit"
 	TemporalWorkflowID buncolgen.Column // "temporal_workflow_id" → qualified: "rrun.temporal_workflow_id"
@@ -776,6 +777,7 @@ var ReportRunColumns = struct {
 	Error:              buncolgen.NewColumn("error", "rrun"),
 	ArtifactKey:        buncolgen.NewColumn("artifact_key", "rrun"),
 	RowsKey:            buncolgen.NewColumn("rows_key", "rrun"),
+	Sample:             buncolgen.NewColumn("sample", "rrun"),
 	ArtifactExpiresAt:  buncolgen.NewColumn("artifact_expires_at", "rrun"),
 	CacheHit:           buncolgen.NewColumn("cache_hit", "rrun"),
 	TemporalWorkflowID: buncolgen.NewColumn("temporal_workflow_id", "rrun"),
@@ -813,6 +815,7 @@ var ReportRunFieldMap = map[string]string{
 	"error":              "error",
 	"artifactKey":        "artifact_key",
 	"rowsKey":            "rows_key",
+	"sample":             "sample",
 	"artifactExpiresAt":  "artifact_expires_at",
 	"cacheHit":           "cache_hit",
 	"temporalWorkflowId": "temporal_workflow_id",
@@ -848,6 +851,7 @@ var ReportRunInsertableColumns = []string{
 	"error",
 	"artifact_key",
 	"rows_key",
+	"sample",
 	"artifact_expires_at",
 	"cache_hit",
 	"temporal_workflow_id",
@@ -949,6 +953,7 @@ var ReportRunFilter = struct {
 	Error              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "error" → DB: "error"
 	ArtifactKey        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "artifactKey" → DB: "artifact_key"
 	RowsKey            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "rowsKey" → DB: "rows_key"
+	Sample             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sample" → DB: "sample"
 	ArtifactExpiresAt  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "artifactExpiresAt" → DB: "artifact_expires_at"
 	CacheHit           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "cacheHit" → DB: "cache_hit"
 	TemporalWorkflowID func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "temporalWorkflowId" → DB: "temporal_workflow_id"
@@ -1019,6 +1024,9 @@ var ReportRunFilter = struct {
 	},
 	RowsKey: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("rowsKey", op, value)
+	},
+	Sample: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return buncolgen.NewFieldFilter("sample", op, value)
 	},
 	ArtifactExpiresAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return buncolgen.NewFieldFilter("artifactExpiresAt", op, value)

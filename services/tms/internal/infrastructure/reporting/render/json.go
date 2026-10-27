@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 	"io"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/shopspring/decimal"
 )
 
 var _ reportports.ReportRenderer = (*JSONRenderer)(nil)
@@ -55,18 +53,4 @@ func (r *JSONRenderer) Render(
 		Rows:      req.Dataset.RowCount(),
 		Truncated: truncated,
 	}, nil
-}
-
-func jsonValue(value any) any {
-	if value == nil {
-		return nil
-	}
-	switch v := value.(type) {
-	case decimal.Decimal:
-		return v.String()
-	case time.Time:
-		return v.Unix()
-	default:
-		return v
-	}
 }

@@ -160,7 +160,7 @@ func (r *runRepository) ListConnection(
 						return dba.
 							NewSelect().
 							Model(entities).
-							ColumnExpr(reportcol.ReportRunTable.All())
+							ExcludeColumn(reportcol.ReportRunColumns.Sample.Bare())
 					},
 					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
 						sq, applyErr := querybuilder.ApplyCursorFilters(

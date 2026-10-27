@@ -149,6 +149,7 @@ func RunReportWorkflow(
 		ByteSize:          execResult.ByteSize,
 		Truncated:         execResult.Truncated,
 		DurationMs:        workflow.Now(ctx).Sub(startedAt).Milliseconds(),
+		Sample:            execResult.Sample,
 	}
 
 	finalizeCtx := workflow.WithActivityOptions(ctx, finalizeActivityOptions)

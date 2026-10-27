@@ -60,17 +60,7 @@ func (e *rowsEnvelope) WriteHead(meta *reportports.ReportRunMeta) error {
 		return err
 	}
 
-	columns := make([]reportrows.Column, len(e.schema))
-	for i := range e.schema {
-		columns[i] = reportrows.Column{
-			ID:      e.schema[i].ID,
-			Label:   e.schema[i].Label,
-			Type:    e.schema[i].Type,
-			Format:  e.schema[i].Format,
-			Display: e.schema[i].Display,
-		}
-	}
-	schemaJSON, err := sonic.Marshal(columns)
+	schemaJSON, err := sonic.Marshal(Columns(e.schema))
 	if err != nil {
 		return err
 	}
@@ -85,7 +75,7 @@ func (e *rowsEnvelope) WriteHead(meta *reportports.ReportRunMeta) error {
 func (e *rowsEnvelope) WriteRow(row reportports.ReportRow) error {
 	for i := range e.schema {
 		if i < len(row) {
-			e.encoded[i] = jsonValue(row[i])
+			e.encoded[i] = reportrows.RawValue(row[i])
 
 			continue
 		}
@@ -124,7 +114,7 @@ func (e *rowsEnvelope) WriteTail(
 	if totals != nil {
 		for i := range e.schema {
 			if i < len(totals) {
-				e.encoded[i] = jsonValue(totals[i])
+				e.encoded[i] = reportrows.RawValue(totals[i])
 
 				continue
 			}
@@ -161,4 +151,19 @@ func writeAll(out *bufio.Writer, chunks ...[]byte) error {
 	}
 
 	return nil
+}
+
+func Columns(schema []reportports.ReportResultColumn) []reportrows.Column {
+	columns := make([]reportrows.Column, len(schema))
+	for i := range schema {
+		columns[i] = reportrows.Column{
+			ID:      schema[i].ID,
+			Label:   schema[i].Label,
+			Type:    schema[i].Type,
+			Format:  schema[i].Format,
+			Display: schema[i].Display,
+		}
+	}
+
+	return columns
 }

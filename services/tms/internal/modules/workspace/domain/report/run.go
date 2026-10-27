@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -48,17 +49,18 @@ type ReportRun struct {
 	// RowsKey is the JSON rows sidecar written beside the artifact. Empty means
 	// the run predates the sidecar, which is how a run that can be compared is
 	// told apart from one that cannot.
-	RowsKey            string `json:"rowsKey"            bun:"rows_key,type:VARCHAR(512),nullzero"`
-	ArtifactExpiresAt  int64  `json:"artifactExpiresAt"  bun:"artifact_expires_at,type:BIGINT,nullzero"`
-	CacheHit           bool   `json:"cacheHit"           bun:"cache_hit,type:BOOLEAN,notnull"`
-	TemporalWorkflowID string `json:"temporalWorkflowId" bun:"temporal_workflow_id,type:VARCHAR(255),nullzero"`
-	TemporalRunID      string `json:"temporalRunId"      bun:"temporal_run_id,type:VARCHAR(255),nullzero"`
-	QueuedAt           int64  `json:"queuedAt"           bun:"queued_at,type:BIGINT,nullzero"`
-	StartedAt          int64  `json:"startedAt"          bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt        int64  `json:"completedAt"        bun:"completed_at,type:BIGINT,nullzero"`
-	Version            int64  `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64  `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64  `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	RowsKey            string             `json:"rowsKey"            bun:"rows_key,type:VARCHAR(512),nullzero"`
+	Sample             *reportrows.Sample `json:"sample,omitempty"   bun:"sample,type:JSONB,nullzero"`
+	ArtifactExpiresAt  int64              `json:"artifactExpiresAt"  bun:"artifact_expires_at,type:BIGINT,nullzero"`
+	CacheHit           bool               `json:"cacheHit"           bun:"cache_hit,type:BOOLEAN,notnull"`
+	TemporalWorkflowID string             `json:"temporalWorkflowId" bun:"temporal_workflow_id,type:VARCHAR(255),nullzero"`
+	TemporalRunID      string             `json:"temporalRunId"      bun:"temporal_run_id,type:VARCHAR(255),nullzero"`
+	QueuedAt           int64              `json:"queuedAt"           bun:"queued_at,type:BIGINT,nullzero"`
+	StartedAt          int64              `json:"startedAt"          bun:"started_at,type:BIGINT,nullzero"`
+	CompletedAt        int64              `json:"completedAt"        bun:"completed_at,type:BIGINT,nullzero"`
+	Version            int64              `json:"version"            bun:"version,type:BIGINT"`
+	CreatedAt          int64              `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt          int64              `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	Organization     *tenant.Organization      `json:"organization,omitempty"     bun:"rel:belongs-to,join:organization_id=id"`
 	BusinessUnit     *tenant.BusinessUnit      `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`

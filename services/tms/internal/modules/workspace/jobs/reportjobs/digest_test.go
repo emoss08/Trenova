@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
@@ -236,4 +237,68 @@ func TestDigestNoteOnlyAppearsWhenRowsWereDropped(t *testing.T) {
 		Truncated: true,
 	}
 	assert.Contains(t, digestNote(sampled, 4000), "first 1 of 4000 rows")
+}
+
+type countingReader struct {
+	fakeReader
+	totalsCalls int
+}
+
+func (c *countingReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
+	c.totalsCalls++
+	return c.fakeReader.Totals(ctx)
+}
+
+func TestDigestReadsTheGrandTotalsOnce(t *testing.T) {
+	inner := &countingReader{fakeReader: fakeReader{
+		schema: []reportports.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
+		rows:   []reportports.ReportRow{{"ACME", decimal.NewFromInt(1000)}},
+		totals: reportports.ReportRow{nil, decimal.NewFromInt(1000)},
+	}}
+	reader := newDigestReader(inner, 10)
+
+	_, err := reader.Totals(t.Context())
+	require.NoError(t, err)
+	digest := drainDigest(t, reader)
+
+	assert.Equal(t, reportports.ReportRow{nil, decimal.NewFromInt(1000)}, digest.Totals)
+	assert.Equal(t, 1, inner.totalsCalls, "the renderer and the digest share one aggregate query")
+}
+
+func TestSampleKeepsRawValuesTheGrandTotalsAndWhetherRowsWereLeftOut(t *testing.T) {
+	delivered := time.Date(2026, time.October, 21, 14, 30, 0, 0, time.UTC)
+	rows := make([]reportports.ReportRow, 0, 3)
+	for i := range 3 {
+		rows = append(rows, reportports.ReportRow{
+			"ACME", decimal.RequireFromString("1180.50"), delivered.AddDate(0, 0, i),
+		})
+	}
+	inner := &fakeReader{
+		schema: []reportports.ReportResultColumn{
+			textColumn("Customer"),
+			moneyColumn("Revenue"),
+			{ID: "delivered", Label: "Delivered", Type: reportcatalog.FieldEpoch},
+		},
+		rows:   rows,
+		totals: reportports.ReportRow{nil, decimal.RequireFromString("3541.50"), nil},
+	}
+
+	sample := sampleOf(drainDigest(t, newDigestReader(inner, 2)))
+
+	require.NotNil(t, sample)
+	assert.Equal(t, []string{"customer", "revenue", "delivered"}, []string{
+		sample.Schema[0].ID, sample.Schema[1].ID, sample.Schema[2].ID,
+	})
+	assert.Equal(t, "Revenue", sample.Schema[1].Label)
+	assert.Equal(t, [][]any{
+		{"ACME", "1180.5", delivered.Unix()},
+		{"ACME", "1180.5", delivered.AddDate(0, 0, 1).Unix()},
+	}, sample.Rows)
+	assert.Equal(t, []any{nil, "3541.5", nil}, sample.Totals)
+	assert.True(t, sample.More)
+}
+
+func TestSampleIsNilWithoutASchema(t *testing.T) {
+	assert.Nil(t, sampleOf(&reportports.ReportDigest{}))
+	assert.Nil(t, sampleOf(nil))
 }

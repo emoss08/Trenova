@@ -31,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/readscope"
+	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -417,7 +418,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 	}
 	defer reader.Close()
 
-	source, digesting := wrapReader(ctx, reader, prepared)
+	digesting := wrapReader(ctx, reader)
 
 	renderer, err := a.renderers.For(prepared.Format)
 	if err != nil {
@@ -435,14 +436,14 @@ func (a *Activities) ExecuteAndRenderActivity(
 		prepared.Format.Extension(),
 	)
 
-	result, err := a.renderToStorage(ctx, prepared, renderer, source, artifactKey)
+	result, err := a.renderToStorage(ctx, prepared, renderer, digesting, artifactKey)
 	if err != nil {
 		return nil, err
 	}
 
-	if digesting != nil {
-		result.Digest = digesting.digest(ctx)
-	}
+	digest := digesting.digest(ctx)
+	result.Digest = digestFor(prepared, digest)
+	result.Sample = sampleOf(digest)
 
 	if a.resultCache != nil && cacheKey != "" {
 		expiresAt := timeutils.NowUnix() + int64(a.cfg.GetArtifactRetention().Seconds())
@@ -454,7 +455,8 @@ func (a *Activities) ExecuteAndRenderActivity(
 			ByteSize:          result.ByteSize,
 			Truncated:         result.Truncated,
 			ArtifactExpiresAt: expiresAt,
-			Digest:            result.Digest,
+			Digest:            digest,
+			Sample:            result.Sample,
 		}); storeErr != nil {
 			a.l.Warn("failed to store report cache entry", zap.Error(storeErr))
 		}
@@ -519,8 +521,9 @@ func (a *Activities) cachedResult(
 
 	// A run that needs an inline digest cannot use an entry stored by a run that
 	// did not: the artifact is identical, but the email would silently lose its
-	// table. Re-running is the cheaper mistake.
-	if prepared.WantDigest && entry.Digest.IsEmpty() {
+	// table. Re-running is the cheaper mistake. An entry without the sample the
+	// run keeps of its result is passed over for the same reason.
+	if entry.Sample == nil || (prepared.WantDigest && entry.Digest.IsEmpty()) {
 		if a.metrics != nil {
 			a.metrics.RecordCacheLookup("miss")
 		}
@@ -538,8 +541,20 @@ func (a *Activities) cachedResult(
 		Truncated:         entry.Truncated,
 		CacheHit:          true,
 		ArtifactExpiresAt: entry.ArtifactExpiresAt,
-		Digest:            entry.Digest,
+		Digest:            digestFor(prepared, entry.Digest),
+		Sample:            entry.Sample,
 	}, cacheKey
+}
+
+func digestFor(
+	prepared *PreparedRun,
+	digest *reportports.ReportDigest,
+) *reportports.ReportDigest {
+	if !prepared.WantDigest {
+		return nil
+	}
+
+	return digest
 }
 
 func (a *Activities) renderToStorage(
@@ -685,6 +700,7 @@ func (a *Activities) FinalizeRunActivity(
 	if payload.Status == report.RunStatusSucceeded {
 		run.ArtifactKey = payload.ArtifactKey
 		run.RowsKey = payload.RowsKey
+		run.Sample = payload.Sample
 		run.ArtifactExpiresAt = now + int64(a.cfg.GetArtifactRetention().Seconds())
 		if payload.ArtifactExpiresAt > 0 {
 			run.ArtifactExpiresAt = payload.ArtifactExpiresAt
@@ -877,6 +893,7 @@ func (a *Activities) CleanupExpiredArtifactsActivity(
 			}
 
 			run.Status = report.RunStatusExpired
+			run.Sample = nil
 			if _, err = a.runRepo.Update(runScope(ctx, run), run); err != nil {
 				a.l.Warn("failed to mark report run expired",
 					zap.String("runId", run.ID.String()), zap.Error(err))
@@ -930,21 +947,17 @@ func (a *Activities) ReconcileZombieRunsActivity(
 var errArtifactTooLarge = uploadpipe.ErrTooLarge
 
 // wrapReader layers the activity's concerns over the raw dataset: heartbeats so
-// a long render is not killed, and — only when a schedule renders an inline
-// email table — a bounded tee of the rows.
+// a long render is not killed, and a bounded tee of the rows, which the run
+// keeps as its sample and a schedule renders as an inline email table.
 func wrapReader(
 	ctx context.Context,
 	reader reportports.ReportDatasetReader,
-	prepared *PreparedRun,
-) (reportports.ReportDatasetReader, *digestReader) {
-	var source reportports.ReportDatasetReader = uploadpipe.NewHeartbeatingReader(
+) *digestReader {
+	source := uploadpipe.NewHeartbeatingReader(
 		ctx, reader, heartbeatEveryRows, activity.RecordHeartbeat,
 	)
-	if !prepared.WantDigest {
-		return source, nil
-	}
-	digesting := newDigestReader(source, reportports.MaxDigestRows)
-	return digesting, digesting
+
+	return newDigestReader(source, reportports.MaxDigestRows)
 }
 
 // digestReader captures a bounded prefix of the rows on their way to the
@@ -955,6 +968,10 @@ type digestReader struct {
 	rows    []reportports.ReportRow
 	limit   int
 	dropped bool
+
+	totals      reportports.ReportRow
+	totalsErr   error
+	totalsTaken bool
 }
 
 func newDigestReader(inner reportports.ReportDatasetReader, limit int) *digestReader {
@@ -981,7 +998,12 @@ func (r *digestReader) Next(ctx context.Context) (reportports.ReportRow, error) 
 }
 
 func (r *digestReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
-	return r.inner.Totals(ctx)
+	if !r.totalsTaken {
+		r.totalsTaken = true
+		r.totals, r.totalsErr = r.inner.Totals(ctx)
+	}
+
+	return r.totals, r.totalsErr
 }
 
 func (r *digestReader) RowCount() int64 { return r.inner.RowCount() }
@@ -998,8 +1020,26 @@ func (r *digestReader) digest(ctx context.Context) *reportports.ReportDigest {
 		Rows:      r.rows,
 		Truncated: r.dropped,
 	}
-	if totals, err := r.inner.Totals(ctx); err == nil {
+	if totals, err := r.Totals(ctx); err == nil {
 		digest.Totals = totals
 	}
 	return digest
+}
+
+func sampleOf(digest *reportports.ReportDigest) *reportrows.Sample {
+	if digest.IsEmpty() {
+		return nil
+	}
+	rows := make([][]any, 0, len(digest.Rows))
+	for _, row := range digest.Rows {
+		rows = append(rows, reportrows.RawRow(row))
+	}
+	sample := &reportrows.Sample{
+		Schema: render.Columns(digest.Columns),
+		Rows:   rows,
+		Totals: reportrows.RawRow(digest.Totals),
+		More:   digest.Truncated,
+	}
+
+	return sample.Fit()
 }

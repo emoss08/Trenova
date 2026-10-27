@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/pkg/reportfmt"
+	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -160,12 +161,13 @@ type ReportCacheEntry struct {
 	// RowsKey rides in the cache entry because a cache hit skips rendering
 	// entirely: without it, every reused result would lose its sidecar and
 	// become the one run in a pair that cannot be compared.
-	RowsKey           string        `json:"rowsKey,omitempty"`
-	RowCount          int64         `json:"rowCount"`
-	ByteSize          int64         `json:"byteSize"`
-	Truncated         bool          `json:"truncated"`
-	ArtifactExpiresAt int64         `json:"artifactExpiresAt"`
-	Digest            *ReportDigest `json:"digest,omitempty"`
+	RowsKey           string             `json:"rowsKey,omitempty"`
+	RowCount          int64              `json:"rowCount"`
+	ByteSize          int64              `json:"byteSize"`
+	Truncated         bool               `json:"truncated"`
+	ArtifactExpiresAt int64              `json:"artifactExpiresAt"`
+	Digest            *ReportDigest      `json:"digest,omitempty"`
+	Sample            *reportrows.Sample `json:"sample,omitempty"`
 }
 
 // ReportResultCache caches finished artifacts keyed by the compiled query, the

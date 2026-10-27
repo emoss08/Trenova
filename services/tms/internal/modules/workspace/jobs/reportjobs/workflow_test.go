@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -226,4 +227,31 @@ func TestRunReportWorkflowCancellationFinalizesCanceled(t *testing.T) {
 
 	require.NotNil(t, finalized, "a canceled run must still be finalized")
 	assert.Equal(t, report.RunStatusCanceled, finalized.Status)
+}
+
+func TestRunReportWorkflowKeepsTheSampleOnTheFinishedRun(t *testing.T) {
+	env := newEnv(t)
+
+	sample := &reportrows.Sample{
+		Schema: []reportrows.Column{{ID: "customer", Label: "Customer"}},
+		Rows:   [][]any{{"ACME"}},
+	}
+	env.OnActivity("PrepareRunActivity", mock.Anything, mock.Anything).
+		Return(testPrepared(), nil)
+	env.OnActivity("ExecuteAndRenderActivity", mock.Anything, mock.Anything).
+		Return(&ExecuteResult{ArtifactKey: "reports/x", RowCount: 1, Sample: sample}, nil)
+
+	var finalized *FinalizePayload
+	env.OnActivity("FinalizeRunActivity", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			finalized = args.Get(1).(*FinalizePayload)
+		}).
+		Return(nil)
+
+	env.ExecuteWorkflow(RunReportWorkflow, testPayload())
+	require.True(t, env.IsWorkflowCompleted())
+	require.NoError(t, env.GetWorkflowError())
+
+	require.NotNil(t, finalized)
+	assert.Equal(t, sample, finalized.Sample)
 }
