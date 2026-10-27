@@ -14,7 +14,7 @@ func (s *service) checkDuplicateBOLsWithControl(
 	control *tenant.ShipmentControl,
 	req *shipmentports.DuplicateBOLCheckRequest,
 ) error {
-	if !control.CheckForDuplicateBOLs {
+	if !control.CheckForDuplicateBOLs || strings.TrimSpace(req.BOL) == "" {
 		return nil
 	}
 

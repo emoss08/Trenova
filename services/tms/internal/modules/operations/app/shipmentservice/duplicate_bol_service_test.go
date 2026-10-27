@@ -142,3 +142,32 @@ func TestCheckDuplicateBOLsWithControl_NoDuplicates(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
+func TestServiceCheckDuplicateBOLsWithControl_SkipsABlankBOL(t *testing.T) {
+	t.Parallel()
+
+	for _, bol := range []string{"", "   "} {
+		repo := shipmentportsmock.NewMockShipmentRepository(t)
+		svc := &service{
+			l:            zap.NewNop(),
+			repo:         repo,
+			validator:    newTestValidator(t),
+			eventService: noopShipmentEventService{},
+			coordinator:  newStateCoordinator(),
+		}
+
+		err := svc.checkDuplicateBOLsWithControl(
+			t.Context(),
+			&tenant.ShipmentControl{CheckForDuplicateBOLs: true},
+			&shipmentports.DuplicateBOLCheckRequest{
+				TenantInfo: pagination.TenantInfo{
+					OrgID: pulid.MustNew("org_"),
+					BuID:  pulid.MustNew("bu_"),
+				},
+				BOL: bol,
+			},
+		)
+
+		require.NoError(t, err)
+	}
+}
