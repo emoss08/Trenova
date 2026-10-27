@@ -16,6 +16,12 @@ export function tariffDocText(doc: TariffDoc): string | null {
 export function appendTariffDoc(parent: HTMLElement, doc: TariffDoc): boolean {
   const text = tariffDocText(doc);
   if (!text) return false;
+  appendDocText(parent, text);
+  return true;
+}
+
+/** Appends a doc's text to an element, its `backticked` spans as `<code>`. */
+export function appendDocText(parent: HTMLElement, text: string): void {
   text.split("`").forEach((part, index) => {
     if (part === "") return;
     if (index % 2 === 1) {
@@ -26,7 +32,6 @@ export function appendTariffDoc(parent: HTMLElement, doc: TariffDoc): boolean {
       parent.appendChild(document.createTextNode(part));
     }
   });
-  return true;
 }
 
 /**

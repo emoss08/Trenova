@@ -1,0 +1,34 @@
+// Orders from Acme's web portal, imported as JSON.
+map orderJson
+  from json
+  to   loadTender
+
+let order = input.order
+key      <- text(order.id) else reject "The order has no ID"
+purpose  <- Original
+weight   <- weight(decimal(order.weightKg), "K")
+customer <- lookup Customer("ACME-AP")
+notes    <- if text(order.hazmat) == "true" then ["Hazmat: the portal says so"] else []
+
+stops <- each order.stops as item {
+  let pickup = text(item.code) == text(order.stops[0].code)
+  sequence <- if pickup then 1 else 2
+  type     <- if pickup then Pickup else Delivery
+  location <- lookup Location(text(item.code))
+  code     <- text(item.code)
+  name     <- text(item.city)
+  window   <- Window {
+    start <- at(date(text(if pickup then order.pickup else order.delivery), "yyyy-MM-dd"), @08:00, partner.zone)
+  } else reject "The order has no dates"
+}
+
+test "a portal order becomes a load" {
+  given file "samples/order.json"
+  expect key == "WEB-77"
+  expect weight == 9_000 kg
+  expect stops.count == 2
+  expect stops.last.type == Delivery
+  expect stops.last.sequence == 2
+  expect stops.last.window.start == @2026-03-05T08:00[America/Detroit]
+  expect notes.isEmpty
+}

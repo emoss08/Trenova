@@ -1,0 +1,80 @@
+rules tenderChecks for tenderIn
+  use common
+
+/// A delivery can't be booked before its pickup.
+rule "pickup comes before delivery" {
+  require stops.first.window.start <= stops.last.window.start
+    else decline "Delivery is scheduled before pickup" code "A13"
+}
+
+/// Loads over the automatic limit go to a planner instead of being accepted.
+rule "within what we haul automatically" {
+  require (weight ?? 0 lb) <= partner.maxWeight
+    else hold "Over {partner.maxWeight}: a planner decides"
+  require stops.count <= partner.maxStops
+    else hold "{stops.count} stops is more than the {partner.maxStops} we take automatically"
+}
+
+/// Every delivery needs a postal code for routing.
+rule "a consignee has a postal code" {
+  for stop in stops where stop.type == Delivery {
+    require exists stop.address.postal
+      else reject at stop.address.postal "The consignee at stop {stop.sequence} has no postal code"
+  }
+}
+
+/// Acme sends ZIP+4; Trenova keeps five digits.
+rule "Acme sends nine-digit zips" {
+  for stop in stops where (stop.address.postal ?? "").matches(r"^\d{9}$") {
+    fix stop.address.postal <- postal(stop.address.postal ?? "")
+  }
+}
+
+/// Hazmat needs a planner's eyes on placards and the driver's endorsement.
+rule "hazmat needs eyes" {
+  let hazardous = commodities.filter(c => c.hazmat ?? false)
+  warn "{hazardous.count} hazmat line(s) on board: check placards" when not hazardous.isEmpty
+}
+
+/// A rate under Acme's minimum is almost always a keying mistake.
+rule "the rate covers the minimum" {
+  hold "The rate is under the {partner.minimumCharge} minimum" when (total ?? $0.00) < partner.minimumCharge
+}
+
+test "a normal tender passes every rule" {
+  given file "samples/tender-original.x12"
+  expect no holds
+  expect no rejects
+  expect no declines
+  expect warned "1 hazmat line(s) on board: check placards"
+  expect stops.last.address.postal == "43219"
+}
+
+test "a heavy load is held for a planner" {
+  given file "samples/tender-heavy.x12"
+  expect held "Over 44,000 lb: a planner decides"
+  expect no warnings
+}
+
+test "a delivery before its pickup is declined" {
+  given file "samples/tender-backwards.x12"
+  expect declined
+}
+
+test "a lighter limit holds the standard tender" {
+  given file "samples/tender-original.x12"
+  given setting maxWeight = 40_000 lb
+  expect held "Over 40,000 lb: a planner decides"
+}
+
+test "a consignee without a postal code is rejected" {
+  given text "ISA*00*          *00*          *01*007912345      *ZZ*TRNVLOGISTICS  *260302*0815*^*00401*000000701*0*T*>~GS*SM*ACMEMFG*TRENOVA*20260302*0815*701*X*004010~ST*204*0001~B2**TRNV**AM-50002**PP~B2A*00*LT~N1*BT*ACME MANUFACTURING CO*93*ACME-AP~N3*1 INDUSTRIAL PKWY~N1*SH*ACME PLANT 3*93*ACME-P3~N3*400 FOUNDRY RD~S5*1*LD~G62*69*20260310*U*0700~N1*SH*ACME PLANT 3*93*ACME-P3~N3*400 FOUNDRY RD~N4*FLINT*MI*48502*US~S5*2*UL~G62*53*20260311*U*0900~N1*CN*ACME DC 9*93*ACME-DC9~N3*7700 COMMERCE DR~L3*20000*G***90000*******L~SE*19*0001~GE*1*701~IEA*1*000000701~"
+  expect rejected
+}
+
+property "any limit at or above the load's weight lets it through" {
+  vary limit in 42_000 lb..80_000 lb
+  given file "samples/tender-original.x12"
+  given setting maxWeight = limit
+  expect no holds
+}

@@ -1,0 +1,28 @@
+map invoiceIn
+  from x12.004010.210
+  to   freightInvoice
+
+number       <- B302
+date         <- B306
+key          <- B303
+deliveryDate <- B309
+total        <- money(B307, partner.currency)
+bol          <- N9[01 == "BM"].02
+refs         <- refs(N9)
+
+lines <- each 0400 as line {
+  sequence    <- line.LX01
+  code        <- line.L1.first.08
+  rate        <- line.L1.first.02
+  amount      <- money(line.L1.first.04, partner.currency) else reject "Line {line.LX01} has no charge"
+  description <- line.L5.first.02.titleCase()
+}
+
+test "the fleet bills linehaul and fuel" {
+  given file "samples/backhaul-invoice.x12"
+  expect number == "INV-3301"
+  expect total == $860.00
+  expect lines.count == 2
+  expect lines.sum(l => l.amount) == total
+  expect lines.last.code == "FUE"
+}

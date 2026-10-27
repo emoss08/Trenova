@@ -1,0 +1,49 @@
+rules statusChecks for statusOut
+
+/// Acme can't match a status without the BOL it gave us.
+rule "a status quotes the BOL" {
+  require exists bol else hold "Acme needs the BOL on every status: add it before sending"
+}
+
+/// An event dated in the future is a typo; it must not reach Acme.
+rule "no status from the future" {
+  for event in events {
+    require event.at <= now() + 1 h
+      else reject at event.at "A status dated {event.at} is in the future"
+  }
+}
+
+/// Exceptions go out, with a note for the account manager.
+rule "exceptions are flagged" {
+  warn "An exception status is going to Acme" when events.any(e => e.kind == Exception)
+}
+
+test "a status with its BOL goes out" {
+  given now = @2026-03-04T18:00Z
+  given shipmentStatus {
+    key: "AM-48213"
+    bol: "BOL-77120"
+    events: [{ kind: Delivered, at: @2026-03-04T16:30Z }]
+  }
+  expect no holds
+  expect no rejects
+  expect no warnings
+}
+
+test "a status without a BOL is held" {
+  given now = @2026-03-04T18:00Z
+  given shipmentStatus { key: "AM-48213", events: [{ kind: Delivered, at: @2026-03-04T16:30Z }] }
+  expect held "Acme needs the BOL on every status: add it before sending"
+}
+
+test "a status from tomorrow is rejected" {
+  given now = @2026-03-04T18:00Z
+  given shipmentStatus { key: "AM-48213", bol: "BOL-77120", events: [{ kind: Delivered, at: @2026-03-05T16:30Z }] }
+  expect rejected
+}
+
+test "an exception is sent with a warning" {
+  given now = @2026-03-04T18:00Z
+  given shipmentStatus { key: "AM-48213", bol: "BOL-77120", events: [{ kind: Exception, reason: "AH", at: @2026-03-04T16:30Z }] }
+  expect warned "An exception status is going to Acme"
+}

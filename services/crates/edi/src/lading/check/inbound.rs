@@ -312,7 +312,7 @@ impl Checker<'_> {
         }
         if !value_ty.unwrapped().fits(target_ty.unwrapped()) && !value_ty.is_any() {
             let mut diagnostic = mismatch(value.span, target_ty.unwrapped(), &value_ty);
-            if let (Type::Enum(name), Type::Code(_) | Type::Text) =
+            if let (Type::Enum(name), Type::Code(..) | Type::Text) =
                 (target_ty.unwrapped(), value_ty.unwrapped())
             {
                 diagnostic = Diagnostic::error(
@@ -328,7 +328,7 @@ impl Checker<'_> {
                         ],
                     ),
                 );
-            } else if let (Type::Ref(kind), Type::Code(_) | Type::Text) =
+            } else if let (Type::Ref(kind), Type::Code(..) | Type::Text) =
                 (target_ty.unwrapped(), value_ty.unwrapped())
             {
                 diagnostic = Diagnostic::error(
@@ -550,6 +550,7 @@ impl Checker<'_> {
         let list_ty = self.expr(env, list, None);
         let item = match list_ty.unwrapped() {
             Type::List(item) => item.as_ref().clone(),
+            Type::Json => Type::Json,
             Type::Any => Type::Any,
             other => {
                 self.report(

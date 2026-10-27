@@ -1,6 +1,7 @@
-// tariff-vim.ts is Vim mode for the Tariff editor, with AstroNvim's defaults on top of Vim's own
-// keys: `jj` or `jk` leaves insert mode, Space is the leader, and the language features answer
-// to the keys Neovim's LSP binds them to. It is loaded only when the person turns Vim keys on
+// tariff-vim.ts is Vim mode for the Tariff and Lading editors, with AstroNvim's defaults on top
+// of Vim's own keys: `jj` or `jk` leaves insert mode, Space is the leader, and the language
+// features answer to the keys Neovim's LSP binds them to, each running the editor's own command
+// when it gives one (`tariffEditorCommands`). It is loaded only when the person turns Vim keys on
 // (`useTariffVim`), so nobody else downloads it. Vim's key mappings are global to the page, so
 // they are defined once, the first time the module is asked for the extension.
 
@@ -9,7 +10,11 @@ import { openLintPanel } from "@codemirror/lint";
 import { Prec, type Extension } from "@codemirror/state";
 import type { Command, EditorView } from "@codemirror/view";
 import { CodeMirror, Vim, vim } from "@replit/codemirror-vim";
-import { requestEditorSave, tariffEditorCommands } from "./tariff-commands";
+import {
+  requestEditorSave,
+  tariffEditorCommands,
+  type TariffEditorCommands,
+} from "./tariff-commands";
 import { showHoverAtCursor } from "./tariff-hover";
 import { jumpToDiagnostic, showLineDiagnostics } from "./tariff-lint";
 import { goToDefinitionAtCursor, startRename } from "./tariff-navigate";
@@ -19,6 +24,12 @@ import { findReferences } from "./tariff-references";
 const ESCAPE_KEYS_TIMEOUT = 500;
 
 const format: Command = (view) => view.state.facet(tariffEditorCommands)?.format(view) ?? false;
+
+/** The editor's own command for `name` when it gives one, else Tariff's. */
+const own =
+  (name: Exclude<keyof TariffEditorCommands, "format">, tariff: Command): Command =>
+  (view) =>
+    (view.state.facet(tariffEditorCommands)?.[name] ?? tariff)(view);
 
 /**
  * Runs a command that selects what it lands on and leaves the cursor at its start instead, as
@@ -35,24 +46,24 @@ const landing =
 
 /** Normal-mode keys and the command each runs, as AstroNvim binds them. */
 const TARIFF_VIM_NORMAL_KEYS: ReadonlyArray<readonly [keys: string, run: Command]> = [
-  ["gd", landing(goToDefinitionAtCursor)],
-  ["K", showHoverAtCursor],
-  ["gl", showLineDiagnostics],
-  ["<Space>ld", showLineDiagnostics],
+  ["gd", landing(own("definition", goToDefinitionAtCursor))],
+  ["K", own("hover", showHoverAtCursor)],
+  ["gl", own("lineProblems", showLineDiagnostics)],
+  ["<Space>ld", own("lineProblems", showLineDiagnostics)],
   ["]d", (view) => jumpToDiagnostic(view, 1)],
   ["[d", (view) => jumpToDiagnostic(view, -1)],
   ["]e", (view) => jumpToDiagnostic(view, 1, "error")],
   ["[e", (view) => jumpToDiagnostic(view, -1, "error")],
   ["]w", (view) => jumpToDiagnostic(view, 1, "warning")],
   ["[w", (view) => jumpToDiagnostic(view, -1, "warning")],
-  ["<Space>la", openLintPanel],
-  ["gra", openLintPanel],
+  ["<Space>la", own("actions", openLintPanel)],
+  ["gra", own("actions", openLintPanel)],
   ["<Space>lD", openLintPanel],
   ["<Space>lf", format],
-  ["<Space>lr", startRename],
-  ["grn", startRename],
-  ["<Space>lR", findReferences],
-  ["grr", findReferences],
+  ["<Space>lr", own("rename", startRename)],
+  ["grn", own("rename", startRename)],
+  ["<Space>lR", own("references", findReferences)],
+  ["grr", own("references", findReferences)],
   ["<Space>/", toggleLineComment],
   ["<Space>w", requestEditorSave],
 ];

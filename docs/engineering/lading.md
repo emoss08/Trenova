@@ -224,6 +224,7 @@ runs every map against them as you type; coverage and replay use them.
 | `Money` | an amount in a currency | |
 | `Weight`, `Length`, `Volume`, `Temperature` | measures with units | |
 | `[T]` | lists | repeated segments, loops, element repetitions |
+| `[Text: T]` | maps from text to `T`: `[key: value, ...]`, `[:]` empty (a document's `refs`) | |
 | `T?` | `T` or `none` | anything not certain to be present |
 | `Segment<ID>`, `Loop<ID>` | an X12 segment or loop instance | |
 | records | document records (`Stop`, `Window`, `Address`) and `{ name: value }` literals | |
@@ -410,9 +411,11 @@ stops <- each rows as row { ... }
   `row` inside `each rows as row`; columns are matched by header name, case-insensitively. A
   `Date`, `Time` or `DateTime` column takes a pattern (`"MM/dd/yyyy"`), a measure a unit, a
   `Money` column a currency.
-- **`json`** reads any JSON document. Paths use `.name` and `[index]`; every value is typed by the
-  conversion that reads it (`text(x)`, `int(x)`, `decimal(x)`, `date(x, "yyyy-MM-dd")`), since
-  JSON carries no schema.
+- **`json`** reads any JSON document as `input`. Paths use `.name` and `[index]` (an index past
+  the end, or a missing key, is none); `each order.stops as stop` walks an array, and the list
+  functions work on one, called with their parentheses (`order.stops.count()`; `.count` alone
+  reads a key named `count`). Every value is typed by the conversion that reads it (`text(x)`,
+  `int(x)`, `decimal(x)`, `date(x, "yyyy-MM-dd")`), since JSON carries no schema.
 
 ## Documents
 
@@ -581,7 +584,10 @@ rule "hazmat needs eyes" {
 ```
 
 A rules file belongs to one map and runs on the document that map produced (inbound), or the
-document about to be written (outbound), before Trenova acts on it. Inside a rule:
+document about to be written (outbound), before Trenova acts on it. It sees the libraries its map
+uses and may `use` more on its header, as a flow or a library may. A function or crosswalk from a
+library the file does not use is an error that names the library, with a fix that adds the
+`use`. Inside a rule:
 
 - **`require cond else outcome`**: the outcome happens when `cond` is false (or none).
 - **`outcome when cond`**: the outcome happens when `cond` is true.
@@ -739,6 +745,12 @@ message when something happens in Trenova. The events are `TenderOffered`, `Tend
 events of one instance that land within the window into one message; `until` stops sending once
 that event has been sent.
 
+**One flow per message.** A received set, a response and an event go to the first flow in the
+project that names them, so a second flow that receives the same set, responds with the same set
+or sends on the same event is an error there (`flow-receive-taken`, `flow-respond-taken`,
+`flow-event-taken`); within one flow, sending the same set twice on one event is
+`duplicate-send`.
+
 **`expect <ack> for every send within duration else resend n then escalate "message"`** watches
 the partner's acknowledgment of everything this flow sends: a missing one is resent up to `n`
 times, then escalated to the exception queue. A rejected one is escalated at once.
@@ -786,7 +798,8 @@ test "an arrival writes the right AT7" {
   **`given lookup Kind("code") = "Label"`** (an unmapped code is `given lookup Kind("code") =
   none`) and **`given now = @...`** fix what the run reads.
 - **`expect cond`** must be true. **`expect x12 contains "..."`** and **`expect x12 == "..."`**
-  compare the transaction a map wrote (without its envelope). **`expect no holds`** (`rejects`,
+  compare the transaction a map wrote, from ST to SE, without the ISA, GS, GE and IEA around
+  it. **`expect no holds`** (`rejects`,
   `declines`, `warnings`), **`expect held "message"`**, **`expect rejected`**, **`expect
   declined`** and **`expect warned "message"`** check a rules file's outcomes.
 - A test in a map file runs that map; in a rules file, its map and then its rules; in a library,
@@ -811,7 +824,11 @@ test "an unanswered tender escalates" {
 ```
 
 `receive file|text`, `respond accept|decline "reason"`, `event Kind { fields }`, `ack accepted|
-rejected` and `advance duration` are steps; `expect sent <set> [accept|decline]`, `expect held`,
+rejected` and `advance duration` are steps. Every message a test sends gets the next control
+number from `0001`, as the partner would see it, so an escalation's `{message.control}` reads as
+it will in production; and the load moves with the events a test raises (`Dispatched` makes it
+dispatched, `Delivered` delivered, `InvoicePosted` invoiced), so a later step meets the state a
+`cancel unless dispatched` checks; `expect sent <set> [accept|decline]`, `expect held`,
 `expect escalated`, `expect created`, `expect updated`, `expect cancelled` and `expect no
 <action>` check what the flow did.
 
@@ -874,15 +891,23 @@ A partner without a project gets the start form, which writes the starter for th
 and sets as the first draft. Everything about the text is computed by the module in the browser,
 against the organisation and custom fields from `GET /edi/lading/context/`:
 
-- **the editor:** colour from `lading.tokens`; diagnostics with quick fixes from `lading.check`
-  of the whole working copy; completion (X12 paths from the guide with each segment's and
-  element's name, usage and codes; document fields; settings; functions; crosswalks; enum
-  variants); hover (the guide's description, the type, the doc, and the last run's value with
-  the elements it was read from and the steps it went through);
+- **the editor:** colour from `lading.tokens`; diagnostics with their code, the places they
+  relate to and quick fixes from `lading.check` of the whole working copy, with this file as the
+  editor holds it; completion (X12 paths from the guide with each segment's and element's name,
+  usage and codes; document fields; settings; functions and methods; crosswalks; enum variants;
+  events; and, inside the quotes of a text compared with a code element, that element's codes
+  with their descriptions), asked about the text being typed and asked again after a `.` or a
+  quote; hover (the guide's description, the declaration in the syntax colours, the type, the doc,
+  and the last run's value with the elements it was read from and the steps it went through);
   signature help; inlay values from the last run; go to definition (F12, Mod-click, into other
-  files); Find references (Shift-F12); rename (F2) and the refactorings (Mod-.: *Extract
-  crosswalk*, *Extract function*, *Promote to setting*, *Move to library*), whose edits may reach
-  other files and land in the working copy; folding from the outline; formatting (Shift-Alt-F);
+  files); Find references (Shift-F12); rename (F2); the line's quick fixes and the refactorings
+  (Mod-.: *Extract crosswalk*, *Extract function*, *Promote to setting*, *Move to library*),
+  whose edits may reach other files and land in the working copy; F8 and Shift-F8 between
+  problems and Mod-Shift-M for all of them; folding from the outline; formatting (Shift-Alt-F);
+  Mod-S (`:w` in Vim) saves the draft. The status bar under it shows the file's errors and
+  warnings, the cursor's line and column, Format and the Vim switch; with Vim keys on, the
+  Tariff editor's mappings (`gd`, `K`, `gl`, `]d`, `grn`, `grr`, `gra`, Space as the leader) run
+  Lading's own commands;
 - **problems:** every finding in the project, errors first, each opening its file at the range;
 - **tests:** tests and properties run on the working copy without saving, with readiness,
   failures that open their range, a property's counterexample, the elements the samples carry
@@ -947,7 +972,7 @@ guideDecl   = path ( "required" | "unused" | "max" INT | "min" INT
 elemRule    = POS { "required" | "unused" | "codes" string {"," string}
               | "length" INT ".." INT | "repeat" INT | "fixed" string } [string]
 
-mapHdr      = "map" name "from" source "to" target [ "use" name {"," name} ]
+mapHdr      = "map" name "from" source "to" target uses
 source      = dotted | docType | "csv" "{" { name ":" type [string] } "}" | "json"
 assign      = lvalue "<-" expr [ "else" (outcome | expr) ]
 lvalue      = name { "." name | "[" expr "]" }
@@ -957,14 +982,15 @@ loopBlock   = LOOPID ( block | "<-" "each" expr "as" name block )
 when        = "when" expr block
 let         = "let" name "=" expr
 
-rulesHdr    = "rules" name "for" name
+uses        = [ "use" name {"," name} ]
+rulesHdr    = "rules" name "for" name uses
 rule        = "rule" string "{" { ruleStmt } "}"
 ruleStmt    = "require" expr "else" outcome | outcome "when" expr
             | "for" name "in" expr [ "where" expr ] block | "fix" lvalue "<-" expr | let
 outcome     = "reject" [ "at" expr ] string | "decline" string [ "code" string ]
             | "hold" string | "warn" string
 
-flowHdr     = "flow" name "with" name
+flowHdr     = "flow" name "with" name uses
 flowDecl    = "receive" SET "as" name { receiveClause }
             | "respond" SET "via" name { respondClause }
             | "send" SET "via" name "on" EVENT {"," EVENT} [ "where" expr ] [ "key" expr ]
@@ -972,7 +998,7 @@ flowDecl    = "receive" SET "as" name { receiveClause }
             | "expect" SET "for" "every" "send" "within" expr "else"
               [ "resend" INT "then" ] "escalate" string
 
-libraryHdr  = "library" name
+libraryHdr  = "library" name uses
 decl        = fnDecl | crosswalk | constDecl
 fnDecl      = "fn" name "(" [ param {"," param} ] ")" "->" type ( "=" expr | block )
 crosswalk   = "crosswalk" name ":" type "<->" type "{" { pair } [ "else" ("->"|"<-") expr ] "}"
@@ -985,6 +1011,7 @@ expr        = literal | name | path | expr "." name [ "(" args ")" ] | expr "[" 
             | "match" expr "{" { pattern "=>" expr } [ "else" "=>" expr ] "}"
             | "if" expr "then" expr "else" expr | name "=>" expr
             | expr binop expr | ("not"|"-") expr | "[" [ expr {"," expr} ] "]"
+            | "[" ":" "]" | "[" expr ":" expr {"," expr ":" expr} "]"
             | TYPE "{" { name "<-" expr } "}" | "{" { name ":" expr [","] } "}"
             | "each" expr "as" name block
 ```

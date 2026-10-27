@@ -116,6 +116,12 @@ pub fn visit<'e>(expr: &'e Expr, found: &mut impl FnMut(&'e Expr)) {
                 visit(item, found);
             }
         }
+        ExprKind::Map(entries) => {
+            for (key, value) in entries {
+                visit(key, found);
+                visit(value, found);
+            }
+        }
         ExprKind::Record { fields, .. } => {
             for field in fields {
                 visit(&field.value, found);

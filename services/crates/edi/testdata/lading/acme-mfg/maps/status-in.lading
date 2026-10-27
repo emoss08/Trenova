@@ -1,0 +1,35 @@
+map statusIn
+  from acme.214.fleet
+  to   shipmentStatus
+  use  common
+
+key       <- B1002 else reject "The status has no shipment ID"
+proNumber <- B1001
+bol       <- L11[02 == "BM"].01
+refs      <- refs(L11)
+
+events <- each 0205 as item {
+  let status = item.0210.first
+  kind <- status.AT701 via statusCodes else Exception
+  let failure = if status.AT701 == "SD" or status.AT701 == "A9"
+    then lookup ServiceFailureReason(status.AT702)
+    else none
+  reason <- failure.code ?? status.AT702
+  at     <- at(status.AT705, status.AT706, zoneFromCode(status.AT707 ?? "") ?? partner.zone)
+    else reject "Status {item.LX01} has no date"
+  local   <- not exists zoneFromCode(status.AT707 ?? "")
+  stop    <- int(item.L11[02 == "QN"].01)
+  city    <- status.MS101.titleCase()
+  state   <- status.MS102
+  country <- status.MS103
+}
+
+test "the fleet reports pickup and delivery" {
+  given file "samples/backhaul-status.x12"
+  expect events.count == 2
+  expect events.first.kind == ArrivedPickup
+  expect events.last.kind == Delivered
+  expect events.last.city == "Akron"
+  expect events.last.at == @2026-03-06T16:30[America/New_York]
+  expect events.all(e => e.stop != none)
+}

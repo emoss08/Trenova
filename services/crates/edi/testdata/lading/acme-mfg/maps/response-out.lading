@@ -1,0 +1,36 @@
+map responseOut
+  from tenderResponse
+  to   x12.004010.990
+  use  common
+
+B1 {
+  01 <- scac ?? org.scac
+  02 <- key
+  03 <- respondedAt
+  04 <- decision via decisions
+}
+N9 when exists reason { 01 <- "ZZ", 02 <- reason.truncate(30) }
+N9 when decision == Decline and not exists reason { 01 <- "ZZ", 02 <- partner.declineNote.truncate(30) }
+G62 { 01 <- "86", 02 <- respondedAt, 03 <- "8", 04 <- respondedAt, 05 <- respondedAt.zoneCode() }
+
+test "an acceptance writes exactly this 990" {
+  given tenderResponse { key: "AM-48213", decision: Accept, respondedAt: @2026-03-02T09:15[America/Detroit] }
+  expect x12 == "ST*990*0001~B1*TRNV*AM-48213*20260302*A~G62*86*20260302*8*0915*ET~SE*4*0001~"
+}
+
+test "a decline without a reason carries the dispatch note" {
+  given tenderResponse { key: "AM-48213", decision: Decline, respondedAt: @2026-03-02T09:15[America/Detroit] }
+  expect x12 contains "N9*ZZ*Call Trenova dispatch at 313-5~"
+}
+
+property "any reason fits the N9" {
+  vary why in ["No capacity", "Equipment unavailable on the requested date at Flint", "Weather"]
+  given tenderResponse { key: "AM-1", decision: Decline, reason: why, respondedAt: @2026-03-02T14:30Z }
+  expect x12 contains "N9*ZZ*"
+}
+
+property "every decision writes a reservation code" {
+  vary decision in Decision
+  given tenderResponse { key: "AM-1", decision: decision, respondedAt: @2026-03-02T14:30Z }
+  expect x12 contains "B1*TRNV*AM-1*20260302*"
+}

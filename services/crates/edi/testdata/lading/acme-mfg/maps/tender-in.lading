@@ -1,0 +1,125 @@
+map tenderIn
+  from acme.204
+  to   loadTender
+  use  common
+
+// The heading: one line per field, read straight from Acme's 204.
+key      <- B204 else reject "The tender has no shipment ID"
+purpose  <- B2A01 via purposes
+payment  <- B206 via payments
+bol      <- L11[02 == "BM"].01
+bol      <- L11[02 == "CR"].01
+poNumber <- reference(L11, "PO")
+refs     <- refs(L11)
+refs["DEPT"] <- L11[02 == "DJ"].01
+notes <- NTE.map(n => n.02)
+
+// The bill-to is a loop in the heading; a code we have no mapping for waits for someone to
+// map it, with the party's name and address as the suggestion.
+let billTo = 0100[N101 == "BT"]
+customer     <- lookup Customer(billTo.N104) learn party(billTo)
+serviceType  <- lookup ServiceType(if exists NTE[01 == "SPH"] then "EXPEDITED" else "STANDARD")
+shipmentType <- lookup ShipmentType(match B206 {
+  "TP" => "BROKERED"
+  else => "TRUCKLOAD"
+})
+rating <- lookup RatingTemplate("ACME-CONTRACT-2026")
+
+let trailer = 0200.N7
+equipment <- trailer.11 via equipment
+  else hold "Acme asked for equipment we don't run: {trailer.11 ?? "none"}"
+temperature <- {
+  min: temperature(decimal(trailer.13), "F")
+  max: partner.maxReeferTemp
+}
+
+weight        <- weight(L301, L312 ?? "L") else warn "Acme sent no total weight"
+pieces        <- L311
+total         <- money(L305, partner.currency)
+otherCharges  <- total * partner.fuelSurcharge
+freightCharge <- total - total * partner.fuelSurcharge
+
+custom.poNumber            <- poNumber
+custom.declaredValue       <- L314
+custom.appointmentRequired <- 0300.any(s => exists s.L11[02 == "AO"])
+
+// A replacement (05) is read as a change, with a note saying so.
+when B2A01 == "05" {
+  notes <- ["Acme replaced this tender: every field is re-read"]
+}
+
+stops <- each 0300 as stop {
+  let party = stop.0310
+  sequence <- stop.S501
+  type     <- stop.S502 via stopTypes else reject "Stop {stop.S501} has no type"
+  location <- lookup Location(party.N104) learn address(party)
+  code     <- party.N104
+  name     <- party.N102.titleCase()
+  address  <- address(party)
+  window   <- window(stop.G62, location.zone ?? partner.zone)
+    else reject "Stop {stop.S501} has no appointment"
+  weight <- weight(stop.AT8.03, stop.AT8.02)
+  pieces <- stop.AT8.04
+  refs   <- refs(stop.L11)
+  notes  <- stop.NTE.map(n => n.02)
+}
+
+commodities <- each 0300.map(s => s.0320).flatten as line {
+  commodity   <- lookup Commodity(line.L503)
+  description <- line.L502.titleCase()
+  weight      <- weight(line.AT8.03, line.AT8.02)
+  pieces      <- line.AT8.04
+  hazmat      <- not line.0325.isEmpty
+}
+
+charges <- each 0300.map(s => s.AT5).flatten as service {
+  accessorial <- lookup Accessorial(service.02)
+  code        <- service.02
+  description <- service.03
+  amount      <- $0.00
+}
+
+test "Acme's standard tender becomes a two-stop load" {
+  given file "samples/tender-original.x12"
+  given lookup Customer("ACME-AP") = "Acme Manufacturing Co"
+  given lookup Location("ACME-P3") = "Acme Plant 3"
+  given lookup Location("ACME-DC9") = "Acme Distribution Center 9"
+  expect key == "AM-48213"
+  expect purpose == Original
+  expect stops.count == 2
+  expect stops.first.type == Pickup
+  expect stops.last.address.city == "COLUMBUS"
+  expect stops.first.window.start == @2026-03-03T08:00[America/Detroit]
+  expect total == $2_145.00
+  expect weight == 42_000 lb
+  expect commodities.count(c => c.hazmat) == 1
+  expect refs["DEPT"] == "DEPT-14"
+  expect equipment == "VAN"
+  expect no rejects
+  expect no holds
+}
+
+test "an unmapped bill-to waits for a mapping" {
+  given file "samples/tender-original.x12"
+  given lookup Customer("ACME-AP") = none
+  expect customer == none
+}
+
+test "a replacement reads as a change" {
+  given file "samples/tender-replace.x12"
+  expect purpose == Change
+  expect notes.first == "Acme replaced this tender: every field is re-read"
+}
+
+test "a tender pasted as text is read too" {
+  given text "ISA*00*          *00*          *01*007912345      *ZZ*TRNVLOGISTICS  *260302*0815*^*00401*000000700*0*T*>~GS*SM*ACMEMFG*TRENOVA*20260302*0815*700*X*004010~ST*204*0001~B2**TRNV**AM-50001**CC~B2A*00*LT~N1*BT*ACME MANUFACTURING CO*93*ACME-AP~N3*1 INDUSTRIAL PKWY~N1*SH*ACME PLANT 3*93*ACME-P3~N3*400 FOUNDRY RD~S5*1*LD~G62*69*20260310*U*0700~N1*SH*ACME PLANT 3*93*ACME-P3~S5*2*UL~G62*53*20260311*U*0900~N1*CN*ACME DC 9*93*ACME-DC9~L3*20000*G***90000*******L~SE*15*0001~GE*1*700~IEA*1*000000700~"
+  given setting fuelSurcharge = 10%
+  expect no rejects
+  expect payment == Collect
+  expect otherCharges == $90.00
+}
+
+property "everything Acme has tendered still reads" {
+  vary file in samples "samples/tender-*.x12"
+  expect no rejects
+}

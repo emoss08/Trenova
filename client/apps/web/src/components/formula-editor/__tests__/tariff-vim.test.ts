@@ -129,6 +129,34 @@ describe("leader keys", () => {
     expect(format).toHaveBeenCalledWith(view);
   });
 
+  it("runs another language's own commands when its editor gives them", () => {
+    const definition = vi.fn(() => true);
+    const hover = vi.fn(() => true);
+    const rename = vi.fn(() => true);
+    const references = vi.fn(() => true);
+    const actions = vi.fn(() => true);
+    const view = mount("let a = 1\n", [
+      tariffEditorCommands.of({
+        format: vi.fn(() => true),
+        definition,
+        hover,
+        rename,
+        references,
+        actions,
+      }),
+    ]);
+    press(view, "g", "d");
+    press(view, "K");
+    press(view, "<Space>", "l", "r");
+    press(view, "g", "r", "r");
+    press(view, "g", "r", "a");
+    expect(definition).toHaveBeenCalledWith(view);
+    expect(hover).toHaveBeenCalledWith(view);
+    expect(rename).toHaveBeenCalledWith(view);
+    expect(references).toHaveBeenCalledWith(view);
+    expect(actions).toHaveBeenCalledWith(view);
+  });
+
   it("asks the page to save on Space w and on :w", () => {
     const view = mount("let a = 1\n");
     const save = vi.fn();

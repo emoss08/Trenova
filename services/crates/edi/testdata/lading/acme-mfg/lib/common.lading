@@ -1,0 +1,167 @@
+library common
+
+// Several codes on one side: the first is the one written.
+crosswalk stopTypes: Code<S502> <-> StopType {
+  "LD", "CL" <-> Pickup
+  "UL", "CU" <-> Delivery
+}
+
+// "05" (replace) is read as a change but never written; anything else reads as an original.
+crosswalk purposes: Code<B2A01> <-> TenderPurpose {
+  "00" <-> Original
+  "01" <-> Cancel
+  "04" <-> Change
+  "05" -> Change
+  else -> Original
+}
+
+crosswalk payments: Code<B206> <-> Payment {
+  "PP" <-> Prepaid
+  "CC" <-> Collect
+  "TP" <-> ThirdParty
+}
+
+crosswalk decisions: Code<B104> <-> Decision {
+  "A" <-> Accept
+  "D" <-> Decline
+}
+
+// "AJ" (tendered for delivery) is only ever read; we never write it. Anything we don't
+// recognise reads as an exception.
+crosswalk statusCodes: Code<AT701> <-> EventKind {
+  "X3" <-> ArrivedPickup
+  "AF" <-> DepartedPickup
+  "X1" <-> ArrivedDelivery
+  "D1" <-> Delivered
+  "CD" <-> DepartedDelivery
+  "X6" <-> EnRoute
+  "AG" <-> EtaChanged
+  "SD" <-> Delayed
+  "AA" <-> AppointmentSet
+  "A9" <-> Exception
+  "CP" <-> Loaded
+  "P1" <-> Dispatched
+  "AJ" -> ArrivedDelivery
+  else -> Exception
+}
+
+// Acme's equipment codes against ours, both text: read left to right with `via equipment`,
+// right to left with `via equipment.back`. Our "VAN" is the one written for both TF and TV.
+crosswalk equipment: Text <-> Text {
+  "TF" <-> "VAN"
+  "TV" -> "VAN"
+  "RT" <-> "REEFER"
+  "FT" <-> "FLATBED"
+  "VAN-53" <- "VAN53"
+  else <- "TF"
+}
+
+/// Average driving speed, in miles an hour.
+const averageSpeed = 50
+/// Acme's heaviest legal load.
+const legalLimit = 80_000 lb
+/// The window a delivery gets when Acme sends only its earliest time.
+const defaultWindow = 2 h
+
+/// The appointment window from a stop's dates: the earliest of 69, 37 or 53, the latest of
+/// 70, 38 or 54, in the zone given.
+fn window(dates: [Segment<G62>], zone: Zone) -> Window? {
+  let opens = dates.find(d => d.01 in ["69", "37", "53"])
+  let closes = dates.find(d => d.01 in ["70", "38", "54"])
+  let start = at(opens.02, opens.04, zone)
+  Window {
+    start <- start
+    end   <- at(closes.02, closes.04, zone) ?? (start ?? now()) + defaultWindow
+  }
+}
+
+/// The first reference with a qualifier, BOL by default.
+fn reference(segments: [Segment<L11>], qualifier: Text = "BM") -> Text? =
+  segments.find(s => s.02 == qualifier).01
+
+/// A US or Canadian postal code in the form Trenova keeps: five digits, or a Canadian
+/// "A1A 1A1".
+fn postal(code: Text) -> Text? =
+  if code.matches(r"^\d{5,9}$") then code.zip5() else code.upper()
+
+/// What a hazmat class number means, for notes.
+fn hazardClass(code: Text) -> Text = match code.take(1) {
+  "1" => "Explosives"
+  "2" => "Gases"
+  "3" => "Flammable liquids"
+  "8" => "Corrosives"
+  else => "Other dangerous goods"
+}
+
+/// Days a run of this many miles takes at eleven driving hours a day.
+fn transitDays(miles: Int) -> Decimal = (miles / (averageSpeed * 11)).ceil()
+
+test "no dates make no window" {
+  expect window([], partner.zone) == none
+}
+
+test "a nine-digit zip keeps five digits and a Canadian code is uppercased" {
+  expect postal("432191234") == "43219"
+  expect postal("m5v 3l9") == "M5V 3L9"
+}
+
+test "hazard classes read from the first digit" {
+  expect hazardClass("8.1") == "Corrosives"
+  expect hazardClass("9") == "Other dangerous goods"
+}
+
+test "equipment reads both ways" {
+  expect "TF" via equipment == "VAN"
+  expect "REEFER" via equipment.back == "RT"
+  expect "XX" via equipment == none
+}
+
+test "a long run takes more than one day" {
+  expect transitDays(900) == 2
+  expect legalLimit > 45_000 lb
+}
+
+test "literals: dates, times, instants, money, percents and measures" {
+  expect @2026-03-02T08:30-05:00 == @2026-03-02T13:30Z
+  expect @2026-03-02T08:30[America/Detroit] == @2026-03-02T13:30Z
+  expect @2026-03-02T08:30Z + 90 min == @2026-03-02T10:00Z
+  expect money(12.50, "CAD").currency() == "CAD"
+  expect $100.00 * 18% == $18.00
+  expect 1 t > 2_000 lb
+  expect 53 ft == 636 in
+  expect 1 m3 > 35 ft3
+  expect -10 °F < 0 °C
+  expect "a {{literal}} brace" == r"a {literal} brace"
+  expect "tab\there".contains("\t")
+}
+
+test "the standard library on text" {
+  expect "  acme  ".trim() == "acme"
+  expect "acme mfg".titleCase() == "Acme Mfg"
+  expect "ACME-48213".digits() == "48213"
+  expect "48201".pad(9, with: "0") == "482010000"
+  expect "a,b,c".split(",").count == 3
+  expect join(["a", "b"], "-") == "a-b"
+  expect "Acme*Mfg~".clean() == "Acme Mfg"
+  expect "Michigan".stateCode() == "MI"
+  expect "United States".countryCode() == "US"
+  expect "(313) 555-0100".phone() == "+13135550100"
+  expect "48201".isNumber()
+  expect "".isBlank()
+}
+
+test "the standard library on numbers, dates and lists" {
+  expect 12.345.round(2) == 12.35
+  expect max(3, 7) == 7
+  expect weight(20, "K").in(lb).round() == 44 lb
+  expect addBusinessDays(@2026-03-06, 1) == @2026-03-09
+  expect date("03/04/2026", "MM/dd/yyyy") == @2026-03-04
+  expect zoneFromCode("ET") == zone(@2026-03-02T08:00[America/New_York])
+  expect [3, 1, 2].sortBy(n => n).first == 1
+  expect [1, 2, 3].sum(n => n) == 6
+  expect [[1], [2, 3]].flatten.count == 3
+  expect [1, 1, 2].distinct.count == 2
+  expect ["a", "b"].get(1) == "b"
+  expect ["BM": "BOL-1", "PO": "PO-9"]["PO"] == "PO-9"
+  expect [:]["BM"] == none
+}

@@ -805,6 +805,8 @@ pub enum ExprKind {
     None,
     /// `[a, b]`
     List(Vec<Expr>),
+    /// `["BM": bol, "PO": po]`, or `[:]` with no entries: text keys to values.
+    Map(Vec<(Expr, Expr)>),
     /// `Type { field <- v }` or `{ name: v }`
     Record {
         /// The type, when written.

@@ -1,0 +1,112 @@
+flow tender with acmeManufacturing
+
+receive 204 as tender
+  via tenderIn, rules tenderChecks
+  key tender.key
+  acknowledge with 997
+  on Original -> create
+  on Change   -> update stops, commodities, refs, notes keep customer, total
+    hold when tender.total != current.total "Acme changed the rate on {tender.key}"
+  on Cancel   -> cancel unless dispatched else hold "Acme cancelled {tender.key} after dispatch"
+
+respond 990 via responseOut
+  accept automatically when partner.autoAccept and not held and not declined
+  decline automatically when declined and partner.autoDecline
+  otherwise planner decides within partner.answerWithin else escalate "Acme tender {tender.key} needs an answer"
+
+send 214 via statusOut on Dispatched, StopArrived, StopDeparted, EtaChanged, Delivered
+  where exists status.bol
+  batch within 5 min
+  until Delivered
+
+send 210 via invoiceOut on InvoicePosted key invoice.key ?? invoice.number
+
+expect 997 for every send within 30 min else resend 2 then escalate "Acme has not acknowledged {message.set} {message.control}"
+
+test "a new tender becomes a load and is acknowledged" {
+  receive file "samples/tender-original.x12"
+  expect created
+  expect sent 997
+}
+
+test "a replacement with the same rate updates the load" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-replace.x12"
+  expect updated
+  expect no held
+}
+
+test "a change to the rate is held for a planner" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  receive file "samples/tender-change.x12"
+  expect held "Acme changed the rate on AM-48213"
+}
+
+test "a cancellation before dispatch cancels the load" {
+  receive file "samples/tender-original.x12"
+  receive file "samples/tender-cancel.x12"
+  expect cancelled
+}
+
+test "a cancellation after dispatch is held" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  event Dispatched { key: "AM-48213", bol: "BOL-77120", events: [{ kind: Dispatched, at: @2026-03-03T07:00Z }] }
+  receive file "samples/tender-cancel.x12"
+  expect held "Acme cancelled AM-48213 after dispatch"
+  expect no cancelled
+}
+
+test "a planner's acceptance is answered with a 990" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  expect sent 990 accept
+}
+
+test "a planner's decline is answered with a 990" {
+  receive file "samples/tender-original.x12"
+  respond decline "No trucks in Flint on the 3rd"
+  expect sent 990 decline
+}
+
+test "a tender the rules decline is declined automatically" {
+  receive file "samples/tender-backwards.x12"
+  expect sent 990 decline
+}
+
+test "an unanswered tender escalates after two hours" {
+  receive file "samples/tender-original.x12"
+  advance 2 h
+  expect escalated "Acme tender AM-48213 needs an answer"
+}
+
+test "arrivals within five minutes go out as one 214" {
+  receive file "samples/tender-original.x12"
+  respond accept
+  event StopArrived { key: "AM-48213", bol: "BOL-77120", events: [{ kind: ArrivedPickup, at: @2026-03-03T12:02Z, stop: 1 }] }
+  event StopDeparted { key: "AM-48213", bol: "BOL-77120", events: [{ kind: DepartedPickup, at: @2026-03-03T12:05Z, stop: 1 }] }
+  advance 5 min
+  expect sent 214
+}
+
+test "an acknowledged status needs nothing more" {
+  event Delivered { key: "AM-48213", bol: "BOL-77120", events: [{ kind: Delivered, at: @2026-03-04T19:30Z, stop: 2 }] }
+  advance 5 min
+  ack accepted
+  advance 2 h
+  expect no escalated
+}
+
+test "a rejected acknowledgment escalates at once" {
+  event Delivered { key: "AM-48213", bol: "BOL-77120", events: [{ kind: Delivered, at: @2026-03-04T19:30Z, stop: 2 }] }
+  advance 5 min
+  ack rejected
+  expect escalated "The partner rejected 214 0001: Acme has not acknowledged 214 0001"
+}
+
+test "a posted invoice is sent" {
+  event InvoicePosted { number: "INV-1001", date: @2026-03-05, key: "AM-48213", total: $2_531.10 }
+  expect sent 210
+}

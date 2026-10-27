@@ -1,0 +1,49 @@
+map tenderOut
+  from loadTender
+  to   x12.004010.204
+  use  common
+
+B2 { 02 <- org.scac, 04 <- key, 06 <- payment via payments ?? "PP" }
+B2A { 01 <- purpose via purposes ?? "00" }
+L11 when exists bol { 01 <- bol, 02 <- "BM" }
+L11 when exists poNumber { 01 <- poNumber, 02 <- "PO" }
+
+0300 <- each stops as stop {
+  S5 { 01 <- stop.sequence, 02 <- stop.type via stopTypes }
+  G62 {
+    01 <- if stop.type == Pickup then "37" else "53"
+    02 <- stop.window.start
+    03 <- "U"
+    04 <- stop.window.start
+    05 <- stop.window.start.zoneCode()
+  }
+  0310 {
+    N1 { 01 <- if stop.type == Pickup then "SH" else "CN", 02 <- stop.name ?? stop.location.label, 03 <- if exists stop.code then "93" else none, 04 <- stop.code }
+    N3 when exists stop.address { 01 <- stop.address.line1, 02 <- stop.address.line2 }
+    N4 when exists stop.address {
+      01 <- stop.address.city
+      02 <- stop.address.state
+      03 <- stop.address.postal
+      04 <- stop.address.country
+    }
+  }
+}
+
+L3 { 01 <- weight.value(lb), 02 <- if exists weight then "G" else none, 05 <- total, 12 <- if exists weight then "L" else none }
+
+test "a backhaul offered to Acme's fleet is a two-stop 204" {
+  given loadTender {
+    key: "BH-7001"
+    purpose: Original
+    bol: "BOL-88001"
+    weight: 38_000 lb
+    total: $860.00
+    stops: [
+      { sequence: 1, type: Pickup, name: "Toledo Steel", code: "TS-1", window: { start: @2026-03-06T07:00[America/New_York] } },
+      { sequence: 2, type: Delivery, name: "Akron Yard", window: { start: @2026-03-06T16:00[America/New_York] } }
+    ]
+  }
+  expect x12 contains "B2**TRNV**BH-7001**PP~B2A*00~"
+  expect x12 contains "S5*1*LD~G62*37*20260306*U*0700*ET~N1*SH*Toledo Steel*93*TS-1~"
+  expect x12 contains "L3*38000*G***86000*******L~"
+}

@@ -480,15 +480,33 @@ impl Parser<'_> {
         expr
     }
 
+    /// `[a, b]`, or a map: `[key: value, ...]` or `[:]`.
     fn list(&mut self) -> Expr {
         let start = self.advance().span.start;
+        self.skip_newlines();
+        if self.eat(Tok::Colon).is_some() {
+            self.skip_newlines();
+            self.expect(Tok::RBracket, "]");
+            return Expr::new(ExprKind::Map(Vec::new()), self.since(start));
+        }
         let mut items = Vec::new();
+        let mut entries = Vec::new();
+        let mut is_map: Option<bool> = None;
         loop {
             self.skip_newlines();
             if self.at(Tok::RBracket) || self.at(Tok::Eof) {
                 break;
             }
-            items.push(self.expr());
+            let item = self.expr();
+            let map = *is_map.get_or_insert_with(|| self.at(Tok::Colon));
+            if map {
+                self.expect(Tok::Colon, ":");
+                self.skip_newlines();
+                let value = self.expr();
+                entries.push((item, value));
+            } else {
+                items.push(item);
+            }
             self.skip_newlines();
             if self.eat(Tok::Comma).is_none() {
                 break;
@@ -496,7 +514,12 @@ impl Parser<'_> {
         }
         self.skip_newlines();
         self.expect(Tok::RBracket, "]");
-        Expr::new(ExprKind::List(items), self.since(start))
+        let kind = if is_map == Some(true) {
+            ExprKind::Map(entries)
+        } else {
+            ExprKind::List(items)
+        };
+        Expr::new(kind, self.since(start))
     }
 
     /// `Type { field <- v }` or `{ name: v, ... }`.

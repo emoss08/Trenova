@@ -15,7 +15,7 @@ use crate::lading::syntax::ast::{
     BinOp, Direction, Else, Expr, ExprKind, FieldInit, MemberKind, Outcome, OutcomeKind, TextPart,
     UnOp,
 };
-use crate::lading::types::{Dim, NodeRef, Type};
+use crate::lading::types::{Dim, NodeRef, Place, Type};
 use crate::x12::guide::compiled::NodeKind;
 
 /// What a unit measures.
@@ -110,7 +110,7 @@ impl Checker<'_> {
     /// Types an outcome's message and its `at` or `code`.
     pub(crate) fn outcome(&mut self, env: &mut Env, outcome: &Outcome, inbound: bool) {
         let ty = self.expr(env, &outcome.message, Some(&Type::Text));
-        if !matches!(ty.unwrapped(), Type::Text | Type::Code(_) | Type::Any) {
+        if !matches!(ty.unwrapped(), Type::Text | Type::Code(..) | Type::Any) {
             self.report(env.unit, mismatch(outcome.message.span, &Type::Text, &ty));
         }
         match &outcome.kind {
@@ -255,6 +255,25 @@ impl Checker<'_> {
                     });
                 }
                 joined.or(item_expected).unwrap_or(Type::Any).list()
+            }
+            ExprKind::Map(entries) => {
+                let value_expected = match expected.map(Type::unwrapped) {
+                    Some(Type::Map(value)) => Some(value.as_ref().clone()),
+                    _ => None,
+                };
+                let mut joined: Option<Type> = None;
+                for (key, value) in entries {
+                    self.expect_type(env, key, &Type::Text);
+                    let ty = self.expr(env, value, value_expected.as_ref());
+                    joined = Some(match joined {
+                        None => ty,
+                        Some(previous) => previous.join(&ty).unwrap_or_else(|| {
+                            self.report(env.unit, mismatch(value.span, &previous, &ty));
+                            previous
+                        }),
+                    });
+                }
+                Type::Map(Box::new(joined.or(value_expected).unwrap_or(Type::Any)))
             }
             ExprKind::Record { ty, fields } => {
                 self.record(env, ty.as_ref(), fields, expr.span, expected)
@@ -721,7 +740,8 @@ impl Checker<'_> {
                     false,
                 );
                 if matches!(segment_ty, Type::List(_)) {
-                    let first = nav::read_element(compiled, child, position).unwrap_or(Type::Any);
+                    let first =
+                        nav::read_element(compiled, reference, position).unwrap_or(Type::Any);
                     self.report(
                         env.unit,
                         Diagnostic::warning(
@@ -735,7 +755,7 @@ impl Checker<'_> {
                     );
                     first.optional()
                 } else {
-                    match nav::read_element(compiled, child, position) {
+                    match nav::read_element(compiled, reference, position) {
                         Some(element) if segment_ty.is_optional() => element.optional(),
                         Some(element) => element,
                         None => {
@@ -919,7 +939,7 @@ impl Checker<'_> {
             Type::Segment(reference) => {
                 let compiled = &self.program.guides[reference.guide].compiled;
                 let id = nav::segment_id(compiled, reference.node).to_owned();
-                if let Some(ty) = nav::read_element(compiled, reference.node, position) {
+                if let Some(ty) = nav::read_element(compiled, *reference, position) {
                     self.occurrence(
                         env.unit,
                         span,
@@ -989,7 +1009,7 @@ impl Checker<'_> {
             let compiled = &program.guides[guide].compiled;
             let definition = compiled.definition(nav::first_use(compiled, id), id)?;
             let element = definition.elements.get(position.checked_sub(1)? as usize)?;
-            Some(nav::element_type(id, position, element).optional())
+            Some(nav::element_type(id, position, element, Place::default()).optional())
         });
         if let Some(ty) = found {
             return ty;
@@ -1359,6 +1379,10 @@ impl Checker<'_> {
                 env.filter = saved;
                 target.clone().optional()
             }
+            Type::Json => {
+                self.expr(env, index, None);
+                Type::Json.optional()
+            }
             Type::Any => {
                 self.expr(env, index, None);
                 Type::Any
@@ -1483,7 +1507,7 @@ impl Checker<'_> {
                             }
                         }
                     }
-                    Type::Any => {}
+                    Type::Any | Type::Json => {}
                     other => self.report(
                         env.unit,
                         Diagnostic::error(
@@ -1539,13 +1563,14 @@ impl Checker<'_> {
 
     /// Warns when a text literal compared with a coded element is not one of its codes.
     pub(crate) fn code_literal(&mut self, env: &Env, ty: &Type, literal: &Expr) {
-        let (Type::Code(element), ExprKind::Text(parts)) = (ty.unwrapped(), &literal.kind) else {
+        let (Type::Code(element, place), ExprKind::Text(parts)) = (ty.unwrapped(), &literal.kind)
+        else {
             return;
         };
         let [TextPart::Literal(value)] = parts.as_slice() else {
             return;
         };
-        let Some(codes) = self.codes_of(env, element) else {
+        let Some(codes) = self.codes_of(env, element, *place) else {
             return;
         };
         if codes.iter().any(|(code, _)| code == value) {
@@ -1567,12 +1592,26 @@ impl Checker<'_> {
         self.report(env.unit, diagnostic);
     }
 
-    /// The codes of an element reference (`S502`) under the guide in context.
-    pub(crate) fn codes_of(&self, env: &Env, element: &str) -> Option<Vec<(String, String)>> {
+    /// The codes of an element reference (`S502`): those of the place it was read when known,
+    /// else under the guide in context.
+    pub(crate) fn codes_of(
+        &self,
+        env: &Env,
+        element: &str,
+        place: Place,
+    ) -> Option<Vec<(String, String)>> {
         let Some(Reference::Element(segment, position)) = nav::reference(element) else {
             return None;
         };
         let guides = &self.program.guides;
+        if let Place(Some(reference)) = place {
+            return nav::codes(
+                &guides[reference.guide].compiled,
+                Some(reference.node),
+                segment,
+                position,
+            );
+        }
         let guide = env
             .x12_root
             .or(env.write_guide)
@@ -1587,7 +1626,7 @@ impl Checker<'_> {
                             .position(|entry| entry.compiled.uses_segment(segment))
                     })
             })?;
-        nav::codes(&guides[guide].compiled, segment, position)
+        nav::codes(&guides[guide].compiled, None, segment, position)
     }
 
     #[allow(clippy::too_many_lines)]
@@ -1614,15 +1653,35 @@ impl Checker<'_> {
                 })
                 .map(|(_, name)| name.clone())
                 .collect();
-            let mut diagnostic = Diagnostic::error(
-                "unknown-crosswalk",
-                crosswalk.span,
-                Message::with(
-                    message!("There is no crosswalk named {0}"),
-                    [Arg::from(crosswalk.name.as_str())],
-                ),
-            );
-            if let Some(close) = nearest(&crosswalk.name, names.iter().map(String::as_str)) {
+            let library = self.unused_library_with(env.unit, &crosswalk.name, |decl| {
+                matches!(decl, Decl::Crosswalk(_))
+            });
+            let mut diagnostic = if let Some(library) = &library {
+                Diagnostic::error(
+                    "unknown-crosswalk",
+                    crosswalk.span,
+                    Message::with(
+                        message!("{0} is in the library {1}, which this file does not use"),
+                        [
+                            Arg::from(crosswalk.name.as_str()),
+                            Arg::from(library.as_str()),
+                        ],
+                    ),
+                )
+                .with_fix(self.use_fix(env.unit, library))
+            } else {
+                Diagnostic::error(
+                    "unknown-crosswalk",
+                    crosswalk.span,
+                    Message::with(
+                        message!("There is no crosswalk named {0}"),
+                        [Arg::from(crosswalk.name.as_str())],
+                    ),
+                )
+            };
+            if library.is_none()
+                && let Some(close) = nearest(&crosswalk.name, names.iter().map(String::as_str))
+            {
                 diagnostic = diagnostic.with_fix(super::replace_fix(crosswalk.span, close));
             }
             self.report(env.unit, diagnostic);
@@ -1733,8 +1792,8 @@ impl Checker<'_> {
                     );
                 }
             }
-            if let Type::Code(element) = value.unwrapped()
-                && let Some(codes) = self.codes_of(env, element)
+            if let Type::Code(element, place) = value.unwrapped()
+                && let Some(codes) = self.codes_of(env, element, *place)
             {
                 let missing: Vec<String> = codes
                     .iter()
@@ -1807,7 +1866,7 @@ pub fn arithmetic(op: BinOp, left: &Type, right: &Type) -> Option<Type> {
     use Type::{Any, DateTime, Decimal, Duration, Int, Measure, Money, Percent, Text};
     Some(match (op, left, right) {
         (_, Any, _) | (_, _, Any) => Any,
-        (BinOp::Add, Text | Type::Code(_), Text | Type::Code(_)) => Text,
+        (BinOp::Add, Text | Type::Code(..), Text | Type::Code(..)) => Text,
         (BinOp::Add | BinOp::Sub | BinOp::Mul, Int, Int) => Int,
         (BinOp::Div, Measure(a), Measure(b)) if a == b => Decimal,
         (_, Int | Decimal, Int | Decimal)

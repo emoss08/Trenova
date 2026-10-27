@@ -108,6 +108,7 @@ impl Checker<'_> {
                         ("key".into(), Type::Text),
                         ("value".into(), value.as_ref().clone()),
                     ]),
+                    Type::Json => Type::Json,
                     Type::Any => Type::Any,
                     other => {
                         self.report(

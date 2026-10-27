@@ -38,13 +38,30 @@ pub struct NodeRef {
     pub node: usize,
 }
 
+/// Where in a guide a coded element was read, when known: its codes are that place's. A code
+/// is the same type wherever it was read, so the place takes no part in equality or hashing.
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Place(pub Option<NodeRef>);
+
+impl PartialEq for Place {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
+}
+
+impl Eq for Place {}
+
+impl std::hash::Hash for Place {
+    fn hash<H: std::hash::Hasher>(&self, _: &mut H) {}
+}
+
 /// A type.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Type {
     /// Any text.
     Text,
     /// Text from the code list of an element (`S502`).
-    Code(String),
+    Code(String, Place),
     /// A whole number.
     Int,
     /// An exact decimal.
@@ -162,7 +179,7 @@ impl Type {
                 | Self::Money
                 | Self::Measure(_)
                 | Self::Text
-                | Self::Code(_)
+                | Self::Code(..)
                 | Self::Any
         )
     }
@@ -176,7 +193,7 @@ impl Type {
     /// Whether it is text, coded or not.
     #[must_use]
     pub fn is_text(&self) -> bool {
-        matches!(self.unwrapped(), Self::Text | Self::Code(_) | Self::Any)
+        matches!(self.unwrapped(), Self::Text | Self::Code(..) | Self::Any)
     }
 
     /// Whether a value of `self` can go where a `target` is expected.
@@ -193,8 +210,8 @@ impl Type {
             (Self::Any, _)
             | (_, Self::Any)
             | (Self::None, Self::Optional(_))
-            | (Self::Code(_), Self::Text | Self::Code(_))
-            | (Self::Text, Self::Code(_))
+            | (Self::Code(..), Self::Text | Self::Code(..))
+            | (Self::Text, Self::Code(..))
             | (Self::Int, Self::Decimal)
             | (Self::Segment(_), Self::SegmentId(_))
             | (Self::Loop(_), Self::LoopId(_)) => true,
@@ -235,7 +252,7 @@ impl fmt::Display for Type {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Text => f.write_str("Text"),
-            Self::Code(element) => write!(f, "Code<{element}>"),
+            Self::Code(element, _) => write!(f, "Code<{element}>"),
             Self::Int => f.write_str("Int"),
             Self::Decimal => f.write_str("Decimal"),
             Self::Bool => f.write_str("Bool"),
@@ -276,14 +293,14 @@ impl fmt::Display for Type {
 
 #[cfg(test)]
 mod tests {
-    use super::{Dim, Type};
+    use super::{Dim, Place, Type};
 
     #[test]
     fn optionals_accept_their_inner_type_and_none() {
         assert!(Type::Text.fits(&Type::Text.optional()));
         assert!(Type::None.fits(&Type::Text.optional()));
         assert!(!Type::Text.optional().fits(&Type::Text));
-        assert!(Type::Code("S502".into()).fits(&Type::Text));
+        assert!(Type::Code("S502".into(), Place::default()).fits(&Type::Text));
         assert!(Type::Int.fits(&Type::Decimal));
         assert!(!Type::Decimal.fits(&Type::Int));
         assert!(!Type::Decimal.fits(&Type::Measure(Dim::Weight)));
@@ -302,7 +319,10 @@ mod tests {
     #[test]
     fn display_reads_like_the_language() {
         assert_eq!(
-            Type::Code("S502".into()).list().optional().to_string(),
+            Type::Code("S502".into(), Place::default())
+                .list()
+                .optional()
+                .to_string(),
             "[Code<S502>]?"
         );
         assert_eq!(Type::Map(Box::new(Type::Text)).to_string(), "[Text: Text]");

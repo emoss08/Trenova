@@ -1,0 +1,37 @@
+// Acme's plants email a daily order sheet when their EDI is down. Imported from a file,
+// never received in a flow.
+map ordersCsv
+  from csv {
+    order: Text
+    pickup: Date "MM/dd/yyyy"
+    delivery: Date "MM/dd/yyyy"
+    weight: Weight lb
+    origin: Text
+    destination: Text
+    value: Money "USD"
+  }
+  to loadTender
+
+key      <- rows.first.order else reject "The order sheet has no rows"
+purpose  <- Original
+customer <- lookup Customer("ACME-AP")
+weight   <- rows.first.weight
+total    <- rows.first.value
+
+stops <- each [rows.first.origin, rows.first.destination] as code {
+  sequence <- if code == rows.first.origin then 1 else 2
+  type     <- if code == rows.first.origin then Pickup else Delivery
+  location <- lookup Location(code)
+  code     <- code
+  window   <- Window {
+    start <- at(if code == rows.first.origin then rows.first.pickup else rows.first.delivery, @08:00, partner.zone)
+  } else reject "Order {rows.first.order} has no dates"
+}
+
+test "an order sheet's first row becomes a load" {
+  given file "samples/orders.csv"
+  expect key == "SO-1001"
+  expect weight == 18_000 lb
+  expect total == $12_500.00
+  expect stops.last.window.start == @2026-03-04T08:00[America/Detroit]
+}
