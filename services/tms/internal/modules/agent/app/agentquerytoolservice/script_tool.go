@@ -177,8 +177,8 @@ func (t *runScriptTool) ParamSchema() map[string]any {
 				toolschema.KeyDescription: "Only a scriptId an analysis_run answer of " +
 					"this turn gave you, never a dataset's name; leave it out otherwise. This " +
 					"code then runs after that script, with every name it left and over its " +
-					"datasets, so send only what to show, without datasets or inputs; it " +
-					"keeps that script's title and purpose unless you give others.",
+					"datasets, so send only what to add or show, without datasets or inputs; " +
+					"it keeps that script's title and purpose unless you give others.",
 				toolschema.KeyMaxLength: maxContinuesRunes,
 			},
 		},
@@ -298,7 +298,8 @@ type scriptAnswer struct {
 	NotShown         int                       `json:"notShown,omitempty"`
 	Note             string                    `json:"note"`
 
-	attachments []agent.RecordRef
+	attachments  []agent.RecordRef
+	continuation codemode.Continuation
 }
 
 type scriptDatasetAnswer struct {
@@ -320,7 +321,7 @@ func (a *scriptAnswer) ScriptCompleted() bool {
 	return a.Status == string(scriptports.Succeeded)
 }
 
-func (a *scriptAnswer) ScriptContinuable() bool { return a.ScriptID != "" }
+func (a *scriptAnswer) ScriptContinuation() codemode.Continuation { return a.continuation }
 
 func (t *runScriptTool) Query(
 	ctx context.Context,
@@ -410,6 +411,23 @@ func markShowing(ctx context.Context, s *showing) {
 	)
 }
 
+// continuable names a script a later call of the turn may continue, and how:
+// any that ran to the end, to add to what it showed, and one that read a
+// dataset and showed nothing, to show it, at no cost to the turn's scripts. A
+// script that prepared changes is never continued: running it again would
+// propose them twice.
+func continuable(r *analysisRecord) {
+	if r.outcome.Status != scriptports.Succeeded || r.params.CallID == "" ||
+		len(r.answer.Changes) > 0 {
+		return
+	}
+	r.answer.ScriptID = r.params.CallID
+	r.answer.continuation = codemode.ContinueCounted
+	if r.outcome.Shown.Empty() && len(r.datasets) > 0 && r.params.Continues == nil {
+		r.answer.continuation = codemode.ContinueFree
+	}
+}
+
 // scriptRun is what a call runs: its own code, or for a continuation its code
 // after the earlier script's, over that script's datasets and inputs.
 type scriptRun struct {
@@ -486,16 +504,15 @@ type analysisRecord struct {
 // the agent what the person sees. A script that only printed is the agent
 // looking at the data and is not kept; one that read a dataset and only
 // printed is an analysis the person never saw, so the agent is told to show it
-// by continuing it. A script that prepared changes is never continued: running
-// it again would propose them twice.
+// by continuing it, which the turn does not count as another script.
 func (t *runScriptTool) keepAnalysis(ctx context.Context, r *analysisRecord) error {
+	continuable(r)
 	shown := r.outcome.Shown
 	if shown.Empty() {
 		if r.outcome.Status != scriptports.Succeeded {
 			return nil
 		}
-		if len(r.datasets) > 0 && r.params.Continues == nil && len(r.answer.Changes) == 0 {
-			r.answer.ScriptID = r.params.CallID
+		if r.answer.continuation == codemode.ContinueFree {
 			r.answer.Note += scriptUnshownAnalysisNote
 		} else {
 			r.answer.Note += scriptPlainNote

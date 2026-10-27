@@ -417,7 +417,8 @@ func TestRunScriptThatReadADatasetAndOnlyPrintedIsToldToShow(t *testing.T) {
 	assert.Contains(t, answer.Note, scriptUnshownAnalysisNote)
 	assert.NotContains(t, answer.Note, scriptPlainNote)
 	assert.Equal(t, "call_printed", answer.ScriptID, "the call that continues it names it so")
-	assert.True(t, answer.ScriptContinuable())
+	assert.Equal(t, codemode.ContinueFree, answer.ScriptContinuation(),
+		"showing what it found finishes it, at no cost to the turn's scripts")
 }
 
 // The continuation sends only the lines that show. It runs after the earlier
@@ -448,10 +449,13 @@ func TestRunScriptContinuesTheScriptItNames(t *testing.T) {
 	require.NotNil(t, run)
 	assert.Equal(t, "total = len(lanes)\n\nshow_figure('Lanes', len(lanes))", run.Code)
 	assert.Equal(t, "Lane margin", run.Title)
-	assert.Empty(t, answer.ScriptID)
+	assert.Equal(t, "call_shows", answer.ScriptID, "a continuation may itself be continued")
+	assert.Equal(t, codemode.ContinueCounted, answer.ScriptContinuation())
 }
 
-func TestRunScriptContinuationThatStillShowsNothingCannotBeContinued(t *testing.T) {
+// A continuation that still shows nothing has had its free turn: continuing
+// it again is one more of the turn's scripts.
+func TestRunScriptContinuationThatStillShowsNothingIsContinuedAsAnotherScript(t *testing.T) {
 	t.Parallel()
 
 	h := newScriptHarness()
@@ -466,8 +470,9 @@ func TestRunScriptContinuationThatStillShowsNothingCannotBeContinued(t *testing.
 	answer, err := h.query(t)
 	require.NoError(t, err)
 
-	assert.Empty(t, answer.ScriptID)
+	assert.Equal(t, codemode.ContinueCounted, answer.ScriptContinuation())
 	assert.Contains(t, answer.Note, scriptPlainNote)
+	assert.NotContains(t, answer.Note, scriptUnshownAnalysisNote)
 }
 
 func TestRunScriptContinuationReadsNoDatasetsOfItsOwn(t *testing.T) {

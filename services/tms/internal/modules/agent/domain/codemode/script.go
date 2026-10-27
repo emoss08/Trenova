@@ -110,9 +110,21 @@ type Completion interface {
 	ScriptCompleted() bool
 }
 
-// Continuable is what the tool that ran a script answers with when another
-// call of the turn may continue the script: it read a dataset and showed
-// nothing, so the person saw none of it.
+// Continuation is how a later call of the turn may continue a script.
+type Continuation int
+
+const (
+	ContinueNone Continuation = iota
+	// ContinueCounted is a script that ran to the end: continuing it, to add
+	// to what it showed, is one more of the turn's scripts.
+	ContinueCounted
+	// ContinueFree is a script that read a dataset and showed nothing:
+	// continuing it finishes the same analysis, so it is not counted.
+	ContinueFree
+)
+
+// Continuable is what the tool that ran a script answers with, saying how a
+// later call of the turn may continue it.
 type Continuable interface {
-	ScriptContinuable() bool
+	ScriptContinuation() Continuation
 }

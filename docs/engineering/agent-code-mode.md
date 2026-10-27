@@ -297,10 +297,16 @@ sends only the `show_*` lines. The runtime finds the earlier call's arguments in
 before the new one (`Start.earlier` in `trenova-scripts`): what it prints is discarded, its
 `result()` is answered in the module and forgotten, and a traceback names it `earlier.py`. So
 the new lines see every name it left, over its datasets and inputs, and the analysis keeps the
-whole code under the earlier title. A continuation is not counted against the scripts a turn may
-run; each script is continued once, a continuation is never continued, and a script that
-prepared changes is never continuable, since running it again would propose them twice. Its
-reads run again as the person and count against its own limits. Each script's span says whether
+whole code under the earlier title. Every script that ran to the end carries a `scriptId`, so a
+model may also continue one that showed something, to add a chart or a table to it; a
+continuation may itself be continued, and the runtime joins the chain's code
+(`Turn.continuedArguments`). Only continuing a script that read a dataset and showed nothing
+(`codemode.ContinueFree`) is left out of the scripts a turn may run: it finishes that analysis.
+Any other continuation (`ContinueCounted`) is one more script. Each script is continued once, a
+continuation leaves out the title and purpose it inherits (`inheritScriptName`), a `continues`
+the turn cannot honour is refused before the arguments are checked, and a script that prepared
+changes is never continuable, since running it again would propose them twice. Its reads run
+again as the person and count against its own limits. Each script's span says whether
 it read a dataset and showed nothing (`trenova.ai.codemode.unshown`) and whether it continued
 one (`trenova.ai.codemode.continues`), which is how often models forget to show and how often
 the continuation recovers it.
@@ -411,7 +417,7 @@ cannot raise one. The values are `codemode.DefaultLimits()` and the constants in
 | Result | 64 KB | the runner | dropped and refused, `result` |
 | Memory | 256 MiB | Monty's memory limit (`MemoryError`, which a script cannot catch); past a margin, `monty-alloc` exits the module; the instance's pages are capped at 1 GiB | `Stopped`, `memory` |
 | Host calls | the read limit for reads; 20,000 for paging datasets in and showing | the module | `Stopped`, `calls` |
-| Scripts per turn | 3, not counting continuations (§4.3) | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
+| Scripts per turn | 3, not counting a continuation that shows what a script left unshown (§4.3) | `runScriptTool`, from `DispatchCall.ScriptPosition` | the call is refused |
 | Scripts running at once | 8 per worker | `pkg/scriptvm`'s slots (`DefaultMaxConcurrent`), so a worker's script memory stays near 8 × 256 MiB | the script waits up to 10 s for a slot (`DefaultQueueWait`), then `Failed`: too many scripts are running |
 
 One script spends one call of the turn's tool budget, and its reads are counted against its own

@@ -36,8 +36,8 @@ type toolOutcome struct {
 	// batch is what a script prepared and filed for a person as one batch;
 	// none of it ran.
 	batch []agentports.PendingAction
-	// continuable marks a script a later call of the turn may continue.
-	continuable bool
+	// continuation is how a later call of the turn may continue a script.
+	continuation codemode.Continuation
 	// data is what a query tool returned, before it was encoded for the
 	// model. The caller may turn it into something a person sees.
 	data    any
@@ -150,6 +150,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 		}
 
 		if tool.Policy().Script == agentports.ScriptRunner {
+			if refusal, refused := continuationRefusal(&call, p.gate); refused {
+				return refusal
+			}
 			call.Arguments = inheritScriptName(call.Arguments, p.gate.continues)
 		}
 		contract, err := contractCall(

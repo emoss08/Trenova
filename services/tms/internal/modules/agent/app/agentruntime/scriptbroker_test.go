@@ -663,13 +663,56 @@ func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
 
 	assert.Nil(t, turn.continueScript(&shows), "only a script its answer marked continuable")
 
-	turn.noteContinuable(&earlier, &toolOutcome{continuable: true})
+	turn.noteContinuable(&earlier, &toolOutcome{continuation: codemode.ContinueFree})
 	assert.Equal(t, earlier.Arguments, turn.continueScript(&shows))
 	assert.Equal(t, earlier.Arguments, turn.continueScript(&shows), "asking again is the same claim")
 	assert.Equal(t, 1, turn.scriptPosition(&shows), "the continuation is not counted")
 
 	assert.Nil(t, turn.continueScript(&again), "a script is continued once")
 	assert.Equal(t, 2, turn.scriptPosition(&again))
+}
+
+// A script that showed something may be continued too, to add to it, but that
+// is one more of the turn's scripts; and a continuation continued again runs
+// after everything before it.
+func TestATurnCountsAContinuationThatAddsAndChainsItsCode(t *testing.T) {
+	t.Parallel()
+
+	script := func(id string, arguments map[string]any) agentports.ToolCall {
+		return agentports.ToolCall{ID: id, Name: codemode.ToolRunScript, Arguments: arguments}
+	}
+	shown := script("call_shown", map[string]any{
+		"title": "Lanes", "code": "rows = lanes", "datasets": []any{"lanes"},
+	})
+	adds := script("call_adds", map[string]any{
+		codemode.ParamScriptContinues: "call_shown", "code": "show_chart('bar', x, y)",
+	})
+	more := script("call_more", map[string]any{
+		codemode.ParamScriptContinues: "call_adds", "code": "show_table(rows)",
+	})
+	asked := func(call agentports.ToolCall) conversation.Message {
+		return conversation.Message{
+			Role: conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{
+				{ID: call.ID, Name: call.Name, Arguments: call.Arguments},
+			},
+		}
+	}
+	turn := &Turn{result: &agentports.RunResult{Messages: []conversation.Message{
+		asked(shown), asked(adds), asked(more),
+	}}}
+
+	turn.noteContinuable(&shown, &toolOutcome{continuation: codemode.ContinueCounted})
+	require.NotNil(t, turn.continueScript(&adds))
+	assert.Equal(t, 2, turn.scriptPosition(&adds), "adding to a script is another script")
+
+	turn.noteContinuable(&adds, &toolOutcome{continuation: codemode.ContinueCounted})
+	chained := turn.continueScript(&more)
+	require.NotNil(t, chained)
+	assert.Equal(t, "rows = lanes\n\nshow_chart('bar', x, y)", chained["code"])
+	assert.Equal(t, "Lanes", chained["title"])
+	assert.Equal(t, []any{"lanes"}, chained["datasets"])
+	assert.Equal(t, 3, turn.scriptPosition(&more))
 }
 
 func TestAContinuationKeepsTheNameOfTheScriptItContinues(t *testing.T) {

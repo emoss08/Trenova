@@ -33,13 +33,6 @@ func (s *Service) runScriptTool(
 			"Tool %q was not run: %s. Answer with the reads you hold, one call at a time.",
 			call.Name, decision.Reason)
 	}
-	continues := strings.TrimSpace(stringArg(call.Arguments, codemode.ParamScriptContinues))
-	if continues != "" && p.gate.continues == nil {
-		return refusedOutcome(aitrace.OutcomeFailed, "it continues no script it may",
-			"Tool %q was not run: continues names no script of this turn that read a dataset "+
-				"and showed nothing, or one another call already continued. Send the whole "+
-				"script without continues.", call.Name)
-	}
 	if p.gate.position > codemode.ScriptsPerTurn {
 		return refusedOutcome(aitrace.OutcomeOverBudget, "the turn ran every script it may",
 			"Tool %q was not run: a turn runs at most %d scripts. Answer with what the scripts "+
@@ -61,7 +54,9 @@ func (s *Service) runScriptTool(
 		call,
 		&queryExtras{broker: broker, stepKey: p.stepKey, continues: p.gate.continues},
 	)
-	outcome.continuable = !outcome.failed && scriptContinuable(outcome.data)
+	if !outcome.failed {
+		outcome.continuation = scriptContinuation(outcome.data)
+	}
 	marks := broker.taintMarks()
 	outcome.taint = append(outcome.taint, marks...)
 
@@ -165,10 +160,29 @@ func inheritScriptName(arguments, continues map[string]any) map[string]any {
 	return inherited
 }
 
-func scriptContinuable(data any) bool {
+func scriptContinuation(data any) codemode.Continuation {
 	continuable, ok := data.(codemode.Continuable)
+	if !ok {
+		return codemode.ContinueNone
+	}
 
-	return ok && continuable.ScriptContinuable()
+	return continuable.ScriptContinuation()
+}
+
+// continuationRefusal refuses a call that continues a script it may not,
+// before its arguments are checked: a continuation leaves out what the
+// script it continues already has, and told "title is required" a model
+// never learned that the script it named was the trouble.
+func continuationRefusal(call *agentports.ToolCall, gate scriptGate) (toolOutcome, bool) {
+	continues := strings.TrimSpace(stringArg(call.Arguments, codemode.ParamScriptContinues))
+	if continues == "" || gate.continues != nil {
+		return toolOutcome{}, false
+	}
+
+	return refusedOutcome(aitrace.OutcomeFailed, "it continues no script it may",
+		"Tool %q was not run: continues names no script of this turn that ran to the end, or "+
+			"one another call already continued. Send the whole script without continues.",
+		call.Name), true
 }
 
 func scriptCompleted(data any) bool {

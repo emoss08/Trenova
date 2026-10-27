@@ -3,6 +3,7 @@ package agentruntime
 import (
 	"context"
 	"errors"
+	"maps"
 	"slices"
 	"strings"
 
@@ -662,7 +663,7 @@ func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
 			if made.Name != codemode.ToolRunScript {
 				continue
 			}
-			if _, continues := t.continuing[made.ID]; !continues {
+			if !t.finishes(made.ID) {
 				position++
 			}
 			if made.ID == call.ID {
@@ -674,10 +675,20 @@ func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
 	return position + 1
 }
 
+// finishes reports whether the call with id continues a script that read a
+// dataset and showed nothing: it finishes that analysis rather than starting
+// another, so the turn's script count leaves it out.
+func (t *Turn) finishes(id string) bool {
+	earlier, continues := t.continuing[id]
+
+	return continues && t.continuable[earlier] == codemode.ContinueFree
+}
+
 // continueScript is the arguments of the script of this turn that call
-// continues: one whose answer marked it continuable and that no other call
-// has continued. It claims that script for call, so a second call naming it
-// runs nothing. Nil when call continues nothing it may.
+// continues, its code the whole of what ran before: one whose answer said it
+// may be continued and that no other call has continued. It claims that
+// script for call, so a second call naming it runs nothing. Nil when call
+// continues nothing it may.
 func (t *Turn) continueScript(call *agentports.ToolCall) map[string]any {
 	if call.Name != codemode.ToolRunScript {
 		return nil
@@ -686,7 +697,7 @@ func (t *Turn) continueScript(call *agentports.ToolCall) map[string]any {
 	if earlier == "" {
 		return nil
 	}
-	if _, ok := t.continuable[earlier]; !ok {
+	if t.continuable[earlier] == codemode.ContinueNone {
 		return nil
 	}
 	for other, continued := range t.continuing {
@@ -694,7 +705,7 @@ func (t *Turn) continueScript(call *agentports.ToolCall) map[string]any {
 			return nil
 		}
 	}
-	arguments := t.scriptArguments(earlier)
+	arguments := t.continuedArguments(earlier, 0)
 	if arguments == nil {
 		return nil
 	}
@@ -704,6 +715,35 @@ func (t *Turn) continueScript(call *agentports.ToolCall) map[string]any {
 	t.continuing[call.ID] = earlier
 
 	return arguments
+}
+
+// continuedArguments is what the script call with id ran: its own arguments,
+// or for a call that itself continued one, the code of every script before it
+// and then its own, over the datasets and inputs of the first. A chain is
+// never longer than the scripts a turn runs.
+func (t *Turn) continuedArguments(id string, depth int) map[string]any {
+	arguments := t.scriptArguments(id)
+	earlier, chained := t.continuing[id]
+	if arguments == nil || !chained {
+		return arguments
+	}
+	if depth > 2*codemode.ScriptsPerTurn {
+		return nil
+	}
+	base := t.continuedArguments(earlier, depth+1)
+	if base == nil {
+		return nil
+	}
+	whole := maps.Clone(base)
+	whole[codemode.ParamScriptCode] = strings.TrimRight(stringArg(base, codemode.ParamScriptCode),
+		"\n") + "\n\n" + stringArg(arguments, codemode.ParamScriptCode)
+	for _, key := range []string{codemode.ParamScriptTitle, codemode.ParamScriptPurpose} {
+		if own := strings.TrimSpace(stringArg(arguments, key)); own != "" {
+			whole[key] = own
+		}
+	}
+
+	return whole
 }
 
 // scriptArguments is what the turn's script call with id was asked to run.
@@ -721,13 +761,13 @@ func (t *Turn) scriptArguments(id string) map[string]any {
 
 // noteContinuable keeps a script a later call of the turn may continue.
 func (t *Turn) noteContinuable(call *agentports.ToolCall, outcome *toolOutcome) {
-	if !outcome.continuable || call.ID == "" {
+	if outcome.continuation == codemode.ContinueNone || call.ID == "" {
 		return
 	}
 	if t.continuable == nil {
-		t.continuable = make(map[string]struct{}, 1)
+		t.continuable = make(map[string]codemode.Continuation, 1)
 	}
-	t.continuable[call.ID] = struct{}{}
+	t.continuable[call.ID] = outcome.continuation
 }
 
 // settleDispatched folds what a dispatched call came to into the turn: the

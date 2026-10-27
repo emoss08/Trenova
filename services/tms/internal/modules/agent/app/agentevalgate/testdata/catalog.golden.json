@@ -3388,7 +3388,7 @@
             "type": "string"
           },
           "continues": {
-            "description": "Only a scriptId an analysis_run answer of this turn gave you, never a dataset's name; leave it out otherwise. This code then runs after that script, with every name it left and over its datasets, so send only what to show, without datasets or inputs; it keeps that script's title and purpose unless you give others.",
+            "description": "Only a scriptId an analysis_run answer of this turn gave you, never a dataset's name; leave it out otherwise. This code then runs after that script, with every name it left and over its datasets, so send only what to add or show, without datasets or inputs; it keeps that script's title and purpose unless you give others.",
             "maxLength": 200,
             "type": "string"
           },
