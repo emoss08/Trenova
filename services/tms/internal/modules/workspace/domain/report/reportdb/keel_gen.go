@@ -848,6 +848,7 @@ var reportRunsTable = schema.Table{
 		{Name: "error", Quoted: `"error"`, Field: "Error", Kind: schema.KindJSON, Flags: schema.FlagNullable | schema.FlagJSONB, Label: `Error`, JSON: `error`, Report: &reportDimJsonbHidden},
 		{Name: "artifact_key", Quoted: `"artifact_key"`, Field: "ArtifactKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Artifact Key`, JSON: `artifactKey`, Report: &reportDimStringHidden},
 		{Name: "rows_key", Quoted: `"rows_key"`, Field: "RowsKey", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Rows Key`, JSON: `rowsKey`, Report: &reportDimString},
+		{Name: "sample", Quoted: `"sample"`, Field: "Sample", Kind: schema.KindBytes, Flags: schema.FlagNullable, Label: `Sample`, Report: &reportDimByteaHidden},
 		{Name: "artifact_expires_at", Quoted: `"artifact_expires_at"`, Field: "ArtifactExpiresAt", Kind: schema.KindInt64, Flags: schema.FlagNullZero, Label: `Artifact Expires At`, JSON: `artifactExpiresAt`, Report: &reportDimEpochHidden},
 		{Name: "cache_hit", Quoted: `"cache_hit"`, Field: "CacheHit", Kind: schema.KindBool, Flags: 0, Label: `Cache Hit`, JSON: `cacheHit`, Report: &reportDimBool},
 		{Name: "temporal_workflow_id", Quoted: `"temporal_workflow_id"`, Field: "TemporalWorkflowID", Kind: schema.KindString, Flags: schema.FlagNullZero, Label: `Temporal Workflow ID`, JSON: `temporalWorkflowId`, Report: &reportDimStringHidden},
@@ -866,14 +867,14 @@ var reportRunsTable = schema.Table{
 	},
 	PK:           []int32{0, 1, 2},
 	Tenant:       []int32{1, 2},
-	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29},
-	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 29},
+	Select:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Insert:       []int32{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30},
+	Update:       []int32{3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 30},
 	Returning:    nil,
-	Version:      27,
+	Version:      28,
 	AutoID:       0,
-	AutoCreate:   28,
-	AutoUpdate:   29,
+	AutoCreate:   29,
+	AutoUpdate:   30,
 	IDPrefix:     "rrun_",
 	New:          newReportRun,
 	NewN:         newNReportRun,
@@ -909,6 +910,7 @@ type ReportRunsTable struct {
 	Error              keel.JSONBCol
 	ArtifactKey        keel.StringCol
 	RowsKey            keel.StringCol
+	Sample             keel.BytesCol
 	ArtifactExpiresAt  keel.Int64Col
 	CacheHit           keel.BoolCol
 	TemporalWorkflowID keel.StringCol
@@ -944,16 +946,17 @@ var ReportRuns = &ReportRunsTable{
 	Error:              keel.JSONBCol{Col: keel.Col{Ref: &reportRunsRef, Index: 17}},
 	ArtifactKey:        keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 18}},
 	RowsKey:            keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 19}},
-	ArtifactExpiresAt:  keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 20}},
-	CacheHit:           keel.BoolCol{Col: keel.Col{Ref: &reportRunsRef, Index: 21}},
-	TemporalWorkflowID: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 22}},
-	TemporalRunID:      keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 23}},
-	QueuedAt:           keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 24}},
-	StartedAt:          keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 25}},
-	CompletedAt:        keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 26}},
-	Version:            keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 27}},
-	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 28}},
-	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 29}},
+	Sample:             keel.BytesCol{Col: keel.Col{Ref: &reportRunsRef, Index: 20}},
+	ArtifactExpiresAt:  keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 21}},
+	CacheHit:           keel.BoolCol{Col: keel.Col{Ref: &reportRunsRef, Index: 22}},
+	TemporalWorkflowID: keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 23}},
+	TemporalRunID:      keel.StringCol{Col: keel.Col{Ref: &reportRunsRef, Index: 24}},
+	QueuedAt:           keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 25}},
+	StartedAt:          keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 26}},
+	CompletedAt:        keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 27}},
+	Version:            keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 28}},
+	CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 29}},
+	UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: &reportRunsRef, Index: 30}},
 }
 
 // BuildReportRuns builds the handle of report_runs for ref. Generated relation and alias methods call it.
@@ -980,16 +983,17 @@ func BuildReportRuns(r *keel.Ref) *ReportRunsTable {
 		Error:              keel.JSONBCol{Col: keel.Col{Ref: r, Index: 17}},
 		ArtifactKey:        keel.StringCol{Col: keel.Col{Ref: r, Index: 18}},
 		RowsKey:            keel.StringCol{Col: keel.Col{Ref: r, Index: 19}},
-		ArtifactExpiresAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 20}},
-		CacheHit:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 21}},
-		TemporalWorkflowID: keel.StringCol{Col: keel.Col{Ref: r, Index: 22}},
-		TemporalRunID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
-		QueuedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 24}},
-		StartedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
-		CompletedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
-		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
-		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
-		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		Sample:             keel.BytesCol{Col: keel.Col{Ref: r, Index: 20}},
+		ArtifactExpiresAt:  keel.Int64Col{Col: keel.Col{Ref: r, Index: 21}},
+		CacheHit:           keel.BoolCol{Col: keel.Col{Ref: r, Index: 22}},
+		TemporalWorkflowID: keel.StringCol{Col: keel.Col{Ref: r, Index: 23}},
+		TemporalRunID:      keel.StringCol{Col: keel.Col{Ref: r, Index: 24}},
+		QueuedAt:           keel.Int64Col{Col: keel.Col{Ref: r, Index: 25}},
+		StartedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 26}},
+		CompletedAt:        keel.Int64Col{Col: keel.Col{Ref: r, Index: 27}},
+		Version:            keel.Int64Col{Col: keel.Col{Ref: r, Index: 28}},
+		CreatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 29}},
+		UpdatedAt:          keel.Int64Col{Col: keel.Col{Ref: r, Index: 30}},
 	}
 }
 
@@ -1071,24 +1075,26 @@ func ptrReportRun(p unsafe.Pointer, c int32) any {
 	case 19:
 		return &r.RowsKey
 	case 20:
-		return &r.ArtifactExpiresAt
+		return &r.Sample
 	case 21:
-		return &r.CacheHit
+		return &r.ArtifactExpiresAt
 	case 22:
-		return &r.TemporalWorkflowID
+		return &r.CacheHit
 	case 23:
-		return &r.TemporalRunID
+		return &r.TemporalWorkflowID
 	case 24:
-		return &r.QueuedAt
+		return &r.TemporalRunID
 	case 25:
-		return &r.StartedAt
+		return &r.QueuedAt
 	case 26:
-		return &r.CompletedAt
+		return &r.StartedAt
 	case 27:
-		return &r.Version
+		return &r.CompletedAt
 	case 28:
-		return &r.CreatedAt
+		return &r.Version
 	case 29:
+		return &r.CreatedAt
+	case 30:
 		return &r.UpdatedAt
 	}
 	return nil
@@ -1174,42 +1180,44 @@ func valueReportRun(p unsafe.Pointer, c int32) any {
 		}
 		return r.RowsKey
 	case 20:
+		return r.Sample
+	case 21:
 		if r.ArtifactExpiresAt == 0 {
 			return nil
 		}
 		return r.ArtifactExpiresAt
-	case 21:
-		return r.CacheHit
 	case 22:
+		return r.CacheHit
+	case 23:
 		if r.TemporalWorkflowID == "" {
 			return nil
 		}
 		return r.TemporalWorkflowID
-	case 23:
+	case 24:
 		if r.TemporalRunID == "" {
 			return nil
 		}
 		return r.TemporalRunID
-	case 24:
+	case 25:
 		if r.QueuedAt == 0 {
 			return nil
 		}
 		return r.QueuedAt
-	case 25:
+	case 26:
 		if r.StartedAt == 0 {
 			return nil
 		}
 		return r.StartedAt
-	case 26:
+	case 27:
 		if r.CompletedAt == 0 {
 			return nil
 		}
 		return r.CompletedAt
-	case 27:
-		return r.Version
 	case 28:
-		return r.CreatedAt
+		return r.Version
 	case 29:
+		return r.CreatedAt
+	case 30:
 		return r.UpdatedAt
 	}
 	return nil
@@ -1799,6 +1807,8 @@ var enumVisibility = [...]schema.EnumValue{
 var reportDimArrayHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueArray, Aggs: schema.AggsCount}
 
 var reportDimBool = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueBool, Aggs: schema.AggsCount}
+
+var reportDimByteaHidden = schema.ReportInfo{Kind: schema.Dimension, Type: schema.ValueBytes, Aggs: schema.AggsCount}
 
 var reportDimEnum = schema.ReportInfo{Included: true, Kind: schema.Dimension, Type: schema.ValueEnum, Aggs: schema.AggsCount}
 

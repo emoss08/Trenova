@@ -53,6 +53,7 @@ import {
   kebabName,
   ladingName,
   newPathProblem,
+  PARTNER_FILE,
   sampleFormat,
   starterSource,
   type FileStarter,
@@ -144,7 +145,7 @@ function AddEntrySteps({
 }) {
   const t = useT();
   const unavailable: Partial<Record<EntryChoice, string>> = {};
-  if (check.partner !== null || taken.includes("partner.lading")) {
+  if (check.partner !== null || taken.includes(PARTNER_FILE)) {
     unavailable.partner = t("The project has its partner file");
   }
   if (check.maps.length === 0) unavailable.rules = t("Add a map first");
@@ -201,7 +202,7 @@ function AddEntryForm({
   const documents = ladingCatalog(edi).documents.flatMap((record) =>
     record.set === null ? [] : [{ name: record.name, set: record.set, doc: record.doc }],
   );
-  const hasPartner = check.partner !== null || taken.includes("partner.lading");
+  const hasPartner = check.partner !== null || taken.includes(PARTNER_FILE);
   const partner = check.partner?.name ?? ladingName(partnerLabel);
   const inboundMaps = check.maps.filter((map) => map.direction === "inbound");
 
@@ -303,7 +304,6 @@ function AddEntryForm({
     };
   });
 
-
   const submit = () => {
     setSubmitted(true);
     if (choice === "upload") {
@@ -322,7 +322,7 @@ function AddEntryForm({
     onAdd([
       {
         kind: "file",
-        path: choice === "partner" ? "partner.lading" : path.trim(),
+        path: choice === "partner" ? PARTNER_FILE : path.trim(),
         content: source,
       },
     ]);
@@ -556,7 +556,7 @@ function AddEntryForm({
               />
             ) : choice === "partner" ? (
               <p className="text-muted-foreground font-mono text-xs">
-                {t("Saved as {0}", "partner.lading")}
+                {t("Saved as {0}", PARTNER_FILE)}
               </p>
             ) : blocked ? null : (
               <Field
@@ -603,7 +603,6 @@ function AddEntryForm({
                 }}
               />
             ) : null}
-
           </div>
         </ScrollArea>
         {hasPreview ? (
@@ -611,7 +610,7 @@ function AddEntryForm({
             <div className="text-muted-foreground flex items-center gap-2 px-4 pt-3 pb-1 text-xs">
               <span className="flex-1">{t("Starts as")}</span>
               <span className="truncate font-mono">
-                {choice === "partner" ? "partner.lading" : path}
+                {choice === "partner" ? PARTNER_FILE : path}
               </span>
             </div>
             <ScrollArea maskVariant="muted" className="min-h-0 flex-1">
@@ -648,7 +647,7 @@ function partnerSource(edi: EdiRuntime, label: string, zone: string): string {
     () => ladingStarter(edi, { name: label, label, role: "carrier", zone }),
     { files: [], samples: [] },
   );
-  return starter.files.find((file) => file.path === "partner.lading")?.source ?? "";
+  return starter.files.find((file) => file.path === PARTNER_FILE)?.source ?? "";
 }
 
 /** Where a palette row sits: in the source files or among the samples. */
@@ -750,7 +749,11 @@ function Palette({
             </p>
           ) : null}
           {groups.map((group) => (
-            <div key={group.key} role="group" aria-label={group.key === "source" ? t("Source files") : t("Samples")}>
+            <div
+              key={group.key}
+              role="group"
+              aria-label={group.key === "source" ? t("Source files") : t("Samples")}
+            >
               <p className="text-muted-foreground px-2 pt-2 pb-1 text-xs font-medium">
                 {group.key === "source" ? t("Source files") : t("Samples")}
               </p>
@@ -799,9 +802,7 @@ function Palette({
           <Kbd>↵</Kbd>
           {t("to choose")}
         </span>
-        <span className="hidden items-center gap-1.5 sm:flex">
-          {t("Or press a kind's letter")}
-        </span>
+        <span className="hidden items-center gap-1.5 sm:flex">{t("Or press a kind's letter")}</span>
       </div>
     </div>
   );

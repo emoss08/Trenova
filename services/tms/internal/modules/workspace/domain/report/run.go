@@ -12,6 +12,8 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+const MaxRunSampleBytes = 48 * 1024
+
 type RunError struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -42,6 +44,7 @@ type ReportRun struct {
 	Error              *RunError      `json:"error"              keel:"error,jsonb,noreport"`
 	ArtifactKey        string         `json:"artifactKey"        keel:"artifact_key,nullzero,noreport"`
 	RowsKey            string         `json:"rowsKey"            keel:"rows_key,nullzero"`
+	Sample             []byte         `json:"-"                  keel:"sample,noreport"`
 	ArtifactExpiresAt  int64          `json:"artifactExpiresAt"  keel:"artifact_expires_at,nullzero,noreport"`
 	CacheHit           bool           `json:"cacheHit"           keel:"cache_hit"`
 	TemporalWorkflowID string         `json:"temporalWorkflowId" keel:"temporal_workflow_id,nullzero,noreport"`

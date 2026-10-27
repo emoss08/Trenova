@@ -56,8 +56,8 @@ import { ExtractionSkeleton } from "./kinds/extraction/extraction-skeleton";
 import { groupLineages, lineageContaining, type ArtifactLineage } from "./desk-lineage";
 import { olderNote, pushRecent, stackLineages, stepLineage } from "./desk-workspace-state";
 import { NO_PENDING_LOOKUPS, withoutPendingLookups } from "./pending-lookups";
-import { DeskReportBars, barsOf } from "./kinds/report/desk-report-bars";
-import { DeskTableBody, gridOf, versionNote } from "./kinds/table/desk-table-body";
+import { DeskReportPreviewBody } from "./kinds/report/desk-report-preview-body";
+import { DeskTableBody, versionNote } from "./kinds/table/desk-table-body";
 
 /** The extraction card is its own chunk: its viewer and list load the first time one is opened. */
 const extractionBody = lazyComponent(
@@ -344,19 +344,10 @@ export function ArtifactBody({
       ) : (
         <DeskTableBody artifact={artifact} previous={previous} versions={versions} />
       );
-    case "report_preview": {
-      const bars = barsOf(gridOf(artifact));
-      return bars ? (
-        <>
-          {versions && <div className="dk-ax-tools dk-end">{versions}</div>}
-          <DeskReportBars artifact={artifact} bars={bars} />
-        </>
-      ) : (
-        <DeskTableBody artifact={artifact} previous={previous} versions={versions} />
-      );
-    }
+    case "report_preview":
+      return <DeskReportPreviewBody artifact={artifact} versions={versions} />;
     case "report_run":
-      return <DeskReportRunBody artifact={artifact} />;
+      return <DeskReportRunBody artifact={artifact} versions={versions} />;
     case "entity_card":
       return <DeskRecordBody artifact={artifact} />;
     case "rate_explanation":

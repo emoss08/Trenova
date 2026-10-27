@@ -172,6 +172,16 @@ type ListStaleReportRunsRequest struct {
 	Limit             int
 }
 
+type GetComparableReportRunRequest struct {
+	TenantInfo      pagination.TenantInfo
+	RequestedBy     pulid.ID
+	DefinitionID    pulid.ID
+	CannedKey       string
+	Params          map[string]any
+	ExcludeRunID    pulid.ID
+	CompletedBefore int64
+}
+
 type ReportRunRepository interface {
 	ListConnection(
 		ctx context.Context,
@@ -180,6 +190,10 @@ type ReportRunRepository interface {
 	Create(ctx context.Context, entity *report.ReportRun) (*report.ReportRun, error)
 	Update(ctx context.Context, entity *report.ReportRun) (*report.ReportRun, error)
 	GetByID(ctx context.Context, req *GetReportRunRequest) (*report.ReportRun, error)
+	LatestComparable(
+		ctx context.Context,
+		req *GetComparableReportRunRequest,
+	) (*report.ReportRun, error)
 	CountActive(
 		ctx context.Context,
 		req *CountActiveReportRunsRequest,

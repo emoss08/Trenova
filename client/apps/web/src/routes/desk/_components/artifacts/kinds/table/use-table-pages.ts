@@ -59,7 +59,9 @@ const PAGE_SIZE_KEY = "desk.table.pageSize";
  * list from its start instead, as does a table cut to fit once the person
  * pages past the rows it holds. A list the person may no longer read stops at
  * the agent's rows. A list that no longer takes the place the agent's read
- * stopped at is read again from its start.
+ * stopped at is read again from its start. The person can read the whole list
+ * again, live, from its start in place of the agent's rows, and go back to
+ * them; each time they ask is a read of its own, never one kept from before.
  */
 export function useTablePages({
   threadId,
@@ -69,6 +71,7 @@ export function useTablePages({
   columns,
   entity,
   paging,
+  rereadable,
   arrange,
 }: {
   threadId: string;
@@ -80,6 +83,8 @@ export function useTablePages({
   entity: string;
   /** Where the list goes on from the agent's rows; null for a table that is all there is. */
   paging: TablePaging | null;
+  /** Whether the list can be read again, live, from its start, in place of the agent's rows. */
+  rereadable: boolean;
   /** Filters and sorts rows where they are, for a list the server does not search or sort. */
   arrange: (rows: readonly PagedRow[], needle: string, sort: TableSort | null) => PagedRow[];
 }) {
@@ -89,23 +94,29 @@ export function useTablePages({
   const [search, setSearchText] = useState("");
   const [sort, setSortState] = useState<TableSort | null>(null);
   const [restarted, setRestarted] = useState(false);
+  const [readAt, setReadAt] = useState<number | null>(null);
+  const [refused, setRefused] = useState(false);
+  const live = readAt !== null;
   const typed = search.trim();
   const q = useDebounce(typed, SEARCH_DELAY_MS);
 
-  const remote = paging !== null && paging.hasMore;
+  const paged = paging !== null && paging.hasMore;
+  const remote = paged || live;
   const [abilities, setAbilities] = useState<ListAbilities | null>(null);
   const listSearches = remote && abilities?.searchable === true;
   const remoteSearch = listSearches && q !== "";
-  const fromStart = remote && (remoteSearch || sort !== null || restarted);
+  const fromStart = remote && (remoteSearch || sort !== null || restarted || live);
   const start: RowsPosition | null = !remote
     ? null
     : fromStart
       ? { first: true }
-      : paging.nextCursor !== ""
-        ? { after: paging.nextCursor, first: true }
-        : paging.nextOffset !== null
-          ? { offset: paging.nextOffset, first: true }
-          : null;
+      : paging === null
+        ? null
+        : paging.nextCursor !== ""
+          ? { after: paging.nextCursor, first: true }
+          : paging.nextOffset !== null
+            ? { offset: paging.nextOffset, first: true }
+            : null;
 
   const read = useInfiniteQuery({
     queryKey: assistant.artifactRows(threadId, artifactId, {
@@ -115,6 +126,7 @@ export function useTablePages({
       sortBy: fromStart ? (sort?.key ?? "") : "",
       sortDirection: sort?.direction === -1 ? "desc" : "asc",
       fromStart,
+      readAt: readAt ?? 0,
     }).queryKey,
     queryFn: ({ pageParam, signal }) =>
       apiService.assistantService.artifactRows(
@@ -192,8 +204,17 @@ export function useTablePages({
   const need = (shownPage + 1) * size;
   const waiting = !filtering && buffer.length < need && hasMore && failure === null;
 
-  if (remote && !fromStart && (stale || (!resumesAfterAgent(paging) && need > agentRows.length))) {
+  if (
+    paging !== null &&
+    remote &&
+    !fromStart &&
+    (stale || (!resumesAfterAgent(paging) && need > agentRows.length))
+  ) {
     setRestarted(true);
+  }
+  if (live && locked) {
+    setReadAt(null);
+    setRefused(true);
   }
 
   const { hasNextPage, isFetching, fetchNextPage } = read;
@@ -222,7 +243,9 @@ export function useTablePages({
     loading: waiting || (!filtering && read.isFetching && buffer.length < need && failure === null),
     fetching: read.isFetching,
     failure: locked ? null : failure,
-    locked,
+    locked: locked || refused,
+    live,
+    rereadable: rereadable && !locked && !refused,
     filtering,
     searchesList: listSearches,
     sortable: (key: string) => (remote ? (abilities?.sortable.includes(key) ?? false) : true),
@@ -241,6 +264,17 @@ export function useTablePages({
     },
     setSort: (next: TableSort | null) => {
       setSortState(next);
+      setPage(0);
+    },
+    readAgain: () => {
+      setReadAt(Date.now());
+      if (!paged) {
+        setSortState(null);
+      }
+      setPage(0);
+    },
+    backToAgent: () => {
+      setReadAt(null);
       setPage(0);
     },
     retry: () => {

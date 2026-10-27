@@ -29,13 +29,20 @@ import type { NewEntry } from "./lading-add-entry-dialog";
 import { LadingFileTree } from "./lading-file-tree";
 import { LadingPanels } from "./lading-panels";
 import { LadingVersionToolbar } from "./lading-version-toolbar";
-import { applyFileEdits, isDirty, isEditable, projectProblems, renameEntry } from "./studio-model";
+import {
+  applyFileEdits,
+  isDirty,
+  isEditable,
+  PARTNER_FILE,
+  projectProblems,
+  renameEntry,
+} from "./studio-model";
 
 type Reveal = { path: string; range: LadingRange };
 
 function firstPath(files: readonly LadingFile[], samples: readonly LadingSample[]): string {
   return (
-    files.find((file) => file.path === "partner.lading")?.path ??
+    files.find((file) => file.path === PARTNER_FILE)?.path ??
     files[0]?.path ??
     samples[0]?.path ??
     ""

@@ -36,3 +36,55 @@ query DeskReportSchedules($definitionId: ID, $enabledOnly: Boolean, $limit: Int)
     consecutiveFailures
   }
 }
+
+query DeskReportRunCard($id: ID!) {
+  reportRunDeskCard(id: $id) {
+    run {
+      ...ReportRunFields
+    }
+    report {
+      name
+      description
+      category
+      definitionId
+      cannedKey
+    }
+    parameters {
+      name
+      label
+      type
+      value
+      isDefault
+      entity
+      windowStart
+      windowEnd
+    }
+    timezone
+    sample {
+      ...ReportPreviewFields
+    }
+    withheld
+    previous {
+      runId
+      completedAt
+      rowCount
+      columnIds
+      totals
+    }
+    schedule {
+      id
+      cronExpression
+      timezone
+      nextRunAt
+    }
+    chart {
+      type
+      x
+      series
+    }
+    sort {
+      column
+      desc
+    }
+  }
+}

@@ -430,6 +430,8 @@ writes:
   "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/rewrite/":
     exempt: agent-administration
     reason: "Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead."
+  "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/run/":
+    tools: [report_run]
   "POST /api/v1/assistant/threads/:threadID/artifacts/:artifactID/versions/":
     exempt: agent-administration
     reason: "A person keeping or restoring their own version of a document an agent drafted in their conversation; the agent drafts through the conversation itself."

@@ -25900,6 +25900,10 @@ type Query {
   reportDefinitionRevisions(definitionId: ID!, limit: Int): [ReportDefinitionRevision!]!
   reportDefinitions(input: DataTableConnectionInput!): ReportDefinitionConnection!
   reportRun(id: ID!): ReportRun!
+  """
+  A report run as the Desk card draws it; the run and its schedule are the root record.
+  """
+  reportRunDeskCard(id: ID!): ReportRunDeskCard! @authorizes(resource: "report")
   reportRuns(filter: ReportRunsFilterInput, input: DataTableConnectionInput!): ReportRunConnection!
   reportSchedules(
     definitionId: ID
@@ -27600,6 +27604,87 @@ type ReportRunConnection {
   Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
   """
   totalCountExact: Boolean!
+}
+
+"""
+A report run as the Desk draws it: the run, the report it ran with the
+parameters it ran with, a sample of its result and the person's previous run
+of the same report to compare it with.
+"""
+type ReportRunDeskCard {
+  """The report's first chart, which decides how the result is pictured."""
+  chart: ReportRunDeskChart
+  parameters: [ReportRunDeskParameter!]!
+  """
+  The person's previous finished run of the same report with the same parameters.
+  """
+  previous: ReportRunDeskPrevious
+  report: ReportRunDeskReport!
+  run: ReportRun!
+  """
+  The first rows and the grand total of the result, as a preview carries them.
+  Absent while the run is going, for a run that finished before samples were
+  kept, after the run expired, and when the result is withheld.
+  """
+  sample: ReportPreview
+  """The schedule the run came from."""
+  schedule: ReportSchedule
+  sort: [ReportRunDeskSort!]!
+  """
+  The organization's time zone, in which the parameter windows are written.
+  """
+  timezone: String!
+  """
+  Why a finished run's result is not shown: access (the person can no longer
+  read everything it shows) or changed (the report no longer runs as it did).
+  """
+  withheld: String
+}
+
+type ReportRunDeskChart {
+  series: [String!]!
+  type: String!
+  x: String
+}
+
+type ReportRunDeskParameter {
+  """The kind of record the parameter's values are ids of."""
+  entity: String
+  """The run did not set it, so it took the report's default."""
+  isDefault: Boolean!
+  label: String!
+  name: String!
+  type: String!
+  value: Any
+  windowEnd: Timestamp
+  """
+  The range a relative date parameter filtered on, as of when the run started.
+  """
+  windowStart: Timestamp
+}
+
+type ReportRunDeskPrevious {
+  """
+  The column each total belongs to, so totals are compared by column and not by position.
+  """
+  columnIds: [String!]!
+  completedAt: Timestamp!
+  rowCount: Int!
+  runId: ID!
+  totals: Any!
+}
+
+type ReportRunDeskReport {
+  cannedKey: String
+  category: String!
+  definitionId: ID
+  description: String!
+  name: String!
+}
+
+type ReportRunDeskSort {
+  column: String!
+  desc: Boolean!
 }
 
 type ReportRunEdge {

@@ -38,6 +38,7 @@ type ExecuteResult struct {
 	CacheHit          bool                      `json:"cacheHit"`
 	ArtifactExpiresAt int64                     `json:"artifactExpiresAt,omitempty"`
 	Digest            *reportports.ReportDigest `json:"digest,omitempty"`
+	Sample            []byte                    `json:"sample,omitempty"`
 }
 
 type FinalizePayload struct {
@@ -54,6 +55,7 @@ type FinalizePayload struct {
 	ByteSize          int64            `json:"byteSize"`
 	Truncated         bool             `json:"truncated"`
 	DurationMs        int64            `json:"durationMs"`
+	Sample            []byte           `json:"sample,omitempty"`
 }
 
 type RunReportResult struct {

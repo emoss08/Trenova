@@ -37,6 +37,7 @@ function markFor(kind: string): Decoration | null {
   if (!role) return null;
   let mark = marks.get(kind);
   if (!mark) {
+    // i18n-ignore: CodeMirror class names
     mark = Decoration.mark({ class: `cm-lading-${kind} cm-syntax-${role}` });
     marks.set(kind, mark);
   }

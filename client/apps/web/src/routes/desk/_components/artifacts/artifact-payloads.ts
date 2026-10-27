@@ -22,7 +22,6 @@ import {
   analysisTablesSchema,
 } from "@/types/analysis";
 import { isAppPath } from "@/lib/app-path";
-import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
@@ -49,17 +48,25 @@ function listOf(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+/** A column of a report_preview payload: its value type, and its resolved display style as `format`. */
+export type ReportPreviewArtifactColumn = {
+  id: string;
+  label: string;
+  type: string;
+  format: string | null;
+};
+
 export type ReportPreviewArtifact = {
   name: string;
   dataset: string;
-  columns: ReportPreviewColumn[];
+  columns: ReportPreviewArtifactColumn[];
   rows: unknown[][];
   totals: unknown[] | null;
   rowCount: number;
   truncated: boolean;
 };
 
-function previewColumn(value: unknown): ReportPreviewColumn | null {
+function previewColumn(value: unknown): ReportPreviewArtifactColumn | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -74,7 +81,7 @@ function previewColumn(value: unknown): ReportPreviewColumn | null {
     label: label || id,
     type: stringOf(value.type) || "string",
     format: stringOf(value.format) || null,
-  } as unknown as ReportPreviewColumn;
+  };
 }
 
 /** Rows arrive keyed by column label; the grid wants them positional. */
@@ -82,7 +89,7 @@ export function reportPreviewFrom(artifact: AssistantArtifact): ReportPreviewArt
   const payload = artifact.payload;
   const columns = listOf(payload.columns)
     .map(previewColumn)
-    .filter((column): column is ReportPreviewColumn => column !== null);
+    .filter((column): column is ReportPreviewArtifactColumn => column !== null);
   const rows = listOf(payload.rows)
     .filter(isRecord)
     .map((row) => columns.map((column) => row[column.label] ?? row[column.id] ?? null));
@@ -131,7 +138,7 @@ export type TablePaging = {
 };
 
 /** The agent that read a table's rows in the conversation, named as it was when it read them. */
-export type TableReader = { id: string; name: string; icon: string; accent: string };
+export type ArtifactReader = { id: string; name: string; icon: string; accent: string };
 
 export type TableViewArtifact = {
   tool: string;
@@ -147,7 +154,9 @@ export type TableViewArtifact = {
   calls: number;
   paging: TablePaging;
   /** Null when the table does not say, or the agent could no longer be read when it was kept. */
-  readBy: TableReader | null;
+  readBy: ArtifactReader | null;
+  /** Whether the list can be read again: the table kept the arguments it was read with. */
+  rereadable: boolean;
 };
 
 /** Whether the person's pages go on from the agent's rows, or read the list from its start. */
@@ -155,7 +164,7 @@ export function resumesAfterAgent(paging: TablePaging): boolean {
   return paging.nextCursor !== "" || paging.nextOffset !== null;
 }
 
-function tableReaderOf(value: unknown): TableReader | null {
+export function artifactReaderOf(value: unknown): ArtifactReader | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -287,7 +296,8 @@ export function tableViewFrom(artifact: AssistantArtifact): TableViewArtifact {
     truncated: rowCount > rows.length,
     calls: bunchedCallCount(payload),
     paging: tablePagingOf(payload),
-    readBy: tableReaderOf(payload.readBy),
+    readBy: artifactReaderOf(payload.readBy),
+    rereadable: isRecord(payload.readWith),
   };
 }
 

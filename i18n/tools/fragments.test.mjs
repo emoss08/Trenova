@@ -170,6 +170,7 @@ const userSchema = z.object({ email: z.string().email({ error: "Enter an email" 
   .superRefine((v, ctx) => ctx.addIssue({ code: "custom", message: "Not allowed" }));
 const field = () => <Controller rules={{ required: "Pick a date", minLength: { value: 2, message: "Too short" } }} />;
 const opts = { rules: { required: translate("Kept") } };
+const kinds = { rules: { ink: "text-accent-rose", tile: { message: "bg-accent-rose-subtle" } } };
 `);
     assert.ok(found.every((f) => f.kind === "untranslated-schema-message"));
     assert.deepEqual(found.map((f) => f.detail).sort(), [

@@ -194,7 +194,6 @@
   "Separate multiple addresses with commas.": "多个地址请用逗号分隔。",
   "Service date": "服务日期",
   "Set rebill amounts manually": "手动设置重新开单金额",
-  "Share": "分享",
   "Share invoice {0}": "分享发票 {0}",
   "Shared by {0} on {1}": "由 {0} 于 {1} 分享",
   "Shared with {0, plural, one {# teammate} other {# teammates}}. Everyone got a notification, but some emails couldn't be sent.": "已分享给 {0, plural, other {# 位团队成员}}。所有人都已收到通知，但部分电子邮件无法发送。",

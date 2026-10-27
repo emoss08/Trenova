@@ -36,6 +36,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "ReportPreviewColumn", Implementors: []string{"ReportPreviewColumn"}},
 		{Name: "ReportRun", Implementors: []string{"ReportRun"}},
 		{Name: "ReportRunConnection", Implementors: []string{"ReportRunConnection"}},
+		{Name: "ReportRunDeskCard", Implementors: []string{"ReportRunDeskCard"}},
+		{Name: "ReportRunDeskChart", Implementors: []string{"ReportRunDeskChart"}},
+		{Name: "ReportRunDeskParameter", Implementors: []string{"ReportRunDeskParameter"}},
+		{Name: "ReportRunDeskPrevious", Implementors: []string{"ReportRunDeskPrevious"}},
+		{Name: "ReportRunDeskReport", Implementors: []string{"ReportRunDeskReport"}},
+		{Name: "ReportRunDeskSort", Implementors: []string{"ReportRunDeskSort"}},
 		{Name: "ReportRunEdge", Implementors: []string{"ReportRunEdge"}},
 		{Name: "ReportRunError", Implementors: []string{"ReportRunError"}},
 		{Name: "ReportSchedule", Implementors: []string{"ReportSchedule"}},
@@ -438,6 +444,20 @@ var Shard = &gqlexec.Shard{
 					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportRun(ctx, fc.Args["id"].(string))
 				},
 				Marshal: gqlexec.Marshal(marshalNReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun),
+			},
+			{
+				Name:       "reportRunDeskCard",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "ReportRunDeskCard",
+				Args:       field_Query_reportRunDeskCard_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").ReportRunDeskCard(ctx, fc.Args["id"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNReportRunDeskCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskCard),
 			},
 			{
 				Name:       "reportRuns",
@@ -2079,6 +2099,344 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "ReportRunDeskCard", Fields: []*gqlexec.Field{
+			{
+				Name:      "run",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ReportRun",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Run, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun),
+			},
+			{
+				Name:      "report",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ReportRunDeskReport",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Report, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNReportRunDeskReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskReport),
+			},
+			{
+				Name:      "parameters",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ReportRunDeskParameter",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Parameters, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNReportRunDeskParameter2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskParameterᚄ),
+			},
+			{
+				Name:     "timezone",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Timezone, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "sample",
+				HasChild:  true,
+				ChildType: "ReportPreview",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Sample, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPreview),
+			},
+			{
+				Name:     "withheld",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Withheld, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:      "previous",
+				HasChild:  true,
+				ChildType: "ReportRunDeskPrevious",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Previous, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportRunDeskPrevious2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskPrevious),
+			},
+			{
+				Name:      "schedule",
+				HasChild:  true,
+				ChildType: "ReportSchedule",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Schedule, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportSchedule2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportSchedule),
+			},
+			{
+				Name:      "chart",
+				HasChild:  true,
+				ChildType: "ReportRunDeskChart",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Chart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOReportRunDeskChart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskChart),
+			},
+			{
+				Name:      "sort",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ReportRunDeskSort",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskCard)
+					return obj.Sort, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNReportRunDeskSort2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskSortᚄ),
+			},
+		}},
+		{Object: "ReportRunDeskChart", Fields: []*gqlexec.Field{
+			{
+				Name:     "type",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskChart)
+					return obj.Type, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "x",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskChart)
+					return obj.X, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "series",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskChart)
+					return obj.Series, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+		}},
+		{Object: "ReportRunDeskParameter", Fields: []*gqlexec.Field{
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskParameter)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskParameter)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "type",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskParameter)
+					return obj.Type, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "value",
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskParameter)
+					return obj.Value, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOAny2interface),
+			},
+			{
+				Name:     "isDefault",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskParameter)
+					return obj.IsDefault, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "entity",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskParameter)
+					return obj.Entity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:     "windowStart",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskParameter)
+					return obj.WindowStart, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+			{
+				Name:     "windowEnd",
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskParameter)
+					return obj.WindowEnd, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
+			},
+		}},
+		{Object: "ReportRunDeskPrevious", Fields: []*gqlexec.Field{
+			{
+				Name:     "runId",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskPrevious)
+					return obj.RunID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "completedAt",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskPrevious)
+					return obj.CompletedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:     "rowCount",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskPrevious)
+					return obj.RowCount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNInt2int),
+			},
+			{
+				Name:     "columnIds",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskPrevious)
+					return obj.ColumnIds, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "totals",
+				NonNull:  true,
+				ChildErr: errNoChild9,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskPrevious)
+					return obj.Totals, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAny2interface),
+			},
+		}},
+		{Object: "ReportRunDeskReport", Fields: []*gqlexec.Field{
+			{
+				Name:     "name",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskReport)
+					return obj.Name, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "description",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskReport)
+					return obj.Description, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "category",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskReport)
+					return obj.Category, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "definitionId",
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskReport)
+					return obj.DefinitionID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
+			},
+			{
+				Name:     "cannedKey",
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskReport)
+					return obj.CannedKey, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "ReportRunDeskSort", Fields: []*gqlexec.Field{
+			{
+				Name:     "column",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskSort)
+					return obj.Column, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "desc",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ReportRunDeskSort)
+					return obj.Desc, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
 		{Object: "ReportRunEdge", Fields: []*gqlexec.Field{
 			{
 				Name:      "node",
@@ -2625,6 +2983,7 @@ type resolverQuery interface {
 	ReportDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ReportDefinitionConnection, error)
 	ReportDefinitionRevisions(ctx context.Context, definitionID string, limit *int) ([]*gqlmodel.ReportDefinitionRevision, error)
 	ReportRun(ctx context.Context, id string) (*gqlmodel.ReportRun, error)
+	ReportRunDeskCard(ctx context.Context, id string) (*gqlmodel.ReportRunDeskCard, error)
 	ReportRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) (*gqlmodel.ReportRunConnection, error)
 	PreviewReport(ctx context.Context, definition map[string]any, params map[string]any, supersede *bool, cursor *string, pageSize *int) (*gqlmodel.ReportPreview, error)
 	DrillThroughReport(ctx context.Context, input gqlmodel.ReportDrillInput) (*gqlmodel.ReportPreview, error)
@@ -2934,6 +3293,19 @@ func field_Query_reportDefinitionRevisions_args(ctx context.Context, ec *gqlexec
 }
 
 func field_Query_reportRun_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func field_Query_reportRunDeskCard_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 1)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
 		func(ctx context.Context, v any) (string, error) {
@@ -5154,6 +5526,54 @@ func marshalNReportRunConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal�
 	return ec.MarshalType(ctx, sel, "ReportRunConnection", v)
 }
 
+func marshalNReportRunDeskCard2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskCard(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRunDeskCard) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportRunDeskCard", v)
+}
+
+func marshalNReportRunDeskParameter2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskParameterᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ReportRunDeskParameter) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ReportRunDeskParameter]{
+		Elem:        marshalNReportRunDeskParameter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskParameter,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNReportRunDeskParameter2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskParameter(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRunDeskParameter) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportRunDeskParameter", v)
+}
+
+func marshalNReportRunDeskReport2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskReport(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRunDeskReport) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportRunDeskReport", v)
+}
+
+func marshalNReportRunDeskSort2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskSortᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ReportRunDeskSort) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ReportRunDeskSort]{
+		Elem:        marshalNReportRunDeskSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskSort,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNReportRunDeskSort2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskSort(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRunDeskSort) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportRunDeskSort", v)
+}
+
 func marshalNReportRunEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ReportRunEdge) graphql.Marshaler {
 	return gqlexec.List[*gqlmodel.ReportRunEdge]{
 		Elem:        marshalNReportRunEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunEdge,
@@ -5288,11 +5708,32 @@ func marshalOReportFieldProtection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 	return ec.MarshalType(ctx, sel, "ReportFieldProtection", v)
 }
 
+func marshalOReportPreview2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportPreview(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportPreview) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportPreview", v)
+}
+
 func marshalOReportRun2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRun(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRun) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "ReportRun", v)
+}
+
+func marshalOReportRunDeskChart2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskChart(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRunDeskChart) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportRunDeskChart", v)
+}
+
+func marshalOReportRunDeskPrevious2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunDeskPrevious(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRunDeskPrevious) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "ReportRunDeskPrevious", v)
 }
 
 func marshalOReportRunError2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐReportRunError(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ReportRunError) graphql.Marshaler {

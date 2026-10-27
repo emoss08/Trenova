@@ -72,6 +72,9 @@ export const FILE_FOLDERS: Record<LadingFileKind, string> = {
   library: "lib/",
 };
 
+/** The one file that holds the partner's envelope, zone, currency and settings. */
+export const PARTNER_FILE = "partner.lading";
+
 export const SAMPLE_FOLDER = "samples/";
 
 /** How a sample is read: X12, CSV, JSON, or a Trenova document for an outbound test. */
@@ -137,7 +140,7 @@ export function entryPath(kind: LadingFileKind | SampleFormat, name: string): st
     const base = trimmed.toLowerCase().endsWith(ending) ? trimmed : `${trimmed}${ending}`;
     return `${SAMPLE_FOLDER}${base}`;
   }
-  if (kind === "partner") return "partner.lading";
+  if (kind === "partner") return PARTNER_FILE;
   const base = trimmed.endsWith(".lading") ? trimmed : `${trimmed}.lading`;
   return `${FILE_FOLDERS[kind as LadingFileKind]}${base}`;
 }
@@ -197,22 +200,29 @@ export function starterSource(path: string, starter: FileStarter): string {
   const name = ladingName(path);
   switch (starter.kind) {
     case "guide":
+      // i18n-ignore: Lading source written into the new file
       return `guide ${fileWords(path).join(".")} from ${starter.base} ${quoted(starter.title)}\n`;
     case "map": {
       if (starter.direction === "outbound") {
+        // i18n-ignore: Lading source written into the new file
         return `map ${name}\n  from ${starter.document}\n  to   ${starter.guide}\n`;
       }
       if (starter.input === "csv") {
+        // i18n-ignore: Lading source written into the new file
         return `map ${name}\n  from csv {\n    reference: Text\n  }\n  to   ${starter.document}\n`;
       }
       const from = starter.input === "json" ? "json" : starter.guide;
+      // i18n-ignore: Lading source written into the new file
       return `map ${name}\n  from ${from}\n  to   ${starter.document}\n`;
     }
     case "rules":
+      // i18n-ignore: Lading source written into the new file
       return `rules ${name} for ${starter.map}\n`;
     case "flow":
+      // i18n-ignore: Lading source written into the new file
       return `flow ${name} with ${starter.partner}\n`;
     case "library":
+      // i18n-ignore: Lading source written into the new file
       return `library ${name}\n`;
   }
 }
@@ -369,14 +379,12 @@ export function projectMap(
     shared: [...ofKind("guide"), ...ofKind("library")],
     loose,
     samples: samples
-      .map(
-        (sample): TreeEntry => ({
-          path: sample.path,
-          kind: "sample",
-          label: rowLabel(sample.path, SAMPLE_FOLDER),
-          format: sampleFormat(sample.path) ?? "x12",
-        }),
-      )
+      .map((sample): TreeEntry => ({
+        path: sample.path,
+        kind: "sample",
+        label: rowLabel(sample.path, SAMPLE_FOLDER),
+        format: sampleFormat(sample.path) ?? "x12",
+      }))
       .sort(byPath),
   };
 }

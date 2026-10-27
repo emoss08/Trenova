@@ -30,6 +30,12 @@ func (h *Handler) registerArtifactRoutes(api *gin.RouterGroup, resource string) 
 	api.POST("/threads/:threadID/artifacts/:artifactID/versions/", read, h.saveDocumentVersion)
 	api.POST("/threads/:threadID/artifacts/:artifactID/restore/", read, h.restoreDocumentVersion)
 	api.POST("/threads/:threadID/artifacts/:artifactID/rewrite/", read, h.rewriteDocument)
+	api.POST(
+		"/threads/:threadID/artifacts/:artifactID/run/",
+		read,
+		h.pm.RequirePermission(permission.ResourceReport.String(), permission.OpExport),
+		h.runArtifactReport,
+	)
 }
 
 type listArtifactsQuery struct {
@@ -267,6 +273,27 @@ func (h *Handler) restoreDocumentVersion(c *gin.Context) {
 	}
 
 	saved, err := h.service.RestoreDocumentVersion(c.Request.Context(), req, artifactID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	helpers.JSON(c, http.StatusCreated, saved)
+}
+
+func (h *Handler) runArtifactReport(c *gin.Context) {
+	req, err := threadRequest(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+	artifactID, err := artifactParam(c)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	saved, err := h.service.RunArtifactReport(c.Request.Context(), req, artifactID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return

@@ -181,14 +181,14 @@ func (s *Service) nameDelegatedSteps(
 }
 
 func (r *artifactRecorder) noteReader(artifact *assistantartifact.Artifact) {
-	if artifact.Kind != assistantartifact.KindTableView {
+	if !namesItsReader(artifact.Kind) {
 		return
 	}
 	reader := r.readingAgent()
 	if reader == nil {
 		return
 	}
-	artifact.Payload[payloadReadBy] = tableReader{
+	artifact.Payload[payloadReadBy] = artifactReader{
 		ID:     r.thread.AgentDefinitionID.String(),
 		Name:   reader.name,
 		Icon:   reader.icon,
@@ -196,7 +196,19 @@ func (r *artifactRecorder) noteReader(artifact *assistantartifact.Artifact) {
 	}
 }
 
-type tableReader struct {
+func namesItsReader(kind assistantartifact.Kind) bool {
+	//nolint:exhaustive // only the kinds whose card names the agent
+	switch kind {
+	case assistantartifact.KindTableView,
+		assistantartifact.KindReportRun,
+		assistantartifact.KindReportPreview:
+		return true
+	default:
+		return false
+	}
+}
+
+type artifactReader struct {
 	ID     string `json:"id"`
 	Name   string `json:"name"`
 	Icon   string `json:"icon"`

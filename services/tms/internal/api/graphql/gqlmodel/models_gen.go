@@ -8006,6 +8006,73 @@ type ReportRunConnection struct {
 	TotalCountExact bool `json:"totalCountExact"`
 }
 
+// A report run as the Desk draws it: the run, the report it ran with the
+// parameters it ran with, a sample of its result and the person's previous run
+// of the same report to compare it with.
+type ReportRunDeskCard struct {
+	Run        *ReportRun                `json:"run"`
+	Report     *ReportRunDeskReport      `json:"report"`
+	Parameters []*ReportRunDeskParameter `json:"parameters"`
+	// The organization's time zone, in which the parameter windows are written.
+	Timezone string `json:"timezone"`
+	// The first rows and the grand total of the result, as a preview carries them.
+	// Absent while the run is going, for a run that finished before samples were
+	// kept, after the run expired, and when the result is withheld.
+	Sample *ReportPreview `json:"sample,omitempty"`
+	// Why a finished run's result is not shown: access (the person can no longer
+	// read everything it shows) or changed (the report no longer runs as it did).
+	Withheld *string `json:"withheld,omitempty"`
+	// The person's previous finished run of the same report with the same parameters.
+	Previous *ReportRunDeskPrevious `json:"previous,omitempty"`
+	// The schedule the run came from.
+	Schedule *ReportSchedule `json:"schedule,omitempty"`
+	// The report's first chart, which decides how the result is pictured.
+	Chart *ReportRunDeskChart  `json:"chart,omitempty"`
+	Sort  []*ReportRunDeskSort `json:"sort"`
+}
+
+type ReportRunDeskChart struct {
+	Type   string   `json:"type"`
+	X      *string  `json:"x,omitempty"`
+	Series []string `json:"series"`
+}
+
+type ReportRunDeskParameter struct {
+	Name  string `json:"name"`
+	Label string `json:"label"`
+	Type  string `json:"type"`
+	Value any    `json:"value,omitempty"`
+	// The run did not set it, so it took the report's default.
+	IsDefault bool `json:"isDefault"`
+	// The kind of record the parameter's values are ids of.
+	Entity *string `json:"entity,omitempty"`
+	// The range a relative date parameter filtered on, as of when the run started.
+	WindowStart *int `json:"windowStart,omitempty"`
+	WindowEnd   *int `json:"windowEnd,omitempty"`
+}
+
+type ReportRunDeskPrevious struct {
+	RunID       string `json:"runId"`
+	CompletedAt int    `json:"completedAt"`
+	RowCount    int    `json:"rowCount"`
+	// The column each total belongs to, so totals are compared by column and not by position.
+	ColumnIds []string `json:"columnIds"`
+	Totals    any      `json:"totals"`
+}
+
+type ReportRunDeskReport struct {
+	Name         string  `json:"name"`
+	Description  string  `json:"description"`
+	Category     string  `json:"category"`
+	DefinitionID *string `json:"definitionId,omitempty"`
+	CannedKey    *string `json:"cannedKey,omitempty"`
+}
+
+type ReportRunDeskSort struct {
+	Column string `json:"column"`
+	Desc   bool   `json:"desc"`
+}
+
 type ReportRunEdge struct {
 	Node   *ReportRun `json:"node"`
 	Cursor string     `json:"cursor"`

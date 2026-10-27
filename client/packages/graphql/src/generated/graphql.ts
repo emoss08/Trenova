@@ -17253,6 +17253,13 @@ export type DeskReportSchedulesQueryVariables = Exact<{
 
 export type DeskReportSchedulesQuery = { reportSchedules: Array<{ id: string, definitionId: string, cronExpression: string, timezone: string, formats: Array<string>, emailRecipients: Array<string>, enabled: boolean, mine: boolean, nextRunAt: number | null, consecutiveFailures: number }> };
 
+export type DeskReportRunCardQueryVariables = Exact<{
+  id: string | number;
+}>;
+
+
+export type DeskReportRunCardQuery = { reportRunDeskCard: { timezone: string, withheld: string | null, run: { ' $fragmentRefs'?: { 'ReportRunFieldsFragment': ReportRunFieldsFragment } }, report: { name: string, description: string, category: string, definitionId: string | null, cannedKey: string | null }, parameters: Array<{ name: string, label: string, type: string, value: unknown, isDefault: boolean, entity: string | null, windowStart: number | null, windowEnd: number | null }>, sample: { ' $fragmentRefs'?: { 'ReportPreviewFieldsFragment': ReportPreviewFieldsFragment } } | null, previous: { runId: string, completedAt: number, rowCount: number, columnIds: Array<string>, totals: unknown } | null, schedule: { id: string, cronExpression: string, timezone: string, nextRunAt: number | null } | null, chart: { type: string, x: string | null, series: Array<string> } | null, sort: Array<{ column: string, desc: boolean }> } };
+
 export type ReportPreviewFieldsFragment = { rows: unknown, levels: Array<number>, totals: unknown, truncated: boolean, cursor: string | null, timezone: string, rollup: string | null, columns: Array<{ id: string, label: string, type: string, sensitivity: string | null, display: { style: string, decimals: number, grouping: boolean, currency: string, negative: string, notation: string, prefix: string, suffix: string, dateStyle: string, boolStyle: string, durationUnit: string, durationStyle: string, nullText: string, labels: unknown, rules: Array<{ op: string, value: number, upper: number, tone: string }>, band: { width: number, edges: Array<number> } | null } }> } & { ' $fragmentName'?: 'ReportPreviewFieldsFragment' };
 
 export type PreviewReportQueryVariables = Exact<{
@@ -19981,7 +19988,7 @@ export { CannedReportsDocument } from "./documents/reports/canned";
 export { ReportCatalogDocument } from "./documents/reports/catalog";
 export { ReportDashboardFieldsFragmentDoc, ReportDashboardsDocument, ReportDashboardByIdDocument, CreateReportDashboardDocument, UpdateReportDashboardDocument, DeleteReportDashboardDocument } from "./documents/reports/dashboards";
 export { ReportDefinitionFieldsFragmentDoc, ReportDefinitionOptionFieldsFragmentDoc, ReportDefinitionsTableDocument, ReportDefinitionByIdDocument, ReportDefinitionRevisionsDocument, CreateReportDefinitionDocument, UpdateReportDefinitionDocument, DeleteReportDefinitionDocument, ForkCannedReportDocument, ResetCannedForkDocument, ReportDefinitionOptionsDocument } from "./documents/reports/definitions";
-export { DeskReportRunsDocument, DeskReportSchedulesDocument } from "./documents/reports/desk";
+export { DeskReportRunsDocument, DeskReportSchedulesDocument, DeskReportRunCardDocument } from "./documents/reports/desk";
 export { ReportPreviewFieldsFragmentDoc, PreviewReportDocument, DrillThroughReportDocument } from "./documents/reports/preview";
 export { ReportRunFieldsFragmentDoc, ReportRunsTableDocument, ReportRunByIdDocument, RunReportDocument, CancelReportRunDocument } from "./documents/reports/runs";
 export { ReportScheduleFieldsFragmentDoc, ReportSchedulesDocument, CreateReportScheduleDocument, UpdateReportScheduleDocument, DeleteReportScheduleDocument } from "./documents/reports/schedules";

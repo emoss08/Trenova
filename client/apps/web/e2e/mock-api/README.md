@@ -490,6 +490,22 @@ artifact's page, after paging, searching and sorting where the state needs it, b
 conversation and in a narrow window, and writes to `e2e/mock-api/screenshots/desk-table` by
 default.
 
+A report the agent ran, and the preview it read first, have their own walkthrough:
+
+```bash
+node e2e/mock-api/desk-report-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens `/desk/c/athr_desk_report/a/revenue-by-customer` (`handlers/deskreport.mjs`): Billing
+Desk ran the built-in revenue by customer report for the last 30 days. `DeskReportRunCard` answers
+as the `deskReport` scenario field says: `finished` (ranked by total revenue, against last week's
+run), `trend` (revenue and shipments by month), `running`, `failed`, `empty` (finished, nothing
+matched), `capped` (hit its row cap), `expired`, `scheduled` (a schedule's run), `withheld` (the
+person lost access to what it shows) or `older` (finished before runs kept a sample). The preview
+is at `…/a/revenue-by-customer-preview`. It shoots each on the artifact's page, beside the
+conversation and in a narrow window, and writes to `e2e/mock-api/screenshots/desk-report` by
+default.
+
 The Desk's extraction artifact, what document intelligence read off a file, has its own
 walkthrough:
 

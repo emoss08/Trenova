@@ -388,9 +388,12 @@ function schemaMessages(call) {
   );
 }
 
+const FORM_RULES = new Set(["required", "min", "max", "minLength", "maxLength", "pattern"]);
+
 /**
  * ruleMessages returns the literal messages a react-hook-form `rules` object carries
- * (`rules={{ required: "…" }}`, `rules: { minLength: { value: 2, message: "…" } }`).
+ * (`rules={{ required: "…" }}`, `rules: { minLength: { value: 2, message: "…" } }`). Only
+ * react-hook-form's own rule names count, so a `rules` key in any other object is left alone.
  */
 function ruleMessages(node) {
   let rules = null;
@@ -401,7 +404,7 @@ function ruleMessages(node) {
   }
   if (rules?.type !== "ObjectExpression") return [];
   return rules.properties.flatMap((prop) => {
-    if (prop.type !== "ObjectProperty") return [];
+    if (prop.type !== "ObjectProperty" || !FORM_RULES.has(keyName(prop.key))) return [];
     if (prop.value.type === "StringLiteral") return [prop.value];
     if (prop.value.type !== "ObjectExpression") return [];
     return prop.value.properties.filter(

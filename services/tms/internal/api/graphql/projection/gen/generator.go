@@ -35,6 +35,7 @@ const (
 	jsonbValueObject    = "GraphQL value object stored as JSONB without column projection metadata"
 	homeWidgetDTO       = "GraphQL home widget catalog DTO"
 	deskMemoryDTO       = "GraphQL Desk memory DTO built by its resolver"
+	reportRunDeskDTO    = "GraphQL Desk report run card DTO built by reporting.GetRunCard"
 	shipmentWorkflowDTO = "GraphQL shipment workflow DTO"
 	journalDTO          = "GraphQL journal DTO without column projection metadata"
 	costingDTO          = "GraphQL costing DTO without column projection metadata"
@@ -94,6 +95,12 @@ var nonProjectionObjects = map[string]string{
 	"DeskMemoryPage":                  deskMemoryDTO,
 	"DeskMemoryRole":                  deskMemoryDTO,
 	"DeskMemorySettings":              deskMemoryDTO,
+	"ReportRunDeskCard":               reportRunDeskDTO,
+	"ReportRunDeskChart":              reportRunDeskDTO,
+	"ReportRunDeskParameter":          reportRunDeskDTO,
+	"ReportRunDeskPrevious":           reportRunDeskDTO,
+	"ReportRunDeskReport":             reportRunDeskDTO,
+	"ReportRunDeskSort":               reportRunDeskDTO,
 	"DocumentTemplateKind":            "GraphQL registry catalog DTO, not a table",
 	"DocumentTemplateVariable":        "GraphQL registry catalog DTO, not a table",
 	"DocumentTemplateDiagnostic":      "GraphQL template engine finding DTO",

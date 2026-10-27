@@ -3215,6 +3215,7 @@ type QueryResolver interface {
 	ReportDefinitions(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.ReportDefinitionConnection, error)
 	ReportDefinitionRevisions(ctx context.Context, definitionID string, limit *int) ([]*gqlmodel.ReportDefinitionRevision, error)
 	ReportRun(ctx context.Context, id string) (*gqlmodel.ReportRun, error)
+	ReportRunDeskCard(ctx context.Context, id string) (*gqlmodel.ReportRunDeskCard, error)
 	ReportRuns(ctx context.Context, input gqlmodel.DataTableConnectionInput, filter *gqlmodel.ReportRunsFilterInput) (*gqlmodel.ReportRunConnection, error)
 	PreviewReport(ctx context.Context, definition map[string]any, params map[string]any, supersede *bool, cursor *string, pageSize *int) (*gqlmodel.ReportPreview, error)
 	DrillThroughReport(ctx context.Context, input gqlmodel.ReportDrillInput) (*gqlmodel.ReportPreview, error)

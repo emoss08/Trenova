@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/keel/analytics/format"
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/keel/analytics/value"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -201,4 +202,31 @@ func TestDigestNoteOnlyAppearsWhenRowsWereDropped(t *testing.T) {
 
 	sampled := captureDigest(t, 1, columns, detail("ACME"), detail("Globex"))
 	assert.Contains(t, digestNote(t.Context(), sampled, 1, 4000), "first 1 of 4000 rows")
+}
+
+func TestRunSampleKeepsTheCapturedEnvelope(t *testing.T) {
+	t.Parallel()
+
+	columns := []table.Column{textColumn("Customer"), moneyColumn("Revenue")}
+	digest := captureDigest(t, 2, columns,
+		detail("ACME", "1180.50"),
+		detail("Globex", "980"),
+		detail("Initech", "640"),
+		total(nil, "2800.50"),
+	)
+
+	sample := runSampleOf(digest)
+
+	require.NotNil(t, sample)
+	assert.Equal(t, digest.Envelope, sample)
+}
+
+func TestRunSampleIsNilWithoutACaptureOrPastItsCap(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, runSampleOf(nil))
+	assert.Nil(t, runSampleOf(&reportports.ReportDigest{}))
+	assert.Nil(t, runSampleOf(&reportports.ReportDigest{
+		Envelope: make([]byte, report.MaxRunSampleBytes+1),
+	}))
 }

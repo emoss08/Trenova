@@ -3,6 +3,8 @@ package reportrepository
 import (
 	"context"
 
+	"github.com/bytedance/sonic"
+
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
@@ -91,6 +93,48 @@ func (r *runRepository) GetByID(
 	})
 }
 
+func (r *runRepository) LatestComparable(
+	ctx context.Context,
+	req *reportports.GetComparableReportRunRequest,
+) (*report.ReportRun, error) {
+	params, err := comparableParams(req.Params)
+	if err != nil {
+		return nil, err
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportRun, error) {
+		run := reportdb.ReportRuns
+		entity, firstErr := run.Pick(run.ID, run.CompletedAt, run.RowCount, run.Sample).
+			Where(
+				run.RequestedByID.Eq(req.RequestedBy),
+				run.Status.Eq(report.RunStatusSucceeded),
+				run.Sample.IsNotNull(),
+				keel.Raw("COALESCE(?, '{}'::jsonb) = ?::jsonb", run.Params, params),
+				run.ID.Ne(req.ExcludeRunID),
+				run.CompletedAt.Lt(req.CompletedBefore),
+				keel.When(req.DefinitionID.IsNil(), run.DefinitionID.IsNull()),
+				keel.When(req.DefinitionID.IsNil(), run.CannedKey.Eq(req.CannedKey)),
+				keel.When(!req.DefinitionID.IsNil(), run.DefinitionID.Eq(req.DefinitionID)),
+				keel.When(!req.DefinitionID.IsNil(), run.CannedKey.IsNull()),
+			).
+			Order(run.CompletedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if firstErr != nil {
+			return nil, runErrors.Map(firstErr, req.ExcludeRunID.String())
+		}
+
+		return entity, nil
+	})
+}
+
+func comparableParams(params map[string]any) (string, error) {
+	if len(params) == 0 {
+		return "{}", nil
+	}
+
+	return sonic.MarshalString(params)
+}
+
 func (r *runRepository) CountActive(
 	ctx context.Context,
 	_ *reportports.CountActiveReportRunsRequest,
@@ -129,6 +173,7 @@ func (r *runRepository) ListStale(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
 		run := reportdb.ReportRuns
 		q := run.AllTenants().
+			Omit(run.Sample).
 			Where(run.Status.In(req.Statuses...), run.UpdatedAt.Lt(req.UpdatedBeforeUnix)).
 			Order(run.UpdatedAt.Asc())
 		if req.Limit > 0 {
@@ -153,6 +198,7 @@ func (r *runRepository) ListExpired(
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
 		run := reportdb.ReportRuns
 		q := run.AllTenants().
+			Omit(run.Sample).
 			Where(
 				run.Status.Eq(report.RunStatusSucceeded),
 				run.ArtifactExpiresAt.IsNotNull(),

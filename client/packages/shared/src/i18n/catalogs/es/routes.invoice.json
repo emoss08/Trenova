@@ -194,7 +194,6 @@
   "Separate multiple addresses with commas.": "Separe varias direcciones con comas.",
   "Service date": "Fecha del servicio",
   "Set rebill amounts manually": "Establecer manualmente los importes de la refacturación",
-  "Share": "Compartir",
   "Share invoice {0}": "Compartir factura {0}",
   "Shared by {0} on {1}": "Compartida por {0} el {1}",
   "Shared with {0, plural, one {# teammate} other {# teammates}}. Everyone got a notification, but some emails couldn't be sent.": "Compartida con {0, plural, one {# compañero} other {# compañeros}}. Todos recibieron una notificación, pero algunos correos no se pudieron enviar.",
