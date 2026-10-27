@@ -565,6 +565,15 @@ describe("sampleInput", () => {
       json: { a: 1 },
     });
   });
+
+  it("gives a Trenova document sample to an outbound map as a document, not as JSON", () => {
+    expect(
+      sampleInput({ path: "samples/invoice.document.json", content: '{"number":"INV-1"}' }),
+    ).toEqual({ document: { number: "INV-1" } });
+    expect(sampleInput({ path: "samples/broken.document.json", content: "{" })).toEqual({
+      document: "{",
+    });
+  });
 });
 
 describe("lineOf", () => {

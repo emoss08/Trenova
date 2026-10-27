@@ -435,16 +435,21 @@ export function problemCounts(
   return counts;
 }
 
-/** A sample as a run's input, read by its extension: X12 unless it is CSV or JSON. */
+/**
+ * A sample as a run's input, read by its format: a Trenova document for an outbound map, CSV,
+ * JSON, and X12 for any other name.
+ */
 export function sampleInput(sample: LadingSample): LadingRunInput {
-  const path = sample.path.toLowerCase();
-  if (path.endsWith(".csv")) return { csv: sample.content };
-  if (path.endsWith(".json")) {
+  const format = sampleFormat(sample.path);
+  if (format === "csv") return { csv: sample.content };
+  if (format === "json" || format === "document") {
+    let value: unknown = sample.content;
     try {
-      return { json: JSON.parse(sample.content) as unknown };
+      value = JSON.parse(sample.content);
     } catch {
-      return { json: sample.content };
+      value = sample.content;
     }
+    return format === "document" ? { document: value } : { json: value };
   }
   return { x12: sample.content };
 }
