@@ -173,6 +173,7 @@ export const serviceFailureEdi214LifecycleActionSchema = z.enum([
   "generated",
   "blocked",
   "duplicate",
+  "queued",
 ]);
 
 export const serviceFailureEdi214LifecycleResultSchema = z.object({
@@ -181,7 +182,6 @@ export const serviceFailureEdi214LifecycleResultSchema = z.object({
   messageId: optionalStringSchema,
   skippedReason: optionalStringSchema,
   ediPartnerId: optionalStringSchema,
-  partnerDocumentProfileId: optionalStringSchema,
   mandatory: z.boolean().default(false),
   diagnostics: z.array(z.unknown()).default([]),
 });

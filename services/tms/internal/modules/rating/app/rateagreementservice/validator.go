@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 	"go.uber.org/fx"
 )
@@ -19,56 +19,49 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB                         *postgres.Connection
-	FormulaTemplateRepo        formulatemplateports.FormulaTemplateRepository
-	FormulaTemplateVersionRepo formulatemplateports.FormulaTemplateVersionRepository `optional:"true"`
-}
-
-type templateRefs struct {
-	templates formulatemplateports.FormulaTemplateRepository
-	versions  formulatemplateports.FormulaTemplateVersionRepository
+	DB       *postgres.Connection
+	Resolver tariffports.Resolver
+	Checker  tariffports.Checker
 }
 
 type Validator struct {
 	validator validationframework.TenantedEntityValidator[*rateagreement.RateAgreement]
-	refs      templateRefs
+	tariffs   *tariffInputs
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	refs := templateRefs{templates: p.FormulaTemplateRepo, versions: p.FormulaTemplateVersionRepo}
+	tariffs := &tariffInputs{resolver: p.Resolver, checker: p.Checker, now: timeutils.NowUnix}
 	return &Validator{
-		validator: newBuilder(p.DB, refs).Build(),
-		refs:      refs,
+		validator: newBuilder(p.DB, tariffs).Build(),
+		tariffs:   tariffs,
 	}
 }
 
 func newBuilder(
 	db *postgres.Connection,
-	refs templateRefs,
+	tariffs *tariffInputs,
 ) *validationframework.TenantedValidatorBuilder[*rateagreement.RateAgreement] {
 	builder := validationframework.
 		NewTenantedValidatorBuilder[*rateagreement.RateAgreement]().
 		WithModelName("Rate Agreement").
 		WithCustomRule(activationReadinessRule()).
-		WithCustomRule(templateReferenceRule(refs))
+		WithCustomRule(tariffInputsRule(tariffs))
 
 	if db == nil {
 		return builder
 	}
 
+	checker := validationframework.NewKeelChecker(db, rateagreementdb.RateAgreementsSchema())
+
 	return builder.
-		WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerScoped(db),
-		).
+		WithUniquenessChecker(checker).
 		WithUniqueField(
 			"code",
 			"code",
 			"A rate agreement with this code already exists in your organization",
 			func(a *rateagreement.RateAgreement) any { return a.Code },
 		).
-		WithReferenceChecker(
-			validationframework.NewBunReferenceCheckerScoped(db),
-		).
+		WithReferenceChecker(checker).
 		WithOptionalReferenceCheck(
 			"customerId",
 			"customers",
@@ -156,16 +149,9 @@ func (v *Validator) ValidateAmendment(
 		rule.Validate(multiErr.WithIndex("rules", index))
 	}
 
-	validateRuleTemplateReferences(
-		ctx,
-		v.refs,
-		pagination.TenantInfo{
-			OrgID: agreement.OrganizationID,
-			BuID:  agreement.BusinessUnitID,
-		},
-		req.Rules,
-		multiErr,
-	)
+	if err := v.tariffs.checkRules(ctx, agreement, req.Rules, multiErr); err != nil {
+		multiErr.Add("rules", errortypes.ErrInvalid, "The rates' tariffs could not be checked")
+	}
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -174,15 +160,11 @@ func (v *Validator) ValidateAmendment(
 	return nil
 }
 
-// templateReferenceRule refuses a rule that points at a formula template the
-// rating engine could never price with — one that does not exist in the
-// tenant, is not Active, or is not a freight-charge template. Without it the
-// failure surfaces only at rating time, where it blocks the shipment save.
-func templateReferenceRule(
-	refs templateRefs,
+func tariffInputsRule(
+	tariffs *tariffInputs,
 ) validationframework.TenantedRule[*rateagreement.RateAgreement] {
 	return validationframework.
-		NewTenantedRule[*rateagreement.RateAgreement]("rate_agreement_rule_template_reference").
+		NewTenantedRule[*rateagreement.RateAgreement]("rate_agreement_tariff_inputs").
 		OnBoth().
 		WithStage(validationframework.ValidationStageBusinessRules).
 		WithPriority(validationframework.ValidationPriorityHigh).
@@ -192,104 +174,11 @@ func templateReferenceRule(
 			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			validateRuleTemplateReferences(
-				ctx,
-				refs,
-				pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-				entity.Rules,
-				multiErr,
-			)
-
-			return nil
+			if err := tariffs.checkRules(ctx, entity, entity.Rules, multiErr); err != nil {
+				return err
+			}
+			return tariffs.checkConditions(ctx, entity, multiErr)
 		})
-}
-
-func validateRuleTemplateReferences(
-	ctx context.Context,
-	refs templateRefs,
-	tenantInfo pagination.TenantInfo,
-	rules []*rateagreement.RateAgreementRule,
-	multiErr *errortypes.MultiError,
-) {
-	if refs.templates == nil {
-		return
-	}
-
-	templateIDs := make([]pulid.ID, 0, len(rules))
-	seen := make(map[pulid.ID]struct{}, len(rules))
-	for _, rule := range rules {
-		if rule == nil || rule.FormulaTemplateID == nil || rule.FormulaTemplateID.IsNil() {
-			continue
-		}
-		if _, ok := seen[*rule.FormulaTemplateID]; ok {
-			continue
-		}
-		seen[*rule.FormulaTemplateID] = struct{}{}
-		templateIDs = append(templateIDs, *rule.FormulaTemplateID)
-	}
-
-	if len(templateIDs) == 0 {
-		return
-	}
-
-	templates, err := refs.templates.GetByIDs(
-		ctx,
-		formulatemplateports.GetFormulaTemplatesByIDsRequest{
-			TenantInfo:  tenantInfo,
-			TemplateIDs: templateIDs,
-		},
-	)
-	if err != nil {
-		multiErr.Add(
-			"rules",
-			errortypes.ErrInvalid,
-			"Unable to verify the referenced formula templates",
-		)
-		return
-	}
-
-	byID := make(map[pulid.ID]*formulatemplate.FormulaTemplate, len(templates))
-	for _, template := range templates {
-		byID[template.ID] = template
-	}
-
-	for index, rule := range rules {
-		if rule == nil || rule.FormulaTemplateID == nil || rule.FormulaTemplateID.IsNil() {
-			continue
-		}
-
-		indexed := multiErr.WithIndex("rules", index)
-		template, ok := byID[*rule.FormulaTemplateID]
-		switch {
-		case !ok:
-			indexed.Add(
-				"formulaTemplateId",
-				errortypes.ErrInvalid,
-				"Formula template does not exist in your organization",
-			)
-		case template.Status == formulatemplate.StatusInactive:
-			indexed.Add(
-				"formulaTemplateId",
-				errortypes.ErrInvalid,
-				"Formula template is archived and no longer prices shipments",
-			)
-		case !refs.bills(ctx, template, tenantInfo):
-			indexed.Add(
-				"formulaTemplateId",
-				errortypes.ErrInvalid,
-				"Formula template has never been approved, so it cannot price shipments yet",
-			)
-		case template.Type != formulatemplate.TemplateTypeFreightCharge:
-			indexed.Add(
-				"formulaTemplateId",
-				errortypes.ErrInvalid,
-				"Formula template must be a freight charge template",
-			)
-		}
-	}
 }
 
 // activationReadinessRule stops an agreement from being saved in a state it
@@ -323,27 +212,4 @@ func activationReadinessRule() validationframework.TenantedRule[*rateagreement.R
 
 			return nil
 		})
-}
-
-func (r templateRefs) bills(
-	ctx context.Context,
-	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
-) bool {
-	if template.Status == formulatemplate.StatusActive {
-		return true
-	}
-	if r.versions == nil {
-		return false
-	}
-
-	approved, err := r.versions.GetLatestByStatus(
-		ctx,
-		&formulatemplateports.GetLatestVersionByStatusRequest{
-			TenantInfo: tenantInfo,
-			TemplateID: template.ID,
-			Status:     formulatemplate.StatusActive,
-		},
-	)
-	return err == nil && approved != nil
 }

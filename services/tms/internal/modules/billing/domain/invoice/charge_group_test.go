@@ -57,7 +57,7 @@ func TestChargeGroupsSumEveryLineBilledTheSameWay(t *testing.T) {
 			ShipmentID: second, LineNumber: 5, Type: invoice.InvoiceLineTypeAccessorial,
 			Description: "Detention", Quantity: amount("2"), Amount: amount("150"),
 			AccessorialChargeID: detention, ChargeCode: "DET",
-			ChargeMethod: accessorialcharge.MethodPerUnit, RateUnit: accessorialcharge.RateUnitHour,
+			ChargeMethod: accessorialcharge.MethodPerUnit, RateUnit: "$/h",
 			Rate: rate("75"),
 		},
 		{
@@ -69,7 +69,7 @@ func TestChargeGroupsSumEveryLineBilledTheSameWay(t *testing.T) {
 			ShipmentID: third, LineNumber: 7, Type: invoice.InvoiceLineTypeAccessorial,
 			Description: "Detention", Quantity: amount("4"), Amount: amount("300"),
 			AccessorialChargeID: detention, ChargeCode: "DET",
-			ChargeMethod: accessorialcharge.MethodPerUnit, RateUnit: accessorialcharge.RateUnitHour,
+			ChargeMethod: accessorialcharge.MethodPerUnit, RateUnit: "$/h",
 			Rate: rate("75"),
 		},
 	}
@@ -102,7 +102,7 @@ func TestChargeGroupsSumEveryLineBilledTheSameWay(t *testing.T) {
 	assert.True(t, fsc.Amount.Equal(amount("241.50")))
 
 	det := groups[3]
-	assert.Equal(t, accessorialcharge.RateUnitHour, det.RateUnit)
+	assert.Equal(t, "$/h", det.RateUnit)
 	assert.True(t, det.Quantity.Equal(amount("6")), "hours add up across loads")
 	assert.True(t, det.Rate.Decimal.Equal(amount("75")))
 	assert.True(t, det.Amount.Equal(amount("450")))
@@ -113,10 +113,31 @@ func TestChargeGroupsKeepFreightBeforeAccessorialsBeforeMemos(t *testing.T) {
 	t.Parallel()
 
 	lines := []*invoice.InvoiceLine{
-		{LineNumber: 1, Type: invoice.InvoiceLineTypeMemo, Description: "Goodwill credit", Amount: amount("-50")},
-		{LineNumber: 2, Type: invoice.InvoiceLineTypeAccessorial, Description: "Lumper", ChargeCode: "LUMP", Amount: amount("185")},
-		{LineNumber: 3, Type: invoice.InvoiceLineTypeFreight, Description: "Freight charge", Amount: amount("900")},
-		{LineNumber: 4, Type: invoice.InvoiceLineTypeMemo, Description: "Rate correction", Amount: amount("-25")},
+		{
+			LineNumber:  1,
+			Type:        invoice.InvoiceLineTypeMemo,
+			Description: "Goodwill credit",
+			Amount:      amount("-50"),
+		},
+		{
+			LineNumber:  2,
+			Type:        invoice.InvoiceLineTypeAccessorial,
+			Description: "Lumper",
+			ChargeCode:  "LUMP",
+			Amount:      amount("185"),
+		},
+		{
+			LineNumber:  3,
+			Type:        invoice.InvoiceLineTypeFreight,
+			Description: "Freight charge",
+			Amount:      amount("900"),
+		},
+		{
+			LineNumber:  4,
+			Type:        invoice.InvoiceLineTypeMemo,
+			Description: "Rate correction",
+			Amount:      amount("-25"),
+		},
 	}
 
 	groups := invoice.ChargeGroups(lines)
@@ -125,7 +146,12 @@ func TestChargeGroupsKeepFreightBeforeAccessorialsBeforeMemos(t *testing.T) {
 	assert.Equal(t, invoice.InvoiceLineTypeFreight, groups[0].Type)
 	assert.Equal(t, invoice.InvoiceLineTypeAccessorial, groups[1].Type)
 	assert.Equal(t, "Goodwill credit", groups[2].Description)
-	assert.Equal(t, "Rate correction", groups[3].Description, "memo lines are told apart by what they say")
+	assert.Equal(
+		t,
+		"Rate correction",
+		groups[3].Description,
+		"memo lines are told apart by what they say",
+	)
 	assert.Equal(t, 0, groups[2].ShipmentCount, "a memo line bills no shipment")
 }
 
@@ -133,9 +159,24 @@ func TestChargeGroupsTellLegacyAccessorialsApartByTheirDescription(t *testing.T)
 	t.Parallel()
 
 	lines := []*invoice.InvoiceLine{
-		{LineNumber: 1, Type: invoice.InvoiceLineTypeAccessorial, Description: "Lumper", Amount: amount("185")},
-		{LineNumber: 2, Type: invoice.InvoiceLineTypeAccessorial, Description: "Tarp", Amount: amount("75")},
-		{LineNumber: 3, Type: invoice.InvoiceLineTypeAccessorial, Description: "Lumper", Amount: amount("120")},
+		{
+			LineNumber:  1,
+			Type:        invoice.InvoiceLineTypeAccessorial,
+			Description: "Lumper",
+			Amount:      amount("185"),
+		},
+		{
+			LineNumber:  2,
+			Type:        invoice.InvoiceLineTypeAccessorial,
+			Description: "Tarp",
+			Amount:      amount("75"),
+		},
+		{
+			LineNumber:  3,
+			Type:        invoice.InvoiceLineTypeAccessorial,
+			Description: "Lumper",
+			Amount:      amount("120"),
+		},
 	}
 
 	groups := invoice.ChargeGroups(lines)
@@ -159,7 +200,10 @@ func TestBilledShipmentIDsNameEachShipmentOnceHeaderFirst(t *testing.T) {
 
 	header, other, third := pulid.MustNew("shp_"), pulid.MustNew("shp_"), pulid.MustNew("shp_")
 	invoices := []*invoice.Invoice{
-		{ShipmentID: header, Lines: []*invoice.InvoiceLine{{ShipmentID: other}, {ShipmentID: header}}},
+		{
+			ShipmentID: header,
+			Lines:      []*invoice.InvoiceLine{{ShipmentID: other}, {ShipmentID: header}},
+		},
 		nil,
 		{Lines: []*invoice.InvoiceLine{nil, {ShipmentID: third}, {ShipmentID: other}, {}}},
 	}

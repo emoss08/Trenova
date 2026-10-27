@@ -6,7 +6,7 @@ import (
 	"errors"
 	"io"
 
-	formulaerrors "github.com/emoss08/trenova/internal/modules/rating/app/formula/errors"
+	tarifferrors "github.com/emoss08/trenova/internal/modules/rating/app/tariff/errors"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/go-playground/validator/v10"
@@ -49,7 +49,7 @@ func NewDefaultClassifier() *ChainClassifier {
 		ClassifierFunc(classifyRequestTooLarge),
 		ClassifierFunc(classifyEditConflict),
 		ClassifierFunc(classifyValidation),
-		ClassifierFunc(classifyFormula),
+		ClassifierFunc(classifyTariff),
 		ClassifierFunc(classifyBadRequest),
 		ClassifierFunc(classifyBusiness),
 		ClassifierFunc(classifyDatabase),
@@ -94,26 +94,13 @@ func classifyValidation(err error) (ProblemType, bool) {
 	return "", false
 }
 
-// classifyFormula treats a formula that will not check, resolve, or evaluate
-// as a validation problem. The expression is tenant-authored data; a fault in
-// it is something the author fixes in the Studio, and a 500 would hide the
-// message that tells them what to fix.
-func classifyFormula(err error) (ProblemType, bool) {
+func classifyTariff(err error) (ProblemType, bool) {
 	var (
-		schemaErr     *formulaerrors.SchemaError
-		computeErr    *formulaerrors.ComputeError
-		transformErr  *formulaerrors.TransformError
-		resolveErr    *formulaerrors.ResolveError
-		evaluationErr *formulaerrors.EvaluationError
-		unresolved    *formulaerrors.UnresolvedFieldError
+		diagnostic *tarifferrors.DiagnosticError
+		evaluation *tarifferrors.EvaluationError
 	)
 
-	if errors.As(err, &schemaErr) ||
-		errors.As(err, &computeErr) ||
-		errors.As(err, &transformErr) ||
-		errors.As(err, &resolveErr) ||
-		errors.As(err, &evaluationErr) ||
-		errors.As(err, &unresolved) {
+	if errors.As(err, &diagnostic) || errors.As(err, &evaluation) {
 		return ProblemTypeValidation, true
 	}
 

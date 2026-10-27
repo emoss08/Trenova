@@ -301,7 +301,7 @@ func collectFields(structType *ast.StructType) map[string]goField {
 			continue
 		}
 		ref := exprTypeRef(field.Type)
-		bun := bunFieldTag(field)
+		column := columnFieldTag(field)
 		for _, name := range field.Names {
 			goName := name.Name
 			key := jsonName
@@ -312,7 +312,7 @@ func collectFields(structType *ast.StructType) map[string]goField {
 				GoName:   goName,
 				JSONName: key,
 				Type:     ref,
-				Bun:      bun,
+				Column:   column,
 			}
 		}
 	}
@@ -329,15 +329,15 @@ func jsonFieldName(field *ast.Field) string {
 	return name
 }
 
-func bunFieldTag(field *ast.Field) bunTag {
-	tag, ok := structTag(field, "bun")
+func columnFieldTag(field *ast.Field) columnTag {
+	tag, ok := structTag(field, "keel")
 	if !ok {
-		return bunTag{}
+		return columnTag{}
 	}
 	if tag == "-" {
-		return bunTag{Present: true, Ignored: true}
+		return columnTag{Present: true, Ignored: true}
 	}
-	result := bunTag{Present: true}
+	result := columnTag{Present: true}
 	for option := range strings.SplitSeq(tag, ",") {
 		if strings.TrimSpace(option) == "nullzero" {
 			result.Nullzero = true
@@ -1081,7 +1081,7 @@ func requiredOnEntity(jsonName string, domainField goField, override typeOverrid
 		return false
 	}
 
-	return domainField.Bun.Present && !domainField.Bun.Ignored && !domainField.Bun.Nullzero
+	return domainField.Column.Present && !domainField.Column.Ignored && !domainField.Column.Nullzero
 }
 
 func requiredGuard(valueName string, inputField goField) []string {

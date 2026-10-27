@@ -22,7 +22,7 @@ func delayThresholdMinutes(control *tenant.ShipmentControl) int16 {
 	return shipmentstate.ResolveDelayThresholdMinutes(*control.AutoDelayShipmentsThreshold)
 }
 
-func autoCancelThresholdDays(control *tenant.ShipmentControl) int8 {
+func autoCancelThresholdDays(control *tenant.ShipmentControl) int16 {
 	if control.AutoCancelShipmentsThreshold == nil {
 		return shipmentstate.ResolveAutoCancelThresholdDays(0)
 	}

@@ -185,7 +185,7 @@ rate overrides on the assignment when individual drivers earn different rates.
 The classification drives W-2 vs 1099 treatment and which GL expense account
 settlements post to.
 """
-type PayProfile {
+type PayProfile @kind(resource: "driver_pay_profile") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -213,6 +213,8 @@ type PayProfileConnection {
   edges: [PayProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -234,7 +236,7 @@ resolved through their assignment effective on the shipment's delivery date.
 Assigning a new profile automatically ends the previous open assignment, so the
 history is a contiguous, auditable record of how the driver was paid over time.
 """
-type WorkerPayAssignment {
+type WorkerPayAssignment @kind(resource: "driver_pay_profile") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -309,6 +311,8 @@ type PayCodeConnection {
   edges: [PayCodeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -350,6 +354,8 @@ type RecurringDeductionConnection {
   edges: [RecurringDeductionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -392,6 +398,8 @@ type RecurringEarningConnection {
   edges: [RecurringEarningEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -431,6 +439,8 @@ type PayAdvanceConnection {
   edges: [PayAdvanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -487,6 +497,8 @@ type EscrowAccountConnection {
   edges: [EscrowAccountEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -652,6 +664,8 @@ type DriverSettlementConnection {
   edges: [DriverSettlementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -694,6 +708,8 @@ type SettlementBatchConnection {
   edges: [SettlementBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A single earning component captured on a pay event, frozen at accrual time."
@@ -713,7 +729,7 @@ Events are recomputed while Accrued (e.g. if charges change), locked once
 Settled, and Voided if the shipment cancels. This is what powers real-time
 "earned so far this period" visibility.
 """
-type DriverPayEvent {
+type DriverPayEvent @kind(resource: "driver_settlement") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -749,6 +765,8 @@ type DriverPayEventConnection {
   edges: [DriverPayEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -840,7 +858,7 @@ type BulkSettlementActionPayload {
 Live pay position for one driver: unsettled earnings accrued to date,
 outstanding advances, and escrow balance.
 """
-type WorkerEarningsSummary {
+type WorkerEarningsSummary @kind(resource: "driver_settlement") {
   workerId: ID!
   accruedEventCount: Int!
   accruedGrossMinor: Int!

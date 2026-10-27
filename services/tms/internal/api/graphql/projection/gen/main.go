@@ -16,8 +16,7 @@ var (
 		"",
 		"Glob of the domain directories (internal/modules/*/domain)",
 	)
-	buncolgenDir = flag.String("buncolgen", "", "Path to pkg/buncolgen")
-	goModPath    = flag.String("gomod", "", "Path to go.mod")
+	goModPath = flag.String("gomod", "", "Path to go.mod")
 )
 
 func main() {
@@ -26,7 +25,7 @@ func main() {
 	if *manifestPath == "" || *schemaDir == "" || *outputPath == "" {
 		fmt.Fprintln(
 			os.Stderr,
-			"Usage: projectiongen -manifest=<file> -schema=<dir> -output=<file> [-gqlgen=<file>] [-domain=<dir>] [-buncolgen=<dir>] [-gomod=<file>]",
+			"Usage: projectiongen -manifest=<file> -schema=<dir> -output=<file> [-gqlgen=<file>] [-domain=<dir>] [-gomod=<file>]",
 		)
 		os.Exit(1)
 	}
@@ -37,7 +36,6 @@ func main() {
 		OutputPath:   *outputPath,
 		GqlgenPath:   *gqlgenPath,
 		DomainDir:    *domainDir,
-		BuncolgenDir: *buncolgenDir,
 		GoModPath:    *goModPath,
 	}); err != nil {
 		fmt.Fprintf(os.Stderr, "Error generating GraphQL projections: %v\n", err)

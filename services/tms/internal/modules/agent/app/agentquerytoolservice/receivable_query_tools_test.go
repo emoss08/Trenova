@@ -8,11 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoicerunports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -22,16 +22,8 @@ import (
 
 type fakeAdjustmentReader struct {
 	lineage   *invoiceadjustmentports.InvoiceAdjustmentLineage
-	detail    *invoiceadjustment.InvoiceAdjustment
 	approvals []*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem
 	groupID   pulid.ID
-}
-
-func (f *fakeAdjustmentReader) GetDetail(
-	context.Context,
-	*invoiceadjustmentports.GetInvoiceAdjustmentDetailRequest,
-) (*invoiceadjustment.InvoiceAdjustment, error) {
-	return f.detail, nil
 }
 
 func (f *fakeAdjustmentReader) GetLineage(
@@ -50,17 +42,6 @@ func (f *fakeAdjustmentReader) ListApprovals(
 	return &pagination.CursorListResult[*invoiceadjustmentports.InvoiceAdjustmentApprovalQueueItem]{
 		Items: f.approvals,
 	}, nil
-}
-
-type fakeDisputeLister struct {
-	disputes map[pulid.ID][]*invoice.InvoiceDispute
-}
-
-func (f *fakeDisputeLister) ListByInvoiceIDs(
-	context.Context,
-	*invoiceports.ListInvoiceDisputesByInvoiceIDsRequest,
-) (map[pulid.ID][]*invoice.InvoiceDispute, error) {
-	return f.disputes, nil
 }
 
 type fakeCreditApplications struct {
@@ -95,7 +76,11 @@ func (f *fakeRunReader) List(
 	context.Context,
 	*invoicerunports.ListInvoiceRunsRequest,
 ) (*pagination.ListResult[*invoicerun.InvoiceRun], error) {
-	return &pagination.ListResult[*invoicerun.InvoiceRun]{Items: f.runs, Total: len(f.runs)}, nil
+	return &pagination.ListResult[*invoicerun.InvoiceRun]{
+		Items:      f.runs,
+		Total:      len(f.runs),
+		TotalExact: true,
+	}, nil
 }
 
 func (f *fakeRunReader) ListOpenStatements(
@@ -119,25 +104,10 @@ func (f *fakeShareCandidates) ListCandidates(
 	f.req = req
 
 	return &pagination.ListResult[*invoiceports.ShareCandidate]{
-		Items: f.candidates,
-		Total: len(f.candidates),
+		Items:      f.candidates,
+		Total:      len(f.candidates),
+		TotalExact: true,
 	}, nil
-}
-
-func TestGetInvoice_NamesEachLineByTheIDAnAdjustmentTakes(t *testing.T) {
-	t.Parallel()
-
-	inv := sensitiveInvoice()
-	inv.Lines[0].ID = pulid.MustNew("invl_")
-	tool := newGetInvoiceTool(&fakeInvoiceRepo{items: []*invoice.Invoice{inv}}, &fakePermissions{})
-
-	result, err := tool.Query(t.Context(), agentParams(map[string]any{
-		"invoiceIds": []any{inv.ID.String()},
-	}, ""))
-	require.NoError(t, err)
-	detail := result.(invoiceDetail)
-	require.Len(t, detail.Lines, 1)
-	assert.Equal(t, inv.Lines[0].ID.String(), detail.Lines[0].ID)
 }
 
 func TestListInvoiceAdjustments_ReadsAnInvoicesLineageWithItsDrafts(t *testing.T) {
@@ -203,63 +173,6 @@ func TestListInvoiceAdjustments_WithoutAnInvoiceListsWhatWaitsForApproval(t *tes
 	require.Len(t, listed.Items, 1)
 	assert.Equal(t, pending.AdjustmentID.String(), listed.Items[0].ID)
 	assert.Equal(t, "PendingApproval", listed.Items[0].Status)
-}
-
-func TestGetInvoiceAdjustment_ShowsItsLines(t *testing.T) {
-	t.Parallel()
-
-	lineID := pulid.MustNew("invl_")
-	adjustment := &invoiceadjustment.InvoiceAdjustment{
-		ID:                pulid.MustNew("iadj_"),
-		OriginalInvoiceID: pulid.MustNew("inv_"),
-		Kind:              invoiceadjustment.KindCreditOnly,
-		Status:            invoiceadjustment.StatusPendingApproval,
-		Reason:            "Detention billed twice",
-		Lines: []*invoiceadjustment.InvoiceAdjustmentLine{{
-			ID:             pulid.MustNew("iadjl_"),
-			OriginalLineID: lineID,
-			Description:    "Detention",
-			CreditAmount:   decimal.RequireFromString("-75.00"),
-		}},
-	}
-	tool := newGetInvoiceAdjustmentTool(
-		&fakeAdjustmentReader{detail: adjustment}, &fakePermissions{},
-	)
-
-	result, err := tool.Query(t.Context(), agentParams(map[string]any{
-		"adjustmentId": adjustment.ID.String(),
-	}, permission.SensitivityRestricted))
-	require.NoError(t, err)
-	detail := result.(*adjustmentDetail)
-	assert.Equal(t, "Detention billed twice", detail.Reason)
-	require.Len(t, detail.Lines, 1)
-	assert.Equal(t, lineID.String(), detail.Lines[0].InvoiceLineID)
-	assert.Equal(t, "75.00", detail.Lines[0].Credit)
-}
-
-func TestListInvoiceDisputes_ListsEveryCaseOnTheInvoices(t *testing.T) {
-	t.Parallel()
-
-	invoiceID := pulid.MustNew("inv_")
-	dispute := &invoice.InvoiceDispute{
-		ID:             pulid.MustNew("idsp_"),
-		InvoiceID:      invoiceID,
-		Status:         invoice.DisputeCaseStatusOpen,
-		ReasonCode:     invoice.DisputeReasonRateDiscrepancy,
-		DisputedAmount: decimal.RequireFromString("200.00"),
-	}
-	tool := newListInvoiceDisputesTool(&fakeDisputeLister{
-		disputes: map[pulid.ID][]*invoice.InvoiceDispute{invoiceID: {dispute}},
-	}, &fakePermissions{})
-
-	result, err := tool.Query(t.Context(), agentParams(map[string]any{
-		"invoiceIds": []any{invoiceID.String()},
-	}, permission.SensitivityRestricted))
-	require.NoError(t, err)
-	listed := result.(*receivableList[disputeRow])
-	require.Len(t, listed.Items, 1)
-	assert.Equal(t, dispute.ID.String(), listed.Items[0].ID)
-	assert.Equal(t, "200.00", listed.Items[0].DisputedAmount)
 }
 
 func TestListCreditMemoApplications_ListsEachApplicationOnce(t *testing.T) {

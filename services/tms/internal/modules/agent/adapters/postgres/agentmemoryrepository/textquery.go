@@ -4,6 +4,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -13,13 +14,13 @@ const (
 	minPrefixRunes   = 2
 	minTermRunes     = 3
 	maxFallbackTerms = 8
-	websearchConfig  = "websearch_to_tsquery('simple', ?)"
-	tsqueryConfig    = "to_tsquery('simple', ?)"
+	textConfig       = "simple"
 )
 
 type textMatch struct {
-	tsquery string
-	args    []any
+	text     string
+	mode     keel.SearchMode
+	prefixes string
 }
 
 type textQuery struct {
@@ -72,18 +73,40 @@ func fallbackTerms(terms []string) []string {
 	return kept
 }
 
+func (m *textMatch) options() []keel.SearchOption {
+	opts := []keel.SearchOption{keel.SearchConfig(textConfig), keel.SearchModes(m.mode)}
+	if m.prefixes != "" {
+		opts = append(opts, keel.SearchAlso(keel.TSQuery, m.prefixes))
+	}
+
+	return opts
+}
+
+func (m *textMatch) matches(vector keel.TSVectorCol) keel.Pred {
+	if m == nil {
+		return nil
+	}
+
+	return vector.Match(m.text, m.options()...)
+}
+
+func (m *textMatch) rank(vector keel.TSVectorCol) keel.Expr {
+	return vector.RankCD(m.text, m.options()...)
+}
+
 func (q textQuery) empty() bool { return q.raw == "" }
 
 func (q textQuery) unmatchable() bool { return len(q.words) == 0 }
 
 func (q textQuery) primary() *textMatch {
 	if q.operators || len(q.prefixes) == 0 {
-		return &textMatch{tsquery: websearchConfig, args: []any{q.raw}}
+		return &textMatch{text: q.raw, mode: keel.WebSearch}
 	}
 
 	return &textMatch{
-		tsquery: "(" + websearchConfig + " || " + tsqueryConfig + ")",
-		args:    []any{q.raw, strings.Join(q.prefixes, " & ")},
+		text:     q.raw,
+		mode:     keel.WebSearch,
+		prefixes: strings.Join(q.prefixes, " & "),
 	}
 }
 
@@ -102,7 +125,7 @@ func (q textQuery) fallback() *textMatch {
 		}
 	}
 
-	return &textMatch{tsquery: tsqueryConfig, args: []any{strings.Join(pairs, " | ")}}
+	return &textMatch{text: strings.Join(pairs, " | "), mode: keel.TSQuery}
 }
 
 func hasWebsearchOperators(query string) bool {

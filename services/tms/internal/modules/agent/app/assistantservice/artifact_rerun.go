@@ -136,7 +136,7 @@ func (s *Service) rerunOf(
 		}
 		format := previewed.DefaultFormat
 		if !format.IsValid() {
-			format = report.DefaultScheduleFormat
+			format = report.DefaultScheduleFormat()
 		}
 
 		return &reporting.RunReportRequest{

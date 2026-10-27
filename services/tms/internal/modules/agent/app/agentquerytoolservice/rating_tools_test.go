@@ -1,288 +1,85 @@
 package agentquerytoolservice
 
 import (
-	"context"
-	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
-	"github.com/emoss08/trenova/pkg/formulatypes"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type fakeRateAgreements struct {
-	agreement *rateagreement.RateAgreement
-	listed    *rateagreementports.ListRateAgreementRequest
+const matrixCellsPerRead = 100
+
+// A matrix is read a page of cells at a time: the result says whether more
+// cells follow and the offset to ask for next, and each cell's keys and
+// ranges are along the matrix's own axes.
+func TestGetRateMatrix_ReadsAPageOfCellsAndSaysWhereTheNextStarts(t *testing.T) {
+	t.Parallel()
+
+	cells := make([]any, 0, matrixCellsPerRead)
+	for range matrixCellsPerRead {
+		cells = append(cells, map[string]any{
+			"d0Key": "Z1", "d1Key": "", "d2Key": "", "d3Key": "",
+			"d1Min": "0", "d1Max": "500", "value": "2.15",
+		})
+	}
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskRateMatrixCard": {Data: map[string]any{"rateMatrix": map[string]any{
+			"id": "rmx_1", "code": "LTL-70", "cellCount": 450,
+			"dimensions": []any{map[string]any{"kind": "Zone"}, map[string]any{"kind": "WeightBreak"}},
+			"cells":      cells,
+		}}},
+	}}
+	spec := rateMatrixGetSpec()
+	tool, err := newGraphQLGetTool(&spec, reader, &mocks.DenyResourcesPermissionEngine{})
+	require.NoError(t, err)
+
+	id := pulid.MustNew("rmx_").String()
+	result, err := tool.Query(t.Context(), testParams(map[string]any{
+		paramRateMatrixID: id, "cellOffset": float64(200),
+	}))
+	require.NoError(t, err)
+
+	matrix := encodedDocument(t, result)
+	assert.Equal(t, true, matrix["cellsHasMore"])
+	assert.EqualValues(t, 300, matrix["nextCellOffset"])
+	first, _ := matrix["cells"].([]any)[0].(map[string]any)
+	assert.Equal(t, []any{"Z1", ""}, first["keys"])
+	assert.Equal(t, []any{"", "0 to 500"}, first["ranges"])
+	assert.NotContains(t, first, "d0Key")
+	sent := reader.sent("DeskRateMatrixCard").Variables
+	assert.Equal(t, id, sent["id"])
+	assert.EqualValues(t, 200, sent["cellOffset"])
 }
 
-func (f *fakeRateAgreements) List(
-	_ context.Context,
-	req *rateagreementports.ListRateAgreementRequest,
-) (*pagination.ListResult[*rateagreement.RateAgreement], error) {
-	f.listed = req
+func TestGetRateMatrix_SaysNoMoreOnTheLastPage(t *testing.T) {
+	t.Parallel()
 
-	return &pagination.ListResult[*rateagreement.RateAgreement]{
-		Items: []*rateagreement.RateAgreement{f.agreement},
-	}, nil
+	record := map[string]any{"cellCount": 2, "cells": []any{map[string]any{}, map[string]any{}}}
+	pages := rateMatrixGetSpec().pages
+	pages.mark(record, map[string]any{})
+
+	assert.Equal(t, false, record["cellsHasMore"])
+	assert.NotContains(t, record, "nextCellOffset")
 }
 
-func (f *fakeRateAgreements) GetByID(
-	context.Context,
-	*rateagreementports.GetRateAgreementByIDRequest,
-) (*rateagreement.RateAgreement, error) {
-	return f.agreement, nil
-}
+func TestFoldMatrixCells_ReadsAPostalRangeAsItsTwoEnds(t *testing.T) {
+	t.Parallel()
 
-func (f *fakeRateAgreements) ListVersions(
-	context.Context,
-	*rateagreementports.ListRateAgreementVersionsRequest,
-) (*pagination.ListResult[*rateagreement.RateAgreementVersion], error) {
-	return &pagination.ListResult[*rateagreement.RateAgreementVersion]{
-		Items: []*rateagreement.RateAgreementVersion{{
-			VersionNumber: 3,
-			ChangeMessage: "Raised Dallas rates 4 percent",
+	record := map[string]any{
+		"dimensions": []any{map[string]any{"kind": "ZipRange"}, map[string]any{"kind": "Zone"}},
+		"cells": []any{map[string]any{
+			"d0Key": "30000", "d0KeyTo": "31999", "d1Key": "SE", "d1KeyTo": "",
+			"value": "2.15",
 		}},
-	}, nil
-}
-
-func rateAgreementWithRules(count int) *rateagreement.RateAgreement {
-	rules := make([]*rateagreement.RateAgreementRule, 0, count)
-	for idx := range count {
-		rules = append(rules, &rateagreement.RateAgreementRule{
-			ID:               pulid.MustNew("ragr_"),
-			OriginScopeType:  "State",
-			OriginScopeValue: "TX",
-			Rate:             decimal.NewNullDecimal(decimal.NewFromInt(int64(idx + 1))),
-			MinCharge:        decimal.NewNullDecimal(decimal.NewFromInt(150)),
-		})
 	}
 
-	return &rateagreement.RateAgreement{
-		ID:                 pulid.MustNew("rag_"),
-		Code:               "ACME-2026",
-		PartyType:          rateagreement.PartyTypeCustomer,
-		Status:             rateagreement.StatusActive,
-		MarginFloorPercent: decimal.NewNullDecimal(decimal.NewFromInt(12)),
-		Rules:              rules,
-	}
-}
+	foldMatrixCells(record, nil, clock{})
 
-func TestGetRateAgreement_BoundsTheRulesAndWithholdsRates(t *testing.T) {
-	t.Parallel()
-
-	agreement := rateAgreementWithRules(maxAgreementRules + 7)
-	tool := newGetRateAgreementTool(&fakeRateAgreements{agreement: agreement}, &fakePermissions{})
-
-	result, err := tool.Query(t.Context(),
-		agentParams(map[string]any{"rateAgreementId": agreement.ID.String()}, ""))
-	require.NoError(t, err)
-
-	view := result.(rateAgreementView)
-	assert.Len(t, view.Rules, maxAgreementRules)
-	assert.Equal(t, 7, view.RulesOmitted)
-	assert.Equal(t, "State TX", view.Rules[0].Origin)
-	assert.Empty(t, view.Rules[0].Rate)
-	assert.Empty(t, view.Rules[0].MinCharge)
-	require.NotNil(t, view.CurrentVersion)
-	assert.Equal(t, int64(3), view.CurrentVersion.VersionNumber)
-	assert.Empty(t, view.CurrentVersion.ChangeMessage)
-	assert.Subset(t, view.Withheld, []string{"rules.rate", "rules.minCharge", "changeMessage"})
-	assert.NotContains(t, view.Withheld, "marginFloorPercent",
-		"a confidential term is never sent and never named")
-}
-
-func TestGetRateAgreement_ShowsRatesAtRestricted(t *testing.T) {
-	t.Parallel()
-
-	agreement := rateAgreementWithRules(1)
-	tool := newGetRateAgreementTool(&fakeRateAgreements{agreement: agreement}, &fakePermissions{})
-
-	result, err := tool.Query(t.Context(), agentParams(
-		map[string]any{"rateAgreementId": agreement.ID.String()},
-		permission.SensitivityRestricted,
-	))
-	require.NoError(t, err)
-
-	view := result.(rateAgreementView)
-	assert.Equal(t, "1", view.Rules[0].Rate)
-	assert.Equal(t, "150", view.Rules[0].MinCharge)
-	assert.Equal(t, "Raised Dallas rates 4 percent", view.CurrentVersion.ChangeMessage)
-}
-
-func TestListRateAgreements_NarrowsToTheCustomer(t *testing.T) {
-	t.Parallel()
-
-	fake := &fakeRateAgreements{agreement: rateAgreementWithRules(0)}
-	tool := newListRateAgreementsTool(fake, &fakePermissions{})
-	customer := pulid.MustNew("cus_")
-
-	_, err := tool.Query(t.Context(), agentParams(map[string]any{
-		"customerId": customer.String(),
-		"status":     "Active",
-	}, ""))
-	require.NoError(t, err)
-
-	require.NotNil(t, fake.listed.CustomerID)
-	assert.Equal(t, customer, *fake.listed.CustomerID)
-	assert.Equal(t, rateagreement.StatusActive, fake.listed.Status)
-}
-
-type fakeRateMatrices struct {
-	matrix *ratematrix.RateMatrix
-	cells  []*ratematrix.RateMatrixCell
-	pages  int
-}
-
-func (f *fakeRateMatrices) GetByID(
-	context.Context,
-	*ratematrixports.GetRateMatrixByIDRequest,
-) (*ratematrix.RateMatrix, error) {
-	return f.matrix, nil
-}
-
-func (f *fakeRateMatrices) ListCells(
-	_ context.Context,
-	req *ratematrixports.ListRateMatrixCellsRequest,
-) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
-	f.pages++
-	offset := min(req.Filter.Pagination.Offset, len(f.cells))
-	end := min(offset+req.Filter.Pagination.Limit, len(f.cells))
-
-	return &pagination.ListResult[*ratematrix.RateMatrixCell]{
-		Items: f.cells[offset:end],
-		Total: len(f.cells),
-	}, nil
-}
-
-func TestGetRateMatrix_ReturnsAtMostTwoHundredCells(t *testing.T) {
-	t.Parallel()
-
-	cells := make([]*ratematrix.RateMatrixCell, 0, 450)
-	for idx := range 450 {
-		cells = append(cells, &ratematrix.RateMatrixCell{
-			D0Key: fmt.Sprintf("Z%d", idx),
-			D1Min: decimal.NewNullDecimal(decimal.NewFromInt(0)),
-			D1Max: decimal.NewNullDecimal(decimal.NewFromInt(500)),
-			Value: decimal.RequireFromString("2.15"),
-		})
-	}
-	fake := &fakeRateMatrices{
-		matrix: &ratematrix.RateMatrix{
-			ID:   pulid.MustNew("rmx_"),
-			Code: "LTL-70",
-			Dimensions: []*ratematrix.RateMatrixDimension{
-				{Position: 0, Kind: ratematrix.DimensionKindZone},
-				{Position: 1, Kind: ratematrix.DimensionKindWeightBreak},
-			},
-		},
-		cells: cells,
-	}
-	tool := newGetRateMatrixTool(fake, &fakePermissions{})
-
-	result, err := tool.Query(t.Context(), agentParams(
-		map[string]any{"rateMatrixId": fake.matrix.ID.String()},
-		permission.SensitivityRestricted,
-	))
-	require.NoError(t, err)
-
-	view := result.(rateMatrixView)
-	assert.Len(t, view.Cells, maxMatrixCells)
-	assert.Equal(t, 450, view.CellCount)
-	assert.True(t, view.CellsHasMore)
-	require.NotNil(t, view.NextCellOffset)
-	assert.Equal(t, maxMatrixCells, *view.NextCellOffset)
-	assert.Equal(t, []string{"Z0", ""}, view.Cells[0].Keys)
-	assert.Equal(t, []string{"", "0 to 500"}, view.Cells[0].Ranges)
-	assert.Equal(t, "2.15", view.Cells[0].Value)
-
-	result, err = tool.Query(t.Context(), agentParams(map[string]any{
-		"rateMatrixId": fake.matrix.ID.String(),
-		"cellOffset":   float64(400),
-	}, ""))
-	require.NoError(t, err)
-	last := result.(rateMatrixView)
-	assert.Len(t, last.Cells, 50)
-	assert.False(t, last.CellsHasMore)
-	assert.Empty(t, last.Cells[0].Value)
-	assert.Contains(t, last.Withheld, "cells.value")
-}
-
-type fakeFuelRates struct {
-	rates []*fuelsurchargeservice.ProgramCurrentRate
-}
-
-func (f *fakeFuelRates) ProgramCurrentRates(
-	context.Context,
-	pagination.TenantInfo,
-) ([]*fuelsurchargeservice.ProgramCurrentRate, error) {
-	return f.rates, nil
-}
-
-func TestGetFuelSurchargeRates_SaysWhenNoPriceIsOnFile(t *testing.T) {
-	t.Parallel()
-
-	perMile := decimal.RequireFromString("0.42")
-	tool := newGetFuelSurchargeRatesTool(&fakeFuelRates{
-		rates: []*fuelsurchargeservice.ProgramCurrentRate{
-			{
-				Program: &fuelsurcharge.FuelSurchargeProgram{
-					ID: pulid.MustNew("fsp_"), Code: "DOE", Name: "DOE weekly",
-				},
-				Price: &fuelsurcharge.FuelIndexPrice{
-					PriceDate: "2026-09-21",
-					Price:     decimal.RequireFromString("3.899"),
-				},
-				RatePerMile: &perMile,
-			},
-			{
-				Program: &fuelsurcharge.FuelSurchargeProgram{
-					ID: pulid.MustNew("fsp_"), Code: "CA", Name: "California",
-				},
-			},
-		},
-	})
-
-	result, err := tool.Query(t.Context(), agentParams(map[string]any{}, ""))
-	require.NoError(t, err)
-
-	rows := result.(searchOutcome).Items.([]fuelRateRow)
-	require.Len(t, rows, 2)
-	assert.Equal(t, "0.42", rows[0].RatePerMile)
-	assert.Equal(t, "3.899", rows[0].IndexPrice)
-	assert.NotEmpty(t, rows[1].Note)
-
-	result, err = tool.Query(t.Context(), agentParams(map[string]any{"query": "calif"}, ""))
-	require.NoError(t, err)
-	assert.Equal(t, 1, result.(searchOutcome).Count)
-}
-
-func TestRateAgreementAccessorials_NameTheLanguageAConditionIsWrittenIn(t *testing.T) {
-	t.Parallel()
-
-	tool := &getRateAgreementTool{}
-	gate := fieldAccess{}.gateAt(permission.ResourceRateAgreement, permission.SensitivityConfidential)
-
-	rows := tool.accessorials([]*rateagreement.RateAgreementAccessorial{
-		{
-			AccessorialChargeID: pulid.MustNew("acc_"),
-			AutoApply:           true,
-			ApplyCondition:      "totalStops > 2",
-		},
-		{AccessorialChargeID: pulid.MustNew("acc_")},
-	}, gate)
-
-	require.Len(t, rows, 2)
-	assert.Equal(t, "totalStops > 2", rows[0].ApplyCondition)
-	assert.Equal(t, int16(formulatypes.CurrentLanguageVersion), rows[0].ConditionLanguage)
-	assert.Zero(t, rows[1].ConditionLanguage, "a row without a condition has no language")
+	cell, _ := record["cells"].([]any)[0].(map[string]any)
+	assert.Equal(t, []any{"30000 to 31999", "SE"}, cell["keys"])
+	assert.NotContains(t, cell, "d0KeyTo")
+	assert.NotContains(t, cell, "d1KeyTo")
 }

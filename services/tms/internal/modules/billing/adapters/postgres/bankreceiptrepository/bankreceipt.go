@@ -3,18 +3,22 @@ package bankreceiptrepository
 import (
 	"context"
 	"fmt"
-	"github.com/emoss08/trenova/pkg/buncolgen/bankreceiptcol"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var bankReceiptErrors = dberror.Mapping{Entity: "BankReceipt"}
 
 type Params struct {
 	fx.In
@@ -29,23 +33,23 @@ type repository struct {
 }
 
 type summaryRecord struct {
-	ImportedCount         int64 `bun:"imported_count"`
-	ImportedAmount        int64 `bun:"imported_amount"`
-	MatchedCount          int64 `bun:"matched_count"`
-	MatchedAmount         int64 `bun:"matched_amount"`
-	ExceptionCount        int64 `bun:"exception_count"`
-	ExceptionAmount       int64 `bun:"exception_amount"`
-	ActiveWorkItemCount   int64 `bun:"active_work_item_count"`
-	AssignedWorkItemCount int64 `bun:"assigned_work_item_count"`
-	InReviewWorkItemCount int64 `bun:"in_review_work_item_count"`
-	CurrentCount          int64 `bun:"current_count"`
-	CurrentAmount         int64 `bun:"current_amount"`
-	Days1To3Count         int64 `bun:"days_1_to_3_count"`
-	Days1To3Amount        int64 `bun:"days_1_to_3_amount"`
-	Days4To7Count         int64 `bun:"days_4_to_7_count"`
-	Days4To7Amount        int64 `bun:"days_4_to_7_amount"`
-	DaysOver7Count        int64 `bun:"days_over_7_count"`
-	DaysOver7Amount       int64 `bun:"days_over_7_amount"`
+	ImportedCount         int64
+	ImportedAmount        int64
+	MatchedCount          int64
+	MatchedAmount         int64
+	ExceptionCount        int64
+	ExceptionAmount       int64
+	ActiveWorkItemCount   int64
+	AssignedWorkItemCount int64
+	InReviewWorkItemCount int64
+	CurrentCount          int64
+	CurrentAmount         int64
+	Days1To3Count         int64
+	Days1To3Amount        int64
+	Days4To7Count         int64
+	Days4To7Amount        int64
+	DaysOver7Count        int64
+	DaysOver7Amount       int64
 }
 
 func New(p Params) bankreceiptports.BankReceiptRepository {
@@ -57,16 +61,9 @@ func (r *repository) GetByID(
 	req bankreceiptports.GetBankReceiptByIDRequest,
 ) (*bankreceipt.BankReceipt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
-		entity := new(bankreceipt.BankReceipt)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("br.id = ?", req.ID).
-			Where("br.organization_id = ?", req.TenantInfo.OrgID).
-			Where("br.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx)
+		entity, err := bankreceiptdb.BankReceipts.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "BankReceipt")
+			return nil, bankReceiptErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
@@ -77,19 +74,10 @@ func (r *repository) LockForUpdate(
 	req bankreceiptports.GetBankReceiptByIDRequest,
 ) (*bankreceipt.BankReceipt, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
-		cols := bankreceiptcol.BankReceiptColumns
-		entity := new(bankreceipt.BankReceipt)
-		err := bankreceiptcol.BankReceiptScopeTenant(
-			r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where(cols.ID.Eq(), req.ID),
-			req.TenantInfo,
-		).
-			For("UPDATE").
-			Scan(ctx)
+		br := bankreceiptdb.BankReceipts
+		entity, err := br.Where(br.ID.Eq(req.ID)).Lock(keel.ForUpdate).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "BankReceipt")
+			return nil, bankReceiptErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
@@ -100,18 +88,11 @@ func (r *repository) ListMatchedToPayment(
 	req bankreceiptports.ListBankReceiptsMatchedToPaymentRequest,
 ) ([]*bankreceipt.BankReceipt, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*bankreceipt.BankReceipt, error) {
-		cols := bankreceiptcol.BankReceiptColumns
-		items := make([]*bankreceipt.BankReceipt, 0, 1)
-		err := bankreceiptcol.BankReceiptScopeTenant(
-			r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where(cols.MatchedCustomerPaymentID.Eq(), req.PaymentID),
-			req.TenantInfo,
-		).
-			Order(cols.CreatedAt.OrderAsc()).
-			For("UPDATE").
-			Scan(ctx)
+		br := bankreceiptdb.BankReceipts
+		items, err := br.Where(br.MatchedCustomerPaymentID.Eq(req.PaymentID)).
+			Order(br.CreatedAt.Asc()).
+			Lock(keel.ForUpdate).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list bank receipts matched to payment: %w", err)
 		}
@@ -124,16 +105,10 @@ func (r *repository) ListByImportBatchID(
 	req bankreceiptports.ListBankReceiptsByImportBatchRequest,
 ) ([]*bankreceipt.BankReceipt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bankreceipt.BankReceipt, error) {
-		items := make([]*bankreceipt.BankReceipt, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("br.import_batch_id = ?", req.BatchID).
-			Where("br.organization_id = ?", req.TenantInfo.OrgID).
-			Where("br.business_unit_id = ?", req.TenantInfo.BuID).
-			Order("br.receipt_date ASC").
-			Order("br.created_at ASC").
-			Scan(ctx)
+		br := bankreceiptdb.BankReceipts
+		items, err := br.Where(br.ImportBatchID.Eq(req.BatchID)).
+			Order(br.ReceiptDate.Asc(), br.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list bank receipts by import batch: %w", err)
 		}
@@ -143,18 +118,13 @@ func (r *repository) ListByImportBatchID(
 
 func (r *repository) ListExceptions(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*bankreceipt.BankReceipt, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bankreceipt.BankReceipt, error) {
-		items := make([]*bankreceipt.BankReceipt, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("br.organization_id = ?", tenantInfo.OrgID).
-			Where("br.business_unit_id = ?", tenantInfo.BuID).
-			Where("br.status = ?", bankreceipt.StatusException).
-			Order("br.receipt_date DESC").
-			Scan(ctx)
+		br := bankreceiptdb.BankReceipts
+		items, err := br.Where(br.Status.Eq(bankreceipt.StatusException)).
+			Order(br.ReceiptDate.Desc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list bank receipt exceptions: %w", err)
 		}
@@ -162,39 +132,57 @@ func (r *repository) ListExceptions(
 	})
 }
 
+func summaryQuery(asOf int64) *keel.Query[*bankreceipt.BankReceipt] {
+	br := bankreceiptdb.BankReceipts
+	wi := bankreceiptworkitemdb.WorkItems.As("wi")
+	count := func(p keel.Pred) keel.Expr { return keel.Count().Filter(p) }
+	amount := func(p keel.Pred) keel.Expr {
+		return keel.NumericOf(br.AmountMinor.Sum().Filter(p)).Coalesce(0)
+	}
+	workItems := func(statuses ...bankreceiptworkitem.Status) keel.Expr {
+		return keel.Scalar(wi.Pick(keel.Count()).Where(wi.Status.In(statuses...)))
+	}
+	days := keel.Int64(asOf).Sub(br.ReceiptDate).Div(keel.Int64(86400))
+	exception := br.Status.Eq(bankreceipt.StatusException)
+	aged := func(band keel.Pred) keel.Pred {
+		return keel.And(exception, band)
+	}
+	imported := br.Status.Eq(bankreceipt.StatusImported)
+	matched := br.Status.Eq(bankreceipt.StatusMatched)
+	current := aged(days.Lte(0))
+	days1To3 := aged(days.Between(1, 3))
+	days4To7 := aged(days.Between(4, 7))
+	daysOver7 := aged(days.Gt(7))
+
+	return br.
+		Pick(
+			count(imported), amount(imported),
+			count(matched), amount(matched),
+			count(exception), amount(exception),
+			workItems(
+				bankreceiptworkitem.StatusOpen,
+				bankreceiptworkitem.StatusAssigned,
+				bankreceiptworkitem.StatusInReview,
+			),
+			workItems(bankreceiptworkitem.StatusAssigned),
+			workItems(bankreceiptworkitem.StatusInReview),
+			count(current), amount(current),
+			count(days1To3), amount(days1To3),
+			count(days4To7), amount(days4To7),
+			count(daysOver7), amount(daysOver7),
+		).
+		Where(br.ReceiptDate.Lte(asOf))
+}
+
 func (r *repository) GetSummary(
 	ctx context.Context,
 	req bankreceiptports.GetBankReceiptSummaryRequest,
 ) (*bankreceiptports.BankReceiptReconciliationSummary, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*bankreceiptports.BankReceiptReconciliationSummary, error) {
-			rec := new(summaryRecord)
-			err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT
-			COALESCE(SUM(CASE WHEN br.status = 'Imported' THEN 1 ELSE 0 END), 0) AS imported_count,
-			COALESCE(SUM(CASE WHEN br.status = 'Imported' THEN br.amount_minor ELSE 0 END), 0) AS imported_amount,
-			COALESCE(SUM(CASE WHEN br.status = 'Matched' THEN 1 ELSE 0 END), 0) AS matched_count,
-			COALESCE(SUM(CASE WHEN br.status = 'Matched' THEN br.amount_minor ELSE 0 END), 0) AS matched_amount,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' THEN 1 ELSE 0 END), 0) AS exception_count,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' THEN br.amount_minor ELSE 0 END), 0) AS exception_amount,
-			COALESCE((SELECT COUNT(*) FROM bank_receipt_work_items wi WHERE wi.organization_id = ? AND wi.business_unit_id = ? AND wi.status IN ('Open','Assigned','InReview')), 0) AS active_work_item_count,
-			COALESCE((SELECT COUNT(*) FROM bank_receipt_work_items wi WHERE wi.organization_id = ? AND wi.business_unit_id = ? AND wi.status = 'Assigned'), 0) AS assigned_work_item_count,
-			COALESCE((SELECT COUNT(*) FROM bank_receipt_work_items wi WHERE wi.organization_id = ? AND wi.business_unit_id = ? AND wi.status = 'InReview'), 0) AS in_review_work_item_count,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' AND (? - br.receipt_date) / 86400 <= 0 THEN 1 ELSE 0 END), 0) AS current_count,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' AND (? - br.receipt_date) / 86400 <= 0 THEN br.amount_minor ELSE 0 END), 0) AS current_amount,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' AND (? - br.receipt_date) / 86400 BETWEEN 1 AND 3 THEN 1 ELSE 0 END), 0) AS days_1_to_3_count,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' AND (? - br.receipt_date) / 86400 BETWEEN 1 AND 3 THEN br.amount_minor ELSE 0 END), 0) AS days_1_to_3_amount,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' AND (? - br.receipt_date) / 86400 BETWEEN 4 AND 7 THEN 1 ELSE 0 END), 0) AS days_4_to_7_count,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' AND (? - br.receipt_date) / 86400 BETWEEN 4 AND 7 THEN br.amount_minor ELSE 0 END), 0) AS days_4_to_7_amount,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' AND (? - br.receipt_date) / 86400 > 7 THEN 1 ELSE 0 END), 0) AS days_over_7_count,
-			COALESCE(SUM(CASE WHEN br.status = 'Exception' AND (? - br.receipt_date) / 86400 > 7 THEN br.amount_minor ELSE 0 END), 0) AS days_over_7_amount
-		FROM bank_receipts br
-		WHERE br.organization_id = ?
-		  AND br.business_unit_id = ?
-		  AND br.receipt_date <= ?
-	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.AsOfDate).Scan(ctx, rec)
+			rec, err := keel.IntoOne[summaryRecord](ctx, r.db.Keel(ctx), summaryQuery(req.AsOfDate))
 			if err != nil {
 				return nil, fmt.Errorf("get bank receipt summary: %w", err)
 			}
@@ -229,19 +217,10 @@ func (r *repository) Create(
 	entity *bankreceipt.BankReceipt,
 ) (*bankreceipt.BankReceipt, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create bank receipt: %w", err)
+		if err := bankreceiptdb.BankReceipts.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, bankReceiptErrors.Map(err, entity.ID.String())
 		}
-		return r.GetByID(
-			ctx,
-			bankreceiptports.GetBankReceiptByIDRequest{
-				ID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-			},
-		)
+		return entity, nil
 	})
 }
 
@@ -250,38 +229,25 @@ func (r *repository) Update(
 	entity *bankreceipt.BankReceipt,
 ) (*bankreceipt.BankReceipt, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceipt.BankReceipt, error) {
-		entity.UpdatedAt = timeutils.NowUnix()
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("status = ?", entity.Status).
-			Set("matched_customer_payment_id = ?", entity.MatchedCustomerPaymentID).
-			Set("matched_at = ?", entity.MatchedAt).
-			Set("matched_by_id = ?", entity.MatchedByID).
-			Set("exception_reason = ?", entity.ExceptionReason).
-			Set("updated_by_id = ?", entity.UpdatedByID).
-			Set("updated_at = ?", entity.UpdatedAt).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update bank receipt: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(res, "BankReceipt", entity.ID.String()); err != nil {
-			return nil, err
-		}
-		return r.GetByID(
+		br := bankreceiptdb.BankReceipts
+		db := r.db.Keel(ctx)
+		if err := br.Save(
 			ctx,
-			bankreceiptports.GetBankReceiptByIDRequest{
-				ID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-			},
-		)
+			db,
+			entity,
+			br.Status,
+			br.MatchedCustomerPaymentID,
+			br.MatchedAt,
+			br.MatchedByID,
+			br.ExceptionReason,
+			br.UpdatedByID,
+		); err != nil {
+			return nil, bankReceiptErrors.Map(err, entity.ID.String())
+		}
+		updated, err := br.Get(ctx, db, entity.ID)
+		if err != nil {
+			return nil, bankReceiptErrors.Map(err, entity.ID.String())
+		}
+		return updated, nil
 	})
 }

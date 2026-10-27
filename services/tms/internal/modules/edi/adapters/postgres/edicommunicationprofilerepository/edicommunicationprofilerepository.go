@@ -5,22 +5,24 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var profileErrors = dberror.Mapping{Entity: "EDICommunicationProfile"}
+
+var pollingMethods = []edi.ConnectionMethod{edi.ConnectionMethodSFTP, edi.ConnectionMethodVAN}
 
 type Params struct {
 	fx.In
@@ -49,34 +51,17 @@ func (r *repository) ListProfiles(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-			entities := make([]*edi.EDICommunicationProfile, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.EDICommunicationProfileColumns
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(edicol.EDICommunicationProfileRelations.Partner).
-				Apply(func(query *bun.SelectQuery) *bun.SelectQuery {
-					return querybuilder.ApplyFilters(
-						query,
-						"ecp",
-						req.Filter,
-						(*edi.EDICommunicationProfile)(nil),
-					)
-				}).
-				Apply(edicol.EDICommunicationProfileApplyTenant(req.Filter.TenantInfo)).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDICommunicationProfile]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			cp := edidb.EDICommunicationProfiles
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				cp.Query(),
+				&listquery.Request[edi.EDICommunicationProfile]{
+					Filter: req.Filter,
+					Shape:  withPartner,
+					Then:   []keel.Order{cp.CreatedAt.Desc()},
+				},
+			)
 		},
 	)
 }
@@ -89,54 +74,47 @@ func (r *repository) SelectProfileOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDICommunicationProfile], error) {
-			entities := make(
-				[]*edi.EDICommunicationProfile,
-				0,
-				req.SelectQueryRequest.Pagination.SafeLimit(),
+			search := *req.SelectQueryRequest
+			search.Query = strings.TrimSpace(search.Query)
+
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				profileOptionsQuery(req),
+				&search,
+				profileOptionsSearch,
 			)
-			cols := edicol.EDICommunicationProfileColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column(
-					cols.ID.Bare(),
-					cols.BusinessUnitID.Bare(),
-					cols.OrganizationID.Bare(),
-					cols.EDIConnectionID.Bare(),
-					cols.EDIPartnerID.Bare(),
-					cols.Method.Bare(),
-					cols.Status.Bare(),
-					cols.Name.Bare(),
-					cols.Description.Bare(),
-				).
-				Apply(edicol.EDICommunicationProfileApplyTenant(req.SelectQueryRequest.TenantInfo))
-
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-			if req.Method != "" {
-				query = query.Where(cols.Method.Eq(), req.Method)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			query = applyCommunicationProfileSearch(query, req.SelectQueryRequest.Query)
-
-			total, err := query.
-				Order(cols.Name.OrderAsc()).
-				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
-				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDICommunicationProfile]{
-				Items: entities,
-				Total: int(total),
-			}, nil
 		},
+	)
+}
+
+func profileOptionsQuery(
+	req *ediports.EDICommunicationProfileSelectOptionsRequest,
+) *keel.Query[*edi.EDICommunicationProfile] {
+	cp := edidb.EDICommunicationProfiles
+	return cp.Pick(
+		cp.ID,
+		cp.BusinessUnitID,
+		cp.OrganizationID,
+		cp.EDIConnectionID,
+		cp.EDIPartnerID,
+		cp.Method,
+		cp.Status,
+		cp.Name,
+		cp.Description,
+	).Where(
+		keel.When(req.Status != "", cp.Status.Eq(req.Status)),
+		keel.When(req.Method != "", cp.Method.Eq(req.Method)),
+		keel.When(req.PartnerID.IsNotNil(), cp.EDIPartnerID.Eq(req.PartnerID)),
+	).Order(cp.Name.Asc())
+}
+
+func profileOptionsSearch(s string) keel.Pred {
+	cp := edidb.EDICommunicationProfiles
+	return keel.Or(
+		cp.Name.ContainsFold(s),
+		cp.Description.ContainsFold(s),
+		listquery.TextContainsFold(cp.Method, s),
 	)
 }
 
@@ -145,37 +123,13 @@ func (r *repository) GetProfileByID(
 	req ediports.GetEDICommunicationProfileByIDRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
-		entity := new(edi.EDICommunicationProfile)
-		cols := edicol.EDICommunicationProfileColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(edicol.EDICommunicationProfileRelations.Partner).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(edicol.EDICommunicationProfileApplyTenant(req.TenantInfo)).
-			Scan(ctx)
+		cp := edidb.EDICommunicationProfiles
+		entity, err := cp.Where(cp.ID.Eq(req.ID)).Load(cp.Partner()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDICommunicationProfile")
+			return nil, profileErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
-	})
-}
-
-func applyCommunicationProfileSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
-	search = strings.TrimSpace(search)
-	if search == "" {
-		return query
-	}
-
-	term := "%" + strings.ToLower(search) + "%"
-	cols := edicol.EDICommunicationProfileColumns
-
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(cols.Name.LowerLike(), term).
-			WhereOr(cols.Description.LowerLike(), term).
-			WhereOr(cols.Method.TextILike(), term)
 	})
 }
 
@@ -184,19 +138,10 @@ func (r *repository) ListProfilesByPartner(
 	req ediports.ListEDICommunicationProfilesByPartnerRequest,
 ) ([]*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
-		cols := edicol.EDICommunicationProfileColumns
-		entities := make([]*edi.EDICommunicationProfile, 0, 2)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			Apply(edicol.EDICommunicationProfileApplyTenant(req.TenantInfo)).
-			Order(cols.Status.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		return entities, nil
+		cp := edidb.EDICommunicationProfiles
+		return cp.Where(cp.EDIPartnerID.Eq(req.PartnerID)).
+			Order(cp.Status.Asc(), cp.CreatedAt.Asc(), cp.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -205,23 +150,19 @@ func (r *repository) GetActiveProfileByPartner(
 	req ediports.GetActiveEDICommunicationProfileByPartnerRequest,
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
-		entity := new(edi.EDICommunicationProfile)
-		cols := edicol.EDICommunicationProfileColumns
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			Apply(edicol.EDICommunicationProfileApplyTenant(req.TenantInfo)).
-			Where(cols.Status.Eq(), domaintypes.StatusActive).
-			Limit(1)
+		cp := edidb.EDICommunicationProfiles
+		method := cp.Method.Eq(req.Method)
 		if len(req.Methods) > 0 {
-			query = query.Where(cols.Method.In(), bun.List(req.Methods))
-		} else {
-			query = query.Where(cols.Method.Eq(), req.Method)
+			method = cp.Method.In(req.Methods...)
 		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDICommunicationProfile")
+
+		entity, err := cp.Where(
+			cp.EDIPartnerID.Eq(req.PartnerID),
+			cp.Status.Eq(domaintypes.StatusActive),
+			method,
+		).First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, profileErrors.Map(err, req.PartnerID.String())
 		}
 
 		return entity, nil
@@ -233,25 +174,11 @@ func (r *repository) ListInboundPollingProfiles(
 ) ([]*edi.EDICommunicationProfile, error) {
 	ctx = dbscope.WithSystem(ctx, "list inbound EDI polling profiles across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDICommunicationProfile, error) {
-		entities := make([]*edi.EDICommunicationProfile, 0)
-		cols := edicol.EDICommunicationProfileColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.Status.Eq(), domaintypes.StatusActive).
-			Where(cols.Method.In(), bun.List([]edi.ConnectionMethod{
-				edi.ConnectionMethodSFTP,
-				edi.ConnectionMethodVAN,
-			})).
-			Where("ecp.edi_partner_id IS NOT NULL").
-			Where("COALESCE(TRIM(ecp.config->>'inboundDirectory'), '') <> ''").
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-		return entities, nil
+		cp := edidb.EDICommunicationProfiles
+		return cp.AllTenants().
+			Where(pollingProfile()...).
+			Order(cp.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -260,22 +187,19 @@ func (r *repository) RecordInboundPollOutcome(
 	req ediports.RecordEDIProfilePollOutcomeRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := edicol.EDICommunicationProfileColumns
-		update := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*edi.EDICommunicationProfile)(nil)).
-			Set("last_poll_attempt_at = ?", req.PolledAt).
-			Where(cols.ID.Eq(), req.ProfileID).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
-		if req.Success {
-			update = update.
-				Set("last_poll_success_at = ?", req.PolledAt).
-				Set("last_poll_error = NULL")
-		} else {
-			update = update.Set("last_poll_error = ?", req.Error)
+		cp := edidb.EDICommunicationProfiles
+		sets := []keel.Assignment{
+			cp.LastPollAttemptAt.To(req.PolledAt),
+			cp.Version.ToExpr(cp.Version),
+			cp.UpdatedAt.ToExpr(cp.UpdatedAt),
 		}
-		_, err := update.Exec(ctx)
+		if req.Success {
+			sets = append(sets, cp.LastPollSuccessAt.To(req.PolledAt), cp.LastPollError.ToNull())
+		} else {
+			sets = append(sets, cp.LastPollError.To(req.Error))
+		}
+
+		_, err := cp.Where(cp.ID.Eq(req.ProfileID)).Update(ctx, r.db.Keel(ctx), sets...)
 		return err
 	})
 }
@@ -289,23 +213,11 @@ func (r *repository) CountStaleInboundPollingProfiles(
 		"count stale inbound polling profiles instance-wide for the health check",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := edicol.EDICommunicationProfileColumns
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDICommunicationProfile)(nil)).
-			Where(cols.Status.Eq(), domaintypes.StatusActive).
-			Where(cols.Method.In(), bun.List([]edi.ConnectionMethod{
-				edi.ConnectionMethodSFTP,
-				edi.ConnectionMethodVAN,
-			})).
-			Where("ecp.edi_partner_id IS NOT NULL").
-			Where("COALESCE(TRIM(ecp.config->>'inboundDirectory'), '') <> ''").
-			Where("COALESCE(ecp.last_poll_success_at, ecp.created_at) < ?", staleBefore).
-			Count(ctx)
-		if err != nil {
-			return 0, err
-		}
-		return int64(count), nil
+		cp := edidb.EDICommunicationProfiles
+		return cp.AllTenants().
+			Where(pollingProfile()...).
+			Where(cp.LastPollSuccessAt.Coalesce(cp.CreatedAt).Lt(staleBefore)).
+			Count(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -318,23 +230,21 @@ func (r *repository) GetActiveAS2ProfileByIdentifiers(
 		"resolve an inbound AS2 message's identifier pair before its tenant is known",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
-		entity := new(edi.EDICommunicationProfile)
-		cols := edicol.EDICommunicationProfileColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.Status.Eq(), domaintypes.StatusActive).
-			Where(cols.Method.Eq(), edi.ConnectionMethodAS2).
-			Where("ecp.edi_partner_id IS NOT NULL").
-			Where("TRIM(ecp.config->>'localAS2Id') = ?", req.LocalAS2ID).
-			Where("TRIM(ecp.config->>'partnerAS2Id') = ?", req.PartnerAS2ID).
-			Order(cols.UpdatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		cp := edidb.EDICommunicationProfiles
+		entity, err := cp.AllTenants().
+			Where(
+				cp.Status.Eq(domaintypes.StatusActive),
+				cp.Method.Eq(edi.ConnectionMethodAS2),
+				cp.EDIPartnerID.IsNotNull(),
+				cp.Config.Text("localAS2Id").Trim().Eq(req.LocalAS2ID),
+				cp.Config.Text("partnerAS2Id").Trim().Eq(req.PartnerAS2ID),
+			).
+			Order(cp.UpdatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDICommunicationProfile")
+			return nil, profileErrors.Map(err, req.LocalAS2ID)
 		}
+
 		return entity, nil
 	})
 }
@@ -344,12 +254,8 @@ func (r *repository) CreateProfile(
 	entity *edi.EDICommunicationProfile,
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := edidb.EDICommunicationProfiles.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, profileErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -361,38 +267,22 @@ func (r *repository) UpdateProfile(
 	entity *edi.EDICommunicationProfile,
 ) (*edi.EDICommunicationProfile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDICommunicationProfile, error) {
-		ov := entity.Version
-		entity.Version++
-		cols := edicol.EDICommunicationProfileColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Column(
-				cols.EDIConnectionID.Bare(),
-				cols.EDIPartnerID.Bare(),
-				cols.Method.Bare(),
-				cols.Status.Bare(),
-				cols.Name.Bare(),
-				cols.Description.Bare(),
-				cols.Config.Bare(),
-				cols.EncryptedSecrets.Bare(),
-				cols.Version.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			Returning("*").
-			Exec(ctx)
+		cp := edidb.EDICommunicationProfiles
+		err := cp.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			cp.EDIConnectionID,
+			cp.EDIPartnerID,
+			cp.Method,
+			cp.Status,
+			cp.Name,
+			cp.Description,
+			cp.Config,
+			cp.EncryptedSecrets,
+		)
 		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"EDICommunicationProfile",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, profileErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -403,52 +293,36 @@ func (r *repository) ListProfilesCursor(
 	ctx context.Context,
 	req *ediports.ListEDICommunicationProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDICommunicationProfile], error) {
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*edi.EDICommunicationProfile)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"ecp",
-							req.Filter,
-							(*edi.EDICommunicationProfile)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDICommunicationProfile]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*edi.EDICommunicationProfile) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(edicol.EDICommunicationProfileTable.All()).
-						Relation(edicol.EDICommunicationProfileRelations.Partner)
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				edidb.EDICommunicationProfiles.Query(),
+				&listquery.Request[edi.EDICommunicationProfile]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withPartner,
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						sq,
-						"ecp",
-						req.Filter,
-						req.Cursor,
-						(*edi.EDICommunicationProfile)(nil),
-					)
-				},
-			})
+			)
 		},
 	)
+}
+
+func withPartner(
+	q *keel.Query[*edi.EDICommunicationProfile],
+) *keel.Query[*edi.EDICommunicationProfile] {
+	return q.Load(edidb.EDICommunicationProfiles.Partner())
+}
+
+func pollingProfile() []keel.Pred {
+	cp := edidb.EDICommunicationProfiles
+	return []keel.Pred{
+		cp.Status.Eq(domaintypes.StatusActive),
+		cp.Method.In(pollingMethods...),
+		cp.EDIPartnerID.IsNotNull(),
+		cp.Config.Text("inboundDirectory").Trim().Coalesce("").Ne(""),
+	}
 }

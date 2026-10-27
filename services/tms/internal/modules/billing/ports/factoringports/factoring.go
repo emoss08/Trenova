@@ -162,8 +162,8 @@ type GetSummaryRequest struct {
 }
 
 type VerdictTotals struct {
-	Count       int   `json:"count"       bun:"count"`
-	AmountMinor int64 `json:"amountMinor" bun:"amount_minor"`
+	Count       int   `json:"count"`
+	AmountMinor int64 `json:"amountMinor"`
 }
 
 type Summary struct {

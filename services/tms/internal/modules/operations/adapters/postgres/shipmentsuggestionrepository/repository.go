@@ -2,17 +2,16 @@ package shipmentsuggestionrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentsuggestioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentsuggestion/shipmentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentsuggestionports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -38,19 +37,6 @@ func New(p Params) shipmentsuggestionports.ShipmentSuggestionDecisionRepository 
 	}
 }
 
-func scoped(
-	q *bun.SelectQuery,
-	tenant pagination.TenantInfo,
-	userID pulid.ID,
-) *bun.SelectQuery {
-	cols := shipmentsuggestioncol.DecisionRecordColumns
-
-	return q.
-		Where(cols.OrganizationID.Eq(), tenant.OrgID).
-		Where(cols.BusinessUnitID.Eq(), tenant.BuID).
-		Where(cols.UserID.Eq(), userID)
-}
-
 func (r *repository) ListSince(
 	ctx context.Context,
 	req *shipmentsuggestionports.ListSuggestionDecisionsRequest,
@@ -59,17 +45,11 @@ func (r *repository) ListSince(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentsuggestion.DecisionRecord, error) {
-			cols := shipmentsuggestioncol.DecisionRecordColumns
-			records := make([]*shipmentsuggestion.DecisionRecord, 0)
-			err := scoped(
-				r.db.DBForContext(ctx).NewSelect().Model(&records),
-				req.TenantInfo,
-				req.UserID,
-			).
-				Where(cols.DecidedAt.Gte(), req.Since).
-				Order(cols.DecidedAt.OrderDesc()).
+			d := shipmentsuggestiondb.DecisionRecords
+			records, err := d.Where(d.UserID.Eq(req.UserID), d.DecidedAt.Gte(req.Since)).
+				Order(d.DecidedAt.Desc()).
 				Limit(maxListedDecisions).
-				Scan(ctx)
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list suggestion decisions: %w", err)
 			}
@@ -87,27 +67,27 @@ func (r *repository) Upsert(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentsuggestion.DecisionRecord, error) {
-			cols := shipmentsuggestioncol.DecisionRecordColumns
-			_, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(record).
-				On(fmt.Sprintf(
-					"CONFLICT (%s, %s, %s, %s) DO UPDATE",
-					cols.OrganizationID.Bare(),
-					cols.BusinessUnitID.Bare(),
-					cols.UserID.Bare(),
-					cols.SuggestionKey.Bare(),
-				)).
-				Set(cols.Decision.Bare() + " = EXCLUDED." + cols.Decision.Bare()).
-				Set(cols.DecidedAt.Bare() + " = EXCLUDED." + cols.DecidedAt.Bare()).
-				Set(cols.UpdatedAt.Bare() + " = EXCLUDED." + cols.UpdatedAt.Bare()).
-				Returning("*").
-				Exec(ctx)
+			d := shipmentsuggestiondb.DecisionRecords
+			inserted, err := d.Upsert(
+				ctx,
+				r.db.Keel(ctx),
+				[]*shipmentsuggestion.DecisionRecord{record},
+				keel.OnConflict(d.OrganizationID, d.BusinessUnitID, d.UserID, d.SuggestionKey).
+					Update(d.Decision, d.DecidedAt),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("save suggestion decision: %w", err)
 			}
+			if len(inserted) == 1 && inserted[0] {
+				return record, nil
+			}
 
-			return record, nil
+			stored, err := byKey(record.UserID, record.SuggestionKey).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, fmt.Errorf("read saved suggestion decision: %w", err)
+			}
+
+			return stored, nil
 		},
 	)
 }
@@ -120,25 +100,22 @@ func (r *repository) Delete(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentsuggestion.DecisionRecord, error) {
-			cols := shipmentsuggestioncol.DecisionRecordColumns
-			removed := make([]*shipmentsuggestion.DecisionRecord, 0, 1)
-			_, err := r.db.DBForContext(ctx).
-				NewDelete().
-				Model(&removed).
-				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Where(cols.UserID.Eq(), req.UserID).
-				Where(cols.SuggestionKey.Eq(), req.Key).
-				Returning("*").
-				Exec(ctx)
+			d := shipmentsuggestiondb.DecisionRecords
+			removed, err := byKey(req.UserID, req.Key).
+				Lock(keel.ForUpdate).
+				One(ctx, r.db.Keel(ctx))
+			if errors.Is(err, keel.ErrNotFound) {
+				return nil, nil
+			}
 			if err != nil {
 				return nil, fmt.Errorf("delete suggestion decision: %w", err)
 			}
-			if len(removed) == 0 {
-				return nil, nil
+
+			if err = d.DeleteRow(ctx, r.db.Keel(ctx), removed); err != nil {
+				return nil, fmt.Errorf("delete suggestion decision: %w", err)
 			}
 
-			return removed[0], nil
+			return removed, nil
 		},
 	)
 }
@@ -148,19 +125,17 @@ func (r *repository) Prune(
 	req *shipmentsuggestionports.PruneSuggestionDecisionsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := shipmentsuggestioncol.DecisionRecordColumns
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*shipmentsuggestion.DecisionRecord)(nil)).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.UserID.Eq(), req.UserID).
-			Where(cols.DecidedAt.Lt(), req.Before).
-			Exec(ctx)
-		if err != nil {
+		d := shipmentsuggestiondb.DecisionRecords
+		if _, err := d.Where(d.UserID.Eq(req.UserID), d.DecidedAt.Lt(req.Before)).
+			Delete(ctx, r.db.Keel(ctx)); err != nil {
 			return fmt.Errorf("prune suggestion decisions: %w", err)
 		}
 
 		return nil
 	})
+}
+
+func byKey(userID pulid.ID, key string) *keel.Query[*shipmentsuggestion.DecisionRecord] {
+	d := shipmentsuggestiondb.DecisionRecords
+	return d.Where(d.UserID.Eq(userID), d.SuggestionKey.Eq(key))
 }

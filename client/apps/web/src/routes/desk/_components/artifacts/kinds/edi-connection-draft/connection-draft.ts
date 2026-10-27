@@ -132,39 +132,6 @@ const requirementSchema = z.object({
   source: sourceSchema,
 });
 
-const templateCandidateSchema = z.object({
-  templateId: text,
-  name: text,
-  starter: flag,
-  unmet: count,
-});
-
-const templateSchema = z
-  .object({
-    templateId: text,
-    name: text,
-    starter: flag,
-    current: text,
-    change: changeSchema,
-    met: count,
-    unmet: list(requirementSchema),
-    considered: list(templateCandidateSchema),
-    unverified: list(requirementSchema),
-    note: text,
-  })
-  .catch({
-    templateId: "",
-    name: "",
-    starter: false,
-    current: "",
-    change: "None",
-    met: 0,
-    unmet: [],
-    considered: [],
-    unverified: [],
-    note: "",
-  });
-
 const controlNumberSchema = z.object({
   kind: text,
   start: count,
@@ -174,17 +141,38 @@ const controlNumberSchema = z.object({
   problem: text,
 });
 
-const documentProfileSchema = z.object({
+const setSchema = z.object({
   transactionSet: text,
   direction: text,
-  profileId: text,
-  name: text,
-  status: text,
   change: changeSchema,
   fields: list(valueSchema),
-  template: templateSchema,
+  requirements: count,
+  unmet: list(requirementSchema),
+  unverified: list(requirementSchema),
   controlNumbers: list(controlNumberSchema),
 });
+
+const projectFileSchema = z.object({ path: text, kind: text, change: changeSchema });
+
+const projectDiagnosticSchema = z.object({
+  path: text,
+  severity: text,
+  code: text,
+  message: text,
+});
+
+const projectSchema = z
+  .object({
+    projectId: text,
+    role: text,
+    change: changeSchema,
+    files: list(projectFileSchema),
+    errors: count,
+    warnings: count,
+    diagnostics: list(projectDiagnosticSchema),
+  })
+  .nullable()
+  .catch(null);
 
 const mappingSchema = z.object({
   entityType: text,
@@ -250,7 +238,8 @@ const draftSchema = z.object({
   connection: connectionSchema,
   interchange: list(valueSchema),
   transport: transportSchema,
-  documentProfiles: list(documentProfileSchema),
+  sets: list(setSchema),
+  project: projectSchema,
   mappings: list(mappingSchema),
   mappingCount: count,
   truncated: flag,
@@ -271,7 +260,8 @@ export type DraftCandidate = z.output<typeof candidateSchema>;
 export type DraftValue = z.output<typeof valueSchema>;
 export type DraftCredential = z.output<typeof credentialSchema>;
 export type DraftRequirement = z.output<typeof requirementSchema>;
-export type DraftDocumentProfile = z.output<typeof documentProfileSchema>;
+export type DraftSet = z.output<typeof setSchema>;
+export type DraftProject = NonNullable<z.output<typeof projectSchema>>;
 export type DraftControlNumber = z.output<typeof controlNumberSchema>;
 export type DraftMapping = z.output<typeof mappingSchema>;
 export type DraftSample = z.output<typeof sampleSchema>;
@@ -288,6 +278,8 @@ export function connectionDraftFrom(artifact: Pick<AssistantArtifact, "payload">
 /** What the person still has to do, and what the guide asks that the draft does not meet. */
 export type DraftOutline = {
   decisions: number;
+  /** Errors the drafted Lading project still has, to fix in the studio. */
+  projectErrors: number;
   secretsToEnter: string[];
   unmet: number;
   gaps: number;
@@ -297,13 +289,11 @@ export type DraftOutline = {
 export function draftOutline(draft: ConnectionDraft): DraftOutline {
   return {
     decisions: draft.decisions.length,
+    projectErrors: draft.project?.errors ?? 0,
     secretsToEnter: (draft.transport?.credentials ?? [])
       .filter((credential) => credential.required && credential.missing)
       .map((credential) => credential.label),
-    unmet: draft.documentProfiles.reduce(
-      (total, profile) => total + profile.template.unmet.length,
-      0,
-    ),
+    unmet: draft.sets.reduce((total, set) => total + set.unmet.length, 0),
     gaps: draft.gaps.length,
     failures: draft.failures.length,
   };

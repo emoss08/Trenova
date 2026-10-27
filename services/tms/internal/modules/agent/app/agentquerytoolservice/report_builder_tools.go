@@ -8,33 +8,29 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/keel/analytics"
+	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-// maxPreviewRows bounds what report_preview hands the model. A preview exists
-// to check the shape of a report — the columns, a few rows, whether the filter
-// bites — and twenty rows show that. The whole result is what report_run is for.
 const maxPreviewRows = 20
 
-// reportSource is a report the tools can act on, whichever way it was named:
-// a built-in one by key or a saved one by definition id. Everything downstream
-// reads this rather than telling the two apart again.
 type reportSource struct {
 	Name          string
 	Key           string
 	DefinitionID  pulid.ID
-	Definition    *report.Definition
+	Definition    *ir.Definition
 	DefaultFormat report.Format
 	Description   string
 	Category      string
@@ -44,8 +40,6 @@ type reportSource struct {
 	OwnerID       pulid.ID
 }
 
-// Editable says whether the actor may change the report. A built-in report is
-// nobody's to edit — it is forked instead — and a saved one belongs to its owner.
 func (s reportSource) Editable(actor pulid.ID) bool {
 	return !s.DefinitionID.IsNil() && s.OwnerID == actor
 }
@@ -55,9 +49,6 @@ var errNoReportNamed = errors.New(
 		"both from report_list",
 )
 
-// resolveReportSource reads the report a call names. A definitionId wins
-// when both are given, because it is the more specific of the two: a saved
-// report may carry the key it was forked from, and the caller means the fork.
 func resolveReportSource(
 	ctx context.Context,
 	reports reportRunner,
@@ -131,89 +122,55 @@ func sourceFromDefinition(definition *report.ReportDefinition) reportSource {
 	}
 }
 
-// catalogAccess answers which datasets and fields the actor may read, the
-// same way the report builder's own catalog does, so a model sees exactly
-// what the person driving it would see in the builder.
-type catalogAccess struct {
-	permissions permissionports.PermissionEngine
-	sensitivity *permission.Registry
+type actorCatalog struct {
+	*reporting.Catalog
+
+	byKey map[string]*reporting.CatalogEntity
 }
 
-func newCatalogAccess(permissions permissionports.PermissionEngine) catalogAccess {
-	return catalogAccess{permissions: permissions, sensitivity: permission.NewRegistry()}
-}
-
-// entity resolves one dataset for the actor: the catalog entry and what they
-// may read of it. A dataset the actor cannot read at all is reported as absent,
-// because a model told "you may not read invoices" will keep trying to.
-func (c catalogAccess) entity(
+func catalogFor(
 	ctx context.Context,
+	reports reportRunner,
 	params *agentports.QueryToolParams,
-	entity *reportcatalog.Entity,
-) (*permissionports.ResourcePermissionDetail, bool, error) {
-	if c.permissions == nil {
-		return nil, false, errors.New(
-			"datasets cannot be described because authorization is unavailable",
-		)
-	}
-
-	detail, err := c.permissions.GetResourcePermissions(
-		ctx, params.Actor.PersonUserID(), params.OrganizationID, entity.Resource.String(),
-	)
+) (*actorCatalog, error) {
+	request := reportingRequestFor(params)
+	catalog, err := reports.Catalog(ctx, &request)
 	if err != nil {
-		return nil, false, fmt.Errorf("resolve permissions for %q: %w", entity.Key, err)
+		return nil, err
 	}
-
-	for _, op := range detail.Operations {
-		if op == permission.OpRead {
-			return detail, true, nil
-		}
+	out := &actorCatalog{
+		Catalog: catalog,
+		byKey:   make(map[string]*reporting.CatalogEntity, len(catalog.Entities)),
 	}
-
-	return nil, false, nil
+	for i := range catalog.Entities {
+		out.byKey[catalog.Entities[i].View.Key] = &catalog.Entities[i]
+	}
+	return out, nil
 }
 
-func (c catalogAccess) fieldAccessible(
-	entity *reportcatalog.Entity,
-	field *reportcatalog.Field,
-	detail *permissionports.ResourcePermissionDetail,
-) (permission.FieldSensitivity, bool) {
-	sensitivity := c.sensitivity.GetFieldSensitivity(entity.Resource.String(), field.Key)
+func (c *actorCatalog) entity(key string) (*reporting.CatalogEntity, bool) {
+	entity, ok := c.byKey[key]
+	return entity, ok
+}
 
-	accessible := detail.MaxSensitivity.CanAccess(sensitivity)
-	if accessible && len(detail.AccessibleFields) > 0 {
-		accessible = false
-		for _, key := range detail.AccessibleFields {
-			if key == field.Key {
-				accessible = true
-				break
-			}
-		}
+func (c *actorCatalog) need(use reportaccess.Use) string {
+	if c.Kinds == nil {
+		return ""
 	}
-
-	return sensitivity, accessible
+	return c.Kinds.Need(use)
 }
 
 type datasetEdgeRow struct {
-	Name        string `json:"name"`
-	Label       string `json:"label,omitempty"`
-	Target      string `json:"target"`
-	Cardinality string `json:"cardinality"`
-	// Key is the field on this dataset holding the id of the record the edge
-	// leads to, such as customerId for the customer edge. A model that had
-	// resolved a customer to its id still filtered on customer.name, because
-	// nothing said the id had a field of its own here.
-	Key string `json:"key,omitempty"`
-	// TargetFields are the keys on the dataset the edge leads to, given by
-	// report_get_dataset so a report can reach one edge out without a
-	// second call. A model that had only the edge's name guessed the field
-	// on the far side, and guessed wrong.
-	TargetFields []string `json:"targetFields,omitempty"`
+	Name          string   `json:"name"`
+	Label         string   `json:"label,omitempty"`
+	Target        string   `json:"target"`
+	Cardinality   string   `json:"cardinality"`
+	Key           string   `json:"key,omitempty"`
+	TargetFields  []string `json:"targetFields,omitempty"`
+	ReferenceOnly bool     `json:"referenceOnly,omitempty"`
+	Needs         string   `json:"needs,omitempty"`
 }
 
-// datasetRow is one dataset in the list. Edges are left to
-// report_get_dataset: with them, the list of seventy ran past one tool
-// result and reached the model cut off.
 type datasetRow struct {
 	Dataset     string `json:"dataset"`
 	Label       string `json:"label"`
@@ -224,22 +181,18 @@ type datasetRow struct {
 
 const (
 	defaultDatasetPage = 20
-	maxDatasetPage     = 70
+	maxDatasetPage     = 90
 	defaultFieldPage   = 40
 	maxFieldPage       = 80
-	// maxEnumValuesShown keeps an enum's values in a field row while they
-	// are a short list to choose from, not a code table.
 	maxEnumValuesShown = 12
 )
 
 type listReportDatasetsTool struct {
-	access catalogAccess
+	reports reportRunner
 }
 
-func newListReportDatasetsTool(
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &listReportDatasetsTool{access: newCatalogAccess(permissions)}
+func newListReportDatasetsTool(reports reportRunner) agentports.AgentQueryTool {
+	return &listReportDatasetsTool{reports: reports}
 }
 
 func (t *listReportDatasetsTool) Name() string { return "report_list_datasets" }
@@ -291,32 +244,32 @@ func (t *listReportDatasetsTool) Query(
 	criteria.Text(query)
 	criteria.Field("category", category)
 
+	catalog, err := catalogFor(ctx, t.reports, params)
+	if err != nil {
+		return nil, err
+	}
+
 	words := stringutils.SearchWords(query)
-	catalog := &reportcatalog.Default
 	rows := make([]datasetRow, 0, len(catalog.Entities))
 	for i := range catalog.Entities {
 		entity := &catalog.Entities[i]
-		if category != "" && !strings.EqualFold(entity.Category, category) {
+		view := &entity.View
+		if !entity.Readable {
 			continue
 		}
-		if !matchesDataset(entity, words) {
+		if category != "" && !strings.EqualFold(view.Category, category) {
 			continue
 		}
-
-		_, readable, err := t.access.entity(ctx, params, entity)
-		if err != nil {
-			return nil, err
-		}
-		if !readable {
+		if !matchesDataset(view, words) {
 			continue
 		}
 
 		rows = append(rows, datasetRow{
-			Dataset:     entity.Key,
-			Label:       entity.Label,
-			Description: stringutils.FirstSentence(entity.Description),
-			Category:    entity.Category,
-			FieldCount:  describedFieldCount(entity),
+			Dataset:     view.Key,
+			Label:       view.Label,
+			Description: stringutils.FirstSentence(view.Doc),
+			Category:    view.Category,
+			FieldCount:  len(view.Fields),
 		})
 	}
 
@@ -340,40 +293,54 @@ func (t *listReportDatasetsTool) Query(
 	return outcome, nil
 }
 
-// matchesDataset reports whether every word of the query begins a word of the
-// dataset's key, label, plural label or description. It used to look for the
-// query as one literal substring, so "shipment delivery" found nothing although
-// the shipment dataset is described in both words.
-func matchesDataset(entity *reportcatalog.Entity, words []string) bool {
+func matchesDataset(view *analytics.EntityView, words []string) bool {
 	return stringutils.MatchesWordPrefixes(
 		words,
-		stringutils.SearchableKey(entity.Key),
-		entity.Label,
-		entity.PluralLabel,
-		entity.Description,
+		stringutils.SearchableKey(view.Key),
+		view.Label,
+		view.Plural,
+		view.Doc,
 	)
 }
 
-func edgeRows(entity *reportcatalog.Entity, withTargetFields bool) []datasetEdgeRow {
-	rows := make([]datasetEdgeRow, 0, len(entity.Edges))
-	for i := range entity.Edges {
-		edge := &entity.Edges[i]
-		if !edge.Traversable {
+func edgeCardinality(edge *analytics.EdgeView) string {
+	switch {
+	case edge.Pick:
+		return "pick"
+	case edge.ToMany:
+		return "many"
+	default:
+		return "one"
+	}
+}
+
+func edgeRows(catalog *actorCatalog, decided *reporting.CatalogEntity) []datasetEdgeRow {
+	view := &decided.View
+	rows := make([]datasetEdgeRow, 0, len(view.Edges))
+	for i := range view.Edges {
+		edge := &view.Edges[i]
+		use := decided.Edges[i]
+		reached, ok := catalog.entity(edge.Target)
+		if !ok {
 			continue
 		}
+		if use.Available() && !reached.Usable() {
+			continue
+		}
+
 		row := datasetEdgeRow{
 			Name:        edge.Name,
 			Label:       edge.Label,
 			Target:      edge.Target,
-			Cardinality: string(edge.Cardinality),
+			Cardinality: edgeCardinality(edge),
+			Needs:       catalog.need(use),
 		}
-		if key, ok := referenceKeyField(&reportcatalog.Default, entity, edge); ok {
-			row.Key = key
+		if !edge.ToMany && !edge.Pick && hasUsableField(reached, "id") {
+			row.Key = edge.Name + ".id"
 		}
-		if withTargetFields {
-			if target, ok := reportcatalog.Default.Entity(edge.Target); ok {
-				row.TargetFields = describedFieldKeys(target)
-			}
+		if use.Available() {
+			row.TargetFields = usableFieldKeys(reached)
+			row.ReferenceOnly = !reached.Readable
 		}
 		rows = append(rows, row)
 	}
@@ -381,53 +348,72 @@ func edgeRows(entity *reportcatalog.Entity, withTargetFields bool) []datasetEdge
 	return rows
 }
 
-// datasetFieldRow is one field, in as few characters as say what a report
-// needs: its key and type, what it aggregates by, and only the exceptions —
-// a field that cannot filter or group, or that this person may not read. The
-// widest datasets carry eighty fields, and a row that spelt out every flag and
-// its sensitivity pushed the shipment dataset past one tool result.
+func hasUsableField(decided *reporting.CatalogEntity, key string) bool {
+	for i := range decided.View.Fields {
+		if decided.View.Fields[i].Key == key {
+			return decided.Fields[i].Available()
+		}
+	}
+	return false
+}
+
+func listedFieldCount(decided *reporting.CatalogEntity) int {
+	if decided.Readable {
+		return len(decided.View.Fields)
+	}
+	count := 0
+	for i := range decided.View.Fields {
+		if decided.Fields[i].Decision != reportaccess.NeedsKindRead {
+			count++
+		}
+	}
+	return count
+}
+
+func usableFieldKeys(decided *reporting.CatalogEntity) []string {
+	keys := make([]string, 0, len(decided.Fields))
+	for i := range decided.View.Fields {
+		if decided.Fields[i].Available() {
+			keys = append(keys, decided.View.Fields[i].Key)
+		}
+	}
+	return keys
+}
+
 type datasetFieldRow struct {
 	Key          string   `json:"key"`
 	Label        string   `json:"label,omitempty"`
 	Description  string   `json:"description,omitempty"`
 	Type         string   `json:"type"`
+	Measure      bool     `json:"measure,omitempty"`
 	EnumValues   []string `json:"enumValues,omitempty"`
 	Aggregations []string `json:"aggs,omitempty"`
 	NoFilter     bool     `json:"noFilter,omitempty"`
 	NoGroup      bool     `json:"noGroup,omitempty"`
-	// Closed marks a field the person's role may not read. The compiler
-	// refuses a report that names one, so a model that knows this up front
-	// builds a report that compiles rather than one that is refused.
-	Closed bool `json:"closed,omitempty"`
+	Closed       bool     `json:"closed,omitempty"`
+	Needs        string   `json:"needs,omitempty"`
 }
 
 type datasetDescription struct {
-	Dataset     string            `json:"dataset"`
-	Label       string            `json:"label"`
-	Description string            `json:"description,omitempty"`
-	Category    string            `json:"category,omitempty"`
-	Fields      []datasetFieldRow `json:"fields"`
-	FieldCount  int               `json:"fieldCount"`
-	// Shown is how many of them this result carries. It differs from
-	// FieldCount when the dataset is wider than one page, and NextOffset
-	// then says where the rest continue.
-	Shown      int              `json:"shownFieldCount"`
-	NextOffset *int             `json:"nextOffset,omitempty"`
-	Edges      []datasetEdgeRow `json:"edges,omitempty"`
-	// RelatedFields are the fields of related datasets a query matched, as
-	// edge.field, so a search names a field one edge out as well as its own.
-	RelatedFields []string `json:"relatedFields,omitempty"`
-	Note          string   `json:"note"`
+	Dataset       string            `json:"dataset"`
+	Label         string            `json:"label"`
+	Description   string            `json:"description,omitempty"`
+	Category      string            `json:"category,omitempty"`
+	Fields        []datasetFieldRow `json:"fields"`
+	FieldCount    int               `json:"fieldCount"`
+	Shown         int               `json:"shownFieldCount"`
+	NextOffset    *int              `json:"nextOffset,omitempty"`
+	Edges         []datasetEdgeRow  `json:"edges,omitempty"`
+	RelatedFields []string          `json:"relatedFields,omitempty"`
+	Note          string            `json:"note"`
 }
 
 type describeReportDatasetTool struct {
-	access catalogAccess
+	reports reportRunner
 }
 
-func newDescribeReportDatasetTool(
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &describeReportDatasetTool{access: newCatalogAccess(permissions)}
+func newDescribeReportDatasetTool(reports reportRunner) agentports.AgentQueryTool {
+	return &describeReportDatasetTool{reports: reports}
 }
 
 func (t *describeReportDatasetTool) Name() string { return "report_get_dataset" }
@@ -464,6 +450,17 @@ func (t *describeReportDatasetTool) Policy() agentports.ToolPolicy {
 	})
 }
 
+const datasetNote = "Refer to a field by its dotted path: \"<key>\" for a field of this " +
+	"dataset and \"<edge>.<key>\" for a field of a related dataset, using only the keys " +
+	"each edge's targetFields lists; an edge two steps away needs report_get_dataset on " +
+	"the first target. A measure column needs an agg the field lists; a dimension column " +
+	"groups the rows, and a report of dimension columns alone lists rows. When you " +
+	"already know a related record's id, filter on the path the edge's key names with " +
+	"that id — customer.id eq \"cus_…\" — not on the record's name, which two records " +
+	"can share and a rename changes. A field marked closed cannot be used by this " +
+	"person; its needs says what it lacks. An edge marked referenceOnly leads to a " +
+	"dataset this person cannot read, and only its targetFields can be used through it."
+
 func (t *describeReportDatasetTool) Query(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
@@ -477,49 +474,51 @@ func (t *describeReportDatasetTool) Query(
 		return nil, err
 	}
 
-	entity, ok := reportcatalog.Default.Entity(key)
+	catalog, err := catalogFor(ctx, t.reports, params)
+	if err != nil {
+		return nil, err
+	}
+	decided, ok := catalog.entity(key)
 	if !ok {
 		return nil, fmt.Errorf(
 			"there is no dataset with the key %q; call report_list_datasets for the ones that exist",
 			key,
 		)
 	}
-
-	detail, readable, err := t.access.entity(ctx, params, entity)
-	if err != nil {
-		return nil, err
-	}
-	if !readable {
+	view := &decided.View
+	if !decided.Usable() {
 		return nil, fmt.Errorf(
-			"there is no dataset with the key %q that you can read; call "+
-				"report_list_datasets for the ones you can",
-			key,
+			"there is no dataset with the key %q that you can use: it needs %s read, "+
+				"which your role does not grant; call report_list_datasets for the ones you can",
+			key, decided.Resource,
 		)
 	}
 
 	query := strings.TrimSpace(optionalString(params.Params, "query"))
 	words := stringutils.SearchWords(query)
-	fields := make([]datasetFieldRow, 0, len(entity.Fields))
-	for i := range entity.Fields {
-		field := &entity.Fields[i]
-		if !describedField(field) {
-			continue
-		}
+	fields := make([]datasetFieldRow, 0, len(view.Fields))
+	for i := range view.Fields {
+		field := &view.Fields[i]
 		if !matchesField(field, words) {
 			continue
 		}
 
-		_, accessible := t.access.fieldAccessible(entity, field, detail)
+		use := decided.Fields[i]
+		if use.Decision == reportaccess.NeedsKindRead {
+			continue
+		}
 		fields = append(fields, datasetFieldRow{
 			Key:          field.Key,
 			Label:        labelIfNotKey(field),
-			Description:  stringutils.FirstSentence(field.Description),
+			Description:  stringutils.FirstSentence(field.Doc),
 			Type:         string(field.Type),
+			Measure:      field.Measure,
 			EnumValues:   shortEnum(field),
 			Aggregations: aggregationNames(field),
 			NoFilter:     !field.Filterable,
 			NoGroup:      !field.Groupable,
-			Closed:       !accessible,
+			Closed:       !use.Available(),
+			Needs:        catalog.need(use),
 		})
 	}
 
@@ -530,27 +529,24 @@ func (t *describeReportDatasetTool) Query(
 		fields = []datasetFieldRow{}
 	}
 
-	note := "Refer to a field of this dataset as {\"field\": \"<key>\"} and to a field " +
-		"of a related dataset as {\"path\": [\"<edge>\"], \"field\": \"<key>\"}, " +
-		"using only the keys each edge's targetFields lists; an edge two steps " +
-		"away needs report_get_dataset on the first target. A measure " +
-		"column needs an agg the field lists; a dimension column groups the " +
-		"rows, and a report of dimension columns alone lists rows. When you " +
-		"already know a related record's id, filter on the field the edge's key " +
-		"names with that id — customerId eq \"cus_…\" — not on the record's " +
-		"name, which two records can share and a rename changes. A field " +
-		"marked closed cannot be used by this person."
-
 	description := datasetDescription{
-		Dataset:     entity.Key,
-		Label:       entity.Label,
-		Description: entity.Description,
-		Category:    entity.Category,
+		Dataset:     view.Key,
+		Label:       view.Label,
+		Description: view.Doc,
+		Category:    view.Category,
 		Fields:      fields,
-		FieldCount:  describedFieldCount(entity),
+		FieldCount:  listedFieldCount(decided),
 		Shown:       len(fields),
-		Edges:       edgeRows(entity, true),
-		Note:        note,
+		Edges:       edgeRows(catalog, decided),
+		Note:        datasetNote,
+	}
+	if !decided.Readable {
+		description.Note = fmt.Sprintf(
+			"You cannot read %s (it needs %s read), so a report cannot start from this "+
+				"dataset. A report on a dataset you can read reaches it through an edge "+
+				"marked referenceOnly and can use only the fields listed here. ",
+			view.Plural, decided.Resource,
+		) + description.Note
 	}
 	if more {
 		next := window.offset + window.limit
@@ -562,35 +558,33 @@ func (t *describeReportDatasetTool) Query(
 		)
 	}
 	if len(words) > 0 {
-		description.RelatedFields = relatedFieldMatches(entity, words)
-		description.Note += queryNote(entity.Key, query, matched, description.RelatedFields)
+		description.RelatedFields = relatedFieldMatches(catalog, decided, words)
+		description.Note += queryNote(view.Key, query, matched, description.RelatedFields)
 	}
 
 	return description, nil
 }
 
-// maxRelatedFieldMatches bounds the related fields one query names. A query
-// broad enough to pass it matches too much to be a search.
 const maxRelatedFieldMatches = 20
 
-// relatedFieldMatches are the fields of the datasets this one's edges reach
-// that a query matches, each as edge.field: "arrival" on shipment finds
-// destinationStop.actualArrival, which a search of shipment's own fields
-// never would.
-func relatedFieldMatches(entity *reportcatalog.Entity, words []string) []string {
+func relatedFieldMatches(
+	catalog *actorCatalog,
+	decided *reporting.CatalogEntity,
+	words []string,
+) []string {
 	matches := make([]string, 0, 4)
-	for i := range entity.Edges {
-		edge := &entity.Edges[i]
-		if !edge.Traversable {
+	for i := range decided.View.Edges {
+		edge := &decided.View.Edges[i]
+		if !decided.Edges[i].Available() {
 			continue
 		}
-		target, ok := reportcatalog.Default.Entity(edge.Target)
+		target, ok := catalog.entity(edge.Target)
 		if !ok {
 			continue
 		}
-		for j := range target.Fields {
-			field := &target.Fields[j]
-			if !describedField(field) || !matchesField(field, words) {
+		for j := range target.View.Fields {
+			field := &target.View.Fields[j]
+			if !target.Fields[j].Available() || !matchesField(field, words) {
 				continue
 			}
 			matches = append(matches, edge.Name+"."+field.Key)
@@ -603,22 +597,20 @@ func relatedFieldMatches(entity *reportcatalog.Entity, words []string) []string 
 	return matches
 }
 
-// queryNote says what a query found when it was narrowed: nothing at all, and
-// how to widen; or only fields of related datasets, and how to reach them.
 func queryNote(dataset, query string, matched int, related []string) string {
 	switch {
 	case matched > 0 && len(related) > 0:
 		return " relatedFields are fields of related datasets the query also matches, " +
-			"written edge.field."
+			"written as the dotted path a definition uses."
 	case matched > 0:
 		return ""
 	case len(related) > 0:
 		edge, field, _ := strings.Cut(related[0], ".")
 		return fmt.Sprintf(
 			" No field of %s itself matches %q, but fields of related datasets do: "+
-				"relatedFields lists them as edge.field, so %s is the field %s on the edge "+
-				"%s. Refer to it as {\"path\": [%q], \"field\": %q}.",
-			dataset, query, related[0], field, edge, edge, field,
+				"relatedFields lists them as dotted paths, so %s is the field %s on the edge "+
+				"%s, and a definition writes it exactly so.",
+			dataset, query, related[0], field, edge,
 		)
 	default:
 		return fmt.Sprintf(
@@ -631,10 +623,7 @@ func queryNote(dataset, query string, matched int, related []string) string {
 	}
 }
 
-// labelIfNotKey keeps a field's label only when it says something its key
-// does not: "Pro number" beside proNumber is noise, "Linehaul revenue" beside
-// freightChargeAmount is not.
-func labelIfNotKey(field *reportcatalog.Field) string {
+func labelIfNotKey(field *analytics.FieldView) string {
 	squashed := strings.ReplaceAll(strings.ToLower(field.Label), " ", "")
 	if squashed == strings.ToLower(field.Key) {
 		return ""
@@ -643,50 +632,35 @@ func labelIfNotKey(field *reportcatalog.Field) string {
 	return field.Label
 }
 
-// shortEnum keeps an enum's values while they are a short list to choose
-// from. A longer one is filtered by value anyway, and the model can ask
-// report_preview for the values it sees.
-func shortEnum(field *reportcatalog.Field) []string {
-	values := enumValueKeys(field)
-	if len(values) > maxEnumValuesShown {
+func shortEnum(field *analytics.FieldView) []string {
+	if len(field.Enum) == 0 || len(field.Enum) > maxEnumValuesShown {
 		return nil
 	}
 
-	return values
-}
-
-// matchesField reports whether every word of the query begins a word of the
-// field's key, label or description, with a camelCase key read as its words:
-// scheduledWindowEnd is found by "window" and by "scheduled end".
-func matchesField(field *reportcatalog.Field, words []string) bool {
-	return stringutils.MatchesWordPrefixes(
-		words,
-		stringutils.SearchableKey(field.Key),
-		field.Label,
-		field.Description,
-	)
-}
-
-func enumValueKeys(field *reportcatalog.Field) []string {
-	if len(field.EnumValues) == 0 {
-		return nil
-	}
-
-	values := make([]string, 0, len(field.EnumValues))
-	for _, value := range field.EnumValues {
+	values := make([]string, 0, len(field.Enum))
+	for _, value := range field.Enum {
 		values = append(values, value.Value)
 	}
 
 	return values
 }
 
-func aggregationNames(field *reportcatalog.Field) []string {
-	if len(field.Aggregations) == 0 {
+func matchesField(field *analytics.FieldView, words []string) bool {
+	return stringutils.MatchesWordPrefixes(
+		words,
+		stringutils.SearchableKey(field.Key),
+		field.Label,
+		field.Doc,
+	)
+}
+
+func aggregationNames(field *analytics.FieldView) []string {
+	if len(field.Aggs) == 0 {
 		return nil
 	}
 
-	names := make([]string, 0, len(field.Aggregations))
-	for _, agg := range field.Aggregations {
+	names := make([]string, 0, len(field.Aggs))
+	for _, agg := range field.Aggs {
 		names = append(names, string(agg))
 	}
 
@@ -694,16 +668,14 @@ func aggregationNames(field *reportcatalog.Field) []string {
 }
 
 type reportColumnRow struct {
-	// Ref is the reference as a definition writes it. Field below is the
-	// same thing in one readable string, which is what a model copied into
-	// its own definitions until the decoder learned to read it.
-	Ref    report.FieldRef `json:"ref"`
-	ID     string          `json:"id"`
-	Label  string          `json:"label,omitempty"`
-	Field  string          `json:"field"`
-	Kind   string          `json:"kind"`
-	Agg    string          `json:"agg,omitempty"`
-	Bucket string          `json:"bucket,omitempty"`
+	ID     string `json:"id"`
+	Label  string `json:"label,omitempty"`
+	Field  string `json:"field,omitempty"`
+	Kind   string `json:"kind"`
+	Agg    string `json:"agg,omitempty"`
+	Bucket string `json:"bucket,omitempty"`
+	Calc   string `json:"calc,omitempty"`
+	Hidden bool   `json:"hidden,omitempty"`
 }
 
 type reportDescription struct {
@@ -720,14 +692,12 @@ type reportDescription struct {
 	Dataset      string               `json:"dataset"`
 	Columns      []reportColumnRow    `json:"columns"`
 	Filters      []string             `json:"filters,omitempty"`
+	Having       []string             `json:"having,omitempty"`
 	Sort         []string             `json:"sort,omitempty"`
 	Limit        int                  `json:"limit,omitempty"`
 	Parameters   []reportParameterRow `json:"parameters,omitempty"`
-	// Definition is the report exactly as the builder saves it, so a change
-	// can be made by editing it and sending it back through report_update or
-	// report_preview rather than by rebuilding it from the summary above.
-	Definition *report.Definition `json:"definition"`
-	Note       string             `json:"note"`
+	Definition   *ir.Definition       `json:"definition"`
+	Note         string               `json:"note"`
 }
 
 type describeReportTool struct {
@@ -815,24 +785,21 @@ func describeReport(source reportSource, actor pulid.ID) reportDescription {
 
 	description.Dataset = definition.Entity
 	description.Columns = make([]reportColumnRow, 0, len(definition.Columns))
-	for _, column := range definition.Columns {
-		description.Columns = append(description.Columns, reportColumnRow{
-			Ref:    column.Ref,
-			ID:     column.ID,
-			Label:  column.Label,
-			Field:  fieldRefText(column.Ref),
-			Kind:   string(column.Kind),
-			Agg:    string(column.Agg),
-			Bucket: string(column.Bucket),
-		})
-	}
-	description.Filters = filterGroupText(definition.Filters, 0)
-	description.Limit = definition.Limit
-	for _, spec := range definition.Sort {
-		description.Sort = append(
-			description.Sort,
-			fmt.Sprintf("%s %s", spec.ColumnID, spec.Direction),
+	for i := range definition.Columns {
+		description.Columns = append(
+			description.Columns,
+			definitionColumnRow(&definition.Columns[i]),
 		)
+	}
+	description.Filters = definitionFilterText(definition.Filters, 0)
+	description.Having = definitionFilterText(definition.Having, 0)
+	description.Limit = definition.Limit.Value
+	for _, spec := range definition.Sort {
+		direction := "asc"
+		if spec.Desc {
+			direction = "desc"
+		}
+		description.Sort = append(description.Sort, spec.Column+" "+direction)
 	}
 
 	switch {
@@ -856,56 +823,80 @@ func describeReport(source reportSource, actor pulid.ID) reportDescription {
 	return description
 }
 
-func fieldRefText(ref report.FieldRef) string {
-	if len(ref.Path) == 0 {
-		return ref.Field
+func definitionColumnRow(column *ir.Column) reportColumnRow {
+	row := reportColumnRow{ID: column.ID, Label: column.Label, Hidden: column.Hidden}
+	switch {
+	case column.Dimension != nil:
+		row.Kind = "dimension"
+		row.Field = column.Dimension.Field
+		if column.Dimension.Bucket.Unit != "" {
+			row.Bucket = string(column.Dimension.Bucket.Unit)
+		} else if column.Dimension.Bucket.Param != "" {
+			row.Bucket = "@" + column.Dimension.Bucket.Param
+		}
+	case column.Measure != nil:
+		row.Kind = "measure"
+		row.Field = column.Measure.Field
+		row.Agg = string(column.Measure.Agg)
+	case column.Calc != nil:
+		row.Kind = "calc"
+		row.Calc = column.Calc.String()
+	case column.Window != nil:
+		row.Kind = "window"
+		row.Field = column.Window.Of
+		row.Agg = string(column.Window.Fn)
 	}
-
-	return strings.Join(ref.Path, ".") + "." + ref.Field
+	return row
 }
 
-// filterGroupText reads a filter tree back as sentences, one per leaf, with
-// the group's operator carried on nested lines. The model narrates these to
-// the person; the definition itself is what it edits.
-func filterGroupText(group *report.FilterGroup, depth int) []string {
-	if group == nil || depth > 8 {
+func definitionFilterText(filter *ir.Filter, depth int) []string {
+	if filter == nil || depth > 8 {
 		return nil
 	}
 
-	lines := make([]string, 0, len(group.Filters)+len(group.Groups))
-	for _, filter := range group.Filters {
-		lines = append(lines, filterLeafText(filter))
-	}
-	for i := range group.Groups {
-		nested := filterGroupText(&group.Groups[i], depth+1)
-		if len(nested) == 0 {
-			continue
+	switch {
+	case filter.And != nil, filter.Or != nil:
+		children, op := filter.And, "AND"
+		if filter.Or != nil {
+			children, op = filter.Or, "OR"
 		}
-		lines = append(lines, fmt.Sprintf(
-			"(%s)", strings.Join(nested, " "+strings.ToUpper(string(group.Groups[i].Op))+" "),
-		))
+		lines := make([]string, 0, len(children))
+		for i := range children {
+			nested := definitionFilterText(&children[i], depth+1)
+			if len(nested) == 0 {
+				continue
+			}
+			line := strings.Join(nested, " ")
+			if children[i].And != nil || children[i].Or != nil {
+				line = "(" + line + ")"
+			}
+			lines = append(lines, line)
+		}
+		if len(lines) > 1 {
+			return []string{strings.Join(lines, " "+op+" ")}
+		}
+		return lines
+	default:
+		return []string{filterLeafText(filter)}
 	}
-
-	if len(lines) > 1 && depth == 0 {
-		return []string{strings.Join(lines, " "+strings.ToUpper(string(group.Op))+" ")}
-	}
-
-	return lines
 }
 
-func filterLeafText(filter report.FieldFilter) string {
-	target := fieldRefText(filter.Ref)
-	if filter.Agg != "" {
-		target = fmt.Sprintf("%s(%s)", filter.Agg, target)
+func filterLeafText(filter *ir.Filter) string {
+	target := filter.Field
+	switch {
+	case filter.Column != "":
+		target = "[" + filter.Column + "]"
+	case filter.Calc != nil:
+		target = filter.Calc.String()
 	}
 
 	switch {
 	case filter.Param != "":
-		return fmt.Sprintf("%s %s :%s", target, filter.Operator, filter.Param)
+		return fmt.Sprintf("%s %s @%s", target, filter.Op, filter.Param)
 	case filter.Value == nil:
-		return fmt.Sprintf("%s %s", target, filter.Operator)
+		return fmt.Sprintf("%s %s", target, filter.Op)
 	default:
-		return fmt.Sprintf("%s %s %v", target, filter.Operator, filter.Value)
+		return fmt.Sprintf("%s %s %v", target, filter.Op, filter.Value)
 	}
 }
 
@@ -917,16 +908,14 @@ type previewColumnRow struct {
 }
 
 type reportPreview struct {
-	Name     string             `json:"name,omitempty"`
-	Dataset  string             `json:"dataset"`
-	Columns  []previewColumnRow `json:"columns"`
-	RowCount int                `json:"rowCount"`
-	// Rows are keyed by column label so the model reads them as a table
-	// rather than as positional tuples it has to line up with the columns.
-	Rows      []map[string]any `json:"rows"`
-	Totals    map[string]any   `json:"totals,omitempty"`
-	Truncated bool             `json:"truncated"`
-	Note      string           `json:"note"`
+	Name      string             `json:"name,omitempty"`
+	Dataset   string             `json:"dataset"`
+	Columns   []previewColumnRow `json:"columns"`
+	RowCount  int                `json:"rowCount"`
+	Rows      []map[string]any   `json:"rows"`
+	Totals    map[string]any     `json:"totals,omitempty"`
+	Truncated bool               `json:"truncated"`
+	Note      string             `json:"note"`
 }
 
 type previewReportTool struct {
@@ -945,18 +934,19 @@ func (t *previewReportTool) Description() string {
 		"report_update, to answer a quick question a small custom report can answer, " +
 		"or to look at what a saved or built-in report produces. Give a definition " +
 		"to preview (the shape report_get returns and report_create takes), or " +
-		"name an existing report by definitionId or reportKey. The compiler checks " +
-		"every field against the person's access and says what is wrong, in " +
-		"which case fix the definition and try again rather than reporting the " +
-		"error to the person. At most " + fmt.Sprint(maxPreviewRows) + " rows come " +
-		"back; for the full result, report_run."
+		"name an existing report by definitionId or reportKey. The engine checks " +
+		"every field against the person's access and says what is wrong, naming the " +
+		"part of the definition at fault and the closest names it knows, in which case " +
+		"fix the definition and try again rather than reporting the error to the " +
+		"person. At most " + strconv.Itoa(maxPreviewRows) + " rows come back; for the " +
+		"full result, report_run."
 }
 
 func (t *previewReportTool) ParamSchema() map[string]any {
 	return map[string]any{
 		"type": "object",
 		"properties": map[string]any{
-			"definition": report.DefinitionJSONSchema(),
+			"definition": report.DefinitionToolSchema(),
 			"definitionId": agenttoolschema.OfResource(map[string]any{
 				"type":        "string",
 				"description": "Preview a saved report from report_list instead of a definition.",
@@ -1008,31 +998,22 @@ func (t *previewReportTool) Query(
 		Params:     values,
 	})
 	if err != nil {
-		return nil, fmt.Errorf(
-			"the report could not be previewed: %s",
-			compileErrorHint(&reportcatalog.Default, err.Error()),
-		)
+		return nil, fmt.Errorf("the report could not be previewed: %w", err)
 	}
 
-	preview := previewOf(source, result, clockFor(params))
-	preview.Note += referenceKeyHint(&reportcatalog.Default, source.Definition)
-
-	return preview, nil
+	return previewOf(source, result, clockFor(params)), nil
 }
 
-// source reads what to preview: an inline definition first, because that is
-// the case the tool exists for, and a named report otherwise.
 func (t *previewReportTool) source(
 	ctx context.Context,
 	params *agentports.QueryToolParams,
 ) (reportSource, error) {
 	raw, given := params.Params["definition"]
 	if given && raw != nil {
-		definition, err := report.DecodeDefinition(raw)
+		definition, err := reporting.DecodeDefinition(raw)
 		if err != nil {
 			return reportSource{}, err
 		}
-		definition.Limit = min(definition.Limit, report.MaxDefinitionLimit)
 
 		return reportSource{Name: "the definition", Definition: definition}, nil
 	}
@@ -1064,10 +1045,8 @@ func previewOf(source reportSource, result *reporting.PreviewResult, clk clock) 
 	}
 
 	shape := newSampleShape(len(result.Columns), clk)
-	for _, column := range result.Columns {
-		preview.Columns = append(preview.Columns, shape.add(
-			column.ID, column.Label, column.Type, column.Format,
-		))
+	for i := range result.Columns {
+		preview.Columns = append(preview.Columns, shape.add(&result.Columns[i]))
 	}
 
 	preview.Rows = sampleRows(shape, result.Rows, maxPreviewRows)
@@ -1104,11 +1083,6 @@ func previewOf(source reportSource, result *reporting.PreviewResult, clk clock) 
 	return preview
 }
 
-// sampleShape is how a report's rows are handed to a model, by report_preview
-// and by a finished run alike: keyed by column label, so the model reads a
-// table rather than positional tuples, and with date columns written as dates.
-// A date comes back from the dataset as epoch seconds, which the download
-// renders and a model reading the rows does not.
 type sampleShape struct {
 	labels []string
 	dated  []bool
@@ -1123,36 +1097,31 @@ func newSampleShape(width int, clk clock) sampleShape {
 	}
 }
 
-// add records one column and returns the row that describes it.
-func (s *sampleShape) add(
-	id, label string,
-	fieldType reportcatalog.FieldType,
-	format reportcatalog.FormatHint,
-) previewColumnRow {
+func (s *sampleShape) add(column *table.Column) previewColumnRow {
+	label := column.Label
 	if label == "" {
-		label = id
+		label = column.ID
 	}
 	s.labels = append(s.labels, label)
-	s.dated = append(s.dated, fieldType == reportcatalog.FieldEpoch)
+	s.dated = append(s.dated, column.Type == value.Epoch)
 
 	return previewColumnRow{
-		ID:     id,
+		ID:     column.ID,
 		Label:  label,
-		Type:   string(fieldType),
-		Format: string(format),
+		Type:   column.Type.String(),
+		Format: string(column.Display.Style),
 	}
 }
 
-func (s *sampleShape) row(row reportports.ReportRow) map[string]any {
+func (s *sampleShape) row(row []any) map[string]any {
 	return rowByLabel(s.labels, renderDates(row, s.dated, s.clk))
 }
 
-// sampleRows renders at most limit rows from the top of a result.
-func sampleRows[R ~[]any](shape sampleShape, rows []R, limit int) []map[string]any {
+func sampleRows(shape sampleShape, rows [][]any, limit int) []map[string]any {
 	shown := min(len(rows), limit)
 	out := make([]map[string]any, 0, shown)
 	for _, row := range rows[:shown] {
-		out = append(out, shape.row(reportports.ReportRow(row)))
+		out = append(out, shape.row(row))
 	}
 
 	return out
@@ -1168,25 +1137,24 @@ func hasDated(dated []bool) bool {
 	return false
 }
 
-// renderDates writes each epoch cell as a readable date.
-func renderDates(row reportports.ReportRow, dated []bool, clk clock) reportports.ReportRow {
-	out := make(reportports.ReportRow, len(row))
-	for idx, value := range row {
+func renderDates(row []any, dated []bool, clk clock) []any {
+	out := make([]any, len(row))
+	for idx, cell := range row {
 		if idx < len(dated) && dated[idx] {
-			if seconds, ok := epochSeconds(value); ok {
+			if seconds, ok := epochSeconds(cell); ok {
 				out[idx] = time.Unix(seconds, 0).In(clk.Location()).Format("2006-01-02 15:04 MST")
 
 				continue
 			}
 		}
-		out[idx] = value
+		out[idx] = cell
 	}
 
 	return out
 }
 
-func epochSeconds(value any) (int64, bool) {
-	switch typed := value.(type) {
+func epochSeconds(cell any) (int64, bool) {
+	switch typed := cell.(type) {
 	case int64:
 		return typed, typed > 0
 	case int:
@@ -1202,7 +1170,7 @@ func epochSeconds(value any) (int64, bool) {
 	}
 }
 
-func rowByLabel(labels []string, row reportports.ReportRow) map[string]any {
+func rowByLabel(labels []string, row []any) map[string]any {
 	out := make(map[string]any, len(labels))
 	for i, label := range labels {
 		if i < len(row) {

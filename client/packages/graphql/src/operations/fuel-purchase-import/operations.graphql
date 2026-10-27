@@ -108,6 +108,7 @@ query FuelPurchaseImportRows($id: ID!, $input: FuelPurchaseImportRowsInput) {
         cursor
       }
       totalCount
+      totalCountExact
       pageInfo {
         hasNextPage
         endCursor
@@ -170,6 +171,7 @@ query FuelPurchaseImportTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

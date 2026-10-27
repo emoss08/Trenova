@@ -21,18 +21,18 @@ type SumFuelPurchasesRequest struct {
 }
 
 type FuelSpendRow struct {
-	CurrencyCode     string          `json:"currencyCode"     bun:"currency_code"`
-	PurchaseCount    int             `json:"purchaseCount"    bun:"purchase_count"`
-	Gallons          decimal.Decimal `json:"gallons"          bun:"gallons"`
-	UntaxedGallons   decimal.Decimal `json:"untaxedGallons"   bun:"untaxed_gallons"`
-	TotalAmountMinor int64           `json:"totalAmountMinor" bun:"total_amount_minor"`
-	LastPurchasedAt  int64           `json:"lastPurchasedAt"  bun:"last_purchased_at"`
+	CurrencyCode     string          `json:"currencyCode"`
+	PurchaseCount    int             `json:"purchaseCount"`
+	Gallons          decimal.Decimal `json:"gallons"`
+	UntaxedGallons   decimal.Decimal `json:"untaxedGallons"`
+	TotalAmountMinor int64           `json:"totalAmountMinor"`
+	LastPurchasedAt  int64           `json:"lastPurchasedAt"`
 }
 
 type FuelJurisdictionRow struct {
-	JurisdictionID pulid.ID        `json:"jurisdictionId" bun:"jurisdiction_id"`
-	Gallons        decimal.Decimal `json:"gallons"        bun:"gallons"`
-	PurchaseCount  int             `json:"purchaseCount"  bun:"purchase_count"`
+	JurisdictionID pulid.ID        `json:"jurisdictionId"`
+	Gallons        decimal.Decimal `json:"gallons"`
+	PurchaseCount  int             `json:"purchaseCount"`
 }
 
 type GetPreviousFillRequest struct {

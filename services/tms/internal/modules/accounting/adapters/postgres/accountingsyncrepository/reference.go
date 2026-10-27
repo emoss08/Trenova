@@ -5,20 +5,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	referenceUpsertBatch   = 500
 	defaultReferenceSearch = 25
 	maxReferenceSearch     = 100
 )
@@ -61,43 +59,50 @@ func (r *referenceRepository) Upsert(
 			obj.RemovedAt = nil
 		}
 
-		cols := accountingsynccol.AccountingReferenceObjectColumns
-		for start := 0; start < len(req.Objects); start += referenceUpsertBatch {
-			batch := req.Objects[start:min(start+referenceUpsertBatch, len(req.Objects))]
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&batch).
-				On("CONFLICT (organization_id, business_unit_id, connection_id, kind, external_id) DO UPDATE").
-				Set(cols.Name.SetExcluded()).
-				Set(cols.SearchName.SetExcluded()).
-				Set(cols.FullyQualifiedName.SetExcluded()).
-				Set(cols.Number.SetExcluded()).
-				Set(cols.Description.SetExcluded()).
-				Set(cols.Classification.SetExcluded()).
-				Set(cols.AccountType.SetExcluded()).
-				Set(cols.AccountSubType.SetExcluded()).
-				Set(cols.ItemType.SetExcluded()).
-				Set(cols.SubType.SetExcluded()).
-				Set(cols.ParentExternalID.SetExcluded()).
-				Set(cols.Active.SetExcluded()).
-				Set(cols.CurrencyCode.SetExcluded()).
-				Set(cols.SyncToken.SetExcluded()).
-				Set(cols.CompanyName.SetExcluded()).
-				Set(cols.Email.SetExcluded()).
-				Set(cols.AddressLine1.SetExcluded()).
-				Set(cols.City.SetExcluded()).
-				Set(cols.State.SetExcluded()).
-				Set(cols.PostalCode.SetExcluded()).
-				Set(cols.IncomeAccountExternalID.SetExcluded()).
-				Set(cols.DueDays.SetExcluded()).
-				Set(cols.Is1099.SetExcluded()).
-				Set(cols.ProviderUpdatedAt.SetExcluded()).
-				Set(cols.LastSeenAt.SetExcluded()).
-				Set(cols.RemovedAt.SetNull()).
-				Set(cols.UpdatedAt.SetExcluded()).
-				Exec(ctx); err != nil {
-				return fmt.Errorf("upsert accounting reference objects: %w", err)
-			}
+		ro := accountingsyncdb.AccountingReferenceObjects
+		_, err := ro.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			req.Objects,
+			keel.OnConflict(
+				ro.OrganizationID,
+				ro.BusinessUnitID,
+				ro.ConnectionID,
+				ro.Kind,
+				ro.ExternalID,
+			).
+				Update(
+					ro.Name,
+					ro.SearchName,
+					ro.FullyQualifiedName,
+					ro.Number,
+					ro.Description,
+					ro.Classification,
+					ro.AccountType,
+					ro.AccountSubType,
+					ro.ItemType,
+					ro.SubType,
+					ro.ParentExternalID,
+					ro.Active,
+					ro.CurrencyCode,
+					ro.SyncToken,
+					ro.CompanyName,
+					ro.Email,
+					ro.AddressLine1,
+					ro.City,
+					ro.State,
+					ro.PostalCode,
+					ro.IncomeAccountExternalID,
+					ro.DueDays,
+					ro.Is1099,
+					ro.ProviderUpdatedAt,
+					ro.LastSeenAt,
+					ro.UpdatedAt,
+				).
+				Set(ro.RemovedAt.ToNull()),
+		)
+		if err != nil {
+			return fmt.Errorf("upsert accounting reference objects: %w", err)
 		}
 
 		return nil
@@ -113,25 +118,13 @@ func (r *referenceRepository) MarkRemoved(
 			return 0, nil
 		}
 
-		cols := accountingsynccol.AccountingReferenceObjectColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*accountingsync.AccountingReferenceObject)(nil)).
-			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return accountingsynccol.AccountingReferenceObjectScopeTenantUpdate(q, req.TenantInfo).
-					Where(cols.ConnectionID.Eq(), req.ConnectionID).
-					Where(cols.Kind.Eq(), req.Kind).
-					Where(cols.ExternalID.In(), bun.List(req.ExternalIDs)).
-					Where(cols.RemovedAt.IsNull())
-			}).
-			Set(cols.RemovedAt.Set(), req.At).
-			Set(cols.UpdatedAt.Set(), req.At).
-			Exec(ctx)
-		if err != nil {
-			return 0, err
-		}
-
-		return results.RowsAffected()
+		ro := accountingsyncdb.AccountingReferenceObjects
+		return ro.Where(
+			ro.ConnectionID.Eq(req.ConnectionID),
+			ro.Kind.Eq(req.Kind),
+			ro.ExternalID.In(req.ExternalIDs...),
+			ro.RemovedAt.IsNull(),
+		).Update(ctx, r.db.Keel(ctx), ro.RemovedAt.To(req.At), ro.UpdatedAt.To(req.At))
 	})
 }
 
@@ -140,25 +133,13 @@ func (r *referenceRepository) MarkRemovedUnseen(
 	req *accountingsyncports.MarkAccountingReferenceRemovedRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := accountingsynccol.AccountingReferenceObjectColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*accountingsync.AccountingReferenceObject)(nil)).
-			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return accountingsynccol.AccountingReferenceObjectScopeTenantUpdate(q, req.TenantInfo).
-					Where(cols.ConnectionID.Eq(), req.ConnectionID).
-					Where(cols.Kind.Eq(), req.Kind).
-					Where(cols.LastSeenAt.Lt(), req.SeenBefore).
-					Where(cols.RemovedAt.IsNull())
-			}).
-			Set(cols.RemovedAt.Set(), req.At).
-			Set(cols.UpdatedAt.Set(), req.At).
-			Exec(ctx)
-		if err != nil {
-			return 0, err
-		}
-
-		return results.RowsAffected()
+		ro := accountingsyncdb.AccountingReferenceObjects
+		return ro.Where(
+			ro.ConnectionID.Eq(req.ConnectionID),
+			ro.Kind.Eq(req.Kind),
+			ro.LastSeenAt.Lt(req.SeenBefore),
+			ro.RemovedAt.IsNull(),
+		).Update(ctx, r.db.Keel(ctx), ro.RemovedAt.To(req.At), ro.UpdatedAt.To(req.At))
 	})
 }
 
@@ -170,24 +151,14 @@ func (r *referenceRepository) ListByKind(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingsync.AccountingReferenceObject, error) {
-			entities := make([]*accountingsync.AccountingReferenceObject, 0)
-			cols := accountingsynccol.AccountingReferenceObjectColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Where(cols.Kind.Eq(), req.Kind).
-				Order(cols.SearchName.OrderAsc(), cols.ExternalID.OrderAsc())
-			if req.UsableOnly {
-				query = applyUsable(query)
-			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ro := accountingsyncdb.AccountingReferenceObjects
+			return ro.Where(
+				ro.ConnectionID.Eq(req.ConnectionID),
+				ro.Kind.Eq(req.Kind),
+				keel.When(req.UsableOnly, usableReference()),
+			).
+				Order(ro.SearchName.Asc(), ro.ExternalID.Asc()).
+				All(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -206,38 +177,23 @@ func (r *referenceRepository) Search(
 			}
 			limit = min(limit, maxReferenceSearch)
 
-			entities := make([]*accountingsync.AccountingReferenceObject, 0, limit)
-			cols := accountingsynccol.AccountingReferenceObjectColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Where(cols.Kind.Eq(), req.Kind).
-				Limit(int64(limit))
-			if req.UsableOnly {
-				query = applyUsable(query)
-			}
+			ro := accountingsyncdb.AccountingReferenceObjects
+			q := ro.Where(
+				ro.ConnectionID.Eq(req.ConnectionID),
+				ro.Kind.Eq(req.Kind),
+				keel.When(req.UsableOnly, usableReference()),
+			).Limit(limit)
 
 			if term := stringutils.NormalizeName(req.Query); term != "" {
-				pattern := "%" + stringutils.EscapeLikePattern(term) + "%"
 				prefix := stringutils.EscapeLikePattern(term) + "%"
-				query = query.
-					WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.SearchName.Like(), pattern).
-							WhereOr(cols.Number.ILike(), prefix).
-							WhereOr(cols.ExternalID.Eq(), strings.TrimSpace(req.Query))
-					}).
-					OrderExpr(cols.SearchName.Expr("CASE WHEN {} LIKE ? THEN 0 ELSE 1 END"), prefix)
-			}
-			query = query.Order(cols.SearchName.OrderAsc(), cols.ExternalID.OrderAsc())
-
-			if err := query.Scan(ctx); err != nil {
-				return nil, err
+				q = q.Where(keel.Or(
+					ro.SearchName.Contains(term),
+					ro.Number.ILike(prefix),
+					ro.ExternalID.Eq(strings.TrimSpace(req.Query)),
+				)).Order(keel.Desc(ro.SearchName.Like(prefix)).NullsLast())
 			}
 
-			return entities, nil
+			return q.Order(ro.SearchName.Asc(), ro.ExternalID.Asc()).List(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -254,37 +210,24 @@ func (r *referenceRepository) GetByExternalIDs(
 				return []*accountingsync.AccountingReferenceObject{}, nil
 			}
 
-			entities := make([]*accountingsync.AccountingReferenceObject, 0, len(req.ExternalIDs))
-			cols := accountingsynccol.AccountingReferenceObjectColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(accountingsynccol.AccountingReferenceObjectApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Where(cols.ExternalID.In(), bun.List(req.ExternalIDs))
-			if req.Kind != "" {
-				query = query.Where(cols.Kind.Eq(), req.Kind)
-			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ro := accountingsyncdb.AccountingReferenceObjects
+			return ro.Where(
+				ro.ConnectionID.Eq(req.ConnectionID),
+				ro.ExternalID.In(req.ExternalIDs...),
+				keel.When(req.Kind != "", ro.Kind.Eq(req.Kind)),
+			).All(ctx, r.db.Keel(ctx))
 		},
 	)
 }
 
-func applyUsable(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := accountingsynccol.AccountingReferenceObjectColumns
-	return q.
-		Where(cols.Active.IsTrue()).
-		Where(cols.RemovedAt.IsNull()).
-		WhereGroup(" AND ", func(g *bun.SelectQuery) *bun.SelectQuery {
-			return g.Where(cols.ItemType.IsNull()).
-				WhereOr(cols.ItemType.NotIn(), bun.List([]string{
-					accountingsync.ItemTypeCategory,
-					accountingsync.ItemTypeGroup,
-				}))
-		})
+func usableReference() keel.Pred {
+	ro := accountingsyncdb.AccountingReferenceObjects
+	return keel.And(
+		ro.Active.IsTrue(),
+		ro.RemovedAt.IsNull(),
+		keel.Or(
+			ro.ItemType.IsNull(),
+			ro.ItemType.NotIn(accountingsync.ItemTypeCategory, accountingsync.ItemTypeGroup),
+		),
+	)
 }

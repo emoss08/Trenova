@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/accounttypeservice"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/fiscalyearservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
@@ -66,6 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
+	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/ptoledgerservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
@@ -105,6 +107,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/app/storedmileageservice"
 	"github.com/emoss08/trenova/internal/modules/places/ports/jurisdictionruleports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
@@ -175,6 +178,7 @@ type Params struct {
 	OrganizationService          tenantports.OrganizationService
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentCommentService       shipmentports.ShipmentCommentService
+	ShipmentRatingReviewService  shipmentports.RatingReviewService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
 	TrackingEventService         trackingeventports.TrackingEventService
 	CheckCallService             checkcallports.CheckCallService
@@ -256,7 +260,9 @@ type Params struct {
 	OrgHolidayService            *orgholidayservice.Service
 	WorkflowStarter              kernelports.WorkflowStarter
 	FiscalYearService            *fiscalyearservice.Service
+	FiscalPeriodService          *fiscalperiodservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
+	FormulaLibraryService        *formulalibraryservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
@@ -365,6 +371,7 @@ type Params struct {
 	ProposalPreviewService       agentports.ProposalPreviewService `optional:"true"`
 	IAMService                   iamports.IAMService
 	RoleService                  *roleservice.Service
+	PageAccessService            *pageaccessservice.Service
 	UserService                  *userservice.Service
 	APIKeyService                *apikeyservice.Service
 	TableChangeAlertService      *tablechangealertservice.Service
@@ -409,6 +416,7 @@ type Services struct {
 	OrganizationService          tenantports.OrganizationService
 	ShipmentService              shipmentports.ShipmentService
 	ShipmentCommentService       shipmentports.ShipmentCommentService
+	ShipmentRatingReviewService  shipmentports.RatingReviewService
 	ShipmentEventService         shipmenteventports.ShipmentEventService
 	TrackingEventService         trackingeventports.TrackingEventService
 	CheckCallService             checkcallports.CheckCallService
@@ -488,7 +496,9 @@ type Services struct {
 	OrgHolidayService            *orgholidayservice.Service
 	WorkflowStarter              kernelports.WorkflowStarter
 	FiscalYearService            *fiscalyearservice.Service
+	FiscalPeriodService          *fiscalperiodservice.Service
 	FormulaTemplateService       *formulatemplateservice.Service
+	FormulaLibraryService        *formulalibraryservice.Service
 	FuelSurchargeService         *fuelsurchargeservice.Service
 	CostingService               *costingservice.Service
 	DetentionService             *detentionservice.Service
@@ -597,6 +607,7 @@ type Services struct {
 	ProposalPreviewService       agentports.ProposalPreviewService
 	IamService                   iamports.IAMService
 	RoleService                  *roleservice.Service
+	PageAccessService            *pageaccessservice.Service
 	UserService                  *userservice.Service
 	APIKeyService                *apikeyservice.Service
 	TableChangeAlertService      *tablechangealertservice.Service
@@ -647,6 +658,7 @@ func newServices(p *Params) *Services {
 		OrganizationService:          p.OrganizationService,
 		ShipmentService:              p.ShipmentService,
 		ShipmentCommentService:       p.ShipmentCommentService,
+		ShipmentRatingReviewService:  p.ShipmentRatingReviewService,
 		ShipmentEventService:         p.ShipmentEventService,
 		TrackingEventService:         p.TrackingEventService,
 		CheckCallService:             p.CheckCallService,
@@ -726,7 +738,9 @@ func newServices(p *Params) *Services {
 		OrgHolidayService:            p.OrgHolidayService,
 		WorkflowStarter:              p.WorkflowStarter,
 		FiscalYearService:            p.FiscalYearService,
+		FiscalPeriodService:          p.FiscalPeriodService,
 		FormulaTemplateService:       p.FormulaTemplateService,
+		FormulaLibraryService:        p.FormulaLibraryService,
 		FuelSurchargeService:         p.FuelSurchargeService,
 		CostingService:               p.CostingService,
 		DetentionService:             p.DetentionService,
@@ -835,6 +849,7 @@ func newServices(p *Params) *Services {
 		ProposalPreviewService:       p.ProposalPreviewService,
 		IamService:                   p.IAMService,
 		RoleService:                  p.RoleService,
+		PageAccessService:            p.PageAccessService,
 		UserService:                  p.UserService,
 		APIKeyService:                p.APIKeyService,
 		TableChangeAlertService:      p.TableChangeAlertService,

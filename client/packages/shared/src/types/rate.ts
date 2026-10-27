@@ -5,6 +5,9 @@ import {
   statusSchema,
   tenantInfoSchema,
 } from "./helpers";
+import { formulaTemplateStatusSchema } from "./formula-template";
+import { tariffInputValuesSchema } from "./tariff";
+import { storedTariffBillSchema, tariffFormInputValuesSchema } from "./tariff-form";
 import { translate } from "@trenova/shared/i18n/runtime";
 
 /**
@@ -85,6 +88,7 @@ export const rateMatrixDimensionKindSchema = z.enum([
   "Zone",
   "Zip3",
   "Zip5",
+  "ZipRange",
   "State",
   "Country",
   "WeightBreak",
@@ -108,7 +112,38 @@ export type RateMatrixKeyNormalization = z.infer<typeof rateMatrixKeyNormalizati
 export const rateMatrixRangeOverflowSchema = z.enum(["Error", "ClampToTopBand", "Nearest"]);
 export type RateMatrixRangeOverflow = z.infer<typeof rateMatrixRangeOverflowSchema>;
 
-export const rateMatrixRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
+/**
+ * What a matrix's cells hold, spelled as the Tariff type a tariff reads them
+ * as: `tables.Zones[…]` on a `Money/cwt` matrix gives a `Money/cwt?`. The money
+ * is always in the rating currency, so a matrix states no currency of its own.
+ */
+export const rateMatrixValueTypeSchema = z.enum([
+  "Money",
+  "Money/lb",
+  "Money/cwt",
+  "Money/kg",
+  "Money/t",
+  "Money/ton",
+  "Money/mi",
+  "Money/km",
+  "Money/in",
+  "Money/ft",
+  "Money/m",
+  "Money/ft3",
+  "Money/m3",
+  "Money/gal",
+  "Money/l",
+  "Money/min",
+  "Money/h",
+  "Money/d",
+  "Money/pallet",
+  "Money/piece",
+  "Money/stop",
+  "Percent",
+  "Number",
+  "Int",
+]);
+export type RateMatrixValueType = z.infer<typeof rateMatrixValueTypeSchema>;
 
 export const rateMatrixDimensionSchema = z.object({
   id: optionalStringSchema,
@@ -136,22 +171,32 @@ export const rateMatrixSchema = z.object({
     .min(1, { error: () => translate("Name is required") })
     .max(100),
   description: z.string().max(500).default(""),
-  status: statusSchema.default("Active"),
   /**
-   * The formula template that says what a cell's number means. The same grid
-   * of numbers is a per-mile tariff or a flat table depending on which
-   * template prices it, so it is stated on the matrix rather than inferred
-   * from the lane that reads it.
+   * Set by review, never by a save: Draft while the draft has unpublished changes, InReview once
+   * submitted, Active when the draft is the newest published version, Inactive once archived.
    */
-  formulaTemplateId: z
-    .string({ error: () => translate("Formula template is required") })
-    .min(1, { error: () => translate("Formula template is required") }),
-  /** Server-derived for list views; never sent back. */
-  formulaTemplateName: optionalStringSchema,
-  currency: z.string().length(3).default("USD"),
-  roundingMode: rateMatrixRoundingModeSchema.default("HalfUp"),
-  roundingPrecision: z.number().int().min(0).max(6).default(2),
-  dimensions: z.array(rateMatrixDimensionSchema).default([]),
+  status: formulaTemplateStatusSchema.default("Draft"),
+  /**
+   * What a cell's number means. The same grid of numbers is a per-mile tariff
+   * or a flat table depending on its type, so it is stated on the matrix and a
+   * tariff that reads it is checked against it.
+   */
+  valueType: rateMatrixValueTypeSchema.default("Money"),
+  dimensions: z
+    .array(rateMatrixDimensionSchema)
+    .min(1, { error: () => translate("A matrix needs at least one dimension") })
+    .max(4, { error: () => translate("A matrix has at most four dimensions") }),
+  /** The newest published version, the one tariffs read by default; 0 before the first. */
+  publishedVersionNumber: z.number().int().default(0),
+  publishedAt: z.number().nullish(),
+  /** Whether the draft differs from the newest published version. */
+  hasDraftChanges: z.boolean().default(true),
+  draftCellCount: z.number().int().default(0),
+  submittedById: z.string().nullish(),
+  submittedAt: z.number().nullish(),
+  approvedById: z.string().nullish(),
+  approvedAt: z.number().nullish(),
+  reviewComment: z.string().nullish(),
 });
 export type RateMatrix = z.infer<typeof rateMatrixSchema>;
 
@@ -167,6 +212,10 @@ export type RateMatrix = z.infer<typeof rateMatrixSchema>;
  * `ratematrix.RateMatrixCell.ContainsQuantity`. A tariff written "1000 to 2000"
  * rates two thousand pounds at the next tier up, and closed intervals would let
  * two adjacent bands both claim the boundary.
+ *
+ * A postal range axis (`ZipRange`) is the exception: its cell holds a range of
+ * postal codes, `dNKey` its first and `dNKeyTo` its last, both inclusive and of
+ * one length, compared character by character.
  */
 export const rateMatrixCellSchema = z.object({
   id: optionalStringSchema,
@@ -178,6 +227,11 @@ export const rateMatrixCellSchema = z.object({
   d1Key: z.string().max(120).default(""),
   d2Key: z.string().max(120).default(""),
   d3Key: z.string().max(120).default(""),
+
+  d0KeyTo: z.string().max(120).default(""),
+  d1KeyTo: z.string().max(120).default(""),
+  d2KeyTo: z.string().max(120).default(""),
+  d3KeyTo: z.string().max(120).default(""),
 
   d0Min: decimalStringSchema.nullish(),
   d0Max: decimalStringSchema.nullish(),
@@ -220,128 +274,81 @@ export const rateAgreementStatusSchema = z.enum([
 ]);
 export type RateAgreementStatus = z.infer<typeof rateAgreementStatusSchema>;
 
-export const rateRoundingModeSchema = z.enum(["HalfUp", "HalfEven", "Up", "Down", "None"]);
-export type RateRoundingMode = z.infer<typeof rateRoundingModeSchema>;
-
 export const rateDirectionSchema = z.enum(["Directional", "Bidirectional"]);
 export type RateDirection = z.infer<typeof rateDirectionSchema>;
-
-export const freightClassSourceSchema = z.enum(["Commodity", "Fixed", "Density"]);
-export type FreightClassSource = z.infer<typeof freightClassSourceSchema>;
 
 export const rateRuleStatusSchema = z.enum(["Active", "Inactive"]);
 export type RateRuleStatus = z.infer<typeof rateRuleStatusSchema>;
 
-export const rateAgreementRuleBreakSchema = z.object({
-  id: echoedIdSchema,
-  organizationId: echoedIdSchema,
-  businessUnitId: echoedIdSchema,
-  rateAgreementRuleId: echoedIdSchema,
-  fromWeight: decimalStringSchema,
-  toWeight: decimalStringSchema,
-  rate: decimalStringSchema,
-  minCharge: decimalStringSchema,
-  label: z.string().max(50).default(""),
-  sortOrder: z.number().int().default(0),
-});
-export type RateAgreementRuleBreak = z.infer<typeof rateAgreementRuleBreakSchema>;
-
 /**
- * One priced lane of an agreement.
+ * One priced lane of an agreement: where it applies, when, and the tariff that
+ * prices it with that tariff's input values. Everything a lane used to say
+ * about price (a rate, weight breaks, a minimum, rounding) is an input now,
+ * declared and typed by the tariff.
  *
  * `laneKey` and `specificityScore` are derived server-side on every write, so
  * they are read-only here — a client that sent its own would only be able to
  * make the stored value disagree with the fields it was derived from.
  */
-export const rateAgreementRuleSchema = z
-  .object({
-    ...tenantInfoSchema.shape,
-    id: echoedIdSchema,
-    organizationId: echoedIdSchema,
-    businessUnitId: echoedIdSchema,
+export const rateAgreementRuleSchema = z.object({
+  ...tenantInfoSchema.shape,
+  id: echoedIdSchema,
+  organizationId: echoedIdSchema,
+  businessUnitId: echoedIdSchema,
 
-    rateAgreementId: echoedIdSchema,
-    label: z.string().max(150).default(""),
-    status: rateRuleStatusSchema.default("Active"),
+  rateAgreementId: echoedIdSchema,
+  label: z.string().max(150).default(""),
+  status: rateRuleStatusSchema.default("Active"),
 
-    originScopeType: rateScopeTypeSchema.default("Any"),
-    originScopeValue: z.string().default(""),
-    originCity: z.string().default(""),
-    destinationScopeType: rateScopeTypeSchema.default("Any"),
-    destinationScopeValue: z.string().default(""),
-    destinationCity: z.string().default(""),
-    direction: rateDirectionSchema.default("Directional"),
+  originScopeType: rateScopeTypeSchema.default("Any"),
+  originScopeValue: z.string().default(""),
+  originCity: z.string().default(""),
+  destinationScopeType: rateScopeTypeSchema.default("Any"),
+  destinationScopeValue: z.string().default(""),
+  destinationCity: z.string().default(""),
+  direction: rateDirectionSchema.default("Directional"),
 
-    laneKey: optionalStringSchema,
-    specificityScore: z.number().int().optional(),
+  laneKey: optionalStringSchema,
+  specificityScore: z.number().int().optional(),
 
-    originRadiusMeters: decimalStringSchema,
-    destinationRadiusMeters: decimalStringSchema,
-    originLatitude: decimalStringSchema,
-    originLongitude: decimalStringSchema,
-    destinationLatitude: decimalStringSchema,
-    destinationLongitude: decimalStringSchema,
+  originRadiusMeters: decimalStringSchema,
+  destinationRadiusMeters: decimalStringSchema,
+  originLatitude: decimalStringSchema,
+  originLongitude: decimalStringSchema,
+  destinationLatitude: decimalStringSchema,
+  destinationLongitude: decimalStringSchema,
 
-    serviceTypeIds: z.array(z.string()).nullish(),
-    shipmentTypeIds: z.array(z.string()).nullish(),
-    tractorTypeIds: z.array(z.string()).nullish(),
-    trailerTypeIds: z.array(z.string()).nullish(),
-    commodityIds: z.array(z.string()).nullish(),
-    freightClasses: z.array(z.string()).nullish(),
-    serviceModels: z.array(z.string()).nullish(),
-    equipmentClasses: z.array(z.string()).nullish(),
+  serviceTypeIds: z.array(z.string()).nullish(),
+  shipmentTypeIds: z.array(z.string()).nullish(),
+  tractorTypeIds: z.array(z.string()).nullish(),
+  trailerTypeIds: z.array(z.string()).nullish(),
+  commodityIds: z.array(z.string()).nullish(),
+  freightClasses: z.array(z.string()).nullish(),
+  serviceModels: z.array(z.string()).nullish(),
+  equipmentClasses: z.array(z.string()).nullish(),
 
-    minWeight: decimalStringSchema,
-    maxWeight: decimalStringSchema,
-    minDistance: decimalStringSchema,
-    maxDistance: decimalStringSchema,
-    minStops: z.number().int().nullish(),
-    maxStops: z.number().int().nullish(),
-    daysOfWeek: z.number().int().default(0),
-    hazmatOnly: z.boolean().default(false),
-    tempControlOnly: z.boolean().default(false),
+  minWeight: decimalStringSchema,
+  maxWeight: decimalStringSchema,
+  minDistance: decimalStringSchema,
+  maxDistance: decimalStringSchema,
+  minStops: z.number().int().nullish(),
+  maxStops: z.number().int().nullish(),
+  daysOfWeek: z.number().int().default(0),
+  hazmatOnly: z.boolean().default(false),
+  tempControlOnly: z.boolean().default(false),
 
-    formulaTemplateId: z.string().nullish(),
-    rateMatrixId: z.string().nullish(),
-    rate: decimalStringSchema,
-    currency: z.string().nullish(),
+  formulaTemplateId: z
+    .string({ error: () => translate("A lane needs a formula template") })
+    .min(1, { error: () => translate("A lane needs a formula template") }),
+  /** The tariff's input values this lane sets, by input name, in the wire form. */
+  inputs: tariffFormInputValuesSchema.default({}),
+  currency: z.string().nullish(),
 
-    freightClassSource: freightClassSourceSchema.default("Commodity"),
-    fixedFreightClass: z.string().nullish(),
-    densityScaleId: z.string().nullish(),
-    discountPercent: decimalStringSchema,
-    absoluteMinCharge: decimalStringSchema,
-    allowDeficitRating: z.boolean().default(true),
-
-    minCharge: decimalStringSchema,
-    maxCharge: decimalStringSchema,
-    minBillableDistance: decimalStringSchema,
-    // Go stores this nullzero, so an unset mode arrives as "" rather than null.
-    roundingMode: rateRoundingModeSchema.nullish().or(z.literal("").transform(() => null)),
-
-    priority: z.number().int().default(0),
-    effectiveFrom: z.number().int(),
-    effectiveTo: z.number().int().nullish(),
-    supersedesRuleId: z.string().nullish(),
-
-    breaks: z.array(rateAgreementRuleBreakSchema).default([]),
-  })
-  .refine((rule) => Boolean(rule.formulaTemplateId) || Boolean(rule.rateMatrixId), {
-    path: ["formulaTemplateId"],
-    error: () => translate("A lane prices by a formula template or a rate matrix"),
-  })
-  .refine((rule) => !(rule.formulaTemplateId && rule.rateMatrixId), {
-    path: ["formulaTemplateId"],
-    error: () => translate("A lane prices by a formula template or a rate matrix, not both"),
-  })
-  .refine((rule) => !rule.rateMatrixId || rule.rate == null, {
-    path: ["rate"],
-    error: () => translate("A matrix rated lane reads its rates from the matrix cells"),
-  })
-  .refine((rule) => !rule.rateMatrixId || (rule.breaks?.length ?? 0) === 0, {
-    path: ["breaks"],
-    error: () => translate("Weight breaks only apply to a formula rated lane"),
-  });
+  priority: z.number().int().default(0),
+  effectiveFrom: z.number().int(),
+  effectiveTo: z.number().int().nullish(),
+  supersedesRuleId: z.string().nullish(),
+});
 export type RateAgreementRule = z.infer<typeof rateAgreementRuleSchema>;
 
 /**
@@ -352,21 +359,20 @@ export type RateAgreementRule = z.infer<typeof rateAgreementRuleSchema>;
 export const rateAgreementLanePageSchema = z.object({
   results: z.array(rateAgreementRuleSchema).default([]),
   count: z.number().int().min(0),
+  countExact: z.boolean().default(true),
   retired: z.number().int().min(0).default(0),
+  retiredExact: z.boolean().default(true),
   limit: z.number().int().min(0),
   offset: z.number().int().min(0),
 });
 export type RateAgreementLanePage = z.infer<typeof rateAgreementLanePageSchema>;
 
+/** The live lanes one tariff prices, in one currency. */
 export const lanePricingGroupSchema = z.object({
-  formulaTemplateId: z.string().nullable().default(null),
+  formulaTemplateId: z.string(),
   formulaTemplateName: z.string().default(""),
-  rateMatrixId: z.string().nullable().default(null),
-  rateMatrixName: z.string().default(""),
   currency: z.string().default(""),
   lanes: z.number().int().min(0),
-  minRate: z.string().nullable().default(null),
-  maxRate: z.string().nullable().default(null),
 });
 export type LanePricingGroup = z.infer<typeof lanePricingGroupSchema>;
 
@@ -390,12 +396,18 @@ export const rateAgreementAccessorialSchema = z.object({
   amount: decimalStringSchema,
   waived: z.boolean().default(false),
   autoApply: z.boolean().default(false),
-  applyCondition: z.string().default(""),
+  /**
+   * A Tariff `condition` file: when it is set the accessorial applies only to
+   * the shipments it holds for. Empty applies it to every shipment.
+   */
+  condition: z
+    .string()
+    .nullish()
+    .transform((value) => (value ? value : null)),
   freeUnits: z.number().int().nullish(),
   maxAmount: decimalStringSchema,
   serviceTypeIds: z.array(z.string()).nullish(),
   shipmentTypeIds: z.array(z.string()).nullish(),
-  formulaTemplateId: z.string().nullish(),
   effectiveFrom: z.number().int().nullish(),
   effectiveTo: z.number().int().nullish(),
 });
@@ -448,10 +460,9 @@ export const versionAccessorialTermSchema = z.object({
   amount: z.string().nullish(),
   waived: z.boolean().nullish(),
   autoApply: z.boolean().nullish(),
-  applyCondition: z.string().nullish(),
+  condition: z.string().nullish(),
   freeUnits: z.number().int().nullish(),
   maxAmount: z.string().nullish(),
-  formulaTemplateId: z.string().nullish(),
   serviceTypeIds: z.array(z.string()).nullish(),
   shipmentTypeIds: z.array(z.string()).nullish(),
   appliesFrom: z.number().int().nullish(),
@@ -522,10 +533,11 @@ export const rateAgreementSchema = z
     renewalNoticeDays: z.number().int().default(30),
 
     currency: z.string().length(3).default("USD"),
-    defaultMinCharge: decimalStringSchema,
-    defaultMaxCharge: decimalStringSchema,
-    roundingMode: rateRoundingModeSchema.default("HalfUp"),
-    roundingPrecision: z.number().int().min(0).max(6).default(2),
+    /**
+     * Contract-wide input values (a minimum, a fuel peg) that every lane's
+     * tariff reads when the lane does not set its own.
+     */
+    inputs: tariffFormInputValuesSchema.default({}),
 
     billToCustomerId: z.string().nullish(),
     marginFloorPercent: decimalStringSchema,
@@ -610,40 +622,25 @@ export const rateTraceCandidateSchema = z.object({
 });
 export type RateTraceCandidate = z.infer<typeof rateTraceCandidateSchema>;
 
-export const rateTraceComponentSchema = z.object({
-  sequence: z.number().int().default(0),
-  kind: z.string().default(""),
-  code: z.string().default(""),
-  label: z.string().default(""),
-  basis: z.string().default(""),
-  quantity: decimalStringSchema,
-  rate: decimalStringSchema,
-  amount: decimalStringSchema,
-  runningTotal: decimalStringSchema,
-  source: z.string().default(""),
-  sourceId: z.string().default(""),
-  sourceName: z.string().default(""),
-  detail: z.record(z.string(), z.unknown()).nullish(),
-});
-export type RateTraceComponent = z.infer<typeof rateTraceComponentSchema>;
-
-/** A bound that changed the answer: the amount before it applied, and after. */
-export const rateTraceGuardrailSchema = z.object({
-  kind: z.string().default(""),
-  applied: z.boolean().default(false),
-  bound: decimalStringSchema,
-  raw: decimalStringSchema,
-  result: decimalStringSchema,
-});
-export type RateTraceGuardrail = z.infer<typeof rateTraceGuardrailSchema>;
-
 export const rateTraceSchema = z.object({
   engineVersion: z.string().default(""),
   laneKeysTried: z.array(z.string()).nullish(),
   candidateCount: z.number().int().default(0),
   candidates: z.array(rateTraceCandidateSchema).nullish(),
-  components: z.array(rateTraceComponentSchema).nullish(),
-  guardrails: z.array(rateTraceGuardrailSchema).nullish(),
+  /** The winning tariff's name and version, and its bill: charge lines, notes, adjustments, totals. */
+  templateId: z.string().default(""),
+  templateName: z.string().default(""),
+  templateVersion: z.number().int().nullish(),
+  bill: storedTariffBillSchema.nullish(),
+  /** The input values the tariff read: the lane's, then the agreement's, then its defaults. */
+  tariffInputs: z.record(z.string(), z.unknown()).nullish(),
+  /** Why the tariff refused to rate, in its author's words, when it did. */
+  refusal: z.string().default(""),
+  /** Charges something else would have generated that the tariff billed itself. */
+  skipped: z
+    .array(z.object({ code: z.string(), source: z.string() }))
+    .nullish()
+    .transform((value) => value ?? []),
   tieBreak: z.string().default(""),
   warnings: z.array(z.string()).nullish(),
   error: z.string().default(""),
@@ -742,9 +739,10 @@ export type ShopStrategy = z.infer<typeof shopStrategySchema>;
 /**
  * What a shipment's two sides came to, and whether that is allowed.
  *
- * The three numbers are never absent: the server carries them as plain decimals
- * rather than nullable ones, and a margin of zero is a real answer that a null
- * would blur into "not measured".
+ * Within a verdict the three numbers are never absent: the server carries them
+ * as plain decimals, and a margin of zero is a real answer that a null would blur
+ * into "not measured". The verdict as a whole is null to a reader without the
+ * margins field group.
  */
 export const marginVerdictSchema = z.object({
   amount: decimalStringSchema.nullish().transform((value) => value ?? 0),
@@ -775,7 +773,8 @@ export const shopOptionSchema = z.object({
   cost: decimalStringSchema.nullish().transform((value) => value ?? 0),
   currency: z.string().default("USD"),
 
-  margin: marginVerdictSchema,
+  /** Null when the option was not priced, or to a reader without the margins field group. */
+  margin: marginVerdictSchema.nullable(),
 
   quote: rateQuoteSchema.nullish(),
   agreementId: z.string().nullish(),
@@ -988,7 +987,12 @@ export type RateImportBatch = z.infer<typeof rateImportBatchSchema>;
 /*                          General rate increase                              */
 /* -------------------------------------------------------------------------- */
 
-/** One lane's before and after — what somebody reviews before applying a GRI. */
+/** One money input a GRI moves on one lane, before and after, in the wire form. */
+/**
+ * One lane's before and after — what somebody reviews before applying a GRI: the lane's input
+ * values as they are and as the increase leaves them, and the names of the inputs it moves
+ * (every money value it scales, money rates and record fields included).
+ */
 export const rateIncreaseLineSchema = z.object({
   rateAgreementId: z.string(),
   agreementCode: z.string().default(""),
@@ -996,9 +1000,12 @@ export const rateIncreaseLineSchema = z.object({
   ruleId: z.string(),
   laneKey: z.string().default(""),
   label: z.string().default(""),
-  before: decimalStringSchema.nullish().transform((value) => value ?? 0),
-  after: decimalStringSchema.nullish().transform((value) => value ?? 0),
-  breakCount: z.number().int().default(0),
+  before: tariffInputValuesSchema.nullish().transform((value) => value ?? {}),
+  after: tariffInputValuesSchema.nullish().transform((value) => value ?? {}),
+  changed: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
 });
 export type RateIncreaseLine = z.infer<typeof rateIncreaseLineSchema>;
 
@@ -1007,8 +1014,8 @@ export const rateIncreasePlanSchema = z.object({
   effectiveFrom: z.number().int(),
   agreementCount: z.number().int().default(0),
   lines: z.array(rateIncreaseLineSchema).nullish(),
-  skippedNoRate: z.number().int().default(0),
-  negativeCount: z.number().int().default(0),
+  /** Lanes whose tariff sets no money input of its own, so the increase leaves them alone. */
+  skippedNoMoney: z.number().int().default(0),
 });
 export type RateIncreasePlan = z.infer<typeof rateIncreasePlanSchema>;
 

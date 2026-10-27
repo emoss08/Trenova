@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func validDataEntryControl() *DataEntryControl {
@@ -120,71 +119,6 @@ func TestDataEntryControl_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestDataEntryControl_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		dec := &DataEntryControl{}
-		require.True(t, dec.ID.IsNil())
-
-		err := dec.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, dec.ID.IsNil())
-		assert.NotZero(t, dec.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("dec_")
-		dec := &DataEntryControl{ID: existingID}
-
-		err := dec.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, dec.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		dec := &DataEntryControl{}
-
-		err := dec.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, dec.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		dec := &DataEntryControl{}
-
-		err := dec.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, dec.CreatedAt)
-		assert.NotZero(t, dec.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		dec := &DataEntryControl{}
-
-		err := dec.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, dec.ID.IsNil())
-		assert.Zero(t, dec.CreatedAt)
-		assert.Zero(t, dec.UpdatedAt)
-	})
 }
 
 func TestDataEntryControl_GetTableName(t *testing.T) {

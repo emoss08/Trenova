@@ -3,7 +3,13 @@ fragment JournalReversalTableRowFields on JournalReversal {
   businessUnitId
   organizationId
   originalJournalEntryId
+  originalJournalEntry {
+    ...JournalEntryReference
+  }
   reversalJournalEntryId
+  reversalJournalEntry {
+    ...JournalEntryReference
+  }
   postedBatchId
   status
   requestedAccountingDate
@@ -35,6 +41,7 @@ query JournalReversalTable($input: DataTableConnectionInput!, $includeTotalCount
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

@@ -124,7 +124,6 @@ func newValidConfig() *Config {
 			User:         "postgres",
 			Password:     "password",
 			SSLMode:      "disable",
-			MaxIdleConns: 10,
 			MaxOpenConns: 100,
 		},
 		Security: SecurityConfig{
@@ -230,20 +229,6 @@ func TestValidateConfig(t *testing.T) {
 		cfg.DocumentConversion.APIKey = "key"
 		assert.True(t, cfg.DocumentConversion.Enabled())
 		assert.False(t, cfg.DocumentConversion.MissingAPIKey())
-	})
-
-	t.Run("MaxIdleConns exceeds MaxOpenConns", func(t *testing.T) {
-		t.Parallel()
-
-		l := NewLoader()
-		cfg := newValidConfig()
-		cfg.Database.MaxIdleConns = 200
-		cfg.Database.MaxOpenConns = 100
-
-		err := l.validateConfig(cfg)
-
-		require.Error(t, err)
-		assert.ErrorIs(t, err, ErrMaxIdleConnsExceedsMaxOpenConns)
 	})
 
 	t.Run("request timeout must be shorter than write timeout", func(t *testing.T) {
@@ -633,13 +618,23 @@ func TestSetDefaults(t *testing.T) {
 		l.configureViper()
 
 		assert.Equal(t, "prefer", l.viper.GetString("database.sslMode"))
-		assert.Equal(t, 10, l.viper.GetInt("database.maxIdleConns"))
 		assert.Equal(t, 100, l.viper.GetInt("database.maxOpenConns"))
 		assert.Equal(t, "1h", l.viper.GetString("database.connMaxLifetime"))
 		assert.Equal(t, "10m", l.viper.GetString("database.connMaxIdleTime"))
 		assert.Equal(t, "10s", l.viper.GetString("database.statementTimeout"))
 		assert.Equal(t, "5s", l.viper.GetString("database.lockTimeout"))
 		assert.Equal(t, "30s", l.viper.GetString("database.idleInTransactionSessionTimeout"))
+		assert.Equal(t, 0, l.viper.GetInt("database.tenantConcurrency"))
+		assert.Equal(t, time.Minute, l.viper.GetDuration("database.maxWait"))
+		assert.True(t, l.viper.GetBool("database.cache.enabled"))
+		assert.Equal(
+			t,
+			DefaultDatabaseCacheLocalBytes,
+			l.viper.GetInt64("database.cache.localBytes"),
+		)
+		assert.False(t, l.viper.GetBool("database.cache.shared.enabled"))
+		assert.Equal(t, "trenova:keel:", l.viper.GetString("database.cache.shared.prefix"))
+		assert.Equal(t, 10, l.viper.GetInt("database.budget.maxRepeats"))
 	})
 
 	t.Run("session defaults", func(t *testing.T) {
@@ -1243,6 +1238,26 @@ func TestProductionConfigFileLoads(t *testing.T) {
 	assert.Equal(t, "__Host-trenova_session", cfg.Security.Session.Name)
 	assert.Equal(t, "enforce", cfg.Security.CSRF.BrowserGuard.Mode)
 	assert.Contains(t, cfg.Server.CORS.AllowedHeaders, "X-CSRF-Token")
+	assert.True(t, cfg.Database.Cache.Enabled)
+	assert.Equal(t, DefaultDatabaseCacheLocalBytes, cfg.Database.Cache.GetLocalBytes())
+	assert.False(
+		t,
+		cfg.Database.Cache.SharedEnabled(),
+		"the Redis tier copies tenant rows; it stays opt-in",
+	)
+	assert.Equal(t, 10, cfg.Database.Budget.GetMaxRepeats())
+	assert.Equal(t, 75/4, cfg.Database.GetTenantConcurrency(cfg.Database.MaxOpenConns))
+	assert.True(t, cfg.Reporting.ResultCache.Enabled)
+	assert.Equal(
+		t,
+		DefaultReportResultCacheLocalBytes,
+		cfg.Reporting.ResultCache.GetLocalBytes(),
+	)
+	assert.False(
+		t,
+		cfg.Reporting.ResultCache.SharedEnabled(),
+		"the Redis tier copies tenant report rows; it stays opt-in",
+	)
 }
 
 // stageProductionBase fills in the sections config.test.yaml leaves out but a

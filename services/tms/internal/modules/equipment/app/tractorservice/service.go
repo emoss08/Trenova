@@ -19,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
 	"github.com/emoss08/trenova/shared/jsonutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -28,7 +27,7 @@ type Params struct {
 	fx.In
 
 	Logger                    *zap.Logger
-	DB                        kernelports.DBConnection
+	DB                        kernelports.Transactor
 	Repo                      tractorports.TractorRepository
 	AssignmentRepo            shipmentports.AssignmentRepository
 	ContinuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
@@ -41,7 +40,7 @@ type Params struct {
 
 type Service struct {
 	l                         *zap.Logger
-	db                        kernelports.DBConnection
+	db                        kernelports.Transactor
 	repo                      tractorports.TractorRepository
 	assignmentRepo            shipmentports.AssignmentRepository
 	continuityRepo            equipmentcontinuityports.EquipmentContinuityRepository
@@ -394,7 +393,7 @@ func (s *Service) Locate(
 	}
 
 	var result *equipmentcontinuity.EquipmentContinuity
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, err := s.planLocate(txCtx, req); err != nil {
 			return err
 		}

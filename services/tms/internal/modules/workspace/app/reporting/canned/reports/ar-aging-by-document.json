@@ -1,0 +1,99 @@
+{
+  "key": "ar-aging-by-document",
+  "version": "1.0.0",
+  "name": "AR Subledger by Document",
+  "description": "Every document that moved a customer balance — invoices, credits, payments and adjustments — with its signed amount",
+  "category": "Accounting",
+  "tags": [
+    "ar",
+    "accounting",
+    "collections"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "customer_ledger_entry",
+    "columns": [
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "customer_code",
+        "label": "Customer Code",
+        "dimension": {
+          "field": "customer.code"
+        }
+      },
+      {
+        "id": "source_object",
+        "label": "Document Type",
+        "dimension": {
+          "field": "sourceObjectType"
+        }
+      },
+      {
+        "id": "document_number",
+        "label": "Document Number",
+        "dimension": {
+          "field": "documentNumber"
+        }
+      },
+      {
+        "id": "transaction_date",
+        "label": "Transaction Date",
+        "dimension": {
+          "field": "transactionDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "balance_movement",
+        "label": "Amount",
+        "measure": {
+          "field": "amountMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "transactionDate",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "balance_movement",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 180
+      }
+    ]
+  }
+}

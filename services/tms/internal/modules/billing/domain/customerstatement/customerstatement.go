@@ -7,46 +7,40 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 // MaxMonthlyDay is the latest day of the month statements can be scheduled
 // for, so the day exists in every month.
 const MaxMonthlyDay = 28
 
-var _ bun.BeforeAppendModelHook = (*Statement)(nil)
-
 // Statement records one statement emailed to a customer: the period it
 // covered, what it said was owed, and who it went to.
 type Statement struct {
-	bun.BaseModel `bun:"table:customer_statements,alias:cst" json:"-"`
+	keel.Table `keel:"customer_statements"`
 
-	ID                 pulid.ID `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerID         pulid.ID `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull"`
-	PeriodStart        int64    `json:"periodStart"        bun:"period_start,type:BIGINT,notnull"`
-	PeriodEnd          int64    `json:"periodEnd"          bun:"period_end,type:BIGINT,notnull"`
-	EndingBalanceMinor int64    `json:"endingBalanceMinor" bun:"ending_balance_minor,type:BIGINT,notnull"`
-	PastDueMinor       int64    `json:"pastDueMinor"       bun:"past_due_minor,type:BIGINT,notnull"`
-	CurrencyCode       string   `json:"currencyCode"       bun:"currency_code,type:VARCHAR(3),notnull"`
-	SentTo             string   `json:"sentTo"             bun:"sent_to,type:TEXT,notnull"`
-	Monthly            bool     `json:"monthly"            bun:"monthly,type:BOOLEAN,notnull"`
-	SentByID           pulid.ID `json:"sentById"           bun:"sent_by_id,type:VARCHAR(100),nullzero"`
-	SentAt             int64    `json:"sentAt"             bun:"sent_at,type:BIGINT,notnull"`
+	ID                 pulid.ID `json:"id"                 keel:"id,pk,autoid:cst_"`
+	OrganizationID     pulid.ID `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	CustomerID         pulid.ID `json:"customerId"         keel:"customer_id"`
+	PeriodStart        int64    `json:"periodStart"        keel:"period_start"`
+	PeriodEnd          int64    `json:"periodEnd"          keel:"period_end"`
+	EndingBalanceMinor int64    `json:"endingBalanceMinor" keel:"ending_balance_minor"`
+	PastDueMinor       int64    `json:"pastDueMinor"       keel:"past_due_minor"`
+	CurrencyCode       string   `json:"currencyCode"       keel:"currency_code"`
+	SentTo             string   `json:"sentTo"             keel:"sent_to"`
+	Monthly            bool     `json:"monthly"            keel:"monthly"`
+	SentByID           pulid.ID `json:"sentById"           keel:"sent_by_id,nullzero"`
+	SentAt             int64    `json:"sentAt"             keel:"sent_at"`
 }
 
-func (s *Statement) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("cst_")
-		}
-		if s.SentAt == 0 {
-			s.SentAt = timeutils.NowUnix()
-		}
+func (s *Statement) BeforeCreate(ctx context.Context) error {
+	if s.SentAt == 0 {
+		s.SentAt = timeutils.NowUnix()
 	}
+
 	return nil
 }
 

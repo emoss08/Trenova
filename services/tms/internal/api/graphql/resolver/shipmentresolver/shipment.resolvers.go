@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	shipmentdomain "github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -316,7 +317,7 @@ func (r *MutationResolver) PreviewShipmentContractRate(ctx context.Context, inpu
 		return nil, err
 	}
 
-	return contractRateToModel(application), nil
+	return contractRateToModel(application)
 }
 
 func (r *MutationResolver) AutoRateShipment(ctx context.Context, id string) (*gqlmodel.ShipmentAutoRateResponse, error) {
@@ -345,10 +346,14 @@ func (r *MutationResolver) AutoRateShipment(ctx context.Context, id string) (*gq
 	if err != nil {
 		return nil, err
 	}
+	contractRate, err := contractRateToModel(application)
+	if err != nil {
+		return nil, err
+	}
 
 	return &gqlmodel.ShipmentAutoRateResponse{
 		Shipment:     model,
-		ContractRate: contractRateToModel(application),
+		ContractRate: contractRate,
 	}, nil
 }
 
@@ -672,6 +677,13 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 	if err != nil {
 		return nil, err
 	}
+	quickFilters := base.QuickFilterSpecsFromGraphQL(input.QuickFilters)
+	if err = shipmentdomain.AuthorizeQuickFilters(
+		quickFilters,
+		r.VisibleFieldGroups(ctx, authCtx).Has(permission.FieldGroupMargins),
+	); err != nil {
+		return nil, err
+	}
 
 	connection, err := base.DataTableConnectionFromGraphQL(ctx, &gqlmodel.DataTableConnectionInput{
 		First:        input.First,
@@ -729,7 +741,7 @@ func (r *QueryResolver) Shipments(ctx context.Context, input gqlmodel.ShipmentsI
 			ActivityWindowEnd:       base.Int64Value(input.ActivityWindowEnd),
 			BillingTransferEligible: base.BoolValue(input.BillingTransferEligible),
 			IncludeCustomer:         base.BoolValue(input.IncludeCustomer),
-			QuickFilters:            base.QuickFilterSpecsFromGraphQL(input.QuickFilters),
+			QuickFilters:            quickFilters,
 			Timezone:                base.StringValue(input.Timezone),
 		},
 	})
@@ -1196,19 +1208,6 @@ func (r *QueryResolver) ShipmentTrackingEvents(ctx context.Context, shipmentID s
 	})
 }
 
-func (r *ShipmentRatingDetailResolver) Expression(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (string, error) {
-	if obj == nil || obj.Expression == "" {
-		return "", nil
-	}
-
-	allowed, err := mayReadFormulas(ctx, r.Core)
-	if err != nil || !allowed {
-		return "", err
-	}
-
-	return obj.Expression, nil
-}
-
 func (r *ShipmentResolver) FormulaTemplate(ctx context.Context, obj *gqlmodel.Shipment) (*gqlmodel.ShipmentFormulaTemplate, error) {
 	if obj == nil || obj.FormulaTemplate == nil {
 		return nil, nil
@@ -1220,4 +1219,49 @@ func (r *ShipmentResolver) FormulaTemplate(ctx context.Context, obj *gqlmodel.Sh
 	}
 
 	return obj.FormulaTemplate, nil
+}
+
+func (r *ShipmentRatingDetailResolver) Trace(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (map[string]any, error) {
+	if obj == nil || len(obj.Trace) == 0 {
+		return nil, nil
+	}
+
+	allowed, err := mayReadFormulas(ctx, r.Core)
+	if err != nil || !allowed {
+		return nil, err
+	}
+
+	return obj.Trace, nil
+}
+
+func (r *MutationResolver) ApproveShipmentRatingReview(ctx context.Context, shipmentID string) (*gqlmodel.Shipment, error) {
+	authCtx, err := r.RequirePermission(ctx, permission.ResourceBillingQueue, permission.OpUpdate)
+	if err != nil {
+		return nil, err
+	}
+	if _, err = r.RequirePermission(ctx, permission.ResourceShipment, permission.OpRead); err != nil {
+		return nil, err
+	}
+
+	id, err := pulid.MustParse(shipmentID)
+	if err != nil {
+		return nil, err
+	}
+	entity, err := r.ShipmentRatingReviewService.Approve(ctx, &shipmentports.ApproveRatingReviewRequest{
+		ShipmentID: id,
+		TenantInfo: base.TenantInfo(authCtx),
+	}, actorutil.FromAuthContext(authCtx))
+	if err != nil {
+		return nil, err
+	}
+
+	return base.ShipmentToModel(ctx, entity)
+}
+
+func (r *ShipmentRatingReviewApprovalResolver) ApprovedBy(ctx context.Context, obj *gqlmodel.ShipmentRatingReviewApproval) (*tenant.User, error) {
+	userID, err := base.OptionalID(&obj.ApprovedByID)
+	if err != nil {
+		return nil, err
+	}
+	return base.LoadUser(ctx, userID)
 }

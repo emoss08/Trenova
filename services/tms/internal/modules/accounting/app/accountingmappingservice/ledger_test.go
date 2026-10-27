@@ -63,8 +63,9 @@ func TestRescoreOffersEveryActiveGLAccountInLedgerMode(t *testing.T) {
 	accounts := glaccountportsmock.NewMockGLAccountRepository(t)
 	accounts.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*glaccount.GLAccount]{
-			Items: []*glaccount.GLAccount{cash, fuel},
-			Total: 2,
+			Items:      []*glaccount.GLAccount{cash, fuel},
+			Total:      2,
+			TotalExact: true,
 		}, nil).Once()
 	h.svc.glAccounts = accounts
 
@@ -85,8 +86,9 @@ func TestRescoreOffersAnInactiveAccountThatCarriesEntries(t *testing.T) {
 	accounts := glaccountportsmock.NewMockGLAccountRepository(t)
 	accounts.EXPECT().List(mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*glaccount.GLAccount]{
-			Items: []*glaccount.GLAccount{cash},
-			Total: 1,
+			Items:      []*glaccount.GLAccount{cash},
+			Total:      1,
+			TotalExact: true,
 		}, nil).Once()
 	h.svc.glAccounts = accounts
 	ledger := &fakeLedgerAccounts{accounts: []journalentryports.LedgerAccount{

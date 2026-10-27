@@ -1,0 +1,59 @@
+guide x12.004010.214 | Transportation Carrier Shipment Status Message
+set 214 QM 004010
+
+# Heading
+ST M 1
+B10 M 1
+L11 O 10
+MAN O 10
+K1 O 10
+AT8 O 10
+loop 0100 O 10 | Name
+  N1 M 1
+  N2 O 1
+  N3 O 2
+  N4 O 1
+  G62 O 1
+  L11 O 10
+end
+loop 0200 O 12 | Interline Information
+  MS3 M 1
+end
+
+# Detail
+loop 0205 O 999999 | Assigned Number
+  LX M 1
+  loop 0210 O 10 | Shipment Status Details
+    AT7 M 1
+    MS1 O 1
+    MS2 O 1
+    M7 O 5
+  end
+  L11 O 10
+  MAN O 9999
+  Q7 O 10
+  K1 O 10
+  AT5 O 10
+  AT8 O 10
+  loop 0220 O 999 | Carton (Package) Detail
+    CD3 M 1
+    L11 O 20
+    H6 O 10
+    POD O 1
+    G62 O 1
+  end
+  loop 0250 O 10 | Name
+    N1 M 1
+    N2 O 1
+    N3 O 2
+    N4 O 1
+    G62 O 1
+    L11 O 10
+  end
+  loop 0260 O 999999 | Shipment Purchase Order Detail
+    SPO M 1
+  end
+end
+
+# Summary
+SE M 1

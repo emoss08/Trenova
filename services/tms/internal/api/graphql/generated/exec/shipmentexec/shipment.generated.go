@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -74,7 +73,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentCommodityDetail", Implementors: []string{"ShipmentCommodityDetail"}},
 		{Name: "ShipmentConnection", Implementors: []string{"ShipmentConnection"}},
 		{Name: "ShipmentContractRate", Implementors: []string{"ShipmentContractRate"}},
-		{Name: "ShipmentContractRateAccessorial", Implementors: []string{"ShipmentContractRateAccessorial"}},
+		{Name: "ShipmentContractRateCharge", Implementors: []string{"ShipmentContractRateCharge"}},
 		{Name: "ShipmentCustomer", Implementors: []string{"ShipmentCustomer"}},
 		{Name: "ShipmentCustomerMix", Implementors: []string{"ShipmentCustomerMix"}},
 		{Name: "ShipmentCustomerMixEntry", Implementors: []string{"ShipmentCustomerMixEntry"}},
@@ -87,7 +86,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentEmptyMile", Implementors: []string{"ShipmentEmptyMile"}},
 		{Name: "ShipmentEventShipmentReference", Implementors: []string{"ShipmentEventShipmentReference"}},
 		{Name: "ShipmentFormulaTemplate", Implementors: []string{"ShipmentFormulaTemplate"}},
-		{Name: "ShipmentFormulaVariableDefinition", Implementors: []string{"ShipmentFormulaVariableDefinition"}},
+		{Name: "ShipmentFreightLine", Implementors: []string{"ShipmentFreightLine"}},
 		{Name: "ShipmentHazmatZone", Implementors: []string{"ShipmentHazmatZone"}},
 		{Name: "ShipmentHoldEvent", Implementors: []string{"ShipmentHoldEvent", "ShipmentEvent"}},
 		{Name: "ShipmentLaneHeatmap", Implementors: []string{"ShipmentLaneHeatmap"}},
@@ -105,9 +104,9 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentPreviousRateSummary", Implementors: []string{"ShipmentPreviousRateSummary"}},
 		{Name: "ShipmentPreviousRatesResponse", Implementors: []string{"ShipmentPreviousRatesResponse"}},
 		{Name: "ShipmentProfitabilityAnalytics", Implementors: []string{"ShipmentProfitabilityAnalytics"}},
-		{Name: "ShipmentRatingBreakdownItem", Implementors: []string{"ShipmentRatingBreakdownItem"}},
 		{Name: "ShipmentRatingDetail", Implementors: []string{"ShipmentRatingDetail"}},
-		{Name: "ShipmentRatingGuardrail", Implementors: []string{"ShipmentRatingGuardrail"}},
+		{Name: "ShipmentRatingReviewApproval", Implementors: []string{"ShipmentRatingReviewApproval"}},
+		{Name: "ShipmentRatingSkip", Implementors: []string{"ShipmentRatingSkip"}},
 		{Name: "ShipmentReadyToDispatch", Implementors: []string{"ShipmentReadyToDispatch"}},
 		{Name: "ShipmentRevenueToday", Implementors: []string{"ShipmentRevenueToday"}},
 		{Name: "ShipmentServiceFailureBillingContext", Implementors: []string{"ShipmentServiceFailureBillingContext"}},
@@ -122,6 +121,12 @@ var Shard = &gqlexec.Shard{
 		{Name: "ShipmentUIPolicy", Implementors: []string{"ShipmentUIPolicy"}},
 		{Name: "ShipmentUnassignedAnalytics", Implementors: []string{"ShipmentUnassignedAnalytics"}},
 		{Name: "ShipmentValidationResponse", Implementors: []string{"ShipmentValidationResponse"}},
+		{Name: "TariffBill", Implementors: []string{"TariffBill"}},
+		{Name: "TariffBillExchange", Implementors: []string{"TariffBillExchange"}},
+		{Name: "TariffBillLine", Implementors: []string{"TariffBillLine"}},
+		{Name: "TariffChoice", Implementors: []string{"TariffChoice"}},
+		{Name: "TariffChoiceOption", Implementors: []string{"TariffChoiceOption"}},
+		{Name: "TariffLineLimit", Implementors: []string{"TariffLineLimit"}},
 		{Name: "TrackingEvent", Implementors: []string{"TrackingEvent"}},
 	},
 	Fields: []gqlexec.Fields{
@@ -1124,6 +1129,19 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
 			},
 			{
+				Name:       "approveShipmentRatingReview",
+				NonNull:    true,
+				IsResolver: true,
+				HasChild:   true,
+				ChildType:  "Shipment",
+				Args:       field_Mutation_approveShipmentRatingReview_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverMutation](ec, "Mutation").ApproveShipmentRatingReview(ctx, fc.Args["shipmentId"].(string))
+				},
+				Marshal: gqlexec.Marshal(marshalNShipment2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipment),
+			},
+			{
 				Name:       "duplicateShipment",
 				NonNull:    true,
 				IsResolver: true,
@@ -1722,13 +1740,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "formulaTemplateId",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
 					return obj.FormulaTemplateID, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNID2string),
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
 				Name:     "consolidationGroupId",
@@ -1869,14 +1886,25 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
-				Name:     "baseRate",
+				Name:     "tariffInputs",
 				NonNull:  true,
-				ChildErr: errNoChild1,
+				ChildErr: errNoChild8,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.Shipment)
-					return obj.BaseRate, nil
+					return obj.TariffInputs, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:      "freightLines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ShipmentFreightLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.Shipment)
+					return obj.FreightLines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNShipmentFreightLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFreightLineᚄ),
 			},
 			{
 				Name:     "totalChargeAmount",
@@ -1986,16 +2014,6 @@ var Shard = &gqlexec.Shard{
 					return obj.BilledAt, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOTimestamp2ᚖint),
-			},
-			{
-				Name:     "ratingUnit",
-				NonNull:  true,
-				ChildErr: errNoChild9,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.Shipment)
-					return obj.RatingUnit, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
 				Name:     "fuelSurchargeLocked",
@@ -2553,6 +2571,54 @@ var Shard = &gqlexec.Shard{
 					return obj.IsDetention, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "isTariff",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
+					return obj.IsTariff, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "quantity",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
+					return obj.Quantity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "rate",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
+					return obj.Rate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "rateUnit",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentAdditionalCharge)
+					return obj.RateUnit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
 				Name:     "version",
@@ -4676,6 +4742,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentCommentConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "ShipmentCommentCountResponse", Fields: []*gqlexec.Field{
 			{
@@ -5352,6 +5428,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "ShipmentContractRate", Fields: []*gqlexec.Field{
 			{
@@ -5432,21 +5518,53 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "baseRate",
-				ChildErr: errNoChild1,
+				Name:     "templateVersion",
+				NonNull:  true,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
-					return obj.BaseRate, nil
+					return obj.TemplateVersion, nil
 				},
-				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
-				Name:     "linehaulAmount",
+				Name:     "inputs",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentContractRate)
+					return obj.Inputs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:     "refusal",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentContractRate)
+					return obj.Refusal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "freightLines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ShipmentFreightLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentContractRate)
+					return obj.FreightLines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNShipmentFreightLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFreightLineᚄ),
+			},
+			{
+				Name:     "freightAmount",
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
-					return obj.LinehaulAmount, nil
+					return obj.FreightAmount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
@@ -5471,25 +5589,25 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
-				Name:     "previousLinehaulAmount",
+				Name:     "previousFreightAmount",
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
-					return obj.PreviousLinehaulAmount, nil
+					return obj.PreviousFreightAmount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
-				Name:      "accessorials",
+				Name:      "charges",
 				NonNull:   true,
 				HasChild:  true,
-				ChildType: "ShipmentContractRateAccessorial",
+				ChildType: "ShipmentContractRateCharge",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentContractRate)
-					return obj.Accessorials, nil
+					return obj.Charges, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentContractRateAccessorial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRateAccessorialᚄ),
+				Marshal: gqlexec.Marshal(marshalNShipmentContractRateCharge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRateChargeᚄ),
 			},
 			{
 				Name:     "explanation",
@@ -5502,56 +5620,94 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
-		{Object: "ShipmentContractRateAccessorial", Fields: []*gqlexec.Field{
+		{Object: "ShipmentContractRateCharge", Fields: []*gqlexec.Field{
 			{
 				Name:     "accessorialChargeId",
 				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentContractRateAccessorial)
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.AccessorialChargeID, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
 				Name:     "description",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentContractRateAccessorial)
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Description, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "method",
+				Name:     "owner",
 				NonNull:  true,
-				ChildErr: errNoChild32,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentContractRateAccessorial)
-					return obj.Method, nil
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
+					return obj.Owner, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNAccessorialMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐMethod),
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
 				Name:     "amount",
 				NonNull:  true,
 				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentContractRateAccessorial)
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
 					return obj.Amount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 			{
-				Name:     "unit",
-				NonNull:  true,
-				ChildErr: errNoChild9,
+				Name:     "quantity",
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentContractRateAccessorial)
-					return obj.Unit, nil
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
+					return obj.Quantity, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "rate",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
+					return obj.Rate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "rateUnit",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentContractRateCharge)
+					return obj.RateUnit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "ShipmentCustomer", Fields: []*gqlexec.Field{
@@ -6260,22 +6416,12 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "type",
+				Name:     "source",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
-					return obj.Type, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "expression",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
-					return obj.Expression, nil
+					return obj.Source, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
@@ -6290,25 +6436,14 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "schemaId",
+				Name:     "testCount",
 				NonNull:  true,
-				ChildErr: errNoChild2,
+				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
-					return obj.SchemaID, nil
+					return obj.TestCount, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:      "variableDefinitions",
-				NonNull:   true,
-				HasChild:  true,
-				ChildType: "ShipmentFormulaVariableDefinition",
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFormulaTemplate)
-					return obj.VariableDefinitions, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNShipmentFormulaVariableDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFormulaVariableDefinitionᚄ),
+				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
 				Name:     "metadata",
@@ -6378,64 +6513,64 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
 			},
 		}},
-		{Object: "ShipmentFormulaVariableDefinition", Fields: []*gqlexec.Field{
+		{Object: "ShipmentFreightLine", Fields: []*gqlexec.Field{
 			{
-				Name:     "name",
+				Name:     "label",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFormulaVariableDefinition)
-					return obj.Name, nil
+					obj := o.(*gqlmodel.ShipmentFreightLine)
+					return obj.Label, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "type",
+				Name:     "quantity",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentFreightLine)
+					return obj.Quantity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "quantityUnit",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFormulaVariableDefinition)
-					return obj.Type, nil
+					obj := o.(*gqlmodel.ShipmentFreightLine)
+					return obj.QuantityUnit, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "description",
+				Name:     "rate",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentFreightLine)
+					return obj.Rate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "rateUnit",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFormulaVariableDefinition)
-					return obj.Description, nil
+					obj := o.(*gqlmodel.ShipmentFreightLine)
+					return obj.RateUnit, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "required",
+				Name:     "amount",
 				NonNull:  true,
-				ChildErr: errNoChild7,
+				ChildErr: errNoChild1,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFormulaVariableDefinition)
-					return obj.Required, nil
+					obj := o.(*gqlmodel.ShipmentFreightLine)
+					return obj.Amount, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
-			},
-			{
-				Name:     "defaultValue",
-				ChildErr: errNoChild33,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFormulaVariableDefinition)
-					return obj.DefaultValue, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOAny2interface),
-			},
-			{
-				Name:     "source",
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentFormulaVariableDefinition)
-					return obj.Source, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
 			},
 		}},
 		{Object: "ShipmentHazmatZone", Fields: []*gqlexec.Field{
@@ -6689,7 +6824,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "holdType",
-				ChildErr: errNoChild34,
+				ChildErr: errNoChild32,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.HoldType, nil
@@ -6698,7 +6833,7 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "holdSeverity",
-				ChildErr: errNoChild35,
+				ChildErr: errNoChild33,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentHoldEvent)
 					return obj.HoldSeverity, nil
@@ -7412,7 +7547,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild36,
+				ChildErr: errNoChild34,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.Status, nil
@@ -7422,7 +7557,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "coverageType",
 				NonNull:  true,
-				ChildErr: errNoChild37,
+				ChildErr: errNoChild35,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentMove)
 					return obj.CoverageType, nil
@@ -8236,13 +8371,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "formulaTemplateId",
-				NonNull:  true,
 				ChildErr: errNoChild0,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
 					return obj.FormulaTemplateID, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNID2string),
+				Marshal: gqlexec.Marshal(marshalOID2ᚖstring),
 			},
 			{
 				Name:     "freightChargeAmount",
@@ -8273,16 +8407,6 @@ var Shard = &gqlexec.Shard{
 					return obj.TotalChargeAmount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNDecimal2string),
-			},
-			{
-				Name:     "ratingUnit",
-				NonNull:  true,
-				ChildErr: errNoChild9,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentPreviousRateSummary)
-					return obj.RatingUnit, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
 				Name:     "pieces",
@@ -8335,6 +8459,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
+			{
+				Name:     "totalExact",
+				NonNull:  true,
+				ChildErr: errNoChild7,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentPreviousRatesResponse)
+					return obj.TotalExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "ShipmentProfitabilityAnalytics", Fields: []*gqlexec.Field{
 			{
@@ -8368,13 +8502,12 @@ var Shard = &gqlexec.Shard{
 			},
 			{
 				Name:     "unprofitableCount",
-				NonNull:  true,
 				ChildErr: errNoChild9,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentProfitabilityAnalytics)
 					return obj.UnprofitableCount, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNInt2int),
+				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
 			{
 				Name:     "shipmentCount",
@@ -8395,48 +8528,6 @@ var Shard = &gqlexec.Shard{
 					return obj.TotalMiles, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNFloat2float64),
-			},
-		}},
-		{Object: "ShipmentRatingBreakdownItem", Fields: []*gqlexec.Field{
-			{
-				Name:     "name",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingBreakdownItem)
-					return obj.Name, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "label",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingBreakdownItem)
-					return obj.Label, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "amount",
-				NonNull:  true,
-				ChildErr: errNoChild26,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingBreakdownItem)
-					return obj.Amount, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
-			},
-			{
-				Name:     "error",
-				NonNull:  true,
-				ChildErr: errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingBreakdownItem)
-					return obj.Error, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "ShipmentRatingDetail", Fields: []*gqlexec.Field{
@@ -8461,38 +8552,6 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:       "expression",
-				NonNull:    true,
-				IsResolver: true,
-				Concurrent: true,
-				ChildErr:   errNoChild2,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingDetail)
-					return gqlexec.Resolver[resolverShipmentRatingDetail](ec, "ShipmentRatingDetail").Expression(ctx, obj)
-				},
-				Marshal: gqlexec.Marshal(marshalNString2string),
-			},
-			{
-				Name:     "resolvedVariables",
-				NonNull:  true,
-				ChildErr: errNoChild8,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingDetail)
-					return obj.ResolvedVariables, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNJSON2map),
-			},
-			{
-				Name:     "result",
-				NonNull:  true,
-				ChildErr: errNoChild26,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingDetail)
-					return obj.Result, nil
-				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
-			},
-			{
 				Name:     "ratedAt",
 				NonNull:  true,
 				ChildErr: errNoChild6,
@@ -8513,25 +8572,67 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNInt2int),
 			},
 			{
-				Name:      "breakdown",
-				NonNull:   true,
+				Name:      "bill",
 				HasChild:  true,
-				ChildType: "ShipmentRatingBreakdownItem",
+				ChildType: "TariffBill",
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
-					return obj.Breakdown, nil
+					return obj.Bill, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNShipmentRatingBreakdownItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingBreakdownItemᚄ),
+				Marshal: gqlexec.Marshal(marshalOTariffBill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffBill),
 			},
 			{
-				Name:      "guardrail",
-				HasChild:  true,
-				ChildType: "ShipmentRatingGuardrail",
+				Name:     "refusal",
+				NonNull:  true,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentRatingDetail)
-					return obj.Guardrail, nil
+					return obj.Refusal, nil
 				},
-				Marshal: gqlexec.Marshal(marshalOShipmentRatingGuardrail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingGuardrail),
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "choices",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "TariffChoice",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return obj.Choices, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTariffChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceᚄ),
+			},
+			{
+				Name:     "inputs",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return obj.Inputs, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNJSON2map),
+			},
+			{
+				Name:      "skipped",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "ShipmentRatingSkip",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return obj.Skipped, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNShipmentRatingSkip2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkipᚄ),
+			},
+			{
+				Name:       "trace",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return gqlexec.Resolver[resolverShipmentRatingDetail](ec, "ShipmentRatingDetail").Trace(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
 			{
 				Name:     "rateQuoteId",
@@ -8603,55 +8704,91 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
-		}},
-		{Object: "ShipmentRatingGuardrail", Fields: []*gqlexec.Field{
 			{
-				Name:     "applied",
+				Name:     "awaitingReview",
 				NonNull:  true,
 				ChildErr: errNoChild7,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingGuardrail)
-					return obj.Applied, nil
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return obj.AwaitingReview, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 			{
-				Name:     "bound",
+				Name:      "reviewApproval",
+				HasChild:  true,
+				ChildType: "ShipmentRatingReviewApproval",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingDetail)
+					return obj.ReviewApproval, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOShipmentRatingReviewApproval2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingReviewApproval),
+			},
+		}},
+		{Object: "ShipmentRatingReviewApproval", Fields: []*gqlexec.Field{
+			{
+				Name:     "reviews",
 				NonNull:  true,
 				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingGuardrail)
-					return obj.Bound, nil
+					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
+					return obj.Reviews, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "approvedById",
+				NonNull:  true,
+				ChildErr: errNoChild0,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
+					return obj.ApprovedByID, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNID2string),
+			},
+			{
+				Name:     "approvedAt",
+				NonNull:  true,
+				ChildErr: errNoChild6,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
+					return obj.ApprovedAt, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTimestamp2int),
+			},
+			{
+				Name:       "approvedBy",
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "User",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingReviewApproval)
+					return gqlexec.Resolver[resolverShipmentRatingReviewApproval](ec, "ShipmentRatingReviewApproval").ApprovedBy(ctx, obj)
+				},
+				Marshal: gqlexec.Marshal(marshalOUser2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋidentityᚋdomainᚋtenantᚐUser),
+			},
+		}},
+		{Object: "ShipmentRatingSkip", Fields: []*gqlexec.Field{
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.ShipmentRatingSkip)
+					return obj.Code, nil
 				},
 				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 			{
-				Name:     "rawResult",
+				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild26,
+				ChildErr: errNoChild2,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingGuardrail)
-					return obj.RawResult, nil
+					obj := o.(*gqlmodel.ShipmentRatingSkip)
+					return obj.Source, nil
 				},
-				Marshal: gqlexec.Marshal(marshalNFloat2float64),
-			},
-			{
-				Name:     "minCharge",
-				ChildErr: errNoChild26,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingGuardrail)
-					return obj.MinCharge, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
-			},
-			{
-				Name:     "maxCharge",
-				ChildErr: errNoChild26,
-				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
-					obj := o.(*gqlmodel.ShipmentRatingGuardrail)
-					return obj.MaxCharge, nil
-				},
-				Marshal: gqlexec.Marshal(marshalOFloat2ᚖfloat64),
+				Marshal: gqlexec.Marshal(marshalNString2string),
 			},
 		}},
 		{Object: "ShipmentReadyToDispatch", Fields: []*gqlexec.Field{
@@ -8845,7 +8982,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "status",
 				NonNull:  true,
-				ChildErr: errNoChild38,
+				ChildErr: errNoChild36,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Status, nil
@@ -8855,7 +8992,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "type",
 				NonNull:  true,
-				ChildErr: errNoChild39,
+				ChildErr: errNoChild37,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.Type, nil
@@ -8865,7 +9002,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "scheduleType",
 				NonNull:  true,
-				ChildErr: errNoChild40,
+				ChildErr: errNoChild38,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*gqlmodel.ShipmentStop)
 					return obj.ScheduleType, nil
@@ -9569,6 +9706,325 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
 			},
 		}},
+		{Object: "TariffBill", Fields: []*gqlexec.Field{
+			{
+				Name:     "currency",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.Currency, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:      "lines",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "TariffBillLine",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.Lines, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTariffBillLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffBillLineᚄ),
+			},
+			{
+				Name:     "notes",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.Notes, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "reviews",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.Reviews, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2ᚕstringᚄ),
+			},
+			{
+				Name:     "freightTotal",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.FreightTotal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "accessorialTotal",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.AccessorialTotal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:     "total",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.Total, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:      "exchange",
+				HasChild:  true,
+				ChildType: "TariffBillExchange",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBill)
+					return obj.Exchange, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTariffBillExchange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffBillExchange),
+			},
+		}},
+		{Object: "TariffBillExchange", Fields: []*gqlexec.Field{
+			{
+				Name:     "currency",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillExchange)
+					return obj.Currency, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "rate",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillExchange)
+					return obj.Rate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+		}},
+		{Object: "TariffBillLine", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "code",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.Code, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "quantity",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.Quantity, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "quantityUnit",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.QuantityUnit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "rate",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.Rate, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "rateUnit",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.RateUnit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "amount",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.Amount, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+			{
+				Name:      "limit",
+				HasChild:  true,
+				ChildType: "TariffLineLimit",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.Limit, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOTariffLineLimit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffLineLimit),
+			},
+			{
+				Name:     "on",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffBillLine)
+					return obj.On, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+		}},
+		{Object: "TariffChoice", Fields: []*gqlexec.Field{
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "currency",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Currency, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "chosen",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Chosen, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+			{
+				Name:      "options",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "TariffChoiceOption",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoice)
+					return obj.Options, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNTariffChoiceOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceOptionᚄ),
+			},
+		}},
+		{Object: "TariffChoiceOption", Fields: []*gqlexec.Field{
+			{
+				Name:     "label",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoiceOption)
+					return obj.Label, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "status",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoiceOption)
+					return obj.Status, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "subtotal",
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoiceOption)
+					return obj.Subtotal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalODecimal2ᚖstring),
+			},
+			{
+				Name:     "refusal",
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffChoiceOption)
+					return obj.Refusal, nil
+				},
+				Marshal: gqlexec.Marshal(marshalOString2ᚖstring),
+			},
+		}},
+		{Object: "TariffLineLimit", Fields: []*gqlexec.Field{
+			{
+				Name:     "kind",
+				NonNull:  true,
+				ChildErr: errNoChild2,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffLineLimit)
+					return obj.Kind, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNString2string),
+			},
+			{
+				Name:     "computed",
+				NonNull:  true,
+				ChildErr: errNoChild1,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.TariffLineLimit)
+					return obj.Computed, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNDecimal2string),
+			},
+		}},
 		{Object: "TrackingEvent", Fields: []*gqlexec.Field{
 			{
 				Name:     "id",
@@ -9613,7 +10069,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "source",
 				NonNull:  true,
-				ChildErr: errNoChild41,
+				ChildErr: errNoChild39,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Source, nil
@@ -9623,7 +10079,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "kind",
 				NonNull:  true,
-				ChildErr: errNoChild42,
+				ChildErr: errNoChild40,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Kind, nil
@@ -9633,7 +10089,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "matchMethod",
 				NonNull:  true,
-				ChildErr: errNoChild43,
+				ChildErr: errNoChild41,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.MatchMethod, nil
@@ -9708,7 +10164,7 @@ var Shard = &gqlexec.Shard{
 			{
 				Name:     "outcome",
 				NonNull:  true,
-				ChildErr: errNoChild44,
+				ChildErr: errNoChild42,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*trackingevent.TrackingEvent)
 					return obj.Outcome, nil
@@ -9766,6 +10222,7 @@ var Shard = &gqlexec.Shard{
 		{Root: "ShipmentMove", Check: func(r any) bool { _, ok := r.(resolverShipmentMove); return ok }},
 		{Root: "ShipmentMoveJurisdictionMile", Check: func(r any) bool { _, ok := r.(resolverShipmentMoveJurisdictionMile); return ok }},
 		{Root: "ShipmentRatingDetail", Check: func(r any) bool { _, ok := r.(resolverShipmentRatingDetail); return ok }},
+		{Root: "ShipmentRatingReviewApproval", Check: func(r any) bool { _, ok := r.(resolverShipmentRatingReviewApproval); return ok }},
 	},
 }
 
@@ -9791,6 +10248,7 @@ type resolverMutation interface {
 	UpdateShipment(ctx context.Context, id string, input gqlmodel.ShipmentInput) (*gqlmodel.Shipment, error)
 	CancelShipment(ctx context.Context, id string, input *gqlmodel.ShipmentCancelInput) (*gqlmodel.Shipment, error)
 	UncancelShipment(ctx context.Context, id string) (*gqlmodel.Shipment, error)
+	ApproveShipmentRatingReview(ctx context.Context, shipmentID string) (*gqlmodel.Shipment, error)
 	DuplicateShipment(ctx context.Context, input gqlmodel.ShipmentDuplicateInput) (*gqlmodel.ShipmentDuplicateResponse, error)
 	TransferShipmentOwnership(ctx context.Context, id string, input gqlmodel.ShipmentTransferOwnershipInput) (*gqlmodel.Shipment, error)
 	TransferShipmentToBillingItems(ctx context.Context, input gqlmodel.ShipmentTransferToBillingInput) (*gqlmodel.ShipmentTransferToBillingResult, error)
@@ -9852,7 +10310,11 @@ type resolverShipmentMoveJurisdictionMile interface {
 }
 
 type resolverShipmentRatingDetail interface {
-	Expression(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (string, error)
+	Trace(ctx context.Context, obj *gqlmodel.ShipmentRatingDetail) (map[string]any, error)
+}
+
+type resolverShipmentRatingReviewApproval interface {
+	ApprovedBy(ctx context.Context, obj *gqlmodel.ShipmentRatingReviewApproval) (*tenant.User, error)
 }
 
 var (
@@ -9888,19 +10350,17 @@ var (
 	errNoChild29 = errors.New("field of type ShipmentCommentVisibility does not have child fields")
 	errNoChild30 = errors.New("field of type ShipmentCommentPriority does not have child fields")
 	errNoChild31 = errors.New("field of type ShipmentCommentSource does not have child fields")
-	errNoChild32 = errors.New("field of type AccessorialMethod does not have child fields")
-	errNoChild33 = errors.New("field of type Any does not have child fields")
-	errNoChild34 = errors.New("field of type HoldType does not have child fields")
-	errNoChild35 = errors.New("field of type HoldSeverity does not have child fields")
-	errNoChild36 = errors.New("field of type MoveStatus does not have child fields")
-	errNoChild37 = errors.New("field of type MoveCoverageType does not have child fields")
-	errNoChild38 = errors.New("field of type StopStatus does not have child fields")
-	errNoChild39 = errors.New("field of type StopType does not have child fields")
-	errNoChild40 = errors.New("field of type StopScheduleType does not have child fields")
-	errNoChild41 = errors.New("field of type TrackingEventSource does not have child fields")
-	errNoChild42 = errors.New("field of type StopVisitKind does not have child fields")
-	errNoChild43 = errors.New("field of type TrackingMatchMethod does not have child fields")
-	errNoChild44 = errors.New("field of type TrackingEventOutcome does not have child fields")
+	errNoChild32 = errors.New("field of type HoldType does not have child fields")
+	errNoChild33 = errors.New("field of type HoldSeverity does not have child fields")
+	errNoChild34 = errors.New("field of type MoveStatus does not have child fields")
+	errNoChild35 = errors.New("field of type MoveCoverageType does not have child fields")
+	errNoChild36 = errors.New("field of type StopStatus does not have child fields")
+	errNoChild37 = errors.New("field of type StopType does not have child fields")
+	errNoChild38 = errors.New("field of type StopScheduleType does not have child fields")
+	errNoChild39 = errors.New("field of type TrackingEventSource does not have child fields")
+	errNoChild40 = errors.New("field of type StopVisitKind does not have child fields")
+	errNoChild41 = errors.New("field of type TrackingMatchMethod does not have child fields")
+	errNoChild42 = errors.New("field of type TrackingEventOutcome does not have child fields")
 )
 
 func marshalAbstractShipmentEvent(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
@@ -10036,6 +10496,19 @@ func field_Mutation_uncancelShipment_args(ctx context.Context, ec *gqlexec.Exec,
 		return nil, err
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func field_Mutation_approveShipmentRatingReview_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 1)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "shipmentId",
+		func(ctx context.Context, v any) (string, error) {
+			return unmarshalNID2string(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["shipmentId"] = arg0
 	return args, nil
 }
 
@@ -11569,14 +12042,8 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 	if _, present := asMap["freightChargeAmount"]; !present {
 		asMap["freightChargeAmount"] = "0"
 	}
-	if _, present := asMap["baseRate"]; !present {
-		asMap["baseRate"] = "0"
-	}
 	if _, present := asMap["totalChargeAmount"]; !present {
 		asMap["totalChargeAmount"] = "0"
-	}
-	if _, present := asMap["ratingUnit"]; !present {
-		asMap["ratingUnit"] = 1
 	}
 	if _, present := asMap["fuelSurchargeLocked"]; !present {
 		asMap["fuelSurchargeLocked"] = false
@@ -11591,7 +12058,7 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 		asMap["commodities"] = []any{}
 	}
 
-	fieldsInOrder := [...]string{"sourceDocumentId", "serviceTypeId", "shipmentTypeId", "customerId", "billToCustomerId", "freightTerms", "tractorTypeId", "trailerTypeId", "ownerId", "enteredById", "canceledById", "formulaTemplateId", "consolidationGroupId", "orderId", "status", "tenderStatus", "entryMethod", "proNumber", "bol", "externalReference", "cancelReason", "otherChargeAmount", "freightChargeAmount", "baseRate", "totalChargeAmount", "pieces", "weight", "temperatureMin", "temperatureMax", "actualDeliveryDate", "actualShipDate", "canceledAt", "billingTransferStatus", "transferredToBillingAt", "markedReadyToBillAt", "billedAt", "ratingUnit", "fuelSurchargeLocked", "rateOverrideReason", "version", "moves", "additionalCharges", "commodities", "freightAllocations"}
+	fieldsInOrder := [...]string{"sourceDocumentId", "serviceTypeId", "shipmentTypeId", "customerId", "billToCustomerId", "freightTerms", "tractorTypeId", "trailerTypeId", "ownerId", "enteredById", "canceledById", "formulaTemplateId", "consolidationGroupId", "orderId", "status", "tenderStatus", "entryMethod", "proNumber", "bol", "externalReference", "cancelReason", "otherChargeAmount", "freightChargeAmount", "tariffInputs", "totalChargeAmount", "pieces", "weight", "temperatureMin", "temperatureMax", "actualDeliveryDate", "actualShipDate", "canceledAt", "billingTransferStatus", "transferredToBillingAt", "markedReadyToBillAt", "billedAt", "fuelSurchargeLocked", "rateOverrideReason", "version", "moves", "additionalCharges", "commodities", "freightAllocations"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -11677,7 +12144,7 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 			it.CanceledByID = data
 		case "formulaTemplateId":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("formulaTemplateId"))
-			data, err := unmarshalNID2string(ctx, ec, v)
+			data, err := unmarshalOID2ᚖstring(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
@@ -11759,13 +12226,13 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 				return it, err
 			}
 			it.FreightChargeAmount = data
-		case "baseRate":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("baseRate"))
-			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
+		case "tariffInputs":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tariffInputs"))
+			data, err := unmarshalOJSON2map(ctx, ec, v)
 			if err != nil {
 				return it, err
 			}
-			it.BaseRate = data
+			it.TariffInputs = data
 		case "totalChargeAmount":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("totalChargeAmount"))
 			data, err := unmarshalODecimal2ᚖstring(ctx, ec, v)
@@ -11850,13 +12317,6 @@ func unmarshalInputShipmentInput(ctx context.Context, ec *gqlexec.Exec, obj any)
 				return it, err
 			}
 			it.BilledAt = data
-		case "ratingUnit":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ratingUnit"))
-			data, err := unmarshalOInt2ᚖint(ctx, ec, v)
-			if err != nil {
-				return it, err
-			}
-			it.RatingUnit = data
 		case "fuelSurchargeLocked":
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fuelSurchargeLocked"))
 			data, err := unmarshalOBoolean2ᚖbool(ctx, ec, v)
@@ -13150,14 +13610,6 @@ func unmarshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, v any) (*
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func marshalNAccessorialMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accessorialcharge.Method) graphql.Marshaler {
-	res := graphql.MarshalString(string(v))
-	if res == graphql.Null {
-		gqlexec.NullViolation(ctx)
-	}
-	return res
-}
-
 func marshalNAssignmentStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAssignmentStatus(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v gqlmodel.AssignmentStatus) graphql.Marshaler {
 	return v
 }
@@ -13691,20 +14143,20 @@ func marshalNShipmentContractRate2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "ShipmentContractRate", v)
 }
 
-func marshalNShipmentContractRateAccessorial2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRateAccessorialᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentContractRateAccessorial) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.ShipmentContractRateAccessorial]{
-		Elem:        marshalNShipmentContractRateAccessorial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRateAccessorial,
+func marshalNShipmentContractRateCharge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRateChargeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentContractRateCharge) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ShipmentContractRateCharge]{
+		Elem:        marshalNShipmentContractRateCharge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRateCharge,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNShipmentContractRateAccessorial2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRateAccessorial(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentContractRateAccessorial) graphql.Marshaler {
+func marshalNShipmentContractRateCharge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentContractRateCharge(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentContractRateCharge) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
-	return ec.MarshalType(ctx, sel, "ShipmentContractRateAccessorial", v)
+	return ec.MarshalType(ctx, sel, "ShipmentContractRateCharge", v)
 }
 
 func marshalNShipmentCustomerMixEntry2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentCustomerMixEntryᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentCustomerMixEntry) graphql.Marshaler {
@@ -13815,20 +14267,20 @@ func marshalNShipmentEventType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapi
 	return v
 }
 
-func marshalNShipmentFormulaVariableDefinition2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFormulaVariableDefinitionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentFormulaVariableDefinition) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.ShipmentFormulaVariableDefinition]{
-		Elem:        marshalNShipmentFormulaVariableDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFormulaVariableDefinition,
+func marshalNShipmentFreightLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFreightLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentFreightLine) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ShipmentFreightLine]{
+		Elem:        marshalNShipmentFreightLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFreightLine,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNShipmentFormulaVariableDefinition2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFormulaVariableDefinition(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentFormulaVariableDefinition) graphql.Marshaler {
+func marshalNShipmentFreightLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentFreightLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentFreightLine) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
-	return ec.MarshalType(ctx, sel, "ShipmentFormulaVariableDefinition", v)
+	return ec.MarshalType(ctx, sel, "ShipmentFreightLine", v)
 }
 
 func marshalNShipmentHazmatZone2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentHazmatZoneᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentHazmatZone) graphql.Marshaler {
@@ -13975,20 +14427,20 @@ func marshalNShipmentPreviousRatesResponse2ᚖgithubᚗcomᚋemoss08ᚋtrenova�
 	return ec.MarshalType(ctx, sel, "ShipmentPreviousRatesResponse", v)
 }
 
-func marshalNShipmentRatingBreakdownItem2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingBreakdownItemᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentRatingBreakdownItem) graphql.Marshaler {
-	return gqlexec.List[*gqlmodel.ShipmentRatingBreakdownItem]{
-		Elem:        marshalNShipmentRatingBreakdownItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingBreakdownItem,
+func marshalNShipmentRatingSkip2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkipᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.ShipmentRatingSkip) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.ShipmentRatingSkip]{
+		Elem:        marshalNShipmentRatingSkip2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkip,
 		NonNull:     true,
 		NonNullElem: true,
 	}.Marshal(ctx, ec, sel, v)
 }
 
-func marshalNShipmentRatingBreakdownItem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingBreakdownItem(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentRatingBreakdownItem) graphql.Marshaler {
+func marshalNShipmentRatingSkip2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingSkip(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentRatingSkip) graphql.Marshaler {
 	if v == nil {
 		gqlexec.NullViolation(ctx)
 		return graphql.Null
 	}
-	return ec.MarshalType(ctx, sel, "ShipmentRatingBreakdownItem", v)
+	return ec.MarshalType(ctx, sel, "ShipmentRatingSkip", v)
 }
 
 func marshalNShipmentServiceFailureBillingContext2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentServiceFailureBillingContext(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentServiceFailureBillingContext) graphql.Marshaler {
@@ -14136,6 +14588,54 @@ func marshalNString2ᚕstringᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.
 	}.Marshal(ctx, ec, sel, v)
 }
 
+func marshalNTariffBillLine2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffBillLineᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.TariffBillLine) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.TariffBillLine]{
+		Elem:        marshalNTariffBillLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffBillLine,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTariffBillLine2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffBillLine(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffBillLine) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffBillLine", v)
+}
+
+func marshalNTariffChoice2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.TariffChoice) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.TariffChoice]{
+		Elem:        marshalNTariffChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoice,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTariffChoice2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoice(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffChoice) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffChoice", v)
+}
+
+func marshalNTariffChoiceOption2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceOptionᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.TariffChoiceOption) graphql.Marshaler {
+	return gqlexec.List[*gqlmodel.TariffChoiceOption]{
+		Elem:        marshalNTariffChoiceOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceOption,
+		NonNull:     true,
+		NonNullElem: true,
+	}.Marshal(ctx, ec, sel, v)
+}
+
+func marshalNTariffChoiceOption2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffChoiceOption(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffChoiceOption) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffChoiceOption", v)
+}
+
 func marshalNTimestamp2int(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v int) graphql.Marshaler {
 	res := graphql.MarshalInt(v)
 	if res == graphql.Null {
@@ -14189,14 +14689,6 @@ func marshalNTrackingMatchMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋm
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}
-	return res
-}
-
-func marshalOAny2interface(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v any) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalAny(v)
 	return res
 }
 
@@ -14539,11 +15031,11 @@ func marshalOShipmentRatingDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternal
 	return ec.MarshalType(ctx, sel, "ShipmentRatingDetail", v)
 }
 
-func marshalOShipmentRatingGuardrail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingGuardrail(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentRatingGuardrail) graphql.Marshaler {
+func marshalOShipmentRatingReviewApproval2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentRatingReviewApproval(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentRatingReviewApproval) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec.MarshalType(ctx, sel, "ShipmentRatingGuardrail", v)
+	return ec.MarshalType(ctx, sel, "ShipmentRatingReviewApproval", v)
 }
 
 func marshalOShipmentReadyToDispatch2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐShipmentReadyToDispatch(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.ShipmentReadyToDispatch) graphql.Marshaler {
@@ -14607,6 +15099,27 @@ func marshalOString2ᚖstring(ctx context.Context, ec *gqlexec.Exec, sel ast.Sel
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func marshalOTariffBill2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffBill(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffBill) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffBill", v)
+}
+
+func marshalOTariffBillExchange2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffBillExchange(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffBillExchange) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffBillExchange", v)
+}
+
+func marshalOTariffLineLimit2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐTariffLineLimit(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.TariffLineLimit) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "TariffLineLimit", v)
 }
 
 func marshalOTimestamp2ᚖint(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *int) graphql.Marshaler {

@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/internal/testutil/workerteamtest"
@@ -23,17 +24,22 @@ func TestChangeRequestsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	team := workerteamtest.Seed(t, ctx, db, data)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	ctx = data.Ctx(ctx)
 
 	for _, wrk := range []*worker.Worker{team.Direct, team.ViaFleet, team.Outsider} {
-		_, err := db.NewInsert().Model(&worker.WorkerProfileChangeRequest{
-			ID:             pulid.MustNew("wpcr_"),
-			OrganizationID: data.Organization.ID,
-			BusinessUnitID: data.BusinessUnit.ID,
-			WorkerID:       wrk.ID,
-			Status:         worker.ProfileChangePending,
-			Changes:        []worker.FieldChange{},
-			SubmittedAt:    1_700_000_000,
-		}).Exec(ctx)
+		err := workerdb.WorkerProfileChangeRequests.Create(
+			ctx,
+			db,
+			&worker.WorkerProfileChangeRequest{
+				ID:             pulid.MustNew("wpcr_"),
+				OrganizationID: data.Organization.ID,
+				BusinessUnitID: data.BusinessUnit.ID,
+				WorkerID:       wrk.ID,
+				Status:         worker.ProfileChangePending,
+				Changes:        []worker.FieldChange{},
+				SubmittedAt:    1_700_000_000,
+			},
+		)
 		require.NoError(t, err)
 	}
 
@@ -54,6 +60,10 @@ func TestChangeRequestsNarrowToTheTeamAManagerAnswersFor(t *testing.T) {
 		return out
 	}
 
-	assert.ElementsMatch(t, []pulid.ID{team.Direct.ID, team.ViaFleet.ID}, workers(team.ManagerIDs()))
+	assert.ElementsMatch(
+		t,
+		[]pulid.ID{team.Direct.ID, team.ViaFleet.ID},
+		workers(team.ManagerIDs()),
+	)
 	assert.Len(t, workers(nil), 3)
 }

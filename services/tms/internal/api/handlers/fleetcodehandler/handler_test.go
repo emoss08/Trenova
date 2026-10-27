@@ -1,19 +1,20 @@
 package fleetcodehandler_test
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/fleetcodeportsmock"
 	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/mocks/fleetcodeportsmock"
+
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/equipment/ports/fleetcodeports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -73,8 +74,8 @@ func TestFleetCodeHandler_List_Success(t *testing.T) {
 
 	fcID := pulid.MustNew("fc_")
 	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
-	repo.On("List", mock.Anything, mock.Anything).
-		Return(&pagination.ListResult[*fleetcode.FleetCode]{
+	repo.On("ListConnection", mock.Anything, mock.Anything).
+		Return(&pagination.CursorListResult[*fleetcode.FleetCode]{
 			Items: []*fleetcode.FleetCode{
 				{
 					ID:             fcID,
@@ -84,7 +85,7 @@ func TestFleetCodeHandler_List_Success(t *testing.T) {
 					Status:         domaintypes.StatusActive,
 				},
 			},
-			Total: 1,
+			TotalCount: new(1),
 		}, nil)
 
 	handler := setupFleetCodeHandler(t, repo)
@@ -99,7 +100,7 @@ func TestFleetCodeHandler_List_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, ginCtx.ResponseCode())
 
-	var resp pagination.Response[[]map[string]any]
+	var resp pagination.CursorResponse[[]map[string]any]
 	require.NoError(t, ginCtx.ResponseJSON(&resp))
 	assert.Equal(t, 1, resp.Count)
 	assert.Len(t, resp.Results, 1)
@@ -123,13 +124,15 @@ func TestFleetCodeHandler_List_WithPagination(t *testing.T) {
 	}
 
 	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
-	repo.On("List", mock.Anything, mock.MatchedBy(
-		func(req *fleetcodeports.ListFleetCodesRequest) bool {
-			return req.Filter.Pagination.Limit == requestedLimit+1
+	repo.On("ListConnection", mock.Anything, mock.MatchedBy(
+		func(req *fleetcodeports.ListFleetCodeConnectionRequest) bool {
+			return req.Cursor.Limit == requestedLimit
 		},
-	)).Return(&pagination.ListResult[*fleetcode.FleetCode]{
-		Items: items,
-		Total: 50,
+	)).Return(&pagination.CursorListResult[*fleetcode.FleetCode]{
+		Items:       items[:requestedLimit],
+		HasNextPage: true,
+		TotalCount:  new(50),
+		EdgeCursors: edgeCursors(requestedLimit),
 	}, nil)
 
 	handler := setupFleetCodeHandler(t, repo)
@@ -417,8 +420,9 @@ func TestFleetCodeHandler_SelectOptions_Success(t *testing.T) {
 	repo := fleetcodeportsmock.NewMockFleetCodeRepository(t)
 	repo.On("SelectOptions", mock.Anything, mock.Anything).
 		Return(&pagination.ListResult[*fleetcode.FleetCode]{
-			Items: []*fleetcode.FleetCode{},
-			Total: 0,
+			Items:      []*fleetcode.FleetCode{},
+			Total:      0,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupFleetCodeHandler(t, repo)
@@ -577,4 +581,13 @@ func TestFleetCodeHandler_GetOption_NotFound(t *testing.T) {
 	ginCtx.Engine.ServeHTTP(ginCtx.Recorder, ginCtx.Context.Request)
 
 	assert.Equal(t, http.StatusInternalServerError, ginCtx.ResponseCode())
+}
+
+func edgeCursors(n int) []string {
+	cursors := make([]string, n)
+	for i := range cursors {
+		cursors[i] = fmt.Sprintf("edge-%d", i)
+	}
+
+	return cursors
 }

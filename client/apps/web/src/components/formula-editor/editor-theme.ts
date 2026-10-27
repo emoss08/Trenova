@@ -2,17 +2,6 @@ import { EditorView } from "@codemirror/view";
 
 export const lightTheme = EditorView.theme(
   {
-    "&": {
-      "--expr-keyword": "var(--accent-violet-on-subtle)",
-      "--expr-operator": "var(--foreground-muted)",
-      "--expr-number": "var(--success-foreground)",
-      "--expr-string": "var(--success-foreground)",
-      "--expr-variable": "var(--brand-subtle-foreground)",
-      "--expr-function": "var(--accent-teal-on-subtle)",
-      "--expr-comment": "var(--foreground-subtle)",
-      "--expr-punctuation": "var(--foreground-subtle)",
-      "--expr-unknown": "var(--warning-foreground)",
-    },
     "&.cm-editor": {
       backgroundColor: "var(--field)",
       color: "var(--foreground)",
@@ -23,14 +12,7 @@ export const lightTheme = EditorView.theme(
       borderColor: "var(--destructive)",
       backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
-    ".cm-expr-hover": {
-      padding: "4px 8px",
-      fontFamily: "var(--font-mono, ui-monospace, monospace)",
-      fontSize: "11px",
-      maxWidth: "360px",
-      whiteSpace: "pre-wrap",
-    },
-    ".cm-expr-completion-info": {
+    ".cm-tariff-completion-info": {
       display: "flex",
       flexDirection: "column",
       gap: "4px",
@@ -39,20 +21,13 @@ export const lightTheme = EditorView.theme(
       fontSize: "12px",
       fontFamily: "inherit",
     },
-    ".cm-expr-completion-info-title": {
-      fontFamily: "'Geist Mono', monospace",
+    ".cm-tariff-completion-info code": {
+      fontFamily: "var(--font-code)",
       fontWeight: "600",
-    },
-    ".cm-expr-completion-info-example": {
-      fontFamily: "'Geist Mono', monospace",
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
-      borderRadius: "4px",
-      padding: "3px 6px",
-      display: "block",
     },
     ".cm-content": {
       caretColor: "var(--primary)",
-      fontFamily: "'Geist Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "13px",
       lineHeight: "1.6",
       padding: "12px 0",
@@ -64,9 +39,6 @@ export const lightTheme = EditorView.theme(
       borderLeftColor: "var(--foreground)",
       borderLeftWidth: "2px",
     },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-    },
     ".cm-activeLine": {
       backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
     },
@@ -75,7 +47,7 @@ export const lightTheme = EditorView.theme(
       color: "var(--muted-foreground)",
       border: "none",
       borderRight: "1px solid var(--border)",
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "12px",
     },
     ".cm-theme[aria-invalid='true'] & .cm-gutters": {
@@ -115,7 +87,7 @@ export const lightTheme = EditorView.theme(
       padding: "4px",
     },
     ".cm-tooltip.cm-tooltip-autocomplete > ul": {
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "13px",
       maxHeight: "300px",
     },
@@ -161,17 +133,6 @@ export const lightTheme = EditorView.theme(
 
 export const darkTheme = EditorView.theme(
   {
-    "&": {
-      "--expr-keyword": "var(--accent-violet-on-subtle)",
-      "--expr-operator": "var(--foreground-muted)",
-      "--expr-number": "var(--success-foreground)",
-      "--expr-string": "var(--success-foreground)",
-      "--expr-variable": "var(--brand-subtle-foreground)",
-      "--expr-function": "var(--accent-teal-on-subtle)",
-      "--expr-comment": "var(--foreground-subtle)",
-      "--expr-punctuation": "var(--foreground-subtle)",
-      "--expr-unknown": "var(--warning-foreground)",
-    },
     "&.cm-editor": {
       backgroundColor: "var(--field)",
       color: "var(--foreground)",
@@ -182,14 +143,7 @@ export const darkTheme = EditorView.theme(
       borderColor: "var(--destructive)",
       backgroundColor: "color-mix(in oklab, var(--destructive) 20%, transparent)",
     },
-    ".cm-expr-hover": {
-      padding: "4px 8px",
-      fontFamily: "var(--font-mono, ui-monospace, monospace)",
-      fontSize: "11px",
-      maxWidth: "360px",
-      whiteSpace: "pre-wrap",
-    },
-    ".cm-expr-completion-info": {
+    ".cm-tariff-completion-info": {
       display: "flex",
       flexDirection: "column",
       gap: "4px",
@@ -198,20 +152,13 @@ export const darkTheme = EditorView.theme(
       fontSize: "12px",
       fontFamily: "inherit",
     },
-    ".cm-expr-completion-info-title": {
-      fontFamily: "'Geist Mono', monospace",
+    ".cm-tariff-completion-info code": {
+      fontFamily: "var(--font-code)",
       fontWeight: "600",
-    },
-    ".cm-expr-completion-info-example": {
-      fontFamily: "'Geist Mono', monospace",
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
-      borderRadius: "4px",
-      padding: "3px 6px",
-      display: "block",
     },
     ".cm-content": {
       caretColor: "var(--brand)",
-      fontFamily: "'Geist Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "13px",
       lineHeight: "1.6",
       padding: "12px 0",
@@ -223,9 +170,6 @@ export const darkTheme = EditorView.theme(
       borderLeftColor: "var(--foreground)",
       borderLeftWidth: "2px",
     },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground, .cm-content ::selection": {
-      backgroundColor: "color-mix(in oklab, var(--muted-foreground) 30%, transparent)",
-    },
     ".cm-activeLine": {
       backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
     },
@@ -234,7 +178,7 @@ export const darkTheme = EditorView.theme(
       color: "var(--muted-foreground)",
       border: "none",
       borderRight: "1px solid var(--border)",
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "12px",
     },
     ".cm-theme[aria-invalid='true'] & .cm-gutters": {
@@ -274,7 +218,7 @@ export const darkTheme = EditorView.theme(
       padding: "4px",
     },
     ".cm-tooltip.cm-tooltip-autocomplete > ul": {
-      fontFamily: "'Geist Mono', monospace",
+      fontFamily: "var(--font-code)",
       fontSize: "13px",
       maxHeight: "300px",
     },
@@ -324,6 +268,21 @@ export const darkTheme = EditorView.theme(
  * inline values. Every colour is a token, so it follows the theme.
  */
 export const languageServiceTheme = EditorView.theme({
+  // Ligatures follow the person's choice in Settings (`--code-ligatures`, app.css), in the text
+  // and in everything the editor draws over it.
+  "&": {
+    fontVariantLigatures: "var(--code-ligatures)",
+  },
+  // Selected code reads as selected text does everywhere in Trenova: solid amber, with the
+  // app's dark ink from its own ::selection. The selector matches CodeMirror's base theme, whose
+  // dark teal otherwise wins while the editor has focus. Out of focus the browser drops the
+  // selection's ink, so the amber fades to a tint the syntax colours read on.
+  "&.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground": {
+    backgroundColor: "var(--selection)",
+  },
+  ".cm-selectionLayer .cm-selectionBackground": {
+    backgroundColor: "var(--highlight-fill)",
+  },
   ".cm-lintRange-error": {
     backgroundImage: "none",
     textDecoration: "underline wavy var(--danger)",
@@ -411,123 +370,267 @@ export const languageServiceTheme = EditorView.theme({
     fontFamily: "inherit",
     cursor: "pointer",
   },
-  ".cm-tooltip .cm-expr-hover": {
+  ".cm-tooltip .cm-tariff-hover": {
     display: "flex",
     flexDirection: "column",
     gap: "4px",
     padding: "8px 10px",
-    maxWidth: "340px",
+    maxWidth: "360px",
     fontSize: "12px",
     fontFamily: "inherit",
     whiteSpace: "normal",
     color: "var(--foreground)",
   },
-  ".cm-expr-hover-head": {
+  ".cm-tariff-hover-head": {
     display: "flex",
     flexWrap: "wrap",
-    alignItems: "center",
-    gap: "6px",
+    alignItems: "baseline",
+    gap: "8px",
   },
-  ".cm-expr-hover-name": {
-    fontFamily: "'Geist Mono', monospace",
+  ".cm-tariff-hover-title": {
+    fontFamily: "var(--font-code)",
     fontWeight: "600",
     fontSize: "12px",
   },
-  ".cm-expr-hover-tag": {
-    display: "inline-flex",
-    alignItems: "center",
-    height: "16px",
-    padding: "0 6px",
-    borderRadius: "var(--radius-label)",
-    backgroundColor: "color-mix(in oklab, var(--muted-foreground) 14%, transparent)",
-    color: "var(--muted-foreground)",
-    fontSize: "10.5px",
-    lineHeight: "1",
+  ".cm-tariff-hover-type": {
+    fontFamily: "var(--font-code)",
+    fontSize: "11px",
+    color: "var(--syntax-type)",
   },
-  ".cm-expr-hover-tag-warn": {
-    backgroundColor: "color-mix(in oklab, var(--warning) 18%, transparent)",
-    color: "var(--warning-foreground)",
-  },
-  ".cm-expr-hover-tag-bad": {
-    backgroundColor: "color-mix(in oklab, var(--danger) 18%, transparent)",
-    color: "var(--danger-foreground)",
-  },
-  ".cm-expr-hover-body": {
-    color: "var(--muted-foreground)",
+  ".cm-tariff-hover-body, .cm-tariff-signature-body, .cm-tariff-completion-info": {
+    color: "var(--foreground-muted)",
     lineHeight: "1.45",
   },
-  ".cm-expr-hover-example": {
-    display: "block",
-    fontFamily: "'Geist Mono', monospace",
+  ".cm-tariff-hover-body code, .cm-tariff-signature-body code, .cm-tariff-completion-info code": {
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
-    backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
-    borderRadius: "4px",
-    padding: "3px 6px",
+    color: "var(--foreground)",
   },
-  ".cm-expr-hover-value": {
-    display: "flex",
-    alignItems: "baseline",
-    gap: "8px",
+  ".cm-tariff-hover-value": {
     marginTop: "2px",
     paddingTop: "6px",
     borderTop: "1px solid var(--border)",
-  },
-  ".cm-expr-hover-value-text": {
-    fontFamily: "'Geist Mono', monospace",
-    fontSize: "12px",
+    fontFamily: "var(--font-code)",
+    fontSize: "11px",
     fontVariantNumeric: "tabular-nums",
   },
-  ".cm-expr-hover-source": {
-    color: "var(--muted-foreground)",
-    fontSize: "11px",
-  },
-  ".cm-tooltip .cm-expr-signature": {
+  // The signature tooltip's own element is the `.cm-tooltip` (a hover card is wrapped in one).
+  ".cm-tooltip.cm-tariff-signature, .cm-tooltip .cm-tariff-signature": {
     display: "flex",
     flexDirection: "column",
     gap: "3px",
     padding: "6px 10px",
-    maxWidth: "360px",
+    maxWidth: "380px",
     fontFamily: "inherit",
     fontSize: "12px",
     color: "var(--foreground)",
   },
-  ".cm-expr-signature-code": {
-    fontFamily: "'Geist Mono', monospace",
+  ".cm-tariff-signature-code": {
+    fontFamily: "var(--font-code)",
     fontSize: "12px",
-    color: "var(--muted-foreground)",
+    color: "var(--foreground-muted)",
   },
-  ".cm-expr-signature-active": {
+  ".cm-tariff-signature-active": {
     color: "var(--foreground)",
     fontWeight: "600",
     backgroundColor: "color-mix(in oklab, var(--muted-foreground) 14%, transparent)",
     borderRadius: "3px",
     padding: "0 3px",
   },
-  ".cm-expr-signature-body": {
-    color: "var(--muted-foreground)",
-    fontSize: "11.5px",
-  },
-  ".cm-expr-inline-value": {
-    marginLeft: "14px",
-    padding: "0 6px",
+  ".cm-tariff-inlay": {
+    marginLeft: "4px",
+    padding: "0 5px",
     borderRadius: "var(--radius-label)",
-    fontFamily: "'Geist Mono', monospace",
+    fontFamily: "var(--font-code)",
     fontSize: "11px",
     fontVariantNumeric: "tabular-nums",
     verticalAlign: "baseline",
     userSelect: "none",
     pointerEvents: "none",
+    color: "var(--foreground-subtle)",
+    backgroundColor: "color-mix(in oklab, var(--muted-foreground) 10%, transparent)",
   },
-  ".cm-expr-inline-value-ok": {
+  ".cm-tariff-inlay-value": {
+    marginLeft: "14px",
     color: "var(--success-foreground)",
     backgroundColor: "color-mix(in oklab, var(--success) 12%, transparent)",
   },
-  ".cm-expr-inline-value-bad": {
-    color: "var(--danger-foreground)",
-    backgroundColor: "color-mix(in oklab, var(--danger) 12%, transparent)",
+  ".cm-tariff-rename": {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "8px",
+    padding: "6px 10px",
+    fontSize: "12px",
+    color: "var(--foreground)",
+    backgroundColor: "var(--card)",
+    borderBottom: "1px solid var(--border)",
   },
-  ".cm-expr-inline-value-muted": {
-    color: "var(--muted-foreground)",
-    backgroundColor: "color-mix(in oklab, var(--muted-foreground) 12%, transparent)",
+  ".cm-tariff-rename label": {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
+  ".cm-tariff-rename-input": {
+    height: "24px",
+    padding: "0 8px",
+    borderRadius: "var(--radius-control)",
+    border: "1px solid var(--border-strong)",
+    backgroundColor: "var(--field)",
+    fontFamily: "var(--font-code)",
+    fontSize: "12px",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-rename-refusal": {
+    margin: "0",
+    color: "var(--danger-foreground)",
+  },
+  ".cm-tariff-hover-constraint": {
+    display: "flex",
+    gap: "6px",
+    alignItems: "baseline",
+    fontFamily: "var(--font-code)",
+    fontSize: "11px",
+    fontVariantNumeric: "tabular-nums",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-hover-label": {
+    fontFamily: "inherit",
+    color: "var(--foreground-subtle)",
+  },
+  ".cm-tariff-occurrence": {
+    backgroundColor: "var(--editor-reference)",
+    borderRadius: "2px",
+  },
+  // The other uses of selected text, as the editor's own search marks them, in the same tint.
+  ".cm-selectionMatch": {
+    backgroundColor: "var(--editor-reference)",
+  },
+  ".cm-tariff-occurrence-write": {
+    backgroundColor: "var(--editor-reference-write)",
+  },
+  ".cm-tooltip .cm-tariff-notice, .cm-tooltip.cm-tariff-notice": {
+    padding: "4px 8px",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-actions ul": {
+    listStyle: "none",
+    margin: "0",
+    padding: "4px",
+    display: "flex",
+    flexDirection: "column",
+    minWidth: "220px",
+  },
+  ".cm-tariff-action": {
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    padding: "5px 8px",
+    borderRadius: "var(--radius-control)",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+    backgroundColor: "transparent",
+    cursor: "pointer",
+  },
+  ".cm-tariff-action code": {
+    fontFamily: "var(--font-code)",
+    fontSize: "11px",
+  },
+  ".cm-tariff-action:hover, .cm-tariff-action[aria-current='true']": {
+    backgroundColor: "var(--surface-hover)",
+  },
+  ".cm-tariff-coverage-gutter": {
+    width: "6px",
+  },
+  ".cm-tariff-coverage-gutter .cm-gutterElement": {
+    padding: "0",
+    display: "flex",
+    justifyContent: "center",
+  },
+  ".cm-tariff-coverage-gap": {
+    display: "block",
+    width: "3px",
+    height: "100%",
+    minHeight: "1.6em",
+    borderRadius: "1px",
+    backgroundColor: "var(--editor-coverage-gap)",
+  },
+  ".cm-tooltip .cm-tariff-coverage-tip, .cm-tooltip.cm-tariff-coverage-tip": {
+    padding: "4px 8px",
+    fontSize: "12px",
+    fontFamily: "inherit",
+    color: "var(--foreground)",
+  },
+  ".cm-tooltip .cm-tariff-diagnostics": {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    padding: "8px 10px",
+    maxWidth: "360px",
+    fontSize: "12px",
+    whiteSpace: "normal",
+    color: "var(--foreground)",
+  },
+  ".cm-tariff-diagnostic": {
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: "6px",
+    paddingLeft: "8px",
+    borderLeft: "2px solid var(--foreground-subtle)",
+  },
+  ".cm-tariff-diagnostic p": {
+    margin: "0",
+    flexBasis: "100%",
+  },
+  ".cm-tariff-diagnostic-error": {
+    borderLeftColor: "var(--danger)",
+  },
+  ".cm-tariff-diagnostic-warning": {
+    borderLeftColor: "var(--warning)",
+  },
+  ".cm-tariff-diagnostic-fix": {
+    height: "22px",
+    padding: "0 8px",
+    borderRadius: "var(--radius-control)",
+    border: "1px solid var(--border)",
+    backgroundColor: "var(--card)",
+    fontSize: "11px",
+    color: "var(--foreground)",
+    cursor: "pointer",
+  },
+  "&.cm-editor .cm-fat-cursor": {
+    backgroundColor: "var(--selection)",
+    color: "var(--selection-foreground)",
+  },
+  "&.cm-editor:not(.cm-focused) .cm-fat-cursor": {
+    backgroundColor: "transparent",
+    outline: "1px solid var(--selection)",
+  },
+  // The editor's minimum height is the content's and the gutter's, as CodeMirror advises: set on
+  // .cm-editor it leaves the gutter short of the floor and the bottom panels (Vim's mode line)
+  // under the last line rather than at the editor's foot. TariffEditor sets the variable.
+  ".cm-content, .cm-gutter": {
+    minHeight: "var(--tariff-editor-min-height, 0)",
+  },
+  ".cm-panels .cm-vim-panel": {
+    minHeight: "24px",
+    alignItems: "center",
+    padding: "0 12px",
+    fontFamily: "var(--font-code)",
+    fontSize: "11px",
+    color: "var(--foreground-muted)",
+    backgroundColor: "var(--sunken)",
+  },
+  ".cm-vim-panel input": {
+    fontFamily: "inherit",
+    fontSize: "inherit",
+    color: "var(--foreground)",
+  },
+  "&.cm-editor .cm-searchMatch": {
+    backgroundColor: "color-mix(in oklab, var(--warning) 30%, transparent)",
   },
 });

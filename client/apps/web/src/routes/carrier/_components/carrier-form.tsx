@@ -1,11 +1,11 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
 import { InputField } from "@/components/fields/input-field";
 import { PhoneNumberField } from "@/components/fields/phone-number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { carrierStatusChoices, carrierTypeChoices } from "@/lib/choices";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import { useFormContext } from "react-hook-form";
 
@@ -72,7 +72,7 @@ export function CarrierForm() {
               maxLength={255}
             />
           </FormControl>
-          <FormControl>
+          <FormControl cols="full">
             <SelectField
               control={control}
               rules={{ required: true }}
@@ -92,7 +92,7 @@ export function CarrierForm() {
         title={t("Operating authority")}
         description={t("Federal identifiers used for safety lookups and compliance monitoring.")}
       >
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <InputField
               control={control}
@@ -213,7 +213,7 @@ export function CarrierForm() {
         title={t("Additional details")}
         description={t("External references and internal notes for this carrier.")}
       >
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <InputField
               control={control}
@@ -225,7 +225,7 @@ export function CarrierForm() {
               )}
             />
           </FormControl>
-          <FormControl cols="full">
+          <FormControl>
             <TextareaField
               control={control}
               name="notes"

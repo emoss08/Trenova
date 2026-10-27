@@ -31,7 +31,7 @@ use tokio_util::sync::CancellationToken;
 pub const IPP_PATH: &str = "/ipp/print";
 const IPP_MIME: &str = "application/ipp";
 const HEADER_TIMEOUT: Duration = Duration::from_secs(30);
-const BODY_TIMEOUT: Duration = Duration::from_secs(300);
+const BODY_TIMEOUT: Duration = Duration::from_mins(5);
 const DRAIN_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[derive(Clone, Copy, Debug)]

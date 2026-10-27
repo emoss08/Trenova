@@ -50,7 +50,7 @@ func (r *Deps) resolveWorkerSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		workerSelectOptionItem,
 	)
 }
@@ -94,7 +94,7 @@ func (r *Deps) resolveOrganizationSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		organizationSelectOptionItem,
 	)
 }
@@ -129,7 +129,7 @@ func (r *Deps) resolveUserSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		userSelectOptionItem,
 	)
 }
@@ -164,7 +164,7 @@ func (r *Deps) resolveRoleSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		roleSelectOptionItem,
 	)
 }

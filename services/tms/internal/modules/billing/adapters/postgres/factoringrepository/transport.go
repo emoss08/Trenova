@@ -2,16 +2,17 @@ package factoringrepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"go.uber.org/zap"
 )
 
@@ -20,8 +21,10 @@ const (
 	transportFactorIndex = "uq_factoring_transports_factor"
 )
 
+var transportErrors = dberror.Mapping{Entity: transportEntity}
+
 type transportRepository struct {
-	db kernelports.DBConnection
+	db *postgres.Connection
 	l  *zap.Logger
 }
 
@@ -37,15 +40,11 @@ func (r *transportRepository) Get(
 	req factoringports.GetTransportRequest,
 ) (*factoring.Transport, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Transport, error) {
-		entity := new(factoring.Transport)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.TransportScopeTenant(sq, req.TenantInfo).
-					Where(factoringcol.TransportColumns.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, transportEntity)
+		t := factoringdb.Transports
+		entity, err := t.Where(t.FactoringCompanyID.Eq(req.FactoringCompanyID)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, transportErrors.Map(err, req.FactoringCompanyID.String())
 		}
 
 		return entity, nil
@@ -57,12 +56,8 @@ func (r *transportRepository) Create(
 	entity *factoring.Transport,
 ) (*factoring.Transport, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Transport, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, translateTransportError(err, "create factoring transport")
+		if err := factoringdb.Transports.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, translateTransportError(err, entity.ID)
 		}
 
 		return entity, nil
@@ -74,25 +69,9 @@ func (r *transportRepository) Update(
 	entity *factoring.Transport,
 ) (*factoring.Transport, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Transport, error) {
-		cols := factoringcol.TransportColumns
-		previousVersion := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			ExcludeColumn(cols.CreatedAt.Bare(), cols.FactoringCompanyID.Bare()).
-			WherePK().
-			Where(cols.Version.Eq(), previousVersion).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = previousVersion
-			return nil, translateTransportError(err, "update factoring transport")
-		}
-		if err = dberror.CheckRowsAffected(res, transportEntity, entity.ID.String()); err != nil {
-			entity.Version = previousVersion
-			return nil, err
+		t := factoringdb.Transports
+		if err := t.SaveExcept(ctx, r.db.Keel(ctx), entity, t.FactoringCompanyID); err != nil {
+			return nil, translateTransportError(err, entity.ID)
 		}
 
 		return entity, nil
@@ -100,27 +79,25 @@ func (r *transportRepository) Update(
 }
 
 func (r *transportRepository) RecordTest(ctx context.Context, entity *factoring.Transport) error {
-	_, err := dbtx.Write(ctx, r.db, func(ctx context.Context) (struct{}, error) {
-		cols := factoringcol.TransportColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(cols.LastTestedAt.Bare(), cols.LastTestError.Bare()).
-			WherePK().
-			Exec(ctx); err != nil {
-			return struct{}{}, fmt.Errorf("record factoring transport test: %w", err)
-		}
-		return struct{}{}, nil
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		t := factoringdb.Transports
+		_, err := t.Where(t.ID.Eq(entity.ID)).Update(ctx, r.db.Keel(ctx),
+			t.LastTestedAt.ToExpr(keel.Val(entity.LastTestedAt)),
+			t.LastTestError.ToExpr(keel.Val(stringutils.NilIfEmpty(entity.LastTestError))),
+			t.Version.ToExpr(t.Version),
+		)
+
+		return transportErrors.Map(err, entity.ID.String())
 	})
-	return err
 }
 
-func translateTransportError(err error, action string) error {
+func translateTransportError(err error, id pulid.ID) error {
 	if dberror.IsUniqueConstraintViolation(err) &&
 		dberror.ExtractConstraintName(err) == transportFactorIndex {
 		return errortypes.NewConflictError(
 			"This factor's delivery settings were just saved by someone else; reload and try again",
 		)
 	}
-	return fmt.Errorf("%s: %w", action, err)
+
+	return transportErrors.Map(err, id.String())
 }

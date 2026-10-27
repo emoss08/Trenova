@@ -22,6 +22,7 @@
   "No subscriptions yet": "Aún no hay suscripciones",
   "Notification": "Notificación",
   "Notification priority level.": "Nivel de prioridad de la notificación.",
+  "Operator": "Operador",
   "Optional categorization tag.": "Etiqueta de categorización opcional.",
   "Optional. Specify a record ID to only watch a single record.": "Opcional. Indique un ID de registro para observar un único registro.",
   "Record ID": "ID del registro",

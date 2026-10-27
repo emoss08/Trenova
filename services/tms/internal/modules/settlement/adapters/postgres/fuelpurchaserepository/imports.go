@@ -4,47 +4,37 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/fuelpurchaseports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+const importRowNumberField = "rowNumber"
 
 func (r *repository) GetImportBatchByID(
 	ctx context.Context,
 	req *fuelpurchaseports.GetImportBatchByIDRequest,
 ) (*fuelpurchase.ImportBatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelpurchase.ImportBatch, error) {
-		entity := new(fuelpurchase.ImportBatch)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelpurchasecol.ImportBatchScopeTenant(sq, req.TenantInfo).
-					Where(fuelpurchasecol.ImportBatchColumns.ID.Eq(), req.ID)
-			})
-
+		b := fuelpurchasedb.ImportBatches
+		q := b.Where(b.ID.Eq(req.ID))
 		if req.IncludeRows {
-			q = q.Relation(
-				fuelpurchasecol.ImportBatchRelations.Rows,
-				func(rq *bun.SelectQuery) *bun.SelectQuery {
-					return rq.Order(fuelpurchasecol.ImportRowColumns.RowNumber.OrderAsc())
-				},
-			)
+			rows := b.Rows()
+			q = q.Load(rows.Order(rows.RowNumber.Asc()))
 		}
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "FuelPurchaseImportBatch")
+		entity, err := q.One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, importBatchErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -56,13 +46,9 @@ func (r *repository) CreateImportBatch(
 	entity *fuelpurchase.ImportBatch,
 ) (*fuelpurchase.ImportBatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelpurchase.ImportBatch, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := fuelpurchasedb.ImportBatches.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create fuel purchase import batch", zap.Error(err))
-			return nil, fmt.Errorf("create fuel purchase import batch: %w", err)
+			return nil, importBatchErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -74,45 +60,21 @@ func (r *repository) UpdateImportBatch(
 	entity *fuelpurchase.ImportBatch,
 ) (*fuelpurchase.ImportBatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelpurchase.ImportBatch, error) {
-		updated, err := r.updateBatch(ctx, r.db.DBForContext(ctx), entity)
-		if err != nil {
+		if err := r.saveBatch(ctx, entity); err != nil {
 			return nil, err
 		}
 
-		return updated, nil
+		return entity, nil
 	})
 }
 
-func (r *repository) updateBatch(
-	ctx context.Context,
-	dba bun.IDB,
-	entity *fuelpurchase.ImportBatch,
-) (*fuelpurchase.ImportBatch, error) {
-	ov := entity.Version
-	entity.Version++
-
-	results, err := dba.
-		NewUpdate().
-		Model(entity).
-		WherePK().
-		Where(fuelpurchasecol.ImportBatchColumns.Version.Eq(), ov).
-		Returning("*").
-		Exec(ctx)
-	if err != nil {
-		entity.Version = ov
+func (r *repository) saveBatch(ctx context.Context, entity *fuelpurchase.ImportBatch) error {
+	if err := fuelpurchasedb.ImportBatches.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 		r.l.Error("failed to update fuel purchase import batch", zap.Error(err))
-		return nil, fmt.Errorf("update fuel purchase import batch: %w", err)
-	}
-	if err = dberror.CheckRowsAffected(
-		results,
-		"FuelPurchaseImportBatch",
-		entity.ID.String(),
-	); err != nil {
-		entity.Version = ov
-		return nil, err
+		return importBatchErrors.Map(err, entity.ID.String())
 	}
 
-	return entity, nil
+	return nil
 }
 
 func (r *repository) ReplaceImportRows(
@@ -121,41 +83,25 @@ func (r *repository) ReplaceImportRows(
 	rows []*fuelpurchase.ImportRow,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		tenant := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
+		db := r.db.Keel(ctx)
+		ir := fuelpurchasedb.ImportRows
+		if _, err := ir.Where(ir.ImportBatchID.Eq(batch.ID)).Delete(ctx, db); err != nil {
+			r.l.Error("failed to clear fuel purchase import rows", zap.Error(err))
+			return fmt.Errorf("replace fuel purchase import rows: clear import rows: %w", err)
+		}
 
-		err := r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, tx bun.Tx) error {
-				if _, dErr := tx.NewDelete().
-					Model((*fuelpurchase.ImportRow)(nil)).
-					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return fuelpurchasecol.ImportRowScopeTenantDelete(dq, tenant).
-							Where(fuelpurchasecol.ImportRowColumns.ImportBatchID.Eq(), batch.ID)
-					}).
-					Exec(txCtx); dErr != nil {
-					return fmt.Errorf("clear import rows: %w", dErr)
-				}
+		for _, row := range rows {
+			row.ImportBatchID = batch.ID
+			row.OrganizationID = batch.OrganizationID
+			row.BusinessUnitID = batch.BusinessUnitID
+		}
 
-				for _, row := range rows {
-					row.ImportBatchID = batch.ID
-					row.OrganizationID = batch.OrganizationID
-					row.BusinessUnitID = batch.BusinessUnitID
-				}
-
-				for start := 0; start < len(rows); start += rowInsertBatch {
-					chunk := rows[start:min(start+rowInsertBatch, len(rows))]
-					if _, iErr := tx.NewInsert().Model(&chunk).Exec(txCtx); iErr != nil {
-						return fmt.Errorf("insert import rows: %w", iErr)
-					}
-				}
-
-				return nil
-			},
-		)
-		if err != nil {
-			r.l.Error("failed to replace fuel purchase import rows", zap.Error(err))
-			return fmt.Errorf("replace fuel purchase import rows: %w", err)
+		if err := ir.CreateMany(ctx, db, rows); err != nil {
+			r.l.Error("failed to insert fuel purchase import rows", zap.Error(err))
+			return fmt.Errorf(
+				"replace fuel purchase import rows: insert import rows: %w",
+				importRowErrors.Map(err, batch.ID.String()),
+			)
 		}
 
 		return nil
@@ -170,96 +116,35 @@ func (r *repository) ListImportRows(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.ImportRow], error) {
-			cols := fuelpurchasecol.ImportRowColumns
-			dba := r.db.DBForContext(ctx)
-
-			scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = fuelpurchasecol.ImportRowScopeTenant(sq, req.TenantInfo).
-					Where(cols.ImportBatchID.Eq(), req.BatchID)
-				if len(req.Statuses) > 0 {
-					sq = sq.Where(cols.Status.In(), bun.In(req.Statuses))
-				}
-				return sq
+			ir := fuelpurchasedb.ImportRows
+			filter := pagination.QueryOptions{}
+			if req.Filter != nil {
+				filter = *req.Filter
+			}
+			filter.Sort = []domaintypes.SortField{
+				{Field: importRowNumberField, Direction: dbtype.SortDirectionAsc},
 			}
 
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*fuelpurchase.ImportRow)(nil)).
-					WhereGroup(" AND ", scope).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count fuel purchase import rows", zap.Error(err))
-					return nil, fmt.Errorf("count fuel purchase import rows: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			cursor, err := importRowCursor(req.Cursor)
-			if err != nil {
-				return nil, err
-			}
-
-			limit := req.Cursor.Limit
-			if limit <= 0 {
-				if req.Filter != nil {
-					limit = req.Filter.Pagination.SafeLimit()
-				} else {
-					limit = pagination.DefaultLimit
-				}
-			}
-
-			rows := make([]*fuelpurchase.ImportRow, 0, limit+1)
-			q := dba.NewSelect().
-				Model(&rows).
-				ColumnExpr(fuelpurchasecol.ImportRowTable.All()).
-				WhereGroup(" AND ", scope)
-
-			if !cursor.ID.IsNil() {
-				anchor := dba.NewSelect().
-					Model((*fuelpurchase.ImportRow)(nil)).
-					Column(cols.RowNumber.String(), cols.ID.String()).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return fuelpurchasecol.ImportRowScopeTenant(sq, req.TenantInfo).
-							Where(cols.ImportBatchID.Eq(), req.BatchID).
-							Where(cols.ID.Eq(), cursor.ID)
-					})
-				q = q.Where(buncolgen.Expr("({0}, {1}) > (?)", cols.RowNumber, cols.ID), anchor)
-			}
-
-			err = q.Order(cols.RowNumber.OrderAsc()).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limit + 1)).
-				Scan(ctx)
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				ir.Where(
+					ir.ImportBatchID.Eq(req.BatchID),
+					when(len(req.Statuses) > 0, ir.Status.In(req.Statuses...)),
+				),
+				&listquery.Request[fuelpurchase.ImportRow]{
+					Filter: &filter,
+					Cursor: req.Cursor,
+				},
+			)
 			if err != nil {
 				r.l.Error("failed to list fuel purchase import rows", zap.Error(err))
 				return nil, fmt.Errorf("list fuel purchase import rows: %w", err)
 			}
 
-			return pagination.NewCursorListResultWithTotalCount(rows, limit, totalCount), nil
+			return result, nil
 		},
 	)
-}
-
-func importRowCursor(info pagination.CursorInfo) (pagination.Cursor, error) {
-	if !info.Cursor.ID.IsNil() {
-		return info.Cursor, nil
-	}
-	if info.After == "" {
-		return pagination.Cursor{}, nil
-	}
-
-	cursor, err := pagination.DecodeCursor(info.After)
-	if err != nil {
-		return pagination.Cursor{}, fmt.Errorf("decode import row cursor: %w", err)
-	}
-
-	return cursor, nil
-}
-
-type committedPurchase struct {
-	ID        pulid.ID `bun:"id"`
-	Reference string   `bun:"transaction_reference"`
 }
 
 func (r *repository) CommitImport(
@@ -270,123 +155,7 @@ func (r *repository) CommitImport(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*fuelpurchaseports.CommitImportResult, error) {
-			cols := fuelpurchasecol.FuelPurchaseColumns
-			rowCols := fuelpurchasecol.ImportRowColumns
-			batch := req.Batch
-			tenant := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
-			conflictClause := "CONFLICT (" + cols.OrganizationID.Name + ", " + cols.BusinessUnitID.Name +
-				", " + cols.TransactionReference.Name + ") WHERE " + cols.TransactionReference.Name +
-				" IS NOT NULL DO NOTHING"
-
-			result := &fuelpurchaseports.CommitImportResult{}
-
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(txCtx context.Context, tx bun.Tx) error {
-					for _, purchase := range req.Purchases {
-						purchase.OrganizationID = batch.OrganizationID
-						purchase.BusinessUnitID = batch.BusinessUnitID
-						purchase.ImportBatchID = &batch.ID
-						purchase.Source = fuelpurchase.PurchaseSourceCardImport
-					}
-
-					inserted := make(map[string]pulid.ID, len(req.Purchases))
-					insertedCount := 0
-					for start := 0; start < len(req.Purchases); start += purchaseInsertBatch {
-						chunk := req.Purchases[start:min(start+purchaseInsertBatch, len(req.Purchases))]
-						returned := make([]committedPurchase, 0, len(chunk))
-						if _, iErr := tx.NewInsert().
-							Model(&chunk).
-							On(conflictClause).
-							Returning(cols.ID.Name+", "+cols.TransactionReference.Name).
-							Exec(txCtx, &returned); iErr != nil {
-							return fmt.Errorf("insert imported purchases: %w", iErr)
-						}
-						insertedCount += len(returned)
-						for _, row := range returned {
-							inserted[row.Reference] = row.ID
-						}
-					}
-
-					committedRows := make([]*fuelpurchase.ImportRow, 0, len(inserted))
-					skippedRowIDs := make([]pulid.ID, 0, len(req.Purchases)-insertedCount)
-					for _, purchase := range req.Purchases {
-						rowID, ok := req.RowIDByReference[purchase.TransactionReference]
-						if !ok {
-							continue
-						}
-						purchaseID, wasInserted := inserted[purchase.TransactionReference]
-						if !wasInserted {
-							skippedRowIDs = append(skippedRowIDs, rowID)
-							continue
-						}
-						committedRows = append(committedRows, &fuelpurchase.ImportRow{
-							ID:             rowID,
-							OrganizationID: batch.OrganizationID,
-							BusinessUnitID: batch.BusinessUnitID,
-							FuelPurchaseID: &purchaseID,
-						})
-					}
-
-					for start := 0; start < len(committedRows); start += rowInsertBatch {
-						chunk := committedRows[start:min(start+rowInsertBatch, len(committedRows))]
-						tuples := make([][]any, 0, len(chunk))
-						for _, row := range chunk {
-							tuples = append(tuples, []any{row.ID, *row.FuelPurchaseID})
-						}
-						if _, uErr := tx.NewUpdate().
-							Model((*fuelpurchase.ImportRow)(nil)).
-							TableExpr("(VALUES ?) AS committed (row_id, purchase_id)", bun.In(tuples)).
-							Set(rowCols.Status.Set(), fuelpurchase.ImportRowStatusCommitted).
-							Set(rowCols.FuelPurchaseID.SetExpr("committed.purchase_id")).
-							Set(rowCols.Error.SetNull()).
-							WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-								return fuelpurchasecol.ImportRowScopeTenantUpdate(uq, tenant).
-									Where(rowCols.ImportBatchID.Eq(), batch.ID).
-									Where(rowCols.ID.Expr("{} = committed.row_id"))
-							}).
-							Exec(txCtx); uErr != nil {
-							return fmt.Errorf("mark import rows committed: %w", uErr)
-						}
-					}
-
-					if len(skippedRowIDs) > 0 {
-						if _, uErr := tx.NewUpdate().
-							Model((*fuelpurchase.ImportRow)(nil)).
-							Set(rowCols.Status.Set(), fuelpurchase.ImportRowStatusAlreadyImported).
-							WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-								return fuelpurchasecol.ImportRowScopeTenantUpdate(uq, tenant).
-									Where(rowCols.ImportBatchID.Eq(), batch.ID).
-									Where(rowCols.ID.In(), bun.List(skippedRowIDs))
-							}).
-							Exec(txCtx); uErr != nil {
-							return fmt.Errorf("mark import rows already imported: %w", uErr)
-						}
-					}
-
-					batch.CommittedCount += insertedCount
-					batch.Error = ""
-					if batch.Summary != nil {
-						batch.Summary.NewCount = 0
-						batch.Summary.AlreadyImportedCount += len(skippedRowIDs)
-					}
-					if !req.KeepOpen {
-						committedAt := req.CommittedAt
-						batch.Status = fuelpurchase.ImportStatusCommitted
-						batch.CommittedAt = &committedAt
-						batch.CommittedByID = req.CommittedByID
-					}
-					if _, uErr := r.updateBatch(txCtx, tx, batch); uErr != nil {
-						return uErr
-					}
-
-					result.Committed = insertedCount
-					result.AlreadyImported = len(skippedRowIDs)
-
-					return nil
-				},
-			)
+			result, err := r.commitImport(ctx, req)
 			if err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, duplicateReference()
@@ -400,88 +169,194 @@ func (r *repository) CommitImport(
 	)
 }
 
-func (r *repository) applyImportBatchFilters(
-	q *bun.SelectQuery,
-	req *fuelpurchaseports.ListImportBatchesRequest,
-) *bun.SelectQuery {
-	cols := fuelpurchasecol.ImportBatchColumns
-
-	if req.Origin != "" {
-		q = q.Where(cols.Origin.Eq(), req.Origin)
-	}
-	if req.Provider != "" {
-		q = q.Where(cols.Provider.Eq(), req.Provider)
-	}
-	if len(req.Statuses) > 0 {
-		q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-	}
-	if req.HeldRowsOnly {
-		q = q.Where(cols.ErrorCount.Gt(), 0)
+func (r *repository) commitImport(
+	ctx context.Context,
+	req *fuelpurchaseports.CommitImportRequest,
+) (*fuelpurchaseports.CommitImportResult, error) {
+	batch := req.Batch
+	for _, purchase := range req.Purchases {
+		purchase.OrganizationID = batch.OrganizationID
+		purchase.BusinessUnitID = batch.BusinessUnitID
+		purchase.ImportBatchID = &batch.ID
+		purchase.Source = fuelpurchase.PurchaseSourceCardImport
 	}
 
-	return q
+	inserted, err := r.insertImportedPurchases(ctx, req.Purchases)
+	if err != nil {
+		return nil, err
+	}
+
+	committedRowIDs := make([]pulid.ID, 0, len(inserted))
+	committedPurchaseIDs := make([]pulid.ID, 0, len(inserted))
+	skippedRowIDs := make([]pulid.ID, 0, len(req.Purchases)-len(inserted))
+	for _, purchase := range req.Purchases {
+		rowID, ok := req.RowIDByReference[purchase.TransactionReference]
+		if !ok {
+			continue
+		}
+		purchaseID, wasInserted := inserted[purchase.TransactionReference]
+		if !wasInserted {
+			skippedRowIDs = append(skippedRowIDs, rowID)
+			continue
+		}
+		committedRowIDs = append(committedRowIDs, rowID)
+		committedPurchaseIDs = append(committedPurchaseIDs, purchaseID)
+	}
+
+	if err = r.markRowsCommitted(ctx, batch.ID, committedRowIDs, committedPurchaseIDs); err != nil {
+		return nil, err
+	}
+	if err = r.markRowsAlreadyImported(ctx, batch.ID, skippedRowIDs); err != nil {
+		return nil, err
+	}
+
+	batch.CommittedCount += len(inserted)
+	batch.Error = ""
+	if batch.Summary != nil {
+		batch.Summary.NewCount = 0
+		batch.Summary.AlreadyImportedCount += len(skippedRowIDs)
+	}
+	if !req.KeepOpen {
+		committedAt := req.CommittedAt
+		batch.Status = fuelpurchase.ImportStatusCommitted
+		batch.CommittedAt = &committedAt
+		batch.CommittedByID = req.CommittedByID
+	}
+	if err = r.saveBatch(ctx, batch); err != nil {
+		return nil, err
+	}
+
+	return &fuelpurchaseports.CommitImportResult{
+		Committed:       len(inserted),
+		AlreadyImported: len(skippedRowIDs),
+	}, nil
 }
 
-// ListImportBatches lists the statements on file, newest first. A feed opens one
-// per run, so this doubles as the history of what each connection has read.
+func (r *repository) insertImportedPurchases(
+	ctx context.Context,
+	purchases []*fuelpurchase.FuelPurchase,
+) (map[string]pulid.ID, error) {
+	inserted := make(map[string]pulid.ID, len(purchases))
+	if len(purchases) == 0 {
+		return inserted, nil
+	}
+
+	db := r.db.Keel(ctx)
+	fp := fuelpurchasedb.FuelPurchases
+	n, err := fp.CreateOrSkip(ctx, db, purchases)
+	if err != nil {
+		return nil, fmt.Errorf("insert imported purchases: %w", err)
+	}
+
+	if int(n) == len(purchases) {
+		for _, purchase := range purchases {
+			inserted[purchase.TransactionReference] = purchase.ID
+		}
+		return inserted, nil
+	}
+
+	ids := make([]pulid.ID, len(purchases))
+	for i, purchase := range purchases {
+		ids[i] = purchase.ID
+	}
+	rows, err := keel.Into[referenceRow](
+		ctx,
+		db,
+		fp.Pick(fp.ID, fp.TransactionReference).Where(fp.ID.In(ids...)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("read imported purchases: %w", err)
+	}
+	for _, row := range rows {
+		inserted[row.Reference] = row.ID
+	}
+
+	return inserted, nil
+}
+
+func (r *repository) markRowsCommitted(
+	ctx context.Context,
+	batchID pulid.ID,
+	rowIDs, purchaseIDs []pulid.ID,
+) error {
+	if len(rowIDs) == 0 {
+		return nil
+	}
+
+	ir := fuelpurchasedb.ImportRows
+	committed := keel.Unnest("committed", []string{"row_id", "purchase_id"}, rowIDs, purchaseIDs)
+	_, err := ir.With(committed).
+		Join(committed, committed.Col("row_id").EqCol(ir.ID)).
+		Where(ir.ImportBatchID.Eq(batchID)).
+		Update(
+			ctx,
+			r.db.Keel(ctx),
+			ir.Status.To(fuelpurchase.ImportRowStatusCommitted),
+			ir.FuelPurchaseID.ToExpr(committed.Col("purchase_id")),
+			ir.Error.ToNull(),
+		)
+	if err != nil {
+		return fmt.Errorf("mark import rows committed: %w", err)
+	}
+
+	return nil
+}
+
+func (r *repository) markRowsAlreadyImported(
+	ctx context.Context,
+	batchID pulid.ID,
+	rowIDs []pulid.ID,
+) error {
+	if len(rowIDs) == 0 {
+		return nil
+	}
+
+	ir := fuelpurchasedb.ImportRows
+	_, err := ir.Where(
+		ir.ImportBatchID.Eq(batchID),
+		ir.ID.In(rowIDs...),
+	).Update(ctx, r.db.Keel(ctx), ir.Status.To(fuelpurchase.ImportRowStatusAlreadyImported))
+	if err != nil {
+		return fmt.Errorf("mark import rows already imported: %w", err)
+	}
+
+	return nil
+}
+
+func importBatchFilters(req *fuelpurchaseports.ListImportBatchesRequest) []keel.Pred {
+	b := fuelpurchasedb.ImportBatches
+
+	return []keel.Pred{
+		when(req.Origin != "", b.Origin.Eq(req.Origin)),
+		when(req.Provider != "", b.Provider.Eq(req.Provider)),
+		when(len(req.Statuses) > 0, b.Status.In(req.Statuses...)),
+		when(req.HeldRowsOnly, b.ErrorCount.Gt(0)),
+	}
+}
+
 func (r *repository) ListImportBatches(
 	ctx context.Context,
 	req *fuelpurchaseports.ListImportBatchesRequest,
 ) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*fuelpurchase.ImportBatch], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*fuelpurchase.ImportBatch)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							fuelpurchasecol.ImportBatchTable.Alias,
-							req.Filter,
-							(*fuelpurchase.ImportBatch)(nil),
-						)
-						return r.applyImportBatchFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					r.l.Error("failed to count fuel purchase imports", zap.Error(err))
-					return nil, fmt.Errorf("count fuel purchase imports: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			b := fuelpurchasedb.ImportBatches
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*fuelpurchase.ImportBatch]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*fuelpurchase.ImportBatch) *bun.SelectQuery {
-						q := dba.NewSelect().
-							Model(items).
-							ColumnExpr(fuelpurchasecol.ImportBatchTable.All())
+				r.db.Keel(ctx),
+				b.Where(importBatchFilters(req)...),
+				&listquery.Request[fuelpurchase.ImportBatch]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[*fuelpurchase.ImportBatch],
+					) *keel.Query[*fuelpurchase.ImportBatch] {
 						if req.IncludeDefaultCard {
-							q = q.Relation(fuelpurchasecol.ImportBatchRelations.DefaultFuelCard)
+							return q.Load(b.DefaultFuelCard())
 						}
 						return q
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							fuelpurchasecol.ImportBatchTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*fuelpurchase.ImportBatch)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-						return r.applyImportBatchFilters(sq, req), nil
 					},
 				},
 			)

@@ -1,8 +1,7 @@
 package aiaudit
 
 import (
-	"encoding/json" //nolint:depguard // the test decodes as bun does, with json.Number
-	"reflect"
+	"encoding/json" //nolint:depguard // the test decodes jsonb as keel does, with json.Number
 	"strings"
 	"testing"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 func sampleEvent() *AIAuditEvent {
@@ -214,14 +211,4 @@ func TestVerifyHash_AZeroCostStoredAsNullStillVerifies(t *testing.T) {
 	ok, err = VerifyHash(priced, key)
 	require.NoError(t, err)
 	assert.False(t, ok, "a cost that was not zero cannot be dropped")
-}
-
-func TestAIAuditEvent_StoresAZeroCostAsZero(t *testing.T) {
-	t.Parallel()
-
-	db := bun.NewDB(nil, pgdialect.New())
-	field, ok := db.Table(reflect.TypeFor[AIAuditEvent]()).FieldMap["cost_usd"]
-	require.True(t, ok)
-	assert.False(t, field.NullZero,
-		"nullzero writes a zero cost as NULL, which no longer hashes as it was sealed")
 }

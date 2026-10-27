@@ -16,7 +16,10 @@ func percent(value string) decimal.NullDecimal {
 func TestAgreementKeepsStoredMarginsForAWriterWithoutTheGroup(t *testing.T) {
 	t.Parallel()
 
-	stored := &RateAgreement{MarginFloorPercent: percent("12.5"), MaxPayPercentOfSell: percent("85")}
+	stored := &RateAgreement{
+		MarginFloorPercent:  percent("12.5"),
+		MaxPayPercentOfSell: percent("85"),
+	}
 	incoming := &RateAgreement{Name: "Renewed", MarginFloorPercent: percent("1")}
 
 	incoming.KeepFields(stored, 0)

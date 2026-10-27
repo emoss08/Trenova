@@ -33,7 +33,7 @@ const REFRESH_MARGIN_SECS: i64 = 60;
 /// Every call but the stream and uploads gives up after this.
 const CALL_TIMEOUT: Duration = Duration::from_secs(30);
 /// A page is at most 20 MB; on a slow uplink that is minutes.
-const UPLOAD_TIMEOUT: Duration = Duration::from_secs(600);
+const UPLOAD_TIMEOUT: Duration = Duration::from_mins(10);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
 /// The longest barcode passed on in a header; longer ones are dropped.
 const MAX_BARCODE_HEADER: usize = 256;

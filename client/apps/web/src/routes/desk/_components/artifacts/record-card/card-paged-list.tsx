@@ -1,5 +1,6 @@
 import { describeApiError } from "@/lib/api-error-message";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { ReactNode } from "react";
 import type { PagedRows } from "./paged-rows";
 import { CardMore, CardSectionError, CardSectionWait } from "./record-card";
@@ -47,9 +48,11 @@ export function CardPagedList<T>({
       {list.hasMore && (
         <CardMore
           shown={
-            list.total !== null
-              ? t("{0} of {1} shown", rows.length, list.total)
-              : t("{0} shown", rows.length)
+            list.total === null
+              ? t("{0} shown", rows.length)
+              : list.totalExact
+                ? t("{0} of {1} shown", rows.length, list.total)
+                : t("{0} of about {1} shown", rows.length, formatRowTotal(list.total, false))
           }
           onMore={list.loadMore}
           loading={list.loadingMore}

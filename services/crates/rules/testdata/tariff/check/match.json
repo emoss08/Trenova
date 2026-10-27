@@ -1,0 +1,761 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "the weight-break table is exhaustive",
+   "source": [
+    "tariff \"t\"",
+    "let perCwt = match shipment.weight {",
+    "  ..500 lb          => $42.00/cwt",
+    "  500 lb..2_000 lb  => $35.50/cwt",
+    "  2_000 lb..5_000 lb => $28.10/cwt",
+    "  _                 => $22.75/cwt",
+    "}",
+    "charge \"x\" = perCwt * (shipment.weight ?? 0 lb)"
+   ],
+   "types": {
+    "perCwt": "Money/cwt"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "half-open bands cover the whole line",
+   "source": [
+    "library \"t\"",
+    "fn rate(w: Weight) -> Money/cwt = match w {",
+    "  ..500 lb => $42/cwt",
+    "  500 lb..2_000 lb => $35/cwt",
+    "  2_000 lb.. => $28/cwt",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `w` doesn't cover `5_000 lb` and above. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a missing top band is named",
+   "source": [
+    "library \"t\"",
+    "fn rate(w: Weight) -> Money/cwt = match w {",
+    "  ..500 lb => $42/cwt",
+    "  500 lb..5_000 lb => $35/cwt",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `w` doesn't cover from `500 lb` up to `600 lb`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a gap between bands is named",
+   "source": [
+    "library \"t\"",
+    "fn rate(w: Weight) -> Money/cwt = match w {",
+    "  ..500 lb => $42/cwt",
+    "  600 lb.. => $35/cwt",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `w` doesn't cover between `500 lb` and `600 lb`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a closed band leaves its end's neighbour uncovered",
+   "source": [
+    "library \"t\"",
+    "fn rate(w: Weight) -> Money/cwt = match w {",
+    "  ..=500 lb => $42/cwt",
+    "  600 lb.. => $35/cwt",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "500 lb..",
+     "code": "match-overlap",
+     "message": "This arm overlaps an arm above it: from `500 lb` up to `600 lb` matches both",
+     "related": [
+      {
+       "at": "..600 lb",
+       "line": 3,
+       "message": "The arm it overlaps"
+      }
+     ]
+    }
+   ],
+   "name": "overlapping bands name both arms",
+   "source": [
+    "library \"t\"",
+    "fn rate(w: Weight) -> Money/cwt = match w {",
+    "  ..600 lb => $42/cwt",
+    "  500 lb.. => $35/cwt",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "bands in different units compare exactly",
+   "source": [
+    "library \"t\"",
+    "fn rate(w: Weight) -> Money/cwt = match w {",
+    "  ..5 cwt => $42/cwt",
+    "  500 lb.. => $35/cwt",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `shipment.weight` doesn't cover `none`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "an optional weight needs a none arm",
+   "source": [
+    "tariff \"t\"",
+    "let r = match shipment.weight {",
+    "  ..500 lb => $42/cwt",
+    "  500 lb.. => $35/cwt",
+    "}",
+    "charge \"x\" = r * 1 lb"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a none arm covers the empty weight and narrows the rest",
+   "source": [
+    "tariff \"t\"",
+    "let r = match shipment.weight {",
+    "  none => $0",
+    "  w => $1/lb * w",
+    "}",
+    "charge \"x\" = r"
+   ],
+   "types": {
+    "w": "Weight"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "a binding before none stays optional",
+   "source": [
+    "tariff \"t\"",
+    "let r = match shipment.weight {",
+    "  w => $1/lb * (w ?? 0 lb)",
+    "}",
+    "charge \"x\" = r"
+   ],
+   "types": {
+    "w": "Weight?"
+   }
+  },
+  {
+   "diagnostics": [],
+   "name": "enum matches are exhaustive over variants",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match rating.mode {",
+    "  Sell => $10",
+    "  Buy => $5",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `shipment.status` doesn't cover `PartiallyAssigned`, `Delayed`, `PartiallyCompleted` and 4 other values. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a missing variant is named",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.status {",
+    "  New => $10",
+    "  Assigned | InTransit => $5",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Sell",
+     "code": "match-overlap",
+     "message": "This arm overlaps an arm above it: `Sell` matches both",
+     "nth": 2,
+     "related": [
+      {
+       "at": "Sell",
+       "line": 3,
+       "message": "The arm it overlaps"
+      }
+     ]
+    }
+   ],
+   "name": "a repeated variant names both arms",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match rating.mode {",
+    "  Sell => $10",
+    "  Buy => $5",
+    "  Sell => $1",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a qualified variant pattern",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match rating.mode {",
+    "  RatingMode.Sell => $10",
+    "  _ => $5",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Pickup",
+     "code": "unknown-variant",
+     "message": "`Pickup` isn't a variant of `RatingMode`"
+    }
+   ],
+   "name": "a variant of another enum",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match rating.mode {",
+    "  Pickup => $10",
+    "  _ => $5",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Sel",
+     "code": "unknown-variant",
+     "fixes": [
+      {
+       "label": "Change to `Sell`",
+       "result": [
+        "tariff \"t\"",
+        "let fee = match rating.mode {",
+        "  Sell => $10",
+        "  _ => $5",
+        "}",
+        "charge \"x\" = fee"
+       ]
+      }
+     ],
+     "message": "`Sel` isn't a variant of `RatingMode`. Did you mean `Sell`?"
+    }
+   ],
+   "name": "a misspelt variant suggests the closest",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match rating.mode {",
+    "  Sel => $10",
+    "  _ => $5",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "StopKind",
+     "code": "type-mismatch",
+     "message": "The value matched is a value of type `RatingMode`, not a value of type `StopKind`"
+    }
+   ],
+   "name": "the wrong enum named in a pattern",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match rating.mode {",
+    "  StopKind.Pickup => $10",
+    "  _ => $5",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `shipment.hazmat` doesn't cover `false`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "Bool matches need both values",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.hazmat {",
+    "  true => $10",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "Bool matched both ways is exhaustive",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.hazmat {",
+    "  true => $10",
+    "  false => $0",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `lane.origin.state` doesn't cover any other value. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "text literals need a wildcard",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match lane.origin.state {",
+    "  \"AK\" => $10",
+    "  \"HI\" => $20",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "text literals with a wildcard",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match lane.origin.state {",
+    "  \"AK\" | \"HI\" => $10",
+    "  _ => $0",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "\"AK\"",
+     "code": "match-overlap",
+     "message": "This arm overlaps an arm above it: `AK` matches both",
+     "nth": 2,
+     "related": [
+      {
+       "at": "\"AK\"",
+       "line": 3,
+       "message": "The arm it overlaps"
+      }
+     ]
+    }
+   ],
+   "name": "a repeated literal names both arms",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match lane.origin.state {",
+    "  \"AK\" => $10",
+    "  \"AK\" => $20",
+    "  _ => $0",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "whole-number ranges have no gap between n and n+1",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.stops.len {",
+    "  ..=2 => $0",
+    "  3..=5 => $10",
+    "  6.. => $20",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `shipment.stops.len` doesn't cover exactly `3`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a whole-number gap is named",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.stops.len {",
+    "  ..=2 => $0",
+    "  4.. => $20",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "whole-number literals",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.stops.len {",
+    "  1 => $0",
+    "  2 => $10",
+    "  _ => $20",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "money ranges",
+   "source": [
+    "library \"t\"",
+    "fn tier(m: Money) -> Percent = match m {",
+    "  ..$100 => 5%",
+    "  $100..$1_000 => 3%",
+    "  $1_000.. => 1%",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "percent ranges",
+   "source": [
+    "library \"t\"",
+    "fn tier(p: Percent) -> Int = match p {",
+    "  ..10% => 1",
+    "  10%.. => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `n` doesn't cover `4` and above. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "guarded arms do not count toward coverage",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int = match n {",
+    "  x if x > 3 => 1",
+    "  ..=3 => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "x + 1",
+     "code": "type-mismatch",
+     "message": "`x + 1` is a whole number, but a condition must be true or false"
+    }
+   ],
+   "name": "a guard must be Bool",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int = match n {",
+    "  x if x + 1 => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "3",
+     "code": "unreachable-arm",
+     "message": "Nothing reaches this arm: the arms above it match every value it would"
+    }
+   ],
+   "name": "an arm after a wildcard is unreachable",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int = match n {",
+    "  _ => 1",
+    "  3 => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "_",
+     "code": "unreachable-arm",
+     "message": "Nothing reaches this arm: the arms above it match every value it would"
+    }
+   ],
+   "name": "an arm covered by the arms above is unreachable",
+   "source": [
+    "library \"t\"",
+    "fn f(b: Bool) -> Int = match b {",
+    "  true => 1",
+    "  false => 2",
+    "  _ => 3",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "record patterns are covered field by field",
+   "source": [
+    "tariff \"t\"",
+    "for stop in shipment.stops {",
+    "  let fee = match stop {",
+    "    { kind: Delivery, appointment: true } => $50",
+    "    { kind: Delivery } => $25",
+    "    _ => $0",
+    "  }",
+    "  charge \"Stop\" = fee",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `p` doesn't cover `{ a: false, b: false }`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a record pattern that leaves a case uncovered",
+   "source": [
+    "library \"t\"",
+    "type Pair = { a: Bool, b: Bool }",
+    "fn f(p: Pair) -> Int = match p {",
+    "  { a: true } => 1",
+    "  { b: true } => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "c",
+     "code": "unknown-field",
+     "fixes": [
+      {
+       "label": "Change to `a`",
+       "result": [
+        "library \"t\"",
+        "type Pair = { a: Bool, b: Bool }",
+        "fn f(p: Pair) -> Int = match p {",
+        "  { a: true } => 1",
+        "  _ => 2",
+        "}"
+       ]
+      }
+     ],
+     "message": "`Pair` has no field `c`. Did you mean `a`?",
+     "nth": 2
+    }
+   ],
+   "name": "a record pattern with an unknown field",
+   "source": [
+    "library \"t\"",
+    "type Pair = { a: Bool, b: Bool }",
+    "fn f(p: Pair) -> Int = match p {",
+    "  { c: true } => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a range pattern on text matches in Unicode order, and needs `_` or an open end",
+   "source": [
+    "library \"t\"",
+    "fn f(t: Text) -> Int = match t {",
+    "  \"a\"..\"b\" => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 mi",
+     "code": "type-mismatch",
+     "message": "The value matched is a weight, so it can never be `5 mi`"
+    }
+   ],
+   "name": "a literal of the wrong type",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Weight) -> Int = match w {",
+    "  5 mi => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "none",
+     "code": "type-mismatch",
+     "message": "The value matched is a weight, so it can never be `none`"
+    }
+   ],
+   "name": "none on a value that is never empty",
+   "source": [
+    "library \"t\"",
+    "fn f(w: Weight) -> Int = match w {",
+    "  none => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "x",
+     "code": "pattern-binding",
+     "message": "A name can't be bound in one alternative of `|`; bind the whole value instead"
+    }
+   ],
+   "name": "a binding inside an alternative is refused",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int = match n {",
+    "  1 | x => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5..5",
+     "code": "empty-range",
+     "message": "This range is empty: its start isn't below its end"
+    }
+   ],
+   "name": "an empty range is refused",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Int = match n {",
+    "  5..5 => 1",
+    "  _ => 2",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "arms that join to a wider type",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Number = match n {",
+    "  1 => 1",
+    "  _ => 2.5",
+    "}"
+   ],
+   "types": {
+    "match n {\n  1 => 1\n  _ => 2.5\n}": "Number"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "branch-mismatch",
+     "message": "This branch gives a weight, but the branches before it give money"
+    }
+   ],
+   "name": "arms of different types",
+   "source": [
+    "library \"t\"",
+    "fn f(n: Int) -> Money = match n {",
+    "  1 => $1",
+    "  _ => 5 lb",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `rating.mode` doesn't cover `Buy`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a match statement must be exhaustive too",
+   "source": [
+    "tariff \"t\"",
+    "match rating.mode {",
+    "  Sell => { charge \"x\" = $1 }",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "date ranges",
+   "source": [
+    "library \"t\"",
+    "fn season(d: Date) -> Int = match d {",
+    "  ..@2026-06-01 => 1",
+    "  @2026-06-01..@2026-09-01 => 2",
+    "  @2026-09-01.. => 3",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `d` doesn't cover from `@2026-06-01` to `@2026-06-30`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a date gap is named",
+   "source": [
+    "library \"t\"",
+    "fn season(d: Date) -> Int = match d {",
+    "  ..@2026-06-01 => 1",
+    "  @2026-07-01.. => 3",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `shipment.status` doesn't cover `PartiallyAssigned`, `Assigned`, `InTransit` and 6 other values. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "several missing values are counted",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.status {",
+    "  New => $10",
+    "}",
+    "charge \"x\" = fee"
+   ]
+  }
+ ]
+}

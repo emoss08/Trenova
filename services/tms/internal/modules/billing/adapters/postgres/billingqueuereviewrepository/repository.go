@@ -2,21 +2,29 @@ package billingqueuereviewrepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	issueErrors = dberror.Mapping{Entity: "Billing queue issue"}
+	eventErrors = dberror.Mapping{Entity: "Billing queue event"}
+	itemErrors  = dberror.Mapping{Entity: "Billing queue item"}
 )
 
 type Params struct {
@@ -38,36 +46,27 @@ func New(p Params) billingqueueports.BillingQueueReviewRepository {
 	}
 }
 
-func tenantWhere(alias string, ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.Where("?.organization_id = ?", bun.Ident(alias), ti.OrgID).
-			Where("?.business_unit_id = ?", bun.Ident(alias), ti.BuID)
-	}
-}
-
 func (r *repository) ListIssues(
 	ctx context.Context,
-	ti pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	itemID pulid.ID,
 ) ([]*billingqueue.Issue, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingqueue.Issue, error) {
-		issues := make([]*billingqueue.Issue, 0, 4)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&issues).
-			Apply(tenantWhere("bqis", ti)).
-			Where("bqis.item_id = ?", itemID).
-			Order("bqis.created_at ASC", "bqis.id ASC").
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list billing queue issues: %w", err)
+		iss := billingqueuedb.Issues
+		issues, err := iss.Where(iss.ItemID.Eq(itemID)).
+			Order(iss.CreatedAt.Asc(), iss.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, err
+		}
+		if issues == nil {
+			return []*billingqueue.Issue{}, nil
 		}
 
 		return issues, nil
 	})
 }
 
-// SyncIssues lands the checks' findings on the stored issues inside one
-// transaction. A finding is inserted with ON CONFLICT DO NOTHING so two reads
-// racing to raise the same issue both end up looking at the one row.
 func (r *repository) SyncIssues(
 	ctx context.Context,
 	req *billingqueueports.SyncBillingQueueIssuesRequest,
@@ -86,47 +85,16 @@ func (r *repository) SyncIssues(
 			}
 
 			result := &billingqueueports.SyncBillingQueueIssuesResult{}
-			db := r.db.DBForContext(ctx)
-			now := timeutils.NowUnix()
 			found := make(map[string]struct{}, len(req.Findings))
-
 			for _, finding := range req.Findings {
 				key := finding.FindingKey()
 				found[key] = struct{}{}
-				current, ok := byKey[key]
-				switch {
-				case !ok:
-					finding.OrganizationID = req.TenantInfo.OrgID
-					finding.BusinessUnitID = req.TenantInfo.BuID
-					finding.ItemID = req.ItemID
-					res, insErr := db.NewInsert().
-						Model(finding).
-						On("CONFLICT (organization_id, business_unit_id, item_id, code, subject_key) DO NOTHING").
-						Exec(ctx)
-					if insErr != nil {
-						return nil, fmt.Errorf("raise billing queue issue: %w", insErr)
-					}
-					if n, _ := res.RowsAffected(); n > 0 {
-						result.Raised = append(result.Raised, finding)
-					}
-				case current.ResolutionKey != nil && *current.ResolutionKey == billingqueue.ResolutionCleared:
-					current.ResolutionKey = nil
-					current.ResolutionText = ""
-					current.ResolvedAt = nil
-					current.ResolvedByID = nil
-					refreshFinding(current, finding)
-					if _, err = r.UpdateIssue(ctx, current); err != nil {
-						return nil, err
-					}
-					result.Reopened = append(result.Reopened, current)
-				case current.IsOpen() && findingChanged(current, finding):
-					refreshFinding(current, finding)
-					if _, err = r.UpdateIssue(ctx, current); err != nil {
-						return nil, err
-					}
+				if err = r.landFinding(ctx, req, byKey[key], finding, result); err != nil {
+					return nil, err
 				}
 			}
 
+			now := timeutils.NowUnix()
 			for _, issue := range existing {
 				if !issue.IsOpen() || issue.Source != billingqueue.IssueSourceDeterministic {
 					continue
@@ -153,6 +121,44 @@ func (r *repository) SyncIssues(
 			return result, nil
 		},
 	)
+}
+
+func (r *repository) landFinding(
+	ctx context.Context,
+	req *billingqueueports.SyncBillingQueueIssuesRequest,
+	current, finding *billingqueue.Issue,
+	result *billingqueueports.SyncBillingQueueIssuesResult,
+) error {
+	switch {
+	case current == nil:
+		finding.ItemID = req.ItemID
+		iss := billingqueuedb.Issues
+		n, err := iss.CreateOrSkip(ctx, r.db.Keel(ctx), []*billingqueue.Issue{finding},
+			iss.OrganizationID, iss.BusinessUnitID, iss.ItemID, iss.Code, iss.SubjectKey)
+		if err != nil {
+			return issueErrors.Map(err, finding.ID.String())
+		}
+		if n > 0 {
+			result.Raised = append(result.Raised, finding)
+		}
+	case current.ResolutionKey != nil && *current.ResolutionKey == billingqueue.ResolutionCleared:
+		current.ResolutionKey = nil
+		current.ResolutionText = ""
+		current.ResolvedAt = nil
+		current.ResolvedByID = nil
+		refreshFinding(current, finding)
+		if _, err := r.UpdateIssue(ctx, current); err != nil {
+			return err
+		}
+		result.Reopened = append(result.Reopened, current)
+	case current.IsOpen() && findingChanged(current, finding):
+		refreshFinding(current, finding)
+		if _, err := r.UpdateIssue(ctx, current); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func refreshFinding(current, finding *billingqueue.Issue) {
@@ -183,14 +189,11 @@ func (r *repository) GetIssue(
 	req *billingqueueports.GetBillingQueueIssueRequest,
 ) (*billingqueue.Issue, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueue.Issue, error) {
-		issue := new(billingqueue.Issue)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(issue).
-			Apply(tenantWhere("bqis", req.TenantInfo)).
-			Where("bqis.item_id = ?", req.ItemID).
-			Where("bqis.id = ?", req.IssueID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Billing queue issue")
+		iss := billingqueuedb.Issues
+		issue, err := iss.Where(iss.ItemID.Eq(req.ItemID), iss.ID.Eq(req.IssueID)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, issueErrors.Map(err, req.IssueID.String())
 		}
 
 		return issue, nil
@@ -202,30 +205,25 @@ func (r *repository) UpdateIssue(
 	issue *billingqueue.Issue,
 ) (*billingqueue.Issue, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.Issue, error) {
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(issue).
-			Column(
-				"check_key", "subject_key", "summary", "reasoning", "flagged_charge_id", "options",
-				"resolution_key", "resolution_text", "effect_snapshot", "resolved_by_id",
-				"resolved_at", "requested_at", "requested_by_id", "updated_at",
-			).
-			Set("version = version + 1").
-			Where("id = ?", issue.ID).
-			Where("organization_id = ?", issue.OrganizationID).
-			Where("business_unit_id = ?", issue.BusinessUnitID).
-			Where("version = ?", issue.Version).
-			Exec(ctx)
+		iss := billingqueuedb.Issues
+		err := iss.Save(ctx, r.db.Keel(ctx), issue,
+			iss.CheckKey,
+			iss.SubjectKey,
+			iss.Summary,
+			iss.Reasoning,
+			iss.FlaggedChargeID,
+			iss.Options,
+			iss.ResolutionKey,
+			iss.ResolutionText,
+			iss.EffectSnapshot,
+			iss.ResolvedByID,
+			iss.ResolvedAt,
+			iss.RequestedAt,
+			iss.RequestedByID,
+		)
 		if err != nil {
-			return nil, fmt.Errorf("update billing queue issue: %w", err)
+			return nil, issueErrors.Map(err, issue.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"Billing queue issue",
-			issue.ID.String(),
-		); err != nil {
-			return nil, err
-		}
-		issue.Version++
 
 		return issue, nil
 	})
@@ -233,15 +231,18 @@ func (r *repository) UpdateIssue(
 
 func (r *repository) CountOpenIssues(
 	ctx context.Context,
-	ti pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	itemID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		return dbhelper.Count(ctx, r.db.DBForContext(ctx).NewSelect().
-			Model((*billingqueue.Issue)(nil)).
-			Apply(tenantWhere("bqis", ti)).
-			Where("bqis.item_id = ?", itemID).
-			Where("bqis.resolution_key IS NULL"))
+		iss := billingqueuedb.Issues
+		n, err := iss.Where(iss.ItemID.Eq(itemID), iss.ResolutionKey.IsNull()).
+			Count(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return 0, err
+		}
+
+		return int(n), nil
 	})
 }
 
@@ -251,11 +252,8 @@ func (r *repository) CreateEvents(ctx context.Context, events ...*billingqueue.I
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(&events).Exec(ctx); err != nil {
-			return fmt.Errorf("record billing queue activity: %w", err)
-		}
-
-		return nil
+		err := billingqueuedb.ItemEvents.CreateMany(ctx, r.db.Keel(ctx), events)
+		return eventErrors.Map(err, "")
 	})
 }
 
@@ -271,35 +269,33 @@ func (r *repository) ListEvents(
 			if limit <= 0 || limit > 100 {
 				limit = 30
 			}
-			db := r.db.DBForContext(ctx)
 
-			total, err := db.NewSelect().
-				Model((*billingqueue.ItemEvent)(nil)).
-				Apply(tenantWhere("bqe", req.TenantInfo)).
-				Where("bqe.item_id = ?", req.ItemID).
-				Count(ctx)
+			e := billingqueuedb.ItemEvents
+			var (
+				total  int64
+				events []*billingqueue.ItemEvent
+			)
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.CountInto(e.Where(e.ItemID.Eq(req.ItemID)), &total),
+				keel.ListInto(e.Where(
+					e.ItemID.Eq(req.ItemID),
+					keel.When(
+						req.BeforeAt > 0,
+						keel.Tuple(e.At, e.ID).Lt(keel.Tuple(req.BeforeAt, req.BeforeID.String())),
+					),
+				).Order(e.At.Desc(), e.ID.Desc()).Limit(limit+1), &events),
+			)
 			if err != nil {
-				return nil, fmt.Errorf("count billing queue activity: %w", err)
-			}
-
-			events := make([]*billingqueue.ItemEvent, 0, limit+1)
-			q := db.NewSelect().
-				Model(&events).
-				Apply(tenantWhere("bqe", req.TenantInfo)).
-				Where("bqe.item_id = ?", req.ItemID)
-			if req.BeforeAt > 0 {
-				q = q.Where("(bqe.at, bqe.id) < (?, ?)", req.BeforeAt, req.BeforeID)
-			}
-			if err = q.Order("bqe.at DESC", "bqe.id DESC").
-				Limit(int64(limit + 1)).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list billing queue activity: %w", err)
+				return nil, err
 			}
 
 			page := &billingqueueports.BillingQueueEventPage{Total: int(total)}
 			if len(events) > limit {
 				page.HasMore = true
 				events = events[:limit]
+			}
+			if events == nil {
+				events = []*billingqueue.ItemEvent{}
 			}
 			page.Items = events
 
@@ -308,10 +304,6 @@ func (r *repository) ListEvents(
 	)
 }
 
-// GetNeighbors walks the queue in the list's own order, newest first. The
-// filter is applied without its sort, because the keyset is the order: a
-// row comes before the item when it was queued later, or at the same moment
-// with a greater id.
 func (r *repository) GetNeighbors(
 	ctx context.Context,
 	req *billingqueueports.GetBillingQueueNeighborsRequest,
@@ -320,70 +312,35 @@ func (r *repository) GetNeighbors(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingqueueports.BillingQueueNeighbors, error) {
-			db := r.db.DBForContext(ctx)
-			ti := req.Filter.TenantInfo
-
-			var anchor struct {
-				CreatedAt int64 `bun:"created_at"`
-			}
-			if err := db.NewSelect().
-				TableExpr("billing_queue_items AS bqi").
-				Column("bqi.created_at").
-				Apply(tenantWhere("bqi", ti)).
-				Where("bqi.id = ?", req.ItemID).
-				Scan(ctx, &anchor); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Billing queue item")
+			db := r.db.Keel(ctx)
+			bq := billingqueuedb.BillingQueueItems
+			anchor, err := bq.Pick(bq.CreatedAt).Where(bq.ID.Eq(req.ItemID)).One(ctx, db)
+			if err != nil {
+				return nil, itemErrors.Map(err, req.ItemID.String())
 			}
 
-			base := func() *bun.SelectQuery {
-				q := querybuilder.ApplyFiltersWithoutSort(
-					db.NewSelect().Model((*billingqueue.BillingQueueItem)(nil)),
-					"bqi",
-					req.Filter,
-					(*billingqueue.BillingQueueItem)(nil),
-				)
-				if !req.IncludePosted {
-					q = q.Where("bqi.status <> ?", billingqueue.StatusPosted)
-				}
-				return q
-			}
-
-			total, err := base().Count(ctx)
+			n := neighborQueries(req, anchor.CreatedAt)
+			var (
+				total, before int64
+				member        bool
+				prev, next    []pulid.ID
+			)
+			err = keel.Batch(ctx, db,
+				keel.CountInto(n.base(), &total),
+				keel.CountInto(n.base().Where(n.after), &before),
+				keel.ExistsInto(n.base().Where(bq.ID.Eq(req.ItemID)), &member),
+				keel.IntoSlice(n.base().Pick(bq.ID).Where(n.after).
+					Order(bq.CreatedAt.Asc(), bq.ID.Asc()).Limit(1), &prev),
+				keel.IntoSlice(n.base().Pick(bq.ID).Where(n.beforeAnchor).
+					Order(bq.CreatedAt.Desc(), bq.ID.Desc()).Limit(1), &next),
+			)
 			if err != nil {
-				return nil, fmt.Errorf("count billing queue: %w", err)
-			}
-			before, err := base().
-				Where("(bqi.created_at, bqi.id) > (?, ?)", anchor.CreatedAt, req.ItemID).
-				Count(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("count billing queue before item: %w", err)
-			}
-			member, err := base().Where("bqi.id = ?", req.ItemID).Exists(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("find item in billing queue: %w", err)
+				return nil, err
 			}
 
 			out := &billingqueueports.BillingQueueNeighbors{Total: int(total)}
 			if member {
 				out.Position = int(before + 1)
-			}
-
-			var prev, next []pulid.ID
-			if err = base().
-				Column("bqi.id").
-				Where("(bqi.created_at, bqi.id) > (?, ?)", anchor.CreatedAt, req.ItemID).
-				OrderExpr("bqi.created_at ASC, bqi.id ASC").
-				Limit(1).
-				Scan(ctx, &prev); err != nil {
-				return nil, fmt.Errorf("find previous billing queue item: %w", err)
-			}
-			if err = base().
-				Column("bqi.id").
-				Where("(bqi.created_at, bqi.id) < (?, ?)", anchor.CreatedAt, req.ItemID).
-				OrderExpr("bqi.created_at DESC, bqi.id DESC").
-				Limit(1).
-				Scan(ctx, &next); err != nil {
-				return nil, fmt.Errorf("find next billing queue item: %w", err)
 			}
 			if len(prev) > 0 {
 				out.PrevID = &prev[0]
@@ -397,10 +354,37 @@ func (r *repository) GetNeighbors(
 	)
 }
 
-// FindDuplicates lists the other bills for the same freight and payer: queue
-// items that are not canceled, and invoices that are not voided, whether the
-// invoice bills the shipment on its own or carries it as one of its lines.
-// Corrections are left out; they bill the same shipment on purpose.
+type neighbors struct {
+	base         func() *keel.Query[*billingqueue.BillingQueueItem]
+	after        keel.Pred
+	beforeAnchor keel.Pred
+}
+
+func neighborQueries(
+	req *billingqueueports.GetBillingQueueNeighborsRequest,
+	createdAt int64,
+) neighbors {
+	bq := billingqueuedb.BillingQueueItems
+	id := req.ItemID.String()
+
+	return neighbors{
+		base: func() *keel.Query[*billingqueue.BillingQueueItem] {
+			return listquery.Filter(
+				bq.Where(keel.When(!req.IncludePosted, bq.Status.Ne(billingqueue.StatusPosted))),
+				req.Filter,
+			)
+		},
+		after:        keel.Tuple(bq.CreatedAt, bq.ID).Gt(keel.Tuple(createdAt, id)),
+		beforeAnchor: keel.Tuple(bq.CreatedAt, bq.ID).Lt(keel.Tuple(createdAt, id)),
+	}
+}
+
+type duplicateRow struct {
+	ID     pulid.ID
+	Number string
+	Status string
+}
+
 func (r *repository) FindDuplicates(
 	ctx context.Context,
 	req *billingqueueports.FindBillingQueueDuplicatesRequest,
@@ -409,63 +393,21 @@ func (r *repository) FindDuplicates(
 		if req.ShipmentID.IsNil() {
 			return nil, nil
 		}
-		db := r.db.DBForContext(ctx)
-		out := make([]*billingqueue.DuplicateRef, 0)
 
-		var items []struct {
-			ID     pulid.ID `bun:"id"`
-			Number string   `bun:"number"`
-			Status string   `bun:"status"`
+		var items, invoices []duplicateRow
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.IntoSlice(duplicateItems(req), &items),
+			keel.IntoSlice(duplicateInvoices(req), &invoices),
+		)
+		if err != nil {
+			return nil, err
 		}
-		if err := db.NewSelect().
-			TableExpr("billing_queue_items AS bqi").
-			Column("bqi.id", "bqi.number", "bqi.status").
-			Apply(tenantWhere("bqi", req.TenantInfo)).
-			Where("bqi.shipment_id = ?", req.ShipmentID).
-			Where("bqi.bill_to_customer_id = ?", req.BillToCustomerID).
-			Where("bqi.bill_type = ?", req.BillType).
-			Where("bqi.id <> ?", req.ItemID).
-			Where("bqi.status <> ?", billingqueue.StatusCanceled).
-			Where("bqi.is_adjustment_origin = FALSE").
-			Where("bqi.source_invoice_id IS NULL").
-			Order("bqi.created_at ASC").
-			Limit(5).
-			Scan(ctx, &items); err != nil {
-			return nil, fmt.Errorf("find duplicate billing queue items: %w", err)
-		}
+
+		out := make([]*billingqueue.DuplicateRef, 0, len(items)+len(invoices))
 		for _, item := range items {
 			out = append(out, &billingqueue.DuplicateRef{
 				Kind: "item", ID: item.ID, Number: item.Number, Status: item.Status,
 			})
-		}
-
-		var invoices []struct {
-			ID     pulid.ID `bun:"id"`
-			Number string   `bun:"number"`
-			Status string   `bun:"status"`
-		}
-		q := db.NewSelect().
-			TableExpr("invoices AS inv").
-			Column("inv.id", "inv.number", "inv.status").
-			Apply(tenantWhere("inv", req.TenantInfo)).
-			Where("inv.customer_id = ?", req.BillToCustomerID).
-			Where("inv.bill_type = ?", req.BillType).
-			Where("inv.status <> 'Voided'").
-			Where("inv.is_adjustment_artifact = FALSE").
-			Where("inv.billing_queue_item_id <> ?", req.ItemID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("inv.shipment_id = ?", req.ShipmentID).
-					WhereOr(`EXISTS (SELECT 1 FROM invoice_lines AS invl
-						WHERE invl.invoice_id = inv.id
-						AND invl.organization_id = inv.organization_id
-						AND invl.business_unit_id = inv.business_unit_id
-						AND invl.shipment_id = ?)`, req.ShipmentID)
-			})
-		if req.InvoiceID.IsNotNil() {
-			q = q.Where("inv.id <> ?", req.InvoiceID)
-		}
-		if err := q.Order("inv.created_at ASC").Limit(5).Scan(ctx, &invoices); err != nil {
-			return nil, fmt.Errorf("find duplicate invoices: %w", err)
 		}
 		for _, inv := range invoices {
 			out = append(out, &billingqueue.DuplicateRef{
@@ -477,8 +419,53 @@ func (r *repository) FindDuplicates(
 	})
 }
 
-// ListSummaries reads the rows' live state in one query: each item with how
-// many of its checks wait on an open issue.
+func duplicateItems(
+	req *billingqueueports.FindBillingQueueDuplicatesRequest,
+) *keel.Query[*billingqueue.BillingQueueItem] {
+	bq := billingqueuedb.BillingQueueItems
+	return bq.Pick(bq.ID, bq.Number, bq.Status).
+		Where(
+			bq.ShipmentID.Eq(req.ShipmentID),
+			bq.BillToCustomerID.Eq(req.BillToCustomerID),
+			bq.BillType.Eq(req.BillType),
+			bq.ID.Ne(req.ItemID),
+			bq.Status.Ne(billingqueue.StatusCanceled),
+			bq.IsAdjustmentOrigin.IsFalse(),
+			bq.SourceInvoiceID.IsNull(),
+		).
+		Order(bq.CreatedAt.Asc()).
+		Limit(5)
+}
+
+func duplicateInvoices(
+	req *billingqueueports.FindBillingQueueDuplicatesRequest,
+) *keel.Query[*invoice.Invoice] {
+	inv := invoicedb.Invoices
+	lines := inv.Lines()
+	return inv.Pick(inv.ID, inv.Number, inv.Status).
+		Where(
+			inv.CustomerID.Eq(req.BillToCustomerID),
+			inv.BillType.Eq(req.BillType),
+			inv.Status.Ne(invoice.StatusVoided),
+			inv.IsAdjustmentArtifact.IsFalse(),
+			inv.BillingQueueItemID.Ne(req.ItemID),
+			keel.Or(inv.ShipmentID.Eq(req.ShipmentID), lines.Any(lines.ShipmentID.Eq(req.ShipmentID))),
+			keel.When(req.InvoiceID.IsNotNil(), inv.ID.Ne(req.InvoiceID)),
+		).
+		Order(inv.CreatedAt.Asc()).
+		Limit(5)
+}
+
+type summaryRow struct {
+	ID                   pulid.ID
+	Number               string
+	Status               billingqueue.Status
+	HoldReasonCode       *billingqueue.HoldReasonCode
+	AssignedBillerID     *pulid.ID
+	AllocatedTotalAmount decimal.Decimal
+	OpenChecks           int
+}
+
 func (r *repository) ListSummaries(
 	ctx context.Context,
 	req *billingqueueports.ListBillingQueueSummariesRequest,
@@ -491,38 +478,50 @@ func (r *repository) ListSummaries(
 			if len(req.ItemIDs) == 0 {
 				return out, nil
 			}
-			db := r.db.DBForContext(ctx)
-			open := db.NewSelect().
-				TableExpr("billing_queue_issues AS bqis").
-				ColumnExpr("COUNT(DISTINCT bqis.check_key)").
-				Where("bqis.item_id = bqi.id").
-				Where("bqis.organization_id = bqi.organization_id").
-				Where("bqis.business_unit_id = bqi.business_unit_id").
-				Where("bqis.resolution_key IS NULL")
 
-			if err := db.NewSelect().
-				TableExpr("billing_queue_items AS bqi").
-				Column(
-					"bqi.id", "bqi.number", "bqi.status", "bqi.hold_reason_code",
-					"bqi.assigned_biller_id", "bqi.allocated_total_amount",
-				).
-				ColumnExpr("(?) AS open_checks", open).
-				Apply(tenantWhere("bqi", req.TenantInfo)).
-				Where("bqi.id IN (?)", bun.In(req.ItemIDs)).
-				Scan(ctx, &out); err != nil {
-				return nil, fmt.Errorf("list billing queue summaries: %w", err)
+			rows, err := keel.Into[summaryRow](ctx, r.db.Keel(ctx), itemSummaries(req.ItemIDs))
+			if err != nil {
+				return nil, err
 			}
 
-			for _, summary := range out {
-				needs := summary.OpenChecks
-				if summary.AssignedBillerID == nil || summary.AssignedBillerID.IsNil() {
+			for _, row := range rows {
+				needs := row.OpenChecks
+				if row.AssignedBillerID == nil || row.AssignedBillerID.IsNil() {
 					needs++
 				}
-				summary.NeedsCount = needs
-				summary.Ready = billingqueue.IsReviewable(summary.Status) && needs == 0
+				out = append(out, &billingqueueports.BillingQueueItemSummary{
+					ID:                   row.ID,
+					Number:               row.Number,
+					Status:               row.Status,
+					HoldReasonCode:       row.HoldReasonCode,
+					AssignedBillerID:     row.AssignedBillerID,
+					AllocatedTotalAmount: row.AllocatedTotalAmount,
+					OpenChecks:           row.OpenChecks,
+					NeedsCount:           needs,
+					Ready:                billingqueue.IsReviewable(row.Status) && needs == 0,
+				})
 			}
 
 			return out, nil
 		},
 	)
+}
+
+func itemSummaries(itemIDs []pulid.ID) *keel.Query[*billingqueue.BillingQueueItem] {
+	bq := billingqueuedb.BillingQueueItems
+	iss := billingqueuedb.Issues
+	open := keel.Scalar(iss.Pick(iss.CheckKey.CountDistinct()).Where(
+		iss.ItemID.EqCol(bq.ID),
+		iss.ResolutionKey.IsNull(),
+	))
+
+	return bq.Pick(
+		bq.ID,
+		bq.Number,
+		bq.Status,
+		bq.HoldReasonCode,
+		bq.AssignedBillerID,
+		bq.AllocatedTotalAmount,
+		open,
+	).Where(bq.ID.In(itemIDs...)).Limit(len(itemIDs))
 }

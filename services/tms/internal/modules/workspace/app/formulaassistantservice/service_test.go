@@ -5,541 +5,394 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
+	"github.com/emoss08/trenova/pkg/wasmmodule"
+
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
-type stubMatrixRepo struct {
-	ratematrixports.RateMatrixRepository
+const perMileSource = "tariff \"Per Mile\"\n\ninput rate: Money/mi\n\n" +
+	"charge \"Per Mile\" (quantity: shipment.distance, rate: rate)\n"
 
-	data []*ratematrixports.RateMatrixLookupData
+type fakeTemplates struct {
+	result   *formulatemplateservice.TestSourceResult
+	preview  *formulatemplateports.PreviewResult
+	tested   []*formulatemplateservice.TestSourceRequest
+	previews []*formulatemplateservice.PreviewRequest
 }
 
-func (s *stubMatrixRepo) GetLookupData(
+func (f *fakeTemplates) StudioContext(
+	context.Context,
+	pagination.TenantInfo,
+) (*formulatemplateservice.StudioContext, error) {
+	return &formulatemplateservice.StudioContext{
+		Context: &rules.TariffContext{
+			Libraries: []rules.TariffLibrary{{Path: "org.accessorials", Source: "library \"org.accessorials\"\n"}},
+		},
+		Libraries: []formulatemplateservice.StudioLibrary{{Path: "org.accessorials", Name: "accessorials"}},
+	}, nil
+}
+
+func (f *fakeTemplates) TestSource(
 	_ context.Context,
-	_ *ratematrixports.GetRateMatrixLookupDataRequest,
-) ([]*ratematrixports.RateMatrixLookupData, error) {
-	return s.data, nil
+	req *formulatemplateservice.TestSourceRequest,
+) (*formulatemplateservice.TestSourceResult, error) {
+	f.tested = append(f.tested, req)
+	return f.result, nil
 }
 
-type stubVersionRepo struct {
-	formulatemplateports.FormulaTemplateVersionRepository
-}
-
-func (s *stubVersionRepo) ListScheduled(
+func (f *fakeTemplates) Preview(
 	_ context.Context,
-	_ *formulatemplateports.ListScheduledVersionsRequest,
-) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
+	req *formulatemplateservice.PreviewRequest,
+) (*formulatemplateports.PreviewResult, error) {
+	f.previews = append(f.previews, req)
+	return f.preview, nil
 }
 
-const testSchema = `{
-	"$schema": "http://json-schema.org/draft-07/schema#",
-	"$id": "assistant-test-schema",
-	"type": "object",
-	"x-formula-context": {"category": "shipment"},
-	"x-data-source": {"table": "shipments", "preloads": []},
-	"properties": {
-		"totalDistance": {"description": "Distance", "type": "number"},
-		"baseRate": {"description": "Rate", "type": "number"},
-		"serviceType": {
-			"description": "Service type",
-			"type": "object",
-			"properties": {"code": {"description": "Service type code", "type": "string"}}
-		}
-	}
-}`
-
-func newTestService(t *testing.T, matrices ...*ratematrixports.RateMatrixLookupData) *Service {
-	t.Helper()
-
-	registry := schema.NewRegistry()
-	require.NoError(t, registry.Register("shipment", []byte(testSchema)))
-	res := resolver.NewResolver()
-
-	matrixRepo := &stubMatrixRepo{data: matrices}
-	formulaSvc := formula.NewService(formula.ServiceParams{
-		Logger:         zap.NewNop(),
-		Registry:       registry,
-		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
-		Resolver:       res,
-		VersionRepo:    &stubVersionRepo{},
-		RateMatrixRepo: matrixRepo,
-	})
-
-	return &Service{
-		formulaService: formulaSvc,
-		templateService: formulatemplateservice.New(formulatemplateservice.Params{
-			Logger:         zap.NewNop(),
-			FormulaService: formulaSvc,
-		}),
-		rateMatrixRepo: matrixRepo,
-	}
+type fakeLibraries struct {
+	result *formulalibraryservice.TestSourceResult
+	tested []*formulalibraryservice.TestSourceRequest
 }
 
-func tenant() pagination.TenantInfo {
-	return pagination.TenantInfo{
-		OrgID:  pulid.MustNew("org_"),
-		BuID:   pulid.MustNew("bu_"),
-		UserID: pulid.MustNew("usr_"),
+func (f *fakeLibraries) TestSource(
+	_ context.Context,
+	req *formulalibraryservice.TestSourceRequest,
+) (*formulalibraryservice.TestSourceResult, error) {
+	f.tested = append(f.tested, req)
+	return f.result, nil
+}
+
+type fakeCatalog struct{}
+
+func (fakeCatalog) Catalog(context.Context) (*tariff.CatalogEntry, error) {
+	return &tariff.CatalogEntry{ModuleVersion: "1.2.3", Catalog: rules.RawJSON(`{"types":[]}`)}, nil
+}
+
+func passing(names ...string) *rules.TariffTestRun {
+	run := &rules.TariffTestRun{Tests: []rules.TariffTestResult{}}
+	for _, name := range names {
+		run.Tests = append(run.Tests, rules.TariffTestResult{
+			Name:   name,
+			Status: rules.TariffTestPassed,
+			Range:  rules.TariffRange{From: 0, To: 4},
+		})
+	}
+	return run
+}
+
+func cleanCheck() *rules.TariffCheck {
+	return &rules.TariffCheck{
+		OK:     true,
+		Header: &rules.TariffHeader{Kind: rules.TariffKindTariff, Name: "Per Mile"},
+		Inputs: []rules.TariffInput{{Name: "rate", Type: "Money/mi", Required: true}},
+		Diagnostics: []rules.TariffDiagnostic{{
+			Severity: rules.SeverityWarning,
+			Code:     "unused",
+			Message:  wasmmodule.Message{Template: "`miles` is never used"},
+			Range:    &rules.TariffRange{From: 19, To: 24},
+		}},
+		Charges: []rules.TariffChargeRef{{Label: "Per Mile"}},
 	}
 }
 
-func matrix(code string, axes int) *ratematrixports.RateMatrixLookupData {
-	dimensions := make([]*ratematrix.RateMatrixDimension, axes)
-	for idx := range dimensions {
-		dimensions[idx] = &ratematrix.RateMatrixDimension{}
-	}
-
-	return &ratematrixports.RateMatrixLookupData{
-		Matrix: &ratematrix.RateMatrix{Code: code, Name: code + " table", Dimensions: dimensions},
-	}
+type fixture struct {
+	svc       *Service
+	templates *fakeTemplates
+	libraries *fakeLibraries
+	tenant    pagination.TenantInfo
 }
 
-func TestReference_NamesTheVariablesFunctionsAndTablesAFormulaMayUse(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t, matrix("ZONES", 1), matrix("LANES", 2), matrix("CUBE", 3), nil)
-
-	reference, err := svc.Reference(t.Context(), tenant(), "")
-	require.NoError(t, err)
-
-	assert.Equal(t, DefaultSchemaID, reference.SchemaID)
-	names := make([]string, 0, len(reference.Variables))
-	for _, variable := range reference.Variables {
-		names = append(names, variable.Name)
-	}
-	assert.Contains(t, names, "totalDistance")
-	assert.Contains(t, names, "baseRate")
-	assert.NotEmpty(t, reference.Functions)
-	assert.Equal(t, []RateTable{
-		{Code: "ZONES", Name: "ZONES table", Axes: 1, Functions: "lookup, lookupOr"},
-		{Code: "LANES", Name: "LANES table", Axes: 2, Functions: "lookup2, lookup2Or"},
-	}, reference.RateTables, "a table a formula cannot look up is not offered")
-
-	_, err = svc.Reference(t.Context(), tenant(), "nothing")
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "no formula schema named nothing")
-}
-
-func TestTest_TheEnginePricesEveryScenario(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t)
-
-	outcome, err := svc.Test(t.Context(), &TestRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance * baseRate",
-		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.5},
-		Scenarios: []Scenario{
-			{Name: "Long haul", Variables: map[string]any{"totalDistance": 900}},
-			{Name: "Own rate", Description: "A cheaper lane",
-				Variables: map[string]any{"baseRate": 1.25}},
+func newFixture() *fixture {
+	templates := &fakeTemplates{result: &formulatemplateservice.TestSourceResult{
+		Check:   cleanCheck(),
+		Imports: []tarifftypes.Import{{Path: "org.accessorials", VersionNumber: 2}},
+		Tests:   passing("a short haul"),
+	}}
+	libraries := &fakeLibraries{result: &formulalibraryservice.TestSourceResult{
+		Check: &rules.TariffCheck{
+			OK:     true,
+			Header: &rules.TariffHeader{Kind: rules.TariffKindLibrary, Name: "org.accessorials"},
 		},
-	})
-	require.NoError(t, err)
-
-	assert.Equal(t, pagedraft.FormulaCheck{Valid: true, Result: "250"}, outcome.Check)
-	require.Len(t, outcome.Scenarios, 2)
-	assert.Equal(t, "Long haul", outcome.Scenarios[0].Name)
-	assert.Equal(t, "2250", outcome.Scenarios[0].Amount)
-	assert.True(t, outcome.Scenarios[0].Valid)
-	assert.Equal(t, 2.5, outcome.Scenarios[0].Variables["baseRate"],
-		"a scenario starts from the defaults and overrides what it names")
-	assert.Equal(t, "125", outcome.Scenarios[1].Amount)
-	assert.Equal(t, "A cheaper lane", outcome.Scenarios[1].Description)
+		Imports: []tarifftypes.Import{},
+		Tests:   passing("hazmat adds the per-mile surcharge"),
+	}}
+	return &fixture{
+		svc:       &Service{templates: templates, libraries: libraries, catalog: fakeCatalog{}},
+		templates: templates,
+		libraries: libraries,
+		tenant: pagination.TenantInfo{
+			OrgID:  pulid.MustNew("org_"),
+			BuID:   pulid.MustNew("bu_"),
+			UserID: pulid.MustNew("usr_"),
+		},
+	}
 }
 
-/*
-gpt-6-luna gave a template variable a value in each scenario but not in
-variables, and the check refused the expression as "unknown name teamService".
-It then set serviceType.code per scenario, a schema field the reference had
-listed, and was told the variable name was invalid. It asked the person which
-service type meant team service instead of proposing the formula.
-*/
-func TestTest_ScenarioValuesCountAsDeclaredAndMayNameASchemaField(t *testing.T) {
+func TestLanguage_JoinsTheCatalogAndTheOrganisationsContext(t *testing.T) {
 	t.Parallel()
 
-	svc := newTestService(t)
-
-	outcome, err := svc.Test(t.Context(), &TestRequest{
-		TenantInfo: tenant(),
-		Expression: `totalDistance * baseRate + (teamService ? teamRate * totalDistance : 0) + ` +
-			`(serviceType.code == "TEAM" ? 10 : 0)`,
-		Variables: map[string]any{"baseRate": 2, "teamRate": 0.25},
-		Scenarios: []Scenario{
-			{Name: "Solo", Variables: map[string]any{
-				"totalDistance": 100, "teamService": false, "serviceType.code": "STD",
-			}},
-			{Name: "Team", Variables: map[string]any{
-				"totalDistance": 100, "teamService": true, "serviceType.code": "TEAM",
-			}},
-		},
-	})
+	f := newFixture()
+	language, err := f.svc.Language(t.Context(), f.tenant)
 	require.NoError(t, err)
-
-	assert.True(t, outcome.Check.Valid, outcome.Check.Error)
-	require.Len(t, outcome.Scenarios, 2)
-	assert.Equal(t, "200", outcome.Scenarios[0].Amount)
-	assert.Equal(t, "235", outcome.Scenarios[1].Amount)
+	assert.Equal(t, "1.2.3", language.ModuleVersion)
+	assert.JSONEq(t, `{"types":[]}`, string(language.Catalog))
+	require.Len(t, language.Libraries, 1)
+	assert.Equal(t, "org.accessorials", language.Context.Libraries[0].Path)
 }
 
-// Asked what the studio's per-mile-with-minimum template comes to on a 90-mile
-// run at 3 a mile, gpt-6-luna set every value on the one load it described.
-// The check ran without them, max met an empty minimum, and the model said the
-// engine could not price it.
-func TestTest_PricesALoadWhoseValuesAreAllOnTheLoad(t *testing.T) {
+func TestCheck_ReadsTemplatesAndLibrariesWithTheirOwnKind(t *testing.T) {
 	t.Parallel()
 
-	svc := newTestService(t)
-
-	outcome, err := svc.Test(t.Context(), &TestRequest{
-		TenantInfo: tenant(),
-		Expression: "max(minimumCharge, baseRate * totalDistance)",
-		Scenarios: []Scenario{{Name: "90-mile run", Variables: map[string]any{
-			"baseRate": 3, "minimumCharge": 250, "totalDistance": 90,
-		}}},
+	f := newFixture()
+	checked, err := f.svc.Check(t.Context(), &CheckRequest{
+		TenantInfo: f.tenant,
+		Kind:       KindTemplate,
+		Source:     perMileSource,
 	})
 	require.NoError(t, err)
+	assert.True(t, checked.OK)
+	assert.True(t, checked.Passing())
+	assert.Equal(t, "tariff", checked.Kind)
+	assert.Equal(t, []string{"org.accessorials"}, checked.Imports)
+	assert.Equal(t, []string{"Per Mile"}, checked.Charges)
+	require.Len(t, checked.Inputs, 1)
+	assert.Equal(t, "Money/mi", checked.Inputs[0].Type)
+	require.Len(t, checked.Findings, 1)
+	assert.Equal(t, &tariff.SourcePosition{Line: 3, Column: 1}, checked.Findings[0].At)
+	assert.Equal(t, "input", checked.Findings[0].Excerpt)
+	assert.Equal(t, 1, checked.Tests.Passed)
+	require.Len(t, f.templates.tested, 1)
+	assert.Empty(t, f.libraries.tested)
 
-	assert.True(t, outcome.Check.Valid, outcome.Check.Error)
-	require.Len(t, outcome.Scenarios, 1)
-	assert.Equal(t, "270", outcome.Scenarios[0].Amount)
+	library, err := f.svc.Check(t.Context(), &CheckRequest{
+		TenantInfo: f.tenant,
+		Kind:       KindLibrary,
+		Source:     "library \"org.accessorials\"\n",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "library", library.Kind)
+	require.Len(t, f.libraries.tested, 1)
+	assert.Equal(t, f.tenant, f.libraries.tested[0].TenantInfo)
 }
 
-func TestTest_PricesUnderThePageDraftsChargePolicy(t *testing.T) {
+func TestCheck_RefusesAnUnknownKindOrAnEmptySource(t *testing.T) {
 	t.Parallel()
 
-	svc := newTestService(t)
-	minCharge, maxCharge, precision := "300", "2000.00", 0
+	f := newFixture()
+	_, err := f.svc.Check(t.Context(), &CheckRequest{Kind: "condition", Source: perMileSource})
+	assert.True(t, errortypes.IsError(err))
+	_, err = f.svc.Check(t.Context(), &CheckRequest{Kind: KindTemplate, Source: "  "})
+	assert.True(t, errortypes.IsError(err))
+	assert.Empty(t, f.templates.tested)
+}
 
-	outcome, err := svc.Test(t.Context(), &TestRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance * baseRate",
-		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
-		Scenarios: []Scenario{
-			{Name: "Short", Variables: map[string]any{"totalDistance": 10}},
-			{Name: "Long", Variables: map[string]any{"totalDistance": 1000}},
+func TestPreview_ReportsTheBillOrWhereItStopped(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	shipmentID := pulid.MustNew("shp_")
+	f.templates.preview = &formulatemplateports.PreviewResult{
+		Valid:     true,
+		Inputs:    []tarifftypes.InputDecl{{Name: "rate", Type: "Money/mi", Required: true}},
+		RatedBill: &tarifftypes.Bill{Total: decimal.NewFromInt(865)},
+		Tests:     passing("a short haul").Tests,
+	}
+
+	preview, err := f.svc.Preview(t.Context(), &PreviewRequest{
+		TenantInfo: f.tenant,
+		Source:     perMileSource,
+		ShipmentID: shipmentID,
+	})
+	require.NoError(t, err)
+	assert.True(t, preview.OK)
+	require.NotNil(t, preview.Bill)
+	assert.Equal(t, "865", preview.Bill.Total.String())
+	require.Len(t, f.templates.previews, 1)
+	assert.Equal(t, shipmentID, *f.templates.previews[0].ShipmentID)
+
+	f.templates.preview = &formulatemplateports.PreviewResult{
+		Valid: true,
+		Refusal: &rules.TariffRefusal{
+			Text:  "This rate needs the trip's miles",
+			Range: &rules.TariffRange{From: 19, To: 30},
 		},
-		Policy: &pagedraft.FormulaPolicy{
-			MinCharge:         &minCharge,
-			MaxCharge:         &maxCharge,
-			RoundingMode:      "Up",
-			RoundingPrecision: &precision,
-		},
+		Tests: []rules.TariffTestResult{},
+	}
+	preview, err = f.svc.Preview(t.Context(), &PreviewRequest{
+		TenantInfo: f.tenant,
+		Source:     perMileSource,
 	})
 	require.NoError(t, err)
+	assert.Equal(t, "This rate needs the trip's miles", preview.Refusal)
+	assert.Equal(t, &tariff.SourcePosition{Line: 3, Column: 1}, preview.RefusalAt)
+	assert.Nil(t, f.templates.previews[1].ShipmentID, "no shipment rates the sample record")
+}
 
-	assert.Equal(t, pagedraft.FormulaCheck{Valid: true, Result: "300"}, outcome.Check,
-		"255.5 is lifted to the minimum")
-	require.Len(t, outcome.Scenarios, 2)
-	assert.Equal(t, "300", outcome.Scenarios[0].Amount)
-	assert.Equal(t, "2000", outcome.Scenarios[1].Amount, "2555 is held to the maximum")
-	require.NotNil(t, outcome.Policy)
-	assert.Equal(t, "300", *outcome.Policy.MinCharge)
-	assert.Equal(t, "2000", *outcome.Policy.MaxCharge)
-	assert.Equal(t, "Up", outcome.Policy.RoundingMode)
-	assert.Equal(t, 0, *outcome.Policy.RoundingPrecision)
+func TestPropose_ShowsOnlySourceThatChecksAndPassesItsTests(t *testing.T) {
+	t.Parallel()
 
-	outcome, err = svc.Test(t.Context(), &TestRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance * baseRate",
-		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
-		Policy:     &pagedraft.FormulaPolicy{RoundingMode: "Up", RoundingPrecision: &precision},
+	f := newFixture()
+	proposed, err := f.svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo:  f.tenant,
+		Kind:        KindTemplate,
+		Name:        " Per Mile ",
+		Source:      perMileSource,
+		Explanation: " Bills the miles at the contract rate. ",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, "256", outcome.Check.Result, "rounded up to whole dollars")
+	require.NotNil(t, proposed.Proposal)
+	assert.Equal(t, pagedraft.SourceProposal{
+		Name:        "Per Mile",
+		Source:      perMileSource,
+		Explanation: "Bills the miles at the contract rate.",
+		Inputs:      []string{"rate"},
+		Imports:     []string{"org.accessorials"},
+		Charges:     []string{"Per Mile"},
+		Warnings:    []string{"`miles` is never used"},
+		Tests:       pagedraft.ProposalTests{Total: 1, Passed: 1},
+	}, *proposed.Proposal)
 
-	outcome, err = svc.Test(t.Context(), &TestRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance * baseRate",
-		Variables:  map[string]any{"totalDistance": 100, "baseRate": 2.555},
+	f.templates.result.Tests = &rules.TariffTestRun{Tests: []rules.TariffTestResult{{
+		Name:   "a short haul",
+		Status: rules.TariffTestFailed,
+	}}}
+	proposed, err = f.svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo:  f.tenant,
+		Kind:        KindTemplate,
+		Source:      perMileSource,
+		Explanation: "Bills the miles.",
 	})
 	require.NoError(t, err)
-	assert.Equal(t, "255.5", outcome.Check.Result, "no policy is the default rounding")
-	assert.Equal(t, "HalfUp", outcome.Policy.RoundingMode)
-	assert.Equal(t, 2, *outcome.Policy.RoundingPrecision)
+	assert.Nil(t, proposed.Proposal, "a failing test keeps the proposal off the page")
+	assert.False(t, proposed.Checked.Passing())
 
-	bad := "lots"
-	_, err = svc.Test(t.Context(), &TestRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance",
-		Policy:     &pagedraft.FormulaPolicy{MinCharge: &bad},
+	f.templates.result.Tests = passing()
+	proposed, err = f.svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo:  f.tenant,
+		Kind:        KindTemplate,
+		Source:      perMileSource,
+		Explanation: "Bills the miles.",
 	})
-	require.Error(t, err)
+	require.NoError(t, err)
+	assert.Nil(t, proposed.Proposal, "a proposal without a test is not shown")
+
+	f.templates.result.Check = &rules.TariffCheck{OK: false, Diagnostics: []rules.TariffDiagnostic{{
+		Severity: rules.SeverityError,
+		Code:     "unknown-name",
+		Message:  wasmmodule.Message{Template: "There is no `ratee`"},
+	}}}
+	f.templates.result.Tests = passing("a short haul")
+	proposed, err = f.svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo:  f.tenant,
+		Kind:        KindTemplate,
+		Source:      perMileSource,
+		Explanation: "Bills the miles.",
+	})
+	require.NoError(t, err)
+	assert.Nil(t, proposed.Proposal)
+	require.Len(t, proposed.Checked.Findings, 1)
+	assert.Equal(t, "There is no `ratee`", proposed.Checked.Findings[0].Message)
+}
+
+func TestPropose_BoundsWhatTheModelWrites(t *testing.T) {
+	t.Parallel()
+
+	f := newFixture()
+	_, err := f.svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo: f.tenant,
+		Kind:       KindTemplate,
+		Source:     perMileSource,
+	})
+	require.Error(t, err, "an explanation is required")
+
+	_, err = f.svc.Propose(t.Context(), &ProposeRequest{
+		TenantInfo:  f.tenant,
+		Kind:        KindLibrary,
+		Name:        strings.Repeat("n", pagedraft.MaxLibraryNameLength+1),
+		Description: strings.Repeat("d", pagedraft.MaxDescriptionLength+1),
+		Source:      "library \"org.accessorials\"\n",
+		Explanation: strings.Repeat("e", MaxExplanationRunes+1),
+	})
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "policy.minCharge", multiErr.Errors[0].Field)
+	assert.Len(t, multiErr.Errors, 3)
+	assert.Empty(t, f.libraries.tested, "nothing runs for a request out of bounds")
 }
 
-func TestTest_ReportsAnExpressionThatWillNotEvaluate(t *testing.T) {
+func TestPreview_ReportsEachChoiceAndTheInputsBounds(t *testing.T) {
 	t.Parallel()
 
-	svc := newTestService(t)
-
-	outcome, err := svc.Test(t.Context(), &TestRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance *",
-		Scenarios:  []Scenario{{Name: "Any"}},
-	})
-	require.NoError(t, err)
-
-	assert.False(t, outcome.Check.Valid)
-	assert.NotEmpty(t, outcome.Check.Error)
-	assert.Empty(t, outcome.Check.Result)
-	assert.Empty(t, outcome.Scenarios, "nothing is priced with an expression that does not run")
-}
-
-func TestTest_RefusesWhatCannotBeAFormulaValue(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t)
-	scenarios := make([]Scenario, MaxScenarios+1)
-	for idx := range scenarios {
-		scenarios[idx] = Scenario{Name: "Scenario"}
+	f := newFixture()
+	chosen := "Flat"
+	bounds := &rules.TariffConstraint{Range: &rules.TariffRangeConstraint{
+		Min:          rules.QuantityValue(decimal.RequireFromString("0.5"), "$/mi"),
+		Max:          rules.QuantityValue(decimal.NewFromInt(15), "$/mi"),
+		MaxInclusive: true,
+	}}
+	f.templates.preview = &formulatemplateports.PreviewResult{
+		Valid: true,
+		Inputs: []tarifftypes.InputDecl{
+			{Name: "rate", Type: "Money/mi", Required: true, Constraint: bounds},
+		},
+		RatedBill: &tarifftypes.Bill{Currency: "USD", Total: decimal.NewFromInt(900)},
+		Choices: []rules.TariffChoice{{
+			Label:  "Linehaul",
+			Kind:   rules.TariffChoiceBest,
+			Chosen: &chosen,
+			Options: []rules.TariffChoiceOption{
+				{
+					Label:    "Per mile",
+					Status:   rules.TariffOptionLost,
+					Subtotal: rules.MoneyValue(decimal.NewFromInt(1175)),
+				},
+				{
+					Label:    "Flat",
+					Status:   rules.TariffOptionChosen,
+					Subtotal: rules.MoneyValue(decimal.NewFromInt(900)),
+				},
+			},
+		}},
+		Tests: passing("a short haul").Tests,
 	}
 
-	cases := map[string]*TestRequest{
-		"no expression":  {Expression: "  "},
-		"a bad name":     {Expression: "1", Variables: map[string]any{"9lives": 1}},
-		"a bad path":     {Expression: "1", Variables: map[string]any{"serviceType..code": 1}},
-		"a list value":   {Expression: "1", Variables: map[string]any{"rate": []any{1, 2}}},
-		"a nameless one": {Expression: "1", Scenarios: []Scenario{{Name: " "}}},
-		"too many":       {Expression: "1", Scenarios: scenarios},
-	}
-	for name, req := range cases {
-		req.TenantInfo = tenant()
-		_, err := svc.Test(t.Context(), req)
-		require.Error(t, err, name)
-		var multiErr *errortypes.MultiError
-		require.ErrorAs(t, err, &multiErr, name)
-	}
-}
-
-func TestPropose_PricesTheDraftWithItsOwnDefaults(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t)
-
-	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
-		TenantInfo: tenant(),
-		Expression: "max(totalDistance * perMile, minimum)",
-		Variables: []pagedraft.FormulaVariable{
-			{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2.85},
-			{Name: "minimum", Type: pagedraft.VariableNumber, DefaultValue: 350},
-		},
-		Explanation: "Charges per mile, never less than the minimum.",
-		Scenarios: []Scenario{
-			{Name: "Short run", Variables: map[string]any{"totalDistance": 10}},
-			{Name: "Long run", Variables: map[string]any{"totalDistance": 1000}},
-		},
+	preview, err := f.svc.Preview(t.Context(), &PreviewRequest{
+		TenantInfo: f.tenant,
+		Source:     perMileSource,
 	})
 	require.NoError(t, err)
-
-	assert.Equal(t, DefaultSchemaID, proposal.SchemaID)
-	assert.Equal(t, "Charges per mile, never less than the minimum.", proposal.Explanation)
-	require.Len(t, proposal.Scenarios, 2)
-	assert.Equal(t, "350", proposal.Scenarios[0].Amount, "the minimum holds on a short run")
-	assert.Equal(t, "2850", proposal.Scenarios[1].Amount)
-	assert.Len(t, proposal.Variables, 2)
+	require.Len(t, preview.Inputs, 1)
+	assert.Same(t, bounds, preview.Inputs[0].Constraint)
+	require.Len(t, preview.Choices, 1)
+	assert.Equal(t, "USD", preview.Choices[0].Currency)
+	require.NotNil(t, preview.Choices[0].Chosen)
+	assert.Equal(t, "Flat", *preview.Choices[0].Chosen)
+	assert.Equal(t, "1175", preview.Choices[0].Options[0].Subtotal.String())
 }
 
-// A proposal goes into the studio, where only its declared variables exist,
-// so a name only its sample loads give a value is still unknown there.
-func TestPropose_ChecksWithTheDeclaredVariablesOnly(t *testing.T) {
+func TestCheck_ReportsAnInputsConstraint(t *testing.T) {
 	t.Parallel()
 
-	svc := newTestService(t)
+	f := newFixture()
+	bounds := &rules.TariffConstraint{OneOf: []rules.RawJSON{rules.TextValue("Standard")}}
+	f.templates.result.Check.Inputs[0].Constraint = bounds
 
-	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
-		TenantInfo:  tenant(),
-		Expression:  "totalDistance * perMile",
-		Explanation: "Charges per mile.",
-		Scenarios: []Scenario{
-			{Name: "Run", Variables: map[string]any{"totalDistance": 10, "perMile": 2}},
-		},
+	checked, err := f.svc.Check(t.Context(), &CheckRequest{
+		TenantInfo: f.tenant,
+		Kind:       KindTemplate,
+		Source:     perMileSource,
 	})
 	require.NoError(t, err)
-
-	assert.False(t, proposal.Check.Valid, "perMile is not declared, so the studio could not run it")
+	require.Len(t, checked.Inputs, 1)
+	assert.Same(t, bounds, checked.Inputs[0].Constraint)
 }
-
-func TestPropose_RefusesADraftTheStudioCouldNotHold(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t)
-
-	_, err := svc.Propose(t.Context(), &ProposeRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance",
-		Variables: []pagedraft.FormulaVariable{
-			{Name: "rate", Type: "Money"},
-			{Name: "rate", Type: pagedraft.VariableNumber},
-		},
-	})
-	require.Error(t, err)
-	var multiErr *errortypes.MultiError
-	require.ErrorAs(t, err, &multiErr)
-	fields := make([]string, 0, len(multiErr.Errors))
-	for _, fieldErr := range multiErr.Errors {
-		fields = append(fields, fieldErr.Field)
-	}
-	assert.Contains(t, fields, "explanation")
-	assert.Contains(t, fields, "formula.variables[0].type")
-	assert.Contains(t, fields, "formula.variables[1].name")
-}
-
-func TestPropose_CarriesTheTemplateDetailsAndPricesTheBreakdown(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t)
-
-	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance * perMile + handling",
-		Variables: []pagedraft.FormulaVariable{
-			{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2},
-			{Name: "handling", Type: pagedraft.VariableNumber, DefaultValue: 50},
-		},
-		Details: pagedraft.FormulaDetails{
-			Name:         "  Per mile with handling ",
-			Description:  "Linehaul by the mile plus a handling fee.",
-			TemplateType: pagedraft.TemplateTypeFreightCharge,
-			Breakdown: []pagedraft.BreakdownLine{
-				{Name: "linehaul", Label: "Linehaul", Expression: "totalDistance * perMile"},
-				{Name: "handlingFee", Label: "Handling", Expression: "handling"},
-			},
-		},
-		Explanation: "Per mile plus handling.",
-	})
-	require.NoError(t, err)
-
-	assert.True(t, proposal.Check.Valid, proposal.Check.Error)
-	assert.Equal(t, "Per mile with handling", proposal.Name)
-	assert.Equal(t, pagedraft.TemplateTypeFreightCharge, proposal.TemplateType)
-	require.Len(t, proposal.Breakdown, 2)
-	assert.Equal(t, "handlingFee", proposal.Breakdown[1].Name)
-	assert.Nil(t, proposal.Policy, "no policy proposed leaves the editor's alone")
-}
-
-func TestPropose_PricesTheSampleLoadsUnderTheProposedPolicy(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t)
-	minCharge, precision := " 350 ", 1
-
-	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance * perMile",
-		Variables: []pagedraft.FormulaVariable{
-			{Name: "perMile", Type: pagedraft.VariableNumber, DefaultValue: 2.85},
-		},
-		Details: pagedraft.FormulaDetails{
-			Breakdown: []pagedraft.BreakdownLine{
-				{Name: "linehaul", Label: "Linehaul", Expression: "totalDistance * perMile"},
-			},
-			Policy: &pagedraft.FormulaPolicy{
-				MinCharge:         &minCharge,
-				RoundingMode:      "HalfEven",
-				RoundingPrecision: &precision,
-			},
-		},
-		Explanation: "Per mile, never less than the minimum.",
-		Scenarios: []Scenario{
-			{Name: "Short run", Variables: map[string]any{"totalDistance": 10}},
-			{Name: "Long run", Variables: map[string]any{"totalDistance": 1001}},
-		},
-	})
-	require.NoError(t, err)
-
-	assert.True(t, proposal.Check.Valid, proposal.Check.Error)
-	require.Len(t, proposal.Scenarios, 2)
-	assert.Equal(t, "350", proposal.Scenarios[0].Amount, "the policy's minimum holds")
-	assert.Equal(t, "2852.8", proposal.Scenarios[1].Amount, "2852.85 rounded half even to 1 place")
-	require.NotNil(t, proposal.Policy)
-	assert.Equal(t, "350", *proposal.Policy.MinCharge, "the proposal carries the policy, trimmed")
-	assert.Equal(t, "HalfEven", proposal.Policy.RoundingMode)
-
-	bad := "-1"
-	_, err = svc.Propose(t.Context(), &ProposeRequest{
-		TenantInfo:  tenant(),
-		Expression:  "totalDistance",
-		Details:     pagedraft.FormulaDetails{Policy: &pagedraft.FormulaPolicy{MaxCharge: &bad}},
-		Explanation: "Distance.",
-	})
-	require.Error(t, err)
-	var multiErr *errortypes.MultiError
-	require.ErrorAs(t, err, &multiErr)
-	assert.Equal(t, "policy.maxCharge", multiErr.Errors[0].Field)
-}
-
-func TestPropose_ABreakdownLineThatFailsFailsTheCheck(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t)
-
-	proposal, err := svc.Propose(t.Context(), &ProposeRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance * 2",
-		Details: pagedraft.FormulaDetails{
-			Breakdown: []pagedraft.BreakdownLine{
-				{Name: "fuel", Label: "Fuel surcharge", Expression: "unknownThing * 2"},
-			},
-		},
-		Explanation: "Two per mile.",
-	})
-	require.NoError(t, err)
-
-	assert.False(t, proposal.Check.Valid)
-	assert.Contains(t, proposal.Check.Error, `"Fuel surcharge" (fuel)`)
-}
-
-func TestPropose_RefusesDetailsTheStudioCouldNotHold(t *testing.T) {
-	t.Parallel()
-
-	svc := newTestService(t)
-
-	_, err := svc.Propose(t.Context(), &ProposeRequest{
-		TenantInfo: tenant(),
-		Expression: "totalDistance",
-		Details: pagedraft.FormulaDetails{
-			Name:         strings.Repeat("n", pagedraft.MaxTemplateNameLength+1),
-			TemplateType: "Discount",
-			Breakdown: []pagedraft.BreakdownLine{
-				{Name: "_hidden", Label: "", Expression: "1"},
-				{Name: "line", Label: "Line", Expression: ""},
-				{Name: "line", Label: "Again", Expression: "2"},
-			},
-		},
-		Explanation: "Distance.",
-	})
-	require.Error(t, err)
-
-	var multiErr *errortypes.MultiError
-	require.ErrorAs(t, err, &multiErr)
-	fields := make(map[string]bool, len(multiErr.Errors))
-	for _, fieldErr := range multiErr.Errors {
-		fields[fieldErr.Field] = true
-	}
-	assert.True(t, fields["name"])
-	assert.True(t, fields["templateType"])
-	assert.True(t, fields["breakdown[0].name"])
-	assert.True(t, fields["breakdown[0].label"])
-	assert.True(t, fields["breakdown[1].expression"])
-	assert.True(t, fields["breakdown[2].name"])
-}
-

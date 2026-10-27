@@ -3,6 +3,7 @@ package invoicerun
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -11,14 +12,11 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*InvoiceRun)(nil)
 	_ domaintypes.PostgresSearchable     = (*InvoiceRun)(nil)
 	_ pagination.CursorEntity            = (*InvoiceRun)(nil)
 	_ validationframework.TenantedEntity = (*InvoiceRun)(nil)
@@ -34,51 +32,50 @@ var (
 // to audit against; and it would leave a scheduled run that failed halfway with
 // nothing to resume from.
 type InvoiceRun struct {
-	bun.BaseModel             `bun:"table:invoice_runs,alias:invrun" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                          json:"-"`
+	keel.Table `keel:"invoice_runs"`
 
-	ID             pulid.ID              `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID              `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID              `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Number         string                `json:"number"         bun:"number,type:VARCHAR(100),notnull"`
-	Status         Status                `json:"status"         bun:"status,type:invoice_run_status_enum,notnull,default:'Building'"`
-	Source         Source                `json:"source"         bun:"source,type:invoice_run_source_enum,notnull"`
-	Cycle          customer.BillingCycle `json:"cycle"          bun:"cycle,type:customer_billing_cycle_enum,nullzero"`
-	PeriodStart    int64                 `json:"periodStart"    bun:"period_start,type:BIGINT,notnull"`
-	PeriodEnd      int64                 `json:"periodEnd"      bun:"period_end,type:BIGINT,notnull"`
-	InvoiceDate    int64                 `json:"invoiceDate"    bun:"invoice_date,type:BIGINT,notnull"`
-	CustomerIDs    []string              `json:"customerIds"    bun:"customer_ids,array,type:text[],nullzero"`
-	CurrencyCode   string                `json:"currencyCode"   bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
+	ID             pulid.ID              `json:"id"             keel:"id,pk,autoid:invrun_"`
+	BusinessUnitID pulid.ID              `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID              `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Number         string                `json:"number"         keel:"number"`
+	Status         Status                `json:"status"         keel:"status"`
+	Source         Source                `json:"source"         keel:"source"`
+	Cycle          customer.BillingCycle `json:"cycle"          keel:"cycle,nullzero"`
+	PeriodStart    int64                 `json:"periodStart"    keel:"period_start"`
+	PeriodEnd      int64                 `json:"periodEnd"      keel:"period_end"`
+	InvoiceDate    int64                 `json:"invoiceDate"    keel:"invoice_date"`
+	CustomerIDs    []string              `json:"customerIds"    keel:"customer_ids,nullzero"`
+	CurrencyCode   string                `json:"currencyCode"   keel:"currency_code"`
 
-	GroupCount       int             `json:"groupCount"       bun:"group_count,type:INTEGER,notnull"`
-	ItemCount        int             `json:"itemCount"        bun:"item_count,type:INTEGER,notnull"`
-	ExcludedCount    int             `json:"excludedCount"    bun:"excluded_count,type:INTEGER,notnull"`
-	InvoiceCount     int             `json:"invoiceCount"     bun:"invoice_count,type:INTEGER,notnull"`
-	TotalAmount      decimal.Decimal `json:"totalAmount"      bun:"total_amount,type:NUMERIC(19,4),notnull,default:0"`
-	TotalAmountMinor int64           `json:"totalAmountMinor" bun:"total_amount_minor,type:BIGINT,notnull"`
+	GroupCount       int             `json:"groupCount"       keel:"group_count"`
+	ItemCount        int             `json:"itemCount"        keel:"item_count"`
+	ExcludedCount    int             `json:"excludedCount"    keel:"excluded_count"`
+	InvoiceCount     int             `json:"invoiceCount"     keel:"invoice_count"`
+	TotalAmount      decimal.Decimal `json:"totalAmount"      keel:"total_amount"`
+	TotalAmountMinor int64           `json:"totalAmountMinor" keel:"total_amount_minor"`
 
-	FailureReason string `json:"failureReason" bun:"failure_reason,type:TEXT,nullzero"`
+	FailureReason string `json:"failureReason" keel:"failure_reason,nullzero"`
 
 	// OffCycleReason is why this run billed a period before its boundary. Empty
 	// on the ordinary path. It is kept on the run rather than only in the audit
 	// log because the next biller looking at the customer's history needs to see
 	// why a month has two invoices without going hunting for it.
-	OffCycleReason string `json:"offCycleReason" bun:"off_cycle_reason,type:TEXT,nullzero"`
+	OffCycleReason string `json:"offCycleReason" keel:"off_cycle_reason,nullzero"`
 
-	BuiltByID     pulid.ID `json:"builtById"     bun:"built_by_id,type:VARCHAR(100),nullzero"`
-	BuiltAt       *int64   `json:"builtAt"       bun:"built_at,type:BIGINT,nullzero"`
-	CommittedByID pulid.ID `json:"committedById" bun:"committed_by_id,type:VARCHAR(100),nullzero"`
-	CommittedAt   *int64   `json:"committedAt"   bun:"committed_at,type:BIGINT,nullzero"`
-	CanceledByID  pulid.ID `json:"canceledById"  bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	CanceledAt    *int64   `json:"canceledAt"    bun:"canceled_at,type:BIGINT,nullzero"`
+	BuiltByID     pulid.ID `json:"builtById"     keel:"built_by_id,nullzero"`
+	BuiltAt       *int64   `json:"builtAt"       keel:"built_at"`
+	CommittedByID pulid.ID `json:"committedById" keel:"committed_by_id,nullzero"`
+	CommittedAt   *int64   `json:"committedAt"   keel:"committed_at"`
+	CanceledByID  pulid.ID `json:"canceledById"  keel:"canceled_by_id,nullzero"`
+	CanceledAt    *int64   `json:"canceledAt"    keel:"canceled_at"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Groups       []*InvoiceRunGroup   `json:"groups,omitempty"       bun:"rel:has-many,join:id=run_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	Groups       []*InvoiceRunGroup   `json:"groups,omitempty"       keel:"many:run_id"`
 }
 
 func (r *InvoiceRun) Validate(multiErr *errortypes.MultiError) {
@@ -165,24 +162,12 @@ func (r *InvoiceRun) SyncTotals() {
 	r.TotalAmountMinor = money.MinorUnits(total)
 }
 
-func (r *InvoiceRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("invrun_")
-		}
-		if r.Status == "" {
-			r.Status = StatusBuilding
-		}
-		if r.CurrencyCode == "" {
-			r.CurrencyCode = "USD"
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
+func (r *InvoiceRun) BeforeCreate(ctx context.Context) error {
+	if r.Status == "" {
+		r.Status = StatusBuilding
+	}
+	if r.CurrencyCode == "" {
+		r.CurrencyCode = "USD"
 	}
 
 	return nil
@@ -205,3 +190,17 @@ func (r *InvoiceRun) GetCreatedAt() int64         { return r.CreatedAt }
 func (r *InvoiceRun) GetTableName() string        { return "invoice_runs" }
 func (r *InvoiceRun) GetOrganizationID() pulid.ID { return r.OrganizationID }
 func (r *InvoiceRun) GetBusinessUnitID() pulid.ID { return r.BusinessUnitID }
+
+func (InvoiceRun) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uk_invoice_runs_number",
+			Message: "Invoice run with this number already exists in your organization",
+		},
+		{
+			Name:    "uq_invoice_runs_scheduled_period",
+			Field:   "periodEnd",
+			Message: "A scheduled invoice run already exists for this cycle and period",
+		},
+	}
+}

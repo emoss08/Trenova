@@ -7,14 +7,14 @@ import {
 /**
  * A report result as the sheet reads it, whichever way it arrived: a run's
  * stored sample (raw values with each column's resolved display) or a
- * preview's rows (raw values with the catalog type and format hint).
+ * preview's rows (raw values with the value type and format hint).
  */
 export type SheetColumn = {
   id: string;
   label: string;
-  /** The catalog value type: string, int, decimal, epoch, … */
+  /** The value type: string, int, decimal, float, epoch, time, … */
   type: string;
-  /** The catalog format hint (money, percent, …), when the column has no resolved display. */
+  /** The format hint (money, percent, …), when the column has no resolved display. */
   hint: string;
   display: ReportColumnDisplayLike | null;
   numeric: boolean;
@@ -35,8 +35,8 @@ export type SheetSource = {
 };
 
 export type SheetHints = {
-  chart: { type: string; xColumnId: string | null; seriesIds: readonly string[] } | null;
-  sort: readonly { columnId: string; direction: string }[];
+  chart: { type: string; x: string | null; series: readonly string[] } | null;
+  sort: readonly { column: string; desc: boolean }[];
 };
 
 /** The rows a sheet shows of a run; the rest are in the file. */
@@ -46,19 +46,20 @@ export const SHEET_COLUMNS = 6;
 /** The headline figures a run shows over its sheet. */
 export const MAX_KPIS = 4;
 
-const NUMERIC_TYPES = new Set(["int", "decimal"]);
+const NUMERIC_TYPES = new Set(["int", "decimal", "float"]);
+const DATED_TYPES = new Set(["epoch", "time"]);
 
 /** A column as the sheet reads it, from its value type, format hint and resolved display. */
 export function sheetColumn(input: {
   id: string;
   label: string;
   type: string;
-  format?: string | null;
+  hint?: string;
   display?: ReportColumnDisplayLike | null;
 }): SheetColumn {
   const display = input.display ?? null;
-  const hint = input.format ?? "";
-  const dated = display ? display.style === "date" : input.type === "epoch";
+  const hint = input.hint ?? "";
+  const dated = display ? display.style === "date" : DATED_TYPES.has(input.type);
 
   return {
     id: input.id,
@@ -111,12 +112,12 @@ export function pictureOf(source: SheetSource, hints: SheetHints): Picture {
   if (chart && TABLE_CHARTS.has(chart.type)) {
     return { kind: "table" };
   }
-  const series = (chart?.seriesIds ?? [])
+  const series = (chart?.series ?? [])
     .map((id) => index(id))
     .filter((at) => at >= 0 && columns[at].numeric);
   const sorted = hints.sort[0];
   const sortedMeasure =
-    sorted && columns[index(sorted.columnId)]?.numeric ? index(sorted.columnId) : -1;
+    sorted && columns[index(sorted.column)]?.numeric ? index(sorted.column) : -1;
 
   const trendsOn = (period: number): Picture | null => {
     if (period < 0 || !columns[period].dated || source.more || source.rows.length < 3) {
@@ -136,15 +137,15 @@ export function pictureOf(source: SheetSource, hints: SheetHints): Picture {
     if (!positive) {
       return null;
     }
-    const ranked = sortedMeasure === measure && sorted.direction.toLowerCase() === "desc";
+    const ranked = sortedMeasure === measure && sorted.desc;
     return { kind: "ranked", label, measure, ranked };
   };
 
   if (chart && TREND_CHARTS.has(chart.type)) {
-    return trendsOn(index(chart.xColumnId)) ?? { kind: "table" };
+    return trendsOn(index(chart.x)) ?? { kind: "table" };
   }
   if (chart && RANKED_CHARTS.has(chart.type)) {
-    return ranksOn(index(chart.xColumnId), series[0] ?? measures[0]) ?? { kind: "table" };
+    return ranksOn(index(chart.x), series[0] ?? measures[0]) ?? { kind: "table" };
   }
 
   const lead = columns.findIndex((column) => !column.numeric);

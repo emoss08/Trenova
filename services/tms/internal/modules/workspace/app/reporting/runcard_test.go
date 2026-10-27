@@ -1,21 +1,23 @@
 package reporting
 
 import (
+	"bytes"
 	"context"
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type cardRuns struct {
@@ -27,8 +29,8 @@ type cardRuns struct {
 }
 
 func (r *cardRuns) GetByID(
-	_ context.Context,
-	_ *reportports.GetReportRunRequest,
+	context.Context,
+	*reportports.GetReportRunRequest,
 ) (*report.ReportRun, error) {
 	return r.run, nil
 }
@@ -47,7 +49,7 @@ func (r *cardRuns) LatestComparable(
 type cardDefinitions struct {
 	reportports.ReportDefinitionRepository
 
-	definition *report.Definition
+	definition *ir.Definition
 }
 
 func (d *cardDefinitions) GetByID(
@@ -64,71 +66,94 @@ func (d *cardDefinitions) GetRevision(
 	return &report.ReportDefinitionRevision{ID: req.RevisionID, Definition: d.definition}, nil
 }
 
-func cardDefinition() *report.Definition {
-	chart := report.ChartSpec{ID: "revenue", Type: report.ChartBar, XColumnID: "customer"}
-	return &report.Definition{
-		IRVersion: report.CurrentIRVersion,
-		Entity:    "invoice",
-		Columns: []report.ColumnSpec{
-			{ID: "customer", Ref: report.FieldRef{Field: "name"}, Kind: report.ColumnKindDimension},
-		},
-		Filters: &report.FilterGroup{
-			Op: report.BoolOpAnd,
-			Filters: []report.FieldFilter{
-				{
-					Ref:      report.FieldRef{Field: "invoiceDate"},
-					Operator: dbtype.OpLastNDays,
-					Param:    "windowDays",
-				},
-				{Ref: report.FieldRef{Field: "status"}, Operator: dbtype.OpIn, Param: "statuses"},
-			},
-		},
-		Sort: []report.SortSpec{{ColumnID: "revenue", Direction: dbtype.SortDirectionDesc}},
-		Parameters: []report.ParameterDef{
-			{Name: "windowDays", Label: "Window (days)", Type: reportcatalog.FieldInt, Default: 90.0},
+func cardDefinition() *ir.Definition {
+	return &ir.Definition{
+		Version: ir.Version,
+		Entity:  "shipment",
+		Columns: []ir.Column{
+			{ID: "c_customer", Label: "Customer", Dimension: &ir.Dimension{Field: "customer.name"}},
 			{
-				Name:          "statuses",
-				Label:         "Statuses",
-				Type:          reportcatalog.FieldEnum,
-				Multi:         true,
-				Default:       []any{"Posted"},
-				AllowedValues: []string{"Posted", "Draft"},
+				ID:      "c_revenue",
+				Label:   "Revenue",
+				Measure: &ir.Measure{Field: "totalChargeAmount", Agg: ir.AggSum},
 			},
 		},
-		Charts: []report.ChartSpec{chart},
-	}
-}
-
-func cardSample(total string) *reportrows.Sample {
-	return &reportrows.Sample{
-		Schema: []reportrows.Column{
-			{ID: "customer", Label: "Customer", Type: reportcatalog.FieldString},
-			{ID: "revenue", Label: "Revenue", Type: reportcatalog.FieldDecimal},
+		Filters: &ir.Filter{And: []ir.Filter{
+			{Field: "createdAt", Op: ir.OpLastNDays, Param: "windowDays"},
+			{Field: "status", Op: ir.OpIn, Param: "statuses"},
+		}},
+		Sort: []ir.Sort{{Column: "c_revenue", Desc: true}},
+		Parameters: []ir.Parameter{
+			{Name: "windowDays", Label: "Window (days)", Type: "int", Default: 90},
+			{
+				Name:    "statuses",
+				Label:   "Statuses",
+				Type:    "enum",
+				Multi:   true,
+				Default: []any{"New"},
+				Allowed: []any{"New", "Completed"},
+			},
 		},
-		Rows:   [][]any{{"ACME", total}},
-		Totals: []any{nil, total},
+		Charts: []ir.Chart{{
+			ID:     "revenue",
+			Type:   ir.ChartBar,
+			X:      "c_customer",
+			Series: []string{"c_revenue"},
+		}},
 	}
 }
 
-func cardService(runs *cardRuns, compile *recordingCompiler) *Service {
-	return &Service{
-		l:        zap.NewNop(),
-		runRepo:  runs,
-		defRepo:  &cardDefinitions{definition: cardDefinition()},
-		orgRepo:  previewOrganizations{},
-		compiler: compile,
-		canned: canned.NewRegistry([]*canned.Entry{{
-			Key:         "revenue-by-customer",
-			Version:     "1.0.0",
-			Name:        "Revenue by customer",
-			Description: "Invoiced revenue per customer.",
-			Category:    "Billing",
-			Definition:  cardDefinition(),
-		}}),
-	}
+func cardSample(t *testing.T, total string) []byte {
+	t.Helper()
+	return sampleOf(t, total, false)
 }
 
-func cardRun() *report.ReportRun {
+func sampleOf(t *testing.T, total string, truncated bool) []byte {
+	t.Helper()
+	columns := []table.Column{
+		{
+			ID:      "c_customer",
+			Label:   "Customer",
+			Type:    value.String,
+			Display: format.Resolve(value.String, format.Hint{}, nil),
+		},
+		{
+			ID:      "c_revenue",
+			Label:   "Revenue",
+			Type:    value.Decimal,
+			Display: format.Resolve(value.Decimal, format.Hint{Kind: format.Money}, nil),
+		},
+	}
+	builder := table.NewBuilder(columns)
+	require.NoError(t, builder.Append("ACME", total))
+	require.NoError(t, builder.AppendLevel(table.Total, nil, total))
+	result := builder.Table()
+	result.Truncated = truncated
+	var buf bytes.Buffer
+	_, err := export.JSON(t.Context(), &buf, result.Reader(), export.Options{})
+	require.NoError(t, err)
+
+	return buf.Bytes()
+}
+
+func cardService(t *testing.T, runs *cardRuns) *Service {
+	t.Helper()
+	svc, _ := engineService(t, engineOptions{})
+	svc.runRepo = runs
+	svc.defRepo = &cardDefinitions{definition: cardDefinition()}
+	svc.canned = canned.NewRegistry([]*canned.Entry{{
+		Key:         "revenue-by-customer",
+		Version:     "1.0.0",
+		Name:        "Revenue by customer",
+		Description: "Charged revenue per customer.",
+		Category:    "Billing",
+		Definition:  cardDefinition(),
+	}})
+	return svc
+}
+
+func cardRun(t *testing.T) *report.ReportRun {
+	t.Helper()
 	return &report.ReportRun{
 		ID:            pulid.MustNew("rrun_"),
 		RequestedByID: pulid.MustNew("usr_"),
@@ -139,95 +164,136 @@ func cardRun() *report.ReportRun {
 		QueuedAt:      time.Date(2026, 10, 27, 14, 59, 0, 0, time.UTC).Unix(),
 		StartedAt:     time.Date(2026, 10, 27, 15, 0, 0, 0, time.UTC).Unix(),
 		CompletedAt:   time.Date(2026, 10, 27, 15, 1, 0, 0, time.UTC).Unix(),
-		Sample:        cardSample("3541.5"),
+		Sample:        cardSample(t, "3541.5"),
 	}
 }
 
 func TestRunCard_ReadsTheReportItsParametersAndTheRunItIsComparedWith(t *testing.T) {
 	t.Parallel()
 
-	run := cardRun()
+	run := cardRun(t)
 	previous := &report.ReportRun{
 		ID:          pulid.MustNew("rrun_"),
 		CompletedAt: run.CompletedAt - 7*24*3600,
 		RowCount:    208,
-		Sample:      cardSample("3100"),
+		Sample:      cardSample(t, "3100"),
 	}
 	runs := &cardRuns{run: run, previous: previous}
 
-	card, err := cardService(runs, &recordingCompiler{}).GetRunCard(t.Context(), rowsRequest())
+	card, err := cardService(t, runs).GetRunCard(t.Context(), rowsRequest())
 	require.NoError(t, err)
 
-	assert.Equal(t, "Revenue by customer", card.Report.Name)
-	assert.Equal(t, "Invoiced revenue per customer.", card.Report.Description)
-	assert.Equal(t, "Billing", card.Report.Category)
-	assert.Equal(t, "revenue-by-customer", card.Report.CannedKey)
+	assert.Equal(t, RunCardReport{
+		Name:        "Revenue by customer",
+		Description: "Charged revenue per customer.",
+		Category:    "Billing",
+		CannedKey:   "revenue-by-customer",
+	}, card.Report)
 	assert.Equal(t, "America/Chicago", card.Timezone)
 
 	chicago, err := time.LoadLocation("America/Chicago")
 	require.NoError(t, err)
-	require.Len(t, card.Parameters, 2)
-	assert.Equal(t, RunCardParameter{
-		Name:        "windowDays",
-		Label:       "Window (days)",
-		Type:        reportcatalog.FieldInt,
-		Value:       30.0,
-		WindowStart: time.Date(2026, 9, 27, 0, 0, 0, 0, chicago).Unix(),
-		WindowEnd:   time.Date(2026, 10, 28, 0, 0, 0, 0, chicago).Unix(),
-	}, card.Parameters[0])
-	assert.Equal(t, RunCardParameter{
-		Name:      "statuses",
-		Label:     "Statuses",
-		Type:      reportcatalog.FieldEnum,
-		Value:     []any{"Posted"},
-		IsDefault: true,
-	}, card.Parameters[1])
+	assert.Equal(t, []RunCardParameter{
+		{
+			Name:        "windowDays",
+			Label:       "Window (days)",
+			Type:        "int",
+			Value:       30.0,
+			WindowStart: time.Date(2026, 9, 27, 0, 0, 0, 0, chicago).Unix(),
+			WindowEnd:   time.Date(2026, 10, 28, 0, 0, 0, 0, chicago).Unix(),
+		},
+		{
+			Name:      "statuses",
+			Label:     "Statuses",
+			Type:      "enum",
+			Value:     []any{"New"},
+			IsDefault: true,
+		},
+	}, card.Parameters)
 
-	require.NotNil(t, card.Chart)
-	assert.Equal(t, report.ChartBar, card.Chart.Type)
-	assert.Equal(t, []report.SortSpec{
-		{ColumnID: "revenue", Direction: dbtype.SortDirectionDesc},
-	}, card.Sort)
+	assert.Equal(t, &ir.Chart{
+		ID:     "revenue",
+		Type:   ir.ChartBar,
+		X:      "c_customer",
+		Series: []string{"c_revenue"},
+	}, card.Chart)
+	assert.Equal(t, []ir.Sort{{Column: "c_revenue", Desc: true}}, card.Sort)
 
-	assert.Equal(t, run.Sample, card.Sample)
 	assert.Empty(t, card.Withheld)
-	require.NotNil(t, card.Previous)
-	assert.Equal(t, previous.ID, card.Previous.RunID)
-	assert.Equal(t, previous.CompletedAt, card.Previous.CompletedAt)
-	assert.Equal(t, int64(208), card.Previous.RowCount)
-	assert.Equal(t, []any{nil, "3100"}, card.Previous.Totals)
+	require.NotNil(t, card.Sample)
+	assert.Equal(t, "America/Chicago", card.Sample.Timezone)
+	require.Len(t, card.Sample.Columns, 2)
+	assert.Equal(t, "c_revenue", card.Sample.Columns[1].ID)
+	assert.Equal(t, [][]any{{"ACME", "3541.5"}}, card.Sample.Rows)
+	assert.Equal(t, []table.Level{table.Detail}, card.Sample.Levels)
+	assert.Equal(t, []any{nil, "3541.5"}, card.Sample.Totals)
+	assert.False(t, card.Sample.Truncated)
+
+	assert.Equal(t, &RunCardPrevious{
+		RunID:       previous.ID,
+		CompletedAt: previous.CompletedAt,
+		RowCount:    208,
+		ColumnIDs:   []string{"c_customer", "c_revenue"},
+		Totals:      []any{nil, "3100"},
+	}, card.Previous)
 
 	require.NotNil(t, runs.asked)
 	assert.Equal(t, run.RequestedByID, runs.asked.RequestedBy)
+	assert.True(t, runs.asked.DefinitionID.IsNil())
 	assert.Equal(t, "revenue-by-customer", runs.asked.CannedKey)
 	assert.Equal(t, run.Params, runs.asked.Params)
 	assert.Equal(t, run.ID, runs.asked.ExcludeRunID)
 	assert.Equal(t, run.CompletedAt, runs.asked.CompletedBefore)
 }
 
+func TestRunCard_ACappedSampleSaysSo(t *testing.T) {
+	t.Parallel()
+
+	run := cardRun(t)
+	run.Sample = sampleOf(t, "3541.5", true)
+
+	card, err := cardService(t, &cardRuns{run: run}).GetRunCard(t.Context(), rowsRequest())
+	require.NoError(t, err)
+
+	require.NotNil(t, card.Sample)
+	assert.True(t, card.Sample.Truncated)
+	assert.Nil(t, card.Previous, "no earlier run is no comparison")
+}
+
 func TestRunCard_WithholdsTheResultWhenTheRequesterLostAccess(t *testing.T) {
 	t.Parallel()
 
-	runs := &cardRuns{run: cardRun(), previous: &report.ReportRun{Sample: cardSample("1")}}
-	compile := &recordingCompiler{err: errAccessWithdrawn}
+	runs := &cardRuns{run: cardRun(t), previous: &report.ReportRun{Sample: cardSample(t, "1")}}
+	svc := cardService(t, runs)
+	withdrawShipments(t, svc)
 
-	card, err := cardService(runs, compile).GetRunCard(t.Context(), rowsRequest())
+	card, err := svc.GetRunCard(t.Context(), rowsRequest())
 	require.NoError(t, err)
 
 	assert.Equal(t, RunCardWithheldAccess, card.Withheld)
 	assert.Nil(t, card.Sample)
 	assert.Nil(t, card.Previous)
-	assert.Nil(t, runs.asked)
+	assert.Nil(t, runs.asked, "nothing is compared with a result that is not shown")
 	assert.Equal(t, report.RunStatusSucceeded, card.Run.Status)
+	assert.Len(t, card.Parameters, 2, "what was asked is still shown")
 }
 
 func TestRunCard_WithholdsTheResultWhenTheReportNoLongerCompiles(t *testing.T) {
 	t.Parallel()
 
-	compile := &recordingCompiler{err: errortypes.NewBusinessError("This report has changed")}
+	run := cardRun(t)
+	run.CannedKey = ""
+	run.DefinitionID = pulid.MustNew("rdef_")
+	run.RevisionID = pulid.MustNew("rrev_")
+	svc := cardService(t, &cardRuns{run: run})
+	changed := cardDefinition()
+	changed.Columns = append(changed.Columns, ir.Column{
+		ID:        "c_gone",
+		Dimension: &ir.Dimension{Field: "noSuchField"},
+	})
+	svc.defRepo = &cardDefinitions{definition: changed}
 
-	card, err := cardService(&cardRuns{run: cardRun()}, compile).
-		GetRunCard(t.Context(), rowsRequest())
+	card, err := svc.GetRunCard(t.Context(), rowsRequest())
 	require.NoError(t, err)
 
 	assert.Equal(t, RunCardWithheldChanged, card.Withheld)
@@ -237,38 +303,56 @@ func TestRunCard_WithholdsTheResultWhenTheReportNoLongerCompiles(t *testing.T) {
 func TestRunCard_ARunStillGoingHasNoResultToCheckOrCompare(t *testing.T) {
 	t.Parallel()
 
-	run := cardRun()
+	run := cardRun(t)
 	run.Status = report.RunStatusRunning
 	run.CompletedAt = 0
 	run.Sample = nil
 	runs := &cardRuns{run: run}
-	compile := &recordingCompiler{}
+	svc := cardService(t, runs)
+	engine, ok := svc.engine.(*fakeEngine)
+	require.True(t, ok)
 
-	card, err := cardService(runs, compile).GetRunCard(t.Context(), rowsRequest())
+	card, err := svc.GetRunCard(t.Context(), rowsRequest())
 	require.NoError(t, err)
 
 	assert.Nil(t, card.Sample)
 	assert.Nil(t, card.Previous)
-	assert.Empty(t, compile.exports)
+	assert.Empty(t, engine.recorded("compile"), "no access check runs without a result")
 	assert.Nil(t, runs.asked)
-	require.Len(t, card.Parameters, 2)
+	assert.Len(t, card.Parameters, 2)
 }
 
 func TestRunCard_ASavedReportWhoseRecordIsGoneStillShowsTheRun(t *testing.T) {
 	t.Parallel()
 
-	run := cardRun()
+	run := cardRun(t)
 	run.CannedKey = ""
 	run.DefinitionID = pulid.MustNew("rdef_")
 	run.RevisionID = pulid.MustNew("rrev_")
+	runs := &cardRuns{run: run}
 
-	card, err := cardService(&cardRuns{run: run}, &recordingCompiler{}).
-		GetRunCard(t.Context(), rowsRequest())
+	card, err := cardService(t, runs).GetRunCard(t.Context(), rowsRequest())
 	require.NoError(t, err)
 
-	assert.Empty(t, card.Report.Name)
-	assert.Equal(t, run.DefinitionID, card.Report.DefinitionID)
-	require.Len(t, card.Parameters, 2)
-	assert.Equal(t, run.Sample, card.Sample)
-	assert.Nil(t, card.Previous)
+	assert.Equal(t, RunCardReport{DefinitionID: run.DefinitionID}, card.Report)
+	assert.Len(t, card.Parameters, 2)
+	require.NotNil(t, card.Sample)
+	assert.Equal(t, [][]any{{"ACME", "3541.5"}}, card.Sample.Rows)
+	require.NotNil(t, runs.asked)
+	assert.Equal(t, run.DefinitionID, runs.asked.DefinitionID)
+	assert.Empty(t, runs.asked.CannedKey)
+}
+
+func TestRunCard_AnUnreadableSampleStillShowsTheRun(t *testing.T) {
+	t.Parallel()
+
+	run := cardRun(t)
+	run.Sample = []byte("not an envelope")
+
+	card, err := cardService(t, &cardRuns{run: run}).GetRunCard(t.Context(), rowsRequest())
+	require.NoError(t, err)
+
+	assert.Nil(t, card.Sample)
+	assert.Empty(t, card.Withheld)
+	assert.Equal(t, "Revenue by customer", card.Report.Name)
 }

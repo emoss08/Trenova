@@ -32,7 +32,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -52,7 +51,7 @@ type Params struct {
 	fx.In
 
 	Logger        *zap.Logger
-	DB            kernelports.DBConnection
+	DB            kernelports.Transactor
 	Connections   accountingsyncports.AccountingConnectionRepository
 	Apps          accountingsyncports.AccountingAppCredentialRepository
 	States        accountingsyncports.AccountingOAuthStateRepository
@@ -73,7 +72,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	connections   accountingsyncports.AccountingConnectionRepository
 	apps          accountingsyncports.AccountingAppCredentialRepository
 	states        accountingsyncports.AccountingOAuthStateRepository
@@ -313,7 +312,7 @@ func (s *Service) Disconnect(
 	var previous map[string]any
 	var refreshCiphertext string
 	changed := false
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		existing, lockErr := s.connections.LockByTypeWithTokens(
 			txCtx,
 			accountingsyncports.GetAccountingConnectionRequest{
@@ -400,7 +399,7 @@ func (s *Service) freshAccessToken(
 	now int64,
 ) (*tokenOutcome, error) {
 	outcome := &tokenOutcome{}
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		conn, lockErr := s.connections.LockWithTokens(
 			txCtx,
 			accountingsyncports.GetAccountingConnectionByIDRequest{
@@ -551,7 +550,7 @@ func (s *Service) CheckHealth(
 	)
 
 	var conn *accountingsync.AccountingConnection
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := s.connections.LockWithTokens(
 			txCtx,
 			accountingsyncports.GetAccountingConnectionByIDRequest{
@@ -657,7 +656,7 @@ func (s *Service) ReportCallFailure(
 
 	now := timeutils.NowUnix()
 	var conn *accountingsync.AccountingConnection
-	txErr := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	txErr := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := s.connections.LockWithTokens(
 			txCtx,
 			accountingsyncports.GetAccountingConnectionByIDRequest{

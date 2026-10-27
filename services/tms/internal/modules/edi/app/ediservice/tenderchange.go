@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -79,7 +78,6 @@ func (s *Service) createTenderChangeForRecipient(
 	change := &edi.TenderChange{
 		BusinessUnitID:       recipient.BusinessUnitID,
 		SourceOrganizationID: recipient.SourceOrganizationID,
-		SourceBusinessUnitID: recipient.SourceBusinessUnitID,
 		SourceShipmentID:     recipient.SourceShipmentID,
 		RecipientID:          recipient.ID,
 		RecipientKind:        recipient.RecipientKind,
@@ -139,17 +137,16 @@ func (s *Service) generateExternalTenderChange(
 	message, err := s.GenerateDocument(ctx, &GenerateEDIDocumentRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID:  recipient.SourceOrganizationID,
-			BuID:   recipient.SourceBusinessUnitID,
+			BuID:   recipient.BusinessUnitID,
 			UserID: actorUserID(actor),
 		},
-		PartnerDocumentProfileID: recipient.PartnerDocumentProfileID,
-		EDIPartnerID:             recipient.EDIPartnerID,
-		ShipmentID:               recipient.SourceShipmentID,
-		TransactionSet:           edi.TransactionSet204,
-		Direction:                edi.DocumentDirectionOutbound,
-		Payload:                  loadTenderDocumentPayload(&payload),
-		GeneratedByID:            actorUserID(actor),
-		DisableDeliveryQueue:     true,
+		EDIPartnerID:         recipient.EDIPartnerID,
+		ShipmentID:           recipient.SourceShipmentID,
+		TransactionSet:       edi.TransactionSet204,
+		Direction:            edi.DocumentDirectionOutbound,
+		Payload:              loadTenderDocumentPayload(&payload),
+		GeneratedByID:        actorUserID(actor),
+		DisableDeliveryQueue: true,
 	})
 	if err != nil {
 		change.Status = edi.TenderChangeStatusFailed
@@ -239,7 +236,7 @@ func (s *Service) reviewTenderChange(
 
 	now := timeutils.NowUnix()
 	var applyErr error
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if status == edi.TenderChangeStatusApplied {
 			if applyErr = s.applyApprovedTenderChange(
 				txCtx,
@@ -358,7 +355,7 @@ func (s *Service) applyLinkedShipmentTenderChange(
 	}
 	sourceTenantInfo := pagination.TenantInfo{
 		OrgID: recipient.SourceOrganizationID,
-		BuID:  recipient.SourceBusinessUnitID,
+		BuID:  recipient.BusinessUnitID,
 	}
 	link, err := s.shipmentLinkRepo.GetShipmentLinkByID(
 		ctx,
@@ -433,10 +430,8 @@ func validateTenderChangeReviewer(
 			"Only internal tender changes can be manually reviewed",
 		)
 	}
-	isRecipientOrg := change.Recipient.RecipientOrganizationID == tenantInfo.OrgID
-	isRecipientBU := change.Recipient.RecipientBusinessUnitID.IsNil() ||
-		change.Recipient.RecipientBusinessUnitID == tenantInfo.BuID
-	if !isRecipientOrg || !isRecipientBU {
+	if change.Recipient.RecipientOrganizationID != tenantInfo.OrgID ||
+		change.Recipient.BusinessUnitID != tenantInfo.BuID {
 		return errortypes.NewValidationError(
 			"tenantInfo",
 			errortypes.ErrInvalidOperation,
@@ -449,9 +444,7 @@ func validateTenderChangeReviewer(
 func tenderRecipientTenantInfo(
 	recipient *edi.TenderRecipient,
 ) (pagination.TenantInfo, error) {
-	if recipient == nil ||
-		recipient.RecipientOrganizationID.IsNil() ||
-		recipient.RecipientBusinessUnitID.IsNil() {
+	if recipient == nil || recipient.RecipientOrganizationID.IsNil() {
 		return pagination.TenantInfo{}, errortypes.NewValidationError(
 			"recipientId",
 			errortypes.ErrRequired,
@@ -460,7 +453,7 @@ func tenderRecipientTenantInfo(
 	}
 	return pagination.TenantInfo{
 		OrgID: recipient.RecipientOrganizationID,
-		BuID:  recipient.RecipientBusinessUnitID,
+		BuID:  recipient.BusinessUnitID,
 	}, nil
 }
 
@@ -494,11 +487,9 @@ func (s *Service) upsertInternalTenderRecipient(
 	recipient := &edi.TenderRecipient{
 		BusinessUnitID:          transfer.SourceBusinessUnitID,
 		SourceOrganizationID:    transfer.SourceOrganizationID,
-		SourceBusinessUnitID:    transfer.SourceBusinessUnitID,
 		SourceShipmentID:        transfer.SourceShipmentID,
 		RecipientKind:           edi.TenderRecipientKindInternal,
 		RecipientOrganizationID: transfer.TargetOrganizationID,
-		RecipientBusinessUnitID: transfer.TargetBusinessUnitID,
 		EDIPartnerID:            transfer.TargetPartnerID,
 		OriginalTransferID:      transfer.ID,
 		LatestBaselinePayload:   payload,
@@ -520,16 +511,16 @@ func (s *Service) upsertInternalTenderRecipient(
 func (s *Service) upsertExternalTenderRecipient(
 	ctx context.Context,
 	message *edi.EDIMessage,
-	profile *edi.EDIPartnerDocumentProfile,
+	partner *edi.EDIPartner,
 ) error {
-	if s.tenderRecipientRepo == nil || message == nil || profile == nil ||
+	if s.tenderRecipientRepo == nil || message == nil || partner == nil ||
 		message.TransactionSet != edi.TransactionSet204 ||
 		message.Direction != edi.DocumentDirectionOutbound ||
 		message.PayloadSnapshot.LoadTender == nil ||
 		message.PayloadSnapshot.LoadTender.PurposeCode == edi.LoadTenderPurposeChange {
 		return nil
 	}
-	if profile.Partner != nil && profile.Partner.Kind != edi.PartnerKindExternal {
+	if partner.Kind != edi.PartnerKindExternal {
 		return nil
 	}
 	commProfile, err := s.profileRepo.GetActiveProfileByPartner(
@@ -552,19 +543,17 @@ func (s *Service) upsertExternalTenderRecipient(
 	payload := *message.PayloadSnapshot.LoadTender
 	payload.PurposeCode = edi.LoadTenderPurposeOriginal
 	recipient := &edi.TenderRecipient{
-		BusinessUnitID:           message.BusinessUnitID,
-		SourceOrganizationID:     message.OrganizationID,
-		SourceBusinessUnitID:     message.BusinessUnitID,
-		SourceShipmentID:         payload.ShipmentID,
-		RecipientKind:            edi.TenderRecipientKindExternal,
-		EDIPartnerID:             message.EDIPartnerID,
-		PartnerDocumentProfileID: message.PartnerDocumentProfileID,
-		OriginalMessageID:        message.ID,
-		LatestBaselinePayload:    payload,
-		LatestBaselineHash:       tenderPayloadHash(&payload),
-		BaselineRecordedAt:       timeutils.NowUnix(),
-		BaselineStatus:           edi.TenderRecipientBaselineStatusSent,
-		Status:                   edi.TenderRecipientStatusActive,
+		BusinessUnitID:        message.BusinessUnitID,
+		SourceOrganizationID:  message.OrganizationID,
+		SourceShipmentID:      payload.ShipmentID,
+		RecipientKind:         edi.TenderRecipientKindExternal,
+		EDIPartnerID:          message.EDIPartnerID,
+		OriginalMessageID:     message.ID,
+		LatestBaselinePayload: payload,
+		LatestBaselineHash:    tenderPayloadHash(&payload),
+		BaselineRecordedAt:    timeutils.NowUnix(),
+		BaselineStatus:        edi.TenderRecipientBaselineStatusSent,
+		Status:                edi.TenderRecipientStatusActive,
 	}
 	if commProfile != nil {
 		recipient.CommunicationProfileID = commProfile.ID
@@ -594,11 +583,11 @@ func applyTenderPayloadToShipment(
 		payload.ShipmentTypeID,
 	)
 	target.CustomerID = mustMappedID(mappings, edi.MappingEntityTypeCustomer, payload.CustomerID)
-	target.FormulaTemplateID = mustMappedID(
+	target.FormulaTemplateID = tenderedTemplate(payload, mustMappedID(
 		mappings,
 		edi.MappingEntityTypeFormulaTemplate,
 		payload.FormulaTemplateID,
-	)
+	))
 	target.TenderStatus = new(shipment.TenderStatusAccepted)
 	target.BOL = payload.BOL
 	target.Pieces = payload.Pieces
@@ -607,9 +596,7 @@ func applyTenderPayloadToShipment(
 	target.TemperatureMax = payload.TemperatureMax
 	target.FreightChargeAmount = payload.FreightChargeAmount
 	target.OtherChargeAmount = payload.OtherChargeAmount
-	target.BaseRate = payload.BaseRate
 	target.TotalChargeAmount = payload.TotalChargeAmount
-	target.RatingUnit = payload.RatingUnit
 	target.Moves = mappedTenderMoves(target, payload, transfer, mappings)
 	target.Commodities = mappedTenderCommodities(target, payload, transfer, mappings)
 	target.AdditionalCharges = mappedTenderCharges(target, payload, transfer, mappings)

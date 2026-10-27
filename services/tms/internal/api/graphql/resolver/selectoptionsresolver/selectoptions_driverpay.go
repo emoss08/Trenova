@@ -44,7 +44,7 @@ func (r *Deps) resolvePayCodeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		payCodeSelectOptionItem,
 	)
 }
@@ -107,7 +107,7 @@ func (r *Deps) resolvePayProfileSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		payProfileSelectOptionItem,
 	)
 }

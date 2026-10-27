@@ -3,17 +3,17 @@ package capturerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var pairingErrors = dberror.Mapping{Entity: "Pairing"}
 
 type pairingRepository struct {
 	db *postgres.Connection
@@ -38,11 +38,7 @@ func (r *pairingRepository) Create(
 		"record a pairing request that belongs to no organization until a person claims it",
 	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := capturedb.CapturePairings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, err
 		}
 
@@ -56,25 +52,8 @@ func (r *pairingRepository) Update(
 ) (*capture.CapturePairing, error) {
 	ctx = dbscope.WithSystem(ctx, "update a pairing that may not belong to an organization yet")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(capturecol.CapturePairingColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "Pairing", entity.ID.String()); err != nil {
-			entity.Version = ov
-
-			return nil, err
+		if err := capturedb.CapturePairings.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, pairingErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -92,14 +71,10 @@ func (r *pairingRepository) GetByDeviceCodeHash(
 		"resolve a pairing device code before it is bound to an organization",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
-		entity := new(capture.CapturePairing)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(capturecol.CapturePairingColumns.DeviceCodeHash.Eq(), hash).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Pairing")
+		p := capturedb.CapturePairings
+		entity, err := p.Where(p.DeviceCodeHash.Eq(hash)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, pairingErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -115,16 +90,11 @@ func (r *pairingRepository) GetOpenByUserCode(
 		"find an unclaimed pairing by the code a person typed; it has no organization yet",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePairing, error) {
-		entity := new(capture.CapturePairing)
-		cols := capturecol.CapturePairingColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.UserCode.Eq(), userCode).
-			Where(cols.Status.In(), bun.List(openPairingStatuses)).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Pairing")
+		p := capturedb.CapturePairings
+		entity, err := p.Where(p.UserCode.Eq(userCode), p.Status.In(openPairingStatuses...)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, pairingErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -134,25 +104,18 @@ func (r *pairingRepository) GetOpenByUserCode(
 func (r *pairingRepository) ExpireStale(ctx context.Context, now int64) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "expire abandoned pairings across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := capturecol.CapturePairingColumns
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*capture.CapturePairing)(nil)).
-			Where(cols.Status.In(), bun.List(openPairingStatuses)).
-			Where(cols.ExpiresAt.Lte(), now).
-			Set(cols.Status.Set(), capture.PairingExpired).
-			Set(cols.UpdatedAt.Set(), now).
-			Exec(ctx)
+		p := capturedb.CapturePairings
+		n, err := p.Where(p.Status.In(openPairingStatuses...), p.ExpiresAt.Lte(now)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			p.Status.To(capture.PairingExpired),
+			p.UpdatedAt.To(now),
+			p.Version.ToExpr(p.Version),
+		)
 		if err != nil {
 			return 0, err
 		}
 
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return 0, err
-		}
-
-		return int(affected), nil
+		return int(n), nil
 	})
 }

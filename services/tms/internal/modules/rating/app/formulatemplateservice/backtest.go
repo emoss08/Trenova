@@ -2,23 +2,21 @@ package formulatemplateservice
 
 import (
 	"context"
-	"errors"
+	"sort"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/effectiveversioncache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff/effectiveversioncache"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/ratesimulation"
-	"github.com/emoss08/trenova/pkg/ratetablecache"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
@@ -28,12 +26,14 @@ import (
 const (
 	backtestDefaultLimit = 50
 	backtestMaxLimit     = 500
+	impactDefaultLimit   = 100
+	backtestDeadline     = 60 * time.Second
 )
 
 type BacktestRequest struct {
 	TenantInfo    pagination.TenantInfo
 	TemplateID    pulid.ID
-	Expression    string
+	Source        string
 	VersionNumber *int64
 	Limit         int
 }
@@ -55,7 +55,8 @@ type BacktestResult struct {
 	DeltaPct         decimal.Decimal       `json:"deltaPct"`
 	CurrentError     string                `json:"currentError,omitempty"`
 	CandidateError   string                `json:"candidateError,omitempty"`
-	GuardrailApplied bool                  `json:"guardrailApplied"`
+	CandidateRefused bool                  `json:"candidateRefused"`
+	Adjusted         bool                  `json:"adjusted"`
 }
 
 type BacktestSummary = formulatemplateports.BacktestSummary
@@ -66,38 +67,13 @@ type BacktestResponse struct {
 	Truncated bool              `json:"truncated"`
 }
 
-const backtestDeadline = 60 * time.Second
-
-type rateEachRequest struct {
-	current        *formulatemplate.FormulaTemplate
-	candidate      *formulatemplate.FormulaTemplate
-	shipments      []*shipment.Shipment
-	tenantInfo     pagination.TenantInfo
-	billedBaseline bool
-	unresolved     map[pulid.ID]error
+type ratedContent struct {
+	source    string
+	libraries []rules.TariffLibrary
+	tables    []tarifftypes.TablePin
 }
 
-func (s *Service) rateEach(ctx context.Context, req *rateEachRequest) *BacktestResponse {
-	ctx, cancel := context.WithTimeout(ctx, backtestDeadline)
-	defer cancel()
-
-	resp := &BacktestResponse{Results: make([]*BacktestResult, 0, len(req.shipments))}
-	for _, entity := range req.shipments {
-		if ctx.Err() != nil {
-			resp.Truncated = true
-			break
-		}
-		resp.Results = append(resp.Results, s.backtestShipment(ctx, req, entity))
-	}
-	resp.Summary = buildBacktestSummary(resp.Results)
-
-	return resp
-}
-
-func (s *Service) Backtest(
-	ctx context.Context,
-	req *BacktestRequest,
-) (*BacktestResponse, error) {
+func (s *Service) Backtest(ctx context.Context, req *BacktestRequest) (*BacktestResponse, error) {
 	log := s.l.With(
 		zap.String("operation", "Backtest"),
 		zap.String("templateID", req.TemplateID.String()),
@@ -106,15 +82,7 @@ func (s *Service) Backtest(
 	if err := validateBacktestRequest(req); err != nil {
 		return nil, err
 	}
-
-	ctx = ratetablecache.With(ctx)
-	ctx = contextvariablecache.With(ctx)
 	ctx = effectiveversioncache.With(ctx)
-
-	limit := req.Limit
-	if limit <= 0 {
-		limit = backtestDefaultLimit
-	}
 
 	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
 	if err != nil {
@@ -122,296 +90,315 @@ func (s *Service) Backtest(
 		return nil, err
 	}
 
-	candidate, err := s.resolveBacktestCandidate(ctx, req, template)
+	candidate, err := s.backtestCandidate(ctx, req, template)
 	if err != nil {
-		log.Error("failed to resolve backtest candidate", zap.Error(err))
 		return nil, err
 	}
 
-	shipments, unresolved, err := s.listRatedShipments(ctx, req.TemplateID, req.TenantInfo, limit)
-	if err != nil {
-		log.Error("failed to list rated shipments", zap.Error(err))
-		return nil, err
+	limit := req.Limit
+	if limit <= 0 {
+		limit = backtestDefaultLimit
 	}
-
-	return s.rateEach(ctx, &rateEachRequest{
-		current:        template,
-		candidate:      candidate,
-		shipments:      shipments,
-		tenantInfo:     req.TenantInfo,
-		billedBaseline: true,
-		unresolved:     unresolved,
-	}), nil
+	return s.rateRecorded(ctx, template, candidate, limit)
 }
 
 func validateBacktestRequest(req *BacktestRequest) error {
 	multiErr := errortypes.NewMultiError()
 
 	switch {
-	case req.Expression == "" && req.VersionNumber == nil:
-		multiErr.Add(
-			"expression",
-			errortypes.ErrRequired,
-			"Either an expression or a version number is required",
-		)
-		multiErr.Add(
-			"versionNumber",
-			errortypes.ErrRequired,
-			"Either an expression or a version number is required",
-		)
-	case req.Expression != "" && req.VersionNumber != nil:
-		multiErr.Add(
-			"expression",
-			errortypes.ErrInvalid,
-			"Provide either an expression or a version number, not both",
-		)
-		multiErr.Add(
-			"versionNumber",
-			errortypes.ErrInvalid,
-			"Provide either an expression or a version number, not both",
-		)
+	case req.Source == "" && req.VersionNumber == nil:
+		multiErr.Add(fieldSource, errortypes.ErrRequired, "Either a source or a version number is required")
+		multiErr.Add(versionNumberField, errortypes.ErrRequired, "Either a source or a version number is required")
+	case req.Source != "" && req.VersionNumber != nil:
+		multiErr.Add(fieldSource, errortypes.ErrInvalid, "Provide either a source or a version number, not both")
+		multiErr.Add(versionNumberField, errortypes.ErrInvalid, "Provide either a source or a version number, not both")
+	case len(req.Source) > tarifftypes.MaxSourceLength:
+		multiErr.Add(fieldSource, errortypes.ErrInvalid, "Source cannot exceed 64 KiB")
 	}
 
 	if req.Limit > backtestMaxLimit {
-		multiErr.Add(
-			"limit",
-			errortypes.ErrInvalid,
-			"Limit cannot exceed 500",
-		)
+		multiErr.Add("limit", errortypes.ErrInvalid, "Limit cannot exceed 500")
 	}
 
 	if multiErr.HasErrors() {
 		return multiErr
 	}
-
 	return nil
 }
 
-func (s *Service) resolveBacktestCandidate(
+func (s *Service) backtestCandidate(
 	ctx context.Context,
 	req *BacktestRequest,
 	template *formulatemplate.FormulaTemplate,
-) (*formulatemplate.FormulaTemplate, error) {
+) (*ratedContent, error) {
 	if req.VersionNumber != nil {
-		version, err := s.versionRepo.GetByTemplateAndVersion(
-			ctx,
-			&formulatemplateports.GetVersionRequest{
-				TenantInfo:    req.TenantInfo,
-				TemplateID:    req.TemplateID,
-				VersionNumber: *req.VersionNumber,
-			},
-		)
+		version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
+			TenantInfo:    req.TenantInfo,
+			TemplateID:    req.TemplateID,
+			VersionNumber: *req.VersionNumber,
+		})
 		if err != nil {
 			return nil, err
 		}
-
-		return template.ApplyVersion(version), nil
+		return s.pinnedContent(ctx, req.TenantInfo, version.Source, version.Imports, version.Tables)
 	}
 
-	candidate := *template
-	candidate.Expression = req.Expression
+	return s.latestContent(ctx, templateTenant(template), req.Source)
+}
 
-	return &candidate, nil
+func (s *Service) latestContent(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	source string,
+) (*ratedContent, error) {
+	content, err := s.checkContent(ctx, &contentRequest{
+		tenant: tenant,
+		source: source,
+		mode:   tariff.LibrariesLatest,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if refusal := content.refusal(); refusal != nil {
+		return nil, refusal
+	}
+	return &ratedContent{source: source, libraries: content.checked.Context.Libraries}, nil
+}
+
+func (s *Service) pinnedContent(
+	ctx context.Context,
+	tenant pagination.TenantInfo,
+	source string,
+	imports []tarifftypes.Import,
+	tables []tarifftypes.TablePin,
+) (*ratedContent, error) {
+	libraries, err := s.resolver.PinnedLibraries(ctx, tenant, imports)
+	if err != nil {
+		return nil, err
+	}
+	return &ratedContent{source: source, libraries: libraries, tables: tables}, nil
+}
+
+type ApprovalImpactRequest struct {
+	TenantInfo pagination.TenantInfo
+	TemplateID pulid.ID
+	Limit      int
+}
+
+func (s *Service) ApprovalImpact(
+	ctx context.Context,
+	req *ApprovalImpactRequest,
+) (*BacktestResponse, error) {
+	if req.Limit > backtestMaxLimit {
+		return nil, errortypes.NewValidationError("limit", errortypes.ErrInvalid, "Limit cannot exceed 500")
+	}
+	ctx = effectiveversioncache.With(ctx)
+
+	template, err := s.getTemplateByIDWithTenant(ctx, req.TemplateID, req.TenantInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	candidate, err := s.latestContent(ctx, templateTenant(template), template.Source)
+	if err != nil {
+		return nil, err
+	}
+
+	limit := req.Limit
+	if limit <= 0 {
+		limit = impactDefaultLimit
+	}
+	resp, err := s.rateRecorded(ctx, template, candidate, limit)
+	if err != nil {
+		return nil, err
+	}
+	sortResultsByImpact(resp.Results)
+	return resp, nil
+}
+
+func (s *Service) rateRecorded(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	candidate *ratedContent,
+	limit int,
+) (*BacktestResponse, error) {
+	if s.rated == nil {
+		return nil, errortypes.NewBusinessError(
+			"Backtesting a formula against past shipments is not available on this server",
+		)
+	}
+
+	tenant := templateTenant(template)
+	records, err := s.rated.RatedByTemplate(ctx, &tariffports.RatedByTemplateRequest{
+		TenantInfo: tenant,
+		TemplateID: template.ID,
+		Limit:      limit,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, backtestDeadline)
+	defer cancel()
+
+	resp := &BacktestResponse{Results: make([]*BacktestResult, 0, len(records))}
+	for _, record := range records {
+		if ctx.Err() != nil {
+			resp.Truncated = true
+			break
+		}
+		resp.Results = append(resp.Results, s.backtestShipment(ctx, template, candidate, record))
+	}
+	resp.Summary = buildBacktestSummary(resp.Results)
+	return resp, nil
 }
 
 func (s *Service) backtestShipment(
 	ctx context.Context,
-	req *rateEachRequest,
-	entity *shipment.Shipment,
+	template *formulatemplate.FormulaTemplate,
+	candidate *ratedContent,
+	record *tariffports.RatedShipment,
 ) *BacktestResult {
-	result := &BacktestResult{
-		ShipmentID: entity.ID,
-		ProNumber:  entity.ProNumber,
-	}
+	result := &BacktestResult{ShipmentID: record.ShipmentID, ProNumber: record.ProNumber}
+	tenant := templateTenant(template)
 
-	unresolved := req.unresolved[entity.ID]
-	switch billed, ok := billedFormulaAmount(req.current, entity); {
-	case req.billedBaseline && ok:
+	if record.Billed.Valid {
 		result.CurrentSource = BacktestCurrentBilled
-		result.CurrentAmount = billed
-		result.GuardrailApplied = entity.RatingDetail.Guardrail != nil &&
-			entity.RatingDetail.Guardrail.Applied
-	case unresolved != nil:
+		result.CurrentAmount = record.Billed.Decimal
+	} else {
 		result.CurrentSource = BacktestCurrentRecomputed
-		result.CurrentError = errortypes.LocalizedText(ctx, unresolved)
-	default:
-		result.CurrentSource = BacktestCurrentRecomputed
-		s.recomputeCurrent(ctx, req, entity, result)
+		s.recomputeCurrent(ctx, template, record, result)
 	}
 
-	if unresolved != nil {
-		result.CandidateError = errortypes.LocalizedText(ctx, unresolved)
-	} else if resp, rateErr := s.rateLeashed(ctx, req.candidate, entity); rateErr != nil {
-		result.CandidateError = errortypes.LocalizedText(ctx, rateErr)
-	} else {
-		result.CandidateAmount = resp.Amount
-		if resp.Guardrail != nil && resp.Guardrail.Applied {
-			result.GuardrailApplied = true
-		}
+	rated, err := s.rateSource(ctx, &sourceRating{
+		tenant:    tenant,
+		name:      template.Name,
+		source:    candidate.source,
+		libraries: candidate.libraries,
+		tables:    candidate.tables,
+		inputs:    record.Inputs,
+		shipment:  record,
+	})
+	switch {
+	case err != nil:
+		result.CandidateError = errortypes.LocalizedText(ctx, err)
+	case rated.Refusal != nil:
+		result.CandidateRefused = true
+		result.CandidateError = rated.Refusal.Localize(i18n.FromContext(ctx))
+	case rated.Bill != nil:
+		result.CandidateAmount = rated.Bill.Total
+		result.Adjusted = adjusted(rated.Bill)
 	}
 
 	if result.CurrentError == "" && result.CandidateError == "" {
-		delta := ratesimulation.Delta{
-			Before: result.CurrentAmount,
-			After:  result.CandidateAmount,
-		}
-
+		delta := ratesimulation.Delta{Before: result.CurrentAmount, After: result.CandidateAmount}
 		result.Delta = delta.Amount()
 		result.DeltaPct = delta.Percent()
 	}
-
 	return result
+}
+
+func adjusted(bill *tarifftypes.Bill) bool {
+	for i := range bill.Lines {
+		if bill.Lines[i].Kind == tarifftypes.LineMinimum || bill.Lines[i].Kind == tarifftypes.LineMaximum {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *Service) recomputeCurrent(
 	ctx context.Context,
-	req *rateEachRequest,
-	entity *shipment.Shipment,
+	template *formulatemplate.FormulaTemplate,
+	record *tariffports.RatedShipment,
 	result *BacktestResult,
 ) {
-	current, err := s.resolveCurrentForShipment(ctx, req.current, entity, req.tenantInfo)
+	current, err := s.recordedContent(ctx, template, record)
 	if err != nil {
 		result.CurrentError = errortypes.LocalizedText(ctx, err)
 		return
 	}
 
-	resp, err := s.rateLeashed(ctx, current, entity)
-	if err != nil {
-		result.CurrentError = errortypes.LocalizedText(ctx, err)
-		return
-	}
-
-	result.CurrentAmount = resp.Amount
-	if resp.Guardrail != nil && resp.Guardrail.Applied {
-		result.GuardrailApplied = true
-	}
-}
-
-func (s *Service) rateLeashed(
-	ctx context.Context,
-	template *formulatemplate.FormulaTemplate,
-	entity *shipment.Shipment,
-) (*formulatemplatetypes.CalculateResponse, error) {
-	leashed, cancel := context.WithTimeout(ctx, previewEvaluationTimeout)
-	defer cancel()
-
-	resp, err := s.formulaService.Rate(leashed, &formula.RateRequest{
-		Template: template,
-		Entity:   entity,
+	rated, err := s.rateSource(ctx, &sourceRating{
+		tenant:    templateTenant(template),
+		name:      template.Name,
+		source:    current.source,
+		libraries: current.libraries,
+		tables:    current.tables,
+		inputs:    record.Inputs,
+		shipment:  record,
 	})
-	if err != nil && ctx.Err() == nil && errors.Is(leashed.Err(), context.DeadlineExceeded) {
-		return nil, timeoutMessage().ValidationError("expression", errortypes.ErrInvalid)
+	switch {
+	case err != nil:
+		result.CurrentError = errortypes.LocalizedText(ctx, err)
+	case rated.Refusal != nil:
+		result.CurrentError = rated.Refusal.Localize(i18n.FromContext(ctx))
+	case rated.Bill != nil:
+		result.CurrentAmount = rated.Bill.Total
 	}
-	return resp, err
 }
 
-func billedFormulaAmount(
-	template *formulatemplate.FormulaTemplate,
-	entity *shipment.Shipment,
-) (decimal.Decimal, bool) {
-	detail := entity.RatingDetail
-	if detail == nil || detail.FormulaTemplateID != template.ID.String() {
-		return decimal.Zero, false
-	}
-	if !entity.FreightChargeAmount.Valid || entity.RateOverrideAmount.Valid {
-		return decimal.Zero, false
-	}
-
-	return entity.FreightChargeAmount.Decimal, true
-}
-
-// resolveCurrentForShipment reconstructs the content a shipment was actually
-// charged with, so the "current" side of a backtest is the number on the
-// invoice rather than whatever the template row happens to hold today.
-//
-// The row is the wrong baseline more often than not: while a template is in
-// review the row already carries the pending edit, and a template under
-// revision has been demoted to Draft. So the search goes from most to least
-// specific — the version stamped on the shipment's own rating detail, then a
-// version scheduled into effect for its ship date, then the newest snapshot
-// the template took while Active — and only falls back to the row when the
-// template has no approved history at all.
-func (s *Service) resolveCurrentForShipment(
+func (s *Service) recordedContent(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
-	entity *shipment.Shipment,
-	tenantInfo pagination.TenantInfo,
-) (*formulatemplate.FormulaTemplate, error) {
-	if recorded := recordedVersionNumber(template, entity); recorded > 0 {
+	record *tariffports.RatedShipment,
+) (*ratedContent, error) {
+	tenant := templateTenant(template)
+	if record.VersionNumber > 0 {
 		version, err := effectiveversioncache.GetVersion(
 			ctx,
 			template.ID,
-			recorded,
+			record.VersionNumber,
 			func(loadCtx context.Context) (*formulatemplate.FormulaTemplateVersion, error) {
-				return s.lookupVersion(loadCtx, template.ID, recorded, tenantInfo)
+				return s.lookupVersion(loadCtx, template.ID, record.VersionNumber, tenant)
 			},
 		)
 		if err != nil {
 			return nil, err
 		}
 		if version != nil {
-			return template.ApplyVersion(version), nil
+			return s.pinnedContent(ctx, tenant, version.Source, version.Imports, version.Tables)
 		}
 	}
 
-	billing, err := s.formulaService.ResolveBillingVersion(
-		ctx,
-		template,
-		tenantInfo,
-		entity.RatingAsOf(timeutils.NowUnix()),
-	)
+	asOf := record.RatedAt
+	if asOf == 0 {
+		asOf = timeutils.NowUnix()
+	}
+	billing, err := s.resolver.BillingVersion(ctx, template, tenant, asOf)
 	if err != nil {
 		return nil, err
 	}
-	if billing.InForce != nil {
-		return template.ApplyVersion(billing.InForce), nil
+	content, err := tariff.BillingContent(template, billing)
+	if err != nil {
+		return nil, err
 	}
-
-	return template, nil
+	return s.pinnedContent(ctx, tenant, content.Source, content.Imports, content.Tables)
 }
 
-// lookupVersion fetches one numbered snapshot, treating "no such version" as
-// nil so a stale stamp on a shipment degrades to the next resolution step
-// instead of failing the whole backtest row.
 func (s *Service) lookupVersion(
 	ctx context.Context,
 	templateID pulid.ID,
 	versionNumber int64,
 	tenantInfo pagination.TenantInfo,
 ) (*formulatemplate.FormulaTemplateVersion, error) {
-	version, err := s.versionRepo.GetByTemplateAndVersion(
-		ctx,
-		&formulatemplateports.GetVersionRequest{
-			TenantInfo:    tenantInfo,
-			TemplateID:    templateID,
-			VersionNumber: versionNumber,
-		},
-	)
+	version, err := s.versionRepo.GetByTemplateAndVersion(ctx, &formulatemplateports.GetVersionRequest{
+		TenantInfo:    tenantInfo,
+		TemplateID:    templateID,
+		VersionNumber: versionNumber,
+	})
 	if err != nil {
 		if errortypes.IsNotFoundError(err) || dberror.IsNotFoundError(err) {
-			return nil, nil //nolint:nilnil // nil version means the stamp points at nothing
+			return nil, nil //nolint:nilnil // a stamp that points at nothing falls back to billing
 		}
 		return nil, err
 	}
-
 	return version, nil
-}
-
-func recordedVersionNumber(
-	template *formulatemplate.FormulaTemplate,
-	entity *shipment.Shipment,
-) int64 {
-	detail := entity.RatingDetail
-	if detail == nil || detail.FormulaTemplateID != template.ID.String() {
-		return 0
-	}
-
-	return detail.VersionNumber
 }
 
 func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
 	var acc ratesimulation.Accumulator
-	var currentErrors, candidateErrors, clamps int
+	var currentErrors, candidateErrors, refused, adjustedCount int
 
 	for _, result := range results {
 		failed := result.CurrentError != "" || result.CandidateError != ""
@@ -426,13 +413,15 @@ func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
 		if result.CandidateError != "" {
 			candidateErrors++
 		}
-		if result.GuardrailApplied && !failed {
-			clamps++
+		if result.CandidateRefused {
+			refused++
+		}
+		if result.Adjusted && !failed {
+			adjustedCount++
 		}
 	}
 
 	shared := acc.Summary()
-
 	return BacktestSummary{
 		ShipmentCount:       shared.ShipmentCount,
 		EvaluatedCount:      shared.EvaluatedCount,
@@ -442,7 +431,8 @@ func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
 		ErrorCount:          shared.ErrorCount,
 		CurrentErrorCount:   currentErrors,
 		CandidateErrorCount: candidateErrors,
-		GuardrailCount:      clamps,
+		RefusedCount:        refused,
+		AdjustedCount:       adjustedCount,
 		CurrentTotal:        shared.BeforeTotal,
 		CandidateTotal:      shared.AfterTotal,
 		TotalDelta:          shared.TotalDelta,
@@ -452,86 +442,13 @@ func buildBacktestSummary(results []*BacktestResult) BacktestSummary {
 	}
 }
 
-func (s *Service) listRatedShipments(
-	ctx context.Context,
-	templateID pulid.ID,
-	tenantInfo pagination.TenantInfo,
-	limit int,
-) ([]*shipment.Shipment, map[pulid.ID]error, error) {
-	shipments, err := s.shipmentRepo.ListRatedByFormulaTemplate(
-		ctx,
-		&shipmentports.ListRatedByFormulaTemplateRequest{
-			TemplateID: templateID,
-			TenantInfo: tenantInfo,
-			Limit:      limit,
-		},
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	unresolved, err := s.hydrateShipments(ctx, shipments, tenantInfo)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return shipments, unresolved, nil
-}
-
-func (s *Service) hydrateShipments(
-	ctx context.Context,
-	shipments []*shipment.Shipment,
-	tenantInfo pagination.TenantInfo,
-) (map[pulid.ID]error, error) {
-	if s.hydrator == nil {
-		return nil, nil
-	}
-
-	err := s.hydrator.HydrateShipments(ctx, &ratequoteports.HydrateShipmentsRequest{
-		Shipments:  shipments,
-		TenantInfo: tenantInfo,
-	})
-	if err == nil {
-		return nil, nil
-	}
-	if !unresolvedReference(err) {
-		return nil, err
-	}
-
-	unresolved := make(map[pulid.ID]error)
-	for _, entity := range shipments {
-		if entity == nil {
-			continue
+func sortResultsByImpact(results []*BacktestResult) {
+	sort.SliceStable(results, func(i, j int) bool {
+		iFailed := results[i].CurrentError != "" || results[i].CandidateError != ""
+		jFailed := results[j].CurrentError != "" || results[j].CandidateError != ""
+		if iFailed != jFailed {
+			return jFailed
 		}
-		hydrateErr := s.hydrateShipment(ctx, entity, tenantInfo)
-		switch {
-		case hydrateErr == nil:
-		case unresolvedReference(hydrateErr):
-			unresolved[entity.ID] = hydrateErr
-		default:
-			return nil, hydrateErr
-		}
-	}
-
-	return unresolved, nil
-}
-
-func (s *Service) hydrateShipment(
-	ctx context.Context,
-	entity *shipment.Shipment,
-	tenantInfo pagination.TenantInfo,
-) error {
-	if s.hydrator == nil {
-		return nil
-	}
-
-	return s.hydrator.HydrateShipment(ctx, &ratequoteports.HydrateShipmentRequest{
-		Shipment:   entity,
-		TenantInfo: tenantInfo,
+		return results[i].Delta.Abs().GreaterThan(results[j].Delta.Abs())
 	})
-}
-
-func unresolvedReference(err error) bool {
-	var validation *errortypes.Error
-	return errors.As(err, &validation) && validation.Code == errortypes.ErrInvalidReference
 }

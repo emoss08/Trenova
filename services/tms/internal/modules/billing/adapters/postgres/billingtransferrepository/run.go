@@ -2,30 +2,32 @@ package billingtransferrepository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer/billingtransferdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingtransferports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-// nonTerminalRunStatuses is the set a run can still be worked on in. Every
-// mutation that advances a run guards on it, so a canceled or finished run is
-// never reopened by a late-arriving activity.
 var nonTerminalRunStatuses = []billingtransfer.RunStatus{
 	billingtransfer.RunStatusQueued,
 	billingtransfer.RunStatusRunning,
 }
+
+var (
+	runErrors  = dberror.Mapping{Entity: "BillingTransferRun"}
+	itemErrors = dberror.Mapping{Entity: "BillingTransferRunItem"}
+)
 
 type Params struct {
 	fx.In
@@ -54,9 +56,13 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+			if err := billingtransferdb.BillingTransferRuns.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
 				r.l.Error("failed to create billing transfer run", zap.Error(err))
-				return nil, err
+				return nil, runErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -72,29 +78,13 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-			log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-
-			ov := entity.Version
-			entity.Version++
-
-			result, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(billingtransfercol.BillingTransferRunColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(ctx)
-			if err != nil {
-				log.Error("failed to update billing transfer run", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				result,
-				"BillingTransferRun",
-				entity.ID.String(),
+			if err := billingtransferdb.BillingTransferRuns.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
 			); err != nil {
-				return nil, err
+				r.l.Error("failed to update billing transfer run", zap.Error(err))
+				return nil, runErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -110,17 +100,9 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-			entity := new(billingtransfer.BillingTransferRun)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return billingtransfercol.BillingTransferRunScopeTenant(sq, req.TenantInfo).
-						Where(billingtransfercol.BillingTransferRunColumns.ID.Eq(), req.RunID)
-				}).
-				Scan(ctx)
+			entity, err := billingtransferdb.BillingTransferRuns.Get(ctx, r.db.Keel(ctx), req.RunID)
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "BillingTransferRun")
+				return nil, runErrors.Map(err, req.RunID.String())
 			}
 
 			return entity, nil
@@ -133,26 +115,21 @@ func (r *repository) LastQueuedAt(
 	req *billingtransferports.LastBillingTransferRunQueuedAtRequest,
 ) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := billingtransfercol.BillingTransferRunColumns
-
-		var queuedAt sql.NullInt64
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*billingtransfer.BillingTransferRun)(nil)).
-			ColumnExpr("MAX(?)", bun.Safe(cols.QueuedAt.Qualified())).
-			Apply(billingtransfercol.BillingTransferRunApplyTenant(req.TenantInfo)).
-			Where(cols.Scope.Eq(), req.Scope).
-			Scan(ctx, &queuedAt); err != nil {
+		run := billingtransferdb.BillingTransferRuns
+		queuedAt, err := keel.IntoOne[*int64](ctx, r.db.Keel(ctx), run.
+			Pick(run.QueuedAt.Max()).
+			Where(run.Scope.Eq(req.Scope)))
+		if err != nil {
 			return 0, err
 		}
+		if queuedAt == nil {
+			return 0, nil
+		}
 
-		return queuedAt.Int64, nil
+		return *queuedAt, nil
 	})
 }
 
-// GetActive returns the one run this user has not finished. Having none is the
-// ordinary case, so it answers with nothing rather than a not-found error; the
-// caller's dialog simply opens on the picker instead of reattaching.
 func (r *repository) GetActive(
 	ctx context.Context,
 	req *billingtransferports.GetActiveBillingTransferRunRequest,
@@ -161,22 +138,15 @@ func (r *repository) GetActive(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-			cols := billingtransfercol.BillingTransferRunColumns
-
-			entity := new(billingtransfer.BillingTransferRun)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Apply(billingtransfercol.BillingTransferRunApplyTenant(req.TenantInfo)).
-				Where(cols.RequestedByID.Eq(), req.RequestedByID).
-				Where(cols.Status.In(), bun.List(nonTerminalRunStatuses)).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(1).
-				Scan(ctx)
+			run := billingtransferdb.BillingTransferRuns
+			entity, err := run.Where(
+				run.RequestedByID.Eq(req.RequestedByID),
+				run.Status.In(nonTerminalRunStatuses...),
+			).Order(run.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
+			if errors.Is(err, keel.ErrNotFound) {
+				return nil, nil
+			}
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return nil, nil //nolint:nilnil // no run in flight is an answer, not a failure
-				}
 				r.l.Error("failed to get active billing transfer run", zap.Error(err))
 				return nil, err
 			}
@@ -186,11 +156,6 @@ func (r *repository) GetActive(
 	)
 }
 
-// MarkRunning stamps the Temporal identity on the run and opens it for work.
-//
-// It is written to be repeatable, because the activity that calls it can be
-// retried: StartedAt is only taken the first time, and the status guard means a
-// run somebody canceled in the meantime is not dragged back into Running.
 func (r *repository) MarkRunning(
 	ctx context.Context,
 	req *billingtransferports.MarkBillingTransferRunRunningRequest,
@@ -199,54 +164,25 @@ func (r *repository) MarkRunning(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-			cols := billingtransfercol.BillingTransferRunColumns
-			now := timeutils.NowUnix()
-
-			entity := new(billingtransfer.BillingTransferRun)
-			result, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Set(cols.Status.Set(), billingtransfer.RunStatusRunning).
-				Set(cols.TotalCount.Set(), req.TotalCount).
-				Set(cols.UnmatchedCount.Set(), req.UnmatchedCount).
-				Set(cols.TemporalWorkflowID.Set(), req.TemporalWorkflowID).
-				Set(cols.TemporalRunID.Set(), req.TemporalRunID).
-				Set(cols.StartedAt.SetExpr("COALESCE({}, ?)"), now).
-				Set(cols.UpdatedAt.Set(), now).
-				Set(cols.Version.Inc(1)).
-				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return billingtransfercol.BillingTransferRunScopeTenantUpdate(
-						uq,
-						req.TenantInfo,
-					)
-				}).
-				Where(cols.ID.Eq(), req.RunID).
-				Where(cols.Status.In(), bun.List(nonTerminalRunStatuses)).
-				Returning("*").
-				Exec(ctx)
-			if err != nil {
-				r.l.Error("failed to mark billing transfer run running", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				result,
-				"BillingTransferRun",
-				req.RunID.String(),
-			); err != nil {
-				return nil, err
-			}
-
-			return entity, nil
+			run := billingtransferdb.BillingTransferRuns
+			return r.advanceRun(
+				ctx,
+				req.RunID,
+				run.Status.To(billingtransfer.RunStatusRunning),
+				run.TotalCount.To(int64(req.TotalCount)),
+				run.UnmatchedCount.To(int64(req.UnmatchedCount)),
+				run.TemporalWorkflowID.ToExpr(
+					keel.Val(stringutils.NilIfEmpty(req.TemporalWorkflowID)),
+				),
+				run.TemporalRunID.ToExpr(keel.Val(stringutils.NilIfEmpty(req.TemporalRunID))),
+				run.StartedAt.ToExpr(
+					run.StartedAt.Coalesce(timeutils.NowUnix()),
+				),
+			)
 		},
 	)
 }
 
-// RequestCancel records the ask and nothing more.
-//
-// It deliberately leaves the run non-terminal: the workflow stops between
-// batches and finalizes itself, so the batch already in flight is never
-// abandoned with its outcomes unwritten. COALESCE keeps the first asker.
 func (r *repository) RequestCancel(
 	ctx context.Context,
 	req *billingtransferports.RequestBillingTransferRunCancelRequest,
@@ -255,43 +191,40 @@ func (r *repository) RequestCancel(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*billingtransfer.BillingTransferRun, error) {
-			cols := billingtransfercol.BillingTransferRunColumns
-			now := timeutils.NowUnix()
-
-			entity := new(billingtransfer.BillingTransferRun)
-			result, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Set(cols.CancelRequestedAt.SetExpr("COALESCE({}, ?)"), now).
-				Set(cols.CancelRequestedByID.SetExpr("COALESCE({}, ?)"), req.RequestedByID).
-				Set(cols.UpdatedAt.Set(), now).
-				Set(cols.Version.Inc(1)).
-				Apply(func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return billingtransfercol.BillingTransferRunScopeTenantUpdate(
-						uq,
-						req.TenantInfo,
-					)
-				}).
-				Where(cols.ID.Eq(), req.RunID).
-				Where(cols.Status.In(), bun.List(nonTerminalRunStatuses)).
-				Returning("*").
-				Exec(ctx)
-			if err != nil {
-				r.l.Error("failed to request billing transfer run cancel", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				result,
-				"BillingTransferRun",
-				req.RunID.String(),
-			); err != nil {
-				return nil, err
-			}
-
-			return entity, nil
+			run := billingtransferdb.BillingTransferRuns
+			return r.advanceRun(ctx, req.RunID,
+				run.CancelRequestedAt.ToExpr(
+					run.CancelRequestedAt.Coalesce(timeutils.NowUnix()),
+				),
+				run.CancelRequestedByID.ToExpr(
+					run.CancelRequestedByID.Coalesce(req.RequestedByID.String()),
+				),
+			)
 		},
 	)
+}
+
+func (r *repository) advanceRun(
+	ctx context.Context,
+	runID pulid.ID,
+	sets ...keel.Assignment,
+) (*billingtransfer.BillingTransferRun, error) {
+	run := billingtransferdb.BillingTransferRuns
+	rows, err := run.Where(run.ID.Eq(runID), run.Status.In(nonTerminalRunStatuses...)).
+		UpdateReturning(ctx, r.db.Keel(ctx), sets...)
+	if err != nil {
+		r.l.Error("failed to advance billing transfer run", zap.Error(err))
+		return nil, runErrors.Map(err, runID.String())
+	}
+	if err = dberror.CheckAffected(
+		int64(len(rows)),
+		"BillingTransferRun",
+		runID.String(),
+	); err != nil {
+		return nil, err
+	}
+
+	return rows[0], nil
 }
 
 func (r *repository) ListStale(
@@ -303,28 +236,31 @@ func (r *repository) ListStale(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*billingtransfer.BillingTransferRun, error) {
-			cols := billingtransfercol.BillingTransferRunColumns
-
 			statuses := req.Statuses
 			if len(statuses) == 0 {
 				statuses = nonTerminalRunStatuses
 			}
 
-			entities := make([]*billingtransfer.BillingTransferRun, 0)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(cols.Status.In(), bun.List(statuses)).
-				Where(cols.UpdatedAt.Lt(), req.UpdatedBeforeUnix).
-				Order(cols.UpdatedAt.OrderAsc())
+			run := billingtransferdb.BillingTransferRuns
+			q := run.AllTenants().
+				Where(run.Status.In(statuses...), run.UpdatedAt.Lt(req.UpdatedBeforeUnix)).
+				Order(run.UpdatedAt.Asc())
 
+			var (
+				entities []*billingtransfer.BillingTransferRun
+				err      error
+			)
 			if req.Limit > 0 {
-				q = q.Limit(int64(req.Limit))
+				entities, err = q.Limit(req.Limit).List(ctx, r.db.Keel(ctx))
+			} else {
+				entities, err = q.All(ctx, r.db.Keel(ctx))
 			}
-
-			if err := q.Scan(ctx); err != nil {
+			if err != nil {
 				r.l.Error("failed to list stale billing transfer runs", zap.Error(err))
 				return nil, err
+			}
+			if entities == nil {
+				return []*billingtransfer.BillingTransferRun{}, nil
 			}
 
 			return entities, nil

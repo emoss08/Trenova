@@ -1,0 +1,35 @@
+fragment FormulaLibraryTableRowFields on FormulaLibrary {
+  id
+  businessUnitId
+  organizationId
+  name
+  path
+  description
+  status
+  testCount
+  imports {
+    path
+    libraryId
+    versionNumber
+  }
+  version
+  currentVersionNumber
+  approvedAt
+  createdAt
+  updatedAt
+}
+
+query FormulaLibraryTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean = true) {
+  formulaLibraries(input: $input) {
+    edges {
+      node {
+        ...FormulaLibraryTableRowFields
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

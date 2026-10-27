@@ -16,12 +16,13 @@ type GetOrCreateSpec[T any] struct {
 	MapError func(error) error
 }
 
-// GetOrCreate reads a row, creating its default when there is none. A preview
-// reads inside a read-only snapshot, where an insert fails and aborts the whole
-// transaction, so every query after it fails ("current transaction is
-// aborted"). The read comes first, the insert runs in a savepoint, and a
-// read-only caller gets the default without anything being written. Find must
-// report a missing row as sql.ErrNoRows.
+// GetOrCreate reads a row, creating its default when there is none. The read
+// runs alone in a read-only transaction, so the result cache can serve it; only
+// a missing row opens a write. A preview reads inside a read-only snapshot,
+// where an insert fails and aborts the whole transaction, so every query after
+// it fails ("current transaction is aborted"): the insert runs in a savepoint
+// after a second read, and a read-only caller gets the default without
+// anything being written. Find must report a missing row as sql.ErrNoRows.
 func GetOrCreate[T any](
 	ctx context.Context,
 	conn kernelports.DBConnection,
@@ -41,30 +42,28 @@ func getOrCreate[T any](
 	conn kernelports.DBConnection,
 	spec GetOrCreateSpec[T],
 ) (T, error) {
-	if kernelports.IsReadOnly(ctx) {
-		return Read(ctx, conn, func(ctx context.Context) (T, error) {
-			found, err := spec.Find(ctx)
-			if dberror.IsNotFoundError(err) {
-				return spec.Default(), nil
-			}
+	found, err := Read(ctx, conn, spec.Find)
+	if !dberror.IsNotFoundError(err) {
+		return found, err
+	}
 
-			return found, err
-		})
+	if kernelports.IsReadOnly(ctx) {
+		return spec.Default(), nil
 	}
 
 	return Write(ctx, conn, func(ctx context.Context) (T, error) {
-		found, err := spec.Find(ctx)
-		if !dberror.IsNotFoundError(err) {
-			return found, err
+		row, findErr := spec.Find(ctx)
+		if !dberror.IsNotFoundError(findErr) {
+			return row, findErr
 		}
 
-		if err = Savepoint(ctx, conn, spec.Create); err != nil {
-			if dberror.IsReadOnlyTransaction(err) {
+		if createErr := Savepoint(ctx, conn, spec.Create); createErr != nil {
+			if dberror.IsReadOnlyTransaction(createErr) {
 				return spec.Default(), nil
 			}
 
 			var zero T
-			return zero, err
+			return zero, createErr
 		}
 
 		return spec.Find(ctx)

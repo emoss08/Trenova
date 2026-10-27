@@ -3,13 +3,12 @@ package aiproviderresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -30,21 +29,21 @@ func aiProviderColumns(ctx context.Context, nodePathPrefix string) []string {
 	if len(columns) == 0 {
 		return columns
 	}
-	cols := aiprovidercol.ProviderColumns
+	p := aiproviderdb.Providers
 	if graphql.FieldRequested(ctx, nodePathPrefix+".apiKey") {
-		return append(columns,
-			cols.APIKey.Name,
-			cols.APIKeyPrefix.Name,
-			cols.APIKeyLastFour.Name,
-			cols.APIKeyAddedAt.Name,
-			cols.APIKeyAddedByID.Name,
-			cols.APIKeyLastUsedAt.Name,
-			cols.RotationExpiresAt.Name,
-			cols.CreatedAt.Name,
-		)
+		return append(columns, projection.ColumnNames(
+			p.APIKey.Col,
+			p.APIKeyPrefix.Col,
+			p.APIKeyLastFour.Col,
+			p.APIKeyAddedAt.Col,
+			p.APIKeyAddedByID.Col,
+			p.APIKeyLastUsedAt.Col,
+			p.RotationExpiresAt.Col,
+			p.CreatedAt.Col,
+		)...)
 	}
 	if graphql.FieldRequested(ctx, nodePathPrefix+".hasApiKey") {
-		columns = append(columns, cols.APIKey.Name)
+		columns = append(columns, projection.ColumnNames(p.APIKey.Col)...)
 	}
 
 	return columns
@@ -65,9 +64,10 @@ func aiProviderConnectionToModel(
 	}
 
 	return &gqlmodel.AIProviderConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

@@ -1,0 +1,126 @@
+# The inbox as the Desk reads it: who wrote, about what, what it was read as and
+# whether it waits on a person, with a line of the sender's own words.
+query DeskInboundMessages($input: InboundMessagesInput!) {
+  inboundMessages(input: $input) {
+    edges {
+      node {
+        id
+        receivedAt
+        fromName
+        fromAddress
+        subject
+        mailboxId
+        mailbox {
+          name
+          address
+        }
+        preview
+        status
+        needsReview
+        classification
+        confidence
+        matchedShipmentId
+        matchedCustomerId
+        matchReason
+        attachmentCount
+        threadKey
+        threadCount
+        ownerId
+        dueAt
+      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# One message in full, with its place in Triage: owner, due time, why it is
+# parked, the load and reply drafted on it and any conflict.
+query DeskInboundMessage($id: ID!) {
+  inboundMessage(id: $id) {
+    id
+    status
+    needsReview
+    classification
+    confidence
+    fromName
+    fromAddress
+    toAddresses
+    subject
+    receivedAt
+    mailboxId
+    mailbox {
+      name
+      address
+    }
+    matchedShipmentId
+    matchedCustomerId
+    matchedCarrierId
+    matchReason
+    reviewNote
+    failureText
+    textBody
+    attachments {
+      id
+      fileName
+      contentType
+      kind
+      documentId
+      failureText
+      pageCount
+      filedShipmentId
+      filedAs
+    }
+    threadKey
+    ownerId
+    dueAt
+    snooze {
+      until
+      event
+      watchShipment {
+        id
+      }
+      documentTypeId
+    }
+    awaitingReply {
+      until
+    }
+    loadDraft {
+      source
+      fields {
+        key
+        value
+      }
+    }
+    actions {
+      id
+      kind
+      done
+      createdShipment {
+        id
+      }
+      stopsDecision
+      exceptionKind
+    }
+    replyDraft {
+      toAddress
+      subject
+      body
+      draftedByNova
+    }
+    conflicts {
+      id
+      kind
+      attachmentId
+      existingDocumentId
+      existingShipment {
+        id
+      }
+      existingAmount
+      newAmount
+      resolution
+    }
+  }
+}

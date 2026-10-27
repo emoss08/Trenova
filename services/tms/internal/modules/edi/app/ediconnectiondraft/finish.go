@@ -216,7 +216,7 @@ func (p *planner) buildGaps() {
 	}
 }
 
-func (p *planner) buildSamples() {
+func (p *planner) buildSamples(ctx context.Context) {
 	mapped := p.draftedMappings()
 	for _, sample := range p.samples {
 		out := ediports.DraftSample{
@@ -241,7 +241,7 @@ func (p *planner) buildSamples() {
 		if sample.identifying {
 			out.Checks = p.sampleChecks(sample)
 		}
-		out.Unmapped = unmappedCodes(sample, mapped)
+		out.Unmapped = p.sampleUnmapped(ctx, sample, mapped)
 		p.draft.Samples = append(p.draft.Samples, out)
 	}
 }
@@ -267,18 +267,6 @@ func (p *planner) sampleChecks(sample *specSample) []ediports.DraftSampleCheck {
 			Matches:  expected != "" && expected == value,
 		})
 	}
-	if set := sample.transactionSet(); set != "" && slices.Contains(supportedSets, set) {
-		group := setField(set, sample.direction, setAttrFunctionalGroupID)
-		if expected, ok := p.usable(group); ok && sample.parsed.FunctionalGroupID != "" {
-			checks = append(checks, ediports.DraftSampleCheck{
-				Field:    group,
-				Label:    fieldCatalog[group].label,
-				Expected: expected,
-				Found:    sample.parsed.FunctionalGroupID,
-				Matches:  expected == sample.parsed.FunctionalGroupID,
-			})
-		}
-	}
 	return checks
 }
 
@@ -296,41 +284,6 @@ func (p *planner) draftedMappings() map[mappingKey]bool {
 		}
 	}
 	return mapped
-}
-
-func unmappedCodes(sample *specSample, mapped map[mappingKey]bool) []ediports.DraftUnmappedCode {
-	out := make([]ediports.DraftUnmappedCode, 0)
-	for transactionIndex := range sample.parsed.Transactions {
-		transaction := &sample.parsed.Transactions[transactionIndex]
-		tender := transaction.Payload.LoadTender
-		if tender == nil {
-			continue
-		}
-		entityTypes := make([]edi.MappingEntityType, 0, len(tender.RequiredMappingEntityIDs))
-		for entityType := range tender.RequiredMappingEntityIDs {
-			entityTypes = append(entityTypes, entityType)
-		}
-		slices.Sort(entityTypes)
-		for _, entityType := range entityTypes {
-			ids := slices.Clone(tender.RequiredMappingEntityIDs[entityType])
-			slices.Sort(ids)
-			for _, id := range ids {
-				key := mappingKey{entityType: entityType, sourceID: id}
-				if mapped[key] ||
-					slices.ContainsFunc(out, func(code ediports.DraftUnmappedCode) bool {
-						return code.EntityType == entityType && code.SourceID == id
-					}) {
-					continue
-				}
-				code := ediports.DraftUnmappedCode{EntityType: entityType, SourceID: id}
-				if id == defaultMappingKey {
-					code.SourceLabel = "Default for every inbound tender"
-				}
-				out = append(out, code)
-			}
-		}
-	}
-	return out
 }
 
 func (p *planner) settle() {
@@ -354,8 +307,8 @@ func (p *planner) decisionSections() [][]ediports.DraftValue {
 	if draft.Transport != nil {
 		sections = append(sections, draft.Transport.Fields)
 	}
-	for index := range draft.DocumentProfiles {
-		sections = append(sections, draft.DocumentProfiles[index].Fields)
+	for index := range draft.Sets {
+		sections = append(sections, draft.Sets[index].Fields)
 	}
 	loose := sortedSetSupportKeys()
 	for _, kind := range controlNumberKinds {
@@ -415,7 +368,7 @@ func blockers(draft *ediports.ConnectionDraft) []string {
 			plural(len(draft.Failures), "failure", "failures"),
 		))
 	}
-	if len(draft.DocumentProfiles) == 0 {
+	if len(draft.Sets) == 0 {
 		out = append(out, "The document names no 204, 210, 214 or 990 that Trenova would exchange")
 	}
 	return out
@@ -432,11 +385,13 @@ func countChanges(draft *ediports.ConnectionDraft) int {
 	if draft.Transport != nil {
 		count(draft.Transport.Change)
 	}
-	for index := range draft.DocumentProfiles {
-		profile := &draft.DocumentProfiles[index]
-		count(profile.Change)
-		for controlIndex := range profile.ControlNumbers {
-			count(profile.ControlNumbers[controlIndex].Change)
+	if draft.Project != nil {
+		count(draft.Project.Change)
+	}
+	for index := range draft.Sets {
+		set := &draft.Sets[index]
+		for controlIndex := range set.ControlNumbers {
+			count(set.ControlNumbers[controlIndex].Change)
 		}
 	}
 	for index := range draft.Mappings {
@@ -458,8 +413,11 @@ func fillEmpty(draft *ediports.ConnectionDraft) {
 	if draft.Failures == nil {
 		draft.Failures = []ediports.DraftFailure{}
 	}
-	if draft.DocumentProfiles == nil {
-		draft.DocumentProfiles = []ediports.DraftDocumentProfile{}
+	if draft.Sets == nil {
+		draft.Sets = []ediports.DraftSet{}
+	}
+	if draft.Kept == nil {
+		draft.Kept = []ediports.DraftKept{}
 	}
 }
 

@@ -9,27 +9,25 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
+	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-func (r *FormulaTemplateResolver) VariableDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateVariableDefinition, error) {
-	return formulaTemplateVariableDefinitionsToModel(obj.VariableDefinitions), nil
+func (r *FormulaLibraryImportResolver) Library(ctx context.Context, obj *tarifftypes.Import) (*formulalibrary.FormulaLibrary, error) {
+	if obj.LibraryID.IsNil() {
+		return nil, nil
+	}
+	return loaders.FormulaLibraryByID(ctx, obj.LibraryID.String())
 }
 
-func (r *FormulaTemplateResolver) BreakdownDefinitions(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaTemplateBreakdownDefinition, error) {
-	return formulaTemplateBreakdownDefinitionsToModel(obj.BreakdownDefinitions), nil
-}
-
-func (r *FormulaTemplateResolver) MinCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.MinCharge), nil
-}
-
-func (r *FormulaTemplateResolver) MaxCharge(ctx context.Context, obj *formulatemplate.FormulaTemplate) (*string, error) {
-	return base.NullDecimalToStringPtr(obj.MaxCharge), nil
+func (r *FormulaTemplateResolver) Inputs(ctx context.Context, obj *formulatemplate.FormulaTemplate) ([]*gqlmodel.FormulaInputDeclaration, error) {
+	return formulaInputDeclarationsToModel(obj.Inputs)
 }
 
 func (r *FormulaTemplateResolver) UsageCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error) {
@@ -38,14 +36,6 @@ func (r *FormulaTemplateResolver) UsageCount(ctx context.Context, obj *formulate
 		return 0, err
 	}
 	return stats.UsageCount, nil
-}
-
-func (r *FormulaTemplateResolver) ScenarioCount(ctx context.Context, obj *formulatemplate.FormulaTemplate) (int, error) {
-	stats, err := formulaTemplateStats(ctx, obj)
-	if err != nil {
-		return 0, err
-	}
-	return stats.ScenarioCount, nil
 }
 
 func (r *QueryResolver) FormulaTemplates(ctx context.Context, input gqlmodel.DataTableConnectionInput) (*gqlmodel.FormulaTemplateConnection, error) {
@@ -89,4 +79,20 @@ func (r *QueryResolver) FormulaTemplate(ctx context.Context, id string) (*formul
 		TemplateID: templateID,
 		TenantInfo: base.TenantInfo(authCtx),
 	})
+}
+
+func (r *FormulaTemplateTableResolver) LatestVersionNumber(ctx context.Context, obj *tarifftypes.TablePin) (int, error) {
+	matrix, err := pinnedMatrix(ctx, obj)
+	if err != nil || matrix == nil {
+		return int(obj.VersionNumber), err
+	}
+	return int(max(matrix.PublishedVersionNumber, obj.VersionNumber)), nil
+}
+
+func (r *FormulaTemplateTableResolver) Archived(ctx context.Context, obj *tarifftypes.TablePin) (bool, error) {
+	matrix, err := pinnedMatrix(ctx, obj)
+	if err != nil || matrix == nil {
+		return false, err
+	}
+	return matrix.Status == formulatemplate.StatusInactive, nil
 }

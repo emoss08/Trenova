@@ -3,7 +3,7 @@ fragment ReportPreviewFields on ReportPreview {
     id
     label
     type
-    format
+    sensitivity
     display {
       style
       decimals
@@ -28,15 +28,32 @@ fragment ReportPreviewFields on ReportPreview {
         width
         edges
       }
+      labels
     }
   }
   rows
+  levels
   totals
   truncated
+  cursor
+  timezone
+  rollup
 }
 
-query PreviewReport($definition: ReportIRInput!, $params: JSON, $supersede: Boolean) {
-  previewReport(definition: $definition, params: $params, supersede: $supersede) {
+query PreviewReport(
+  $definition: JSON!
+  $params: JSON
+  $supersede: Boolean
+  $cursor: String
+  $pageSize: Int
+) {
+  previewReport(
+    definition: $definition
+    params: $params
+    supersede: $supersede
+    cursor: $cursor
+    pageSize: $pageSize
+  ) {
     ...ReportPreviewFields
   }
 }

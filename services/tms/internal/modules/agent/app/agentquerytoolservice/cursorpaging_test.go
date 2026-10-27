@@ -4,6 +4,8 @@ import (
 	"maps"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -16,9 +18,9 @@ func pageAfter[T pagination.CursorEntity](
 	cursor pagination.CursorInfo,
 ) *pagination.CursorListResult[T] {
 	start := 0
-	if cursor.Cursor.ID.IsNotNil() {
+	if cursor.Cursor.Keyset != "" {
 		for idx, item := range items {
-			if item.GetID() == cursor.Cursor.ID {
+			if item.GetID().String() == cursor.Cursor.Keyset {
 				start = idx + 1
 				break
 			}
@@ -26,7 +28,7 @@ func pageAfter[T pagination.CursorEntity](
 	}
 	end := min(len(items), start+cursor.Limit+1)
 
-	return pagination.NewCursorListResult(items[start:end], cursor.Limit)
+	return pagetest.Of(items[start:end], cursor.Limit)
 }
 
 func cursorIDs[T pagination.CursorEntity](items []T) []pulid.ID {
@@ -81,7 +83,7 @@ func assertCursorPaging(t *testing.T, c cursorPagingCase) {
 	result, err := c.call(nil, c.args)
 	require.NoError(t, err)
 	first := readCursorPage(t, result)
-	assert.True(t, c.received().Cursor.ID.IsNil(), "the first page starts from the top")
+	assert.Empty(t, c.received().Cursor.Keyset, "the first page starts from the top")
 	assert.Equal(t, c.limit, first.Count)
 	assert.True(t, first.HasMore)
 	require.NotEmpty(t, first.NextCursor, "a full page names where the next one starts")
@@ -95,7 +97,7 @@ func assertCursorPaging(t *testing.T, c cursorPagingCase) {
 		result, err = c.call(map[string]any{paramAfter: after}, c.args)
 		require.NoError(t, err)
 		page := readCursorPage(t, result)
-		assert.Equal(t, c.ids[seen-1], c.received().Cursor.ID,
+		assert.Equal(t, c.ids[seen-1].String(), c.received().Cursor.Keyset,
 			"after reaches the repository as the last row of the previous page")
 		assert.Equal(t, page.HasMore, page.NextCursor != "")
 		seen += page.Count
@@ -144,7 +146,7 @@ func TestCursorScope_IgnoresLimitAndAfterAndKeyOrder(t *testing.T) {
 func TestReadCursorWindow_DecodesTheRepositoryCursor(t *testing.T) {
 	t.Parallel()
 
-	inner, err := pagination.EncodeCursor(pagination.Cursor{ID: pulid.MustNew("wrk_")})
+	inner, err := pagination.EncodeKeysetCursor(nil, pulid.MustNew("wrk_").String())
 	require.NoError(t, err)
 	params := map[string]any{"query": "ortiz"}
 	scope, err := cursorScope("worker_list", params)

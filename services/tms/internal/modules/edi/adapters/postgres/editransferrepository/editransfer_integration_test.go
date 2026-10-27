@@ -3,19 +3,19 @@
 package editransferrepository_test
 
 import (
+	"context"
 	"slices"
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editransferrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
@@ -24,6 +24,7 @@ import (
 )
 
 type transferFixture struct {
+	ctx      context.Context
 	tenant   pagination.TenantInfo
 	sender   *edi.EDIPartner
 	fileA    pulid.ID
@@ -38,38 +39,19 @@ type transferFixture struct {
 func seedTransfers(t *testing.T) *transferFixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	_, err := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
+
+	scope := editest.FirstTenant(t, ctx, db)
+	ctx = scope.Ctx
+	org := scope.Info
+	dt := edidb.EDIDocumentTypes
+	documentType, err := dt.Where(dt.TransactionSet.Eq(edi.TransactionSet204)).First(ctx, db)
 	require.NoError(t, err)
 
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
-	var documentType struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(t, db.NewSelect().
-		Table("edi_document_types").
-		Column("id").
-		Where("transaction_set = ?", edi.TransactionSet204).
-		Limit(1).
-		Scan(ctx, &documentType))
-
 	fixture := &transferFixture{
-		tenant: pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+		ctx:    ctx,
+		tenant: org,
 		repo: editransferrepository.New(editransferrepository.Params{
 			DB:     postgres.NewTestConnection(db),
 			Logger: zap.NewNop(),
@@ -77,34 +59,26 @@ func seedTransfers(t *testing.T) *transferFixture {
 	}
 	partner := func(code, name string) *edi.EDIPartner {
 		row := &edi.EDIPartner{
-			BusinessUnitID: org.BusinessUnitID,
-			OrganizationID: org.ID,
-			Kind:           edi.PartnerKindExternal,
-			Code:           code,
-			Name:           name,
+			Kind: edi.PartnerKindExternal,
+			Code: code,
+			Name: name,
 		}
-		_, insertErr := db.NewInsert().Model(row).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, edidb.EDIPartners.Create(ctx, db, row))
 		return row
 	}
 	fixture.sender = partner("ACME-TENDERS", "Acme Foods")
 	fixture.receiver = partner("TRENOVA-SELF", "Trenova Freight")
 
 	profile := &edi.EDICommunicationProfile{
-		BusinessUnitID: org.BusinessUnitID,
-		OrganizationID: org.ID,
-		EDIPartnerID:   fixture.sender.ID,
-		Method:         edi.ConnectionMethodSFTP,
-		Name:           "Acme Tenders Mailbox",
+		EDIPartnerID: fixture.sender.ID,
+		Method:       edi.ConnectionMethodSFTP,
+		Name:         "Acme Tenders Mailbox",
 	}
-	_, err = db.NewInsert().Model(profile).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, edidb.EDICommunicationProfiles.Create(ctx, db, profile))
 
 	now := timeutils.NowUnix()
 	file := func(name string) pulid.ID {
 		row := &edi.EDIInboundFile{
-			BusinessUnitID:         org.BusinessUnitID,
-			OrganizationID:         org.ID,
 			CommunicationProfileID: profile.ID,
 			EDIPartnerID:           fixture.sender.ID,
 			Method:                 edi.ConnectionMethodSFTP,
@@ -115,8 +89,7 @@ func seedTransfers(t *testing.T) *transferFixture {
 			Status:                 edi.InboundFileStatusProcessed,
 			ReceivedAt:             now,
 		}
-		_, insertErr := db.NewInsert().Model(row).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, edidb.EDIInboundFiles.Create(ctx, db, row))
 		return row.ID
 	}
 	fixture.fileA = file("ACME_A.x12")
@@ -124,8 +97,6 @@ func seedTransfers(t *testing.T) *transferFixture {
 
 	tender := func(fileID pulid.ID, bol string) pulid.ID {
 		message := &edi.EDIMessage{
-			BusinessUnitID:           org.BusinessUnitID,
-			OrganizationID:           org.ID,
 			EDIPartnerID:             fixture.sender.ID,
 			DocumentTypeID:           documentType.ID,
 			InboundFileID:            fileID,
@@ -134,20 +105,18 @@ func seedTransfers(t *testing.T) *transferFixture {
 			TransactionSet:           edi.TransactionSet204,
 			X12Version:               edi.DefaultX12204Version,
 			Status:                   edi.MessageStatusGenerated,
-			ValidationMode:           edi.ValidationModeDisabled,
 			InterchangeControlNumber: "000000001",
 			GroupControlNumber:       "1",
 			TransactionControlNumber: bol,
 			GeneratedAt:              now,
 		}
-		_, insertErr := db.NewInsert().Model(message).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, edidb.EDIMessages.Create(ctx, db, message))
 
 		transfer := &edi.EDITransfer{
-			SourceOrganizationID: org.ID,
-			SourceBusinessUnitID: org.BusinessUnitID,
-			TargetOrganizationID: org.ID,
-			TargetBusinessUnitID: org.BusinessUnitID,
+			SourceOrganizationID: org.OrgID,
+			SourceBusinessUnitID: org.BuID,
+			TargetOrganizationID: org.OrgID,
+			TargetBusinessUnitID: org.BuID,
 			SourcePartnerID:      fixture.sender.ID,
 			TargetPartnerID:      fixture.receiver.ID,
 			InboundMessageID:     message.ID,
@@ -155,20 +124,21 @@ func seedTransfers(t *testing.T) *transferFixture {
 			TenderPayload:        edi.LoadTenderPayload{BOL: bol},
 			SubmittedAt:          now,
 		}
-		_, insertErr = db.NewInsert().Model(transfer).Exec(ctx)
-		require.NoError(t, insertErr)
+		require.NoError(t, edidb.EDITransfers.Create(ctx, db, transfer))
 		return transfer.ID
 	}
 	fixture.fromA = tender(fixture.fileA, "BOL-A")
 	fixture.fromB = tender(fileB, "BOL-B")
 	fixture.tender = tender
 	fixture.stampAll = func(createdAt int64) {
-		_, stampErr := db.NewUpdate().
-			Table("edi_load_tender_transfers").
-			Set("created_at = ?", createdAt).
-			Where("target_organization_id = ?", org.ID).
-			Exec(ctx)
-		require.NoError(t, stampErr)
+		editest.Exec(
+			t,
+			ctx,
+			db,
+			"UPDATE edi_load_tender_transfers SET created_at = $1 WHERE target_organization_id = $2",
+			createdAt,
+			org.OrgID.String(),
+		)
 	}
 	return fixture
 }
@@ -176,7 +146,7 @@ func seedTransfers(t *testing.T) *transferFixture {
 func TestGetTransferByIDNamesBothPartners(t *testing.T) {
 	fixture := seedTransfers(t)
 
-	transfer, err := fixture.repo.GetTransferByID(t.Context(), ediports.GetEDITransferByIDRequest{
+	transfer, err := fixture.repo.GetTransferByID(fixture.ctx, ediports.GetEDITransferByIDRequest{
 		ID:         fixture.fromA,
 		TenantInfo: fixture.tenant,
 		Direction:  "inbound",
@@ -192,7 +162,7 @@ func TestGetTransferByIDNamesBothPartners(t *testing.T) {
 func TestListInboundTransfersFromOneInboundFile(t *testing.T) {
 	fixture := seedTransfers(t)
 
-	result, err := fixture.repo.ListInbound(t.Context(), &ediports.ListEDITransfersRequest{
+	result, err := fixture.repo.ListInbound(fixture.ctx, &ediports.ListEDITransfersRequest{
 		Filter: &pagination.QueryOptions{
 			TenantInfo: fixture.tenant,
 			Pagination: pagination.Info{Limit: 20},
@@ -220,7 +190,7 @@ func TestListInboundTransfersPagesAFileWhoseTendersArrivedTogether(t *testing.T)
 
 	read := make([]pulid.ID, 0, len(want))
 	for offset := 0; offset < len(want); offset += 2 {
-		page, err := fixture.repo.ListInbound(t.Context(), &ediports.ListEDITransfersRequest{
+		page, err := fixture.repo.ListInbound(fixture.ctx, &ediports.ListEDITransfersRequest{
 			Filter: &pagination.QueryOptions{
 				TenantInfo: fixture.tenant,
 				Pagination: pagination.Info{Limit: 2, Offset: offset},

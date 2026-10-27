@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   AGENT_MEMORY_LIST_KEY,
   agentMemoryUsageQueryKey,
+  fetchActiveAgentMemoryCount,
+  fetchAgentMemoryTotal,
   fetchAgentMemoryUsage,
   memoryUsageNearCap,
 } from "../agent-memories";
@@ -43,5 +45,30 @@ describe("agent memory usage", () => {
 
   it("is refreshed by whatever refreshes the memory list", () => {
     expect(agentMemoryUsageQueryKey[0]).toBe(AGENT_MEMORY_LIST_KEY);
+  });
+});
+
+describe("agent memory counts", () => {
+  beforeEach(() => {
+    requestGraphQLMock.mockReset();
+  });
+
+  it("keeps whether the server counted the active memories", async () => {
+    requestGraphQLMock.mockResolvedValueOnce({
+      agentMemories: { totalCount: 48_200, totalCountExact: false },
+    } as never);
+
+    await expect(fetchActiveAgentMemoryCount()).resolves.toEqual({
+      count: 48_200,
+      exact: false,
+    });
+  });
+
+  it("reads the whole total as a number to tell an empty list apart", async () => {
+    requestGraphQLMock.mockResolvedValueOnce({
+      agentMemories: { totalCount: 3, totalCountExact: true },
+    } as never);
+
+    await expect(fetchAgentMemoryTotal()).resolves.toBe(3);
   });
 });

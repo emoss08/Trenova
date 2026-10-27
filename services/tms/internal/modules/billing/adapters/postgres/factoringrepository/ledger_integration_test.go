@@ -49,24 +49,19 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 	p := Params{DB: conn, Logger: logger}
 
 	var userID pulid.ID
-	require.NoError(t, e.db.NewSelect().
-		Table("users").
-		Column("id").
-		Where("current_organization_id = ?", e.tenantInfo.OrgID).
-		Where("business_unit_id = ?", e.tenantInfo.BuID).
-		Limit(1).
-		Scan(e.ctx, &userID))
+	require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+		"SELECT id FROM users WHERE current_organization_id = $1 AND business_unit_id = $2 ORDER BY id LIMIT 1",
+		e.tenantInfo.OrgID, e.tenantInfo.BuID,
+	).
+		Scan(&userID))
 
 	account := func(code string) pulid.ID {
 		var id pulid.ID
-		require.NoError(t, e.db.NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", e.tenantInfo.OrgID).
-			Where("business_unit_id = ?", e.tenantInfo.BuID).
-			Where("account_code = ?", code).
-			Limit(1).
-			Scan(e.ctx, &id))
+		require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+			"SELECT id FROM gl_accounts WHERE organization_id = $1 AND business_unit_id = $2 AND account_code = $3 LIMIT 1",
+			e.tenantInfo.OrgID, e.tenantInfo.BuID, code,
+		).
+			Scan(&id))
 		return id
 	}
 	accounts := factoring.PostingAccounts{
@@ -96,7 +91,9 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 
 	store := seqgen.NewSequenceStore(seqgen.SequenceStoreParams{DB: conn, Logger: logger})
 	provider := seqgen.NewFormatProvider(seqgen.FormatProviderParams{DB: conn, Logger: logger})
-	ledger := customerledgerrepository.New(customerledgerrepository.Params{DB: conn, Logger: logger})
+	ledger := customerledgerrepository.New(
+		customerledgerrepository.Params{DB: conn, Logger: logger},
+	)
 	submissions := NewSubmissionRepository(p)
 	entries := NewReserveEntryRepository(p)
 	svc := factoringservice.NewLedgerService(factoringservice.LedgerParams{
@@ -107,7 +104,9 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 		Invoices:    e.invoices,
 		Ledger:      ledger,
 		Controls:    controls,
-		Periods:     fiscalperiodrepository.New(fiscalperiodrepository.Params{DB: conn, Logger: logger}),
+		Periods: fiscalperiodrepository.New(
+			fiscalperiodrepository.Params{DB: conn, Logger: logger},
+		),
 		Sequences: seqgen.NewGenerator(
 			seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 		),
@@ -132,36 +131,33 @@ func setupLedgerEnv(t *testing.T) *ledgerEnv {
 func (e *ledgerEnv) glBalance(t *testing.T, accountID pulid.ID) int64 {
 	t.Helper()
 	var total int64
-	require.NoError(t, e.db.NewSelect().
-		TableExpr("journal_entry_lines AS jel").
-		ColumnExpr("COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0)").
-		Where("jel.organization_id = ?", e.tenantInfo.OrgID).
-		Where("jel.business_unit_id = ?", e.tenantInfo.BuID).
-		Where("jel.gl_account_id = ?", accountID).
-		Where(`jel.journal_entry_id IN (
-			SELECT journal_entry_id FROM factoring_reserve_entries
-			WHERE organization_id = ? AND business_unit_id = ?)`,
-			e.tenantInfo.OrgID, e.tenantInfo.BuID).
-		Scan(e.ctx, &total))
+	require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+		`SELECT COALESCE(SUM(jel.debit_amount - jel.credit_amount), 0)::bigint
+		FROM journal_entry_lines AS jel
+		WHERE jel.organization_id = $1 AND jel.business_unit_id = $2 AND jel.gl_account_id = $3
+			AND jel.journal_entry_id IN (
+				SELECT journal_entry_id FROM factoring_reserve_entries
+				WHERE organization_id = $1 AND business_unit_id = $2)`,
+		e.tenantInfo.OrgID, e.tenantInfo.BuID, accountID,
+	).Scan(&total))
 	return total
 }
 
 func (e *ledgerEnv) unbalancedEntries(t *testing.T) int {
 	t.Helper()
 	var count int
-	require.NoError(t, e.db.NewSelect().
-		TableExpr(`(SELECT jel.journal_entry_id
+	require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+		`SELECT COUNT(*) FROM (SELECT jel.journal_entry_id
 			FROM journal_entry_lines AS jel
 			JOIN factoring_reserve_entries AS facres
 				ON facres.journal_entry_id = jel.journal_entry_id
 				AND facres.organization_id = jel.organization_id
 				AND facres.business_unit_id = jel.business_unit_id
-			WHERE jel.organization_id = ? AND jel.business_unit_id = ?
+			WHERE jel.organization_id = $1 AND jel.business_unit_id = $2
 			GROUP BY jel.journal_entry_id
 			HAVING SUM(jel.debit_amount) <> SUM(jel.credit_amount)) AS unbalanced`,
-			e.tenantInfo.OrgID, e.tenantInfo.BuID).
-		ColumnExpr("COUNT(*)").
-		Scan(e.ctx, &count))
+		e.tenantInfo.OrgID, e.tenantInfo.BuID,
+	).Scan(&count))
 	return count
 }
 
@@ -178,14 +174,12 @@ func (e *ledgerEnv) invoice(t *testing.T, id pulid.ID) *invoice.Invoice {
 func (e *ledgerEnv) ledgerBalance(t *testing.T, invoiceID pulid.ID) int64 {
 	t.Helper()
 	var total int64
-	require.NoError(t, e.db.NewSelect().
-		TableExpr("customer_ledger_entries AS cle").
-		ColumnExpr("COALESCE(SUM(cle.amount_minor), 0)").
-		Where("cle.organization_id = ?", e.tenantInfo.OrgID).
-		Where("cle.business_unit_id = ?", e.tenantInfo.BuID).
-		Where("cle.related_invoice_id = ?", invoiceID).
-		Where("cle.source_object_type = ?", "FactoringSubmissionItem").
-		Scan(e.ctx, &total))
+	require.NoError(t, e.db.Pool().QueryRow(e.ctx,
+		`SELECT COALESCE(SUM(cle.amount_minor), 0)::bigint FROM customer_ledger_entries AS cle
+		WHERE cle.organization_id = $1 AND cle.business_unit_id = $2
+			AND cle.related_invoice_id = $3 AND cle.source_object_type = $4`,
+		e.tenantInfo.OrgID, e.tenantInfo.BuID, invoiceID, "FactoringSubmissionItem",
+	).Scan(&total))
 	return total
 }
 
@@ -249,7 +243,11 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 		Items: []factoringports.FundingItemInput{
 			{ItemID: releasedItem.ID, Outcome: factoring.FundingOutcomeFunded},
 			{ItemID: chargedItem.ID, Outcome: factoring.FundingOutcomeFunded},
-			{ItemID: rejectedItem.ID, Outcome: factoring.FundingOutcomeRejected, Reason: "Over limit"},
+			{
+				ItemID:  rejectedItem.ID,
+				Outcome: factoring.FundingOutcomeRejected,
+				Reason:  "Over limit",
+			},
 		},
 	}, actor)
 	require.NoError(t, err)
@@ -305,14 +303,20 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, due, 2)
-	claimed, err := e.submissions.ClaimChargebackWarning(e.ctx, factoringports.ClaimChargebackWarningRequest{
-		TenantInfo: e.tenantInfo, ItemID: due[0].ItemID, At: now,
-	})
+	claimed, err := e.submissions.ClaimChargebackWarning(
+		e.ctx,
+		factoringports.ClaimChargebackWarningRequest{
+			TenantInfo: e.tenantInfo, ItemID: due[0].ItemID, At: now,
+		},
+	)
 	require.NoError(t, err)
 	assert.True(t, claimed)
-	claimed, err = e.submissions.ClaimChargebackWarning(e.ctx, factoringports.ClaimChargebackWarningRequest{
-		TenantInfo: e.tenantInfo, ItemID: due[0].ItemID, At: now,
-	})
+	claimed, err = e.submissions.ClaimChargebackWarning(
+		e.ctx,
+		factoringports.ClaimChargebackWarningRequest{
+			TenantInfo: e.tenantInfo, ItemID: due[0].ItemID, At: now,
+		},
+	)
 	require.NoError(t, err)
 	assert.False(t, claimed, "a warning is claimed once")
 
@@ -369,7 +373,11 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 		ReadyBefore: now,
 	})
 	require.NoError(t, err)
-	assert.Zero(t, summary.Funded.Count, "a settled item and a charged-back one are no longer funded")
+	assert.Zero(
+		t,
+		summary.Funded.Count,
+		"a settled item and a charged-back one are no longer funded",
+	)
 	assert.Zero(t, summary.ReserveHeld.Count)
 	assert.Zero(t, summary.ReserveHeld.AmountMinor)
 
@@ -389,17 +397,25 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	reminders := paymentreminderrepository.New(paymentreminderrepository.Params{
 		DB: postgres.NewTestConnection(e.db), Logger: zap.NewNop(),
 	})
-	overdue, err := reminders.ListOverdueInvoices(e.ctx, paymentreminderports.ListOverdueInvoicesRequest{
-		TenantInfo:  e.tenantInfo,
-		AsOf:        now + 60*86400,
-		CustomerIDs: []pulid.ID{e.customerID},
-	})
+	overdue, err := reminders.ListOverdueInvoices(
+		e.ctx,
+		paymentreminderports.ListOverdueInvoicesRequest{
+			TenantInfo:  e.tenantInfo,
+			AsOf:        now + 60*86400,
+			CustomerIDs: []pulid.ID{e.customerID},
+		},
+	)
 	require.NoError(t, err)
 	overdueIDs := make([]pulid.ID, 0, len(overdue))
 	for _, row := range overdue {
 		overdueIDs = append(overdueIDs, row.InvoiceID)
 	}
-	assert.Contains(t, overdueIDs, charged.ID, "a charged-back invoice is the organization's to chase")
+	assert.Contains(
+		t,
+		overdueIDs,
+		charged.ID,
+		"a charged-back invoice is the organization's to chase",
+	)
 	assert.NotContains(t, overdueIDs, rejected.ID, "a factored invoice is the factor's to chase")
 
 	_, err = e.ledger.SumCustomerBalances(e.ctx, customerledgerports.SumCustomerBalancesRequest{
@@ -409,8 +425,8 @@ func TestFactoringLedgerKeepsTheBooksBalanced(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	_, err = e.db.ExecContext(e.ctx,
-		"UPDATE factoring_reserve_entries SET memo = 'edited' WHERE organization_id = ?",
+	_, err = e.db.Pool().Exec(e.ctx,
+		"UPDATE factoring_reserve_entries SET memo = 'edited' WHERE organization_id = $1",
 		e.tenantInfo.OrgID)
 	require.Error(t, err, "reserve entries are append-only")
 }

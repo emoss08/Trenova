@@ -3,6 +3,7 @@ package invoiceadjustmentservice
 import (
 	"context"
 	"fmt"
+
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingnumber"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
@@ -283,23 +284,27 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 	}
 
 	if computation.preview.RequiresReconciliationException {
-		if _, err = s.db.DBForContext(ctx).
-			NewInsert().
-			Model(&invoiceadjustment.InvoiceAdjustmentReconciliationException{
-				OrganizationID:      adjustment.OrganizationID,
-				BusinessUnitID:      adjustment.BusinessUnitID,
-				AdjustmentID:        adjustment.ID,
-				InvoiceID:           lockedInvoice.ID,
-				CreditMemoInvoiceID: creditMemoInvoice.ID,
-				Status:              invoiceadjustment.ExceptionStatusOpen,
-				Reason:              "Adjustment executed against settled or finance-sensitive invoice state",
-				Amount:              computation.preview.CreditTotalAmount,
-				Metadata: map[string]any{
-					"settlementStatus": lockedInvoice.SettlementStatus,
-					"disputeStatus":    lockedInvoice.DisputeStatus,
+		if err = s.repo.CreateAdjustmentArtifacts(
+			ctx,
+			invoiceadjustmentports.CreateAdjustmentArtifactsParams{
+				ReconciliationExceptions: []*invoiceadjustment.InvoiceAdjustmentReconciliationException{
+					{
+						OrganizationID:      adjustment.OrganizationID,
+						BusinessUnitID:      adjustment.BusinessUnitID,
+						AdjustmentID:        adjustment.ID,
+						InvoiceID:           lockedInvoice.ID,
+						CreditMemoInvoiceID: creditMemoInvoice.ID,
+						Status:              invoiceadjustment.ExceptionStatusOpen,
+						Reason:              "Adjustment executed against settled or finance-sensitive invoice state",
+						Amount:              computation.preview.CreditTotalAmount,
+						Metadata: map[string]any{
+							"settlementStatus": lockedInvoice.SettlementStatus,
+							"disputeStatus":    lockedInvoice.DisputeStatus,
+						},
+					},
 				},
-			}).
-			Exec(ctx); err != nil {
+			},
+		); err != nil {
 			return nil, fmt.Errorf("create reconciliation exception: %w", err)
 		}
 	}
@@ -312,24 +317,26 @@ func (s *Service) executeApprovedAdjustment( //nolint:cyclop,funlen // legacy wo
 		replacementInvoiceID = typeutils.IDString(replacementInvoice.ID)
 	}
 
-	if _, err = s.db.DBForContext(ctx).
-		NewInsert().
-		Model(&invoiceadjustment.InvoiceAdjustmentSnapshot{
-			OrganizationID: adjustment.OrganizationID,
-			BusinessUnitID: adjustment.BusinessUnitID,
-			AdjustmentID:   adjustment.ID,
-			InvoiceID:      lockedInvoice.ID,
-			Kind:           invoiceadjustment.SnapshotKindExecution,
-			CreatedByID:    actor.UserID,
-			Payload: map[string]any{
-				"sourceInvoice":          s.snapshotPayload(lockedInvoice),
-				"creditMemoId":           creditMemoInvoice.ID.String(),
-				"rebillQueueItemId":      rebillQueueItemID,
-				"replacementInvoiceId":   replacementInvoiceID,
-				"writeOffJournalEntryId": typeutils.IDString(writeOffJournalEntryID),
-			},
-		}).
-		Exec(ctx); err != nil {
+	if err = s.repo.CreateAdjustmentArtifacts(
+		ctx,
+		invoiceadjustmentports.CreateAdjustmentArtifactsParams{
+			Snapshots: []*invoiceadjustment.InvoiceAdjustmentSnapshot{{
+				OrganizationID: adjustment.OrganizationID,
+				BusinessUnitID: adjustment.BusinessUnitID,
+				AdjustmentID:   adjustment.ID,
+				InvoiceID:      lockedInvoice.ID,
+				Kind:           invoiceadjustment.SnapshotKindExecution,
+				CreatedByID:    actor.UserID,
+				Payload: map[string]any{
+					"sourceInvoice":          s.snapshotPayload(lockedInvoice),
+					"creditMemoId":           creditMemoInvoice.ID.String(),
+					"rebillQueueItemId":      rebillQueueItemID,
+					"replacementInvoiceId":   replacementInvoiceID,
+					"writeOffJournalEntryId": typeutils.IDString(writeOffJournalEntryID),
+				},
+			}},
+		},
+	); err != nil {
 		return nil, fmt.Errorf("create execution snapshot: %w", err)
 	}
 

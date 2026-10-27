@@ -3,14 +3,13 @@ package triage
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -48,15 +47,15 @@ func DefaultTargetMinutes(class inboundmessage.Classification) int {
 }
 
 type ResponseTarget struct {
-	bun.BaseModel `bun:"table:triage_response_targets,alias:ttgt" json:"-"`
+	keel.Table `keel:"triage_response_targets"`
 
-	OrganizationID pulid.ID                      `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID                      `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Classification inboundmessage.Classification `json:"classification" bun:"classification,pk,type:VARCHAR(30),notnull"`
-	Minutes        int                           `json:"minutes"        bun:"minutes,type:INTEGER,notnull"`
-	UpdatedByID    pulid.ID                      `json:"updatedById"    bun:"updated_by_id,type:VARCHAR(100),nullzero"`
-	CreatedAt      int64                         `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64                         `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	OrganizationID pulid.ID                      `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID                      `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	Classification inboundmessage.Classification `json:"classification" keel:"classification,pk"`
+	Minutes        int                           `json:"minutes"        keel:"minutes"`
+	UpdatedByID    pulid.ID                      `json:"updatedById"    keel:"updated_by_id,nullzero"`
+	CreatedAt      int64                         `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64                         `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (t *ResponseTarget) Validate(multiErr *errortypes.MultiError) {
@@ -71,19 +70,6 @@ func (t *ResponseTarget) Validate(multiErr *errortypes.MultiError) {
 			validation.Max(MaxTargetMinutes).Error("A target is at most thirty days"),
 		),
 	))
-}
-
-func (t *ResponseTarget) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-
-	return nil
 }
 
 type Targets map[inboundmessage.Classification]int
@@ -109,15 +95,15 @@ func (t Targets) For(class inboundmessage.Classification) int {
 }
 
 type Settings struct {
-	bun.BaseModel `bun:"table:triage_settings,alias:tset" json:"-"`
+	keel.Table `keel:"triage_settings"`
 
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OnCallUserID   pulid.ID `json:"onCallUserId"   bun:"on_call_user_id,type:VARCHAR(100),nullzero"`
-	EndOfDayMinute int      `json:"endOfDayMinute" bun:"end_of_day_minute,type:INTEGER,notnull,default:1020"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OnCallUserID   pulid.ID `json:"onCallUserId"   keel:"on_call_user_id,nullzero"`
+	EndOfDayMinute int      `json:"endOfDayMinute" keel:"end_of_day_minute"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func DefaultSettings(orgID, buID pulid.ID) *Settings {
@@ -137,31 +123,26 @@ func (s *Settings) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-func (s *Settings) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		s.CreatedAt = now
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
+func (s *Settings) BeforeCreate(_ context.Context) error {
+	if s.EndOfDayMinute == 0 {
+		s.EndOfDayMinute = DefaultEndOfDayMinute
 	}
 
 	return nil
 }
 
 type ReplyTemplate struct {
-	bun.BaseModel `bun:"table:triage_reply_templates,alias:ttpl" json:"-"`
+	keel.Table `keel:"triage_reply_templates"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	Name           string   `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
-	Body           string   `json:"body"           bun:"body,type:TEXT,notnull"`
-	CreatedByID    pulid.ID `json:"createdById"    bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ttpl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	Name           string   `json:"name"           keel:"name"`
+	Body           string   `json:"body"           keel:"body"`
+	CreatedByID    pulid.ID `json:"createdById"    keel:"created_by_id,nullzero"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (t *ReplyTemplate) Validate(multiErr *errortypes.MultiError) {
@@ -177,20 +158,16 @@ func (t *ReplyTemplate) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-func (t *ReplyTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (t *ReplyTemplate) BeforeCreate(ctx context.Context) error {
 	t.Name = stringutils.StripNUL(t.Name)
 	t.Body = stringutils.StripNUL(t.Body)
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("ttpl_")
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
+
+	return nil
+}
+
+func (t *ReplyTemplate) BeforeUpdate(ctx context.Context) error {
+	t.Name = stringutils.StripNUL(t.Name)
+	t.Body = stringutils.StripNUL(t.Body)
 
 	return nil
 }
@@ -200,17 +177,17 @@ func (t *ReplyTemplate) GetCreatedAt() int64  { return t.CreatedAt }
 func (t *ReplyTemplate) GetTableName() string { return "triage_reply_templates" }
 
 type View struct {
-	bun.BaseModel `bun:"table:triage_views,alias:tview" json:"-"`
+	keel.Table `keel:"triage_views"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	Name           string   `json:"name"           bun:"name,type:VARCHAR(80),notnull"`
-	Query          string   `json:"query"          bun:"query,type:VARCHAR(200),notnull"`
-	Position       int      `json:"position"       bun:"position,type:INTEGER,notnull,default:0"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tview_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	Name           string   `json:"name"           keel:"name"`
+	Query          string   `json:"query"          keel:"query"`
+	Position       int      `json:"position"       keel:"position"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (v *View) Validate(multiErr *errortypes.MultiError) {
@@ -226,20 +203,16 @@ func (v *View) Validate(multiErr *errortypes.MultiError) {
 	))
 }
 
-func (v *View) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (v *View) BeforeCreate(ctx context.Context) error {
 	v.Name = stringutils.StripNUL(v.Name)
 	v.Query = stringutils.StripNUL(v.Query)
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if v.ID.IsNil() {
-			v.ID = pulid.MustNew("tview_")
-		}
-		v.CreatedAt = now
-		v.UpdatedAt = now
-	case *bun.UpdateQuery:
-		v.UpdatedAt = now
-	}
+
+	return nil
+}
+
+func (v *View) BeforeUpdate(ctx context.Context) error {
+	v.Name = stringutils.StripNUL(v.Name)
+	v.Query = stringutils.StripNUL(v.Query)
 
 	return nil
 }
@@ -249,12 +222,12 @@ func (v *View) GetCreatedAt() int64  { return v.CreatedAt }
 func (v *View) GetTableName() string { return "triage_views" }
 
 type SenderHint struct {
-	bun.BaseModel `bun:"table:inbound_sender_hints,alias:ishint" json:"-"`
+	keel.Table `keel:"inbound_sender_hints"`
 
-	OrganizationID  pulid.ID                      `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID                      `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	SenderDomain    string                        `json:"senderDomain"    bun:"sender_domain,pk,type:VARCHAR(255),notnull"`
-	Classification  inboundmessage.Classification `json:"classification"  bun:"classification,pk,type:VARCHAR(30),notnull"`
-	Corrections     int                           `json:"corrections"     bun:"corrections,type:INTEGER,notnull,default:0"`
-	LastCorrectedAt int64                         `json:"lastCorrectedAt" bun:"last_corrected_at,type:BIGINT,notnull"`
+	OrganizationID  pulid.ID                      `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	BusinessUnitID  pulid.ID                      `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	SenderDomain    string                        `json:"senderDomain"    keel:"sender_domain,pk"`
+	Classification  inboundmessage.Classification `json:"classification"  keel:"classification,pk"`
+	Corrections     int                           `json:"corrections"     keel:"corrections"`
+	LastCorrectedAt int64                         `json:"lastCorrectedAt" keel:"last_corrected_at"`
 }

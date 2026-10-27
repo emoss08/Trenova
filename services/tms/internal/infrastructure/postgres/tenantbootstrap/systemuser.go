@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -32,21 +30,16 @@ type SystemUserParams struct {
 
 func EnsureSystemUser(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	params SystemUserParams,
 ) (pulid.ID, bool, error) {
-	cols := tenantcol.UserColumns
-	existing := new(tenant.User)
-	err := db.NewSelect().
-		Model(existing).
-		Column(cols.ID.Bare()).
-		Where("lower("+cols.Username.Qualified()+") = ?", tenant.SystemUsername).
-		Limit(1).
-		Scan(ctx)
+	u := tenantdb.Users
+	existing, err := scoped(ctx, u.Pick(u.ID).Where(u.Username.Lower().Eq(tenant.SystemUsername))).
+		First(ctx, db)
 	switch {
 	case err == nil:
 		return existing.ID, false, nil
-	case !dberror.IsNotFoundError(err):
+	case !errors.Is(err, keel.ErrNotFound):
 		return pulid.Nil, false, fmt.Errorf("check system user: %w", err)
 	}
 
@@ -73,11 +66,8 @@ func EnsureSystemUser(
 	}
 	user.Password = hashed
 
-	if _, err = db.NewInsert().Model(user).Exec(ctx); err != nil {
+	if err = u.Create(ctx, db, user); err != nil {
 		return pulid.Nil, false, fmt.Errorf("create system user: %w", err)
-	}
-	if err = params.Scope.record(ctx, "users", user.ID); err != nil {
-		return pulid.Nil, false, err
 	}
 
 	return user.ID, true, nil

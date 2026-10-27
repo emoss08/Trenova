@@ -37,7 +37,8 @@ type Registry struct {
 	AIAudit    *AIAudit
 	// ProposalPreview measures what people are shown before they approve.
 	ProposalPreview *ProposalPreview
-	Rules           *Rules
+	Rules           *WasmModule
+	EDIModule       *WasmModule
 }
 
 func graphQLOptions(cfg *config.Config) GraphQLOptions {
@@ -73,7 +74,8 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 			Realtime:        NewRealtime(nil, logger, false),
 			AIAudit:         NewAIAudit(nil, logger, false),
 			ProposalPreview: NewProposalPreview(nil, logger, false),
-			Rules:           NewRules(nil, logger, false),
+			Rules:           NewWasmModule(nil, logger, false, rulesSubsystem, "rules"),
+			EDIModule:       NewWasmModule(nil, logger, false, ediModuleSubsystem, "EDI"),
 		}, nil
 	}
 
@@ -101,7 +103,8 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 		Realtime:        NewRealtime(registry, logger, true),
 		AIAudit:         NewAIAudit(registry, logger, true),
 		ProposalPreview: NewProposalPreview(registry, logger, true),
-		Rules:           NewRules(registry, logger, true),
+		Rules:           NewWasmModule(registry, logger, true, rulesSubsystem, "rules"),
+		EDIModule:       NewWasmModule(registry, logger, true, ediModuleSubsystem, "EDI"),
 	}
 
 	dberror.SetConcurrencyObserver(m.Database.RecordConcurrencyEvent)

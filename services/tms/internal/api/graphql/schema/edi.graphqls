@@ -71,19 +71,6 @@ enum EdiTransferDirection {
   Outbound
 }
 
-enum EdiTemplateStatus {
-  Draft
-  Certified
-  Active
-  Deprecated
-  Archived
-  Superseded
-}
-
-enum EdiStandard {
-  X12
-}
-
 enum EdiMappingEntityType {
   Customer
   ServiceType
@@ -93,11 +80,6 @@ enum EdiMappingEntityType {
   Commodity
   AccessorialCharge
   ServiceFailureReasonCode
-}
-
-enum EdiDocumentStatus {
-  Active
-  Inactive
 }
 
 type EdiConnectionCapabilities {
@@ -152,7 +134,7 @@ type EdiCommunicationProfileSecretState {
   key: String!
 }
 
-type EdiCommunicationProfile {
+type EdiCommunicationProfile @kind(resource: "edi") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -174,7 +156,7 @@ type EdiCommunicationProfile {
   partner: EdiPartner
 }
 
-type EdiTransfer {
+type EdiTransfer @kind(resource: "edi") {
   id: ID!
   sourceOrganizationId: ID!
   sourceBusinessUnitId: ID!
@@ -197,17 +179,93 @@ type EdiTransfer {
   updatedAt: Timestamp!
   sourcePartner: EdiPartner
   targetPartner: EdiPartner
+  "Inbound when this organization received the tender, Outbound when it sent it."
+  direction: EdiTransferDirection!
+  "The other side of the tender: the partner who sent it in, or the one it was sent to."
+  counterparty: EdiPartner
+  "The tender's bill of lading number."
+  bol: String
+  "The customer the tender names, as the sender labels it."
+  customerLabel: String
+  "The service type the tender asks for, as the sender labels it."
+  serviceTypeLabel: String
+  "The shipment type the tender names, as the sender labels it."
+  shipmentTypeLabel: String
+  pieces: Int
+  weight: Int
+  temperatureMin: Int
+  temperatureMax: Int
+  "How many stops the tender's moves carry."
+  stopCount: Int!
+  "Each stop of the tender's moves, in order."
+  stops: [EdiTenderStop!]!
+  commodities: [EdiTenderCommodity!]!
+  "What the tender offers to pay."
+  charges: EdiTenderCharges
+  "Whether the tender can still be accepted or declined."
+  canDecide: Boolean!
 }
 
-type EdiMessage {
+type EdiTenderStop {
+  sequence: Int!
+  type: String!
+  "The stop's location: its name, label or code."
+  location: String
+  address: String
+  city: String
+  state: String
+  postalCode: String
+  windowOpens: Timestamp
+  windowCloses: Timestamp
+  pieces: Int
+  weight: Int
+}
+
+type EdiTenderCommodity {
+  commodity: String!
+  weight: Int!
+  pieces: Int!
+}
+
+type EdiTenderCharge {
+  charge: String!
+  method: String
+  amount: Decimal!
+}
+
+type EdiTenderCharges {
+  freight: Decimal
+  other: Decimal
+  total: Decimal
+  additional: [EdiTenderCharge!]!
+}
+
+"A partner's code a tender carries that this organization has not mapped to its own record."
+type EdiTransferMappingNeed {
+  entityType: EdiMappingEntityType!
+  "The partner's code or label for it."
+  source: String!
+}
+
+"One load tender as its card reads it, with what accepting it still waits on."
+type EdiTransferDetail @kind(resource: "edi") {
+  transfer: EdiTransfer!
+  "The partner's codes not yet mapped, read only for an inbound tender that can still be decided; accepting it waits on them."
+  unresolvedMappings: [EdiTransferMappingNeed!]!
+  "Whether the tender can be accepted now: inbound, still open, and every code mapped."
+  canAccept: Boolean!
+}
+
+type EdiMessage @kind(resource: "edi") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
   ediPartnerId: ID!
   documentTypeId: ID!
-  partnerDocumentProfileId: ID
-  templateId: ID
-  templateVersionId: ID
+  "The version of the partner's Lading project that read or wrote the message."
+  ladingVersionId: ID
+  "The flow conversation the message belongs to."
+  flowInstanceId: ID
   shipmentId: ID
   transferId: ID
   inboundFileId: ID
@@ -234,9 +292,44 @@ type EdiMessage {
   createdAt: Timestamp!
   updatedAt: Timestamp!
   partner: EdiPartner
+  "The invoice the message bills, for a 210."
+  invoiceId: ID
+  "When the raw X12 was purged under the retention policy."
+  rawPurgedAt: Timestamp
 }
 
-type EdiInboundFile {
+"The raw X12 of a message or file, cut to its first 16 KB."
+type EdiRawText {
+  text: String!
+  "Whether the X12 is longer than the text shown."
+  truncated: Boolean!
+  sizeBytes: Int!
+}
+
+"One validation finding on an EDI message, naming the segment and element it is about."
+type EdiMessageDiagnostic {
+  severity: String!
+  code: String!
+  segmentId: String
+  elementPosition: Int
+  path: String
+  message: String!
+  suggestedFix: String
+}
+
+"One EDI message as its detail reads it: the document it decoded to and every finding."
+type EdiMessageDetail @kind(resource: "edi") {
+  message: EdiMessage!
+  "What the document says, decoded from its X12."
+  decoded: Any
+  diagnosticCount: Int!
+  "The validation findings, the first 50."
+  diagnostics: [EdiMessageDiagnostic!]!
+  "The raw X12 as it was sent or received, its first 16 KB; null once purged under the retention policy."
+  raw: EdiRawText
+}
+
+type EdiInboundFile @kind(resource: "edi") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -261,51 +354,20 @@ type EdiInboundFile {
   createdAt: Timestamp!
   updatedAt: Timestamp!
   partner: EdiPartner
+  "When the raw file was purged under the retention policy."
+  rawPurgedAt: Timestamp
 }
 
-type EdiTemplateVersion {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  templateId: ID!
-  sourceVersionId: ID
-  versionNumber: Int!
-  x12Version: String!
-  functionalGroupId: String!
-  status: EdiTemplateStatus!
-  isActive: Boolean!
-  notes: String
-  certificationNotes: String
-  activationNotes: String
-  archiveNotes: String
-  deprecatedNotes: String
-  supersededNotes: String
-  certifiedAt: Timestamp
-  activatedAt: Timestamp
-  archivedAt: Timestamp
-  deprecatedAt: Timestamp
-  supersededAt: Timestamp
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-}
-
-type EdiTemplate {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  documentTypeId: ID!
-  name: String!
-  description: String
-  direction: EdiDocumentDirection!
-  standard: EdiStandard!
-  transactionSet: String!
-  status: EdiTemplateStatus!
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  activeVersion: EdiTemplateVersion
-  versions: [EdiTemplateVersion!]
+"One inbound EDI file as its detail reads it, with the transaction sets parsed from it."
+type EdiInboundFileDetail @kind(resource: "edi") {
+  file: EdiInboundFile!
+  "The communication profile the file was picked up through."
+  communicationProfileName: String
+  messageCount: Int!
+  "The transaction sets parsed from the file, the first 50."
+  messages: [EdiMessage!]!
+  "The raw file as it was received, its first 16 KB; null once purged under the retention policy."
+  raw: EdiRawText
 }
 
 type EdiMappingProfileItem {
@@ -347,6 +409,8 @@ type EdiPartnerConnection {
   edges: [EdiPartnerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiCommunicationProfileEdge {
@@ -358,6 +422,8 @@ type EdiCommunicationProfileConnection {
   edges: [EdiCommunicationProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiTransferEdge {
@@ -369,6 +435,8 @@ type EdiTransferConnection {
   edges: [EdiTransferEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiMessageEdge {
@@ -380,6 +448,8 @@ type EdiMessageConnection {
   edges: [EdiMessageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiInboundFileEdge {
@@ -391,17 +461,8 @@ type EdiInboundFileConnection {
   edges: [EdiInboundFileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
-}
-
-type EdiTemplateEdge {
-  node: EdiTemplate!
-  cursor: String!
-}
-
-type EdiTemplateConnection {
-  edges: [EdiTemplateEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiMappingProfileEdge {
@@ -413,61 +474,8 @@ type EdiMappingProfileConnection {
   edges: [EdiMappingProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
-}
-
-"""
-The ISA and GS identities and separators every interchange of a document profile is
-written with.
-"""
-type EdiX12Envelope {
-  interchangeSenderQualifier: String!
-  interchangeSenderId: String!
-  interchangeReceiverQualifier: String!
-  interchangeReceiverId: String!
-  applicationSenderCode: String!
-  applicationReceiverCode: String!
-  "T for test, P for production."
-  interchangeUsageIndicator: String!
-  elementSeparator: String!
-  segmentTerminator: String!
-  componentSeparator: String!
-  repetitionSeparator: String!
-}
-
-type EdiAcknowledgmentConfig {
-  expected: Boolean!
-  "None, 997 or 999."
-  type: String!
-  slaInMinutes: Int!
-}
-
-type EdiPartnerDocumentProfile {
-  id: ID!
-  ediPartnerId: ID!
-  name: String!
-  status: EdiDocumentStatus!
-  direction: EdiDocumentDirection!
-  transactionSet: String!
-  functionalGroupId: String!
-  x12VersionOverride: String
-  envelope: EdiX12Envelope!
-  acknowledgment: EdiAcknowledgmentConfig!
-  partner: EdiPartner
-}
-
-type EdiTestCase {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  partnerDocumentProfileId: ID!
-  name: String!
-  description: String
-  expectedWarnings: Int!
-  expectedErrors: Int!
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  documentProfile: EdiPartnerDocumentProfile
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiSummaryStatusCount {
@@ -489,6 +497,51 @@ type EdiSummaryAttentionItem {
 enum EdiSummaryAttentionKind {
   Message
   InboundFile
+}
+
+type EdiAckStatusCount {
+  status: EdiMessageAckStatus!
+  count: Int!
+}
+
+type EdiPartnerAckCounts {
+  partnerId: ID!
+  partnerName: String!
+  partnerCode: String!
+  ackStatusCounts: [EdiAckStatusCount!]!
+}
+
+type EdiOverduePartnerAcks {
+  partnerId: ID!
+  partnerName: String!
+  partnerCode: String!
+  overdueCount: Int!
+  oldestGeneratedAt: Timestamp!
+  "The partner's oldest overdue messages, a few at most."
+  messages: [EdiMessage!]!
+}
+
+"How partners are acknowledging what this organization sent them."
+type EdiAckHealth @kind(resource: "edi") {
+  "When the figures were read."
+  asOf: Timestamp!
+  "Start of the window the counts by status cover."
+  since: Timestamp!
+  "How long an acknowledgment may be pending before it is overdue, in seconds."
+  overdueAfterSeconds: Int!
+  "True when the call asked about 997s or 999s, so the counts cover every set they answer."
+  answersEverySet: Boolean!
+  ackStatusCounts: [EdiAckStatusCount!]!
+  "Each partner's counts by acknowledgment status, in the window."
+  partners: [EdiPartnerAckCounts!]!
+  "How many messages are overdue, whenever they were sent."
+  overdueCount: Int!
+  "The overdue messages by partner, oldest first."
+  overdueByPartner: [EdiOverduePartnerAcks!]!
+  "How many overdue messages are counted but not listed."
+  overdueNotListed: Int!
+  "Messages dead-lettered recently, newest first."
+  recentDeadLettered: [EdiMessage!]!
 }
 
 type EdiSummary {
@@ -577,6 +630,7 @@ type EdiPartnerTransport {
 
 type EdiPartnerReadinessItem {
   key: String!
+  label: String!
   complete: Boolean!
 }
 
@@ -646,7 +700,8 @@ ever returned.
 type EdiPartnerCard {
   partner: EdiPartner!
   customer: EdiPartnerCustomer
-  documentProfiles: [EdiPartnerDocumentProfile!]!
+  "The partner's Lading project and the versions running."
+  lading: EdiPartnerLading!
   transports: [EdiPartnerTransport!]!
   readiness: EdiPartnerCardReadiness!
   mappings: EdiPartnerMappingSummary!
@@ -656,15 +711,137 @@ type EdiPartnerCard {
   carriers: [EdiPartnerCarrier!]
 }
 
-type EdiTestCaseEdge {
-  node: EdiTestCase!
+enum EdiLadingVersionStatus {
+  Draft
+  Certified
+  Active
+  Shadow
+  Superseded
+  Archived
+}
+
+enum EdiFlowInstanceStatus {
+  Open
+  Held
+  Escalated
+  Closed
+}
+
+"What a version's tests and checks last found."
+type EdiLadingReadiness {
+  errors: Int!
+  failing: Int!
+  tests: Int!
+  uncoveredFlowClauses: Int!
+  ready: Boolean!
+  checkedAt: Timestamp!
+}
+
+"A version of a partner's Lading project, without its files."
+type EdiLadingVersion @kind(resource: "edi") {
+  id: ID!
+  projectId: ID!
+  number: Int!
+  status: EdiLadingVersionStatus!
+  parentVersionId: ID
+  readiness: EdiLadingReadiness
+  notes: String
+  errorCount: Int!
+  warningCount: Int!
+  "When a shadow run ends."
+  shadowUntil: Timestamp
+  certifiedAt: Timestamp
+  activatedAt: Timestamp
+  supersededAt: Timestamp
+  archivedAt: Timestamp
+  "Who the partner and Trenova are in the X12 envelope, as the version's partner file says."
+  interchange: EdiLadingInterchange
+  "Each set the version reads or writes, and the map that does it."
+  exchanges: [EdiLadingExchange!]!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"The X12 envelope a Lading version writes and expects."
+type EdiLadingInterchange {
+  theirQualifier: String
+  theirId: String
+  ourQualifier: String
+  ourId: String
+  theirGroupCode: String
+  ourGroupCode: String
+  version: String
+  "test or production."
+  usage: String
+  "Element, segment, component and repetition separators, in that order."
+  separators: [String!]!
+}
+
+"A set a Lading version exchanges with the partner."
+type EdiLadingExchange {
+  transactionSet: String!
+  direction: EdiDocumentDirection!
+  map: String!
+  "The acknowledgment that answers it: the one Trenova sends back for an inbound set, the one the flow expects for an outbound set. Null when none is."
+  acknowledgment: String
+  "Seconds the flow waits for that acknowledgment, for an outbound set."
+  acknowledgmentWithin: Int
+}
+
+"A partner's Lading project: its maps, rules, guides and flows, kept as versions."
+type EdiLadingProject @kind(resource: "edi") {
+  id: ID!
+  ediPartnerId: ID!
+  activeVersionId: ID
+  shadowVersionId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type EdiPartnerLading {
+  project: EdiLadingProject
+  "The version Trenova runs for the partner."
+  active: EdiLadingVersion
+  "The version compared with it on live traffic, if one is."
+  shadow: EdiLadingVersion
+}
+
+"One conversation with a partner about one load, stepped by the partner's flow."
+type EdiFlowInstance @kind(resource: "edi") {
+  id: ID!
+  ediPartnerId: ID!
+  projectId: ID
+  versionId: ID
+  flow: String!
+  "What the conversation is about: the partner's load number for a tender."
+  key: String!
+  status: EdiFlowInstanceStatus!
+  "Why it is held or escalated."
+  reason: String
+  "When the flow next wakes on its own."
+  wakeAt: Timestamp
+  shipmentId: ID
+  transferId: ID
+  lastEventAt: Timestamp!
+  heldAt: Timestamp
+  resolvedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  partner: EdiPartner
+}
+
+type EdiFlowInstanceEdge {
+  node: EdiFlowInstance!
   cursor: String!
 }
 
-type EdiTestCaseConnection {
-  edges: [EdiTestCaseEdge!]!
+type EdiFlowInstanceConnection {
+  edges: [EdiFlowInstanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -672,8 +849,25 @@ extend type Query {
   ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
   ediTransfers(
     input: DataTableConnectionInput!
+    "Inbound for the tenders partners sent in, Outbound for the ones this organization sent."
     direction: EdiTransferDirection!
+    "Only the tenders one inbound file carried."
+    inboundFileId: ID
   ): EdiTransferConnection!
+  ediTransfer(id: ID!): EdiTransferDetail! @authorizes(resource: "edi")
+  ediMessage(id: ID!): EdiMessageDetail! @authorizes(resource: "edi")
+  ediInboundFile(id: ID!): EdiInboundFileDetail! @authorizes(resource: "edi")
+  "How partners are acknowledging what was sent: counts by acknowledgment status overall and per partner, the messages whose acknowledgment is overdue, and recent dead letters."
+  ediAckHealth(
+    "Only this partner's messages."
+    partnerId: ID
+    "Only messages of this transaction set that were sent: 204, 210, 214 or 990. 997 or 999 asks about the acknowledgments themselves, so the counts cover every set they answer."
+    transactionSet: String
+    "How long an acknowledgment may be pending before it is overdue, in seconds: 14400 (four hours) unless given, between 60 and 2592000."
+    overdueAfterSeconds: Int
+    "How many hours back the counts by status reach: 24 unless given, at most 720. Overdue messages are counted whenever they were sent."
+    sinceHours: Int
+  ): EdiAckHealth! @authorizes(resource: "edi")
   ediMessages(
     input: DataTableConnectionInput!
     transactionSet: String
@@ -685,17 +879,14 @@ extend type Query {
     status: EdiInboundFileStatus
     partnerId: ID
   ): EdiInboundFileConnection!
-  ediTemplates(
-    input: DataTableConnectionInput!
-    status: EdiTemplateStatus
-    transactionSet: String
-    direction: EdiDocumentDirection
-  ): EdiTemplateConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
-  ediTestCases(
+  "The partners' flow conversations: open ones, and the ones held or escalated for a person."
+  ediFlowInstances(
     input: DataTableConnectionInput!
-    partnerDocumentProfileId: ID
-  ): EdiTestCaseConnection!
+    partnerId: ID
+    shipmentId: ID
+    statuses: [EdiFlowInstanceStatus!]
+  ): EdiFlowInstanceConnection!
   ediSummary(sinceHours: Int): EdiSummary!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!

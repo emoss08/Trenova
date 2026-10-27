@@ -2,12 +2,14 @@ package manualjournalresolver
 
 import (
 	"context"
+	"slices"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -19,9 +21,22 @@ func manualJournalColumns(ctx context.Context, nodePathPrefix string) []string {
 		},
 		projection.SelectOptions{PathPrefix: nodePathPrefix},
 	)
+	if len(selection.Columns) == 0 || !selection.HasSpecial(balanceSpecial) {
+		return selection.Columns
+	}
 
-	return selection.Columns
+	columns := selection.Columns
+	r := manualjournaldb.Requests
+	for _, column := range projection.ColumnNames(r.TotalDebit.Col, r.TotalCredit.Col) {
+		if !slices.Contains(columns, column) {
+			columns = append(columns, column)
+		}
+	}
+
+	return columns
 }
+
+const balanceSpecial = "balance"
 
 func manualJournalConnectionToModel(
 	result *pagination.CursorListResult[*manualjournal.Request],
@@ -41,8 +56,9 @@ func manualJournalConnectionToModel(
 	}
 
 	return &gqlmodel.ManualJournalConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }

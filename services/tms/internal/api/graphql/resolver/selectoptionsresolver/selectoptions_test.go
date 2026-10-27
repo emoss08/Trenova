@@ -111,7 +111,8 @@ func TestSelectOptions_InitialResourcesDoNotRequireResourcePermission(t *testing
 					Color:       "#ffffff",
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 
@@ -160,7 +161,8 @@ func TestSelectOptions_EquipmentManufacturerUsesAuthContextOnly(t *testing.T) {
 					Name:      "Great Dane",
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 
@@ -368,7 +370,8 @@ func TestSelectOptions_EDIConnectionSelectOptionsFiltersActive(t *testing.T) {
 					CreatedAt:            1780415883,
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 
@@ -426,8 +429,9 @@ func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
 				req.SelectQueryRequest.TenantInfo.BuID == buID
 		})).
 		Return(&pagination.ListResult[*edi.EDIDocumentType]{
-			Items: []*edi.EDIDocumentType{outbound, inbound},
-			Total: 2,
+			Items:      []*edi.EDIDocumentType{outbound, inbound},
+			Total:      2,
+			TotalExact: true,
 		}, nil).
 		Twice()
 
@@ -454,10 +458,10 @@ func TestSelectOptions_EDIDocumentTypeCatalogIDs(t *testing.T) {
 	assert.Equal(t, "Outbound", listed.Edges[0].Node.Meta["direction"])
 	assert.Equal(t, "004010", listed.Edges[0].Node.Meta["defaultVersion"])
 
-	cursor, err := pagination.DecodeCursor(listed.Edges[1].Cursor)
+	cursor, err := pagination.DecodePositionCursor(listed.Edges[1].Cursor)
 	require.NoError(t, err)
 	assert.Equal(t, inbound.ID, cursor.ID)
-	assert.Equal(t, inbound.CreatedAt, cursor.CreatedAt)
+	assert.Equal(t, inbound.CreatedAt, cursor.At)
 
 	hydrated, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
 		Resource: gqlmodel.SelectOptionResourceEDIDocumentType,
@@ -529,8 +533,9 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 				req.Standard == ""
 		})).
 		Return(&pagination.ListResult[*edi.EDITransactionSet]{
-			Items: []*edi.EDITransactionSet{tender, response},
-			Total: 2,
+			Items:      []*edi.EDITransactionSet{tender, response},
+			Total:      2,
+			TotalExact: true,
 		}, nil).
 		Once()
 	repo.EXPECT().
@@ -541,8 +546,9 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 				req.SelectQueryRequest.Pagination.Limit >= 2
 		})).
 		Return(&pagination.ListResult[*edi.EDITransactionSet]{
-			Items: []*edi.EDITransactionSet{tender, response},
-			Total: 2,
+			Items:      []*edi.EDITransactionSet{tender, response},
+			Total:      2,
+			TotalExact: true,
 		}, nil).
 		Once()
 
@@ -574,10 +580,10 @@ func TestSelectOptions_EDITransactionSetCatalogIDs(t *testing.T) {
 	assert.Equal(t, "Active", listed.Edges[0].Node.Meta["status"])
 	assert.Nil(t, listed.Edges[1].Node.Description)
 
-	cursor, err := pagination.DecodeCursor(listed.Edges[1].Cursor)
+	cursor, err := pagination.DecodePositionCursor(listed.Edges[1].Cursor)
 	require.NoError(t, err)
 	assert.Equal(t, response.ID, cursor.ID)
-	assert.Equal(t, response.CreatedAt, cursor.CreatedAt)
+	assert.Equal(t, response.CreatedAt, cursor.At)
 
 	first := 1
 	hydrated, err := resolver.SelectOptions(ctx, gqlmodel.SelectOptionsInput{
@@ -645,7 +651,7 @@ func TestSelectOptions_IFTAFuelTypeListsEveryFuelWithReportingMeta(t *testing.T)
 	assert.Equal(t, "Not reported on the quarterly IFTA return", *reefer.Description)
 	assert.Equal(t, false, reefer.Meta["countsForIfta"])
 
-	cursor, err := pagination.DecodeCursor(result.Edges[0].Cursor)
+	cursor, err := pagination.DecodePositionCursor(result.Edges[0].Cursor)
 	require.NoError(t, err)
 	assert.Equal(t, pulid.ID("Diesel"), cursor.ID)
 }

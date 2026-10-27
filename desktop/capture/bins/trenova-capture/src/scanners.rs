@@ -25,7 +25,7 @@ use tokio_util::sync::CancellationToken;
 
 /// How long a listing may take before the helper is stopped. A driver that
 /// hangs on enumeration must not stall the agent.
-const ENUMERATE_TIMEOUT: Duration = Duration::from_secs(60);
+const ENUMERATE_TIMEOUT: Duration = Duration::from_mins(1);
 /// How long a helper asked to cancel gets before it is stopped.
 const CANCEL_GRACE: Duration = Duration::from_secs(15);
 

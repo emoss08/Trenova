@@ -60,8 +60,8 @@ type RateAgreement {
   autoRenew: Boolean!
   renewalNoticeDays: Int!
   currency: String!
-  defaultMinCharge: Decimal
-  defaultMaxCharge: Decimal
+  "Values every rule's tariff prices with unless the rule sets its own, by input name. Each value is a Tariff wire value."
+  inputs: JSON!
   marginFloorPercent: Decimal @protected(group: Margins)
   maxPayPercentOfSell: Decimal @protected(group: Margins)
   submittedById: ID
@@ -70,9 +70,85 @@ type RateAgreement {
   approvedAt: Timestamp
   reviewComment: String!
   currentVersionNumber: Int!
+  "The customer invoices for this agreement's freight go to, when not the party itself."
+  billToCustomerId: ID
+  """
+  The live lanes: active rules in force now or starting later, most specific
+  first. first takes at most 100.
+  """
+  lanes(first: Int = 50): [RateAgreementLane!]!
+  "How many live lanes the agreement holds."
+  laneCount: Int!
+  "Whether laneCount was counted; false when it is the planner's estimate of more lanes than it counts."
+  laneCountExact: Boolean!
+  "The accessorial schedule. Read by rateAgreement only."
+  accessorials: [RateAgreementAccessorial!]
+  "The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only."
+  fuelBinding: RateAgreementFuelBinding
+  "The version of the header terms in force now. Read by rateAgreement only."
+  currentVersion: RateAgreementVersion
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"""
+One priced lane of a rate agreement: where it applies, when, and the tariff
+and inputs it prices with.
+"""
+type RateAgreementLane {
+  id: ID!
+  label: String!
+  originScopeType: String!
+  originScopeValue: String!
+  originCity: String!
+  destinationScopeType: String!
+  destinationScopeValue: String!
+  destinationCity: String!
+  direction: String!
+  priority: Int!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  hazmatOnly: Boolean!
+  tempControlOnly: Boolean!
+  "The tariff that prices the lane."
+  formulaTemplateId: ID!
+  currency: String!
+  "The values the lane's tariff prices with, by input name. Each value is a Tariff wire value."
+  inputs: JSON!
+}
+
+"An accessorial an agreement prices, and on what terms."
+type RateAgreementAccessorial {
+  id: ID!
+  accessorialChargeId: ID!
+  method: String!
+  rateUnit: String!
+  waived: Boolean!
+  autoApply: Boolean!
+  freeUnits: Int
+  effectiveFrom: Timestamp
+  effectiveTo: Timestamp
+  amount: Decimal!
+  maxAmount: Decimal
+  "The Tariff condition a shipment meets for the charge to apply; empty applies always."
+  condition: String!
+}
+
+"How an agreement prices fuel: the program it binds, or a waiver."
+type RateAgreementFuelBinding {
+  id: ID!
+  fuelSurchargeProgramId: ID!
+  waived: Boolean!
+}
+
+"The header terms of an agreement as they stood for a window."
+type RateAgreementVersion {
+  id: ID!
+  versionNumber: Int!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  changeMessage: String!
 }
 
 type RateAgreementEdge {
@@ -84,6 +160,8 @@ type RateAgreementConnection {
   edges: [RateAgreementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -113,11 +191,15 @@ type RateZoneConnection {
   edges: [RateZoneEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
-A multi-dimensional rate table — origin zone by destination zone by weight break
-by class, and any subset of that.
+A rate table a tariff looks values up in: one to four axes, such as origin zone
+by destination zone, and a value of one Tariff type in every cell. The matrix
+is a draft that editors change; approving a submitted draft publishes it as the
+next numbered version, which formula template versions pin.
 """
 type RateMatrix {
   id: ID!
@@ -126,18 +208,130 @@ type RateMatrix {
   code: String!
   name: String!
   description: String!
-  status: String!
   """
-  The formula template that says what a cell's number means. The same grid is a
-  per-mile tariff or a flat table depending on which template prices it, so the
-  list has to show it — the numbers alone do not say.
+  Draft while it has unpublished changes, InReview once submitted, Active when
+  the draft is the newest published version, Inactive once archived.
   """
-  formulaTemplateId: ID!
-  formulaTemplateName: String!
-  currency: String!
+  status: FormulaTemplateStatus!
+  "What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int."
+  valueType: String!
+  "The draft's axes, by position. Read by rateMatrix only."
+  dimensions: [RateMatrixDimension!]
+  "How many cells the draft holds."
+  cellCount: Int!
+  """
+  The draft's cells, a page at a time: offset skips that many, and limit takes
+  at most 100.
+  """
+  cells(
+    "Skip this many cells, in the matrix's order, for the page after them."
+    offset: Int = 0
+    "At most this many cells."
+    limit: Int = 100
+  ): [RateMatrixCell!]!
+  "The newest published version, which tariffs read by default; 0 before the first."
+  publishedVersionNumber: Int!
+  publishedAt: Timestamp
+  "Whether the draft differs from the newest published version."
+  hasDraftChanges: Boolean!
+  submittedById: ID
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedAt: Timestamp
+  reviewComment: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"A published, immutable version of a rate matrix. Formula template versions pin one per table they read."
+type RateMatrixVersion {
+  id: ID!
+  rateMatrixId: ID!
+  versionNumber: Int!
+  code: String!
+  name: String!
+  description: String!
+  valueType: String!
+  "The version's axes, by position."
+  dimensions: [RateMatrixDimension!]!
+  cellCount: Int!
+  """
+  The version's cells, a page at a time: offset skips that many, and limit
+  takes at most 100.
+  """
+  cells(offset: Int = 0, limit: Int = 100): [RateMatrixCell!]!
+  "The reviewer's comment when it was published."
+  changeMessage: String!
+  submittedById: ID
+  publishedById: ID
+  publishedBy: User
+  createdAt: Timestamp!
+}
+
+"One step of a rate matrix draft's review: who did what, in which round, against which published version."
+type RateMatrixReview {
+  id: ID!
+  rateMatrixId: ID!
+  round: Int!
+  decision: FormulaReviewDecision!
+  actorId: ID
+  actor: User
+  comment: String!
+  baseVersionNumber: Int!
+  requestedReviewerId: ID
+  requestedReviewer: User
+  reviewerNote: String!
+  createdAt: Timestamp!
+}
+
+"A formula template version that pins a version of a rate matrix."
+type RateMatrixUsage {
+  templateId: ID!
+  templateName: String!
+  templateStatus: FormulaTemplateStatus!
+  templateVersion: Int!
+  versionStatus: FormulaTemplateStatus!
+  matrixVersionNumber: Int!
+}
+
+"One axis of a rate matrix: what it keys on and how a value matches it."
+type RateMatrixDimension {
+  id: ID!
+  position: Int!
+  kind: String!
+  matchMode: String!
+  label: String!
+  keyNormalization: String!
+  rangeOverflow: String!
+}
+
+"""
+One cell of a rate matrix: a key or a range on each axis, by position (d0 is
+the first axis), and the value it holds. On a ZipRange axis the key is the
+range's first postal code and keyTo its last, both inclusive.
+"""
+type RateMatrixCell {
+  id: ID!
+  d0Key: String!
+  d1Key: String!
+  d2Key: String!
+  d3Key: String!
+  d0KeyTo: String!
+  d1KeyTo: String!
+  d2KeyTo: String!
+  d3KeyTo: String!
+  d0Min: Decimal
+  d0Max: Decimal
+  d1Min: Decimal
+  d1Max: Decimal
+  d2Min: Decimal
+  d2Max: Decimal
+  d3Min: Decimal
+  d3Max: Decimal
+  deficitEligible: Boolean!
+  value: Decimal!
+  minCharge: Decimal
 }
 
 type RateMatrixEdge {
@@ -149,6 +343,8 @@ type RateMatrixConnection {
   edges: [RateMatrixEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -192,11 +388,28 @@ type RateQuoteConnection {
   edges: [RateQuoteEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
   rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
+  """
+  One rate agreement with its accessorials, fuel binding and current version;
+  its lanes are read a page at a time.
+  """
+  rateAgreement(id: ID!): RateAgreement
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  "One rate matrix with its draft's axes; its cells are read a page at a time."
+  rateMatrix(id: ID!): RateMatrix
+  "A rate matrix's published versions, newest first."
+  rateMatrixVersions(rateMatrixId: ID!, first: Int): [RateMatrixVersion!]!
+  "One published version of a rate matrix with its axes; its cells are read a page at a time."
+  rateMatrixVersion(rateMatrixId: ID!, versionNumber: Int!): RateMatrixVersion
+  "A rate matrix draft's review history, newest first."
+  rateMatrixReviews(rateMatrixId: ID!): [RateMatrixReview!]!
+  "The formula template versions that pin a rate matrix, or one of its versions."
+  rateMatrixUsages(rateMatrixId: ID!, versionNumber: Int): [RateMatrixUsage!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
 }

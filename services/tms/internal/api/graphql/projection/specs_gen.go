@@ -2,111 +2,6 @@
 
 package projection
 
-import (
-	"github.com/emoss08/trenova/pkg/buncolgen/accessorialchargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-	"github.com/emoss08/trenova/pkg/buncolgen/accounttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentprofilecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentsuggestioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aianalyticscol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aiauditcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aicorrectioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aifeedbackcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aituneupcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/apikeycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/billingtransfercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/briefingcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercapacitycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/checkcallcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/costingcontrolcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customertrackingcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customfieldcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/detentioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/distanceoverridecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/distanceprofilecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentpacketrulecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmentcontinuitycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmentmanufacturercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/extractionevalcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/extractionrolloutcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcompanycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalyearcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelpurchasecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/hazardousmaterialcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/hazmatsegregationrulecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/homelayoutcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/iftacol"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoiceadjustmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalreversalcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/jurisdictionrulecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/latechargecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcategorycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/manualjournalcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/notificationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ordercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ratequotecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ratesimulationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ratezonecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentbriefcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/stopetacol"
-	"github.com/emoss08/trenova/pkg/buncolgen/storedmileagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tablechangealertcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tableconfigurationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tablelayoutcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/trackingeventcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/watchtowercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-)
-
 var AIAnalyticsCauseCountSpec TypeSpec
 
 var AIAnalyticsProviderSpec TypeSpec
@@ -355,7 +250,13 @@ var EdiCommunicationProfileSpec TypeSpec
 
 var EdiConnectionSpec TypeSpec
 
+var EdiFlowInstanceSpec TypeSpec
+
 var EdiInboundFileSpec TypeSpec
+
+var EdiLadingProjectSpec TypeSpec
+
+var EdiLadingVersionSpec TypeSpec
 
 var EdiMappingProfileSpec TypeSpec
 
@@ -363,17 +264,15 @@ var EdiMappingProfileItemSpec TypeSpec
 
 var EdiMessageSpec TypeSpec
 
+var EdiMessageDiagnosticSpec TypeSpec
+
 var EdiPartnerSpec TypeSpec
 
 var EdiPartnerCustomerSpec TypeSpec
 
-var EdiPartnerDocumentProfileSpec TypeSpec
+var EdiTenderChargeSpec TypeSpec
 
-var EdiTemplateSpec TypeSpec
-
-var EdiTemplateVersionSpec TypeSpec
-
-var EdiTestCaseSpec TypeSpec
+var EdiTenderCommoditySpec TypeSpec
 
 var EdiTransferSpec TypeSpec
 
@@ -430,6 +329,12 @@ var FiscalPeriodSpec TypeSpec
 var FiscalYearSpec TypeSpec
 
 var FleetCodeSpec TypeSpec
+
+var FormulaLibrarySpec TypeSpec
+
+var FormulaLibraryReviewSpec TypeSpec
+
+var FormulaLibraryVersionSpec TypeSpec
 
 var FormulaTemplateSpec TypeSpec
 
@@ -561,7 +466,23 @@ var PortalPtoSpec TypeSpec
 
 var RateAgreementSpec TypeSpec
 
+var RateAgreementAccessorialSpec TypeSpec
+
+var RateAgreementFuelBindingSpec TypeSpec
+
+var RateAgreementLaneSpec TypeSpec
+
+var RateAgreementVersionSpec TypeSpec
+
 var RateMatrixSpec TypeSpec
+
+var RateMatrixCellSpec TypeSpec
+
+var RateMatrixDimensionSpec TypeSpec
+
+var RateMatrixReviewSpec TypeSpec
+
+var RateMatrixVersionSpec TypeSpec
 
 var RateQuoteSpec TypeSpec
 
@@ -793,55 +714,53 @@ var WorkerTrainingRecordSpec TypeSpec
 func init() {
 	AIAnalyticsCauseCountSpec = TypeSpec{
 		TypeName:      "AIAnalyticsCauseCount",
-		FieldMap:      aianalyticscol.UnitToolFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "cause",
-				FieldMapKey: "cause",
+				Name:   "cause",
+				Column: "cause",
 			},
 			{
 				Name:    "blame",
 				Special: "blame",
 			},
 			{
-				Name:        "calls",
-				FieldMapKey: "calls",
+				Name:   "calls",
+				Column: "calls",
 			},
 		},
 	}
 
 	AIAnalyticsProviderSpec = TypeSpec{
 		TypeName: "AIAnalyticsProvider",
-		FieldMap: aiprovidercol.ProviderFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
 				Name:    "shortName",
 				Special: "shortName",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "baseUrl",
-				FieldMapKey: "baseUrl",
+				Name:   "baseUrl",
+				Column: "base_url",
 			},
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
 				Name:    "removed",
@@ -852,839 +771,834 @@ func init() {
 
 	AIAuditEventSpec = TypeSpec{
 		TypeName: "AIAuditEvent",
-		FieldMap: aiauditcol.AIAuditEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "seq",
-				FieldMapKey: "seq",
+				Name:   "seq",
+				Column: "seq",
 			},
 			{
-				Name:        "sourceKey",
-				FieldMapKey: "sourceKey",
+				Name:   "sourceKey",
+				Column: "source_key",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "recordedAt",
-				FieldMapKey: "recordedAt",
+				Name:   "recordedAt",
+				Column: "recorded_at",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "outcome",
-				FieldMapKey: "outcome",
+				Name:   "outcome",
+				Column: "outcome",
 			},
 			{
-				Name:        "purpose",
-				FieldMapKey: "purpose",
+				Name:   "purpose",
+				Column: "purpose",
 			},
 			{
-				Name:        "principalType",
-				FieldMapKey: "principalType",
+				Name:   "principalType",
+				Column: "principal_type",
 			},
 			{
-				Name:        "principalId",
-				FieldMapKey: "principalId",
+				Name:   "principalId",
+				Column: "principal_id",
 			},
 			{
-				Name:        "onBehalfOfUserId",
-				FieldMapKey: "onBehalfOfUserId",
+				Name:   "onBehalfOfUserId",
+				Column: "on_behalf_of_user_id",
 			},
 			{
-				Name:        "onBehalfOfUserName",
-				FieldMapKey: "onBehalfOfUserName",
+				Name:   "onBehalfOfUserName",
+				Column: "on_behalf_of_user_name",
 			},
 			{
 				Name:    "onBehalfOf",
 				Special: "onBehalfOf",
 			},
 			{
-				Name:        "decidedByUserId",
-				FieldMapKey: "decidedByUserId",
+				Name:   "decidedByUserId",
+				Column: "decided_by_user_id",
 			},
 			{
-				Name:        "decidedByUserName",
-				FieldMapKey: "decidedByUserName",
+				Name:   "decidedByUserName",
+				Column: "decided_by_user_name",
 			},
 			{
 				Name:    "decidedBy",
 				Special: "decidedBy",
 			},
 			{
-				Name:        "agentDefinitionId",
-				FieldMapKey: "agentDefinitionId",
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
 			},
 			{
-				Name:        "agentDefinitionVersion",
-				FieldMapKey: "agentDefinitionVersion",
+				Name:   "agentDefinitionVersion",
+				Column: "agent_definition_version",
 			},
 			{
-				Name:        "agentName",
-				FieldMapKey: "agentName",
+				Name:   "agentName",
+				Column: "agent_name",
 			},
 			{
 				Name:    "agent",
 				Special: "agent",
 			},
 			{
-				Name:        "ownerKind",
-				FieldMapKey: "ownerKind",
+				Name:   "ownerKind",
+				Column: "owner_kind",
 			},
 			{
-				Name:        "ownerId",
-				FieldMapKey: "ownerId",
+				Name:   "ownerId",
+				Column: "owner_id",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "turnId",
-				FieldMapKey: "turnId",
+				Name:   "turnId",
+				Column: "turn_id",
 			},
 			{
-				Name:        "threadId",
-				FieldMapKey: "threadId",
+				Name:   "threadId",
+				Column: "thread_id",
 			},
 			{
-				Name:        "proposalId",
-				FieldMapKey: "proposalId",
+				Name:   "proposalId",
+				Column: "proposal_id",
 			},
 			{
-				Name:        "planId",
-				FieldMapKey: "planId",
+				Name:   "planId",
+				Column: "plan_id",
 			},
 			{
-				Name:        "decisionId",
-				FieldMapKey: "decisionId",
+				Name:   "decisionId",
+				Column: "decision_id",
 			},
 			{
-				Name:        "stepKey",
-				FieldMapKey: "stepKey",
+				Name:   "stepKey",
+				Column: "step_key",
 			},
 			{
-				Name:        "callId",
-				FieldMapKey: "callId",
+				Name:   "callId",
+				Column: "call_id",
 			},
 			{
-				Name:        "delegateCallId",
-				FieldMapKey: "delegateCallId",
+				Name:   "delegateCallId",
+				Column: "delegate_call_id",
 			},
 			{
-				Name:        "parentOwnerId",
-				FieldMapKey: "parentOwnerId",
+				Name:   "parentOwnerId",
+				Column: "parent_owner_id",
 			},
 			{
-				Name:        "traceId",
-				FieldMapKey: "traceId",
+				Name:   "traceId",
+				Column: "trace_id",
 			},
 			{
-				Name:        "spanId",
-				FieldMapKey: "spanId",
+				Name:   "spanId",
+				Column: "span_id",
 			},
 			{
 				Name:    "traceUrl",
 				Special: "traceUrl",
 			},
 			{
-				Name:        "providerId",
-				FieldMapKey: "providerId",
+				Name:   "providerId",
+				Column: "provider_id",
 			},
 			{
-				Name:        "providerKind",
-				FieldMapKey: "providerKind",
+				Name:   "providerKind",
+				Column: "provider_kind",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
-				Name:        "attempt",
-				FieldMapKey: "attempt",
+				Name:   "attempt",
+				Column: "attempt",
 			},
 			{
-				Name:        "failover",
-				FieldMapKey: "failover",
+				Name:   "failover",
+				Column: "failover",
 			},
 			{
-				Name:        "inputTokens",
-				FieldMapKey: "inputTokens",
+				Name:   "inputTokens",
+				Column: "input_tokens",
 			},
 			{
-				Name:        "outputTokens",
-				FieldMapKey: "outputTokens",
+				Name:   "outputTokens",
+				Column: "output_tokens",
 			},
 			{
-				Name:        "reasoningTokens",
-				FieldMapKey: "reasoningTokens",
+				Name:   "reasoningTokens",
+				Column: "reasoning_tokens",
 			},
 			{
-				Name:        "cacheReadTokens",
-				FieldMapKey: "cacheReadTokens",
+				Name:   "cacheReadTokens",
+				Column: "cache_read_tokens",
 			},
 			{
-				Name:        "cacheWriteTokens",
-				FieldMapKey: "cacheWriteTokens",
+				Name:   "cacheWriteTokens",
+				Column: "cache_write_tokens",
 			},
 			{
-				Name:        "costUsd",
-				FieldMapKey: "costUsd",
+				Name:   "costUsd",
+				Column: "cost_usd",
 			},
 			{
-				Name:        "latencyMs",
-				FieldMapKey: "latencyMs",
+				Name:   "latencyMs",
+				Column: "latency_ms",
 			},
 			{
-				Name:        "toolName",
-				FieldMapKey: "toolName",
+				Name:   "toolName",
+				Column: "tool_name",
 			},
 			{
-				Name:        "toolEffect",
-				FieldMapKey: "toolEffect",
+				Name:   "toolEffect",
+				Column: "tool_effect",
 			},
 			{
-				Name:        "egressClass",
-				FieldMapKey: "egressClass",
+				Name:   "egressClass",
+				Column: "egress_class",
 			},
 			{
-				Name:        "tier",
-				FieldMapKey: "tier",
+				Name:   "tier",
+				Column: "tier",
 			},
 			{
-				Name:        "tierSource",
-				FieldMapKey: "tierSource",
+				Name:   "tierSource",
+				Column: "tier_source",
 			},
 			{
-				Name:        "heldBy",
-				FieldMapKey: "heldBy",
+				Name:   "heldBy",
+				Column: "held_by",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
 				Name:    "arguments",
 				Special: "arguments",
 			},
 			{
-				Name:        "argumentSensitivity",
-				FieldMapKey: "argumentSensitivity",
+				Name:   "argumentSensitivity",
+				Column: "argument_sensitivity",
 			},
 			{
-				Name:        "argumentsTruncated",
-				FieldMapKey: "argumentsTruncated",
+				Name:   "argumentsTruncated",
+				Column: "arguments_truncated",
 			},
 			{
-				Name:        "redactedPaths",
-				FieldMapKey: "redactedPaths",
+				Name:   "redactedPaths",
+				Column: "redacted_paths",
 			},
 			{
-				Name:        "resultSummary",
-				FieldMapKey: "resultSummary",
+				Name:   "resultSummary",
+				Column: "result_summary",
 			},
 			{
-				Name:        "entityType",
-				FieldMapKey: "entityType",
+				Name:   "entityType",
+				Column: "entity_type",
 			},
 			{
-				Name:        "entityId",
-				FieldMapKey: "entityId",
+				Name:   "entityId",
+				Column: "entity_id",
 			},
 			{
-				Name:        "versionBefore",
-				FieldMapKey: "versionBefore",
+				Name:   "versionBefore",
+				Column: "version_before",
 			},
 			{
-				Name:        "versionAfter",
-				FieldMapKey: "versionAfter",
+				Name:   "versionAfter",
+				Column: "version_after",
 			},
 			{
-				Name:        "windowStart",
-				FieldMapKey: "windowStart",
+				Name:   "windowStart",
+				Column: "window_start",
 			},
 			{
-				Name:        "windowEnd",
-				FieldMapKey: "windowEnd",
+				Name:   "windowEnd",
+				Column: "window_end",
 			},
 			{
 				Name:    "auditEntries",
 				Special: "auditEntries",
 			},
 			{
-				Name:        "tainted",
-				FieldMapKey: "tainted",
+				Name:   "tainted",
+				Column: "tainted",
 			},
 			{
-				Name:        "taint",
-				FieldMapKey: "taint",
+				Name:   "taint",
+				Column: "taint",
 			},
 			{
-				Name:        "externalContent",
-				FieldMapKey: "externalContent",
+				Name:   "externalContent",
+				Column: "external_content",
 			},
 			{
-				Name:        "simulated",
-				FieldMapKey: "simulated",
+				Name:   "simulated",
+				Column: "simulated",
 			},
 			{
-				Name:        "reconstructed",
-				FieldMapKey: "reconstructed",
+				Name:   "reconstructed",
+				Column: "reconstructed",
 			},
 			{
-				Name:        "prevHash",
-				FieldMapKey: "prevHash",
+				Name:   "prevHash",
+				Column: "prev_hash",
 			},
 			{
-				Name:        "hash",
-				FieldMapKey: "hash",
+				Name:   "hash",
+				Column: "hash",
 			},
 			{
-				Name:        "hashKeyId",
-				FieldMapKey: "hashKeyId",
+				Name:   "hashKeyId",
+				Column: "hash_key_id",
 			},
 			{
-				Name:        "hashVersion",
-				FieldMapKey: "hashVersion",
+				Name:   "hashVersion",
+				Column: "hash_version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	AIAuditExportSpec = TypeSpec{
 		TypeName: "AIAuditExport",
-		FieldMap: aiauditcol.AIAuditExportFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "requestedByUserId",
-				FieldMapKey: "requestedByUserId",
+				Name:   "requestedByUserId",
+				Column: "requested_by_user_id",
 			},
 			{
 				Name:    "requestedBy",
 				Special: "requestedBy",
 			},
 			{
-				Name:        "format",
-				FieldMapKey: "format",
+				Name:   "format",
+				Column: "format",
 			},
 			{
-				Name:        "filters",
-				FieldMapKey: "filters",
+				Name:   "filters",
+				Column: "filters",
 			},
 			{
-				Name:        "rangeFrom",
-				FieldMapKey: "rangeFrom",
+				Name:   "rangeFrom",
+				Column: "range_from",
 			},
 			{
-				Name:        "rangeTo",
-				FieldMapKey: "rangeTo",
+				Name:   "rangeTo",
+				Column: "range_to",
 			},
 			{
-				Name:        "snapshotSeq",
-				FieldMapKey: "snapshotSeq",
+				Name:   "snapshotSeq",
+				Column: "snapshot_seq",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "rowCount",
-				FieldMapKey: "rowCount",
+				Name:   "rowCount",
+				Column: "row_count",
 			},
 			{
-				Name:        "byteSize",
-				FieldMapKey: "byteSize",
+				Name:   "byteSize",
+				Column: "byte_size",
 			},
 			{
-				Name:        "sha256",
-				FieldMapKey: "sha256",
+				Name:   "sha256",
+				Column: "sha256",
 			},
 			{
-				Name:        "artifactExpiresAt",
-				FieldMapKey: "artifactExpiresAt",
+				Name:   "artifactExpiresAt",
+				Column: "artifact_expires_at",
 			},
 			{
-				Name:        "chainKeyId",
-				FieldMapKey: "chainKeyId",
+				Name:   "chainKeyId",
+				Column: "chain_key_id",
 			},
 			{
-				Name:        "chainFirstSeq",
-				FieldMapKey: "chainFirstSeq",
+				Name:   "chainFirstSeq",
+				Column: "chain_first_seq",
 			},
 			{
-				Name:        "chainLastSeq",
-				FieldMapKey: "chainLastSeq",
+				Name:   "chainLastSeq",
+				Column: "chain_last_seq",
 			},
 			{
-				Name:        "chainComplete",
-				FieldMapKey: "chainComplete",
+				Name:   "chainComplete",
+				Column: "chain_complete",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
 				Name:    "downloadable",
 				Special: "downloadable",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AICorrectionSpec = TypeSpec{
 		TypeName: "AICorrection",
-		FieldMap: aicorrectioncol.CorrectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "task",
-				FieldMapKey: "task",
+				Name:   "task",
+				Column: "task",
 			},
 			{
-				Name:        "sourceType",
-				FieldMapKey: "sourceType",
+				Name:   "sourceType",
+				Column: "source_type",
 			},
 			{
-				Name:        "sourceId",
-				FieldMapKey: "sourceId",
+				Name:   "sourceId",
+				Column: "source_id",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "capturedById",
-				FieldMapKey: "capturedById",
+				Name:   "capturedById",
+				Column: "captured_by_id",
 			},
 			{
-				Name:        "documentKind",
-				FieldMapKey: "documentKind",
+				Name:   "documentKind",
+				Column: "document_kind",
 			},
 			{
-				Name:        "documentFingerprint",
-				FieldMapKey: "documentFingerprint",
+				Name:   "documentFingerprint",
+				Column: "document_fingerprint",
 			},
 			{
-				Name:        "extractionModel",
-				FieldMapKey: "extractionModel",
+				Name:   "extractionModel",
+				Column: "extraction_model",
 			},
 			{
-				Name:        "extractionProviderId",
-				FieldMapKey: "extractionProviderId",
+				Name:   "extractionProviderId",
+				Column: "extraction_provider_id",
 			},
 			{
-				Name:        "predictedConfidence",
-				FieldMapKey: "predictedConfidence",
+				Name:   "predictedConfidence",
+				Column: "predicted_confidence",
 			},
 			{
-				Name:        "predicted",
-				FieldMapKey: "predicted",
+				Name:   "predicted",
+				Column: "predicted",
 			},
 			{
-				Name:        "confirmed",
-				FieldMapKey: "confirmed",
+				Name:   "confirmed",
+				Column: "confirmed",
 			},
 			{
-				Name:        "fieldResults",
-				FieldMapKey: "fieldResults",
+				Name:   "fieldResults",
+				Column: "field_results",
 			},
 			{
-				Name:        "scoredCount",
-				FieldMapKey: "scoredCount",
+				Name:   "scoredCount",
+				Column: "scored_count",
 			},
 			{
-				Name:        "correctCount",
-				FieldMapKey: "correctCount",
+				Name:   "correctCount",
+				Column: "correct_count",
 			},
 			{
-				Name:        "correctedCount",
-				FieldMapKey: "correctedCount",
+				Name:   "correctedCount",
+				Column: "corrected_count",
 			},
 			{
-				Name:        "missedCount",
-				FieldMapKey: "missedCount",
+				Name:   "missedCount",
+				Column: "missed_count",
 			},
 			{
-				Name:        "unconfirmedCount",
-				FieldMapKey: "unconfirmedCount",
+				Name:   "unconfirmedCount",
+				Column: "unconfirmed_count",
 			},
 			{
-				Name:        "unscoredCount",
-				FieldMapKey: "unscoredCount",
+				Name:   "unscoredCount",
+				Column: "unscored_count",
 			},
 			{
 				Name:    "accuracy",
 				Special: "accuracy",
 			},
 			{
-				Name:        "capturedAt",
-				FieldMapKey: "capturedAt",
+				Name:   "capturedAt",
+				Column: "captured_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AIFeedbackSpec = TypeSpec{
 		TypeName: "AIFeedback",
-		FieldMap: aifeedbackcol.FeedbackFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "targetType",
-				FieldMapKey: "targetType",
+				Name:   "targetType",
+				Column: "target_type",
 			},
 			{
-				Name:        "targetId",
-				FieldMapKey: "targetId",
+				Name:   "targetId",
+				Column: "target_id",
 			},
 			{
-				Name:        "targetPart",
-				FieldMapKey: "targetPart",
+				Name:   "targetPart",
+				Column: "target_part",
 			},
 			{
-				Name:        "threadId",
-				FieldMapKey: "threadId",
+				Name:   "threadId",
+				Column: "thread_id",
 			},
 			{
-				Name:        "turnId",
-				FieldMapKey: "turnId",
+				Name:   "turnId",
+				Column: "turn_id",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "agentDefinitionId",
-				FieldMapKey: "agentDefinitionId",
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
 			},
 			{
-				Name:        "definitionVersion",
-				FieldMapKey: "definitionVersion",
+				Name:   "definitionVersion",
+				Column: "definition_version",
 			},
 			{
-				Name:        "detectorKey",
-				FieldMapKey: "detectorKey",
+				Name:   "detectorKey",
+				Column: "detector_key",
 			},
 			{
-				Name:        "task",
-				FieldMapKey: "task",
+				Name:   "task",
+				Column: "task",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
-				Name:        "providerId",
-				FieldMapKey: "providerId",
+				Name:   "providerId",
+				Column: "provider_id",
 			},
 			{
-				Name:        "promptHash",
-				FieldMapKey: "promptHash",
+				Name:   "promptHash",
+				Column: "prompt_hash",
 			},
 			{
-				Name:        "toolSpecHash",
-				FieldMapKey: "toolSpecHash",
+				Name:   "toolSpecHash",
+				Column: "tool_spec_hash",
 			},
 			{
-				Name:        "fingerprintSource",
-				FieldMapKey: "fingerprintSource",
+				Name:   "fingerprintSource",
+				Column: "fingerprint_source",
 			},
 			{
-				Name:        "rating",
-				FieldMapKey: "rating",
+				Name:   "rating",
+				Column: "rating",
 			},
 			{
-				Name:        "reasons",
-				FieldMapKey: "reasons",
+				Name:   "reasons",
+				Column: "reasons",
 			},
 			{
-				Name:        "comment",
-				FieldMapKey: "comment",
+				Name:   "comment",
+				Column: "comment",
 			},
 			{
-				Name:        "turnSnapshot",
-				FieldMapKey: "turnSnapshot",
+				Name:   "turnSnapshot",
+				Column: "turn_snapshot",
 			},
 			{
-				Name:        "patternKey",
-				FieldMapKey: "patternKey",
+				Name:   "patternKey",
+				Column: "pattern_key",
 			},
 			{
-				Name:        "evalCaseId",
-				FieldMapKey: "evalCaseId",
+				Name:   "evalCaseId",
+				Column: "eval_case_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AIProviderSpec = TypeSpec{
 		TypeName: "AIProvider",
-		FieldMap: aiprovidercol.ProviderFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "baseUrl",
-				FieldMapKey: "baseUrl",
+				Name:   "baseUrl",
+				Column: "base_url",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
 				Name:    "hasApiKey",
 				Special: "hasApiKey",
 			},
 			{
-				Name:        "allowPrivateNetwork",
-				FieldMapKey: "allowPrivateNetwork",
+				Name:   "allowPrivateNetwork",
+				Column: "allow_private_network",
 			},
 			{
-				Name:        "structuredOutputMode",
-				FieldMapKey: "structuredOutputMode",
+				Name:   "structuredOutputMode",
+				Column: "structured_output_mode",
 			},
 			{
-				Name:        "reasoningEffort",
-				FieldMapKey: "reasoningEffort",
+				Name:   "reasoningEffort",
+				Column: "reasoning_effort",
 			},
 			{
-				Name:        "thinkingStyle",
-				FieldMapKey: "thinkingStyle",
+				Name:   "thinkingStyle",
+				Column: "thinking_style",
 			},
 			{
-				Name:        "platform",
-				FieldMapKey: "platform",
+				Name:   "platform",
+				Column: "platform",
 			},
 			{
-				Name:        "advisorEnabled",
-				FieldMapKey: "advisorEnabled",
+				Name:   "advisorEnabled",
+				Column: "advisor_enabled",
 			},
 			{
-				Name:        "advisorModel",
-				FieldMapKey: "advisorModel",
+				Name:   "advisorModel",
+				Column: "advisor_model",
 			},
 			{
-				Name:        "advisorRefusal",
-				FieldMapKey: "advisorRefusal",
+				Name:   "advisorRefusal",
+				Column: "advisor_refusal",
 			},
 			{
-				Name:        "scripts",
-				FieldMapKey: "scripts",
+				Name:   "scripts",
+				Column: "code_mode_scripts",
 			},
 			{
-				Name:        "scriptWrites",
-				FieldMapKey: "scriptWrites",
+				Name:   "scriptWrites",
+				Column: "code_mode_writes",
 			},
 			{
-				Name:        "platformSettings",
-				FieldMapKey: "platformSettings",
+				Name:   "platformSettings",
+				Column: "platform_settings",
 			},
 			{
-				Name:        "extraBody",
-				FieldMapKey: "extraBody",
+				Name:   "extraBody",
+				Column: "extra_body",
 			},
 			{
-				Name:        "inputCostPerMillion",
-				FieldMapKey: "inputCostPerMillion",
+				Name:   "inputCostPerMillion",
+				Column: "input_cost_per_million",
 			},
 			{
-				Name:        "outputCostPerMillion",
-				FieldMapKey: "outputCostPerMillion",
+				Name:   "outputCostPerMillion",
+				Column: "output_cost_per_million",
 			},
 			{
-				Name:        "cacheReadCostPerMillion",
-				FieldMapKey: "cacheReadCostPerMillion",
+				Name:   "cacheReadCostPerMillion",
+				Column: "cache_read_cost_per_million",
 			},
 			{
-				Name:        "cacheWriteCostPerMillion",
-				FieldMapKey: "cacheWriteCostPerMillion",
+				Name:   "cacheWriteCostPerMillion",
+				Column: "cache_write_cost_per_million",
 			},
 			{
-				Name:        "maxTokens",
-				FieldMapKey: "maxTokens",
+				Name:   "maxTokens",
+				Column: "max_tokens",
 			},
 			{
-				Name:        "tasks",
-				FieldMapKey: "tasks",
+				Name:   "tasks",
+				Column: "tasks",
 			},
 			{
-				Name:        "priority",
-				FieldMapKey: "priority",
+				Name:   "priority",
+				Column: "priority",
 			},
 			{
-				Name:        "embeddingDimensions",
-				FieldMapKey: "embeddingDimensions",
+				Name:   "embeddingDimensions",
+				Column: "embedding_dimensions",
 			},
 			{
-				Name:        "embeddingInputStyle",
-				FieldMapKey: "embeddingInputStyle",
+				Name:   "embeddingInputStyle",
+				Column: "embedding_input_style",
 			},
 			{
-				Name:        "trusted",
-				FieldMapKey: "trusted",
+				Name:   "trusted",
+				Column: "trusted",
 			},
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
-				Name:        "lastTest",
-				FieldMapKey: "lastTest",
+				Name:   "lastTest",
+				Column: "last_test",
 			},
 			{
-				Name:        "timeoutSeconds",
-				FieldMapKey: "timeoutSeconds",
+				Name:   "timeoutSeconds",
+				Column: "timeout_seconds",
 			},
 			{
-				Name:        "maxConcurrent",
-				FieldMapKey: "maxConcurrent",
+				Name:   "maxConcurrent",
+				Column: "max_concurrent",
 			},
 			{
-				Name:        "monthlyCapUsd",
-				FieldMapKey: "monthlyCapUsd",
+				Name:   "monthlyCapUsd",
+				Column: "monthly_cap_usd",
 			},
 			{
-				Name:        "onCap",
-				FieldMapKey: "onCap",
+				Name:   "onCap",
+				Column: "on_cap",
 			},
 			{
 				Name:    "monthSpendUsd",
@@ -1695,35 +1609,34 @@ func init() {
 				Special: "apiKey",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AITuneUpSpec = TypeSpec{
 		TypeName: "AITuneUp",
-		FieldMap: aituneupcol.TuneUpFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
 				Name:    "agent",
@@ -1738,102 +1651,101 @@ func init() {
 				Special: "otherProvider",
 			},
 			{
-				Name:        "toolName",
-				FieldMapKey: "toolName",
+				Name:   "toolName",
+				Column: "tool_name",
 			},
 			{
-				Name:        "task",
-				FieldMapKey: "task",
+				Name:   "task",
+				Column: "task",
 			},
 			{
-				Name:        "evidence",
-				FieldMapKey: "evidence",
+				Name:   "evidence",
+				Column: "evidence",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "dismissedUntil",
-				FieldMapKey: "dismissedUntil",
+				Name:   "dismissedUntil",
+				Column: "dismissed_until",
 			},
 			{
-				Name:        "computedAt",
-				FieldMapKey: "computedAt",
+				Name:   "computedAt",
+				Column: "computed_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	AccessorialChargeSpec = TypeSpec{
 		TypeName: "AccessorialCharge",
-		FieldMap: accessorialchargecol.AccessorialChargeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "rateUnit",
-				FieldMapKey: "rateUnit",
+				Name:   "rateUnit",
+				Column: "rate_unit",
 			},
 			{
-				Name:        "amount",
-				FieldMapKey: "amount",
+				Name:   "amount",
+				Column: "amount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -1843,74 +1755,73 @@ func init() {
 
 	AccountTypeSpec = TypeSpec{
 		TypeName: "AccountType",
-		FieldMap: accounttypecol.AccountTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "isSystem",
-				FieldMapKey: "isSystem",
+				Name:   "isSystem",
+				Column: "is_system",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -1920,303 +1831,299 @@ func init() {
 
 	AccountingAppCredentialSpec = TypeSpec{
 		TypeName: "AccountingAppCredential",
-		FieldMap: accountingsynccol.AccountingAppCredentialFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "integrationType",
-				FieldMapKey: "integrationType",
+				Name:   "integrationType",
+				Column: "integration_type",
 			},
 			{
-				Name:        "environment",
-				FieldMapKey: "environment",
+				Name:   "environment",
+				Column: "environment",
 			},
 			{
-				Name:        "clientId",
-				FieldMapKey: "clientId",
+				Name:   "clientId",
+				Column: "client_id",
 			},
 			{
 				Name:    "hasWebhookVerifier",
 				Special: "hasWebhookVerifier",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AccountingBackfillSpec = TypeSpec{
 		TypeName: "AccountingBackfill",
-		FieldMap: accountingsynccol.AccountingBackfillFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "rangeStart",
-				FieldMapKey: "rangeStart",
+				Name:   "rangeStart",
+				Column: "range_start",
 			},
 			{
-				Name:        "rangeEnd",
-				FieldMapKey: "rangeEnd",
+				Name:   "rangeEnd",
+				Column: "range_end",
 			},
 			{
-				Name:        "objectTypes",
-				FieldMapKey: "objectTypes",
+				Name:   "objectTypes",
+				Column: "object_types",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "enqueuedCount",
-				FieldMapKey: "enqueuedCount",
+				Name:   "enqueuedCount",
+				Column: "enqueued_count",
 			},
 			{
-				Name:        "alreadyQueuedCount",
-				FieldMapKey: "alreadyQueuedCount",
+				Name:   "alreadyQueuedCount",
+				Column: "already_queued_count",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "lastError",
-				FieldMapKey: "lastError",
+				Name:   "lastError",
+				Column: "last_error",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AccountingConnectionSpec = TypeSpec{
 		TypeName: "AccountingConnection",
-		FieldMap: accountingsynccol.AccountingConnectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "integrationType",
-				FieldMapKey: "integrationType",
+				Name:   "integrationType",
+				Column: "integration_type",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "appSource",
-				FieldMapKey: "appSource",
+				Name:   "appSource",
+				Column: "app_source",
 			},
 			{
-				Name:        "appEnvironment",
-				FieldMapKey: "appEnvironment",
+				Name:   "appEnvironment",
+				Column: "app_environment",
 			},
 			{
-				Name:        "externalCompanyName",
-				FieldMapKey: "externalCompanyName",
+				Name:   "externalCompanyName",
+				Column: "external_company_name",
 			},
 			{
-				Name:        "externalLegalName",
-				FieldMapKey: "externalLegalName",
+				Name:   "externalLegalName",
+				Column: "external_legal_name",
 			},
 			{
-				Name:        "externalCountry",
-				FieldMapKey: "externalCountry",
+				Name:   "externalCountry",
+				Column: "external_country",
 			},
 			{
-				Name:        "externalHomeCurrency",
-				FieldMapKey: "externalHomeCurrency",
+				Name:   "externalHomeCurrency",
+				Column: "external_home_currency",
 			},
 			{
-				Name:        "externalMultiCurrencyEnabled",
-				FieldMapKey: "externalMultiCurrencyEnabled",
+				Name:   "externalMultiCurrencyEnabled",
+				Column: "external_multi_currency_enabled",
 			},
 			{
-				Name:        "externalBooksClosedThrough",
-				FieldMapKey: "externalBooksClosedThrough",
+				Name:   "externalBooksClosedThrough",
+				Column: "external_books_closed_through",
 			},
 			{
-				Name:        "lastCheckedAt",
-				FieldMapKey: "lastCheckedAt",
+				Name:   "lastCheckedAt",
+				Column: "last_checked_at",
 			},
 			{
-				Name:        "lastSuccessAt",
-				FieldMapKey: "lastSuccessAt",
+				Name:   "lastSuccessAt",
+				Column: "last_success_at",
 			},
 			{
-				Name:        "lastFailureAt",
-				FieldMapKey: "lastFailureAt",
+				Name:   "lastFailureAt",
+				Column: "last_failure_at",
 			},
 			{
-				Name:        "consecutiveFailures",
-				FieldMapKey: "consecutiveFailures",
+				Name:   "consecutiveFailures",
+				Column: "consecutive_failures",
 			},
 			{
-				Name:        "lastErrorCategory",
-				FieldMapKey: "lastErrorCategory",
+				Name:   "lastErrorCategory",
+				Column: "last_error_category",
 			},
 			{
-				Name:        "lastErrorMessage",
-				FieldMapKey: "lastErrorMessage",
+				Name:   "lastErrorMessage",
+				Column: "last_error_message",
 			},
 			{
-				Name:        "lastWebhookAt",
-				FieldMapKey: "lastWebhookAt",
+				Name:   "lastWebhookAt",
+				Column: "last_webhook_at",
 			},
 			{
-				Name:        "refreshTokenAbsoluteExpiresAt",
-				FieldMapKey: "refreshTokenAbsoluteExpiresAt",
+				Name:   "refreshTokenAbsoluteExpiresAt",
+				Column: "refresh_token_absolute_expires_at",
 			},
 			{
-				Name:        "authMethod",
-				FieldMapKey: "authMethod",
+				Name:   "authMethod",
+				Column: "auth_method",
 			},
 			{
-				Name:        "certificateId",
-				FieldMapKey: "clientCertificateId",
+				Name:   "certificateId",
+				Column: "client_certificate_id",
 			},
 			{
-				Name:        "certificateExpiresAt",
-				FieldMapKey: "clientCertificateExpiresAt",
+				Name:   "certificateExpiresAt",
+				Column: "client_certificate_expires_at",
 			},
 			{
-				Name:        "connectedAt",
-				FieldMapKey: "connectedAt",
+				Name:   "connectedAt",
+				Column: "connected_at",
 			},
 			{
-				Name:        "disconnectedAt",
-				FieldMapKey: "disconnectedAt",
+				Name:   "disconnectedAt",
+				Column: "disconnected_at",
 			},
 			{
-				Name:        "setupStep",
-				FieldMapKey: "setupStep",
+				Name:   "setupStep",
+				Column: "setup_step",
 			},
 			{
-				Name:        "syncMode",
-				FieldMapKey: "syncMode",
+				Name:   "syncMode",
+				Column: "sync_mode",
 			},
 			{
-				Name:        "ledgerGranularity",
-				FieldMapKey: "ledgerGranularity",
+				Name:   "ledgerGranularity",
+				Column: "ledger_granularity",
 			},
 			{
-				Name:        "ledgerOpeningBalancesSentAt",
-				FieldMapKey: "ledgerOpeningBalancesSentAt",
+				Name:   "ledgerOpeningBalancesSentAt",
+				Column: "ledger_opening_balances_sent_at",
 			},
 			{
-				Name:        "externalFiscalYearStartMonth",
-				FieldMapKey: "externalFiscalYearStartMonth",
+				Name:   "externalFiscalYearStartMonth",
+				Column: "external_fiscal_year_start_month",
 			},
 			{
-				Name:        "syncStartDate",
-				FieldMapKey: "syncStartDate",
+				Name:   "syncStartDate",
+				Column: "sync_start_date",
 			},
 			{
-				Name:        "syncEnabledAt",
-				FieldMapKey: "syncEnabledAt",
+				Name:   "syncEnabledAt",
+				Column: "sync_enabled_at",
 			},
 			{
-				Name:        "autoSync",
-				FieldMapKey: "autoSync",
+				Name:   "autoSync",
+				Column: "auto_sync",
 			},
 			{
-				Name:        "driverSettlementsEnabledAt",
-				FieldMapKey: "driverSettlementsEnabledAt",
+				Name:   "driverSettlementsEnabledAt",
+				Column: "driver_settlements_enabled_at",
 			},
 			{
-				Name:        "syncsDriverSettlements",
-				FieldMapKey: "driverSettlementsEnabledAt",
+				Name:   "syncsDriverSettlements",
+				Column: "driver_settlements_enabled_at",
 			},
 			{
-				Name:        "inboundPaymentPolicy",
-				FieldMapKey: "inboundPaymentPolicy",
+				Name:   "inboundPaymentPolicy",
+				Column: "inbound_payment_policy",
 			},
 			{
-				Name:        "changesReadAt",
-				FieldMapKey: "changesReadAt",
+				Name:   "changesReadAt",
+				Column: "changes_read_at",
 			},
 			{
-				Name:        "changesErrorMessage",
-				FieldMapKey: "changesErrorMessage",
+				Name:   "changesErrorMessage",
+				Column: "changes_error_message",
 			},
 			{
-				Name:        "pausedAt",
-				FieldMapKey: "pausedAt",
+				Name:   "pausedAt",
+				Column: "paused_at",
 			},
 			{
-				Name:        "pausedBy",
-				FieldMapKey: "pausedById",
+				Name:   "pausedBy",
+				Column: "paused_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "pausedReason",
-				FieldMapKey: "pausedReason",
+				Name:   "pausedReason",
+				Column: "paused_reason",
 			},
 			{
-				Name:        "referenceRefreshStartedAt",
-				FieldMapKey: "referenceRefreshStartedAt",
+				Name:   "referenceRefreshStartedAt",
+				Column: "reference_refresh_started_at",
 			},
 			{
-				Name:        "referenceRefreshedAt",
-				FieldMapKey: "referenceRefreshedAt",
+				Name:   "referenceRefreshedAt",
+				Column: "reference_refreshed_at",
 			},
 			{
-				Name:        "referenceRefreshError",
-				FieldMapKey: "referenceRefreshError",
+				Name:   "referenceRefreshError",
+				Column: "reference_refresh_error",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AccountingDriftFindingSpec = TypeSpec{
 		TypeName: "AccountingDriftFinding",
-		FieldMap: accountingsynccol.AccountingDriftFindingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -2227,100 +2134,100 @@ func init() {
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "connectionId",
-				FieldMapKey: "connectionId",
+				Name:   "connectionId",
+				Column: "connection_id",
 			},
 			{
-				Name:        "objectType",
-				FieldMapKey: "objectType",
+				Name:   "objectType",
+				Column: "object_type",
 			},
 			{
-				Name:        "objectId",
-				FieldMapKey: "objectId",
+				Name:   "objectId",
+				Column: "object_id",
 			},
 			{
-				Name:        "objectNumber",
-				FieldMapKey: "objectNumber",
+				Name:   "objectNumber",
+				Column: "object_number",
 			},
 			{
-				Name:        "partyId",
-				FieldMapKey: "partyId",
+				Name:   "partyId",
+				Column: "party_id",
 			},
 			{
-				Name:        "partyName",
-				FieldMapKey: "partyName",
+				Name:   "partyName",
+				Column: "party_name",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "externalUrl",
-				FieldMapKey: "externalUrl",
+				Name:   "externalUrl",
+				Column: "external_url",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "trenovaMinor",
-				FieldMapKey: "trenovaMinor",
+				Name:   "trenovaMinor",
+				Column: "trenova_minor",
 			},
 			{
-				Name:        "providerMinor",
-				FieldMapKey: "providerMinor",
+				Name:   "providerMinor",
+				Column: "provider_minor",
 			},
 			{
-				Name:        "differenceMinor",
-				FieldMapKey: "differenceMinor",
+				Name:   "differenceMinor",
+				Column: "difference_minor",
 			},
 			{
-				Name:        "trenovaState",
-				FieldMapKey: "trenovaState",
+				Name:   "trenovaState",
+				Column: "trenova_state",
 			},
 			{
-				Name:        "providerState",
-				FieldMapKey: "providerState",
+				Name:   "providerState",
+				Column: "provider_state",
 			},
 			{
-				Name:        "detail",
-				FieldMapKey: "detail",
+				Name:   "detail",
+				Column: "detail",
 			},
 			{
-				Name:        "providerModifiedAt",
-				FieldMapKey: "providerModifiedAt",
+				Name:   "providerModifiedAt",
+				Column: "provider_modified_at",
 			},
 			{
-				Name:        "providerModifiedBy",
-				FieldMapKey: "providerModifiedBy",
+				Name:   "providerModifiedBy",
+				Column: "provider_modified_by",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "resolution",
-				FieldMapKey: "resolution",
+				Name:   "resolution",
+				Column: "resolution",
 			},
 			{
-				Name:        "resolutionNote",
-				FieldMapKey: "resolutionNote",
+				Name:   "resolutionNote",
+				Column: "resolution_note",
 			},
 			{
-				Name:        "fixObjectType",
-				FieldMapKey: "fixObjectType",
+				Name:   "fixObjectType",
+				Column: "fix_object_type",
 			},
 			{
-				Name:        "fixObjectId",
-				FieldMapKey: "fixObjectId",
+				Name:   "fixObjectId",
+				Column: "fix_object_id",
 			},
 			{
 				Name:    "directions",
@@ -2331,208 +2238,206 @@ func init() {
 				Special: "pushed",
 			},
 			{
-				Name:        "resolvedBy",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedBy",
+				Column: "resolved_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "detectedAt",
-				FieldMapKey: "detectedAt",
+				Name:   "detectedAt",
+				Column: "detected_at",
 			},
 			{
-				Name:        "lastSeenAt",
-				FieldMapKey: "lastSeenAt",
+				Name:   "lastSeenAt",
+				Column: "last_seen_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AccountingInboundChangeSpec = TypeSpec{
 		TypeName: "AccountingInboundChange",
-		FieldMap: accountingsynccol.AccountingInboundChangeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "resolution",
-				FieldMapKey: "resolution",
+				Name:   "resolution",
+				Column: "resolution",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "externalNumber",
-				FieldMapKey: "externalNumber",
+				Name:   "externalNumber",
+				Column: "external_number",
 			},
 			{
-				Name:        "externalUrl",
-				FieldMapKey: "externalUrl",
+				Name:   "externalUrl",
+				Column: "external_url",
 			},
 			{
-				Name:        "providerModifiedAt",
-				FieldMapKey: "providerModifiedAt",
+				Name:   "providerModifiedAt",
+				Column: "provider_modified_at",
 			},
 			{
-				Name:        "providerModifiedBy",
-				FieldMapKey: "providerModifiedBy",
+				Name:   "providerModifiedBy",
+				Column: "provider_modified_by",
 			},
 			{
-				Name:        "txnDate",
-				FieldMapKey: "txnDate",
+				Name:   "txnDate",
+				Column: "txn_date",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "partyName",
-				FieldMapKey: "partyName",
+				Name:   "partyName",
+				Column: "party_name",
 			},
 			{
-				Name:        "partyObjectId",
-				FieldMapKey: "partyObjectId",
+				Name:   "partyObjectId",
+				Column: "party_object_id",
 			},
 			{
-				Name:        "referenceNumber",
-				FieldMapKey: "document",
+				Name:   "referenceNumber",
+				Column: "document",
 			},
 			{
-				Name:        "methodName",
-				FieldMapKey: "document",
+				Name:   "methodName",
+				Column: "document",
 			},
 			{
-				Name:        "unappliedMinor",
-				FieldMapKey: "document",
+				Name:   "unappliedMinor",
+				Column: "document",
 			},
 			{
-				Name:        "lines",
-				FieldMapKey: "document",
+				Name:   "lines",
+				Column: "document",
 			},
 			{
-				Name:        "appliedObjects",
-				FieldMapKey: "appliedObjects",
+				Name:   "appliedObjects",
+				Column: "applied_objects",
 			},
 			{
-				Name:        "decidedBy",
-				FieldMapKey: "decidedById",
+				Name:   "decidedBy",
+				Column: "decided_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "decidedAt",
-				FieldMapKey: "decidedAt",
+				Name:   "decidedAt",
+				Column: "decided_at",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "detectedAt",
-				FieldMapKey: "detectedAt",
+				Name:   "detectedAt",
+				Column: "detected_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AccountingMappingSpec = TypeSpec{
 		TypeName: "AccountingMapping",
-		FieldMap: accountingsynccol.AccountingMappingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "targetType",
-				FieldMapKey: "targetType",
+				Name:   "targetType",
+				Column: "target_type",
 			},
 			{
-				Name:        "trenovaObjectId",
-				FieldMapKey: "trenovaObjectId",
+				Name:   "trenovaObjectId",
+				Column: "trenova_object_id",
 			},
 			{
-				Name:        "trenovaKey",
-				FieldMapKey: "trenovaKey",
+				Name:   "trenovaKey",
+				Column: "trenova_key",
 			},
 			{
-				Name:        "targetLabel",
-				FieldMapKey: "targetLabel",
+				Name:   "targetLabel",
+				Column: "target_label",
 			},
 			{
-				Name:        "providerKind",
-				FieldMapKey: "providerKind",
+				Name:   "providerKind",
+				Column: "provider_kind",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "externalName",
-				FieldMapKey: "externalName",
+				Name:   "externalName",
+				Column: "external_name",
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "state",
+				Name:   "state",
+				Column: "state",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "confidence",
-				FieldMapKey: "confidence",
+				Name:   "confidence",
+				Column: "confidence",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
 				Name:    "required",
@@ -2551,118 +2456,117 @@ func init() {
 				Special: "matchers",
 			},
 			{
-				Name:        "confirmedBy",
-				FieldMapKey: "confirmedById",
+				Name:   "confirmedBy",
+				Column: "confirmed_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "confirmedAt",
-				FieldMapKey: "confirmedAt",
+				Name:   "confirmedAt",
+				Column: "confirmed_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AccountingReferenceObjectSpec = TypeSpec{
 		TypeName: "AccountingReferenceObject",
-		FieldMap: accountingsynccol.AccountingReferenceObjectFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "fullyQualifiedName",
-				FieldMapKey: "fullyQualifiedName",
+				Name:   "fullyQualifiedName",
+				Column: "fully_qualified_name",
 			},
 			{
 				Name:    "label",
 				Special: "label",
 			},
 			{
-				Name:        "number",
-				FieldMapKey: "number",
+				Name:   "number",
+				Column: "number",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "accountType",
-				FieldMapKey: "accountType",
+				Name:   "accountType",
+				Column: "account_type",
 			},
 			{
-				Name:        "accountSubType",
-				FieldMapKey: "accountSubType",
+				Name:   "accountSubType",
+				Column: "account_sub_type",
 			},
 			{
-				Name:        "itemType",
-				FieldMapKey: "itemType",
+				Name:   "itemType",
+				Column: "item_type",
 			},
 			{
-				Name:        "companyName",
-				FieldMapKey: "companyName",
+				Name:   "companyName",
+				Column: "company_name",
 			},
 			{
-				Name:        "email",
-				FieldMapKey: "email",
+				Name:   "email",
+				Column: "email",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "state",
+				Name:   "state",
+				Column: "state",
 			},
 			{
-				Name:        "postalCode",
-				FieldMapKey: "postalCode",
+				Name:   "postalCode",
+				Column: "postal_code",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "dueDays",
-				FieldMapKey: "dueDays",
+				Name:   "dueDays",
+				Column: "due_days",
 			},
 			{
-				Name:        "active",
-				FieldMapKey: "active",
+				Name:   "active",
+				Column: "active",
 			},
 			{
-				Name:        "removedAt",
-				FieldMapKey: "removedAt",
+				Name:   "removedAt",
+				Column: "removed_at",
 			},
 			{
 				Name:    "usable",
@@ -2673,526 +2577,521 @@ func init() {
 
 	AccountingSyncAttemptSpec = TypeSpec{
 		TypeName: "AccountingSyncAttempt",
-		FieldMap: accountingsynccol.AccountingSyncAttemptFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "attemptNumber",
-				FieldMapKey: "attemptNumber",
+				Name:   "attemptNumber",
+				Column: "attempt_number",
 			},
 			{
-				Name:        "outcome",
-				FieldMapKey: "outcome",
+				Name:   "outcome",
+				Column: "outcome",
 			},
 			{
-				Name:        "errorCategory",
-				FieldMapKey: "errorCategory",
+				Name:   "errorCategory",
+				Column: "error_category",
 			},
 			{
-				Name:        "errorCode",
-				FieldMapKey: "errorCode",
+				Name:   "errorCode",
+				Column: "error_code",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "finishedAt",
-				FieldMapKey: "finishedAt",
+				Name:   "finishedAt",
+				Column: "finished_at",
 			},
 			{
-				Name:        "durationMs",
-				FieldMapKey: "durationMs",
+				Name:   "durationMs",
+				Column: "duration_ms",
 			},
 		},
 	}
 
 	AccountingSyncRecordSpec = TypeSpec{
 		TypeName: "AccountingSyncRecord",
-		FieldMap: accountingsynccol.AccountingSyncRecordFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "objectType",
-				FieldMapKey: "objectType",
+				Name:   "objectType",
+				Column: "object_type",
 			},
 			{
-				Name:        "objectId",
-				FieldMapKey: "objectId",
+				Name:   "objectId",
+				Column: "object_id",
 			},
 			{
-				Name:        "objectNumber",
-				FieldMapKey: "objectNumber",
+				Name:   "objectNumber",
+				Column: "object_number",
 			},
 			{
-				Name:        "operation",
-				FieldMapKey: "operation",
+				Name:   "operation",
+				Column: "operation",
 			},
 			{
-				Name:        "sourceEvent",
-				FieldMapKey: "sourceEvent",
+				Name:   "sourceEvent",
+				Column: "source_event",
 			},
 			{
-				Name:        "revision",
-				FieldMapKey: "revision",
+				Name:   "revision",
+				Column: "revision",
 			},
 			{
-				Name:        "documentDate",
-				FieldMapKey: "documentDate",
+				Name:   "documentDate",
+				Column: "document_date",
 			},
 			{
-				Name:        "dependsOnRecordId",
-				FieldMapKey: "dependsOnRecordId",
+				Name:   "dependsOnRecordId",
+				Column: "depends_on_record_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "attemptCount",
-				FieldMapKey: "attemptCount",
+				Name:   "attemptCount",
+				Column: "attempt_count",
 			},
 			{
-				Name:        "nextAttemptAt",
-				FieldMapKey: "nextAttemptAt",
+				Name:   "nextAttemptAt",
+				Column: "next_attempt_at",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "externalDocNumber",
-				FieldMapKey: "externalDocNumber",
+				Name:   "externalDocNumber",
+				Column: "external_doc_number",
 			},
 			{
-				Name:        "externalUrl",
-				FieldMapKey: "externalUrl",
+				Name:   "externalUrl",
+				Column: "external_url",
 			},
 			{
-				Name:        "errorCategory",
-				FieldMapKey: "errorCategory",
+				Name:   "errorCategory",
+				Column: "error_category",
 			},
 			{
-				Name:        "errorCode",
-				FieldMapKey: "errorCode",
+				Name:   "errorCode",
+				Column: "error_code",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "resolution",
-				FieldMapKey: "resolution",
+				Name:   "resolution",
+				Column: "resolution",
 			},
 			{
-				Name:        "queuedAt",
-				FieldMapKey: "queuedAt",
+				Name:   "queuedAt",
+				Column: "queued_at",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "syncedAt",
-				FieldMapKey: "syncedAt",
+				Name:   "syncedAt",
+				Column: "synced_at",
 			},
 			{
-				Name:        "skippedBy",
-				FieldMapKey: "skippedById",
+				Name:   "skippedBy",
+				Column: "skipped_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "skippedReason",
-				FieldMapKey: "skippedReason",
+				Name:   "skippedReason",
+				Column: "skipped_reason",
 			},
 			{
-				Name:        "redatedTo",
-				FieldMapKey: "redatedTo",
+				Name:   "redatedTo",
+				Column: "redated_to",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentControlSpec = TypeSpec{
 		TypeName: "AgentControl",
-		FieldMap: tenantcol.AgentControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shadowMode",
-				FieldMapKey: "shadowMode",
+				Name:   "shadowMode",
+				Column: "shadow_mode",
 			},
 			{
-				Name:        "earnedAutonomy",
-				FieldMapKey: "earnedAutonomy",
+				Name:   "earnedAutonomy",
+				Column: "earned_autonomy",
 			},
 			{
-				Name:        "promotionThreshold",
-				FieldMapKey: "promotionThreshold",
+				Name:   "promotionThreshold",
+				Column: "promotion_threshold",
 			},
 			{
-				Name:        "aiTrainingConsent",
-				FieldMapKey: "aiTrainingConsent",
+				Name:   "aiTrainingConsent",
+				Column: "ai_training_consent",
 			},
 			{
-				Name:        "aiTrainingConsentChangedAt",
-				FieldMapKey: "aiTrainingConsentChangedAt",
+				Name:   "aiTrainingConsentChangedAt",
+				Column: "ai_training_consent_changed_at",
 			},
 			{
-				Name:        "aiTrainingConsentChangedById",
-				FieldMapKey: "aiTrainingConsentChangedById",
+				Name:   "aiTrainingConsentChangedById",
+				Column: "ai_training_consent_changed_by_id",
 			},
 			{
-				Name:        "personMonthlyMessages",
-				FieldMapKey: "personMonthlyMessages",
+				Name:   "personMonthlyMessages",
+				Column: "person_monthly_messages",
 			},
 			{
-				Name:        "learningOff",
-				FieldMapKey: "learningOff",
+				Name:   "learningOff",
+				Column: "learning_off",
 			},
 			{
-				Name:        "agentMoneyCallCeiling",
-				FieldMapKey: "agentMoneyCallCeilingMinor",
+				Name:   "agentMoneyCallCeiling",
+				Column: "agent_money_call_ceiling_minor",
 			},
 			{
-				Name:        "agentMoneyRunCalls",
-				FieldMapKey: "agentMoneyRunCalls",
+				Name:   "agentMoneyRunCalls",
+				Column: "agent_money_run_calls",
 			},
 			{
-				Name:        "agentMoneyRunAmount",
-				FieldMapKey: "agentMoneyRunAmountMinor",
+				Name:   "agentMoneyRunAmount",
+				Column: "agent_money_run_amount_minor",
 			},
 			{
-				Name:        "agentMoneyDayCalls",
-				FieldMapKey: "agentMoneyDayCalls",
+				Name:   "agentMoneyDayCalls",
+				Column: "agent_money_day_calls",
 			},
 			{
-				Name:        "agentMoneyDayAmount",
-				FieldMapKey: "agentMoneyDayAmountMinor",
+				Name:   "agentMoneyDayAmount",
+				Column: "agent_money_day_amount_minor",
 			},
 			{
 				Name:    "agentMoneyCurrency",
 				Special: "agentMoneyCurrency",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentDecisionSpec = TypeSpec{
 		TypeName: "AgentDecision",
-		FieldMap: agentcol.AgentDecisionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "proposalId",
-				FieldMapKey: "proposalId",
+				Name:   "proposalId",
+				Column: "proposal_id",
 			},
 			{
-				Name:        "exceptionId",
-				FieldMapKey: "exceptionId",
+				Name:   "exceptionId",
+				Column: "exception_id",
 			},
 			{
-				Name:        "decidedByUserId",
-				FieldMapKey: "decidedByUserId",
+				Name:   "decidedByUserId",
+				Column: "decided_by_user_id",
 			},
 			{
-				Name:        "decision",
-				FieldMapKey: "decision",
+				Name:   "decision",
+				Column: "decision",
 			},
 			{
-				Name:        "modifications",
-				FieldMapKey: "modifications",
+				Name:   "modifications",
+				Column: "modifications",
 			},
 			{
-				Name:        "reasonCode",
-				FieldMapKey: "reasonCode",
+				Name:   "reasonCode",
+				Column: "reason_code",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "traceId",
-				FieldMapKey: "traceId",
+				Name:   "traceId",
+				Column: "trace_id",
 			},
 			{
 				Name:    "traceUrl",
 				Special: "traceUrl",
 			},
 			{
-				Name:        "commitsAt",
-				FieldMapKey: "commitsAt",
+				Name:   "commitsAt",
+				Column: "commits_at",
 			},
 			{
-				Name:        "committedAt",
-				FieldMapKey: "committedAt",
+				Name:   "committedAt",
+				Column: "committed_at",
 			},
 			{
-				Name:        "undoneAt",
-				FieldMapKey: "undoneAt",
+				Name:   "undoneAt",
+				Column: "undone_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "preview",
-				FieldMapKey: "preview",
+				Name:   "preview",
+				Column: "preview",
 			},
 			{
-				Name:        "previewDigest",
-				FieldMapKey: "previewDigest",
+				Name:   "previewDigest",
+				Column: "preview_digest",
 			},
 			{
-				Name:        "previewReviewed",
-				FieldMapKey: "previewReviewed",
+				Name:   "previewReviewed",
+				Column: "preview_reviewed",
 			},
 		},
 	}
 
 	AgentDefinitionSpec = TypeSpec{
 		TypeName: "AgentDefinition",
-		FieldMap: agentdefinitioncol.DefinitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "template",
-				FieldMapKey: "template",
+				Name:   "template",
+				Column: "template",
 			},
 			{
-				Name:        "instructions",
-				FieldMapKey: "instructions",
+				Name:   "instructions",
+				Column: "instructions",
 			},
 			{
-				Name:        "guardrails",
-				FieldMapKey: "guardrails",
+				Name:   "guardrails",
+				Column: "guardrails",
 			},
 			{
-				Name:        "toolNames",
-				FieldMapKey: "toolNames",
+				Name:   "toolNames",
+				Column: "tool_names",
 			},
 			{
-				Name:        "toolTiers",
-				FieldMapKey: "toolTiers",
+				Name:   "toolTiers",
+				Column: "tool_tiers",
 			},
 			{
-				Name:        "autonomyCeiling",
-				FieldMapKey: "autonomyCeiling",
+				Name:   "autonomyCeiling",
+				Column: "autonomy_ceiling",
 			},
 			{
-				Name:        "dataAccessCeiling",
-				FieldMapKey: "dataAccessCeiling",
+				Name:   "dataAccessCeiling",
+				Column: "data_access_ceiling",
 			},
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
-				Name:        "shadowMode",
-				FieldMapKey: "shadowMode",
+				Name:   "shadowMode",
+				Column: "shadow_mode",
 			},
 			{
-				Name:        "decisionTimeoutSeconds",
-				FieldMapKey: "decisionTimeoutSeconds",
+				Name:   "decisionTimeoutSeconds",
+				Column: "decision_timeout_seconds",
 			},
 			{
-				Name:        "triggerMode",
-				FieldMapKey: "triggerMode",
+				Name:   "triggerMode",
+				Column: "trigger_mode",
 			},
 			{
-				Name:        "cronExpression",
-				FieldMapKey: "cronExpression",
+				Name:   "cronExpression",
+				Column: "cron_expression",
 			},
 			{
-				Name:        "cronTimezone",
-				FieldMapKey: "cronTimezone",
+				Name:   "cronTimezone",
+				Column: "cron_timezone",
 			},
 			{
-				Name:        "eventKinds",
-				FieldMapKey: "eventKinds",
+				Name:   "eventKinds",
+				Column: "event_kinds",
 			},
 			{
-				Name:        "intervalSeconds",
-				FieldMapKey: "intervalSeconds",
+				Name:   "intervalSeconds",
+				Column: "interval_seconds",
 			},
 			{
-				Name:        "endsAt",
-				FieldMapKey: "endsAt",
+				Name:   "endsAt",
+				Column: "ends_at",
 			},
 			{
-				Name:        "maxConcurrentRuns",
-				FieldMapKey: "maxConcurrentRuns",
+				Name:   "maxConcurrentRuns",
+				Column: "max_concurrent_runs",
 			},
 			{
-				Name:        "runTimeoutSeconds",
-				FieldMapKey: "runTimeoutSeconds",
+				Name:   "runTimeoutSeconds",
+				Column: "run_timeout_seconds",
 			},
 			{
-				Name:        "maxToolCalls",
-				FieldMapKey: "maxToolCalls",
+				Name:   "maxToolCalls",
+				Column: "max_tool_calls",
 			},
 			{
-				Name:        "monthlyBudgetUsd",
-				FieldMapKey: "monthlyBudgetUsd",
+				Name:   "monthlyBudgetUsd",
+				Column: "monthly_budget_usd",
 			},
 			{
-				Name:        "dailyRunLimit",
-				FieldMapKey: "dailyRunLimit",
+				Name:   "dailyRunLimit",
+				Column: "daily_run_limit",
 			},
 			{
-				Name:        "toolDailyLimits",
-				FieldMapKey: "toolDailyLimits",
+				Name:   "toolDailyLimits",
+				Column: "tool_daily_limits",
 			},
 			{
-				Name:        "simulationMode",
-				FieldMapKey: "simulationMode",
+				Name:   "simulationMode",
+				Column: "simulation_mode",
 			},
 			{
-				Name:        "memoryTokenBudget",
-				FieldMapKey: "memoryTokenBudget",
+				Name:   "memoryTokenBudget",
+				Column: "memory_token_budget",
 			},
 			{
-				Name:        "learningOff",
-				FieldMapKey: "learningOff",
+				Name:   "learningOff",
+				Column: "learning_off",
 			},
 			{
-				Name:        "contextProviders",
-				FieldMapKey: "contextProviders",
+				Name:   "contextProviders",
+				Column: "context_providers",
 			},
 			{
-				Name:        "outputMode",
-				FieldMapKey: "outputMode",
+				Name:   "outputMode",
+				Column: "output_mode",
 			},
 			{
-				Name:        "icon",
-				FieldMapKey: "icon",
+				Name:   "icon",
+				Column: "icon",
 			},
 			{
-				Name:        "accent",
-				FieldMapKey: "accent",
+				Name:   "accent",
+				Column: "accent",
 			},
 			{
-				Name:        "preferredProviderId",
-				FieldMapKey: "preferredProviderId",
+				Name:   "preferredProviderId",
+				Column: "preferred_provider_id",
 			},
 			{
-				Name:        "systemKey",
-				FieldMapKey: "systemKey",
+				Name:   "systemKey",
+				Column: "system_key",
 			},
 			{
-				Name:        "delegateIds",
-				FieldMapKey: "delegateIds",
+				Name:   "delegateIds",
+				Column: "delegate_ids",
 			},
 			{
-				Name:        "delegates",
-				FieldMapKey: "delegateIds",
+				Name:   "delegates",
+				Column: "delegate_ids",
 			},
 			{
-				Name:        "accessMode",
-				FieldMapKey: "accessMode",
+				Name:   "accessMode",
+				Column: "access_mode",
 			},
 			{
-				Name:        "unattendedRoleId",
-				FieldMapKey: "unattendedRoleId",
+				Name:   "unattendedRoleId",
+				Column: "unattended_role_id",
 			},
 			{
 				Name:    "accessRoles",
@@ -3203,12 +3102,12 @@ func init() {
 				Special: "starters",
 			},
 			{
-				Name:        "lastRunAt",
-				FieldMapKey: "lastRunAt",
+				Name:   "lastRunAt",
+				Column: "last_run_at",
 			},
 			{
-				Name:        "nextRunAt",
-				FieldMapKey: "nextRunAt",
+				Name:   "nextRunAt",
+				Column: "next_run_at",
 			},
 			{
 				Name:    "pendingProposals",
@@ -3219,57 +3118,55 @@ func init() {
 				Special: "openRuns",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentDefinitionVersionSpec = TypeSpec{
 		TypeName: "AgentDefinitionVersion",
-		FieldMap: agentdefinitioncol.DefinitionVersionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "author",
-				FieldMapKey: "authorId",
+				Name:   "author",
+				Column: "author_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	AgentEvalCaseSpec = TypeSpec{
 		TypeName: "AgentEvalCase",
-		FieldMap: agentqualitycol.EvalCaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3277,380 +3174,376 @@ func init() {
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "agentDefinitionId",
-				FieldMapKey: "agentDefinitionId",
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "trigger",
-				FieldMapKey: "trigger",
+				Name:   "trigger",
+				Column: "trigger",
 			},
 			{
-				Name:        "sourceRunId",
-				FieldMapKey: "sourceRunId",
+				Name:   "sourceRunId",
+				Column: "source_run_id",
 			},
 			{
-				Name:        "sourceTurnId",
-				FieldMapKey: "sourceTurnId",
+				Name:   "sourceTurnId",
+				Column: "source_turn_id",
 			},
 			{
-				Name:        "sourceThreadId",
-				FieldMapKey: "sourceThreadId",
+				Name:   "sourceThreadId",
+				Column: "source_thread_id",
 			},
 			{
-				Name:        "sourceMessageId",
-				FieldMapKey: "sourceMessageId",
+				Name:   "sourceMessageId",
+				Column: "source_message_id",
 			},
 			{
-				Name:        "sourceProposalId",
-				FieldMapKey: "sourceProposalId",
+				Name:   "sourceProposalId",
+				Column: "source_proposal_id",
 			},
 			{
-				Name:        "sourceFeedbackId",
-				FieldMapKey: "sourceFeedbackId",
+				Name:   "sourceFeedbackId",
+				Column: "source_feedback_id",
 			},
 			{
-				Name:        "input",
-				FieldMapKey: "input",
+				Name:   "input",
+				Column: "input",
 			},
 			{
-				Name:        "history",
-				FieldMapKey: "history",
+				Name:   "history",
+				Column: "history",
 			},
 			{
-				Name:        "pageContext",
-				FieldMapKey: "pageContext",
+				Name:   "pageContext",
+				Column: "page_context",
 			},
 			{
-				Name:        "mentions",
-				FieldMapKey: "mentions",
+				Name:   "mentions",
+				Column: "mentions",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "heldTools",
-				FieldMapKey: "heldTools",
+				Name:   "heldTools",
+				Column: "held_tools",
 			},
 			{
-				Name:        "toolFixtures",
-				FieldMapKey: "toolFixtures",
+				Name:   "toolFixtures",
+				Column: "tool_fixtures",
 			},
 			{
-				Name:        "expected",
-				FieldMapKey: "expected",
+				Name:   "expected",
+				Column: "expected",
 			},
 			{
-				Name:        "rubric",
-				FieldMapKey: "rubric",
+				Name:   "rubric",
+				Column: "rubric",
 			},
 			{
-				Name:        "redaction",
-				FieldMapKey: "redaction",
+				Name:   "redaction",
+				Column: "redaction",
 			},
 			{
-				Name:        "contentHash",
-				FieldMapKey: "contentHash",
+				Name:   "contentHash",
+				Column: "content_hash",
 			},
 			{
-				Name:        "capturedFingerprint",
-				FieldMapKey: "capturedFingerprint",
+				Name:   "capturedFingerprint",
+				Column: "captured_fingerprint",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "createdByUserId",
-				FieldMapKey: "createdByUserId",
+				Name:   "createdByUserId",
+				Column: "created_by_user_id",
 			},
 			{
 				Name:    "weight",
 				Special: "weight",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentEvaluationSpec = TypeSpec{
 		TypeName: "AgentEvaluation",
-		FieldMap: agentcol.EvaluationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "agentDefinitionId",
-				FieldMapKey: "agentDefinitionId",
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
 			},
 			{
-				Name:        "sourceRunId",
-				FieldMapKey: "sourceRunId",
+				Name:   "sourceRunId",
+				Column: "source_run_id",
 			},
 			{
-				Name:        "evalCaseId",
-				FieldMapKey: "evalCaseId",
+				Name:   "evalCaseId",
+				Column: "eval_case_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "trigger",
-				FieldMapKey: "trigger",
+				Name:   "trigger",
+				Column: "trigger",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "input",
-				FieldMapKey: "input",
+				Name:   "input",
+				Column: "input",
 			},
 			{
-				Name:        "definitionVersion",
-				FieldMapKey: "definitionVersion",
+				Name:   "definitionVersion",
+				Column: "definition_version",
 			},
 			{
-				Name:        "promptVersion",
-				FieldMapKey: "promptVersion",
+				Name:   "promptVersion",
+				Column: "prompt_version",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
-				Name:        "providerId",
-				FieldMapKey: "providerId",
+				Name:   "providerId",
+				Column: "provider_id",
 			},
 			{
-				Name:        "reply",
-				FieldMapKey: "reply",
+				Name:   "reply",
+				Column: "reply",
 			},
 			{
-				Name:        "actions",
-				FieldMapKey: "actions",
+				Name:   "actions",
+				Column: "actions",
 			},
 			{
-				Name:        "comparison",
-				FieldMapKey: "comparison",
+				Name:   "comparison",
+				Column: "comparison",
 			},
 			{
-				Name:        "originalProposals",
-				FieldMapKey: "originalProposals",
+				Name:   "originalProposals",
+				Column: "original_proposals",
 			},
 			{
-				Name:        "toolCallsUsed",
-				FieldMapKey: "toolCallsUsed",
+				Name:   "toolCallsUsed",
+				Column: "tool_calls_used",
 			},
 			{
-				Name:        "checks",
-				FieldMapKey: "checks",
+				Name:   "checks",
+				Column: "checks",
 			},
 			{
-				Name:        "judge",
-				FieldMapKey: "judge",
+				Name:   "judge",
+				Column: "judge",
 			},
 			{
-				Name:        "caseScore",
-				FieldMapKey: "caseScore",
+				Name:   "caseScore",
+				Column: "case_score",
 			},
 			{
-				Name:        "fingerprint",
-				FieldMapKey: "fingerprint",
+				Name:   "fingerprint",
+				Column: "fingerprint",
 			},
 			{
-				Name:        "suiteRunId",
-				FieldMapKey: "suiteRunId",
+				Name:   "suiteRunId",
+				Column: "suite_run_id",
 			},
 			{
-				Name:        "suiteOrdinal",
-				FieldMapKey: "suiteOrdinal",
+				Name:   "suiteOrdinal",
+				Column: "suite_ordinal",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "requestedByUserId",
-				FieldMapKey: "requestedByUserId",
+				Name:   "requestedByUserId",
+				Column: "requested_by_user_id",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentExceptionSpec = TypeSpec{
 		TypeName: "AgentException",
-		FieldMap: agentcol.AgentExceptionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "attemptSummary",
-				FieldMapKey: "attemptSummary",
+				Name:   "attemptSummary",
+				Column: "attempt_summary",
 			},
 			{
-				Name:        "evidence",
-				FieldMapKey: "evidence",
+				Name:   "evidence",
+				Column: "evidence",
 			},
 			{
-				Name:        "blastRadius",
-				FieldMapKey: "blastRadius",
+				Name:   "blastRadius",
+				Column: "blast_radius",
 			},
 			{
-				Name:        "resolutionState",
-				FieldMapKey: "resolutionState",
+				Name:   "resolutionState",
+				Column: "resolution_state",
 			},
 			{
-				Name:        "resolutionNotes",
-				FieldMapKey: "resolutionNotes",
+				Name:   "resolutionNotes",
+				Column: "resolution_notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentMatchToolSpec = TypeSpec{
 		TypeName: "AgentMatchTool",
-		FieldMap: ratesimulationcol.RateSimulationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 		},
 	}
 
 	AgentMemorySpec = TypeSpec{
 		TypeName: "AgentMemory",
-		FieldMap: agentcol.MemoryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3658,104 +3551,104 @@ func init() {
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "subjectLabel",
-				FieldMapKey: "subjectLabel",
+				Name:   "subjectLabel",
+				Column: "subject_label",
 			},
 			{
-				Name:        "toolName",
-				FieldMapKey: "toolName",
+				Name:   "toolName",
+				Column: "tool_name",
 			},
 			{
-				Name:        "content",
-				FieldMapKey: "content",
+				Name:   "content",
+				Column: "content",
 			},
 			{
-				Name:        "agentDefinitionId",
-				FieldMapKey: "agentDefinitionId",
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
 			},
 			{
-				Name:        "scope",
-				FieldMapKey: "scope",
+				Name:   "scope",
+				Column: "scope",
 			},
 			{
-				Name:        "ownerUserId",
-				FieldMapKey: "ownerUserId",
+				Name:   "ownerUserId",
+				Column: "owner_user_id",
 			},
 			{
-				Name:        "roleId",
-				FieldMapKey: "roleId",
+				Name:   "roleId",
+				Column: "role_id",
 			},
 			{
-				Name:        "tainted",
-				FieldMapKey: "tainted",
+				Name:   "tainted",
+				Column: "tainted",
 			},
 			{
 				Name:    "taints",
 				Special: "taints",
 			},
 			{
-				Name:        "reviewedByUserId",
-				FieldMapKey: "reviewedByUserId",
+				Name:   "reviewedByUserId",
+				Column: "reviewed_by_user_id",
 			},
 			{
-				Name:        "reviewedAt",
-				FieldMapKey: "reviewedAt",
+				Name:   "reviewedAt",
+				Column: "reviewed_at",
 			},
 			{
-				Name:        "taintRunId",
-				FieldMapKey: "taintRunId",
+				Name:   "taintRunId",
+				Column: "taint_run_id",
 			},
 			{
-				Name:        "sourceRunId",
-				FieldMapKey: "sourceRunId",
+				Name:   "sourceRunId",
+				Column: "source_run_id",
 			},
 			{
-				Name:        "sourceProposalId",
-				FieldMapKey: "sourceProposalId",
+				Name:   "sourceProposalId",
+				Column: "source_proposal_id",
 			},
 			{
-				Name:        "sourceThreadId",
-				FieldMapKey: "sourceThreadId",
+				Name:   "sourceThreadId",
+				Column: "source_thread_id",
 			},
 			{
-				Name:        "reflectionId",
-				FieldMapKey: "reflectionId",
+				Name:   "reflectionId",
+				Column: "reflection_id",
 			},
 			{
-				Name:        "supersedesId",
-				FieldMapKey: "supersedesId",
+				Name:   "supersedesId",
+				Column: "supersedes_id",
 			},
 			{
 				Name:    "supersedes",
@@ -3766,51 +3659,50 @@ func init() {
 				Special: "replacedBy",
 			},
 			{
-				Name:        "createdByUserId",
-				FieldMapKey: "createdByUserId",
+				Name:   "createdByUserId",
+				Column: "created_by_user_id",
 			},
 			{
-				Name:        "retiredByUserId",
-				FieldMapKey: "retiredByUserId",
+				Name:   "retiredByUserId",
+				Column: "retired_by_user_id",
 			},
 			{
-				Name:        "retiredAt",
-				FieldMapKey: "retiredAt",
+				Name:   "retiredAt",
+				Column: "retired_at",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "useCount",
-				FieldMapKey: "useCount",
+				Name:   "useCount",
+				Column: "use_count",
 			},
 			{
-				Name:        "lastUsedAt",
-				FieldMapKey: "lastUsedAt",
+				Name:   "lastUsedAt",
+				Column: "last_used_at",
 			},
 			{
-				Name:        "evidence",
-				FieldMapKey: "evidence",
+				Name:   "evidence",
+				Column: "evidence",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentPlanSpec = TypeSpec{
 		TypeName: "AgentPlan",
-		FieldMap: agentcol.AgentPlanFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -3820,100 +3712,100 @@ func init() {
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "stepCount",
-				FieldMapKey: "stepCount",
+				Name:   "stepCount",
+				Column: "step_count",
 			},
 			{
-				Name:        "completedSteps",
-				FieldMapKey: "completedSteps",
+				Name:   "completedSteps",
+				Column: "completed_steps",
 			},
 			{
-				Name:        "failedStep",
-				FieldMapKey: "failedStep",
+				Name:   "failedStep",
+				Column: "failed_step",
 			},
 			{
-				Name:        "failureError",
-				FieldMapKey: "failureError",
+				Name:   "failureError",
+				Column: "failure_error",
 			},
 			{
-				Name:        "decidedByUserId",
-				FieldMapKey: "decidedByUserId",
+				Name:   "decidedByUserId",
+				Column: "decided_by_user_id",
 			},
 			{
-				Name:        "decidedBy",
-				FieldMapKey: "decidedByUserId",
+				Name:   "decidedBy",
+				Column: "decided_by_user_id",
 			},
 			{
-				Name:        "decidedAt",
-				FieldMapKey: "decidedAt",
+				Name:   "decidedAt",
+				Column: "decided_at",
 			},
 			{
-				Name:        "decisionNote",
-				FieldMapKey: "approvalNote",
+				Name:   "decisionNote",
+				Column: "approval_note",
 			},
 			{
-				Name:        "previewDigest",
-				FieldMapKey: "approvalPreviewDigest",
+				Name:   "previewDigest",
+				Column: "approval_preview_digest",
 			},
 			{
 				Name:    "runMode",
 				Special: "runMode",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "commitsAt",
-				FieldMapKey: "commitsAt",
+				Name:   "commitsAt",
+				Column: "commits_at",
 			},
 			{
-				Name:        "undoneAt",
-				FieldMapKey: "undoneAt",
+				Name:   "undoneAt",
+				Column: "undone_at",
 			},
 			{
-				Name:        "script",
-				FieldMapKey: "script",
+				Name:   "script",
+				Column: "script",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "run",
@@ -3928,113 +3820,110 @@ func init() {
 
 	AgentProfileGuidanceSpec = TypeSpec{
 		TypeName: "AgentProfileGuidance",
-		FieldMap: agentprofilecol.GuidanceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "subject",
-				FieldMapKey: "subject",
+				Name:   "subject",
+				Column: "subject",
 			},
 			{
-				Name:        "content",
-				FieldMapKey: "content",
+				Name:   "content",
+				Column: "content",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
 				Name:    "createdByName",
 				Special: "createdByName",
 			},
 			{
-				Name:        "threadId",
-				FieldMapKey: "threadId",
+				Name:   "threadId",
+				Column: "thread_id",
 			},
 			{
-				Name:        "retiredAt",
-				FieldMapKey: "retiredAt",
+				Name:   "retiredAt",
+				Column: "retired_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	AgentProfileVersionSpec = TypeSpec{
 		TypeName: "AgentProfileVersion",
-		FieldMap: map[string]string{"businessUnitId": "business_unit_id", "checkedAt": "checked_at", "content": "content", "createdAt": "created_at", "digest": "digest", "errorMessage": "error_message", "facts": "facts", "guidanceIds": "guidance_ids", "id": "id", "inputTokens": "input_tokens", "model": "model", "organizationId": "organization_id", "outputTokens": "output_tokens", "providerId": "provider_id", "requestedById": "requested_by_id", "status": "status", "subject": "subject", "trigger": "trigger", "updatedAt": "updated_at", "userId": "user_id", "version": "version"},
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "subject",
-				FieldMapKey: "subject",
+				Name:   "subject",
+				Column: "subject",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "trigger",
-				FieldMapKey: "trigger",
+				Name:   "trigger",
+				Column: "trigger",
 			},
 			{
-				Name:        "content",
-				FieldMapKey: "content",
+				Name:   "content",
+				Column: "content",
 			},
 			{
-				Name:        "facts",
-				FieldMapKey: "facts",
+				Name:   "facts",
+				Column: "facts",
 			},
 			{
-				Name:        "guidanceIds",
-				FieldMapKey: "guidanceIds",
+				Name:   "guidanceIds",
+				Column: "guidance_ids",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "checkedAt",
-				FieldMapKey: "checkedAt",
+				Name:   "checkedAt",
+				Column: "checked_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	AgentProposalSpec = TypeSpec{
 		TypeName: "AgentProposal",
-		FieldMap: agentcol.AgentProposalFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -4046,72 +3935,72 @@ func init() {
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "toolName",
-				FieldMapKey: "toolName",
+				Name:   "toolName",
+				Column: "tool_name",
 			},
 			{
-				Name:        "toolParams",
-				FieldMapKey: "toolParams",
+				Name:   "toolParams",
+				Column: "tool_params",
 			},
 			{
-				Name:        "confidence",
-				FieldMapKey: "confidence",
+				Name:   "confidence",
+				Column: "confidence",
 			},
 			{
-				Name:        "rationale",
-				FieldMapKey: "rationale",
+				Name:   "rationale",
+				Column: "rationale",
 			},
 			{
-				Name:        "evidence",
-				FieldMapKey: "evidence",
+				Name:   "evidence",
+				Column: "evidence",
 			},
 			{
-				Name:        "autonomyTier",
-				FieldMapKey: "autonomyTier",
+				Name:   "autonomyTier",
+				Column: "autonomy_tier",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "fromScript",
-				FieldMapKey: "scriptStepKey",
+				Name:   "fromScript",
+				Column: "script_step_key",
 			},
 			{
-				Name:        "executionError",
-				FieldMapKey: "executionError",
+				Name:   "executionError",
+				Column: "execution_error",
 			},
 			{
-				Name:        "planId",
-				FieldMapKey: "planId",
+				Name:   "planId",
+				Column: "plan_id",
 			},
 			{
-				Name:        "planStep",
-				FieldMapKey: "planStep",
+				Name:   "planStep",
+				Column: "plan_step",
 			},
 			{
-				Name:        "simulatedAt",
-				FieldMapKey: "simulatedAt",
+				Name:   "simulatedAt",
+				Column: "simulated_at",
 			},
 			{
-				Name:        "simulation",
-				FieldMapKey: "simulation",
+				Name:   "simulation",
+				Column: "simulation",
 			},
 			{
 				Name:    "parameterFields",
@@ -4122,44 +4011,44 @@ func init() {
 				Special: "modifications",
 			},
 			{
-				Name:        "tainted",
-				FieldMapKey: "tainted",
+				Name:   "tainted",
+				Column: "tainted",
 			},
 			{
-				Name:        "taint",
-				FieldMapKey: "taint",
+				Name:   "taint",
+				Column: "taint",
 			},
 			{
-				Name:        "egressClass",
-				FieldMapKey: "egressClass",
+				Name:   "egressClass",
+				Column: "egress_class",
 			},
 			{
-				Name:        "heldBy",
-				FieldMapKey: "heldBy",
+				Name:   "heldBy",
+				Column: "held_by",
 			},
 			{
 				Name:    "reviewRequired",
 				Special: "reviewRequired",
 			},
 			{
-				Name:        "traceId",
-				FieldMapKey: "traceId",
+				Name:   "traceId",
+				Column: "trace_id",
 			},
 			{
 				Name:    "traceUrl",
 				Special: "traceUrl",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "run",
@@ -4174,301 +4063,298 @@ func init() {
 
 	AgentQualityControlSpec = TypeSpec{
 		TypeName: "AgentQualityControl",
-		FieldMap: agentqualitycol.ControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
-				Name:        "runHourLocal",
-				FieldMapKey: "runHourLocal",
+				Name:   "runHourLocal",
+				Column: "run_hour_local",
 			},
 			{
-				Name:        "timezone",
-				FieldMapKey: "timezone",
+				Name:   "timezone",
+				Column: "timezone",
 			},
 			{
-				Name:        "maxCasesPerAgent",
-				FieldMapKey: "maxCasesPerAgent",
+				Name:   "maxCasesPerAgent",
+				Column: "max_cases_per_agent",
 			},
 			{
-				Name:        "nightlyBudgetUsd",
-				FieldMapKey: "nightlyBudgetUsd",
+				Name:   "nightlyBudgetUsd",
+				Column: "nightly_budget_usd",
 			},
 			{
-				Name:        "monthlyBudgetUsd",
-				FieldMapKey: "monthlyBudgetUsd",
+				Name:   "monthlyBudgetUsd",
+				Column: "monthly_budget_usd",
 			},
 			{
-				Name:        "judgeEnabled",
-				FieldMapKey: "judgeEnabled",
+				Name:   "judgeEnabled",
+				Column: "judge_enabled",
 			},
 			{
-				Name:        "judgeSampleRate",
-				FieldMapKey: "judgeSampleRate",
+				Name:   "judgeSampleRate",
+				Column: "judge_sample_rate",
 			},
 			{
-				Name:        "regressionThreshold",
-				FieldMapKey: "regressionThreshold",
+				Name:   "regressionThreshold",
+				Column: "regression_threshold",
 			},
 			{
-				Name:        "minCases",
-				FieldMapKey: "minCases",
+				Name:   "minCases",
+				Column: "min_cases",
 			},
 			{
-				Name:        "forceRerunDays",
-				FieldMapKey: "forceRerunDays",
+				Name:   "forceRerunDays",
+				Column: "force_rerun_days",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentReflectionSpec = TypeSpec{
 		TypeName: "AgentReflection",
-		FieldMap: agentcol.ReflectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "agentDefinitionId",
-				FieldMapKey: "agentDefinitionId",
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "threadId",
-				FieldMapKey: "threadId",
+				Name:   "threadId",
+				Column: "thread_id",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "fromSequence",
-				FieldMapKey: "fromSequence",
+				Name:   "fromSequence",
+				Column: "from_sequence",
 			},
 			{
-				Name:        "throughSequence",
-				FieldMapKey: "throughSequence",
+				Name:   "throughSequence",
+				Column: "through_sequence",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "skipReason",
-				FieldMapKey: "skipReason",
+				Name:   "skipReason",
+				Column: "skip_reason",
 			},
 			{
-				Name:        "signals",
-				FieldMapKey: "signals",
+				Name:   "signals",
+				Column: "signals",
 			},
 			{
-				Name:        "changes",
-				FieldMapKey: "changes",
+				Name:   "changes",
+				Column: "changes",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "tainted",
-				FieldMapKey: "tainted",
+				Name:   "tainted",
+				Column: "tainted",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
-				Name:        "inputTokens",
-				FieldMapKey: "inputTokens",
+				Name:   "inputTokens",
+				Column: "input_tokens",
 			},
 			{
-				Name:        "outputTokens",
-				FieldMapKey: "outputTokens",
+				Name:   "outputTokens",
+				Column: "output_tokens",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "finishedAt",
-				FieldMapKey: "finishedAt",
+				Name:   "finishedAt",
+				Column: "finished_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentRunSpec = TypeSpec{
 		TypeName: "AgentRun",
-		FieldMap: agentcol.AgentRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "agentType",
-				FieldMapKey: "agentType",
+				Name:   "agentType",
+				Column: "agent_type",
 			},
 			{
-				Name:        "agentDefinitionId",
-				FieldMapKey: "agentDefinitionId",
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
 			},
 			{
-				Name:        "trigger",
-				FieldMapKey: "trigger",
+				Name:   "trigger",
+				Column: "trigger",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "workflowId",
-				FieldMapKey: "workflowId",
+				Name:   "workflowId",
+				Column: "workflow_id",
 			},
 			{
-				Name:        "modelIdentifier",
-				FieldMapKey: "modelIdentifier",
+				Name:   "modelIdentifier",
+				Column: "model_identifier",
 			},
 			{
-				Name:        "promptVersion",
-				FieldMapKey: "promptVersion",
+				Name:   "promptVersion",
+				Column: "prompt_version",
 			},
 			{
-				Name:        "inputContextHash",
-				FieldMapKey: "inputContextHash",
+				Name:   "inputContextHash",
+				Column: "input_context_hash",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "tainted",
-				FieldMapKey: "tainted",
+				Name:   "tainted",
+				Column: "tainted",
 			},
 			{
-				Name:        "taint",
-				FieldMapKey: "taint",
+				Name:   "taint",
+				Column: "taint",
 			},
 			{
-				Name:        "taintedAt",
-				FieldMapKey: "taintedAt",
+				Name:   "taintedAt",
+				Column: "tainted_at",
 			},
 			{
-				Name:        "traceId",
-				FieldMapKey: "traceId",
+				Name:   "traceId",
+				Column: "trace_id",
 			},
 			{
 				Name:    "traceUrl",
 				Special: "traceUrl",
 			},
 			{
-				Name:        "parentOwnerKind",
-				FieldMapKey: "parentOwnerKind",
+				Name:   "parentOwnerKind",
+				Column: "parent_owner_kind",
 			},
 			{
-				Name:        "parentOwnerId",
-				FieldMapKey: "parentOwnerId",
+				Name:   "parentOwnerId",
+				Column: "parent_owner_id",
 			},
 			{
-				Name:        "delegateCallId",
-				FieldMapKey: "delegateCallId",
+				Name:   "delegateCallId",
+				Column: "delegate_call_id",
 			},
 			{
 				Name:    "transcript",
 				Special: "transcript",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "definition",
@@ -4483,511 +4369,503 @@ func init() {
 
 	AgentRunEventSpec = TypeSpec{
 		TypeName: "AgentRunEvent",
-		FieldMap: agentcol.AgentRunEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "ownerKind",
-				FieldMapKey: "ownerKind",
+				Name:   "ownerKind",
+				Column: "owner_kind",
 			},
 			{
-				Name:        "ownerId",
-				FieldMapKey: "ownerId",
+				Name:   "ownerId",
+				Column: "owner_id",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "stepKey",
-				FieldMapKey: "stepKey",
+				Name:   "stepKey",
+				Column: "step_key",
 			},
 			{
-				Name:        "callId",
-				FieldMapKey: "callId",
+				Name:   "callId",
+				Column: "call_id",
 			},
 			{
-				Name:        "payload",
-				FieldMapKey: "payload",
+				Name:   "payload",
+				Column: "payload",
 			},
 			{
-				Name:        "truncated",
-				FieldMapKey: "truncated",
+				Name:   "truncated",
+				Column: "truncated",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentSuggestionSpec = TypeSpec{
 		TypeName: "AgentSuggestion",
-		FieldMap: agentsuggestioncol.SuggestionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "suggestedAgentId",
-				FieldMapKey: "suggestedAgentId",
+				Name:   "suggestedAgentId",
+				Column: "suggested_agent_id",
 			},
 			{
-				Name:        "currentAgentId",
-				FieldMapKey: "currentAgentId",
+				Name:   "currentAgentId",
+				Column: "current_agent_id",
 			},
 			{
-				Name:        "surface",
-				FieldMapKey: "surface",
+				Name:   "surface",
+				Column: "surface",
 			},
 			{
-				Name:        "outcome",
-				FieldMapKey: "outcome",
+				Name:   "outcome",
+				Column: "outcome",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentSuiteRunSpec = TypeSpec{
 		TypeName: "AgentSuiteRun",
-		FieldMap: agentqualitycol.SuiteRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "agentDefinitionId",
-				FieldMapKey: "agentDefinitionId",
+				Name:   "agentDefinitionId",
+				Column: "agent_definition_id",
 			},
 			{
 				Name:    "agentName",
 				Special: "agentName",
 			},
 			{
-				Name:        "trigger",
-				FieldMapKey: "trigger",
+				Name:   "trigger",
+				Column: "trigger",
 			},
 			{
-				Name:        "fingerprint",
-				FieldMapKey: "fingerprint",
+				Name:   "fingerprint",
+				Column: "fingerprint",
 			},
 			{
-				Name:        "fingerprintHash",
-				FieldMapKey: "fingerprintHash",
+				Name:   "fingerprintHash",
+				Column: "fingerprint_hash",
 			},
 			{
-				Name:        "fingerprintChanges",
-				FieldMapKey: "fingerprintChanges",
+				Name:   "fingerprintChanges",
+				Column: "fingerprint_changes",
 			},
 			{
 				Name:    "changeSummary",
 				Special: "changeSummary",
 			},
 			{
-				Name:        "suiteRevision",
-				FieldMapKey: "suiteRevision",
+				Name:   "suiteRevision",
+				Column: "suite_revision",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "casesTotal",
-				FieldMapKey: "casesTotal",
+				Name:   "casesTotal",
+				Column: "cases_total",
 			},
 			{
-				Name:        "casesPassed",
-				FieldMapKey: "casesPassed",
+				Name:   "casesPassed",
+				Column: "cases_passed",
 			},
 			{
-				Name:        "casesFailed",
-				FieldMapKey: "casesFailed",
+				Name:   "casesFailed",
+				Column: "cases_failed",
 			},
 			{
-				Name:        "casesSkipped",
-				FieldMapKey: "casesSkipped",
+				Name:   "casesSkipped",
+				Column: "cases_skipped",
 			},
 			{
-				Name:        "hardFailures",
-				FieldMapKey: "hardFailures",
+				Name:   "hardFailures",
+				Column: "hard_failures",
 			},
 			{
-				Name:        "deterministicScore",
-				FieldMapKey: "deterministicScore",
+				Name:   "deterministicScore",
+				Column: "deterministic_score",
 			},
 			{
-				Name:        "judgeScore",
-				FieldMapKey: "judgeScore",
+				Name:   "judgeScore",
+				Column: "judge_score",
 			},
 			{
-				Name:        "qualityScore",
-				FieldMapKey: "qualityScore",
+				Name:   "qualityScore",
+				Column: "quality_score",
 			},
 			{
-				Name:        "baselineScore",
-				FieldMapKey: "baselineScore",
+				Name:   "baselineScore",
+				Column: "baseline_score",
 			},
 			{
-				Name:        "baselineRunId",
-				FieldMapKey: "baselineRunId",
+				Name:   "baselineRunId",
+				Column: "baseline_run_id",
 			},
 			{
-				Name:        "regression",
-				FieldMapKey: "regression",
+				Name:   "regression",
+				Column: "regression",
 			},
 			{
-				Name:        "costUsd",
-				FieldMapKey: "costUsd",
+				Name:   "costUsd",
+				Column: "cost_usd",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "finishedAt",
-				FieldMapKey: "finishedAt",
+				Name:   "finishedAt",
+				Column: "finished_at",
 			},
 			{
-				Name:        "comments",
-				FieldMapKey: "comments",
+				Name:   "comments",
+				Column: "comments",
 			},
 			{
-				Name:        "workflowId",
-				FieldMapKey: "workflowId",
+				Name:   "workflowId",
+				Column: "workflow_id",
 			},
 			{
-				Name:        "requestedByUserId",
-				FieldMapKey: "requestedByUserId",
+				Name:   "requestedByUserId",
+				Column: "requested_by_user_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	AgentTestPromptSpec = TypeSpec{
 		TypeName: "AgentTestPrompt",
-		FieldMap: agentdefinitioncol.TestPromptFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "prompt",
-				FieldMapKey: "prompt",
+				Name:   "prompt",
+				Column: "prompt",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	AgentToolRuleSpec = TypeSpec{
 		TypeName: "AgentToolRule",
-		FieldMap: agentcol.ToolRuleOverrideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "maxTier",
-				FieldMapKey: "maxTier",
+				Name:   "maxTier",
+				Column: "max_tier",
 			},
 			{
-				Name:        "readsExternal",
-				FieldMapKey: "readsExternal",
+				Name:   "readsExternal",
+				Column: "reads_external",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "updatedBy",
-				FieldMapKey: "updatedById",
+				Name:   "updatedBy",
+				Column: "updated_by_id",
 			},
 		},
 	}
 
 	AgentToolTrustSpec = TypeSpec{
 		TypeName: "AgentToolTrust",
-		FieldMap: agentcol.ToolTrustFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "toolName",
-				FieldMapKey: "toolName",
+				Name:   "toolName",
+				Column: "tool_name",
 			},
 			{
-				Name:        "streak",
-				FieldMapKey: "streak",
+				Name:   "streak",
+				Column: "streak",
 			},
 			{
-				Name:        "approvals",
-				FieldMapKey: "approvals",
+				Name:   "approvals",
+				Column: "approvals",
 			},
 			{
-				Name:        "modifications",
-				FieldMapKey: "modifications",
+				Name:   "modifications",
+				Column: "modifications",
 			},
 			{
-				Name:        "rejections",
-				FieldMapKey: "rejections",
+				Name:   "rejections",
+				Column: "rejections",
 			},
 			{
-				Name:        "executionFailures",
-				FieldMapKey: "executionFailures",
+				Name:   "executionFailures",
+				Column: "execution_failures",
 			},
 			{
-				Name:        "earnedTier",
-				FieldMapKey: "earnedTier",
+				Name:   "earnedTier",
+				Column: "earned_tier",
 			},
 			{
-				Name:        "lastDecisionAt",
-				FieldMapKey: "lastDecisionAt",
+				Name:   "lastDecisionAt",
+				Column: "last_decision_at",
 			},
 			{
-				Name:        "promotedAt",
-				FieldMapKey: "promotedAt",
+				Name:   "promotedAt",
+				Column: "promoted_at",
 			},
 			{
-				Name:        "demotedAt",
-				FieldMapKey: "demotedAt",
+				Name:   "demotedAt",
+				Column: "demoted_at",
 			},
 		},
 	}
 
 	ApiKeySpec = TypeSpec{
 		TypeName: "ApiKey",
-		FieldMap: apikeycol.KeyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "keyPrefix",
-				FieldMapKey: "keyPrefix",
+				Name:   "keyPrefix",
+				Column: "key_prefix",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "lastUsedAt",
-				FieldMapKey: "lastUsedAt",
+				Name:   "lastUsedAt",
+				Column: "last_used_at",
 			},
 			{
-				Name:        "lastUsedIp",
-				FieldMapKey: "lastUsedIp",
+				Name:   "lastUsedIp",
+				Column: "last_used_ip",
 			},
 			{
-				Name:        "lastUsedUserAgent",
-				FieldMapKey: "lastUsedUserAgent",
+				Name:   "lastUsedUserAgent",
+				Column: "last_used_user_agent",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "revokedById",
-				FieldMapKey: "revokedById",
+				Name:   "revokedById",
+				Column: "revoked_by_id",
 			},
 			{
-				Name:        "revokedAt",
-				FieldMapKey: "revokedAt",
+				Name:   "revokedAt",
+				Column: "revoked_at",
 			},
 			{
 				Name:    "permissionScope",
 				Special: "permissionScope",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ApprovalDelegationSpec = TypeSpec{
 		TypeName: "ApprovalDelegation",
-		FieldMap: workercol.ApprovalDelegationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "delegatorId",
-				FieldMapKey: "delegatorId",
+				Name:   "delegatorId",
+				Column: "delegator_id",
 			},
 			{
-				Name:        "delegateId",
-				FieldMapKey: "delegateId",
+				Name:   "delegateId",
+				Column: "delegate_id",
 			},
 			{
-				Name:        "scope",
-				FieldMapKey: "scope",
+				Name:   "scope",
+				Column: "scope",
 			},
 			{
-				Name:        "startsAt",
-				FieldMapKey: "startsAt",
+				Name:   "startsAt",
+				Column: "starts_at",
 			},
 			{
-				Name:        "endsAt",
-				FieldMapKey: "endsAt",
+				Name:   "endsAt",
+				Column: "ends_at",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "revokedAt",
-				FieldMapKey: "revokedAt",
+				Name:   "revokedAt",
+				Column: "revoked_at",
 			},
 			{
-				Name:        "revokedById",
-				FieldMapKey: "revokedById",
+				Name:   "revokedById",
+				Column: "revoked_by_id",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "delegator",
-				FieldMapKey: "delegatorId",
+				Name:   "delegator",
+				Column: "delegator_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "delegate",
-				FieldMapKey: "delegateId",
+				Name:   "delegate",
+				Column: "delegate_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -4997,106 +4875,105 @@ func init() {
 
 	AuditEntrySpec = TypeSpec{
 		TypeName: "AuditEntry",
-		FieldMap: auditcol.EntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "principalType",
-				FieldMapKey: "principalType",
+				Name:   "principalType",
+				Column: "principal_type",
 			},
 			{
-				Name:        "principalId",
-				FieldMapKey: "principalId",
+				Name:   "principalId",
+				Column: "principal_id",
 			},
 			{
-				Name:        "apiKeyId",
-				FieldMapKey: "apiKeyId",
+				Name:   "apiKeyId",
+				Column: "api_key_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "timestamp",
-				FieldMapKey: "timestamp",
+				Name:   "timestamp",
+				Column: "timestamp",
 			},
 			{
-				Name:        "changes",
-				FieldMapKey: "changes",
+				Name:   "changes",
+				Column: "changes",
 			},
 			{
-				Name:        "previousState",
-				FieldMapKey: "previousState",
+				Name:   "previousState",
+				Column: "previous_state",
 			},
 			{
-				Name:        "currentState",
-				FieldMapKey: "currentState",
+				Name:   "currentState",
+				Column: "current_state",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "resource",
-				FieldMapKey: "resource",
+				Name:   "resource",
+				Column: "resource",
 			},
 			{
-				Name:        "operation",
-				FieldMapKey: "operation",
+				Name:   "operation",
+				Column: "operation",
 			},
 			{
-				Name:        "resourceId",
-				FieldMapKey: "resourceId",
+				Name:   "resourceId",
+				Column: "resource_id",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "userAgent",
-				FieldMapKey: "userAgent",
+				Name:   "userAgent",
+				Column: "user_agent",
 			},
 			{
-				Name:        "comment",
-				FieldMapKey: "comment",
+				Name:   "comment",
+				Column: "comment",
 			},
 			{
-				Name:        "ipAddress",
-				FieldMapKey: "ipAddress",
+				Name:   "ipAddress",
+				Column: "ip_address",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "sensitiveData",
-				FieldMapKey: "sensitiveData",
+				Name:   "sensitiveData",
+				Column: "sensitive_data",
 			},
 			{
-				Name:        "critical",
-				FieldMapKey: "critical",
+				Name:   "critical",
+				Column: "critical",
 			},
 			{
 				Name:    "entityRef",
 				Special: "entityRef",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -5106,166 +4983,164 @@ func init() {
 
 	AuthEventSpec = TypeSpec{
 		TypeName: "AuthEvent",
-		FieldMap: iamcol.AuthEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "identityProviderId",
-				FieldMapKey: "identityProviderId",
+				Name:   "identityProviderId",
+				Column: "identity_provider_id",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "outcome",
-				FieldMapKey: "outcome",
+				Name:   "outcome",
+				Column: "outcome",
 			},
 			{
-				Name:        "ipAddress",
-				FieldMapKey: "ipAddress",
+				Name:   "ipAddress",
+				Column: "ip_address",
 			},
 			{
-				Name:        "userAgent",
-				FieldMapKey: "userAgent",
+				Name:   "userAgent",
+				Column: "user_agent",
 			},
 			{
-				Name:        "authenticatorAal",
-				FieldMapKey: "authenticatorAal",
+				Name:   "authenticatorAal",
+				Column: "authenticator_aal",
 			},
 			{
-				Name:        "federationFal",
-				FieldMapKey: "federationFal",
+				Name:   "federationFal",
+				Column: "federation_fal",
 			},
 			{
-				Name:        "mfaState",
-				FieldMapKey: "mfaState",
+				Name:   "mfaState",
+				Column: "mfa_state",
 			},
 			{
-				Name:        "riskOutcome",
-				FieldMapKey: "riskOutcome",
+				Name:   "riskOutcome",
+				Column: "risk_outcome",
 			},
 			{
-				Name:        "riskSignals",
-				FieldMapKey: "riskSignals",
+				Name:   "riskSignals",
+				Column: "risk_signals",
 			},
 			{
-				Name:        "errorCode",
-				FieldMapKey: "errorCode",
+				Name:   "errorCode",
+				Column: "error_code",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 			},
 		},
 	}
 
 	BenefitPlanSpec = TypeSpec{
 		TypeName: "BenefitPlan",
-		FieldMap: driverpaycol.BenefitPlanFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "planType",
-				FieldMapKey: "planType",
+				Name:   "planType",
+				Column: "plan_type",
 			},
 			{
-				Name:        "carrier",
-				FieldMapKey: "carrier",
+				Name:   "carrier",
+				Column: "carrier",
 			},
 			{
-				Name:        "policyNumber",
-				FieldMapKey: "policyNumber",
+				Name:   "policyNumber",
+				Column: "policy_number",
 			},
 			{
-				Name:        "payCodeId",
-				FieldMapKey: "payCodeId",
+				Name:   "payCodeId",
+				Column: "pay_code_id",
 			},
 			{
-				Name:        "planYear",
-				FieldMapKey: "planYear",
+				Name:   "planYear",
+				Column: "plan_year",
 			},
 			{
-				Name:        "employeeCostMinor",
-				FieldMapKey: "employeeCostMinor",
+				Name:   "employeeCostMinor",
+				Column: "employee_cost_minor",
 			},
 			{
-				Name:        "employerCostMinor",
-				FieldMapKey: "employerCostMinor",
+				Name:   "employerCostMinor",
+				Column: "employer_cost_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "waitingPeriodDays",
-				FieldMapKey: "waitingPeriodDays",
+				Name:   "waitingPeriodDays",
+				Column: "waiting_period_days",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "payCode",
-				FieldMapKey: "businessUnitId",
+				Name:   "payCode",
+				Column: "pay_code_id",
 				Relation: &RelationSpec{
 					Target: &PayCodeSpec,
 				},
@@ -5275,157 +5150,156 @@ func init() {
 
 	BillingQueueItemSpec = TypeSpec{
 		TypeName: "BillingQueueItem",
-		FieldMap: billingqueuecol.BillingQueueItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "orderId",
-				FieldMapKey: "orderId",
+				Name:   "orderId",
+				Column: "order_id",
 			},
 			{
-				Name:        "billToCustomerId",
-				FieldMapKey: "billToCustomerId",
+				Name:   "billToCustomerId",
+				Column: "bill_to_customer_id",
 			},
 			{
-				Name:        "allocatedTotalAmount",
-				FieldMapKey: "allocatedTotalAmount",
+				Name:   "allocatedTotalAmount",
+				Column: "allocated_total_amount",
 			},
 			{
 				Name:    "billToCustomer",
 				Special: "billToCustomer",
 			},
 			{
-				Name:        "assignedBillerId",
-				FieldMapKey: "assignedBillerId",
+				Name:   "assignedBillerId",
+				Column: "assigned_biller_id",
 			},
 			{
-				Name:        "number",
-				FieldMapKey: "number",
+				Name:   "number",
+				Column: "number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "billType",
-				FieldMapKey: "billType",
+				Name:   "billType",
+				Column: "bill_type",
 			},
 			{
-				Name:        "exceptionReasonCode",
-				FieldMapKey: "exceptionReasonCode",
+				Name:   "exceptionReasonCode",
+				Column: "exception_reason_code",
 			},
 			{
-				Name:        "reviewNotes",
-				FieldMapKey: "reviewNotes",
+				Name:   "reviewNotes",
+				Column: "review_notes",
 			},
 			{
-				Name:        "exceptionNotes",
-				FieldMapKey: "exceptionNotes",
+				Name:   "exceptionNotes",
+				Column: "exception_notes",
 			},
 			{
-				Name:        "reviewStartedAt",
-				FieldMapKey: "reviewStartedAt",
+				Name:   "reviewStartedAt",
+				Column: "review_started_at",
 			},
 			{
-				Name:        "reviewCompletedAt",
-				FieldMapKey: "reviewCompletedAt",
+				Name:   "reviewCompletedAt",
+				Column: "review_completed_at",
 			},
 			{
-				Name:        "canceledById",
-				FieldMapKey: "canceledById",
+				Name:   "canceledById",
+				Column: "canceled_by_id",
 			},
 			{
-				Name:        "canceledAt",
-				FieldMapKey: "canceledAt",
+				Name:   "canceledAt",
+				Column: "canceled_at",
 			},
 			{
-				Name:        "cancelReason",
-				FieldMapKey: "cancelReason",
+				Name:   "cancelReason",
+				Column: "cancel_reason",
 			},
 			{
-				Name:        "isAdjustmentOrigin",
-				FieldMapKey: "isAdjustmentOrigin",
+				Name:   "isAdjustmentOrigin",
+				Column: "is_adjustment_origin",
 			},
 			{
-				Name:        "sourceInvoiceId",
-				FieldMapKey: "sourceInvoiceId",
+				Name:   "sourceInvoiceId",
+				Column: "source_invoice_id",
 			},
 			{
-				Name:        "sourceInvoiceAdjustmentId",
-				FieldMapKey: "sourceInvoiceAdjustmentId",
+				Name:   "sourceInvoiceAdjustmentId",
+				Column: "source_invoice_adjustment_id",
 			},
 			{
-				Name:        "sourceCreditMemoInvoiceId",
-				FieldMapKey: "sourceCreditMemoInvoiceId",
+				Name:   "sourceCreditMemoInvoiceId",
+				Column: "source_credit_memo_invoice_id",
 			},
 			{
-				Name:        "correctionGroupId",
-				FieldMapKey: "correctionGroupId",
+				Name:   "correctionGroupId",
+				Column: "correction_group_id",
 			},
 			{
-				Name:        "rebillStrategy",
-				FieldMapKey: "rebillStrategy",
+				Name:   "rebillStrategy",
+				Column: "rebill_strategy",
 			},
 			{
-				Name:        "requiresReplacementReview",
-				FieldMapKey: "requiresReplacementReview",
+				Name:   "requiresReplacementReview",
+				Column: "requires_replacement_review",
 			},
 			{
-				Name:        "rerateVariancePercent",
-				FieldMapKey: "rerateVariancePercent",
+				Name:   "rerateVariancePercent",
+				Column: "rerate_variance_percent",
 			},
 			{
-				Name:        "adjustmentContext",
-				FieldMapKey: "adjustmentContext",
+				Name:   "adjustmentContext",
+				Column: "adjustment_context",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "shipment",
-				FieldMapKey: "businessUnitId",
+				Name:   "shipment",
+				Column: "shipment_id",
 				Relation: &RelationSpec{
 					Target: &ShipmentSpec,
 				},
 			},
 			{
-				Name:        "assignedBiller",
-				FieldMapKey: "assignedBillerId",
+				Name:   "assignedBiller",
+				Column: "assigned_biller_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "canceledBy",
-				FieldMapKey: "canceledById",
+				Name:   "canceledBy",
+				Column: "canceled_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -5435,407 +5309,406 @@ func init() {
 
 	BillingTransferRunSpec = TypeSpec{
 		TypeName: "BillingTransferRun",
-		FieldMap: billingtransfercol.BillingTransferRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "scope",
-				FieldMapKey: "scope",
+				Name:   "scope",
+				Column: "scope",
 			},
 			{
-				Name:        "billType",
-				FieldMapKey: "billType",
+				Name:   "billType",
+				Column: "bill_type",
 			},
 			{
-				Name:        "markCompletedReadyToInvoice",
-				FieldMapKey: "markCompletedReadyToInvoice",
+				Name:   "markCompletedReadyToInvoice",
+				Column: "mark_completed_ready_to_invoice",
 			},
 			{
-				Name:        "searchQuery",
-				FieldMapKey: "searchQuery",
+				Name:   "searchQuery",
+				Column: "search_query",
 			},
 			{
-				Name:        "shipmentStatus",
-				FieldMapKey: "shipmentStatus",
+				Name:   "shipmentStatus",
+				Column: "shipment_status",
 			},
 			{
-				Name:        "sourceRunId",
-				FieldMapKey: "sourceRunId",
+				Name:   "sourceRunId",
+				Column: "source_run_id",
 			},
 			{
-				Name:        "requestedById",
-				FieldMapKey: "requestedById",
+				Name:   "requestedById",
+				Column: "requested_by_id",
 			},
 			{
-				Name:        "totalCount",
-				FieldMapKey: "totalCount",
+				Name:   "totalCount",
+				Column: "total_count",
 			},
 			{
-				Name:        "processedCount",
-				FieldMapKey: "processedCount",
+				Name:   "processedCount",
+				Column: "processed_count",
 			},
 			{
-				Name:        "transferredCount",
-				FieldMapKey: "transferredCount",
+				Name:   "transferredCount",
+				Column: "transferred_count",
 			},
 			{
-				Name:        "notTransferredCount",
-				FieldMapKey: "notTransferredCount",
+				Name:   "notTransferredCount",
+				Column: "not_transferred_count",
 			},
 			{
-				Name:        "skippedCount",
-				FieldMapKey: "skippedCount",
+				Name:   "skippedCount",
+				Column: "skipped_count",
 			},
 			{
-				Name:        "markedReadyToInvoiceCount",
-				FieldMapKey: "markedReadyToInvoiceCount",
+				Name:   "markedReadyToInvoiceCount",
+				Column: "marked_ready_to_invoice_count",
 			},
 			{
-				Name:        "retryableCount",
-				FieldMapKey: "retryableCount",
+				Name:   "retryableCount",
+				Column: "retryable_count",
 			},
 			{
-				Name:        "unmatchedCount",
-				FieldMapKey: "unmatchedCount",
+				Name:   "unmatchedCount",
+				Column: "unmatched_count",
 			},
 			{
-				Name:        "failureMessage",
-				FieldMapKey: "failureMessage",
+				Name:   "failureMessage",
+				Column: "failure_message",
 			},
 			{
-				Name:        "cancelRequestedAt",
-				FieldMapKey: "cancelRequestedAt",
+				Name:   "cancelRequestedAt",
+				Column: "cancel_requested_at",
 			},
 			{
-				Name:        "cancelRequestedById",
-				FieldMapKey: "cancelRequestedById",
+				Name:   "cancelRequestedById",
+				Column: "cancel_requested_by_id",
 			},
 			{
-				Name:        "queuedAt",
-				FieldMapKey: "queuedAt",
+				Name:   "queuedAt",
+				Column: "queued_at",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	BillingTransferRunItemSpec = TypeSpec{
 		TypeName: "BillingTransferRunItem",
-		FieldMap: billingtransfercol.BillingTransferRunItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "failureCode",
-				FieldMapKey: "failureCode",
+				Name:   "failureCode",
+				Column: "failure_code",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "markedReadyToInvoice",
-				FieldMapKey: "markedReadyToInvoice",
+				Name:   "markedReadyToInvoice",
+				Column: "marked_ready_to_invoice",
 			},
 			{
-				Name:        "billingQueueItemId",
-				FieldMapKey: "billingQueueItemId",
+				Name:   "billingQueueItemId",
+				Column: "billing_queue_item_id",
 			},
 			{
-				Name:        "billingQueueNumber",
-				FieldMapKey: "billingQueueNumber",
+				Name:   "billingQueueNumber",
+				Column: "billing_queue_number",
 			},
 			{
-				Name:        "billingQueueStatus",
-				FieldMapKey: "billingQueueStatus",
+				Name:   "billingQueueStatus",
+				Column: "billing_queue_status",
 			},
 			{
-				Name:        "missingRequirements",
-				FieldMapKey: "missingRequirements",
+				Name:   "missingRequirements",
+				Column: "missing_requirements",
 			},
 			{
-				Name:        "validationFailures",
-				FieldMapKey: "validationFailures",
+				Name:   "validationFailures",
+				Column: "validation_failures",
 			},
 			{
-				Name:        "processedAt",
-				FieldMapKey: "processedAt",
+				Name:   "processedAt",
+				Column: "processed_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	BriefingSpec = TypeSpec{
 		TypeName: "Briefing",
-		FieldMap: briefingcol.BriefingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "roleKey",
-				FieldMapKey: "roleKey",
+				Name:   "roleKey",
+				Column: "role_key",
 			},
 			{
-				Name:        "briefingDate",
-				FieldMapKey: "briefingDate",
+				Name:   "briefingDate",
+				Column: "briefing_date",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "headline",
-				FieldMapKey: "headline",
+				Name:   "headline",
+				Column: "headline",
 			},
 			{
-				Name:        "sections",
-				FieldMapKey: "sections",
+				Name:   "sections",
+				Column: "sections",
 			},
 			{
-				Name:        "narrated",
-				FieldMapKey: "narrated",
+				Name:   "narrated",
+				Column: "narrated",
 			},
 			{
-				Name:        "emailedAt",
-				FieldMapKey: "emailedAt",
+				Name:   "withheldSections",
+				Column: "sections",
 			},
 			{
-				Name:        "readAt",
-				FieldMapKey: "readAt",
+				Name:   "emailedAt",
+				Column: "emailed_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "readAt",
+				Column: "read_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	BusinessUnitSpec = TypeSpec{
 		TypeName: "BusinessUnit",
-		FieldMap: tenantcol.BusinessUnitFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CaptureBatchSpec = TypeSpec{
 		TypeName: "CaptureBatch",
-		FieldMap: capturecol.CaptureBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 			},
 			{
-				Name:        "deviceId",
-				FieldMapKey: "deviceId",
+				Name:   "deviceId",
+				Column: "device_id",
 			},
 			{
-				Name:        "device",
-				FieldMapKey: "deviceId",
+				Name:   "device",
+				Column: "device_id",
 			},
 			{
-				Name:        "requestId",
-				FieldMapKey: "requestId",
+				Name:   "requestId",
+				Column: "request_id",
 			},
 			{
-				Name:        "profileId",
-				FieldMapKey: "profileId",
+				Name:   "profileId",
+				Column: "profile_id",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "sourceName",
-				FieldMapKey: "sourceName",
+				Name:   "sourceName",
+				Column: "source_name",
 			},
 			{
-				Name:        "jobName",
-				FieldMapKey: "jobName",
+				Name:   "jobName",
+				Column: "job_name",
 			},
 			{
-				Name:        "settings",
-				FieldMapKey: "settings",
+				Name:   "settings",
+				Column: "settings",
 			},
 			{
-				Name:        "targetType",
-				FieldMapKey: "targetType",
+				Name:   "targetType",
+				Column: "target_type",
 			},
 			{
-				Name:        "targetId",
-				FieldMapKey: "targetId",
+				Name:   "targetId",
+				Column: "target_id",
 			},
 			{
-				Name:        "target",
-				FieldMapKey: "targetId",
+				Name:   "target",
+				Column: "target_id",
 			},
 			{
-				Name:        "documentTypeId",
-				FieldMapKey: "documentTypeId",
+				Name:   "documentTypeId",
+				Column: "document_type_id",
 			},
 			{
-				Name:        "receivedPageCount",
-				FieldMapKey: "receivedPageCount",
+				Name:   "receivedPageCount",
+				Column: "received_page_count",
 			},
 			{
-				Name:        "itemCount",
-				FieldMapKey: "itemCount",
+				Name:   "itemCount",
+				Column: "item_count",
 			},
 			{
-				Name:        "filedItemCount",
-				FieldMapKey: "filedItemCount",
+				Name:   "filedItemCount",
+				Column: "filed_item_count",
 			},
 			{
-				Name:        "openItemCount",
-				FieldMapKey: "itemCount",
+				Name:   "openItemCount",
+				Column: "item_count",
 			},
 			{
-				Name:        "failureMessage",
-				FieldMapKey: "failureMessage",
+				Name:   "failureMessage",
+				Column: "failure_message",
 			},
 			{
-				Name:        "sealedAt",
-				FieldMapKey: "sealedAt",
+				Name:   "sealedAt",
+				Column: "sealed_at",
 			},
 			{
-				Name:        "processedAt",
-				FieldMapKey: "processedAt",
+				Name:   "processedAt",
+				Column: "processed_at",
 			},
 			{
-				Name:        "retainUntil",
-				FieldMapKey: "retainUntil",
+				Name:   "retainUntil",
+				Column: "retain_until",
 			},
 			{
-				Name:        "isEditable",
-				FieldMapKey: "status",
+				Name:   "isEditable",
+				Column: "status",
 			},
 			{
 				Name: "pages",
@@ -5850,47 +5723,46 @@ func init() {
 				},
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CaptureCoverSheetSpec = TypeSpec{
 		TypeName: "CaptureCoverSheet",
-		FieldMap: capturecol.CaptureCoverSheetFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "targetType",
-				FieldMapKey: "targetType",
+				Name:   "targetType",
+				Column: "target_type",
 			},
 			{
-				Name:        "targetId",
-				FieldMapKey: "targetId",
+				Name:   "targetId",
+				Column: "target_id",
 			},
 			{
 				Name:    "target",
 				Special: "target",
 			},
 			{
-				Name:        "documentTypeId",
-				FieldMapKey: "documentTypeId",
+				Name:   "documentTypeId",
+				Column: "document_type_id",
 			},
 			{
 				Name:    "payload",
@@ -5901,687 +5773,681 @@ func init() {
 				Special: "qrCode",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	CaptureDeviceSpec = TypeSpec{
 		TypeName: "CaptureDevice",
-		FieldMap: capturecol.CaptureDeviceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "machineName",
-				FieldMapKey: "machineName",
+				Name:   "machineName",
+				Column: "machine_name",
 			},
 			{
-				Name:        "windowsUser",
-				FieldMapKey: "windowsUser",
+				Name:   "windowsUser",
+				Column: "windows_user",
 			},
 			{
-				Name:        "agentVersion",
-				FieldMapKey: "agentVersion",
+				Name:   "agentVersion",
+				Column: "agent_version",
 			},
 			{
-				Name:        "architecture",
-				FieldMapKey: "architecture",
+				Name:   "architecture",
+				Column: "architecture",
 			},
 			{
-				Name:        "osVersion",
-				FieldMapKey: "osVersion",
+				Name:   "osVersion",
+				Column: "os_version",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "sources",
-				FieldMapKey: "sources",
+				Name:   "sources",
+				Column: "sources",
 			},
 			{
-				Name:        "lastSeenAt",
-				FieldMapKey: "lastSeenAt",
+				Name:   "lastSeenAt",
+				Column: "last_seen_at",
 			},
 			{
-				Name:        "isOnline",
-				FieldMapKey: "lastSeenAt",
+				Name:   "isOnline",
+				Column: "last_seen_at",
 			},
 			{
-				Name:        "lastIp",
-				FieldMapKey: "lastIp",
+				Name:   "lastIp",
+				Column: "last_ip",
 			},
 			{
-				Name:        "revokedAt",
-				FieldMapKey: "revokedAt",
+				Name:   "revokedAt",
+				Column: "revoked_at",
 			},
 			{
-				Name:        "revokedById",
-				FieldMapKey: "revokedById",
+				Name:   "revokedById",
+				Column: "revoked_by_id",
 			},
 			{
-				Name:        "revokedReason",
-				FieldMapKey: "revokedReason",
+				Name:   "revokedReason",
+				Column: "revoked_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CaptureItemSpec = TypeSpec{
 		TypeName: "CaptureItem",
-		FieldMap: capturecol.CaptureItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "batchId",
-				FieldMapKey: "batchId",
+				Name:   "batchId",
+				Column: "batch_id",
 			},
 			{
-				Name:        "position",
-				FieldMapKey: "position",
+				Name:   "position",
+				Column: "position",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "pageIds",
-				FieldMapKey: "pageIds",
+				Name:   "pageIds",
+				Column: "page_ids",
 			},
 			{
-				Name:        "pageCount",
-				FieldMapKey: "pageIds",
+				Name:   "pageCount",
+				Column: "page_ids",
 			},
 			{
-				Name:        "suggestedType",
-				FieldMapKey: "suggestedType",
+				Name:   "suggestedType",
+				Column: "suggested_type",
 			},
 			{
-				Name:        "suggestedId",
-				FieldMapKey: "suggestedId",
+				Name:   "suggestedId",
+				Column: "suggested_id",
 			},
 			{
-				Name:        "suggestedRecord",
-				FieldMapKey: "suggestedId",
+				Name:   "suggestedRecord",
+				Column: "suggested_id",
 			},
 			{
-				Name:        "suggestedDocumentTypeId",
-				FieldMapKey: "suggestedDocTypeId",
+				Name:   "suggestedDocumentTypeId",
+				Column: "suggested_doc_type_id",
 			},
 			{
-				Name:        "suggestionSource",
-				FieldMapKey: "suggestionSource",
+				Name:   "suggestionSource",
+				Column: "suggestion_source",
 			},
 			{
-				Name:        "suggestionConfidence",
-				FieldMapKey: "suggestionConfidence",
+				Name:   "suggestionConfidence",
+				Column: "suggestion_confidence",
 			},
 			{
-				Name:        "suggestionReason",
-				FieldMapKey: "suggestionReason",
+				Name:   "suggestionReason",
+				Column: "suggestion_reason",
 			},
 			{
-				Name:        "coverSheetId",
-				FieldMapKey: "coverSheetId",
+				Name:   "coverSheetId",
+				Column: "cover_sheet_id",
 			},
 			{
-				Name:        "detectedKind",
-				FieldMapKey: "detectedKind",
+				Name:   "detectedKind",
+				Column: "detected_kind",
 			},
 			{
-				Name:        "filedType",
-				FieldMapKey: "filedType",
+				Name:   "filedType",
+				Column: "filed_type",
 			},
 			{
-				Name:        "filedId",
-				FieldMapKey: "filedId",
+				Name:   "filedId",
+				Column: "filed_id",
 			},
 			{
-				Name:        "filedRecord",
-				FieldMapKey: "filedId",
+				Name:   "filedRecord",
+				Column: "filed_id",
 			},
 			{
-				Name:        "filedDocumentTypeId",
-				FieldMapKey: "filedDocTypeId",
+				Name:   "filedDocumentTypeId",
+				Column: "filed_doc_type_id",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "filedById",
-				FieldMapKey: "filedById",
+				Name:   "filedById",
+				Column: "filed_by_id",
 			},
 			{
-				Name:        "filedBy",
-				FieldMapKey: "filedById",
+				Name:   "filedBy",
+				Column: "filed_by_id",
 			},
 			{
-				Name:        "filedAt",
-				FieldMapKey: "filedAt",
+				Name:   "filedAt",
+				Column: "filed_at",
 			},
 			{
-				Name:        "failureMessage",
-				FieldMapKey: "failureMessage",
+				Name:   "failureMessage",
+				Column: "failure_message",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CapturePageSpec = TypeSpec{
 		TypeName: "CapturePage",
-		FieldMap: capturecol.CapturePageFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "batchId",
-				FieldMapKey: "batchId",
+				Name:   "batchId",
+				Column: "batch_id",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "byteSize",
-				FieldMapKey: "byteSize",
+				Name:   "byteSize",
+				Column: "byte_size",
 			},
 			{
-				Name:        "widthPx",
-				FieldMapKey: "widthPx",
+				Name:   "widthPx",
+				Column: "width_px",
 			},
 			{
-				Name:        "heightPx",
-				FieldMapKey: "heightPx",
+				Name:   "heightPx",
+				Column: "height_px",
 			},
 			{
-				Name:        "dpi",
-				FieldMapKey: "dpi",
+				Name:   "dpi",
+				Column: "dpi",
 			},
 			{
-				Name:        "rotation",
-				FieldMapKey: "rotation",
+				Name:   "rotation",
+				Column: "rotation",
 			},
 			{
-				Name:        "blankScore",
-				FieldMapKey: "blankScore",
+				Name:   "blankScore",
+				Column: "blank_score",
 			},
 			{
-				Name:        "isBlank",
-				FieldMapKey: "blankScore",
+				Name:   "isBlank",
+				Column: "blank_score",
 			},
 			{
-				Name:        "isSeparator",
-				FieldMapKey: "isSeparator",
+				Name:   "isSeparator",
+				Column: "is_separator",
 			},
 			{
-				Name:        "patchCode",
-				FieldMapKey: "markers",
+				Name:   "patchCode",
+				Column: "markers",
 			},
 			{
-				Name:        "isCoverSheet",
-				FieldMapKey: "markers",
+				Name:   "isCoverSheet",
+				Column: "markers",
 			},
 			{
-				Name:        "unrecognizedCoverSheet",
-				FieldMapKey: "markers",
+				Name:   "unrecognizedCoverSheet",
+				Column: "markers",
 			},
 			{
-				Name:        "failureMessage",
-				FieldMapKey: "failureMessage",
+				Name:   "failureMessage",
+				Column: "failure_message",
 			},
 			{
-				Name:        "contentPath",
-				FieldMapKey: "id",
+				Name:   "contentPath",
+				Column: "id",
 			},
 			{
-				Name:        "thumbnailPath",
-				FieldMapKey: "id",
+				Name:   "thumbnailPath",
+				Column: "id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	CaptureProfileSpec = TypeSpec{
 		TypeName: "CaptureProfile",
-		FieldMap: capturecol.CaptureProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "isDefault",
-				FieldMapKey: "isDefault",
+				Name:   "isDefault",
+				Column: "is_default",
 			},
 			{
-				Name:        "dpi",
-				FieldMapKey: "dpi",
+				Name:   "dpi",
+				Column: "dpi",
 			},
 			{
-				Name:        "pixelType",
-				FieldMapKey: "pixelType",
+				Name:   "pixelType",
+				Column: "pixel_type",
 			},
 			{
-				Name:        "duplex",
-				FieldMapKey: "duplex",
+				Name:   "duplex",
+				Column: "duplex",
 			},
 			{
-				Name:        "useFeeder",
-				FieldMapKey: "useFeeder",
+				Name:   "useFeeder",
+				Column: "use_feeder",
 			},
 			{
-				Name:        "discardBlankPages",
-				FieldMapKey: "discardBlankPages",
+				Name:   "discardBlankPages",
+				Column: "discard_blank_pages",
 			},
 			{
-				Name:        "jpegQuality",
-				FieldMapKey: "jpegQuality",
+				Name:   "jpegQuality",
+				Column: "jpeg_quality",
 			},
 			{
-				Name:        "showDriverUi",
-				FieldMapKey: "showDriverUi",
+				Name:   "showDriverUi",
+				Column: "show_driver_ui",
 			},
 			{
-				Name:        "separatorStrategies",
-				FieldMapKey: "separatorStrategies",
+				Name:   "separatorStrategies",
+				Column: "separator_strategies",
 			},
 			{
-				Name:        "fixedPageCount",
-				FieldMapKey: "fixedPageCount",
+				Name:   "fixedPageCount",
+				Column: "fixed_page_count",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CaptureRequestSpec = TypeSpec{
 		TypeName: "CaptureRequest",
-		FieldMap: capturecol.CaptureRequestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "deviceId",
-				FieldMapKey: "deviceId",
+				Name:   "deviceId",
+				Column: "device_id",
 			},
 			{
-				Name:        "mode",
-				FieldMapKey: "mode",
+				Name:   "mode",
+				Column: "mode",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "targetType",
-				FieldMapKey: "targetType",
+				Name:   "targetType",
+				Column: "target_type",
 			},
 			{
-				Name:        "targetId",
-				FieldMapKey: "targetId",
+				Name:   "targetId",
+				Column: "target_id",
 			},
 			{
-				Name:        "documentTypeId",
-				FieldMapKey: "documentTypeId",
+				Name:   "documentTypeId",
+				Column: "document_type_id",
 			},
 			{
-				Name:        "profileId",
-				FieldMapKey: "profileId",
+				Name:   "profileId",
+				Column: "profile_id",
 			},
 			{
-				Name:        "sourceName",
-				FieldMapKey: "sourceName",
+				Name:   "sourceName",
+				Column: "source_name",
 			},
 			{
-				Name:        "batchId",
-				FieldMapKey: "batchId",
+				Name:   "batchId",
+				Column: "batch_id",
 			},
 			{
-				Name:        "failureCode",
-				FieldMapKey: "failureCode",
+				Name:   "failureCode",
+				Column: "failure_code",
 			},
 			{
-				Name:        "failureMessage",
-				FieldMapKey: "failureMessage",
+				Name:   "failureMessage",
+				Column: "failure_message",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "deliveredAt",
-				FieldMapKey: "deliveredAt",
+				Name:   "deliveredAt",
+				Column: "delivered_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "isOpen",
-				FieldMapKey: "status",
+				Name:   "isOpen",
+				Column: "status",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CarrierSpec = TypeSpec{
 		TypeName: "Carrier",
-		FieldMap: carriercol.CarrierFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "remitStateId",
-				FieldMapKey: "remitStateId",
+				Name:   "remitStateId",
+				Column: "remit_state_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "dbaName",
-				FieldMapKey: "dbaName",
+				Name:   "dbaName",
+				Column: "dba_name",
 			},
 			{
-				Name:        "carrierType",
-				FieldMapKey: "carrierType",
+				Name:   "carrierType",
+				Column: "carrier_type",
 			},
 			{
-				Name:        "dotNumber",
-				FieldMapKey: "dotNumber",
+				Name:   "dotNumber",
+				Column: "dot_number",
 			},
 			{
-				Name:        "mcNumber",
-				FieldMapKey: "mcNumber",
+				Name:   "mcNumber",
+				Column: "mc_number",
 			},
 			{
-				Name:        "scac",
-				FieldMapKey: "scac",
+				Name:   "scac",
+				Column: "scac",
 			},
 			{
-				Name:        "complianceStatus",
-				FieldMapKey: "complianceStatus",
+				Name:   "complianceStatus",
+				Column: "compliance_status",
 			},
 			{
-				Name:        "safetyRating",
-				FieldMapKey: "safetyRating",
+				Name:   "safetyRating",
+				Column: "safety_rating",
 			},
 			{
-				Name:        "qualifiedAt",
-				FieldMapKey: "qualifiedAt",
+				Name:   "qualifiedAt",
+				Column: "qualified_at",
 			},
 			{
-				Name:        "disqualifiedReason",
-				FieldMapKey: "disqualifiedReason",
+				Name:   "disqualifiedReason",
+				Column: "disqualified_reason",
 			},
 			{
-				Name:        "taxId",
-				FieldMapKey: "taxId",
+				Name:   "taxId",
+				Column: "tax_id",
 			},
 			{
-				Name:        "taxIdType",
-				FieldMapKey: "taxIdType",
+				Name:   "taxIdType",
+				Column: "tax_id_type",
 			},
 			{
-				Name:        "w9OnFile",
-				FieldMapKey: "w9OnFile",
+				Name:   "w9OnFile",
+				Column: "w9_on_file",
 			},
 			{
-				Name:        "is1099Eligible",
-				FieldMapKey: "is1099Eligible",
+				Name:   "is1099Eligible",
+				Column: "is_1099_eligible",
 			},
 			{
-				Name:        "paymentMethod",
-				FieldMapKey: "paymentMethod",
+				Name:   "paymentMethod",
+				Column: "payment_method",
 			},
 			{
-				Name:        "paymentTermDays",
-				FieldMapKey: "paymentTermDays",
+				Name:   "paymentTermDays",
+				Column: "payment_term_days",
 			},
 			{
-				Name:        "remitToName",
-				FieldMapKey: "remitToName",
+				Name:   "remitToName",
+				Column: "remit_to_name",
 			},
 			{
-				Name:        "remitAddressLine1",
-				FieldMapKey: "remitAddressLine1",
+				Name:   "remitAddressLine1",
+				Column: "remit_address_line_1",
 			},
 			{
-				Name:        "remitAddressLine2",
-				FieldMapKey: "remitAddressLine2",
+				Name:   "remitAddressLine2",
+				Column: "remit_address_line_2",
 			},
 			{
-				Name:        "remitCity",
-				FieldMapKey: "remitCity",
+				Name:   "remitCity",
+				Column: "remit_city",
 			},
 			{
-				Name:        "remitPostalCode",
-				FieldMapKey: "remitPostalCode",
+				Name:   "remitPostalCode",
+				Column: "remit_postal_code",
 			},
 			{
-				Name:        "addressLine1",
-				FieldMapKey: "addressLine1",
+				Name:   "addressLine1",
+				Column: "address_line_1",
 			},
 			{
-				Name:        "addressLine2",
-				FieldMapKey: "addressLine2",
+				Name:   "addressLine2",
+				Column: "address_line_2",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "postalCode",
-				FieldMapKey: "postalCode",
+				Name:   "postalCode",
+				Column: "postal_code",
 			},
 			{
-				Name:        "phone",
-				FieldMapKey: "phone",
+				Name:   "phone",
+				Column: "phone",
 			},
 			{
-				Name:        "email",
-				FieldMapKey: "email",
+				Name:   "email",
+				Column: "email",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
 			},
 			{
-				Name:        "remitState",
-				FieldMapKey: "remitStateId",
+				Name:   "remitState",
+				Column: "remit_state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
@@ -6599,16 +6465,16 @@ func init() {
 				},
 			},
 			{
-				Name:        "intelRiskLevel",
-				FieldMapKey: "intelRiskLevel",
+				Name:   "intelRiskLevel",
+				Column: "intel_risk_level",
 			},
 			{
-				Name:        "intelReviewRequired",
-				FieldMapKey: "intelReviewRequired",
+				Name:   "intelReviewRequired",
+				Column: "intel_review_required",
 			},
 			{
-				Name:        "intelBlockingCount",
-				FieldMapKey: "intelBlockingCount",
+				Name:   "intelBlockingCount",
+				Column: "intel_blocking_count",
 			},
 			{
 				Name:    "intelligence",
@@ -6627,115 +6493,114 @@ func init() {
 
 	CarrierAssignmentSpec = TypeSpec{
 		TypeName: "CarrierAssignment",
-		FieldMap: shipmentcol.CarrierAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "rateMethod",
-				FieldMapKey: "rateMethod",
+				Name:   "rateMethod",
+				Column: "rate_method",
 			},
 			{
-				Name:        "baseRate",
-				FieldMapKey: "baseRate",
+				Name:   "baseRate",
+				Column: "base_rate",
 			},
 			{
-				Name:        "baseAmount",
-				FieldMapKey: "baseAmount",
+				Name:   "baseAmount",
+				Column: "base_amount",
 			},
 			{
-				Name:        "fuelSurcharge",
-				FieldMapKey: "fuelSurcharge",
+				Name:   "fuelSurcharge",
+				Column: "fuel_surcharge",
 			},
 			{
-				Name:        "accessorialTotal",
-				FieldMapKey: "accessorialTotal",
+				Name:   "accessorialTotal",
+				Column: "accessorial_total",
 			},
 			{
-				Name:        "totalCost",
-				FieldMapKey: "totalCost",
+				Name:   "totalCost",
+				Column: "total_cost",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 			{
-				Name:        "externalDriverName",
-				FieldMapKey: "externalDriverName",
+				Name:   "externalDriverName",
+				Column: "external_driver_name",
 			},
 			{
-				Name:        "externalDriverPhone",
-				FieldMapKey: "externalDriverPhone",
+				Name:   "externalDriverPhone",
+				Column: "external_driver_phone",
 			},
 			{
-				Name:        "externalTractorNumber",
-				FieldMapKey: "externalTractorNumber",
+				Name:   "externalTractorNumber",
+				Column: "external_tractor_number",
 			},
 			{
-				Name:        "externalTrailerNumber",
-				FieldMapKey: "externalTrailerNumber",
+				Name:   "externalTrailerNumber",
+				Column: "external_trailer_number",
 			},
 			{
-				Name:        "assignedById",
-				FieldMapKey: "assignedById",
+				Name:   "assignedById",
+				Column: "assigned_by_id",
 			},
 			{
-				Name:        "confirmedAt",
-				FieldMapKey: "confirmedAt",
+				Name:   "confirmedAt",
+				Column: "confirmed_at",
 			},
 			{
-				Name:        "canceledAt",
-				FieldMapKey: "canceledAt",
+				Name:   "canceledAt",
+				Column: "canceled_at",
 			},
 			{
-				Name:        "cancellationReason",
-				FieldMapKey: "cancellationReason",
+				Name:   "cancellationReason",
+				Column: "cancellation_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "carrier",
-				FieldMapKey: "carrierId",
+				Name:   "carrier",
+				Column: "carrier_id",
 				Relation: &RelationSpec{
 					Target: &CarrierSpec,
 				},
@@ -6751,170 +6616,168 @@ func init() {
 
 	CarrierAssignmentAccessorialSpec = TypeSpec{
 		TypeName: "CarrierAssignmentAccessorial",
-		FieldMap: shipmentcol.CarrierAssignmentAccessorialFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "carrierAssignmentId",
-				FieldMapKey: "carrierAssignmentId",
+				Name:   "carrierAssignmentId",
+				Column: "carrier_assignment_id",
 			},
 			{
-				Name:        "accessorialChargeId",
-				FieldMapKey: "accessorialChargeId",
+				Name:   "accessorialChargeId",
+				Column: "accessorial_charge_id",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "amount",
-				FieldMapKey: "amount",
+				Name:   "amount",
+				Column: "amount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CarrierCapacityPostingSpec = TypeSpec{
 		TypeName: "CarrierCapacityPosting",
-		FieldMap: carriercapacitycol.PostingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "originLocationId",
-				FieldMapKey: "originLocationId",
+				Name:   "originLocationId",
+				Column: "origin_location_id",
 			},
 			{
-				Name:        "originStateId",
-				FieldMapKey: "originStateId",
+				Name:   "originStateId",
+				Column: "origin_state_id",
 			},
 			{
-				Name:        "originRadiusMiles",
-				FieldMapKey: "originRadiusMiles",
+				Name:   "originRadiusMiles",
+				Column: "origin_radius_miles",
 			},
 			{
-				Name:        "destinationStateId",
-				FieldMapKey: "destinationStateId",
+				Name:   "destinationStateId",
+				Column: "destination_state_id",
 			},
 			{
-				Name:        "equipmentTypeId",
-				FieldMapKey: "equipmentTypeId",
+				Name:   "equipmentTypeId",
+				Column: "equipment_type_id",
 			},
 			{
-				Name:        "availableFrom",
-				FieldMapKey: "availableFrom",
+				Name:   "availableFrom",
+				Column: "available_from",
 			},
 			{
-				Name:        "availableTo",
-				FieldMapKey: "availableTo",
+				Name:   "availableTo",
+				Column: "available_to",
 			},
 			{
-				Name:        "truckCount",
-				FieldMapKey: "truckCount",
+				Name:   "truckCount",
+				Column: "truck_count",
 			},
 			{
-				Name:        "rateMethod",
-				FieldMapKey: "rateMethod",
+				Name:   "rateMethod",
+				Column: "rate_method",
 			},
 			{
-				Name:        "rate",
-				FieldMapKey: "rate",
+				Name:   "rate",
+				Column: "rate",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "carrier",
-				FieldMapKey: "carrierId",
+				Name:   "carrier",
+				Column: "carrier_id",
 				Relation: &RelationSpec{
 					Target: &CarrierSpec,
 				},
 			},
 			{
-				Name:        "originLocation",
-				FieldMapKey: "originLocationId",
+				Name:   "originLocation",
+				Column: "origin_location_id",
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
 			},
 			{
-				Name:        "originState",
-				FieldMapKey: "originStateId",
+				Name:   "originState",
+				Column: "origin_state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
 			},
 			{
-				Name:        "destinationState",
-				FieldMapKey: "destinationStateId",
+				Name:   "destinationState",
+				Column: "destination_state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
 			},
 			{
-				Name:        "equipmentType",
-				FieldMapKey: "equipmentTypeId",
+				Name:   "equipmentType",
+				Column: "equipment_type_id",
 				Relation: &RelationSpec{
 					Target: &EquipmentTypeSpec,
 				},
@@ -6924,162 +6787,160 @@ func init() {
 
 	CarrierContactSpec = TypeSpec{
 		TypeName: "CarrierContact",
-		FieldMap: carriercol.CarrierContactFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "email",
-				FieldMapKey: "email",
+				Name:   "email",
+				Column: "email",
 			},
 			{
-				Name:        "phone",
-				FieldMapKey: "phone",
+				Name:   "phone",
+				Column: "phone",
 			},
 			{
-				Name:        "isPrimary",
-				FieldMapKey: "isPrimary",
+				Name:   "isPrimary",
+				Column: "is_primary",
 			},
 			{
-				Name:        "receivesRateConfirmations",
-				FieldMapKey: "receivesRateConfirmations",
+				Name:   "receivesRateConfirmations",
+				Column: "receives_rate_confirmations",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CarrierCostEventSpec = TypeSpec{
 		TypeName: "CarrierCostEvent",
-		FieldMap: carriersettlementcol.CostEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "carrierAssignmentId",
-				FieldMapKey: "carrierAssignmentId",
+				Name:   "carrierAssignmentId",
+				Column: "carrier_assignment_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "moveId",
-				FieldMapKey: "moveId",
+				Name:   "moveId",
+				Column: "move_id",
 			},
 			{
-				Name:        "settlementId",
-				FieldMapKey: "settlementId",
+				Name:   "settlementId",
+				Column: "settlement_id",
 			},
 			{
-				Name:        "eventType",
-				FieldMapKey: "eventType",
+				Name:   "eventType",
+				Column: "event_type",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "eventDate",
-				FieldMapKey: "eventDate",
+				Name:   "eventDate",
+				Column: "event_date",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 			{
-				Name:        "assignmentVersion",
-				FieldMapKey: "assignmentVersion",
+				Name:   "assignmentVersion",
+				Column: "assignment_version",
 			},
 			{
-				Name:        "voidedAt",
-				FieldMapKey: "voidedAt",
+				Name:   "voidedAt",
+				Column: "voided_at",
 			},
 			{
-				Name:        "voidReason",
-				FieldMapKey: "voidReason",
+				Name:   "voidReason",
+				Column: "void_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "carrier",
-				FieldMapKey: "businessUnitId",
+				Name:   "carrier",
+				Column: "carrier_id",
 				Relation: &RelationSpec{
 					Target: &CarrierSpec,
 				},
@@ -7089,670 +6950,663 @@ func init() {
 
 	CarrierEquipmentVerificationSpec = TypeSpec{
 		TypeName: "CarrierEquipmentVerification",
-		FieldMap: carrierintelcol.CarrierEquipmentVerificationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "carrierAssignmentId",
-				FieldMapKey: "carrierAssignmentId",
+				Name:   "carrierAssignmentId",
+				Column: "carrier_assignment_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "expectedDotNumber",
-				FieldMapKey: "expectedDotNumber",
+				Name:   "expectedDotNumber",
+				Column: "expected_dot_number",
 			},
 			{
-				Name:        "unitType",
-				FieldMapKey: "unitType",
+				Name:   "unitType",
+				Column: "unit_type",
 			},
 			{
-				Name:        "vin",
-				FieldMapKey: "vin",
+				Name:   "vin",
+				Column: "vin",
 			},
 			{
-				Name:        "plateNumber",
-				FieldMapKey: "plateNumber",
+				Name:   "plateNumber",
+				Column: "plate_number",
 			},
 			{
-				Name:        "plateState",
-				FieldMapKey: "plateState",
+				Name:   "plateState",
+				Column: "plate_state",
 			},
 			{
-				Name:        "unitNumber",
-				FieldMapKey: "unitNumber",
+				Name:   "unitNumber",
+				Column: "unit_number",
 			},
 			{
-				Name:        "result",
-				FieldMapKey: "result",
+				Name:   "result",
+				Column: "result",
 			},
 			{
-				Name:        "matchedDotNumbers",
-				FieldMapKey: "matchedDotNumbers",
+				Name:   "matchedDotNumbers",
+				Column: "matched_dot_numbers",
 			},
 			{
-				Name:        "matchedLegalName",
-				FieldMapKey: "matchedLegalName",
+				Name:   "matchedLegalName",
+				Column: "matched_legal_name",
 			},
 			{
-				Name:        "detail",
-				FieldMapKey: "detail",
+				Name:   "detail",
+				Column: "detail",
 			},
 			{
-				Name:        "mismatchReason",
-				FieldMapKey: "mismatchReason",
+				Name:   "mismatchReason",
+				Column: "mismatch_reason",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "verifiedById",
-				FieldMapKey: "verifiedById",
+				Name:   "verifiedById",
+				Column: "verified_by_id",
 			},
 			{
-				Name:        "verifiedAt",
-				FieldMapKey: "verifiedAt",
+				Name:   "verifiedAt",
+				Column: "verified_at",
 			},
 			{
-				Name:        "overrideById",
-				FieldMapKey: "overrideById",
+				Name:   "overrideById",
+				Column: "override_by_id",
 			},
 			{
-				Name:        "overrideReason",
-				FieldMapKey: "overrideReason",
+				Name:   "overrideReason",
+				Column: "override_reason",
 			},
 			{
-				Name:        "overriddenAt",
-				FieldMapKey: "overriddenAt",
+				Name:   "overriddenAt",
+				Column: "overridden_at",
 			},
 			{
 				Name:    "cleared",
 				Special: "cleared",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	CarrierInsurancePolicySpec = TypeSpec{
 		TypeName: "CarrierInsurancePolicy",
-		FieldMap: carriercol.CarrierInsurancePolicyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "policyType",
-				FieldMapKey: "policyType",
+				Name:   "policyType",
+				Column: "policy_type",
 			},
 			{
-				Name:        "policyNumber",
-				FieldMapKey: "policyNumber",
+				Name:   "policyNumber",
+				Column: "policy_number",
 			},
 			{
-				Name:        "providerName",
-				FieldMapKey: "providerName",
+				Name:   "providerName",
+				Column: "provider_name",
 			},
 			{
-				Name:        "coverageAmount",
-				FieldMapKey: "coverageAmount",
+				Name:   "coverageAmount",
+				Column: "coverage_amount",
 			},
 			{
-				Name:        "effectiveDate",
-				FieldMapKey: "effectiveDate",
+				Name:   "effectiveDate",
+				Column: "effective_date",
 			},
 			{
-				Name:        "expirationDate",
-				FieldMapKey: "expirationDate",
+				Name:   "expirationDate",
+				Column: "expiration_date",
 			},
 			{
-				Name:        "isVerified",
-				FieldMapKey: "isVerified",
+				Name:   "isVerified",
+				Column: "is_verified",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CarrierIntelControlSpec = TypeSpec{
 		TypeName: "CarrierIntelControl",
-		FieldMap: carrierintelcol.CarrierIntelControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "primaryProvider",
-				FieldMapKey: "primaryProvider",
+				Name:   "primaryProvider",
+				Column: "primary_provider",
 			},
 			{
-				Name:        "fallbackProvider",
-				FieldMapKey: "fallbackProvider",
+				Name:   "fallbackProvider",
+				Column: "fallback_provider",
 			},
 			{
-				Name:        "enrollmentPolicy",
-				FieldMapKey: "enrollmentPolicy",
+				Name:   "enrollmentPolicy",
+				Column: "enrollment_policy",
 			},
 			{
-				Name:        "recentUsageDays",
-				FieldMapKey: "recentUsageDays",
+				Name:   "recentUsageDays",
+				Column: "recent_usage_days",
 			},
 			{
-				Name:        "includeOpenTenders",
-				FieldMapKey: "includeOpenTenders",
+				Name:   "includeOpenTenders",
+				Column: "include_open_tenders",
 			},
 			{
-				Name:        "autoEnrollOnCreate",
-				FieldMapKey: "autoEnrollOnCreate",
+				Name:   "autoEnrollOnCreate",
+				Column: "auto_enroll_on_create",
 			},
 			{
-				Name:        "autoUnenrollOnInactive",
-				FieldMapKey: "autoUnenrollOnInactive",
+				Name:   "autoUnenrollOnInactive",
+				Column: "auto_unenroll_on_inactive",
 			},
 			{
-				Name:        "exclusiveWatchlist",
-				FieldMapKey: "exclusiveWatchlist",
+				Name:   "exclusiveWatchlist",
+				Column: "exclusive_watchlist",
 			},
 			{
-				Name:        "pollIntervalMinutes",
-				FieldMapKey: "pollIntervalMinutes",
+				Name:   "pollIntervalMinutes",
+				Column: "poll_interval_minutes",
 			},
 			{
-				Name:        "snapshotTtlHours",
-				FieldMapKey: "snapshotTtlHours",
+				Name:   "snapshotTtlHours",
+				Column: "snapshot_ttl_hours",
 			},
 			{
-				Name:        "fullProfileTtlDays",
-				FieldMapKey: "fullProfileTtlDays",
+				Name:   "fullProfileTtlDays",
+				Column: "full_profile_ttl_days",
 			},
 			{
-				Name:        "preTenderRefreshEnabled",
-				FieldMapKey: "preTenderRefreshEnabled",
+				Name:   "preTenderRefreshEnabled",
+				Column: "pretender_refresh_enabled",
 			},
 			{
-				Name:        "preTenderMaxAgeHours",
-				FieldMapKey: "preTenderMaxAgeHours",
+				Name:   "preTenderMaxAgeHours",
+				Column: "pretender_max_age_hours",
 			},
 			{
-				Name:        "hardMaxAgeHours",
-				FieldMapKey: "hardMaxAgeHours",
+				Name:   "hardMaxAgeHours",
+				Column: "hard_max_age_hours",
 			},
 			{
-				Name:        "confirmBlockingChanges",
-				FieldMapKey: "confirmBlockingChanges",
+				Name:   "confirmBlockingChanges",
+				Column: "confirm_blocking_changes",
 			},
 			{
-				Name:        "outagePolicy",
-				FieldMapKey: "outagePolicy",
+				Name:   "outagePolicy",
+				Column: "outage_policy",
 			},
 			{
-				Name:        "autoDisqualifyOnBlock",
-				FieldMapKey: "autoDisqualifyOnBlock",
+				Name:   "autoDisqualifyOnBlock",
+				Column: "auto_disqualify_on_block",
 			},
 			{
-				Name:        "autoApplySafetyRating",
-				FieldMapKey: "autoApplySafetyRating",
+				Name:   "autoApplySafetyRating",
+				Column: "auto_apply_safety_rating",
 			},
 			{
-				Name:        "rules",
-				FieldMapKey: "rules",
+				Name:   "rules",
+				Column: "rules",
 			},
 			{
-				Name:        "autoSyncFields",
-				FieldMapKey: "autoSyncFields",
+				Name:   "autoSyncFields",
+				Column: "auto_sync_fields",
 			},
 			{
-				Name:        "monthlySpendCap",
-				FieldMapKey: "monthlySpendCap",
+				Name:   "monthlySpendCap",
+				Column: "monthly_spend_cap",
 			},
 			{
-				Name:        "softCapPercent",
-				FieldMapKey: "softCapPercent",
+				Name:   "softCapPercent",
+				Column: "soft_cap_percent",
 			},
 			{
-				Name:        "dailyFullProfileCap",
-				FieldMapKey: "dailyFullProfileCap",
+				Name:   "dailyFullProfileCap",
+				Column: "daily_full_profile_cap",
 			},
 			{
-				Name:        "rawRetentionDays",
-				FieldMapKey: "rawRetentionDays",
+				Name:   "rawRetentionDays",
+				Column: "raw_retention_days",
 			},
 			{
-				Name:        "snapshotHistoryLimit",
-				FieldMapKey: "snapshotHistoryLimit",
+				Name:   "snapshotHistoryLimit",
+				Column: "snapshot_history_limit",
 			},
 			{
-				Name:        "selfMonitoringEnabled",
-				FieldMapKey: "selfMonitoringEnabled",
+				Name:   "selfMonitoringEnabled",
+				Column: "self_monitoring_enabled",
 			},
 			{
-				Name:        "policyVersion",
-				FieldMapKey: "policyVersion",
+				Name:   "policyVersion",
+				Column: "policy_version",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CarrierIntelEventSpec = TypeSpec{
 		TypeName: "CarrierIntelEvent",
-		FieldMap: carrierintelcol.CarrierIntelEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "dotNumber",
-				FieldMapKey: "dotNumber",
+				Name:   "dotNumber",
+				Column: "dot_number",
 			},
 			{
-				Name:        "subjectName",
-				FieldMapKey: "subjectName",
+				Name:   "subjectName",
+				Column: "subject_name",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "fieldPath",
-				FieldMapKey: "fieldPath",
+				Name:   "fieldPath",
+				Column: "field_path",
 			},
 			{
-				Name:        "fieldLabel",
-				FieldMapKey: "fieldPath",
+				Name:   "fieldLabel",
+				Column: "field_path",
 			},
 			{
-				Name:        "ruleCode",
-				FieldMapKey: "ruleCode",
+				Name:   "ruleCode",
+				Column: "rule_code",
 			},
 			{
-				Name:        "ruleLabel",
-				FieldMapKey: "ruleCode",
+				Name:   "ruleLabel",
+				Column: "rule_code",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "action",
-				FieldMapKey: "action",
+				Name:   "action",
+				Column: "action",
 			},
 			{
-				Name:        "priorValue",
-				FieldMapKey: "priorValue",
+				Name:   "priorValue",
+				Column: "prior_value",
 			},
 			{
-				Name:        "currentValue",
-				FieldMapKey: "currentValue",
+				Name:   "currentValue",
+				Column: "current_value",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "vendorChangedAt",
-				FieldMapKey: "vendorChangedAt",
+				Name:   "vendorChangedAt",
+				Column: "vendor_changed_at",
 			},
 			{
-				Name:        "detectedAt",
-				FieldMapKey: "detectedAt",
+				Name:   "detectedAt",
+				Column: "detected_at",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "acknowledgedById",
-				FieldMapKey: "acknowledgedById",
+				Name:   "acknowledgedById",
+				Column: "acknowledged_by_id",
 			},
 			{
-				Name:        "acknowledgedBy",
-				FieldMapKey: "acknowledgedById",
+				Name:   "acknowledgedBy",
+				Column: "acknowledged_by_id",
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "resolvedById",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedById",
+				Column: "resolved_by_id",
 			},
 			{
-				Name:        "resolvedBy",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedBy",
+				Column: "resolved_by_id",
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "resolution",
-				FieldMapKey: "resolution",
+				Name:   "resolution",
+				Column: "resolution",
 			},
 			{
-				Name:        "resolutionNote",
-				FieldMapKey: "resolutionNote",
+				Name:   "resolutionNote",
+				Column: "resolution_note",
 			},
 			{
-				Name:        "snapshotId",
-				FieldMapKey: "snapshotId",
+				Name:   "snapshotId",
+				Column: "snapshot_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CarrierIntelFeedStateSpec = TypeSpec{
 		TypeName:      "CarrierIntelFeedState",
-		FieldMap:      carrierintelcol.CarrierIntelFeedStateFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "feedType",
-				FieldMapKey: "feedType",
+				Name:   "feedType",
+				Column: "feed_type",
 			},
 			{
-				Name:        "lastPolledAt",
-				FieldMapKey: "lastPolledAt",
+				Name:   "lastPolledAt",
+				Column: "last_polled_at",
 			},
 			{
-				Name:        "lastSuccessAt",
-				FieldMapKey: "lastSuccessAt",
+				Name:   "lastSuccessAt",
+				Column: "last_success_at",
 			},
 			{
-				Name:        "nextPollAfter",
-				FieldMapKey: "nextPollAfter",
+				Name:   "nextPollAfter",
+				Column: "next_poll_after",
 			},
 			{
-				Name:        "pausedReason",
-				FieldMapKey: "pausedReason",
+				Name:   "pausedReason",
+				Column: "paused_reason",
 			},
 			{
-				Name:        "pausedAt",
-				FieldMapKey: "pausedAt",
+				Name:   "pausedAt",
+				Column: "paused_at",
 			},
 			{
-				Name:        "failureCount",
-				FieldMapKey: "failureCount",
+				Name:   "failureCount",
+				Column: "failure_count",
 			},
 			{
-				Name:        "lastError",
-				FieldMapKey: "lastError",
+				Name:   "lastError",
+				Column: "last_error",
 			},
 		},
 	}
 
 	CarrierIntelOverrideSpec = TypeSpec{
 		TypeName: "CarrierIntelOverride",
-		FieldMap: carrierintelcol.CarrierIntelOverrideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "ruleCode",
-				FieldMapKey: "ruleCode",
+				Name:   "ruleCode",
+				Column: "rule_code",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "grantedById",
-				FieldMapKey: "grantedById",
+				Name:   "grantedById",
+				Column: "granted_by_id",
 			},
 			{
-				Name:        "grantedAt",
-				FieldMapKey: "grantedAt",
+				Name:   "grantedAt",
+				Column: "granted_at",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "revokedById",
-				FieldMapKey: "revokedById",
+				Name:   "revokedById",
+				Column: "revoked_by_id",
 			},
 			{
-				Name:        "revokedAt",
-				FieldMapKey: "revokedAt",
+				Name:   "revokedAt",
+				Column: "revoked_at",
 			},
 			{
-				Name:        "revokeReason",
-				FieldMapKey: "revokeReason",
+				Name:   "revokeReason",
+				Column: "revoke_reason",
 			},
 			{
 				Name:    "active",
 				Special: "active",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	CarrierIntelSnapshotSpec = TypeSpec{
 		TypeName: "CarrierIntelSnapshot",
-		FieldMap: carrierintelcol.CarrierIntelSnapshotFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "dotNumber",
-				FieldMapKey: "dotNumber",
+				Name:   "dotNumber",
+				Column: "dot_number",
 			},
 			{
-				Name:        "docketNumber",
-				FieldMapKey: "docketNumber",
+				Name:   "docketNumber",
+				Column: "docket_number",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "providerRef",
-				FieldMapKey: "providerRef",
+				Name:   "providerRef",
+				Column: "provider_ref",
 			},
 			{
-				Name:        "depth",
-				FieldMapKey: "depth",
+				Name:   "depth",
+				Column: "depth",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "isCurrent",
-				FieldMapKey: "isCurrent",
+				Name:   "isCurrent",
+				Column: "is_current",
 			},
 			{
-				Name:        "notFound",
-				FieldMapKey: "notFound",
+				Name:   "notFound",
+				Column: "not_found",
 			},
 			{
-				Name:        "profile",
-				FieldMapKey: "profile",
+				Name:   "profile",
+				Column: "profile",
 			},
 			{
-				Name:        "findings",
-				FieldMapKey: "findings",
+				Name:   "findings",
+				Column: "findings",
 			},
 			{
-				Name:        "blockingCodes",
-				FieldMapKey: "blockingCodes",
+				Name:   "blockingCodes",
+				Column: "blocking_codes",
 			},
 			{
-				Name:        "advisoryCodes",
-				FieldMapKey: "advisoryCodes",
+				Name:   "advisoryCodes",
+				Column: "advisory_codes",
 			},
 			{
-				Name:        "riskLevel",
-				FieldMapKey: "riskLevel",
+				Name:   "riskLevel",
+				Column: "risk_level",
 			},
 			{
-				Name:        "reviewState",
-				FieldMapKey: "reviewState",
+				Name:   "reviewState",
+				Column: "review_state",
 			},
 			{
-				Name:        "reviewedById",
-				FieldMapKey: "reviewedById",
+				Name:   "reviewedById",
+				Column: "reviewed_by_id",
 			},
 			{
-				Name:        "reviewedAt",
-				FieldMapKey: "reviewedAt",
+				Name:   "reviewedAt",
+				Column: "reviewed_at",
 			},
 			{
-				Name:        "reviewNote",
-				FieldMapKey: "reviewNote",
+				Name:   "reviewNote",
+				Column: "review_note",
 			},
 			{
-				Name:        "policyVersion",
-				FieldMapKey: "policyVersion",
+				Name:   "policyVersion",
+				Column: "policy_version",
 			},
 			{
-				Name:        "fetchedAt",
-				FieldMapKey: "fetchedAt",
+				Name:   "fetchedAt",
+				Column: "fetched_at",
 			},
 			{
-				Name:        "fetchedDepth",
-				FieldMapKey: "fetchedDepth",
+				Name:   "fetchedDepth",
+				Column: "fetched_depth",
 			},
 			{
-				Name:        "depthFetchedAt",
-				FieldMapKey: "depthFetchedAt",
+				Name:   "depthFetchedAt",
+				Column: "depth_fetched_at",
 			},
 			{
-				Name:        "sourceAsOf",
-				FieldMapKey: "sourceAsOf",
+				Name:   "sourceAsOf",
+				Column: "source_as_of",
 			},
 			{
-				Name:        "confirmedAt",
-				FieldMapKey: "confirmedAt",
+				Name:   "confirmedAt",
+				Column: "confirmed_at",
 			},
 			{
 				Name:    "effectiveAsOf",
@@ -7763,182 +7617,179 @@ func init() {
 				Special: "hasRawPayload",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	CarrierIntelUsageDaySpec = TypeSpec{
 		TypeName:      "CarrierIntelUsageDay",
-		FieldMap:      carrierintelcol.CarrierIntelUsageDailyFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "day",
-				FieldMapKey: "day",
+				Name:   "day",
+				Column: "day",
 			},
 			{
-				Name:        "endpoint",
-				FieldMapKey: "endpoint",
+				Name:   "endpoint",
+				Column: "endpoint",
 			},
 			{
-				Name:        "calls",
-				FieldMapKey: "calls",
+				Name:   "calls",
+				Column: "calls",
 			},
 			{
-				Name:        "billableUnits",
-				FieldMapKey: "billableUnits",
+				Name:   "billableUnits",
+				Column: "billable_units",
 			},
 			{
-				Name:        "estimatedCost",
-				FieldMapKey: "estimatedCost",
+				Name:   "estimatedCost",
+				Column: "estimated_cost",
 			},
 		},
 	}
 
 	CarrierIntelUsageRowSpec = TypeSpec{
 		TypeName:      "CarrierIntelUsageRow",
-		FieldMap:      carrierintelcol.CarrierIntelUsageDailyFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "endpoint",
-				FieldMapKey: "endpoint",
+				Name:   "endpoint",
+				Column: "endpoint",
 			},
 			{
-				Name:        "calls",
-				FieldMapKey: "calls",
+				Name:   "calls",
+				Column: "calls",
 			},
 			{
-				Name:        "billableUnits",
-				FieldMapKey: "billableUnits",
+				Name:   "billableUnits",
+				Column: "billable_units",
 			},
 			{
-				Name:        "estimatedCost",
-				FieldMapKey: "estimatedCost",
+				Name:   "estimatedCost",
+				Column: "estimated_cost",
 			},
 		},
 	}
 
 	CarrierInvoiceMatchSpec = TypeSpec{
 		TypeName: "CarrierInvoiceMatch",
-		FieldMap: carriersettlementcol.InvoiceMatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "ediCarrierInvoiceId",
-				FieldMapKey: "ediCarrierInvoiceId",
+				Name:   "ediCarrierInvoiceId",
+				Column: "edi_carrier_invoice_id",
 			},
 			{
-				Name:        "documentAiExtractionId",
-				FieldMapKey: "documentAiExtractionId",
+				Name:   "documentAiExtractionId",
+				Column: "document_ai_extraction_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "carrierAssignmentId",
-				FieldMapKey: "carrierAssignmentId",
+				Name:   "carrierAssignmentId",
+				Column: "carrier_assignment_id",
 			},
 			{
-				Name:        "carrierSettlementId",
-				FieldMapKey: "carrierSettlementId",
+				Name:   "carrierSettlementId",
+				Column: "carrier_settlement_id",
 			},
 			{
-				Name:        "adjustmentCostEventId",
-				FieldMapKey: "adjustmentCostEventId",
+				Name:   "adjustmentCostEventId",
+				Column: "adjustment_cost_event_id",
 			},
 			{
-				Name:        "duplicateOfMatchId",
-				FieldMapKey: "duplicateOfMatchId",
+				Name:   "duplicateOfMatchId",
+				Column: "duplicate_of_match_id",
 			},
 			{
-				Name:        "possibleDuplicateOfId",
-				FieldMapKey: "possibleDuplicateOfId",
+				Name:   "possibleDuplicateOfId",
+				Column: "possible_duplicate_of_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "matchedVia",
-				FieldMapKey: "matchedVia",
+				Name:   "matchedVia",
+				Column: "matched_via",
 			},
 			{
-				Name:        "invoiceNumber",
-				FieldMapKey: "invoiceNumber",
+				Name:   "invoiceNumber",
+				Column: "invoice_number",
 			},
 			{
-				Name:        "invoiceTotalMinor",
-				FieldMapKey: "invoiceTotalMinor",
+				Name:   "invoiceTotalMinor",
+				Column: "invoice_total_minor",
 			},
 			{
-				Name:        "expectedTotalMinor",
-				FieldMapKey: "expectedTotalMinor",
+				Name:   "expectedTotalMinor",
+				Column: "expected_total_minor",
 			},
 			{
-				Name:        "varianceMinor",
-				FieldMapKey: "varianceMinor",
+				Name:   "varianceMinor",
+				Column: "variance_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "resolutionNote",
-				FieldMapKey: "resolutionNote",
+				Name:   "resolutionNote",
+				Column: "resolution_note",
 			},
 			{
-				Name:        "resolvedById",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedById",
+				Column: "resolved_by_id",
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "carrier",
-				FieldMapKey: "businessUnitId",
+				Name:   "carrier",
+				Column: "carrier_id",
 				Relation: &RelationSpec{
 					Target: &CarrierSpec,
 				},
 			},
 			{
-				Name:        "carrierAssignment",
-				FieldMapKey: "businessUnitId",
+				Name:   "carrierAssignment",
+				Column: "carrier_assignment_id",
 				Relation: &RelationSpec{
 					Target: &CarrierAssignmentSpec,
 				},
@@ -7948,7 +7799,6 @@ func init() {
 
 	CarrierInvoiceMatchListSpec = TypeSpec{
 		TypeName: "CarrierInvoiceMatchList",
-		FieldMap: invoiceadjustmentcol.InvoiceAdjustmentBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -7961,361 +7811,362 @@ func init() {
 				},
 			},
 			{
-				Name:        "totalCount",
-				FieldMapKey: "totalCount",
+				Name:   "totalCount",
+				Column: "total_count",
+			},
+			{
+				Name:    "totalCountExact",
+				Special: "totalCountExact",
 			},
 		},
 	}
 
 	CarrierLedgerEntrySpec = TypeSpec{
 		TypeName: "CarrierLedgerEntry",
-		FieldMap: carriersettlementcol.LedgerEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "entryType",
-				FieldMapKey: "entryType",
+				Name:   "entryType",
+				Column: "entry_type",
 			},
 			{
-				Name:        "sourceObjectType",
-				FieldMapKey: "sourceObjectType",
+				Name:   "sourceObjectType",
+				Column: "source_object_type",
 			},
 			{
-				Name:        "sourceObjectId",
-				FieldMapKey: "sourceObjectId",
+				Name:   "sourceObjectId",
+				Column: "source_object_id",
 			},
 			{
-				Name:        "sourceEventType",
-				FieldMapKey: "sourceEventType",
+				Name:   "sourceEventType",
+				Column: "source_event_type",
 			},
 			{
-				Name:        "relatedSettlementId",
-				FieldMapKey: "relatedSettlementId",
+				Name:   "relatedSettlementId",
+				Column: "related_settlement_id",
 			},
 			{
-				Name:        "journalBatchId",
-				FieldMapKey: "journalBatchId",
+				Name:   "journalBatchId",
+				Column: "journal_batch_id",
 			},
 			{
-				Name:        "documentNumber",
-				FieldMapKey: "documentNumber",
+				Name:   "documentNumber",
+				Column: "document_number",
 			},
 			{
-				Name:        "transactionDate",
-				FieldMapKey: "transactionDate",
+				Name:   "transactionDate",
+				Column: "transaction_date",
 			},
 			{
-				Name:        "lineNumber",
-				FieldMapKey: "lineNumber",
+				Name:   "lineNumber",
+				Column: "line_number",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	CarrierMonitoringEnrollmentSpec = TypeSpec{
 		TypeName: "CarrierMonitoringEnrollment",
-		FieldMap: carrierintelcol.CarrierMonitoringEnrollmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "subjectName",
-				FieldMapKey: "subjectName",
+				Name:   "subjectName",
+				Column: "subject_name",
 			},
 			{
-				Name:        "dotNumber",
-				FieldMapKey: "dotNumber",
+				Name:   "dotNumber",
+				Column: "dot_number",
 			},
 			{
-				Name:        "docketNumber",
-				FieldMapKey: "docketNumber",
+				Name:   "docketNumber",
+				Column: "docket_number",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "providerRef",
-				FieldMapKey: "providerRef",
+				Name:   "providerRef",
+				Column: "provider_ref",
 			},
 			{
-				Name:        "mode",
-				FieldMapKey: "mode",
+				Name:   "mode",
+				Column: "mode",
 			},
 			{
-				Name:        "desiredState",
-				FieldMapKey: "desiredState",
+				Name:   "desiredState",
+				Column: "desired_state",
 			},
 			{
-				Name:        "vendorState",
-				FieldMapKey: "vendorState",
+				Name:   "vendorState",
+				Column: "vendor_state",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "ownedByTrenova",
-				FieldMapKey: "ownedByTrenova",
+				Name:   "ownedByTrenova",
+				Column: "owned_by_trenova",
 			},
 			{
-				Name:        "enrolledAt",
-				FieldMapKey: "enrolledAt",
+				Name:   "enrolledAt",
+				Column: "enrolled_at",
 			},
 			{
-				Name:        "unenrolledAt",
-				FieldMapKey: "unenrolledAt",
+				Name:   "unenrolledAt",
+				Column: "unenrolled_at",
 			},
 			{
-				Name:        "lastSyncedAt",
-				FieldMapKey: "lastSyncedAt",
+				Name:   "lastSyncedAt",
+				Column: "last_synced_at",
 			},
 			{
-				Name:        "lastConfirmedAt",
-				FieldMapKey: "lastConfirmedAt",
+				Name:   "lastConfirmedAt",
+				Column: "last_confirmed_at",
 			},
 			{
-				Name:        "lastUsedAt",
-				FieldMapKey: "lastUsedAt",
+				Name:   "lastUsedAt",
+				Column: "last_used_at",
 			},
 			{
-				Name:        "failureCount",
-				FieldMapKey: "failureCount",
+				Name:   "failureCount",
+				Column: "failure_count",
 			},
 			{
-				Name:        "lastError",
-				FieldMapKey: "lastError",
+				Name:   "lastError",
+				Column: "last_error",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CarrierSettlementSpec = TypeSpec{
 		TypeName: "CarrierSettlement",
-		FieldMap: carriersettlementcol.CarrierSettlementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "batchId",
-				FieldMapKey: "batchId",
+				Name:   "batchId",
+				Column: "batch_id",
 			},
 			{
-				Name:        "settlementNumber",
-				FieldMapKey: "settlementNumber",
+				Name:   "settlementNumber",
+				Column: "settlement_number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "payDate",
-				FieldMapKey: "payDate",
+				Name:   "payDate",
+				Column: "pay_date",
 			},
 			{
-				Name:        "grossCostMinor",
-				FieldMapKey: "grossCostMinor",
+				Name:   "grossCostMinor",
+				Column: "gross_cost_minor",
 			},
 			{
-				Name:        "adjustmentsMinor",
-				FieldMapKey: "adjustmentsMinor",
+				Name:   "adjustmentsMinor",
+				Column: "adjustments_minor",
 			},
 			{
-				Name:        "netPayableMinor",
-				FieldMapKey: "netPayableMinor",
+				Name:   "netPayableMinor",
+				Column: "net_payable_minor",
 			},
 			{
-				Name:        "shipmentCount",
-				FieldMapKey: "shipmentCount",
+				Name:   "shipmentCount",
+				Column: "shipment_count",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "exchangeRate",
-				FieldMapKey: "exchangeRate",
+				Name:   "exchangeRate",
+				Column: "exchange_rate",
 			},
 			{
-				Name:        "exchangeRateDate",
-				FieldMapKey: "exchangeRateDate",
+				Name:   "exchangeRateDate",
+				Column: "exchange_rate_date",
 			},
 			{
-				Name:        "paidExchangeRate",
-				FieldMapKey: "paidExchangeRate",
+				Name:   "paidExchangeRate",
+				Column: "paid_exchange_rate",
 			},
 			{
-				Name:        "paidExchangeRateDate",
-				FieldMapKey: "paidExchangeRateDate",
+				Name:   "paidExchangeRateDate",
+				Column: "paid_exchange_rate_date",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "submittedById",
-				FieldMapKey: "submittedById",
+				Name:   "submittedById",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "postedById",
-				FieldMapKey: "postedById",
+				Name:   "postedById",
+				Column: "posted_by_id",
 			},
 			{
-				Name:        "postedAt",
-				FieldMapKey: "postedAt",
+				Name:   "postedAt",
+				Column: "posted_at",
 			},
 			{
-				Name:        "postedJournalBatchId",
-				FieldMapKey: "postedJournalBatchId",
+				Name:   "postedJournalBatchId",
+				Column: "posted_journal_batch_id",
 			},
 			{
-				Name:        "paidAt",
-				FieldMapKey: "paidAt",
+				Name:   "paidAt",
+				Column: "paid_at",
 			},
 			{
-				Name:        "paidById",
-				FieldMapKey: "paidById",
+				Name:   "paidById",
+				Column: "paid_by_id",
 			},
 			{
-				Name:        "paymentMethod",
-				FieldMapKey: "paymentMethod",
+				Name:   "paymentMethod",
+				Column: "payment_method",
 			},
 			{
-				Name:        "paymentReference",
-				FieldMapKey: "paymentReference",
+				Name:   "paymentReference",
+				Column: "payment_reference",
 			},
 			{
-				Name:        "paidJournalBatchId",
-				FieldMapKey: "paidJournalBatchId",
+				Name:   "paidJournalBatchId",
+				Column: "paid_journal_batch_id",
 			},
 			{
-				Name:        "voidedById",
-				FieldMapKey: "voidedById",
+				Name:   "voidedById",
+				Column: "voided_by_id",
 			},
 			{
-				Name:        "voidedAt",
-				FieldMapKey: "voidedAt",
+				Name:   "voidedAt",
+				Column: "voided_at",
 			},
 			{
-				Name:        "voidReason",
-				FieldMapKey: "voidReason",
+				Name:   "voidReason",
+				Column: "void_reason",
 			},
 			{
-				Name:        "voidJournalBatchId",
-				FieldMapKey: "voidJournalBatchId",
+				Name:   "voidJournalBatchId",
+				Column: "void_journal_batch_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "carrier",
-				FieldMapKey: "businessUnitId",
+				Name:   "carrier",
+				Column: "carrier_id",
 				Relation: &RelationSpec{
 					Target: &CarrierSpec,
 				},
@@ -8339,119 +8190,118 @@ func init() {
 				Special: "moveInvoices",
 			},
 			{
-				Name:        "submittedBy",
-				FieldMapKey: "submittedById",
+				Name:   "submittedBy",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "approvedBy",
-				FieldMapKey: "approvedById",
+				Name:   "approvedBy",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "postedBy",
-				FieldMapKey: "postedById",
+				Name:   "postedBy",
+				Column: "posted_by_id",
 			},
 			{
-				Name:        "paidBy",
-				FieldMapKey: "paidById",
+				Name:   "paidBy",
+				Column: "paid_by_id",
 			},
 			{
-				Name:        "voidedBy",
-				FieldMapKey: "voidedById",
+				Name:   "voidedBy",
+				Column: "voided_by_id",
 			},
 		},
 	}
 
 	CarrierSettlementBatchSpec = TypeSpec{
 		TypeName: "CarrierSettlementBatch",
-		FieldMap: carriersettlementcol.CarrierSettlementBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "payDate",
-				FieldMapKey: "payDate",
+				Name:   "payDate",
+				Column: "pay_date",
 			},
 			{
-				Name:        "settlementCount",
-				FieldMapKey: "settlementCount",
+				Name:   "settlementCount",
+				Column: "settlement_count",
 			},
 			{
-				Name:        "totalGrossMinor",
-				FieldMapKey: "totalGrossMinor",
+				Name:   "totalGrossMinor",
+				Column: "total_gross_minor",
 			},
 			{
-				Name:        "totalNetMinor",
-				FieldMapKey: "totalNetMinor",
+				Name:   "totalNetMinor",
+				Column: "total_net_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "generatedById",
-				FieldMapKey: "generatedById",
+				Name:   "generatedById",
+				Column: "generated_by_id",
 			},
 			{
-				Name:        "generatedAt",
-				FieldMapKey: "generatedAt",
+				Name:   "generatedAt",
+				Column: "generated_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "canceledById",
-				FieldMapKey: "canceledById",
+				Name:   "canceledById",
+				Column: "canceled_by_id",
 			},
 			{
-				Name:        "canceledAt",
-				FieldMapKey: "canceledAt",
+				Name:   "canceledAt",
+				Column: "canceled_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "settlements",
@@ -8464,264 +8314,260 @@ func init() {
 
 	CarrierSettlementControlSpec = TypeSpec{
 		TypeName: "CarrierSettlementControl",
-		FieldMap: tenantcol.CarrierSettlementControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "payTrigger",
-				FieldMapKey: "payTrigger",
+				Name:   "payTrigger",
+				Column: "pay_trigger",
 			},
 			{
-				Name:        "payPeriodFrequency",
-				FieldMapKey: "payPeriodFrequency",
+				Name:   "payPeriodFrequency",
+				Column: "pay_period_frequency",
 			},
 			{
-				Name:        "periodEndDayOfWeek",
-				FieldMapKey: "periodEndDayOfWeek",
+				Name:   "periodEndDayOfWeek",
+				Column: "period_end_day_of_week",
 			},
 			{
-				Name:        "payDelayDays",
-				FieldMapKey: "payDelayDays",
+				Name:   "payDelayDays",
+				Column: "pay_delay_days",
 			},
 			{
-				Name:        "autoGenerateBatches",
-				FieldMapKey: "autoGenerateBatches",
+				Name:   "autoGenerateBatches",
+				Column: "auto_generate_batches",
 			},
 			{
-				Name:        "autoPostOnApprove",
-				FieldMapKey: "autoPostOnApprove",
+				Name:   "autoPostOnApprove",
+				Column: "auto_post_on_approve",
 			},
 			{
-				Name:        "varianceToleranceMinor",
-				FieldMapKey: "varianceToleranceMinor",
+				Name:   "varianceToleranceMinor",
+				Column: "variance_tolerance_minor",
 			},
 			{
-				Name:        "autoMatchInboundInvoices",
-				FieldMapKey: "autoMatchInboundInvoices",
+				Name:   "autoMatchInboundInvoices",
+				Column: "auto_match_inbound_invoices",
 			},
 			{
-				Name:        "autoAcceptWithinTolerance",
-				FieldMapKey: "autoAcceptWithinTolerance",
+				Name:   "autoAcceptWithinTolerance",
+				Column: "auto_accept_within_tolerance",
 			},
 			{
-				Name:        "holdUntilInvoiceMatched",
-				FieldMapKey: "holdUntilInvoiceMatched",
+				Name:   "holdUntilInvoiceMatched",
+				Column: "hold_until_invoice_matched",
 			},
 			{
-				Name:        "defaultApAccountId",
-				FieldMapKey: "defaultApAccountId",
+				Name:   "defaultApAccountId",
+				Column: "default_ap_account_id",
 			},
 			{
-				Name:        "defaultPurchasedTransportationAccountId",
-				FieldMapKey: "defaultPurchasedTransportationAccountId",
+				Name:   "defaultPurchasedTransportationAccountId",
+				Column: "default_purchased_transportation_account_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CarrierSettlementLineSpec = TypeSpec{
 		TypeName: "CarrierSettlementLine",
-		FieldMap: carriersettlementcol.CarrierSettlementLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "settlementId",
-				FieldMapKey: "settlementId",
+				Name:   "settlementId",
+				Column: "settlement_id",
 			},
 			{
-				Name:        "lineNumber",
-				FieldMapKey: "lineNumber",
+				Name:   "lineNumber",
+				Column: "line_number",
 			},
 			{
-				Name:        "eventType",
-				FieldMapKey: "eventType",
+				Name:   "eventType",
+				Column: "event_type",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "costEventId",
-				FieldMapKey: "costEventId",
+				Name:   "costEventId",
+				Column: "cost_event_id",
 			},
 			{
-				Name:        "glAccountId",
-				FieldMapKey: "glAccountId",
+				Name:   "glAccountId",
+				Column: "gl_account_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "moveId",
-				FieldMapKey: "moveId",
+				Name:   "moveId",
+				Column: "move_id",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 		},
 	}
 
 	CarrierTrackingLinkSpec = TypeSpec{
 		TypeName: "CarrierTrackingLink",
-		FieldMap: checkcallcol.TrackingLinkFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "recipientEmail",
-				FieldMapKey: "recipientEmail",
+				Name:   "recipientEmail",
+				Column: "recipient_email",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "lastUsedAt",
-				FieldMapKey: "lastUsedAt",
+				Name:   "lastUsedAt",
+				Column: "last_used_at",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	ChargeAllocationSpec = TypeSpec{
 		TypeName: "ChargeAllocation",
-		FieldMap: shipmentcol.ChargeAllocationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "additionalChargeId",
-				FieldMapKey: "additionalChargeId",
+				Name:   "additionalChargeId",
+				Column: "additional_charge_id",
 			},
 			{
-				Name:        "orderChargeId",
-				FieldMapKey: "orderChargeId",
+				Name:   "orderChargeId",
+				Column: "order_charge_id",
 			},
 			{
-				Name:        "chargeKind",
-				FieldMapKey: "chargeKind",
+				Name:   "chargeKind",
+				Column: "charge_kind",
 			},
 			{
-				Name:        "billToCustomerId",
-				FieldMapKey: "billToCustomerId",
+				Name:   "billToCustomerId",
+				Column: "bill_to_customer_id",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "percent",
-				FieldMapKey: "percent",
+				Name:   "percent",
+				Column: "percent",
 			},
 			{
-				Name:        "amount",
-				FieldMapKey: "amount",
+				Name:   "amount",
+				Column: "amount",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "invoiceId",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "invoicedAt",
-				FieldMapKey: "invoicedAt",
+				Name:   "invoicedAt",
+				Column: "invoiced_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "billToCustomer",
-				FieldMapKey: "billToCustomerId",
+				Name:   "billToCustomer",
+				Column: "bill_to_customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
@@ -8731,185 +8577,183 @@ func init() {
 
 	CheckCallSpec = TypeSpec{
 		TypeName: "CheckCall",
-		FieldMap: checkcallcol.CheckCallFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
+				Name:   "stopId",
+				Column: "stop_id",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "reportedAt",
-				FieldMapKey: "reportedAt",
+				Name:   "reportedAt",
+				Column: "reported_at",
 			},
 			{
-				Name:        "receivedAt",
-				FieldMapKey: "receivedAt",
+				Name:   "receivedAt",
+				Column: "received_at",
 			},
 			{
-				Name:        "latitude",
-				FieldMapKey: "latitude",
+				Name:   "latitude",
+				Column: "latitude",
 			},
 			{
-				Name:        "longitude",
-				FieldMapKey: "longitude",
+				Name:   "longitude",
+				Column: "longitude",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "stateCode",
-				FieldMapKey: "stateCode",
+				Name:   "stateCode",
+				Column: "state_code",
 			},
 			{
-				Name:        "delayed",
-				FieldMapKey: "delayed",
+				Name:   "delayed",
+				Column: "delayed",
 			},
 			{
-				Name:        "delayReason",
-				FieldMapKey: "delayReason",
+				Name:   "delayReason",
+				Column: "delay_reason",
 			},
 			{
-				Name:        "estimatedArrival",
-				FieldMapKey: "estimatedArrival",
+				Name:   "estimatedArrival",
+				Column: "estimated_arrival",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "contactName",
-				FieldMapKey: "contactName",
+				Name:   "contactName",
+				Column: "contact_name",
 			},
 			{
-				Name:        "reportedById",
-				FieldMapKey: "reportedById",
+				Name:   "reportedById",
+				Column: "reported_by_id",
 			},
 			{
-				Name:        "trackingEventId",
-				FieldMapKey: "trackingEventId",
+				Name:   "trackingEventId",
+				Column: "tracking_event_id",
 			},
 		},
 	}
 
 	CommoditySpec = TypeSpec{
 		TypeName: "Commodity",
-		FieldMap: commoditycol.CommodityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "hazardousMaterialId",
-				FieldMapKey: "hazardousMaterialId",
+				Name:   "hazardousMaterialId",
+				Column: "hazardous_material_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "minTemperature",
-				FieldMapKey: "minTemperature",
+				Name:   "minTemperature",
+				Column: "min_temperature",
 			},
 			{
-				Name:        "maxTemperature",
-				FieldMapKey: "maxTemperature",
+				Name:   "maxTemperature",
+				Column: "max_temperature",
 			},
 			{
-				Name:        "weightPerUnit",
-				FieldMapKey: "weightPerUnit",
+				Name:   "weightPerUnit",
+				Column: "weight_per_unit",
 			},
 			{
-				Name:        "linearFeetPerUnit",
-				FieldMapKey: "linearFeetPerUnit",
+				Name:   "linearFeetPerUnit",
+				Column: "linear_feet_per_unit",
 			},
 			{
-				Name:        "maxQuantityPerShipment",
-				FieldMapKey: "maxQuantityPerShipment",
+				Name:   "maxQuantityPerShipment",
+				Column: "max_quantity_per_shipment",
 			},
 			{
-				Name:        "freightClass",
-				FieldMapKey: "freightClass",
+				Name:   "freightClass",
+				Column: "freight_class",
 			},
 			{
-				Name:        "loadingInstructions",
-				FieldMapKey: "loadingInstructions",
+				Name:   "loadingInstructions",
+				Column: "loading_instructions",
 			},
 			{
-				Name:        "stackable",
-				FieldMapKey: "stackable",
+				Name:   "stackable",
+				Column: "stackable",
 			},
 			{
-				Name:        "fragile",
-				FieldMapKey: "fragile",
+				Name:   "fragile",
+				Column: "fragile",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -8919,51 +8763,50 @@ func init() {
 
 	CostCategorySpec = TypeSpec{
 		TypeName: "CostCategory",
-		FieldMap: costingcontrolcol.CostCategoryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "costBehavior",
-				FieldMapKey: "costBehavior",
+				Name:   "costBehavior",
+				Column: "cost_behavior",
 			},
 			{
-				Name:        "rateSource",
-				FieldMapKey: "rateSource",
+				Name:   "rateSource",
+				Column: "rate_source",
 			},
 			{
-				Name:        "benchmarkRatePerMile",
-				FieldMapKey: "benchmarkRatePerMile",
+				Name:   "benchmarkRatePerMile",
+				Column: "benchmark_rate_per_mile",
 			},
 			{
-				Name:        "overrideRatePerMile",
-				FieldMapKey: "overrideRatePerMile",
+				Name:   "overrideRatePerMile",
+				Column: "override_rate_per_mile",
 			},
 			{
-				Name:        "isActive",
-				FieldMapKey: "isActive",
+				Name:   "isActive",
+				Column: "is_active",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
 				Name:    "glAccounts",
@@ -8974,74 +8817,73 @@ func init() {
 
 	CostingControlSpec = TypeSpec{
 		TypeName: "CostingControl",
-		FieldMap: costingcontrolcol.CostingControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "fuelIndexId",
-				FieldMapKey: "fuelIndexId",
+				Name:   "fuelIndexId",
+				Column: "fuel_index_id",
 			},
 			{
-				Name:        "fuelIndex",
-				FieldMapKey: "fuelIndexId",
+				Name:   "fuelIndex",
+				Column: "fuel_index_id",
 				Relation: &RelationSpec{
 					Target: &FuelIndexSpec,
 				},
 			},
 			{
-				Name:        "useLiveFuelPrice",
-				FieldMapKey: "useLiveFuelPrice",
+				Name:   "useLiveFuelPrice",
+				Column: "use_live_fuel_price",
 			},
 			{
-				Name:        "milesPerGallon",
-				FieldMapKey: "milesPerGallon",
+				Name:   "milesPerGallon",
+				Column: "miles_per_gallon",
 			},
 			{
-				Name:        "includeDeadheadMiles",
-				FieldMapKey: "includeDeadheadMiles",
+				Name:   "includeDeadheadMiles",
+				Column: "include_deadhead_miles",
 			},
 			{
-				Name:        "glActualsEnabled",
-				FieldMapKey: "glActualsEnabled",
+				Name:   "glActualsEnabled",
+				Column: "gl_actuals_enabled",
 			},
 			{
-				Name:        "glRollingMonths",
-				FieldMapKey: "glRollingMonths",
+				Name:   "glRollingMonths",
+				Column: "gl_rolling_months",
 			},
 			{
-				Name:        "plannedMonthlyMiles",
-				FieldMapKey: "plannedMonthlyMiles",
+				Name:   "plannedMonthlyMiles",
+				Column: "planned_monthly_miles",
 			},
 			{
-				Name:        "targetMarginPercent",
-				FieldMapKey: "targetMarginPercent",
+				Name:   "targetMarginPercent",
+				Column: "target_margin_percent",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "categories",
@@ -9054,71 +8896,70 @@ func init() {
 
 	CreditMemoApplicationSpec = TypeSpec{
 		TypeName: "CreditMemoApplication",
-		FieldMap: customerpaymentcol.CreditMemoApplicationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "creditMemoInvoiceId",
-				FieldMapKey: "creditMemoInvoiceId",
+				Name:   "creditMemoInvoiceId",
+				Column: "credit_memo_invoice_id",
 			},
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "invoiceId",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "appliedAmountMinor",
-				FieldMapKey: "appliedAmountMinor",
+				Name:   "appliedAmountMinor",
+				Column: "applied_amount_minor",
 			},
 			{
-				Name:        "accountingDate",
-				FieldMapKey: "accountingDate",
+				Name:   "accountingDate",
+				Column: "accounting_date",
 			},
 			{
-				Name:        "lineNumber",
-				FieldMapKey: "lineNumber",
+				Name:   "lineNumber",
+				Column: "line_number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "unappliedAt",
-				FieldMapKey: "unappliedAt",
+				Name:   "unappliedAt",
+				Column: "unapplied_at",
 			},
 			{
-				Name:        "unappliedById",
-				FieldMapKey: "unappliedById",
+				Name:   "unappliedById",
+				Column: "unapplied_by_id",
 			},
 			{
-				Name:        "unappliedReason",
-				FieldMapKey: "unappliedReason",
+				Name:   "unappliedReason",
+				Column: "unapplied_reason",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "creditMemo",
@@ -9133,212 +8974,210 @@ func init() {
 
 	CustomFieldDefinitionSpec = TypeSpec{
 		TypeName: "CustomFieldDefinition",
-		FieldMap: customfieldcol.CustomFieldDefinitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "resourceType",
-				FieldMapKey: "resourceType",
+				Name:   "resourceType",
+				Column: "resource_type",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "label",
-				FieldMapKey: "label",
+				Name:   "label",
+				Column: "label",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "fieldType",
-				FieldMapKey: "fieldType",
+				Name:   "fieldType",
+				Column: "field_type",
 			},
 			{
-				Name:        "isRequired",
-				FieldMapKey: "isRequired",
+				Name:   "isRequired",
+				Column: "is_required",
 			},
 			{
-				Name:        "isActive",
-				FieldMapKey: "isActive",
+				Name:   "isActive",
+				Column: "is_active",
 			},
 			{
-				Name:        "displayOrder",
-				FieldMapKey: "displayOrder",
+				Name:   "displayOrder",
+				Column: "display_order",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "options",
-				FieldMapKey: "options",
+				Name:   "options",
+				Column: "options",
 			},
 			{
-				Name:        "validationRules",
-				FieldMapKey: "validationRules",
+				Name:   "validationRules",
+				Column: "validation_rules",
 			},
 			{
-				Name:        "defaultValue",
-				FieldMapKey: "defaultValue",
+				Name:   "defaultValue",
+				Column: "default_value",
 			},
 			{
-				Name:        "uiAttributes",
-				FieldMapKey: "uiAttributes",
+				Name:   "uiAttributes",
+				Column: "ui_attributes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CustomerSpec = TypeSpec{
 		TypeName: "Customer",
-		FieldMap: customercol.CustomerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "addressLine1",
-				FieldMapKey: "addressLine1",
+				Name:   "addressLine1",
+				Column: "address_line_1",
 			},
 			{
-				Name:        "addressLine2",
-				FieldMapKey: "addressLine2",
+				Name:   "addressLine2",
+				Column: "address_line_2",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "postalCode",
-				FieldMapKey: "postalCode",
+				Name:   "postalCode",
+				Column: "postal_code",
 			},
 			{
-				Name:        "isGeocoded",
-				FieldMapKey: "isGeocoded",
+				Name:   "isGeocoded",
+				Column: "is_geocoded",
 			},
 			{
-				Name:        "longitude",
-				FieldMapKey: "longitude",
+				Name:   "longitude",
+				Column: "longitude",
 			},
 			{
-				Name:        "latitude",
-				FieldMapKey: "latitude",
+				Name:   "latitude",
+				Column: "latitude",
 			},
 			{
-				Name:        "placeId",
-				FieldMapKey: "placeId",
+				Name:   "placeId",
+				Column: "place_id",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "allowConsolidation",
-				FieldMapKey: "allowConsolidation",
+				Name:   "allowConsolidation",
+				Column: "allow_consolidation",
 			},
 			{
-				Name:        "exclusiveConsolidation",
-				FieldMapKey: "exclusiveConsolidation",
+				Name:   "exclusiveConsolidation",
+				Column: "exclusive_consolidation",
 			},
 			{
-				Name:        "consolidationPriority",
-				FieldMapKey: "consolidationPriority",
+				Name:   "consolidationPriority",
+				Column: "consolidation_priority",
 			},
 			{
-				Name:        "statusUpdatePreference",
-				FieldMapKey: "statusUpdatePreference",
+				Name:   "statusUpdatePreference",
+				Column: "status_update_preference",
 			},
 			{
-				Name:        "statusUpdateRecipients",
-				FieldMapKey: "statusUpdateRecipients",
+				Name:   "statusUpdateRecipients",
+				Column: "status_update_recipients",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
@@ -9356,16 +9195,16 @@ func init() {
 				},
 			},
 			{
-				Name:        "dotNumber",
-				FieldMapKey: "dotNumber",
+				Name:   "dotNumber",
+				Column: "dot_number",
 			},
 			{
-				Name:        "mcNumber",
-				FieldMapKey: "mcNumber",
+				Name:   "mcNumber",
+				Column: "mc_number",
 			},
 			{
-				Name:        "brokerVettingEnabled",
-				FieldMapKey: "brokerVettingEnabled",
+				Name:   "brokerVettingEnabled",
+				Column: "broker_vetting_enabled",
 			},
 			{
 				Name:    "brokerIntelligence",
@@ -9376,255 +9215,254 @@ func init() {
 
 	CustomerBillingProfileSpec = TypeSpec{
 		TypeName: "CustomerBillingProfile",
-		FieldMap: customercol.CustomerBillingProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "invoiceDelivery",
-				FieldMapKey: "invoiceDelivery",
+				Name:   "invoiceDelivery",
+				Column: "invoice_delivery",
 			},
 			{
-				Name:        "billingCycle",
-				FieldMapKey: "billingCycle",
+				Name:   "billingCycle",
+				Column: "billing_cycle",
 			},
 			{
-				Name:        "billingCycleAnchorDay",
-				FieldMapKey: "billingCycleAnchorDay",
+				Name:   "billingCycleAnchorDay",
+				Column: "billing_cycle_anchor_day",
 			},
 			{
-				Name:        "billingCycleTimezone",
-				FieldMapKey: "billingCycleTimezone",
+				Name:   "billingCycleTimezone",
+				Column: "billing_cycle_timezone",
 			},
 			{
-				Name:        "lastBilledPeriodEnd",
-				FieldMapKey: "lastBilledPeriodEnd",
+				Name:   "lastBilledPeriodEnd",
+				Column: "last_billed_period_end",
 			},
 			{
-				Name:        "splitBy",
-				FieldMapKey: "splitBy",
+				Name:   "splitBy",
+				Column: "split_by",
 			},
 			{
-				Name:        "sectionBy",
-				FieldMapKey: "sectionBy",
+				Name:   "sectionBy",
+				Column: "section_by",
 			},
 			{
-				Name:        "invoiceDetail",
-				FieldMapKey: "invoiceDetail",
+				Name:   "invoiceDetail",
+				Column: "invoice_detail",
 			},
 			{
-				Name:        "minConsolidatedAmount",
-				FieldMapKey: "minConsolidatedAmount",
+				Name:   "minConsolidatedAmount",
+				Column: "min_consolidated_amount",
 			},
 			{
-				Name:        "maxShipmentsPerInvoice",
-				FieldMapKey: "maxShipmentsPerInvoice",
+				Name:   "maxShipmentsPerInvoice",
+				Column: "max_shipments_per_invoice",
 			},
 			{
-				Name:        "paymentTerm",
-				FieldMapKey: "paymentTerm",
+				Name:   "paymentTerm",
+				Column: "payment_term",
 			},
 			{
-				Name:        "hasBillingControlOverrides",
-				FieldMapKey: "hasBillingControlOverrides",
+				Name:   "hasBillingControlOverrides",
+				Column: "has_billing_control_overrides",
 			},
 			{
-				Name:        "creditLimit",
-				FieldMapKey: "creditLimit",
+				Name:   "creditLimit",
+				Column: "credit_limit",
 			},
 			{
-				Name:        "creditBalance",
-				FieldMapKey: "creditBalance",
+				Name:   "creditBalance",
+				Column: "credit_balance",
 			},
 			{
-				Name:        "creditStatus",
-				FieldMapKey: "creditStatus",
+				Name:   "creditStatus",
+				Column: "credit_status",
 			},
 			{
-				Name:        "enforceCreditLimit",
-				FieldMapKey: "enforceCreditLimit",
+				Name:   "enforceCreditLimit",
+				Column: "enforce_credit_limit",
 			},
 			{
-				Name:        "autoCreditHold",
-				FieldMapKey: "autoCreditHold",
+				Name:   "autoCreditHold",
+				Column: "auto_credit_hold",
 			},
 			{
-				Name:        "creditHoldReason",
-				FieldMapKey: "creditHoldReason",
+				Name:   "creditHoldReason",
+				Column: "credit_hold_reason",
 			},
 			{
-				Name:        "creditHoldAutomatic",
-				FieldMapKey: "creditHoldAutomatic",
+				Name:   "creditHoldAutomatic",
+				Column: "credit_hold_automatic",
 			},
 			{
-				Name:        "creditReviewedAt",
-				FieldMapKey: "creditReviewedAt",
+				Name:   "creditReviewedAt",
+				Column: "credit_reviewed_at",
 			},
 			{
-				Name:        "autoSendInvoiceOnGeneration",
-				FieldMapKey: "autoSendInvoiceOnGeneration",
+				Name:   "autoSendInvoiceOnGeneration",
+				Column: "auto_send_invoice_on_generation",
 			},
 			{
-				Name:        "sendPaymentReminders",
-				FieldMapKey: "sendPaymentReminders",
+				Name:   "sendPaymentReminders",
+				Column: "send_payment_reminders",
 			},
 			{
-				Name:        "sendStatements",
-				FieldMapKey: "sendStatements",
+				Name:   "sendStatements",
+				Column: "send_statements",
 			},
 			{
-				Name:        "emailInvoiceEnabled",
-				FieldMapKey: "emailInvoiceEnabled",
+				Name:   "emailInvoiceEnabled",
+				Column: "email_invoice_enabled",
 			},
 			{
-				Name:        "ediInvoiceEnabled",
-				FieldMapKey: "ediInvoiceEnabled",
+				Name:   "ediInvoiceEnabled",
+				Column: "edi_invoice_enabled",
 			},
 			{
-				Name:        "invoiceNumberFormat",
-				FieldMapKey: "invoiceNumberFormat",
+				Name:   "invoiceNumberFormat",
+				Column: "invoice_number_format",
 			},
 			{
-				Name:        "customerInvoicePrefix",
-				FieldMapKey: "customerInvoicePrefix",
+				Name:   "customerInvoicePrefix",
+				Column: "customer_invoice_prefix",
 			},
 			{
-				Name:        "invoiceCopies",
-				FieldMapKey: "invoiceCopies",
+				Name:   "invoiceCopies",
+				Column: "invoice_copies",
 			},
 			{
-				Name:        "revenueAccountId",
-				FieldMapKey: "revenueAccountId",
+				Name:   "revenueAccountId",
+				Column: "revenue_account_id",
 			},
 			{
-				Name:        "arAccountId",
-				FieldMapKey: "arAccountId",
+				Name:   "arAccountId",
+				Column: "ar_account_id",
 			},
 			{
-				Name:        "applyLateCharges",
-				FieldMapKey: "applyLateCharges",
+				Name:   "applyLateCharges",
+				Column: "apply_late_charges",
 			},
 			{
-				Name:        "lateChargeRate",
-				FieldMapKey: "lateChargeRate",
+				Name:   "lateChargeRate",
+				Column: "late_charge_rate",
 			},
 			{
-				Name:        "gracePeriodDays",
-				FieldMapKey: "gracePeriodDays",
+				Name:   "gracePeriodDays",
+				Column: "grace_period_days",
 			},
 			{
-				Name:        "taxExempt",
-				FieldMapKey: "taxExempt",
+				Name:   "taxExempt",
+				Column: "tax_exempt",
 			},
 			{
-				Name:        "taxExemptNumber",
-				FieldMapKey: "taxExemptNumber",
+				Name:   "taxExemptNumber",
+				Column: "tax_exempt_number",
 			},
 			{
-				Name:        "enforceCustomerBillingReq",
-				FieldMapKey: "enforceCustomerBillingReq",
+				Name:   "enforceCustomerBillingReq",
+				Column: "enforce_customer_billing_req",
 			},
 			{
-				Name:        "validateCustomerRates",
-				FieldMapKey: "validateCustomerRates",
+				Name:   "validateCustomerRates",
+				Column: "validate_customer_rates",
 			},
 			{
-				Name:        "autoTransfer",
-				FieldMapKey: "autoTransfer",
+				Name:   "autoTransfer",
+				Column: "auto_transfer",
 			},
 			{
-				Name:        "autoMarkReadyToBill",
-				FieldMapKey: "autoMarkReadyToBill",
+				Name:   "autoMarkReadyToBill",
+				Column: "auto_mark_ready_to_bill",
 			},
 			{
-				Name:        "autoApprove",
-				FieldMapKey: "autoApprove",
+				Name:   "autoApprove",
+				Column: "auto_approve",
 			},
 			{
-				Name:        "autoBill",
-				FieldMapKey: "autoBill",
+				Name:   "autoBill",
+				Column: "auto_bill",
 			},
 			{
-				Name:        "countLateOnlyOnAppointmentStops",
-				FieldMapKey: "countLateOnlyOnAppointmentStops",
+				Name:   "countLateOnlyOnAppointmentStops",
+				Column: "count_late_only_on_appointment_stops",
 			},
 			{
-				Name:        "autoApplyAccessorials",
-				FieldMapKey: "autoApplyAccessorials",
+				Name:   "autoApplyAccessorials",
+				Column: "auto_apply_accessorials",
 			},
 			{
-				Name:        "billingCurrency",
-				FieldMapKey: "billingCurrency",
+				Name:   "billingCurrency",
+				Column: "billing_currency",
 			},
 			{
-				Name:        "requirePONumber",
-				FieldMapKey: "requirePONumber",
+				Name:   "requirePONumber",
+				Column: "require_po_number",
 			},
 			{
-				Name:        "requireBOLNumber",
-				FieldMapKey: "requireBOLNumber",
+				Name:   "requireBOLNumber",
+				Column: "require_bol_number",
 			},
 			{
-				Name:        "requireDeliveryNumber",
-				FieldMapKey: "requireDeliveryNumber",
+				Name:   "requireDeliveryNumber",
+				Column: "require_delivery_number",
 			},
 			{
-				Name:        "defaultBillerId",
-				FieldMapKey: "defaultBillerId",
+				Name:   "defaultBillerId",
+				Column: "default_biller_id",
 			},
 			{
-				Name:        "billingNotes",
-				FieldMapKey: "billingNotes",
+				Name:   "billingNotes",
+				Column: "billing_notes",
 			},
 			{
-				Name:        "fuelSurchargeMode",
-				FieldMapKey: "fuelSurchargeMode",
+				Name:   "fuelSurchargeMode",
+				Column: "fuel_surcharge_mode",
 			},
 			{
-				Name:        "fuelSurchargeProgramId",
-				FieldMapKey: "fuelSurchargeProgramId",
+				Name:   "fuelSurchargeProgramId",
+				Column: "fuel_surcharge_program_id",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
 				Name:    "documentTypes",
 				Special: "documentTypes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "factoringCompany",
-				FieldMapKey: "businessUnitId",
+				Name:   "factoringCompany",
+				Column: "factoring_company_id",
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
@@ -9634,186 +9472,184 @@ func init() {
 
 	CustomerEmailProfileSpec = TypeSpec{
 		TypeName: "CustomerEmailProfile",
-		FieldMap: customercol.CustomerEmailProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "subject",
-				FieldMapKey: "subject",
+				Name:   "subject",
+				Column: "subject",
 			},
 			{
-				Name:        "comment",
-				FieldMapKey: "comment",
+				Name:   "comment",
+				Column: "comment",
 			},
 			{
-				Name:        "toRecipients",
-				FieldMapKey: "toRecipients",
+				Name:   "toRecipients",
+				Column: "to_recipients",
 			},
 			{
-				Name:        "ccRecipients",
-				FieldMapKey: "ccRecipients",
+				Name:   "ccRecipients",
+				Column: "cc_recipients",
 			},
 			{
-				Name:        "bccRecipients",
-				FieldMapKey: "bccRecipients",
+				Name:   "bccRecipients",
+				Column: "bcc_recipients",
 			},
 			{
-				Name:        "attachmentName",
-				FieldMapKey: "attachmentName",
+				Name:   "attachmentName",
+				Column: "attachment_name",
 			},
 			{
-				Name:        "readReceipt",
-				FieldMapKey: "readReceipt",
+				Name:   "readReceipt",
+				Column: "read_receipt",
 			},
 			{
-				Name:        "includeShipmentDetail",
-				FieldMapKey: "includeShipmentDetail",
+				Name:   "includeShipmentDetail",
+				Column: "include_shipment_detail",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	CustomerPaymentSpec = TypeSpec{
 		TypeName: "CustomerPayment",
-		FieldMap: customerpaymentcol.PaymentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "paymentDate",
-				FieldMapKey: "paymentDate",
+				Name:   "paymentDate",
+				Column: "payment_date",
 			},
 			{
-				Name:        "accountingDate",
-				FieldMapKey: "accountingDate",
+				Name:   "accountingDate",
+				Column: "accounting_date",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "appliedAmountMinor",
-				FieldMapKey: "appliedAmountMinor",
+				Name:   "appliedAmountMinor",
+				Column: "applied_amount_minor",
 			},
 			{
-				Name:        "unappliedAmountMinor",
-				FieldMapKey: "unappliedAmountMinor",
+				Name:   "unappliedAmountMinor",
+				Column: "unapplied_amount_minor",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "paymentMethod",
-				FieldMapKey: "paymentMethod",
+				Name:   "paymentMethod",
+				Column: "payment_method",
 			},
 			{
-				Name:        "referenceNumber",
-				FieldMapKey: "referenceNumber",
+				Name:   "referenceNumber",
+				Column: "reference_number",
 			},
 			{
-				Name:        "memo",
-				FieldMapKey: "memo",
+				Name:   "memo",
+				Column: "memo",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "exchangeRate",
-				FieldMapKey: "exchangeRate",
+				Name:   "exchangeRate",
+				Column: "exchange_rate",
 			},
 			{
-				Name:        "exchangeRateDate",
-				FieldMapKey: "exchangeRateDate",
+				Name:   "exchangeRateDate",
+				Column: "exchange_rate_date",
 			},
 			{
-				Name:        "postedBatchId",
-				FieldMapKey: "postedBatchId",
+				Name:   "postedBatchId",
+				Column: "posted_batch_id",
 			},
 			{
-				Name:        "reversalBatchId",
-				FieldMapKey: "reversalBatchId",
+				Name:   "reversalBatchId",
+				Column: "reversal_batch_id",
 			},
 			{
-				Name:        "reversedById",
-				FieldMapKey: "reversedById",
+				Name:   "reversedById",
+				Column: "reversed_by_id",
 			},
 			{
-				Name:        "reversedAt",
-				FieldMapKey: "reversedAt",
+				Name:   "reversedAt",
+				Column: "reversed_at",
 			},
 			{
-				Name:        "reversalReason",
-				FieldMapKey: "reversalReason",
+				Name:   "reversalReason",
+				Column: "reversal_reason",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "updatedById",
-				FieldMapKey: "updatedById",
+				Name:   "updatedById",
+				Column: "updated_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "customer",
@@ -9830,51 +9666,50 @@ func init() {
 
 	CustomerPaymentApplicationSpec = TypeSpec{
 		TypeName: "CustomerPaymentApplication",
-		FieldMap: customerpaymentcol.ApplicationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "customerPaymentId",
-				FieldMapKey: "customerPaymentId",
+				Name:   "customerPaymentId",
+				Column: "customer_payment_id",
 			},
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "invoiceId",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "appliedAmountMinor",
-				FieldMapKey: "appliedAmountMinor",
+				Name:   "appliedAmountMinor",
+				Column: "applied_amount_minor",
 			},
 			{
-				Name:        "shortPayAmountMinor",
-				FieldMapKey: "shortPayAmountMinor",
+				Name:   "shortPayAmountMinor",
+				Column: "short_pay_amount_minor",
 			},
 			{
-				Name:        "lineNumber",
-				FieldMapKey: "lineNumber",
+				Name:   "lineNumber",
+				Column: "line_number",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "invoice",
@@ -9889,295 +9724,291 @@ func init() {
 
 	CustomerStatusNotificationSpec = TypeSpec{
 		TypeName: "CustomerStatusNotification",
-		FieldMap: map[string]string{"attempts": "attempts", "businessUnitId": "business_unit_id", "createdAt": "created_at", "customerId": "customer_id", "emailMessageId": "email_message_id", "estimatedAt": "estimated_at", "event": "event", "id": "id", "lastError": "last_error", "linkId": "link_id", "nextAttemptAt": "next_attempt_at", "occurredAt": "occurred_at", "organizationId": "organization_id", "recipients": "recipients", "sentAt": "sent_at", "shipmentId": "shipment_id", "skipReason": "skip_reason", "status": "status", "stopId": "stop_id", "subjectKey": "subject_key", "updatedAt": "updated_at"},
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "event",
-				FieldMapKey: "event",
+				Name:   "event",
+				Column: "event",
 			},
 			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
+				Name:   "stopId",
+				Column: "stop_id",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "estimatedAt",
-				FieldMapKey: "estimatedAt",
+				Name:   "estimatedAt",
+				Column: "estimated_at",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "skipReason",
-				FieldMapKey: "skipReason",
+				Name:   "skipReason",
+				Column: "skip_reason",
 			},
 			{
-				Name:        "recipients",
-				FieldMapKey: "recipients",
+				Name:   "recipients",
+				Column: "recipients",
 			},
 			{
-				Name:        "attempts",
-				FieldMapKey: "attempts",
+				Name:   "attempts",
+				Column: "attempts",
 			},
 			{
-				Name:        "lastError",
-				FieldMapKey: "lastError",
+				Name:   "lastError",
+				Column: "last_error",
 			},
 			{
-				Name:        "sentAt",
-				FieldMapKey: "sentAt",
+				Name:   "sentAt",
+				Column: "sent_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	CustomerTrackingLinkSpec = TypeSpec{
 		TypeName: "CustomerTrackingLink",
-		FieldMap: customertrackingcol.LinkFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "purpose",
-				FieldMapKey: "purpose",
+				Name:   "purpose",
+				Column: "purpose",
 			},
 			{
-				Name:        "recipientEmail",
-				FieldMapKey: "recipientEmail",
+				Name:   "recipientEmail",
+				Column: "recipient_email",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "revokedAt",
-				FieldMapKey: "revokedAt",
+				Name:   "revokedAt",
+				Column: "revoked_at",
 			},
 			{
-				Name:        "lastViewedAt",
-				FieldMapKey: "lastViewedAt",
+				Name:   "lastViewedAt",
+				Column: "last_viewed_at",
 			},
 			{
-				Name:        "viewCount",
-				FieldMapKey: "viewCount",
+				Name:   "viewCount",
+				Column: "view_count",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	CustomerTrackingProfileSpec = TypeSpec{
 		TypeName: "CustomerTrackingProfile",
-		FieldMap: map[string]string{"businessUnitId": "business_unit_id", "createdAt": "created_at", "customerId": "customer_id", "id": "id", "includeLink": "include_link", "linkEnabled": "link_enabled", "linkTtlDays": "link_ttl_days", "notificationsEnabledAt": "notifications_enabled_at", "notifyDelayed": "notify_delayed", "notifyDelivered": "notify_delivered", "notifyPickedUp": "notify_picked_up", "notifyPodReady": "notify_pod_ready", "organizationId": "organization_id", "recipients": "recipients", "updatedAt": "updated_at", "version": "version", "visibleFields": "visible_fields"},
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "linkEnabled",
-				FieldMapKey: "linkEnabled",
+				Name:   "linkEnabled",
+				Column: "link_enabled",
 			},
 			{
-				Name:        "visibleFields",
-				FieldMapKey: "visibleFields",
+				Name:   "visibleFields",
+				Column: "visible_fields",
 			},
 			{
-				Name:        "linkTtlDays",
-				FieldMapKey: "linkTtlDays",
+				Name:   "linkTtlDays",
+				Column: "link_ttl_days",
 			},
 			{
-				Name:        "notifyPickedUp",
-				FieldMapKey: "notifyPickedUp",
+				Name:   "notifyPickedUp",
+				Column: "notify_picked_up",
 			},
 			{
-				Name:        "notifyDelayed",
-				FieldMapKey: "notifyDelayed",
+				Name:   "notifyDelayed",
+				Column: "notify_delayed",
 			},
 			{
-				Name:        "notifyDelivered",
-				FieldMapKey: "notifyDelivered",
+				Name:   "notifyDelivered",
+				Column: "notify_delivered",
 			},
 			{
-				Name:        "notifyPodReady",
-				FieldMapKey: "notifyPodReady",
+				Name:   "notifyPodReady",
+				Column: "notify_pod_ready",
 			},
 			{
-				Name:        "includeLink",
-				FieldMapKey: "includeLink",
+				Name:   "includeLink",
+				Column: "include_link",
 			},
 			{
-				Name:        "recipients",
-				FieldMapKey: "recipients",
+				Name:   "recipients",
+				Column: "recipients",
 			},
 			{
-				Name:        "notificationsEnabledAt",
-				FieldMapKey: "notificationsEnabledAt",
+				Name:   "notificationsEnabledAt",
+				Column: "notifications_enabled_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	DOTRandomDrawSpec = TypeSpec{
 		TypeName: "DOTRandomDraw",
-		FieldMap: workercol.DOTRandomDrawFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "poolId",
-				FieldMapKey: "poolId",
+				Name:   "poolId",
+				Column: "pool_id",
 			},
 			{
-				Name:        "periodKey",
-				FieldMapKey: "periodKey",
+				Name:   "periodKey",
+				Column: "period_key",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "poolSize",
-				FieldMapKey: "poolSize",
+				Name:   "poolSize",
+				Column: "pool_size",
 			},
 			{
-				Name:        "drugTarget",
-				FieldMapKey: "drugTarget",
+				Name:   "drugTarget",
+				Column: "drug_target",
 			},
 			{
-				Name:        "alcoholTarget",
-				FieldMapKey: "alcoholTarget",
+				Name:   "alcoholTarget",
+				Column: "alcohol_target",
 			},
 			{
-				Name:        "drugSelected",
-				FieldMapKey: "drugSelected",
+				Name:   "drugSelected",
+				Column: "drug_selected",
 			},
 			{
-				Name:        "alcoholSelected",
-				FieldMapKey: "alcoholSelected",
+				Name:   "alcoholSelected",
+				Column: "alcohol_selected",
 			},
 			{
-				Name:        "seed",
-				FieldMapKey: "seed",
+				Name:   "seed",
+				Column: "seed",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "drawnAt",
-				FieldMapKey: "drawnAt",
+				Name:   "drawnAt",
+				Column: "drawn_at",
 			},
 			{
-				Name:        "drawnById",
-				FieldMapKey: "drawnById",
+				Name:   "drawnById",
+				Column: "drawn_by_id",
 			},
 			{
-				Name:        "finalizedAt",
-				FieldMapKey: "finalizedAt",
+				Name:   "finalizedAt",
+				Column: "finalized_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "pool",
-				FieldMapKey: "businessUnitId",
+				Name:   "pool",
+				Column: "pool_id",
 				Relation: &RelationSpec{
 					Target: &DOTRandomPoolSpec,
 				},
 			},
 			{
-				Name:        "drawnBy",
-				FieldMapKey: "drawnById",
+				Name:   "drawnBy",
+				Column: "drawn_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -10193,75 +10024,74 @@ func init() {
 
 	DOTRandomDrawEntrySpec = TypeSpec{
 		TypeName: "DOTRandomDrawEntry",
-		FieldMap: workercol.DOTRandomDrawEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "drawId",
-				FieldMapKey: "drawId",
+				Name:   "drawId",
+				Column: "draw_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "substance",
-				FieldMapKey: "substance",
+				Name:   "substance",
+				Column: "substance",
 			},
 			{
-				Name:        "rank",
-				FieldMapKey: "rank",
+				Name:   "rank",
+				Column: "rank",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "notifiedAt",
-				FieldMapKey: "notifiedAt",
+				Name:   "notifiedAt",
+				Column: "notified_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "testId",
-				FieldMapKey: "testId",
+				Name:   "testId",
+				Column: "test_id",
 			},
 			{
-				Name:        "excuseReason",
-				FieldMapKey: "excuseReason",
+				Name:   "excuseReason",
+				Column: "excuse_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -10271,205 +10101,202 @@ func init() {
 
 	DOTRandomPoolSpec = TypeSpec{
 		TypeName: "DOTRandomPool",
-		FieldMap: workercol.DOTRandomPoolFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "period",
-				FieldMapKey: "period",
+				Name:   "period",
+				Column: "period",
 			},
 			{
-				Name:        "drugRatePercent",
-				FieldMapKey: "drugRatePercent",
+				Name:   "drugRatePercent",
+				Column: "drug_rate_percent",
 			},
 			{
-				Name:        "alcoholRatePercent",
-				FieldMapKey: "alcoholRatePercent",
+				Name:   "alcoholRatePercent",
+				Column: "alcohol_rate_percent",
 			},
 			{
-				Name:        "includedDriverTypes",
-				FieldMapKey: "includedDriverTypes",
+				Name:   "includedDriverTypes",
+				Column: "included_driver_types",
 			},
 			{
-				Name:        "isDefault",
-				FieldMapKey: "isDefault",
+				Name:   "isDefault",
+				Column: "is_default",
 			},
 			{
 				Name:    "meetsDotMinimums",
 				Special: "meetsDotMinimums",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	DashControlSpec = TypeSpec{
 		TypeName: "DashControl",
-		FieldMap: tenantcol.DashControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "requireLoadAcknowledgment",
-				FieldMapKey: "requireLoadAcknowledgment",
+				Name:   "requireLoadAcknowledgment",
+				Column: "require_load_acknowledgment",
 			},
 			{
-				Name:        "allowLoadRefusals",
-				FieldMapKey: "allowLoadRefusals",
+				Name:   "allowLoadRefusals",
+				Column: "allow_load_refusals",
 			},
 			{
-				Name:        "allowStopActions",
-				FieldMapKey: "allowStopActions",
+				Name:   "allowStopActions",
+				Column: "allow_stop_actions",
 			},
 			{
-				Name:        "allowLoadDocumentUpload",
-				FieldMapKey: "allowLoadDocumentUpload",
+				Name:   "allowLoadDocumentUpload",
+				Column: "allow_load_document_upload",
 			},
 			{
-				Name:        "allowLoadComments",
-				FieldMapKey: "allowLoadComments",
+				Name:   "allowLoadComments",
+				Column: "allow_load_comments",
 			},
 			{
-				Name:        "showLoadPay",
-				FieldMapKey: "showLoadPay",
+				Name:   "showLoadPay",
+				Column: "show_load_pay",
 			},
 			{
-				Name:        "showPayEstimates",
-				FieldMapKey: "showPayEstimates",
+				Name:   "showPayEstimates",
+				Column: "show_pay_estimates",
 			},
 			{
-				Name:        "allowExpenseSubmission",
-				FieldMapKey: "allowExpenseSubmission",
+				Name:   "allowExpenseSubmission",
+				Column: "allow_expense_submission",
 			},
 			{
-				Name:        "requireExpenseReceipt",
-				FieldMapKey: "requireExpenseReceipt",
+				Name:   "requireExpenseReceipt",
+				Column: "require_expense_receipt",
 			},
 			{
-				Name:        "allowSettlementDisputes",
-				FieldMapKey: "allowSettlementDisputes",
+				Name:   "allowSettlementDisputes",
+				Column: "allow_settlement_disputes",
 			},
 			{
-				Name:        "allowProfileDocumentUpload",
-				FieldMapKey: "allowProfileDocumentUpload",
+				Name:   "allowProfileDocumentUpload",
+				Column: "allow_profile_document_upload",
 			},
 			{
-				Name:        "allowContactInfoEdit",
-				FieldMapKey: "allowContactInfoEdit",
+				Name:   "allowContactInfoEdit",
+				Column: "allow_contact_info_edit",
 			},
 			{
-				Name:        "allowPtoRequests",
-				FieldMapKey: "allowPtoRequests",
+				Name:   "allowPtoRequests",
+				Column: "allow_pto_requests",
 			},
 			{
-				Name:        "sendCredentialReminders",
-				FieldMapKey: "sendCredentialReminders",
+				Name:   "sendCredentialReminders",
+				Column: "send_credential_reminders",
 			},
 			{
-				Name:        "requireContactChangeApproval",
-				FieldMapKey: "requireContactChangeApproval",
+				Name:   "requireContactChangeApproval",
+				Column: "require_contact_change_approval",
 			},
 			{
-				Name:        "driverDigestCadence",
-				FieldMapKey: "driverDigestCadence",
+				Name:   "driverDigestCadence",
+				Column: "driver_digest_cadence",
 			},
 			{
-				Name:        "driverDigestWeekday",
-				FieldMapKey: "driverDigestWeekday",
+				Name:   "driverDigestWeekday",
+				Column: "driver_digest_weekday",
 			},
 			{
-				Name:        "enableDetentionAlerts",
-				FieldMapKey: "enableDetentionAlerts",
+				Name:   "enableDetentionAlerts",
+				Column: "enable_detention_alerts",
 			},
 			{
-				Name:        "detentionAlertThresholdMinutes",
-				FieldMapKey: "detentionAlertThresholdMinutes",
+				Name:   "detentionAlertThresholdMinutes",
+				Column: "detention_alert_threshold_minutes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	DetentionClockPriceSpec = TypeSpec{
 		TypeName: "DetentionClockPrice",
-		FieldMap: detentioncol.DetentionOccurrenceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "billableMinutes",
-				FieldMapKey: "billableMinutes",
+				Name:   "billableMinutes",
+				Column: "billable_minutes",
 			},
 			{
-				Name:        "billableAmount",
-				FieldMapKey: "billableAmount",
+				Name:   "billableAmount",
+				Column: "billable_amount",
 			},
 			{
 				Name:    "asOf",
@@ -10480,499 +10307,494 @@ func init() {
 
 	DetentionEvidenceSpec = TypeSpec{
 		TypeName: "DetentionEvidence",
-		FieldMap: detentioncol.DetentionEvidenceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "detentionOccurrenceId",
-				FieldMapKey: "detentionOccurrenceId",
+				Name:   "detentionOccurrenceId",
+				Column: "detention_occurrence_id",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "observedAt",
-				FieldMapKey: "observedAt",
+				Name:   "observedAt",
+				Column: "observed_at",
 			},
 			{
-				Name:        "recordedAt",
-				FieldMapKey: "recordedAt",
+				Name:   "recordedAt",
+				Column: "recorded_at",
 			},
 			{
-				Name:        "recordedById",
-				FieldMapKey: "recordedById",
+				Name:   "recordedById",
+				Column: "recorded_by_id",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "payload",
-				FieldMapKey: "payload",
+				Name:   "payload",
+				Column: "payload",
 			},
 			{
-				Name:        "prevHash",
-				FieldMapKey: "prevHash",
+				Name:   "prevHash",
+				Column: "prev_hash",
 			},
 			{
-				Name:        "hash",
-				FieldMapKey: "hash",
+				Name:   "hash",
+				Column: "hash",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	DetentionNoticeSpec = TypeSpec{
 		TypeName: "DetentionNotice",
-		FieldMap: detentioncol.DetentionNoticeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "detentionOccurrenceId",
-				FieldMapKey: "detentionOccurrenceId",
+				Name:   "detentionOccurrenceId",
+				Column: "detention_occurrence_id",
 			},
 			{
-				Name:        "threadKey",
-				FieldMapKey: "threadKey",
+				Name:   "threadKey",
+				Column: "thread_key",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "channel",
-				FieldMapKey: "channel",
+				Name:   "channel",
+				Column: "channel",
 			},
 			{
-				Name:        "deliveryStatus",
-				FieldMapKey: "deliveryStatus",
+				Name:   "deliveryStatus",
+				Column: "delivery_status",
 			},
 			{
-				Name:        "recipients",
-				FieldMapKey: "recipients",
+				Name:   "recipients",
+				Column: "recipients",
 			},
 			{
-				Name:        "subject",
-				FieldMapKey: "subject",
+				Name:   "subject",
+				Column: "subject",
 			},
 			{
-				Name:        "body",
-				FieldMapKey: "body",
+				Name:   "body",
+				Column: "body",
 			},
 			{
-				Name:        "scheduledFor",
-				FieldMapKey: "scheduledFor",
+				Name:   "scheduledFor",
+				Column: "scheduled_for",
 			},
 			{
-				Name:        "sentAt",
-				FieldMapKey: "sentAt",
+				Name:   "sentAt",
+				Column: "sent_at",
 			},
 			{
-				Name:        "deliveredAt",
-				FieldMapKey: "deliveredAt",
+				Name:   "deliveredAt",
+				Column: "delivered_at",
 			},
 			{
-				Name:        "openedAt",
-				FieldMapKey: "openedAt",
+				Name:   "openedAt",
+				Column: "opened_at",
 			},
 			{
-				Name:        "failedAt",
-				FieldMapKey: "failedAt",
+				Name:   "failedAt",
+				Column: "failed_at",
 			},
 			{
-				Name:        "failureReason",
-				FieldMapKey: "failureReason",
+				Name:   "failureReason",
+				Column: "failure_reason",
 			},
 			{
-				Name:        "sentById",
-				FieldMapKey: "sentById",
+				Name:   "sentById",
+				Column: "sent_by_id",
 			},
 			{
-				Name:        "wasAutomatic",
-				FieldMapKey: "wasAutomatic",
+				Name:   "wasAutomatic",
+				Column: "was_automatic",
 			},
 			{
-				Name:        "satisfiesRequirement",
-				FieldMapKey: "satisfiesRequirement",
+				Name:   "satisfiesRequirement",
+				Column: "satisfies_requirement",
 			},
 			{
-				Name:        "quotedFreeMinutes",
-				FieldMapKey: "quotedFreeMinutes",
+				Name:   "quotedFreeMinutes",
+				Column: "quoted_free_minutes",
 			},
 			{
-				Name:        "quotedRate",
-				FieldMapKey: "quotedRate",
+				Name:   "quotedRate",
+				Column: "quoted_rate",
 			},
 			{
-				Name:        "quotedAmount",
-				FieldMapKey: "quotedAmount",
+				Name:   "quotedAmount",
+				Column: "quoted_amount",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	DetentionOccurrenceSpec = TypeSpec{
 		TypeName: "DetentionOccurrence",
-		FieldMap: detentioncol.DetentionOccurrenceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
+				Name:   "stopId",
+				Column: "stop_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "locationId",
-				FieldMapKey: "locationId",
+				Name:   "locationId",
+				Column: "location_id",
 			},
 			{
-				Name:        "location",
-				FieldMapKey: "locationId",
+				Name:   "location",
+				Column: "location_id",
 			},
 			{
-				Name:        "detentionPolicyId",
-				FieldMapKey: "detentionPolicyId",
+				Name:   "detentionPolicyId",
+				Column: "detention_policy_id",
 			},
 			{
-				Name:        "policySnapshot",
-				FieldMapKey: "policySnapshot",
+				Name:   "policySnapshot",
+				Column: "policy_snapshot",
 			},
 			{
-				Name:        "calculationTrace",
-				FieldMapKey: "calculationTrace",
+				Name:   "calculationTrace",
+				Column: "calculation_trace",
 			},
 			{
-				Name:        "stopType",
-				FieldMapKey: "stopType",
+				Name:   "stopType",
+				Column: "stop_type",
 			},
 			{
-				Name:        "scheduleType",
-				FieldMapKey: "scheduleType",
+				Name:   "scheduleType",
+				Column: "schedule_type",
 			},
 			{
-				Name:        "appointmentStart",
-				FieldMapKey: "appointmentStart",
+				Name:   "appointmentStart",
+				Column: "appointment_start",
 			},
 			{
-				Name:        "appointmentEnd",
-				FieldMapKey: "appointmentEnd",
+				Name:   "appointmentEnd",
+				Column: "appointment_end",
 			},
 			{
-				Name:        "arrivedAt",
-				FieldMapKey: "arrivedAt",
+				Name:   "arrivedAt",
+				Column: "arrived_at",
 			},
 			{
-				Name:        "departedAt",
-				FieldMapKey: "departedAt",
+				Name:   "departedAt",
+				Column: "departed_at",
 			},
 			{
-				Name:        "clockStartAt",
-				FieldMapKey: "clockStartAt",
+				Name:   "clockStartAt",
+				Column: "clock_start_at",
 			},
 			{
-				Name:        "clockStopAt",
-				FieldMapKey: "clockStopAt",
+				Name:   "clockStopAt",
+				Column: "clock_stop_at",
 			},
 			{
-				Name:        "freeTimeExpiresAt",
-				FieldMapKey: "freeTimeExpiresAt",
+				Name:   "freeTimeExpiresAt",
+				Column: "free_time_expires_at",
 			},
 			{
-				Name:        "noticeDueAt",
-				FieldMapKey: "noticeDueAt",
+				Name:   "noticeDueAt",
+				Column: "notice_due_at",
 			},
 			{
-				Name:        "noticeDeadlineAt",
-				FieldMapKey: "noticeDeadlineAt",
+				Name:   "noticeDeadlineAt",
+				Column: "notice_deadline_at",
 			},
 			{
-				Name:        "isOpen",
-				FieldMapKey: "isOpen",
+				Name:   "isOpen",
+				Column: "is_open",
 			},
 			{
-				Name:        "arrivedLate",
-				FieldMapKey: "arrivedLate",
+				Name:   "arrivedLate",
+				Column: "arrived_late",
 			},
 			{
-				Name:        "lateByMinutes",
-				FieldMapKey: "lateByMinutes",
+				Name:   "lateByMinutes",
+				Column: "late_by_minutes",
 			},
 			{
-				Name:        "freeMinutesGranted",
-				FieldMapKey: "freeMinutesGranted",
+				Name:   "freeMinutesGranted",
+				Column: "free_minutes_granted",
 			},
 			{
-				Name:        "rawDwellMinutes",
-				FieldMapKey: "rawDwellMinutes",
+				Name:   "rawDwellMinutes",
+				Column: "raw_dwell_minutes",
 			},
 			{
-				Name:        "billableMinutes",
-				FieldMapKey: "billableMinutes",
+				Name:   "billableMinutes",
+				Column: "billable_minutes",
 			},
 			{
-				Name:        "roundedMinutes",
-				FieldMapKey: "roundedMinutes",
+				Name:   "roundedMinutes",
+				Column: "rounded_minutes",
 			},
 			{
-				Name:        "billableUnits",
-				FieldMapKey: "billableUnits",
+				Name:   "billableUnits",
+				Column: "billable_units",
 			},
 			{
-				Name:        "grossAmount",
-				FieldMapKey: "grossAmount",
+				Name:   "grossAmount",
+				Column: "gross_amount",
 			},
 			{
-				Name:        "billableAmount",
-				FieldMapKey: "billableAmount",
+				Name:   "billableAmount",
+				Column: "billable_amount",
 			},
 			{
-				Name:        "driverPayMinutes",
-				FieldMapKey: "driverPayMinutes",
+				Name:   "driverPayMinutes",
+				Column: "driver_pay_minutes",
 			},
 			{
-				Name:        "driverPayAmount",
-				FieldMapKey: "driverPayAmount",
+				Name:   "driverPayAmount",
+				Column: "driver_pay_amount",
 			},
 			{
-				Name:        "netMargin",
-				FieldMapKey: "netMargin",
+				Name:   "netMargin",
+				Column: "net_margin",
 			},
 			{
-				Name:        "capApplied",
-				FieldMapKey: "capApplied",
+				Name:   "capApplied",
+				Column: "cap_applied",
 			},
 			{
-				Name:        "convertedToLayover",
-				FieldMapKey: "convertedToLayover",
+				Name:   "convertedToLayover",
+				Column: "converted_to_layover",
 			},
 			{
-				Name:        "currency",
-				FieldMapKey: "currency",
+				Name:   "currency",
+				Column: "currency",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "notificationStatus",
-				FieldMapKey: "notificationStatus",
+				Name:   "notificationStatus",
+				Column: "notification_status",
 			},
 			{
-				Name:        "noticeSentAt",
-				FieldMapKey: "noticeSentAt",
+				Name:   "noticeSentAt",
+				Column: "notice_sent_at",
 			},
 			{
-				Name:        "suppressedByGate",
-				FieldMapKey: "suppressedByGate",
+				Name:   "suppressedByGate",
+				Column: "suppressed_by_gate",
 			},
 			{
-				Name:        "requiresApproval",
-				FieldMapKey: "requiresApproval",
+				Name:   "requiresApproval",
+				Column: "requires_approval",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "approvedBy",
-				FieldMapKey: "approvedById",
+				Name:   "approvedBy",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "waiverReason",
-				FieldMapKey: "waiverReason",
+				Name:   "waiverReason",
+				Column: "waiver_reason",
 			},
 			{
-				Name:        "waiverNote",
-				FieldMapKey: "waiverNote",
+				Name:   "waiverNote",
+				Column: "waiver_note",
 			},
 			{
-				Name:        "waivedAt",
-				FieldMapKey: "waivedAt",
+				Name:   "waivedAt",
+				Column: "waived_at",
 			},
 			{
-				Name:        "waivedById",
-				FieldMapKey: "waivedById",
+				Name:   "waivedById",
+				Column: "waived_by_id",
 			},
 			{
-				Name:        "waivedBy",
-				FieldMapKey: "waivedById",
+				Name:   "waivedBy",
+				Column: "waived_by_id",
 			},
 			{
-				Name:        "waivedAmount",
-				FieldMapKey: "waivedAmount",
+				Name:   "waivedAmount",
+				Column: "waived_amount",
 			},
 			{
-				Name:        "disputeNote",
-				FieldMapKey: "disputeNote",
+				Name:   "disputeNote",
+				Column: "dispute_note",
 			},
 			{
-				Name:        "disputedAt",
-				FieldMapKey: "disputedAt",
+				Name:   "disputedAt",
+				Column: "disputed_at",
 			},
 			{
-				Name:        "collectabilityScore",
-				FieldMapKey: "collectabilityScore",
+				Name:   "collectabilityScore",
+				Column: "collectability_score",
 			},
 			{
-				Name:        "evidenceHead",
-				FieldMapKey: "evidenceHead",
+				Name:   "evidenceHead",
+				Column: "evidence_head",
 			},
 			{
-				Name:        "additionalChargeId",
-				FieldMapKey: "additionalChargeId",
+				Name:   "additionalChargeId",
+				Column: "additional_charge_id",
 			},
 			{
-				Name:        "locationName",
-				FieldMapKey: "locationName",
+				Name:   "locationName",
+				Column: "location_name",
 			},
 			{
-				Name:        "customerName",
-				FieldMapKey: "customerName",
+				Name:   "customerName",
+				Column: "customer_name",
 			},
 			{
-				Name:        "shipmentProNumber",
-				FieldMapKey: "shipmentProNumber",
+				Name:   "shipmentProNumber",
+				Column: "shipment_pro_number",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	DetentionPolicyTierSpec = TypeSpec{
 		TypeName: "DetentionPolicyTier",
-		FieldMap: detentioncol.DetentionPolicyTierFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "fromMinute",
-				FieldMapKey: "fromMinute",
+				Name:   "fromMinute",
+				Column: "from_minute",
 			},
 			{
-				Name:        "toMinute",
-				FieldMapKey: "toMinute",
+				Name:   "toMinute",
+				Column: "to_minute",
 			},
 			{
-				Name:        "rate",
-				FieldMapKey: "rate",
+				Name:   "rate",
+				Column: "rate",
 			},
 			{
-				Name:        "rateUnit",
-				FieldMapKey: "rateUnit",
+				Name:   "rateUnit",
+				Column: "rate_unit",
 			},
 			{
-				Name:        "label",
-				FieldMapKey: "label",
+				Name:   "label",
+				Column: "label",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 		},
 	}
 
 	DispatchCarrierEligibilityFindingSpec = TypeSpec{
 		TypeName: "DispatchCarrierEligibilityFinding",
-		FieldMap: edicol.EDIMessageValidationErrorFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
 				Name:    "source",
 				Special: "source",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "message",
-				FieldMapKey: "message",
+				Name:   "message",
+				Column: "message",
 			},
 			{
 				Name:    "requiresOverride",
@@ -10983,92 +10805,90 @@ func init() {
 
 	DispatchTimeOffSpec = TypeSpec{
 		TypeName: "DispatchTimeOff",
-		FieldMap: workercol.WorkerPTOFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "startDate",
-				FieldMapKey: "startDate",
+				Name:   "startDate",
+				Column: "start_date",
 			},
 			{
-				Name:        "endDate",
-				FieldMapKey: "endDate",
+				Name:   "endDate",
+				Column: "end_date",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 		},
 	}
 
 	DistanceOverrideSpec = TypeSpec{
 		TypeName: "DistanceOverride",
-		FieldMap: distanceoverridecol.DistanceOverrideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "originLocationId",
-				FieldMapKey: "originLocationId",
+				Name:   "originLocationId",
+				Column: "origin_location_id",
 			},
 			{
-				Name:        "destinationLocationId",
-				FieldMapKey: "destinationLocationId",
+				Name:   "destinationLocationId",
+				Column: "destination_location_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "distance",
-				FieldMapKey: "distance",
+				Name:   "distance",
+				Column: "distance",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "originLocation",
-				FieldMapKey: "originLocationId",
+				Name:   "originLocation",
+				Column: "origin_location_id",
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
 			},
 			{
-				Name:        "destinationLocation",
-				FieldMapKey: "destinationLocationId",
+				Name:   "destinationLocation",
+				Column: "destination_location_id",
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "customerId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
@@ -11080,15 +10900,15 @@ func init() {
 				},
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -11098,20 +10918,19 @@ func init() {
 
 	DistanceOverrideStopSpec = TypeSpec{
 		TypeName:      "DistanceOverrideStop",
-		FieldMap:      distanceoverridecol.DistanceOverrideStopFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "locationId",
-				FieldMapKey: "locationId",
+				Name:   "locationId",
+				Column: "location_id",
 			},
 			{
 				Name:    "stopOrder",
 				Special: "stopOrder",
 			},
 			{
-				Name:        "location",
-				FieldMapKey: "locationId",
+				Name:   "location",
+				Column: "location_id",
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
@@ -11121,106 +10940,105 @@ func init() {
 
 	DistanceProfileSpec = TypeSpec{
 		TypeName: "DistanceProfile",
-		FieldMap: distanceprofilecol.DistanceProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "isDefault",
-				FieldMapKey: "isDefault",
+				Name:   "isDefault",
+				Column: "is_default",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "dataVersion",
-				FieldMapKey: "dataVersion",
+				Name:   "dataVersion",
+				Column: "data_version",
 			},
 			{
-				Name:        "region",
-				FieldMapKey: "region",
+				Name:   "region",
+				Column: "region",
 			},
 			{
-				Name:        "routingType",
-				FieldMapKey: "routingType",
+				Name:   "routingType",
+				Column: "routing_type",
 			},
 			{
-				Name:        "distanceUnits",
-				FieldMapKey: "distanceUnits",
+				Name:   "distanceUnits",
+				Column: "distance_units",
 			},
 			{
-				Name:        "locationGranularity",
-				FieldMapKey: "locationGranularity",
+				Name:   "locationGranularity",
+				Column: "location_granularity",
 			},
 			{
-				Name:        "profileName",
-				FieldMapKey: "profileName",
+				Name:   "profileName",
+				Column: "profile_name",
 			},
 			{
-				Name:        "highwayOnly",
-				FieldMapKey: "highwayOnly",
+				Name:   "highwayOnly",
+				Column: "highway_only",
 			},
 			{
-				Name:        "tollRoads",
-				FieldMapKey: "tollRoads",
+				Name:   "tollRoads",
+				Column: "toll_roads",
 			},
 			{
-				Name:        "bordersOpen",
-				FieldMapKey: "bordersOpen",
+				Name:   "bordersOpen",
+				Column: "borders_open",
 			},
 			{
-				Name:        "includeTollData",
-				FieldMapKey: "includeTollData",
+				Name:   "includeTollData",
+				Column: "include_toll_data",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -11230,134 +11048,132 @@ func init() {
 
 	DocumentPacketRuleSpec = TypeSpec{
 		TypeName: "DocumentPacketRule",
-		FieldMap: documentpacketrulecol.DocumentPacketRuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "resourceType",
-				FieldMapKey: "resourceType",
+				Name:   "resourceType",
+				Column: "resource_type",
 			},
 			{
-				Name:        "documentTypeId",
-				FieldMapKey: "documentTypeId",
+				Name:   "documentTypeId",
+				Column: "document_type_id",
 			},
 			{
-				Name:        "required",
-				FieldMapKey: "required",
+				Name:   "required",
+				Column: "required",
 			},
 			{
-				Name:        "allowMultiple",
-				FieldMapKey: "allowMultiple",
+				Name:   "allowMultiple",
+				Column: "allow_multiple",
 			},
 			{
-				Name:        "displayOrder",
-				FieldMapKey: "displayOrder",
+				Name:   "displayOrder",
+				Column: "display_order",
 			},
 			{
-				Name:        "expirationRequired",
-				FieldMapKey: "expirationRequired",
+				Name:   "expirationRequired",
+				Column: "expiration_required",
 			},
 			{
-				Name:        "expirationWarningDays",
-				FieldMapKey: "expirationWarningDays",
+				Name:   "expirationWarningDays",
+				Column: "expiration_warning_days",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	DocumentTemplateSpec = TypeSpec{
 		TypeName: "DocumentTemplate",
-		FieldMap: documenttemplatecol.DocumentTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "isOrgDefault",
-				FieldMapKey: "isOrgDefault",
+				Name:   "isOrgDefault",
+				Column: "is_org_default",
 			},
 			{
-				Name:        "activeVersionId",
-				FieldMapKey: "activeVersionId",
+				Name:   "activeVersionId",
+				Column: "active_version_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "updatedById",
-				FieldMapKey: "updatedById",
+				Name:   "updatedById",
+				Column: "updated_by_id",
 			},
 			{
-				Name:        "activeVersion",
-				FieldMapKey: "activeVersionId",
+				Name:   "activeVersion",
+				Column: "active_version_id",
 				Relation: &RelationSpec{
 					Target: &DocumentTemplateVersionSpec,
 				},
@@ -11379,58 +11195,57 @@ func init() {
 
 	DocumentTemplateAssignmentSpec = TypeSpec{
 		TypeName: "DocumentTemplateAssignment",
-		FieldMap: documenttemplatecol.DocumentTemplateAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
+				Name:   "templateId",
+				Column: "template_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "assignedById",
-				FieldMapKey: "assignedById",
+				Name:   "assignedById",
+				Column: "assigned_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "template",
-				FieldMapKey: "templateId",
+				Name:   "template",
+				Column: "template_id",
 				Relation: &RelationSpec{
 					Target: &DocumentTemplateSpec,
 				},
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "customerId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
@@ -11440,205 +11255,203 @@ func init() {
 
 	DocumentTemplateVersionSpec = TypeSpec{
 		TypeName: "DocumentTemplateVersion",
-		FieldMap: documenttemplatecol.DocumentTemplateVersionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
+				Name:   "templateId",
+				Column: "template_id",
 			},
 			{
-				Name:        "sourceVersionId",
-				FieldMapKey: "sourceVersionId",
+				Name:   "sourceVersionId",
+				Column: "source_version_id",
 			},
 			{
-				Name:        "versionNumber",
-				FieldMapKey: "versionNumber",
+				Name:   "versionNumber",
+				Column: "version_number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "subject",
-				FieldMapKey: "subject",
+				Name:   "subject",
+				Column: "subject",
 			},
 			{
-				Name:        "bodyHtml",
-				FieldMapKey: "bodyHtml",
+				Name:   "bodyHtml",
+				Column: "body_html",
 			},
 			{
-				Name:        "bodyText",
-				FieldMapKey: "bodyText",
+				Name:   "bodyText",
+				Column: "body_text",
 			},
 			{
-				Name:        "cssContent",
-				FieldMapKey: "cssContent",
+				Name:   "cssContent",
+				Column: "css_content",
 			},
 			{
-				Name:        "headerHtml",
-				FieldMapKey: "headerHtml",
+				Name:   "headerHtml",
+				Column: "header_html",
 			},
 			{
-				Name:        "footerHtml",
-				FieldMapKey: "footerHtml",
+				Name:   "footerHtml",
+				Column: "footer_html",
 			},
 			{
-				Name:        "pageSize",
-				FieldMapKey: "pageSize",
+				Name:   "pageSize",
+				Column: "page_size",
 			},
 			{
-				Name:        "orientation",
-				FieldMapKey: "orientation",
+				Name:   "orientation",
+				Column: "orientation",
 			},
 			{
-				Name:        "marginTop",
-				FieldMapKey: "marginTop",
+				Name:   "marginTop",
+				Column: "margin_top",
 			},
 			{
-				Name:        "marginBottom",
-				FieldMapKey: "marginBottom",
+				Name:   "marginBottom",
+				Column: "margin_bottom",
 			},
 			{
-				Name:        "marginLeft",
-				FieldMapKey: "marginLeft",
+				Name:   "marginLeft",
+				Column: "margin_left",
 			},
 			{
-				Name:        "marginRight",
-				FieldMapKey: "marginRight",
+				Name:   "marginRight",
+				Column: "margin_right",
 			},
 			{
-				Name:        "contentHash",
-				FieldMapKey: "contentHash",
+				Name:   "contentHash",
+				Column: "content_hash",
 			},
 			{
-				Name:        "starterHash",
-				FieldMapKey: "starterHash",
+				Name:   "starterHash",
+				Column: "starter_hash",
 			},
 			{
 				Name:    "starterDrifted",
 				Special: "starterDrifted",
 			},
 			{
-				Name:        "publishNotes",
-				FieldMapKey: "publishNotes",
+				Name:   "publishNotes",
+				Column: "publish_notes",
 			},
 			{
-				Name:        "publishedById",
-				FieldMapKey: "publishedById",
+				Name:   "publishedById",
+				Column: "published_by_id",
 			},
 			{
-				Name:        "publishedAt",
-				FieldMapKey: "publishedAt",
+				Name:   "publishedAt",
+				Column: "published_at",
 			},
 			{
-				Name:        "archivedById",
-				FieldMapKey: "archivedById",
+				Name:   "archivedById",
+				Column: "archived_by_id",
 			},
 			{
-				Name:        "archivedAt",
-				FieldMapKey: "archivedAt",
+				Name:   "archivedAt",
+				Column: "archived_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	DocumentTypeSpec = TypeSpec{
 		TypeName: "DocumentType",
-		FieldMap: documenttypecol.DocumentTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "documentClassification",
-				FieldMapKey: "documentClassification",
+				Name:   "documentClassification",
+				Column: "document_classification",
 			},
 			{
-				Name:        "documentCategory",
-				FieldMapKey: "documentCategory",
+				Name:   "documentCategory",
+				Column: "document_category",
 			},
 			{
-				Name:        "isSystem",
-				FieldMapKey: "isSystem",
+				Name:   "isSystem",
+				Column: "is_system",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -11648,105 +11461,104 @@ func init() {
 
 	DriverExpenseSpec = TypeSpec{
 		TypeName: "DriverExpense",
-		FieldMap: driverpaycol.ExpenseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "payCodeId",
-				FieldMapKey: "payCodeId",
+				Name:   "payCodeId",
+				Column: "pay_code_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "incurredDate",
-				FieldMapKey: "incurredDate",
+				Name:   "incurredDate",
+				Column: "incurred_date",
 			},
 			{
-				Name:        "receiptDocumentId",
-				FieldMapKey: "receiptDocumentId",
+				Name:   "receiptDocumentId",
+				Column: "receipt_document_id",
 			},
 			{
-				Name:        "reviewNote",
-				FieldMapKey: "reviewNote",
+				Name:   "reviewNote",
+				Column: "review_note",
 			},
 			{
-				Name:        "reviewedById",
-				FieldMapKey: "reviewedById",
+				Name:   "reviewedById",
+				Column: "reviewed_by_id",
 			},
 			{
-				Name:        "reviewedAt",
-				FieldMapKey: "reviewedAt",
+				Name:   "reviewedAt",
+				Column: "reviewed_at",
 			},
 			{
-				Name:        "settlementLineId",
-				FieldMapKey: "settlementLineId",
+				Name:   "settlementLineId",
+				Column: "settlement_line_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "payCode",
-				FieldMapKey: "businessUnitId",
+				Name:   "payCode",
+				Column: "pay_code_id",
 				Relation: &RelationSpec{
 					Target: &PayCodeSpec,
 				},
 			},
 			{
-				Name:        "reviewedBy",
-				FieldMapKey: "reviewedById",
+				Name:   "reviewedBy",
+				Column: "reviewed_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -11756,103 +11568,102 @@ func init() {
 
 	DriverPayEventSpec = TypeSpec{
 		TypeName: "DriverPayEvent",
-		FieldMap: driversettlementcol.PayEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "moveId",
-				FieldMapKey: "moveId",
+				Name:   "moveId",
+				Column: "move_id",
 			},
 			{
-				Name:        "payProfileId",
-				FieldMapKey: "payProfileId",
+				Name:   "payProfileId",
+				Column: "pay_profile_id",
 			},
 			{
-				Name:        "settlementId",
-				FieldMapKey: "settlementId",
+				Name:   "settlementId",
+				Column: "settlement_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "eventDate",
-				FieldMapKey: "eventDate",
+				Name:   "eventDate",
+				Column: "event_date",
 			},
 			{
-				Name:        "grossAmountMinor",
-				FieldMapKey: "grossAmountMinor",
+				Name:   "grossAmountMinor",
+				Column: "gross_amount_minor",
 			},
 			{
-				Name:        "totalMiles",
-				FieldMapKey: "totalMiles",
+				Name:   "totalMiles",
+				Column: "total_miles",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "components",
-				FieldMapKey: "components",
+				Name:   "components",
+				Column: "components",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 			{
-				Name:        "onHold",
-				FieldMapKey: "onHold",
+				Name:   "onHold",
+				Column: "on_hold",
 			},
 			{
-				Name:        "holdReason",
-				FieldMapKey: "holdReason",
+				Name:   "holdReason",
+				Column: "hold_reason",
 			},
 			{
-				Name:        "voidedAt",
-				FieldMapKey: "voidedAt",
+				Name:   "voidedAt",
+				Column: "voided_at",
 			},
 			{
-				Name:        "voidReason",
-				FieldMapKey: "voidReason",
+				Name:   "voidReason",
+				Column: "void_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -11862,195 +11673,194 @@ func init() {
 
 	DriverSettlementSpec = TypeSpec{
 		TypeName: "DriverSettlement",
-		FieldMap: driversettlementcol.SettlementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "batchId",
-				FieldMapKey: "batchId",
+				Name:   "batchId",
+				Column: "batch_id",
 			},
 			{
-				Name:        "payProfileId",
-				FieldMapKey: "payProfileId",
+				Name:   "payProfileId",
+				Column: "pay_profile_id",
 			},
 			{
-				Name:        "settlementNumber",
-				FieldMapKey: "settlementNumber",
+				Name:   "settlementNumber",
+				Column: "settlement_number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "classification",
-				FieldMapKey: "classification",
+				Name:   "classification",
+				Column: "classification",
 			},
 			{
-				Name:        "payProfileName",
-				FieldMapKey: "payProfileName",
+				Name:   "payProfileName",
+				Column: "pay_profile_name",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "payDate",
-				FieldMapKey: "payDate",
+				Name:   "payDate",
+				Column: "pay_date",
 			},
 			{
-				Name:        "grossEarningsMinor",
-				FieldMapKey: "grossEarningsMinor",
+				Name:   "grossEarningsMinor",
+				Column: "gross_earnings_minor",
 			},
 			{
-				Name:        "reimbursementsMinor",
-				FieldMapKey: "reimbursementsMinor",
+				Name:   "reimbursementsMinor",
+				Column: "reimbursements_minor",
 			},
 			{
-				Name:        "deductionsMinor",
-				FieldMapKey: "deductionsMinor",
+				Name:   "deductionsMinor",
+				Column: "deductions_minor",
 			},
 			{
-				Name:        "carryForwardInMinor",
-				FieldMapKey: "carryForwardInMinor",
+				Name:   "carryForwardInMinor",
+				Column: "carry_forward_in_minor",
 			},
 			{
-				Name:        "carryForwardOutMinor",
-				FieldMapKey: "carryForwardOutMinor",
+				Name:   "carryForwardOutMinor",
+				Column: "carry_forward_out_minor",
 			},
 			{
-				Name:        "netPayMinor",
-				FieldMapKey: "netPayMinor",
+				Name:   "netPayMinor",
+				Column: "net_pay_minor",
 			},
 			{
-				Name:        "totalMiles",
-				FieldMapKey: "totalMiles",
+				Name:   "totalMiles",
+				Column: "total_miles",
 			},
 			{
-				Name:        "shipmentCount",
-				FieldMapKey: "shipmentCount",
+				Name:   "shipmentCount",
+				Column: "shipment_count",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "exchangeRate",
-				FieldMapKey: "exchangeRate",
+				Name:   "exchangeRate",
+				Column: "exchange_rate",
 			},
 			{
-				Name:        "exchangeRateDate",
-				FieldMapKey: "exchangeRateDate",
+				Name:   "exchangeRateDate",
+				Column: "exchange_rate_date",
 			},
 			{
-				Name:        "paidExchangeRate",
-				FieldMapKey: "paidExchangeRate",
+				Name:   "paidExchangeRate",
+				Column: "paid_exchange_rate",
 			},
 			{
-				Name:        "paidExchangeRateDate",
-				FieldMapKey: "paidExchangeRateDate",
+				Name:   "paidExchangeRateDate",
+				Column: "paid_exchange_rate_date",
 			},
 			{
-				Name:        "hasExceptions",
-				FieldMapKey: "hasExceptions",
+				Name:   "hasExceptions",
+				Column: "has_exceptions",
 			},
 			{
-				Name:        "exceptions",
-				FieldMapKey: "exceptions",
+				Name:   "exceptions",
+				Column: "exceptions",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "submittedById",
-				FieldMapKey: "submittedById",
+				Name:   "submittedById",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "postedById",
-				FieldMapKey: "postedById",
+				Name:   "postedById",
+				Column: "posted_by_id",
 			},
 			{
-				Name:        "postedAt",
-				FieldMapKey: "postedAt",
+				Name:   "postedAt",
+				Column: "posted_at",
 			},
 			{
-				Name:        "paidAt",
-				FieldMapKey: "paidAt",
+				Name:   "paidAt",
+				Column: "paid_at",
 			},
 			{
-				Name:        "paidById",
-				FieldMapKey: "paidById",
+				Name:   "paidById",
+				Column: "paid_by_id",
 			},
 			{
-				Name:        "paymentMethod",
-				FieldMapKey: "paymentMethod",
+				Name:   "paymentMethod",
+				Column: "payment_method",
 			},
 			{
-				Name:        "paymentReference",
-				FieldMapKey: "paymentReference",
+				Name:   "paymentReference",
+				Column: "payment_reference",
 			},
 			{
-				Name:        "voidedById",
-				FieldMapKey: "voidedById",
+				Name:   "voidedById",
+				Column: "voided_by_id",
 			},
 			{
-				Name:        "voidedAt",
-				FieldMapKey: "voidedAt",
+				Name:   "voidedAt",
+				Column: "voided_at",
 			},
 			{
-				Name:        "voidReason",
-				FieldMapKey: "voidReason",
+				Name:   "voidReason",
+				Column: "void_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -12074,217 +11884,218 @@ func init() {
 				Special: "disputes",
 			},
 			{
-				Name:        "submittedBy",
-				FieldMapKey: "submittedById",
+				Name:   "submittedBy",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "approvedBy",
-				FieldMapKey: "approvedById",
+				Name:   "approvedBy",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "postedBy",
-				FieldMapKey: "postedById",
+				Name:   "postedBy",
+				Column: "posted_by_id",
 			},
 			{
-				Name:        "paidBy",
-				FieldMapKey: "paidById",
+				Name:   "paidBy",
+				Column: "paid_by_id",
 			},
 			{
-				Name:        "voidedBy",
-				FieldMapKey: "voidedById",
+				Name:   "voidedBy",
+				Column: "voided_by_id",
 			},
 		},
 	}
 
 	DriverSettlementLineSpec = TypeSpec{
 		TypeName: "DriverSettlementLine",
-		FieldMap: driversettlementcol.SettlementLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "settlementId",
-				FieldMapKey: "settlementId",
+				Name:   "settlementId",
+				Column: "settlement_id",
 			},
 			{
-				Name:        "lineNumber",
-				FieldMapKey: "lineNumber",
+				Name:   "lineNumber",
+				Column: "line_number",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "componentKind",
-				FieldMapKey: "componentKind",
+				Name:   "componentKind",
+				Column: "component_kind",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "quantity",
-				FieldMapKey: "quantity",
+				Name:   "quantity",
+				Column: "quantity",
 			},
 			{
-				Name:        "rate",
-				FieldMapKey: "rate",
+				Name:   "rate",
+				Column: "rate",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "moveId",
-				FieldMapKey: "moveId",
+				Name:   "moveId",
+				Column: "move_id",
 			},
 			{
-				Name:        "payEventId",
-				FieldMapKey: "payEventId",
+				Name:   "payEventId",
+				Column: "pay_event_id",
 			},
 			{
-				Name:        "recurringDeductionId",
-				FieldMapKey: "recurringDeductionId",
+				Name:   "recurringDeductionId",
+				Column: "recurring_deduction_id",
 			},
 			{
-				Name:        "recurringEarningId",
-				FieldMapKey: "recurringEarningId",
+				Name:   "recurringEarningId",
+				Column: "recurring_earning_id",
 			},
 			{
-				Name:        "payCodeId",
-				FieldMapKey: "payCodeId",
+				Name:   "payCodeId",
+				Column: "pay_code_id",
 			},
 			{
-				Name:        "advanceId",
-				FieldMapKey: "advanceId",
+				Name:   "advanceId",
+				Column: "advance_id",
 			},
 			{
-				Name:        "escrowAccountId",
-				FieldMapKey: "escrowAccountId",
+				Name:   "escrowAccountId",
+				Column: "escrow_account_id",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 		},
 	}
 
 	EdiCarrierInvoiceSpec = TypeSpec{
 		TypeName: "EdiCarrierInvoice",
-		FieldMap: edicol.CarrierInvoiceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "invoiceNumber",
-				FieldMapKey: "invoiceNumber",
+				Name:   "invoiceNumber",
+				Column: "invoice_number",
 			},
 			{
-				Name:        "invoiceDate",
-				FieldMapKey: "invoiceDate",
+				Name:   "invoiceDate",
+				Column: "invoice_date",
 			},
 			{
-				Name:        "deliveryDate",
-				FieldMapKey: "deliveryDate",
+				Name:   "deliveryDate",
+				Column: "delivery_date",
 			},
 			{
-				Name:        "shipmentReference",
-				FieldMapKey: "shipmentReference",
+				Name:   "shipmentReference",
+				Column: "shipment_reference",
 			},
 			{
-				Name:        "bol",
-				FieldMapKey: "bol",
+				Name:   "bol",
+				Column: "bol",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 			{
-				Name:        "billToName",
-				FieldMapKey: "billToName",
+				Name:   "billToName",
+				Column: "bill_to_name",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "totalAmount",
-				FieldMapKey: "totalAmount",
+				Name:   "totalAmount",
+				Column: "total_amount",
 			},
 			{
-				Name:        "expectedAmount",
-				FieldMapKey: "expectedAmount",
+				Name:   "expectedAmount",
+				Column: "expected_amount",
 			},
 			{
-				Name:        "varianceAmount",
-				FieldMapKey: "varianceAmount",
+				Name:   "varianceAmount",
+				Column: "variance_amount",
 			},
 			{
-				Name:        "reconciliationStatus",
-				FieldMapKey: "reconciliationStatus",
+				Name:   "reconciliationStatus",
+				Column: "reconciliation_status",
 			},
 			{
-				Name:        "reconciliationNotes",
-				FieldMapKey: "reconciliationNotes",
+				Name:   "reconciliationNotes",
+				Column: "reconciliation_notes",
 			},
 			{
-				Name:        "duplicateOfId",
-				FieldMapKey: "duplicateOfId",
+				Name:   "duplicateOfId",
+				Column: "duplicate_of_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name:    "suggestedCarrier",
+				Special: "suggestedCarrier",
 			},
 		},
 	}
 
 	EdiCarrierInvoiceListSpec = TypeSpec{
 		TypeName: "EdiCarrierInvoiceList",
-		FieldMap: invoiceadjustmentcol.InvoiceAdjustmentBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -12297,79 +12108,82 @@ func init() {
 				},
 			},
 			{
-				Name:        "totalCount",
-				FieldMapKey: "totalCount",
+				Name:   "totalCount",
+				Column: "total_count",
+			},
+			{
+				Name:    "totalCountExact",
+				Special: "totalCountExact",
 			},
 		},
 	}
 
 	EdiCommunicationProfileSpec = TypeSpec{
 		TypeName: "EdiCommunicationProfile",
-		FieldMap: edicol.EDICommunicationProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "ediPartnerId",
-				FieldMapKey: "ediPartnerId",
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
 			},
 			{
-				Name:        "ediConnectionId",
-				FieldMapKey: "ediConnectionId",
+				Name:   "ediConnectionId",
+				Column: "edi_connection_id",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "config",
-				FieldMapKey: "config",
+				Name:   "config",
+				Column: "config",
 			},
 			{
 				Name:    "secretState",
 				Special: "secretState",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "partner",
-				FieldMapKey: "ediPartnerId",
+				Name:   "partner",
+				Column: "edi_partner_id",
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
@@ -12379,158 +12193,128 @@ func init() {
 
 	EdiConnectionSpec = TypeSpec{
 		TypeName: "EdiConnection",
-		FieldMap: edicol.EDIConnectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "capabilities",
-				FieldMapKey: "capabilities",
+				Name:   "capabilities",
+				Column: "capabilities",
 			},
 			{
-				Name:        "requestedAt",
-				FieldMapKey: "requestedAt",
+				Name:   "requestedAt",
+				Column: "requested_at",
 			},
 			{
-				Name:        "acceptedAt",
-				FieldMapKey: "acceptedAt",
+				Name:   "acceptedAt",
+				Column: "accepted_at",
 			},
 			{
-				Name:        "rejectedAt",
-				FieldMapKey: "rejectedAt",
+				Name:   "rejectedAt",
+				Column: "rejected_at",
 			},
 			{
-				Name:        "rejectionReason",
-				FieldMapKey: "rejectionReason",
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
 			},
 			{
-				Name:        "suspendedAt",
-				FieldMapKey: "suspendedAt",
+				Name:   "suspendedAt",
+				Column: "suspended_at",
 			},
 			{
-				Name:        "revokedAt",
-				FieldMapKey: "revokedAt",
+				Name:   "revokedAt",
+				Column: "revoked_at",
 			},
 		},
 	}
 
-	EdiInboundFileSpec = TypeSpec{
-		TypeName: "EdiInboundFile",
-		FieldMap: edicol.EDIInboundFileFieldMap,
+	EdiFlowInstanceSpec = TypeSpec{
+		TypeName: "EdiFlowInstance",
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "projectId",
+				Column: "project_id",
 			},
 			{
-				Name:        "communicationProfileId",
-				FieldMapKey: "communicationProfileId",
+				Name:   "versionId",
+				Column: "version_id",
 			},
 			{
-				Name:        "ediPartnerId",
-				FieldMapKey: "ediPartnerId",
+				Name:   "flow",
+				Column: "flow",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "key",
+				Column: "key",
 			},
 			{
-				Name:        "remotePath",
-				FieldMapKey: "remotePath",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "fileName",
-				FieldMapKey: "fileName",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "checksum",
-				FieldMapKey: "checksum",
+				Name:   "wakeAt",
+				Column: "wake_at",
 			},
 			{
-				Name:        "sizeBytes",
-				FieldMapKey: "sizeBytes",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "interchangeControlNumber",
-				FieldMapKey: "interchangeControlNumber",
+				Name:   "transferId",
+				Column: "transfer_id",
 			},
 			{
-				Name:        "isaSenderQualifier",
-				FieldMapKey: "isaSenderQualifier",
+				Name:   "lastEventAt",
+				Column: "last_event_at",
 			},
 			{
-				Name:        "isaSenderId",
-				FieldMapKey: "isaSenderId",
+				Name:   "heldAt",
+				Column: "held_at",
 			},
 			{
-				Name:        "isaReceiverQualifier",
-				FieldMapKey: "isaReceiverQualifier",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "isaReceiverId",
-				FieldMapKey: "isaReceiverId",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "failureReason",
-				FieldMapKey: "failureReason",
-			},
-			{
-				Name:        "transactionCount",
-				FieldMapKey: "transactionCount",
-			},
-			{
-				Name:        "receivedAt",
-				FieldMapKey: "receivedAt",
-			},
-			{
-				Name:        "processedAt",
-				FieldMapKey: "processedAt",
-			},
-			{
-				Name:        "version",
-				FieldMapKey: "version",
-			},
-			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
-			},
-			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
-			},
-			{
-				Name:        "partner",
-				FieldMapKey: "ediPartnerId",
+				Name:   "partner",
+				Column: "edi_partner_id",
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
@@ -12538,53 +12322,285 @@ func init() {
 		},
 	}
 
-	EdiMappingProfileSpec = TypeSpec{
-		TypeName: "EdiMappingProfile",
-		FieldMap: edicol.EDIMappingProfileFieldMap,
+	EdiInboundFileSpec = TypeSpec{
+		TypeName: "EdiInboundFile",
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "ediPartnerId",
-				FieldMapKey: "ediPartnerId",
+				Name:   "communicationProfileId",
+				Column: "communication_profile_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "remotePath",
+				Column: "remote_path",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "fileName",
+				Column: "file_name",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "checksum",
+				Column: "checksum",
 			},
 			{
-				Name:        "partner",
-				FieldMapKey: "ediPartnerId",
+				Name:   "sizeBytes",
+				Column: "size_bytes",
+			},
+			{
+				Name:   "interchangeControlNumber",
+				Column: "interchange_control_number",
+			},
+			{
+				Name:   "isaSenderQualifier",
+				Column: "isa_sender_qualifier",
+			},
+			{
+				Name:   "isaSenderId",
+				Column: "isa_sender_id",
+			},
+			{
+				Name:   "isaReceiverQualifier",
+				Column: "isa_receiver_qualifier",
+			},
+			{
+				Name:   "isaReceiverId",
+				Column: "isa_receiver_id",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "failureReason",
+				Column: "failure_reason",
+			},
+			{
+				Name:   "transactionCount",
+				Column: "transaction_count",
+			},
+			{
+				Name:   "receivedAt",
+				Column: "received_at",
+			},
+			{
+				Name:   "processedAt",
+				Column: "processed_at",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name:   "partner",
+				Column: "edi_partner_id",
+				Relation: &RelationSpec{
+					Target: &EdiPartnerSpec,
+				},
+			},
+			{
+				Name:   "rawPurgedAt",
+				Column: "raw_purged_at",
+			},
+		},
+	}
+
+	EdiLadingProjectSpec = TypeSpec{
+		TypeName: "EdiLadingProject",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
+			},
+			{
+				Name:   "activeVersionId",
+				Column: "active_version_id",
+			},
+			{
+				Name:   "shadowVersionId",
+				Column: "shadow_version_id",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	EdiLadingVersionSpec = TypeSpec{
+		TypeName: "EdiLadingVersion",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "projectId",
+				Column: "project_id",
+			},
+			{
+				Name:   "number",
+				Column: "number",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "parentVersionId",
+				Column: "parent_version_id",
+			},
+			{
+				Name:   "readiness",
+				Column: "readiness",
+			},
+			{
+				Name:   "notes",
+				Column: "notes",
+			},
+			{
+				Name:   "errorCount",
+				Column: "error_count",
+			},
+			{
+				Name:   "warningCount",
+				Column: "warning_count",
+			},
+			{
+				Name:   "shadowUntil",
+				Column: "shadow_until",
+			},
+			{
+				Name:   "certifiedAt",
+				Column: "certified_at",
+			},
+			{
+				Name:   "activatedAt",
+				Column: "activated_at",
+			},
+			{
+				Name:   "supersededAt",
+				Column: "superseded_at",
+			},
+			{
+				Name:   "archivedAt",
+				Column: "archived_at",
+			},
+			{
+				Name:   "interchange",
+				Column: "manifest",
+			},
+			{
+				Name:   "exchanges",
+				Column: "manifest",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	EdiMappingProfileSpec = TypeSpec{
+		TypeName: "EdiMappingProfile",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "description",
+				Column: "description",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+			{
+				Name:   "partner",
+				Column: "edi_partner_id",
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
@@ -12600,330 +12616,369 @@ func init() {
 
 	EdiMappingProfileItemSpec = TypeSpec{
 		TypeName: "EdiMappingProfileItem",
-		FieldMap: edicol.EDIMappingProfileItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "ediPartnerId",
-				FieldMapKey: "ediPartnerId",
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
 			},
 			{
-				Name:        "mappingProfileId",
-				FieldMapKey: "mappingProfileId",
+				Name:   "mappingProfileId",
+				Column: "mapping_profile_id",
 			},
 			{
-				Name:        "entityType",
-				FieldMapKey: "entityType",
+				Name:   "entityType",
+				Column: "entity_type",
 			},
 			{
-				Name:        "sourceId",
-				FieldMapKey: "sourceId",
+				Name:   "sourceId",
+				Column: "source_id",
 			},
 			{
-				Name:        "sourceLabel",
-				FieldMapKey: "sourceLabel",
+				Name:   "sourceLabel",
+				Column: "source_label",
 			},
 			{
-				Name:        "targetId",
-				FieldMapKey: "targetId",
+				Name:   "targetId",
+				Column: "target_id",
 			},
 			{
-				Name:        "targetLabel",
-				FieldMapKey: "targetLabel",
+				Name:   "targetLabel",
+				Column: "target_label",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	EdiMessageSpec = TypeSpec{
 		TypeName: "EdiMessage",
-		FieldMap: edicol.EDIMessageFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "ediPartnerId",
-				FieldMapKey: "ediPartnerId",
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
 			},
 			{
-				Name:        "documentTypeId",
-				FieldMapKey: "documentTypeId",
+				Name:   "documentTypeId",
+				Column: "document_type_id",
 			},
 			{
-				Name:        "partnerDocumentProfileId",
-				FieldMapKey: "partnerDocumentProfileId",
+				Name:   "ladingVersionId",
+				Column: "lading_version_id",
 			},
 			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
+				Name:   "flowInstanceId",
+				Column: "flow_instance_id",
 			},
 			{
-				Name:        "templateVersionId",
-				FieldMapKey: "templateVersionId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "transferId",
+				Column: "transfer_id",
 			},
 			{
-				Name:        "transferId",
-				FieldMapKey: "transferId",
+				Name:   "inboundFileId",
+				Column: "inbound_file_id",
 			},
 			{
-				Name:        "inboundFileId",
-				FieldMapKey: "inboundFileId",
+				Name:   "direction",
+				Column: "direction",
 			},
 			{
-				Name:        "direction",
-				FieldMapKey: "direction",
+				Name:   "transactionSet",
+				Column: "transaction_set",
 			},
 			{
-				Name:        "transactionSet",
-				FieldMapKey: "transactionSet",
+				Name:   "x12Version",
+				Column: "x12_version",
 			},
 			{
-				Name:        "x12Version",
-				FieldMapKey: "x12Version",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "interchangeControlNumber",
+				Column: "interchange_control_number",
 			},
 			{
-				Name:        "interchangeControlNumber",
-				FieldMapKey: "interchangeControlNumber",
+				Name:   "groupControlNumber",
+				Column: "group_control_number",
 			},
 			{
-				Name:        "groupControlNumber",
-				FieldMapKey: "groupControlNumber",
+				Name:   "transactionControlNumber",
+				Column: "transaction_control_number",
 			},
 			{
-				Name:        "transactionControlNumber",
-				FieldMapKey: "transactionControlNumber",
+				Name:   "segmentCount",
+				Column: "segment_count",
 			},
 			{
-				Name:        "segmentCount",
-				FieldMapKey: "segmentCount",
+				Name:   "deliveryStatus",
+				Column: "delivery_status",
 			},
 			{
-				Name:        "deliveryStatus",
-				FieldMapKey: "deliveryStatus",
+				Name:   "deliveryRemotePath",
+				Column: "delivery_remote_path",
 			},
 			{
-				Name:        "deliveryRemotePath",
-				FieldMapKey: "deliveryRemotePath",
+				Name:   "deliveryAttempts",
+				Column: "delivery_attempts",
 			},
 			{
-				Name:        "deliveryAttempts",
-				FieldMapKey: "deliveryAttempts",
+				Name:   "deliveryLastAttemptAt",
+				Column: "delivery_last_attempt_at",
 			},
 			{
-				Name:        "deliveryLastAttemptAt",
-				FieldMapKey: "deliveryLastAttemptAt",
+				Name:   "deliverySentAt",
+				Column: "delivery_sent_at",
 			},
 			{
-				Name:        "deliverySentAt",
-				FieldMapKey: "deliverySentAt",
+				Name:   "deliveryLastError",
+				Column: "delivery_last_error",
 			},
 			{
-				Name:        "deliveryLastError",
-				FieldMapKey: "deliveryLastError",
+				Name:   "ackStatus",
+				Column: "ack_status",
 			},
 			{
-				Name:        "ackStatus",
-				FieldMapKey: "ackStatus",
+				Name:   "ackMessageId",
+				Column: "ack_message_id",
 			},
 			{
-				Name:        "ackMessageId",
-				FieldMapKey: "ackMessageId",
+				Name:   "ackReceivedAt",
+				Column: "ack_received_at",
 			},
 			{
-				Name:        "ackReceivedAt",
-				FieldMapKey: "ackReceivedAt",
+				Name:   "ackLastError",
+				Column: "ack_last_error",
 			},
 			{
-				Name:        "ackLastError",
-				FieldMapKey: "ackLastError",
+				Name:   "generatedAt",
+				Column: "generated_at",
 			},
 			{
-				Name:        "generatedAt",
-				FieldMapKey: "generatedAt",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
-			},
-			{
-				Name:        "partner",
-				FieldMapKey: "ediPartnerId",
+				Name:   "partner",
+				Column: "edi_partner_id",
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
+			},
+			{
+				Name:   "invoiceId",
+				Column: "invoice_id",
+			},
+			{
+				Name:   "rawPurgedAt",
+				Column: "raw_purged_at",
+			},
+		},
+	}
+
+	EdiMessageDiagnosticSpec = TypeSpec{
+		TypeName: "EdiMessageDiagnostic",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "severity",
+				Column: "severity",
+			},
+			{
+				Name:   "code",
+				Column: "code",
+			},
+			{
+				Name:   "segmentId",
+				Column: "segment_id",
+			},
+			{
+				Name:   "elementPosition",
+				Column: "element_position",
+			},
+			{
+				Name:   "path",
+				Column: "path",
+			},
+			{
+				Name:   "message",
+				Column: "message",
+			},
+			{
+				Name:   "suggestedFix",
+				Column: "suggested_fix",
 			},
 		},
 	}
 
 	EdiPartnerSpec = TypeSpec{
 		TypeName: "EdiPartner",
-		FieldMap: edicol.EDIPartnerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "internalOrganizationId",
-				FieldMapKey: "internalOrganizationId",
+				Name:   "internalOrganizationId",
+				Column: "internal_organization_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "defaultTransportId",
-				FieldMapKey: "defaultTransportId",
+				Name:   "defaultTransportId",
+				Column: "default_transport_id",
 			},
 			{
-				Name:        "defaultMappingProfileId",
-				FieldMapKey: "defaultMappingProfileId",
+				Name:   "defaultMappingProfileId",
+				Column: "default_mapping_profile_id",
 			},
 			{
-				Name:        "country",
-				FieldMapKey: "country",
+				Name:   "country",
+				Column: "country",
 			},
 			{
-				Name:        "timezone",
-				FieldMapKey: "timezone",
+				Name:   "timezone",
+				Column: "timezone",
 			},
 			{
-				Name:        "contactName",
-				FieldMapKey: "contactName",
+				Name:   "contactName",
+				Column: "contact_name",
 			},
 			{
-				Name:        "contactEmail",
-				FieldMapKey: "contactEmail",
+				Name:   "contactEmail",
+				Column: "contact_email",
 			},
 			{
-				Name:        "contactPhone",
-				FieldMapKey: "contactPhone",
+				Name:   "contactPhone",
+				Column: "contact_phone",
 			},
 			{
-				Name:        "enabledForInbound",
-				FieldMapKey: "enabledForInbound",
+				Name:   "enabledForInbound",
+				Column: "enabled_for_inbound",
 			},
 			{
-				Name:        "enabledForOutbound",
-				FieldMapKey: "enabledForOutbound",
+				Name:   "enabledForOutbound",
+				Column: "enabled_for_outbound",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "internalOrganization",
-				FieldMapKey: "internalOrganizationId",
+				Name:   "internalOrganization",
+				Column: "internal_organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "connection",
-				FieldMapKey: "ediConnectionId",
+				Name:   "connection",
+				Column: "edi_connection_id",
 				Relation: &RelationSpec{
 					Target: &EdiConnectionSpec,
 				},
 			},
 			{
-				Name:        "defaultTransport",
-				FieldMapKey: "defaultTransportId",
+				Name:   "defaultTransport",
+				Column: "default_transport_id",
 				Relation: &RelationSpec{
 					Target: &EdiCommunicationProfileSpec,
 				},
@@ -12933,504 +12988,303 @@ func init() {
 
 	EdiPartnerCustomerSpec = TypeSpec{
 		TypeName: "EdiPartnerCustomer",
-		FieldMap: customercol.CustomerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 		},
 	}
 
-	EdiPartnerDocumentProfileSpec = TypeSpec{
-		TypeName: "EdiPartnerDocumentProfile",
-		FieldMap: edicol.EDIPartnerDocumentProfileFieldMap,
+	EdiTenderChargeSpec = TypeSpec{
+		TypeName: "EdiTenderCharge",
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:    "charge",
+				Special: "charge",
 			},
 			{
-				Name:        "ediPartnerId",
-				FieldMapKey: "ediPartnerId",
+				Name:    "method",
+				Special: "method",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
-			},
-			{
-				Name:        "status",
-				FieldMapKey: "status",
-			},
-			{
-				Name:        "direction",
-				FieldMapKey: "direction",
-			},
-			{
-				Name:        "transactionSet",
-				FieldMapKey: "transactionSet",
-			},
-			{
-				Name:        "functionalGroupId",
-				FieldMapKey: "functionalGroupId",
-			},
-			{
-				Name:        "x12VersionOverride",
-				FieldMapKey: "x12VersionOverride",
-			},
-			{
-				Name:        "envelope",
-				FieldMapKey: "envelope",
-			},
-			{
-				Name:        "acknowledgment",
-				FieldMapKey: "acknowledgment",
-			},
-			{
-				Name:        "partner",
-				FieldMapKey: "ediPartnerId",
-				Relation: &RelationSpec{
-					Target: &EdiPartnerSpec,
-				},
+				Name:    "amount",
+				Special: "amount",
 			},
 		},
 	}
 
-	EdiTemplateSpec = TypeSpec{
-		TypeName: "EdiTemplate",
-		FieldMap: edicol.EDITemplateFieldMap,
+	EdiTenderCommoditySpec = TypeSpec{
+		TypeName: "EdiTenderCommodity",
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:    "commodity",
+				Special: "commodity",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "weight",
+				Column: "weight",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
-			},
-			{
-				Name:        "documentTypeId",
-				FieldMapKey: "documentTypeId",
-			},
-			{
-				Name:        "name",
-				FieldMapKey: "name",
-			},
-			{
-				Name:        "description",
-				FieldMapKey: "description",
-			},
-			{
-				Name:        "direction",
-				FieldMapKey: "direction",
-			},
-			{
-				Name:        "standard",
-				FieldMapKey: "standard",
-			},
-			{
-				Name:        "transactionSet",
-				FieldMapKey: "transactionSet",
-			},
-			{
-				Name:        "status",
-				FieldMapKey: "status",
-			},
-			{
-				Name:        "version",
-				FieldMapKey: "version",
-			},
-			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
-			},
-			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
-			},
-			{
-				Name: "activeVersion",
-				Relation: &RelationSpec{
-					Target: &EdiTemplateVersionSpec,
-				},
-			},
-			{
-				Name: "versions",
-				Relation: &RelationSpec{
-					Target: &EdiTemplateVersionSpec,
-				},
-			},
-		},
-	}
-
-	EdiTemplateVersionSpec = TypeSpec{
-		TypeName: "EdiTemplateVersion",
-		FieldMap: edicol.EDITemplateVersionFieldMap,
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:        "id",
-				FieldMapKey: "id",
-			},
-			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
-			},
-			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
-			},
-			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
-			},
-			{
-				Name:        "sourceVersionId",
-				FieldMapKey: "sourceVersionId",
-			},
-			{
-				Name:        "versionNumber",
-				FieldMapKey: "versionNumber",
-			},
-			{
-				Name:        "x12Version",
-				FieldMapKey: "x12Version",
-			},
-			{
-				Name:        "functionalGroupId",
-				FieldMapKey: "functionalGroupId",
-			},
-			{
-				Name:        "status",
-				FieldMapKey: "status",
-			},
-			{
-				Name:        "isActive",
-				FieldMapKey: "isActive",
-			},
-			{
-				Name:        "notes",
-				FieldMapKey: "notes",
-			},
-			{
-				Name:        "certificationNotes",
-				FieldMapKey: "certificationNotes",
-			},
-			{
-				Name:        "activationNotes",
-				FieldMapKey: "activationNotes",
-			},
-			{
-				Name:        "archiveNotes",
-				FieldMapKey: "archiveNotes",
-			},
-			{
-				Name:        "deprecatedNotes",
-				FieldMapKey: "deprecatedNotes",
-			},
-			{
-				Name:        "supersededNotes",
-				FieldMapKey: "supersededNotes",
-			},
-			{
-				Name:        "certifiedAt",
-				FieldMapKey: "certifiedAt",
-			},
-			{
-				Name:        "activatedAt",
-				FieldMapKey: "activatedAt",
-			},
-			{
-				Name:        "archivedAt",
-				FieldMapKey: "archivedAt",
-			},
-			{
-				Name:        "deprecatedAt",
-				FieldMapKey: "deprecatedAt",
-			},
-			{
-				Name:        "supersededAt",
-				FieldMapKey: "supersededAt",
-			},
-			{
-				Name:        "version",
-				FieldMapKey: "version",
-			},
-			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
-			},
-			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
-			},
-		},
-	}
-
-	EdiTestCaseSpec = TypeSpec{
-		TypeName: "EdiTestCase",
-		FieldMap: edicol.EDITestCaseFieldMap,
-		AlwaysColumns: []string{
-			"id",
-			"created_at",
-		},
-		Fields: []FieldSpec{
-			{
-				Name:        "id",
-				FieldMapKey: "id",
-			},
-			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
-			},
-			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
-			},
-			{
-				Name:        "partnerDocumentProfileId",
-				FieldMapKey: "partnerDocumentProfileId",
-			},
-			{
-				Name:        "name",
-				FieldMapKey: "name",
-			},
-			{
-				Name:        "description",
-				FieldMapKey: "description",
-			},
-			{
-				Name:        "expectedWarnings",
-				FieldMapKey: "expectedWarnings",
-			},
-			{
-				Name:        "expectedErrors",
-				FieldMapKey: "expectedErrors",
-			},
-			{
-				Name:        "version",
-				FieldMapKey: "version",
-			},
-			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
-			},
-			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
-			},
-			{
-				Name:        "documentProfile",
-				FieldMapKey: "partnerDocumentProfileId",
-				Relation: &RelationSpec{
-					Target: &EdiPartnerDocumentProfileSpec,
-				},
+				Name:   "pieces",
+				Column: "pieces",
 			},
 		},
 	}
 
 	EdiTransferSpec = TypeSpec{
 		TypeName: "EdiTransfer",
-		FieldMap: edicol.EDITransferFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "sourceOrganizationId",
-				FieldMapKey: "sourceOrganizationId",
+				Name:   "sourceOrganizationId",
+				Column: "source_organization_id",
 			},
 			{
-				Name:        "sourceBusinessUnitId",
-				FieldMapKey: "sourceBusinessUnitId",
+				Name:   "sourceBusinessUnitId",
+				Column: "source_business_unit_id",
 			},
 			{
-				Name:        "targetOrganizationId",
-				FieldMapKey: "targetOrganizationId",
+				Name:   "targetOrganizationId",
+				Column: "target_organization_id",
 			},
 			{
-				Name:        "targetBusinessUnitId",
-				FieldMapKey: "targetBusinessUnitId",
+				Name:   "targetBusinessUnitId",
+				Column: "target_business_unit_id",
 			},
 			{
-				Name:        "sourcePartnerId",
-				FieldMapKey: "sourcePartnerId",
+				Name:   "sourcePartnerId",
+				Column: "source_partner_id",
 			},
 			{
-				Name:        "targetPartnerId",
-				FieldMapKey: "targetPartnerId",
+				Name:   "targetPartnerId",
+				Column: "target_partner_id",
 			},
 			{
-				Name:        "sourceShipmentId",
-				FieldMapKey: "sourceShipmentId",
+				Name:   "sourceShipmentId",
+				Column: "source_shipment_id",
 			},
 			{
-				Name:        "targetShipmentId",
-				FieldMapKey: "targetShipmentId",
+				Name:   "targetShipmentId",
+				Column: "target_shipment_id",
 			},
 			{
-				Name:        "inboundMessageId",
-				FieldMapKey: "inboundMessageId",
+				Name:   "inboundMessageId",
+				Column: "inbound_message_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "tenderPayload",
-				FieldMapKey: "tenderPayload",
+				Name:   "tenderPayload",
+				Column: "tender_payload",
 			},
 			{
-				Name:        "mappingSnapshot",
-				FieldMapKey: "mappingSnapshot",
+				Name:   "mappingSnapshot",
+				Column: "mapping_snapshot",
 			},
 			{
-				Name:        "rejectionReason",
-				FieldMapKey: "rejectionReason",
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
 			},
 			{
-				Name:        "failureReason",
-				FieldMapKey: "failureReason",
+				Name:   "failureReason",
+				Column: "failure_reason",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "processedAt",
-				FieldMapKey: "processedAt",
+				Name:   "processedAt",
+				Column: "processed_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "sourcePartner",
-				FieldMapKey: "sourcePartnerId",
+				Name:   "sourcePartner",
+				Column: "source_partner_id",
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
 			},
 			{
-				Name:        "targetPartner",
-				FieldMapKey: "targetPartnerId",
+				Name:   "targetPartner",
+				Column: "target_partner_id",
 				Relation: &RelationSpec{
 					Target: &EdiPartnerSpec,
 				},
+			},
+			{
+				Name:   "direction",
+				Column: "target_organization_id",
+			},
+			{
+				Name:    "counterparty",
+				Special: "counterparty",
+			},
+			{
+				Name:   "bol",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "customerLabel",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "serviceTypeLabel",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "shipmentTypeLabel",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "pieces",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "weight",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "temperatureMin",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "temperatureMax",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "stopCount",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "stops",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "commodities",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "charges",
+				Column: "tender_payload",
+			},
+			{
+				Name:   "canDecide",
+				Column: "status",
 			},
 		},
 	}
 
 	EmailProfileSpec = TypeSpec{
 		TypeName: "EmailProfile",
-		FieldMap: map[string]string{"businessUnitId": "business_unit_id", "createdAt": "created_at", "description": "description", "id": "id", "name": "name", "organizationId": "organization_id", "provider": "provider_type", "replyToEmail": "reply_to", "senderEmail": "from_address", "senderName": "from_name", "status": "status", "updatedAt": "updated_at", "version": "version"},
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "senderName",
-				FieldMapKey: "senderName",
+				Name:   "senderName",
+				Column: "from_name",
 			},
 			{
-				Name:        "senderEmail",
-				FieldMapKey: "senderEmail",
+				Name:   "senderEmail",
+				Column: "from_address",
 			},
 			{
-				Name:        "replyToEmail",
-				FieldMapKey: "replyToEmail",
+				Name:   "replyToEmail",
+				Column: "reply_to",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider_type",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -13440,121 +13294,119 @@ func init() {
 
 	EquipmentContinuitySpec = TypeSpec{
 		TypeName: "EquipmentContinuity",
-		FieldMap: equipmentcontinuitycol.EquipmentContinuityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "equipmentType",
-				FieldMapKey: "equipmentType",
+				Name:   "equipmentType",
+				Column: "equipment_type",
 			},
 			{
-				Name:        "equipmentId",
-				FieldMapKey: "equipmentId",
+				Name:   "equipmentId",
+				Column: "equipment_id",
 			},
 			{
-				Name:        "sourceShipmentId",
-				FieldMapKey: "sourceShipmentId",
+				Name:   "sourceShipmentId",
+				Column: "source_shipment_id",
 			},
 			{
-				Name:        "sourceShipmentMoveId",
-				FieldMapKey: "sourceShipmentMoveId",
+				Name:   "sourceShipmentMoveId",
+				Column: "source_shipment_move_id",
 			},
 			{
-				Name:        "currentLocationId",
-				FieldMapKey: "currentLocationId",
+				Name:   "currentLocationId",
+				Column: "current_location_id",
 			},
 			{
-				Name:        "currentLocationName",
-				FieldMapKey: "currentLocationId",
+				Name:   "currentLocationName",
+				Column: "current_location_id",
 			},
 			{
-				Name:        "isCurrent",
-				FieldMapKey: "isCurrent",
+				Name:   "isCurrent",
+				Column: "is_current",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	EquipmentManufacturerSpec = TypeSpec{
 		TypeName: "EquipmentManufacturer",
-		FieldMap: equipmentmanufacturercol.EquipmentManufacturerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -13564,70 +13416,69 @@ func init() {
 
 	EquipmentTypeSpec = TypeSpec{
 		TypeName: "EquipmentType",
-		FieldMap: equipmenttypecol.EquipmentTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "class",
-				FieldMapKey: "class",
+				Name:   "class",
+				Column: "class",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "interiorLength",
-				FieldMapKey: "interiorLength",
+				Name:   "interiorLength",
+				Column: "interior_length",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -13637,75 +13488,74 @@ func init() {
 
 	EscrowAccountSpec = TypeSpec{
 		TypeName: "EscrowAccount",
-		FieldMap: driverpaycol.EscrowAccountFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "targetAmountMinor",
-				FieldMapKey: "targetAmountMinor",
+				Name:   "targetAmountMinor",
+				Column: "target_amount_minor",
 			},
 			{
-				Name:        "balanceMinor",
-				FieldMapKey: "balanceMinor",
+				Name:   "balanceMinor",
+				Column: "balance_minor",
 			},
 			{
-				Name:        "annualInterestRate",
-				FieldMapKey: "annualInterestRate",
+				Name:   "annualInterestRate",
+				Column: "annual_interest_rate",
 			},
 			{
-				Name:        "lastInterestAccrualDate",
-				FieldMapKey: "lastInterestAccrualDate",
+				Name:   "lastInterestAccrualDate",
+				Column: "last_interest_accrual_date",
 			},
 			{
-				Name:        "openedDate",
-				FieldMapKey: "openedDate",
+				Name:   "openedDate",
+				Column: "opened_date",
 			},
 			{
-				Name:        "closedDate",
-				FieldMapKey: "closedDate",
+				Name:   "closedDate",
+				Column: "closed_date",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -13721,863 +13571,854 @@ func init() {
 
 	EscrowTransactionSpec = TypeSpec{
 		TypeName: "EscrowTransaction",
-		FieldMap: driverpaycol.EscrowTransactionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "escrowAccountId",
-				FieldMapKey: "escrowAccountId",
+				Name:   "escrowAccountId",
+				Column: "escrow_account_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "balanceAfterMinor",
-				FieldMapKey: "balanceAfterMinor",
+				Name:   "balanceAfterMinor",
+				Column: "balance_after_minor",
 			},
 			{
-				Name:        "occurredDate",
-				FieldMapKey: "occurredDate",
+				Name:   "occurredDate",
+				Column: "occurred_date",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "settlementId",
-				FieldMapKey: "settlementId",
+				Name:   "settlementId",
+				Column: "settlement_id",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	ExternalIdentitySpec = TypeSpec{
 		TypeName: "ExternalIdentity",
-		FieldMap: iamcol.ExternalIdentityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "identityProviderId",
-				FieldMapKey: "identityProviderId",
+				Name:   "identityProviderId",
+				Column: "identity_provider_id",
 			},
 			{
-				Name:        "externalSubject",
-				FieldMapKey: "externalSubject",
+				Name:   "externalSubject",
+				Column: "external_subject",
 			},
 			{
-				Name:        "externalUsername",
-				FieldMapKey: "externalUsername",
+				Name:   "externalUsername",
+				Column: "external_username",
 			},
 			{
-				Name:        "externalEmail",
-				FieldMapKey: "externalEmail",
+				Name:   "externalEmail",
+				Column: "external_email",
 			},
 			{
-				Name:        "lastLoginAt",
-				FieldMapKey: "lastLoginAt",
+				Name:   "lastLoginAt",
+				Column: "last_login_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 			},
 		},
 	}
 
 	ExtractionEvalCaseSpec = TypeSpec{
 		TypeName: "ExtractionEvalCase",
-		FieldMap: extractionevalcol.ExtractionCaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "task",
-				FieldMapKey: "task",
+				Name:   "task",
+				Column: "task",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "documentKind",
-				FieldMapKey: "documentKind",
+				Name:   "documentKind",
+				Column: "document_kind",
 			},
 			{
-				Name:        "documentFingerprint",
-				FieldMapKey: "documentFingerprint",
+				Name:   "documentFingerprint",
+				Column: "document_fingerprint",
 			},
 			{
-				Name:        "fileName",
-				FieldMapKey: "fileName",
+				Name:   "fileName",
+				Column: "file_name",
 			},
 			{
-				Name:        "pages",
-				FieldMapKey: "pages",
+				Name:   "pages",
+				Column: "pages",
 			},
 			{
-				Name:        "pageCount",
-				FieldMapKey: "pageCount",
+				Name:   "pageCount",
+				Column: "page_count",
 			},
 			{
-				Name:        "inputHash",
-				FieldMapKey: "inputHash",
+				Name:   "inputHash",
+				Column: "input_hash",
 			},
 			{
-				Name:        "expected",
-				FieldMapKey: "expected",
+				Name:   "expected",
+				Column: "expected",
 			},
 			{
-				Name:        "expectedFieldCount",
-				FieldMapKey: "expectedFieldCount",
+				Name:   "expectedFieldCount",
+				Column: "expected_field_count",
 			},
 			{
-				Name:        "sourceCorrectionId",
-				FieldMapKey: "sourceCorrectionId",
+				Name:   "sourceCorrectionId",
+				Column: "source_correction_id",
 			},
 			{
-				Name:        "sourceDocumentId",
-				FieldMapKey: "sourceDocumentId",
+				Name:   "sourceDocumentId",
+				Column: "source_document_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ExtractionEvalResultSpec = TypeSpec{
 		TypeName: "ExtractionEvalResult",
-		FieldMap: extractionevalcol.ExtractionResultFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "caseId",
-				FieldMapKey: "caseId",
+				Name:   "caseId",
+				Column: "case_id",
 			},
 			{
-				Name:        "caseTitle",
-				FieldMapKey: "caseTitle",
+				Name:   "caseTitle",
+				Column: "case_title",
 			},
 			{
-				Name:        "ordinal",
-				FieldMapKey: "ordinal",
+				Name:   "ordinal",
+				Column: "ordinal",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
-				Name:        "providerId",
-				FieldMapKey: "providerId",
+				Name:   "providerId",
+				Column: "provider_id",
 			},
 			{
-				Name:        "predicted",
-				FieldMapKey: "predicted",
+				Name:   "predicted",
+				Column: "predicted",
 			},
 			{
-				Name:        "fieldResults",
-				FieldMapKey: "fieldResults",
+				Name:   "fieldResults",
+				Column: "field_results",
 			},
 			{
-				Name:        "scoredCount",
-				FieldMapKey: "scoredCount",
+				Name:   "scoredCount",
+				Column: "scored_count",
 			},
 			{
-				Name:        "correctCount",
-				FieldMapKey: "correctCount",
+				Name:   "correctCount",
+				Column: "correct_count",
 			},
 			{
-				Name:        "correctedCount",
-				FieldMapKey: "correctedCount",
+				Name:   "correctedCount",
+				Column: "corrected_count",
 			},
 			{
-				Name:        "missedCount",
-				FieldMapKey: "missedCount",
+				Name:   "missedCount",
+				Column: "missed_count",
 			},
 			{
-				Name:        "unconfirmedCount",
-				FieldMapKey: "unconfirmedCount",
+				Name:   "unconfirmedCount",
+				Column: "unconfirmed_count",
 			},
 			{
-				Name:        "unscoredCount",
-				FieldMapKey: "unscoredCount",
+				Name:   "unscoredCount",
+				Column: "unscored_count",
 			},
 			{
-				Name:        "accuracy",
-				FieldMapKey: "accuracy",
+				Name:   "accuracy",
+				Column: "accuracy",
 			},
 			{
-				Name:        "latencyMs",
-				FieldMapKey: "latencyMs",
+				Name:   "latencyMs",
+				Column: "latency_ms",
 			},
 			{
-				Name:        "inputTokens",
-				FieldMapKey: "inputTokens",
+				Name:   "inputTokens",
+				Column: "input_tokens",
 			},
 			{
-				Name:        "outputTokens",
-				FieldMapKey: "outputTokens",
+				Name:   "outputTokens",
+				Column: "output_tokens",
 			},
 			{
-				Name:        "costUsd",
-				FieldMapKey: "costUsd",
+				Name:   "costUsd",
+				Column: "cost_usd",
 			},
 			{
-				Name:        "errorMessage",
-				FieldMapKey: "errorMessage",
+				Name:   "errorMessage",
+				Column: "error_message",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ExtractionEvalRunSpec = TypeSpec{
 		TypeName: "ExtractionEvalRun",
-		FieldMap: extractionevalcol.ExtractionRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "task",
-				FieldMapKey: "task",
+				Name:   "task",
+				Column: "task",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "providerId",
-				FieldMapKey: "providerId",
+				Name:   "providerId",
+				Column: "provider_id",
 			},
 			{
-				Name:        "providerName",
-				FieldMapKey: "providerName",
+				Name:   "providerName",
+				Column: "provider_name",
 			},
 			{
-				Name:        "providerModel",
-				FieldMapKey: "providerModel",
+				Name:   "providerModel",
+				Column: "provider_model",
 			},
 			{
-				Name:        "servedModel",
-				FieldMapKey: "servedModel",
+				Name:   "servedModel",
+				Column: "served_model",
 			},
 			{
-				Name:        "caseLimit",
-				FieldMapKey: "caseLimit",
+				Name:   "caseLimit",
+				Column: "case_limit",
 			},
 			{
-				Name:        "casesTotal",
-				FieldMapKey: "casesTotal",
+				Name:   "casesTotal",
+				Column: "cases_total",
 			},
 			{
-				Name:        "casesCompleted",
-				FieldMapKey: "casesCompleted",
+				Name:   "casesCompleted",
+				Column: "cases_completed",
 			},
 			{
-				Name:        "casesFailed",
-				FieldMapKey: "casesFailed",
+				Name:   "casesFailed",
+				Column: "cases_failed",
 			},
 			{
-				Name:        "casesSkipped",
-				FieldMapKey: "casesSkipped",
+				Name:   "casesSkipped",
+				Column: "cases_skipped",
 			},
 			{
-				Name:        "scoredCount",
-				FieldMapKey: "scoredCount",
+				Name:   "scoredCount",
+				Column: "scored_count",
 			},
 			{
-				Name:        "correctCount",
-				FieldMapKey: "correctCount",
+				Name:   "correctCount",
+				Column: "correct_count",
 			},
 			{
-				Name:        "correctedCount",
-				FieldMapKey: "correctedCount",
+				Name:   "correctedCount",
+				Column: "corrected_count",
 			},
 			{
-				Name:        "missedCount",
-				FieldMapKey: "missedCount",
+				Name:   "missedCount",
+				Column: "missed_count",
 			},
 			{
-				Name:        "unconfirmedCount",
-				FieldMapKey: "unconfirmedCount",
+				Name:   "unconfirmedCount",
+				Column: "unconfirmed_count",
 			},
 			{
-				Name:        "unscoredCount",
-				FieldMapKey: "unscoredCount",
+				Name:   "unscoredCount",
+				Column: "unscored_count",
 			},
 			{
-				Name:        "accuracy",
-				FieldMapKey: "accuracy",
+				Name:   "accuracy",
+				Column: "accuracy",
 			},
 			{
-				Name:        "fieldAccuracy",
-				FieldMapKey: "fieldAccuracy",
+				Name:   "fieldAccuracy",
+				Column: "field_accuracy",
 			},
 			{
-				Name:        "costUsd",
-				FieldMapKey: "costUsd",
+				Name:   "costUsd",
+				Column: "cost_usd",
 			},
 			{
-				Name:        "inputTokens",
-				FieldMapKey: "inputTokens",
+				Name:   "inputTokens",
+				Column: "input_tokens",
 			},
 			{
-				Name:        "outputTokens",
-				FieldMapKey: "outputTokens",
+				Name:   "outputTokens",
+				Column: "output_tokens",
 			},
 			{
-				Name:        "avgLatencyMs",
-				FieldMapKey: "avgLatencyMs",
+				Name:   "avgLatencyMs",
+				Column: "avg_latency_ms",
 			},
 			{
-				Name:        "stopReason",
-				FieldMapKey: "stopReason",
+				Name:   "stopReason",
+				Column: "stop_reason",
 			},
 			{
-				Name:        "failureMessage",
-				FieldMapKey: "failureMessage",
+				Name:   "failureMessage",
+				Column: "failure_message",
 			},
 			{
-				Name:        "requestedById",
-				FieldMapKey: "requestedById",
+				Name:   "requestedById",
+				Column: "requested_by_id",
 			},
 			{
-				Name:        "workflowId",
-				FieldMapKey: "workflowId",
+				Name:   "workflowId",
+				Column: "workflow_id",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "finishedAt",
-				FieldMapKey: "finishedAt",
+				Name:   "finishedAt",
+				Column: "finished_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ExtractionRolloutSpec = TypeSpec{
 		TypeName: "ExtractionRollout",
-		FieldMap: extractionrolloutcol.ExtractionRolloutFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
-				Name:        "providerId",
-				FieldMapKey: "providerId",
+				Name:   "providerId",
+				Column: "provider_id",
 			},
 			{
-				Name:        "percent",
-				FieldMapKey: "percent",
+				Name:   "percent",
+				Column: "percent",
 			},
 			{
-				Name:        "maxAccuracyDropPoints",
-				FieldMapKey: "maxAccuracyDropPoints",
+				Name:   "maxAccuracyDropPoints",
+				Column: "max_accuracy_drop_points",
 			},
 			{
-				Name:        "maxRejectionIncreasePoints",
-				FieldMapKey: "maxRejectionIncreasePoints",
+				Name:   "maxRejectionIncreasePoints",
+				Column: "max_rejection_increase_points",
 			},
 			{
 				Name:    "serving",
 				Special: "serving",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "haltedAt",
-				FieldMapKey: "haltedAt",
+				Name:   "haltedAt",
+				Column: "halted_at",
 			},
 			{
-				Name:        "haltReason",
-				FieldMapKey: "haltReason",
+				Name:   "haltReason",
+				Column: "halt_reason",
 			},
 			{
-				Name:        "haltCandidateRate",
-				FieldMapKey: "haltCandidateRate",
+				Name:   "haltCandidateRate",
+				Column: "halt_candidate_rate",
 			},
 			{
-				Name:        "haltBaselineRate",
-				FieldMapKey: "haltBaselineRate",
+				Name:   "haltBaselineRate",
+				Column: "halt_baseline_rate",
 			},
 			{
-				Name:        "updatedById",
-				FieldMapKey: "updatedById",
+				Name:   "updatedById",
+				Column: "updated_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ExtractionShadowResultSpec = TypeSpec{
 		TypeName: "ExtractionShadowResult",
-		FieldMap: extractionshadowcol.ShadowResultFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "extractedAt",
-				FieldMapKey: "extractedAt",
+				Name:   "extractedAt",
+				Column: "extracted_at",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "statusReason",
-				FieldMapKey: "statusReason",
+				Name:   "statusReason",
+				Column: "status_reason",
 			},
 			{
-				Name:        "providerId",
-				FieldMapKey: "providerId",
+				Name:   "providerId",
+				Column: "provider_id",
 			},
 			{
-				Name:        "providerName",
-				FieldMapKey: "providerName",
+				Name:   "providerName",
+				Column: "provider_name",
 			},
 			{
-				Name:        "servedModel",
-				FieldMapKey: "servedModel",
+				Name:   "servedModel",
+				Column: "served_model",
 			},
 			{
-				Name:        "productionProviderId",
-				FieldMapKey: "productionProviderId",
+				Name:   "productionProviderId",
+				Column: "production_provider_id",
 			},
 			{
-				Name:        "productionModel",
-				FieldMapKey: "productionModel",
+				Name:   "productionModel",
+				Column: "production_model",
 			},
 			{
-				Name:        "accepted",
-				FieldMapKey: "accepted",
+				Name:   "accepted",
+				Column: "accepted",
 			},
 			{
-				Name:        "rejectionReason",
-				FieldMapKey: "rejectionReason",
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
 			},
 			{
-				Name:        "predicted",
-				FieldMapKey: "predicted",
+				Name:   "predicted",
+				Column: "predicted",
 			},
 			{
-				Name:        "correctionId",
-				FieldMapKey: "correctionId",
+				Name:   "correctionId",
+				Column: "correction_id",
 			},
 			{
-				Name:        "scoredAt",
-				FieldMapKey: "scoredAt",
+				Name:   "scoredAt",
+				Column: "scored_at",
 			},
 			{
-				Name:        "verdict",
-				FieldMapKey: "verdict",
+				Name:   "verdict",
+				Column: "verdict",
 			},
 			{
-				Name:        "fieldResults",
-				FieldMapKey: "fieldResults",
+				Name:   "fieldResults",
+				Column: "field_results",
 			},
 			{
-				Name:        "scoredCount",
-				FieldMapKey: "scoredCount",
+				Name:   "scoredCount",
+				Column: "scored_count",
 			},
 			{
-				Name:        "correctCount",
-				FieldMapKey: "correctCount",
+				Name:   "correctCount",
+				Column: "correct_count",
 			},
 			{
-				Name:        "correctedCount",
-				FieldMapKey: "correctedCount",
+				Name:   "correctedCount",
+				Column: "corrected_count",
 			},
 			{
-				Name:        "missedCount",
-				FieldMapKey: "missedCount",
+				Name:   "missedCount",
+				Column: "missed_count",
 			},
 			{
-				Name:        "accuracy",
-				FieldMapKey: "accuracy",
+				Name:   "accuracy",
+				Column: "accuracy",
 			},
 			{
-				Name:        "baselineFieldResults",
-				FieldMapKey: "baselineFieldResults",
+				Name:   "baselineFieldResults",
+				Column: "baseline_field_results",
 			},
 			{
-				Name:        "baselineScoredCount",
-				FieldMapKey: "baselineScoredCount",
+				Name:   "baselineScoredCount",
+				Column: "baseline_scored_count",
 			},
 			{
-				Name:        "baselineCorrectCount",
-				FieldMapKey: "baselineCorrectCount",
+				Name:   "baselineCorrectCount",
+				Column: "baseline_correct_count",
 			},
 			{
-				Name:        "baselineCorrectedCount",
-				FieldMapKey: "baselineCorrectedCount",
+				Name:   "baselineCorrectedCount",
+				Column: "baseline_corrected_count",
 			},
 			{
-				Name:        "baselineMissedCount",
-				FieldMapKey: "baselineMissedCount",
+				Name:   "baselineMissedCount",
+				Column: "baseline_missed_count",
 			},
 			{
-				Name:        "baselineAccuracy",
-				FieldMapKey: "baselineAccuracy",
+				Name:   "baselineAccuracy",
+				Column: "baseline_accuracy",
 			},
 			{
-				Name:        "latencyMs",
-				FieldMapKey: "latencyMs",
+				Name:   "latencyMs",
+				Column: "latency_ms",
 			},
 			{
-				Name:        "inputTokens",
-				FieldMapKey: "inputTokens",
+				Name:   "inputTokens",
+				Column: "input_tokens",
 			},
 			{
-				Name:        "outputTokens",
-				FieldMapKey: "outputTokens",
+				Name:   "outputTokens",
+				Column: "output_tokens",
 			},
 			{
-				Name:        "costUsd",
-				FieldMapKey: "costUsd",
+				Name:   "costUsd",
+				Column: "cost_usd",
 			},
 			{
-				Name:        "workflowId",
-				FieldMapKey: "workflowId",
+				Name:   "workflowId",
+				Column: "workflow_id",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ExtractionShadowSettingsSpec = TypeSpec{
 		TypeName: "ExtractionShadowSettings",
-		FieldMap: extractionshadowcol.ShadowSettingsFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
-				Name:        "providerId",
-				FieldMapKey: "providerId",
+				Name:   "providerId",
+				Column: "provider_id",
 			},
 			{
-				Name:        "samplePercent",
-				FieldMapKey: "samplePercent",
+				Name:   "samplePercent",
+				Column: "sample_percent",
 			},
 			{
-				Name:        "dailyLimit",
-				FieldMapKey: "dailyLimit",
+				Name:   "dailyLimit",
+				Column: "daily_limit",
 			},
 			{
-				Name:        "updatedById",
-				FieldMapKey: "updatedById",
+				Name:   "updatedById",
+				Column: "updated_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	FactoringAgreementSpec = TypeSpec{
 		TypeName: "FactoringAgreement",
-		FieldMap: factoringcol.AgreementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "effectiveFrom",
-				FieldMapKey: "effectiveFrom",
+				Name:   "effectiveFrom",
+				Column: "effective_from",
 			},
 			{
-				Name:        "effectiveTo",
-				FieldMapKey: "effectiveTo",
+				Name:   "effectiveTo",
+				Column: "effective_to",
 			},
 			{
-				Name:        "advanceRateBp",
-				FieldMapKey: "advanceRateBp",
+				Name:   "advanceRateBp",
+				Column: "advance_rate_bp",
 			},
 			{
-				Name:        "reserveRateBp",
-				FieldMapKey: "reserveRateBp",
+				Name:   "reserveRateBp",
+				Column: "reserve_rate_bp",
 			},
 			{
-				Name:        "minimumFeeMinor",
-				FieldMapKey: "minimumFeeMinor",
+				Name:   "minimumFeeMinor",
+				Column: "minimum_fee_minor",
 			},
 			{
-				Name:        "chargebackWindowDays",
-				FieldMapKey: "chargebackWindowDays",
+				Name:   "chargebackWindowDays",
+				Column: "chargeback_window_days",
 			},
 			{
-				Name:        "recourse",
-				FieldMapKey: "recourse",
+				Name:   "recourse",
+				Column: "recourse",
 			},
 			{
-				Name:        "accountingTreatment",
-				FieldMapKey: "accountingTreatment",
+				Name:   "accountingTreatment",
+				Column: "accounting_treatment",
 			},
 			{
-				Name:        "fundingDays",
-				FieldMapKey: "fundingDays",
+				Name:   "fundingDays",
+				Column: "funding_days",
 			},
 			{
-				Name:        "submissionTime",
-				FieldMapKey: "submissionTime",
+				Name:   "submissionTime",
+				Column: "submission_time",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "activatedAt",
-				FieldMapKey: "activatedAt",
+				Name:   "activatedAt",
+				Column: "activated_at",
 			},
 			{
-				Name:        "endedAt",
-				FieldMapKey: "endedAt",
+				Name:   "endedAt",
+				Column: "ended_at",
 			},
 			{
-				Name:        "dueFromFactorAccountId",
-				FieldMapKey: "dueFromFactorAccountId",
+				Name:   "dueFromFactorAccountId",
+				Column: "due_from_factor_account_id",
 			},
 			{
-				Name:        "feeExpenseAccountId",
-				FieldMapKey: "feeExpenseAccountId",
+				Name:   "feeExpenseAccountId",
+				Column: "fee_expense_account_id",
 			},
 			{
-				Name:        "liabilityAccountId",
-				FieldMapKey: "liabilityAccountId",
+				Name:   "liabilityAccountId",
+				Column: "factoring_liability_account_id",
 			},
 			{
-				Name:        "cashAccountId",
-				FieldMapKey: "cashAccountId",
+				Name:   "cashAccountId",
+				Column: "cash_account_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "feeTiers",
@@ -14590,8 +14431,8 @@ func init() {
 				Special: "documentTypes",
 			},
 			{
-				Name:        "factoringCompany",
-				FieldMapKey: "businessUnitId",
+				Name:   "factoringCompany",
+				Column: "factoring_company_id",
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
@@ -14601,95 +14442,94 @@ func init() {
 
 	FactoringCompanySpec = TypeSpec{
 		TypeName: "FactoringCompany",
-		FieldMap: factoringcompanycol.FactoringCompanyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "addressLine1",
-				FieldMapKey: "addressLine1",
+				Name:   "addressLine1",
+				Column: "address_line_1",
 			},
 			{
-				Name:        "addressLine2",
-				FieldMapKey: "addressLine2",
+				Name:   "addressLine2",
+				Column: "address_line_2",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "postalCode",
-				FieldMapKey: "postalCode",
+				Name:   "postalCode",
+				Column: "postal_code",
 			},
 			{
-				Name:        "email",
-				FieldMapKey: "email",
+				Name:   "email",
+				Column: "email",
 			},
 			{
-				Name:        "phoneNumber",
-				FieldMapKey: "phoneNumber",
+				Name:   "phoneNumber",
+				Column: "phone_number",
 			},
 			{
-				Name:        "remittanceInstructions",
-				FieldMapKey: "remittanceInstructions",
+				Name:   "remittanceInstructions",
+				Column: "remittance_instructions",
 			},
 			{
-				Name:        "noticeOfAssignment",
-				FieldMapKey: "noticeOfAssignment",
+				Name:   "noticeOfAssignment",
+				Column: "notice_of_assignment",
 			},
 			{
-				Name:        "nonRecourse",
-				FieldMapKey: "nonRecourse",
+				Name:   "nonRecourse",
+				Column: "non_recourse",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
@@ -14703,95 +14543,93 @@ func init() {
 
 	FactoringFeeTierSpec = TypeSpec{
 		TypeName: "FactoringFeeTier",
-		FieldMap: factoringcol.FeeTierFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "daysFrom",
-				FieldMapKey: "daysFrom",
+				Name:   "daysFrom",
+				Column: "days_from",
 			},
 			{
-				Name:        "daysTo",
-				FieldMapKey: "daysTo",
+				Name:   "daysTo",
+				Column: "days_to",
 			},
 			{
-				Name:        "rateBp",
-				FieldMapKey: "rateBp",
+				Name:   "rateBp",
+				Column: "rate_bp",
 			},
 			{
-				Name:        "flatMinor",
-				FieldMapKey: "flatMinor",
+				Name:   "flatMinor",
+				Column: "flat_minor",
 			},
 		},
 	}
 
 	FactoringInvoiceStateSpec = TypeSpec{
 		TypeName: "FactoringInvoiceState",
-		FieldMap: factoringcol.InvoiceStateFieldMap,
 		AlwaysColumns: []string{
 			"invoice_id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "id",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "verdict",
-				FieldMapKey: "verdict",
+				Name:   "verdict",
+				Column: "verdict",
 			},
 			{
-				Name:        "checks",
-				FieldMapKey: "checks",
+				Name:   "checks",
+				Column: "checks",
 			},
 			{
-				Name:        "failedChecks",
-				FieldMapKey: "failedChecks",
+				Name:   "failedChecks",
+				Column: "failed_checks",
 			},
 			{
-				Name:        "openBalanceMinor",
-				FieldMapKey: "openBalanceMinor",
+				Name:   "openBalanceMinor",
+				Column: "open_balance_minor",
 			},
 			{
-				Name:        "readySince",
-				FieldMapKey: "readySince",
+				Name:   "readySince",
+				Column: "ready_since",
 			},
 			{
-				Name:        "evaluatedAt",
-				FieldMapKey: "evaluatedAt",
+				Name:   "evaluatedAt",
+				Column: "evaluated_at",
 			},
 			{
-				Name:        "invoice",
-				FieldMapKey: "businessUnitId",
+				Name:   "invoice",
+				Column: "invoice_id",
 				Relation: &RelationSpec{
 					Target: &InvoiceSpec,
 				},
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "businessUnitId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
 			},
 			{
-				Name:        "factoringCompany",
-				FieldMapKey: "businessUnitId",
+				Name:   "factoringCompany",
+				Column: "factoring_company_id",
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
@@ -14805,90 +14643,89 @@ func init() {
 
 	FactoringNoaSpec = TypeSpec{
 		TypeName: "FactoringNoa",
-		FieldMap: factoringcol.NoaFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "sentAt",
-				FieldMapKey: "sentAt",
+				Name:   "sentAt",
+				Column: "sent_at",
 			},
 			{
-				Name:        "sentTo",
-				FieldMapKey: "sentTo",
+				Name:   "sentTo",
+				Column: "sent_to",
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "signedDocumentId",
-				FieldMapKey: "signedDocumentId",
+				Name:   "signedDocumentId",
+				Column: "signed_document_id",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "releasedAt",
-				FieldMapKey: "releasedAt",
+				Name:   "releasedAt",
+				Column: "released_at",
 			},
 			{
-				Name:        "releaseReason",
-				FieldMapKey: "releaseReason",
+				Name:   "releaseReason",
+				Column: "release_reason",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "businessUnitId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
 			},
 			{
-				Name:        "factoringCompany",
-				FieldMapKey: "businessUnitId",
+				Name:   "factoringCompany",
+				Column: "factoring_company_id",
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
@@ -14898,141 +14735,146 @@ func init() {
 
 	FactoringRemittanceSpec = TypeSpec{
 		TypeName: "FactoringRemittance",
-		FieldMap: factoringcol.RemittanceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "fileName",
-				FieldMapKey: "fileName",
+				Name:   "fileName",
+				Column: "file_name",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "inboundMessageId",
-				FieldMapKey: "inboundMessageId",
+				Name:   "inboundMessageId",
+				Column: "inbound_message_id",
 			},
 			{
-				Name:        "sourceFormat",
-				FieldMapKey: "sourceFormat",
+				Name:   "sourceFormat",
+				Column: "source_format",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "defaultKind",
-				FieldMapKey: "defaultKind",
+				Name:   "defaultKind",
+				Column: "default_kind",
 			},
 			{
-				Name:        "remittedOn",
-				FieldMapKey: "remittedOn",
+				Name:   "remittedOn",
+				Column: "remitted_on",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "mapping",
-				FieldMapKey: "mapping",
+				Name:   "mapping",
+				Column: "mapping",
 			},
 			{
-				Name:        "headers",
-				FieldMapKey: "headers",
+				Name:   "headers",
+				Column: "headers",
 			},
 			{
-				Name:        "unmappedHeaders",
-				FieldMapKey: "unmappedHeaders",
+				Name:   "unmappedHeaders",
+				Column: "unmapped_headers",
 			},
 			{
-				Name:        "lineCount",
-				FieldMapKey: "lineCount",
+				Name:   "lineCount",
+				Column: "line_count",
 			},
 			{
-				Name:        "matchedCount",
-				FieldMapKey: "matchedCount",
+				Name:   "matchedCount",
+				Column: "matched_count",
 			},
 			{
-				Name:        "exceptionCount",
-				FieldMapKey: "exceptionCount",
+				Name:   "exceptionCount",
+				Column: "exception_count",
 			},
 			{
-				Name:        "appliedCount",
-				FieldMapKey: "appliedCount",
+				Name:   "appliedCount",
+				Column: "applied_count",
 			},
 			{
-				Name:        "totalCashMinor",
-				FieldMapKey: "totalCashMinor",
+				Name:   "totalCashMinor",
+				Column: "total_cash_minor",
 			},
 			{
-				Name:        "error",
-				FieldMapKey: "error",
+				Name:   "error",
+				Column: "error",
 			},
 			{
-				Name:        "stagedAt",
-				FieldMapKey: "stagedAt",
+				Name:   "stagedAt",
+				Column: "staged_at",
 			},
 			{
-				Name:        "appliedAt",
-				FieldMapKey: "appliedAt",
+				Name:   "appliedAt",
+				Column: "applied_at",
 			},
 			{
-				Name:        "appliedById",
-				FieldMapKey: "appliedById",
+				Name:   "appliedById",
+				Column: "applied_by_id",
 			},
 			{
-				Name:        "discardedAt",
-				FieldMapKey: "discardedAt",
+				Name:   "discardedAt",
+				Column: "discarded_at",
 			},
 			{
-				Name:        "discardReason",
-				FieldMapKey: "discardReason",
+				Name:   "discardReason",
+				Column: "discard_reason",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "factoringCompany",
-				FieldMapKey: "businessUnitId",
+				Name:   "factoringCompany",
+				Column: "factoring_company_id",
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
+				},
+			},
+			{
+				Name: "lines",
+				Relation: &RelationSpec{
+					Target: &FactoringRemittanceLineSpec,
 				},
 			},
 		},
@@ -15040,79 +14882,78 @@ func init() {
 
 	FactoringRemittanceLineSpec = TypeSpec{
 		TypeName: "FactoringRemittanceLine",
-		FieldMap: factoringcol.RemittanceLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "remittanceId",
-				FieldMapKey: "remittanceId",
+				Name:   "remittanceId",
+				Column: "remittance_id",
 			},
 			{
-				Name:        "rowNumber",
-				FieldMapKey: "rowNumber",
+				Name:   "rowNumber",
+				Column: "row_number",
 			},
 			{
-				Name:        "cells",
-				FieldMapKey: "cells",
+				Name:   "cells",
+				Column: "cells",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "invoiceNumber",
-				FieldMapKey: "invoiceNumber",
+				Name:   "invoiceNumber",
+				Column: "invoice_number",
 			},
 			{
-				Name:        "factorReference",
-				FieldMapKey: "factorReference",
+				Name:   "factorReference",
+				Column: "factor_reference",
 			},
 			{
-				Name:        "debtorName",
-				FieldMapKey: "debtorName",
+				Name:   "debtorName",
+				Column: "debtor_name",
 			},
 			{
-				Name:        "faceMinor",
-				FieldMapKey: "faceMinor",
+				Name:   "faceMinor",
+				Column: "face_minor",
 			},
 			{
-				Name:        "advanceMinor",
-				FieldMapKey: "advanceMinor",
+				Name:   "advanceMinor",
+				Column: "advance_minor",
 			},
 			{
-				Name:        "feeMinor",
-				FieldMapKey: "feeMinor",
+				Name:   "feeMinor",
+				Column: "fee_minor",
 			},
 			{
-				Name:        "reserveMinor",
-				FieldMapKey: "reserveMinor",
+				Name:   "reserveMinor",
+				Column: "reserve_minor",
 			},
 			{
-				Name:        "cashMinor",
-				FieldMapKey: "cashMinor",
+				Name:   "cashMinor",
+				Column: "cash_minor",
 			},
 			{
-				Name:        "occurredOn",
-				FieldMapKey: "occurredOn",
+				Name:   "occurredOn",
+				Column: "occurred_on",
 			},
 			{
-				Name:        "matchStatus",
-				FieldMapKey: "matchStatus",
+				Name:   "matchStatus",
+				Column: "match_status",
 			},
 			{
-				Name:        "matchedBy",
-				FieldMapKey: "matchedBy",
+				Name:   "matchedBy",
+				Column: "matched_by",
 			},
 			{
-				Name:        "submissionItemId",
-				FieldMapKey: "submissionItemId",
+				Name:   "submissionItemId",
+				Column: "submission_item_id",
 			},
 			{
 				Name:    "matchedInvoiceNumber",
@@ -15123,172 +14964,171 @@ func init() {
 				Special: "matchedSubmissionId",
 			},
 			{
-				Name:        "score",
-				FieldMapKey: "score",
+				Name:   "score",
+				Column: "score",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "suggestions",
-				FieldMapKey: "suggestions",
+				Name:   "suggestions",
+				Column: "suggestions",
 			},
 			{
-				Name:        "error",
-				FieldMapKey: "error",
+				Name:   "error",
+				Column: "error",
 			},
 			{
-				Name:        "ignoredReason",
-				FieldMapKey: "ignoredReason",
+				Name:   "ignoredReason",
+				Column: "ignored_reason",
 			},
 			{
-				Name:        "reserveEntryId",
-				FieldMapKey: "reserveEntryId",
+				Name:   "reserveEntryId",
+				Column: "reserve_entry_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	FactoringReserveEntrySpec = TypeSpec{
 		TypeName: "FactoringReserveEntry",
-		FieldMap: factoringcol.ReserveEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
-				Name:        "agreementId",
-				FieldMapKey: "agreementId",
+				Name:   "agreementId",
+				Column: "agreement_id",
 			},
 			{
-				Name:        "submissionId",
-				FieldMapKey: "submissionId",
+				Name:   "submissionId",
+				Column: "submission_id",
 			},
 			{
-				Name:        "submissionItemId",
-				FieldMapKey: "submissionItemId",
+				Name:   "submissionItemId",
+				Column: "submission_item_id",
 			},
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "invoiceId",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "treatment",
-				FieldMapKey: "treatment",
+				Name:   "treatment",
+				Column: "treatment",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "cashMinor",
-				FieldMapKey: "cashMinor",
+				Name:   "cashMinor",
+				Column: "cash_minor",
 			},
 			{
-				Name:        "feeMinor",
-				FieldMapKey: "feeMinor",
+				Name:   "feeMinor",
+				Column: "fee_minor",
 			},
 			{
-				Name:        "reserveMinor",
-				FieldMapKey: "reserveMinor",
+				Name:   "reserveMinor",
+				Column: "reserve_minor",
 			},
 			{
-				Name:        "liabilityMinor",
-				FieldMapKey: "liabilityMinor",
+				Name:   "liabilityMinor",
+				Column: "liability_minor",
 			},
 			{
-				Name:        "arMinor",
-				FieldMapKey: "arMinor",
+				Name:   "arMinor",
+				Column: "ar_minor",
 			},
 			{
-				Name:        "journalEntryId",
-				FieldMapKey: "journalEntryId",
+				Name:   "journalEntryId",
+				Column: "journal_entry_id",
 			},
 			{
-				Name:        "journalBatchId",
-				FieldMapKey: "journalBatchId",
+				Name:   "journalBatchId",
+				Column: "journal_batch_id",
 			},
 			{
-				Name:        "accountingDate",
-				FieldMapKey: "accountingDate",
+				Name:   "accountingDate",
+				Column: "accounting_date",
 			},
 			{
-				Name:        "occurredOn",
-				FieldMapKey: "occurredOn",
+				Name:   "occurredOn",
+				Column: "occurred_on",
 			},
 			{
-				Name:        "reversesEntryId",
-				FieldMapKey: "reversesEntryId",
+				Name:   "reversesEntryId",
+				Column: "reverses_entry_id",
 			},
 			{
-				Name:        "memo",
-				FieldMapKey: "memo",
+				Name:   "memo",
+				Column: "memo",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "factoringCompany",
-				FieldMapKey: "businessUnitId",
+				Name:   "factoringCompany",
+				Column: "factoring_company_id",
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
 			},
 			{
-				Name:        "invoice",
-				FieldMapKey: "businessUnitId",
+				Name:   "invoice",
+				Column: "invoice_id",
 				Relation: &RelationSpec{
 					Target: &InvoiceSpec,
 				},
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "businessUnitId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
 			},
 			{
-				Name:        "submission",
-				FieldMapKey: "businessUnitId",
+				Name:   "submission",
+				Column: "submission_id",
 				Relation: &RelationSpec{
 					Target: &FactoringSubmissionSpec,
 				},
@@ -15298,131 +15138,130 @@ func init() {
 
 	FactoringSubmissionSpec = TypeSpec{
 		TypeName: "FactoringSubmission",
-		FieldMap: factoringcol.SubmissionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "number",
-				FieldMapKey: "number",
+				Name:   "number",
+				Column: "number",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
-				Name:        "agreementId",
-				FieldMapKey: "agreementId",
+				Name:   "agreementId",
+				Column: "agreement_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "invoiceCount",
-				FieldMapKey: "invoiceCount",
+				Name:   "invoiceCount",
+				Column: "invoice_count",
 			},
 			{
-				Name:        "faceMinor",
-				FieldMapKey: "faceMinor",
+				Name:   "faceMinor",
+				Column: "face_minor",
 			},
 			{
-				Name:        "expectedAdvanceMinor",
-				FieldMapKey: "expectedAdvanceMinor",
+				Name:   "expectedAdvanceMinor",
+				Column: "expected_advance_minor",
 			},
 			{
-				Name:        "expectedFeeMinor",
-				FieldMapKey: "expectedFeeMinor",
+				Name:   "expectedFeeMinor",
+				Column: "expected_fee_minor",
 			},
 			{
-				Name:        "expectedReserveMinor",
-				FieldMapKey: "expectedReserveMinor",
+				Name:   "expectedReserveMinor",
+				Column: "expected_reserve_minor",
 			},
 			{
-				Name:        "schedulePdfDocumentId",
-				FieldMapKey: "schedulePdfDocumentId",
+				Name:   "schedulePdfDocumentId",
+				Column: "schedule_pdf_document_id",
 			},
 			{
-				Name:        "scheduleCsvDocumentId",
-				FieldMapKey: "scheduleCsvDocumentId",
+				Name:   "scheduleCsvDocumentId",
+				Column: "schedule_csv_document_id",
 			},
 			{
-				Name:        "transportMethod",
-				FieldMapKey: "transportMethod",
+				Name:   "transportMethod",
+				Column: "transport_method",
 			},
 			{
-				Name:        "transportTarget",
-				FieldMapKey: "transportTarget",
+				Name:   "transportTarget",
+				Column: "transport_target",
 			},
 			{
-				Name:        "transportReference",
-				FieldMapKey: "transportReference",
+				Name:   "transportReference",
+				Column: "transport_reference",
 			},
 			{
-				Name:        "sendAttemptGroup",
-				FieldMapKey: "sendAttemptGroup",
+				Name:   "sendAttemptGroup",
+				Column: "send_attempt_group",
 			},
 			{
-				Name:        "attempts",
-				FieldMapKey: "attempts",
+				Name:   "attempts",
+				Column: "attempts",
 			},
 			{
-				Name:        "lastError",
-				FieldMapKey: "lastError",
+				Name:   "lastError",
+				Column: "last_error",
 			},
 			{
-				Name:        "sentAt",
-				FieldMapKey: "sentAt",
+				Name:   "sentAt",
+				Column: "sent_at",
 			},
 			{
-				Name:        "failedAt",
-				FieldMapKey: "failedAt",
+				Name:   "failedAt",
+				Column: "failed_at",
 			},
 			{
-				Name:        "cancelledAt",
-				FieldMapKey: "cancelledAt",
+				Name:   "cancelledAt",
+				Column: "cancelled_at",
 			},
 			{
-				Name:        "cancelReason",
-				FieldMapKey: "cancelReason",
+				Name:   "cancelReason",
+				Column: "cancel_reason",
 			},
 			{
-				Name:        "fundedAt",
-				FieldMapKey: "fundedAt",
+				Name:   "fundedAt",
+				Column: "funded_at",
 			},
 			{
-				Name:        "submittedById",
-				FieldMapKey: "submittedById",
+				Name:   "submittedById",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "items",
@@ -15431,8 +15270,8 @@ func init() {
 				},
 			},
 			{
-				Name:        "factoringCompany",
-				FieldMapKey: "businessUnitId",
+				Name:   "factoringCompany",
+				Column: "factoring_company_id",
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
@@ -15442,114 +15281,113 @@ func init() {
 
 	FactoringSubmissionItemSpec = TypeSpec{
 		TypeName: "FactoringSubmissionItem",
-		FieldMap: factoringcol.SubmissionItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "submissionId",
-				FieldMapKey: "submissionId",
+				Name:   "submissionId",
+				Column: "submission_id",
 			},
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "invoiceId",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "invoiceNumber",
-				FieldMapKey: "invoiceNumber",
+				Name:   "invoiceNumber",
+				Column: "invoice_number",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "position",
-				FieldMapKey: "position",
+				Name:   "position",
+				Column: "position",
 			},
 			{
-				Name:        "faceMinor",
-				FieldMapKey: "faceMinor",
+				Name:   "faceMinor",
+				Column: "face_minor",
 			},
 			{
-				Name:        "expectedAdvanceMinor",
-				FieldMapKey: "expectedAdvanceMinor",
+				Name:   "expectedAdvanceMinor",
+				Column: "expected_advance_minor",
 			},
 			{
-				Name:        "expectedFeeMinor",
-				FieldMapKey: "expectedFeeMinor",
+				Name:   "expectedFeeMinor",
+				Column: "expected_fee_minor",
 			},
 			{
-				Name:        "expectedReserveMinor",
-				FieldMapKey: "expectedReserveMinor",
+				Name:   "expectedReserveMinor",
+				Column: "expected_reserve_minor",
 			},
 			{
-				Name:        "expectedDays",
-				FieldMapKey: "expectedDays",
+				Name:   "expectedDays",
+				Column: "expected_days",
 			},
 			{
-				Name:        "packetDocumentId",
-				FieldMapKey: "packetDocumentId",
+				Name:   "packetDocumentId",
+				Column: "packet_document_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "releasedAt",
-				FieldMapKey: "releasedAt",
+				Name:   "releasedAt",
+				Column: "released_at",
 			},
 			{
-				Name:        "fundedOn",
-				FieldMapKey: "fundedOn",
+				Name:   "fundedOn",
+				Column: "funded_on",
 			},
 			{
-				Name:        "advanceMinor",
-				FieldMapKey: "advanceMinor",
+				Name:   "advanceMinor",
+				Column: "advance_minor",
 			},
 			{
-				Name:        "feeMinor",
-				FieldMapKey: "feeMinor",
+				Name:   "feeMinor",
+				Column: "fee_minor",
 			},
 			{
-				Name:        "reserveMinor",
-				FieldMapKey: "reserveMinor",
+				Name:   "reserveMinor",
+				Column: "reserve_minor",
 			},
 			{
-				Name:        "rejectionReason",
-				FieldMapKey: "rejectionReason",
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
 			},
 			{
-				Name:        "settledOn",
-				FieldMapKey: "settledOn",
+				Name:   "settledOn",
+				Column: "settled_on",
 			},
 			{
-				Name:        "chargedBackOn",
-				FieldMapKey: "chargedBackOn",
+				Name:   "chargedBackOn",
+				Column: "charged_back_on",
 			},
 			{
-				Name:        "chargebackReason",
-				FieldMapKey: "chargebackReason",
+				Name:   "chargebackReason",
+				Column: "chargeback_reason",
 			},
 			{
-				Name:        "chargebackWarnedAt",
-				FieldMapKey: "chargebackWarnedAt",
+				Name:   "chargebackWarnedAt",
+				Column: "chargeback_warned_at",
 			},
 			{
-				Name:        "invoice",
-				FieldMapKey: "businessUnitId",
+				Name:   "invoice",
+				Column: "invoice_id",
 				Relation: &RelationSpec{
 					Target: &InvoiceSpec,
 				},
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "businessUnitId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
@@ -15559,236 +15397,241 @@ func init() {
 
 	FactoringTransportSpec = TypeSpec{
 		TypeName: "FactoringTransport",
-		FieldMap: factoringcol.TransportFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "emailRecipients",
-				FieldMapKey: "emailRecipients",
+				Name:   "emailRecipients",
+				Column: "email_recipients",
 			},
 			{
-				Name:        "attachPackets",
-				FieldMapKey: "attachPackets",
+				Name:   "attachPackets",
+				Column: "attach_packets",
 			},
 			{
-				Name:        "sftpHost",
-				FieldMapKey: "sftpHost",
+				Name:   "sftpHost",
+				Column: "sftp_host",
 			},
 			{
-				Name:        "sftpPort",
-				FieldMapKey: "sftpPort",
+				Name:   "sftpPort",
+				Column: "sftp_port",
 			},
 			{
-				Name:        "sftpUsername",
-				FieldMapKey: "sftpUsername",
+				Name:   "sftpUsername",
+				Column: "sftp_username",
 			},
 			{
-				Name:        "sftpAuthMethod",
-				FieldMapKey: "sftpAuthMethod",
+				Name:   "sftpAuthMethod",
+				Column: "sftp_auth_method",
 			},
 			{
 				Name:    "sftpSecretSet",
 				Special: "sftpSecretSet",
 			},
 			{
-				Name:        "sftpKnownHostKey",
-				FieldMapKey: "sftpKnownHostKey",
+				Name:   "sftpKnownHostKey",
+				Column: "sftp_known_host_key",
 			},
 			{
-				Name:        "sftpDirectory",
-				FieldMapKey: "sftpDirectory",
+				Name:   "sftpDirectory",
+				Column: "sftp_directory",
 			},
 			{
-				Name:        "lastTestedAt",
-				FieldMapKey: "lastTestedAt",
+				Name:   "lastTestedAt",
+				Column: "last_tested_at",
 			},
 			{
-				Name:        "lastTestError",
-				FieldMapKey: "lastTestError",
+				Name:   "lastTestError",
+				Column: "last_test_error",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	FiscalPeriodSpec = TypeSpec{
 		TypeName: "FiscalPeriod",
-		FieldMap: fiscalperiodcol.FiscalPeriodFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "fiscalYearId",
-				FieldMapKey: "fiscalYearId",
+				Name:   "fiscalYearId",
+				Column: "fiscal_year_id",
 			},
 			{
-				Name:        "periodNumber",
-				FieldMapKey: "periodNumber",
+				Name:   "periodNumber",
+				Column: "period_number",
 			},
 			{
-				Name:        "periodType",
-				FieldMapKey: "periodType",
+				Name:   "periodType",
+				Column: "period_type",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "startDate",
-				FieldMapKey: "startDate",
+				Name:   "startDate",
+				Column: "start_date",
 			},
 			{
-				Name:        "endDate",
-				FieldMapKey: "endDate",
+				Name:   "endDate",
+				Column: "end_date",
 			},
 			{
-				Name:        "isAdjusting",
-				FieldMapKey: "isAdjusting",
+				Name:   "isAdjusting",
+				Column: "is_adjusting",
 			},
 			{
-				Name:        "allowAdjustingEntries",
-				FieldMapKey: "allowAdjustingEntries",
+				Name:   "allowAdjustingEntries",
+				Column: "allow_adjusting_entries",
 			},
 			{
-				Name:        "adjustmentDeadline",
-				FieldMapKey: "adjustmentDeadline",
+				Name:   "adjustmentDeadline",
+				Column: "adjustment_deadline",
 			},
 			{
-				Name:        "lockedAt",
-				FieldMapKey: "lockedAt",
+				Name:   "lockedAt",
+				Column: "locked_at",
 			},
 			{
-				Name:        "closedAt",
-				FieldMapKey: "closedAt",
+				Name:   "closedAt",
+				Column: "closed_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "reopenedAt",
+				Column: "reopened_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "reopenReason",
+				Column: "reopen_reason",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	FiscalYearSpec = TypeSpec{
 		TypeName: "FiscalYear",
-		FieldMap: fiscalyearcol.FiscalYearFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "year",
-				FieldMapKey: "year",
+				Name:   "year",
+				Column: "year",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "startDate",
-				FieldMapKey: "startDate",
+				Name:   "startDate",
+				Column: "start_date",
 			},
 			{
-				Name:        "endDate",
-				FieldMapKey: "endDate",
+				Name:   "endDate",
+				Column: "end_date",
 			},
 			{
-				Name:        "isCurrent",
-				FieldMapKey: "isCurrent",
+				Name:   "isCurrent",
+				Column: "is_current",
 			},
 			{
-				Name:        "isCalendarYear",
-				FieldMapKey: "isCalendarYear",
+				Name:   "isCalendarYear",
+				Column: "is_calendar_year",
 			},
 			{
-				Name:        "allowAdjustingEntries",
-				FieldMapKey: "allowAdjustingEntries",
+				Name:   "allowAdjustingEntries",
+				Column: "allow_adjusting_entries",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -15804,85 +15647,84 @@ func init() {
 
 	FleetCodeSpec = TypeSpec{
 		TypeName: "FleetCode",
-		FieldMap: fleetcodecol.FleetCodeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "managerId",
-				FieldMapKey: "managerId",
+				Name:   "managerId",
+				Column: "manager_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "revenueGoal",
-				FieldMapKey: "revenueGoal",
+				Name:   "revenueGoal",
+				Column: "revenue_goal",
 			},
 			{
-				Name:        "deadheadGoal",
-				FieldMapKey: "deadheadGoal",
+				Name:   "deadheadGoal",
+				Column: "deadhead_goal",
 			},
 			{
-				Name:        "mileageGoal",
-				FieldMapKey: "mileageGoal",
+				Name:   "mileageGoal",
+				Column: "mileage_goal",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "manager",
-				FieldMapKey: "managerId",
+				Name:   "manager",
+				Column: "manager_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -15890,140 +15732,350 @@ func init() {
 		},
 	}
 
-	FormulaTemplateSpec = TypeSpec{
-		TypeName: "FormulaTemplate",
-		FieldMap: formulatemplatecol.FormulaTemplateFieldMap,
+	FormulaLibrarySpec = TypeSpec{
+		TypeName: "FormulaLibrary",
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "path",
+				Column: "name",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "expression",
-				FieldMapKey: "expression",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "imports",
+				Column: "imports",
 			},
 			{
-				Name:        "schemaId",
-				FieldMapKey: "schemaId",
+				Name:   "testCount",
+				Column: "test_count",
 			},
 			{
-				Name:        "variableDefinitions",
-				FieldMapKey: "variableDefinitions",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "breakdownDefinitions",
-				FieldMapKey: "breakdownDefinitions",
+				Name:   "submittedById",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "minCharge",
-				FieldMapKey: "minCharge",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "maxCharge",
-				FieldMapKey: "maxCharge",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "roundingMode",
-				FieldMapKey: "roundingMode",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "roundingPrecision",
-				FieldMapKey: "roundingPrecision",
+				Name:   "reviewComment",
+				Column: "review_comment",
 			},
 			{
-				Name:        "submittedById",
-				FieldMapKey: "submittedById",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "sourceLibraryId",
+				Column: "source_library_id",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "sourceVersionNumber",
+				Column: "source_version_number",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:   "currentVersionNumber",
+				Column: "current_version_number",
 			},
 			{
-				Name:        "reviewComment",
-				FieldMapKey: "reviewComment",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	FormulaLibraryReviewSpec = TypeSpec{
+		TypeName: "FormulaLibraryReview",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "libraryId",
+				Column: "library_id",
 			},
 			{
-				Name:        "sourceTemplateId",
-				FieldMapKey: "sourceTemplateId",
+				Name:   "round",
+				Column: "round",
 			},
 			{
-				Name:        "sourceVersionNumber",
-				FieldMapKey: "sourceVersionNumber",
+				Name:   "decision",
+				Column: "decision",
 			},
 			{
-				Name:        "currentVersionNumber",
-				FieldMapKey: "currentVersionNumber",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "actor",
+				Column: "actor_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "comment",
+				Column: "comment",
+			},
+			{
+				Name:   "baseVersionNumber",
+				Column: "base_version_number",
+			},
+			{
+				Name:   "requestedReviewerId",
+				Column: "requested_reviewer_id",
+			},
+			{
+				Name:   "requestedReviewer",
+				Column: "requested_reviewer_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "reviewerNote",
+				Column: "reviewer_note",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+		},
+	}
+
+	FormulaLibraryVersionSpec = TypeSpec{
+		TypeName: "FormulaLibraryVersion",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "libraryId",
+				Column: "library_id",
+			},
+			{
+				Name:   "versionNumber",
+				Column: "version_number",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "path",
+				Column: "name",
+			},
+			{
+				Name:   "description",
+				Column: "description",
+			},
+			{
+				Name:   "source",
+				Column: "source",
+			},
+			{
+				Name:   "imports",
+				Column: "imports",
+			},
+			{
+				Name:   "testCount",
+				Column: "test_count",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "changeMessage",
+				Column: "change_message",
+			},
+			{
+				Name:   "changeSummary",
+				Column: "change_summary",
+			},
+			{
+				Name:   "createdById",
+				Column: "created_by_id",
+			},
+			{
+				Name:   "createdBy",
+				Column: "created_by_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+		},
+	}
+
+	FormulaTemplateSpec = TypeSpec{
+		TypeName: "FormulaTemplate",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
+			},
+			{
+				Name:   "organizationId",
+				Column: "organization_id",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "description",
+				Column: "description",
+			},
+			{
+				Name:   "source",
+				Column: "source",
+			},
+			{
+				Name:   "inputs",
+				Column: "inputs",
+			},
+			{
+				Name:   "imports",
+				Column: "imports",
+			},
+			{
+				Name:   "tables",
+				Column: "tables",
+			},
+			{
+				Name:   "testCount",
+				Column: "test_count",
+			},
+			{
+				Name:   "status",
+				Column: "status",
+			},
+			{
+				Name:   "submittedById",
+				Column: "submitted_by_id",
+			},
+			{
+				Name:   "submittedAt",
+				Column: "submitted_at",
+			},
+			{
+				Name:   "approvedById",
+				Column: "approved_by_id",
+			},
+			{
+				Name:   "approvedAt",
+				Column: "approved_at",
+			},
+			{
+				Name:   "reviewComment",
+				Column: "review_comment",
+			},
+			{
+				Name:   "metadata",
+				Column: "metadata",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "sourceTemplateId",
+				Column: "source_template_id",
+			},
+			{
+				Name:   "sourceVersionNumber",
+				Column: "source_version_number",
+			},
+			{
+				Name:   "currentVersionNumber",
+				Column: "current_version_number",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "usageCount",
 				Special: "usageCount",
 			},
 			{
-				Name:    "scenarioCount",
-				Special: "scenarioCount",
-			},
-			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -16033,94 +16085,93 @@ func init() {
 
 	FuelCardSpec = TypeSpec{
 		TypeName: "FuelCard",
-		FieldMap: fuelpurchasecol.FuelCardFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "lastFour",
-				FieldMapKey: "lastFour",
+				Name:   "lastFour",
+				Column: "last_four",
 			},
 			{
-				Name:        "label",
-				FieldMapKey: "label",
+				Name:   "label",
+				Column: "label",
 			},
 			{
-				Name:        "externalCardId",
-				FieldMapKey: "externalCardId",
+				Name:   "externalCardId",
+				Column: "external_card_id",
 			},
 			{
-				Name:        "assignedWorkerId",
-				FieldMapKey: "assignedWorkerId",
+				Name:   "assignedWorkerId",
+				Column: "assigned_worker_id",
 			},
 			{
-				Name:        "assignedTractorId",
-				FieldMapKey: "assignedTractorId",
+				Name:   "assignedTractorId",
+				Column: "assigned_tractor_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "cancelledAt",
-				FieldMapKey: "cancelledAt",
+				Name:   "cancelledAt",
+				Column: "cancelled_at",
 			},
 			{
-				Name:        "cancelReason",
-				FieldMapKey: "cancelReason",
+				Name:   "cancelReason",
+				Column: "cancel_reason",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "discoveredAt",
-				FieldMapKey: "discoveredAt",
+				Name:   "discoveredAt",
+				Column: "discovered_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "assignedWorker",
-				FieldMapKey: "businessUnitId",
+				Name:   "assignedWorker",
+				Column: "assigned_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "assignedTractor",
-				FieldMapKey: "businessUnitId",
+				Name:   "assignedTractor",
+				Column: "assigned_tractor_id",
 				Relation: &RelationSpec{
 					Target: &TractorSpec,
 				},
@@ -16130,297 +16181,293 @@ func init() {
 
 	FuelFeedStatusSpec = TypeSpec{
 		TypeName:      "FuelFeedStatus",
-		FieldMap:      fuelpurchasecol.CardFeedStateFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "lastPolledAt",
-				FieldMapKey: "lastPolledAt",
+				Name:   "lastPolledAt",
+				Column: "last_polled_at",
 			},
 			{
-				Name:        "lastSuccessAt",
-				FieldMapKey: "lastSuccessAt",
+				Name:   "lastSuccessAt",
+				Column: "last_success_at",
 			},
 			{
-				Name:        "failureCount",
-				FieldMapKey: "failureCount",
+				Name:   "failureCount",
+				Column: "failure_count",
 			},
 			{
-				Name:        "lastError",
-				FieldMapKey: "lastError",
+				Name:   "lastError",
+				Column: "last_error",
 			},
 		},
 	}
 
 	FuelIndexSpec = TypeSpec{
 		TypeName: "FuelIndex",
-		FieldMap: fuelsurchargecol.FuelIndexFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "fuelType",
-				FieldMapKey: "fuelType",
+				Name:   "fuelType",
+				Column: "fuel_type",
 			},
 			{
-				Name:        "region",
-				FieldMapKey: "region",
+				Name:   "region",
+				Column: "region",
 			},
 			{
-				Name:        "eiaSeriesId",
-				FieldMapKey: "eiaSeriesId",
+				Name:   "eiaSeriesId",
+				Column: "eia_series_id",
 			},
 			{
-				Name:        "currency",
-				FieldMapKey: "currency",
+				Name:   "currency",
+				Column: "currency",
 			},
 			{
-				Name:        "isActive",
-				FieldMapKey: "isActive",
+				Name:   "isActive",
+				Column: "is_active",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	FuelIndexPriceSpec = TypeSpec{
 		TypeName: "FuelIndexPrice",
-		FieldMap: fuelsurchargecol.FuelIndexPriceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "fuelIndexId",
-				FieldMapKey: "fuelIndexId",
+				Name:   "fuelIndexId",
+				Column: "fuel_index_id",
 			},
 			{
-				Name:        "priceDate",
-				FieldMapKey: "priceDate",
+				Name:   "priceDate",
+				Column: "price_date",
 			},
 			{
-				Name:        "price",
-				FieldMapKey: "price",
+				Name:   "price",
+				Column: "price",
 			},
 			{
-				Name:        "currency",
-				FieldMapKey: "currency",
+				Name:   "currency",
+				Column: "currency",
 			},
 			{
-				Name:        "isManual",
-				FieldMapKey: "isManual",
+				Name:   "isManual",
+				Column: "is_manual",
 			},
 			{
-				Name:        "enteredById",
-				FieldMapKey: "enteredById",
+				Name:   "enteredById",
+				Column: "entered_by_id",
 			},
 			{
-				Name:        "sourceRaw",
-				FieldMapKey: "sourceRaw",
+				Name:   "sourceRaw",
+				Column: "source_raw",
 			},
 			{
-				Name:        "fetchedAt",
-				FieldMapKey: "fetchedAt",
+				Name:   "fetchedAt",
+				Column: "fetched_at",
 			},
 		},
 	}
 
 	FuelPurchaseSpec = TypeSpec{
 		TypeName: "FuelPurchase",
-		FieldMap: fuelpurchasecol.FuelPurchaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "tractorId",
-				FieldMapKey: "tractorId",
+				Name:   "tractorId",
+				Column: "tractor_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "jurisdictionId",
-				FieldMapKey: "jurisdictionId",
+				Name:   "jurisdictionId",
+				Column: "jurisdiction_id",
 			},
 			{
-				Name:        "fuelCardId",
-				FieldMapKey: "fuelCardId",
+				Name:   "fuelCardId",
+				Column: "fuel_card_id",
 			},
 			{
-				Name:        "cardLastFour",
-				FieldMapKey: "cardLastFour",
+				Name:   "cardLastFour",
+				Column: "card_last_four",
 			},
 			{
-				Name:        "purchasedAt",
-				FieldMapKey: "purchasedAt",
+				Name:   "purchasedAt",
+				Column: "purchased_at",
 			},
 			{
-				Name:        "vendor",
-				FieldMapKey: "vendor",
+				Name:   "vendor",
+				Column: "vendor",
 			},
 			{
-				Name:        "vendorCity",
-				FieldMapKey: "vendorCity",
+				Name:   "vendorCity",
+				Column: "vendor_city",
 			},
 			{
-				Name:        "fuelType",
-				FieldMapKey: "fuelType",
+				Name:   "fuelType",
+				Column: "fuel_type",
 			},
 			{
-				Name:        "quantity",
-				FieldMapKey: "quantity",
+				Name:   "quantity",
+				Column: "quantity",
 			},
 			{
-				Name:        "quantityUnit",
-				FieldMapKey: "quantityUnit",
+				Name:   "quantityUnit",
+				Column: "quantity_unit",
 			},
 			{
-				Name:        "gallons",
-				FieldMapKey: "gallons",
+				Name:   "gallons",
+				Column: "gallons",
 			},
 			{
-				Name:        "unitPrice",
-				FieldMapKey: "unitPrice",
+				Name:   "unitPrice",
+				Column: "unit_price",
 			},
 			{
-				Name:        "totalAmount",
-				FieldMapKey: "totalAmountMinor",
+				Name:   "totalAmount",
+				Column: "total_amount_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "odometer",
-				FieldMapKey: "odometer",
+				Name:   "odometer",
+				Column: "odometer",
 			},
 			{
-				Name:        "transactionReference",
-				FieldMapKey: "transactionReference",
+				Name:   "transactionReference",
+				Column: "transaction_reference",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "importBatchId",
-				FieldMapKey: "importBatchId",
+				Name:   "importBatchId",
+				Column: "import_batch_id",
 			},
 			{
-				Name:        "taxPaid",
-				FieldMapKey: "taxPaid",
+				Name:   "taxPaid",
+				Column: "tax_paid",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "tractor",
-				FieldMapKey: "businessUnitId",
+				Name:   "tractor",
+				Column: "tractor_id",
 				Relation: &RelationSpec{
 					Target: &TractorSpec,
 				},
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "jurisdiction",
-				FieldMapKey: "jurisdictionId",
+				Name:   "jurisdiction",
+				Column: "jurisdiction_id",
 				Relation: &RelationSpec{
 					Target: &IFTAJurisdictionSpec,
 				},
 			},
 			{
-				Name:        "fuelCard",
-				FieldMapKey: "businessUnitId",
+				Name:   "fuelCard",
+				Column: "fuel_card_id",
 				Relation: &RelationSpec{
 					Target: &FuelCardSpec,
 				},
@@ -16430,130 +16477,129 @@ func init() {
 
 	FuelPurchaseImportBatchSpec = TypeSpec{
 		TypeName: "FuelPurchaseImportBatch",
-		FieldMap: fuelpurchasecol.ImportBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "origin",
-				FieldMapKey: "origin",
+				Name:   "origin",
+				Column: "origin",
 			},
 			{
-				Name:        "feedReference",
-				FieldMapKey: "feedReference",
+				Name:   "feedReference",
+				Column: "feed_reference",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "fileName",
-				FieldMapKey: "fileName",
+				Name:   "fileName",
+				Column: "file_name",
 			},
 			{
-				Name:        "sourceFormat",
-				FieldMapKey: "sourceFormat",
+				Name:   "sourceFormat",
+				Column: "source_format",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "defaultFuelType",
-				FieldMapKey: "defaultFuelType",
+				Name:   "defaultFuelType",
+				Column: "default_fuel_type",
 			},
 			{
-				Name:        "defaultFuelCardId",
-				FieldMapKey: "defaultFuelCardId",
+				Name:   "defaultFuelCardId",
+				Column: "default_fuel_card_id",
 			},
 			{
-				Name:        "defaultCurrency",
-				FieldMapKey: "defaultCurrency",
+				Name:   "defaultCurrency",
+				Column: "default_currency",
 			},
 			{
-				Name:        "mapping",
-				FieldMapKey: "mapping",
+				Name:   "mapping",
+				Column: "mapping",
 			},
 			{
-				Name:        "unmappedHeaders",
-				FieldMapKey: "unmappedHeaders",
+				Name:   "unmappedHeaders",
+				Column: "unmapped_headers",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "rowCount",
-				FieldMapKey: "rowCount",
+				Name:   "rowCount",
+				Column: "row_count",
 			},
 			{
-				Name:        "errorCount",
-				FieldMapKey: "errorCount",
+				Name:   "errorCount",
+				Column: "error_count",
 			},
 			{
-				Name:        "committedCount",
-				FieldMapKey: "committedCount",
+				Name:   "committedCount",
+				Column: "committed_count",
 			},
 			{
-				Name:        "error",
-				FieldMapKey: "error",
+				Name:   "error",
+				Column: "error",
 			},
 			{
-				Name:        "uploadedById",
-				FieldMapKey: "uploadedById",
+				Name:   "uploadedById",
+				Column: "uploaded_by_id",
 			},
 			{
-				Name:        "stagedAt",
-				FieldMapKey: "stagedAt",
+				Name:   "stagedAt",
+				Column: "staged_at",
 			},
 			{
-				Name:        "committedAt",
-				FieldMapKey: "committedAt",
+				Name:   "committedAt",
+				Column: "committed_at",
 			},
 			{
-				Name:        "committedById",
-				FieldMapKey: "committedById",
+				Name:   "committedById",
+				Column: "committed_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
 			},
 			{
-				Name:        "defaultFuelCard",
-				FieldMapKey: "businessUnitId",
+				Name:   "defaultFuelCard",
+				Column: "default_fuel_card_id",
 				Relation: &RelationSpec{
 					Target: &FuelCardSpec,
 				},
@@ -16567,7 +16613,6 @@ func init() {
 
 	FuelPurchaseImportRowSpec = TypeSpec{
 		TypeName: "FuelPurchaseImportRow",
-		FieldMap: fuelpurchasecol.ImportRowFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -16575,68 +16620,68 @@ func init() {
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "importBatchId",
-				FieldMapKey: "importBatchId",
+				Name:   "importBatchId",
+				Column: "import_batch_id",
 			},
 			{
-				Name:        "rowNumber",
-				FieldMapKey: "rowNumber",
+				Name:   "rowNumber",
+				Column: "row_number",
 			},
 			{
-				Name:        "cells",
-				FieldMapKey: "cells",
+				Name:   "cells",
+				Column: "cells",
 			},
 			{
-				Name:        "parsed",
-				FieldMapKey: "parsed",
+				Name:   "parsed",
+				Column: "parsed",
 			},
 			{
-				Name:        "transactionReference",
-				FieldMapKey: "transactionReference",
+				Name:   "transactionReference",
+				Column: "transaction_reference",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "error",
-				FieldMapKey: "error",
+				Name:   "error",
+				Column: "error",
 			},
 			{
-				Name:        "resolvedTractorId",
-				FieldMapKey: "resolvedTractorId",
+				Name:   "resolvedTractorId",
+				Column: "resolved_tractor_id",
 			},
 			{
-				Name:        "resolvedFuelCardId",
-				FieldMapKey: "resolvedFuelCardId",
+				Name:   "resolvedFuelCardId",
+				Column: "resolved_fuel_card_id",
 			},
 			{
-				Name:        "resolvedJurisdictionId",
-				FieldMapKey: "resolvedJurisdictionId",
+				Name:   "resolvedJurisdictionId",
+				Column: "resolved_jurisdiction_id",
 			},
 			{
-				Name:        "resolutionNotes",
-				FieldMapKey: "resolutionNotes",
+				Name:   "resolutionNotes",
+				Column: "resolution_notes",
 			},
 			{
-				Name:        "fuelPurchaseId",
-				FieldMapKey: "fuelPurchaseId",
+				Name:   "fuelPurchaseId",
+				Column: "fuel_purchase_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
 				Name:    "resolvedTractor",
@@ -16647,150 +16692,149 @@ func init() {
 
 	FuelSurchargeProgramSpec = TypeSpec{
 		TypeName: "FuelSurchargeProgram",
-		FieldMap: fuelsurchargecol.FuelSurchargeProgramFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "fuelIndexId",
-				FieldMapKey: "fuelIndexId",
+				Name:   "fuelIndexId",
+				Column: "fuel_index_id",
 			},
 			{
-				Name:        "accessorialChargeId",
-				FieldMapKey: "accessorialChargeId",
+				Name:   "accessorialChargeId",
+				Column: "accessorial_charge_id",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "pegPrice",
-				FieldMapKey: "pegPrice",
+				Name:   "pegPrice",
+				Column: "peg_price",
 			},
 			{
-				Name:        "increment",
-				FieldMapKey: "increment",
+				Name:   "increment",
+				Column: "increment",
 			},
 			{
-				Name:        "incrementRate",
-				FieldMapKey: "incrementRate",
+				Name:   "incrementRate",
+				Column: "increment_rate",
 			},
 			{
-				Name:        "milesPerGallon",
-				FieldMapKey: "milesPerGallon",
+				Name:   "milesPerGallon",
+				Column: "miles_per_gallon",
 			},
 			{
-				Name:        "percentBasis",
-				FieldMapKey: "percentBasis",
+				Name:   "percentBasis",
+				Column: "percent_basis",
 			},
 			{
-				Name:        "stepRounding",
-				FieldMapKey: "stepRounding",
+				Name:   "stepRounding",
+				Column: "step_rounding",
 			},
 			{
-				Name:        "rateRounding",
-				FieldMapKey: "rateRounding",
+				Name:   "rateRounding",
+				Column: "rate_rounding",
 			},
 			{
-				Name:        "ratePrecision",
-				FieldMapKey: "ratePrecision",
+				Name:   "ratePrecision",
+				Column: "rate_precision",
 			},
 			{
-				Name:        "minAmount",
-				FieldMapKey: "minAmount",
+				Name:   "minAmount",
+				Column: "min_amount",
 			},
 			{
-				Name:        "maxAmount",
-				FieldMapKey: "maxAmount",
+				Name:   "maxAmount",
+				Column: "max_amount",
 			},
 			{
-				Name:        "dateBasis",
-				FieldMapKey: "dateBasis",
+				Name:   "dateBasis",
+				Column: "date_basis",
 			},
 			{
-				Name:        "priceEffectiveDay",
-				FieldMapKey: "priceEffectiveDay",
+				Name:   "priceEffectiveDay",
+				Column: "price_effective_day",
 			},
 			{
-				Name:        "missingPriceFallback",
-				FieldMapKey: "missingPriceFallback",
+				Name:   "missingPriceFallback",
+				Column: "missing_price_fallback",
 			},
 			{
-				Name:        "effectiveStartDate",
-				FieldMapKey: "effectiveStartDate",
+				Name:   "effectiveStartDate",
+				Column: "effective_start_date",
 			},
 			{
-				Name:        "effectiveEndDate",
-				FieldMapKey: "effectiveEndDate",
+				Name:   "effectiveEndDate",
+				Column: "effective_end_date",
 			},
 			{
-				Name:        "shipmentTypeIds",
-				FieldMapKey: "shipmentTypeIds",
+				Name:   "shipmentTypeIds",
+				Column: "shipment_type_ids",
 			},
 			{
-				Name:        "serviceTypeIds",
-				FieldMapKey: "serviceTypeIds",
+				Name:   "serviceTypeIds",
+				Column: "service_type_ids",
 			},
 			{
-				Name:        "tractorTypeIds",
-				FieldMapKey: "tractorTypeIds",
+				Name:   "tractorTypeIds",
+				Column: "tractor_type_ids",
 			},
 			{
-				Name:        "trailerTypeIds",
-				FieldMapKey: "trailerTypeIds",
+				Name:   "trailerTypeIds",
+				Column: "trailer_type_ids",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "fuelIndex",
-				FieldMapKey: "fuelIndexId",
+				Name:   "fuelIndex",
+				Column: "fuel_index_id",
 				Relation: &RelationSpec{
 					Target: &FuelIndexSpec,
 				},
 			},
 			{
-				Name:        "accessorialCharge",
-				FieldMapKey: "accessorialChargeId",
+				Name:   "accessorialCharge",
+				Column: "accessorial_charge_id",
 				Relation: &RelationSpec{
 					Target: &ShipmentAccessorialChargeSpec,
 				},
@@ -16806,177 +16850,175 @@ func init() {
 
 	FuelSurchargeTableRowSpec = TypeSpec{
 		TypeName: "FuelSurchargeTableRow",
-		FieldMap: fuelsurchargecol.FuelSurchargeTableRowFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "fuelSurchargeProgramId",
-				FieldMapKey: "fuelSurchargeProgramId",
+				Name:   "fuelSurchargeProgramId",
+				Column: "fuel_surcharge_program_id",
 			},
 			{
-				Name:        "priceMin",
-				FieldMapKey: "priceMin",
+				Name:   "priceMin",
+				Column: "price_min",
 			},
 			{
-				Name:        "priceMax",
-				FieldMapKey: "priceMax",
+				Name:   "priceMax",
+				Column: "price_max",
 			},
 			{
-				Name:        "value",
-				FieldMapKey: "value",
+				Name:   "value",
+				Column: "value",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	HazardousMaterialSpec = TypeSpec{
 		TypeName: "HazardousMaterial",
-		FieldMap: hazardousmaterialcol.HazardousMaterialFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "class",
-				FieldMapKey: "class",
+				Name:   "class",
+				Column: "class",
 			},
 			{
-				Name:        "unNumber",
-				FieldMapKey: "unNumber",
+				Name:   "unNumber",
+				Column: "un_number",
 			},
 			{
-				Name:        "packingGroup",
-				FieldMapKey: "packingGroup",
+				Name:   "packingGroup",
+				Column: "packing_group",
 			},
 			{
-				Name:        "subsidiaryHazardClass",
-				FieldMapKey: "subsidiaryHazardClass",
+				Name:   "subsidiaryHazardClass",
+				Column: "subsidiary_hazard_class",
 			},
 			{
-				Name:        "ergGuideNumber",
-				FieldMapKey: "ergGuideNumber",
+				Name:   "ergGuideNumber",
+				Column: "erg_guide_number",
 			},
 			{
-				Name:        "labelCodes",
-				FieldMapKey: "labelCodes",
+				Name:   "labelCodes",
+				Column: "label_codes",
 			},
 			{
-				Name:        "specialProvisions",
-				FieldMapKey: "specialProvisions",
+				Name:   "specialProvisions",
+				Column: "special_provisions",
 			},
 			{
-				Name:        "properShippingName",
-				FieldMapKey: "properShippingName",
+				Name:   "properShippingName",
+				Column: "proper_shipping_name",
 			},
 			{
-				Name:        "handlingInstructions",
-				FieldMapKey: "handlingInstructions",
+				Name:   "handlingInstructions",
+				Column: "handling_instructions",
 			},
 			{
-				Name:        "emergencyContact",
-				FieldMapKey: "emergencyContact",
+				Name:   "emergencyContact",
+				Column: "emergency_contact",
 			},
 			{
-				Name:        "emergencyContactPhoneNumber",
-				FieldMapKey: "emergencyContactPhoneNumber",
+				Name:   "emergencyContactPhoneNumber",
+				Column: "emergency_contact_phone_number",
 			},
 			{
-				Name:        "quantityThreshold",
-				FieldMapKey: "quantityThreshold",
+				Name:   "quantityThreshold",
+				Column: "quantity_threshold",
 			},
 			{
-				Name:        "placardRequired",
-				FieldMapKey: "placardRequired",
+				Name:   "placardRequired",
+				Column: "placard_required",
 			},
 			{
-				Name:        "isReportableQuantity",
-				FieldMapKey: "isReportableQuantity",
+				Name:   "isReportableQuantity",
+				Column: "is_reportable_quantity",
 			},
 			{
-				Name:        "marinePollutant",
-				FieldMapKey: "marinePollutant",
+				Name:   "marinePollutant",
+				Column: "marine_pollutant",
 			},
 			{
-				Name:        "inhalationHazard",
-				FieldMapKey: "inhalationHazard",
+				Name:   "inhalationHazard",
+				Column: "inhalation_hazard",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -16986,102 +17028,101 @@ func init() {
 
 	HazmatSegregationRuleSpec = TypeSpec{
 		TypeName: "HazmatSegregationRule",
-		FieldMap: hazmatsegregationrulecol.HazmatSegregationRuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "exceptionNotes",
-				FieldMapKey: "exceptionNotes",
+				Name:   "exceptionNotes",
+				Column: "exception_notes",
 			},
 			{
-				Name:        "referenceCode",
-				FieldMapKey: "referenceCode",
+				Name:   "referenceCode",
+				Column: "reference_code",
 			},
 			{
-				Name:        "regulationSource",
-				FieldMapKey: "regulationSource",
+				Name:   "regulationSource",
+				Column: "regulation_source",
 			},
 			{
-				Name:        "distanceUnit",
-				FieldMapKey: "distanceUnit",
+				Name:   "distanceUnit",
+				Column: "distance_unit",
 			},
 			{
-				Name:        "classA",
-				FieldMapKey: "classA",
+				Name:   "classA",
+				Column: "class_a",
 			},
 			{
-				Name:        "classB",
-				FieldMapKey: "classB",
+				Name:   "classB",
+				Column: "class_b",
 			},
 			{
-				Name:        "segregationType",
-				FieldMapKey: "segregationType",
+				Name:   "segregationType",
+				Column: "segregation_type",
 			},
 			{
-				Name:        "hasExceptions",
-				FieldMapKey: "hasExceptions",
+				Name:   "hasExceptions",
+				Column: "has_exceptions",
 			},
 			{
-				Name:        "hazmatAId",
-				FieldMapKey: "hazmatAId",
+				Name:   "hazmatAId",
+				Column: "hazmat_a_id",
 			},
 			{
-				Name:        "hazmatBId",
-				FieldMapKey: "hazmatBId",
+				Name:   "hazmatBId",
+				Column: "hazmat_b_id",
 			},
 			{
-				Name:        "minimumDistance",
-				FieldMapKey: "minimumDistance",
+				Name:   "minimumDistance",
+				Column: "minimum_distance",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -17091,94 +17132,93 @@ func init() {
 
 	HoldReasonSpec = TypeSpec{
 		TypeName: "HoldReason",
-		FieldMap: holdreasoncol.HoldReasonFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "label",
-				FieldMapKey: "label",
+				Name:   "label",
+				Column: "label",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "active",
-				FieldMapKey: "active",
+				Name:   "active",
+				Column: "active",
 			},
 			{
-				Name:        "defaultSeverity",
-				FieldMapKey: "defaultSeverity",
+				Name:   "defaultSeverity",
+				Column: "default_severity",
 			},
 			{
-				Name:        "defaultBlocksDispatch",
-				FieldMapKey: "defaultBlocksDispatch",
+				Name:   "defaultBlocksDispatch",
+				Column: "default_blocks_dispatch",
 			},
 			{
-				Name:        "defaultBlocksDelivery",
-				FieldMapKey: "defaultBlocksDelivery",
+				Name:   "defaultBlocksDelivery",
+				Column: "default_blocks_delivery",
 			},
 			{
-				Name:        "defaultBlocksBilling",
-				FieldMapKey: "defaultBlocksBilling",
+				Name:   "defaultBlocksBilling",
+				Column: "default_blocks_billing",
 			},
 			{
-				Name:        "defaultVisibleToCustomer",
-				FieldMapKey: "defaultVisibleToCustomer",
+				Name:   "defaultVisibleToCustomer",
+				Column: "default_visible_to_customer",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
-				Name:        "externalMap",
-				FieldMapKey: "externalMap",
+				Name:   "externalMap",
+				Column: "external_map",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -17188,122 +17228,120 @@ func init() {
 
 	HomeLayoutPresetSpec = TypeSpec{
 		TypeName: "HomeLayoutPreset",
-		FieldMap: homelayoutcol.PresetFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
 				Name:    "widgets",
 				Special: "widgets",
 			},
 			{
-				Name:        "roleIds",
-				FieldMapKey: "roleIds",
+				Name:   "roleIds",
+				Column: "role_ids",
 			},
 			{
-				Name:        "coreResponsibility",
-				FieldMapKey: "coreResponsibility",
+				Name:   "coreResponsibility",
+				Column: "core_responsibility",
 			},
 			{
-				Name:        "isOrgDefault",
-				FieldMapKey: "isOrgDefault",
+				Name:   "isOrgDefault",
+				Column: "is_org_default",
 			},
 			{
-				Name:        "locked",
-				FieldMapKey: "locked",
+				Name:   "locked",
+				Column: "locked",
 			},
 			{
-				Name:        "priority",
-				FieldMapKey: "priority",
+				Name:   "priority",
+				Column: "priority",
 			},
 			{
 				Name:    "assignedUserCount",
 				Special: "assignedUserCount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	IFTAJurisdictionSpec = TypeSpec{
 		TypeName: "IFTAJurisdiction",
-		FieldMap: iftacol.JurisdictionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "countryCode",
-				FieldMapKey: "countryCode",
+				Name:   "countryCode",
+				Column: "country_code",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "usStateId",
-				FieldMapKey: "usStateId",
+				Name:   "usStateId",
+				Column: "us_state_id",
 			},
 			{
-				Name:        "isIftaMember",
-				FieldMapKey: "isIftaMember",
+				Name:   "isIftaMember",
+				Column: "is_ifta_member",
 			},
 			{
-				Name:        "hasSurcharge",
-				FieldMapKey: "hasSurcharge",
+				Name:   "hasSurcharge",
+				Column: "has_surcharge",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "usState",
-				FieldMapKey: "usStateId",
+				Name:   "usState",
+				Column: "us_state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
@@ -17313,90 +17351,89 @@ func init() {
 
 	IFTAJurisdictionMileageEntrySpec = TypeSpec{
 		TypeName: "IFTAJurisdictionMileageEntry",
-		FieldMap: iftacol.JurisdictionMileageEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "tractorId",
-				FieldMapKey: "tractorId",
+				Name:   "tractorId",
+				Column: "tractor_id",
 			},
 			{
-				Name:        "jurisdictionId",
-				FieldMapKey: "jurisdictionId",
+				Name:   "jurisdictionId",
+				Column: "jurisdiction_id",
 			},
 			{
-				Name:        "traveledAt",
-				FieldMapKey: "traveledAt",
+				Name:   "traveledAt",
+				Column: "traveled_at",
 			},
 			{
-				Name:        "year",
-				FieldMapKey: "year",
+				Name:   "year",
+				Column: "year",
 			},
 			{
-				Name:        "quarter",
-				FieldMapKey: "quarter",
+				Name:   "quarter",
+				Column: "quarter",
 			},
 			{
-				Name:        "miles",
-				FieldMapKey: "miles",
+				Name:   "miles",
+				Column: "miles",
 			},
 			{
-				Name:        "loaded",
-				FieldMapKey: "loaded",
+				Name:   "loaded",
+				Column: "loaded",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "tractor",
-				FieldMapKey: "businessUnitId",
+				Name:   "tractor",
+				Column: "tractor_id",
 				Relation: &RelationSpec{
 					Target: &TractorSpec,
 				},
 			},
 			{
-				Name:        "jurisdiction",
-				FieldMapKey: "jurisdictionId",
+				Name:   "jurisdiction",
+				Column: "jurisdiction_id",
 				Relation: &RelationSpec{
 					Target: &IFTAJurisdictionSpec,
 				},
@@ -17406,176 +17443,175 @@ func init() {
 
 	IFTAReturnSpec = TypeSpec{
 		TypeName: "IFTAReturn",
-		FieldMap: iftacol.ReturnFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "year",
-				FieldMapKey: "year",
+				Name:   "year",
+				Column: "year",
 			},
 			{
-				Name:        "quarter",
-				FieldMapKey: "quarter",
+				Name:   "quarter",
+				Column: "quarter",
 			},
 			{
 				Name:    "period",
 				Special: "period",
 			},
 			{
-				Name:        "amendmentNumber",
-				FieldMapKey: "amendmentNumber",
+				Name:   "amendmentNumber",
+				Column: "amendment_number",
 			},
 			{
-				Name:        "amendsReturnId",
-				FieldMapKey: "amendsReturnId",
+				Name:   "amendsReturnId",
+				Column: "amends_return_id",
 			},
 			{
-				Name:        "amendsReturn",
-				FieldMapKey: "businessUnitId",
+				Name:   "amendsReturn",
+				Column: "amends_return_id",
 				Relation: &RelationSpec{
 					Target: &IFTAReturnSpec,
 				},
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "timezone",
-				FieldMapKey: "timezone",
+				Name:   "timezone",
+				Column: "timezone",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "totalMiles",
-				FieldMapKey: "totalMiles",
+				Name:   "totalMiles",
+				Column: "total_miles",
 			},
 			{
-				Name:        "totalTaxableMiles",
-				FieldMapKey: "totalTaxableMiles",
+				Name:   "totalTaxableMiles",
+				Column: "total_taxable_miles",
 			},
 			{
-				Name:        "totalGallons",
-				FieldMapKey: "totalGallons",
+				Name:   "totalGallons",
+				Column: "total_gallons",
 			},
 			{
-				Name:        "totalTaxPaidGallons",
-				FieldMapKey: "totalTaxPaidGallons",
+				Name:   "totalTaxPaidGallons",
+				Column: "total_tax_paid_gallons",
 			},
 			{
-				Name:        "netTaxableGallons",
-				FieldMapKey: "netTaxableGallons",
+				Name:   "netTaxableGallons",
+				Column: "net_taxable_gallons",
 			},
 			{
-				Name:        "taxDue",
-				FieldMapKey: "taxDueMinor",
+				Name:   "taxDue",
+				Column: "tax_due_minor",
 			},
 			{
-				Name:        "surchargeDue",
-				FieldMapKey: "surchargeDueMinor",
+				Name:   "surchargeDue",
+				Column: "surcharge_due_minor",
 			},
 			{
-				Name:        "netDue",
-				FieldMapKey: "netDueMinor",
+				Name:   "netDue",
+				Column: "net_due_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "fleetMpgByFuelType",
-				FieldMapKey: "fleetMpgByFuelType",
+				Name:   "fleetMpgByFuelType",
+				Column: "fleet_mpg_by_fuel_type",
 			},
 			{
-				Name:        "unattributedMiles",
-				FieldMapKey: "unattributedMiles",
+				Name:   "unattributedMiles",
+				Column: "unattributed_miles",
 			},
 			{
-				Name:        "unattributedMoveCount",
-				FieldMapKey: "unattributedMoveCount",
+				Name:   "unattributedMoveCount",
+				Column: "unattributed_move_count",
 			},
 			{
-				Name:        "noTractorMiles",
-				FieldMapKey: "noTractorMiles",
+				Name:   "noTractorMiles",
+				Column: "no_tractor_miles",
 			},
 			{
-				Name:        "noTractorMoveCount",
-				FieldMapKey: "noTractorMoveCount",
+				Name:   "noTractorMoveCount",
+				Column: "no_tractor_move_count",
 			},
 			{
-				Name:        "problems",
-				FieldMapKey: "problems",
+				Name:   "problems",
+				Column: "problems",
 			},
 			{
-				Name:        "computedAt",
-				FieldMapKey: "computedAt",
+				Name:   "computedAt",
+				Column: "computed_at",
 			},
 			{
-				Name:        "finalizedAt",
-				FieldMapKey: "finalizedAt",
+				Name:   "finalizedAt",
+				Column: "finalized_at",
 			},
 			{
-				Name:        "finalizedById",
-				FieldMapKey: "finalizedById",
+				Name:   "finalizedById",
+				Column: "finalized_by_id",
 			},
 			{
-				Name:        "finalizedBy",
-				FieldMapKey: "finalizedById",
+				Name:   "finalizedBy",
+				Column: "finalized_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "filedAt",
-				FieldMapKey: "filedAt",
+				Name:   "filedAt",
+				Column: "filed_at",
 			},
 			{
-				Name:        "filedById",
-				FieldMapKey: "filedById",
+				Name:   "filedById",
+				Column: "filed_by_id",
 			},
 			{
-				Name:        "filedBy",
-				FieldMapKey: "filedById",
+				Name:   "filedBy",
+				Column: "filed_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "filingReference",
-				FieldMapKey: "filingReference",
+				Name:   "filingReference",
+				Column: "filing_reference",
 			},
 			{
-				Name:        "reopenedAt",
-				FieldMapKey: "reopenedAt",
+				Name:   "reopenedAt",
+				Column: "reopened_at",
 			},
 			{
-				Name:        "reopenedById",
-				FieldMapKey: "reopenedById",
+				Name:   "reopenedById",
+				Column: "reopened_by_id",
 			},
 			{
-				Name:        "reopenReason",
-				FieldMapKey: "reopenReason",
+				Name:   "reopenReason",
+				Column: "reopen_reason",
 			},
 			{
 				Name: "lines",
@@ -17584,139 +17620,138 @@ func init() {
 				},
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	IFTAReturnLineSpec = TypeSpec{
 		TypeName: "IFTAReturnLine",
-		FieldMap: iftacol.ReturnLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "returnId",
-				FieldMapKey: "returnId",
+				Name:   "returnId",
+				Column: "return_id",
 			},
 			{
-				Name:        "jurisdictionId",
-				FieldMapKey: "jurisdictionId",
+				Name:   "jurisdictionId",
+				Column: "jurisdiction_id",
 			},
 			{
-				Name:        "fuelType",
-				FieldMapKey: "fuelType",
+				Name:   "fuelType",
+				Column: "fuel_type",
 			},
 			{
-				Name:        "isIftaMember",
-				FieldMapKey: "isIftaMember",
+				Name:   "isIftaMember",
+				Column: "is_ifta_member",
 			},
 			{
-				Name:        "totalMiles",
-				FieldMapKey: "totalMiles",
+				Name:   "totalMiles",
+				Column: "total_miles",
 			},
 			{
-				Name:        "taxableMiles",
-				FieldMapKey: "taxableMiles",
+				Name:   "taxableMiles",
+				Column: "taxable_miles",
 			},
 			{
-				Name:        "routeMiles",
-				FieldMapKey: "routeMiles",
+				Name:   "routeMiles",
+				Column: "route_miles",
 			},
 			{
-				Name:        "manualMiles",
-				FieldMapKey: "manualMiles",
+				Name:   "manualMiles",
+				Column: "manual_miles",
 			},
 			{
-				Name:        "loadedMiles",
-				FieldMapKey: "loadedMiles",
+				Name:   "loadedMiles",
+				Column: "loaded_miles",
 			},
 			{
-				Name:        "emptyMiles",
-				FieldMapKey: "emptyMiles",
+				Name:   "emptyMiles",
+				Column: "empty_miles",
 			},
 			{
-				Name:        "taxPaidGallons",
-				FieldMapKey: "taxPaidGallons",
+				Name:   "taxPaidGallons",
+				Column: "tax_paid_gallons",
 			},
 			{
-				Name:        "taxPaidGallonsRaw",
-				FieldMapKey: "taxPaidGallonsRaw",
+				Name:   "taxPaidGallonsRaw",
+				Column: "tax_paid_gallons_raw",
 			},
 			{
-				Name:        "purchaseCount",
-				FieldMapKey: "purchaseCount",
+				Name:   "purchaseCount",
+				Column: "purchase_count",
 			},
 			{
-				Name:        "taxableGallons",
-				FieldMapKey: "taxableGallons",
+				Name:   "taxableGallons",
+				Column: "taxable_gallons",
 			},
 			{
-				Name:        "netTaxableGallons",
-				FieldMapKey: "netTaxableGallons",
+				Name:   "netTaxableGallons",
+				Column: "net_taxable_gallons",
 			},
 			{
-				Name:        "ratePerGallon",
-				FieldMapKey: "ratePerGallon",
+				Name:   "ratePerGallon",
+				Column: "rate_per_gallon",
 			},
 			{
-				Name:        "surchargeRatePerGallon",
-				FieldMapKey: "surchargeRatePerGallon",
+				Name:   "surchargeRatePerGallon",
+				Column: "surcharge_rate_per_gallon",
 			},
 			{
-				Name:        "rateMissing",
-				FieldMapKey: "rateMissing",
+				Name:   "rateMissing",
+				Column: "rate_missing",
 			},
 			{
-				Name:        "taxDue",
-				FieldMapKey: "taxDueMinor",
+				Name:   "taxDue",
+				Column: "tax_due_minor",
 			},
 			{
-				Name:        "surchargeDue",
-				FieldMapKey: "surchargeDueMinor",
+				Name:   "surchargeDue",
+				Column: "surcharge_due_minor",
 			},
 			{
-				Name:        "lineTotal",
-				FieldMapKey: "lineTotalMinor",
+				Name:   "lineTotal",
+				Column: "line_total_minor",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "jurisdiction",
-				FieldMapKey: "jurisdictionId",
+				Name:   "jurisdiction",
+				Column: "jurisdiction_id",
 				Relation: &RelationSpec{
 					Target: &IFTAJurisdictionSpec,
 				},
@@ -17726,63 +17761,62 @@ func init() {
 
 	IFTATaxRateSpec = TypeSpec{
 		TypeName: "IFTATaxRate",
-		FieldMap: iftacol.TaxRateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "jurisdictionId",
-				FieldMapKey: "jurisdictionId",
+				Name:   "jurisdictionId",
+				Column: "jurisdiction_id",
 			},
 			{
-				Name:        "year",
-				FieldMapKey: "year",
+				Name:   "year",
+				Column: "year",
 			},
 			{
-				Name:        "quarter",
-				FieldMapKey: "quarter",
+				Name:   "quarter",
+				Column: "quarter",
 			},
 			{
-				Name:        "fuelType",
-				FieldMapKey: "fuelType",
+				Name:   "fuelType",
+				Column: "fuel_type",
 			},
 			{
-				Name:        "ratePerGallon",
-				FieldMapKey: "ratePerGallon",
+				Name:   "ratePerGallon",
+				Column: "rate_per_gallon",
 			},
 			{
-				Name:        "surchargeRatePerGallon",
-				FieldMapKey: "surchargeRatePerGallon",
+				Name:   "surchargeRatePerGallon",
+				Column: "surcharge_rate_per_gallon",
 			},
 			{
-				Name:        "sourceNote",
-				FieldMapKey: "sourceNote",
+				Name:   "sourceNote",
+				Column: "source_note",
 			},
 			{
-				Name:        "sourceUrl",
-				FieldMapKey: "sourceUrl",
+				Name:   "sourceUrl",
+				Column: "source_url",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "jurisdiction",
-				FieldMapKey: "jurisdictionId",
+				Name:   "jurisdiction",
+				Column: "jurisdiction_id",
 				Relation: &RelationSpec{
 					Target: &IFTAJurisdictionSpec,
 				},
@@ -17792,126 +17826,124 @@ func init() {
 
 	InboundActivitySpec = TypeSpec{
 		TypeName: "InboundActivity",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorKind": "actor_kind", "businessUnitId": "business_unit_id", "createdAt": "created_at", "detail": "detail", "fromClassification": "from_classification", "id": "id", "kind": "kind", "messageId": "message_id", "organizationId": "organization_id", "recordId": "record_id", "subject": "subject", "toClassification": "to_classification", "until": "until"},
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "actorKind",
-				FieldMapKey: "actorKind",
+				Name:   "actorKind",
+				Column: "actor_kind",
 			},
 			{
 				Name:    "actor",
 				Special: "actor",
 			},
 			{
-				Name:        "subject",
-				FieldMapKey: "subject",
+				Name:   "subject",
+				Column: "subject",
 			},
 			{
-				Name:        "detail",
-				FieldMapKey: "detail",
+				Name:   "detail",
+				Column: "detail",
 			},
 			{
-				Name:        "until",
-				FieldMapKey: "until",
+				Name:   "until",
+				Column: "until",
 			},
 			{
-				Name:        "fromClassification",
-				FieldMapKey: "fromClassification",
+				Name:   "fromClassification",
+				Column: "from_classification",
 			},
 			{
-				Name:        "toClassification",
-				FieldMapKey: "toClassification",
+				Name:   "toClassification",
+				Column: "to_classification",
 			},
 			{
-				Name:        "recordId",
-				FieldMapKey: "recordId",
+				Name:   "recordId",
+				Column: "record_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	InboundAttachmentSpec = TypeSpec{
 		TypeName: "InboundAttachment",
-		FieldMap: inboundmessagecol.InboundAttachmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "fileName",
-				FieldMapKey: "fileName",
+				Name:   "fileName",
+				Column: "file_name",
 			},
 			{
-				Name:        "contentType",
-				FieldMapKey: "contentType",
+				Name:   "contentType",
+				Column: "content_type",
 			},
 			{
-				Name:        "byteSize",
-				FieldMapKey: "byteSize",
+				Name:   "byteSize",
+				Column: "byte_size",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "failureText",
-				FieldMapKey: "failureText",
+				Name:   "failureText",
+				Column: "failure_text",
 			},
 			{
-				Name:        "filedShipmentId",
-				FieldMapKey: "filedShipmentId",
+				Name:   "filedShipmentId",
+				Column: "filed_shipment_id",
 			},
 			{
 				Name:    "filedShipment",
 				Special: "filedShipment",
 			},
 			{
-				Name:        "filedAs",
-				FieldMapKey: "filedAs",
+				Name:   "filedAs",
+				Column: "filed_as",
 			},
 			{
-				Name:        "filedAt",
-				FieldMapKey: "filedAt",
+				Name:   "filedAt",
+				Column: "filed_at",
 			},
 			{
-				Name:        "pageCount",
-				FieldMapKey: "pageCount",
+				Name:   "pageCount",
+				Column: "page_count",
 			},
 			{
-				Name:        "pages",
-				FieldMapKey: "pages",
+				Name:   "pages",
+				Column: "pages",
 			},
 			{
-				Name:        "splitDocuments",
-				FieldMapKey: "splitDocuments",
+				Name:   "splitDocuments",
+				Column: "split_documents",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
 				Name:    "reading",
@@ -17922,51 +17954,50 @@ func init() {
 
 	InboundMailboxSpec = TypeSpec{
 		TypeName: "InboundMailbox",
-		FieldMap: inboundmessagecol.MailboxFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "address",
-				FieldMapKey: "address",
+				Name:   "address",
+				Column: "address",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "purpose",
-				FieldMapKey: "purpose",
+				Name:   "purpose",
+				Column: "purpose",
 			},
 			{
-				Name:        "reviewPolicy",
-				FieldMapKey: "reviewPolicy",
+				Name:   "reviewPolicy",
+				Column: "review_policy",
 			},
 			{
-				Name:        "minConfidence",
-				FieldMapKey: "minConfidence",
+				Name:   "minConfidence",
+				Column: "min_confidence",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
 				Name:    "hasSigningSecret",
@@ -17977,151 +18008,150 @@ func init() {
 				Special: "hasApiKey",
 			},
 			{
-				Name:        "lastReceivedAt",
-				FieldMapKey: "lastReceivedAt",
+				Name:   "lastReceivedAt",
+				Column: "last_received_at",
 			},
 			{
 				Name:    "health",
 				Special: "health",
 			},
 			{
-				Name:        "testSentAt",
-				FieldMapKey: "testSentAt",
+				Name:   "testSentAt",
+				Column: "test_sent_at",
 			},
 			{
-				Name:        "testReceivedAt",
-				FieldMapKey: "testReceivedAt",
+				Name:   "testReceivedAt",
+				Column: "test_received_at",
 			},
 			{
-				Name:        "blockedSenders",
-				FieldMapKey: "blockedSenders",
+				Name:   "blockedSenders",
+				Column: "blocked_senders",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	InboundMessageSpec = TypeSpec{
 		TypeName: "InboundMessage",
-		FieldMap: inboundmessagecol.InboundMessageFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "mailboxId",
-				FieldMapKey: "mailboxId",
+				Name:   "mailboxId",
+				Column: "mailbox_id",
 			},
 			{
 				Name:    "mailbox",
 				Special: "mailbox",
 			},
 			{
-				Name:        "fromAddress",
-				FieldMapKey: "fromAddress",
+				Name:   "fromAddress",
+				Column: "from_address",
 			},
 			{
-				Name:        "fromName",
-				FieldMapKey: "fromName",
+				Name:   "fromName",
+				Column: "from_name",
 			},
 			{
-				Name:        "toAddresses",
-				FieldMapKey: "toAddresses",
+				Name:   "toAddresses",
+				Column: "to_addresses",
 			},
 			{
-				Name:        "ccAddresses",
-				FieldMapKey: "ccAddresses",
+				Name:   "ccAddresses",
+				Column: "cc_addresses",
 			},
 			{
-				Name:        "subject",
-				FieldMapKey: "subject",
+				Name:   "subject",
+				Column: "subject",
 			},
 			{
-				Name:        "textBody",
-				FieldMapKey: "textBody",
+				Name:   "textBody",
+				Column: "text_body",
 			},
 			{
-				Name:        "receivedAt",
-				FieldMapKey: "receivedAt",
+				Name:   "receivedAt",
+				Column: "received_at",
 			},
 			{
-				Name:        "spamScore",
-				FieldMapKey: "spamScore",
+				Name:   "spamScore",
+				Column: "spam_score",
 			},
 			{
-				Name:        "classification",
-				FieldMapKey: "classification",
+				Name:   "classification",
+				Column: "classification",
 			},
 			{
-				Name:        "confidence",
-				FieldMapKey: "confidence",
+				Name:   "confidence",
+				Column: "confidence",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "matchedCustomerId",
-				FieldMapKey: "matchedCustomerId",
+				Name:   "matchedCustomerId",
+				Column: "matched_customer_id",
 			},
 			{
-				Name:        "matchedCarrierId",
-				FieldMapKey: "matchedCarrierId",
+				Name:   "matchedCarrierId",
+				Column: "matched_carrier_id",
 			},
 			{
-				Name:        "matchedShipmentId",
-				FieldMapKey: "matchedShipmentId",
+				Name:   "matchedShipmentId",
+				Column: "matched_shipment_id",
 			},
 			{
-				Name:        "matchReason",
-				FieldMapKey: "matchReason",
+				Name:   "matchReason",
+				Column: "match_reason",
 			},
 			{
-				Name:        "runId",
-				FieldMapKey: "runId",
+				Name:   "runId",
+				Column: "run_id",
 			},
 			{
-				Name:        "reviewedBy",
-				FieldMapKey: "reviewedBy",
+				Name:   "reviewedBy",
+				Column: "reviewed_by",
 			},
 			{
-				Name:        "reviewedAt",
-				FieldMapKey: "reviewedAt",
+				Name:   "reviewedAt",
+				Column: "reviewed_at",
 			},
 			{
-				Name:        "reviewNote",
-				FieldMapKey: "reviewNote",
+				Name:   "reviewNote",
+				Column: "review_note",
 			},
 			{
-				Name:        "failureCode",
-				FieldMapKey: "failureCode",
+				Name:   "failureCode",
+				Column: "failure_code",
 			},
 			{
-				Name:        "failureText",
-				FieldMapKey: "failureText",
+				Name:   "failureText",
+				Column: "failure_text",
 			},
 			{
 				Name:    "attachments",
@@ -18148,28 +18178,28 @@ func init() {
 				Special: "needsReview",
 			},
 			{
-				Name:        "threadKey",
-				FieldMapKey: "threadKey",
+				Name:   "threadKey",
+				Column: "thread_key",
 			},
 			{
 				Name:    "threadCount",
 				Special: "threadCount",
 			},
 			{
-				Name:        "senderDomain",
-				FieldMapKey: "senderDomain",
+				Name:   "senderDomain",
+				Column: "sender_domain",
 			},
 			{
-				Name:        "ownerId",
-				FieldMapKey: "ownerId",
+				Name:   "ownerId",
+				Column: "owner_id",
 			},
 			{
 				Name:    "owner",
 				Special: "owner",
 			},
 			{
-				Name:        "dueAt",
-				FieldMapKey: "dueAt",
+				Name:   "dueAt",
+				Column: "due_at",
 			},
 			{
 				Name:    "responseTargetMinutes",
@@ -18184,20 +18214,20 @@ func init() {
 				Special: "awaitingReply",
 			},
 			{
-				Name:        "novaRead",
-				FieldMapKey: "novaRead",
+				Name:   "novaRead",
+				Column: "nova_read",
 			},
 			{
 				Name:    "handledByNova",
 				Special: "handledByNova",
 			},
 			{
-				Name:        "handledByRuleId",
-				FieldMapKey: "handledByRuleId",
+				Name:   "handledByRuleId",
+				Column: "handled_by_rule_id",
 			},
 			{
-				Name:        "handledAction",
-				FieldMapKey: "handledAction",
+				Name:   "handledAction",
+				Column: "handled_action",
 			},
 			{
 				Name:    "reviewer",
@@ -18208,16 +18238,16 @@ func init() {
 				Special: "activity",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "actions",
@@ -18232,358 +18262,380 @@ func init() {
 				Special: "replyDraft",
 			},
 			{
-				Name:        "loadDraft",
-				FieldMapKey: "loadDraft",
+				Name:   "loadDraft",
+				Column: "load_draft",
 			},
 			{
-				Name:        "facts",
-				FieldMapKey: "facts",
+				Name:   "facts",
+				Column: "facts",
 			},
 			{
-				Name:        "conflicts",
-				FieldMapKey: "conflicts",
+				Name:   "conflicts",
+				Column: "conflicts",
 			},
 			{
-				Name:        "classificationCorrected",
-				FieldMapKey: "classificationCorrected",
+				Name:   "classificationCorrected",
+				Column: "classification_corrected",
 			},
 		},
 	}
 
 	InboundReplySpec = TypeSpec{
 		TypeName: "InboundReply",
-		FieldMap: triagecol.ReplyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "messageId",
-				FieldMapKey: "messageId",
+				Name:   "messageId",
+				Column: "message_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "fromAddress",
-				FieldMapKey: "fromAddress",
+				Name:   "fromAddress",
+				Column: "from_address",
 			},
 			{
-				Name:        "toAddress",
-				FieldMapKey: "toAddress",
+				Name:   "toAddress",
+				Column: "to_address",
 			},
 			{
-				Name:        "ccAddresses",
-				FieldMapKey: "ccAddresses",
+				Name:   "ccAddresses",
+				Column: "cc_addresses",
 			},
 			{
-				Name:        "subject",
-				FieldMapKey: "subject",
+				Name:   "subject",
+				Column: "subject",
 			},
 			{
-				Name:        "body",
-				FieldMapKey: "body",
+				Name:   "body",
+				Column: "body",
 			},
 			{
-				Name:        "draftedByNova",
-				FieldMapKey: "draftedByNova",
+				Name:   "draftedByNova",
+				Column: "drafted_by_nova",
 			},
 			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
+				Name:   "templateId",
+				Column: "template_id",
 			},
 			{
-				Name:        "failureText",
-				FieldMapKey: "failureText",
+				Name:   "failureText",
+				Column: "failure_text",
 			},
 			{
-				Name:        "suggestedAddress",
-				FieldMapKey: "suggestedAddress",
+				Name:   "suggestedAddress",
+				Column: "suggested_address",
 			},
 			{
 				Name:    "sentBy",
 				Special: "sentBy",
 			},
 			{
-				Name:        "sentAt",
-				FieldMapKey: "sentAt",
+				Name:   "sentAt",
+				Column: "sent_at",
 			},
 			{
-				Name:        "attachments",
-				FieldMapKey: "attachments",
+				Name:   "attachments",
+				Column: "attachments",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	InvoiceSpec = TypeSpec{
 		TypeName: "Invoice",
-		FieldMap: invoicecol.InvoiceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "billingQueueItemId",
-				FieldMapKey: "billingQueueItemId",
+				Name:   "billingQueueItemId",
+				Column: "billing_queue_item_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "orderId",
-				FieldMapKey: "orderId",
+				Name:   "orderId",
+				Column: "order_id",
 			},
 			{
-				Name:        "orderNumber",
-				FieldMapKey: "orderNumber",
+				Name:   "orderNumber",
+				Column: "order_number",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "scope",
-				FieldMapKey: "scope",
+				Name:   "scope",
+				Column: "scope",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "shipmentCount",
-				FieldMapKey: "shipmentCount",
+				Name:   "shipmentCount",
+				Column: "shipment_count",
 			},
 			{
-				Name:        "detail",
-				FieldMapKey: "detail",
+				Name:   "detail",
+				Column: "detail",
 			},
 			{
-				Name:        "sectionBy",
-				FieldMapKey: "sectionBy",
+				Name:   "sectionBy",
+				Column: "section_by",
 			},
 			{
-				Name:        "offCycleReason",
-				FieldMapKey: "offCycleReason",
+				Name:   "offCycleReason",
+				Column: "off_cycle_reason",
 			},
 			{
-				Name:        "number",
-				FieldMapKey: "number",
+				Name:   "number",
+				Column: "number",
 			},
 			{
-				Name:        "billType",
-				FieldMapKey: "billType",
+				Name:   "billType",
+				Column: "bill_type",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "paymentTerm",
-				FieldMapKey: "paymentTerm",
+				Name:   "paymentTerm",
+				Column: "payment_term",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "exchangeRate",
-				FieldMapKey: "exchangeRate",
+				Name:   "exchangeRate",
+				Column: "exchange_rate",
 			},
 			{
-				Name:        "exchangeRateDate",
-				FieldMapKey: "exchangeRateDate",
+				Name:   "exchangeRateDate",
+				Column: "exchange_rate_date",
 			},
 			{
-				Name:        "invoiceDate",
-				FieldMapKey: "invoiceDate",
+				Name:   "invoiceDate",
+				Column: "invoice_date",
 			},
 			{
-				Name:        "dueDate",
-				FieldMapKey: "dueDate",
+				Name:   "dueDate",
+				Column: "due_date",
 			},
 			{
-				Name:        "postedAt",
-				FieldMapKey: "postedAt",
+				Name:   "postedAt",
+				Column: "posted_at",
 			},
 			{
-				Name:        "shipmentProNumber",
-				FieldMapKey: "shipmentProNumber",
+				Name:   "shipmentProNumber",
+				Column: "shipment_pro_number",
 			},
 			{
-				Name:        "shipmentBol",
-				FieldMapKey: "shipmentBol",
+				Name:   "shipmentBol",
+				Column: "shipment_bol",
 			},
 			{
-				Name:        "serviceDate",
-				FieldMapKey: "serviceDate",
+				Name:   "serviceDate",
+				Column: "service_date",
 			},
 			{
-				Name:        "billToName",
-				FieldMapKey: "billToName",
+				Name:   "billToName",
+				Column: "bill_to_name",
 			},
 			{
-				Name:        "billToCode",
-				FieldMapKey: "billToCode",
+				Name:   "billToCode",
+				Column: "bill_to_code",
 			},
 			{
-				Name:        "billToAddressLine1",
-				FieldMapKey: "billToAddressLine1",
+				Name:   "billToAddressLine1",
+				Column: "bill_to_address_line_1",
 			},
 			{
-				Name:        "billToAddressLine2",
-				FieldMapKey: "billToAddressLine2",
+				Name:   "billToAddressLine2",
+				Column: "bill_to_address_line_2",
 			},
 			{
-				Name:        "billToCity",
-				FieldMapKey: "billToCity",
+				Name:   "billToCity",
+				Column: "bill_to_city",
 			},
 			{
-				Name:        "billToState",
-				FieldMapKey: "billToState",
+				Name:   "billToState",
+				Column: "bill_to_state",
 			},
 			{
-				Name:        "billToPostalCode",
-				FieldMapKey: "billToPostalCode",
+				Name:   "billToPostalCode",
+				Column: "bill_to_postal_code",
 			},
 			{
-				Name:        "billToCountry",
-				FieldMapKey: "billToCountry",
+				Name:   "billToCountry",
+				Column: "bill_to_country",
 			},
 			{
-				Name:        "shipperCustomerId",
-				FieldMapKey: "shipperCustomerId",
+				Name:   "shipperCustomerId",
+				Column: "shipper_customer_id",
 			},
 			{
-				Name:        "factoringCompanyId",
-				FieldMapKey: "factoringCompanyId",
+				Name:   "factoringCompanyId",
+				Column: "factoring_company_id",
 			},
 			{
 				Name:    "shipperCustomer",
 				Special: "shipperCustomer",
 			},
 			{
-				Name:        "isSplitBill",
-				FieldMapKey: "isSplitBill",
+				Name:   "isSplitBill",
+				Column: "is_split_bill",
+			},
+			{
+				Name:   "ratingNotes",
+				Column: "rating_notes",
 			},
 			{
 				Name:    "relatedInvoices",
 				Special: "relatedInvoices",
 			},
 			{
-				Name:        "subtotalAmount",
-				FieldMapKey: "subtotalAmount",
+				Name:   "subtotalAmount",
+				Column: "subtotal_amount",
 			},
 			{
-				Name:        "otherAmount",
-				FieldMapKey: "otherAmount",
+				Name:   "otherAmount",
+				Column: "other_amount",
 			},
 			{
-				Name:        "totalAmount",
-				FieldMapKey: "totalAmount",
+				Name:   "totalAmount",
+				Column: "total_amount",
 			},
 			{
-				Name:        "appliedAmount",
-				FieldMapKey: "appliedAmount",
+				Name:   "appliedAmount",
+				Column: "applied_amount",
 			},
 			{
-				Name:        "settlementStatus",
-				FieldMapKey: "settlementStatus",
+				Name:   "settlementStatus",
+				Column: "settlement_status",
 			},
 			{
-				Name:        "disputeStatus",
-				FieldMapKey: "disputeStatus",
+				Name:   "disputeStatus",
+				Column: "dispute_status",
 			},
 			{
-				Name:        "sendStatus",
-				FieldMapKey: "sendStatus",
+				Name:   "sendStatus",
+				Column: "send_status",
 			},
 			{
-				Name:        "sentAt",
-				FieldMapKey: "sentAt",
+				Name:   "sentAt",
+				Column: "sent_at",
 			},
 			{
-				Name:        "pdfDocumentId",
-				FieldMapKey: "pdfDocumentId",
+				Name:   "pdfDocumentId",
+				Column: "pdf_document_id",
 			},
 			{
-				Name:        "isAdjustmentArtifact",
-				FieldMapKey: "isAdjustmentArtifact",
+				Name:   "lastSendError",
+				Column: "last_send_error",
 			},
 			{
-				Name:        "voidedAt",
-				FieldMapKey: "voidedAt",
+				Name:   "memo",
+				Column: "memo",
 			},
 			{
-				Name:        "voidedById",
-				FieldMapKey: "voidedById",
+				Name:   "remittanceInstructions",
+				Column: "remittance_instructions",
 			},
 			{
-				Name:        "voidReason",
-				FieldMapKey: "voidReason",
+				Name:   "supersedesInvoiceId",
+				Column: "supersedes_invoice_id",
 			},
 			{
-				Name:        "voidDisposition",
-				FieldMapKey: "voidDisposition",
+				Name:   "supersededByInvoiceId",
+				Column: "superseded_by_invoice_id",
 			},
 			{
-				Name:        "voidedByAdjustmentId",
-				FieldMapKey: "voidedByAdjustmentId",
+				Name:   "isAdjustmentArtifact",
+				Column: "is_adjustment_artifact",
 			},
 			{
-				Name:        "referenceInvoiceId",
-				FieldMapKey: "referenceInvoiceId",
+				Name:   "voidedAt",
+				Column: "voided_at",
+			},
+			{
+				Name:   "voidedById",
+				Column: "voided_by_id",
+			},
+			{
+				Name:   "voidReason",
+				Column: "void_reason",
+			},
+			{
+				Name:   "voidDisposition",
+				Column: "void_disposition",
+			},
+			{
+				Name:   "voidedByAdjustmentId",
+				Column: "voided_by_adjustment_id",
+			},
+			{
+				Name:   "referenceInvoiceId",
+				Column: "reference_invoice_id",
 			},
 			{
 				Name:    "referenceInvoice",
 				Special: "referenceInvoice",
 			},
 			{
-				Name:        "memoReason",
-				FieldMapKey: "memoReason",
+				Name:   "memoReason",
+				Column: "memo_reason",
 			},
 			{
-				Name:        "memoKind",
-				FieldMapKey: "memoKind",
+				Name:   "memoKind",
+				Column: "memo_kind",
 			},
 			{
 				Name:    "openBalance",
 				Special: "openBalance",
 			},
 			{
-				Name:        "balanceDueMinor",
-				FieldMapKey: "balanceDueMinor",
+				Name:   "balanceDueMinor",
+				Column: "balance_due_minor",
 			},
 			{
 				Name:    "creditRemaining",
@@ -18602,47 +18654,47 @@ func init() {
 				Special: "creditApplications",
 			},
 			{
-				Name:        "ediSendStatus",
-				FieldMapKey: "ediSendStatus",
+				Name:   "ediSendStatus",
+				Column: "edi_send_status",
 			},
 			{
-				Name:        "lastEdiMessageId",
-				FieldMapKey: "lastEdiMessageId",
+				Name:   "lastEdiMessageId",
+				Column: "last_edi_message_id",
 			},
 			{
-				Name:        "ediSentAt",
-				FieldMapKey: "ediSentAt",
+				Name:   "ediSentAt",
+				Column: "edi_sent_at",
 			},
 			{
-				Name:        "lastEdiError",
-				FieldMapKey: "lastEdiError",
+				Name:   "lastEdiError",
+				Column: "last_edi_error",
 			},
 			{
 				Name:    "ediSendPlan",
 				Special: "ediSendPlan",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "businessUnitId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
 			},
 			{
-				Name:        "order",
-				FieldMapKey: "businessUnitId",
+				Name:   "order",
+				Column: "order_id",
 				Relation: &RelationSpec{
 					Target: &OrderSpec,
 				},
@@ -18658,24 +18710,24 @@ func init() {
 				Special: "chargeSummary",
 			},
 			{
-				Name:        "voidedBy",
-				FieldMapKey: "voidedById",
+				Name:   "voidedBy",
+				Column: "voided_by_id",
 			},
 			{
-				Name:        "factoringOverride",
-				FieldMapKey: "factoringOverride",
+				Name:   "factoringOverride",
+				Column: "factoring_override",
 			},
 			{
-				Name:        "factoringOverrideReason",
-				FieldMapKey: "factoringOverrideReason",
+				Name:   "factoringOverrideReason",
+				Column: "factoring_override_reason",
 			},
 			{
-				Name:        "factoringAgreementId",
-				FieldMapKey: "factoringAgreementId",
+				Name:   "factoringAgreementId",
+				Column: "factoring_agreement_id",
 			},
 			{
-				Name:        "factoringCompany",
-				FieldMapKey: "businessUnitId",
+				Name:   "factoringCompany",
+				Column: "factoring_company_id",
 				Relation: &RelationSpec{
 					Target: &FactoringCompanySpec,
 				},
@@ -18701,151 +18753,150 @@ func init() {
 
 	InvoiceAdjustmentSpec = TypeSpec{
 		TypeName: "InvoiceAdjustment",
-		FieldMap: invoiceadjustmentcol.InvoiceAdjustmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "correctionGroupId",
-				FieldMapKey: "correctionGroupId",
+				Name:   "correctionGroupId",
+				Column: "correction_group_id",
 			},
 			{
-				Name:        "originalInvoiceId",
-				FieldMapKey: "originalInvoiceId",
+				Name:   "originalInvoiceId",
+				Column: "original_invoice_id",
 			},
 			{
-				Name:        "creditMemoInvoiceId",
-				FieldMapKey: "creditMemoInvoiceId",
+				Name:   "creditMemoInvoiceId",
+				Column: "credit_memo_invoice_id",
 			},
 			{
-				Name:        "replacementInvoiceId",
-				FieldMapKey: "replacementInvoiceId",
+				Name:   "replacementInvoiceId",
+				Column: "replacement_invoice_id",
 			},
 			{
-				Name:        "rebillQueueItemId",
-				FieldMapKey: "rebillQueueItemId",
+				Name:   "rebillQueueItemId",
+				Column: "rebill_queue_item_id",
 			},
 			{
-				Name:        "batchId",
-				FieldMapKey: "batchId",
+				Name:   "batchId",
+				Column: "batch_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "approvalStatus",
-				FieldMapKey: "approvalStatus",
+				Name:   "approvalStatus",
+				Column: "approval_status",
 			},
 			{
-				Name:        "replacementReviewStatus",
-				FieldMapKey: "replacementReviewStatus",
+				Name:   "replacementReviewStatus",
+				Column: "replacement_review_status",
 			},
 			{
-				Name:        "rebillStrategy",
-				FieldMapKey: "rebillStrategy",
+				Name:   "rebillStrategy",
+				Column: "rebill_strategy",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "policyReason",
-				FieldMapKey: "policyReason",
+				Name:   "policyReason",
+				Column: "policy_reason",
 			},
 			{
-				Name:        "accountingDate",
-				FieldMapKey: "accountingDate",
+				Name:   "accountingDate",
+				Column: "accounting_date",
 			},
 			{
-				Name:        "creditTotalAmount",
-				FieldMapKey: "creditTotalAmount",
+				Name:   "creditTotalAmount",
+				Column: "credit_total_amount",
 			},
 			{
-				Name:        "rebillTotalAmount",
-				FieldMapKey: "rebillTotalAmount",
+				Name:   "rebillTotalAmount",
+				Column: "rebill_total_amount",
 			},
 			{
-				Name:        "netDeltaAmount",
-				FieldMapKey: "netDeltaAmount",
+				Name:   "netDeltaAmount",
+				Column: "net_delta_amount",
 			},
 			{
-				Name:        "rerateVariancePercent",
-				FieldMapKey: "rerateVariancePercent",
+				Name:   "rerateVariancePercent",
+				Column: "rerate_variance_percent",
 			},
 			{
-				Name:        "wouldCreateUnappliedCredit",
-				FieldMapKey: "wouldCreateUnappliedCredit",
+				Name:   "wouldCreateUnappliedCredit",
+				Column: "would_create_unapplied_credit",
 			},
 			{
-				Name:        "requiresReconciliationException",
-				FieldMapKey: "requiresReconciliationException",
+				Name:   "requiresReconciliationException",
+				Column: "requires_reconciliation_exception",
 			},
 			{
-				Name:        "approvalRequired",
-				FieldMapKey: "approvalRequired",
+				Name:   "approvalRequired",
+				Column: "approval_required",
 			},
 			{
-				Name:        "submittedById",
-				FieldMapKey: "submittedById",
+				Name:   "submittedById",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "rejectedById",
-				FieldMapKey: "rejectedById",
+				Name:   "rejectedById",
+				Column: "rejected_by_id",
 			},
 			{
-				Name:        "rejectedAt",
-				FieldMapKey: "rejectedAt",
+				Name:   "rejectedAt",
+				Column: "rejected_at",
 			},
 			{
-				Name:        "rejectionReason",
-				FieldMapKey: "rejectionReason",
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
 			},
 			{
-				Name:        "executionError",
-				FieldMapKey: "executionError",
+				Name:   "executionError",
+				Column: "execution_error",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "lines",
@@ -18853,167 +18904,169 @@ func init() {
 					Target: &InvoiceAdjustmentLineSpec,
 				},
 			},
+			{
+				Name:    "supportingDocumentIds",
+				Special: "supportingDocumentIds",
+			},
 		},
 	}
 
 	InvoiceAdjustmentLineSpec = TypeSpec{
 		TypeName: "InvoiceAdjustmentLine",
-		FieldMap: invoiceadjustmentcol.InvoiceAdjustmentLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "adjustmentId",
-				FieldMapKey: "adjustmentId",
+				Name:   "adjustmentId",
+				Column: "adjustment_id",
 			},
 			{
-				Name:        "originalInvoiceId",
-				FieldMapKey: "originalInvoiceId",
+				Name:   "originalInvoiceId",
+				Column: "original_invoice_id",
 			},
 			{
-				Name:        "originalLineId",
-				FieldMapKey: "originalLineId",
+				Name:   "originalLineId",
+				Column: "original_line_id",
 			},
 			{
-				Name:        "creditMemoLineId",
-				FieldMapKey: "creditMemoLineId",
+				Name:   "creditMemoLineId",
+				Column: "credit_memo_line_id",
 			},
 			{
-				Name:        "replacementLineId",
-				FieldMapKey: "replacementLineId",
+				Name:   "replacementLineId",
+				Column: "replacement_line_id",
 			},
 			{
-				Name:        "lineNumber",
-				FieldMapKey: "lineNumber",
+				Name:   "lineNumber",
+				Column: "line_number",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "creditQuantity",
-				FieldMapKey: "creditQuantity",
+				Name:   "creditQuantity",
+				Column: "credit_quantity",
 			},
 			{
-				Name:        "creditAmount",
-				FieldMapKey: "creditAmount",
+				Name:   "creditAmount",
+				Column: "credit_amount",
 			},
 			{
-				Name:        "remainingEligibleAmount",
-				FieldMapKey: "remainingEligibleAmount",
+				Name:   "remainingEligibleAmount",
+				Column: "remaining_eligible_amount",
 			},
 			{
-				Name:        "rebillQuantity",
-				FieldMapKey: "rebillQuantity",
+				Name:   "rebillQuantity",
+				Column: "rebill_quantity",
 			},
 			{
-				Name:        "rebillAmount",
-				FieldMapKey: "rebillAmount",
+				Name:   "rebillAmount",
+				Column: "rebill_amount",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	InvoiceDisputeSpec = TypeSpec{
 		TypeName: "InvoiceDispute",
-		FieldMap: invoicecol.InvoiceDisputeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "invoiceId",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "reasonCode",
-				FieldMapKey: "reasonCode",
+				Name:   "reasonCode",
+				Column: "reason_code",
 			},
 			{
-				Name:        "disputedAmount",
-				FieldMapKey: "disputedAmount",
+				Name:   "disputedAmount",
+				Column: "disputed_amount",
 			},
 			{
-				Name:        "disputedAmountMinor",
-				FieldMapKey: "disputedAmountMinor",
+				Name:   "disputedAmountMinor",
+				Column: "disputed_amount_minor",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "openedById",
-				FieldMapKey: "openedById",
+				Name:   "openedById",
+				Column: "opened_by_id",
 			},
 			{
-				Name:        "openedAt",
-				FieldMapKey: "openedAt",
+				Name:   "openedAt",
+				Column: "opened_at",
 			},
 			{
-				Name:        "resolvedById",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedById",
+				Column: "resolved_by_id",
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "resolution",
-				FieldMapKey: "resolution",
+				Name:   "resolution",
+				Column: "resolution",
 			},
 			{
-				Name:        "resolutionAdjustmentId",
-				FieldMapKey: "resolutionAdjustmentId",
+				Name:   "resolutionAdjustmentId",
+				Column: "resolution_adjustment_id",
 			},
 			{
-				Name:        "resolutionNotes",
-				FieldMapKey: "resolutionNotes",
+				Name:   "resolutionNotes",
+				Column: "resolution_notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "invoice",
@@ -19024,362 +19077,369 @@ func init() {
 				Special: "customer",
 			},
 			{
-				Name:        "openedBy",
-				FieldMapKey: "openedById",
+				Name:   "openedBy",
+				Column: "opened_by_id",
 			},
 			{
-				Name:        "resolvedBy",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedBy",
+				Column: "resolved_by_id",
 			},
 		},
 	}
 
 	InvoiceLineSpec = TypeSpec{
 		TypeName: "InvoiceLine",
-		FieldMap: invoicecol.InvoiceLineFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "invoiceId",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "shipmentProNumber",
-				FieldMapKey: "shipmentProNumber",
+				Name:   "shipmentProNumber",
+				Column: "shipment_pro_number",
 			},
 			{
-				Name:        "shipmentBol",
-				FieldMapKey: "shipmentBol",
+				Name:   "shipmentBol",
+				Column: "shipment_bol",
 			},
 			{
-				Name:        "lineNumber",
-				FieldMapKey: "lineNumber",
+				Name:   "lineNumber",
+				Column: "line_number",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "quantity",
-				FieldMapKey: "quantity",
+				Name:   "quantity",
+				Column: "quantity",
 			},
 			{
-				Name:        "unitPrice",
-				FieldMapKey: "unitPrice",
+				Name:   "unitPrice",
+				Column: "unit_price",
 			},
 			{
-				Name:        "amount",
-				FieldMapKey: "amount",
+				Name:   "amount",
+				Column: "amount",
 			},
 			{
-				Name:        "accessorialChargeId",
-				FieldMapKey: "accessorialChargeId",
+				Name:   "accessorialChargeId",
+				Column: "accessorial_charge_id",
 			},
 			{
-				Name:        "chargeCode",
-				FieldMapKey: "chargeCode",
+				Name:   "chargeCode",
+				Column: "charge_code",
 			},
 			{
-				Name:        "chargeMethod",
-				FieldMapKey: "chargeMethod",
+				Name:   "chargeMethod",
+				Column: "charge_method",
 			},
 			{
-				Name:        "rate",
-				FieldMapKey: "rate",
+				Name:   "rate",
+				Column: "rate",
 			},
 			{
-				Name:        "allocationPercent",
-				FieldMapKey: "allocationPercent",
+				Name:   "rateUnit",
+				Column: "rate_unit",
 			},
 			{
-				Name:        "formulaTemplateId",
-				FieldMapKey: "formulaTemplateId",
+				Name:   "allocationPercent",
+				Column: "allocation_percent",
 			},
 			{
-				Name:        "formulaTemplateName",
-				FieldMapKey: "formulaTemplateName",
+				Name:   "formulaTemplateId",
+				Column: "formula_template_id",
 			},
 			{
-				Name:        "chargeAllocationId",
-				FieldMapKey: "chargeAllocationId",
+				Name:   "formulaTemplateName",
+				Column: "formula_template_name",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "chargeAllocationId",
+				Column: "charge_allocation_id",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	JobPositionSpec = TypeSpec{
 		TypeName: "JobPosition",
-		FieldMap: workercol.JobPositionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "department",
-				FieldMapKey: "department",
+				Name:   "department",
+				Column: "department",
 			},
 			{
-				Name:        "flsaExempt",
-				FieldMapKey: "flsaExempt",
+				Name:   "flsaExempt",
+				Column: "flsa_exempt",
 			},
 			{
-				Name:        "isDrivingPosition",
-				FieldMapKey: "isDrivingPosition",
+				Name:   "isDrivingPosition",
+				Column: "is_driving_position",
 			},
 			{
-				Name:        "reportsToPositionId",
-				FieldMapKey: "reportsToPositionId",
+				Name:   "reportsToPositionId",
+				Column: "reports_to_position_id",
 			},
 			{
-				Name:        "reportsTo",
-				FieldMapKey: "businessUnitId",
+				Name:   "reportsTo",
+				Column: "reports_to_position_id",
 				Relation: &RelationSpec{
 					Target: &JobPositionSpec,
 				},
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	JournalEntryLineAccountSpec = TypeSpec{
 		TypeName: "JournalEntryLineAccount",
-		FieldMap: glaccountcol.GLAccountFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "accountCode",
-				FieldMapKey: "accountCode",
+				Name:   "accountCode",
+				Column: "account_code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 		},
 	}
 
 	JournalReversalSpec = TypeSpec{
 		TypeName: "JournalReversal",
-		FieldMap: journalreversalcol.ReversalFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "originalJournalEntryId",
-				FieldMapKey: "originalJournalEntryId",
+				Name:   "originalJournalEntryId",
+				Column: "original_journal_entry_id",
 			},
 			{
-				Name:        "reversalJournalEntryId",
-				FieldMapKey: "reversalJournalEntryId",
+				Name:   "originalJournalEntry",
+				Column: "original_journal_entry_id",
 			},
 			{
-				Name:        "postedBatchId",
-				FieldMapKey: "postedBatchId",
+				Name:   "reversalJournalEntryId",
+				Column: "reversal_journal_entry_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "reversalJournalEntry",
+				Column: "reversal_journal_entry_id",
 			},
 			{
-				Name:        "requestedAccountingDate",
-				FieldMapKey: "requestedAccountingDate",
+				Name:   "postedBatchId",
+				Column: "posted_batch_id",
 			},
 			{
-				Name:        "resolvedFiscalYearId",
-				FieldMapKey: "resolvedFiscalYearId",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "resolvedFiscalPeriodId",
-				FieldMapKey: "resolvedFiscalPeriodId",
+				Name:   "requestedAccountingDate",
+				Column: "requested_accounting_date",
 			},
 			{
-				Name:        "reasonCode",
-				FieldMapKey: "reasonCode",
+				Name:   "resolvedFiscalYearId",
+				Column: "resolved_fiscal_year_id",
 			},
 			{
-				Name:        "reasonText",
-				FieldMapKey: "reasonText",
+				Name:   "resolvedFiscalPeriodId",
+				Column: "resolved_fiscal_period_id",
 			},
 			{
-				Name:        "requestedById",
-				FieldMapKey: "requestedById",
+				Name:   "reasonCode",
+				Column: "reason_code",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "reasonText",
+				Column: "reason_text",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:   "requestedById",
+				Column: "requested_by_id",
 			},
 			{
-				Name:        "rejectedById",
-				FieldMapKey: "rejectedById",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "rejectedAt",
-				FieldMapKey: "rejectedAt",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "rejectionReason",
-				FieldMapKey: "rejectionReason",
+				Name:   "rejectedById",
+				Column: "rejected_by_id",
 			},
 			{
-				Name:        "cancelledById",
-				FieldMapKey: "cancelledById",
+				Name:   "rejectedAt",
+				Column: "rejected_at",
 			},
 			{
-				Name:        "cancelledAt",
-				FieldMapKey: "cancelledAt",
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
 			},
 			{
-				Name:        "cancelReason",
-				FieldMapKey: "cancelReason",
+				Name:   "cancelledById",
+				Column: "cancelled_by_id",
 			},
 			{
-				Name:        "postedById",
-				FieldMapKey: "postedById",
+				Name:   "cancelledAt",
+				Column: "cancelled_at",
 			},
 			{
-				Name:        "postedAt",
-				FieldMapKey: "postedAt",
+				Name:   "cancelReason",
+				Column: "cancel_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "postedById",
+				Column: "posted_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "postedAt",
+				Column: "posted_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	JournalSourceInfoSpec = TypeSpec{
 		TypeName: "JournalSourceInfo",
-		FieldMap: journalsourcecol.SourceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "sourceObjectType",
-				FieldMapKey: "sourceObjectType",
+				Name:   "sourceObjectType",
+				Column: "source_object_type",
 			},
 			{
-				Name:        "sourceObjectId",
-				FieldMapKey: "sourceObjectId",
+				Name:   "sourceObjectId",
+				Column: "source_object_id",
 			},
 			{
-				Name:        "sourceEventType",
-				FieldMapKey: "sourceEventType",
+				Name:   "sourceEventType",
+				Column: "source_event_type",
 			},
 			{
-				Name:        "sourceDocumentNumber",
-				FieldMapKey: "sourceDocumentNumber",
+				Name:   "sourceDocumentNumber",
+				Column: "source_document_number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
 				Name:    "batchNumber",
@@ -19390,119 +19450,118 @@ func init() {
 
 	JurisdictionRuleSpec = TypeSpec{
 		TypeName: "JurisdictionRule",
-		FieldMap: jurisdictionrulecol.JurisdictionRuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "maxWidthFeet",
-				FieldMapKey: "maxWidthFeet",
+				Name:   "maxWidthFeet",
+				Column: "max_width_feet",
 			},
 			{
-				Name:        "maxHeightFeet",
-				FieldMapKey: "maxHeightFeet",
+				Name:   "maxHeightFeet",
+				Column: "max_height_feet",
 			},
 			{
-				Name:        "maxLengthFeet",
-				FieldMapKey: "maxLengthFeet",
+				Name:   "maxLengthFeet",
+				Column: "max_length_feet",
 			},
 			{
-				Name:        "maxWeightPounds",
-				FieldMapKey: "maxWeightPounds",
+				Name:   "maxWeightPounds",
+				Column: "max_weight_pounds",
 			},
 			{
-				Name:        "superloadWidthFeet",
-				FieldMapKey: "superloadWidthFeet",
+				Name:   "superloadWidthFeet",
+				Column: "superload_width_feet",
 			},
 			{
-				Name:        "superloadWeightPounds",
-				FieldMapKey: "superloadWeightPounds",
+				Name:   "superloadWeightPounds",
+				Column: "superload_weight_pounds",
 			},
 			{
-				Name:        "daylightOnly",
-				FieldMapKey: "daylightOnly",
+				Name:   "daylightOnly",
+				Column: "daylight_only",
 			},
 			{
-				Name:        "rushHourRestricted",
-				FieldMapKey: "rushHourRestricted",
+				Name:   "rushHourRestricted",
+				Column: "rush_hour_restricted",
 			},
 			{
-				Name:        "weekendRestricted",
-				FieldMapKey: "weekendRestricted",
+				Name:   "weekendRestricted",
+				Column: "weekend_restricted",
 			},
 			{
-				Name:        "holidayRestricted",
-				FieldMapKey: "holidayRestricted",
+				Name:   "holidayRestricted",
+				Column: "holiday_restricted",
 			},
 			{
-				Name:        "permitLeadTimeDays",
-				FieldMapKey: "permitLeadTimeDays",
+				Name:   "permitLeadTimeDays",
+				Column: "permit_lead_time_days",
 			},
 			{
-				Name:        "permitValidityDays",
-				FieldMapKey: "permitValidityDays",
+				Name:   "permitValidityDays",
+				Column: "permit_validity_days",
 			},
 			{
-				Name:        "permitBaseFee",
-				FieldMapKey: "permitBaseFee",
+				Name:   "permitBaseFee",
+				Column: "permit_base_fee",
 			},
 			{
-				Name:        "permitPerMileFee",
-				FieldMapKey: "permitPerMileFee",
+				Name:   "permitPerMileFee",
+				Column: "permit_per_mile_fee",
 			},
 			{
-				Name:        "sourceNote",
-				FieldMapKey: "sourceNote",
+				Name:   "sourceNote",
+				Column: "source_note",
 			},
 			{
-				Name:        "sourceUrl",
-				FieldMapKey: "sourceUrl",
+				Name:   "sourceUrl",
+				Column: "source_url",
 			},
 			{
-				Name:        "verificationState",
-				FieldMapKey: "verificationState",
+				Name:   "verificationState",
+				Column: "verification_state",
 			},
 			{
-				Name:        "verifiedAt",
-				FieldMapKey: "verifiedAt",
+				Name:   "verifiedAt",
+				Column: "verified_at",
 			},
 			{
-				Name:        "effectiveStartDate",
-				FieldMapKey: "effectiveStartDate",
+				Name:   "effectiveStartDate",
+				Column: "effective_start_date",
 			},
 			{
-				Name:        "effectiveEndDate",
-				FieldMapKey: "effectiveEndDate",
+				Name:   "effectiveEndDate",
+				Column: "effective_end_date",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
@@ -19512,75 +19571,74 @@ func init() {
 
 	JurisdictionRuleOverrideSpec = TypeSpec{
 		TypeName: "JurisdictionRuleOverride",
-		FieldMap: jurisdictionrulecol.OverrideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "maxWidthFeet",
-				FieldMapKey: "maxWidthFeet",
+				Name:   "maxWidthFeet",
+				Column: "max_width_feet",
 			},
 			{
-				Name:        "maxHeightFeet",
-				FieldMapKey: "maxHeightFeet",
+				Name:   "maxHeightFeet",
+				Column: "max_height_feet",
 			},
 			{
-				Name:        "maxLengthFeet",
-				FieldMapKey: "maxLengthFeet",
+				Name:   "maxLengthFeet",
+				Column: "max_length_feet",
 			},
 			{
-				Name:        "maxWeightPounds",
-				FieldMapKey: "maxWeightPounds",
+				Name:   "maxWeightPounds",
+				Column: "max_weight_pounds",
 			},
 			{
-				Name:        "permitLeadTimeDays",
-				FieldMapKey: "permitLeadTimeDays",
+				Name:   "permitLeadTimeDays",
+				Column: "permit_lead_time_days",
 			},
 			{
-				Name:        "daylightOnly",
-				FieldMapKey: "daylightOnly",
+				Name:   "daylightOnly",
+				Column: "daylight_only",
 			},
 			{
-				Name:        "holidayRestricted",
-				FieldMapKey: "holidayRestricted",
+				Name:   "holidayRestricted",
+				Column: "holiday_restricted",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
@@ -19590,79 +19648,78 @@ func init() {
 
 	LateChargeAssessmentSpec = TypeSpec{
 		TypeName: "LateChargeAssessment",
-		FieldMap: latechargecol.LateChargeAssessmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "sourceInvoiceId",
-				FieldMapKey: "sourceInvoiceId",
+				Name:   "sourceInvoiceId",
+				Column: "source_invoice_id",
 			},
 			{
-				Name:        "periodIndex",
-				FieldMapKey: "periodIndex",
+				Name:   "periodIndex",
+				Column: "period_index",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "asOfDate",
-				FieldMapKey: "asOfDate",
+				Name:   "asOfDate",
+				Column: "as_of_date",
 			},
 			{
-				Name:        "basisOpenBalanceMinor",
-				FieldMapKey: "basisOpenBalanceMinor",
+				Name:   "basisOpenBalanceMinor",
+				Column: "basis_open_balance_minor",
 			},
 			{
-				Name:        "ratePercent",
-				FieldMapKey: "ratePercent",
+				Name:   "ratePercent",
+				Column: "rate_percent",
 			},
 			{
-				Name:        "chargeMinor",
-				FieldMapKey: "chargeMinor",
+				Name:   "chargeMinor",
+				Column: "charge_minor",
 			},
 			{
-				Name:        "debitMemoInvoiceId",
-				FieldMapKey: "debitMemoInvoiceId",
+				Name:   "debitMemoInvoiceId",
+				Column: "debit_memo_invoice_id",
 			},
 			{
-				Name:        "debitMemoLineId",
-				FieldMapKey: "debitMemoLineId",
+				Name:   "debitMemoLineId",
+				Column: "debit_memo_line_id",
 			},
 			{
-				Name:        "runKey",
-				FieldMapKey: "runKey",
+				Name:   "runKey",
+				Column: "run_key",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "sourceInvoice",
@@ -19677,179 +19734,177 @@ func init() {
 
 	LeaveControlSpec = TypeSpec{
 		TypeName: "LeaveControl",
-		FieldMap: workercol.LeaveControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "measurementMethod",
-				FieldMapKey: "measurementMethod",
+				Name:   "measurementMethod",
+				Column: "measurement_method",
 			},
 			{
-				Name:        "entitlementWeeks",
-				FieldMapKey: "entitlementWeeks",
+				Name:   "entitlementWeeks",
+				Column: "entitlement_weeks",
 			},
 			{
-				Name:        "militaryCaregiverWeeks",
-				FieldMapKey: "militaryCaregiverWeeks",
+				Name:   "militaryCaregiverWeeks",
+				Column: "military_caregiver_weeks",
 			},
 			{
-				Name:        "workweekHours",
-				FieldMapKey: "workweekHours",
+				Name:   "workweekHours",
+				Column: "workweek_hours",
 			},
 			{
-				Name:        "eligibilityMonths",
-				FieldMapKey: "eligibilityMonths",
+				Name:   "eligibilityMonths",
+				Column: "eligibility_months",
 			},
 			{
-				Name:        "eligibilityHours",
-				FieldMapKey: "eligibilityHours",
+				Name:   "eligibilityHours",
+				Column: "eligibility_hours",
 			},
 			{
-				Name:        "certificationDueDays",
-				FieldMapKey: "certificationDueDays",
+				Name:   "certificationDueDays",
+				Column: "certification_due_days",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	LocationSpec = TypeSpec{
 		TypeName: "Location",
-		FieldMap: locationcol.LocationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "locationCategoryId",
-				FieldMapKey: "locationCategoryId",
+				Name:   "locationCategoryId",
+				Column: "location_category_id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "addressLine1",
-				FieldMapKey: "addressLine1",
+				Name:   "addressLine1",
+				Column: "address_line_1",
 			},
 			{
-				Name:        "addressLine2",
-				FieldMapKey: "addressLine2",
+				Name:   "addressLine2",
+				Column: "address_line_2",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "postalCode",
-				FieldMapKey: "postalCode",
+				Name:   "postalCode",
+				Column: "postal_code",
 			},
 			{
-				Name:        "timezone",
-				FieldMapKey: "timezone",
+				Name:   "timezone",
+				Column: "timezone",
 			},
 			{
-				Name:        "placeId",
-				FieldMapKey: "placeId",
+				Name:   "placeId",
+				Column: "place_id",
 			},
 			{
-				Name:        "isGeocoded",
-				FieldMapKey: "isGeocoded",
+				Name:   "isGeocoded",
+				Column: "is_geocoded",
 			},
 			{
-				Name:        "longitude",
-				FieldMapKey: "longitude",
+				Name:   "longitude",
+				Column: "longitude",
 			},
 			{
-				Name:        "latitude",
-				FieldMapKey: "latitude",
+				Name:   "latitude",
+				Column: "latitude",
 			},
 			{
-				Name:        "geofenceType",
-				FieldMapKey: "geofenceType",
+				Name:   "geofenceType",
+				Column: "geofence_type",
 			},
 			{
-				Name:        "geofenceRadiusMeters",
-				FieldMapKey: "geofenceRadiusMeters",
+				Name:   "geofenceRadiusMeters",
+				Column: "geofence_radius_meters",
 			},
 			{
 				Name:    "geofenceVertices",
 				Special: "geofenceVertices",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
 			},
 			{
-				Name:        "locationCategory",
-				FieldMapKey: "locationCategoryId",
+				Name:   "locationCategory",
+				Column: "location_category_id",
 				Relation: &RelationSpec{
 					Target: &LocationCategorySpec,
 				},
@@ -19859,82 +19914,81 @@ func init() {
 
 	LocationCategorySpec = TypeSpec{
 		TypeName: "LocationCategory",
-		FieldMap: locationcategorycol.LocationCategoryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "facilityType",
-				FieldMapKey: "facilityType",
+				Name:   "facilityType",
+				Column: "facility_type",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "hasSecureParking",
-				FieldMapKey: "hasSecureParking",
+				Name:   "hasSecureParking",
+				Column: "has_secure_parking",
 			},
 			{
-				Name:        "requiresAppointment",
-				FieldMapKey: "requiresAppointment",
+				Name:   "requiresAppointment",
+				Column: "requires_appointment",
 			},
 			{
-				Name:        "allowsOvernight",
-				FieldMapKey: "allowsOvernight",
+				Name:   "allowsOvernight",
+				Column: "allows_overnight",
 			},
 			{
-				Name:        "hasRestroom",
-				FieldMapKey: "hasRestroom",
+				Name:   "hasRestroom",
+				Column: "has_restroom",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -19944,7 +19998,6 @@ func init() {
 
 	LogCheckCallPayloadSpec = TypeSpec{
 		TypeName: "LogCheckCallPayload",
-		FieldMap: trackingeventcol.TrackingEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -19967,504 +20020,502 @@ func init() {
 
 	MFAAuthenticatorSpec = TypeSpec{
 		TypeName: "MFAAuthenticator",
-		FieldMap: iamcol.MFAAuthenticatorFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
-				Name:        "verifiedAt",
-				FieldMapKey: "verifiedAt",
+				Name:   "verifiedAt",
+				Column: "verified_at",
 			},
 			{
-				Name:        "lastUsedAt",
-				FieldMapKey: "lastUsedAt",
+				Name:   "lastUsedAt",
+				Column: "last_used_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 			},
 		},
 	}
 
 	ManualJournalSpec = TypeSpec{
 		TypeName: "ManualJournal",
-		FieldMap: manualjournalcol.RequestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "requestNumber",
-				FieldMapKey: "requestNumber",
+				Name:   "requestNumber",
+				Column: "request_number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "accountingDate",
-				FieldMapKey: "accountingDate",
+				Name:   "accountingDate",
+				Column: "accounting_date",
 			},
 			{
-				Name:        "requestedFiscalYearId",
-				FieldMapKey: "requestedFiscalYearId",
+				Name:   "requestedFiscalYearId",
+				Column: "requested_fiscal_year_id",
 			},
 			{
-				Name:        "requestedFiscalPeriodId",
-				FieldMapKey: "requestedFiscalPeriodId",
+				Name:   "requestedFiscalPeriodId",
+				Column: "requested_fiscal_period_id",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "totalDebit",
-				FieldMapKey: "totalDebit",
+				Name:   "totalDebit",
+				Column: "total_debit_minor",
 			},
 			{
-				Name:        "totalCredit",
-				FieldMapKey: "totalCredit",
+				Name:   "totalCredit",
+				Column: "total_credit_minor",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:    "isBalanced",
+				Special: "balance",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "rejectedAt",
-				FieldMapKey: "rejectedAt",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "rejectedById",
-				FieldMapKey: "rejectedById",
+				Name:   "rejectedAt",
+				Column: "rejected_at",
 			},
 			{
-				Name:        "rejectionReason",
-				FieldMapKey: "rejectionReason",
+				Name:   "rejectedById",
+				Column: "rejected_by_id",
 			},
 			{
-				Name:        "cancelledAt",
-				FieldMapKey: "cancelledAt",
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
 			},
 			{
-				Name:        "cancelledById",
-				FieldMapKey: "cancelledById",
+				Name:   "cancelledAt",
+				Column: "cancelled_at",
 			},
 			{
-				Name:        "cancelReason",
-				FieldMapKey: "cancelReason",
+				Name:   "cancelledById",
+				Column: "cancelled_by_id",
 			},
 			{
-				Name:        "postedBatchId",
-				FieldMapKey: "postedBatchId",
+				Name:   "cancelReason",
+				Column: "cancel_reason",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "postedBatchId",
+				Column: "posted_batch_id",
 			},
 			{
-				Name:        "updatedById",
-				FieldMapKey: "updatedById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "updatedById",
+				Column: "updated_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	MyAgentSpec = TypeSpec{
 		TypeName: "MyAgent",
-		FieldMap: agentdefinitioncol.DefinitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "template",
-				FieldMapKey: "template",
+				Name:   "template",
+				Column: "template",
 			},
 			{
-				Name:        "icon",
-				FieldMapKey: "icon",
+				Name:   "icon",
+				Column: "icon",
 			},
 			{
-				Name:        "accent",
-				FieldMapKey: "accent",
+				Name:   "accent",
+				Column: "accent",
 			},
 			{
-				Name:        "toolNames",
-				FieldMapKey: "toolNames",
+				Name:   "toolNames",
+				Column: "tool_names",
 			},
 			{
-				Name:        "systemKey",
-				FieldMapKey: "systemKey",
+				Name:   "systemKey",
+				Column: "system_key",
 			},
 			{
 				Name:    "starters",
 				Special: "starters",
 			},
 			{
-				Name:        "delegates",
-				FieldMapKey: "delegateIds",
+				Name:   "delegates",
+				Column: "delegate_ids",
 			},
 		},
 	}
 
 	NotificationSpec = TypeSpec{
 		TypeName: "Notification",
-		FieldMap: notificationcol.NotificationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "targetUserId",
-				FieldMapKey: "targetUserId",
+				Name:   "targetUserId",
+				Column: "target_user_id",
 			},
 			{
-				Name:        "eventType",
-				FieldMapKey: "eventType",
+				Name:   "eventType",
+				Column: "event_type",
 			},
 			{
-				Name:        "priority",
-				FieldMapKey: "priority",
+				Name:   "priority",
+				Column: "priority",
 			},
 			{
-				Name:        "channel",
-				FieldMapKey: "channel",
+				Name:   "channel",
+				Column: "channel",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "message",
-				FieldMapKey: "message",
+				Name:   "message",
+				Column: "message",
 			},
 			{
-				Name:        "data",
-				FieldMapKey: "data",
+				Name:   "data",
+				Column: "data",
 			},
 			{
-				Name:        "relatedEntities",
-				FieldMapKey: "relatedEntities",
+				Name:   "relatedEntities",
+				Column: "related_entities",
 			},
 			{
-				Name:        "actions",
-				FieldMapKey: "actions",
+				Name:   "actions",
+				Column: "actions",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "deliveredAt",
-				FieldMapKey: "deliveredAt",
+				Name:   "deliveredAt",
+				Column: "delivered_at",
 			},
 			{
-				Name:        "readAt",
-				FieldMapKey: "readAt",
+				Name:   "readAt",
+				Column: "read_at",
 			},
 			{
-				Name:        "dismissedAt",
-				FieldMapKey: "dismissedAt",
+				Name:   "dismissedAt",
+				Column: "dismissed_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "deliveryStatus",
-				FieldMapKey: "deliveryStatus",
+				Name:   "deliveryStatus",
+				Column: "delivery_status",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "jobId",
-				FieldMapKey: "jobId",
+				Name:   "jobId",
+				Column: "job_id",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "tags",
-				FieldMapKey: "tags",
+				Name:   "tags",
+				Column: "tags",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	OSHAAnnualSummarySpec = TypeSpec{
 		TypeName: "OSHAAnnualSummary",
-		FieldMap: workercol.OSHAAnnualSummaryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "year",
-				FieldMapKey: "year",
+				Name:   "year",
+				Column: "year",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "naicsCode",
-				FieldMapKey: "naicsCode",
+				Name:   "naicsCode",
+				Column: "naics_code",
 			},
 			{
-				Name:        "averageEmployees",
-				FieldMapKey: "averageEmployees",
+				Name:   "averageEmployees",
+				Column: "average_employees",
 			},
 			{
-				Name:        "totalHoursWorked",
-				FieldMapKey: "totalHoursWorked",
+				Name:   "totalHoursWorked",
+				Column: "total_hours_worked",
 			},
 			{
-				Name:        "executiveName",
-				FieldMapKey: "executiveName",
+				Name:   "executiveName",
+				Column: "executive_name",
 			},
 			{
-				Name:        "executiveTitle",
-				FieldMapKey: "executiveTitle",
+				Name:   "executiveTitle",
+				Column: "executive_title",
 			},
 			{
-				Name:        "executivePhone",
-				FieldMapKey: "executivePhone",
+				Name:   "executivePhone",
+				Column: "executive_phone",
 			},
 			{
-				Name:        "certifiedAt",
-				FieldMapKey: "certifiedAt",
+				Name:   "certifiedAt",
+				Column: "certified_at",
 			},
 			{
-				Name:        "certifiedById",
-				FieldMapKey: "certifiedById",
+				Name:   "certifiedById",
+				Column: "certified_by_id",
 			},
 			{
-				Name:        "postedFrom",
-				FieldMapKey: "postedFrom",
+				Name:   "postedFrom",
+				Column: "posted_from",
 			},
 			{
-				Name:        "postedThrough",
-				FieldMapKey: "postedThrough",
+				Name:   "postedThrough",
+				Column: "posted_through",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "submissionReference",
-				FieldMapKey: "submissionReference",
+				Name:   "submissionReference",
+				Column: "submission_reference",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	OrderSpec = TypeSpec{
 		TypeName: "Order",
-		FieldMap: ordercol.OrderFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "ownerId",
-				FieldMapKey: "ownerId",
+				Name:   "ownerId",
+				Column: "owner_id",
 			},
 			{
-				Name:        "enteredById",
-				FieldMapKey: "enteredById",
+				Name:   "enteredById",
+				Column: "entered_by_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "orderNumber",
-				FieldMapKey: "orderNumber",
+				Name:   "orderNumber",
+				Column: "order_number",
 			},
 			{
-				Name:        "poNumber",
-				FieldMapKey: "poNumber",
+				Name:   "poNumber",
+				Column: "po_number",
 			},
 			{
-				Name:        "bol",
-				FieldMapKey: "bol",
+				Name:   "bol",
+				Column: "bol",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "quotedAmount",
-				FieldMapKey: "quotedAmount",
+				Name:   "quotedAmount",
+				Column: "quoted_amount",
 			},
 			{
-				Name:        "baseAmount",
-				FieldMapKey: "baseAmount",
+				Name:   "baseAmount",
+				Column: "base_amount",
 			},
 			{
-				Name:        "totalAmount",
-				FieldMapKey: "totalAmount",
+				Name:   "totalAmount",
+				Column: "total_amount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "customerId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
@@ -20484,43 +20535,42 @@ func init() {
 
 	OrderChargeSpec = TypeSpec{
 		TypeName: "OrderCharge",
-		FieldMap: ordercol.OrderChargeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "orderId",
-				FieldMapKey: "orderId",
+				Name:   "orderId",
+				Column: "order_id",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "amount",
-				FieldMapKey: "amount",
+				Name:   "amount",
+				Column: "amount",
 			},
 			{
-				Name:        "invoiceId",
-				FieldMapKey: "invoiceId",
+				Name:   "invoiceId",
+				Column: "invoice_id",
 			},
 			{
-				Name:        "invoicedAt",
-				FieldMapKey: "invoicedAt",
+				Name:   "invoicedAt",
+				Column: "invoiced_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
 				Name:    "allocations",
@@ -20531,192 +20581,189 @@ func init() {
 
 	OrderLegSpec = TypeSpec{
 		TypeName: "OrderLeg",
-		FieldMap: shipmentcol.ShipmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "bol",
-				FieldMapKey: "bol",
+				Name:   "bol",
+				Column: "bol",
 			},
 			{
-				Name:        "freightChargeAmount",
-				FieldMapKey: "freightChargeAmount",
+				Name:   "freightChargeAmount",
+				Column: "freight_charge_amount",
 			},
 			{
-				Name:        "totalChargeAmount",
-				FieldMapKey: "totalChargeAmount",
+				Name:   "totalChargeAmount",
+				Column: "total_charge_amount",
 			},
 		},
 	}
 
 	OrgHolidaySpec = TypeSpec{
 		TypeName: "OrgHoliday",
-		FieldMap: workercol.OrgHolidayFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "holidayDate",
-				FieldMapKey: "holidayDate",
+				Name:   "holidayDate",
+				Column: "holiday_date",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "recursAnnually",
-				FieldMapKey: "recursAnnually",
+				Name:   "recursAnnually",
+				Column: "recurs_annually",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	OrganizationSpec = TypeSpec{
 		TypeName: "Organization",
-		FieldMap: tenantcol.OrganizationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "loginSlug",
-				FieldMapKey: "loginSlug",
+				Name:   "loginSlug",
+				Column: "login_slug",
 			},
 			{
-				Name:        "scacCode",
-				FieldMapKey: "scacCode",
+				Name:   "scacCode",
+				Column: "scac_code",
 			},
 			{
-				Name:        "dotNumber",
-				FieldMapKey: "dotNumber",
+				Name:   "dotNumber",
+				Column: "dot_number",
 			},
 			{
-				Name:        "logoUrl",
-				FieldMapKey: "logoUrl",
+				Name:   "logoUrl",
+				Column: "logo_url",
 			},
 			{
-				Name:        "bucketName",
-				FieldMapKey: "bucketName",
+				Name:   "bucketName",
+				Column: "bucket_name",
 			},
 			{
-				Name:        "addressLine1",
-				FieldMapKey: "addressLine1",
+				Name:   "addressLine1",
+				Column: "address_line1",
 			},
 			{
-				Name:        "addressLine2",
-				FieldMapKey: "addressLine2",
+				Name:   "addressLine2",
+				Column: "address_line2",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "postalCode",
-				FieldMapKey: "postalCode",
+				Name:   "postalCode",
+				Column: "postal_code",
 			},
 			{
-				Name:        "timezone",
-				FieldMapKey: "timezone",
+				Name:   "timezone",
+				Column: "timezone",
 			},
 			{
-				Name:        "taxId",
-				FieldMapKey: "taxId",
+				Name:   "taxId",
+				Column: "tax_id",
 			},
 			{
-				Name:        "brokerageEnabled",
-				FieldMapKey: "brokerageEnabled",
+				Name:   "brokerageEnabled",
+				Column: "brokerage_enabled",
 			},
 			{
-				Name:        "assetOperationsEnabled",
-				FieldMapKey: "assetOperationsEnabled",
+				Name:   "assetOperationsEnabled",
+				Column: "asset_operations_enabled",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
@@ -20726,71 +20773,70 @@ func init() {
 
 	PTOPolicySpec = TypeSpec{
 		TypeName: "PTOPolicy",
-		FieldMap: workercol.PTOPolicyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "isDefault",
-				FieldMapKey: "isDefault",
+				Name:   "isDefault",
+				Column: "is_default",
 			},
 			{
-				Name:        "yearBasis",
-				FieldMapKey: "yearBasis",
+				Name:   "yearBasis",
+				Column: "year_basis",
 			},
 			{
-				Name:        "countWeekends",
-				FieldMapKey: "countWeekends",
+				Name:   "countWeekends",
+				Column: "count_weekends",
 			},
 			{
-				Name:        "waitingPeriodDays",
-				FieldMapKey: "waitingPeriodDays",
+				Name:   "waitingPeriodDays",
+				Column: "waiting_period_days",
 			},
 			{
-				Name:        "requiresApproval",
-				FieldMapKey: "requiresApproval",
+				Name:   "requiresApproval",
+				Column: "requires_approval",
 			},
 			{
-				Name:        "enforceBalance",
-				FieldMapKey: "enforceBalance",
+				Name:   "enforceBalance",
+				Column: "enforce_balance",
 			},
 			{
-				Name:        "allowNegative",
-				FieldMapKey: "allowNegative",
+				Name:   "allowNegative",
+				Column: "allow_negative",
 			},
 			{
-				Name:        "negativeFloorDays",
-				FieldMapKey: "negativeFloorDays",
+				Name:   "negativeFloorDays",
+				Column: "negative_floor_days",
 			},
 			{
 				Name: "rules",
@@ -20803,158 +20849,156 @@ func init() {
 				Special: "openAssignmentCount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	PTOPolicyRuleSpec = TypeSpec{
 		TypeName: "PTOPolicyRule",
-		FieldMap: workercol.PTOPolicyRuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "ptoPolicyId",
-				FieldMapKey: "ptoPolicyId",
+				Name:   "ptoPolicyId",
+				Column: "pto_policy_id",
 			},
 			{
-				Name:        "ptoType",
-				FieldMapKey: "ptoType",
+				Name:   "ptoType",
+				Column: "pto_type",
 			},
 			{
-				Name:        "accrualMethod",
-				FieldMapKey: "accrualMethod",
+				Name:   "accrualMethod",
+				Column: "accrual_method",
 			},
 			{
-				Name:        "accrualAmountDays",
-				FieldMapKey: "accrualAmountDays",
+				Name:   "accrualAmountDays",
+				Column: "accrual_amount_days",
 			},
 			{
-				Name:        "maxBalanceDays",
-				FieldMapKey: "maxBalanceDays",
+				Name:   "maxBalanceDays",
+				Column: "max_balance_days",
 			},
 			{
-				Name:        "carryoverCapDays",
-				FieldMapKey: "carryoverCapDays",
+				Name:   "carryoverCapDays",
+				Column: "carryover_cap_days",
 			},
 			{
-				Name:        "carryoverExpiryDays",
-				FieldMapKey: "carryoverExpiryDays",
+				Name:   "carryoverExpiryDays",
+				Column: "carryover_expiry_days",
 			},
 			{
-				Name:        "tiers",
-				FieldMapKey: "tiers",
+				Name:   "tiers",
+				Column: "tiers",
 			},
 			{
-				Name:        "onTermination",
-				FieldMapKey: "onTermination",
+				Name:   "onTermination",
+				Column: "on_termination",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 		},
 	}
 
 	PayAdvanceSpec = TypeSpec{
 		TypeName: "PayAdvance",
-		FieldMap: driverpaycol.PayAdvanceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "reference",
-				FieldMapKey: "reference",
+				Name:   "reference",
+				Column: "reference",
 			},
 			{
-				Name:        "issuedDate",
-				FieldMapKey: "issuedDate",
+				Name:   "issuedDate",
+				Column: "issued_date",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "recoveredMinor",
-				FieldMapKey: "recoveredMinor",
+				Name:   "recoveredMinor",
+				Column: "recovered_minor",
 			},
 			{
-				Name:        "writtenOffMinor",
-				FieldMapKey: "writtenOffMinor",
+				Name:   "writtenOffMinor",
+				Column: "written_off_minor",
 			},
 			{
 				Name:    "outstandingMinor",
 				Special: "outstandingMinor",
 			},
 			{
-				Name:        "writeOffReason",
-				FieldMapKey: "writeOffReason",
+				Name:   "writeOffReason",
+				Column: "write_off_reason",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -20964,75 +21008,74 @@ func init() {
 
 	PayCodeSpec = TypeSpec{
 		TypeName: "PayCode",
-		FieldMap: driverpaycol.PayCodeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "direction",
-				FieldMapKey: "direction",
+				Name:   "direction",
+				Column: "direction",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "taxable",
-				FieldMapKey: "taxable",
+				Name:   "taxable",
+				Column: "taxable",
 			},
 			{
-				Name:        "countsTowardGuarantee",
-				FieldMapKey: "countsTowardGuarantee",
+				Name:   "countsTowardGuarantee",
+				Column: "counts_toward_guarantee",
 			},
 			{
-				Name:        "glAccountId",
-				FieldMapKey: "glAccountId",
+				Name:   "glAccountId",
+				Column: "gl_account_id",
 			},
 			{
-				Name:        "defaultAmountMinor",
-				FieldMapKey: "defaultAmountMinor",
+				Name:   "defaultAmountMinor",
+				Column: "default_amount_minor",
 			},
 			{
-				Name:        "isSystem",
-				FieldMapKey: "isSystem",
+				Name:   "isSystem",
+				Column: "is_system",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "glAccount",
@@ -21043,90 +21086,88 @@ func init() {
 
 	PayCodeGLAccountSpec = TypeSpec{
 		TypeName: "PayCodeGLAccount",
-		FieldMap: glaccountcol.GLAccountFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "accountCode",
-				FieldMapKey: "accountCode",
+				Name:   "accountCode",
+				Column: "account_code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 		},
 	}
 
 	PayProfileSpec = TypeSpec{
 		TypeName: "PayProfile",
-		FieldMap: driverpaycol.PayProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "classification",
-				FieldMapKey: "classification",
+				Name:   "classification",
+				Column: "classification",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "guaranteedPeriodMinimumMinor",
-				FieldMapKey: "guaranteedPeriodMinimumMinor",
+				Name:   "guaranteedPeriodMinimumMinor",
+				Column: "guaranteed_period_minimum_minor",
 			},
 			{
-				Name:        "perDiemRatePerMile",
-				FieldMapKey: "perDiemRatePerMile",
+				Name:   "perDiemRatePerMile",
+				Column: "per_diem_rate_per_mile",
 			},
 			{
-				Name:        "perDiemDailyCapMinor",
-				FieldMapKey: "perDiemDailyCapMinor",
+				Name:   "perDiemDailyCapMinor",
+				Column: "per_diem_daily_cap_minor",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "components",
@@ -21143,286 +21184,282 @@ func init() {
 
 	PayProfileComponentSpec = TypeSpec{
 		TypeName: "PayProfileComponent",
-		FieldMap: driverpaycol.PayProfileComponentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "payProfileId",
-				FieldMapKey: "payProfileId",
+				Name:   "payProfileId",
+				Column: "pay_profile_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "rate",
-				FieldMapKey: "rate",
+				Name:   "rate",
+				Column: "rate",
 			},
 			{
-				Name:        "revenueBasis",
-				FieldMapKey: "revenueBasis",
+				Name:   "revenueBasis",
+				Column: "revenue_basis",
 			},
 			{
-				Name:        "bands",
-				FieldMapKey: "bands",
+				Name:   "bands",
+				Column: "bands",
 			},
 			{
-				Name:        "freeTimeMinutes",
-				FieldMapKey: "freeTimeMinutes",
+				Name:   "freeTimeMinutes",
+				Column: "free_time_minutes",
 			},
 			{
-				Name:        "minAmountMinor",
-				FieldMapKey: "minAmountMinor",
+				Name:   "minAmountMinor",
+				Column: "min_amount_minor",
 			},
 			{
-				Name:        "maxAmountMinor",
-				FieldMapKey: "maxAmountMinor",
+				Name:   "maxAmountMinor",
+				Column: "max_amount_minor",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "isActive",
-				FieldMapKey: "isActive",
+				Name:   "isActive",
+				Column: "is_active",
 			},
 		},
 	}
 
 	PayrollExportSpec = TypeSpec{
 		TypeName: "PayrollExport",
-		FieldMap: workercol.PayrollExportFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "timesheetCount",
-				FieldMapKey: "timesheetCount",
+				Name:   "timesheetCount",
+				Column: "timesheet_count",
 			},
 			{
-				Name:        "regularMinutes",
-				FieldMapKey: "regularMinutes",
+				Name:   "regularMinutes",
+				Column: "regular_minutes",
 			},
 			{
-				Name:        "overtimeMinutes",
-				FieldMapKey: "overtimeMinutes",
+				Name:   "overtimeMinutes",
+				Column: "overtime_minutes",
 			},
 			{
-				Name:        "paidLeaveMinutes",
-				FieldMapKey: "paidLeaveMinutes",
+				Name:   "paidLeaveMinutes",
+				Column: "paid_leave_minutes",
 			},
 			{
-				Name:        "generatedAt",
-				FieldMapKey: "generatedAt",
+				Name:   "generatedAt",
+				Column: "generated_at",
 			},
 			{
-				Name:        "generatedById",
-				FieldMapKey: "generatedById",
+				Name:   "generatedById",
+				Column: "generated_by_id",
 			},
 			{
-				Name:        "voidedAt",
-				FieldMapKey: "voidedAt",
+				Name:   "voidedAt",
+				Column: "voided_at",
 			},
 			{
-				Name:        "voidReason",
-				FieldMapKey: "voidReason",
+				Name:   "voidReason",
+				Column: "void_reason",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	PendingDecisionHoldSpec = TypeSpec{
 		TypeName: "PendingDecisionHold",
-		FieldMap: aiauditcol.AIAuditEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "agentName",
-				FieldMapKey: "agentName",
+				Name:   "agentName",
+				Column: "agent_name",
 			},
 		},
 	}
 
 	PerformanceReviewSpec = TypeSpec{
 		TypeName: "PerformanceReview",
-		FieldMap: workercol.PerformanceReviewFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
+				Name:   "templateId",
+				Column: "template_id",
 			},
 			{
-				Name:        "template",
-				FieldMapKey: "businessUnitId",
+				Name:   "template",
+				Column: "template_id",
 				Relation: &RelationSpec{
 					Target: &PerformanceReviewTemplateSpec,
 				},
 			},
 			{
-				Name:        "reviewerId",
-				FieldMapKey: "reviewerId",
+				Name:   "reviewerId",
+				Column: "reviewer_id",
 			},
 			{
-				Name:        "reviewer",
-				FieldMapKey: "reviewerId",
+				Name:   "reviewer",
+				Column: "reviewer_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "ratings",
-				FieldMapKey: "ratings",
+				Name:   "ratings",
+				Column: "ratings",
 			},
 			{
-				Name:        "overallScore",
-				FieldMapKey: "overallScore",
+				Name:   "overallScore",
+				Column: "overall_score",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "strengths",
-				FieldMapKey: "strengths",
+				Name:   "strengths",
+				Column: "strengths",
 			},
 			{
-				Name:        "improvements",
-				FieldMapKey: "improvements",
+				Name:   "improvements",
+				Column: "improvements",
 			},
 			{
-				Name:        "goals",
-				FieldMapKey: "goals",
+				Name:   "goals",
+				Column: "goals",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "workerComment",
-				FieldMapKey: "workerComment",
+				Name:   "workerComment",
+				Column: "worker_comment",
 			},
 			{
-				Name:        "closedAt",
-				FieldMapKey: "closedAt",
+				Name:   "closedAt",
+				Column: "closed_at",
 			},
 			{
-				Name:        "closedById",
-				FieldMapKey: "closedById",
+				Name:   "closedById",
+				Column: "closed_by_id",
 			},
 			{
-				Name:        "nextReviewAt",
-				FieldMapKey: "nextReviewAt",
+				Name:   "nextReviewAt",
+				Column: "next_review_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -21432,82 +21469,80 @@ func init() {
 
 	PerformanceReviewTemplateSpec = TypeSpec{
 		TypeName: "PerformanceReviewTemplate",
-		FieldMap: workercol.PerformanceReviewTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "isDefault",
-				FieldMapKey: "isDefault",
+				Name:   "isDefault",
+				Column: "is_default",
 			},
 			{
-				Name:        "cadenceMonths",
-				FieldMapKey: "cadenceMonths",
+				Name:   "cadenceMonths",
+				Column: "cadence_months",
 			},
 			{
-				Name:        "items",
-				FieldMapKey: "items",
+				Name:   "items",
+				Column: "items",
 			},
 			{
 				Name:    "openReviewCount",
 				Special: "openReviewCount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	PolicyComplianceRowSpec = TypeSpec{
 		TypeName: "PolicyComplianceRow",
-		FieldMap: workercol.WorkerPolicyAcknowledgementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
 				Name:    "workerName",
@@ -21518,82 +21553,81 @@ func init() {
 				Special: "workerType",
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "signatureName",
-				FieldMapKey: "signatureName",
+				Name:   "signatureName",
+				Column: "signature_name",
 			},
 		},
 	}
 
 	PortalInvitationSpec = TypeSpec{
 		TypeName: "PortalInvitation",
-		FieldMap: workercol.PortalInvitationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "email",
-				FieldMapKey: "email",
+				Name:   "email",
+				Column: "email",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "invitedById",
-				FieldMapKey: "invitedById",
+				Name:   "invitedById",
+				Column: "invited_by_id",
 			},
 			{
-				Name:        "acceptedAt",
-				FieldMapKey: "acceptedAt",
+				Name:   "acceptedAt",
+				Column: "accepted_at",
 			},
 			{
-				Name:        "acceptedUserId",
-				FieldMapKey: "acceptedUserId",
+				Name:   "acceptedUserId",
+				Column: "accepted_user_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "invitedBy",
-				FieldMapKey: "invitedById",
+				Name:   "invitedBy",
+				Column: "invited_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -21603,493 +21637,1006 @@ func init() {
 
 	PortalPtoSpec = TypeSpec{
 		TypeName: "PortalPto",
-		FieldMap: workercol.WorkerPTOFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "startDate",
-				FieldMapKey: "startDate",
+				Name:   "startDate",
+				Column: "start_date",
 			},
 			{
-				Name:        "endDate",
-				FieldMapKey: "endDate",
+				Name:   "endDate",
+				Column: "end_date",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	RateAgreementSpec = TypeSpec{
 		TypeName: "RateAgreement",
-		FieldMap: rateagreementcol.RateAgreementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "partyType",
-				FieldMapKey: "partyType",
+				Name:   "partyType",
+				Column: "party_type",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "agreementType",
-				FieldMapKey: "agreementType",
+				Name:   "agreementType",
+				Column: "agreement_type",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "contractRef",
-				FieldMapKey: "contractRef",
+				Name:   "contractRef",
+				Column: "contract_ref",
 			},
 			{
-				Name:        "priority",
-				FieldMapKey: "priority",
+				Name:   "priority",
+				Column: "priority",
 			},
 			{
-				Name:        "effectiveFrom",
-				FieldMapKey: "effectiveFrom",
+				Name:   "effectiveFrom",
+				Column: "effective_from",
 			},
 			{
-				Name:        "effectiveTo",
-				FieldMapKey: "effectiveTo",
+				Name:   "effectiveTo",
+				Column: "effective_to",
 			},
 			{
-				Name:        "autoRenew",
-				FieldMapKey: "autoRenew",
+				Name:   "autoRenew",
+				Column: "auto_renew",
 			},
 			{
-				Name:        "renewalNoticeDays",
-				FieldMapKey: "renewalNoticeDays",
+				Name:   "renewalNoticeDays",
+				Column: "renewal_notice_days",
 			},
 			{
-				Name:        "currency",
-				FieldMapKey: "currency",
+				Name:   "currency",
+				Column: "currency",
 			},
 			{
-				Name:        "defaultMinCharge",
-				FieldMapKey: "defaultMinCharge",
+				Name:   "inputs",
+				Column: "inputs",
 			},
 			{
-				Name:        "defaultMaxCharge",
-				FieldMapKey: "defaultMaxCharge",
+				Name:   "marginFloorPercent",
+				Column: "margin_floor_percent",
 			},
 			{
-				Name:        "marginFloorPercent",
-				FieldMapKey: "marginFloorPercent",
+				Name:   "maxPayPercentOfSell",
+				Column: "max_pay_percent_of_sell",
 			},
 			{
-				Name:        "maxPayPercentOfSell",
-				FieldMapKey: "maxPayPercentOfSell",
+				Name:   "submittedById",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "submittedById",
-				FieldMapKey: "submittedById",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:   "reviewComment",
+				Column: "review_comment",
 			},
 			{
-				Name:        "reviewComment",
-				FieldMapKey: "reviewComment",
+				Name:   "currentVersionNumber",
+				Column: "current_version_number",
 			},
 			{
-				Name:        "currentVersionNumber",
-				FieldMapKey: "currentVersionNumber",
+				Name:   "billToCustomerId",
+				Column: "bill_to_customer_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:    "lanes",
+				Special: "lanes",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:    "laneCount",
+				Special: "laneCount",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:    "laneCountExact",
+				Special: "laneCountExact",
+			},
+			{
+				Name: "accessorials",
+				Relation: &RelationSpec{
+					Target: &RateAgreementAccessorialSpec,
+				},
+			},
+			{
+				Name: "fuelBinding",
+				Relation: &RelationSpec{
+					Target: &RateAgreementFuelBindingSpec,
+				},
+			},
+			{
+				Name:    "currentVersion",
+				Special: "currentVersion",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	RateAgreementAccessorialSpec = TypeSpec{
+		TypeName: "RateAgreementAccessorial",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "accessorialChargeId",
+				Column: "accessorial_charge_id",
+			},
+			{
+				Name:   "method",
+				Column: "method",
+			},
+			{
+				Name:   "rateUnit",
+				Column: "rate_unit",
+			},
+			{
+				Name:   "waived",
+				Column: "waived",
+			},
+			{
+				Name:   "autoApply",
+				Column: "auto_apply",
+			},
+			{
+				Name:   "freeUnits",
+				Column: "free_units",
+			},
+			{
+				Name:   "effectiveFrom",
+				Column: "effective_from",
+			},
+			{
+				Name:   "effectiveTo",
+				Column: "effective_to",
+			},
+			{
+				Name:   "amount",
+				Column: "amount",
+			},
+			{
+				Name:   "maxAmount",
+				Column: "max_amount",
+			},
+			{
+				Name:   "condition",
+				Column: "condition",
+			},
+		},
+	}
+
+	RateAgreementFuelBindingSpec = TypeSpec{
+		TypeName: "RateAgreementFuelBinding",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "fuelSurchargeProgramId",
+				Column: "fuel_surcharge_program_id",
+			},
+			{
+				Name:   "waived",
+				Column: "waived",
+			},
+		},
+	}
+
+	RateAgreementLaneSpec = TypeSpec{
+		TypeName: "RateAgreementLane",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "label",
+				Column: "label",
+			},
+			{
+				Name:   "originScopeType",
+				Column: "origin_scope_type",
+			},
+			{
+				Name:   "originScopeValue",
+				Column: "origin_scope_value",
+			},
+			{
+				Name:   "originCity",
+				Column: "origin_city",
+			},
+			{
+				Name:   "destinationScopeType",
+				Column: "destination_scope_type",
+			},
+			{
+				Name:   "destinationScopeValue",
+				Column: "destination_scope_value",
+			},
+			{
+				Name:   "destinationCity",
+				Column: "destination_city",
+			},
+			{
+				Name:   "direction",
+				Column: "direction",
+			},
+			{
+				Name:   "priority",
+				Column: "priority",
+			},
+			{
+				Name:   "effectiveFrom",
+				Column: "effective_from",
+			},
+			{
+				Name:   "effectiveTo",
+				Column: "effective_to",
+			},
+			{
+				Name:   "hazmatOnly",
+				Column: "hazmat_only",
+			},
+			{
+				Name:   "tempControlOnly",
+				Column: "temp_control_only",
+			},
+			{
+				Name:   "formulaTemplateId",
+				Column: "formula_template_id",
+			},
+			{
+				Name:   "currency",
+				Column: "currency",
+			},
+			{
+				Name:   "inputs",
+				Column: "inputs",
+			},
+		},
+	}
+
+	RateAgreementVersionSpec = TypeSpec{
+		TypeName: "RateAgreementVersion",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "versionNumber",
+				Column: "version_number",
+			},
+			{
+				Name:   "effectiveFrom",
+				Column: "effective_from",
+			},
+			{
+				Name:   "effectiveTo",
+				Column: "effective_to",
+			},
+			{
+				Name:   "changeMessage",
+				Column: "change_message",
 			},
 		},
 	}
 
 	RateMatrixSpec = TypeSpec{
 		TypeName: "RateMatrix",
-		FieldMap: ratematrixcol.RateMatrixFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "formulaTemplateId",
-				FieldMapKey: "formulaTemplateId",
+				Name:   "valueType",
+				Column: "value_type",
 			},
 			{
-				Name:    "formulaTemplateName",
-				Special: "formulaTemplateName",
+				Name: "dimensions",
+				Relation: &RelationSpec{
+					Target: &RateMatrixDimensionSpec,
+				},
 			},
 			{
-				Name:        "currency",
-				FieldMapKey: "currency",
+				Name:   "cellCount",
+				Column: "draft_cell_count",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:    "cells",
+				Special: "cells",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "publishedVersionNumber",
+				Column: "published_version_number",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "publishedAt",
+				Column: "published_at",
+			},
+			{
+				Name:   "hasDraftChanges",
+				Column: "has_draft_changes",
+			},
+			{
+				Name:   "submittedById",
+				Column: "submitted_by_id",
+			},
+			{
+				Name:   "submittedAt",
+				Column: "submitted_at",
+			},
+			{
+				Name:   "approvedById",
+				Column: "approved_by_id",
+			},
+			{
+				Name:   "approvedAt",
+				Column: "approved_at",
+			},
+			{
+				Name:   "reviewComment",
+				Column: "review_comment",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
+			},
+		},
+	}
+
+	RateMatrixCellSpec = TypeSpec{
+		TypeName: "RateMatrixCell",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "d0Key",
+				Column: "d0_key",
+			},
+			{
+				Name:   "d1Key",
+				Column: "d1_key",
+			},
+			{
+				Name:   "d2Key",
+				Column: "d2_key",
+			},
+			{
+				Name:   "d3Key",
+				Column: "d3_key",
+			},
+			{
+				Name:   "d0KeyTo",
+				Column: "d0_key_to",
+			},
+			{
+				Name:   "d1KeyTo",
+				Column: "d1_key_to",
+			},
+			{
+				Name:   "d2KeyTo",
+				Column: "d2_key_to",
+			},
+			{
+				Name:   "d3KeyTo",
+				Column: "d3_key_to",
+			},
+			{
+				Name:   "d0Min",
+				Column: "d0_min",
+			},
+			{
+				Name:   "d0Max",
+				Column: "d0_max",
+			},
+			{
+				Name:   "d1Min",
+				Column: "d1_min",
+			},
+			{
+				Name:   "d1Max",
+				Column: "d1_max",
+			},
+			{
+				Name:   "d2Min",
+				Column: "d2_min",
+			},
+			{
+				Name:   "d2Max",
+				Column: "d2_max",
+			},
+			{
+				Name:   "d3Min",
+				Column: "d3_min",
+			},
+			{
+				Name:   "d3Max",
+				Column: "d3_max",
+			},
+			{
+				Name:   "deficitEligible",
+				Column: "deficit_eligible",
+			},
+			{
+				Name:   "value",
+				Column: "value",
+			},
+			{
+				Name:   "minCharge",
+				Column: "min_charge",
+			},
+		},
+	}
+
+	RateMatrixDimensionSpec = TypeSpec{
+		TypeName: "RateMatrixDimension",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "position",
+				Column: "position",
+			},
+			{
+				Name:   "kind",
+				Column: "kind",
+			},
+			{
+				Name:   "matchMode",
+				Column: "match_mode",
+			},
+			{
+				Name:   "label",
+				Column: "label",
+			},
+			{
+				Name:   "keyNormalization",
+				Column: "key_normalization",
+			},
+			{
+				Name:   "rangeOverflow",
+				Column: "range_overflow",
+			},
+		},
+	}
+
+	RateMatrixReviewSpec = TypeSpec{
+		TypeName: "RateMatrixReview",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "rateMatrixId",
+				Column: "rate_matrix_id",
+			},
+			{
+				Name:   "round",
+				Column: "round",
+			},
+			{
+				Name:   "decision",
+				Column: "decision",
+			},
+			{
+				Name:   "actorId",
+				Column: "actor_id",
+			},
+			{
+				Name:   "actor",
+				Column: "actor_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "comment",
+				Column: "comment",
+			},
+			{
+				Name:   "baseVersionNumber",
+				Column: "base_version_number",
+			},
+			{
+				Name:   "requestedReviewerId",
+				Column: "requested_reviewer_id",
+			},
+			{
+				Name:   "requestedReviewer",
+				Column: "requested_reviewer_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "reviewerNote",
+				Column: "reviewer_note",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+		},
+	}
+
+	RateMatrixVersionSpec = TypeSpec{
+		TypeName: "RateMatrixVersion",
+		AlwaysColumns: []string{
+			"id",
+			"created_at",
+		},
+		Fields: []FieldSpec{
+			{
+				Name:   "id",
+				Column: "id",
+			},
+			{
+				Name:   "rateMatrixId",
+				Column: "rate_matrix_id",
+			},
+			{
+				Name:   "versionNumber",
+				Column: "version_number",
+			},
+			{
+				Name:   "code",
+				Column: "code",
+			},
+			{
+				Name:   "name",
+				Column: "name",
+			},
+			{
+				Name:   "description",
+				Column: "description",
+			},
+			{
+				Name:   "valueType",
+				Column: "value_type",
+			},
+			{
+				Name:    "dimensions",
+				Special: "dimensions",
+			},
+			{
+				Name:   "cellCount",
+				Column: "cell_count",
+			},
+			{
+				Name:    "cells",
+				Special: "cells",
+			},
+			{
+				Name:   "changeMessage",
+				Column: "change_message",
+			},
+			{
+				Name:   "submittedById",
+				Column: "submitted_by_id",
+			},
+			{
+				Name:   "publishedById",
+				Column: "published_by_id",
+			},
+			{
+				Name:   "publishedBy",
+				Column: "published_by_id",
+				Relation: &RelationSpec{
+					Target: &UserSpec,
+				},
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	RateQuoteSpec = TypeSpec{
 		TypeName: "RateQuote",
-		FieldMap: ratequotecol.RateQuoteFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "partyType",
-				FieldMapKey: "partyType",
+				Name:   "partyType",
+				Column: "party_type",
 			},
 			{
-				Name:        "partyId",
-				FieldMapKey: "partyId",
+				Name:   "partyId",
+				Column: "party_id",
 			},
 			{
-				Name:        "purpose",
-				FieldMapKey: "purpose",
+				Name:   "purpose",
+				Column: "purpose",
 			},
 			{
-				Name:        "outcome",
-				FieldMapKey: "outcome",
+				Name:   "outcome",
+				Column: "outcome",
 			},
 			{
-				Name:        "rateAgreementId",
-				FieldMapKey: "rateAgreementId",
+				Name:   "rateAgreementId",
+				Column: "rate_agreement_id",
 			},
 			{
-				Name:        "rateAgreementRuleId",
-				FieldMapKey: "rateAgreementRuleId",
+				Name:   "rateAgreementRuleId",
+				Column: "rate_agreement_rule_id",
 			},
 			{
-				Name:        "formulaTemplateId",
-				FieldMapKey: "formulaTemplateId",
+				Name:   "formulaTemplateId",
+				Column: "formula_template_id",
 			},
 			{
-				Name:        "specificityScore",
-				FieldMapKey: "specificityScore",
+				Name:   "specificityScore",
+				Column: "specificity_score",
 			},
 			{
-				Name:        "currency",
-				FieldMapKey: "currency",
+				Name:   "currency",
+				Column: "currency",
 			},
 			{
-				Name:        "billingCurrency",
-				FieldMapKey: "billingCurrency",
+				Name:   "billingCurrency",
+				Column: "billing_currency",
 			},
 			{
-				Name:        "linehaulAmount",
-				FieldMapKey: "linehaulAmount",
+				Name:   "linehaulAmount",
+				Column: "linehaul_amount",
 			},
 			{
-				Name:        "totalAmount",
-				FieldMapKey: "totalAmount",
+				Name:   "totalAmount",
+				Column: "total_amount",
 			},
 			{
-				Name:        "billingAmount",
-				FieldMapKey: "billingAmount",
+				Name:   "billingAmount",
+				Column: "billing_amount",
 			},
 			{
-				Name:        "foregoneAmount",
-				FieldMapKey: "foregoneAmount",
+				Name:   "foregoneAmount",
+				Column: "foregone_amount",
 			},
 			{
-				Name:        "overrideReason",
-				FieldMapKey: "overrideReason",
+				Name:   "overrideReason",
+				Column: "override_reason",
 			},
 			{
-				Name:        "asOf",
-				FieldMapKey: "asOf",
+				Name:   "asOf",
+				Column: "as_of",
 			},
 			{
-				Name:        "ratedAt",
-				FieldMapKey: "ratedAt",
+				Name:   "ratedAt",
+				Column: "rated_at",
 			},
 			{
-				Name:        "ratedById",
-				FieldMapKey: "ratedById",
+				Name:   "ratedById",
+				Column: "rated_by_id",
 			},
 			{
-				Name:        "engineVersion",
-				FieldMapKey: "engineVersion",
+				Name:   "engineVersion",
+				Column: "engine_version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	RateZoneSpec = TypeSpec{
 		TypeName: "RateZone",
-		FieldMap: ratezonecol.RateZoneFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	RecurringDeductionSpec = TypeSpec{
 		TypeName: "RecurringDeduction",
-		FieldMap: driverpaycol.RecurringDeductionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "payCodeId",
-				FieldMapKey: "payCodeId",
+				Name:   "payCodeId",
+				Column: "pay_code_id",
 			},
 			{
-				Name:        "escrowAccountId",
-				FieldMapKey: "escrowAccountId",
+				Name:   "escrowAccountId",
+				Column: "escrow_account_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "frequency",
-				FieldMapKey: "frequency",
+				Name:   "frequency",
+				Column: "frequency",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "totalCapMinor",
-				FieldMapKey: "totalCapMinor",
+				Name:   "totalCapMinor",
+				Column: "total_cap_minor",
 			},
 			{
-				Name:        "deductedToDateMinor",
-				FieldMapKey: "deductedToDateMinor",
+				Name:   "deductedToDateMinor",
+				Column: "deducted_to_date_minor",
 			},
 			{
-				Name:        "startDate",
-				FieldMapKey: "startDate",
+				Name:   "startDate",
+				Column: "start_date",
 			},
 			{
-				Name:        "endDate",
-				FieldMapKey: "endDate",
+				Name:   "endDate",
+				Column: "end_date",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "payCode",
-				FieldMapKey: "businessUnitId",
+				Name:   "payCode",
+				Column: "pay_code_id",
 				Relation: &RelationSpec{
 					Target: &PayCodeSpec,
 				},
@@ -22099,90 +22646,89 @@ func init() {
 
 	RecurringEarningSpec = TypeSpec{
 		TypeName: "RecurringEarning",
-		FieldMap: driverpaycol.RecurringEarningFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "payCodeId",
-				FieldMapKey: "payCodeId",
+				Name:   "payCodeId",
+				Column: "pay_code_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "frequency",
-				FieldMapKey: "frequency",
+				Name:   "frequency",
+				Column: "frequency",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "amountMinor",
-				FieldMapKey: "amountMinor",
+				Name:   "amountMinor",
+				Column: "amount_minor",
 			},
 			{
-				Name:        "totalCapMinor",
-				FieldMapKey: "totalCapMinor",
+				Name:   "totalCapMinor",
+				Column: "total_cap_minor",
 			},
 			{
-				Name:        "paidToDateMinor",
-				FieldMapKey: "paidToDateMinor",
+				Name:   "paidToDateMinor",
+				Column: "paid_to_date_minor",
 			},
 			{
-				Name:        "startDate",
-				FieldMapKey: "startDate",
+				Name:   "startDate",
+				Column: "start_date",
 			},
 			{
-				Name:        "endDate",
-				FieldMapKey: "endDate",
+				Name:   "endDate",
+				Column: "end_date",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "payCode",
-				FieldMapKey: "businessUnitId",
+				Name:   "payCode",
+				Column: "pay_code_id",
 				Relation: &RelationSpec{
 					Target: &PayCodeSpec,
 				},
@@ -22192,160 +22738,159 @@ func init() {
 
 	RecurringShipmentSpec = TypeSpec{
 		TypeName: "RecurringShipment",
-		FieldMap: recurringshipmentcol.RecurringShipmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "sourceShipmentId",
-				FieldMapKey: "sourceShipmentId",
+				Name:   "sourceShipmentId",
+				Column: "source_shipment_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "originLocationId",
-				FieldMapKey: "originLocationId",
+				Name:   "originLocationId",
+				Column: "origin_location_id",
 			},
 			{
-				Name:        "destinationLocationId",
-				FieldMapKey: "destinationLocationId",
+				Name:   "destinationLocationId",
+				Column: "destination_location_id",
 			},
 			{
-				Name:        "enteredById",
-				FieldMapKey: "enteredById",
+				Name:   "enteredById",
+				Column: "entered_by_id",
 			},
 			{
-				Name:        "lastGeneratedShipmentId",
-				FieldMapKey: "lastGeneratedShipmentId",
+				Name:   "lastGeneratedShipmentId",
+				Column: "last_generated_shipment_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "cronExpression",
-				FieldMapKey: "cronExpression",
+				Name:   "cronExpression",
+				Column: "cron_expression",
 			},
 			{
-				Name:        "timezone",
-				FieldMapKey: "timezone",
+				Name:   "timezone",
+				Column: "timezone",
 			},
 			{
-				Name:        "startDate",
-				FieldMapKey: "startDate",
+				Name:   "startDate",
+				Column: "start_date",
 			},
 			{
-				Name:        "endDate",
-				FieldMapKey: "endDate",
+				Name:   "endDate",
+				Column: "end_date",
 			},
 			{
-				Name:        "maxOccurrences",
-				FieldMapKey: "maxOccurrences",
+				Name:   "maxOccurrences",
+				Column: "max_occurrences",
 			},
 			{
-				Name:        "leadTimeDays",
-				FieldMapKey: "leadTimeDays",
+				Name:   "leadTimeDays",
+				Column: "lead_time_days",
 			},
 			{
-				Name:        "skipWeekends",
-				FieldMapKey: "skipWeekends",
+				Name:   "skipWeekends",
+				Column: "skip_weekends",
 			},
 			{
-				Name:        "exceptionPolicy",
-				FieldMapKey: "exceptionPolicy",
+				Name:   "exceptionPolicy",
+				Column: "exception_policy",
 			},
 			{
-				Name:        "blackoutDates",
-				FieldMapKey: "blackoutDates",
+				Name:   "blackoutDates",
+				Column: "blackout_dates",
 			},
 			{
-				Name:        "autoGenerate",
-				FieldMapKey: "autoGenerate",
+				Name:   "autoGenerate",
+				Column: "auto_generate",
 			},
 			{
-				Name:        "nextOccurrenceAt",
-				FieldMapKey: "nextOccurrenceAt",
+				Name:   "nextOccurrenceAt",
+				Column: "next_occurrence_at",
 			},
 			{
-				Name:        "nextOccurrenceSourceAt",
-				FieldMapKey: "nextOccurrenceSourceAt",
+				Name:   "nextOccurrenceSourceAt",
+				Column: "next_occurrence_source_at",
 			},
 			{
-				Name:        "lastOccurrenceAt",
-				FieldMapKey: "lastOccurrenceAt",
+				Name:   "lastOccurrenceAt",
+				Column: "last_occurrence_at",
 			},
 			{
-				Name:        "lastRunAt",
-				FieldMapKey: "lastRunAt",
+				Name:   "lastRunAt",
+				Column: "last_run_at",
 			},
 			{
-				Name:        "generationCount",
-				FieldMapKey: "generationCount",
+				Name:   "generationCount",
+				Column: "generation_count",
 			},
 			{
-				Name:        "consecutiveFailures",
-				FieldMapKey: "consecutiveFailures",
+				Name:   "consecutiveFailures",
+				Column: "consecutive_failures",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "customerId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
 			},
 			{
-				Name:        "originLocation",
-				FieldMapKey: "originLocationId",
+				Name:   "originLocation",
+				Column: "origin_location_id",
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
 			},
 			{
-				Name:        "destinationLocation",
-				FieldMapKey: "destinationLocationId",
+				Name:   "destinationLocation",
+				Column: "destination_location_id",
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
 			},
 			{
-				Name:        "enteredBy",
-				FieldMapKey: "enteredById",
+				Name:   "enteredBy",
+				Column: "entered_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -22355,311 +22900,310 @@ func init() {
 
 	ReportDashboardSpec = TypeSpec{
 		TypeName: "ReportDashboard",
-		FieldMap: reportcol.DashboardFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "tags",
-				FieldMapKey: "tags",
+				Name:   "tags",
+				Column: "tags",
 			},
 			{
-				Name:        "ownerId",
-				FieldMapKey: "ownerId",
+				Name:   "ownerId",
+				Column: "owner_id",
 			},
 			{
-				Name:        "visibility",
-				FieldMapKey: "visibility",
+				Name:   "visibility",
+				Column: "visibility",
 			},
 			{
-				Name:        "layout",
-				FieldMapKey: "layout",
+				Name:   "layout",
+				Column: "layout",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ReportDefinitionSpec = TypeSpec{
 		TypeName: "ReportDefinition",
-		FieldMap: reportcol.ReportDefinitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "tags",
-				FieldMapKey: "tags",
+				Name:   "tags",
+				Column: "tags",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "cannedKey",
-				FieldMapKey: "cannedKey",
+				Name:   "cannedKey",
+				Column: "canned_key",
 			},
 			{
-				Name:        "cannedVersion",
-				FieldMapKey: "cannedVersion",
+				Name:   "cannedVersion",
+				Column: "canned_version",
 			},
 			{
-				Name:        "ownerId",
-				FieldMapKey: "ownerId",
+				Name:   "ownerId",
+				Column: "owner_id",
 			},
 			{
-				Name:        "visibility",
-				FieldMapKey: "visibility",
+				Name:   "visibility",
+				Column: "visibility",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "diagnostics",
-				FieldMapKey: "diagnostics",
+				Name:   "diagnostics",
+				Column: "diagnostics",
 			},
 			{
-				Name:        "catalogVersion",
-				FieldMapKey: "catalogVersion",
+				Name:   "catalogVersion",
+				Column: "catalog_version",
 			},
 			{
-				Name:        "definition",
-				FieldMapKey: "definition",
+				Name:   "definition",
+				Column: "definition",
 			},
 			{
-				Name:        "defaultFormat",
-				FieldMapKey: "defaultFormat",
+				Name:   "defaultFormat",
+				Column: "default_format",
 			},
 			{
-				Name:        "currentRevision",
-				FieldMapKey: "currentRevision",
+				Name:   "currentRevision",
+				Column: "current_revision",
 			},
 			{
-				Name:        "lastRunAt",
-				FieldMapKey: "lastRunAt",
+				Name:   "lastRunAt",
+				Column: "last_run_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ReportDefinitionRevisionSpec = TypeSpec{
 		TypeName: "ReportDefinitionRevision",
-		FieldMap: reportcol.ReportDefinitionRevisionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "definitionId",
-				FieldMapKey: "definitionId",
+				Name:   "definitionId",
+				Column: "definition_id",
 			},
 			{
-				Name:        "revisionNumber",
-				FieldMapKey: "revisionNumber",
+				Name:   "revisionNumber",
+				Column: "revision_number",
 			},
 			{
-				Name:        "catalogVersion",
-				FieldMapKey: "catalogVersion",
+				Name:   "catalogVersion",
+				Column: "catalog_version",
 			},
 			{
-				Name:        "definition",
-				FieldMapKey: "definition",
+				Name:   "definition",
+				Column: "definition",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	ReportRunSpec = TypeSpec{
 		TypeName: "ReportRun",
-		FieldMap: reportcol.ReportRunFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "definitionId",
-				FieldMapKey: "definitionId",
+				Name:   "definitionId",
+				Column: "definition_id",
 			},
 			{
-				Name:        "revisionId",
-				FieldMapKey: "revisionId",
+				Name:   "revisionId",
+				Column: "revision_id",
 			},
 			{
-				Name:        "cannedKey",
-				FieldMapKey: "cannedKey",
+				Name:   "cannedKey",
+				Column: "canned_key",
 			},
 			{
-				Name:        "cannedVersion",
-				FieldMapKey: "cannedVersion",
+				Name:   "cannedVersion",
+				Column: "canned_version",
 			},
 			{
-				Name:        "requestedById",
-				FieldMapKey: "requestedById",
+				Name:   "requestedById",
+				Column: "requested_by_id",
 			},
 			{
-				Name:        "trigger",
-				FieldMapKey: "trigger",
+				Name:   "trigger",
+				Column: "trigger",
 			},
 			{
-				Name:        "params",
-				FieldMapKey: "params",
+				Name:   "params",
+				Column: "params",
 			},
 			{
-				Name:        "format",
-				FieldMapKey: "format",
+				Name:   "format",
+				Column: "format",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "rowCount",
-				FieldMapKey: "rowCount",
+				Name:   "rowCount",
+				Column: "row_count",
 			},
 			{
-				Name:        "byteSize",
-				FieldMapKey: "byteSize",
+				Name:   "byteSize",
+				Column: "byte_size",
 			},
 			{
-				Name:        "durationMs",
-				FieldMapKey: "durationMs",
+				Name:   "durationMs",
+				Column: "duration_ms",
 			},
 			{
-				Name:        "truncated",
-				FieldMapKey: "truncated",
+				Name:   "truncated",
+				Column: "truncated",
 			},
 			{
-				Name:        "error",
-				FieldMapKey: "error",
+				Name:   "rowsStored",
+				Column: "rows_key",
 			},
 			{
-				Name:        "artifactExpiresAt",
-				FieldMapKey: "artifactExpiresAt",
+				Name:   "error",
+				Column: "error",
 			},
 			{
-				Name:        "cacheHit",
-				FieldMapKey: "cacheHit",
+				Name:   "artifactExpiresAt",
+				Column: "artifact_expires_at",
 			},
 			{
-				Name:        "queuedAt",
-				FieldMapKey: "queuedAt",
+				Name:   "cacheHit",
+				Column: "cache_hit",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "queuedAt",
+				Column: "queued_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	ReportScheduleSpec = TypeSpec{
 		TypeName: "ReportSchedule",
-		FieldMap: reportcol.ReportScheduleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "definitionId",
-				FieldMapKey: "definitionId",
+				Name:   "definitionId",
+				Column: "definition_id",
 			},
 			{
-				Name:        "cronExpression",
-				FieldMapKey: "cronExpression",
+				Name:   "cronExpression",
+				Column: "cron_expression",
 			},
 			{
-				Name:        "timezone",
-				FieldMapKey: "timezone",
+				Name:   "timezone",
+				Column: "timezone",
 			},
 			{
 				Name:    "formats",
@@ -22682,209 +23226,210 @@ func init() {
 				Special: "notifyUserIds",
 			},
 			{
-				Name:        "alert",
-				FieldMapKey: "alert",
+				Name:   "alert",
+				Column: "alert",
 			},
 			{
-				Name:        "alertFiring",
-				FieldMapKey: "alertFiring",
+				Name:   "alertFiring",
+				Column: "alert_firing",
 			},
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
-				Name:        "runAsId",
-				FieldMapKey: "runAsId",
+				Name:   "runAsId",
+				Column: "run_as_id",
 			},
 			{
-				Name:        "lastRunId",
-				FieldMapKey: "lastRunId",
+				Name:   "mine",
+				Column: "run_as_id",
 			},
 			{
-				Name:        "nextRunAt",
-				FieldMapKey: "nextRunAt",
+				Name:   "lastRunId",
+				Column: "last_run_id",
 			},
 			{
-				Name:        "consecutiveFailures",
-				FieldMapKey: "consecutiveFailures",
+				Name:   "nextRunAt",
+				Column: "next_run_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "consecutiveFailures",
+				Column: "consecutive_failures",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ReportViewSpec = TypeSpec{
 		TypeName: "ReportView",
-		FieldMap: reportcol.ReportViewFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "definitionId",
-				FieldMapKey: "definitionId",
+				Name:   "definitionId",
+				Column: "definition_id",
 			},
 			{
-				Name:        "ownerId",
-				FieldMapKey: "ownerId",
+				Name:   "ownerId",
+				Column: "owner_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "params",
-				FieldMapKey: "params",
+				Name:   "params",
+				Column: "params",
 			},
 			{
-				Name:        "shared",
-				FieldMapKey: "shared",
+				Name:   "shared",
+				Column: "shared",
 			},
 			{
-				Name:        "pinned",
-				FieldMapKey: "pinned",
+				Name:   "pinned",
+				Column: "pinned",
 			},
 			{
-				Name:        "format",
-				FieldMapKey: "format",
+				Name:   "format",
+				Column: "format",
 			},
 			{
-				Name:        "lastRunAt",
-				FieldMapKey: "lastRunAt",
+				Name:   "lastRunAt",
+				Column: "last_run_at",
 			},
 			{
-				Name:        "runCount",
-				FieldMapKey: "runCount",
+				Name:   "runCount",
+				Column: "run_count",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	RiskDecisionSpec = TypeSpec{
 		TypeName: "RiskDecision",
-		FieldMap: iamcol.RiskDecisionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "outcome",
-				FieldMapKey: "outcome",
+				Name:   "outcome",
+				Column: "outcome",
 			},
 			{
-				Name:        "signals",
-				FieldMapKey: "signals",
+				Name:   "signals",
+				Column: "signals",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 			},
 		},
 	}
 
 	RoleSpec = TypeSpec{
 		TypeName: "Role",
-		FieldMap: permissioncol.RoleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "coreResponsibility",
-				FieldMapKey: "coreResponsibility",
+				Name:   "coreResponsibility",
+				Column: "core_responsibility",
 			},
 			{
-				Name:        "parentRoleIds",
-				FieldMapKey: "parentRoleIds",
+				Name:   "parentRoleIds",
+				Column: "parent_role_ids",
 			},
 			{
-				Name:        "maxSensitivity",
-				FieldMapKey: "maxSensitivity",
+				Name:   "maxSensitivity",
+				Column: "max_sensitivity",
 			},
 			{
-				Name:        "isSystem",
-				FieldMapKey: "isSystem",
+				Name:   "isSystem",
+				Column: "is_system",
 			},
 			{
-				Name:        "createdBy",
-				FieldMapKey: "createdBy",
+				Name:   "createdBy",
+				Column: "created_by",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "agents",
@@ -22895,75 +23440,74 @@ func init() {
 
 	RoutingGuideSpec = TypeSpec{
 		TypeName: "RoutingGuide",
-		FieldMap: tendercol.RoutingGuideFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "originLocationId",
-				FieldMapKey: "originLocationId",
+				Name:   "originLocationId",
+				Column: "origin_location_id",
 			},
 			{
-				Name:        "destinationLocationId",
-				FieldMapKey: "destinationLocationId",
+				Name:   "destinationLocationId",
+				Column: "destination_location_id",
 			},
 			{
-				Name:        "originCity",
-				FieldMapKey: "originCity",
+				Name:   "originCity",
+				Column: "origin_city",
 			},
 			{
-				Name:        "originState",
-				FieldMapKey: "originState",
+				Name:   "originState",
+				Column: "origin_state",
 			},
 			{
-				Name:        "destinationCity",
-				FieldMapKey: "destinationCity",
+				Name:   "destinationCity",
+				Column: "destination_city",
 			},
 			{
-				Name:        "destinationState",
-				FieldMapKey: "destinationState",
+				Name:   "destinationState",
+				Column: "destination_state",
 			},
 			{
-				Name:        "specificity",
-				FieldMapKey: "specificity",
+				Name:   "specificity",
+				Column: "specificity",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "entries",
@@ -22976,71 +23520,70 @@ func init() {
 
 	RoutingGuideEntrySpec = TypeSpec{
 		TypeName: "RoutingGuideEntry",
-		FieldMap: tendercol.RoutingGuideEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "routingGuideId",
-				FieldMapKey: "routingGuideId",
+				Name:   "routingGuideId",
+				Column: "routing_guide_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "rank",
-				FieldMapKey: "rank",
+				Name:   "rank",
+				Column: "rank",
 			},
 			{
-				Name:        "rateMethod",
-				FieldMapKey: "rateMethod",
+				Name:   "rateMethod",
+				Column: "rate_method",
 			},
 			{
-				Name:        "rate",
-				FieldMapKey: "rate",
+				Name:   "rate",
+				Column: "rate",
 			},
 			{
-				Name:        "useContractRate",
-				FieldMapKey: "useContractRate",
+				Name:   "useContractRate",
+				Column: "use_contract_rate",
 			},
 			{
-				Name:        "offerTtlSeconds",
-				FieldMapKey: "offerTtlSeconds",
+				Name:   "offerTtlSeconds",
+				Column: "offer_ttl_seconds",
 			},
 			{
-				Name:        "channel",
-				FieldMapKey: "channel",
+				Name:   "channel",
+				Column: "channel",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "carrier",
-				FieldMapKey: "carrierId",
+				Name:   "carrier",
+				Column: "carrier_id",
 				Relation: &RelationSpec{
 					Target: &CarrierSpec,
 				},
@@ -23050,94 +23593,92 @@ func init() {
 
 	SCIMDirectorySpec = TypeSpec{
 		TypeName: "SCIMDirectory",
-		FieldMap: iamcol.SCIMDirectoryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "tenantSlug",
-				FieldMapKey: "tenantSlug",
+				Name:   "tenantSlug",
+				Column: "tenant_slug",
 			},
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	SCIMGroupRoleMappingSpec = TypeSpec{
 		TypeName: "SCIMGroupRoleMapping",
-		FieldMap: iamcol.SCIMGroupRoleMappingFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "directoryId",
-				FieldMapKey: "directoryId",
+				Name:   "directoryId",
+				Column: "directory_id",
 			},
 			{
-				Name:        "externalGroupId",
-				FieldMapKey: "externalGroupId",
+				Name:   "externalGroupId",
+				Column: "external_group_id",
 			},
 			{
-				Name:        "displayName",
-				FieldMapKey: "displayName",
+				Name:   "displayName",
+				Column: "display_name",
 			},
 			{
-				Name:        "roleId",
-				FieldMapKey: "roleId",
+				Name:   "roleId",
+				Column: "role_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "role",
-				FieldMapKey: "roleId",
+				Name:   "role",
+				Column: "role_id",
 				Relation: &RelationSpec{
 					Target: &RoleSpec,
 				},
@@ -23147,173 +23688,172 @@ func init() {
 
 	ServiceFailureSpec = TypeSpec{
 		TypeName: "ServiceFailure",
-		FieldMap: servicefailurecol.ServiceFailureFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
+				Name:   "stopId",
+				Column: "stop_id",
 			},
 			{
-				Name:        "reasonCodeId",
-				FieldMapKey: "reasonCodeId",
+				Name:   "reasonCodeId",
+				Column: "reason_code_id",
 			},
 			{
-				Name:        "number",
-				FieldMapKey: "number",
+				Name:   "number",
+				Column: "number",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "stopType",
-				FieldMapKey: "stopType",
+				Name:   "stopType",
+				Column: "stop_type",
 			},
 			{
-				Name:        "scheduledCutoff",
-				FieldMapKey: "scheduledCutoff",
+				Name:   "scheduledCutoff",
+				Column: "scheduled_cutoff",
 			},
 			{
-				Name:        "actualArrival",
-				FieldMapKey: "actualArrival",
+				Name:   "actualArrival",
+				Column: "actual_arrival",
 			},
 			{
-				Name:        "gracePeriodMinutes",
-				FieldMapKey: "gracePeriodMinutes",
+				Name:   "gracePeriodMinutes",
+				Column: "grace_period_minutes",
 			},
 			{
-				Name:        "lateMinutes",
-				FieldMapKey: "lateMinutes",
+				Name:   "lateMinutes",
+				Column: "late_minutes",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "internalNotes",
-				FieldMapKey: "internalNotes",
+				Name:   "internalNotes",
+				Column: "internal_notes",
 			},
 			{
-				Name:        "x12StatusCodeOverride",
-				FieldMapKey: "x12StatusCodeOverride",
+				Name:   "x12StatusCodeOverride",
+				Column: "x12_status_code_override",
 			},
 			{
-				Name:        "x12ReasonCodeOverride",
-				FieldMapKey: "x12ReasonCodeOverride",
+				Name:   "x12ReasonCodeOverride",
+				Column: "x12_reason_code_override",
 			},
 			{
-				Name:        "x12ExceptionCode",
-				FieldMapKey: "x12ExceptionCode",
+				Name:   "x12ExceptionCode",
+				Column: "x12_exception_code",
 			},
 			{
-				Name:        "detectedAt",
-				FieldMapKey: "detectedAt",
+				Name:   "detectedAt",
+				Column: "detected_at",
 			},
 			{
-				Name:        "reviewedAt",
-				FieldMapKey: "reviewedAt",
+				Name:   "reviewedAt",
+				Column: "reviewed_at",
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "voidedAt",
-				FieldMapKey: "voidedAt",
+				Name:   "voidedAt",
+				Column: "voided_at",
 			},
 			{
-				Name:        "voidReason",
-				FieldMapKey: "voidReason",
+				Name:   "voidReason",
+				Column: "void_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "shipment",
-				FieldMapKey: "businessUnitId",
+				Name:   "shipment",
+				Column: "shipment_id",
 				Relation: &RelationSpec{
 					Target: &ServiceFailureShipmentSpec,
 				},
 			},
 			{
-				Name:        "stop",
-				FieldMapKey: "businessUnitId",
+				Name:   "stop",
+				Column: "stop_id",
 				Relation: &RelationSpec{
 					Target: &ServiceFailureStopSpec,
 				},
 			},
 			{
-				Name:        "reasonCode",
-				FieldMapKey: "businessUnitId",
+				Name:   "reasonCode",
+				Column: "reason_code_id",
 				Relation: &RelationSpec{
 					Target: &ServiceFailureReasonCodeSpec,
 				},
 			},
 			{
-				Name:        "createdBy",
-				FieldMapKey: "createdById",
+				Name:   "createdBy",
+				Column: "created_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "reviewedBy",
-				FieldMapKey: "reviewedById",
+				Name:   "reviewedBy",
+				Column: "reviewed_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "resolvedBy",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedBy",
+				Column: "resolved_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "voidedBy",
-				FieldMapKey: "voidedById",
+				Name:   "voidedBy",
+				Column: "voided_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -23323,94 +23863,93 @@ func init() {
 
 	ServiceFailureReasonCodeSpec = TypeSpec{
 		TypeName: "ServiceFailureReasonCode",
-		FieldMap: servicefailurecol.ReasonCodeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "label",
-				FieldMapKey: "label",
+				Name:   "label",
+				Column: "label",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "appliesTo",
-				FieldMapKey: "appliesTo",
+				Name:   "appliesTo",
+				Column: "applies_to",
 			},
 			{
-				Name:        "defaultStatusCode",
-				FieldMapKey: "defaultStatusCode",
+				Name:   "defaultStatusCode",
+				Column: "default_status_code",
 			},
 			{
-				Name:        "defaultReasonCode",
-				FieldMapKey: "defaultReasonCode",
+				Name:   "defaultReasonCode",
+				Column: "default_reason_code",
 			},
 			{
-				Name:        "defaultExceptionCode",
-				FieldMapKey: "defaultExceptionCode",
+				Name:   "defaultExceptionCode",
+				Column: "default_exception_code",
 			},
 			{
-				Name:        "defaultNote",
-				FieldMapKey: "defaultNote",
+				Name:   "defaultNote",
+				Column: "default_note",
 			},
 			{
-				Name:        "active",
-				FieldMapKey: "active",
+				Name:   "active",
+				Column: "active",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
-				Name:        "externalMap",
-				FieldMapKey: "externalMap",
+				Name:   "externalMap",
+				Column: "external_map",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -23420,27 +23959,26 @@ func init() {
 
 	ServiceFailureShipmentSpec = TypeSpec{
 		TypeName: "ServiceFailureShipment",
-		FieldMap: shipmentcol.ShipmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 			{
-				Name:        "bol",
-				FieldMapKey: "bol",
+				Name:   "bol",
+				Column: "bol",
 			},
 			{
-				Name:        "customer",
-				FieldMapKey: "customerId",
+				Name:   "customer",
+				Column: "customer_id",
 				Relation: &RelationSpec{
 					Target: &CustomerSpec,
 				},
@@ -23450,31 +23988,30 @@ func init() {
 
 	ServiceFailureStopSpec = TypeSpec{
 		TypeName: "ServiceFailureStop",
-		FieldMap: shipmentcol.StopFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "locationId",
-				FieldMapKey: "locationId",
+				Name:   "locationId",
+				Column: "location_id",
 			},
 			{
-				Name:        "location",
-				FieldMapKey: "locationId",
+				Name:   "location",
+				Column: "location_id",
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
@@ -23484,62 +24021,61 @@ func init() {
 
 	ServiceTypeSpec = TypeSpec{
 		TypeName: "ServiceType",
-		FieldMap: servicetypecol.ServiceTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -23549,99 +24085,98 @@ func init() {
 
 	SettlementBatchSpec = TypeSpec{
 		TypeName: "SettlementBatch",
-		FieldMap: driversettlementcol.SettlementBatchFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "payDate",
-				FieldMapKey: "payDate",
+				Name:   "payDate",
+				Column: "pay_date",
 			},
 			{
-				Name:        "settlementCount",
-				FieldMapKey: "settlementCount",
+				Name:   "settlementCount",
+				Column: "settlement_count",
 			},
 			{
-				Name:        "exceptionCount",
-				FieldMapKey: "exceptionCount",
+				Name:   "exceptionCount",
+				Column: "exception_count",
 			},
 			{
-				Name:        "totalGrossMinor",
-				FieldMapKey: "totalGrossMinor",
+				Name:   "totalGrossMinor",
+				Column: "total_gross_minor",
 			},
 			{
-				Name:        "totalNetMinor",
-				FieldMapKey: "totalNetMinor",
+				Name:   "totalNetMinor",
+				Column: "total_net_minor",
 			},
 			{
-				Name:        "currencyCode",
-				FieldMapKey: "currencyCode",
+				Name:   "currencyCode",
+				Column: "currency_code",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "generatedById",
-				FieldMapKey: "generatedById",
+				Name:   "generatedById",
+				Column: "generated_by_id",
 			},
 			{
-				Name:        "generatedAt",
-				FieldMapKey: "generatedAt",
+				Name:   "generatedAt",
+				Column: "generated_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "canceledById",
-				FieldMapKey: "canceledById",
+				Name:   "canceledById",
+				Column: "canceled_by_id",
 			},
 			{
-				Name:        "canceledAt",
-				FieldMapKey: "canceledAt",
+				Name:   "canceledAt",
+				Column: "canceled_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "settlements",
@@ -23654,191 +24189,189 @@ func init() {
 
 	SettlementControlSpec = TypeSpec{
 		TypeName: "SettlementControl",
-		FieldMap: tenantcol.SettlementControlFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "payPeriodFrequency",
-				FieldMapKey: "payPeriodFrequency",
+				Name:   "payPeriodFrequency",
+				Column: "pay_period_frequency",
 			},
 			{
-				Name:        "periodEndDayOfWeek",
-				FieldMapKey: "periodEndDayOfWeek",
+				Name:   "periodEndDayOfWeek",
+				Column: "period_end_day_of_week",
 			},
 			{
-				Name:        "payDelayDays",
-				FieldMapKey: "payDelayDays",
+				Name:   "payDelayDays",
+				Column: "pay_delay_days",
 			},
 			{
-				Name:        "payTrigger",
-				FieldMapKey: "payTrigger",
+				Name:   "payTrigger",
+				Column: "pay_trigger",
 			},
 			{
-				Name:        "autoGenerateBatches",
-				FieldMapKey: "autoGenerateBatches",
+				Name:   "autoGenerateBatches",
+				Column: "auto_generate_batches",
 			},
 			{
-				Name:        "autoApproveClean",
-				FieldMapKey: "autoApproveClean",
+				Name:   "autoApproveClean",
+				Column: "auto_approve_clean",
 			},
 			{
-				Name:        "autoAttachAccruals",
-				FieldMapKey: "autoAttachAccruals",
+				Name:   "autoAttachAccruals",
+				Column: "auto_attach_accruals",
 			},
 			{
-				Name:        "autoPostOnApprove",
-				FieldMapKey: "autoPostOnApprove",
+				Name:   "autoPostOnApprove",
+				Column: "auto_post_on_approve",
 			},
 			{
-				Name:        "allowNegativeNet",
-				FieldMapKey: "allowNegativeNet",
+				Name:   "allowNegativeNet",
+				Column: "allow_negative_net",
 			},
 			{
-				Name:        "varianceThresholdPct",
-				FieldMapKey: "varianceThresholdPct",
+				Name:   "varianceThresholdPct",
+				Column: "variance_threshold_pct",
 			},
 			{
-				Name:        "varianceLookbackWeeks",
-				FieldMapKey: "varianceLookbackWeeks",
+				Name:   "varianceLookbackWeeks",
+				Column: "variance_lookback_weeks",
 			},
 			{
-				Name:        "defaultEscrowInterestRate",
-				FieldMapKey: "defaultEscrowInterestRate",
+				Name:   "defaultEscrowInterestRate",
+				Column: "default_escrow_interest_rate",
 			},
 			{
-				Name:        "escrowInterestFrequencyMonths",
-				FieldMapKey: "escrowInterestFrequencyMonths",
+				Name:   "escrowInterestFrequencyMonths",
+				Column: "escrow_interest_frequency_months",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	SettlementDisputeSpec = TypeSpec{
 		TypeName: "SettlementDispute",
-		FieldMap: driversettlementcol.DisputeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "settlementId",
-				FieldMapKey: "settlementId",
+				Name:   "settlementId",
+				Column: "settlement_id",
 			},
 			{
-				Name:        "settlementLineId",
-				FieldMapKey: "settlementLineId",
+				Name:   "settlementLineId",
+				Column: "settlement_line_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "submittedByUserId",
-				FieldMapKey: "submittedByUserId",
+				Name:   "submittedByUserId",
+				Column: "submitted_by_user_id",
 			},
 			{
-				Name:        "resolutionNote",
-				FieldMapKey: "resolutionNote",
+				Name:   "resolutionNote",
+				Column: "resolution_note",
 			},
 			{
-				Name:        "resolutionLineId",
-				FieldMapKey: "resolutionLineId",
+				Name:   "resolutionLineId",
+				Column: "resolution_line_id",
 			},
 			{
-				Name:        "resolvedById",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedById",
+				Column: "resolved_by_id",
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "settlement",
-				FieldMapKey: "businessUnitId",
+				Name:   "settlement",
+				Column: "settlement_id",
 				Relation: &RelationSpec{
 					Target: &DriverSettlementSpec,
 				},
 			},
 			{
-				Name:        "settlementLine",
-				FieldMapKey: "businessUnitId",
+				Name:   "settlementLine",
+				Column: "settlement_line_id",
 				Relation: &RelationSpec{
 					Target: &DriverSettlementLineSpec,
 				},
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "resolvedBy",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedBy",
+				Column: "resolved_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -23848,86 +24381,85 @@ func init() {
 
 	ShiftSwapRequestSpec = TypeSpec{
 		TypeName: "ShiftSwapRequest",
-		FieldMap: workercol.ShiftSwapRequestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "requestingWorkerId",
-				FieldMapKey: "requestingWorkerId",
+				Name:   "requestingWorkerId",
+				Column: "requesting_worker_id",
 			},
 			{
-				Name:        "counterpartyWorkerId",
-				FieldMapKey: "counterpartyWorkerId",
+				Name:   "counterpartyWorkerId",
+				Column: "counterparty_worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "shiftDate",
-				FieldMapKey: "shiftDate",
+				Name:   "shiftDate",
+				Column: "shift_date",
 			},
 			{
-				Name:        "counterpartyShiftDate",
-				FieldMapKey: "counterpartyShiftDate",
+				Name:   "counterpartyShiftDate",
+				Column: "counterparty_shift_date",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "responseNote",
-				FieldMapKey: "responseNote",
+				Name:   "responseNote",
+				Column: "response_note",
 			},
 			{
-				Name:        "respondedAt",
-				FieldMapKey: "respondedAt",
+				Name:   "respondedAt",
+				Column: "responded_at",
 			},
 			{
-				Name:        "decidedAt",
-				FieldMapKey: "decidedAt",
+				Name:   "decidedAt",
+				Column: "decided_at",
 			},
 			{
-				Name:        "decidedById",
-				FieldMapKey: "decidedById",
+				Name:   "decidedById",
+				Column: "decided_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "requestingWorker",
-				FieldMapKey: "businessUnitId",
+				Name:   "requestingWorker",
+				Column: "requesting_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "counterpartyWorker",
-				FieldMapKey: "businessUnitId",
+				Name:   "counterpartyWorker",
+				Column: "counterparty_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -23937,71 +24469,70 @@ func init() {
 
 	ShiftTemplateSpec = TypeSpec{
 		TypeName: "ShiftTemplate",
-		FieldMap: workercol.ShiftTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "daysOfWeek",
-				FieldMapKey: "daysOfWeek",
+				Name:   "daysOfWeek",
+				Column: "days_of_week",
 			},
 			{
-				Name:        "startMinute",
-				FieldMapKey: "startMinute",
+				Name:   "startMinute",
+				Column: "start_minute",
 			},
 			{
-				Name:        "durationMinutes",
-				FieldMapKey: "durationMinutes",
+				Name:   "durationMinutes",
+				Column: "duration_minutes",
 			},
 			{
-				Name:        "cycleWeeks",
-				FieldMapKey: "cycleWeeks",
+				Name:   "cycleWeeks",
+				Column: "cycle_weeks",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "activeAssignmentCount",
@@ -24012,87 +24543,86 @@ func init() {
 
 	ShipmentSpec = TypeSpec{
 		TypeName: "Shipment",
-		FieldMap: shipmentcol.ShipmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "stage",
-				FieldMapKey: "status",
+				Name:   "stage",
+				Column: "status",
 			},
 			{
 				Name:    "eta",
 				Special: "eta",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
 				Name:    "sourceDocumentId",
 				Special: "sourceDocumentId",
 			},
 			{
-				Name:        "serviceTypeId",
-				FieldMapKey: "serviceTypeId",
+				Name:   "serviceTypeId",
+				Column: "service_type_id",
 			},
 			{
-				Name:        "shipmentTypeId",
-				FieldMapKey: "shipmentTypeId",
+				Name:   "shipmentTypeId",
+				Column: "shipment_type_id",
 			},
 			{
-				Name:        "customerId",
-				FieldMapKey: "customerId",
+				Name:   "customerId",
+				Column: "customer_id",
 			},
 			{
-				Name:        "billToCustomerId",
-				FieldMapKey: "billToCustomerId",
+				Name:   "billToCustomerId",
+				Column: "bill_to_customer_id",
 			},
 			{
-				Name:        "freightTerms",
-				FieldMapKey: "freightTerms",
+				Name:   "freightTerms",
+				Column: "freight_terms",
 			},
 			{
-				Name:        "tractorTypeId",
-				FieldMapKey: "tractorTypeId",
+				Name:   "tractorTypeId",
+				Column: "tractor_type_id",
 			},
 			{
-				Name:        "trailerTypeId",
-				FieldMapKey: "trailerTypeId",
+				Name:   "trailerTypeId",
+				Column: "trailer_type_id",
 			},
 			{
-				Name:        "ownerId",
-				FieldMapKey: "ownerId",
+				Name:   "ownerId",
+				Column: "owner_id",
 			},
 			{
-				Name:        "enteredById",
-				FieldMapKey: "enteredById",
+				Name:   "enteredById",
+				Column: "entered_by_id",
 			},
 			{
-				Name:        "canceledById",
-				FieldMapKey: "canceledById",
+				Name:   "canceledById",
+				Column: "canceled_by_id",
 			},
 			{
-				Name:        "formulaTemplateId",
-				FieldMapKey: "formulaTemplateId",
+				Name:   "formulaTemplateId",
+				Column: "formula_template_id",
 			},
 			{
-				Name:        "consolidationGroupId",
-				FieldMapKey: "consolidationGroupId",
+				Name:   "consolidationGroupId",
+				Column: "consolidation_group_id",
 			},
 			{
-				Name:        "orderId",
-				FieldMapKey: "orderId",
+				Name:   "orderId",
+				Column: "order_id",
 			},
 			{
 				Name:    "orderNumber",
@@ -24107,152 +24637,152 @@ func init() {
 				Special: "profitabilityEstimate",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "tenderStatus",
-				FieldMapKey: "tenderStatus",
+				Name:   "tenderStatus",
+				Column: "tender_status",
 			},
 			{
-				Name:        "entryMethod",
-				FieldMapKey: "entryMethod",
+				Name:   "entryMethod",
+				Column: "entry_method",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "proNumber",
+				Name:   "proNumber",
+				Column: "pro_number",
 			},
 			{
-				Name:        "bol",
-				FieldMapKey: "bol",
+				Name:   "bol",
+				Column: "bol",
 			},
 			{
-				Name:        "externalReference",
-				FieldMapKey: "externalReference",
+				Name:   "externalReference",
+				Column: "external_reference",
 			},
 			{
-				Name:        "cancelReason",
-				FieldMapKey: "cancelReason",
+				Name:   "cancelReason",
+				Column: "cancel_reason",
 			},
 			{
-				Name:        "otherChargeAmount",
-				FieldMapKey: "otherChargeAmount",
+				Name:   "otherChargeAmount",
+				Column: "other_charge_amount",
 			},
 			{
-				Name:        "freightChargeAmount",
-				FieldMapKey: "freightChargeAmount",
+				Name:   "freightChargeAmount",
+				Column: "freight_charge_amount",
 			},
 			{
-				Name:        "baseRate",
-				FieldMapKey: "baseRate",
+				Name:   "tariffInputs",
+				Column: "tariff_inputs",
 			},
 			{
-				Name:        "totalChargeAmount",
-				FieldMapKey: "totalChargeAmount",
+				Name:   "freightLines",
+				Column: "freight_lines",
 			},
 			{
-				Name:        "pieces",
-				FieldMapKey: "pieces",
+				Name:   "totalChargeAmount",
+				Column: "total_charge_amount",
 			},
 			{
-				Name:        "weight",
-				FieldMapKey: "weight",
+				Name:   "pieces",
+				Column: "pieces",
 			},
 			{
-				Name:        "temperatureMin",
-				FieldMapKey: "temperatureMin",
+				Name:   "weight",
+				Column: "weight",
 			},
 			{
-				Name:        "temperatureMax",
-				FieldMapKey: "temperatureMax",
+				Name:   "temperatureMin",
+				Column: "temperature_min",
 			},
 			{
-				Name:        "actualDeliveryDate",
-				FieldMapKey: "actualDeliveryDate",
+				Name:   "temperatureMax",
+				Column: "temperature_max",
 			},
 			{
-				Name:        "actualShipDate",
-				FieldMapKey: "actualShipDate",
+				Name:   "actualDeliveryDate",
+				Column: "actual_delivery_date",
 			},
 			{
-				Name:        "canceledAt",
-				FieldMapKey: "canceledAt",
+				Name:   "actualShipDate",
+				Column: "actual_ship_date",
 			},
 			{
-				Name:        "billingTransferStatus",
-				FieldMapKey: "billingTransferStatus",
+				Name:   "canceledAt",
+				Column: "canceled_at",
 			},
 			{
-				Name:        "transferredToBillingAt",
-				FieldMapKey: "transferredToBillingAt",
+				Name:   "billingTransferStatus",
+				Column: "billing_transfer_status",
 			},
 			{
-				Name:        "markedReadyToBillAt",
-				FieldMapKey: "markedReadyToBillAt",
+				Name:   "transferredToBillingAt",
+				Column: "transferred_to_billing_at",
 			},
 			{
-				Name:        "billedAt",
-				FieldMapKey: "billedAt",
+				Name:   "markedReadyToBillAt",
+				Column: "marked_ready_to_bill_at",
 			},
 			{
-				Name:        "ratingUnit",
-				FieldMapKey: "ratingUnit",
+				Name:   "billedAt",
+				Column: "billed_at",
 			},
 			{
-				Name:        "fuelSurchargeLocked",
-				FieldMapKey: "fuelSurchargeLocked",
+				Name:   "fuelSurchargeLocked",
+				Column: "fuel_surcharge_locked",
 			},
 			{
-				Name:        "ratingDetail",
-				FieldMapKey: "ratingDetail",
+				Name:   "ratingDetail",
+				Column: "rating_detail",
 			},
 			{
-				Name:        "autoRated",
-				FieldMapKey: "autoRated",
+				Name:   "autoRated",
+				Column: "auto_rated",
 			},
 			{
-				Name:        "autoRatedAt",
-				FieldMapKey: "autoRatedAt",
+				Name:   "autoRatedAt",
+				Column: "auto_rated_at",
 			},
 			{
-				Name:        "rateAgreementId",
-				FieldMapKey: "rateAgreementId",
+				Name:   "rateAgreementId",
+				Column: "rate_agreement_id",
 			},
 			{
-				Name:        "rateAgreementRuleId",
-				FieldMapKey: "rateAgreementRuleId",
+				Name:   "rateAgreementRuleId",
+				Column: "rate_agreement_rule_id",
 			},
 			{
-				Name:        "rateQuoteId",
-				FieldMapKey: "rateQuoteId",
+				Name:   "rateQuoteId",
+				Column: "rate_quote_id",
 			},
 			{
-				Name:        "rateOverrideAmount",
-				FieldMapKey: "rateOverrideAmount",
+				Name:   "rateOverrideAmount",
+				Column: "rate_override_amount",
 			},
 			{
-				Name:        "rateOverrideReason",
-				FieldMapKey: "rateOverrideReason",
+				Name:   "rateOverrideReason",
+				Column: "rate_override_reason",
 			},
 			{
-				Name:        "rateOverrideAt",
-				FieldMapKey: "rateOverrideAt",
+				Name:   "rateOverrideAt",
+				Column: "rate_override_at",
 			},
 			{
-				Name:        "rateLocked",
-				FieldMapKey: "rateLocked",
+				Name:   "rateLocked",
+				Column: "rate_locked",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "moves",
@@ -24281,8 +24811,8 @@ func init() {
 				Special: "billToCustomer",
 			},
 			{
-				Name:        "owner",
-				FieldMapKey: "ownerId",
+				Name:   "owner",
+				Column: "owner_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -24306,130 +24836,148 @@ func init() {
 
 	ShipmentAccessorialChargeSpec = TypeSpec{
 		TypeName: "ShipmentAccessorialCharge",
-		FieldMap: accessorialchargecol.AccessorialChargeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "rateUnit",
-				FieldMapKey: "rateUnit",
+				Name:   "rateUnit",
+				Column: "rate_unit",
 			},
 			{
-				Name:        "amount",
-				FieldMapKey: "amount",
+				Name:   "amount",
+				Column: "amount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ShipmentAdditionalChargeSpec = TypeSpec{
 		TypeName: "ShipmentAdditionalCharge",
-		FieldMap: shipmentcol.AdditionalChargeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "accessorialChargeId",
-				FieldMapKey: "accessorialChargeId",
+				Name:   "accessorialChargeId",
+				Column: "accessorial_charge_id",
 			},
 			{
-				Name:        "isSystemGenerated",
-				FieldMapKey: "isSystemGenerated",
+				Name:   "isSystemGenerated",
+				Column: "is_system_generated",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "amount",
-				FieldMapKey: "amount",
+				Name:   "amount",
+				Column: "amount",
 			},
 			{
-				Name:        "unit",
-				FieldMapKey: "unit",
+				Name:   "unit",
+				Column: "unit",
 			},
 			{
-				Name:        "fuelSurchargeProgramId",
-				FieldMapKey: "fuelSurchargeProgramId",
+				Name:   "fuelSurchargeProgramId",
+				Column: "fuel_surcharge_program_id",
 			},
 			{
-				Name:        "fuelSurchargeDetail",
-				FieldMapKey: "fuelSurchargeDetail",
+				Name:   "fuelSurchargeDetail",
+				Column: "fuel_surcharge_detail",
 			},
 			{
-				Name:        "isDetention",
-				FieldMapKey: "isDetention",
+				Name:   "isDetention",
+				Column: "is_detention",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "isTariff",
+				Column: "is_tariff",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "label",
+				Column: "label",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "quantity",
+				Column: "quantity",
+			},
+			{
+				Name:   "rate",
+				Column: "rate",
+			},
+			{
+				Name:   "rateUnit",
+				Column: "rate_unit",
+			},
+			{
+				Name:   "version",
+				Column: "version",
+			},
+			{
+				Name:   "createdAt",
+				Column: "created_at",
+			},
+			{
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "accessorialCharge",
@@ -24440,88 +24988,87 @@ func init() {
 
 	ShipmentAssignmentSpec = TypeSpec{
 		TypeName: "ShipmentAssignment",
-		FieldMap: shipmentcol.AssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "primaryWorkerId",
-				FieldMapKey: "primaryWorkerId",
+				Name:   "primaryWorkerId",
+				Column: "primary_worker_id",
 			},
 			{
-				Name:        "tractorId",
-				FieldMapKey: "tractorId",
+				Name:   "tractorId",
+				Column: "tractor_id",
 			},
 			{
-				Name:        "trailerId",
-				FieldMapKey: "trailerId",
+				Name:   "trailerId",
+				Column: "trailer_id",
 			},
 			{
-				Name:        "secondaryWorkerId",
-				FieldMapKey: "secondaryWorkerId",
+				Name:   "secondaryWorkerId",
+				Column: "secondary_worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "archivedAt",
-				FieldMapKey: "archivedAt",
+				Name:   "archivedAt",
+				Column: "archived_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "tractor",
-				FieldMapKey: "tractorId",
+				Name:   "tractor",
+				Column: "tractor_id",
 				Relation: &RelationSpec{
 					Target: &TractorSpec,
 				},
 			},
 			{
-				Name:        "trailer",
-				FieldMapKey: "trailerId",
+				Name:   "trailer",
+				Column: "trailer_id",
 				Relation: &RelationSpec{
 					Target: &TrailerSpec,
 				},
 			},
 			{
-				Name:        "primaryWorker",
-				FieldMapKey: "primaryWorkerId",
+				Name:   "primaryWorker",
+				Column: "primary_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "secondaryWorker",
-				FieldMapKey: "secondaryWorkerId",
+				Name:   "secondaryWorker",
+				Column: "secondary_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -24531,67 +25078,66 @@ func init() {
 
 	ShipmentAssignmentEventSpec = TypeSpec{
 		TypeName: "ShipmentAssignmentEvent",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
+				Name:   "actorLabel",
+				Column: "actor_label",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -24601,126 +25147,124 @@ func init() {
 				Special: "shipment",
 			},
 			{
-				Name:        "moveId",
-				FieldMapKey: "moveId",
+				Name:   "moveId",
+				Column: "move_id",
 			},
 			{
-				Name:        "assignmentId",
-				FieldMapKey: "assignmentId",
+				Name:   "assignmentId",
+				Column: "assignment_id",
 			},
 			{
-				Name:        "primaryWorkerId",
-				FieldMapKey: "metadata",
+				Name:   "primaryWorkerId",
+				Column: "metadata",
 			},
 			{
-				Name:        "secondaryWorkerId",
-				FieldMapKey: "metadata",
+				Name:   "secondaryWorkerId",
+				Column: "metadata",
 			},
 			{
-				Name:        "tractorId",
-				FieldMapKey: "metadata",
+				Name:   "tractorId",
+				Column: "metadata",
 			},
 			{
-				Name:        "trailerId",
-				FieldMapKey: "metadata",
+				Name:   "trailerId",
+				Column: "metadata",
 			},
 			{
-				Name:        "driverName",
-				FieldMapKey: "metadata",
+				Name:   "driverName",
+				Column: "metadata",
 			},
 		},
 	}
 
 	ShipmentBriefingSpec = TypeSpec{
 		TypeName: "ShipmentBriefing",
-		FieldMap: shipmentbriefcol.BriefFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "segments",
-				FieldMapKey: "segments",
+				Name:   "segments",
+				Column: "segments",
 			},
 			{
-				Name:        "narrated",
-				FieldMapKey: "narrated",
+				Name:   "narrated",
+				Column: "narrated",
 			},
 			{
-				Name:        "generatedAt",
-				FieldMapKey: "generatedAt",
+				Name:   "generatedAt",
+				Column: "generated_at",
 			},
 			{
-				Name:        "generation",
-				FieldMapKey: "generation",
+				Name:   "generation",
+				Column: "generation",
 			},
 		},
 	}
 
 	ShipmentCarrierEventSpec = TypeSpec{
 		TypeName: "ShipmentCarrierEvent",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
+				Name:   "actorLabel",
+				Column: "actor_label",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -24730,157 +25274,156 @@ func init() {
 				Special: "shipment",
 			},
 			{
-				Name:        "moveId",
-				FieldMapKey: "moveId",
+				Name:   "moveId",
+				Column: "move_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "metadata",
+				Name:   "carrierId",
+				Column: "metadata",
 			},
 			{
-				Name:        "carrierName",
-				FieldMapKey: "metadata",
+				Name:   "carrierName",
+				Column: "metadata",
 			},
 			{
-				Name:        "totalCost",
-				FieldMapKey: "metadata",
+				Name:   "totalCost",
+				Column: "metadata",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "metadata",
+				Name:   "reason",
+				Column: "metadata",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "metadata",
+				Name:   "proNumber",
+				Column: "metadata",
 			},
 		},
 	}
 
 	ShipmentCommentSpec = TypeSpec{
 		TypeName: "ShipmentComment",
-		FieldMap: shipmentcol.ShipmentCommentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "parentCommentId",
-				FieldMapKey: "parentCommentId",
+				Name:   "parentCommentId",
+				Column: "parent_comment_id",
 			},
 			{
-				Name:        "replyCount",
-				FieldMapKey: "replyCount",
+				Name:   "replyCount",
+				Column: "reply_count",
 			},
 			{
-				Name:        "comment",
-				FieldMapKey: "comment",
+				Name:   "comment",
+				Column: "comment",
 			},
 			{
-				Name:        "body",
-				FieldMapKey: "body",
+				Name:   "body",
+				Column: "body",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "visibility",
-				FieldMapKey: "visibility",
+				Name:   "visibility",
+				Column: "visibility",
 			},
 			{
-				Name:        "priority",
-				FieldMapKey: "priority",
+				Name:   "priority",
+				Column: "priority",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "editedAt",
-				FieldMapKey: "editedAt",
+				Name:   "editedAt",
+				Column: "edited_at",
 			},
 			{
-				Name:        "pinnedAt",
-				FieldMapKey: "pinnedAt",
+				Name:   "pinnedAt",
+				Column: "pinned_at",
 			},
 			{
-				Name:        "pinnedById",
-				FieldMapKey: "pinnedById",
+				Name:   "pinnedById",
+				Column: "pinned_by_id",
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "resolvedById",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedById",
+				Column: "resolved_by_id",
 			},
 			{
-				Name:        "requiresAcknowledgment",
-				FieldMapKey: "requiresAcknowledgment",
+				Name:   "requiresAcknowledgment",
+				Column: "requires_acknowledgment",
 			},
 			{
-				Name:        "deletedAt",
-				FieldMapKey: "deletedAt",
+				Name:   "deletedAt",
+				Column: "deleted_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "mentionedUserIds",
 				Special: "mentionedUserIds",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "pinnedBy",
-				FieldMapKey: "pinnedById",
+				Name:   "pinnedBy",
+				Column: "pinned_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "resolvedBy",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedBy",
+				Column: "resolved_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -24906,30 +25449,29 @@ func init() {
 
 	ShipmentCommentAcknowledgmentSpec = TypeSpec{
 		TypeName: "ShipmentCommentAcknowledgment",
-		FieldMap: shipmentcol.ShipmentCommentAcknowledgmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "commentId",
-				FieldMapKey: "commentId",
+				Name:   "commentId",
+				Column: "comment_id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -24939,67 +25481,66 @@ func init() {
 
 	ShipmentCommentEventSpec = TypeSpec{
 		TypeName: "ShipmentCommentEvent",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
+				Name:   "actorLabel",
+				Column: "actor_label",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -25009,71 +25550,70 @@ func init() {
 				Special: "shipment",
 			},
 			{
-				Name:        "commentId",
-				FieldMapKey: "commentId",
+				Name:   "commentId",
+				Column: "comment_id",
 			},
 			{
-				Name:        "commentBody",
-				FieldMapKey: "metadata",
+				Name:   "commentBody",
+				Column: "metadata",
 			},
 			{
-				Name:        "commentType",
-				FieldMapKey: "metadata",
+				Name:   "commentType",
+				Column: "metadata",
 			},
 			{
-				Name:        "commentVisibility",
-				FieldMapKey: "metadata",
+				Name:   "commentVisibility",
+				Column: "metadata",
 			},
 			{
-				Name:        "commentPriority",
-				FieldMapKey: "metadata",
+				Name:   "commentPriority",
+				Column: "metadata",
 			},
 			{
-				Name:        "mentionedUserIds",
-				FieldMapKey: "metadata",
+				Name:   "mentionedUserIds",
+				Column: "metadata",
 			},
 		},
 	}
 
 	ShipmentCommentMentionSpec = TypeSpec{
 		TypeName: "ShipmentCommentMention",
-		FieldMap: shipmentcol.ShipmentCommentMentionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "commentId",
-				FieldMapKey: "commentId",
+				Name:   "commentId",
+				Column: "comment_id",
 			},
 			{
-				Name:        "mentionedUserId",
-				FieldMapKey: "mentionedUserId",
+				Name:   "mentionedUserId",
+				Column: "mentioned_user_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "mentionedUser",
-				FieldMapKey: "mentionedUserId",
+				Name:   "mentionedUser",
+				Column: "mentioned_user_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -25083,63 +25623,62 @@ func init() {
 
 	ShipmentCommoditySpec = TypeSpec{
 		TypeName: "ShipmentCommodity",
-		FieldMap: shipmentcol.ShipmentCommodityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "commodityId",
-				FieldMapKey: "commodityId",
+				Name:   "commodityId",
+				Column: "commodity_id",
 			},
 			{
-				Name:        "pieces",
-				FieldMapKey: "pieces",
+				Name:   "pieces",
+				Column: "pieces",
 			},
 			{
-				Name:        "weight",
-				FieldMapKey: "weight",
+				Name:   "weight",
+				Column: "weight",
 			},
 			{
-				Name:        "lengthFeet",
-				FieldMapKey: "lengthFeet",
+				Name:   "lengthFeet",
+				Column: "length_feet",
 			},
 			{
-				Name:        "widthFeet",
-				FieldMapKey: "widthFeet",
+				Name:   "widthFeet",
+				Column: "width_feet",
 			},
 			{
-				Name:        "heightFeet",
-				FieldMapKey: "heightFeet",
+				Name:   "heightFeet",
+				Column: "height_feet",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "commodity",
@@ -25150,186 +25689,184 @@ func init() {
 
 	ShipmentCommodityDetailSpec = TypeSpec{
 		TypeName: "ShipmentCommodityDetail",
-		FieldMap: commoditycol.CommodityFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "hazardousMaterialId",
-				FieldMapKey: "hazardousMaterialId",
+				Name:   "hazardousMaterialId",
+				Column: "hazardous_material_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "minTemperature",
-				FieldMapKey: "minTemperature",
+				Name:   "minTemperature",
+				Column: "min_temperature",
 			},
 			{
-				Name:        "maxTemperature",
-				FieldMapKey: "maxTemperature",
+				Name:   "maxTemperature",
+				Column: "max_temperature",
 			},
 			{
-				Name:        "weightPerUnit",
-				FieldMapKey: "weightPerUnit",
+				Name:   "weightPerUnit",
+				Column: "weight_per_unit",
 			},
 			{
-				Name:        "linearFeetPerUnit",
-				FieldMapKey: "linearFeetPerUnit",
+				Name:   "linearFeetPerUnit",
+				Column: "linear_feet_per_unit",
 			},
 			{
-				Name:        "maxQuantityPerShipment",
-				FieldMapKey: "maxQuantityPerShipment",
+				Name:   "maxQuantityPerShipment",
+				Column: "max_quantity_per_shipment",
 			},
 			{
-				Name:        "freightClass",
-				FieldMapKey: "freightClass",
+				Name:   "freightClass",
+				Column: "freight_class",
 			},
 			{
-				Name:        "loadingInstructions",
-				FieldMapKey: "loadingInstructions",
+				Name:   "loadingInstructions",
+				Column: "loading_instructions",
 			},
 			{
-				Name:        "stackable",
-				FieldMapKey: "stackable",
+				Name:   "stackable",
+				Column: "stackable",
 			},
 			{
-				Name:        "fragile",
-				FieldMapKey: "fragile",
+				Name:   "fragile",
+				Column: "fragile",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ShipmentCustomerSpec = TypeSpec{
 		TypeName: "ShipmentCustomer",
-		FieldMap: customercol.CustomerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "addressLine1",
-				FieldMapKey: "addressLine1",
+				Name:   "addressLine1",
+				Column: "address_line_1",
 			},
 			{
-				Name:        "addressLine2",
-				FieldMapKey: "addressLine2",
+				Name:   "addressLine2",
+				Column: "address_line_2",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "postalCode",
-				FieldMapKey: "postalCode",
+				Name:   "postalCode",
+				Column: "postal_code",
 			},
 			{
-				Name:        "isGeocoded",
-				FieldMapKey: "isGeocoded",
+				Name:   "isGeocoded",
+				Column: "is_geocoded",
 			},
 			{
-				Name:        "longitude",
-				FieldMapKey: "longitude",
+				Name:   "longitude",
+				Column: "longitude",
 			},
 			{
-				Name:        "latitude",
-				FieldMapKey: "latitude",
+				Name:   "latitude",
+				Column: "latitude",
 			},
 			{
-				Name:        "placeId",
-				FieldMapKey: "placeId",
+				Name:   "placeId",
+				Column: "place_id",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "allowConsolidation",
-				FieldMapKey: "allowConsolidation",
+				Name:   "allowConsolidation",
+				Column: "allow_consolidation",
 			},
 			{
-				Name:        "exclusiveConsolidation",
-				FieldMapKey: "exclusiveConsolidation",
+				Name:   "exclusiveConsolidation",
+				Column: "exclusive_consolidation",
 			},
 			{
-				Name:        "consolidationPriority",
-				FieldMapKey: "consolidationPriority",
+				Name:   "consolidationPriority",
+				Column: "consolidation_priority",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "ediPartner",
@@ -25340,42 +25877,41 @@ func init() {
 
 	ShipmentEtaSpec = TypeSpec{
 		TypeName: "ShipmentEta",
-		FieldMap: stopetacol.StopETAFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
+				Name:   "stopId",
+				Column: "stop_id",
 			},
 			{
-				Name:        "estimatedArrival",
-				FieldMapKey: "estimatedArrival",
+				Name:   "estimatedArrival",
+				Column: "estimated_arrival",
 			},
 			{
-				Name:        "slackMinutes",
-				FieldMapKey: "slackMinutes",
+				Name:   "slackMinutes",
+				Column: "slack_minutes",
 			},
 			{
-				Name:        "verdict",
-				FieldMapKey: "verdict",
+				Name:   "verdict",
+				Column: "verdict",
 			},
 			{
-				Name:        "basis",
-				FieldMapKey: "basis",
+				Name:   "basis",
+				Column: "basis",
 			},
 			{
-				Name:        "inputStale",
-				FieldMapKey: "inputStale",
+				Name:   "inputStale",
+				Column: "input_stale",
 			},
 			{
-				Name:        "computedAt",
-				FieldMapKey: "computedAt",
+				Name:   "computedAt",
+				Column: "computed_at",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
 				Name:    "stops",
@@ -25386,146 +25922,136 @@ func init() {
 
 	ShipmentFormulaTemplateSpec = TypeSpec{
 		TypeName: "ShipmentFormulaTemplate",
-		FieldMap: formulatemplatecol.FormulaTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "expression",
-				FieldMapKey: "expression",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "testCount",
+				Column: "test_count",
 			},
 			{
-				Name:        "schemaId",
-				FieldMapKey: "schemaId",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "variableDefinitions",
-				FieldMapKey: "variableDefinitions",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "sourceTemplateId",
+				Column: "source_template_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "sourceVersionNumber",
+				Column: "source_version_number",
 			},
 			{
-				Name:        "sourceTemplateId",
-				FieldMapKey: "sourceTemplateId",
+				Name:   "currentVersionNumber",
+				Column: "current_version_number",
 			},
 			{
-				Name:        "sourceVersionNumber",
-				FieldMapKey: "sourceVersionNumber",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "currentVersionNumber",
-				FieldMapKey: "currentVersionNumber",
-			},
-			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
-			},
-			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	ShipmentHoldEventSpec = TypeSpec{
 		TypeName: "ShipmentHoldEvent",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
+				Name:   "actorLabel",
+				Column: "actor_label",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -25535,87 +26061,86 @@ func init() {
 				Special: "shipment",
 			},
 			{
-				Name:        "holdId",
-				FieldMapKey: "holdId",
+				Name:   "holdId",
+				Column: "hold_id",
 			},
 			{
-				Name:        "holdType",
-				FieldMapKey: "metadata",
+				Name:   "holdType",
+				Column: "metadata",
 			},
 			{
-				Name:        "holdSeverity",
-				FieldMapKey: "metadata",
+				Name:   "holdSeverity",
+				Column: "metadata",
 			},
 			{
-				Name:        "holdSource",
-				FieldMapKey: "metadata",
+				Name:   "holdSource",
+				Column: "metadata",
 			},
 		},
 	}
 
 	ShipmentLifecycleEventSpec = TypeSpec{
 		TypeName: "ShipmentLifecycleEvent",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
+				Name:   "actorLabel",
+				Column: "actor_label",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -25625,111 +26150,110 @@ func init() {
 				Special: "shipment",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "metadata",
+				Name:   "proNumber",
+				Column: "metadata",
 			},
 			{
-				Name:        "previousStatus",
-				FieldMapKey: "metadata",
+				Name:   "previousStatus",
+				Column: "metadata",
 			},
 			{
-				Name:        "newStatus",
-				FieldMapKey: "metadata",
+				Name:   "newStatus",
+				Column: "metadata",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "metadata",
+				Name:   "reason",
+				Column: "metadata",
 			},
 		},
 	}
 
 	ShipmentMoveSpec = TypeSpec{
 		TypeName: "ShipmentMove",
-		FieldMap: shipmentcol.ShipmentMoveFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "coverageType",
-				FieldMapKey: "coverageType",
+				Name:   "coverageType",
+				Column: "coverage_type",
 			},
 			{
-				Name:        "loaded",
-				FieldMapKey: "loaded",
+				Name:   "loaded",
+				Column: "loaded",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "distance",
-				FieldMapKey: "distance",
+				Name:   "distance",
+				Column: "distance",
 			},
 			{
-				Name:        "distanceSource",
-				FieldMapKey: "distanceSource",
+				Name:   "distanceSource",
+				Column: "distance_source",
 			},
 			{
-				Name:        "distanceProvider",
-				FieldMapKey: "distanceProvider",
+				Name:   "distanceProvider",
+				Column: "distance_provider",
 			},
 			{
-				Name:        "distanceCalculatedAt",
-				FieldMapKey: "distanceCalculatedAt",
+				Name:   "distanceCalculatedAt",
+				Column: "distance_calculated_at",
 			},
 			{
-				Name:        "distanceRouteSignature",
-				FieldMapKey: "distanceRouteSignature",
+				Name:   "distanceRouteSignature",
+				Column: "distance_route_signature",
 			},
 			{
-				Name:        "distanceDataVersion",
-				FieldMapKey: "distanceDataVersion",
+				Name:   "distanceDataVersion",
+				Column: "distance_data_version",
 			},
 			{
-				Name:        "distanceRoutingType",
-				FieldMapKey: "distanceRoutingType",
+				Name:   "distanceRoutingType",
+				Column: "distance_routing_type",
 			},
 			{
-				Name:        "distanceUnits",
-				FieldMapKey: "distanceUnits",
+				Name:   "distanceUnits",
+				Column: "distance_units",
 			},
 			{
-				Name:        "distanceMetadata",
-				FieldMapKey: "distanceMetadata",
+				Name:   "distanceMetadata",
+				Column: "distance_metadata",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name: "stops",
@@ -25760,67 +26284,66 @@ func init() {
 
 	ShipmentMoveEventSpec = TypeSpec{
 		TypeName: "ShipmentMoveEvent",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
+				Name:   "actorLabel",
+				Column: "actor_label",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -25830,158 +26353,156 @@ func init() {
 				Special: "shipment",
 			},
 			{
-				Name:        "moveId",
-				FieldMapKey: "moveId",
+				Name:   "moveId",
+				Column: "move_id",
 			},
 			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
+				Name:   "stopId",
+				Column: "stop_id",
 			},
 			{
-				Name:        "previousStatus",
-				FieldMapKey: "metadata",
+				Name:   "previousStatus",
+				Column: "metadata",
 			},
 			{
-				Name:        "newStatus",
-				FieldMapKey: "metadata",
+				Name:   "newStatus",
+				Column: "metadata",
 			},
 		},
 	}
 
 	ShipmentMoveJurisdictionMileSpec = TypeSpec{
 		TypeName: "ShipmentMoveJurisdictionMile",
-		FieldMap: shipmentcol.ShipmentMoveJurisdictionMileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "countryCode",
-				FieldMapKey: "countryCode",
+				Name:   "countryCode",
+				Column: "country_code",
 			},
 			{
-				Name:        "jurisdictionCode",
-				FieldMapKey: "jurisdictionCode",
+				Name:   "jurisdictionCode",
+				Column: "jurisdiction_code",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "distance",
-				FieldMapKey: "distance",
+				Name:   "distance",
+				Column: "distance",
 			},
 			{
-				Name:        "distanceUnits",
-				FieldMapKey: "distanceUnits",
+				Name:   "distanceUnits",
+				Column: "distance_units",
 			},
 			{
-				Name:        "tollDistance",
-				FieldMapKey: "tollDistance",
+				Name:   "tollDistance",
+				Column: "toll_distance",
 			},
 			{
-				Name:        "ferryDistance",
-				FieldMapKey: "ferryDistance",
+				Name:   "ferryDistance",
+				Column: "ferry_distance",
 			},
 			{
-				Name:        "loaded",
-				FieldMapKey: "loaded",
+				Name:   "loaded",
+				Column: "loaded",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "dataVersion",
-				FieldMapKey: "dataVersion",
+				Name:   "dataVersion",
+				Column: "data_version",
 			},
 			{
-				Name:        "calculatedAt",
-				FieldMapKey: "calculatedAt",
+				Name:   "calculatedAt",
+				Column: "calculated_at",
 			},
 		},
 	}
 
 	ShipmentOwnershipEventSpec = TypeSpec{
 		TypeName: "ShipmentOwnershipEvent",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
+				Name:   "actorLabel",
+				Column: "actor_label",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -25991,115 +26512,114 @@ func init() {
 				Special: "shipment",
 			},
 			{
-				Name:        "proNumber",
-				FieldMapKey: "metadata",
+				Name:   "proNumber",
+				Column: "metadata",
 			},
 			{
-				Name:        "previousOwnerId",
-				FieldMapKey: "metadata",
+				Name:   "previousOwnerId",
+				Column: "metadata",
 			},
 			{
-				Name:        "newOwnerId",
-				FieldMapKey: "metadata",
+				Name:   "newOwnerId",
+				Column: "metadata",
 			},
 		},
 	}
 
 	ShipmentStopSpec = TypeSpec{
 		TypeName: "ShipmentStop",
-		FieldMap: shipmentcol.StopFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "locationId",
-				FieldMapKey: "locationId",
+				Name:   "locationId",
+				Column: "location_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "scheduleType",
-				FieldMapKey: "scheduleType",
+				Name:   "scheduleType",
+				Column: "schedule_type",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "pieces",
-				FieldMapKey: "pieces",
+				Name:   "pieces",
+				Column: "pieces",
 			},
 			{
-				Name:        "weight",
-				FieldMapKey: "weight",
+				Name:   "weight",
+				Column: "weight",
 			},
 			{
-				Name:        "scheduledWindowStart",
-				FieldMapKey: "scheduledWindowStart",
+				Name:   "scheduledWindowStart",
+				Column: "scheduled_window_start",
 			},
 			{
-				Name:        "scheduledWindowEnd",
-				FieldMapKey: "scheduledWindowEnd",
+				Name:   "scheduledWindowEnd",
+				Column: "scheduled_window_end",
 			},
 			{
-				Name:        "actualArrival",
-				FieldMapKey: "actualArrival",
+				Name:   "actualArrival",
+				Column: "actual_arrival",
 			},
 			{
-				Name:        "actualDeparture",
-				FieldMapKey: "actualDeparture",
+				Name:   "actualDeparture",
+				Column: "actual_departure",
 			},
 			{
-				Name:        "countLateOverride",
-				FieldMapKey: "countLateOverride",
+				Name:   "countLateOverride",
+				Column: "count_late_override",
 			},
 			{
-				Name:        "countDetentionOverride",
-				FieldMapKey: "countDetentionOverride",
+				Name:   "countDetentionOverride",
+				Column: "count_detention_override",
 			},
 			{
-				Name:        "addressLine",
-				FieldMapKey: "addressLine",
+				Name:   "addressLine",
+				Column: "address_line",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "location",
-				FieldMapKey: "locationId",
+				Name:   "location",
+				Column: "location_id",
 				Relation: &RelationSpec{
 					Target: &LocationSpec,
 				},
@@ -26109,67 +26629,66 @@ func init() {
 
 	ShipmentTenderEventSpec = TypeSpec{
 		TypeName: "ShipmentTenderEvent",
-		FieldMap: map[string]string{"actorId": "actor_id", "actorLabel": "actor_label", "actorType": "actor_type", "assignmentId": "assignment_id", "businessUnitId": "business_unit_id", "commentId": "comment_id", "correlationId": "correlation_id", "holdId": "hold_id", "id": "id", "metadata": "metadata", "moveId": "move_id", "occurredAt": "occurred_at", "organizationId": "organization_id", "severity": "severity", "shipmentId": "shipment_id", "stopId": "stop_id", "summary": "summary", "type": "type"},
 		AlwaysColumns: []string{
 			"id",
 			"occurred_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actorLabel",
-				FieldMapKey: "actorLabel",
+				Name:   "actorLabel",
+				Column: "actor_label",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "metadata",
-				FieldMapKey: "metadata",
+				Name:   "metadata",
+				Column: "metadata",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "correlationId",
-				FieldMapKey: "correlationId",
+				Name:   "correlationId",
+				Column: "correlation_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -26179,118 +26698,117 @@ func init() {
 				Special: "shipment",
 			},
 			{
-				Name:        "tenderId",
-				FieldMapKey: "metadata",
+				Name:   "tenderId",
+				Column: "metadata",
 			},
 			{
-				Name:        "offerId",
-				FieldMapKey: "metadata",
+				Name:   "offerId",
+				Column: "metadata",
 			},
 			{
-				Name:        "moveId",
-				FieldMapKey: "metadata",
+				Name:   "moveId",
+				Column: "metadata",
 			},
 			{
-				Name:        "carrierName",
-				FieldMapKey: "metadata",
+				Name:   "carrierName",
+				Column: "metadata",
 			},
 			{
-				Name:        "rank",
-				FieldMapKey: "metadata",
+				Name:   "rank",
+				Column: "metadata",
 			},
 			{
-				Name:        "channel",
-				FieldMapKey: "metadata",
+				Name:   "channel",
+				Column: "metadata",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "metadata",
+				Name:   "source",
+				Column: "metadata",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "metadata",
+				Name:   "reason",
+				Column: "metadata",
 			},
 			{
-				Name:        "action",
-				FieldMapKey: "metadata",
+				Name:   "action",
+				Column: "metadata",
 			},
 			{
-				Name:        "mode",
-				FieldMapKey: "metadata",
+				Name:   "mode",
+				Column: "metadata",
 			},
 			{
-				Name:        "error",
-				FieldMapKey: "metadata",
+				Name:   "error",
+				Column: "metadata",
 			},
 			{
-				Name:        "reasons",
-				FieldMapKey: "metadata",
+				Name:   "reasons",
+				Column: "metadata",
 			},
 			{
-				Name:        "warnings",
-				FieldMapKey: "metadata",
+				Name:   "warnings",
+				Column: "metadata",
 			},
 		},
 	}
 
 	ShipmentTypeSpec = TypeSpec{
 		TypeName: "ShipmentType",
-		FieldMap: shipmenttypecol.ShipmentTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "color",
-				FieldMapKey: "color",
+				Name:   "color",
+				Column: "color",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -26300,216 +26818,214 @@ func init() {
 
 	StopEtaSpec = TypeSpec{
 		TypeName: "StopEta",
-		FieldMap: stopetacol.StopETAFieldMap,
 		AlwaysColumns: []string{
 			"id",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
+				Name:   "stopId",
+				Column: "stop_id",
 			},
 			{
-				Name:        "moveSequence",
-				FieldMapKey: "moveSequence",
+				Name:   "moveSequence",
+				Column: "move_sequence",
 			},
 			{
-				Name:        "stopSequence",
-				FieldMapKey: "stopSequence",
+				Name:   "stopSequence",
+				Column: "stop_sequence",
 			},
 			{
-				Name:        "arrived",
-				FieldMapKey: "arrived",
+				Name:   "arrived",
+				Column: "arrived",
 			},
 			{
-				Name:        "estimatedArrival",
-				FieldMapKey: "estimatedArrival",
+				Name:   "estimatedArrival",
+				Column: "estimated_arrival",
 			},
 			{
-				Name:        "estimatedDeparture",
-				FieldMapKey: "estimatedDeparture",
+				Name:   "estimatedDeparture",
+				Column: "estimated_departure",
 			},
 			{
-				Name:        "windowEnd",
-				FieldMapKey: "windowEnd",
+				Name:   "windowEnd",
+				Column: "window_end",
 			},
 			{
-				Name:        "slackMinutes",
-				FieldMapKey: "slackMinutes",
+				Name:   "slackMinutes",
+				Column: "slack_minutes",
 			},
 			{
-				Name:        "verdict",
-				FieldMapKey: "verdict",
+				Name:   "verdict",
+				Column: "verdict",
 			},
 			{
-				Name:        "basis",
-				FieldMapKey: "basis",
+				Name:   "basis",
+				Column: "basis",
 			},
 			{
-				Name:        "driveMethod",
-				FieldMapKey: "driveMethod",
+				Name:   "driveMethod",
+				Column: "drive_method",
 			},
 			{
-				Name:        "milesRemaining",
-				FieldMapKey: "milesRemaining",
+				Name:   "milesRemaining",
+				Column: "miles_remaining",
 			},
 			{
-				Name:        "driveMinutes",
-				FieldMapKey: "driveMinutes",
+				Name:   "driveMinutes",
+				Column: "drive_minutes",
 			},
 			{
-				Name:        "restMinutes",
-				FieldMapKey: "restMinutes",
+				Name:   "restMinutes",
+				Column: "rest_minutes",
 			},
 			{
-				Name:        "inputAt",
-				FieldMapKey: "inputAt",
+				Name:   "inputAt",
+				Column: "input_at",
 			},
 			{
-				Name:        "inputStale",
-				FieldMapKey: "inputStale",
+				Name:   "inputStale",
+				Column: "input_stale",
 			},
 			{
-				Name:        "thresholdMinutes",
-				FieldMapKey: "thresholdMinutes",
+				Name:   "thresholdMinutes",
+				Column: "threshold_minutes",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "computedAt",
-				FieldMapKey: "computedAt",
+				Name:   "computedAt",
+				Column: "computed_at",
 			},
 		},
 	}
 
 	StoredMileageSpec = TypeSpec{
 		TypeName: "StoredMileage",
-		FieldMap: storedmileagecol.StoredMileageFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "originKey",
-				FieldMapKey: "originKey",
+				Name:   "originKey",
+				Column: "origin_key",
 			},
 			{
-				Name:        "destinationKey",
-				FieldMapKey: "destinationKey",
+				Name:   "destinationKey",
+				Column: "destination_key",
 			},
 			{
-				Name:        "intermediateKeys",
-				FieldMapKey: "intermediateKeys",
+				Name:   "intermediateKeys",
+				Column: "intermediate_keys",
 			},
 			{
-				Name:        "routeSignature",
-				FieldMapKey: "routeSignature",
+				Name:   "routeSignature",
+				Column: "route_signature",
 			},
 			{
-				Name:        "routeHash",
-				FieldMapKey: "routeHash",
+				Name:   "routeHash",
+				Column: "route_hash",
 			},
 			{
-				Name:        "distance",
-				FieldMapKey: "distance",
+				Name:   "distance",
+				Column: "distance",
 			},
 			{
-				Name:        "distanceUnits",
-				FieldMapKey: "distanceUnits",
+				Name:   "distanceUnits",
+				Column: "distance_units",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "routingType",
-				FieldMapKey: "routingType",
+				Name:   "routingType",
+				Column: "routing_type",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "locationGranularity",
-				FieldMapKey: "locationGranularity",
+				Name:   "locationGranularity",
+				Column: "location_granularity",
 			},
 			{
-				Name:        "dataVersion",
-				FieldMapKey: "dataVersion",
+				Name:   "dataVersion",
+				Column: "data_version",
 			},
 			{
-				Name:        "distanceProfileId",
-				FieldMapKey: "distanceProfileId",
+				Name:   "distanceProfileId",
+				Column: "distance_profile_id",
 			},
 			{
-				Name:        "distanceProfileName",
-				FieldMapKey: "distanceProfileName",
+				Name:   "distanceProfileName",
+				Column: "distance_profile_name",
 			},
 			{
-				Name:        "hitCount",
-				FieldMapKey: "hitCount",
+				Name:   "hitCount",
+				Column: "hit_count",
 			},
 			{
-				Name:        "lastCalculatedAt",
-				FieldMapKey: "lastCalculatedAt",
+				Name:   "lastCalculatedAt",
+				Column: "last_calculated_at",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -26519,172 +27035,170 @@ func init() {
 
 	TCASubscriptionSpec = TypeSpec{
 		TypeName: "TCASubscription",
-		FieldMap: tablechangealertcol.TCASubscriptionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "tableName",
-				FieldMapKey: "tableName",
+				Name:   "tableName",
+				Column: "table_name",
 			},
 			{
-				Name:        "recordId",
-				FieldMapKey: "recordId",
+				Name:   "recordId",
+				Column: "record_id",
 			},
 			{
-				Name:        "eventTypes",
-				FieldMapKey: "eventTypes",
+				Name:   "eventTypes",
+				Column: "event_types",
 			},
 			{
-				Name:        "conditions",
-				FieldMapKey: "conditions",
+				Name:   "conditions",
+				Column: "conditions",
 			},
 			{
-				Name:        "conditionMatch",
-				FieldMapKey: "conditionMatch",
+				Name:   "conditionMatch",
+				Column: "condition_match",
 			},
 			{
-				Name:        "watchedColumns",
-				FieldMapKey: "watchedColumns",
+				Name:   "watchedColumns",
+				Column: "watched_columns",
 			},
 			{
-				Name:        "customTitle",
-				FieldMapKey: "customTitle",
+				Name:   "customTitle",
+				Column: "custom_title",
 			},
 			{
-				Name:        "customMessage",
-				FieldMapKey: "customMessage",
+				Name:   "customMessage",
+				Column: "custom_message",
 			},
 			{
-				Name:        "topic",
-				FieldMapKey: "topic",
+				Name:   "topic",
+				Column: "topic",
 			},
 			{
-				Name:        "priority",
-				FieldMapKey: "priority",
+				Name:   "priority",
+				Column: "priority",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	TableConfigurationSpec = TypeSpec{
 		TypeName: "TableConfiguration",
-		FieldMap: tableconfigurationcol.TableConfigurationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "userId",
-				FieldMapKey: "userId",
+				Name:   "userId",
+				Column: "user_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "resource",
-				FieldMapKey: "resource",
+				Name:   "resource",
+				Column: "resource",
 			},
 			{
-				Name:        "tableConfig",
-				FieldMapKey: "tableConfig",
+				Name:   "tableConfig",
+				Column: "table_config",
 			},
 			{
-				Name:        "visibility",
-				FieldMapKey: "visibility",
+				Name:   "visibility",
+				Column: "visibility",
 			},
 			{
-				Name:        "isDefault",
-				FieldMapKey: "isDefault",
+				Name:   "isDefault",
+				Column: "is_default",
 			},
 			{
-				Name:        "isOrgDefault",
-				FieldMapKey: "isOrgDefault",
+				Name:   "isOrgDefault",
+				Column: "is_org_default",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "user",
-				FieldMapKey: "userId",
+				Name:   "user",
+				Column: "user_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -26694,134 +27208,132 @@ func init() {
 
 	TableLayoutSpec = TypeSpec{
 		TypeName: "TableLayout",
-		FieldMap: tablelayoutcol.TableLayoutFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "resource",
-				FieldMapKey: "resource",
+				Name:   "resource",
+				Column: "resource",
 			},
 			{
-				Name:        "layout",
-				FieldMapKey: "layout",
+				Name:   "layout",
+				Column: "layout",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	TenderSpec = TypeSpec{
 		TypeName: "Tender",
-		FieldMap: tendercol.TenderFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "routingGuideId",
-				FieldMapKey: "routingGuideId",
+				Name:   "routingGuideId",
+				Column: "routing_guide_id",
 			},
 			{
-				Name:        "mode",
-				FieldMapKey: "mode",
+				Name:   "mode",
+				Column: "mode",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "currentRank",
-				FieldMapKey: "currentRank",
+				Name:   "currentRank",
+				Column: "current_rank",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "canceledById",
-				FieldMapKey: "canceledById",
+				Name:   "canceledById",
+				Column: "canceled_by_id",
 			},
 			{
-				Name:        "cancellationReason",
-				FieldMapKey: "cancellationReason",
+				Name:   "cancellationReason",
+				Column: "cancellation_reason",
 			},
 			{
-				Name:        "acceptedOfferId",
-				FieldMapKey: "acceptedOfferId",
+				Name:   "acceptedOfferId",
+				Column: "accepted_offer_id",
 			},
 			{
-				Name:        "acceptedAt",
-				FieldMapKey: "acceptedAt",
+				Name:   "acceptedAt",
+				Column: "accepted_at",
 			},
 			{
-				Name:        "exhaustedAt",
-				FieldMapKey: "exhaustedAt",
+				Name:   "exhaustedAt",
+				Column: "exhausted_at",
 			},
 			{
-				Name:        "canceledAt",
-				FieldMapKey: "canceledAt",
+				Name:   "canceledAt",
+				Column: "canceled_at",
 			},
 			{
-				Name:        "bounceCount",
-				FieldMapKey: "bounceCount",
+				Name:   "bounceCount",
+				Column: "bounce_count",
 			},
 			{
-				Name:        "lastBouncedAt",
-				FieldMapKey: "lastBouncedAt",
+				Name:   "lastBouncedAt",
+				Column: "last_bounced_at",
 			},
 			{
-				Name:        "escalatedFromId",
-				FieldMapKey: "escalatedFromId",
+				Name:   "escalatedFromId",
+				Column: "escalated_from_tender_id",
 			},
 			{
-				Name:        "escalationRound",
-				FieldMapKey: "escalationRound",
+				Name:   "escalationRound",
+				Column: "escalation_round",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "routingGuide",
-				FieldMapKey: "routingGuideId",
+				Name:   "routingGuide",
+				Column: "routing_guide_id",
 				Relation: &RelationSpec{
 					Target: &RoutingGuideSpec,
 				},
@@ -26837,163 +27349,162 @@ func init() {
 
 	TenderOfferSpec = TypeSpec{
 		TypeName: "TenderOffer",
-		FieldMap: tendercol.TenderOfferFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "tenderId",
-				FieldMapKey: "tenderId",
+				Name:   "tenderId",
+				Column: "tender_id",
 			},
 			{
-				Name:        "carrierId",
-				FieldMapKey: "carrierId",
+				Name:   "carrierId",
+				Column: "carrier_id",
 			},
 			{
-				Name:        "rank",
-				FieldMapKey: "rank",
+				Name:   "rank",
+				Column: "rank",
 			},
 			{
-				Name:        "rateMethod",
-				FieldMapKey: "rateMethod",
+				Name:   "rateMethod",
+				Column: "rate_method",
 			},
 			{
-				Name:        "rate",
-				FieldMapKey: "rate",
+				Name:   "rate",
+				Column: "rate",
 			},
 			{
-				Name:        "offerTtlSeconds",
-				FieldMapKey: "offerTtlSeconds",
+				Name:   "offerTtlSeconds",
+				Column: "offer_ttl_seconds",
 			},
 			{
-				Name:        "channel",
-				FieldMapKey: "channel",
+				Name:   "channel",
+				Column: "channel",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "recipientEmail",
-				FieldMapKey: "recipientEmail",
+				Name:   "recipientEmail",
+				Column: "recipient_email",
 			},
 			{
-				Name:        "sentAt",
-				FieldMapKey: "sentAt",
+				Name:   "sentAt",
+				Column: "sent_at",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "respondedAt",
-				FieldMapKey: "respondedAt",
+				Name:   "respondedAt",
+				Column: "responded_at",
 			},
 			{
-				Name:        "responseSource",
-				FieldMapKey: "responseSource",
+				Name:   "responseSource",
+				Column: "response_source",
 			},
 			{
-				Name:        "declineReason",
-				FieldMapKey: "declineReason",
+				Name:   "declineReason",
+				Column: "decline_reason",
 			},
 			{
-				Name:        "deliveryError",
-				FieldMapKey: "deliveryError",
+				Name:   "deliveryError",
+				Column: "delivery_error",
 			},
 			{
-				Name:        "ediPartnerId",
-				FieldMapKey: "ediPartnerId",
+				Name:   "ediPartnerId",
+				Column: "edi_partner_id",
 			},
 			{
-				Name:        "ediMessageId",
-				FieldMapKey: "ediMessageId",
+				Name:   "ediMessageId",
+				Column: "edi_message_id",
 			},
 			{
-				Name:        "lateResponseAction",
-				FieldMapKey: "lateResponseAction",
+				Name:   "lateResponseAction",
+				Column: "late_response_action",
 			},
 			{
-				Name:        "lateResponseAt",
-				FieldMapKey: "lateResponseAt",
+				Name:   "lateResponseAt",
+				Column: "late_response_at",
 			},
 			{
-				Name:        "counterRate",
-				FieldMapKey: "counterRate",
+				Name:   "counterRate",
+				Column: "counter_rate",
 			},
 			{
-				Name:        "counterNote",
-				FieldMapKey: "counterNote",
+				Name:   "counterNote",
+				Column: "counter_note",
 			},
 			{
-				Name:        "counteredAt",
-				FieldMapKey: "counteredAt",
+				Name:   "counteredAt",
+				Column: "countered_at",
 			},
 			{
-				Name:        "counterMarginPercent",
-				FieldMapKey: "counterMargin",
+				Name:   "counterMarginPercent",
+				Column: "counter_margin_percent",
 			},
 			{
-				Name:        "counterNeedsApproval",
-				FieldMapKey: "counterNeedsApproval",
+				Name:   "counterNeedsApproval",
+				Column: "counter_needs_approval",
 			},
 			{
-				Name:        "counterDecidedAt",
-				FieldMapKey: "counterDecidedAt",
+				Name:   "counterDecidedAt",
+				Column: "counter_decided_at",
 			},
 			{
-				Name:        "counterDecidedById",
-				FieldMapKey: "counterDecidedById",
+				Name:   "counterDecidedById",
+				Column: "counter_decided_by_id",
 			},
 			{
 				Name:    "agreedRate",
 				Special: "agreedRate",
 			},
 			{
-				Name:        "revokedAt",
-				FieldMapKey: "revokedAt",
+				Name:   "revokedAt",
+				Column: "revoked_at",
 			},
 			{
-				Name:        "revokeReason",
-				FieldMapKey: "revokeReason",
+				Name:   "revokeReason",
+				Column: "revoke_reason",
 			},
 			{
-				Name:        "revokedById",
-				FieldMapKey: "revokedById",
+				Name:   "revokedById",
+				Column: "revoked_by_id",
 			},
 			{
-				Name:        "reofferedFromId",
-				FieldMapKey: "reofferedFromId",
+				Name:   "reofferedFromId",
+				Column: "reoffered_from_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "carrier",
-				FieldMapKey: "carrierId",
+				Name:   "carrier",
+				Column: "carrier_id",
 				Relation: &RelationSpec{
 					Target: &CarrierSpec,
 				},
@@ -27003,75 +27514,74 @@ func init() {
 
 	TimeClockEntrySpec = TypeSpec{
 		TypeName: "TimeClockEntry",
-		FieldMap: workercol.TimeClockEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "timesheetId",
-				FieldMapKey: "timesheetId",
+				Name:   "timesheetId",
+				Column: "timesheet_id",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "clockedInAt",
-				FieldMapKey: "clockedInAt",
+				Name:   "clockedInAt",
+				Column: "clocked_in_at",
 			},
 			{
-				Name:        "clockedOutAt",
-				FieldMapKey: "clockedOutAt",
+				Name:   "clockedOutAt",
+				Column: "clocked_out_at",
 			},
 			{
-				Name:        "breakMinutes",
-				FieldMapKey: "breakMinutes",
+				Name:   "breakMinutes",
+				Column: "break_minutes",
 			},
 			{
-				Name:        "payCodeId",
-				FieldMapKey: "payCodeId",
+				Name:   "payCodeId",
+				Column: "pay_code_id",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "editedById",
-				FieldMapKey: "editedById",
+				Name:   "editedById",
+				Column: "edited_by_id",
 			},
 			{
-				Name:        "editReason",
-				FieldMapKey: "editReason",
+				Name:   "editReason",
+				Column: "edit_reason",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
 				Name:    "paidMinutes",
 				Special: "paidMinutes",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -27081,95 +27591,94 @@ func init() {
 
 	TimesheetSpec = TypeSpec{
 		TypeName: "Timesheet",
-		FieldMap: workercol.TimesheetFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "periodStart",
-				FieldMapKey: "periodStart",
+				Name:   "periodStart",
+				Column: "period_start",
 			},
 			{
-				Name:        "periodEnd",
-				FieldMapKey: "periodEnd",
+				Name:   "periodEnd",
+				Column: "period_end",
 			},
 			{
-				Name:        "regularMinutes",
-				FieldMapKey: "regularMinutes",
+				Name:   "regularMinutes",
+				Column: "regular_minutes",
 			},
 			{
-				Name:        "overtimeMinutes",
-				FieldMapKey: "overtimeMinutes",
+				Name:   "overtimeMinutes",
+				Column: "overtime_minutes",
 			},
 			{
-				Name:        "paidLeaveMinutes",
-				FieldMapKey: "paidLeaveMinutes",
+				Name:   "paidLeaveMinutes",
+				Column: "paid_leave_minutes",
 			},
 			{
-				Name:        "entryCount",
-				FieldMapKey: "entryCount",
+				Name:   "entryCount",
+				Column: "entry_count",
 			},
 			{
-				Name:        "overtimeThresholdMinutes",
-				FieldMapKey: "overtimeThresholdMinutes",
+				Name:   "overtimeThresholdMinutes",
+				Column: "overtime_threshold_minutes",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "submittedById",
-				FieldMapKey: "submittedById",
+				Name:   "submittedById",
+				Column: "submitted_by_id",
 			},
 			{
-				Name:        "approvedAt",
-				FieldMapKey: "approvedAt",
+				Name:   "approvedAt",
+				Column: "approved_at",
 			},
 			{
-				Name:        "approvedById",
-				FieldMapKey: "approvedById",
+				Name:   "approvedById",
+				Column: "approved_by_id",
 			},
 			{
-				Name:        "decisionNote",
-				FieldMapKey: "decisionNote",
+				Name:   "decisionNote",
+				Column: "decision_note",
 			},
 			{
-				Name:        "payrollExportId",
-				FieldMapKey: "payrollExportId",
+				Name:   "payrollExportId",
+				Column: "payroll_export_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
 				Name:    "totalMinutes",
 				Special: "totalMinutes",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -27183,166 +27692,164 @@ func init() {
 
 	TrackingEventSpec = TypeSpec{
 		TypeName: "TrackingEvent",
-		FieldMap: trackingeventcol.TrackingEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "shipmentMoveId",
-				FieldMapKey: "shipmentMoveId",
+				Name:   "shipmentMoveId",
+				Column: "shipment_move_id",
 			},
 			{
-				Name:        "stopId",
-				FieldMapKey: "stopId",
+				Name:   "stopId",
+				Column: "stop_id",
 			},
 			{
-				Name:        "source",
-				FieldMapKey: "source",
+				Name:   "source",
+				Column: "source",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "matchMethod",
-				FieldMapKey: "matchMethod",
+				Name:   "matchMethod",
+				Column: "match_method",
 			},
 			{
-				Name:        "eventAt",
-				FieldMapKey: "eventAt",
+				Name:   "eventAt",
+				Column: "event_at",
 			},
 			{
-				Name:        "receivedAt",
-				FieldMapKey: "receivedAt",
+				Name:   "receivedAt",
+				Column: "received_at",
 			},
 			{
-				Name:        "latitude",
-				FieldMapKey: "latitude",
+				Name:   "latitude",
+				Column: "latitude",
 			},
 			{
-				Name:        "longitude",
-				FieldMapKey: "longitude",
+				Name:   "longitude",
+				Column: "longitude",
 			},
 			{
-				Name:        "sourceStatus",
-				FieldMapKey: "sourceStatus",
+				Name:   "sourceStatus",
+				Column: "source_status",
 			},
 			{
-				Name:        "rawReference",
-				FieldMapKey: "rawReference",
+				Name:   "rawReference",
+				Column: "raw_reference",
 			},
 			{
-				Name:        "reportedById",
-				FieldMapKey: "reportedById",
+				Name:   "reportedById",
+				Column: "reported_by_id",
 			},
 			{
-				Name:        "outcome",
-				FieldMapKey: "outcome",
+				Name:   "outcome",
+				Column: "outcome",
 			},
 			{
-				Name:        "outcomeReason",
-				FieldMapKey: "outcomeReason",
+				Name:   "outcomeReason",
+				Column: "outcome_reason",
 			},
 		},
 	}
 
 	TractorSpec = TypeSpec{
 		TypeName: "Tractor",
-		FieldMap: tractorcol.TractorFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "primaryWorkerId",
-				FieldMapKey: "primaryWorkerId",
+				Name:   "primaryWorkerId",
+				Column: "primary_worker_id",
 			},
 			{
-				Name:        "equipmentTypeId",
-				FieldMapKey: "equipmentTypeId",
+				Name:   "equipmentTypeId",
+				Column: "equipment_type_id",
 			},
 			{
-				Name:        "equipmentManufacturerId",
-				FieldMapKey: "equipmentManufacturerId",
+				Name:   "equipmentManufacturerId",
+				Column: "equipment_manufacturer_id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "fleetCodeId",
-				FieldMapKey: "fleetCodeId",
+				Name:   "fleetCodeId",
+				Column: "fleet_code_id",
 			},
 			{
-				Name:        "secondaryWorkerId",
-				FieldMapKey: "secondaryWorkerId",
+				Name:   "secondaryWorkerId",
+				Column: "secondary_worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "equipmentStatus",
-				FieldMapKey: "status",
+				Name:   "equipmentStatus",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
-				Name:        "make",
-				FieldMapKey: "make",
+				Name:   "make",
+				Column: "make",
 			},
 			{
-				Name:        "year",
-				FieldMapKey: "year",
+				Name:   "year",
+				Column: "year",
 			},
 			{
-				Name:        "licensePlateNumber",
-				FieldMapKey: "licensePlateNumber",
+				Name:   "licensePlateNumber",
+				Column: "license_plate_number",
 			},
 			{
-				Name:        "registrationNumber",
-				FieldMapKey: "registrationNumber",
+				Name:   "registrationNumber",
+				Column: "registration_number",
 			},
 			{
-				Name:        "registrationExpiry",
-				FieldMapKey: "registrationExpiry",
+				Name:   "registrationExpiry",
+				Column: "registration_expiry",
 			},
 			{
-				Name:        "vin",
-				FieldMapKey: "vin",
+				Name:   "vin",
+				Column: "vin",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
 				Name:    "lastKnownLocationId",
@@ -27353,113 +27860,113 @@ func init() {
 				Special: "lastKnownLocation",
 			},
 			{
-				Name:        "fuelType",
-				FieldMapKey: "fuelType",
+				Name:   "fuelType",
+				Column: "fuel_type",
 			},
 			{
-				Name:        "iftaQualified",
-				FieldMapKey: "iftaQualified",
+				Name:   "iftaQualified",
+				Column: "ifta_qualified",
 			},
 			{
-				Name:        "ownershipType",
-				FieldMapKey: "ownershipType",
+				Name:   "ownershipType",
+				Column: "ownership_type",
 			},
 			{
-				Name:        "ownerWorkerId",
-				FieldMapKey: "ownerWorkerId",
+				Name:   "ownerWorkerId",
+				Column: "owner_worker_id",
 			},
 			{
-				Name:        "lessorName",
-				FieldMapKey: "lessorName",
+				Name:   "lessorName",
+				Column: "lessor_name",
 			},
 			{
-				Name:        "leaseReference",
-				FieldMapKey: "leaseReference",
+				Name:   "leaseReference",
+				Column: "lease_reference",
 			},
 			{
-				Name:        "leaseEndDate",
-				FieldMapKey: "leaseEndDate",
+				Name:   "leaseEndDate",
+				Column: "lease_end_date",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "customFields",
 				Special: "customFields",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "equipmentType",
-				FieldMapKey: "equipmentTypeId",
+				Name:   "equipmentType",
+				Column: "equipment_type_id",
 				Relation: &RelationSpec{
 					Target: &EquipmentTypeSpec,
 					Gate:   "equipmentDetails",
 				},
 			},
 			{
-				Name:        "equipmentManufacturer",
-				FieldMapKey: "equipmentManufacturerId",
+				Name:   "equipmentManufacturer",
+				Column: "equipment_manufacturer_id",
 				Relation: &RelationSpec{
 					Target: &EquipmentManufacturerSpec,
 					Gate:   "equipmentDetails",
 				},
 			},
 			{
-				Name:        "fleetCode",
-				FieldMapKey: "fleetCodeId",
+				Name:   "fleetCode",
+				Column: "fleet_code_id",
 				Relation: &RelationSpec{
 					Target: &FleetCodeSpec,
 					Gate:   "fleetDetails",
 				},
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
 			},
 			{
-				Name:        "primaryWorker",
-				FieldMapKey: "primaryWorkerId",
+				Name:   "primaryWorker",
+				Column: "primary_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 					Gate:   "workerDetails",
 				},
 			},
 			{
-				Name:        "secondaryWorker",
-				FieldMapKey: "secondaryWorkerId",
+				Name:   "secondaryWorker",
+				Column: "secondary_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 					Gate:   "workerDetails",
 				},
 			},
 			{
-				Name:        "ownerWorker",
-				FieldMapKey: "ownerWorkerId",
+				Name:   "ownerWorker",
+				Column: "owner_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -27473,91 +27980,90 @@ func init() {
 
 	TrailerSpec = TypeSpec{
 		TypeName: "Trailer",
-		FieldMap: trailercol.TrailerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "equipmentTypeId",
-				FieldMapKey: "equipmentTypeId",
+				Name:   "equipmentTypeId",
+				Column: "equipment_type_id",
 			},
 			{
-				Name:        "equipmentManufacturerId",
-				FieldMapKey: "equipmentManufacturerId",
+				Name:   "equipmentManufacturerId",
+				Column: "equipment_manufacturer_id",
 			},
 			{
-				Name:        "registrationStateId",
-				FieldMapKey: "registrationStateId",
+				Name:   "registrationStateId",
+				Column: "registration_state_id",
 			},
 			{
-				Name:        "fleetCodeId",
-				FieldMapKey: "fleetCodeId",
+				Name:   "fleetCodeId",
+				Column: "fleet_code_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "equipmentStatus",
-				FieldMapKey: "status",
+				Name:   "equipmentStatus",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "model",
-				FieldMapKey: "model",
+				Name:   "model",
+				Column: "model",
 			},
 			{
-				Name:        "make",
-				FieldMapKey: "make",
+				Name:   "make",
+				Column: "make",
 			},
 			{
-				Name:        "year",
-				FieldMapKey: "year",
+				Name:   "year",
+				Column: "year",
 			},
 			{
-				Name:        "licensePlateNumber",
-				FieldMapKey: "licensePlateNumber",
+				Name:   "licensePlateNumber",
+				Column: "license_plate_number",
 			},
 			{
-				Name:        "vin",
-				FieldMapKey: "vin",
+				Name:   "vin",
+				Column: "vin",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "registrationNumber",
-				FieldMapKey: "registrationNumber",
+				Name:   "registrationNumber",
+				Column: "registration_number",
 			},
 			{
-				Name:        "maxLoadWeight",
-				FieldMapKey: "maxLoadWeight",
+				Name:   "maxLoadWeight",
+				Column: "max_load_weight",
 			},
 			{
-				Name:        "lastInspectionDate",
-				FieldMapKey: "lastInspectionDate",
+				Name:   "lastInspectionDate",
+				Column: "last_inspection_date",
 			},
 			{
-				Name:        "registrationExpiry",
-				FieldMapKey: "registrationExpiry",
+				Name:   "registrationExpiry",
+				Column: "registration_expiry",
 			},
 			{
 				Name:    "lastKnownLocationId",
@@ -27568,89 +28074,89 @@ func init() {
 				Special: "lastKnownLocation",
 			},
 			{
-				Name:        "ownershipType",
-				FieldMapKey: "ownershipType",
+				Name:   "ownershipType",
+				Column: "ownership_type",
 			},
 			{
-				Name:        "ownerWorkerId",
-				FieldMapKey: "ownerWorkerId",
+				Name:   "ownerWorkerId",
+				Column: "owner_worker_id",
 			},
 			{
-				Name:        "lessorName",
-				FieldMapKey: "lessorName",
+				Name:   "lessorName",
+				Column: "lessor_name",
 			},
 			{
-				Name:        "leaseReference",
-				FieldMapKey: "leaseReference",
+				Name:   "leaseReference",
+				Column: "lease_reference",
 			},
 			{
-				Name:        "leaseEndDate",
-				FieldMapKey: "leaseEndDate",
+				Name:   "leaseEndDate",
+				Column: "lease_end_date",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "customFields",
 				Special: "customFields",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "equipmentType",
-				FieldMapKey: "equipmentTypeId",
+				Name:   "equipmentType",
+				Column: "equipment_type_id",
 				Relation: &RelationSpec{
 					Target: &EquipmentTypeSpec,
 					Gate:   "equipmentDetails",
 				},
 			},
 			{
-				Name:        "equipmentManufacturer",
-				FieldMapKey: "equipmentManufacturerId",
+				Name:   "equipmentManufacturer",
+				Column: "equipment_manufacturer_id",
 				Relation: &RelationSpec{
 					Target: &EquipmentManufacturerSpec,
 					Gate:   "equipmentDetails",
 				},
 			},
 			{
-				Name:        "fleetCode",
-				FieldMapKey: "fleetCodeId",
+				Name:   "fleetCode",
+				Column: "fleet_code_id",
 				Relation: &RelationSpec{
 					Target: &FleetCodeSpec,
 					Gate:   "fleetDetails",
 				},
 			},
 			{
-				Name:        "registrationState",
-				FieldMapKey: "registrationStateId",
+				Name:   "registrationState",
+				Column: "registration_state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
 			},
 			{
-				Name:        "ownerWorker",
-				FieldMapKey: "ownerWorkerId",
+				Name:   "ownerWorker",
+				Column: "owner_worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -27664,189 +28170,186 @@ func init() {
 
 	TrainingCourseSpec = TypeSpec{
 		TypeName: "TrainingCourse",
-		FieldMap: workercol.TrainingCourseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "delivery",
-				FieldMapKey: "delivery",
+				Name:   "delivery",
+				Column: "delivery",
 			},
 			{
-				Name:        "contentUrl",
-				FieldMapKey: "contentUrl",
+				Name:   "contentUrl",
+				Column: "content_url",
 			},
 			{
-				Name:        "durationMinutes",
-				FieldMapKey: "durationMinutes",
+				Name:   "durationMinutes",
+				Column: "duration_minutes",
 			},
 			{
-				Name:        "passingScore",
-				FieldMapKey: "passingScore",
+				Name:   "passingScore",
+				Column: "passing_score",
 			},
 			{
-				Name:        "validityMonths",
-				FieldMapKey: "validityMonths",
+				Name:   "validityMonths",
+				Column: "validity_months",
 			},
 			{
-				Name:        "renewalWindowDays",
-				FieldMapKey: "renewalWindowDays",
+				Name:   "renewalWindowDays",
+				Column: "renewal_window_days",
 			},
 			{
-				Name:        "isRequired",
-				FieldMapKey: "isRequired",
+				Name:   "isRequired",
+				Column: "is_required",
 			},
 			{
-				Name:        "requiredForDriverTypes",
-				FieldMapKey: "requiredForDriverTypes",
+				Name:   "requiredForDriverTypes",
+				Column: "required_for_driver_types",
 			},
 			{
-				Name:        "dueDaysAfterAssignment",
-				FieldMapKey: "dueDaysAfterAssignment",
+				Name:   "dueDaysAfterAssignment",
+				Column: "due_days_after_assignment",
 			},
 			{
-				Name:        "requiresAcknowledgement",
-				FieldMapKey: "requiresAcknowledgement",
+				Name:   "requiresAcknowledgement",
+				Column: "requires_acknowledgement",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
 				Name:    "openRecordCount",
 				Special: "openRecordCount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	TriageReplyTemplateSpec = TypeSpec{
 		TypeName: "TriageReplyTemplate",
-		FieldMap: triagecol.ReplyTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "body",
-				FieldMapKey: "body",
+				Name:   "body",
+				Column: "body",
 			},
 			{
 				Name:    "createdBy",
 				Special: "createdBy",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	TriageRuleSpec = TypeSpec{
 		TypeName: "TriageRule",
-		FieldMap: triagecol.RuleFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "classification",
-				FieldMapKey: "classification",
+				Name:   "classification",
+				Column: "classification",
 			},
 			{
-				Name:        "senderScope",
-				FieldMapKey: "senderScope",
+				Name:   "senderScope",
+				Column: "sender_scope",
 			},
 			{
-				Name:        "sender",
-				FieldMapKey: "sender",
+				Name:   "sender",
+				Column: "sender",
 			},
 			{
-				Name:        "mailboxId",
-				FieldMapKey: "mailboxId",
+				Name:   "mailboxId",
+				Column: "mailbox_id",
 			},
 			{
 				Name:    "mailbox",
 				Special: "mailbox",
 			},
 			{
-				Name:        "action",
-				FieldMapKey: "action",
+				Name:   "action",
+				Column: "action",
 			},
 			{
-				Name:        "assigneeId",
-				FieldMapKey: "assigneeId",
+				Name:   "assigneeId",
+				Column: "assignee_id",
 			},
 			{
 				Name:    "assignee",
 				Special: "assignee",
 			},
 			{
-				Name:        "enabled",
-				FieldMapKey: "enabled",
+				Name:   "enabled",
+				Column: "enabled",
 			},
 			{
 				Name:    "createdBy",
@@ -27857,31 +28360,30 @@ func init() {
 				Special: "matchesThisMonth",
 			},
 			{
-				Name:        "matchCount",
-				FieldMapKey: "matchCount",
+				Name:   "matchCount",
+				Column: "match_count",
 			},
 			{
-				Name:        "lastMatchedAt",
-				FieldMapKey: "lastMatchedAt",
+				Name:   "lastMatchedAt",
+				Column: "last_matched_at",
 			},
 			{
 				Name:    "lastMatch",
 				Special: "lastMatch",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	TriageSettingsSpec = TypeSpec{
 		TypeName: "TriageSettings",
-		FieldMap: triagecol.SettingsFieldMap,
 		AlwaysColumns: []string{
 			"created_at",
 		},
@@ -27891,47 +28393,46 @@ func init() {
 				Special: "onCallUser",
 			},
 			{
-				Name:        "onCallUserId",
-				FieldMapKey: "onCallUserId",
+				Name:   "onCallUserId",
+				Column: "on_call_user_id",
 			},
 			{
-				Name:        "endOfDayMinute",
-				FieldMapKey: "endOfDayMinute",
+				Name:   "endOfDayMinute",
+				Column: "end_of_day_minute",
 			},
 			{
 				Name:    "timezone",
 				Special: "timezone",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	TriageViewSpec = TypeSpec{
 		TypeName: "TriageView",
-		FieldMap: triagecol.ViewFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "query",
-				FieldMapKey: "query",
+				Name:   "query",
+				Column: "query",
 			},
 			{
-				Name:        "position",
-				FieldMapKey: "position",
+				Name:   "position",
+				Column: "position",
 			},
 			{
 				Name:    "waiting",
@@ -27942,153 +28443,151 @@ func init() {
 
 	UsStateSpec = TypeSpec{
 		TypeName: "UsState",
-		FieldMap: usstatecol.UsStateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "abbreviation",
-				FieldMapKey: "abbreviation",
+				Name:   "abbreviation",
+				Column: "abbreviation",
 			},
 			{
-				Name:        "countryName",
-				FieldMapKey: "countryName",
+				Name:   "countryName",
+				Column: "country_name",
 			},
 			{
-				Name:        "countryIso3",
-				FieldMapKey: "countryIso3",
+				Name:   "countryIso3",
+				Column: "country_iso3",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	UserSpec = TypeSpec{
 		TypeName: "User",
-		FieldMap: tenantcol.UserFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "currentOrganizationId",
-				FieldMapKey: "currentOrganizationId",
+				Name:   "currentOrganizationId",
+				Column: "current_organization_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "username",
-				FieldMapKey: "username",
+				Name:   "username",
+				Column: "username",
 			},
 			{
-				Name:        "timeFormat",
-				FieldMapKey: "timeFormat",
+				Name:   "timeFormat",
+				Column: "time_format",
 			},
 			{
-				Name:        "emailAddress",
-				FieldMapKey: "emailAddress",
+				Name:   "emailAddress",
+				Column: "email_address",
 			},
 			{
-				Name:        "profilePicUrl",
-				FieldMapKey: "profilePicUrl",
+				Name:   "profilePicUrl",
+				Column: "profile_pic_url",
 			},
 			{
-				Name:        "thumbnailUrl",
-				FieldMapKey: "thumbnailUrl",
+				Name:   "thumbnailUrl",
+				Column: "thumbnail_url",
 			},
 			{
-				Name:        "timezone",
-				FieldMapKey: "timezone",
+				Name:   "timezone",
+				Column: "timezone",
 			},
 			{
-				Name:        "isLocked",
-				FieldMapKey: "isLocked",
+				Name:   "isLocked",
+				Column: "is_locked",
 			},
 			{
-				Name:        "mustChangePassword",
-				FieldMapKey: "mustChangePassword",
+				Name:   "mustChangePassword",
+				Column: "must_change_password",
 			},
 			{
-				Name:        "locale",
-				FieldMapKey: "locale",
+				Name:   "locale",
+				Column: "locale",
 			},
 			{
-				Name:        "jobTitle",
-				FieldMapKey: "jobTitle",
+				Name:   "jobTitle",
+				Column: "job_title",
 			},
 			{
-				Name:        "phoneNumber",
-				FieldMapKey: "phoneNumber",
+				Name:   "phoneNumber",
+				Column: "phone_number",
 			},
 			{
-				Name:        "avatarStyle",
-				FieldMapKey: "avatarStyle",
+				Name:   "avatarStyle",
+				Column: "avatar_style",
 			},
 			{
-				Name:        "availabilityStatus",
-				FieldMapKey: "availabilityStatus",
+				Name:   "availabilityStatus",
+				Column: "availability_status",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "lastLoginAt",
-				FieldMapKey: "lastLoginAt",
+				Name:   "lastLoginAt",
+				Column: "last_login_at",
 			},
 			{
-				Name:        "passwordChangedAt",
-				FieldMapKey: "passwordChangedAt",
+				Name:   "passwordChangedAt",
+				Column: "password_changed_at",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "currentOrganization",
-				FieldMapKey: "currentOrganizationId",
+				Name:   "currentOrganization",
+				Column: "current_organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
@@ -28098,135 +28597,133 @@ func init() {
 
 	VehicleInspectionSpec = TypeSpec{
 		TypeName: "VehicleInspection",
-		FieldMap: telematicscol.VehicleInspectionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "inspectionType",
-				FieldMapKey: "inspectionType",
+				Name:   "inspectionType",
+				Column: "inspection_type",
 			},
 			{
-				Name:        "safetyStatus",
-				FieldMapKey: "safetyStatus",
+				Name:   "safetyStatus",
+				Column: "safety_status",
 			},
 			{
-				Name:        "tractorId",
-				FieldMapKey: "tractorId",
+				Name:   "tractorId",
+				Column: "tractor_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
 				Name:    "workerName",
 				Special: "workerName",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "endedAt",
-				FieldMapKey: "endedAt",
+				Name:   "endedAt",
+				Column: "ended_at",
 			},
 			{
-				Name:        "odometerMeters",
-				FieldMapKey: "odometerMeters",
+				Name:   "odometerMeters",
+				Column: "odometer_meters",
 			},
 			{
-				Name:        "location",
-				FieldMapKey: "location",
+				Name:   "location",
+				Column: "location",
 			},
 			{
-				Name:        "signed",
-				FieldMapKey: "signed",
+				Name:   "signed",
+				Column: "signed",
 			},
 			{
-				Name:        "defectCount",
-				FieldMapKey: "defectCount",
+				Name:   "defectCount",
+				Column: "defect_count",
 			},
 			{
-				Name:        "unresolvedDefectCount",
-				FieldMapKey: "unresolvedDefectCount",
+				Name:   "unresolvedDefectCount",
+				Column: "unresolved_defect_count",
 			},
 			{
-				Name:        "defects",
-				FieldMapKey: "defects",
+				Name:   "defects",
+				Column: "defects",
 			},
 		},
 	}
 
 	VehiclePositionSpec = TypeSpec{
 		TypeName:      "VehiclePosition",
-		FieldMap:      telematicscol.VehiclePositionFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "tractorId",
-				FieldMapKey: "tractorId",
+				Name:   "tractorId",
+				Column: "tractor_id",
 			},
 			{
 				Name:    "tractorCode",
 				Special: "tractorCode",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "providerVehicleId",
-				FieldMapKey: "providerVehicleId",
+				Name:   "providerVehicleId",
+				Column: "provider_vehicle_id",
 			},
 			{
-				Name:        "latitude",
-				FieldMapKey: "latitude",
+				Name:   "latitude",
+				Column: "latitude",
 			},
 			{
-				Name:        "longitude",
-				FieldMapKey: "longitude",
+				Name:   "longitude",
+				Column: "longitude",
 			},
 			{
-				Name:        "headingDegrees",
-				FieldMapKey: "headingDegrees",
+				Name:   "headingDegrees",
+				Column: "heading_degrees",
 			},
 			{
-				Name:        "speedMph",
-				FieldMapKey: "speedMph",
+				Name:   "speedMph",
+				Column: "speed_mph",
 			},
 			{
-				Name:        "engineState",
-				FieldMapKey: "engineState",
+				Name:   "engineState",
+				Column: "engine_state",
 			},
 			{
-				Name:        "fuelPercent",
-				FieldMapKey: "fuelPercent",
+				Name:   "fuelPercent",
+				Column: "fuel_percent",
 			},
 			{
-				Name:        "odometerMeters",
-				FieldMapKey: "odometerMeters",
+				Name:   "odometerMeters",
+				Column: "odometer_meters",
 			},
 			{
-				Name:        "formattedLocation",
-				FieldMapKey: "formattedLocation",
+				Name:   "formattedLocation",
+				Column: "formatted_location",
 			},
 			{
-				Name:        "recordedAt",
-				FieldMapKey: "recordedAt",
+				Name:   "recordedAt",
+				Column: "recorded_at",
 			},
 			{
-				Name:        "receivedAt",
-				FieldMapKey: "receivedAt",
+				Name:   "receivedAt",
+				Column: "received_at",
 			},
 			{
 				Name:    "primaryWorkerId",
@@ -28241,7 +28738,6 @@ func init() {
 
 	WatchtowerItemSpec = TypeSpec{
 		TypeName: "WatchtowerItem",
-		FieldMap: watchtowercol.ItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
@@ -28250,168 +28746,168 @@ func init() {
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "sourceKind",
-				FieldMapKey: "sourceKind",
+				Name:   "sourceKind",
+				Column: "source_kind",
 			},
 			{
-				Name:        "sourceId",
-				FieldMapKey: "sourceId",
+				Name:   "sourceId",
+				Column: "source_id",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "subjectType",
-				FieldMapKey: "subjectType",
+				Name:   "subjectType",
+				Column: "subject_type",
 			},
 			{
-				Name:        "subjectId",
-				FieldMapKey: "subjectId",
+				Name:   "subjectId",
+				Column: "subject_id",
 			},
 			{
-				Name:        "eventKind",
-				FieldMapKey: "eventKind",
+				Name:   "eventKind",
+				Column: "event_kind",
 			},
 			{
-				Name:        "path",
-				FieldMapKey: "path",
+				Name:   "path",
+				Column: "path",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
 				Name:    "seen",
 				Special: "seen",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "kindLabel",
 				Special: "kindLabel",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "assigneeId",
-				FieldMapKey: "assigneeId",
+				Name:   "assigneeId",
+				Column: "assignee_id",
 			},
 			{
-				Name:        "assignee",
-				FieldMapKey: "assigneeId",
+				Name:   "assignee",
+				Column: "assignee_id",
 			},
 			{
-				Name:        "dueAt",
-				FieldMapKey: "dueAt",
+				Name:   "dueAt",
+				Column: "due_at",
 			},
 			{
-				Name:        "overdue",
-				FieldMapKey: "dueAt",
+				Name:   "overdue",
+				Column: "due_at",
 			},
 			{
-				Name:        "snoozedUntil",
-				FieldMapKey: "snoozedUntil",
+				Name:   "snoozedUntil",
+				Column: "snoozed_until",
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "resolutionCode",
-				FieldMapKey: "resolutionCode",
+				Name:   "resolutionCode",
+				Column: "resolution_code",
 			},
 			{
-				Name:        "resolutionNote",
-				FieldMapKey: "resolutionNote",
+				Name:   "resolutionNote",
+				Column: "resolution_note",
 			},
 			{
-				Name:        "resolvedById",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedById",
+				Column: "resolved_by_id",
 			},
 			{
-				Name:        "resolvedBy",
-				FieldMapKey: "resolvedById",
+				Name:   "resolvedBy",
+				Column: "resolved_by_id",
 			},
 			{
-				Name:        "sourceClearedAt",
-				FieldMapKey: "sourceClearedAt",
+				Name:   "sourceClearedAt",
+				Column: "source_cleared_at",
 			},
 			{
-				Name:        "escalationLevel",
-				FieldMapKey: "escalationLevel",
+				Name:   "escalationLevel",
+				Column: "escalation_level",
 			},
 			{
-				Name:        "lastEscalatedAt",
-				FieldMapKey: "lastEscalatedAt",
+				Name:   "lastEscalatedAt",
+				Column: "last_escalated_at",
 			},
 			{
-				Name:        "dueLabel",
-				FieldMapKey: "dueLabel",
+				Name:   "dueLabel",
+				Column: "due_label",
 			},
 			{
-				Name:        "dueSource",
-				FieldMapKey: "dueSource",
+				Name:   "dueSource",
+				Column: "due_source",
 			},
 			{
 				Name:    "record",
 				Special: "record",
 			},
 			{
-				Name:        "facts",
-				FieldMapKey: "facts",
+				Name:   "facts",
+				Column: "facts",
 			},
 			{
-				Name:        "impact",
-				FieldMapKey: "impact",
+				Name:   "impact",
+				Column: "impact",
 			},
 			{
-				Name:        "trail",
-				FieldMapKey: "trail",
+				Name:   "trail",
+				Column: "trail",
 			},
 			{
-				Name:        "suggestedAgentId",
-				FieldMapKey: "eventKind",
+				Name:   "suggestedAgentId",
+				Column: "event_kind",
 			},
 			{
-				Name:        "suggestedAgent",
-				FieldMapKey: "eventKind",
+				Name:   "suggestedAgent",
+				Column: "event_kind",
 			},
 			{
 				Name:    "agentWork",
@@ -28422,237 +28918,234 @@ func init() {
 
 	WatchtowerItemEventSpec = TypeSpec{
 		TypeName: "WatchtowerItemEvent",
-		FieldMap: watchtowercol.EventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "itemId",
-				FieldMapKey: "itemId",
+				Name:   "itemId",
+				Column: "item_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "actorId",
-				FieldMapKey: "actorId",
+				Name:   "actorId",
+				Column: "actor_id",
 			},
 			{
-				Name:        "actor",
-				FieldMapKey: "actorId",
+				Name:   "actor",
+				Column: "actor_id",
 			},
 			{
-				Name:        "fromValue",
-				FieldMapKey: "fromValue",
+				Name:   "fromValue",
+				Column: "from_value",
 			},
 			{
-				Name:        "toValue",
-				FieldMapKey: "toValue",
+				Name:   "toValue",
+				Column: "to_value",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	WatchtowerTrailEventSpec = TypeSpec{
 		TypeName: "WatchtowerTrailEvent",
-		FieldMap: billingqueuecol.ItemEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "at",
-				FieldMapKey: "at",
+				Name:   "at",
+				Column: "at",
 			},
 			{
-				Name:        "text",
-				FieldMapKey: "text",
+				Name:   "text",
+				Column: "text",
 			},
 		},
 	}
 
 	WorkerSpec = TypeSpec{
 		TypeName: "Worker",
-		FieldMap: workercol.WorkerFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "stateId",
-				FieldMapKey: "stateId",
+				Name:   "stateId",
+				Column: "state_id",
 			},
 			{
-				Name:        "fleetCodeId",
-				FieldMapKey: "fleetCodeId",
+				Name:   "fleetCodeId",
+				Column: "fleet_code_id",
 			},
 			{
-				Name:        "managerId",
-				FieldMapKey: "managerId",
+				Name:   "managerId",
+				Column: "manager_id",
 			},
 			{
-				Name:        "positionId",
-				FieldMapKey: "positionId",
+				Name:   "positionId",
+				Column: "position_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "driverType",
-				FieldMapKey: "driverType",
+				Name:   "driverType",
+				Column: "driver_type",
 			},
 			{
-				Name:        "leaveType",
-				FieldMapKey: "leaveType",
+				Name:   "leaveType",
+				Column: "leave_type",
 			},
 			{
-				Name:        "profilePicUrl",
-				FieldMapKey: "profilePicUrl",
+				Name:   "profilePicUrl",
+				Column: "profile_pic_url",
 			},
 			{
-				Name:        "firstName",
-				FieldMapKey: "firstName",
+				Name:   "firstName",
+				Column: "first_name",
 			},
 			{
-				Name:        "lastName",
-				FieldMapKey: "lastName",
+				Name:   "lastName",
+				Column: "last_name",
 			},
 			{
-				Name:        "wholeName",
-				FieldMapKey: "wholeName",
+				Name:   "wholeName",
+				Column: "whole_name",
 			},
 			{
-				Name:        "addressLine1",
-				FieldMapKey: "addressLine1",
+				Name:   "addressLine1",
+				Column: "address_line1",
 			},
 			{
-				Name:        "addressLine2",
-				FieldMapKey: "addressLine2",
+				Name:   "addressLine2",
+				Column: "address_line2",
 			},
 			{
-				Name:        "city",
-				FieldMapKey: "city",
+				Name:   "city",
+				Column: "city",
 			},
 			{
-				Name:        "postalCode",
-				FieldMapKey: "postalCode",
+				Name:   "postalCode",
+				Column: "postal_code",
 			},
 			{
-				Name:        "email",
-				FieldMapKey: "email",
+				Name:   "email",
+				Column: "email",
 			},
 			{
-				Name:        "phoneNumber",
-				FieldMapKey: "phoneNumber",
+				Name:   "phoneNumber",
+				Column: "phone_number",
 			},
 			{
-				Name:        "emergencyContactName",
-				FieldMapKey: "emergencyContactName",
+				Name:   "emergencyContactName",
+				Column: "emergency_contact_name",
 			},
 			{
-				Name:        "emergencyContactPhone",
-				FieldMapKey: "emergencyContactPhone",
+				Name:   "emergencyContactPhone",
+				Column: "emergency_contact_phone",
 			},
 			{
-				Name:        "externalId",
-				FieldMapKey: "externalId",
+				Name:   "externalId",
+				Column: "external_id",
 			},
 			{
-				Name:        "assignmentBlocked",
-				FieldMapKey: "assignmentBlocked",
+				Name:   "assignmentBlocked",
+				Column: "assignment_blocked",
 			},
 			{
-				Name:        "gender",
-				FieldMapKey: "gender",
+				Name:   "gender",
+				Column: "gender",
 			},
 			{
-				Name:        "canBeAssigned",
-				FieldMapKey: "canBeAssigned",
+				Name:   "canBeAssigned",
+				Column: "can_be_assigned",
 			},
 			{
-				Name:        "availableForDispatch",
-				FieldMapKey: "availableForDispatch",
+				Name:   "availableForDispatch",
+				Column: "available_for_dispatch",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
 				Name:    "customFields",
 				Special: "customFields",
 			},
 			{
-				Name:        "businessUnit",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnit",
+				Column: "business_unit_id",
 				Relation: &RelationSpec{
 					Target: &BusinessUnitSpec,
 				},
 			},
 			{
-				Name:        "organization",
-				FieldMapKey: "organizationId",
+				Name:   "organization",
+				Column: "organization_id",
 				Relation: &RelationSpec{
 					Target: &OrganizationSpec,
 				},
 			},
 			{
-				Name:        "state",
-				FieldMapKey: "stateId",
+				Name:   "state",
+				Column: "state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
 			},
 			{
-				Name:        "fleetCode",
-				FieldMapKey: "fleetCodeId",
+				Name:   "fleetCode",
+				Column: "fleet_code_id",
 				Relation: &RelationSpec{
 					Target: &FleetCodeSpec,
 				},
 			},
 			{
-				Name:        "manager",
-				FieldMapKey: "managerId",
+				Name:   "manager",
+				Column: "manager_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -28674,129 +29167,127 @@ func init() {
 
 	WorkerAvailabilityPreferenceSpec = TypeSpec{
 		TypeName: "WorkerAvailabilityPreference",
-		FieldMap: workercol.WorkerAvailabilityPreferenceFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "dayOfWeek",
-				FieldMapKey: "dayOfWeek",
+				Name:   "dayOfWeek",
+				Column: "day_of_week",
 			},
 			{
-				Name:        "preference",
-				FieldMapKey: "preference",
+				Name:   "preference",
+				Column: "preference",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerBenefitEnrollmentSpec = TypeSpec{
 		TypeName: "WorkerBenefitEnrollment",
-		FieldMap: driverpaycol.WorkerBenefitEnrollmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "benefitPlanId",
-				FieldMapKey: "benefitPlanId",
+				Name:   "benefitPlanId",
+				Column: "benefit_plan_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "coverageTier",
-				FieldMapKey: "coverageTier",
+				Name:   "coverageTier",
+				Column: "coverage_tier",
 			},
 			{
-				Name:        "effectiveFrom",
-				FieldMapKey: "effectiveFrom",
+				Name:   "effectiveFrom",
+				Column: "effective_from",
 			},
 			{
-				Name:        "effectiveTo",
-				FieldMapKey: "effectiveTo",
+				Name:   "effectiveTo",
+				Column: "effective_to",
 			},
 			{
-				Name:        "employeeCostMinor",
-				FieldMapKey: "employeeCostMinor",
+				Name:   "employeeCostMinor",
+				Column: "employee_cost_minor",
 			},
 			{
-				Name:        "employerCostMinor",
-				FieldMapKey: "employerCostMinor",
+				Name:   "employerCostMinor",
+				Column: "employer_cost_minor",
 			},
 			{
-				Name:        "recurringDeductionId",
-				FieldMapKey: "recurringDeductionId",
+				Name:   "recurringDeductionId",
+				Column: "recurring_deduction_id",
 			},
 			{
-				Name:        "waivedReason",
-				FieldMapKey: "waivedReason",
+				Name:   "waivedReason",
+				Column: "waived_reason",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "benefitPlan",
-				FieldMapKey: "businessUnitId",
+				Name:   "benefitPlan",
+				Column: "benefit_plan_id",
 				Relation: &RelationSpec{
 					Target: &BenefitPlanSpec,
 				},
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -28806,67 +29297,66 @@ func init() {
 
 	WorkerChecklistSpec = TypeSpec{
 		TypeName: "WorkerChecklist",
-		FieldMap: workercol.WorkerChecklistFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
+				Name:   "templateId",
+				Column: "template_id",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "dueAt",
-				FieldMapKey: "dueAt",
+				Name:   "dueAt",
+				Column: "due_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "cancelledAt",
-				FieldMapKey: "cancelledAt",
+				Name:   "cancelledAt",
+				Column: "cancelled_at",
 			},
 			{
-				Name:        "cancelReason",
-				FieldMapKey: "cancelReason",
+				Name:   "cancelReason",
+				Column: "cancel_reason",
 			},
 			{
-				Name:        "sourceEventId",
-				FieldMapKey: "sourceEventId",
+				Name:   "sourceEventId",
+				Column: "source_event_id",
 			},
 			{
-				Name:        "startedById",
-				FieldMapKey: "startedById",
+				Name:   "startedById",
+				Column: "started_by_id",
 			},
 			{
-				Name:        "startedBy",
-				FieldMapKey: "startedById",
+				Name:   "startedBy",
+				Column: "started_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -28882,186 +29372,184 @@ func init() {
 				},
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerChecklistItemSpec = TypeSpec{
 		TypeName: "WorkerChecklistItem",
-		FieldMap: workercol.WorkerChecklistItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "checklistId",
-				FieldMapKey: "checklistId",
+				Name:   "checklistId",
+				Column: "checklist_id",
 			},
 			{
-				Name:        "label",
-				FieldMapKey: "label",
+				Name:   "label",
+				Column: "label",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "required",
-				FieldMapKey: "required",
+				Name:   "required",
+				Column: "required",
 			},
 			{
-				Name:        "owner",
-				FieldMapKey: "owner",
+				Name:   "owner",
+				Column: "owner",
 			},
 			{
-				Name:        "dueAt",
-				FieldMapKey: "dueAt",
+				Name:   "dueAt",
+				Column: "due_at",
 			},
 			{
 				Name:    "overdue",
 				Special: "overdue",
 			},
 			{
-				Name:        "credentialTypeId",
-				FieldMapKey: "credentialTypeId",
+				Name:   "credentialTypeId",
+				Column: "credential_type_id",
 			},
 			{
-				Name:        "credentialType",
-				FieldMapKey: "businessUnitId",
+				Name:   "credentialType",
+				Column: "credential_type_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialTypeSpec,
 				},
 			},
 			{
-				Name:        "documentTypeId",
-				FieldMapKey: "documentTypeId",
+				Name:   "documentTypeId",
+				Column: "document_type_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "completedById",
-				FieldMapKey: "completedById",
+				Name:   "completedById",
+				Column: "completed_by_id",
 			},
 			{
-				Name:        "completedBy",
-				FieldMapKey: "completedById",
+				Name:   "completedBy",
+				Column: "completed_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "autoCompleted",
-				FieldMapKey: "autoCompleted",
+				Name:   "autoCompleted",
+				Column: "auto_completed",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "evidenceDocumentId",
-				FieldMapKey: "evidenceDocumentId",
+				Name:   "evidenceDocumentId",
+				Column: "evidence_document_id",
 			},
 			{
-				Name:        "evidenceDocument",
-				FieldMapKey: "businessUnitId",
+				Name:   "evidenceDocument",
+				Column: "evidence_document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
 			},
 			{
-				Name:        "evidenceCredentialId",
-				FieldMapKey: "evidenceCredentialId",
+				Name:   "evidenceCredentialId",
+				Column: "evidence_credential_id",
 			},
 			{
-				Name:        "evidenceCredential",
-				FieldMapKey: "businessUnitId",
+				Name:   "evidenceCredential",
+				Column: "evidence_credential_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialSpec,
 				},
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	WorkerChecklistTemplateSpec = TypeSpec{
 		TypeName: "WorkerChecklistTemplate",
-		FieldMap: workercol.WorkerChecklistTemplateFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "trigger",
-				FieldMapKey: "trigger",
+				Name:   "trigger",
+				Column: "trigger",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "isDefault",
-				FieldMapKey: "isDefault",
+				Name:   "isDefault",
+				Column: "is_default",
 			},
 			{
 				Name: "items",
@@ -29074,265 +29562,262 @@ func init() {
 				Special: "openChecklistCount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerChecklistTemplateItemSpec = TypeSpec{
 		TypeName: "WorkerChecklistTemplateItem",
-		FieldMap: workercol.WorkerChecklistTemplateItemFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
+				Name:   "templateId",
+				Column: "template_id",
 			},
 			{
-				Name:        "label",
-				FieldMapKey: "label",
+				Name:   "label",
+				Column: "label",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "required",
-				FieldMapKey: "required",
+				Name:   "required",
+				Column: "required",
 			},
 			{
-				Name:        "dueOffsetDays",
-				FieldMapKey: "dueOffsetDays",
+				Name:   "dueOffsetDays",
+				Column: "due_offset_days",
 			},
 			{
-				Name:        "owner",
-				FieldMapKey: "owner",
+				Name:   "owner",
+				Column: "owner",
 			},
 			{
-				Name:        "credentialTypeId",
-				FieldMapKey: "credentialTypeId",
+				Name:   "credentialTypeId",
+				Column: "credential_type_id",
 			},
 			{
-				Name:        "credentialType",
-				FieldMapKey: "businessUnitId",
+				Name:   "credentialType",
+				Column: "credential_type_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialTypeSpec,
 				},
 			},
 			{
-				Name:        "documentTypeId",
-				FieldMapKey: "documentTypeId",
+				Name:   "documentTypeId",
+				Column: "document_type_id",
 			},
 			{
 				Name:    "documentTypeName",
 				Special: "documentTypeName",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 		},
 	}
 
 	WorkerClearinghouseQuerySpec = TypeSpec{
 		TypeName: "WorkerClearinghouseQuery",
-		FieldMap: workercol.WorkerClearinghouseQueryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "queryType",
-				FieldMapKey: "queryType",
+				Name:   "queryType",
+				Column: "query_type",
 			},
 			{
-				Name:        "result",
-				FieldMapKey: "result",
+				Name:   "result",
+				Column: "result",
 			},
 			{
-				Name:        "consentObtainedAt",
-				FieldMapKey: "consentObtainedAt",
+				Name:   "consentObtainedAt",
+				Column: "consent_obtained_at",
 			},
 			{
-				Name:        "consentExpiresAt",
-				FieldMapKey: "consentExpiresAt",
+				Name:   "consentExpiresAt",
+				Column: "consent_expires_at",
 			},
 			{
-				Name:        "requestedAt",
-				FieldMapKey: "requestedAt",
+				Name:   "requestedAt",
+				Column: "requested_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "violationCount",
-				FieldMapKey: "violationCount",
+				Name:   "violationCount",
+				Column: "violation_count",
 			},
 			{
-				Name:        "reference",
-				FieldMapKey: "reference",
+				Name:   "reference",
+				Column: "reference",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "performedById",
-				FieldMapKey: "performedById",
+				Name:   "performedById",
+				Column: "performed_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerCredentialSpec = TypeSpec{
 		TypeName: "WorkerCredential",
-		FieldMap: workercol.WorkerCredentialFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "credentialTypeId",
-				FieldMapKey: "credentialTypeId",
+				Name:   "credentialTypeId",
+				Column: "credential_type_id",
 			},
 			{
-				Name:        "credentialType",
-				FieldMapKey: "businessUnitId",
+				Name:   "credentialType",
+				Column: "credential_type_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialTypeSpec,
 				},
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "number",
-				FieldMapKey: "number",
+				Name:   "number",
+				Column: "number",
 			},
 			{
-				Name:        "issuingAuthority",
-				FieldMapKey: "issuingAuthority",
+				Name:   "issuingAuthority",
+				Column: "issuing_authority",
 			},
 			{
-				Name:        "issuedAt",
-				FieldMapKey: "issuedAt",
+				Name:   "issuedAt",
+				Column: "issued_at",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "verifiedById",
-				FieldMapKey: "verifiedById",
+				Name:   "verifiedById",
+				Column: "verified_by_id",
 			},
 			{
-				Name:        "verifiedBy",
-				FieldMapKey: "verifiedById",
+				Name:   "verifiedBy",
+				Column: "verified_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "verifiedAt",
-				FieldMapKey: "verifiedAt",
+				Name:   "verifiedAt",
+				Column: "verified_at",
 			},
 			{
-				Name:        "archivedById",
-				FieldMapKey: "archivedById",
+				Name:   "archivedById",
+				Column: "archived_by_id",
 			},
 			{
-				Name:        "archivedAt",
-				FieldMapKey: "archivedAt",
+				Name:   "archivedAt",
+				Column: "archived_at",
 			},
 			{
-				Name:        "archiveReason",
-				FieldMapKey: "archiveReason",
+				Name:   "archiveReason",
+				Column: "archive_reason",
 			},
 			{
 				Name:    "health",
@@ -29343,20 +29828,20 @@ func init() {
 				Special: "daysUntilExpiry",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -29366,282 +29851,279 @@ func init() {
 
 	WorkerCredentialDocumentSpec = TypeSpec{
 		TypeName: "WorkerCredentialDocument",
-		FieldMap: documentcol.DocumentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "fileName",
-				FieldMapKey: "fileName",
+				Name:   "fileName",
+				Column: "file_name",
 			},
 			{
-				Name:        "originalName",
-				FieldMapKey: "originalName",
+				Name:   "originalName",
+				Column: "original_name",
 			},
 			{
-				Name:        "fileType",
-				FieldMapKey: "fileType",
+				Name:   "fileType",
+				Column: "file_type",
 			},
 			{
-				Name:        "fileSize",
-				FieldMapKey: "fileSize",
+				Name:   "fileSize",
+				Column: "file_size",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 		},
 	}
 
 	WorkerCredentialTypeSpec = TypeSpec{
 		TypeName: "WorkerCredentialType",
-		FieldMap: workercol.WorkerCredentialTypeFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "name",
-				FieldMapKey: "name",
+				Name:   "name",
+				Column: "name",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "category",
-				FieldMapKey: "category",
+				Name:   "category",
+				Column: "category",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "isRequired",
-				FieldMapKey: "isRequired",
+				Name:   "isRequired",
+				Column: "is_required",
 			},
 			{
-				Name:        "requiredForDriverTypes",
-				FieldMapKey: "requiredForDriverTypes",
+				Name:   "requiredForDriverTypes",
+				Column: "required_for_driver_types",
 			},
 			{
-				Name:        "renewalWindowDays",
-				FieldMapKey: "renewalWindowDays",
+				Name:   "renewalWindowDays",
+				Column: "renewal_window_days",
 			},
 			{
-				Name:        "validityMonths",
-				FieldMapKey: "validityMonths",
+				Name:   "validityMonths",
+				Column: "validity_months",
 			},
 			{
-				Name:        "requiresNumber",
-				FieldMapKey: "requiresNumber",
+				Name:   "requiresNumber",
+				Column: "requires_number",
 			},
 			{
-				Name:        "requiresDocument",
-				FieldMapKey: "requiresDocument",
+				Name:   "requiresDocument",
+				Column: "requires_document",
 			},
 			{
-				Name:        "profileField",
-				FieldMapKey: "profileField",
+				Name:   "profileField",
+				Column: "profile_field",
 			},
 			{
-				Name:        "isSystem",
-				FieldMapKey: "isSystem",
+				Name:   "isSystem",
+				Column: "is_system",
 			},
 			{
-				Name:        "sortOrder",
-				FieldMapKey: "sortOrder",
+				Name:   "sortOrder",
+				Column: "sort_order",
 			},
 			{
 				Name:    "activeCredentialCount",
 				Special: "activeCredentialCount",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerDOTTestSpec = TypeSpec{
 		TypeName: "WorkerDOTTest",
-		FieldMap: workercol.WorkerDOTTestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "testType",
-				FieldMapKey: "testType",
+				Name:   "testType",
+				Column: "test_type",
 			},
 			{
-				Name:        "substance",
-				FieldMapKey: "substance",
+				Name:   "substance",
+				Column: "substance",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "result",
-				FieldMapKey: "result",
+				Name:   "result",
+				Column: "result",
 			},
 			{
-				Name:        "isDot",
-				FieldMapKey: "isDot",
+				Name:   "isDot",
+				Column: "is_dot",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "scheduledAt",
-				FieldMapKey: "scheduledAt",
+				Name:   "scheduledAt",
+				Column: "scheduled_at",
 			},
 			{
-				Name:        "collectedAt",
-				FieldMapKey: "collectedAt",
+				Name:   "collectedAt",
+				Column: "collected_at",
 			},
 			{
-				Name:        "resultAt",
-				FieldMapKey: "resultAt",
+				Name:   "resultAt",
+				Column: "result_at",
 			},
 			{
-				Name:        "collectionSite",
-				FieldMapKey: "collectionSite",
+				Name:   "collectionSite",
+				Column: "collection_site",
 			},
 			{
-				Name:        "collectorName",
-				FieldMapKey: "collectorName",
+				Name:   "collectorName",
+				Column: "collector_name",
 			},
 			{
-				Name:        "specimenId",
-				FieldMapKey: "specimenId",
+				Name:   "specimenId",
+				Column: "specimen_id",
 			},
 			{
-				Name:        "labName",
-				FieldMapKey: "labName",
+				Name:   "labName",
+				Column: "lab_name",
 			},
 			{
-				Name:        "mroName",
-				FieldMapKey: "mroName",
+				Name:   "mroName",
+				Column: "mro_name",
 			},
 			{
-				Name:        "mroVerifiedAt",
-				FieldMapKey: "mroVerifiedAt",
+				Name:   "mroVerifiedAt",
+				Column: "mro_verified_at",
 			},
 			{
-				Name:        "alcoholConcentration",
-				FieldMapKey: "alcoholConcentration",
+				Name:   "alcoholConcentration",
+				Column: "alcohol_concentration",
 			},
 			{
-				Name:        "safetyEventId",
-				FieldMapKey: "safetyEventId",
+				Name:   "safetyEventId",
+				Column: "safety_event_id",
 			},
 			{
-				Name:        "drawEntryId",
-				FieldMapKey: "drawEntryId",
+				Name:   "drawEntryId",
+				Column: "draw_entry_id",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "orderedById",
-				FieldMapKey: "orderedById",
+				Name:   "orderedById",
+				Column: "ordered_by_id",
 			},
 			{
-				Name:        "recordedById",
-				FieldMapKey: "recordedById",
+				Name:   "recordedById",
+				Column: "recorded_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
 			},
 			{
-				Name:        "orderedBy",
-				FieldMapKey: "orderedById",
+				Name:   "orderedBy",
+				Column: "ordered_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "recordedBy",
-				FieldMapKey: "recordedById",
+				Name:   "recordedBy",
+				Column: "recorded_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -29651,111 +30133,110 @@ func init() {
 
 	WorkerDOTViolationSpec = TypeSpec{
 		TypeName: "WorkerDOTViolation",
-		FieldMap: workercol.WorkerDOTViolationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "violationType",
-				FieldMapKey: "violationType",
+				Name:   "violationType",
+				Column: "violation_type",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "sourceTestId",
-				FieldMapKey: "sourceTestId",
+				Name:   "sourceTestId",
+				Column: "source_test_id",
 			},
 			{
-				Name:        "reportedToClearinghouseAt",
-				FieldMapKey: "reportedToClearinghouseAt",
+				Name:   "reportedToClearinghouseAt",
+				Column: "reported_to_clearinghouse_at",
 			},
 			{
-				Name:        "sapName",
-				FieldMapKey: "sapName",
+				Name:   "sapName",
+				Column: "sap_name",
 			},
 			{
-				Name:        "sapReferredAt",
-				FieldMapKey: "sapReferredAt",
+				Name:   "sapReferredAt",
+				Column: "sap_referred_at",
 			},
 			{
-				Name:        "sapEvaluationCompletedAt",
-				FieldMapKey: "sapEvaluationCompletedAt",
+				Name:   "sapEvaluationCompletedAt",
+				Column: "sap_evaluation_completed_at",
 			},
 			{
-				Name:        "rtdTestId",
-				FieldMapKey: "rtdTestId",
+				Name:   "rtdTestId",
+				Column: "rtd_test_id",
 			},
 			{
-				Name:        "rtdCompletedAt",
-				FieldMapKey: "rtdCompletedAt",
+				Name:   "rtdCompletedAt",
+				Column: "rtd_completed_at",
 			},
 			{
-				Name:        "followUpTestCount",
-				FieldMapKey: "followUpTestCount",
+				Name:   "followUpTestCount",
+				Column: "follow_up_test_count",
 			},
 			{
-				Name:        "followUpTestsCompleted",
-				FieldMapKey: "followUpTestsCompleted",
+				Name:   "followUpTestsCompleted",
+				Column: "follow_up_tests_completed",
 			},
 			{
-				Name:        "followUpEndsAt",
-				FieldMapKey: "followUpEndsAt",
+				Name:   "followUpEndsAt",
+				Column: "follow_up_ends_at",
 			},
 			{
-				Name:        "resolvedAt",
-				FieldMapKey: "resolvedAt",
+				Name:   "resolvedAt",
+				Column: "resolved_at",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "recordedById",
-				FieldMapKey: "recordedById",
+				Name:   "recordedById",
+				Column: "recorded_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "sourceTest",
-				FieldMapKey: "businessUnitId",
+				Name:   "sourceTest",
+				Column: "source_test_id",
 				Relation: &RelationSpec{
 					Target: &WorkerDOTTestSpec,
 				},
@@ -29769,363 +30250,360 @@ func init() {
 
 	WorkerDisciplinaryActionSpec = TypeSpec{
 		TypeName: "WorkerDisciplinaryAction",
-		FieldMap: workercol.WorkerDisciplinaryActionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "level",
-				FieldMapKey: "level",
+				Name:   "level",
+				Column: "level",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "details",
-				FieldMapKey: "details",
+				Name:   "details",
+				Column: "details",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "issuedAt",
-				FieldMapKey: "issuedAt",
+				Name:   "issuedAt",
+				Column: "issued_at",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "suspensionDays",
-				FieldMapKey: "suspensionDays",
+				Name:   "suspensionDays",
+				Column: "suspension_days",
 			},
 			{
-				Name:        "safetyEventId",
-				FieldMapKey: "safetyEventId",
+				Name:   "safetyEventId",
+				Column: "safety_event_id",
 			},
 			{
-				Name:        "safetyEvent",
-				FieldMapKey: "businessUnitId",
+				Name:   "safetyEvent",
+				Column: "safety_event_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSafetyEventSpec,
 				},
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "issuedById",
-				FieldMapKey: "issuedById",
+				Name:   "issuedById",
+				Column: "issued_by_id",
 			},
 			{
-				Name:        "issuedBy",
-				FieldMapKey: "issuedById",
+				Name:   "issuedBy",
+				Column: "issued_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "workerComment",
-				FieldMapKey: "workerComment",
+				Name:   "workerComment",
+				Column: "worker_comment",
 			},
 			{
-				Name:        "rescindedAt",
-				FieldMapKey: "rescindedAt",
+				Name:   "rescindedAt",
+				Column: "rescinded_at",
 			},
 			{
-				Name:        "rescindedById",
-				FieldMapKey: "rescindedById",
+				Name:   "rescindedById",
+				Column: "rescinded_by_id",
 			},
 			{
-				Name:        "rescindReason",
-				FieldMapKey: "rescindReason",
+				Name:   "rescindReason",
+				Column: "rescind_reason",
 			},
 			{
 				Name:    "active",
 				Special: "active",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerEmploymentEventSpec = TypeSpec{
 		TypeName: "WorkerEmploymentEvent",
-		FieldMap: workercol.WorkerEmploymentEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "effectiveAt",
-				FieldMapKey: "effectiveAt",
+				Name:   "effectiveAt",
+				Column: "effective_at",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "fromValues",
-				FieldMapKey: "fromValues",
+				Name:   "fromValues",
+				Column: "from_values",
 			},
 			{
-				Name:        "toValues",
-				FieldMapKey: "toValues",
+				Name:   "toValues",
+				Column: "to_values",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
 			},
 			{
-				Name:        "recordedById",
-				FieldMapKey: "recordedById",
+				Name:   "recordedById",
+				Column: "recorded_by_id",
 			},
 			{
-				Name:        "recordedBy",
-				FieldMapKey: "recordedById",
+				Name:   "recordedBy",
+				Column: "recorded_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "amendedById",
-				FieldMapKey: "amendedById",
+				Name:   "amendedById",
+				Column: "amended_by_id",
 			},
 			{
-				Name:        "amendedBy",
-				FieldMapKey: "amendedById",
+				Name:   "amendedBy",
+				Column: "amended_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "amendedAt",
-				FieldMapKey: "amendedAt",
+				Name:   "amendedAt",
+				Column: "amended_at",
 			},
 			{
-				Name:        "amendmentNote",
-				FieldMapKey: "amendmentNote",
+				Name:   "amendmentNote",
+				Column: "amendment_note",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerEmploymentVerificationSpec = TypeSpec{
 		TypeName: "WorkerEmploymentVerification",
-		FieldMap: workercol.WorkerEmploymentVerificationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "employerName",
-				FieldMapKey: "employerName",
+				Name:   "employerName",
+				Column: "employer_name",
 			},
 			{
-				Name:        "employerDotNumber",
-				FieldMapKey: "employerDotNumber",
+				Name:   "employerDotNumber",
+				Column: "employer_dot_number",
 			},
 			{
-				Name:        "employerMcNumber",
-				FieldMapKey: "employerMcNumber",
+				Name:   "employerMcNumber",
+				Column: "employer_mc_number",
 			},
 			{
-				Name:        "contactName",
-				FieldMapKey: "contactName",
+				Name:   "contactName",
+				Column: "contact_name",
 			},
 			{
-				Name:        "contactPhone",
-				FieldMapKey: "contactPhone",
+				Name:   "contactPhone",
+				Column: "contact_phone",
 			},
 			{
-				Name:        "contactEmail",
-				FieldMapKey: "contactEmail",
+				Name:   "contactEmail",
+				Column: "contact_email",
 			},
 			{
-				Name:        "employedFrom",
-				FieldMapKey: "employedFrom",
+				Name:   "employedFrom",
+				Column: "employed_from",
 			},
 			{
-				Name:        "employedTo",
-				FieldMapKey: "employedTo",
+				Name:   "employedTo",
+				Column: "employed_to",
 			},
 			{
-				Name:        "wasDotRegulated",
-				FieldMapKey: "wasDotRegulated",
+				Name:   "wasDotRegulated",
+				Column: "was_dot_regulated",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "method",
-				FieldMapKey: "method",
+				Name:   "method",
+				Column: "method",
 			},
 			{
-				Name:        "requestedAt",
-				FieldMapKey: "requestedAt",
+				Name:   "requestedAt",
+				Column: "requested_at",
 			},
 			{
-				Name:        "responseReceivedAt",
-				FieldMapKey: "responseReceivedAt",
+				Name:   "responseReceivedAt",
+				Column: "response_received_at",
 			},
 			{
-				Name:        "lastFollowUpAt",
-				FieldMapKey: "lastFollowUpAt",
+				Name:   "lastFollowUpAt",
+				Column: "last_follow_up_at",
 			},
 			{
-				Name:        "followUpCount",
-				FieldMapKey: "followUpCount",
+				Name:   "followUpCount",
+				Column: "follow_up_count",
 			},
 			{
-				Name:        "drugAlcoholResponseReceivedAt",
-				FieldMapKey: "drugAlcoholResponseReceivedAt",
+				Name:   "drugAlcoholResponseReceivedAt",
+				Column: "drug_alcohol_response_received_at",
 			},
 			{
-				Name:        "hadAccidents",
-				FieldMapKey: "hadAccidents",
+				Name:   "hadAccidents",
+				Column: "had_accidents",
 			},
 			{
-				Name:        "accidentCount",
-				FieldMapKey: "accidentCount",
+				Name:   "accidentCount",
+				Column: "accident_count",
 			},
 			{
-				Name:        "hadDrugAlcoholViolations",
-				FieldMapKey: "hadDrugAlcoholViolations",
+				Name:   "hadDrugAlcoholViolations",
+				Column: "had_drug_alcohol_violations",
 			},
 			{
-				Name:        "findings",
-				FieldMapKey: "findings",
+				Name:   "findings",
+				Column: "findings",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
@@ -30135,111 +30613,109 @@ func init() {
 
 	WorkerFormSubmissionSpec = TypeSpec{
 		TypeName: "WorkerFormSubmission",
-		FieldMap: telematicscol.FormSubmissionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "templateId",
-				FieldMapKey: "templateId",
+				Name:   "templateId",
+				Column: "template_id",
 			},
 			{
-				Name:        "templateName",
-				FieldMapKey: "templateName",
+				Name:   "templateName",
+				Column: "template_name",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "fields",
-				FieldMapKey: "fields",
+				Name:   "fields",
+				Column: "fields",
 			},
 		},
 	}
 
 	WorkerHosStateSpec = TypeSpec{
 		TypeName:      "WorkerHosState",
-		FieldMap:      telematicscol.WorkerHOSStateFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
 				Name:    "workerName",
 				Special: "workerName",
 			},
 			{
-				Name:        "provider",
-				FieldMapKey: "provider",
+				Name:   "provider",
+				Column: "provider",
 			},
 			{
-				Name:        "providerDriverId",
-				FieldMapKey: "providerDriverId",
+				Name:   "providerDriverId",
+				Column: "provider_driver_id",
 			},
 			{
-				Name:        "dutyStatus",
-				FieldMapKey: "dutyStatus",
+				Name:   "dutyStatus",
+				Column: "duty_status",
 			},
 			{
-				Name:        "driveRemainingMs",
-				FieldMapKey: "driveRemainingMs",
+				Name:   "driveRemainingMs",
+				Column: "drive_remaining_ms",
 			},
 			{
-				Name:        "shiftRemainingMs",
-				FieldMapKey: "shiftRemainingMs",
+				Name:   "shiftRemainingMs",
+				Column: "shift_remaining_ms",
 			},
 			{
-				Name:        "cycleRemainingMs",
-				FieldMapKey: "cycleRemainingMs",
+				Name:   "cycleRemainingMs",
+				Column: "cycle_remaining_ms",
 			},
 			{
-				Name:        "cycleTomorrowMs",
-				FieldMapKey: "cycleTomorrowMs",
+				Name:   "cycleTomorrowMs",
+				Column: "cycle_tomorrow_ms",
 			},
 			{
-				Name:        "breakRemainingMs",
-				FieldMapKey: "breakRemainingMs",
+				Name:   "breakRemainingMs",
+				Column: "break_remaining_ms",
 			},
 			{
-				Name:        "cycleStartedAt",
-				FieldMapKey: "cycleStartedAt",
+				Name:   "cycleStartedAt",
+				Column: "cycle_started_at",
 			},
 			{
-				Name:        "shiftDrivingViolationMs",
-				FieldMapKey: "shiftDrivingViolationMs",
+				Name:   "shiftDrivingViolationMs",
+				Column: "shift_driving_violation_ms",
 			},
 			{
-				Name:        "cycleViolationMs",
-				FieldMapKey: "cycleViolationMs",
+				Name:   "cycleViolationMs",
+				Column: "cycle_violation_ms",
 			},
 			{
-				Name:        "currentVehicleId",
-				FieldMapKey: "currentVehicleId",
+				Name:   "currentVehicleId",
+				Column: "current_vehicle_id",
 			},
 			{
-				Name:        "currentTractorId",
-				FieldMapKey: "currentTractorId",
+				Name:   "currentTractorId",
+				Column: "current_tractor_id",
 			},
 			{
-				Name:        "rulesetCycle",
-				FieldMapKey: "rulesetCycle",
+				Name:   "rulesetCycle",
+				Column: "ruleset_cycle",
 			},
 			{
-				Name:        "rulesetShift",
-				FieldMapKey: "rulesetShift",
+				Name:   "rulesetShift",
+				Column: "ruleset_shift",
 			},
 			{
-				Name:        "rulesetJurisdiction",
-				FieldMapKey: "rulesetJurisdiction",
+				Name:   "rulesetJurisdiction",
+				Column: "ruleset_jurisdiction",
 			},
 			{
 				Name:    "driveLimitMs",
@@ -30258,202 +30734,200 @@ func init() {
 				Special: "breakLimitMs",
 			},
 			{
-				Name:        "recordedAt",
-				FieldMapKey: "recordedAt",
+				Name:   "recordedAt",
+				Column: "recorded_at",
 			},
 		},
 	}
 
 	WorkerHosViolationSpec = TypeSpec{
 		TypeName:      "WorkerHosViolation",
-		FieldMap:      telematicscol.WorkerHOSViolationFieldMap,
 		AlwaysColumns: []string{},
 		Fields: []FieldSpec{
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "violationType",
-				FieldMapKey: "violationType",
+				Name:   "violationType",
+				Column: "violation_type",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "durationMs",
-				FieldMapKey: "durationMs",
+				Name:   "durationMs",
+				Column: "duration_ms",
 			},
 			{
-				Name:        "violationStartAt",
-				FieldMapKey: "violationStartAt",
+				Name:   "violationStartAt",
+				Column: "violation_start_at",
 			},
 			{
-				Name:        "dayStartAt",
-				FieldMapKey: "dayStartAt",
+				Name:   "dayStartAt",
+				Column: "day_start_at",
 			},
 			{
-				Name:        "dayEndAt",
-				FieldMapKey: "dayEndAt",
+				Name:   "dayEndAt",
+				Column: "day_end_at",
 			},
 			{
-				Name:        "detectedAt",
-				FieldMapKey: "detectedAt",
+				Name:   "detectedAt",
+				Column: "detected_at",
 			},
 		},
 	}
 
 	WorkerInjurySpec = TypeSpec{
 		TypeName: "WorkerInjury",
-		FieldMap: workercol.WorkerInjuryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "caseNumber",
-				FieldMapKey: "caseNumber",
+				Name:   "caseNumber",
+				Column: "case_number",
 			},
 			{
-				Name:        "caseYear",
-				FieldMapKey: "caseYear",
+				Name:   "caseYear",
+				Column: "case_year",
 			},
 			{
-				Name:        "classification",
-				FieldMapKey: "classification",
+				Name:   "classification",
+				Column: "classification",
 			},
 			{
-				Name:        "illnessType",
-				FieldMapKey: "illnessType",
+				Name:   "illnessType",
+				Column: "illness_type",
 			},
 			{
-				Name:        "treatment",
-				FieldMapKey: "treatment",
+				Name:   "treatment",
+				Column: "treatment",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
 				Name:    "recordable",
 				Special: "recordable",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "reportedAt",
-				FieldMapKey: "reportedAt",
+				Name:   "reportedAt",
+				Column: "reported_at",
 			},
 			{
-				Name:        "returnedToWorkAt",
-				FieldMapKey: "returnedToWorkAt",
+				Name:   "returnedToWorkAt",
+				Column: "returned_to_work_at",
 			},
 			{
-				Name:        "location",
-				FieldMapKey: "location",
+				Name:   "location",
+				Column: "location",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "bodyPart",
-				FieldMapKey: "bodyPart",
+				Name:   "bodyPart",
+				Column: "body_part",
 			},
 			{
-				Name:        "harmfulAgent",
-				FieldMapKey: "harmfulAgent",
+				Name:   "harmfulAgent",
+				Column: "harmful_agent",
 			},
 			{
-				Name:        "daysAway",
-				FieldMapKey: "daysAway",
+				Name:   "daysAway",
+				Column: "days_away",
 			},
 			{
-				Name:        "daysRestricted",
-				FieldMapKey: "daysRestricted",
+				Name:   "daysRestricted",
+				Column: "days_restricted",
 			},
 			{
-				Name:        "privacyCase",
-				FieldMapKey: "privacyCase",
+				Name:   "privacyCase",
+				Column: "privacy_case",
 			},
 			{
 				Name:    "logName",
 				Special: "logName",
 			},
 			{
-				Name:        "claimStatus",
-				FieldMapKey: "claimStatus",
+				Name:   "claimStatus",
+				Column: "claim_status",
 			},
 			{
-				Name:        "claimNumber",
-				FieldMapKey: "claimNumber",
+				Name:   "claimNumber",
+				Column: "claim_number",
 			},
 			{
-				Name:        "claimCarrier",
-				FieldMapKey: "claimCarrier",
+				Name:   "claimCarrier",
+				Column: "claim_carrier",
 			},
 			{
-				Name:        "claimFiledAt",
-				FieldMapKey: "claimFiledAt",
+				Name:   "claimFiledAt",
+				Column: "claim_filed_at",
 			},
 			{
-				Name:        "claimClosedAt",
-				FieldMapKey: "claimClosedAt",
+				Name:   "claimClosedAt",
+				Column: "claim_closed_at",
 			},
 			{
-				Name:        "safetyEventId",
-				FieldMapKey: "safetyEventId",
+				Name:   "safetyEventId",
+				Column: "safety_event_id",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
@@ -30463,134 +30937,133 @@ func init() {
 
 	WorkerLeaveCaseSpec = TypeSpec{
 		TypeName: "WorkerLeaveCase",
-		FieldMap: workercol.WorkerLeaveCaseFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "leaveType",
-				FieldMapKey: "leaveType",
+				Name:   "leaveType",
+				Column: "leave_type",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "frequency",
-				FieldMapKey: "frequency",
+				Name:   "frequency",
+				Column: "frequency",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "fmlaDesignated",
-				FieldMapKey: "fmlaDesignated",
+				Name:   "fmlaDesignated",
+				Column: "fmla_designated",
 			},
 			{
-				Name:        "militaryCaregiver",
-				FieldMapKey: "militaryCaregiver",
+				Name:   "militaryCaregiver",
+				Column: "military_caregiver",
 			},
 			{
-				Name:        "requestedAt",
-				FieldMapKey: "requestedAt",
+				Name:   "requestedAt",
+				Column: "requested_at",
 			},
 			{
-				Name:        "startsAt",
-				FieldMapKey: "startsAt",
+				Name:   "startsAt",
+				Column: "starts_at",
 			},
 			{
-				Name:        "endsAt",
-				FieldMapKey: "endsAt",
+				Name:   "endsAt",
+				Column: "ends_at",
 			},
 			{
-				Name:        "decidedAt",
-				FieldMapKey: "decidedAt",
+				Name:   "decidedAt",
+				Column: "decided_at",
 			},
 			{
-				Name:        "closedAt",
-				FieldMapKey: "closedAt",
+				Name:   "closedAt",
+				Column: "closed_at",
 			},
 			{
-				Name:        "certificationStatus",
-				FieldMapKey: "certificationStatus",
+				Name:   "certificationStatus",
+				Column: "certification_status",
 			},
 			{
-				Name:        "certificationRequestedAt",
-				FieldMapKey: "certificationRequestedAt",
+				Name:   "certificationRequestedAt",
+				Column: "certification_requested_at",
 			},
 			{
-				Name:        "certificationDueAt",
-				FieldMapKey: "certificationDueAt",
+				Name:   "certificationDueAt",
+				Column: "certification_due_at",
 			},
 			{
-				Name:        "certificationReceivedAt",
-				FieldMapKey: "certificationReceivedAt",
+				Name:   "certificationReceivedAt",
+				Column: "certification_received_at",
 			},
 			{
-				Name:        "recertificationDueAt",
-				FieldMapKey: "recertificationDueAt",
+				Name:   "recertificationDueAt",
+				Column: "recertification_due_at",
 			},
 			{
 				Name:    "certificationLate",
 				Special: "certificationLate",
 			},
 			{
-				Name:        "eligibilityHoursWorked",
-				FieldMapKey: "eligibilityHoursWorked",
+				Name:   "eligibilityHoursWorked",
+				Column: "eligibility_hours_worked",
 			},
 			{
-				Name:        "employmentEventId",
-				FieldMapKey: "employmentEventId",
+				Name:   "employmentEventId",
+				Column: "employment_event_id",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
@@ -30606,163 +31079,161 @@ func init() {
 
 	WorkerLeaveEntrySpec = TypeSpec{
 		TypeName: "WorkerLeaveEntry",
-		FieldMap: workercol.WorkerLeaveEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "leaveCaseId",
-				FieldMapKey: "leaveCaseId",
+				Name:   "leaveCaseId",
+				Column: "leave_case_id",
 			},
 			{
-				Name:        "usedOn",
-				FieldMapKey: "usedOn",
+				Name:   "usedOn",
+				Column: "used_on",
 			},
 			{
-				Name:        "hours",
-				FieldMapKey: "hours",
+				Name:   "hours",
+				Column: "hours",
 			},
 			{
-				Name:        "countsAgainstEntitlement",
-				FieldMapKey: "countsAgainstEntitlement",
+				Name:   "countsAgainstEntitlement",
+				Column: "counts_against_entitlement",
 			},
 			{
-				Name:        "ptoId",
-				FieldMapKey: "ptoId",
+				Name:   "ptoId",
+				Column: "pto_id",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 		},
 	}
 
 	WorkerPTOSpec = TypeSpec{
 		TypeName: "WorkerPTO",
-		FieldMap: workercol.WorkerPTOFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "approverId",
-				FieldMapKey: "approverId",
+				Name:   "approverId",
+				Column: "approver_id",
 			},
 			{
-				Name:        "rejectorId",
-				FieldMapKey: "rejectorId",
+				Name:   "rejectorId",
+				Column: "rejector_id",
 			},
 			{
-				Name:        "cancelledById",
-				FieldMapKey: "cancelledById",
+				Name:   "cancelledById",
+				Column: "cancelled_by_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "type",
-				FieldMapKey: "type",
+				Name:   "type",
+				Column: "type",
 			},
 			{
-				Name:        "startDate",
-				FieldMapKey: "startDate",
+				Name:   "startDate",
+				Column: "start_date",
 			},
 			{
-				Name:        "endDate",
-				FieldMapKey: "endDate",
+				Name:   "endDate",
+				Column: "end_date",
 			},
 			{
-				Name:        "reason",
-				FieldMapKey: "reason",
+				Name:   "reason",
+				Column: "reason",
 			},
 			{
-				Name:        "rejectionReason",
-				FieldMapKey: "rejectionReason",
+				Name:   "rejectionReason",
+				Column: "rejection_reason",
 			},
 			{
-				Name:        "cancellationReason",
-				FieldMapKey: "cancellationReason",
+				Name:   "cancellationReason",
+				Column: "cancellation_reason",
 			},
 			{
-				Name:        "days",
-				FieldMapKey: "days",
+				Name:   "days",
+				Column: "days",
 			},
 			{
-				Name:        "balanceAfterDays",
-				FieldMapKey: "balanceAfterDays",
+				Name:   "balanceAfterDays",
+				Column: "balance_after_days",
 			},
 			{
-				Name:        "autoApproved",
-				FieldMapKey: "autoApproved",
+				Name:   "autoApproved",
+				Column: "auto_approved",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "workerId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "approver",
-				FieldMapKey: "approverId",
+				Name:   "approver",
+				Column: "approver_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "rejector",
-				FieldMapKey: "rejectorId",
+				Name:   "rejector",
+				Column: "rejector_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "cancelledBy",
-				FieldMapKey: "cancelledById",
+				Name:   "cancelledBy",
+				Column: "cancelled_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
@@ -30772,79 +31243,78 @@ func init() {
 
 	WorkerPTOLedgerEntrySpec = TypeSpec{
 		TypeName: "WorkerPTOLedgerEntry",
-		FieldMap: workercol.WorkerPTOLedgerEntryFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "ptoType",
-				FieldMapKey: "ptoType",
+				Name:   "ptoType",
+				Column: "pto_type",
 			},
 			{
-				Name:        "entryType",
-				FieldMapKey: "entryType",
+				Name:   "entryType",
+				Column: "entry_type",
 			},
 			{
-				Name:        "amountDays",
-				FieldMapKey: "amountDays",
+				Name:   "amountDays",
+				Column: "amount_days",
 			},
 			{
-				Name:        "balanceAfterDays",
-				FieldMapKey: "balanceAfterDays",
+				Name:   "balanceAfterDays",
+				Column: "balance_after_days",
 			},
 			{
-				Name:        "sequence",
-				FieldMapKey: "sequence",
+				Name:   "sequence",
+				Column: "sequence",
 			},
 			{
-				Name:        "effectiveAt",
-				FieldMapKey: "effectiveAt",
+				Name:   "effectiveAt",
+				Column: "effective_at",
 			},
 			{
-				Name:        "periodKey",
-				FieldMapKey: "periodKey",
+				Name:   "periodKey",
+				Column: "period_key",
 			},
 			{
-				Name:        "sourcePtoId",
-				FieldMapKey: "sourcePtoId",
+				Name:   "sourcePtoId",
+				Column: "source_pto_id",
 			},
 			{
-				Name:        "assignmentId",
-				FieldMapKey: "assignmentId",
+				Name:   "assignmentId",
+				Column: "assignment_id",
 			},
 			{
-				Name:        "ptoPolicyId",
-				FieldMapKey: "ptoPolicyId",
+				Name:   "ptoPolicyId",
+				Column: "pto_policy_id",
 			},
 			{
-				Name:        "actorType",
-				FieldMapKey: "actorType",
+				Name:   "actorType",
+				Column: "actor_type",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -30858,133 +31328,131 @@ func init() {
 
 	WorkerPTOPolicyAssignmentSpec = TypeSpec{
 		TypeName: "WorkerPTOPolicyAssignment",
-		FieldMap: workercol.WorkerPTOPolicyAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "ptoPolicyId",
-				FieldMapKey: "ptoPolicyId",
+				Name:   "ptoPolicyId",
+				Column: "pto_policy_id",
 			},
 			{
 				Name:    "ptoPolicy",
 				Special: "ptoPolicy",
 			},
 			{
-				Name:        "effectiveFrom",
-				FieldMapKey: "effectiveFrom",
+				Name:   "effectiveFrom",
+				Column: "effective_from",
 			},
 			{
-				Name:        "effectiveTo",
-				FieldMapKey: "effectiveTo",
+				Name:   "effectiveTo",
+				Column: "effective_to",
 			},
 			{
-				Name:        "assignedById",
-				FieldMapKey: "assignedById",
+				Name:   "assignedById",
+				Column: "assigned_by_id",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerPayAssignmentSpec = TypeSpec{
 		TypeName: "WorkerPayAssignment",
-		FieldMap: driverpaycol.WorkerPayAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "payProfileId",
-				FieldMapKey: "payProfileId",
+				Name:   "payProfileId",
+				Column: "pay_profile_id",
 			},
 			{
-				Name:        "effectiveFrom",
-				FieldMapKey: "effectiveFrom",
+				Name:   "effectiveFrom",
+				Column: "effective_from",
 			},
 			{
-				Name:        "effectiveTo",
-				FieldMapKey: "effectiveTo",
+				Name:   "effectiveTo",
+				Column: "effective_to",
 			},
 			{
-				Name:        "splitPercent",
-				FieldMapKey: "splitPercent",
+				Name:   "splitPercent",
+				Column: "split_percent",
 			},
 			{
-				Name:        "rateOverrides",
-				FieldMapKey: "rateOverrides",
+				Name:   "rateOverrides",
+				Column: "rate_overrides",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "payProfile",
-				FieldMapKey: "businessUnitId",
+				Name:   "payProfile",
+				Column: "pay_profile_id",
 				Relation: &RelationSpec{
 					Target: &PayProfileSpec,
 				},
@@ -30994,149 +31462,147 @@ func init() {
 
 	WorkerPolicySpec = TypeSpec{
 		TypeName: "WorkerPolicy",
-		FieldMap: workercol.WorkerPolicyFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "summary",
-				FieldMapKey: "summary",
+				Name:   "summary",
+				Column: "summary",
 			},
 			{
-				Name:        "body",
-				FieldMapKey: "body",
+				Name:   "body",
+				Column: "body",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "versionLabel",
-				FieldMapKey: "versionLabel",
+				Name:   "versionLabel",
+				Column: "version_label",
 			},
 			{
-				Name:        "requiresSignature",
-				FieldMapKey: "requiresSignature",
+				Name:   "requiresSignature",
+				Column: "requires_signature",
 			},
 			{
-				Name:        "appliesTo",
-				FieldMapKey: "appliesTo",
+				Name:   "appliesTo",
+				Column: "applies_to",
 			},
 			{
-				Name:        "effectiveFrom",
-				FieldMapKey: "effectiveFrom",
+				Name:   "effectiveFrom",
+				Column: "effective_from",
 			},
 			{
-				Name:        "createdById",
-				FieldMapKey: "createdById",
+				Name:   "createdById",
+				Column: "created_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerPolicyAcknowledgementSpec = TypeSpec{
 		TypeName: "WorkerPolicyAcknowledgement",
-		FieldMap: workercol.WorkerPolicyAcknowledgementFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "policyId",
-				FieldMapKey: "policyId",
+				Name:   "policyId",
+				Column: "policy_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "versionLabel",
-				FieldMapKey: "versionLabel",
+				Name:   "versionLabel",
+				Column: "version_label",
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "signatureName",
-				FieldMapKey: "signatureName",
+				Name:   "signatureName",
+				Column: "signature_name",
 			},
 			{
-				Name:        "signatureIp",
-				FieldMapKey: "signatureIp",
+				Name:   "signatureIp",
+				Column: "signature_ip",
 			},
 			{
-				Name:        "signatureUserAgent",
-				FieldMapKey: "signatureUserAgent",
+				Name:   "signatureUserAgent",
+				Column: "signature_user_agent",
 			},
 			{
-				Name:        "documentChecksum",
-				FieldMapKey: "documentChecksum",
+				Name:   "documentChecksum",
+				Column: "document_checksum",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
 			},
 			{
-				Name:        "policy",
-				FieldMapKey: "businessUnitId",
+				Name:   "policy",
+				Column: "policy_id",
 				Relation: &RelationSpec{
 					Target: &WorkerPolicySpec,
 				},
@@ -31146,167 +31612,166 @@ func init() {
 
 	WorkerProfileSpec = TypeSpec{
 		TypeName: "WorkerProfile",
-		FieldMap: workercol.WorkerProfileFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "licenseStateId",
-				FieldMapKey: "licenseStateId",
+				Name:   "licenseStateId",
+				Column: "license_state_id",
 			},
 			{
-				Name:        "dob",
-				FieldMapKey: "dob",
+				Name:   "dob",
+				Column: "dob",
 			},
 			{
-				Name:        "licenseNumber",
-				FieldMapKey: "licenseNumber",
+				Name:   "licenseNumber",
+				Column: "license_number",
 			},
 			{
-				Name:        "cdlClass",
-				FieldMapKey: "cdlClass",
+				Name:   "cdlClass",
+				Column: "cdl_class",
 			},
 			{
-				Name:        "cdlRestrictions",
-				FieldMapKey: "cdlRestrictions",
+				Name:   "cdlRestrictions",
+				Column: "cdl_restrictions",
 			},
 			{
-				Name:        "endorsement",
-				FieldMapKey: "endorsement",
+				Name:   "endorsement",
+				Column: "endorsement",
 			},
 			{
-				Name:        "hazmatExpiry",
-				FieldMapKey: "hazmatExpiry",
+				Name:   "hazmatExpiry",
+				Column: "hazmat_expiry",
 			},
 			{
-				Name:        "licenseExpiry",
-				FieldMapKey: "licenseExpiry",
+				Name:   "licenseExpiry",
+				Column: "license_expiry",
 			},
 			{
-				Name:        "medicalCardExpiry",
-				FieldMapKey: "medicalCardExpiry",
+				Name:   "medicalCardExpiry",
+				Column: "medical_card_expiry",
 			},
 			{
-				Name:        "medicalExaminerName",
-				FieldMapKey: "medicalExaminerName",
+				Name:   "medicalExaminerName",
+				Column: "medical_examiner_name",
 			},
 			{
-				Name:        "medicalExaminerNpi",
-				FieldMapKey: "medicalExaminerNpi",
+				Name:   "medicalExaminerNpi",
+				Column: "medical_examiner_npi",
 			},
 			{
-				Name:        "twicCardNumber",
-				FieldMapKey: "twicCardNumber",
+				Name:   "twicCardNumber",
+				Column: "twic_card_number",
 			},
 			{
-				Name:        "twicExpiry",
-				FieldMapKey: "twicExpiry",
+				Name:   "twicExpiry",
+				Column: "twic_expiry",
 			},
 			{
-				Name:        "hireDate",
-				FieldMapKey: "hireDate",
+				Name:   "hireDate",
+				Column: "hire_date",
 			},
 			{
-				Name:        "terminationDate",
-				FieldMapKey: "terminationDate",
+				Name:   "terminationDate",
+				Column: "termination_date",
 			},
 			{
-				Name:        "physicalDueDate",
-				FieldMapKey: "physicalDueDate",
+				Name:   "physicalDueDate",
+				Column: "physical_due_date",
 			},
 			{
-				Name:        "mvrDueDate",
-				FieldMapKey: "mvrDueDate",
+				Name:   "mvrDueDate",
+				Column: "mvr_due_date",
 			},
 			{
-				Name:        "complianceStatus",
-				FieldMapKey: "complianceStatus",
+				Name:   "complianceStatus",
+				Column: "compliance_status",
 			},
 			{
-				Name:        "trainingHealth",
-				FieldMapKey: "trainingHealth",
+				Name:   "trainingHealth",
+				Column: "training_health",
 			},
 			{
-				Name:        "safetyRating",
-				FieldMapKey: "safetyRating",
+				Name:   "safetyRating",
+				Column: "safety_rating",
 			},
 			{
-				Name:        "safetyScore",
-				FieldMapKey: "safetyScore",
+				Name:   "safetyScore",
+				Column: "safety_score",
 			},
 			{
-				Name:        "nextCredentialExpiry",
-				FieldMapKey: "nextCredentialExpiry",
+				Name:   "nextCredentialExpiry",
+				Column: "next_credential_expiry",
 			},
 			{
-				Name:        "nextTrainingDue",
-				FieldMapKey: "nextTrainingDue",
+				Name:   "nextTrainingDue",
+				Column: "next_training_due",
 			},
 			{
-				Name:        "drugAlcoholStatus",
-				FieldMapKey: "drugAlcoholStatus",
+				Name:   "drugAlcoholStatus",
+				Column: "drug_alcohol_status",
 			},
 			{
-				Name:        "isQualified",
-				FieldMapKey: "isQualified",
+				Name:   "isQualified",
+				Column: "is_qualified",
 			},
 			{
-				Name:        "disqualificationReason",
-				FieldMapKey: "disqualificationReason",
+				Name:   "disqualificationReason",
+				Column: "disqualification_reason",
 			},
 			{
-				Name:        "lastComplianceCheck",
-				FieldMapKey: "lastComplianceCheck",
+				Name:   "lastComplianceCheck",
+				Column: "last_compliance_check",
 			},
 			{
-				Name:        "lastMvrCheck",
-				FieldMapKey: "lastMvrCheck",
+				Name:   "lastMvrCheck",
+				Column: "last_mvr_check",
 			},
 			{
-				Name:        "lastDrugTest",
-				FieldMapKey: "lastDrugTest",
+				Name:   "lastDrugTest",
+				Column: "last_drug_test",
 			},
 			{
-				Name:        "eldExempt",
-				FieldMapKey: "eldExempt",
+				Name:   "eldExempt",
+				Column: "eld_exempt",
 			},
 			{
-				Name:        "shortHaulExempt",
-				FieldMapKey: "shortHaulExempt",
+				Name:   "shortHaulExempt",
+				Column: "short_haul_exempt",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "licenseState",
-				FieldMapKey: "licenseStateId",
+				Name:   "licenseState",
+				Column: "license_state_id",
 				Relation: &RelationSpec{
 					Target: &UsStateSpec,
 				},
@@ -31316,63 +31781,62 @@ func init() {
 
 	WorkerProfileChangeRequestSpec = TypeSpec{
 		TypeName: "WorkerProfileChangeRequest",
-		FieldMap: workercol.WorkerProfileChangeRequestFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "changes",
-				FieldMapKey: "changes",
+				Name:   "changes",
+				Column: "changes",
 			},
 			{
-				Name:        "note",
-				FieldMapKey: "note",
+				Name:   "note",
+				Column: "note",
 			},
 			{
-				Name:        "submittedAt",
-				FieldMapKey: "submittedAt",
+				Name:   "submittedAt",
+				Column: "submitted_at",
 			},
 			{
-				Name:        "decidedAt",
-				FieldMapKey: "decidedAt",
+				Name:   "decidedAt",
+				Column: "decided_at",
 			},
 			{
-				Name:        "decidedById",
-				FieldMapKey: "decidedById",
+				Name:   "decidedById",
+				Column: "decided_by_id",
 			},
 			{
-				Name:        "decisionNote",
-				FieldMapKey: "decisionNote",
+				Name:   "decisionNote",
+				Column: "decision_note",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -31382,222 +31846,220 @@ func init() {
 
 	WorkerRecognitionSpec = TypeSpec{
 		TypeName: "WorkerRecognition",
-		FieldMap: workercol.WorkerRecognitionFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "title",
-				FieldMapKey: "title",
+				Name:   "title",
+				Column: "title",
 			},
 			{
-				Name:        "message",
-				FieldMapKey: "message",
+				Name:   "message",
+				Column: "message",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "awardedById",
-				FieldMapKey: "awardedById",
+				Name:   "awardedById",
+				Column: "awarded_by_id",
 			},
 			{
-				Name:        "awardedBy",
-				FieldMapKey: "awardedById",
+				Name:   "awardedBy",
+				Column: "awarded_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "visibleToWorker",
-				FieldMapKey: "visibleToWorker",
+				Name:   "visibleToWorker",
+				Column: "visible_to_worker",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerSafetyEventSpec = TypeSpec{
 		TypeName: "WorkerSafetyEvent",
-		FieldMap: workercol.WorkerSafetyEventFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "kind",
-				FieldMapKey: "kind",
+				Name:   "kind",
+				Column: "kind",
 			},
 			{
-				Name:        "severity",
-				FieldMapKey: "severity",
+				Name:   "severity",
+				Column: "severity",
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "occurredAt",
-				FieldMapKey: "occurredAt",
+				Name:   "occurredAt",
+				Column: "occurred_at",
 			},
 			{
-				Name:        "location",
-				FieldMapKey: "location",
+				Name:   "location",
+				Column: "location",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "preventable",
-				FieldMapKey: "preventable",
+				Name:   "preventable",
+				Column: "preventable",
 			},
 			{
-				Name:        "points",
-				FieldMapKey: "points",
+				Name:   "points",
+				Column: "points",
 			},
 			{
-				Name:        "pointsExpireAt",
-				FieldMapKey: "pointsExpireAt",
+				Name:   "pointsExpireAt",
+				Column: "points_expire_at",
 			},
 			{
 				Name:    "activePoints",
 				Special: "activePoints",
 			},
 			{
-				Name:        "referenceNumber",
-				FieldMapKey: "referenceNumber",
+				Name:   "referenceNumber",
+				Column: "reference_number",
 			},
 			{
-				Name:        "shipmentId",
-				FieldMapKey: "shipmentId",
+				Name:   "shipmentId",
+				Column: "shipment_id",
 			},
 			{
-				Name:        "inspectionLevel",
-				FieldMapKey: "inspectionLevel",
+				Name:   "inspectionLevel",
+				Column: "inspection_level",
 			},
 			{
-				Name:        "inspectionResult",
-				FieldMapKey: "inspectionResult",
+				Name:   "inspectionResult",
+				Column: "inspection_result",
 			},
 			{
-				Name:        "outOfService",
-				FieldMapKey: "outOfService",
+				Name:   "outOfService",
+				Column: "out_of_service",
 			},
 			{
-				Name:        "fineAmount",
-				FieldMapKey: "fineAmount",
+				Name:   "fineAmount",
+				Column: "fine_amount",
 			},
 			{
-				Name:        "costAmount",
-				FieldMapKey: "costAmount",
+				Name:   "costAmount",
+				Column: "cost_amount",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
 			},
 			{
-				Name:        "recordedById",
-				FieldMapKey: "recordedById",
+				Name:   "recordedById",
+				Column: "recorded_by_id",
 			},
 			{
-				Name:        "recordedBy",
-				FieldMapKey: "recordedById",
+				Name:   "recordedBy",
+				Column: "recorded_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "closedById",
-				FieldMapKey: "closedById",
+				Name:   "closedById",
+				Column: "closed_by_id",
 			},
 			{
-				Name:        "closedBy",
-				FieldMapKey: "closedById",
+				Name:   "closedBy",
+				Column: "closed_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "closedAt",
-				FieldMapKey: "closedAt",
+				Name:   "closedAt",
+				Column: "closed_at",
 			},
 			{
-				Name:        "resolution",
-				FieldMapKey: "resolution",
+				Name:   "resolution",
+				Column: "resolution",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -31611,137 +32073,135 @@ func init() {
 
 	WorkerSafetyViolationSpec = TypeSpec{
 		TypeName: "WorkerSafetyViolation",
-		FieldMap: workercol.WorkerSafetyViolationFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "safetyEventId",
-				FieldMapKey: "safetyEventId",
+				Name:   "safetyEventId",
+				Column: "safety_event_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "basic",
-				FieldMapKey: "basic",
+				Name:   "basic",
+				Column: "basic",
 			},
 			{
-				Name:        "code",
-				FieldMapKey: "code",
+				Name:   "code",
+				Column: "code",
 			},
 			{
-				Name:        "description",
-				FieldMapKey: "description",
+				Name:   "description",
+				Column: "description",
 			},
 			{
-				Name:        "severityWeight",
-				FieldMapKey: "severityWeight",
+				Name:   "severityWeight",
+				Column: "severity_weight",
 			},
 			{
-				Name:        "outOfService",
-				FieldMapKey: "outOfService",
+				Name:   "outOfService",
+				Column: "out_of_service",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 		},
 	}
 
 	WorkerShiftAssignmentSpec = TypeSpec{
 		TypeName: "WorkerShiftAssignment",
-		FieldMap: workercol.WorkerShiftAssignmentFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "shiftTemplateId",
-				FieldMapKey: "shiftTemplateId",
+				Name:   "shiftTemplateId",
+				Column: "shift_template_id",
 			},
 			{
-				Name:        "effectiveFrom",
-				FieldMapKey: "effectiveFrom",
+				Name:   "effectiveFrom",
+				Column: "effective_from",
 			},
 			{
-				Name:        "effectiveTo",
-				FieldMapKey: "effectiveTo",
+				Name:   "effectiveTo",
+				Column: "effective_to",
 			},
 			{
-				Name:        "cycleOffsetWeeks",
-				FieldMapKey: "cycleOffsetWeeks",
+				Name:   "cycleOffsetWeeks",
+				Column: "cycle_offset_weeks",
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "assignedById",
-				FieldMapKey: "assignedById",
+				Name:   "assignedById",
+				Column: "assigned_by_id",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "shiftTemplate",
-				FieldMapKey: "businessUnitId",
+				Name:   "shiftTemplate",
+				Column: "shift_template_id",
 				Relation: &RelationSpec{
 					Target: &ShiftTemplateSpec,
 				},
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},
@@ -31751,115 +32211,114 @@ func init() {
 
 	WorkerTrainingRecordSpec = TypeSpec{
 		TypeName: "WorkerTrainingRecord",
-		FieldMap: workercol.WorkerTrainingRecordFieldMap,
 		AlwaysColumns: []string{
 			"id",
 			"created_at",
 		},
 		Fields: []FieldSpec{
 			{
-				Name:        "id",
-				FieldMapKey: "id",
+				Name:   "id",
+				Column: "id",
 			},
 			{
-				Name:        "businessUnitId",
-				FieldMapKey: "businessUnitId",
+				Name:   "businessUnitId",
+				Column: "business_unit_id",
 			},
 			{
-				Name:        "organizationId",
-				FieldMapKey: "organizationId",
+				Name:   "organizationId",
+				Column: "organization_id",
 			},
 			{
-				Name:        "workerId",
-				FieldMapKey: "workerId",
+				Name:   "workerId",
+				Column: "worker_id",
 			},
 			{
-				Name:        "courseId",
-				FieldMapKey: "courseId",
+				Name:   "courseId",
+				Column: "course_id",
 			},
 			{
-				Name:        "course",
-				FieldMapKey: "businessUnitId",
+				Name:   "course",
+				Column: "course_id",
 				Relation: &RelationSpec{
 					Target: &TrainingCourseSpec,
 				},
 			},
 			{
-				Name:        "status",
-				FieldMapKey: "status",
+				Name:   "status",
+				Column: "status",
 			},
 			{
-				Name:        "assignedAt",
-				FieldMapKey: "assignedAt",
+				Name:   "assignedAt",
+				Column: "assigned_at",
 			},
 			{
-				Name:        "dueAt",
-				FieldMapKey: "dueAt",
+				Name:   "dueAt",
+				Column: "due_at",
 			},
 			{
-				Name:        "startedAt",
-				FieldMapKey: "startedAt",
+				Name:   "startedAt",
+				Column: "started_at",
 			},
 			{
-				Name:        "completedAt",
-				FieldMapKey: "completedAt",
+				Name:   "completedAt",
+				Column: "completed_at",
 			},
 			{
-				Name:        "expiresAt",
-				FieldMapKey: "expiresAt",
+				Name:   "expiresAt",
+				Column: "expires_at",
 			},
 			{
-				Name:        "score",
-				FieldMapKey: "score",
+				Name:   "score",
+				Column: "score",
 			},
 			{
-				Name:        "passed",
-				FieldMapKey: "passed",
+				Name:   "passed",
+				Column: "passed",
 			},
 			{
-				Name:        "acknowledgedAt",
-				FieldMapKey: "acknowledgedAt",
+				Name:   "acknowledgedAt",
+				Column: "acknowledged_at",
 			},
 			{
-				Name:        "documentId",
-				FieldMapKey: "documentId",
+				Name:   "documentId",
+				Column: "document_id",
 			},
 			{
-				Name:        "document",
-				FieldMapKey: "businessUnitId",
+				Name:   "document",
+				Column: "document_id",
 				Relation: &RelationSpec{
 					Target: &WorkerCredentialDocumentSpec,
 				},
 			},
 			{
-				Name:        "assignedById",
-				FieldMapKey: "assignedById",
+				Name:   "assignedById",
+				Column: "assigned_by_id",
 			},
 			{
-				Name:        "assignedBy",
-				FieldMapKey: "assignedById",
+				Name:   "assignedBy",
+				Column: "assigned_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "recordedById",
-				FieldMapKey: "recordedById",
+				Name:   "recordedById",
+				Column: "recorded_by_id",
 			},
 			{
-				Name:        "recordedBy",
-				FieldMapKey: "recordedById",
+				Name:   "recordedBy",
+				Column: "recorded_by_id",
 				Relation: &RelationSpec{
 					Target: &UserSpec,
 				},
 			},
 			{
-				Name:        "notes",
-				FieldMapKey: "notes",
+				Name:   "notes",
+				Column: "notes",
 			},
 			{
-				Name:        "waivedReason",
-				FieldMapKey: "waivedReason",
+				Name:   "waivedReason",
+				Column: "waived_reason",
 			},
 			{
 				Name:    "health",
@@ -31874,20 +32333,20 @@ func init() {
 				Special: "daysUntilExpiry",
 			},
 			{
-				Name:        "version",
-				FieldMapKey: "version",
+				Name:   "version",
+				Column: "version",
 			},
 			{
-				Name:        "createdAt",
-				FieldMapKey: "createdAt",
+				Name:   "createdAt",
+				Column: "created_at",
 			},
 			{
-				Name:        "updatedAt",
-				FieldMapKey: "updatedAt",
+				Name:   "updatedAt",
+				Column: "updated_at",
 			},
 			{
-				Name:        "worker",
-				FieldMapKey: "businessUnitId",
+				Name:   "worker",
+				Column: "worker_id",
 				Relation: &RelationSpec{
 					Target: &WorkerSpec,
 				},

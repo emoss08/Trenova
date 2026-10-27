@@ -3,18 +3,17 @@ package organizationrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/rateconfirmationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 )
 
 // activeTenderStatuses mirrors the statuses for which [tender.Status.IsTerminal]
@@ -43,77 +42,58 @@ var openInvoiceMatchStatuses = []carriersettlement.InvoiceMatchStatus{
 
 func (r *repository) CountBrokerageDependencies(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*tenantports.BrokerageDependencyCounts, error) {
 	counts := new(tenantports.BrokerageDependencyCounts)
 
-	if err := r.countDependencies(ctx, brokerageDependencyCounts(tenantInfo, counts)); err != nil {
+	if err := r.countDependencies(ctx, brokerageDependencyCounts(counts)); err != nil {
 		return nil, err
 	}
 
 	return counts, nil
 }
 
-func brokerageDependencyCounts(
-	tenantInfo pagination.TenantInfo,
-	counts *tenantports.BrokerageDependencyCounts,
-) []dependencyCount {
+func brokerageDependencyCounts(counts *tenantports.BrokerageDependencyCounts) []dependencyCount {
 	return []dependencyCount{
 		{
-			label:  "active tenders",
-			model:  (*tender.Tender)(nil),
 			target: &counts.ActiveTenders,
-			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tendercol.TenderScopeTenant(sq, tenantInfo).
-					Where(tendercol.TenderColumns.Status.In(), bun.List(activeTenderStatuses))
+			count: func(total *int64) keel.BatchItem {
+				t := tenderdb.Tenders
+				return keel.CountInto(t.Where(t.Status.In(activeTenderStatuses...)), total)
 			},
 		},
 		{
-			label:  "active rate confirmations",
-			model:  (*rateconfirmation.RateConfirmation)(nil),
 			target: &counts.ActiveRateConfirmations,
-			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return rateconfirmationcol.RateConfirmationScopeTenant(sq, tenantInfo).
-					Where(
-						rateconfirmationcol.RateConfirmationColumns.Status.NotEq(),
-						rateconfirmation.StatusVoided,
-					)
+			count: func(total *int64) keel.BatchItem {
+				rc := rateconfirmationdb.RateConfirmations
+				return keel.CountInto(rc.Where(rc.Status.Ne(rateconfirmation.StatusVoided)), total)
 			},
 		},
 		{
-			label:  "unpaid carrier settlements",
-			model:  (*carriersettlement.CarrierSettlement)(nil),
 			target: &counts.UnpaidCarrierSettlements,
-			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.CarrierSettlementScopeTenant(sq, tenantInfo).
-					Where(
-						carriersettlementcol.CarrierSettlementColumns.Status.In(),
-						bun.List(unpaidCarrierSettlementStatuses),
-					)
+			count: func(total *int64) keel.BatchItem {
+				cs := carriersettlementdb.CarrierSettlements
+				return keel.CountInto(
+					cs.Where(cs.Status.In(unpaidCarrierSettlementStatuses...)),
+					total,
+				)
 			},
 		},
 		{
-			label:  "open carrier invoice matches",
-			model:  (*carriersettlement.InvoiceMatch)(nil),
 			target: &counts.OpenCarrierInvoiceMatches,
-			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.InvoiceMatchScopeTenant(sq, tenantInfo).
-					Where(
-						carriersettlementcol.InvoiceMatchColumns.Status.In(),
-						bun.List(openInvoiceMatchStatuses),
-					)
+			count: func(total *int64) keel.BatchItem {
+				im := carriersettlementdb.InvoiceMatches
+				return keel.CountInto(im.Where(im.Status.In(openInvoiceMatchStatuses...)), total)
 			},
 		},
 		{
-			label:  "active carrier assignments",
-			model:  (*shipment.CarrierAssignment)(nil),
 			target: &counts.ActiveCarrierAssignments,
-			scope: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.CarrierAssignmentScopeTenant(sq, tenantInfo).
-					Where(
-						shipmentcol.CarrierAssignmentColumns.Status.NotEq(),
-						shipment.CarrierAssignmentStatusCanceled,
-					)
+			count: func(total *int64) keel.BatchItem {
+				ca := shipmentdb.CarrierAssignments
+				return keel.CountInto(
+					ca.Where(ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled)),
+					total,
+				)
 			},
 		},
 	}

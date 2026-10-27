@@ -155,6 +155,10 @@ Eight categorical accents on the same hue family: `accent-indigo`, `accent-teal`
 `accent-slate`. Rungs are `--accent-x`, `--accent-x-on-subtle`,
 `--accent-x-subtle`, `--accent-x-border`.
 
+`--accent-orange` is a single rung for glows (Browser Use's extension tile), not a ninth badge
+accent: `BADGE_ACCENTS` drives the hash-assigned identity accents by modulo, so adding to it
+would recolour every agent and person.
+
 Use an accent when the set has **no severity ordering**: a HOS duty status, an
 agent trigger type, a pricing method, W-2 versus 1099. None of those members is
 further along or worse than another, and giving one a tone says something false —
@@ -225,7 +229,11 @@ is for data that *is* uppercase — a SCAC, a state code, a VIN.
 
 Fonts: `font-sans` (Geist) for everything; `font-mono` (Geist Mono) for numbers
 that must align in a column — load numbers, IDs, currency, timestamps. Pair it
-with `tabular-nums`.
+with `tabular-nums`. `font-code` (JetBrains Mono) is for source code only: the
+formula editor (`var(--font-code)` in its theme), `HighlightedCode` and
+`SourceDiff`. It draws ligatures through `--code-ligatures`, which the person
+turns off in Settings → Preferences (the root's `data-code-ligatures="off"`,
+set by `CodeLigaturesPreference`); a new code surface spends both.
 
 ### Weight
 
@@ -599,6 +607,23 @@ module.
   are announced assertively, everything else politely, and each change in place is
   announced again.
 
+### List totals
+
+A list counts its rows exactly up to 10,000 and takes the database's estimate above, so
+every connection's `totalCount` comes with `totalCountExact`. Select both (with the same
+`@include`), and show an estimate as approximate: `formatRowTotal(total, false)` writes it
+compactly ("1.2M") inside a message that says so ("of about {0}"), never as a bare number
+that reads as counted. Paging never trusts an estimate for the last page: it pages as far as
+it has read.
+
+Offset lists follow the same rule. A REST list or select-options response carries
+`totalCountExact` beside `count` (the shared `GenericLimitOffsetResponse`), a hand-built REST
+page carries `totalExact` beside `total`, and so does a GraphQL list type with a `total`. With an
+estimate, an offset pager shows "Page 3" rather than "Page 3 of about 50K", offers no last-page
+jump and follows a full page to the next one (`DataTablePagination`, `insightPaging`); code that
+reads every page follows the list's cursor or `next` until it ends, never offsets computed from
+the total (`listInboundFileTransfers`).
+
 ### Loading states
 
 A page's first paint is its Suspense fallback: the chunk is still on the wire, or a
@@ -770,15 +795,29 @@ nothing in the code can become markup. A language without a grammar is shown as 
 can mark a search's matches across tokens (`query`), draw something after a line (`lineEnd`) and
 report a clicked line (`onLineClick`).
 
-Colour is by role, on the categorical hues, through seven tokens: `--syntax-keyword` (violet),
-`--syntax-string` (emerald), `--syntax-number` (amber), `--syntax-property` (sky),
-`--syntax-function` (indigo), `--syntax-type` (teal) and `--syntax-meta` (rose). Comments and
-punctuation take `--foreground-subtle` and `--foreground-muted`, and a diff's added and removed
+Tariff has no grammar here: its colours come from the rules module. Pass `spans` instead of a
+language, built with `tariffCodeSpans(tariffTokens(rules, source))`
+(`lib/highlight/tariff.ts`, whose `TARIFF_TOKEN_ROLES` maps each token class onto the roles
+below), or use `TariffCode` (`apps/web/src/components/tariff-code/`), which does that and
+suspends until the module has loaded. The editor spends the same roles through `cm-syntax-<role>`
+classes, so a source reads the same in the editor, a Desk card and a diff.
+
+Colour is by role, in the Gruvbox palette (its faded inks in light, its bright ones in dark),
+through seven tokens: `--syntax-keyword` (red), `--syntax-string` (green), `--syntax-number`
+(purple), `--syntax-property` (blue), `--syntax-function` (aqua), `--syntax-type` (yellow) and
+`--syntax-meta` (orange). Only a value's lightness moves from Gruvbox's, where AA needs it. Comments
+(in italics) and punctuation take `--foreground-subtle` and `--foreground-muted`, and a diff's added and removed
 lines take the success and danger text. Each syntax token is written out in both themes rather
 than pointing at an accent, so `pnpm lint:design` holds it to AA on `--card`, `--sunken` and
 `--surface-hover` (the ground under a Desk reply's code block). A theme switch recolours code
 through CSS alone; nothing is highlighted again. A new grammar goes in `lib/highlight/`, built with
 `defineLanguage` (see `graphql.ts`), and is added to the highlighter's list.
+
+The Tariff editor marks over code with three tokens of its own: `--editor-reference` (a read of
+the name at the cursor, and the editor's selection matches), `--editor-reference-write` (where it
+is declared or set, in an amber tint, so a change of value stands out) and
+`--editor-coverage-gap` (the gutter bar beside a line no test reaches). `pnpm lint:design` holds
+the ink and every syntax role to AA on both tints and the bar to 3:1 on the field.
 
 ## Adding a token
 

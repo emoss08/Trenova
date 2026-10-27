@@ -3,19 +3,24 @@ package reportrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const definitionEntityName = "ReportDefinition"
+
+var (
+	definitionErrors = dberror.Mapping{Entity: definitionEntityName}
+	revisionErrors   = dberror.Mapping{Entity: "ReportDefinitionRevision"}
 )
 
 type DefinitionParams struct {
@@ -43,28 +48,22 @@ func (r *definitionRepository) Create(
 	createdBy pulid.ID,
 ) (*report.ReportDefinition, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.ReportDefinition, error) {
-		log := r.l.With(zap.String("operation", "Create"), zap.String("name", entity.Name))
-
+		db := r.db.Keel(ctx)
 		entity.CurrentRevision = 1
 
-		err := r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, tx bun.Tx) error {
-				if _, iErr := tx.NewInsert().Model(entity).Exec(txCtx); iErr != nil {
-					return iErr
-				}
-
-				revision := newRevision(entity, createdBy)
-				_, iErr := tx.NewInsert().Model(revision).Exec(txCtx)
-				return iErr
-			},
-		)
+		err := reportdb.ReportDefinitions.Create(ctx, db, entity)
+		if err == nil {
+			err = reportdb.ReportDefinitionRevisions.Create(ctx, db, newRevision(entity, createdBy))
+		}
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, dberror.CreateVersionMismatchError(definitionEntityName, entity.Name)
+		}
 		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, dberror.CreateVersionMismatchError("ReportDefinition", entity.Name)
-			}
-			log.Error("failed to create report definition", zap.Error(err))
+			r.l.Error(
+				"failed to create report definition",
+				zap.String("name", entity.Name),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -78,38 +77,21 @@ func (r *definitionRepository) Update(
 	updatedBy pulid.ID,
 ) (*report.ReportDefinition, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.ReportDefinition, error) {
-		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-
-		ov := entity.Version
-		entity.Version++
+		db := r.db.Keel(ctx)
 		entity.CurrentRevision++
 
-		err := r.db.WithTx(
-			ctx,
-			kernelports.TxOptions{},
-			func(txCtx context.Context, tx bun.Tx) error {
-				result, uErr := tx.NewUpdate().
-					Model(entity).
-					WherePK().
-					Where(reportcol.ReportDefinitionColumns.Version.Eq(), ov).
-					Returning("*").
-					Exec(txCtx)
-				if uErr != nil {
-					return uErr
-				}
-				uErr = dberror.CheckRowsAffected(result, "ReportDefinition", entity.ID.String())
-				if uErr != nil {
-					return uErr
-				}
-
-				revision := newRevision(entity, updatedBy)
-				_, iErr := tx.NewInsert().Model(revision).Exec(txCtx)
-				return iErr
-			},
-		)
+		err := reportdb.ReportDefinitions.Save(ctx, db, entity)
+		if err == nil {
+			err = reportdb.ReportDefinitionRevisions.Create(ctx, db, newRevision(entity, updatedBy))
+		}
 		if err != nil {
-			log.Error("failed to update report definition", zap.Error(err))
-			return nil, err
+			entity.CurrentRevision--
+			r.l.Error(
+				"failed to update report definition",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, definitionErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -131,36 +113,67 @@ func newRevision(
 	}
 }
 
-func (r *definitionRepository) UpdateStatus(
+func (r *definitionRepository) ListCatalogStale(
 	ctx context.Context,
-	req *reportports.GetReportDefinitionRequest,
-	status report.DefinitionStatus,
-	diagnostics []string,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "UpdateStatus"),
-			zap.String("id", req.DefinitionID.String()),
-		)
-
-		cols := reportcol.ReportDefinitionColumns
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*report.ReportDefinition)(nil)).
-			Set(cols.Status.Set(), status).
-			Set(cols.Diagnostics.Set(), dbhelper.TextArray(diagnostics)).
-			Set(cols.Version.Inc(1)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return reportcol.ReportDefinitionScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.DefinitionID)
-			}).
-			Exec(ctx)
+	req *reportports.ListCatalogStaleReportDefinitionsRequest,
+) ([]*report.ReportDefinition, error) {
+	ctx = dbscope.WithSystem(ctx, "check saved report definitions against the report catalog")
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportDefinition, error) {
+		d := reportdb.ReportDefinitions
+		older, err := d.AllTenants().
+			Where(d.CatalogVersion.Lt(req.CatalogVersion)).
+			Limit(req.Limit).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to update report definition status", zap.Error(err))
-			return err
+			r.l.Error("failed to list report definitions behind the catalog", zap.Error(err))
+			return nil, err
+		}
+		if len(older) >= req.Limit {
+			return older, nil
 		}
 
-		return dberror.CheckRowsAffected(result, "ReportDefinition", req.DefinitionID.String())
+		newer, err := d.AllTenants().
+			Where(d.CatalogVersion.Gt(req.CatalogVersion)).
+			Limit(req.Limit-len(older)).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list report definitions behind the catalog", zap.Error(err))
+			return nil, err
+		}
+
+		return append(older, newer...), nil
+	})
+}
+
+func (r *definitionRepository) RecordCatalogCheck(
+	ctx context.Context,
+	req *reportports.RecordReportCatalogCheckRequest,
+) (bool, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
+		d := reportdb.ReportDefinitions
+		rows, err := d.Where(
+			d.ID.Eq(req.DefinitionID),
+			d.Version.Eq(req.Version),
+			d.CatalogVersion.Ne(req.CatalogVersion),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			d.Status.To(req.Status),
+			d.Diagnostics.To(req.Diagnostics),
+			d.CatalogVersion.To(req.CatalogVersion),
+			d.Version.ToExpr(d.Version),
+			d.UpdatedAt.ToExpr(d.UpdatedAt),
+		)
+		if err != nil {
+			r.l.Error(
+				"failed to record a report definition's catalog check",
+				zap.String("id", req.DefinitionID.String()),
+				zap.Error(err),
+			)
+			return false, err
+		}
+
+		return rows > 0, nil
 	})
 }
 
@@ -169,17 +182,9 @@ func (r *definitionRepository) GetByID(
 	req *reportports.GetReportDefinitionRequest,
 ) (*report.ReportDefinition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportDefinition, error) {
-		entity := new(report.ReportDefinition)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return reportcol.ReportDefinitionScopeTenant(sq, req.TenantInfo).
-					Where(reportcol.ReportDefinitionColumns.ID.Eq(), req.DefinitionID)
-			}).
-			Scan(ctx)
+		entity, err := reportdb.ReportDefinitions.Get(ctx, r.db.Keel(ctx), req.DefinitionID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ReportDefinition")
+			return nil, definitionErrors.Map(err, req.DefinitionID.String())
 		}
 
 		return entity, nil
@@ -191,28 +196,21 @@ func (r *definitionRepository) List(
 	req *reportports.ListReportDefinitionsRequest,
 ) ([]*report.ReportDefinition, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportDefinition, error) {
-		cols := reportcol.ReportDefinitionColumns
-
-		entities := make([]*report.ReportDefinition, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(reportcol.ReportDefinitionApplyTenant(req.TenantInfo))
-
-		if len(req.Statuses) > 0 {
-			q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-		}
-		if !req.OwnerID.IsNil() {
-			q = q.Where(cols.OwnerID.Eq(), req.OwnerID)
-		}
+		d := reportdb.ReportDefinitions
+		q := d.Where(
+			definitionVisibleTo(req.ViewerID),
+			keel.When(len(req.Statuses) > 0, d.Status.In(req.Statuses...)),
+			keel.When(!req.OwnerID.IsNil(), d.OwnerID.Eq(req.OwnerID)),
+		).Order(d.UpdatedAt.Desc())
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			q = q.Limit(req.Limit)
 		}
 		if req.Offset > 0 {
-			q = q.Offset(int64(req.Offset))
+			q = q.Offset(req.Offset)
 		}
 
-		if err := q.Order(cols.UpdatedAt.OrderDesc()).Scan(ctx); err != nil {
+		entities, err := q.All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list report definitions", zap.Error(err))
 			return nil, err
 		}
@@ -226,20 +224,14 @@ func (r *definitionRepository) Delete(
 	req *reportports.DeleteReportDefinitionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*report.ReportDefinition)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return reportcol.ReportDefinitionScopeTenantDelete(dq, req.TenantInfo).
-					Where(reportcol.ReportDefinitionColumns.ID.Eq(), req.DefinitionID)
-			}).
-			Exec(ctx)
+		d := reportdb.ReportDefinitions
+		rows, err := d.Where(d.ID.Eq(req.DefinitionID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete report definition", zap.Error(err))
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, "ReportDefinition", req.DefinitionID.String())
+		return dberror.CheckAffected(rows, definitionEntityName, req.DefinitionID.String())
 	})
 }
 
@@ -251,17 +243,13 @@ func (r *definitionRepository) GetRevision(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*report.ReportDefinitionRevision, error) {
-			entity := new(report.ReportDefinitionRevision)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return reportcol.ReportDefinitionRevisionScopeTenant(sq, req.TenantInfo).
-						Where(reportcol.ReportDefinitionRevisionColumns.ID.Eq(), req.RevisionID)
-				}).
-				Scan(ctx)
+			entity, err := reportdb.ReportDefinitionRevisions.Get(
+				ctx,
+				r.db.Keel(ctx),
+				req.RevisionID,
+			)
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "ReportDefinitionRevision")
+				return nil, revisionErrors.Map(err, req.RevisionID.String())
 			}
 
 			return entity, nil
@@ -277,21 +265,14 @@ func (r *definitionRepository) ListRevisions(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*report.ReportDefinitionRevision, error) {
-			cols := reportcol.ReportDefinitionRevisionColumns
-
-			entities := make([]*report.ReportDefinitionRevision, 0)
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(reportcol.ReportDefinitionRevisionApplyTenant(req.TenantInfo)).
-				Where(cols.DefinitionID.Eq(), req.DefinitionID).
-				Order(cols.RevisionNumber.OrderDesc())
-
+			rev := reportdb.ReportDefinitionRevisions
+			q := rev.Where(rev.DefinitionID.Eq(req.DefinitionID)).Order(rev.RevisionNumber.Desc())
 			if req.Limit > 0 {
-				q = q.Limit(int64(req.Limit))
+				q = q.Limit(req.Limit)
 			}
 
-			if err := q.Scan(ctx); err != nil {
+			entities, err := q.All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list report definition revisions", zap.Error(err))
 				return nil, err
 			}

@@ -1,3 +1,4 @@
+import { readStoredTariffBill, type StoredTariffBill } from "@trenova/shared/types/tariff-form";
 import {
   RECORD_ID_KEY,
   formatDisplayValue,
@@ -13,13 +14,14 @@ import {
 import type { AnalysisView } from "@/components/assistant/analysis-result";
 import { isRecordEntityType, recordPath, type RecordEntityType } from "@/config/record-links";
 import {
+  analysisChartsSchema,
+  analysisDatasetsSchema,
   analysisFiguresSchema,
   analysisLayoutSchema,
+  analysisRunStatusSchema,
   analysisTablesSchema,
-  type AnalysisRunStatus,
-} from "@/types/agent-extension";
+} from "@/types/analysis";
 import { isAppPath } from "@/lib/app-path";
-import type { ReportPreviewColumn } from "@/lib/graphql/reports";
 import type { AssistantArtifact } from "@/types/assistant";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 
@@ -46,17 +48,25 @@ function listOf(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
+/** A column of a report_preview payload: its value type, and its resolved display style as `format`. */
+export type ReportPreviewArtifactColumn = {
+  id: string;
+  label: string;
+  type: string;
+  format: string | null;
+};
+
 export type ReportPreviewArtifact = {
   name: string;
   dataset: string;
-  columns: ReportPreviewColumn[];
+  columns: ReportPreviewArtifactColumn[];
   rows: unknown[][];
   totals: unknown[] | null;
   rowCount: number;
   truncated: boolean;
 };
 
-function previewColumn(value: unknown): ReportPreviewColumn | null {
+function previewColumn(value: unknown): ReportPreviewArtifactColumn | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -71,7 +81,7 @@ function previewColumn(value: unknown): ReportPreviewColumn | null {
     label: label || id,
     type: stringOf(value.type) || "string",
     format: stringOf(value.format) || null,
-  } as ReportPreviewColumn;
+  };
 }
 
 /** Rows arrive keyed by column label; the grid wants them positional. */
@@ -79,7 +89,7 @@ export function reportPreviewFrom(artifact: AssistantArtifact): ReportPreviewArt
   const payload = artifact.payload;
   const columns = listOf(payload.columns)
     .map(previewColumn)
-    .filter((column): column is ReportPreviewColumn => column !== null);
+    .filter((column): column is ReportPreviewArtifactColumn => column !== null);
   const rows = listOf(payload.rows)
     .filter(isRecord)
     .map((row) => columns.map((column) => row[column.label] ?? row[column.id] ?? null));
@@ -121,6 +131,8 @@ export type TablePaging = {
   nextOffset: number | null;
   /** How many rows the list holds in all, when the agent's read counted them. */
   total: number | null;
+  /** True when total is the server's estimate of a list too large to count. */
+  totalEstimated: boolean;
   /** How many pages of the list the agent read into the table. */
   pages: number;
 };
@@ -178,6 +190,7 @@ function tablePagingOf(payload: Record<string, unknown>): TablePaging {
     nextCursor: stringOf(payload.nextCursor),
     nextOffset: typeof nextOffset === "number" && Number.isInteger(nextOffset) ? nextOffset : null,
     total: typeof total === "number" && Number.isInteger(total) ? total : null,
+    totalEstimated: payload.totalEstimated === true,
     pages: numberOf(payload.pages) || 1,
   };
 }
@@ -451,15 +464,6 @@ export function composedViewFrom(artifact: AssistantArtifact): ComposedViewArtif
   };
 }
 
-export type RateComponent = {
-  label: string;
-  basis: string;
-  amount: string;
-  runningTotal: string;
-};
-
-export type RateGuardrail = { kind: string; bound: string; raw: string; result: string };
-
 export type RateExplanationArtifact = {
   shipmentId: string;
   side: string;
@@ -467,15 +471,14 @@ export type RateExplanationArtifact = {
   winner: { agreementCode: string; agreementName: string; ruleLabel: string } | null;
   tieBreak: string;
   rejected: { agreementCode: string; ruleLabel: string; reason: string; detail: string }[];
-  components: RateComponent[];
-  guardrails: RateGuardrail[];
+  /** The winning tariff's bill: its charges, notes and adjustments, in wire form; null when unread. */
+  bill: StoredTariffBill | null;
   totals: { linehaul: string; fuel: string; accessorial: string; total: string };
   warnings: string[];
-  /** How a shipment no agreement priced got its price: its formula template, or an entered amount. */
+  /** How a shipment no agreement priced got its price: its tariff, or an entered amount. */
   pricedBy: {
     method: string;
     explanation: string;
-    expression: string;
     override: string;
     overrideReason: string;
   } | null;
@@ -515,22 +518,7 @@ export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanatio
         reason: stringOf(entry.reason),
         detail: stringOf(entry.detail),
       })),
-    components: listOf(payload.components)
-      .filter(isRecord)
-      .map((entry) => ({
-        label: stringOf(entry.label),
-        basis: stringOf(entry.basis),
-        amount: amountOf(entry.amount),
-        runningTotal: amountOf(entry.runningTotal),
-      })),
-    guardrails: listOf(payload.guardrails)
-      .filter(isRecord)
-      .map((entry) => ({
-        kind: stringOf(entry.kind),
-        bound: amountOf(entry.bound),
-        raw: amountOf(entry.raw),
-        result: amountOf(entry.result),
-      })),
+    bill: readStoredTariffBill(payload.bill),
     totals: totalsOf(payload.totals),
     warnings: listOf(payload.warnings).filter(
       (warning): warning is string => typeof warning === "string" && warning !== "",
@@ -541,7 +529,6 @@ export function rateExplanationFrom(artifact: AssistantArtifact): RateExplanatio
         : {
             method: stringOf(pricedBy.method),
             explanation: stringOf(pricedBy.explanation),
-            expression: stringOf(pricedBy.expression),
             override: amountOf(pricedBy.override),
             overrideReason: stringOf(pricedBy.overrideReason),
           },
@@ -970,12 +957,15 @@ export function runDiffFrom(artifact: AssistantArtifact): RunDiffArtifactPayload
 
   const changes = listOf(payload.changes)
     .filter(isRecord)
-    .map((change) => ({
-      kind: stringOf(change.kind),
-      key: stringOf(change.key),
-      keyValues: listOf(change.keyValues).map(stringOf),
-      measures: diffMeasures(change.measures),
-    }));
+    .map((change) => {
+      const keyValues = listOf(change.key).map(stringOf);
+      return {
+        kind: stringOf(change.kind),
+        key: keyValues.join(" · "),
+        keyValues,
+        measures: diffMeasures(change.measures),
+      };
+    });
 
   return {
     before: diffSide(payload.before),
@@ -996,50 +986,27 @@ export function runDiffFrom(artifact: AssistantArtifact): RunDiffArtifactPayload
   };
 }
 
-const ANALYSIS_STATUSES: readonly AnalysisRunStatus[] = [
-  "Running",
-  "Succeeded",
-  "Errored",
-  "Failed",
-  "TimedOut",
-];
-
 /**
- * What an analysis showed: the figures it printed and returned, the charts it
- * drew by position (their images are read from the run), the exception it
- * raised, and the code. A status the server did not send reads as a failure,
+ * What a script showed: its headline figures, tables and charts as what they plot, the
+ * exception it raised, and the code. A status the server did not send reads as a failure,
  * never as a success.
  */
 export function analysisFrom(artifact: AssistantArtifact): AnalysisView {
   const payload = artifact.payload;
-  const status = stringOf(payload.status) as AnalysisRunStatus;
+  const status = analysisRunStatusSchema.catch("Failed").parse(payload.status);
   const error = isRecord(payload.error) ? payload.error : null;
 
   return {
     runId: stringOf(payload.analysisRunId),
-    status: ANALYSIS_STATUSES.includes(status) ? status : "Failed",
+    status,
     title: stringOf(payload.title) || artifact.title,
     code: stringOf(payload.code),
-    datasets: listOf(payload.datasets)
-      .filter(isRecord)
-      .map((dataset) => ({
-        name: stringOf(dataset.name),
-        path: stringOf(dataset.path),
-        source: dataset.source === "Attachment" ? ("Attachment" as const) : ("ReportRun" as const),
-        label: stringOf(dataset.label),
-        rows: numberOf(dataset.rows),
-      })),
+    datasets: analysisDatasetsSchema.catch([]).parse(payload.datasets),
     output: stringOf(payload.output),
-    results: listOf(payload.results)
-      .map(stringOf)
-      .filter((text) => text !== ""),
     tables: analysisTablesSchema.catch([]).parse(payload.tables),
     figures: analysisFiguresSchema.catch([]).parse(payload.figures),
+    charts: analysisChartsSchema.catch([]).parse(payload.charts),
     layout: analysisLayoutSchema.catch([]).parse(payload.layout),
-    charts: listOf(payload.charts)
-      .filter(isRecord)
-      .map((chart) => ({ position: numberOf(chart.position), title: stringOf(chart.title) }))
-      .filter((chart) => chart.position > 0),
     error: error
       ? {
           name: stringOf(error.name),

@@ -1,299 +1,404 @@
 package aianalyticsrepository
 
 import (
-	"fmt"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aifeedback/aifeedbackdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 )
 
 const (
-	unitScopeSQL = `w.organization_id = ?org AND w.business_unit_id = ?bu
-		AND (?agent = '' OR w.agent_definition_id = ?agent)
-		AND (?task = '' OR w.task = ?task)`
-	unitWindowSQL = unitScopeSQL + `
-		AND w.finished_at >= ?since`
-	hourScopeSQL = `h.organization_id = ?org AND h.business_unit_id = ?bu
-		AND h.hour >= ?since_hour
-		AND (?agent = '' OR h.agent_definition_id = ?agent)
-		AND (?task = '' OR h.task = ?task)`
-
-	modelKeySQL    = "w.model_key"
-	providerKeySQL = "COALESCE(w.provider_id, '')"
-
-	hourModelKeySQL    = "h.model_key"
-	hourProviderKeySQL = "h.provider_id"
-
-	deploymentColumnsSQL     = modelKeySQL + " AS model_key, " + providerKeySQL + " AS provider_id"
-	hourDeploymentColumnsSQL = hourModelKeySQL + " AS model_key, " + hourProviderKeySQL + " AS provider_id"
+	colUnitID = "unit_id"
 )
 
-func keySQL(compareBy aianalytics.CompareBy) string {
-	if compareBy == aianalytics.CompareByProvider {
-		return providerKeySQL
-	}
+var durationFractions = []float64{0.25, 0.5, 0.75, 0.95}
 
-	return modelKeySQL
+func unitScope(w *aianalyticsdb.WorkUnitsTable, filter *aianalyticsports.Filter) []keel.Pred {
+	return []keel.Pred{
+		keel.When(
+			filter.AgentDefinitionID.IsNotNil(),
+			w.AgentDefinitionID.Eq(filter.AgentDefinitionID),
+		),
+		keel.When(filter.Task != "", w.Task.Eq(filter.Task)),
+	}
 }
 
-func groupColumnsSQL(grouping aianalytics.Grouping) string {
+func unitWindow(w *aianalyticsdb.WorkUnitsTable, filter *aianalyticsports.Filter) []keel.Pred {
+	return append(unitScope(w, filter), w.FinishedAt.Gte(filter.Since))
+}
+
+func hourScope(h *aianalyticsdb.ProviderHoursTable, filter *aianalyticsports.Filter) []keel.Pred {
+	return []keel.Pred{
+		h.Hour.Gte(ceilHour(filter.Since)),
+		keel.When(
+			filter.AgentDefinitionID.IsNotNil(),
+			h.AgentDefinitionID.Eq(filter.AgentDefinitionID.String()),
+		),
+		keel.When(filter.Task != "", h.Task.Eq(filter.Task)),
+	}
+}
+
+func toolScope(t *aianalyticsdb.UnitToolsTable, filter *aianalyticsports.Filter) []keel.Pred {
+	return []keel.Pred{
+		t.FinishedAt.Gte(filter.Since),
+		keel.When(
+			filter.AgentDefinitionID.IsNotNil(),
+			t.AgentDefinitionID.Eq(filter.AgentDefinitionID.String()),
+		),
+		keel.When(filter.Task != "", t.Task.Eq(filter.Task)),
+	}
+}
+
+func providerKey(w *aianalyticsdb.WorkUnitsTable) keel.StringExpr {
+	return w.ProviderID.Coalesce("")
+}
+
+func deploymentColumns(w *aianalyticsdb.WorkUnitsTable) []keel.Expr {
+	return []keel.Expr{w.ModelKey, providerKey(w)}
+}
+
+func groupColumns(w *aianalyticsdb.WorkUnitsTable, grouping aianalytics.Grouping) []keel.Expr {
 	switch grouping {
 	case aianalytics.GroupingProvider:
-		return "''::varchar AS model_key, " + providerKeySQL + " AS provider_id"
+		return []keel.Expr{keel.Text(""), providerKey(w)}
 	case aianalytics.GroupingDeployment:
-		return deploymentColumnsSQL
+		return deploymentColumns(w)
 	default:
-		return modelKeySQL + " AS model_key, ''::varchar AS provider_id"
+		return []keel.Expr{w.ModelKey, keel.Text("")}
 	}
 }
 
-var outcomeCountsSQL = fmt.Sprintf(`COUNT(*) AS runs,
-		COUNT(*) FILTER (WHERE w.outcome = '%[1]s') AS completed,
-		COUNT(*) FILTER (WHERE w.outcome = '%[2]s') AS handed_off,
-		COUNT(*) FILTER (WHERE w.outcome = '%[3]s') AS stopped,
-		COUNT(*) FILTER (WHERE w.outcome = '%[4]s') AS failed,
-		COALESCE(SUM(w.model_calls), 0) AS model_calls,
-		COALESCE(SUM(w.failed_calls), 0) AS failed_calls,
-		COALESCE(SUM(w.tool_calls), 0) AS tool_calls,
-		COALESCE(SUM(w.tool_failures_model), 0) AS tool_failures_model,
-		COALESCE(SUM(w.tool_failures_tool), 0) AS tool_failures_tool,
-		COALESCE(SUM(w.cost_usd), 0)::text AS cost_usd,
-		COUNT(w.cost_usd) AS priced_runs,
-		COALESCE(SUM(w.input_tokens), 0) AS input_tokens,
-		COALESCE(SUM(w.output_tokens), 0) AS output_tokens,
-		COALESCE(SUM(w.cache_read_tokens), 0) AS cache_read_tokens,
-		COALESCE(SUM(w.cache_write_tokens), 0) AS cache_write_tokens,
-		COALESCE(SUM(w.advisor_calls), 0) AS advisor_calls,
-		COALESCE(SUM(w.advisor_prompt_tokens), 0) AS advisor_prompt_tokens,
-		COALESCE(SUM(w.advisor_output_tokens), 0) AS advisor_output_tokens,
-		COALESCE(SUM(w.advisor_cost_usd), 0)::text AS advisor_cost_usd,
-		COALESCE(MAX(w.finished_at), 0) AS last_ran_at`,
-	aianalytics.OutcomeCompleted,
-	aianalytics.OutcomeHandedOff,
-	aianalytics.OutcomeStopped,
-	aianalytics.OutcomeFailed,
-)
-
-var totalsSQL = fmt.Sprintf(`SELECT %[1]s,
-		COUNT(*) FILTER (WHERE w.outcome = '%[2]s') AS completion_count,
-		percentile_cont(ARRAY[0.25, 0.5, 0.75, 0.95]) WITHIN GROUP (ORDER BY w.duration_ms)
-			FILTER (WHERE w.outcome = '%[2]s') AS completion
-	FROM ai_work_units AS w
-	WHERE %[3]s`,
-	outcomeCountsSQL,
-	aianalytics.OutcomeCompleted,
-	unitWindowSQL,
-)
-
-var deploymentsSQL = fmt.Sprintf(`SELECT %[1]s, %[2]s
-	FROM ai_work_units AS w
-	WHERE %[3]s
-	GROUP BY 1, 2`,
-	deploymentColumnsSQL, outcomeCountsSQL, unitWindowSQL)
-
-func outcomeDurationsSQL(grouping aianalytics.Grouping) string {
-	return fmt.Sprintf(`SELECT %[1]s, w.outcome,
-		COUNT(*) AS count,
-		percentile_cont(ARRAY[0.25, 0.5, 0.75, 0.95]) WITHIN GROUP (ORDER BY w.duration_ms) AS percentiles
-	FROM ai_work_units AS w
-	WHERE %[2]s
-	GROUP BY 1, 2, 3`,
-		groupColumnsSQL(grouping), unitWindowSQL)
+func completedUnit(w *aianalyticsdb.WorkUnitsTable) keel.Pred {
+	return w.Outcome.Eq(aianalytics.OutcomeCompleted)
 }
 
-func trendSQL(grouping aianalytics.Grouping) string {
-	return fmt.Sprintf(`SELECT %[1]s,
-		(?starts::bigint[])[width_bucket(w.finished_at, ?starts::bigint[])] AS bucket_start,
-		COUNT(*) AS runs,
-		COUNT(*) FILTER (WHERE w.outcome = '%[2]s') AS completed,
-		COALESCE(SUM(w.tool_calls), 0) AS tool_calls,
-		COALESCE(SUM(w.tool_failures_model + w.tool_failures_tool), 0) AS tool_failures,
-		percentile_cont(0.5) WITHIN GROUP (ORDER BY w.duration_ms)
-			FILTER (WHERE w.outcome = '%[2]s') AS median_run_ms
-	FROM ai_work_units AS w
-	WHERE %[3]s
-		AND w.finished_at >= (?starts::bigint[])[1]
-	GROUP BY 1, 2, 3`,
-		groupColumnsSQL(grouping), aianalytics.OutcomeCompleted, unitWindowSQL)
+func summed(e keel.Expr) keel.NumericExpr {
+	return keel.NumericOf(keel.Sum(e)).Coalesce(0)
 }
 
-const toolScopeSQL = `t.organization_id = ?org AND t.business_unit_id = ?bu AND t.finished_at >= ?since
-		AND (?agent = '' OR t.agent_definition_id = ?agent)
-		AND (?task = '' OR t.task = ?task)`
+func outcomeCounts(w *aianalyticsdb.WorkUnitsTable) []keel.Expr {
+	return []keel.Expr{
+		keel.Count(),
+		keel.Count().Filter(completedUnit(w)),
+		keel.Count().Filter(w.Outcome.Eq(aianalytics.OutcomeHandedOff)),
+		keel.Count().Filter(w.Outcome.Eq(aianalytics.OutcomeStopped)),
+		keel.Count().Filter(w.Outcome.Eq(aianalytics.OutcomeFailed)),
+		summed(w.ModelCalls),
+		summed(w.FailedCalls),
+		summed(w.ToolCalls),
+		summed(w.ToolFailuresModel),
+		summed(w.ToolFailuresTool),
+		keel.CastText(summed(w.CostUSD)),
+		w.CostUSD.Count(),
+		summed(w.InputTokens),
+		summed(w.OutputTokens),
+		summed(w.CacheReadTokens),
+		summed(w.CacheWriteTokens),
+		summed(w.AdvisorCalls),
+		summed(w.AdvisorPromptTokens),
+		summed(w.AdvisorOutputTokens),
+		keel.CastText(summed(w.AdvisorCostUSD)),
+		keel.Int64Of(w.FinishedAt.Max()).Coalesce(0),
+	}
+}
 
-var toolCellsSQL = `SELECT t.model_key, t.provider_id, t.tool_name, t.cause,
-		SUM(t.calls) AS calls
-	FROM ai_work_unit_tools AS t
-	WHERE ` + toolScopeSQL + `
-	GROUP BY 1, 2, 3, 4`
+func durationPercentiles(w *aianalyticsdb.WorkUnitsTable, filter keel.Pred) []keel.Expr {
+	out := make([]keel.Expr, 0, len(durationFractions))
+	for _, fraction := range durationFractions {
+		percentile := keel.PercentileCont(fraction, w.DurationMs.Asc())
+		if filter != nil {
+			percentile = percentile.Filter(filter)
+		}
+		out = append(out, percentile)
+	}
 
-func toolKeySQL(compareBy aianalytics.CompareBy) string {
+	return out
+}
+
+func totalsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.WorkUnit] {
+	w := aianalyticsdb.WorkUnits
+	picks := outcomeCounts(w)
+	picks = append(picks, keel.Count().Filter(completedUnit(w)))
+	picks = append(picks, durationPercentiles(w, completedUnit(w))...)
+
+	return w.Pick(picks...).Where(unitWindow(w, filter)...)
+}
+
+func deploymentsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.WorkUnit] {
+	w := aianalyticsdb.WorkUnits
+	keys := deploymentColumns(w)
+
+	return w.Pick(append(keys, outcomeCounts(w)...)...).
+		Where(unitWindow(w, filter)...).
+		Group(keys...)
+}
+
+func outcomeDurationsQuery(
+	filter *aianalyticsports.Filter,
+	grouping aianalytics.Grouping,
+) *keel.Query[*aianalytics.WorkUnit] {
+	w := aianalyticsdb.WorkUnits
+	keys := append(groupColumns(w, grouping), w.Outcome)
+	picks := append(append([]keel.Expr{}, keys...), keel.Count())
+
+	return w.Pick(append(picks, durationPercentiles(w, nil)...)...).
+		Where(unitWindow(w, filter)...).
+		Group(keys...)
+}
+
+func trendBucket(w *aianalyticsdb.WorkUnitsTable, starts []int64) keel.Expr {
+	if len(starts) == 1 {
+		return keel.Int64(starts[0])
+	}
+	bucket := keel.CaseInt64()
+	for index := len(starts) - 1; index > 0; index-- {
+		bucket = bucket.When(w.FinishedAt.Gte(starts[index]), keel.Int64(starts[index]))
+	}
+
+	return bucket.Else(keel.Int64(starts[0]))
+}
+
+func trendQuery(req *aianalyticsports.TrendRequest) *keel.Query[*aianalytics.WorkUnit] {
+	w := aianalyticsdb.WorkUnits
+	keys := append(groupColumns(w, req.Grouping), trendBucket(w, req.BucketStarts))
+
+	return w.Pick(append(append([]keel.Expr{}, keys...),
+		keel.Count(),
+		keel.Count().Filter(completedUnit(w)),
+		summed(w.ToolCalls),
+		summed(w.ToolFailuresModel.Add(w.ToolFailuresTool)),
+		keel.PercentileCont(0.5, w.DurationMs.Asc()).Filter(completedUnit(w)),
+	)...).
+		Where(append(unitWindow(w, &req.Filter), w.FinishedAt.Gte(req.BucketStarts[0]))...).
+		Group(keys...)
+}
+
+func toolCellsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.UnitTool] {
+	t := aianalyticsdb.UnitTools
+
+	return t.Pick(t.ModelKey, t.ProviderID, t.ToolName, t.Cause, t.Calls.Sum()).
+		Where(toolScope(t, filter)...).
+		Group(t.ModelKey, t.ProviderID, t.ToolName, t.Cause)
+}
+
+func toolKey(t *aianalyticsdb.UnitToolsTable, compareBy aianalytics.CompareBy) keel.StringCol {
 	if compareBy == aianalytics.CompareByProvider {
-		return "t.provider_id"
+		return t.ProviderID
 	}
 
-	return "t.model_key"
+	return t.ModelKey
 }
 
-var taskCellsSQL = fmt.Sprintf(`SELECT %[1]s, w.task,
-		COUNT(*) AS runs,
-		COUNT(*) FILTER (WHERE w.outcome = '%[2]s') AS completed
-	FROM ai_work_units AS w
-	WHERE %[3]s
-	GROUP BY 1, 2, 3`,
-	deploymentColumnsSQL, aianalytics.OutcomeCompleted, unitWindowSQL)
+func taskCellsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.WorkUnit] {
+	w := aianalyticsdb.WorkUnits
+	keys := append(deploymentColumns(w), w.Task)
 
-var decisionsSQL = fmt.Sprintf(`SELECT %[1]s,
-		COUNT(*) FILTER (WHERE d.decision = '%[2]s') AS accepted,
-		COUNT(*) FILTER (WHERE d.decision = '%[3]s') AS modified,
-		COUNT(*) FILTER (WHERE d.decision = '%[4]s') AS rejected
-	FROM agent_decisions AS d
-	JOIN agent_proposals AS p
-		ON p.organization_id = d.organization_id
-		AND p.business_unit_id = d.business_unit_id
-		AND p.id = d.proposal_id
-	JOIN ai_work_units AS w
-		ON w.organization_id = p.organization_id
-		AND w.business_unit_id = p.business_unit_id
-		AND w.decision_run_id = p.run_id
-	WHERE d.organization_id = ?org AND d.business_unit_id = ?bu
-		AND d.created_at >= ?since
-		AND d.proposal_id IS NOT NULL
-		AND d.undone_at IS NULL
-		AND %[5]s
-	GROUP BY 1, 2`,
-	deploymentColumnsSQL,
-	agent.DecisionAccepted,
-	agent.DecisionModified,
-	agent.DecisionRejected,
-	unitScopeSQL,
-)
-
-var ratingsSQL = fmt.Sprintf(`SELECT %[1]s,
-		COUNT(*) AS rated,
-		COUNT(*) FILTER (WHERE f.rating > 0) AS helpful
-	FROM ai_feedback AS f
-	JOIN ai_work_units AS w
-		ON w.organization_id = f.organization_id
-		AND w.business_unit_id = f.business_unit_id
-		AND w.id = COALESCE(f.turn_id, f.run_id)
-	WHERE f.organization_id = ?org AND f.business_unit_id = ?bu
-		AND f.created_at >= ?since
-		AND %[2]s
-	GROUP BY 1, 2`,
-	deploymentColumnsSQL, unitScopeSQL)
-
-var suggestionsSQL = fmt.Sprintf(`SELECT s.suggested_agent_id AS agent_definition_id,
-		COALESCE(MAX(d.name), '') AS agent_name,
-		COUNT(*) FILTER (WHERE s.outcome = '%[1]s') AS switched,
-		COUNT(*) FILTER (WHERE s.outcome = '%[2]s') AS sent_through,
-		COUNT(*) FILTER (WHERE s.outcome = '%[3]s') AS auto_switched,
-		COUNT(*) FILTER (WHERE s.outcome = '%[4]s') AS kept,
-		COUNT(*) FILTER (WHERE s.outcome IN ('%[5]s', '%[6]s')) AS passed_over
-	FROM agent_suggestions AS s
-	LEFT JOIN agent_definitions AS d
-		ON d.organization_id = s.organization_id
-		AND d.business_unit_id = s.business_unit_id
-		AND d.id = s.suggested_agent_id
-	WHERE s.organization_id = ?org AND s.business_unit_id = ?bu
-		AND s.created_at >= ?since
-		AND (?agent = '' OR s.suggested_agent_id = ?agent)
-		AND (s.outcome <> '%[6]s' OR s.created_at < ?pending_since)
-	GROUP BY s.suggested_agent_id`,
-	agentsuggestion.OutcomeSwitched,
-	agentsuggestion.OutcomeSentThrough,
-	agentsuggestion.OutcomeAutoSwitched,
-	agentsuggestion.OutcomeKept,
-	agentsuggestion.OutcomePassedOver,
-	agentsuggestion.OutcomeShown,
-)
-
-var providerCallsSQL = `SELECT ` + hourDeploymentColumnsSQL + `, h.error_class,
-		SUM(h.calls) AS calls,
-		SUM(h.fell_to_next) AS fell_to_next,
-		MAX(h.hour) AS last_hour
-	FROM ai_provider_hourly_stats AS h
-	WHERE ` + hourScopeSQL + `
-	GROUP BY 1, 2, 3`
-
-var firstTokenSQL = fmt.Sprintf(`SELECT %[1]s,
-		(b.idx - 1)::int AS bucket,
-		SUM(b.v)::bigint AS count
-	FROM ai_provider_hourly_stats AS h
-	CROSS JOIN LATERAL unnest(h.first_token_hist) WITH ORDINALITY AS b(v, idx)
-	WHERE %[2]s AND h.error_class = '' AND b.v > 0
-	GROUP BY 1, 2, 3`,
-	hourDeploymentColumnsSQL, hourScopeSQL)
-
-var providerHoursSQL = fmt.Sprintf(`SELECT h.provider_id, h.hour,
-		SUM(h.calls) AS calls,
-		COALESCE(SUM(h.calls) FILTER (WHERE h.error_class IN (%[1]s)), 0) AS failed,
-		COALESCE(SUM(h.calls) FILTER (WHERE h.error_class = '%[2]s'), 0) AS auth_failed
-	FROM ai_provider_hourly_stats AS h
-	WHERE %[3]s AND h.provider_id <> ''
-	GROUP BY 1, 2
-	ORDER BY 1, 2`,
-	quoted(aianalytics.AllProviderErrors()...), aianalytics.ProviderErrorAccessDenied, hourScopeSQL)
-
-var providerVersionsSQL = fmt.Sprintf(`SELECT v.subject_id AS provider_id,
-		v.version,
-		COALESCE(v.snapshot->>'name', '') AS name,
-		COALESCE(v.snapshot->>'model', '') AS model,
-		COALESCE((v.snapshot->>'enabled')::boolean, false) AS enabled,
-		v.created_at
-	FROM ai_setting_versions AS v
-	WHERE v.organization_id = ?org AND v.business_unit_id = ?bu
-		AND v.kind = '%[1]s'
-		AND v.subject_id IN (
-			SELECT x.subject_id FROM ai_setting_versions AS x
-			WHERE x.organization_id = ?org AND x.business_unit_id = ?bu
-				AND x.kind = '%[1]s' AND x.created_at >= ?since
-		)
-	ORDER BY v.subject_id, v.version`,
-	settingversion.KindAIProvider)
-
-func toolCausesSQL(compareBy aianalytics.CompareBy) string {
-	return fmt.Sprintf(`SELECT t.cause, t.provider_id, SUM(t.calls) AS calls
-	FROM ai_work_unit_tools AS t
-	WHERE %[1]s
-		AND t.tool_name = ?tool_name
-		AND %[2]s = ?series_key
-	GROUP BY 1, 2`,
-		toolScopeSQL, toolKeySQL(compareBy))
+	return w.Pick(append(append([]keel.Expr{}, keys...), keel.Count(),
+		keel.Count().Filter(completedUnit(w)))...).
+		Where(unitWindow(w, filter)...).
+		Group(keys...)
 }
 
-func toolExamplesSQL(compareBy aianalytics.CompareBy) string {
-	return fmt.Sprintf(`WITH candidates AS (
-		SELECT t.unit_id, MAX(t.finished_at) AS finished_at
-		FROM ai_work_unit_tools AS t
-		WHERE %[1]s
-			AND t.tool_name = ?tool_name
-			AND %[2]s = ?series_key
-			AND t.cause <> ''
-		GROUP BY t.unit_id
-		ORDER BY 2 DESC
-		LIMIT ?candidates
+func decisionsQuery(filter *aianalyticsports.Filter) *keel.Query[*agent.AgentDecision] {
+	d := agentdb.AgentDecisions
+	p := agentdb.AgentProposals
+	w := aianalyticsdb.WorkUnits
+	keys := deploymentColumns(w)
+
+	return d.Join(p, p.ID.EqCol(d.ProposalID)).
+		Join(w, w.DecisionRunID.EqCol(p.RunID)).
+		Pick(append(append([]keel.Expr{}, keys...),
+			keel.Count().Filter(d.Decision.Eq(agent.DecisionAccepted)),
+			keel.Count().Filter(d.Decision.Eq(agent.DecisionModified)),
+			keel.Count().Filter(d.Decision.Eq(agent.DecisionRejected)),
+		)...).
+		Where(append(unitScope(w, filter),
+			d.CreatedAt.Gte(filter.Since),
+			d.ProposalID.IsNotNull(),
+			d.UndoneAt.IsNull(),
+		)...).
+		Group(keys...)
+}
+
+func ratingsQuery(filter *aianalyticsports.Filter) *keel.Query[*aifeedback.Feedback] {
+	f := aifeedbackdb.Feedbacks
+	w := aianalyticsdb.WorkUnits
+	keys := deploymentColumns(w)
+
+	return f.Join(w, w.ID.EqCol(f.TurnID.Coalesce(f.RunID))).
+		Pick(append(append([]keel.Expr{}, keys...),
+			keel.Count(),
+			keel.Count().Filter(f.Rating.Gt(0)),
+		)...).
+		Where(append(unitScope(w, filter), f.CreatedAt.Gte(filter.Since))...).
+		Group(keys...)
+}
+
+func suggestionsQuery(
+	req *aianalyticsports.SuggestionRequest,
+) *keel.Query[*agentsuggestion.Suggestion] {
+	s := agentsuggestiondb.Suggestions
+	d := agentdefinitiondb.Definitions
+
+	return s.LeftJoin(d, d.ID.EqCol(s.SuggestedAgentID)).
+		Pick(
+			s.SuggestedAgentID,
+			keel.StringOf(d.Name.Max()).Coalesce(""),
+			keel.Count().Filter(s.Outcome.Eq(agentsuggestion.OutcomeSwitched)),
+			keel.Count().Filter(s.Outcome.Eq(agentsuggestion.OutcomeSentThrough)),
+			keel.Count().Filter(s.Outcome.Eq(agentsuggestion.OutcomeAutoSwitched)),
+			keel.Count().Filter(s.Outcome.Eq(agentsuggestion.OutcomeKept)),
+			keel.Count().Filter(s.Outcome.In(
+				agentsuggestion.OutcomePassedOver,
+				agentsuggestion.OutcomeShown,
+			)),
+		).
+		Where(
+			s.CreatedAt.Gte(req.Filter.Since),
+			keel.When(
+				req.Filter.AgentDefinitionID.IsNotNil(),
+				s.SuggestedAgentID.Eq(req.Filter.AgentDefinitionID),
+			),
+			keel.Or(
+				s.Outcome.Ne(agentsuggestion.OutcomeShown),
+				s.CreatedAt.Lt(req.PendingSince),
+			),
+		).
+		Group(s.SuggestedAgentID)
+}
+
+func providerCallsQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.ProviderHour] {
+	h := aianalyticsdb.ProviderHours
+
+	return h.Pick(h.ModelKey, h.ProviderID, h.ErrorClass,
+		h.Calls.Sum(), h.FellToNext.Sum(), h.Hour.Max()).
+		Where(hourScope(h, filter)...).
+		Group(h.ModelKey, h.ProviderID, h.ErrorClass)
+}
+
+func firstTokenQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.ProviderHour] {
+	h := aianalyticsdb.ProviderHours
+	hist := keel.Int64ArrayOf(h.FirstTokenHist)
+	b := keel.Rows("b", []string{"v", "idx"},
+		hist.Unnest(),
+		keel.GenerateSeries(keel.ConstInt64(1), keel.Int64Of(hist.Len())),
 	)
-	SELECT w.id AS unit_id, w.source, s.tool_name,
-		LEFT(COALESCE(NULLIF(s.outcome->>'content', ''), s.outcome->>'reason', ''), 300) AS message,
-		COALESCE(w.agent_definition_id, '') AS agent_definition_id,
-		COALESCE(s.settled_at_ms / 1000, s.updated_at) AS at
-	FROM candidates AS c
-	JOIN ai_work_units AS w
-		ON w.organization_id = ?org AND w.business_unit_id = ?bu AND w.id = c.unit_id
-	JOIN agent_run_steps AS s
-		ON s.organization_id = ?org
-		AND s.business_unit_id = ?bu
-		AND s.owner_id = c.unit_id
-	WHERE s.kind = '%[3]s' AND s.status = '%[4]s' AND s.tool_name = ?tool_name
-	ORDER BY s.updated_at DESC, s.id DESC
-	LIMIT ?limit`,
-		toolScopeSQL, toolKeySQL(compareBy), agentports.RunStepTool, agentports.RunStepFailed)
+	bucket := keel.Int64Of(b.Col("idx")).Sub(keel.ConstInt64(1))
+
+	return h.JoinLateral(b).
+		Pick(h.ModelKey, h.ProviderID, bucket, keel.Sum(b.Col("v"))).
+		Where(append(hourScope(h, filter),
+			h.ErrorClass.Eq(aianalytics.ProviderErrorNone),
+			b.Col("v").Gt(0),
+		)...).
+		Group(h.ModelKey, h.ProviderID, bucket)
 }
 
-const paletteSQL = `SELECT DISTINCT h.model_key, h.provider_id
-	FROM ai_provider_hourly_stats AS h
-	WHERE h.organization_id = ?org AND h.business_unit_id = ?bu AND h.hour >= ?since_hour`
+func providerHoursQuery(filter *aianalyticsports.Filter) *keel.Query[*aianalytics.ProviderHour] {
+	h := aianalyticsdb.ProviderHours
+
+	return h.Pick(
+		h.ProviderID,
+		h.Hour,
+		h.Calls.Sum(),
+		keel.NumericOf(h.Calls.Sum().Filter(h.ErrorClass.In(aianalytics.AllProviderErrors()...))).
+			Coalesce(0),
+		keel.NumericOf(h.Calls.Sum().Filter(h.ErrorClass.Eq(aianalytics.ProviderErrorAccessDenied))).
+			Coalesce(0),
+	).
+		Where(append(hourScope(h, filter), h.ProviderID.Ne(""))...).
+		Group(h.ProviderID, h.Hour).
+		Order(h.ProviderID.Asc(), h.Hour.Asc())
+}
+
+func providerVersionsQuery(
+	filter *aianalyticsports.Filter,
+) *keel.Query[*settingversion.SettingVersion] {
+	v := settingversiondb.SettingVersions
+	changed := settingversiondb.SettingVersions.As("changed")
+
+	return v.Pick(
+		v.SubjectID,
+		v.Version,
+		v.Snapshot.Text("name").Coalesce(""),
+		v.Snapshot.Text("model").Coalesce(""),
+		keel.CastBool(v.Snapshot.Text("enabled")).Coalesce(false),
+		v.CreatedAt,
+	).
+		Where(
+			v.Kind.Eq(settingversion.KindAIProvider),
+			v.SubjectID.InQuery(changed.Pick(changed.SubjectID).Where(
+				changed.Kind.Eq(settingversion.KindAIProvider),
+				changed.CreatedAt.Gte(filter.Since),
+			)),
+		).
+		Order(v.SubjectID.Asc(), v.Version.Asc())
+}
+
+func toolCausesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*aianalytics.UnitTool] {
+	t := aianalyticsdb.UnitTools
+
+	return t.Pick(t.Cause, t.ProviderID, t.Calls.Sum()).
+		Where(append(toolScope(t, &req.Filter),
+			t.ToolName.Eq(req.ToolName),
+			toolKey(t, req.CompareBy).Eq(req.SeriesKey),
+		)...).
+		Group(t.Cause, t.ProviderID)
+}
+
+func toolExamplesQuery(req *aianalyticsports.ToolFailureRequest) *keel.Query[*keel.Row] {
+	t := aianalyticsdb.UnitTools
+	w := aianalyticsdb.WorkUnits
+	s := agentdb.AgentRunSteps
+	latest := t.FinishedAt.Max()
+	candidates := keel.CTE("candidates", []string{colUnitID, "finished_at"}, t.
+		Pick(t.UnitID, latest).
+		Where(append(toolScope(t, &req.Filter),
+			t.ToolName.Eq(req.ToolName),
+			toolKey(t, req.CompareBy).Eq(req.SeriesKey),
+			t.Cause.Ne(aianalytics.Cause("")),
+		)...).
+		Group(t.UnitID).
+		Order(latest.Desc()).
+		Limit(req.Limit*toolExampleCandidatesPerExample))
+	unitID := candidates.Col(colUnitID)
+	outcome := s.Outcome
+
+	return candidates.Query().With(candidates).
+		Join(w, w.ID.EqCol(unitID)).
+		Join(s, s.OwnerID.EqCol(unitID)).
+		Pick(
+			w.ID,
+			w.Source,
+			s.ToolName,
+			outcome.Text("content").
+				NullIf("").
+				Coalesce(outcome.Text("reason"), "").
+				Left(300),
+			w.AgentDefinitionID.Coalesce(""),
+			s.SettledAtMs.Div(keel.Int64(1000)).Coalesce(s.UpdatedAt),
+		).
+		Where(
+			s.Kind.Eq(string(agentports.RunStepTool)),
+			s.Status.Eq(string(agentports.RunStepFailed)),
+			s.ToolName.Eq(req.ToolName),
+		).
+		Order(s.UpdatedAt.Desc(), s.ID.Desc()).
+		Limit(req.Limit)
+}
+
+func paletteQuery(since int64) *keel.Query[*aianalytics.ProviderHour] {
+	h := aianalyticsdb.ProviderHours
+
+	return h.Pick(h.ModelKey, h.ProviderID).Where(h.Hour.Gte(floorHour(since))).Distinct()
+}

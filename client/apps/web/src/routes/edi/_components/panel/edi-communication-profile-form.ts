@@ -9,17 +9,7 @@ import {
 
 type ProfileConfigKey = keyof CommunicationProfileFormValues["config"];
 
-const x12EnvelopeKeys: ProfileConfigKey[] = [
-  "isaSenderQualifier",
-  "isaSenderId",
-  "isaReceiverQualifier",
-  "isaReceiverId",
-  "gsSenderId",
-  "gsReceiverId",
-  "x12Version",
-  "environment",
-  "acknowledgmentPreference",
-];
+const x12EnvelopeKeys: ProfileConfigKey[] = ["environment"];
 
 const deliveryRetryKeys: ProfileConfigKey[] = [
   "retryMaxAttempts",
@@ -119,15 +109,7 @@ export function getProfileFormDefaults(
       gsRoutingId: stringConfig(config, "gsRoutingId"),
       endpoint: stringConfig(config, "endpoint"),
       contactEmail: stringConfig(config, "contactEmail"),
-      isaSenderQualifier: stringConfig(config, "isaSenderQualifier"),
-      isaSenderId: stringConfig(config, "isaSenderId"),
-      isaReceiverQualifier: stringConfig(config, "isaReceiverQualifier"),
-      isaReceiverId: stringConfig(config, "isaReceiverId"),
-      gsSenderId: stringConfig(config, "gsSenderId"),
-      gsReceiverId: stringConfig(config, "gsReceiverId"),
-      x12Version: stringConfig(config, "x12Version", "004010"),
       environment: stringConfig(config, "environment", "test"),
-      acknowledgmentPreference: stringConfig(config, "acknowledgmentPreference", "997"),
     },
     secrets: {
       basicAuthPassword: "",

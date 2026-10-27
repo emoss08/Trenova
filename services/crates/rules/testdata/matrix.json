@@ -1,212 +1,37 @@
 {
-  "op": "matrix.select",
+  "op": "matrix.coverage",
   "cases": [
     {
-      "name": "ratematrix: select across zone, zone and weight break",
-      "input": {
-        "dimensions": [
-          {"position": 0, "kind": "Zone", "matchMode": "Exact"},
-          {"position": 1, "kind": "Zone", "matchMode": "Exact"},
-          {"position": 2, "kind": "WeightBreak", "matchMode": "Range"}
-        ],
-        "cells": [
-          {"id": "rmc_light", "d0Key": "SE", "d1Key": "MW", "d2Min": 0, "d2Max": 1000, "value": "18.50"},
-          {"id": "rmc_heavy", "d0Key": "SE", "d1Key": "MW", "d2Min": 1000, "d2Max": 5000, "value": "12.25"}
-        ],
-        "values": [{"keys": ["SE"]}, {"keys": ["MW"]}, {"quantity": 4200}]
-      },
-      "exact": true,
-      "output": {"cell": {"index": 1, "id": "rmc_heavy", "preference": 0, "matchedKeys": ["SE", "MW", "4200", ""]}}
-    },
-    {
-      "name": "ratematrix: the boundary weight belongs to the upper band",
-      "input": {
-        "dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range"}],
-        "cells": [
-          {"id": "rmc_lower", "d0Min": 0, "d0Max": 1000},
-          {"id": "rmc_upper", "d0Min": 1000, "d0Max": 5000}
-        ],
-        "values": [{"quantity": "1000"}]
-      },
-      "output": {"cell": {"index": 1, "id": "rmc_upper"}}
-    },
-    {
-      "name": "ratematrix: an open-ended top band catches anything heavier",
-      "input": {
-        "dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range"}],
-        "cells": [{"id": "rmc_top", "d0Min": 20000, "d0Max": null}],
-        "values": [{"quantity": 48000}]
-      },
-      "output": {"cell": {"index": 0, "id": "rmc_top", "matchedKeys": ["48000", "", "", ""]}}
-    },
-    {
-      "name": "ratematrix: the earlier candidate key wins, whatever order the cells arrive in",
-      "input": {
-        "dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact"}],
-        "cells": [
-          {"id": "rmc_fallback", "d0Key": "MIDWEST"},
-          {"id": "rmc_preferred", "d0Key": "CHI_METRO"}
-        ],
-        "values": [{"keys": ["CHI_METRO", "MIDWEST"]}]
-      },
-      "output": {"cell": {"index": 1, "id": "rmc_preferred", "preference": 0, "matchedKeys": ["CHI_METRO", "", "", ""]}}
-    },
-    {
-      "name": "ratematrix: the summed preference ranks across axes",
-      "input": {
-        "dimensions": [
-          {"position": 0, "kind": "Zone", "matchMode": "Exact"},
-          {"position": 1, "kind": "Zone", "matchMode": "Exact"}
-        ],
-        "cells": [
-          {"id": "rmc_a", "d0Key": "METRO", "d1Key": "REGION"},
-          {"id": "rmc_b", "d0Key": "REGION", "d1Key": "METRO"},
-          {"id": "rmc_c", "d0Key": "REGION", "d1Key": "REGION"}
-        ],
-        "values": [{"keys": ["METRO", "REGION"]}, {"keys": ["METRO", "REGION"]}]
-      },
-      "output": {"cell": {"index": 0, "id": "rmc_a", "preference": 1}}
-    },
-    {
-      "name": "ratematrix: indistinguishable cells resolve to the lowest ID (forward)",
-      "input": {
-        "dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact"}],
-        "cells": [
-          {"id": "rmc_00000000000000000000000001", "d0Key": "SE"},
-          {"id": "rmc_00000000000000000000000002", "d0Key": "SE"}
-        ],
-        "values": [{"keys": ["SE"]}]
-      },
-      "output": {"cell": {"index": 0, "id": "rmc_00000000000000000000000001"}}
-    },
-    {
-      "name": "ratematrix: indistinguishable cells resolve to the lowest ID (reversed)",
-      "input": {
-        "dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact"}],
-        "cells": [
-          {"id": "rmc_00000000000000000000000002", "d0Key": "SE"},
-          {"id": "rmc_00000000000000000000000001", "d0Key": "SE"}
-        ],
-        "values": [{"keys": ["SE"]}]
-      },
-      "output": {"cell": {"index": 1, "id": "rmc_00000000000000000000000001"}}
-    },
-    {
-      "name": "unsaved cells tie in request order, before saved ones",
-      "input": {
-        "dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact"}],
-        "cells": [{"id": "rmc_1", "d0Key": "SE"}, null, {"d0Key": "SE"}, {"d0Key": "SE"}],
-        "values": [{"keys": ["SE"]}]
-      },
-      "exact": true,
-      "output": {"cell": {"index": 2, "preference": 0, "matchedKeys": ["SE", "", "", ""]}}
-    },
-    {
-      "name": "ratematrix: a missing dimension value is refused",
-      "input": {
-        "dimensions": [
-          {"position": 0, "kind": "Zone", "matchMode": "Exact"},
-          {"position": 1, "kind": "WeightBreak", "matchMode": "Range"}
-        ],
-        "cells": [],
-        "values": [{"keys": ["SE"]}]
-      },
-      "exact": true,
-      "output": {"error": {"code": "dimension_value_missing", "position": 1, "message": {"message": "No value was supplied for the matrix dimension {0}", "args": ["Weight break"]}}}
-    },
-    {
-      "name": "the missing axis is named by its label, and an exact axis with no keys is missing",
-      "input": {
-        "dimensions": [{"position": 2, "kind": "Zone", "matchMode": "Exact", "label": " Origin market "}],
-        "cells": [{"d2Key": "SE"}],
-        "values": [{}, {}, {"keys": []}]
-      },
-      "output": {"error": {"code": "dimension_value_missing", "position": 2, "message": {"args": ["Origin market"]}}}
-    },
-    {
-      "name": "ratematrix: nothing covers the lookup",
-      "input": {
-        "dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact"}],
-        "cells": [{"id": "rmc_ne", "d0Key": "NE"}],
-        "values": [{"keys": ["SE"]}]
-      },
-      "exact": true,
-      "output": {"error": {"code": "no_matching_cell", "message": {"message": "No matrix cell matches the supplied values"}}}
-    },
-    {
-      "name": "an axis with an unknown match mode constrains nothing, as in Go",
-      "input": {
-        "dimensions": [
-          {"position": 0, "kind": "Zone", "matchMode": "Exact"},
-          {"position": 1, "kind": "Zone", "matchMode": "Banded"}
-        ],
-        "cells": [{"id": "rmc_1", "d0Key": "SE", "d1Key": "anything"}],
-        "values": [{"keys": ["SE"]}]
-      },
-      "output": {"cell": {"index": 0, "matchedKeys": ["SE", "", "", ""]}}
-    },
-    {
-      "name": "bounds and quantities are exact decimals from numbers or strings",
-      "input": {
-        "dimensions": [{"position": 3, "kind": "Distance", "matchMode": "Range"}],
-        "cells": [
-          {"id": "rmc_1", "d3Min": "0", "d3Max": "100.0001"},
-          {"id": "rmc_2", "d3Min": "100.0001", "d3Max": ""}
-        ],
-        "values": [null, null, null, {"quantity": "100.00010"}]
-      },
-      "output": {"cell": {"index": 1, "matchedKeys": ["", "", "", "100.0001"]}}
-    },
-    {
-      "name": "null labels, keys and lists read as empty",
-      "input": {
-        "dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact", "label": null}],
-        "cells": [{"id": "rmc_1", "d0Key": null}],
-        "values": [{"keys": null}]
-      },
-      "output": {"error": {"code": "dimension_value_missing", "message": {"args": ["Zone"]}}}
-    },
-    {
       "name": "a position outside 0 to 3 is a request error",
-      "input": {"dimensions": [{"position": 4, "matchMode": "Exact"}], "cells": [], "values": []},
-      "error": "invalid_input"
-    },
-    {
-      "name": "more than four values is a request error",
-      "input": {"dimensions": [], "cells": [], "values": [{}, {}, {}, {}, {}]},
+      "input": {"dimensions": [{"position": 4, "matchMode": "Exact"}], "cells": []},
       "error": "invalid_input"
     },
     {
       "name": "coverage (TS): a matrix with no axes",
-      "op": "matrix.coverage",
       "input": {"dimensions": [], "cells": [{"d0Key": ""}]},
       "exact": true,
       "output": {"issues": [{"kind": "empty", "position": null, "message": {"message": "This matrix has no axes, so nothing can ever look a rate up in it."}}]}
     },
     {
       "name": "coverage (TS): a matrix with axes but no rates",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": []},
       "exact": true,
       "output": {"issues": [{"kind": "empty", "position": null, "message": {"message": "This matrix has no rates yet, so every lane pointing at it prices nothing."}}]}
     },
     {
       "name": "coverage (TS): bands that meet exactly are contiguous",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [{"d0Min": 0, "d0Max": 1000}, {"d0Min": 1000}]},
       "exact": true,
       "output": {"issues": []}
     },
     {
       "name": "coverage (TS): the hole between two bands",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [{"d0Min": 0, "d0Max": 1000}, {"d0Min": 5000}]},
       "exact": true,
       "output": {"issues": [{"kind": "gap", "position": 0, "message": {"message": "{0} jumps from {1} to {2} with nothing in between.", "args": ["Weight", "1,000", "5,000"]}}]}
     },
     {
       "name": "coverage (TS): two bands claiming the same weight",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [{"d0Min": 0, "d0Max": 2000}, {"d0Min": 1000}]},
       "exact": true,
       "output": {"issues": [{"kind": "overlap", "position": 0,
@@ -215,35 +40,30 @@
     },
     {
       "name": "coverage (TS): a top band with a ceiling leaves everything above it unpriced",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [{"d0Min": 0, "d0Max": 1000}, {"d0Min": 1000, "d0Max": 20000}]},
       "exact": true,
       "output": {"issues": [{"kind": "unbounded", "position": 0, "message": {"message": "{0} stops at {1}. Anything at or above that finds no rate — give the top band no upper bound to catch it.", "args": ["Weight", "20,000"]}}]}
     },
     {
       "name": "coverage (TS): a bottom band that leaves light freight unpriced",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range"}], "cells": [{"d0Min": 500}]},
       "exact": true,
       "output": {"issues": [{"kind": "gap", "position": 0, "message": {"message": "{0} has no band below {1}, so anything smaller finds no rate.", "args": ["Weight break", "500"]}}]}
     },
     {
       "name": "coverage (TS): two rates at one coordinate, reported once however often it repeats",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact"}], "cells": [{"d0Key": "SE", "value": 2.1}, {"d0Key": "SE", "value": 9.99}, {"d0Key": "SE"}]},
       "exact": true,
       "output": {"issues": [{"kind": "duplicate", "position": null, "message": {"message": "Two rates sit at {0}. The engine will take the one entered first and never mention the other.", "args": ["SE"]}}]}
     },
     {
       "name": "coverage (TS): a complete exact grid passes",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact"}, {"position": 1, "kind": "Zone", "matchMode": "Exact"}], "cells": [{"d0Key": "SE", "d1Key": "MW"}, {"d0Key": "SE", "d1Key": "NE"}]},
       "exact": true,
       "output": {"issues": []}
     },
     {
       "name": "coverage: a duplicate coordinate names every axis, bands by their bounds",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact"}, {"position": 1, "kind": "WeightBreak", "matchMode": "Range"}], "cells": [
         {"d0Key": "SE", "d1Min": "0.0", "d1Max": 1000},
         {"d0Key": "SE", "d1Min": 0, "d1Max": "1000.00"}
@@ -252,7 +72,6 @@
     },
     {
       "name": "coverage: each zone's weight breaks are checked on their own",
-      "op": "matrix.coverage",
       "input": {"dimensions": [
         {"position": 0, "kind": "Zone", "matchMode": "Exact", "label": "Origin"},
         {"position": 1, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}
@@ -267,7 +86,6 @@
     },
     {
       "name": "coverage: a wide band covering two narrow ones overlaps both and leaves no false gap",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [
         {"d0Min": 0, "d0Max": 5000}, {"d0Min": 1000, "d0Max": 2000}, {"d0Min": 3000, "d0Max": 4000}, {"d0Min": 5000}
       ]},
@@ -278,7 +96,6 @@
     },
     {
       "name": "coverage: an unbounded band in the middle overlaps everything above it",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [
         {"d0Min": 0}, {"d0Min": 1000, "d0Max": 2000}
       ]},
@@ -286,7 +103,6 @@
     },
     {
       "name": "coverage: bands without a floor sort first and overlap each other",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "WeightBreak", "matchMode": "Range", "label": "Weight"}], "cells": [
         {"d0Max": 1000}, {"d0Max": 2000}, {"d0Min": 2000}
       ]},
@@ -294,9 +110,30 @@
     },
     {
       "name": "coverage: an empty band label reads Any",
-      "op": "matrix.coverage",
       "input": {"dimensions": [{"position": 0, "kind": "LinearFeet", "matchMode": "Range"}], "cells": [{}, {"d0Min": 5}]},
       "output": {"issues": [{"kind": "overlap", "message": {"args": ["Linear feet", {"message": "Any"}, {"message": "{0} and over", "args": ["5"]}]}}]}
+    },
+    {
+      "name": "coverage: postal ranges that meet or leave gaps are fine",
+      "input": {"dimensions": [{"position": 0, "kind": "ZipRange", "matchMode": "Range", "label": "Origin"}], "cells": [{"d0Key": "30000", "d0KeyTo": "31999"}, {"d0Key": "32000", "d0KeyTo": "34999"}, {"d0Key": "40000", "d0KeyTo": "41999"}]},
+      "exact": true,
+      "output": {"issues": []}
+    },
+    {
+      "name": "coverage: overlapping postal ranges are an overlap, compared trimmed and upper-cased",
+      "input": {"dimensions": [{"position": 0, "kind": "ZipRange", "matchMode": "Range", "label": "Origin"}], "cells": [{"d0Key": "k1a", "d0KeyTo": "K1Z"}, {"d0Key": " K1P ", "d0KeyTo": "K2B"}]},
+      "exact": true,
+      "output": {"issues": [{"kind": "overlap", "position": 0, "message": {"message": "{0} ranges {1} and {2} overlap, so the same postal code matches both.", "args": ["Origin", "K1A–K1Z", "K1P–K2B"]}}]}
+    },
+    {
+      "name": "coverage: postal ranges are checked within each slice",
+      "input": {"dimensions": [{"position": 0, "kind": "Zone", "matchMode": "Exact", "label": "Zone"}, {"position": 1, "kind": "ZipRange", "matchMode": "Range", "label": "Destination"}], "cells": [{"d0Key": "SE", "d1Key": "30000", "d1KeyTo": "31999"}, {"d0Key": "NE", "d1Key": "31000", "d1KeyTo": "32999"}, {"d0Key": "SE", "d1Key": "31500", "d1KeyTo": "33999"}]},
+      "output": {"issues": [{"kind": "overlap", "position": 1, "message": {"args": ["Destination", "30000–31999", "31500–33999"]}, "slices": ["SE"]}]}
+    },
+    {
+      "name": "coverage: the same postal range twice in a slice is a duplicate",
+      "input": {"dimensions": [{"position": 0, "kind": "ZipRange", "matchMode": "Range", "label": "Origin"}], "cells": [{"d0Key": "30000", "d0KeyTo": "31999"}, {"d0Key": "30000", "d0KeyTo": "31999"}]},
+      "output": {"issues": [{"kind": "duplicate", "message": {"args": ["30000–31999"]}}]}
     }
   ]
 }

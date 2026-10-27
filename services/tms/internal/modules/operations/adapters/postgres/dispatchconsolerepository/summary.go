@@ -4,17 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics/telematicsdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const atRiskLeadSeconds = int64(4 * 3600)
@@ -23,148 +20,125 @@ const positionFreshnessSeconds = int64(4 * 3600)
 
 const metersPerMile = 1609.344
 
-var vehiclePositionJoin = "LEFT JOIN " + telematicscol.VehiclePositionTable.As(
-	telematicscol.VehiclePositionTable.Alias) +
-	" ON " + telematicscol.VehiclePositionColumns.TractorID.EqColumn(
-	shipmentcol.AssignmentColumns.TractorID) +
-	" AND " + telematicscol.VehiclePositionColumns.OrganizationID.EqColumn(
-	shipmentcol.AssignmentColumns.OrganizationID) +
-	" AND " + telematicscol.VehiclePositionColumns.BusinessUnitID.EqColumn(
-	shipmentcol.AssignmentColumns.BusinessUnitID) +
-	" AND " + telematicscol.VehiclePositionColumns.RecordedAt.Gte()
+type moveSummary struct {
+	UncoveredMoves  int
+	CoveredMoves    int
+	LateMoves       int
+	AtRiskMoves     int
+	AssignedToday   int
+	AverageDeadhead float64
+}
+
+type driverSummary struct {
+	AvailableDrivers int
+	UnseatedDrivers  int
+}
 
 func (r *repository) GetBoardSummary(
 	ctx context.Context,
 	filter *shipmentports.DispatchBoardFilter,
 ) (*shipmentports.BoardSummary, error) {
-	summary := new(shipmentports.BoardSummary)
-	now := timeutils.NowUnix()
-
-	if err := r.scanMoveSummary(ctx, filter, now, summary); err != nil {
-		return nil, err
-	}
-	if err := r.scanDriverSummary(ctx, filter, summary); err != nil {
-		return nil, err
-	}
-
-	if summary.AvailableDrivers > 0 {
-		seated := summary.AvailableDrivers - summary.UnseatedDrivers
-		summary.UtilizationPct = float64(seated) / float64(summary.AvailableDrivers) * 100
-	}
-
-	return summary, nil
-}
-
-func (r *repository) scanMoveSummary(
-	ctx context.Context,
-	filter *shipmentports.DispatchBoardFilter,
-	now int64,
-	summary *shipmentports.BoardSummary,
-) error {
-	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
-		asnCols := shipmentcol.AssignmentColumns
-
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*shipmentports.BoardSummary, error) {
+		now := timeutils.NowUnix()
 		dayStart := filter.DayStartUnix
 		if dayStart <= 0 {
 			var err error
 			dayStart, err = timeutils.DayStartUnix(now, "")
 			if err != nil {
-				return fmt.Errorf("resolve dispatch board day start: %w", err)
+				return nil, fmt.Errorf("resolve dispatch board day start: %w", err)
 			}
 		}
 
-		casnCols := shipmentcol.CarrierAssignmentColumns
-		uncoveredCond := "(" + asnCols.ID.IsNull() + " AND " + casnCols.ID.IsNull() + ")"
-		coveredCond := "(" + asnCols.ID.IsNotNull() + " OR " + casnCols.ID.IsNotNull() + ")"
-
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model((*shipment.ShipmentMove)(nil)).
-			ColumnExpr(buncolgen.CountFilter("uncovered_moves", uncoveredCond)).
-			ColumnExpr(buncolgen.CountFilter("covered_moves", coveredCond)).
-			ColumnExpr(buncolgen.CountFilter("late_moves",
-				uncoveredCond,
-				"COALESCE(orig.window_start, 0) > 0",
-				"orig.window_start < ?",
-			), now).
-			ColumnExpr(buncolgen.CountFilter("at_risk_moves",
-				uncoveredCond,
-				"COALESCE(orig.window_start, 0) > 0",
-				"orig.window_start >= ?",
-				"orig.window_start <= ?",
-			), now, now+atRiskLeadSeconds).
-			ColumnExpr(buncolgen.CountFilter("assigned_today",
-				coveredCond,
-				"COALESCE("+asnCols.CreatedAt.Qualified()+", "+
-					casnCols.CreatedAt.Qualified()+") >= ?",
-			), dayStart).
-			Apply(averageDeadheadColumn()).
-			Join(shipmentJoin).
-			Join(customerJoin).
-			Join(assignmentJoin).
-			Join(carrierAssignmentJoin).
-			Join(vehiclePositionJoin, now-positionFreshnessSeconds).
-			Apply(joinMoveStopEdges).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = shipmentcol.ShipmentMoveScopeTenant(sq, filter.TenantInfo)
-				return applyMoveFilters(sq, filter)
-			}).
-			Scan(ctx, summary)
+		var moves moveSummary
+		var drivers driverSummary
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.IntoValue(moveSummaryQuery(filter, now, dayStart), &moves),
+			keel.IntoValue(driverSummaryQuery(filter), &drivers),
+		)
 		if err != nil {
-			return fmt.Errorf("scan dispatch board move summary: %w", err)
+			return nil, fmt.Errorf("scan dispatch board summary: %w", err)
 		}
 
-		return nil
+		summary := &shipmentports.BoardSummary{
+			UncoveredMoves:   moves.UncoveredMoves,
+			CoveredMoves:     moves.CoveredMoves,
+			LateMoves:        moves.LateMoves,
+			AtRiskMoves:      moves.AtRiskMoves,
+			UnseatedDrivers:  drivers.UnseatedDrivers,
+			AvailableDrivers: drivers.AvailableDrivers,
+			AssignedToday:    moves.AssignedToday,
+			AverageDeadhead:  moves.AverageDeadhead,
+		}
+		if summary.AvailableDrivers > 0 {
+			seated := summary.AvailableDrivers - summary.UnseatedDrivers
+			summary.UtilizationPct = float64(seated) / float64(summary.AvailableDrivers) * 100
+		}
+
+		return summary, nil
 	})
 }
 
-func (r *repository) scanDriverSummary(
-	ctx context.Context,
+func countIf(preds ...keel.Pred) keel.Expr {
+	return keel.Count().Filter(keel.And(preds...))
+}
+
+func moveSummaryQuery(
 	filter *shipmentports.DispatchBoardFilter,
-	summary *shipmentports.BoardSummary,
-) error {
-	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.WorkerColumns
+	now, dayStart int64,
+) *moveQuery {
+	asn := assignments
+	ca := carrierAssignments
+	pos := telematicsdb.VehiclePositions
+	windowStart := origin.stop.ScheduledWindowStart
 
-		counts := new(struct {
-			AvailableDrivers int `bun:"available_drivers"`
-			UnseatedDrivers  int `bun:"unseated_drivers"`
-		})
+	uncovered := keel.And(asn.ID.IsNull(), ca.ID.IsNull())
+	covered := keel.Or(asn.ID.IsNotNull(), ca.ID.IsNotNull())
+	scheduled := windowStart.Coalesce(0).Gt(0)
 
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model((*worker.Worker)(nil)).
-			ColumnExpr("COUNT(*)::int AS available_drivers").
-			ColumnExpr(buncolgen.CountFilter("unseated_drivers",
-				"COALESCE(oa.open_assignments, 0) = 0")).
-			Join(openAssignmentLateral, bun.List(openMoveStatuses)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerScopeTenant(sq, filter.TenantInfo)
-				sq = applyDriverFilters(sq, filter)
-				return sq.Where(cols.AvailableForDispatch.IsTrue())
-			}).
-			Scan(ctx, counts)
-		if err != nil {
-			return fmt.Errorf("scan dispatch board driver summary: %w", err)
-		}
-
-		summary.AvailableDrivers = counts.AvailableDrivers
-		summary.UnseatedDrivers = counts.UnseatedDrivers
-
-		return nil
-	})
+	return boardMoves().
+		LeftJoin(pos,
+			pos.TractorID.EqCol(asn.TractorID),
+			pos.RecordedAt.Gte(now-positionFreshnessSeconds),
+		).
+		Pick(
+			countIf(uncovered),
+			countIf(covered),
+			countIf(uncovered, scheduled, windowStart.Lt(now)),
+			countIf(
+				uncovered,
+				scheduled,
+				windowStart.Gte(now),
+				windowStart.Lte(now+atRiskLeadSeconds),
+			),
+			countIf(
+				covered,
+				asn.CreatedAt.Coalesce(ca.CreatedAt).Gte(dayStart),
+			),
+			postgis.DistanceSphere(
+				postgis.Pt(pos.Longitude, pos.Latitude),
+				postgis.Pt(origin.loc.Longitude, origin.loc.Latitude),
+			).
+				Div(metersPerMile).
+				Avg().
+				Filter(keel.And(
+					asn.ID.IsNotNull(),
+					pos.TractorID.IsNotNull(),
+					origin.loc.Latitude.IsNotNull(),
+					origin.loc.Longitude.IsNotNull(),
+				)).
+				Coalesce(0).
+				Cast(keel.TypeFloat64),
+		).
+		Where(moveFilters(filter)...)
 }
 
-func averageDeadheadColumn() func(*bun.SelectQuery) *bun.SelectQuery {
-	posCols := telematicscol.VehiclePositionColumns
-	asnCols := shipmentcol.AssignmentColumns
-
-	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.ColumnExpr(buncolgen.Expr(
-			"COALESCE(AVG(ST_DistanceSphere(ST_MakePoint({0}, {1}), "+
-				"ST_MakePoint(orig.longitude, orig.latitude)) / ?) "+
-				"FILTER (WHERE {2} IS NOT NULL AND {3} IS NOT NULL "+
-				"AND orig.latitude IS NOT NULL AND orig.longitude IS NOT NULL), 0)::float8 "+
-				"AS average_deadhead",
-			posCols.Longitude, posCols.Latitude, asnCols.ID, posCols.TractorID,
-		), metersPerMile)
-	}
+func driverSummaryQuery(filter *shipmentports.DispatchBoardFilter) *keel.Query[*worker.Worker] {
+	w := workerdb.Workers
+	return w.
+		Pick(
+			keel.Count(),
+			countIf(zero(openAssignments(w)).Eq(0)),
+		).
+		Where(driverFilters(filter)...).
+		Where(w.AvailableForDispatch.IsTrue())
 }

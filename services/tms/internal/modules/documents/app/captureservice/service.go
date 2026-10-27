@@ -58,7 +58,7 @@ type Params struct {
 
 	Logger          *zap.Logger
 	Config          *config.Config
-	DB              kernelports.DBConnection
+	DB              kernelports.Transactor
 	Devices         captureports.CaptureDeviceRepository
 	Pairings        captureports.CapturePairingRepository
 	Profiles        captureports.CaptureProfileRepository
@@ -121,7 +121,7 @@ type notifier interface {
 type Service struct {
 	l             *zap.Logger
 	cfg           *config.Config
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	devices       captureports.CaptureDeviceRepository
 	pairings      captureports.CapturePairingRepository
 	profiles      captureports.CaptureProfileRepository

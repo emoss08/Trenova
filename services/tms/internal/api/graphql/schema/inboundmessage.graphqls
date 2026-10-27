@@ -276,6 +276,8 @@ type InboundMessageConnection {
   edges: [InboundMessageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A folder of the queue: a question about state rather than a filter."
@@ -528,7 +530,7 @@ input TriageResponseTargetInput {
 }
 
 "The organization's queue settings."
-type TriageSettings {
+type TriageSettings @kind(resource: "inbound_message") {
   "Who the queue is handed to at the end of the day."
   onCallUser: User
   onCallUserId: ID
@@ -545,7 +547,7 @@ input TriageSettingsInput {
 }
 
 "Someone a message can be assigned to."
-type TriageAssignee {
+type TriageAssignee @kind(resource: "inbound_message") {
   user: User!
   "Waiting messages already assigned to them."
   waiting: Int!

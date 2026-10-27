@@ -1,0 +1,549 @@
+package fixtures
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/seeds/reference"
+
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/seed"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/shopspring/decimal"
+)
+
+const (
+	fuelSpendSeedDay          = int64(86400)
+	fuelSpendSeedTractorCount = 2
+	fuelSpendSeedCardYears    = 2
+	fuelSpendSeedRateNote     = "Development seed — illustrative, not published rates"
+
+	fuelSpendJurisdictionTX = "US_TX"
+	fuelSpendJurisdictionOK = "US_OK"
+	fuelSpendJurisdictionIN = "US_IN"
+	fuelSpendJurisdictionON = "CA_ON"
+
+	fuelSpendCardComdataLastFour = "4412"
+	fuelSpendCardWEXLastFour     = "0931"
+)
+
+type FuelSpendIFTASeed struct {
+}
+
+var FuelSpendIFTA = Seeds.Add(seed.Seed{
+	Name:        "fuel_spend_ifta",
+	Kind:        seed.Fixture,
+	Description: "Seeds fuel cards, fuel purchases, IFTA tax rates and jurisdiction mileage for the last two completed quarters",
+	After:       []*seed.Seed{reference.IFTAJurisdictions, TestData},
+	Run:         (&FuelSpendIFTASeed{}).Run,
+})
+
+type fuelSpendSeedRefs struct {
+	orgID         pulid.ID
+	buID          pulid.ID
+	adminID       pulid.ID
+	now           int64
+	periods       [2]ifta.Period
+	tractors      []*tractor.Tractor
+	cards         []*fuelpurchase.FuelCard
+	jurisdictions map[string]pulid.ID
+	odometers     []int64
+}
+
+type fuelPurchasePlan struct {
+	tractor      int
+	period       int
+	day          int
+	jurisdiction string
+	vendor       string
+	city         string
+	fuelType     domaintypes.IFTAFuelType
+	quantity     string
+	unit         fuelpurchase.QuantityUnit
+	unitPrice    string
+	currency     string
+	taxPaid      bool
+	useCard      bool
+	milesDriven  int64
+	notes        string
+}
+
+type taxRatePlan struct {
+	jurisdiction string
+	fuelType     domaintypes.IFTAFuelType
+	rate         string
+	surcharge    string
+}
+
+type mileagePlan struct {
+	tractor      int
+	period       int
+	day          int
+	jurisdiction string
+	miles        string
+	loaded       bool
+	notes        string
+}
+
+func (s *FuelSpendIFTASeed) Run(ctx context.Context, sr *seed.Run) error {
+	db := sr.DB
+	org, err := defaultOrganization(ctx, sr)
+	if err != nil {
+		return err
+	}
+	admin, err := userByUsername(ctx, db, "admin")
+	if err != nil {
+		return fmt.Errorf("get admin user: %w", err)
+	}
+
+	current := ifta.PeriodOf(timeutils.NowUnix(), time.UTC)
+	refs := &fuelSpendSeedRefs{
+		orgID:   org.ID,
+		buID:    org.BusinessUnitID,
+		adminID: admin.ID,
+		now:     timeutils.NowUnix(),
+		periods: [2]ifta.Period{current.Previous(), current},
+	}
+
+	if err = s.loadTractors(ctx, db, refs); err != nil {
+		return fmt.Errorf("load tractors: %w", err)
+	}
+	if len(refs.tractors) < fuelSpendSeedTractorCount {
+		return nil
+	}
+	if err = s.loadJurisdictions(ctx, db, refs); err != nil {
+		return fmt.Errorf("load ifta jurisdictions: %w", err)
+	}
+
+	if err = s.seedCards(ctx, db, sr, refs); err != nil {
+		return fmt.Errorf("seed fuel cards: %w", err)
+	}
+	if err = s.seedPurchases(ctx, db, sr, refs); err != nil {
+		return fmt.Errorf("seed fuel purchases: %w", err)
+	}
+	if err = s.seedTaxRates(ctx, db, sr, refs); err != nil {
+		return fmt.Errorf("seed ifta tax rates: %w", err)
+	}
+	if err = s.seedMileage(ctx, db, sr, refs); err != nil {
+		return fmt.Errorf("seed jurisdiction mileage: %w", err)
+	}
+	return nil
+}
+
+func (s *FuelSpendIFTASeed) loadTractors(
+	ctx context.Context,
+	db *keel.DB,
+	refs *fuelSpendSeedRefs,
+) error {
+	tractors, err := tractordb.Tractors.AllTenants().Where(
+		tractordb.Tractors.OrganizationID.Eq(refs.orgID),
+		tractordb.Tractors.BusinessUnitID.Eq(refs.buID),
+	).Order(tractordb.Tractors.Code.Asc()).Limit(fuelSpendSeedTractorCount).List(ctx, db)
+	if err != nil {
+		return err
+	}
+	refs.tractors = tractors
+	refs.odometers = []int64{412_350, 287_910}
+	return nil
+}
+
+func (s *FuelSpendIFTASeed) loadJurisdictions(
+	ctx context.Context,
+	db *keel.DB,
+	refs *fuelSpendSeedRefs,
+) error {
+	wanted := []string{
+		fuelSpendJurisdictionTX,
+		fuelSpendJurisdictionOK,
+		fuelSpendJurisdictionIN,
+		fuelSpendJurisdictionON,
+	}
+	rows, err := iftadb.Jurisdictions.Query().Where(
+		iftadb.Jurisdictions.CountryCode.In([]string{ifta.CountryCodeUS, ifta.CountryCodeCA}...),
+		iftadb.Jurisdictions.Code.In([]string{"TX", "OK", "IN", "ON"}...),
+	).All(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	refs.jurisdictions = make(map[string]pulid.ID, len(wanted))
+	for _, row := range rows {
+		refs.jurisdictions[row.Key()] = row.ID
+	}
+	for _, key := range wanted {
+		if _, ok := refs.jurisdictions[key]; !ok {
+			return fmt.Errorf("ifta jurisdiction %s is not seeded", key)
+		}
+	}
+	return nil
+}
+
+func (s *FuelSpendIFTASeed) seedCards(
+	ctx context.Context,
+	db *keel.DB,
+	sr *seed.Run,
+	refs *fuelSpendSeedRefs,
+) error {
+	expires := time.Unix(refs.now, 0).UTC().AddDate(fuelSpendSeedCardYears, 0, 0).Unix()
+	first, second := refs.tractors[0], refs.tractors[1]
+	firstWorker := first.PrimaryWorkerID
+
+	cards := []*fuelpurchase.FuelCard{
+		{
+			OrganizationID:    refs.orgID,
+			BusinessUnitID:    refs.buID,
+			Provider:          fuelpurchase.CardProviderComdata,
+			LastFour:          fuelSpendCardComdataLastFour,
+			Label:             fmt.Sprintf("Comdata •••• %s — Unit %s", fuelSpendCardComdataLastFour, first.Code),
+			ExternalCardID:    "CMD-7781-4412",
+			AssignedWorkerID:  &firstWorker,
+			AssignedTractorID: &first.ID,
+			Status:            fuelpurchase.CardStatusActive,
+			ExpiresAt:         &expires,
+			Notes:             "Primary over-the-road card; diesel and DEF only.",
+		},
+		{
+			OrganizationID:    refs.orgID,
+			BusinessUnitID:    refs.buID,
+			Provider:          fuelpurchase.CardProviderWEX,
+			LastFour:          fuelSpendCardWEXLastFour,
+			Label:             fmt.Sprintf("WEX •••• %s — Unit %s", fuelSpendCardWEXLastFour, second.Code),
+			ExternalCardID:    "WEX-2210-0931",
+			AssignedTractorID: &second.ID,
+			Status:            fuelpurchase.CardStatusActive,
+			ExpiresAt:         &expires,
+		},
+	}
+
+	for _, card := range cards {
+		card.Normalize()
+		if err := validateSeedEntity("fuel card "+card.LastFour, card.Validate); err != nil {
+			return err
+		}
+		if err := fuelpurchasedb.FuelCards.Create(ctx, db, card); err != nil {
+			return err
+		}
+	}
+	refs.cards = cards
+	return nil
+}
+
+func (s *FuelSpendIFTASeed) purchasePlan() []fuelPurchasePlan {
+	return []fuelPurchasePlan{
+		{
+			tractor: 0, period: 0, day: 4,
+			jurisdiction: fuelSpendJurisdictionTX, vendor: "Pilot Travel Center", city: "Amarillo",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "132.500", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "3.6890", currency: money.DefaultCurrencyCode, taxPaid: true, useCard: true,
+			milesDriven: 0,
+		},
+		{
+			tractor: 1, period: 0, day: 6,
+			jurisdiction: fuelSpendJurisdictionOK, vendor: "Love's Travel Stop", city: "Oklahoma City",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "118.200", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "3.7590", currency: money.DefaultCurrencyCode, taxPaid: true, useCard: true,
+			milesDriven: 0,
+		},
+		{
+			tractor: 0, period: 0, day: 19,
+			jurisdiction: fuelSpendJurisdictionOK, vendor: "Love's Travel Stop", city: "Tulsa",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "96.400", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "3.7290", currency: money.DefaultCurrencyCode, taxPaid: true, useCard: true,
+			milesDriven: 742,
+		},
+		{
+			tractor: 0, period: 0, day: 33,
+			jurisdiction: fuelSpendJurisdictionON, vendor: "Petro-Canada", city: "Windsor",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "420.000", unit: fuelpurchase.QuantityUnitLitre,
+			unitPrice: "1.5590", currency: "CAD", taxPaid: true, useCard: true,
+			milesDriven: 688,
+			notes:       "Cross-border fill; receipt in litres and CAD.",
+		},
+		{
+			tractor: 1, period: 0, day: 41,
+			jurisdiction: fuelSpendJurisdictionTX, vendor: "Flying J", city: "Dallas",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "145.000", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "3.6490", currency: money.DefaultCurrencyCode, taxPaid: true, useCard: true,
+			milesDriven: 1_106,
+		},
+		{
+			tractor: 0, period: 0, day: 58,
+			jurisdiction: fuelSpendJurisdictionTX, vendor: "Pilot Travel Center", city: "Amarillo",
+			fuelType: domaintypes.IFTAFuelTypeDEF, quantity: "15.000", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "3.2990", currency: money.DefaultCurrencyCode, taxPaid: false, useCard: true,
+			milesDriven: 903,
+			notes:       "DEF top-up; not a taxable motor fuel.",
+		},
+		{
+			tractor: 1, period: 1, day: 3,
+			jurisdiction: fuelSpendJurisdictionOK, vendor: "Love's Travel Stop", city: "Oklahoma City",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "122.800", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "3.8190", currency: money.DefaultCurrencyCode, taxPaid: true, useCard: true,
+			milesDriven: 964,
+		},
+		{
+			tractor: 0, period: 1, day: 9,
+			jurisdiction: fuelSpendJurisdictionTX, vendor: "Flying J", city: "Fort Worth",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "151.300", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "3.8990", currency: money.DefaultCurrencyCode, taxPaid: true, useCard: true,
+			milesDriven: 1_015,
+		},
+		{
+			tractor: 0, period: 1, day: 22,
+			jurisdiction: fuelSpendJurisdictionON, vendor: "Petro-Canada", city: "London",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "380.000", unit: fuelpurchase.QuantityUnitLitre,
+			unitPrice: "1.5790", currency: "CAD", taxPaid: true, useCard: true,
+			milesDriven: 811,
+		},
+		{
+			tractor: 1, period: 1, day: 27,
+			jurisdiction: fuelSpendJurisdictionTX, vendor: "Yard bulk tank", city: "Houston",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "160.000", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "3.4890", currency: money.DefaultCurrencyCode, taxPaid: false, useCard: false,
+			milesDriven: 1_188,
+			notes:       "Tax-unpaid bulk fill from the yard tank; tax is settled on the return.",
+		},
+		{
+			tractor: 1, period: 1, day: 47,
+			jurisdiction: fuelSpendJurisdictionTX, vendor: "Pilot Travel Center", city: "San Antonio",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "108.600", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "4.0190", currency: money.DefaultCurrencyCode, taxPaid: true, useCard: true,
+			milesDriven: 872,
+		},
+		{
+			tractor: 0, period: 1, day: 61,
+			jurisdiction: fuelSpendJurisdictionOK, vendor: "Flying J", city: "Oklahoma City",
+			fuelType: domaintypes.IFTAFuelTypeDiesel, quantity: "139.900", unit: fuelpurchase.QuantityUnitGallon,
+			unitPrice: "4.1290", currency: money.DefaultCurrencyCode, taxPaid: true, useCard: true,
+			milesDriven: 1_047,
+		},
+	}
+}
+
+func (s *FuelSpendIFTASeed) seedPurchases(
+	ctx context.Context,
+	db *keel.DB,
+	sr *seed.Run,
+	refs *fuelSpendSeedRefs,
+) error {
+	plans := s.purchasePlan()
+	for i, plan := range plans {
+		trc := refs.tractors[plan.tractor]
+		card := refs.cards[plan.tractor]
+		workerID := trc.PrimaryWorkerID
+		refs.odometers[plan.tractor] += plan.milesDriven
+		odometer := refs.odometers[plan.tractor]
+
+		quantity, err := decimal.NewFromString(plan.quantity)
+		if err != nil {
+			return fmt.Errorf("parse quantity for purchase %d: %w", i+1, err)
+		}
+		unitPrice, err := decimal.NewFromString(plan.unitPrice)
+		if err != nil {
+			return fmt.Errorf("parse unit price for purchase %d: %w", i+1, err)
+		}
+
+		purchase := &fuelpurchase.FuelPurchase{
+			OrganizationID:       refs.orgID,
+			BusinessUnitID:       refs.buID,
+			TractorID:            trc.ID,
+			WorkerID:             &workerID,
+			JurisdictionID:       refs.jurisdictions[plan.jurisdiction],
+			PurchasedAt:          seedPeriodInstant(refs.periods[plan.period], plan.day, 9),
+			Vendor:               plan.vendor,
+			VendorCity:           plan.city,
+			FuelType:             plan.fuelType,
+			Quantity:             quantity,
+			QuantityUnit:         plan.unit,
+			UnitPrice:            decimal.NewNullDecimal(unitPrice),
+			TotalAmountMinor:     money.MinorUnits(quantity.Mul(unitPrice)),
+			CurrencyCode:         plan.currency,
+			Odometer:             &odometer,
+			TransactionReference: fmt.Sprintf("DEV-FP-%04d", i+1),
+			Source:               fuelpurchase.PurchaseSourceManual,
+			TaxPaid:              plan.taxPaid,
+			Notes:                plan.notes,
+			CreatedByID:          refs.adminID,
+		}
+		if plan.useCard {
+			purchase.FuelCardID = &card.ID
+			purchase.CardLastFour = card.LastFour
+		}
+
+		purchase.Normalize()
+		if err = validateSeedEntity(
+			"fuel purchase "+purchase.TransactionReference,
+			purchase.Validate,
+		); err != nil {
+			return err
+		}
+		if err = fuelpurchasedb.FuelPurchases.Create(ctx, db, purchase); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *FuelSpendIFTASeed) taxRatePlan() []taxRatePlan {
+	return []taxRatePlan{
+		{jurisdiction: fuelSpendJurisdictionTX, fuelType: domaintypes.IFTAFuelTypeDiesel, rate: "0.2000"},
+		{jurisdiction: fuelSpendJurisdictionTX, fuelType: domaintypes.IFTAFuelTypeGasoline, rate: "0.2000"},
+		{jurisdiction: fuelSpendJurisdictionOK, fuelType: domaintypes.IFTAFuelTypeDiesel, rate: "0.1900"},
+		{jurisdiction: fuelSpendJurisdictionOK, fuelType: domaintypes.IFTAFuelTypeGasoline, rate: "0.1900"},
+		{jurisdiction: fuelSpendJurisdictionON, fuelType: domaintypes.IFTAFuelTypeDiesel, rate: "0.4300"},
+		{jurisdiction: fuelSpendJurisdictionON, fuelType: domaintypes.IFTAFuelTypeGasoline, rate: "0.4100"},
+		{jurisdiction: fuelSpendJurisdictionIN, fuelType: domaintypes.IFTAFuelTypeDiesel, rate: "0.5500", surcharge: "0.1100"},
+		{jurisdiction: fuelSpendJurisdictionIN, fuelType: domaintypes.IFTAFuelTypeGasoline, rate: "0.3400", surcharge: "0.1100"},
+	}
+}
+
+func (s *FuelSpendIFTASeed) seedTaxRates(
+	ctx context.Context,
+	db *keel.DB,
+	sr *seed.Run,
+	refs *fuelSpendSeedRefs,
+) error {
+	plans := s.taxRatePlan()
+	for _, period := range refs.periods {
+		for _, plan := range plans {
+			rate, err := decimal.NewFromString(plan.rate)
+			if err != nil {
+				return fmt.Errorf("parse rate for %s %s: %w", plan.jurisdiction, plan.fuelType, err)
+			}
+			entity := &ifta.TaxRate{
+				JurisdictionID: refs.jurisdictions[plan.jurisdiction],
+				Year:           period.Year,
+				Quarter:        period.Quarter,
+				FuelType:       plan.fuelType,
+				RatePerGallon:  rate,
+				SourceNote:     fuelSpendSeedRateNote,
+			}
+			if plan.surcharge != "" {
+				surcharge, parseErr := decimal.NewFromString(plan.surcharge)
+				if parseErr != nil {
+					return fmt.Errorf(
+						"parse surcharge for %s %s: %w",
+						plan.jurisdiction,
+						plan.fuelType,
+						parseErr,
+					)
+				}
+				entity.SurchargeRatePerGallon = decimal.NewNullDecimal(surcharge)
+			}
+
+			entity.Normalize()
+			if err = validateSeedEntity(
+				fmt.Sprintf("ifta tax rate %s %s %s", plan.jurisdiction, plan.fuelType, period.Key()),
+				entity.Validate,
+			); err != nil {
+				return err
+			}
+
+			tr := iftadb.TaxRates
+			inserted, err := tr.CreateOrSkip(
+				ctx,
+				db,
+				[]*ifta.TaxRate{entity},
+				tr.JurisdictionID,
+				tr.Year,
+				tr.Quarter,
+				tr.FuelType,
+			)
+			if err != nil {
+				return err
+			}
+			sr.Count(inserted)
+		}
+	}
+	return nil
+}
+
+func (s *FuelSpendIFTASeed) mileagePlan() []mileagePlan {
+	return []mileagePlan{
+		{
+			tractor: 0, period: 1, day: 9,
+			jurisdiction: fuelSpendJurisdictionOK, miles: "212.40", loaded: false,
+			notes: "Deadhead from Tulsa back to the Fort Worth yard.",
+		},
+		{
+			tractor: 1, period: 1, day: 27,
+			jurisdiction: fuelSpendJurisdictionTX, miles: "640.00", loaded: true,
+			notes: "Houston to Amarillo, loaded.",
+		},
+		{
+			tractor: 0, period: 0, day: 33,
+			jurisdiction: fuelSpendJurisdictionON, miles: "150.00", loaded: true,
+			notes: "Windsor to London and back to the border.",
+		},
+	}
+}
+
+func (s *FuelSpendIFTASeed) seedMileage(
+	ctx context.Context,
+	db *keel.DB,
+	sr *seed.Run,
+	refs *fuelSpendSeedRefs,
+) error {
+	for i, plan := range s.mileagePlan() {
+		miles, err := decimal.NewFromString(plan.miles)
+		if err != nil {
+			return fmt.Errorf("parse miles for mileage entry %d: %w", i+1, err)
+		}
+		entry := &ifta.JurisdictionMileageEntry{
+			OrganizationID: refs.orgID,
+			BusinessUnitID: refs.buID,
+			TractorID:      refs.tractors[plan.tractor].ID,
+			JurisdictionID: refs.jurisdictions[plan.jurisdiction],
+			TraveledAt:     seedPeriodInstant(refs.periods[plan.period], plan.day, 14),
+			Miles:          miles,
+			Loaded:         plan.loaded,
+			Source:         ifta.MileageSourceManual,
+			Notes:          plan.notes,
+			CreatedByID:    refs.adminID,
+		}
+		entry.AssignPeriod(time.UTC)
+		entry.Normalize()
+		if err = validateSeedEntity(
+			fmt.Sprintf("mileage entry %d", i+1),
+			entry.Validate,
+		); err != nil {
+			return err
+		}
+		if err = iftadb.JurisdictionMileageEntries.Create(ctx, db, entry); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func seedPeriodInstant(period ifta.Period, day, hour int) int64 {
+	start, _ := period.Bounds(time.UTC)
+	instant := start + int64(day)*fuelSpendSeedDay + int64(hour)*3600
+
+	if now := timeutils.NowUnix(); instant > now {
+		return now - fuelSpendSeedDay
+	}
+
+	return instant
+}
+
+func validateSeedEntity(label string, validate func(*errortypes.MultiError)) error {
+	multiErr := errortypes.NewMultiError()
+	validate(multiErr)
+	if multiErr.HasErrors() {
+		return fmt.Errorf("%s is invalid: %w", label, multiErr)
+	}
+	return nil
+}

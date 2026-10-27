@@ -5,7 +5,7 @@ import {
   bundleState,
   bundlesIncluding,
   grantsToPermissions,
-  removeBundle,
+  removeBundles,
 } from "../role-bundles";
 
 const board: CapabilityBundle = {
@@ -65,11 +65,11 @@ describe("applyBundle", () => {
   });
 });
 
-describe("removeBundle", () => {
+describe("removeBundles", () => {
   it("takes away the bundle's operations but keeps what another full bundle grants", () => {
     const permissions = applyBundle(applyBundle([], board), booking);
 
-    const remaining = removeBundle(permissions, board, [board, booking]);
+    const remaining = removeBundles(permissions, [board], [board, booking]);
 
     expect(remaining).toEqual([
       { resource: "shipment", operations: ["create", "read"], dataScope: "organization" },
@@ -77,7 +77,19 @@ describe("removeBundle", () => {
   });
 
   it("drops a resource left with no operations", () => {
-    expect(removeBundle(grantsToPermissions(board.grants), board, [board])).toEqual([]);
+    expect(removeBundles(grantsToPermissions(board.grants), [board], [board])).toEqual([]);
+  });
+
+  it("removes a bundle held inside another when both are removed together", () => {
+    const viewing: CapabilityBundle = {
+      ...board,
+      id: "dispatch.view",
+      label: "View the board",
+      grants: [board.grants[1]],
+    };
+    const permissions = applyBundle([], board);
+
+    expect(removeBundles(permissions, [viewing, board], [viewing, board, booking])).toEqual([]);
   });
 });
 

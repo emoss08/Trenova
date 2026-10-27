@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 )
 
 type ListRateMatrixRequest struct {
@@ -23,37 +22,19 @@ type GetRateMatrixByIDRequest struct {
 	RateMatrixID      pulid.ID              `json:"rateMatrixId"`
 	TenantInfo        pagination.TenantInfo `json:"-"`
 	IncludeDimensions bool                  `json:"includeDimensions"`
+	ForUpdate         bool                  `json:"-"`
 }
 
-type GetRateMatrixByCodeRequest struct {
-	Code       string                `json:"code"`
-	TenantInfo pagination.TenantInfo `json:"-"`
-}
-
-// MatrixAxisQuery narrows one axis of a cell lookup.
-//
-// Exact axes carry the candidate keys, ordered most preferred first, because a
-// place can belong to several zones at once. Banded axes carry the quantity,
-// and the database narrows to the bands containing it.
-type MatrixAxisQuery struct {
-	Position int16
-	Keys     []string
-	Quantity decimal.NullDecimal
-}
-
-// LookupRateMatrixCellsRequest fetches the handful of cells that could price a
-// lookup. Nothing loads a matrix whole: a class tariff runs to hundreds of
-// thousands of cells and rating now happens on every shipment write.
-type LookupRateMatrixCellsRequest struct {
-	TenantInfo   pagination.TenantInfo `json:"-"`
-	RateMatrixID pulid.ID              `json:"rateMatrixId"`
-	Axes         []MatrixAxisQuery     `json:"axes"`
+type GetRateMatricesByIDsRequest struct {
+	TenantInfo    pagination.TenantInfo
+	RateMatrixIDs []pulid.ID
 }
 
 type ListRateMatrixCellsRequest struct {
-	TenantInfo   pagination.TenantInfo    `json:"-"`
-	RateMatrixID pulid.ID                 `json:"rateMatrixId"`
-	Filter       *pagination.QueryOptions `json:"filter"`
+	TenantInfo    pagination.TenantInfo    `json:"-"`
+	RateMatrixID  pulid.ID                 `json:"rateMatrixId"`
+	VersionNumber int64                    `json:"versionNumber"`
+	Filter        *pagination.QueryOptions `json:"filter"`
 }
 
 type ReplaceRateMatrixCellsRequest struct {
@@ -62,29 +43,11 @@ type ReplaceRateMatrixCellsRequest struct {
 	Cells        []*ratematrix.RateMatrixCell `json:"cells"`
 }
 
-// GetRateMatrixLookupDataRequest fetches every matrix a formula's lookup()
-// or lookup2() call could address: active, with one or two axes. Matrices
-// with more axes are excluded on purpose — the lookup functions supply at
-// most two keys, and loading a class tariff whole to answer them would be
-// the exact cost this shape exists to avoid.
-type GetRateMatrixLookupDataRequest struct {
-	TenantInfo pagination.TenantInfo `json:"-"`
-}
-
-// RateMatrixLookupData is one lookup-addressable matrix with its cells.
-//
-// Cells ride beside the matrix rather than on it because the domain model
-// deliberately has no whole-matrix cell relation: one- and two-axis matrices
-// are the only shapes small enough to load in full, and this type is how that
-// exception stays an exception.
-type RateMatrixLookupData struct {
-	Matrix *ratematrix.RateMatrix
-	Cells  []*ratematrix.RateMatrixCell
-}
-
-type GetDensityScaleRequest struct {
-	DensityScaleID pulid.ID              `json:"densityScaleId"`
-	TenantInfo     pagination.TenantInfo `json:"-"`
+type CopyVersionRequest struct {
+	TenantInfo   pagination.TenantInfo
+	RateMatrixID pulid.ID
+	From         int64
+	To           int64
 }
 
 type RateMatrixRepository interface {
@@ -101,37 +64,127 @@ type RateMatrixRepository interface {
 		req *pagination.SelectQueryRequest,
 	) (*pagination.ListResult[*ratematrix.RateMatrix], error)
 	GetByID(ctx context.Context, req *GetRateMatrixByIDRequest) (*ratematrix.RateMatrix, error)
-	GetByCode(ctx context.Context, req *GetRateMatrixByCodeRequest) (*ratematrix.RateMatrix, error)
+	GetByIDs(
+		ctx context.Context,
+		req *GetRateMatricesByIDsRequest,
+	) ([]*ratematrix.RateMatrix, error)
 	Create(ctx context.Context, entity *ratematrix.RateMatrix) (*ratematrix.RateMatrix, error)
 	Update(ctx context.Context, entity *ratematrix.RateMatrix) (*ratematrix.RateMatrix, error)
+	UpdateHeader(
+		ctx context.Context,
+		entity *ratematrix.RateMatrix,
+	) (*ratematrix.RateMatrix, error)
 	Delete(ctx context.Context, req *GetRateMatrixByIDRequest) error
 
-	LookupCells(
-		ctx context.Context,
-		req *LookupRateMatrixCellsRequest,
-	) ([]*ratematrix.RateMatrixCell, error)
-	GetLookupStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
-	GetLookupData(
-		ctx context.Context,
-		req *GetRateMatrixLookupDataRequest,
-	) ([]*RateMatrixLookupData, error)
 	ListCells(
 		ctx context.Context,
 		req *ListRateMatrixCellsRequest,
 	) (*pagination.ListResult[*ratematrix.RateMatrixCell], error)
 	ReplaceCells(ctx context.Context, req *ReplaceRateMatrixCellsRequest) error
+	CopyVersion(ctx context.Context, req *CopyVersionRequest) (int64, error)
+	CountMisfitCells(ctx context.Context, req *CountMisfitCellsRequest) (int64, error)
 }
 
-type DensityScaleRepository interface {
-	List(
+type CountMisfitCellsRequest struct {
+	TenantInfo    pagination.TenantInfo
+	RateMatrixID  pulid.ID
+	VersionNumber int64
+	Dimensions    []*ratematrix.RateMatrixDimension
+}
+
+type GetVersionRequest struct {
+	TenantInfo    pagination.TenantInfo
+	RateMatrixID  pulid.ID
+	VersionNumber int64
+}
+
+type ListVersionsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	RateMatrixID pulid.ID
+	Limit        int
+}
+
+type GetVersionsByKeysRequest struct {
+	TenantInfo pagination.TenantInfo
+	Keys       []ratematrix.VersionKey
+}
+
+type LoadTableCellsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Key        ratematrix.VersionKey
+	Keys       map[int16][]string
+}
+
+type ListAxisKeysRequest struct {
+	TenantInfo pagination.TenantInfo
+	Key        ratematrix.VersionKey
+	Position   int16
+}
+
+type ListTableCellsRequest struct {
+	TenantInfo pagination.TenantInfo
+	Keys       []ratematrix.VersionKey
+}
+
+type RateMatrixVersionRepository interface {
+	Create(
 		ctx context.Context,
-		req *ListRateMatrixRequest,
-	) (*pagination.ListResult[*ratematrix.DensityScale], error)
-	GetByID(ctx context.Context, req *GetDensityScaleRequest) (*ratematrix.DensityScale, error)
-	GetOrgDefault(
+		version *ratematrix.RateMatrixVersion,
+	) (*ratematrix.RateMatrixVersion, error)
+	Get(ctx context.Context, req *GetVersionRequest) (*ratematrix.RateMatrixVersion, error)
+	List(ctx context.Context, req *ListVersionsRequest) ([]*ratematrix.RateMatrixVersion, error)
+	GetByKeys(
+		ctx context.Context,
+		req *GetVersionsByKeysRequest,
+	) ([]*ratematrix.RateMatrixVersion, error)
+	ListServed(
 		ctx context.Context,
 		tenantInfo pagination.TenantInfo,
-	) (*ratematrix.DensityScale, error)
-	Create(ctx context.Context, entity *ratematrix.DensityScale) (*ratematrix.DensityScale, error)
-	Update(ctx context.Context, entity *ratematrix.DensityScale) (*ratematrix.DensityScale, error)
+	) ([]*ratematrix.RateMatrixVersion, error)
+	ServedStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
+
+	LoadTableCells(
+		ctx context.Context,
+		req *LoadTableCellsRequest,
+	) ([]*ratematrix.RateMatrixCell, error)
+	ListTableCells(
+		ctx context.Context,
+		req *ListTableCellsRequest,
+	) ([]*ratematrix.RateMatrixCell, error)
+	ListAxisKeys(ctx context.Context, req *ListAxisKeysRequest) ([]string, error)
+	ListAxisRanges(
+		ctx context.Context,
+		req *ListAxisKeysRequest,
+	) ([]ratematrix.PostalRange, error)
+}
+
+type ListReviewsRequest struct {
+	TenantInfo   pagination.TenantInfo
+	RateMatrixID pulid.ID
+	Limit        int
+}
+
+type ListStaleSubmissionsRequest struct {
+	SubmittedBefore int64
+	Limit           int
+}
+
+type RateMatrixReviewRepository interface {
+	Create(
+		ctx context.Context,
+		entity *ratematrix.RateMatrixReview,
+	) (*ratematrix.RateMatrixReview, error)
+	ListByMatrix(
+		ctx context.Context,
+		req *ListReviewsRequest,
+	) ([]*ratematrix.RateMatrixReview, error)
+	Latest(
+		ctx context.Context,
+		rateMatrixID pulid.ID,
+		tenantInfo pagination.TenantInfo,
+	) (*ratematrix.RateMatrixReview, error)
+	ListStaleSubmissions(
+		ctx context.Context,
+		req *ListStaleSubmissionsRequest,
+	) ([]*ratematrix.RateMatrix, error)
 }

@@ -287,6 +287,57 @@ func (s *Service) ListAwaitingApproval(
 	return entries, nil
 }
 
+// DeskFilter narrows the detention board: the charges waiting on approval
+// beside the running clocks, one urgency, one shipment, or a PRO number.
+type DeskFilter struct {
+	IncludeAwaitingApproval bool
+	Urgency                 string
+	ShipmentID              pulid.ID
+	ProNumber               string
+}
+
+// ListDeskEntries is the board narrowed by filter. Naming the
+// AwaitingApproval urgency reads the held charges whether or not they were
+// asked for beside the running clocks.
+func (s *Service) ListDeskEntries(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	filter *DeskFilter,
+) ([]*DeskEntry, error) {
+	entries := make([]*DeskEntry, 0)
+	if filter.Urgency != UrgencyAwaitingApproval {
+		open, err := s.ListDesk(ctx, tenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, open...)
+	}
+	if filter.IncludeAwaitingApproval || filter.Urgency == UrgencyAwaitingApproval {
+		held, err := s.ListAwaitingApproval(ctx, tenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, held...)
+	}
+
+	proNumber := strings.ToLower(strings.TrimSpace(filter.ProNumber))
+
+	return slices.DeleteFunc(entries, func(entry *DeskEntry) bool {
+		switch {
+		case entry == nil || entry.Occurrence == nil:
+			return true
+		case filter.Urgency != "" && entry.Urgency != filter.Urgency:
+			return true
+		case filter.ShipmentID.IsNotNil() && entry.Occurrence.ShipmentID != filter.ShipmentID:
+			return true
+		case proNumber != "" &&
+			!strings.Contains(strings.ToLower(entry.Occurrence.ShipmentProNumber), proNumber):
+			return true
+		}
+		return false
+	}), nil
+}
+
 func newDeskEntry(
 	occurrence *detention.DetentionOccurrence,
 	now int64,

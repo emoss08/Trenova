@@ -134,7 +134,8 @@ func TestPlanDeleteDefinition_OnlyTheOwner(t *testing.T) {
 func TestPlanResetCannedFork_PutsBackTheBuiltInDefinition(t *testing.T) {
 	t.Parallel()
 
-	registry := canned.Default()
+	registry, err := canned.Default()
+	require.NoError(t, err)
 	entries := registry.All()
 	require.NotEmpty(t, entries)
 	entry := entries[0]
@@ -148,7 +149,9 @@ func TestPlanResetCannedFork_PutsBackTheBuiltInDefinition(t *testing.T) {
 		CannedKey: entry.Key,
 		Status:    report.DefinitionStatusDraft,
 	}
-	svc := &Service{l: zap.NewNop(), defRepo: &planDefinitions{definition: fork}, canned: registry}
+	svc, _ := engineService(t, engineOptions{})
+	svc.defRepo = &planDefinitions{definition: fork}
+	svc.canned = registry
 
 	change, err := svc.PlanResetCannedFork(t.Context(), &GetDefinitionRequest{
 		Request: planRequest(owner), DefinitionID: fork.ID,

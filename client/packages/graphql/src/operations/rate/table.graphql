@@ -17,8 +17,7 @@ fragment RateAgreementRowFields on RateAgreement {
   autoRenew
   renewalNoticeDays
   currency
-  defaultMinCharge
-  defaultMaxCharge
+  inputs
   marginFloorPercent
   maxPayPercentOfSell
   submittedById
@@ -53,9 +52,11 @@ fragment RateMatrixRowFields on RateMatrix {
   name
   description
   status
-  formulaTemplateId
-  formulaTemplateName
-  currency
+  valueType
+  publishedVersionNumber
+  publishedAt
+  hasDraftChanges
+  cellCount
   version
   createdAt
   updatedAt
@@ -96,6 +97,7 @@ query RateAgreementTable($input: DataTableConnectionInput!, $includeTotalCount: 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -110,6 +112,7 @@ query RateZoneTable($input: DataTableConnectionInput!, $includeTotalCount: Boole
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -124,6 +127,7 @@ query RateMatrixTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -138,6 +142,7 @@ query RateQuoteTable($input: DataTableConnectionInput!, $includeTotalCount: Bool
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

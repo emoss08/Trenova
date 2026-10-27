@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -202,11 +202,11 @@ func SeriesBounds(
 	interval SeriesInterval,
 	periods int,
 ) ([]int64, error) {
-	if periods < 1 || periods > dbhelper.MaxSeriesPeriods {
+	if periods < 1 || periods > tableinsight.MaxSeriesPeriods {
 		return nil, errortypes.NewValidationError(
 			"periods",
 			errortypes.ErrInvalid,
-			fmt.Sprintf("A chart covers between 1 and %d periods", dbhelper.MaxSeriesPeriods),
+			fmt.Sprintf("A chart covers between 1 and %d periods", tableinsight.MaxSeriesPeriods),
 		)
 	}
 

@@ -56,9 +56,12 @@ user_role_assignments ──▶ permission engine ──▶ Check(resource, oper
    hides a module in one place. Names, descriptions, categories and operation labels are
    translated by `GET /permissions/resources` and `GET /permissions/bundles` from the
    request's locale; the client renders them as they arrive.
-2. Do not write a migration to grant it to administrators. `trenova db migrate` runs
-   `ReconcileAdminRoles` after the migrations: every system role named
-   "Organization Administrator" is given every registry resource and operation it lacks.
+2. Do not write a migration to grant it to administrators. The `administrator_permissions`
+   reference seed (`internal/seeds/reference`) is fingerprinted by the registry's grants
+   (`Registry.GrantFingerprint`), so the next `trenova-db up` reruns it once per organization
+   (`ReconcileAdminRole`): every system role named "Organization Administrator" is given every
+   registry resource and operation it lacks. The permission cache keys carry the same
+   fingerprint, so no cached grant outlives the change.
    Grants beyond the registry are left alone for a person to review, and other system
    roles (the driver portal role) are never touched.
 3. Check it where the work happens: `RequirePermission` on the route or in the resolver.
@@ -79,7 +82,7 @@ things. The engine lets a grant on the parent satisfy a check on the child
 (`Registry.GetEffectiveResource`, `engine.resolveResourcePermission`), so worker read is
 also read on a worker's credentials and timesheets. And `Registry.PartOf` treats a record
 of the child carried by one of its family as part of it rather than a linked record, so the
-GraphQL field guard, the REST response guard and the report catalog's `withinRecord` show
+GraphQL field guard, the REST response guard and the report policy's `withinRecord` kinds show
 it whole to whoever may read the carrier.
 
 Give a resource a parent only when everyone who may read the parent may read all of it.
@@ -119,12 +122,12 @@ and `hr.team` grants them for a driver manager's team.
 and cover work.
 
 Taking a parent away moves no stored grant: administrators already hold every registry
-resource, and `trenova db migrate` (`ReconcileAdminRoles`) adds any that is missing, and
+resource, and the `administrator_permissions` seed (`ReconcileAdminRole`) adds any that is missing, and
 other roles lose what they reached only through the parent until a bundle or a person
 grants it. `TestJobTemplates_KindsGrantedOnTheirOwn` holds every stock template's effective
 operations and scope on each of these kinds; a new template fails it until it has a row.
 
-`GetResourcePermissions`, which the report compiler, the report catalog, the agent dataset
+`GetResourcePermissions`, which the report policy (`reportaccess`, in one batch), the agent dataset
 tools and `GET /me/permissions/:resource` read, reports a kind's own grant together with the
 operations its parent's grant implies, with the scope the engine applies to a read
 (`resourcedetail.go`). `TestGetResourcePermissions_AgreesWithCheckOnEveryKind` holds it to
@@ -192,7 +195,7 @@ definition's `Scopes`:
 | `shipment`, `order` | own: records whose `owner_id` is the person | database |
 | `invoice` | own: invoices on a shipment or order the person owns (the header's or a line's) | database |
 | `worker` | team: workers the person manages, directly or through a fleet code, or who were delegated to them | database |
-| `capture_batch`, `report` | own | application (`captureservice`, the report compiler) |
+| `capture_batch`, `report` | own | application (`captureservice`, `reportaccess`; see [reporting](reporting.md#access)) |
 | `worker_schedule`, `timesheet`, `profile_change_request`, `worker_leave`, `driver_portal` | team | application (`RequireTeamScope`, `RequireListTeamScope`, `teamscope.Guard`, `teamscope.ListGuard`) |
 
 **Application enforcement.** A team is the workers a person manages directly
@@ -217,6 +220,14 @@ restrictive `read_scope` policy on `shipments`, `orders`, `invoices` and `worker
 applies it to every read: lists, lookups, loaders, search, insights and reports alike.
 The value only narrows what the signed tenant scope allows, so it is not signed; work
 with no holder (jobs, unattended agents) reads its whole tenant.
+
+The first query that needs the value may be inside a transaction that has not sent its
+`BEGIN` yet (the result cache keys a read by its read scope before the read runs), so the
+grants resolve in a read-only transaction of their own (`RunDetached`, through
+`kernelports.Detacher`). Were they to join the caller's transaction, their first read would
+send its `BEGIN`, whose scope guard asks the same holder for the value it is still
+resolving, and the request would wait on itself for good
+(`TestRuntime_ACachedReadWhoseReadScopeReadsTheDatabaseFinishes`).
 
 Only `own` and `team` grants are sent. A kind the principal cannot read at all is left
 out of the setting, so the database shows its rows to whatever reaches them from a record
@@ -385,13 +396,35 @@ are not gated this way.
 Views are declared on each resource definition (`ReferenceView` in `resources_*.go`) and decided by
 one package, `refview`, which the GraphQL field guard asks for people and agents alike, and the
 REST response guard (`internal/api/responseguard`) asks for every REST response. Global search,
-shipment analytics and reports ask it through `permissionports.ReferenceViews`; an insight names
+shipment analytics and reports ask it through `permissionports.ReferenceViews` (reports through
+`reporting/reportaccess`, which the compiler, the builder's catalog and the agent's dataset tools
+share, so the builder offers exactly what the compiler accepts; see
+[reporting.md](reporting.md#access)); an insight names
 records beside figures about them, so its reader needs read on every kind its detector declares. They are
 fixed in the code; an organization decides who sees whole linked records through bundles and job
 templates, and the role's sensitivity ceiling still applies inside a view. Built-in bundles grant
 a linked kind's read where the job needs the full record (billing receivables reads invoices and
 disputes, carrier settlements read carriers). How to build a screen that shows another record,
 and how to change a view, is in [reference-views.md](reference-views.md).
+
+## What a role sees on a screen
+
+The page access manifest (`pkg/pageaccess`, generated from the web app and the operations its
+screens run) says what each screen needs: its route's permissions, its REST endpoints', the kinds it
+reads as root records, and the linked fields it selects. Three reads are built on it
+(`pageaccessservice`), none of which returns record data:
+
+| Query | Needs | Answers |
+|---|---|---|
+| `pageAccess(location:)` | sign-in (`authOnlyAllowlist`) | the caller's own access to a screen, from one `CheckBatch` |
+| `pageAccessPreview(input:)` | `role` read | a saved or draft role's access to a screen, with the roles it inherits |
+| `pageAccessScreens`, `roleResourceGuides(input:)` | `role` read | the screens to preview; the role editor's sentence for each resource and the screens its grant affects |
+
+A preview unites the role's grants as the engine does (`permission.GrantsOf`: implied operations,
+a parent resource's grant reaching its children, the widest ceiling) and decides each field through
+`refview.RoleAccess`, so it shows what the field guard will do. It is the role's grants alone:
+organization access policies (ABAC), data scopes and row-level security narrow what a person
+holding it reads, never widen it. A role inheriting a role of another organization is refused.
 
 ## Protected fields
 
@@ -402,7 +435,7 @@ the **Protected fields** category of the role editor:
 | Group | Resource | Fields |
 |---|---|---|
 | Personal details | `protected_personal` | `WorkerProfile.dob`, `licenseNumber`, `twicCardNumber`, `lastDrugTest`; `WorkerCredential.number` |
-| Margins | `protected_margins` | `RateAgreement.marginFloorPercent`, `maxPayPercentOfSell` (and the same values on a version) |
+| Margins | `protected_margins` | every margin figure in the product; see "Margins" below |
 
 The schema marks each field `@protected(group: …)` (`shared.graphqls`; the directive is
 `skip_runtime`). `FieldGuardExtension` (`internal/api/graphql/fieldguard.go`) reads the
@@ -421,6 +454,22 @@ that never received a field cannot clear it. Creating a record takes the values 
 Workers are published to the realtime stream without their entity, so a subscriber refetches
 through the guarded paths.
 
+The audit trail withholds the same fields when an entry is read, not when it is written, so a
+reader who holds the group (an administrator reviewing a change) still sees the whole diff.
+An audit entry stores its record as JSON, so the fields are declared as JSON paths in
+`permission.ProtectedPaths` (`protectedpaths.go`): a path matches at any depth unless it is
+rooted at a resource (`WorkerCredential.number`, `RateQuote.costAmount`), `[]` steps into a
+list, and a `When` condition limits it to the object holding it (only the driver pay step of a
+calculation trace). `audit.Entry.WithholdFields` applies them to `previousState`,
+`currentState` and `changes`: a change to a protected field keeps its path and type and loses
+both values, and a change to an object or list keeps the object with the protected fields
+inside it nulled. GraphQL resolves the three `AuditEntry` fields through it, on every path that
+reaches an entry (the audit log, a record's history, an AI audit event); an entry in a REST
+response is a `FieldWithholder`, so the response guard does the same. No agent tool or export
+carries audit states (an AI audit export lists entry IDs). A new protected field on a stored
+record needs its path declared there; `TestEveryProtectedFieldIsWithheldFromTheAuditTrail`
+fails until it is.
+
 Every protected field is also classified confidential in the registry, which keeps it out
 of agent tools, reports and proposal previews by tier. `fieldguard_test.go` fails if a field
 is protected without that classification, without an entity that withholds it, or if the
@@ -433,8 +482,48 @@ New roles get them from bundles: `safety.drivers` and `hr.workers` carry persona
 
 To protect another field: add the directive to a nullable field, classify it confidential on
 its resource, give the entity `WithholdFields` (the REST response guard calls it wherever the
-entity appears) and `KeepFields`, call `KeepFields` from its update path, show "Hidden" where the client reads it, and add it to the tables in
-`fieldguard_test.go`.
+entity appears) and `KeepFields`, call `KeepFields` from its update path, draw the client's
+null with `WithheldValue group="…"`, and add the type to `protectedTypes`
+(`gqlext/protectedtypes_test.go`) and the set in `fieldguard_test.go`.
+
+### Margins
+
+A person or agent without the Margins group never receives a margin, a margin percent, a
+margin floor or target, or anything that works one out trivially. A record that carries a
+revenue and a cost is treated the same way: the side that is not the record's purpose is
+withheld with the margin (a quote keeps its total and withholds its cost; a cost summary keeps
+its cost and withholds its revenue). Derivation across records (a shipment's charge against
+its carrier assignment's pay) is not gated: each figure is the working number of its own job.
+
+| Surface | Withheld without the group | How |
+|---|---|---|
+| Rate agreements and versions | `marginFloorPercent`, `maxPayPercentOfSell` | `@protected`, `WithholdFields`/`KeepFields`, catalog |
+| Costing control (`costingControl`, `resolvedCostProfile`) | `targetMarginPercent` | `@protected`, `costingcontrol.WithholdFields`/`KeepFields` in `costingservice.Update` |
+| Shipment profitability (`shipmentProfitability`, `Shipment.profitabilityEstimate`) | the whole payload: revenue, cost, profit, margin, break-even | `@protected` on the field that returns it; the client does not ask |
+| Fleet cost summary | `avgMarginPercent`, `unprofitableCount`, `totalRevenue` | `@protected` |
+| Shipment analytics (`/analytics?page=shipment`, Home KPIs) | `avgMarginPct`, `unprofitableCount` | `shipmentprovider/access.go`, and `@protected` on the GraphQL card |
+| Shipment board | the margin column and expanded row, the `LowMargin` quick filter (refused) and its count | `@protected`, `shipment.AuthorizeQuickFilters`, `ShipmentBoardScopeRequest.Margins` |
+| Board brief | no thin-margin fact: the brief is shared by every board reader | `shipmentbriefingservice` counts no margin set |
+| Capacity matches | `marginPercent`, `quote` (beside the load's revenue) | `@protected` |
+| Tender offers | `counterMarginPercent` (`counterMargin` on REST); counter events and notifications state no figure | `@protected`, `tender.TenderOffer.WithholdFields`, `tender.EvaluateCounter` |
+| Detention occurrences, stats, preview, backtest | `driverPayAmount`, `netMargin`, `proposedDriverPay`, `proposedNetMargin`, `negativeMarginStops`, the driver pay step of a calculation trace | `@protected`, `WithholdFields` on each REST type, the `calculationTrace` field resolver |
+| Dispatch control | `tenderCounterMarginFloorPercent` | `dispatchcontrol.WithholdFields`/`KeepFields` |
+| Rate quotes and shopping (REST) | a quote's `costAmount`, `marginAmount`, `marginPercent` and trace totals; an option's margin verdict; the shop's `sellTotal`; ranking by `BestMargin` (refused) | `ratequote.RateQuote` and `ShopOption`/`ShopResult.WithholdFields`, `ratequoteports.AuthorizeShopStrategy` |
+| Carrier assignment | the margin floor refusal names no figure | `carrierassignmentservice.enforceMarginFloor` |
+| Reports, exports and dashboards | rate quote `costAmount`, `marginAmount`, `marginPercent`, rate agreement margins | `permission.ProtectedPaths`, applied by `reportaccess.Resolver.Protection` |
+| Agent tools | `carrier_shop` margins, sell total and `BestMargin`; `rate_explain` margin | `fieldAccess.groups`, held to the agent's data access |
+| Audit trail | every field above in an entry's previous and current state and its changes | `permission.ProtectedPaths`, `audit.Entry.WithholdFields` at read time |
+
+An agent is held to its person's group and to its own data access. A protected field of a
+record is Confidential and never reaches an agent; a computed figure (a capacity match's
+margin, a tool's margin) is shown only where the agent's ceiling on `protected_margins`
+reaches Restricted (`fieldsensitivity.AgentVisibleGroups`, used by the GraphQL guard through
+`base.VisibleFieldGroups` and by the agent tools through `fieldAccess.groups`).
+
+Two names match margin and are not margins: a document template's page margins, and the GL
+income statement's `grossProfitMinor`, a statement line gated by the general ledger's own
+read. CI holds every field named for a margin to the group (see "What CI checks" in
+[reference-views.md](reference-views.md)).
 
 ## Agents
 

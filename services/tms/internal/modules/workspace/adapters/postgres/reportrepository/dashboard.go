@@ -3,17 +3,18 @@ package reportrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var dashboardErrors = dberror.Mapping{Entity: "Dashboard"}
 
 type DashboardParams struct {
 	fx.In
@@ -39,13 +40,12 @@ func (r *dashboardRepository) Create(
 	entity *report.Dashboard,
 ) (*report.Dashboard, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.Dashboard, error) {
-		log := r.l.With(zap.String("operation", "Create"), zap.String("name", entity.Name))
-
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, dberror.CreateVersionMismatchError("Dashboard", entity.Name)
-			}
-			log.Error("failed to create dashboard", zap.Error(err))
+		err := reportdb.Dashboards.Create(ctx, r.db.Keel(ctx), entity)
+		if dberror.IsUniqueConstraintViolation(err) {
+			return nil, dberror.CreateVersionMismatchError("Dashboard", entity.Name)
+		}
+		if err != nil {
+			r.l.Error("failed to create dashboard", zap.String("name", entity.Name), zap.Error(err))
 			return nil, err
 		}
 
@@ -58,24 +58,13 @@ func (r *dashboardRepository) Update(
 	entity *report.Dashboard,
 ) (*report.Dashboard, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.Dashboard, error) {
-		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-
-		ov := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(reportcol.DashboardColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update dashboard", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(result, "Dashboard", entity.ID.String()); err != nil {
-			return nil, err
+		if err := reportdb.Dashboards.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update dashboard",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, dashboardErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -87,17 +76,9 @@ func (r *dashboardRepository) GetByID(
 	req *reportports.GetReportDashboardRequest,
 ) (*report.Dashboard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.Dashboard, error) {
-		entity := new(report.Dashboard)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return reportcol.DashboardScopeTenant(sq, req.TenantInfo).
-					Where(reportcol.DashboardColumns.ID.Eq(), req.DashboardID)
-			}).
-			Scan(ctx)
+		entity, err := reportdb.Dashboards.Get(ctx, r.db.Keel(ctx), req.DashboardID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Dashboard")
+			return nil, dashboardErrors.Map(err, req.DashboardID.String())
 		}
 
 		return entity, nil
@@ -109,29 +90,20 @@ func (r *dashboardRepository) List(
 	req *reportports.ListReportDashboardsRequest,
 ) ([]*report.Dashboard, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.Dashboard, error) {
-		cols := reportcol.DashboardColumns
-
-		entities := make([]*report.Dashboard, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(reportcol.DashboardApplyTenant(req.TenantInfo))
-
-		if !req.ViewerID.IsNil() {
-			q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.Visibility.Eq(), report.VisibilityShared).
-					WhereOr(cols.OwnerID.Eq(), req.ViewerID)
-			})
-		}
+		d := reportdb.Dashboards
+		q := d.Where(keel.When(
+			!req.ViewerID.IsNil(),
+			keel.Or(d.Visibility.Eq(report.VisibilityShared), d.OwnerID.Eq(req.ViewerID)),
+		)).Order(d.UpdatedAt.Desc())
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			q = q.Limit(req.Limit)
 		}
 		if req.Offset > 0 {
-			q = q.Offset(int64(req.Offset))
+			q = q.Offset(req.Offset)
 		}
 
-		if err := q.Order(cols.UpdatedAt.OrderDesc()).Scan(ctx); err != nil {
+		entities, err := q.All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list dashboards", zap.Error(err))
 			return nil, err
 		}
@@ -145,19 +117,13 @@ func (r *dashboardRepository) Delete(
 	req *reportports.GetReportDashboardRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*report.Dashboard)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return reportcol.DashboardScopeTenantDelete(dq, req.TenantInfo).
-					Where(reportcol.DashboardColumns.ID.Eq(), req.DashboardID)
-			}).
-			Exec(ctx)
+		d := reportdb.Dashboards
+		rows, err := d.Where(d.ID.Eq(req.DashboardID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete dashboard", zap.Error(err))
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, "Dashboard", req.DashboardID.String())
+		return dberror.CheckAffected(rows, "Dashboard", req.DashboardID.String())
 	})
 }

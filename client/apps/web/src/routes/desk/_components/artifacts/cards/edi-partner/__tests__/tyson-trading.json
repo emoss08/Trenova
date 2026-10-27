@@ -26,112 +26,74 @@
       "name": "Tyson Foods",
       "code": "TYSON"
     },
-    "documentProfiles": [
-      {
-        "id": "edidp_tyson_214",
-        "name": "Tyson 214 status",
-        "status": "Active",
-        "direction": "Outbound",
-        "transactionSet": "214",
-        "functionalGroupId": "QM",
-        "envelope": {
-          "interchangeSenderQualifier": "ZZ",
-          "interchangeSenderId": "TRENOVA        ",
-          "interchangeReceiverQualifier": "ZZ",
-          "interchangeReceiverId": "TYSONFOODS     ",
-          "applicationSenderCode": "TRENOVA",
-          "applicationReceiverCode": "TYSONFOODS",
-          "interchangeUsageIndicator": "P",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
-        },
-        "acknowledgment": {
-          "expected": true,
-          "type": "997",
-          "slaInMinutes": 240
-        }
+    "lading": {
+      "project": {
+        "id": "ldp_tyson",
+        "activeVersionId": "ldv_tyson",
+        "shadowVersionId": null,
+        "updatedAt": 1788272000
       },
-      {
-        "id": "edidp_tyson_210",
-        "name": "Tyson 210 invoice",
+      "active": {
+        "id": "ldv_tyson",
+        "number": 3,
         "status": "Active",
-        "direction": "Outbound",
-        "transactionSet": "210",
-        "functionalGroupId": "IM",
-        "envelope": {
-          "interchangeSenderQualifier": "ZZ",
-          "interchangeSenderId": "TRENOVA        ",
-          "interchangeReceiverQualifier": "ZZ",
-          "interchangeReceiverId": "TYSONFOODS     ",
-          "applicationSenderCode": "TRENOVA",
-          "applicationReceiverCode": "TYSONFOODS",
-          "interchangeUsageIndicator": "P",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
+        "errorCount": 0,
+        "warningCount": 0,
+        "activatedAt": 1788272000,
+        "readiness": {
+          "tests": 12,
+          "failing": 0,
+          "ready": true
         },
-        "acknowledgment": {
-          "expected": true,
-          "type": "997",
-          "slaInMinutes": 1440
-        }
+        "interchange": {
+          "theirQualifier": "ZZ",
+          "theirId": "TYSONFOODS",
+          "ourQualifier": "ZZ",
+          "ourId": "TRENOVA",
+          "theirGroupCode": "TYSONFOODS",
+          "ourGroupCode": "TRENOVA",
+          "version": "004010",
+          "usage": "production",
+          "separators": [
+            "*",
+            "~",
+            ">",
+            "^"
+          ]
+        },
+        "exchanges": [
+          {
+            "transactionSet": "204",
+            "direction": "Inbound",
+            "map": "tenderIn",
+            "acknowledgment": "997",
+            "acknowledgmentWithin": null
+          },
+          {
+            "transactionSet": "210",
+            "direction": "Outbound",
+            "map": "invoiceOut",
+            "acknowledgment": "997",
+            "acknowledgmentWithin": 86400
+          },
+          {
+            "transactionSet": "214",
+            "direction": "Outbound",
+            "map": "statusOut",
+            "acknowledgment": "997",
+            "acknowledgmentWithin": 14400
+          },
+          {
+            "transactionSet": "990",
+            "direction": "Outbound",
+            "map": "answerOut",
+            "acknowledgment": null,
+            "acknowledgmentWithin": null
+          }
+        ]
       },
-      {
-        "id": "edidp_tyson_990",
-        "name": "Tyson 990 response",
-        "status": "Active",
-        "direction": "Outbound",
-        "transactionSet": "990",
-        "functionalGroupId": "GF",
-        "envelope": {
-          "interchangeSenderQualifier": "ZZ",
-          "interchangeSenderId": "TRENOVA        ",
-          "interchangeReceiverQualifier": "ZZ",
-          "interchangeReceiverId": "TYSONFOODS     ",
-          "applicationSenderCode": "TRENOVA",
-          "applicationReceiverCode": "TYSONFOODS",
-          "interchangeUsageIndicator": "P",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
-        },
-        "acknowledgment": {
-          "expected": false,
-          "type": "None",
-          "slaInMinutes": 0
-        }
-      },
-      {
-        "id": "edidp_tyson_204",
-        "name": "Tyson 204 tender",
-        "status": "Active",
-        "direction": "Inbound",
-        "transactionSet": "204",
-        "functionalGroupId": "SM",
-        "envelope": {
-          "interchangeSenderQualifier": "ZZ",
-          "interchangeSenderId": "TYSONFOODS     ",
-          "interchangeReceiverQualifier": "ZZ",
-          "interchangeReceiverId": "TRENOVA        ",
-          "applicationSenderCode": "TYSONFOODS",
-          "applicationReceiverCode": "TRENOVA",
-          "interchangeUsageIndicator": "P",
-          "elementSeparator": "*",
-          "segmentTerminator": "~",
-          "componentSeparator": ">",
-          "repetitionSeparator": "^"
-        },
-        "acknowledgment": {
-          "expected": true,
-          "type": "997",
-          "slaInMinutes": 0
-        }
-      }
-    ],
+      "shadow": null
+    },
     "transports": [
       {
         "profile": {
@@ -149,9 +111,9 @@
             "retryMaxAttempts": 5,
             "retryInitialIntervalSeconds": 60,
             "retryMaxIntervalSeconds": 1800,
-            "partnerEncryptionCertificate": "-----BEGIN CERTIFICATE-----\u2026",
-            "partnerSigningCertificate": "-----BEGIN CERTIFICATE-----\u2026",
-            "localCertificate": "-----BEGIN CERTIFICATE-----\u2026"
+            "partnerEncryptionCertificate": "-----BEGIN CERTIFICATE-----…",
+            "partnerSigningCertificate": "-----BEGIN CERTIFICATE-----…",
+            "localCertificate": "-----BEGIN CERTIFICATE-----…"
           }
         },
         "lastPollAttemptAt": null,

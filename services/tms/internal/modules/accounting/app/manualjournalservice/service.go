@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -37,7 +36,7 @@ type Params struct {
 	fx.In
 
 	Logger         *zap.Logger
-	DB             kernelports.DBConnection
+	DB             kernelports.Transactor
 	Repo           manualjournalports.ManualJournalRepository
 	JournalRepo    journalentryports.JournalPostingRepository
 	AccountingRepo tenantports.AccountingControlRepository
@@ -48,7 +47,7 @@ type Params struct {
 
 type Service struct {
 	l              *zap.Logger
-	db             kernelports.DBConnection
+	db             kernelports.Transactor
 	repo           manualjournalports.ManualJournalRepository
 	journalRepo    journalentryports.JournalPostingRepository
 	accountingRepo tenantports.AccountingControlRepository
@@ -167,7 +166,7 @@ func (s *Service) CreateDraft(
 	}
 
 	var created *manualjournal.Request
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		created, err = s.repo.Create(txCtx, entity)
 		return err
 	})
@@ -245,7 +244,7 @@ func (s *Service) UpdateDraft(
 	}
 
 	var updated *manualjournal.Request
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		updated, err = s.repo.Update(txCtx, change.After)
 		return err
 	})
@@ -470,7 +469,7 @@ func (s *Service) Post(
 		})
 	}
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if err := s.journalRepo.CreatePosting(txCtx, journalentryports.CreateJournalPostingParams{
 			BatchID:              batchID,
 			OrganizationID:       entity.OrganizationID,
@@ -639,7 +638,7 @@ func (s *Service) saveTransition(
 		updated *manualjournal.Request
 		err     error
 	)
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		updated, err = s.repo.Update(txCtx, entity)
 		return err
 	})

@@ -3,65 +3,86 @@ package tenant
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/editchange"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*AgentControl)(nil)
 	_ validationframework.TenantedEntity = (*AgentControl)(nil)
 )
 
 type AgentControl struct {
-	bun.BaseModel `json:"-" bun:"table:agent_controls,alias:agc"`
+	keel.Table `keel:"agent_controls"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:agc_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ShadowMode bool `json:"shadowMode" bun:"shadow_mode,type:BOOLEAN,notnull"`
+	ShadowMode bool `json:"shadowMode" keel:"shadow_mode"`
 
 	// EarnedAutonomy lets a streak of clean approvals move a tool up one tier
 	// on an agent, and PromotionThreshold is how long that streak must be.
 	// Off by default: an agent widening its own reach is something an
 	// organization opts into.
-	EarnedAutonomy     bool `json:"earnedAutonomy"     bun:"earned_autonomy,type:BOOLEAN,notnull"`
-	PromotionThreshold int  `json:"promotionThreshold" bun:"promotion_threshold,type:INTEGER,notnull"`
+	EarnedAutonomy     bool `json:"earnedAutonomy"     keel:"earned_autonomy"`
+	PromotionThreshold int  `json:"promotionThreshold" keel:"promotion_threshold"`
 
 	// BriefingEnabled turns the morning briefing on, and BriefingHourLocal
 	// is the hour it is written in the organization's own timezone. The
 	// hour is local rather than UTC because a briefing is read at the
 	// start of a working day, and a company with offices in two timezones
 	// would otherwise get one of them yesterday's page.
-	BriefingEnabled   bool `json:"briefingEnabled"   bun:"briefing_enabled,type:BOOLEAN,notnull"`
-	BriefingHourLocal int  `json:"briefingHourLocal" bun:"briefing_hour_local,type:INTEGER,notnull,default:6"`
+	BriefingEnabled   bool `json:"briefingEnabled"   keel:"briefing_enabled"`
+	BriefingHourLocal int  `json:"briefingHourLocal" keel:"briefing_hour_local"`
 
-	AITrainingConsent            bool      `json:"aiTrainingConsent"            bun:"ai_training_consent,type:BOOLEAN,notnull,default:false"`
-	AITrainingConsentChangedAt   *int64    `json:"aiTrainingConsentChangedAt"   bun:"ai_training_consent_changed_at,type:BIGINT,nullzero"`
-	AITrainingConsentChangedByID *pulid.ID `json:"aiTrainingConsentChangedById" bun:"ai_training_consent_changed_by_id,type:VARCHAR(100),nullzero"`
+	AITrainingConsent            bool      `json:"aiTrainingConsent"            keel:"ai_training_consent"`
+	AITrainingConsentChangedAt   *int64    `json:"aiTrainingConsentChangedAt"   keel:"ai_training_consent_changed_at"`
+	AITrainingConsentChangedByID *pulid.ID `json:"aiTrainingConsentChangedById" keel:"ai_training_consent_changed_by_id"`
 
 	// PersonMonthlyMessages is how many questions one person may ask the
 	// agents in a calendar month; nought leaves it unlimited.
-	PersonMonthlyMessages int `json:"personMonthlyMessages" bun:"person_monthly_messages,type:INTEGER,notnull,default:0"`
+	PersonMonthlyMessages int `json:"personMonthlyMessages" keel:"person_monthly_messages"`
 
-	LearningOff bool `json:"learningOff" bun:"learning_off,type:BOOLEAN,notnull,default:false"`
+	LearningOff bool `json:"learningOff" keel:"learning_off"`
 
-	AgentMoneyCallCeilingMinor int64 `json:"agentMoneyCallCeilingMinor" bun:"agent_money_call_ceiling_minor,type:BIGINT,notnull,default:100000"`
-	AgentMoneyRunCalls         int   `json:"agentMoneyRunCalls"         bun:"agent_money_run_calls,type:INTEGER,notnull,default:10"`
-	AgentMoneyRunAmountMinor   int64 `json:"agentMoneyRunAmountMinor"   bun:"agent_money_run_amount_minor,type:BIGINT,notnull,default:500000"`
-	AgentMoneyDayCalls         int   `json:"agentMoneyDayCalls"         bun:"agent_money_day_calls,type:INTEGER,notnull,default:50"`
-	AgentMoneyDayAmountMinor   int64 `json:"agentMoneyDayAmountMinor"   bun:"agent_money_day_amount_minor,type:BIGINT,notnull,default:2500000"`
+	AgentMoneyCallCeilingMinor int64 `json:"agentMoneyCallCeilingMinor" keel:"agent_money_call_ceiling_minor"`
+	AgentMoneyRunCalls         int   `json:"agentMoneyRunCalls"         keel:"agent_money_run_calls"`
+	AgentMoneyRunAmountMinor   int64 `json:"agentMoneyRunAmountMinor"   keel:"agent_money_run_amount_minor"`
+	AgentMoneyDayCalls         int   `json:"agentMoneyDayCalls"         keel:"agent_money_day_calls"`
+	AgentMoneyDayAmountMinor   int64 `json:"agentMoneyDayAmountMinor"   keel:"agent_money_day_amount_minor"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *Organization `json:"organization,omitempty"`
+}
+
+func (ac *AgentControl) BeforeCreate(_ context.Context) error {
+	if ac.BriefingHourLocal == 0 {
+		ac.BriefingHourLocal = 6
+	}
+	if ac.AgentMoneyCallCeilingMinor == 0 {
+		ac.AgentMoneyCallCeilingMinor = 100000
+	}
+	if ac.AgentMoneyRunCalls == 0 {
+		ac.AgentMoneyRunCalls = 10
+	}
+	if ac.AgentMoneyRunAmountMinor == 0 {
+		ac.AgentMoneyRunAmountMinor = 500000
+	}
+	if ac.AgentMoneyDayCalls == 0 {
+		ac.AgentMoneyDayCalls = 50
+	}
+	if ac.AgentMoneyDayAmountMinor == 0 {
+		ac.AgentMoneyDayAmountMinor = 2500000
+	}
+
+	return nil
 }
 
 const (
@@ -185,22 +206,6 @@ func (ac *AgentControl) SetAITrainingConsent(consent bool, changedByID pulid.ID,
 	ac.AITrainingConsentChangedByID = &changedByID
 
 	return true
-}
-
-func (ac *AgentControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if ac.ID.IsNil() {
-			ac.ID = pulid.MustNew("agc_")
-		}
-		ac.CreatedAt = now
-	case *bun.UpdateQuery:
-		ac.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (ac *AgentControl) GetID() pulid.ID {

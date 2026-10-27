@@ -40,12 +40,13 @@ export function BillingQueueActionBar({
   const invalidate = useInvalidateBillingQueue();
 
   const { data: billingReadiness } = useQuery({
-    ...shipment.billingReadiness(item.shipmentId),
-    enabled: item.status === "InReview",
+    ...shipment.billingReadiness(item.shipmentId ?? ""),
+    enabled: item.status === "InReview" && !!item.shipmentId,
   });
 
   const heldCount = item.detentionHolds.length;
-  const canApprove = billingReadiness?.canMarkReadyToInvoice !== false && heldCount === 0;
+  const canApprove =
+    billingReadiness?.canMarkReadyToInvoice !== false && heldCount === 0 && !item.ratingReviewHold;
   const missingCount = billingReadiness?.missingRequirements?.length ?? 0;
 
   const { mutate: updateStatus, isPending: isStatusPending } = useApiMutation({
@@ -122,12 +123,14 @@ export function BillingQueueActionBar({
                       "{0, plural, one {# detention charge needs approval} other {# detention charges need approval}} before this can be approved",
                       heldCount,
                     )
-                  : missingCount > 0
-                    ? t(
-                        "{0, plural, one {# required document} other {# required documents}} missing",
-                        missingCount,
-                      )
-                    : t("Billing requirements not met")}
+                  : item.ratingReviewHold
+                    ? t("The tariff held this rating for review; approve the rating first")
+                    : missingCount > 0
+                      ? t(
+                          "{0, plural, one {# required document} other {# required documents}} missing",
+                          missingCount,
+                        )
+                      : t("Billing requirements not met")}
               </TooltipContent>
             )}
           </Tooltip>

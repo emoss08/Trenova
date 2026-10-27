@@ -1,0 +1,127 @@
+{
+  "key": "revenue-by-gl-account",
+  "version": "1.0.0",
+  "name": "Posted Activity by GL Account",
+  "description": "Monthly posted debits, credits and net movement per GL account and customer",
+  "category": "Accounting",
+  "tags": [
+    "ledger",
+    "accounting",
+    "revenue"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "journal_entry_line",
+    "columns": [
+      {
+        "id": "account_code",
+        "label": "Account Code",
+        "dimension": {
+          "field": "glAccount.accountCode"
+        }
+      },
+      {
+        "id": "account_name",
+        "label": "Account Name",
+        "dimension": {
+          "field": "glAccount.name"
+        }
+      },
+      {
+        "id": "account_category",
+        "label": "Category",
+        "dimension": {
+          "field": "glAccount.accountType.category"
+        }
+      },
+      {
+        "id": "customer",
+        "label": "Customer",
+        "dimension": {
+          "field": "customer.name"
+        }
+      },
+      {
+        "id": "debit_total",
+        "label": "Debits",
+        "measure": {
+          "field": "debitAmount",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "credit_total",
+        "label": "Credits",
+        "measure": {
+          "field": "creditAmount",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "net_total",
+        "label": "Net",
+        "measure": {
+          "field": "netAmount",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "journalEntry.isPosted",
+          "op": "eq",
+          "value": true
+        },
+        {
+          "field": "journalEntry.accountingDate",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "net_total",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}

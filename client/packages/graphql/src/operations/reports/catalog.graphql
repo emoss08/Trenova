@@ -1,6 +1,7 @@
 query ReportCatalog {
   reportCatalog {
     version
+    rules
     entities {
       key
       resource
@@ -9,29 +10,44 @@ query ReportCatalog {
       description
       category
       ownScopeSupported
+      readable
+      exportable
       fields {
         key
         label
         description
         type
         format
-        nullable
+        measure
         enumValues {
           value
           label
         }
         aggregations
+        operators
         filterable
         groupable
-        accessible
+        access
+        inReferenceView
+        protection {
+          group
+          held
+        }
         sensitivity
       }
       edges {
         name
         label
+        description
         target
-        cardinality
-        traversable
+        toMany
+        pick
+        access
+        inReferenceView
+        needsReadOf {
+          resource
+          label
+        }
       }
     }
   }

@@ -8,22 +8,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -53,9 +50,24 @@ func newOwner(email string) *tenant.User {
 	}
 }
 
-func count(t *testing.T, ctx context.Context, db bun.IDB, model any, orgID any) int {
+var countByOrganization = map[string]string{
+	"accounting_controls":           "SELECT count(*) FROM accounting_controls WHERE organization_id = $1",
+	"shipment_controls":             "SELECT count(*) FROM shipment_controls WHERE organization_id = $1",
+	"sequences":                     "SELECT count(*) FROM sequences WHERE organization_id = $1",
+	"user_organization_memberships": "SELECT count(*) FROM user_organization_memberships WHERE organization_id = $1",
+	"user_role_assignments":         "SELECT count(*) FROM user_role_assignments WHERE organization_id = $1",
+	"account_types":                 "SELECT count(*) FROM account_types WHERE organization_id = $1",
+	"document_types":                "SELECT count(*) FROM document_types WHERE organization_id = $1",
+	"service_failure_reason_codes":  "SELECT count(*) FROM service_failure_reason_codes WHERE organization_id = $1",
+	"document_templates":            "SELECT count(*) FROM document_templates WHERE organization_id = $1",
+	"agent_definitions":             "SELECT count(*) FROM agent_definitions WHERE organization_id = $1",
+}
+
+func count(t *testing.T, ctx context.Context, db *keel.DB, table string, orgID pulid.ID) int {
 	t.Helper()
-	n, err := db.NewSelect().Model(model).Where("organization_id = ?", orgID).Count(ctx)
+	statement, ok := countByOrganization[table]
+	require.True(t, ok, "no count statement for %s", table)
+	n, err := keel.QueryValue[int64](ctx, db, statement, orgID.String())
 	require.NoError(t, err)
 	return int(n)
 }
@@ -72,7 +84,8 @@ func TestBootstrapCreatesEverythingATenantNeeds(t *testing.T) {
 	org.StateID = data.State.ID
 
 	var result *tenantports.BootstrapTenantResult
-	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+	sysCtx := dbscope.WithSystem(ctx, "bootstrap a tenant the way instance bootstrap does")
+	err := conn.Transact(sysCtx, kernelports.TxOptions{}, func(ctx context.Context) error {
 		require.NoError(t, repo.LockProvisioning(ctx))
 		var bootErr error
 		result, bootErr = repo.Bootstrap(ctx, &tenantports.BootstrapTenantRequest{
@@ -94,16 +107,16 @@ func TestBootstrapCreatesEverythingATenantNeeds(t *testing.T) {
 	assert.Equal(t, result.Organization.ID, result.Owner.CurrentOrganizationID)
 
 	orgID := result.Organization.ID
-	assert.Equal(t, 1, count(t, ctx, db, (*tenant.AccountingControl)(nil), orgID))
-	assert.Equal(t, 1, count(t, ctx, db, (*tenant.ShipmentControl)(nil), orgID))
-	assert.Len(t, tenantbootstrap.DefaultSequenceTypes(), count(t, ctx, db, (*tenant.Sequence)(nil), orgID))
-	assert.Equal(t, 1, count(t, ctx, db, (*tenant.OrganizationMembership)(nil), orgID))
-	assert.Equal(t, 1, count(t, ctx, db, (*permission.UserRoleAssignment)(nil), orgID))
-	assert.Equal(t, 6, count(t, ctx, db, (*accounttype.AccountType)(nil), orgID))
-	assert.Positive(t, count(t, ctx, db, (*documenttype.DocumentType)(nil), orgID))
-	assert.Positive(t, count(t, ctx, db, (*servicefailure.ReasonCode)(nil), orgID))
-	assert.Len(t, documenttemplate.AllKinds(), count(t, ctx, db, (*documenttemplate.DocumentTemplate)(nil), orgID))
-	assert.Equal(t, 2, count(t, ctx, db, (*agentdefinition.Definition)(nil), orgID))
+	assert.Equal(t, 1, count(t, ctx, db, "accounting_controls", orgID))
+	assert.Equal(t, 1, count(t, ctx, db, "shipment_controls", orgID))
+	assert.Len(t, tenantbootstrap.DefaultSequenceTypes(), count(t, ctx, db, "sequences", orgID))
+	assert.Equal(t, 1, count(t, ctx, db, "user_organization_memberships", orgID))
+	assert.Equal(t, 1, count(t, ctx, db, "user_role_assignments", orgID))
+	assert.Equal(t, 6, count(t, ctx, db, "account_types", orgID))
+	assert.Positive(t, count(t, ctx, db, "document_types", orgID))
+	assert.Positive(t, count(t, ctx, db, "service_failure_reason_codes", orgID))
+	assert.Len(t, documenttemplate.AllKinds(), count(t, ctx, db, "document_templates", orgID))
+	assert.Equal(t, 2, count(t, ctx, db, "agent_definitions", orgID))
 
 	second := newOrganization("Acme Freight, LLC")
 	second.StateID = data.State.ID

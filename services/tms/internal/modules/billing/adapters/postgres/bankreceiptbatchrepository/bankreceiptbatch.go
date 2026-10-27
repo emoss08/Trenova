@@ -5,22 +5,28 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptbatchports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
+var batchErrors = dberror.Mapping{Entity: "BankReceiptBatch"}
+
 type Params struct {
 	fx.In
+
 	DB     *postgres.Connection
 	Logger *zap.Logger
 }
+
 type repository struct {
 	db *postgres.Connection
 	l  *zap.Logger
@@ -38,16 +44,9 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*bankreceiptbatch.BankReceiptBatch, error) {
-			entity := new(bankreceiptbatch.BankReceiptBatch)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where("brib.id = ?", req.ID).
-				Where("brib.organization_id = ?", req.TenantInfo.OrgID).
-				Where("brib.business_unit_id = ?", req.TenantInfo.BuID).
-				Scan(ctx)
+			entity, err := bankreceiptbatchdb.BankReceiptBatches.Get(ctx, r.db.Keel(ctx), req.ID)
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, "BankReceiptBatch")
+				return nil, batchErrors.Map(err, req.ID.String())
 			}
 			return entity, nil
 		},
@@ -56,20 +55,14 @@ func (r *repository) GetByID(
 
 func (r *repository) List(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*bankreceiptbatch.BankReceiptBatch, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*bankreceiptbatch.BankReceiptBatch, error) {
-			items := make([]*bankreceiptbatch.BankReceiptBatch, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where("brib.organization_id = ?", tenantInfo.OrgID).
-				Where("brib.business_unit_id = ?", tenantInfo.BuID).
-				Order("brib.created_at DESC").
-				Scan(ctx)
+			b := bankreceiptbatchdb.BankReceiptBatches
+			items, err := b.Order(b.CreatedAt.Desc()).All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list bank receipt batches: %w", err)
 			}
@@ -86,19 +79,14 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*bankreceiptbatch.BankReceiptBatch, error) {
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create bank receipt batch: %w", err)
-			}
-			return r.GetByID(
+			if err := bankreceiptbatchdb.BankReceiptBatches.Create(
 				ctx,
-				bankreceiptbatchports.GetBankReceiptBatchByIDRequest{
-					ID: entity.ID,
-					TenantInfo: pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					},
-				},
-			)
+				r.db.Keel(ctx),
+				entity,
+			); err != nil {
+				return nil, batchErrors.Map(err, entity.ID.String())
+			}
+			return entity, nil
 		},
 	)
 }
@@ -111,45 +99,41 @@ func (r *repository) DistinctSources(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption], error) {
+			q := sourceOptions(req.Query)
+			counted := q.Clone()
+			page := q.Order(bankreceiptbatchdb.BankReceiptBatches.Source.Asc()).
+				Limit(req.Pagination.SafeLimit()).
+				Offset(req.Pagination.SafeOffset())
+
 			var sources []string
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("bank_receipt_import_batches AS brib").
-				ColumnExpr("DISTINCT brib.source").
-				Where("brib.organization_id = ?", req.TenantInfo.OrgID).
-				Where("brib.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("brib.source != ''").
-				OrderExpr("brib.source ASC")
-
-			if strings.TrimSpace(req.Query) != "" {
-				q = q.Where("brib.source ILIKE ?", "%"+strings.TrimSpace(req.Query)+"%")
-			}
-
-			err := q.Scan(ctx, &sources)
-			if err != nil {
+			var total keel.RowCount
+			if err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoSlice(page, &sources),
+				keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total),
+			); err != nil {
 				return nil, fmt.Errorf("distinct sources: %w", err)
 			}
 
 			options := make([]*bankreceiptbatchports.BankReceiptBatchSourceOption, len(sources))
-			for i, s := range sources {
-				options[i] = &bankreceiptbatchports.BankReceiptBatchSourceOption{Value: s, Label: s}
+			for i, source := range sources {
+				options[i] = &bankreceiptbatchports.BankReceiptBatchSourceOption{
+					Value: source,
+					Label: source,
+				}
 			}
 
-			limit := req.Pagination.SafeLimit()
-			offset := req.Pagination.SafeOffset()
-			total := len(options)
-
-			if offset > total {
-				offset = total
-			}
-			end := min(offset+limit, total)
-
-			return &pagination.ListResult[*bankreceiptbatchports.BankReceiptBatchSourceOption]{
-				Items: options[offset:end],
-				Total: total,
-			}, nil
+			return listquery.Result(options, total), nil
 		},
 	)
+}
+
+func sourceOptions(query string) *keel.Query[*bankreceiptbatch.BankReceiptBatch] {
+	b := bankreceiptbatchdb.BankReceiptBatches
+	search := strings.TrimSpace(query)
+
+	return b.Group(b.Source).
+		Pick(b.Source).
+		Where(b.Source.Ne(""), keel.When(search != "", b.Source.ContainsFold(search)))
 }
 
 func (r *repository) Update(
@@ -160,45 +144,29 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*bankreceiptbatch.BankReceiptBatch, error) {
-			entity.UpdatedAt = timeutils.NowUnix()
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Where("id = ?", entity.ID).
-				Where("organization_id = ?", entity.OrganizationID).
-				Where("business_unit_id = ?", entity.BusinessUnitID).
-				Where("version = ?", entity.Version).
-				Set("status = ?", entity.Status).
-				Set("imported_count = ?", entity.ImportedCount).
-				Set("matched_count = ?", entity.MatchedCount).
-				Set("exception_count = ?", entity.ExceptionCount).
-				Set("imported_amount_minor = ?", entity.ImportedAmountMinor).
-				Set("matched_amount_minor = ?", entity.MatchedAmountMinor).
-				Set("exception_amount_minor = ?", entity.ExceptionAmountMinor).
-				Set("updated_by_id = ?", entity.UpdatedByID).
-				Set("updated_at = ?", entity.UpdatedAt).
-				Set("version = version + 1").
-				Exec(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("update bank receipt batch: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				"BankReceiptBatch",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
-			}
-			return r.GetByID(
+			b := bankreceiptbatchdb.BankReceiptBatches
+			db := r.db.Keel(ctx)
+			if err := b.Save(
 				ctx,
-				bankreceiptbatchports.GetBankReceiptBatchByIDRequest{
-					ID: entity.ID,
-					TenantInfo: pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					},
-				},
-			)
+				db,
+				entity,
+				b.Status,
+				b.ImportedCount,
+				b.MatchedCount,
+				b.ExceptionCount,
+				b.ImportedAmountMinor,
+				b.MatchedAmountMinor,
+				b.ExceptionAmountMinor,
+				b.UpdatedByID,
+			); err != nil {
+				return nil, batchErrors.Map(err, entity.ID.String())
+			}
+
+			updated, err := b.Get(ctx, db, entity.ID)
+			if err != nil {
+				return nil, batchErrors.Map(err, entity.ID.String())
+			}
+			return updated, nil
 		},
 	)
 }

@@ -2,24 +2,24 @@ package driversettlementrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+const batchAggregateCTE = "agg"
+
+var batchErrors = dberror.Mapping{Entity: "SettlementBatch"}
 
 type batchRepository struct {
 	db *postgres.Connection
@@ -41,34 +41,18 @@ func (r *batchRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*driversettlement.SettlementBatch], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*driversettlement.SettlementBatch, 0, limit)
+			b := driversettlementdb.SettlementBatches
+			q := b.Where(
+				when(req.Filter.Query != "", b.Name.ContainsFold(req.Filter.Query)),
+				when(req.Status != "", b.Status.Eq(req.Status)),
+			).Order(b.PeriodEnd.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where("dstlb.organization_id = ?", req.Filter.TenantInfo.OrgID).
-				Where("dstlb.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-				Order("dstlb.period_end DESC").
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				query = query.Where("dstlb.name ILIKE ?", "%"+req.Filter.Query+"%")
-			}
-			if req.Status != "" {
-				query = query.Where("dstlb.status = ?", req.Status)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list settlement batches: %w", err)
 			}
 
-			return &pagination.ListResult[*driversettlement.SettlementBatch]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -77,58 +61,21 @@ func (r *batchRepository) ListConnection(
 	ctx context.Context,
 	req *driversettlementports.ListSettlementBatchConnectionRequest,
 ) (*pagination.CursorListResult[*driversettlement.SettlementBatch], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*driversettlement.SettlementBatch], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*driversettlement.SettlementBatch)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"dstlb",
-							req.Filter,
-							(*driversettlement.SettlementBatch)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count settlement batches", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*driversettlement.SettlementBatch]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*driversettlement.SettlementBatch) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(driversettlementcol.SettlementBatchTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							"dstlb",
-							req.Filter,
-							req.Cursor,
-							(*driversettlement.SettlementBatch)(nil),
-						)
-					},
+				r.db.Keel(ctx),
+				driversettlementdb.SettlementBatches.Query(),
+				&listquery.Request[driversettlement.SettlementBatch]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan settlement batches", zap.Error(err))
+				r.l.Error("failed to list settlement batches", zap.Error(err))
 				return nil, err
 			}
 
@@ -145,23 +92,18 @@ func (r *batchRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*driversettlement.SettlementBatch, error) {
-			entity := new(driversettlement.SettlementBatch)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where("dstlb.id = ?", req.ID).
-				Where("dstlb.organization_id = ?", req.TenantInfo.OrgID).
-				Where("dstlb.business_unit_id = ?", req.TenantInfo.BuID)
+			b := driversettlementdb.SettlementBatches
+			q := b.Where(b.ID.Eq(req.ID))
 			if req.IncludeSettlements {
-				query = query.Relation("Settlements", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order("dstl.settlement_number ASC")
-				}).Relation("Settlements.Worker", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q
-				})
+				s := b.Settlements()
+				q = q.Load(s.Order(s.SettlementNumber.Asc()).Load(s.Worker()))
 			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "SettlementBatch")
+
+			entity, err := q.One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, batchErrors.Map(err, req.ID.String())
 			}
+
 			return entity, nil
 		},
 	)
@@ -169,31 +111,26 @@ func (r *batchRepository) GetByID(
 
 func (r *batchRepository) GetForPeriod(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	periodStart, periodEnd int64,
 ) (*driversettlement.SettlementBatch, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*driversettlement.SettlementBatch, error) {
-			entity := new(driversettlement.SettlementBatch)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where("dstlb.organization_id = ?", tenantInfo.OrgID).
-				Where("dstlb.business_unit_id = ?", tenantInfo.BuID).
-				Where("dstlb.period_start = ?", periodStart).
-				Where("dstlb.period_end = ?", periodEnd).
-				Where("dstlb.status != ?", driversettlement.BatchStatusCanceled).
-				Order("dstlb.created_at DESC").
-				Limit(1).
-				Scan(ctx)
+			b := driversettlementdb.SettlementBatches
+			entity, err := b.Where(
+				b.PeriodStart.Eq(periodStart),
+				b.PeriodEnd.Eq(periodEnd),
+				b.Status.Ne(driversettlement.BatchStatusCanceled),
+			).Order(b.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, nil
+			}
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return nil, nil //nolint:nilnil // nil batch means no batch exists for the period
-				}
 				return nil, fmt.Errorf("get settlement batch for period: %w", err)
 			}
+
 			return entity, nil
 		},
 	)
@@ -208,31 +145,36 @@ func (r *batchRepository) RecalculateAggregates(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*driversettlement.SettlementBatch, error) {
-			if _, err := r.db.DBForContext(ctx).NewRaw(`
-		UPDATE driver_settlement_batches AS b SET
-			settlement_count = agg.settlement_count,
-			exception_count = agg.exception_count,
-			total_gross_minor = agg.total_gross_minor,
-			total_net_minor = agg.total_net_minor,
-			updated_at = `+dbhelper.NowEpoch+`
-		FROM (
-			SELECT
-				COUNT(*) FILTER (WHERE s.status != 'Voided') AS settlement_count,
-				COUNT(*) FILTER (WHERE s.has_exceptions AND s.status != 'Voided') AS exception_count,
-				COALESCE(SUM(s.gross_earnings_minor) FILTER (WHERE s.status != 'Voided'), 0) AS total_gross_minor,
-				COALESCE(SUM(s.net_pay_minor) FILTER (WHERE s.status != 'Voided'), 0) AS total_net_minor
-			FROM driver_settlements s
-			WHERE s.batch_id = ?
-				AND s.organization_id = ?
-				AND s.business_unit_id = ?
-		) AS agg
-		WHERE b.id = ?
-			AND b.organization_id = ?
-			AND b.business_unit_id = ?
-	`,
-				batchID, tenantInfo.OrgID, tenantInfo.BuID,
-				batchID, tenantInfo.OrgID, tenantInfo.BuID,
-			).Exec(ctx); err != nil {
+			s := driversettlementdb.Settlements
+			b := driversettlementdb.SettlementBatches
+			live := s.Status.Ne(driversettlement.StatusVoided)
+			agg := keel.CTE(
+				batchAggregateCTE,
+				[]string{
+					"settlement_count",
+					"exception_count",
+					"total_gross_minor",
+					"total_net_minor",
+				},
+				s.Pick(
+					keel.Count().Filter(live),
+					keel.Count().Filter(keel.And(s.HasExceptions.IsTrue(), live)),
+					keel.Int64Of(s.GrossEarningsMinor.Sum().Filter(live)).Coalesce(0),
+					keel.Int64Of(s.NetPayMinor.Sum().Filter(live)).Coalesce(0),
+				).Where(s.BatchID.Eq(batchID)),
+			)
+
+			if _, err := b.With(agg).
+				Join(agg).
+				Where(b.ID.Eq(batchID)).
+				Update(
+					ctx,
+					r.db.Keel(ctx),
+					b.SettlementCount.ToExpr(agg.Col("settlement_count")),
+					b.ExceptionCount.ToExpr(agg.Col("exception_count")),
+					b.TotalGrossMinor.ToExpr(agg.Col("total_gross_minor")),
+					b.TotalNetMinor.ToExpr(agg.Col("total_net_minor")),
+				); err != nil {
 				return nil, fmt.Errorf("recalculate settlement batch aggregates: %w", err)
 			}
 
@@ -252,12 +194,11 @@ func (r *batchRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*driversettlement.SettlementBatch, error) {
-			if entity.ID.IsNil() {
-				entity.ID = pulid.MustNew("dstlb_")
+			err := driversettlementdb.SettlementBatches.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				return nil, batchErrors.Map(err, entity.ID.String())
 			}
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create settlement batch: %w", err)
-			}
+
 			return entity, nil
 		},
 	)
@@ -271,37 +212,27 @@ func (r *batchRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*driversettlement.SettlementBatch, error) {
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Where("id = ?", entity.ID).
-				Where("organization_id = ?", entity.OrganizationID).
-				Where("business_unit_id = ?", entity.BusinessUnitID).
-				Where("version = ?", entity.Version).
-				Set("status = ?", entity.Status).
-				Set("name = ?", entity.Name).
-				Set("settlement_count = ?", entity.SettlementCount).
-				Set("exception_count = ?", entity.ExceptionCount).
-				Set("total_gross_minor = ?", entity.TotalGrossMinor).
-				Set("total_net_minor = ?", entity.TotalNetMinor).
-				Set("notes = ?", entity.Notes).
-				Set("generated_by_id = ?", entity.GeneratedByID).
-				Set("generated_at = ?", entity.GeneratedAt).
-				Set("completed_at = ?", entity.CompletedAt).
-				Set("canceled_by_id = ?", entity.CanceledByID).
-				Set("canceled_at = ?", entity.CanceledAt).
-				Set("version = version + 1").
-				Exec(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("update settlement batch: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				"SettlementBatch",
-				entity.ID.String(),
+			b := driversettlementdb.SettlementBatches
+			if err := b.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				b.Status,
+				b.Name,
+				b.SettlementCount,
+				b.ExceptionCount,
+				b.TotalGrossMinor,
+				b.TotalNetMinor,
+				b.Notes,
+				b.GeneratedByID,
+				b.GeneratedAt,
+				b.CompletedAt,
+				b.CanceledByID,
+				b.CanceledAt,
 			); err != nil {
-				return nil, err
+				return nil, batchErrors.Map(err, entity.ID.String())
 			}
+
 			return entity, nil
 		},
 	)

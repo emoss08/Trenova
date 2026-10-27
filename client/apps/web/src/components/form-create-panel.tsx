@@ -52,6 +52,8 @@ type FormCreatePanelProps<
   /** More at the left of the footer, such as a test button. */
   footerLeading?: React.ReactNode;
   mutationFn?: (values: TSubmitValues) => Promise<TMutationData>;
+  /** Runs once a record is created, after the list it belongs to is refreshed. */
+  onCreated?: (data: TMutationData) => void;
   /** A toast for a create whose outcome needs saying; a plain create shows nothing. */
   successToast?: (
     data: TMutationData,
@@ -86,6 +88,7 @@ export function FormCreatePanel<
   changeFields,
   footerProblem,
   footerLeading,
+  onCreated,
   successToast,
 }: FormCreatePanelProps<TFieldValues, TData, TSubmitValues, TMutationData>) {
   const t = useT();
@@ -146,6 +149,7 @@ export function FormCreatePanel<
           toast.success(custom.title, { description: custom.description });
         }
         void queryClient.invalidateQueries({ queryKey: [queryKey] });
+        onCreated?.(data);
 
         if (isPopout) {
           closePopout();

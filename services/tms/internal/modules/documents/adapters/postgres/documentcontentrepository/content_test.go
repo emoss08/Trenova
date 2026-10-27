@@ -1,130 +1,69 @@
 package documentcontentrepository
 
 import (
-	"context"
-	"fmt"
-	"strings"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentcontentports"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"go.uber.org/zap"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestListPendingExtractionTenants_UsesQualifiedTenantGrouping(t *testing.T) {
+const pendingEligibility = `d."status" = 'Active' AND d."processing_profile" IN ` +
+	`('rate_confirmation_import', 'assistant_attachment', 'inbound_attachment', 'capture', 'factoring_remittance') ` +
+	`AND (dc."document_id" IS NULL OR dc."status" IN ('Pending', 'Extracting') ` +
+	`OR d."content_status" IN ('Pending', 'Extracting'))`
+
+func TestListPendingExtractionTenants_GroupsByTheQualifiedTenantColumns(t *testing.T) {
 	t.Parallel()
 
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-	matcher := sqlmock.QueryMatcherFunc(func(_ string, actualSQL string) error {
-		requiredFragments := []string{
-			"SELECT doc.organization_id AS organization_id, doc.business_unit_id AS business_unit_id",
-			"LEFT JOIN document_contents AS dc",
-			"GROUP BY doc.organization_id, doc.business_unit_id",
-			`ORDER BY "doc"."organization_id" ASC, "doc"."business_unit_id" ASC`,
-		}
-		for _, fragment := range requiredFragments {
-			if !strings.Contains(actualSQL, fragment) {
-				return fmt.Errorf("expected SQL to contain %q, got %s", fragment, actualSQL)
-			}
-		}
-
-		if strings.Contains(actualSQL, `GROUP BY "organization_id"`) ||
-			strings.Contains(actualSQL, "GROUP BY organization_id") {
-			return fmt.Errorf("tenant grouping must be table-qualified, got %s", actualSQL)
-		}
-
-		if strings.Contains(actualSQL, "doc.status = $1) OR") ||
-			strings.Contains(actualSQL, "doc.status = 'Active') OR") {
-			return fmt.Errorf(
-				"status filter must not be ORed with eligibility filters, got %s",
-				actualSQL,
-			)
-		}
-
-		return nil
-	})
-	sqlDB, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(matcher))
-	require.NoError(t, err)
-
-	bunDB := bun.NewDB(sqlDB, pgdialect.New())
-	repo := &repository{
-		db: postgres.NewTestConnection(bunDB),
-		l:  zap.NewNop(),
-	}
-	mock.ExpectQuery("tenant discovery").
-		WillReturnRows(sqlmock.NewRows([]string{
-			"organization_id",
-			"business_unit_id",
-		}).AddRow(orgID, buID))
-	mock.ExpectClose()
-
-	tenants, err := repo.ListPendingExtractionTenants(
-		context.Background(),
-		&documentcontentports.ListPendingDocumentExtractionRequest{
+	sqlText, args := keeltest.RenderIn(
+		t,
+		dbscope.WithSystem(t.Context(), "render the pending extraction tenant sweep"),
+		pendingTenantsQuery(&documentcontentports.ListPendingDocumentExtractionRequest{
 			OlderThan: 1779222120,
 			Limit:     100,
-		},
+		}),
 	)
-	require.NoError(t, err)
-	require.Equal(t, []pagination.TenantInfo{
-		{
-			OrgID: orgID,
-			BuID:  buID,
-		},
-	}, tenants)
-	require.NoError(t, bunDB.Close())
-	require.NoError(t, mock.ExpectationsWereMet())
+
+	assert.Contains(
+		t,
+		sqlText,
+		`LEFT JOIN "document_contents" dc ON dc."document_id" = d."id" `+
+			`AND dc."organization_id" = d."organization_id" AND dc."business_unit_id" = d."business_unit_id"`,
+		sqlText,
+	)
+	assert.Contains(t, sqlText, "WHERE "+pendingEligibility, sqlText)
+	assert.Contains(
+		t,
+		sqlText,
+		`AND d."updated_at" <= $1 GROUP BY d."organization_id", d."business_unit_id" `+
+			`ORDER BY d."organization_id" ASC, d."business_unit_id" ASC LIMIT 100`,
+		sqlText,
+	)
+	assert.Equal(t, []any{int64(1779222120)}, args)
 }
 
 func TestListPendingExtraction_LeavesFailedDocumentsForAReextract(t *testing.T) {
 	t.Parallel()
 
-	matcher := sqlmock.QueryMatcherFunc(func(_ string, actualSQL string) error {
-		for _, fragment := range []string{"'Pending'", "'Extracting'"} {
-			if !strings.Contains(actualSQL, fragment) {
-				return fmt.Errorf("expected SQL to contain %q, got %s", fragment, actualSQL)
-			}
-		}
-		if strings.Contains(actualSQL, "'Failed'") {
-			return fmt.Errorf(
-				"a failed conversion waits for a Reextract and is never re-driven, got %s",
-				actualSQL,
-			)
-		}
-
-		return nil
-	})
-	sqlDB, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(matcher))
-	require.NoError(t, err)
-
-	bunDB := bun.NewDB(sqlDB, pgdialect.New())
-	repo := &repository{
-		db: postgres.NewTestConnection(bunDB),
-		l:  zap.NewNop(),
-	}
-	mock.ExpectQuery("pending extraction").WillReturnRows(sqlmock.NewRows([]string{"id"}))
-	mock.ExpectClose()
-
-	docs, err := repo.ListPendingExtraction(
-		t.Context(),
-		&documentcontentports.ListPendingDocumentExtractionRequest{
-			TenantInfo: pagination.TenantInfo{
-				OrgID: pulid.MustNew("org_"),
-				BuID:  pulid.MustNew("bu_"),
-			},
+	sqlText, args := keeltest.Render(
+		t,
+		pendingExtractionQuery(&documentcontentports.ListPendingDocumentExtractionRequest{
 			OlderThan: 1779222120,
 			Limit:     10,
-		},
+		}),
 	)
-	require.NoError(t, err)
-	require.Empty(t, docs)
-	require.NoError(t, bunDB.Close())
-	require.NoError(t, mock.ExpectationsWereMet())
+
+	assert.Contains(
+		t,
+		sqlText,
+		`WHERE d."organization_id" = $1 AND d."business_unit_id" = $2 AND `+
+			pendingEligibility+
+			` AND d."updated_at" <= $3 ORDER BY d."updated_at" ASC LIMIT 10`,
+		sqlText,
+	)
+	assert.Len(t, args, 3)
+	assert.Equal(t, int64(1779222120), args[2])
+	assert.NotContains(t, sqlText, "'Failed'")
 }

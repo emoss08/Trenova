@@ -4,10 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 func TestRegisterEntitiesIncludesRBACModels(t *testing.T) {
@@ -31,18 +28,4 @@ func TestRegisterEntitiesIncludesRBACModels(t *testing.T) {
 			t.Fatalf("expected %T to be registered", entity)
 		}
 	}
-}
-
-func TestRegisterEntitiesCanBeRegisteredByBun(t *testing.T) {
-	t.Parallel()
-
-	sqlDB, _, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("new sql mock: %v", err)
-	}
-	db := bun.NewDB(sqlDB, pgdialect.New())
-	defer db.Close()
-
-	db.RegisterModel(RegisterManyToManyEntities()...)
-	db.RegisterModel(RegisterEntities()...)
 }

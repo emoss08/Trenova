@@ -37,7 +37,7 @@ describe("brandMarkFor", () => {
   });
 
   it("ships the mark of every AI extension vendor in the marketplace", () => {
-    for (const domain of ["exa.ai", "parallel.ai", "browser-use.com", "e2b.dev"]) {
+    for (const domain of ["exa.ai", "parallel.ai", "browser-use.com"]) {
       expect(brandMarkFor({ domain }), `${domain} has no bundled mark`).not.toBeNull();
     }
   });

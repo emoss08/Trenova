@@ -2,27 +2,16 @@ package watchtowerservice
 
 import (
 	"context"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/dispatchcontrolports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/ttlcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-const (
-	policyCacheTTL     = time.Minute
-	policyCacheEntries = 4096
-)
-
-type tenantKey struct {
-	orgID pulid.ID
-	buID  pulid.ID
-}
 
 type RouterParams struct {
 	fx.In
@@ -34,17 +23,12 @@ type RouterParams struct {
 type Router struct {
 	l        *zap.Logger
 	controls dispatchcontrolports.DispatchControlRepository
-	cache    *ttlcache.Cache[tenantKey, dispatchcontrol.ExceptionPolicy]
 }
 
 func NewRouter(p RouterParams) *Router {
 	return &Router{
 		l:        p.Logger.Named("service.watchtower.router"),
 		controls: p.Controls,
-		cache: ttlcache.New[tenantKey, dispatchcontrol.ExceptionPolicy](ttlcache.Options{
-			TTL:        policyCacheTTL,
-			MaxEntries: policyCacheEntries,
-		}),
 	}
 }
 
@@ -52,17 +36,11 @@ func (r *Router) Policy(
 	ctx context.Context,
 	tenant pagination.TenantInfo,
 ) dispatchcontrol.ExceptionPolicy {
-	if r == nil {
-		return (*dispatchcontrol.DispatchControl)(nil).ExceptionPolicy()
-	}
-	key := tenantKey{orgID: tenant.OrgID, buID: tenant.BuID}
-	if policy, ok := r.cache.Get(key); ok {
-		return policy
-	}
-	if r.controls == nil {
+	if r == nil || r.controls == nil {
 		return (*dispatchcontrol.DispatchControl)(nil).ExceptionPolicy()
 	}
 
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 	control, err := r.controls.GetByOrgID(ctx, dispatchcontrolports.GetDispatchControlRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: tenant.OrgID, BuID: tenant.BuID},
 	})
@@ -73,9 +51,7 @@ func (r *Router) Policy(
 		return (*dispatchcontrol.DispatchControl)(nil).ExceptionPolicy()
 	}
 
-	policy := control.ExceptionPolicy()
-	r.cache.Set(key, policy)
-	return policy
+	return control.ExceptionPolicy()
 }
 
 func DueAfterSeconds(policy dispatchcontrol.ExceptionPolicy, severity watchtower.Severity) int64 {

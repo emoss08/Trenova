@@ -59,3 +59,10 @@ func (tc *TestContext) RegisterCleanup() {
 func (tc *TestContext) Deadline() (time.Time, bool) {
 	return tc.Ctx.Deadline()
 }
+
+func RequireIntegration(t *testing.T) {
+	t.Helper()
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+}

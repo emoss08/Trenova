@@ -107,6 +107,8 @@ enum DetentionDeskUrgency {
   Accruing
   FreeTimeEnding
   Normal
+  "A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived."
+  AwaitingApproval
 }
 
 enum DetentionNoticeKind {
@@ -229,6 +231,8 @@ type DetentionPolicyConnection {
   edges: [DetentionPolicyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input DetentionTierInput {
@@ -290,7 +294,7 @@ input DetentionPolicyInput {
   version: Int
 }
 
-type DetentionOccurrence {
+type DetentionOccurrence @kind(resource: "detention") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -326,8 +330,10 @@ type DetentionOccurrence {
   grossAmount: Decimal!
   billableAmount: Decimal!
   driverPayMinutes: Int!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
   capApplied: DetentionCapKind!
   convertedToLayover: Boolean!
   currency: String!
@@ -426,7 +432,7 @@ type DetentionClockPrice {
   asOf: Timestamp!
 }
 
-type DetentionOccurrenceDetail {
+type DetentionOccurrenceDetail @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   evidence: [DetentionEvidence!]
   notices: [DetentionNotice!]
@@ -436,16 +442,18 @@ type DetentionOccurrenceDetail {
   currentlyBillable: DetentionClockPrice
 }
 
-type DetentionDeskEntry {
+type DetentionDeskEntry @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   minutesUntilFreeEnds: Int!
   minutesUntilNoticeDue: Int
   noticeWindowOpen: Boolean!
   amountAtRisk: Decimal!
+  "The minutes it bills: a running clock's as of now, a stopped charge's as recorded."
+  billableMinutes: Int!
   urgency: DetentionDeskUrgency!
 }
 
-type DetentionDisputePacket {
+type DetentionDisputePacket @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   policySnapshot: JSON
   receipt: String!
@@ -465,8 +473,10 @@ type FacilityDetentionStat {
   medianDwellMinutes: Float!
   p90DwellMinutes: Float!
   billedAmount: Decimal!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
   waivedAmount: Decimal!
   disputeCount: Int!
   suppressedCount: Int!
@@ -478,8 +488,10 @@ type CustomerDetentionStat {
   stopCount: Int!
   breachCount: Int!
   billedAmount: Decimal!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
   waivedAmount: Decimal!
   disputeCount: Int!
   suppressedCount: Int!
@@ -511,8 +523,10 @@ type DetentionPreviewResult {
   roundedMinutes: Int!
   billableAmount: Decimal!
   grossAmount: Decimal!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
   arrivedLate: Boolean!
   capApplied: DetentionCapKind!
   status: DetentionOccurrenceStatus!
@@ -540,8 +554,10 @@ type DetentionBacktestBucket {
   baselineAmount: Decimal!
   "proposedAmount minus baselineAmount."
   delta: Decimal!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
 }
 
 type DetentionBacktestResult {
@@ -553,9 +569,12 @@ type DetentionBacktestResult {
   proposedRevenue: Decimal!
   baselineRevenue: Decimal!
   revenueDelta: Decimal!
-  proposedDriverPay: Decimal!
-  proposedNetMargin: Decimal!
-  negativeMarginStops: Int!
+  "Null to a reader without the margins field group."
+  proposedDriverPay: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  proposedNetMargin: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  negativeMarginStops: Int @protected(group: Margins)
   byCustomer: [DetentionBacktestBucket!]!
   byFacility: [DetentionBacktestBucket!]!
   from: Timestamp!
@@ -585,7 +604,16 @@ input DetentionStatsInput {
 extend type Query {
   detentionPolicies(input: DataTableConnectionInput!): DetentionPolicyConnection!
   detentionPolicy(id: ID!): DetentionPolicy
-  detentionDesk: [DetentionDeskEntry!]!
+  detentionDesk(
+    "Also list the stopped charges waiting on approval, whose shipments cannot be invoiced until someone approves or waives them."
+    includeAwaitingApproval: Boolean = false
+    "How soon someone has to act, as the board ranks it."
+    urgency: DetentionDeskUrgency
+    "Only this shipment's occurrences."
+    shipmentId: ID
+    "A shipment's PRO number, or part of it, ignoring case."
+    proNumber: String
+  ): [DetentionDeskEntry!]!
   detentionOccurrence(id: ID!): DetentionOccurrenceDetail!
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!

@@ -71,5 +71,6 @@
   "Your new password is active. Any other sessions on this account have been signed out.": "您的新密码已生效。此账户的其他会话皆已登出。",
   "Your password is set. Sign in to get started.": "密码已设置完成，请登录开始使用。",
   "you@carrier.com": "you@carrier.com",
-  "{0, plural, one {permission} other {permissions}}": "{0, plural, other {项权限}}"
+  "{0, plural, one {permission} other {permissions}}": "{0, plural, other {项权限}}",
+  "{0} available": "{0} 可用"
 }

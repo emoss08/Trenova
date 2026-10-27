@@ -434,7 +434,7 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"What are the factor's terms?",
 			"What are the advance, reserve and fee terms of the factoring agreement in force?",
-			"factoring_get_agreement",
+			"factoring_list_agreements",
 		),
 		ask(
 			"Which schedules failed?",
@@ -620,17 +620,22 @@ var templateStarters = map[Template][]starterQuestion{
 		ask(
 			"Write a formula",
 			"Write a formula that charges per mile with a fuel surcharge and a minimum charge.",
-			"formula_propose", "formula_describe_schema",
+			"formula_propose", "formula_describe_language",
 		),
 		ask(
 			"Explain this formula",
-			"Explain what this formula charges, term by term.",
-			"formula_describe_schema",
+			"Explain what this formula charges, charge by charge.",
+			"formula_describe_language",
 		),
 		ask(
 			"What would this charge?",
 			"What would this formula charge for a 500 mile load?",
-			"formula_test_expression",
+			"formula_preview",
+		),
+		ask(
+			"Write tests for this",
+			"Write tests that cover the cases this formula prices.",
+			"formula_run_tests", "formula_propose",
 		),
 		ask(
 			"How was this rate worked out?",

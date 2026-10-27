@@ -1,171 +1,267 @@
-// Package ratetablecache memoizes a tenant's rate tables, encoded once into the
-// rules module's wire form, for the life of one request or one batch and, under
-// the tenant's matrix stamp, across requests in the process.
-//
-// A rate table — what a formula's lookup() call names — is stored as a one- or
-// two-axis rate matrix. Encoding them reads every one of them with every cell. That was affordable when a formula was evaluated because
-// somebody asked for a rate; it stopped being affordable when rate agreements
-// made rating happen on every shipment write, and made re-rating happen in
-// loops — a fuel price refresh walks every affected shipment, and each one
-// would otherwise re-read the same matrices from scratch.
-//
-// The memo is deliberately scoped to a context rather than held globally. A
-// process-wide cache would have to be invalidated when somebody edits a
-// matrix, and a rate that silently kept using yesterday's numbers is a far
-// worse failure than a slow one. Within a single request nothing can edit the
-// matrices underneath the rating, so the memo cannot go stale.
 package ratetablecache
 
 import (
 	"context"
+	"strings"
 	"sync"
+	"time"
 
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/shared/lrucache"
 	"github.com/emoss08/trenova/shared/pulid"
+)
+
+const (
+	processTenants  = 512
+	processVersions = 2048
+	processCells    = 4096
+	entryTTL        = 30 * time.Minute
+	keySeparator    = "\x1f"
 )
 
 type contextKey struct{}
 
-// Build encodes a tenant's rate tables. It is the expensive call being memoized.
-type Build func(ctx context.Context) (*formulatemplatetypes.RateTables, error)
+type VersionKey struct {
+	MatrixID pulid.ID
+	Version  int64
+}
 
-type StampedBuild func(ctx context.Context, stamp string) (*formulatemplatetypes.RateTables, error)
+type Axis struct {
+	Position      int16
+	Kind          string
+	Exact         bool
+	Postal        bool
+	Normalization string
+	Forward       map[string]string
+	Reverse       map[string][]string
+	Ranges        func(key string) []string
+}
 
-// tenantKey scopes a memo entry to one organization in one business unit. An
-// organization belongs to exactly one business unit, so the pair is never
-// ambiguous for a well-formed caller — carrying both means a malformed tenant
-// pairing builds its own entry instead of silently reusing another's rates.
+func (a *Axis) Keyed() bool {
+	return a.Exact || a.Postal
+}
+
+type Table struct {
+	Key  VersionKey
+	Code string
+	Axes []Axis
+}
+
+type Version struct {
+	Shape rules.TariffTable
+	Index Table
+}
+
+type Served struct {
+	Versions []*Version
+}
+
+type Stamp func(ctx context.Context) (string, error)
+
+type BuildServed func(ctx context.Context, stamp string) (*Served, error)
+
+type LoadVersions func(ctx context.Context, keys []VersionKey) ([]*Version, error)
+
 type tenantKey struct {
 	orgID pulid.ID
 	buID  pulid.ID
 }
 
-type cache struct {
-	mu      sync.Mutex
-	entries map[tenantKey]*formulatemplatetypes.RateTables
+type served struct {
+	stamp  string
+	served *Served
 }
 
-// With attaches a memo to the context.
-//
-// Callers install one where the unit of work begins: a request, or the batch a
-// job walks. Nesting is harmless — the inner call finds the outer memo and
-// leaves it in place, so a handler that installs one does not have its work
-// undone by a service that installs another.
+type memo struct {
+	mu      sync.Mutex
+	entries map[tenantKey]served
+	values  map[valueKey]any
+}
+
+type valueKey struct {
+	tenant tenantKey
+	name   string
+}
+
+type versionKey struct {
+	tenant tenantKey
+	key    VersionKey
+}
+
+type cellKey struct {
+	tenant tenantKey
+	key    VersionKey
+	keys   string
+}
+
+var process = struct {
+	mu       sync.Mutex
+	served   lrucache.Cache[tenantKey, served]
+	versions lrucache.Cache[versionKey, *Version]
+	cells    lrucache.Cache[cellKey, []rules.TariffCell]
+}{
+	served:   lrucache.NewExpirable[tenantKey, served](processTenants, entryTTL),
+	versions: lrucache.NewExpirable[versionKey, *Version](processVersions, entryTTL),
+	cells:    lrucache.NewExpirable[cellKey, []rules.TariffCell](processCells, entryTTL),
+}
+
 func With(ctx context.Context) context.Context {
 	if from(ctx) != nil {
 		return ctx
 	}
-
-	return context.WithValue(ctx, contextKey{}, &cache{
-		entries: make(map[tenantKey]*formulatemplatetypes.RateTables, 1),
+	return context.WithValue(ctx, contextKey{}, &memo{
+		entries: make(map[tenantKey]served, 1),
+		values:  make(map[valueKey]any, 2),
 	})
 }
 
-// Get returns the tenant's encoded tables, building it once per context.
-//
-// Without a memo on the context it simply builds, so a caller that never
-// installed one behaves exactly as it did before this package existed.
-func Get(
+func Memoize[T any](
 	ctx context.Context,
 	orgID, buID pulid.ID,
-	build Build,
-) (*formulatemplatetypes.RateTables, error) {
-	c := from(ctx)
-	if c == nil {
-		return build(ctx)
+	name string,
+	load func(ctx context.Context) (T, error),
+) (T, error) {
+	m := from(ctx)
+	if m == nil {
+		return load(ctx)
+	}
+	key := valueKey{tenant: tenantKey{orgID: orgID, buID: buID}, name: name}
+
+	m.mu.Lock()
+	cached, ok := m.values[key]
+	m.mu.Unlock()
+	if value, typed := cached.(T); ok && typed {
+		return value, nil
 	}
 
+	value, err := load(ctx)
+	if err != nil {
+		return value, err
+	}
+	m.mu.Lock()
+	m.values[key] = value
+	m.mu.Unlock()
+	return value, nil
+}
+
+func from(ctx context.Context) *memo {
+	m, _ := ctx.Value(contextKey{}).(*memo)
+	return m
+}
+
+func ServedTables(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	stamp Stamp,
+	build BuildServed,
+) (string, *Served, error) {
 	key := tenantKey{orgID: orgID, buID: buID}
-
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if tables, ok := c.entries[key]; ok {
-		return tables, nil
+	m := from(ctx)
+	if m != nil {
+		m.mu.Lock()
+		entry, ok := m.entries[key]
+		m.mu.Unlock()
+		if ok {
+			return entry.stamp, entry.served, nil
+		}
 	}
 
-	tables, err := build(ctx)
+	current, err := stamp(ctx)
+	if err != nil {
+		return "", nil, err
+	}
+
+	process.mu.Lock()
+	entry, ok := process.served.Get(key)
+	process.mu.Unlock()
+	if !ok || entry.stamp != current || current == "" {
+		built, buildErr := build(ctx, current)
+		if buildErr != nil {
+			return "", nil, buildErr
+		}
+		entry = served{stamp: current, served: built}
+		if current != "" {
+			process.mu.Lock()
+			process.served.Add(key, entry)
+			process.mu.Unlock()
+		}
+	}
+
+	if m != nil {
+		m.mu.Lock()
+		m.entries[key] = entry
+		m.mu.Unlock()
+	}
+
+	return entry.stamp, entry.served, nil
+}
+
+func Versions(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	keys []VersionKey,
+	load LoadVersions,
+) (map[VersionKey]*Version, error) {
+	tenant := tenantKey{orgID: orgID, buID: buID}
+	found := make(map[VersionKey]*Version, len(keys))
+	missing := make([]VersionKey, 0, len(keys))
+
+	process.mu.Lock()
+	for _, key := range keys {
+		if _, seen := found[key]; seen {
+			continue
+		}
+		if version, ok := process.versions.Get(versionKey{tenant: tenant, key: key}); ok {
+			found[key] = version
+			continue
+		}
+		missing = append(missing, key)
+	}
+	process.mu.Unlock()
+
+	if len(missing) == 0 {
+		return found, nil
+	}
+
+	loaded, err := load(ctx, missing)
 	if err != nil {
 		return nil, err
 	}
 
-	c.entries[key] = tables
-
-	return tables, nil
+	process.mu.Lock()
+	defer process.mu.Unlock()
+	for _, version := range loaded {
+		if version == nil {
+			continue
+		}
+		found[version.Index.Key] = version
+		process.versions.Add(versionKey{tenant: tenant, key: version.Index.Key}, version)
+	}
+	return found, nil
 }
 
-func from(ctx context.Context) *cache {
-	c, _ := ctx.Value(contextKey{}).(*cache)
-
-	return c
+func Cells(orgID, buID pulid.ID, key VersionKey, keys []string) ([]rules.TariffCell, bool) {
+	process.mu.Lock()
+	defer process.mu.Unlock()
+	return process.cells.Get(cellKeyFor(orgID, buID, key, keys))
 }
 
-// Stamp answers the cheap question "has anything a formula could read from
-// this tenant's matrices changed?" as an opaque string. Two equal stamps mean
-// tables encoded under the first is still right under the second.
-type Stamp func(ctx context.Context) (string, error)
-
-type processEntry struct {
-	stamp  string
-	tables *formulatemplatetypes.RateTables
+func StoreCells(orgID, buID pulid.ID, key VersionKey, keys []string, cells []rules.TariffCell) {
+	process.mu.Lock()
+	defer process.mu.Unlock()
+	process.cells.Add(cellKeyFor(orgID, buID, key, keys), cells)
 }
 
-// process is the store shared by every request in this process. It holds one
-// set of encoded tables per tenant, tagged with the stamp it was built under.
-var process = struct {
-	mu      sync.Mutex
-	entries map[tenantKey]processEntry
-}{entries: make(map[tenantKey]processEntry, 8)}
-
-// GetStamped layers two memos. Within a context the per-context memo answers
-// without asking anything. Across contexts the process store answers when the
-// tenant's stamp still matches, so a busy tenant pays the full matrix read
-// once per edit rather than once per request. An empty or failing stamp
-// degrades to a plain build: correctness never depends on the cache.
-func GetStamped(
-	ctx context.Context,
-	orgID, buID pulid.ID,
-	stamp Stamp,
-	build StampedBuild,
-) (*formulatemplatetypes.RateTables, error) {
-	return Get(
-		ctx,
-		orgID,
-		buID,
-		func(ctx context.Context) (*formulatemplatetypes.RateTables, error) {
-			current, err := stamp(ctx)
-			if err != nil || current == "" {
-				return build(ctx, "")
-			}
-
-			key := tenantKey{orgID: orgID, buID: buID}
-
-			process.mu.Lock()
-			entry, ok := process.entries[key]
-			process.mu.Unlock()
-			if ok && entry.stamp == current {
-				return entry.tables, nil
-			}
-
-			tables, err := build(ctx, current)
-			if err != nil {
-				return nil, err
-			}
-
-			process.mu.Lock()
-			process.entries[key] = processEntry{stamp: current, tables: tables}
-			process.mu.Unlock()
-
-			return tables, nil
-		},
-	)
+func cellKeyFor(orgID, buID pulid.ID, key VersionKey, keys []string) cellKey {
+	return cellKey{
+		tenant: tenantKey{orgID: orgID, buID: buID},
+		key:    key,
+		keys:   strings.Join(keys, keySeparator),
+	}
 }
 
-// Invalidate drops the tenant's process-level tables. The rate-matrix write
-// path calls it so an edit is visible to the next request in this process
-// even before the stamp query would have noticed.
 func Invalidate(orgID, buID pulid.ID) {
 	process.mu.Lock()
 	defer process.mu.Unlock()
-	delete(process.entries, tenantKey{orgID: orgID, buID: buID})
+	process.served.Remove(tenantKey{orgID: orgID, buID: buID})
 }

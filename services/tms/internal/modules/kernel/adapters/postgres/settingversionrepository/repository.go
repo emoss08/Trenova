@@ -2,17 +2,14 @@ package settingversionrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/settingversioncol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/settingversion/settingversiondb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/settingversionports"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -35,7 +32,11 @@ func New(p Params) settingversionports.SettingVersionRepository {
 
 func (r *repository) Create(ctx context.Context, version *settingversion.SettingVersion) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(version).Exec(ctx); err != nil {
+		if err := settingversiondb.SettingVersions.Create(
+			ctx,
+			r.db.Keel(ctx),
+			version,
+		); err != nil {
 			return fmt.Errorf("record setting version: %w", err)
 		}
 		return nil
@@ -47,22 +48,16 @@ func (r *repository) LatestAt(
 	req *settingversionports.GetSettingVersionAtRequest,
 ) (*settingversion.SettingVersion, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*settingversion.SettingVersion, error) {
-		cols := settingversioncol.SettingVersionColumns
-		version := new(settingversion.SettingVersion)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(version).
-			Relation(settingversioncol.SettingVersionRelations.Author).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return settingversioncol.SettingVersionScopeTenant(sq, req.TenantInfo).
-					Where(cols.Kind.Eq(), req.Kind).
-					Where(cols.SubjectID.Eq(), req.SubjectID).
-					Where(cols.Version.Lte(), req.Version)
-			}).
-			Order(cols.Version.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
-		if errors.Is(err, sql.ErrNoRows) {
+		sv := settingversiondb.SettingVersions
+		version, err := sv.Where(
+			sv.Kind.Eq(req.Kind),
+			sv.SubjectID.Eq(req.SubjectID),
+			sv.Version.Lte(req.Version),
+		).
+			Load(sv.Author()).
+			Order(sv.Version.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
 			return nil, nil //nolint:nilnil // a setting saved before versions were kept has none
 		}
 		if err != nil {

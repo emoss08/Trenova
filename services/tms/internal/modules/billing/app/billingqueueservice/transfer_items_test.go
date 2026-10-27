@@ -2,12 +2,13 @@ package billingqueueservice
 
 import (
 	"context"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/agentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
@@ -27,20 +28,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-type passthroughDB struct {
-	kernelports.DBConnection
-}
+type passthroughDB struct{}
 
-func (passthroughDB) WithTx(
+func (passthroughDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 type countingGenerator struct {
@@ -157,17 +155,21 @@ func TestTransferToBillingItemsCreatesOneItemPerPayer(t *testing.T) {
 		validator:    testValidator(),
 	}
 
-	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
-		ShipmentID: shp.ID,
-		BillType:   billingqueue.BillTypeInvoice,
-		TenantInfo: tenantInfo,
-	}, &permissionports.RequestActor{
-		PrincipalType:  permissionports.PrincipalTypeUser,
-		PrincipalID:    pulid.MustNew("usr_"),
-		UserID:         pulid.MustNew("usr_"),
-		OrganizationID: tenantInfo.OrgID,
-		BusinessUnitID: tenantInfo.BuID,
-	})
+	result, err := svc.TransferToBillingItems(
+		t.Context(),
+		&billingqueueports.TransferToBillingRequest{
+			ShipmentID: shp.ID,
+			BillType:   billingqueue.BillTypeInvoice,
+			TenantInfo: tenantInfo,
+		},
+		&permissionports.RequestActor{
+			PrincipalType:  permissionports.PrincipalTypeUser,
+			PrincipalID:    pulid.MustNew("usr_"),
+			UserID:         pulid.MustNew("usr_"),
+			OrganizationID: tenantInfo.OrgID,
+			BusinessUnitID: tenantInfo.BuID,
+		},
+	)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 
@@ -226,11 +228,15 @@ func TestTransferToBillingItemsRefusesWhenAPayerIsAlreadyQueued(t *testing.T) {
 
 	svc := &service{l: zap.NewNop(), repo: repo, shipmentRepo: shipmentRepo}
 
-	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
-		ShipmentID: shp.ID,
-		BillType:   billingqueue.BillTypeInvoice,
-		TenantInfo: tenantInfo,
-	}, &permissionports.RequestActor{})
+	result, err := svc.TransferToBillingItems(
+		t.Context(),
+		&billingqueueports.TransferToBillingRequest{
+			ShipmentID: shp.ID,
+			BillType:   billingqueue.BillTypeInvoice,
+			TenantInfo: tenantInfo,
+		},
+		&permissionports.RequestActor{},
+	)
 	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.True(
@@ -276,7 +282,9 @@ func TestShouldAutoApprove(t *testing.T) {
 	assert.True(
 		t,
 		svc.shouldAutoApprove(
-			&billingqueueports.TransferToBillingRequest{AutoApprovePayerIDs: []pulid.ID{intel, amd}},
+			&billingqueueports.TransferToBillingRequest{
+				AutoApprovePayerIDs: []pulid.ID{intel, amd},
+			},
 			amd,
 		),
 	)
@@ -351,15 +359,19 @@ func TestTransferToBillingItemsSkipsAPayerWhoOwesNothing(t *testing.T) {
 		validator:    testValidator(),
 	}
 
-	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
-		ShipmentID: shp.ID,
-		BillType:   billingqueue.BillTypeInvoice,
-		TenantInfo: tenantInfo,
-	}, &permissionports.RequestActor{
-		PrincipalType: permissionports.PrincipalTypeUser,
-		PrincipalID:   pulid.MustNew("usr_"),
-		UserID:        pulid.MustNew("usr_"),
-	})
+	result, err := svc.TransferToBillingItems(
+		t.Context(),
+		&billingqueueports.TransferToBillingRequest{
+			ShipmentID: shp.ID,
+			BillType:   billingqueue.BillTypeInvoice,
+			TenantInfo: tenantInfo,
+		},
+		&permissionports.RequestActor{
+			PrincipalType: permissionports.PrincipalTypeUser,
+			PrincipalID:   pulid.MustNew("usr_"),
+			UserID:        pulid.MustNew("usr_"),
+		},
+	)
 
 	require.NoError(t, err)
 	require.Len(t, created, 1)
@@ -394,7 +406,10 @@ func transferringService(
 	customerRepo.EXPECT().
 		GetByID(mock.Anything, mock.AnythingOfType("customerports.GetCustomerByIDRequest")).
 		RunAndReturn(func(_ context.Context, req customerports.GetCustomerByIDRequest) (*customer.Customer, error) {
-			return &customer.Customer{ID: req.ID, BillingProfile: &customer.CustomerBillingProfile{}}, nil
+			return &customer.Customer{
+				ID:             req.ID,
+				BillingProfile: &customer.CustomerBillingProfile{},
+			}, nil
 		}).
 		Twice()
 
@@ -429,12 +444,16 @@ func TestTransferToBillingItemsReusesTheCallersDetailedShipment(t *testing.T) {
 	shipmentRepo := shipmentportsmock.NewMockShipmentRepository(t)
 	svc := transferringService(t, shp, tenantInfo, shipmentRepo)
 
-	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
-		ShipmentID:       shp.ID,
-		BillType:         billingqueue.BillTypeInvoice,
-		TenantInfo:       tenantInfo,
-		DetailedShipment: shp,
-	}, transferActor(tenantInfo))
+	result, err := svc.TransferToBillingItems(
+		t.Context(),
+		&billingqueueports.TransferToBillingRequest{
+			ShipmentID:       shp.ID,
+			BillType:         billingqueue.BillTypeInvoice,
+			TenantInfo:       tenantInfo,
+			DetailedShipment: shp,
+		},
+		transferActor(tenantInfo),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, result.Items, 2, "the split still comes from the shipment handed in")
@@ -458,12 +477,16 @@ func TestTransferToBillingItemsReloadsAShipmentFromAnotherTenant(t *testing.T) {
 		Once()
 	svc := transferringService(t, shp, tenantInfo, shipmentRepo)
 
-	result, err := svc.TransferToBillingItems(t.Context(), &billingqueueports.TransferToBillingRequest{
-		ShipmentID:       shp.ID,
-		BillType:         billingqueue.BillTypeInvoice,
-		TenantInfo:       tenantInfo,
-		DetailedShipment: &foreign,
-	}, transferActor(tenantInfo))
+	result, err := svc.TransferToBillingItems(
+		t.Context(),
+		&billingqueueports.TransferToBillingRequest{
+			ShipmentID:       shp.ID,
+			BillType:         billingqueue.BillTypeInvoice,
+			TenantInfo:       tenantInfo,
+			DetailedShipment: &foreign,
+		},
+		transferActor(tenantInfo),
+	)
 
 	require.NoError(t, err)
 	require.Len(t, result.Items, 2)

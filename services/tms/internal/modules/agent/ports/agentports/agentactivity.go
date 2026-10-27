@@ -13,16 +13,16 @@ type AgentActivityTotalsRequest struct {
 }
 
 type AgentActivityTotals struct {
-	Runs              int    `bun:"runs"`
-	RunsFailed        int    `bun:"runs_failed"`
-	RunsWorking       int    `bun:"runs_working"`
-	RunsAwaiting      int    `bun:"runs_awaiting"`
-	PendingProposals  int    `bun:"pending_proposals"`
-	OldestPendingAt   *int64 `bun:"oldest_pending_at"`
-	OpenExceptions    int    `bun:"open_exceptions"`
-	DecisionsAccepted int    `bun:"decisions_accepted"`
-	DecisionsModified int    `bun:"decisions_modified"`
-	DecisionsRejected int    `bun:"decisions_rejected"`
+	Runs              int
+	RunsFailed        int
+	RunsWorking       int
+	RunsAwaiting      int
+	PendingProposals  int
+	OldestPendingAt   *int64
+	OpenExceptions    int
+	DecisionsAccepted int
+	DecisionsModified int
+	DecisionsRejected int
 }
 
 type AgentActivityRepository interface {

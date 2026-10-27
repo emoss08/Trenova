@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
@@ -19,7 +20,7 @@ type PreviewedReport struct {
 	Key           string
 	DefinitionID  pulid.ID
 	DefaultFormat report.Format
-	Definition    *report.Definition
+	Definition    *ir.Definition
 	Params        map[string]any
 }
 

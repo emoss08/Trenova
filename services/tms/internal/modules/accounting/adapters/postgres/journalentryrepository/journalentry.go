@@ -3,19 +3,24 @@ package journalentryrepository
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/dbtype"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var journalEntryErrors = dberror.Mapping{Entity: "JournalEntry"}
 
 type Params struct {
 	fx.In
@@ -33,6 +38,26 @@ func New(p Params) journalentryports.JournalEntryRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-entry-repository")}
 }
 
+func listFilters(req *journalentryports.ListJournalEntriesRequest) []keel.Pred {
+	je := journalentrydb.JournalEntries
+	query := req.Filter.Query
+
+	return []keel.Pred{
+		keel.When(query != "", keel.Or(
+			je.EntryNumber.ContainsFold(query),
+			je.Description.ContainsFold(query),
+			je.ReferenceID.ContainsFold(query),
+			je.ReferenceType.ContainsFold(query),
+		)),
+		keel.When(!req.FiscalYearID.IsNil(), je.FiscalYearID.Eq(req.FiscalYearID)),
+		keel.When(!req.FiscalPeriodID.IsNil(), je.FiscalPeriodID.Eq(req.FiscalPeriodID)),
+		keel.When(req.ReferenceType != "", je.ReferenceType.Eq(req.ReferenceType)),
+		keel.When(req.Status != "", je.Status.Eq(journalentry.Status(req.Status))),
+		keel.When(req.AccountingDateStart > 0, je.AccountingDate.Gte(req.AccountingDateStart)),
+		keel.When(req.AccountingDateEnd > 0, je.AccountingDate.Lte(req.AccountingDateEnd)),
+	}
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *journalentryports.ListJournalEntriesRequest,
@@ -41,57 +66,60 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			entries := make([]*journalentry.JournalEntry, 0, limit)
-			cols := journalentrycol.JournalEntryColumns
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entries).
-				Apply(journalentrycol.JournalEntryApplyTenant(req.Filter.TenantInfo)).
-				Order(cols.AccountingDate.OrderDesc()).
-				Order(cols.EntryNumber.OrderDesc()).
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
+			je := journalentrydb.JournalEntries
+			q := je.Where(listFilters(req)...)
+			counted := q.Clone()
+			rows := q.Order(je.AccountingDate.Desc(), je.EntryNumber.Desc()).
+				Limit(req.Filter.Pagination.SafeLimit()).
+				Offset(req.Filter.Pagination.SafeOffset())
 
-			if req.Filter.Query != "" {
-				like := "%" + req.Filter.Query + "%"
-				query = query.Where(
-					"("+cols.EntryNumber.ILike()+" OR "+cols.Description.ILike()+
-						" OR "+cols.ReferenceID.ILike()+" OR "+cols.ReferenceType.ILike()+")",
-					like,
-					like,
-					like,
-					like,
-				)
-			}
-			if !req.FiscalYearID.IsNil() {
-				query = query.Where(cols.FiscalYearID.Eq(), req.FiscalYearID)
-			}
-			if !req.FiscalPeriodID.IsNil() {
-				query = query.Where(cols.FiscalPeriodID.Eq(), req.FiscalPeriodID)
-			}
-			if req.ReferenceType != "" {
-				query = query.Where(cols.ReferenceType.Eq(), req.ReferenceType)
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-			if req.AccountingDateStart > 0 {
-				query = query.Where(cols.AccountingDate.Gte(), req.AccountingDateStart)
-			}
-			if req.AccountingDateEnd > 0 {
-				query = query.Where(cols.AccountingDate.Lte(), req.AccountingDateEnd)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			var entries []*journalentry.JournalEntry
+			var total keel.RowCount
+			err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.ListInto(rows, &entries),
+				keel.CountEstimateInto(counted, pagination.ExactTotalUpTo, &total),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("list journal entries: %w", err)
 			}
 
-			return &pagination.ListResult[*journalentry.JournalEntry]{
-				Items: entries,
-				Total: int(total),
-			}, nil
+			return listquery.Result(entries, total), nil
+		},
+	)
+}
+
+const newestAccountingDate = "accountingDate"
+
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *journalentryports.ListJournalEntryConnectionRequest,
+) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
+			if len(req.Filter.Sort) == 0 {
+				req.Filter.Sort = []domaintypes.SortField{
+					{Field: newestAccountingDate, Direction: dbtype.SortDirectionDesc},
+				}
+			}
+
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				journalentrydb.JournalEntries.Query(),
+				&listquery.Request[journalentry.JournalEntry]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("list journal entries: %w", err)
+			}
+
+			return result, nil
 		},
 	)
 }
@@ -101,48 +129,93 @@ func (r *repository) GetByID(
 	req journalentryports.GetJournalEntryByIDRequest,
 ) (*journalentry.JournalEntry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*journalentry.JournalEntry, error) {
-		cols := journalentrycol.JournalEntryColumns
-		entry := new(journalentry.JournalEntry)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entry).
-			Where(cols.ID.Eq(), req.ID).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Relation(journalentrycol.JournalEntryRelations.Lines, func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Order(journalentrycol.JournalEntryLineColumns.LineNumber.OrderAsc())
-			}).
-			Scan(ctx)
+		je := journalentrydb.JournalEntries
+		lines := je.Lines()
+		entry, err := je.Where(je.ID.Eq(req.ID)).
+			Load(lines.Order(lines.LineNumber.Asc())).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "JournalEntry")
+			return nil, journalEntryErrors.Map(err, req.ID.String())
 		}
 
 		return entry, nil
 	})
 }
 
-//
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req journalentryports.GetJournalEntriesByIDsRequest,
+) ([]*journalentry.JournalEntry, error) {
+	if len(req.IDs) == 0 {
+		return []*journalentry.JournalEntry{}, nil
+	}
+
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*journalentry.JournalEntry, error) {
+		je := journalentrydb.JournalEntries
+		entries, err := je.Where(je.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("get journal entries by ids: %w", err)
+		}
+
+		return entries, nil
+	})
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req *journalentryports.JournalEntrySelectOptionsRequest,
+) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+			je := journalentrydb.JournalEntries
+			q := je.Pick(
+				je.ID,
+				je.FiscalPeriodID,
+				je.EntryNumber,
+				je.EntryType,
+				je.Status,
+				je.AccountingDate,
+				je.CreatedAt,
+			).Order(je.AccountingDate.Desc(), je.ID.Desc())
+			if req.ReversibleOnly {
+				q = q.Where(
+					je.Status.Eq(journalentry.StatusPosted),
+					je.IsPosted.IsTrue(),
+					je.IsReversal.IsFalse(),
+					je.ReversedByID.IsNull(),
+				)
+			}
+
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				q,
+				req.SelectQueryRequest,
+				func(s string) keel.Pred { return je.EntryNumber.Lower().Contains(strings.ToLower(s)) },
+			)
+		},
+	)
+}
+
 //nolint:gocritic // repository contract uses value request types
 func (r *repository) MarkReversed(
 	ctx context.Context,
 	req journalentryports.MarkJournalEntryReversedRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := journalentrycol.JournalEntryColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*journalentry.JournalEntry)(nil)).
-			Set(cols.Status.Set(), journalentry.StatusReversed).
-			Set(cols.ReversedByID.Set(), req.ReversalEntryID).
-			Set(cols.ReversalDate.Set(), req.ReversalDate).
-			Set(cols.ReversalReason.Set(), req.ReversalReason).
-			Set(cols.UpdatedByID.Set(), req.UpdatedByID).
-			Set(cols.Version.Inc(1)).
-			Where(cols.ID.Eq(), req.OriginalEntryID).
-			Where(cols.OrganizationID.Eq(), req.OrganizationID).
-			Where(cols.BusinessUnitID.Eq(), req.BusinessUnitID).
-			Where(cols.ReversedByID.IsNull()).
-			Exec(ctx)
+		je := journalentrydb.JournalEntries
+		_, err := je.Where(je.ID.Eq(req.OriginalEntryID), je.ReversedByID.IsNull()).
+			Update(
+				ctx,
+				r.db.Keel(ctx),
+				je.Status.To(journalentry.StatusReversed),
+				je.ReversedByID.To(req.ReversalEntryID),
+				je.ReversalDate.To(req.ReversalDate),
+				je.ReversalReason.To(req.ReversalReason),
+				je.UpdatedByID.To(req.UpdatedByID),
+			)
 		return err
 	})
 }

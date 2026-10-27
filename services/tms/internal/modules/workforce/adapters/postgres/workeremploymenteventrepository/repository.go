@@ -3,17 +3,19 @@ package workeremploymenteventrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var eventErrors = dberror.Mapping{Entity: "WorkerEmploymentEvent"}
 
 const defaultPageSize = 500
 
@@ -36,44 +38,45 @@ func New(p Params) workerports.WorkerEmploymentEventRepository {
 	}
 }
 
+func eventLoads(includeDocument, includeActors bool) []keel.Loader {
+	e := workerdb.WorkerEmploymentEvents
+
+	return append(
+		listquery.When(includeDocument, e.Document()),
+		listquery.When(includeActors, e.RecordedBy(), e.AmendedBy())...,
+	)
+}
+
+func listQuery(
+	req *workerports.ListWorkerEmploymentEventsRequest,
+) *keel.Query[*worker.WorkerEmploymentEvent] {
+	e := workerdb.WorkerEmploymentEvents
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultPageSize
+	}
+
+	order := []keel.Order{e.EffectiveAt.Desc(), e.CreatedAt.Desc()}
+	if req.Ascending {
+		order = []keel.Order{e.EffectiveAt.Asc(), e.CreatedAt.Asc()}
+	}
+
+	return e.Where(
+		e.WorkerID.Eq(req.WorkerID),
+		keel.When(len(req.Kinds) > 0, e.Kind.In(req.Kinds...)),
+	).
+		Load(eventLoads(req.IncludeDocument, req.IncludeActors)...).
+		Order(order...).
+		Limit(limit)
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListWorkerEmploymentEventsRequest,
 ) ([]*worker.WorkerEmploymentEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerEmploymentEvent, error) {
-		cols := workercol.WorkerEmploymentEventColumns
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultPageSize
-		}
-
-		entities := make([]*worker.WorkerEmploymentEvent, 0, 16)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerEmploymentEventScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID)
-				if len(req.Kinds) > 0 {
-					sq = sq.Where(cols.Kind.In(), bun.In(req.Kinds))
-				}
-				return sq
-			}).
-			Limit(int64(limit))
-		if req.Ascending {
-			q = q.Order(cols.EffectiveAt.OrderAsc()).Order(cols.CreatedAt.OrderAsc())
-		} else {
-			q = q.Order(cols.EffectiveAt.OrderDesc()).Order(cols.CreatedAt.OrderDesc())
-		}
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerEmploymentEventRelations.Document)
-		}
-		if req.IncludeActors {
-			q = q.Relation(workercol.WorkerEmploymentEventRelations.RecordedBy).
-				Relation(workercol.WorkerEmploymentEventRelations.AmendedBy)
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := listQuery(req).List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list worker employment events", zap.Error(err))
 			return nil, err
 		}
@@ -87,24 +90,12 @@ func (r *repository) GetByID(
 	req *workerports.GetWorkerEmploymentEventByIDRequest,
 ) (*worker.WorkerEmploymentEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerEmploymentEvent, error) {
-		entity := new(worker.WorkerEmploymentEvent)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerEmploymentEventScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerEmploymentEventColumns.ID.Eq(), req.ID)
-			})
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerEmploymentEventRelations.Document)
-		}
-		if req.IncludeActors {
-			q = q.Relation(workercol.WorkerEmploymentEventRelations.RecordedBy).
-				Relation(workercol.WorkerEmploymentEventRelations.AmendedBy)
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerEmploymentEvent")
+		e := workerdb.WorkerEmploymentEvents
+		entity, err := e.Where(e.ID.Eq(req.ID)).
+			Load(eventLoads(req.IncludeDocument, req.IncludeActors)...).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, eventErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -116,13 +107,9 @@ func (r *repository) Create(
 	entity *worker.WorkerEmploymentEvent,
 ) (*worker.WorkerEmploymentEvent, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerEmploymentEvent, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := workerdb.WorkerEmploymentEvents.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create worker employment event", zap.Error(err))
-			return nil, err
+			return nil, eventErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -134,26 +121,9 @@ func (r *repository) Update(
 	entity *worker.WorkerEmploymentEvent,
 ) (*worker.WorkerEmploymentEvent, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerEmploymentEvent, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerEmploymentEventColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := workerdb.WorkerEmploymentEvents.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update worker employment event", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerEmploymentEvent",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, eventErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil

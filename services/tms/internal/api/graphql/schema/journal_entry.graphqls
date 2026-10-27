@@ -26,6 +26,8 @@ type JournalEntry {
   fiscalYearId: ID!
   fiscalPeriodId: ID!
   entryNumber: String!
+  "The day the entry was written, which can differ from the day it books to."
+  entryDate: Timestamp!
   entryType: String!
   status: String!
   accountingDate: Timestamp!
@@ -46,6 +48,11 @@ type JournalEntry {
   isApproved: Boolean!
   approvedById: ID
   approvedAt: Timestamp
+  "What the approver wrote when approving it; empty when nothing was."
+  approvalNotes: String!
+  rejectedAt: Timestamp
+  "Why it was rejected; empty unless it was."
+  rejectionReason: String!
   postedById: ID
   postedAt: Timestamp
   createdById: ID
@@ -63,6 +70,8 @@ type JournalEntryConnection {
   edges: [JournalEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How many journal entries wait for a person before they reach the general ledger."
@@ -120,6 +129,8 @@ type JournalCardLine {
   "Null when the line names no location or the reader may not read locations."
   locationId: ID
   locationName: String!
+  "Whether the line has been reconciled. A manual journal's lines never are: they reconcile once posted, as journal entry lines."
+  isReconciled: Boolean!
 }
 
 "Where a journal not yet posted would land if it posted now, under the organization's closed-period policy."
@@ -131,7 +142,7 @@ type JournalCardPosting {
   refusal: String!
 }
 
-type JournalEntryCard {
+type JournalEntryCard @kind(resource: "journal_entry") {
   entry: JournalEntry!
   lines: [JournalCardLine!]!
   period: FiscalPeriod
@@ -153,6 +164,8 @@ type JournalEntryCard {
 
 extend type Query {
   journalEntry(id: ID!): JournalEntry
+  "Every journal entry in the general ledger, whatever its status, newest accounting date first."
+  journalEntries(input: DataTableConnectionInput!): JournalEntryConnection!
   journalEntriesBySource(sourceType: String!, sourceId: String!): [JournalEntry!]!
   journalSourceByObject(sourceType: String!, sourceId: String!): JournalSourceInfo
   "Journal entries waiting to be approved or posted, oldest first."

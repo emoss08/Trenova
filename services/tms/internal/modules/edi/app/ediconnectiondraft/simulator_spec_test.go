@@ -3,7 +3,6 @@ package ediconnectiondraft
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -17,9 +16,9 @@ import (
 func simulatorGuide(t *testing.T) ediports.SpecDocument {
 	t.Helper()
 
-	_, file, _, ok := runtime.Caller(0)
-	require.True(t, ok)
-	path := filepath.Join(filepath.Dir(file), "..", "..", "..", "..", "..", "..", "..",
+	dir, err := os.Getwd()
+	require.NoError(t, err)
+	path := filepath.Join(dir, "..", "..", "..", "..", "..", "..", "..",
 		"dev", "edi-partner-sim", "specs", "simpartner-implementation-guide.txt")
 	text, err := os.ReadFile(filepath.Clean(path))
 	require.NoError(t, err, "the partner simulator's guide is the fixture for this test")
@@ -77,7 +76,7 @@ func simulatorValues() []ediports.DraftValueInput {
 func TestPlan_ThePartnerSimulatorsGuideDraftsAConnectionToTheSimulator(t *testing.T) {
 	t.Parallel()
 
-	h := newHarness()
+	h := newHarness(t)
 	draft, err := h.service.PlanConnectionDraft(t.Context(), &ediports.ConnectionDraftRequest{
 		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
 		Document:   simulatorGuide(t),
@@ -95,7 +94,9 @@ func TestPlan_ThePartnerSimulatorsGuideDraftsAConnectionToTheSimulator(t *testin
 	assert.True(t, draft.Ready, draft.Blockers)
 	require.NotNil(t, draft.Transport)
 	assert.Equal(t, "http://localhost:9210/as2", valueOf(t, draft.Transport.Fields, "as2.endpointUrl").Value)
-	assert.Len(t, draft.DocumentProfiles, 3)
+	assert.Len(t, draft.Sets, 3)
+	require.NotNil(t, draft.Project)
+	assert.Zero(t, draft.Project.Errors, draft.Project.Diagnostics)
 
 	require.Len(t, draft.Samples, 1, "the guide carries the tender the simulator sends")
 	sample := draft.Samples[0]

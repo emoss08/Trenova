@@ -28,9 +28,10 @@ func ediPartnerConnectionToModel(
 	}
 
 	return &gqlmodel.EDIPartnerConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -49,9 +50,10 @@ func ediCommunicationProfileConnectionToModel(
 	}
 
 	return &gqlmodel.EDICommunicationProfileConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -70,9 +72,10 @@ func ediTransferConnectionToModel(
 	}
 
 	return &gqlmodel.EDITransferConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -91,9 +94,10 @@ func ediMessageConnectionToModel(
 	}
 
 	return &gqlmodel.EDIMessageConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -218,45 +222,25 @@ func summaryStatusCounts[T ~string](counts map[T]int) []*gqlmodel.EDISummaryStat
 	return result
 }
 
-func ediTestCaseConnectionToModel(
-	result *pagination.CursorListResult[*edi.EDITestCase],
-) (*gqlmodel.EDITestCaseConnection, error) {
+func ediFlowInstanceConnectionToModel(
+	result *pagination.CursorListResult[*edi.FlowInstance],
+) (*gqlmodel.EDIFlowInstanceConnection, error) {
 	page, err := base.EntityCursorConnection(
 		result,
-		func(node *edi.EDITestCase, cursor string) *gqlmodel.EDITestCaseEdge {
-			return &gqlmodel.EDITestCaseEdge{Node: node, Cursor: cursor}
+		func(node *edi.FlowInstance, cursor string) *gqlmodel.EDIFlowInstanceEdge {
+			return &gqlmodel.EDIFlowInstanceEdge{Node: node, Cursor: cursor}
 		},
-		func(edge *gqlmodel.EDITestCaseEdge) string { return edge.Cursor },
+		func(edge *gqlmodel.EDIFlowInstanceEdge) string { return edge.Cursor },
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gqlmodel.EDITestCaseConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
-	}, nil
-}
-
-func ediTemplateConnectionToModel(
-	result *pagination.CursorListResult[*edi.EDITemplate],
-) (*gqlmodel.EDITemplateConnection, error) {
-	page, err := base.EntityCursorConnection(
-		result,
-		func(node *edi.EDITemplate, cursor string) *gqlmodel.EDITemplateEdge {
-			return &gqlmodel.EDITemplateEdge{Node: node, Cursor: cursor}
-		},
-		func(edge *gqlmodel.EDITemplateEdge) string { return edge.Cursor },
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return &gqlmodel.EDITemplateConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+	return &gqlmodel.EDIFlowInstanceConnection{
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -275,9 +259,10 @@ func ediMappingProfileConnectionToModel(
 	}
 
 	return &gqlmodel.EDIMappingProfileConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -296,8 +281,9 @@ func ediInboundFileConnectionToModel(
 	}
 
 	return &gqlmodel.EDIInboundFileConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }

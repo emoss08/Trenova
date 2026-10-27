@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -55,9 +54,7 @@ func (r *repository) LockProvisioning(ctx context.Context) error {
 	ctx = dbscope.WithSystem(ctx, lockScopeReason)
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).
-			NewRaw("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", provisioningLockKey).
-			Exec(ctx); err != nil {
+		if err := keel.LockKey(ctx, r.db.Keel(ctx), provisioningLockKey); err != nil {
 			return fmt.Errorf("lock tenant provisioning: %w", err)
 		}
 
@@ -82,7 +79,7 @@ func (r *repository) Bootstrap(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tenantports.BootstrapTenantResult, error) {
-			db := r.db.DBForContext(ctx)
+			db := r.db.Keel(ctx)
 
 			if req.Organization.StateID.IsNil() {
 				stateID, err := r.resolveState(ctx, req.StateAbbreviation)
@@ -132,15 +129,10 @@ func (r *repository) Bootstrap(
 }
 
 func (r *repository) resolveState(ctx context.Context, abbreviation string) (pulid.ID, error) {
-	cols := usstatecol.UsStateColumns
-	state := new(usstate.UsState)
-	err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(state).
-		Column(cols.ID.Bare()).
-		Where("upper("+cols.Abbreviation.Qualified()+") = ?", strings.ToUpper(strings.TrimSpace(abbreviation))).
-		Limit(1).
-		Scan(ctx)
+	us := usstatedb.UsStates
+	state, err := us.Pick(us.ID).
+		Where(us.Abbreviation.Upper().Eq(strings.ToUpper(strings.TrimSpace(abbreviation)))).
+		First(ctx, r.db.Keel(ctx))
 	if err != nil {
 		return "", fmt.Errorf(
 			"resolve placeholder state %q: %w",

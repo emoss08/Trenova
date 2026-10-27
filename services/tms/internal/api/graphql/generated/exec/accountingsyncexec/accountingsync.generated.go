@@ -45,6 +45,7 @@ var Shard = &gqlexec.Shard{
 		{Name: "AccountingMapping", Implementors: []string{"AccountingMapping"}},
 		{Name: "AccountingMappingCandidate", Implementors: []string{"AccountingMappingCandidate"}},
 		{Name: "AccountingMappingConnection", Implementors: []string{"AccountingMappingConnection"}},
+		{Name: "AccountingMappingDetail", Implementors: []string{"AccountingMappingDetail"}},
 		{Name: "AccountingMappingEdge", Implementors: []string{"AccountingMappingEdge"}},
 		{Name: "AccountingMappingGroup", Implementors: []string{"AccountingMappingGroup"}},
 		{Name: "AccountingMappingMatcher", Implementors: []string{"AccountingMappingMatcher"}},
@@ -1208,6 +1209,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AccountingDriftFindingConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AccountingDriftFindingEdge", Fields: []*gqlexec.Field{
 			{
@@ -1894,6 +1905,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AccountingInboundChangeConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AccountingInboundChangeEdge", Fields: []*gqlexec.Field{
 			{
@@ -2435,6 +2456,40 @@ var Shard = &gqlexec.Shard{
 					return obj.TotalCount, nil
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
+			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AccountingMappingConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
+		}},
+		{Object: "AccountingMappingDetail", Fields: []*gqlexec.Field{
+			{
+				Name:      "mapping",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AccountingMapping",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AccountingMappingDetail)
+					return obj.Mapping, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountingMapping2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingMapping),
+			},
+			{
+				Name:      "options",
+				NonNull:   true,
+				HasChild:  true,
+				ChildType: "AccountingReferenceObject",
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AccountingMappingDetail)
+					return obj.Options, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountingReferenceObject2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐAccountingReferenceObjectᚄ),
 			},
 		}},
 		{Object: "AccountingMappingEdge", Fields: []*gqlexec.Field{
@@ -3528,6 +3583,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild4,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AccountingSyncRecordConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AccountingSyncRecordEdge", Fields: []*gqlexec.Field{
 			{
@@ -4284,6 +4349,20 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNAccountingMappingSummary2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingMappingSummary),
 			},
 			{
+				Name:       "accountingMappingDetail",
+				NonNull:    true,
+				IsResolver: true,
+				Concurrent: true,
+				HasChild:   true,
+				ChildType:  "AccountingMappingDetail",
+				Args:       field_Query_accountingMappingDetail_args,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					fc := graphql.GetFieldContext(ctx)
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingMappingDetail(ctx, fc.Args["integrationType"].(integration.Type), fc.Args["id"].(*string), fc.Args["targetType"].(*accountingsync.MappingTargetType), fc.Args["recordId"].(*string), fc.Args["key"].(*string), fc.Args["optionsQuery"].(*string))
+				},
+				Marshal: gqlexec.Marshal(marshalNAccountingMappingDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingMappingDetail),
+			},
+			{
 				Name:       "accountingMappings",
 				NonNull:    true,
 				IsResolver: true,
@@ -4377,7 +4456,7 @@ var Shard = &gqlexec.Shard{
 				Args:       field_Query_accountingSyncObjectStates_args,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					fc := graphql.GetFieldContext(ctx)
-					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingSyncObjectStates(ctx, fc.Args["objectIds"].([]string))
+					return gqlexec.Resolver[resolverQuery](ec, "Query").AccountingSyncObjectStates(ctx, fc.Args["objectIds"].([]string), fc.Args["integrationType"].(*integration.Type))
 				},
 				Marshal: gqlexec.Marshal(marshalNAccountingSyncObjectState2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋportsᚋaccountingsyncportsᚐAccountingSyncObjectStateᚄ),
 			},
@@ -4684,13 +4763,14 @@ type resolverMutation interface {
 type resolverQuery interface {
 	AccountingSyncStatus(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncStatus, error)
 	AccountingMappingSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingMappingSummary, error)
+	AccountingMappingDetail(ctx context.Context, integrationType integration.Type, id *string, targetType *accountingsync.MappingTargetType, recordID *string, key *string, optionsQuery *string) (*gqlmodel.AccountingMappingDetail, error)
 	AccountingMappings(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingMappingFilterInput) (*gqlmodel.AccountingMappingConnection, error)
 	AccountingSyncSummary(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingSyncSummary, error)
 	AccountingSyncRecords(ctx context.Context, integrationType integration.Type, first *int, after *string, filter *gqlmodel.AccountingSyncRecordFilterInput) (*gqlmodel.AccountingSyncRecordConnection, error)
 	AccountingSyncRecordTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingSyncRecordConnection, error)
 	AccountingSyncRecord(ctx context.Context, id string) (*accountingsync.AccountingSyncRecord, error)
 	AccountingSyncAttempts(ctx context.Context, recordID string) ([]*accountingsync.AccountingSyncAttempt, error)
-	AccountingSyncObjectStates(ctx context.Context, objectIds []string) ([]*accountingsyncports.AccountingSyncObjectState, error)
+	AccountingSyncObjectStates(ctx context.Context, objectIds []string, integrationType *integration.Type) ([]*accountingsyncports.AccountingSyncObjectState, error)
 	AccountingBackfills(ctx context.Context, integrationType integration.Type) ([]*accountingsync.AccountingBackfill, error)
 	AccountingInboundOverview(ctx context.Context, integrationType integration.Type) (*accountingsyncports.AccountingInboundOverview, error)
 	AccountingInboundChangeTable(ctx context.Context, integrationType integration.Type, input gqlmodel.DataTableConnectionInput) (*gqlmodel.AccountingInboundChangeConnection, error)
@@ -5198,6 +5278,59 @@ func field_Query_accountingMappingSummary_args(ctx context.Context, ec *gqlexec.
 	return args, nil
 }
 
+func field_Query_accountingMappingDetail_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
+	args := make(map[string]any, 6)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "integrationType",
+		func(ctx context.Context, v any) (integration.Type, error) {
+			return unmarshalNAccountingSystem2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋintegrationᚐType(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["integrationType"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "targetType",
+		func(ctx context.Context, v any) (*accountingsync.MappingTargetType, error) {
+			return unmarshalOAccountingMappingTargetType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingTargetType(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["targetType"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "recordId",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOID2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["recordId"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "key",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["key"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "optionsQuery",
+		func(ctx context.Context, v any) (*string, error) {
+			return unmarshalOString2ᚖstring(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["optionsQuery"] = arg5
+	return args, nil
+}
+
 func field_Query_accountingMappings_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
 	args := make(map[string]any, 4)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "integrationType",
@@ -5333,7 +5466,7 @@ func field_Query_accountingSyncAttempts_args(ctx context.Context, ec *gqlexec.Ex
 }
 
 func field_Query_accountingSyncObjectStates_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
-	args := make(map[string]any, 1)
+	args := make(map[string]any, 2)
 	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "objectIds",
 		func(ctx context.Context, v any) ([]string, error) {
 			return unmarshalNID2ᚕstringᚄ(ctx, ec, v)
@@ -5342,6 +5475,14 @@ func field_Query_accountingSyncObjectStates_args(ctx context.Context, ec *gqlexe
 		return nil, err
 	}
 	args["objectIds"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "integrationType",
+		func(ctx context.Context, v any) (*integration.Type, error) {
+			return unmarshalOAccountingSystem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋintegrationᚐType(ctx, ec, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["integrationType"] = arg1
 	return args, nil
 }
 
@@ -6789,6 +6930,15 @@ func unmarshalOAccountingMappingTargetType2ᚕgithubᚗcomᚋemoss08ᚋtrenova�
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAccountingMappingTargetType2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingTargetType)
 }
 
+func unmarshalOAccountingMappingTargetType2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐMappingTargetType(ctx context.Context, ec *gqlexec.Exec, v any) (*accountingsync.MappingTargetType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := accountingsync.MappingTargetType(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func unmarshalOAccountingSyncErrorCategory2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncErrorCategoryᚄ(ctx context.Context, ec *gqlexec.Exec, v any) ([]accountingsync.SyncErrorCategory, error) {
 	if v == nil {
 		return nil, nil
@@ -6816,6 +6966,15 @@ func unmarshalOAccountingSyncRecordStatus2ᚕgithubᚗcomᚋemoss08ᚋtrenovaᚋ
 		return nil, nil
 	}
 	return gqlexec.UnmarshalList(ctx, ec, v, unmarshalNAccountingSyncRecordStatus2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋaccountingᚋdomainᚋaccountingsyncᚐSyncStatus)
+}
+
+func unmarshalOAccountingSystem2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋworkspaceᚋdomainᚋintegrationᚐType(ctx context.Context, ec *gqlexec.Exec, v any) (*integration.Type, error) {
+	if v == nil {
+		return nil, nil
+	}
+	tmp, err := graphql.UnmarshalString(v)
+	res := integration.Type(tmp)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func unmarshalOBoolean2ᚖbool(ctx context.Context, ec *gqlexec.Exec, v any) (*bool, error) {
@@ -7239,6 +7398,14 @@ func marshalNAccountingMappingConnection2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋi
 		return graphql.Null
 	}
 	return ec.MarshalType(ctx, sel, "AccountingMappingConnection", v)
+}
+
+func marshalNAccountingMappingDetail2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingMappingDetail(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v *gqlmodel.AccountingMappingDetail) graphql.Marshaler {
+	if v == nil {
+		gqlexec.NullViolation(ctx)
+		return graphql.Null
+	}
+	return ec.MarshalType(ctx, sel, "AccountingMappingDetail", v)
 }
 
 func marshalNAccountingMappingEdge2ᚕᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋapiᚋgraphqlᚋgqlmodelᚐAccountingMappingEdgeᚄ(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v []*gqlmodel.AccountingMappingEdge) graphql.Marshaler {

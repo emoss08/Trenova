@@ -54,7 +54,7 @@ mod state {
 }
 
 /// How long a job created without its document waits for it.
-const PENDING_TIMEOUT: Duration = Duration::from_secs(300);
+const PENDING_TIMEOUT: Duration = Duration::from_mins(5);
 /// How many finished jobs are remembered for `Get-Jobs`.
 const REMEMBERED_JOBS: usize = 64;
 

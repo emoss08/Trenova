@@ -31,6 +31,12 @@ You are a senior engineer on this codebase, not a transcriber of instructions.
 - **DRY and SOLID, judged against this codebase.** Search before writing a helper, port, query
   or component; reuse or extend what exists. One responsibility per type, depend on ports, keep
   interfaces narrow. Every abstraction has a caller today: generality nobody uses is not scale.
+- **Use a maintained package before hand-rolling a mechanism.** Goroutine pools, bounded fan-out
+  and error groups (`sourcegraph/conc`), in-process caches (`maypok86/otter`), retries and
+  backoff (`cenkalti/backoff`), rate limits and log throttling (`x/time/rate`), semaphores and
+  single-flight (`x/sync`), and any other general mechanism come from a library already in
+  `go.mod`, or a maintained one you add. Write your own only when no package fits or the ones
+  that do are unmaintained, and name what you checked in your report. This holds in keel too.
 - **Never gate a feature behind the bench.** Ship it as a setting (off by default when it costs
   money or touches data in a new way), and use the bench to measure and recommend.
 - **When a rule is wrong, change the rule** in the same change and say so. Never work around a
@@ -56,7 +62,9 @@ change-data-capture pipeline, is a separate project; its routing is `deploy/gtc/
 
 From `services/tms/`: `task run-watch` (API, hot reload), `task test`, `task test-integration`
 (Docker), `task lint`, `task gqlgen` (never `go tool gqlgen generate`), `task gqlschema-diff`,
-`task db-migrate`, `task db-seed`, `task db-reset`, `task docker-up`, `task quick-start`.
+`task db-migrate` (`trenova-devdb up`: migrations, then every seed that changed), `task db-seed`,
+`task db-reset`, `task db-seed-volume`,
+`task db-create-migration name=…`, `task db-stamp`, `task docker-up`, `task quick-start`.
 One test: `GOFLAGS=-tags=nomsgpack go test -run TestName ./path/...`.
 
 From `client/`: `pnpm dev`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm test`; scope with
@@ -74,10 +82,14 @@ and still break production or the build.
   `domain`, `ports` and `<name>contract` packages (`archlint`). Public code never imports
   `internal/cloud`.
 - **Tenancy.** Repository methods run in `dbtx.Read`/`dbtx.Write` and query through
-  `DBForContext(ctx)`, never `.DB()`. A new tenant table's migration ends with
-  `SELECT trenova_rls.reconcile();`. Cross-tenant code declares `dbscope.WithSystem` and is listed
-  in `rlslint`'s allowlist.
-- **Columns** come from `pkg/buncolgen` helpers, never hand-written names.
+  `Keel(ctx)`, never `keel.Write`/`keel.Read` directly
+  ([data-access.md](docs/engineering/backend/data-access.md)).
+  `trenova-db` runs `SELECT trenova_rls.reconcile()` after every migration run, which protects a
+  table with non-null `organization_id` and `business_unit_id`; any other shape calls
+  `trenova_rls.apply_policy` or joins `trenova_rls.global_tables` in its migration. Cross-tenant
+  code declares `dbscope.WithSystem` and is listed in `rlslint`'s allowlist.
+- **Columns** come from the generated keel tables (`<entity>db`, `task keel-gen`), never
+  hand-written names.
 - **Authorization.** Every root resolver and route reaches a permission check or is listed with a
   reason in `authzlint`; every new write has an agent tool, exemption or `pending` entry in
   `writecoverage.yml`; access changes are audited through `SecurityAuditor`.
@@ -85,8 +97,12 @@ and still break production or the build.
   and no widely reachable type holds a `sync.Map`; see "Generics and build time" in
   [module-architecture.md](docs/engineering/module-architecture.md).
 - **Go style.** [Uber Go Style Guide](https://github.com/uber-go/guide/blob/master/style.md);
-  no comments; `sonic`, never `encoding/json`; `errortypes` for errors the caller sees; a params
+  no comments, except a reportable keel model's doc comments, which are its catalog
+  descriptions; `sonic`, never `encoding/json`; `errortypes` for errors the caller sees; a params
   struct past three or four parameters; `goimports` and `golines`.
+- **Migrations** are keel files in `services/tms/schema/migrations`, applied by `trenova-db`
+  (`cmd/db`); add one with `task db-create-migration` and run `task db-stamp` in the same change.
+  See "Migrations" in [data-access.md](docs/engineering/backend/data-access.md).
 - **Generated code.** Before changing a GraphQL schema, removing a column or editing
   user-facing text, read [generated-artifacts.md](docs/engineering/generated-artifacts.md).
 - **The TMS does no document or image computation in process**; it calls the imaging worker

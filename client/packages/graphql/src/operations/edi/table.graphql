@@ -45,6 +45,7 @@ query EdiPartnerTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -87,6 +88,7 @@ query EdiCommunicationProfileTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -139,6 +141,7 @@ query EdiTransferTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -152,7 +155,8 @@ fragment EdiMessageRowFields on EdiMessage {
   organizationId
   ediPartnerId
   documentTypeId
-  partnerDocumentProfileId
+  ladingVersionId
+  flowInstanceId
   shipmentId
   transferId
   inboundFileId
@@ -191,6 +195,7 @@ query EdiMessageTable($input: DataTableConnectionInput!, $includeTotalCount: Boo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -235,6 +240,7 @@ query EdiInboundFileTable($input: DataTableConnectionInput!, $includeTotalCount:
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -278,6 +284,7 @@ query EdiMappingProfileTable(
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor
@@ -285,43 +292,43 @@ query EdiMappingProfileTable(
   }
 }
 
-fragment EdiTestCaseRowFields on EdiTestCase {
+fragment EdiFlowInstanceRowFields on EdiFlowInstance {
   id
-  businessUnitId
-  organizationId
-  partnerDocumentProfileId
-  name
-  description
-  expectedWarnings
-  expectedErrors
-  version
+  ediPartnerId
+  versionId
+  flow
+  key
+  status
+  reason
+  wakeAt
+  shipmentId
+  transferId
+  lastEventAt
+  heldAt
+  resolvedAt
   createdAt
   updatedAt
-  documentProfile {
+  partner {
     id
+    code
     name
-    direction
-    transactionSet
-    partner {
-      id
-      code
-      name
-    }
   }
 }
 
-query EdiTestCaseTable(
+query EdiFlowInstanceTable(
   $input: DataTableConnectionInput!
-  $partnerDocumentProfileId: ID
+  $partnerId: ID
+  $statuses: [EdiFlowInstanceStatus!]
   $includeTotalCount: Boolean = true
 ) {
-  ediTestCases(input: $input, partnerDocumentProfileId: $partnerDocumentProfileId) {
+  ediFlowInstances(input: $input, partnerId: $partnerId, statuses: $statuses) {
     edges {
       node {
-        ...EdiTestCaseRowFields
+        ...EdiFlowInstanceRowFields
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

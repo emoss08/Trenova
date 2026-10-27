@@ -4,34 +4,19 @@ fragment FormulaTemplateTableRowFields on FormulaTemplate {
   organizationId
   name
   description
-  type
-  expression
   status
-  schemaId
-  variableDefinitions {
-    name
-    type
-    description
-    required
-    defaultValue
-    source
+  testCount
+  imports {
+    path
+    libraryId
+    versionNumber
   }
-  breakdownDefinitions {
-    name
-    label
-    expression
-  }
-  minCharge
-  maxCharge
-  roundingMode
-  roundingPrecision
   sourceTemplateId
   sourceVersionNumber
   version
   currentVersionNumber
   approvedAt
   usageCount
-  scenarioCount
   createdAt
   updatedAt
 }
@@ -44,6 +29,7 @@ query FormulaTemplateTable($input: DataTableConnectionInput!, $includeTotalCount
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

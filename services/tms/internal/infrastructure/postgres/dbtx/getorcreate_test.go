@@ -120,3 +120,39 @@ func TestGetOrCreate_TheRepositoryWordsAFailure(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "kept", got.name)
 }
+
+func TestGetOrCreate_AnExistingRowIsReadInAReadOnlyTransactionAlone(t *testing.T) {
+	t.Parallel()
+
+	conn := &fakeConn{DBConnection: outsideTx{}}
+	table := &fakeControlTable{row: &controlRow{name: "kept"}}
+	got, err := GetOrCreate(t.Context(), conn, table.spec())
+
+	require.NoError(t, err)
+	assert.Equal(t, "kept", got.name)
+	assert.Equal(t, []kernelports.TxOptions{{ReadOnly: true}}, conn.opened)
+}
+
+func TestGetOrCreate_AMissingRowOpensAWriteAfterTheRead(t *testing.T) {
+	t.Parallel()
+
+	conn := &fakeConn{DBConnection: outsideTx{}}
+	table := &fakeControlTable{}
+	got, err := GetOrCreate(t.Context(), conn, table.spec())
+
+	require.NoError(t, err)
+	assert.Equal(t, "inserted", got.name)
+	assert.Equal(t, []kernelports.TxOptions{{ReadOnly: true}, {}}, conn.opened)
+}
+
+func TestGetOrCreate_AReadOnlyCallerNeverOpensAWrite(t *testing.T) {
+	t.Parallel()
+
+	conn := &fakeConn{DBConnection: outsideTx{}}
+	table := &fakeControlTable{}
+	got, err := GetOrCreate(kernelports.WithReadOnly(t.Context()), conn, table.spec())
+
+	require.NoError(t, err)
+	assert.Equal(t, "default", got.name)
+	assert.Equal(t, []kernelports.TxOptions{{ReadOnly: true}}, conn.opened)
+}

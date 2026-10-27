@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -27,29 +30,21 @@ func (r *repository) ListCustomerOpenBalances(
 				return nil, nil
 			}
 
-			now := timeutils.NowUnix()
-			balances := make([]*kernelports.CustomerOpenBalance, 0, len(req.CustomerIDs))
-			err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT
-			inv.customer_id,
-			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS open_minor,
-			SUM(CASE WHEN inv.due_date < ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS overdue_minor,
-			MIN(inv.currency_code) AS currency_code
-		FROM invoices inv
-		WHERE inv.organization_id = ?
-		  AND inv.business_unit_id = ?
-		  AND inv.customer_id IN (?)
-		  AND inv.status = 'Posted'
-		  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-		  AND inv.total_amount_minor > inv.applied_amount_minor
-		GROUP BY inv.customer_id
-	`, now, req.TenantInfo.OrgID, req.TenantInfo.BuID, bun.List(req.CustomerIDs)).Scan(ctx, &balances)
+			inv := invoicedb.Invoices
+			open := receivablesql.OpenMinor(inv)
+			overdue := keel.CaseInt64().
+				When(inv.DueDate.Lt(timeutils.NowUnix()), open).
+				Else(keel.Int64(0))
+			balances, err := keel.Into[kernelports.CustomerOpenBalance](ctx, r.db.Keel(ctx), inv.
+				Pick(inv.CustomerID, open.Sum(), overdue.Sum(), inv.CurrencyCode.Min()).
+				Where(inv.CustomerID.In(req.CustomerIDs...), receivablesql.Open(inv)).
+				Group(inv.CustomerID))
 			if err != nil {
 				r.l.Error("failed to list customer open balances", zap.Error(err))
 				return nil, fmt.Errorf("list customer open balances: %w", err)
 			}
 
-			return balances, nil
+			return sliceutils.Pointers(balances), nil
 		},
 	)
 }

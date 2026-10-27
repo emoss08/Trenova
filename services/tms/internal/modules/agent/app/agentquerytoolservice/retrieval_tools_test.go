@@ -137,7 +137,9 @@ func TestSearchToolPoliciesReadOutsideTextAlways(t *testing.T) {
 	assert.Equal(t, agent.ExternalReadAlways, documents.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceDocument, documents.Source)
 
-	messages := newListInboundMessagesTool(nil, nil, nil).Policy()
+	inbox, err := provideListInboundMessagesTool(&keyedReader{}, nil, nil)
+	require.NoError(t, err)
+	messages := inbox.Policy()
 	assert.Equal(t, permission.ResourceInboundMessage, messages.Resource)
 	assert.Equal(t, agent.ExternalReadAlways, messages.ReadsExternal)
 	assert.Equal(t, agent.TaintSourceInboundMessage, messages.Source)

@@ -6,8 +6,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/idempotency"
@@ -23,6 +26,7 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	svc, _, controlRepo, _, tenantInfo, fixture, data := newIntegrationShipmentService(t, ctx, db)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckHazmatSegregation = false
 		sc.CheckForDuplicateBOLs = false
@@ -50,11 +54,9 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 	assert.Equal(t, created.ProNumber, replayed.ProNumber)
 	assert.NotEmpty(t, replayed.Moves, "the replay returns the shipment with its details")
 
-	count, err := db.NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("bol = ?", "BOL-IDEMPOTENT-1").
-		Count(ctx)
+	count, err := keel.QueryValue[int64](ctx, db,
+		"SELECT count(*) FROM shipments WHERE organization_id = $1 AND bol = $2",
+		tenantInfo.OrgID.String(), "BOL-IDEMPOTENT-1")
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 
@@ -62,16 +64,12 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 	created.IdempotencyKey = ""
 	_, err = svc.Update(ctx, created, actor)
 	require.NoError(t, err)
-	var stored string
-	err = db.NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		Column("idempotency_key").
-		Where("id = ?", created.ID).
-		Scan(ctx, &stored)
+	stored, err := keel.QueryValue[string](ctx, db,
+		"SELECT idempotency_key FROM shipments WHERE id = $1", created.ID.String())
 	require.NoError(t, err)
 	assert.Equal(t, key, stored, "an edit keeps the key the shipment was booked under")
 
-	_, err = db.NewInsert().Model(&shipment.Shipment{
+	err = shipmentdb.Shipments.Create(ctx, db, &shipment.Shipment{
 		ID:                pulid.MustNew("shp_"),
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
@@ -82,12 +80,12 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 		ProNumber:         "PRO-RACE-IDEMPOTENT",
 		IdempotencyKey:    key,
 		Status:            shipment.StatusNew,
-	}).Exec(ctx)
+	})
 	require.Error(t, err, "the unique index holds when the lookup is raced")
 	assert.True(t, isIdempotencyKeyConflict(err))
 	assert.False(t, isIdempotencyKeyConflict(errors.New("unrelated")))
 
-	_, err = db.NewInsert().Model(&shipment.Shipment{
+	err = shipmentdb.Shipments.Create(ctx, db, &shipment.Shipment{
 		ID:                pulid.MustNew("shp_"),
 		OrganizationID:    tenantInfo.OrgID,
 		BusinessUnitID:    tenantInfo.BuID,
@@ -103,6 +101,6 @@ func TestCreateIntegration_IdempotencyKeyBooksOneShipment(t *testing.T) {
 			PrincipalID:    data.User.ID,
 		}, "create-shipment-2"),
 		Status: shipment.StatusNew,
-	}).Exec(ctx)
+	})
 	require.NoError(t, err, "another key books another shipment")
 }

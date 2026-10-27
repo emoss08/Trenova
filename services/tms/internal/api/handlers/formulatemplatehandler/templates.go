@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -24,7 +23,6 @@ import (
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
 // @Param offset query int false "Page offset" minimum(0)
-// @Param type query string false "Filter by template type"
 // @Param status query string false "Filter by template status"
 // @Success 200 {object} pagination.Response[[]formulatemplate.FormulaTemplate]
 // @Failure 400 {object} helpers.ProblemDetail
@@ -45,7 +43,6 @@ func (h *Handler) list(c *gin.Context) {
 				c.Request.Context(),
 				&formulatemplateports.ListFormulaTemplatesRequest{
 					Filter: req,
-					Type:   helpers.QueryString(c, "type"),
 					Status: helpers.QueryString(c, "status"),
 				},
 			)
@@ -189,17 +186,12 @@ func (h *Handler) getUsage(c *gin.Context) {
 	helpers.JSON(c, http.StatusOK, usage)
 }
 
-type createTemplateRequest struct {
-	formulatemplate.FormulaTemplate
-	TestCases []*formulatemplateservice.TestCaseInput `json:"testCases"`
-}
-
 // @Summary Create a formula template
 // @ID createFormulaTemplate
 // @Tags Formula Templates
 // @Accept json
 // @Produce json
-// @Param request body createTemplateRequest true "Formula template payload, with the scenarios held while it was being written"
+// @Param request body formulatemplate.FormulaTemplate true "Formula template payload; the name, inputs, imports and testCount are derived from the source"
 // @Success 201 {object} formulatemplate.FormulaTemplate
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -209,7 +201,7 @@ type createTemplateRequest struct {
 func (h *Handler) create(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	req := new(createTemplateRequest)
+	req := new(formulatemplate.FormulaTemplate)
 	req.OrganizationID = authCtx.OrganizationID
 	req.BusinessUnitID = authCtx.BusinessUnitID
 
@@ -218,12 +210,7 @@ func (h *Handler) create(c *gin.Context) {
 		return
 	}
 
-	createdEntity, err := h.service.CreateWithTestCases(
-		c.Request.Context(),
-		&req.FormulaTemplate,
-		authCtx.UserID,
-		req.TestCases,
-	)
+	createdEntity, err := h.service.Create(c.Request.Context(), req, authCtx.UserID)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -238,7 +225,7 @@ func (h *Handler) create(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param templateID path string true "Formula template ID"
-// @Param request body formulatemplate.FormulaTemplate true "Formula template payload"
+// @Param request body formulatemplate.FormulaTemplate true "Formula template payload; only description, source and version are written (the name is the source's header), status moves through review"
 // @Success 200 {object} formulatemplate.FormulaTemplate
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
@@ -336,19 +323,17 @@ func (h *Handler) bulkUpdateStatus(c *gin.Context) {
 		UserID: authCtx.UserID,
 	}
 
-	mayApprove, err := h.permEngine.Check(
-		c.Request.Context(),
-		middleware.BuildPermissionCheckRequest(
-			authCtx,
-			permission.ResourceFormulaTemplate.String(),
-			permission.OpApprove,
-		),
+	mayApprove, err := middleware.Allows(
+		c,
+		h.permEngine,
+		permission.ResourceFormulaTemplate,
+		permission.OpApprove,
 	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	req.MayArchiveInUse = mayApprove.Allowed
+	req.MayArchiveInUse = mayApprove
 
 	results, err := h.service.BulkUpdateStatus(c.Request.Context(), req)
 	if err != nil {
@@ -393,14 +378,10 @@ func (h *Handler) patch(c *gin.Context) {
 		return
 	}
 
-	// A partial update never moves status; that belongs to the review
-	// workflow, so whatever the body says about it is dropped here.
-	status := existing.Status
 	if err = authctx.BindJSON(c, authCtx, existing); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
-	existing.Status = status
 
 	updatedEntity, err := h.service.Update(c.Request.Context(), existing, authCtx.UserID)
 	if err != nil {
@@ -409,33 +390,6 @@ func (h *Handler) patch(c *gin.Context) {
 	}
 
 	helpers.JSON(c, http.StatusOK, updatedEntity)
-}
-
-// @Summary Describe the variables and functions available to formula expressions
-// @ID getFormulaSchema
-// @Tags Formula Templates
-// @Produce json
-// @Param schemaId query string false "Formula schema identifier" default(shipment)
-// @Success 200 {object} formulatemplatetypes.SchemaDescription
-// @Failure 400 {object} helpers.ProblemDetail
-// @Failure 401 {object} helpers.ProblemDetail
-// @Failure 500 {object} helpers.ProblemDetail
-// @Security BearerAuth
-// @Router /formula-templates/schema [get]
-func (h *Handler) getSchema(c *gin.Context) {
-	schemaID := helpers.QueryString(c, "schemaId")
-	if schemaID == "" {
-		schemaID = "shipment"
-	}
-
-	var description *formulatemplatetypes.SchemaDescription
-	description, err := h.service.DescribeSchema(schemaID)
-	if err != nil {
-		h.eh.HandleError(c, err)
-		return
-	}
-
-	helpers.JSON(c, http.StatusOK, description)
 }
 
 // @Summary Import formula templates from an exported JSON payload

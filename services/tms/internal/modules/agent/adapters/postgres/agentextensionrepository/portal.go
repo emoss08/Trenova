@@ -4,16 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentextensioncol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -22,6 +22,11 @@ const (
 	portalRunEntityName  = "Portal run"
 	defaultPortalRuns    = 50
 	maxPortalRuns        = 200
+)
+
+var (
+	portalSiteErrors = dberror.Mapping{Entity: portalSiteEntityName}
+	portalRunErrors  = dberror.Mapping{Entity: portalRunEntityName}
 )
 
 type portalSiteRepository struct {
@@ -38,17 +43,14 @@ func NewPortalSiteRepository(p Params) agentextensionports.PortalSiteRepository 
 
 func (r *portalSiteRepository) List(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*agentextension.PortalSite, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentextension.PortalSite, error) {
-		sites := make([]*agentextension.PortalSite, 0, 8)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&sites).
-			Apply(agentextensioncol.PortalSiteApplyTenant(tenantInfo)).
-			Order(agentextensioncol.PortalSiteColumns.Name.OrderAsc()).
+		s := agentextensiondb.PortalSites
+		sites, err := s.Query().
+			Order(s.Name.Asc()).
 			Limit(agentextension.MaxPortalSitesPerTenant).
-			Scan(ctx)
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list portal sites", zap.Error(err))
 			return nil, fmt.Errorf("list portal sites: %w", err)
@@ -60,21 +62,13 @@ func (r *portalSiteRepository) List(
 
 func (r *portalSiteRepository) Get(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*agentextension.PortalSite, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentextension.PortalSite, error) {
-		site := new(agentextension.PortalSite)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(site).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentextensioncol.PortalSiteScopeTenant(sq, tenantInfo).
-					Where(agentextensioncol.PortalSiteColumns.ID.Eq(), id)
-			}).
-			Scan(ctx)
+		site, err := agentextensiondb.PortalSites.Get(ctx, r.db.Keel(ctx), id)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, portalSiteEntityName)
+			return nil, portalSiteErrors.Map(err, id.String())
 		}
 
 		return site, nil
@@ -86,11 +80,7 @@ func (r *portalSiteRepository) Create(
 	site *agentextension.PortalSite,
 ) (*agentextension.PortalSite, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.PortalSite, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(site).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentextensiondb.PortalSites.Create(ctx, r.db.Keel(ctx), site); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, duplicateSiteName()
 			}
@@ -107,25 +97,15 @@ func (r *portalSiteRepository) Update(
 	site *agentextension.PortalSite,
 ) (*agentextension.PortalSite, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.PortalSite, error) {
-		ov := site.Version
-		site.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(site).
-			WherePK().
-			Where(agentextensioncol.PortalSiteColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
+		if err := agentextensiondb.PortalSites.Save(ctx, r.db.Keel(ctx), site); err != nil {
+			switch {
+			case dberror.IsUniqueConstraintViolation(err):
 				return nil, duplicateSiteName()
+			case dberror.IsVersionConflict(err):
+				return nil, portalSiteErrors.Map(err, site.ID.String())
 			}
 			r.l.Error("failed to update portal site", zap.Error(err))
 			return nil, fmt.Errorf("update portal site: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(result, portalSiteEntityName, site.ID.String()); err != nil {
-			return nil, err
 		}
 
 		return site, nil
@@ -134,18 +114,12 @@ func (r *portalSiteRepository) Update(
 
 func (r *portalSiteRepository) Delete(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*agentextension.PortalSite)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return agentextensioncol.PortalSiteScopeTenantDelete(dq, tenantInfo).
-					Where(agentextensioncol.PortalSiteColumns.ID.Eq(), id)
-			}).
-			Exec(ctx)
+		s := agentextensiondb.PortalSites
+		n, err := s.Where(s.ID.Eq(id)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsForeignKeyConstraintViolation(err) {
 				return errortypes.NewBusinessError(
@@ -156,7 +130,7 @@ func (r *portalSiteRepository) Delete(
 			return fmt.Errorf("delete portal site: %w", err)
 		}
 
-		return dberror.CheckRowsAffected(result, portalSiteEntityName, id.String())
+		return dberror.CheckAffected(n, portalSiteEntityName, id.String())
 	})
 }
 
@@ -184,11 +158,7 @@ func (r *portalRunRepository) Create(
 	run *agentextension.PortalRun,
 ) (*agentextension.PortalRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.PortalRun, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(run).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentextensiondb.PortalRuns.Create(ctx, r.db.Keel(ctx), run); err != nil {
 			if dberror.IsUniqueConstraintViolation(err) {
 				return nil, agentextensionports.ErrPortalRunExists
 			}
@@ -202,40 +172,28 @@ func (r *portalRunRepository) Create(
 
 func (r *portalRunRepository) Get(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*agentextension.PortalRun, error) {
-	return r.getWhere(ctx, tenantInfo, func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(agentextensioncol.PortalRunColumns.ID.Eq(), id)
-	})
+	return r.getWhere(ctx, agentextensiondb.PortalRuns.ID.Eq(id))
 }
 
 func (r *portalRunRepository) GetByIdempotencyKey(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	key string,
 ) (*agentextension.PortalRun, error) {
-	return r.getWhere(ctx, tenantInfo, func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where(agentextensioncol.PortalRunColumns.IdempotencyKey.Eq(), key)
-	})
+	return r.getWhere(ctx, agentextensiondb.PortalRuns.IdempotencyKey.Eq(key))
 }
 
 func (r *portalRunRepository) getWhere(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	where func(*bun.SelectQuery) *bun.SelectQuery,
+	where keel.Pred,
 ) (*agentextension.PortalRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentextension.PortalRun, error) {
-		run := new(agentextension.PortalRun)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(run).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return where(agentextensioncol.PortalRunScopeTenant(sq, tenantInfo))
-			}).
-			Scan(ctx)
+		run, err := agentextensiondb.PortalRuns.Where(where).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, portalRunEntityName)
+			return nil, portalRunErrors.Map(err, "")
 		}
 
 		return run, nil
@@ -247,22 +205,12 @@ func (r *portalRunRepository) Update(
 	run *agentextension.PortalRun,
 ) (*agentextension.PortalRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.PortalRun, error) {
-		ov := run.Version
-		run.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(run).
-			WherePK().
-			Where(agentextensioncol.PortalRunColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := agentextensiondb.PortalRuns.Save(ctx, r.db.Keel(ctx), run); err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, portalRunErrors.Map(err, run.ID.String())
+			}
 			r.l.Error("failed to update portal run", zap.Error(err))
 			return nil, fmt.Errorf("update portal run: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(result, portalRunEntityName, run.ID.String()); err != nil {
-			return nil, err
 		}
 
 		return run, nil
@@ -280,24 +228,14 @@ func (r *portalRunRepository) List(
 	limit = min(limit, maxPortalRuns)
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentextension.PortalRun, error) {
-		runs := make([]*agentextension.PortalRun, 0, limit)
-		cols := agentextensioncol.PortalRunColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&runs).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentextensioncol.PortalRunScopeTenant(sq, req.TenantInfo)
-				if req.SiteID.IsNotNil() {
-					sq = sq.Where(cols.SiteID.Eq(), req.SiteID)
-				}
-				if req.Before > 0 {
-					sq = sq.Where(cols.StartedAt.Lt(), req.Before)
-				}
-				return sq
-			}).
-			Order(cols.StartedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		p := agentextensiondb.PortalRuns
+		runs, err := p.Where(
+			keel.When(req.SiteID.IsNotNil(), p.SiteID.Eq(req.SiteID)),
+			keel.When(req.Before > 0, p.StartedAt.Lt(req.Before)),
+		).
+			Order(p.StartedAt.Desc(), p.ID.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list portal runs", zap.Error(err))
 			return nil, fmt.Errorf("list portal runs: %w", err)

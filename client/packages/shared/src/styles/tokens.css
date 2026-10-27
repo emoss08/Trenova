@@ -68,6 +68,7 @@
   --hue-indigo: 283;
   --hue-teal: 182;
   --hue-amber: 98;
+  --hue-orange: 50;
   --hue-rose: 2;
   --hue-emerald: 147;
   --hue-sky: 232;
@@ -228,6 +229,7 @@
   --danger-hover: oklch(0.55 0.196 25);
   --danger-foreground: oklch(0.55 0.196 25);
   --danger-subtle: oklch(0.955 0.022 17.5);
+  --danger-subtle-hover: oklch(0.935 0.032 18);
   --danger-subtle-foreground: oklch(0.55 0.197 25);
   --danger-border: oklch(0.914 0.041 18);
 
@@ -236,6 +238,7 @@
   --warning-on-solid: oklch(0.307 0.077 44);
   --warning-foreground: oklch(0.528 0.13 55);
   --warning-subtle: oklch(0.968 0.041 90);
+  --warning-subtle-hover: oklch(0.939 0.073 88);
   --warning-subtle-foreground: oklch(0.528 0.132 54);
   --warning-border: oklch(0.91 0.104 87);
 
@@ -243,6 +246,7 @@
   --success-hover: oklch(0.49 0.12 147);
   --success-foreground: oklch(0.515 0.125 147);
   --success-subtle: oklch(0.969 0.026 145);
+  --success-subtle-hover: oklch(0.943 0.049 146);
   --success-subtle-foreground: oklch(0.516 0.125 147);
   --success-border: oklch(0.916 0.071 146);
 
@@ -257,6 +261,7 @@
   --neutral-hover: oklch(0.42 0 0);
   --neutral-foreground: oklch(0.51 0 0);
   --neutral-subtle: oklch(0.961 0 0);
+  --neutral-subtle-hover: oklch(0.942 0 0);
   --neutral-subtle-foreground: oklch(0.45 0 0);
   --neutral-border: oklch(0.922 0 0);
 
@@ -426,20 +431,32 @@
   --chart-8: var(--accent-slate);
 
   /* Syntax ----------------------------------------------------------------
-     Code is coloured by role, one role per categorical hue, so a keyword is the
-     same violet in a reply, an audit record and a raw payload. Comments and
-     punctuation take --foreground-subtle and --foreground-muted, and a diff's
-     added and removed lines take the success and danger text. Each value is
-     written out rather than borrowed from an accent so the audit can hold it to
-     AA on every ground code sits on: --card, --sunken, and --surface-hover
-     under a Desk reply's code block. */
-  --syntax-keyword: oklch(0.471 0.22 var(--hue-violet));
-  --syntax-string: oklch(0.516 0.125 var(--hue-emerald));
-  --syntax-number: oklch(0.5 0.103 var(--hue-amber));
-  --syntax-property: oklch(0.5 0.1 var(--hue-sky));
-  --syntax-function: oklch(0.5 0.19 var(--hue-indigo));
-  --syntax-type: oklch(0.52 0.091 var(--hue-teal));
-  --syntax-meta: oklch(0.535 0.188 var(--hue-rose));
+     Code is coloured by role in the Gruvbox palette (light: its faded inks;
+     dark: its bright ones), so a keyword is the same red in the editor, a
+     reply, an audit record and a raw payload. Comments and punctuation take
+     --foreground-subtle and --foreground-muted, and a diff's added and removed
+     lines take the success and danger text. Each value is Gruvbox's own with
+     only its lightness moved where the audit needs it (light string, function
+     and type are darker; dark keyword is lighter), so every role holds AA on
+     every ground code sits on: --card, --sunken, --surface-hover under a Desk
+     reply's code block, and the editor's reference tints. */
+  --syntax-keyword: oklch(0.437 0.178 28.3);
+  --syntax-string: oklch(0.526 0.112 106.5);
+  --syntax-number: oklch(0.489 0.124 344.3);
+  --syntax-property: oklch(0.471 0.082 215.8);
+  --syntax-function: oklch(0.52 0.082 155.4);
+  --syntax-type: oklch(0.535 0.115 70.7);
+  --syntax-meta: oklch(0.513 0.162 39.3);
+
+  /* Editor ----------------------------------------------------------------
+     What the Tariff editor marks over code: every use of the name at the
+     cursor (a read in a brand tint, a write or declaration in an amber one, so
+     where a value changes stands out), and the gutter bar beside a line no test
+     reaches. The tints sit under code, so the audit holds the ink and every
+     syntax role to AA on them; the bar is held to 3:1 on the field. */
+  --editor-reference: oklch(0.952 0.022 var(--hue-brand));
+  --editor-reference-write: oklch(0.952 0.045 var(--hue-amber));
+  --editor-coverage-gap: oklch(0.6 0.12 var(--hue-amber));
 
   /* Series ---------------------------------------------------------------
      Comparison charts give every model and every provider a hue of its own,
@@ -487,6 +504,10 @@
   --accent-amber-on-subtle: oklch(0.5 0.103 var(--hue-amber));
   --accent-amber-border: oklch(0.914 0.05 var(--hue-amber));
 
+  /* A glow colour, not a badge accent: it is outside BADGE_ACCENTS so the
+     hash-assigned identity accents keep their colours. */
+  --accent-orange: oklch(0.7 0.18 var(--hue-orange));
+
   --accent-rose: oklch(0.636 0.212 var(--hue-rose));
   --accent-rose-subtle: oklch(0.958 0.021 var(--hue-rose));
   --accent-rose-on-subtle: oklch(0.535 0.188 var(--hue-rose));
@@ -499,11 +520,13 @@
 
   --accent-sky: oklch(0.58 0.118 var(--hue-sky));
   --accent-sky-subtle: oklch(0.966 0.02 var(--hue-sky));
+  --accent-sky-subtle-hover: oklch(0.94 0.035 var(--hue-sky));
   --accent-sky-on-subtle: oklch(0.5 0.102 var(--hue-sky));
   --accent-sky-border: oklch(0.914 0.05 var(--hue-sky));
 
   --accent-violet: oklch(0.555 0.182 var(--hue-violet));
   --accent-violet-subtle: oklch(0.967 0.02 var(--hue-violet));
+  --accent-violet-subtle-hover: oklch(0.943 0.032 var(--hue-violet));
   --accent-violet-on-subtle: oklch(0.471 0.22 var(--hue-violet));
   --accent-violet-border: oklch(0.918 0.043 var(--hue-violet));
 
@@ -618,6 +641,7 @@
   --danger-hover: oklch(0.67 0.19 23);
   --danger-foreground: oklch(0.698 0.193 22);
   --danger-subtle: oklch(0.259 0.059 19);
+  --danger-subtle-hover: oklch(0.306 0.082 20);
   --danger-subtle-foreground: oklch(0.698 0.193 22);
   --danger-border: oklch(0.352 0.104 21);
 
@@ -626,6 +650,7 @@
   --warning-on-solid: oklch(0.22 0.04 70);
   --warning-foreground: oklch(0.772 0.165 65);
   --warning-subtle: oklch(0.25 0.055 66);
+  --warning-subtle-hover: oklch(0.303 0.066 66);
   --warning-subtle-foreground: oklch(0.772 0.165 64);
   --warning-border: oklch(0.356 0.076 67);
 
@@ -633,6 +658,7 @@
   --success-hover: oklch(0.69 0.14 147);
   --success-foreground: oklch(0.731 0.142 148);
   --success-subtle: oklch(0.271 0.055 150);
+  --success-subtle-hover: oklch(0.308 0.073 148);
   --success-subtle-foreground: oklch(0.732 0.142 148);
   --success-border: oklch(0.345 0.091 147);
 
@@ -647,6 +673,7 @@
   --neutral-hover: oklch(0.77 0 0);
   --neutral-foreground: oklch(0.709 0 0);
   --neutral-subtle: oklch(0.239 0 0);
+  --neutral-subtle-hover: oklch(0.27 0 0);
   --neutral-subtle-foreground: oklch(0.86 0 0);
   --neutral-border: oklch(0.301 0 0);
 
@@ -675,13 +702,17 @@
   --series-11: oklch(0.72 0.15 288);
   --series-12: oklch(0.72 0.142 168);
 
-  --syntax-keyword: oklch(0.699 0.179 var(--hue-violet));
-  --syntax-string: oklch(0.732 0.142 var(--hue-emerald));
-  --syntax-number: oklch(0.8 0.13 var(--hue-amber));
-  --syntax-property: oklch(0.718 0.13 var(--hue-sky));
-  --syntax-function: oklch(0.72 0.15 var(--hue-indigo));
-  --syntax-type: oklch(0.744 0.132 var(--hue-teal));
-  --syntax-meta: oklch(0.693 0.189 var(--hue-rose));
+  --syntax-keyword: oklch(0.73 0.166 30.4);
+  --syntax-string: oklch(0.765 0.158 110.8);
+  --syntax-number: oklch(0.705 0.098 2.2);
+  --syntax-property: oklch(0.693 0.042 169.8);
+  --syntax-function: oklch(0.756 0.108 137.7);
+  --syntax-type: oklch(0.832 0.159 83);
+  --syntax-meta: oklch(0.731 0.182 51.7);
+
+  --editor-reference: oklch(0.3 0.06 var(--hue-brand));
+  --editor-reference-write: oklch(0.3 0.055 var(--hue-amber));
+  --editor-coverage-gap: oklch(0.72 0.14 var(--hue-amber));
 
   --accent-indigo: oklch(0.71 0.156 var(--hue-indigo));
   --accent-indigo-subtle: oklch(0.258 0.058 var(--hue-indigo));
@@ -698,6 +729,8 @@
   --accent-amber-on-subtle: oklch(0.8 0.15 var(--hue-amber));
   --accent-amber-border: oklch(0.348 0.072 var(--hue-amber));
 
+  --accent-orange: oklch(0.74 0.17 var(--hue-orange));
+
   --accent-rose: oklch(0.693 0.189 var(--hue-rose));
   --accent-rose-subtle: oklch(0.263 0.059 var(--hue-rose));
   --accent-rose-on-subtle: oklch(0.693 0.189 var(--hue-rose));
@@ -710,11 +743,13 @@
 
   --accent-sky: oklch(0.71 0.144 var(--hue-sky));
   --accent-sky-subtle: oklch(0.258 0.053 var(--hue-sky));
+  --accent-sky-subtle-hover: oklch(0.303 0.062 var(--hue-sky));
   --accent-sky-on-subtle: oklch(0.71 0.144 var(--hue-sky));
   --accent-sky-border: oklch(0.348 0.071 var(--hue-sky));
 
   --accent-violet: oklch(0.699 0.179 var(--hue-violet));
   --accent-violet-subtle: oklch(0.259 0.062 var(--hue-violet));
+  --accent-violet-subtle-hover: oklch(0.309 0.089 var(--hue-violet));
   --accent-violet-on-subtle: oklch(0.699 0.179 var(--hue-violet));
   --accent-violet-border: oklch(0.358 0.115 var(--hue-violet));
 
@@ -986,12 +1021,17 @@
 
      The UI face is Geist, so the words and the numerals beside them are one
      family drawn to one set of proportions. Inter stays in the stack as the
-     fallback while the variable file loads. */
+     fallback while the variable file loads.
+
+     --font-code is for source code only (the formula editor, highlighted code
+     and diffs): JetBrains Mono, for its ligatures and its taller lowercase at
+     editor sizes. Figures in the UI stay in --font-mono. */
   --font-sans: "Geist Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-geist: "Geist Variable", "Inter Variable", ui-sans-serif, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, "IBM Plex Mono", monospace;
   --font-table: "Geist Mono", ui-monospace, monospace;
   --font-plex-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-code: "JetBrains Mono Variable", "Geist Mono", ui-monospace, monospace;
   --font-newsreader: "Newsreader Variable", Georgia, serif;
 
   /* Surfaces */
@@ -1037,6 +1077,7 @@
   --color-danger-hover: var(--danger-hover);
   --color-danger-foreground: var(--danger-foreground);
   --color-danger-subtle: var(--danger-subtle);
+  --color-danger-subtle-hover: var(--danger-subtle-hover);
   --color-danger-subtle-foreground: var(--danger-subtle-foreground);
   --color-danger-border: var(--danger-border);
 
@@ -1045,6 +1086,7 @@
   --color-warning-on-solid: var(--warning-on-solid);
   --color-warning-foreground: var(--warning-foreground);
   --color-warning-subtle: var(--warning-subtle);
+  --color-warning-subtle-hover: var(--warning-subtle-hover);
   --color-warning-subtle-foreground: var(--warning-subtle-foreground);
   --color-warning-border: var(--warning-border);
 
@@ -1052,6 +1094,7 @@
   --color-success-hover: var(--success-hover);
   --color-success-foreground: var(--success-foreground);
   --color-success-subtle: var(--success-subtle);
+  --color-success-subtle-hover: var(--success-subtle-hover);
   --color-success-subtle-foreground: var(--success-subtle-foreground);
   --color-success-border: var(--success-border);
 
@@ -1066,6 +1109,7 @@
   --color-neutral-hover: var(--neutral-hover);
   --color-neutral-foreground: var(--neutral-foreground);
   --color-neutral-subtle: var(--neutral-subtle);
+  --color-neutral-subtle-hover: var(--neutral-subtle-hover);
   --color-neutral-subtle-foreground: var(--neutral-subtle-foreground);
   --color-neutral-border: var(--neutral-border);
 
@@ -1115,6 +1159,9 @@
   --color-syntax-function: var(--syntax-function);
   --color-syntax-type: var(--syntax-type);
   --color-syntax-meta: var(--syntax-meta);
+  --color-editor-reference: var(--editor-reference);
+  --color-editor-reference-write: var(--editor-reference-write);
+  --color-editor-coverage-gap: var(--editor-coverage-gap);
 
   --color-agent-indigo: var(--agent-indigo);
   --color-agent-teal: var(--agent-teal);
@@ -1147,10 +1194,12 @@
   --color-accent-emerald-border: var(--accent-emerald-border);
   --color-accent-sky: var(--accent-sky);
   --color-accent-sky-subtle: var(--accent-sky-subtle);
+  --color-accent-sky-subtle-hover: var(--accent-sky-subtle-hover);
   --color-accent-sky-on-subtle: var(--accent-sky-on-subtle);
   --color-accent-sky-border: var(--accent-sky-border);
   --color-accent-violet: var(--accent-violet);
   --color-accent-violet-subtle: var(--accent-violet-subtle);
+  --color-accent-violet-subtle-hover: var(--accent-violet-subtle-hover);
   /* Desk ---------------------------------------------------------------
      The Desk's palette as Tailwind colours, so its controls are written as
      classes (text-dsk-muted, bg-dsk-hover) rather than one-off rules. */

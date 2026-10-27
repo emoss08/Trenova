@@ -3,60 +3,63 @@ package hazardousmaterial
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*HazardousMaterial)(nil)
 	_ validationframework.TenantedEntity = (*HazardousMaterial)(nil)
 	_ domaintypes.PostgresSearchable     = (*HazardousMaterial)(nil)
 )
 
+// Hazmat reference data
 type HazardousMaterial struct {
-	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
+	keel.Table `keel:"hazardous_materials,report=Freight"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID                          pulid.ID           `json:"id"                          keel:"id,pk,autoid:hm_"`
+	BusinessUnitID              pulid.ID           `json:"businessUnitId"              keel:"business_unit_id,pk,tenant"`
+	OrganizationID              pulid.ID           `json:"organizationId"              keel:"organization_id,pk,tenant"`
+	Status                      domaintypes.Status `json:"status"                      keel:"status"`
+	Code                        string             `json:"code"                        keel:"code"`
+	Name                        string             `json:"name"                        keel:"name"`
+	Description                 string             `json:"description"                 keel:"description"`
+	Class                       HazardousClass     `json:"class"                       keel:"class"`
+	UNNumber                    string             `json:"unNumber"                    keel:"un_number,nullzero"`
+	PackingGroup                PackingGroup       `json:"packingGroup"                keel:"packing_group"`
+	SubsidiaryHazardClass       string             `json:"subsidiaryHazardClass"       keel:"subsidiary_hazard_class,nullzero"`
+	ErgGuideNumber              string             `json:"ergGuideNumber"              keel:"erg_guide_number,nullzero"`
+	LabelCodes                  string             `json:"labelCodes"                  keel:"label_codes,nullzero"`
+	SpecialProvisions           string             `json:"specialProvisions"           keel:"special_provisions,nullzero"`
+	ProperShippingName          string             `json:"properShippingName"          keel:"proper_shipping_name,nullzero"`
+	HandlingInstructions        string             `json:"handlingInstructions"        keel:"handling_instructions,nullzero"`
+	EmergencyContact            string             `json:"emergencyContact"            keel:"emergency_contact,nullzero"`
+	EmergencyContactPhoneNumber string             `json:"emergencyContactPhoneNumber" keel:"emergency_contact_phone_number,nullzero"`
+	QuantityThreshold           string             `json:"quantityThreshold"           keel:"quantity_threshold,nullzero"`
+	SearchVector                string             `json:"-"`
+	Rank                        string             `json:"-"                           keel:"rank,computed"`
+	PlacardRequired             bool               `json:"placardRequired"             keel:"placard_required"`
+	IsReportableQuantity        bool               `json:"isReportableQuantity"        keel:"is_reportable_quantity"`
+	MarinePollutant             bool               `json:"marinePollutant"             keel:"marine_pollutant"`
+	InhalationHazard            bool               `json:"inhalationHazard"            keel:"inhalation_hazard"`
+	Version                     int64              `json:"version"                     keel:"version,version"`
+	CreatedAt                   int64              `json:"createdAt"                   keel:"created_at,autocreate"`
+	UpdatedAt                   int64              `json:"updatedAt"                   keel:"updated_at,autoupdate"`
 
-	ID                          pulid.ID           `json:"id"                          bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID              pulid.ID           `json:"businessUnitId"              bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID              pulid.ID           `json:"organizationId"              bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Status                      domaintypes.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                        string             `json:"code"                        bun:"code,type:VARCHAR(10),notnull"`
-	Name                        string             `json:"name"                        bun:"name,type:VARCHAR(100),notnull"`
-	Description                 string             `json:"description"                 bun:"description,type:TEXT,notnull"`
-	Class                       HazardousClass     `json:"class"                       bun:"class,type:hazardous_class_enum,notnull"`
-	UNNumber                    string             `json:"unNumber"                    bun:"un_number,type:VARCHAR(4)"`
-	PackingGroup                PackingGroup       `json:"packingGroup"                bun:"packing_group,type:packing_group_enum,notnull"`
-	SubsidiaryHazardClass       string             `json:"subsidiaryHazardClass"       bun:"subsidiary_hazard_class,type:VARCHAR(20)"`
-	ErgGuideNumber              string             `json:"ergGuideNumber"              bun:"erg_guide_number,type:VARCHAR(10)"`
-	LabelCodes                  string             `json:"labelCodes"                  bun:"label_codes,type:VARCHAR(50)"`
-	SpecialProvisions           string             `json:"specialProvisions"           bun:"special_provisions,type:TEXT"`
-	ProperShippingName          string             `json:"properShippingName"          bun:"proper_shipping_name,type:TEXT"`
-	HandlingInstructions        string             `json:"handlingInstructions"        bun:"handling_instructions,type:TEXT"`
-	EmergencyContact            string             `json:"emergencyContact"            bun:"emergency_contact,type:TEXT"`
-	EmergencyContactPhoneNumber string             `json:"emergencyContactPhoneNumber" bun:"emergency_contact_phone_number,type:TEXT"`
-	QuantityThreshold           string             `json:"quantityThreshold"           bun:"quantity_threshold,type:VARCHAR(20)"`
-	SearchVector                string             `json:"-"                           bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                        string             `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly"`
-	PlacardRequired             bool               `json:"placardRequired"             bun:"placard_required,type:BOOLEAN"`
-	IsReportableQuantity        bool               `json:"isReportableQuantity"        bun:"is_reportable_quantity,type:BOOLEAN"`
-	MarinePollutant             bool               `json:"marinePollutant"             bun:"marine_pollutant,type:BOOLEAN"`
-	InhalationHazard            bool               `json:"inhalationHazard"            bun:"inhalation_hazard,type:BOOLEAN"`
-	Version                     int64              `json:"version"                     bun:"version,type:BIGINT"`
-	CreatedAt                   int64              `json:"createdAt"                   bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                   int64              `json:"updatedAt"                   bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+}
 
-	// Relationships
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+func (hm *HazardousMaterial) BeforeCreate(_ context.Context) error {
+	if hm.Status == "" {
+		hm.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (hm *HazardousMaterial) Validate(multiErr *errortypes.MultiError) {
@@ -177,19 +180,11 @@ func (hm *HazardousMaterial) GetPostgresSearchConfig() domaintypes.PostgresSearc
 	}
 }
 
-func (hm *HazardousMaterial) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if hm.ID.IsNil() {
-			hm.ID = pulid.MustNew("hm_")
-		}
-
-		hm.CreatedAt = now
-	case *bun.UpdateQuery:
-		hm.UpdatedAt = now
+func (HazardousMaterial) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_hazardous_materials_code",
+			Message: "Hazardous material with this code already exists in your organization",
+		},
 	}
-
-	return nil
 }

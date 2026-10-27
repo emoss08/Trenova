@@ -1,8 +1,9 @@
 package shipmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -34,8 +35,9 @@ func TestServiceGetPreviousRates_DelegatesToRepository(t *testing.T) {
 				req.ServiceTypeID == serviceTypeID
 		})).
 		Return(&pagination.ListResult[*shipmentports.PreviousRateSummary]{
-			Items: []*shipmentports.PreviousRateSummary{{ShipmentID: pulid.MustNew("shp_")}},
-			Total: 1,
+			Items:      []*shipmentports.PreviousRateSummary{{ShipmentID: pulid.MustNew("shp_")}},
+			Total:      1,
+			TotalExact: true,
 		}, nil).
 		Once()
 

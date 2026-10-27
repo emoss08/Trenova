@@ -2,10 +2,12 @@ package ediservice
 
 import (
 	"context"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/planservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/platformplan"
@@ -22,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -42,13 +45,14 @@ type Params struct {
 	TransferRepo        ediports.EDILoadTenderTransferRepository
 	DocumentTypeRepo    ediports.EDIDocumentTypeRepository
 	TransactionSetRepo  ediports.EDITransactionSetRepository
-	SourceContextRepo   ediports.EDISourceContextRepository
-	PartnerSettingRepo  ediports.EDIPartnerSettingRepository
-	TemplateRepo        ediports.EDITemplateRepository
-	DocumentProfileRepo ediports.EDIPartnerDocumentProfileRepository
 	ControlNumberRepo   ediports.EDIControlNumberRepository
 	MessageRepo         ediports.EDIMessageRepository
-	TestCaseRepo        ediports.EDITestCaseRepository
+	FlowRepo            ediports.FlowRepository
+	LadingProjects      *edilading.Projects
+	Lading              *edilading.Runtime
+	Flows               *edilading.Flows
+	Replayer            *edilading.Replayer
+	LocationRepo        locationports.LocationRepository `optional:"true"`
 	CarrierInvoiceRepo  ediports.EDICarrierInvoiceRepository
 	InboundFileRepo     ediports.EDIInboundFileRepository
 	InvoiceRepo         invoiceports.InvoiceRepository
@@ -71,7 +75,9 @@ type Params struct {
 	Notifications       *notificationservice.Service
 	Encryption          *encryptionservice.Service
 	Validator           *Validator
-	DB                  kernelports.DBConnection
+	DB                  kernelports.Transactor
+	Savepoints          kernelports.Savepointer
+	ShipmentTenderRepo  ediports.EDIShipmentTenderRepository
 	Coordinator         *shipmentstate.Coordinator
 	Transport           ediports.EDITransportDispatcher
 	OrderDerivation     orderports.OrderDerivationService
@@ -89,13 +95,14 @@ type Service struct {
 	transferRepo        ediports.EDILoadTenderTransferRepository
 	documentTypeRepo    ediports.EDIDocumentTypeRepository
 	transactionSetRepo  ediports.EDITransactionSetRepository
-	sourceContextRepo   ediports.EDISourceContextRepository
-	partnerSettingRepo  ediports.EDIPartnerSettingRepository
-	templateRepo        ediports.EDITemplateRepository
-	documentProfileRepo ediports.EDIPartnerDocumentProfileRepository
 	controlNumberRepo   ediports.EDIControlNumberRepository
 	messageRepo         ediports.EDIMessageRepository
-	testCaseRepo        ediports.EDITestCaseRepository
+	flowRepo            ediports.FlowRepository
+	ladingProjects      *edilading.Projects
+	lading              *edilading.Runtime
+	flows               *edilading.Flows
+	replayer            *edilading.Replayer
+	locationRepo        locationports.LocationRepository
 	carrierInvoiceRepo  ediports.EDICarrierInvoiceRepository
 	inboundFileRepo     ediports.EDIInboundFileRepository
 	invoiceRepo         invoiceports.InvoiceRepository
@@ -119,7 +126,9 @@ type Service struct {
 	notifications       *notificationservice.Service
 	encryption          *encryptionservice.Service
 	validator           *Validator
-	db                  kernelports.DBConnection
+	db                  kernelports.Transactor
+	savepoints          kernelports.Savepointer
+	shipmentTenderRepo  ediports.EDIShipmentTenderRepository
 	coordinator         *shipmentstate.Coordinator
 	transport           ediports.EDITransportDispatcher
 	orderDerivation     orderports.OrderDerivationService
@@ -143,13 +152,14 @@ func New(p Params) *Service {
 		transferRepo:        p.TransferRepo,
 		documentTypeRepo:    p.DocumentTypeRepo,
 		transactionSetRepo:  p.TransactionSetRepo,
-		sourceContextRepo:   p.SourceContextRepo,
-		partnerSettingRepo:  p.PartnerSettingRepo,
-		templateRepo:        p.TemplateRepo,
-		documentProfileRepo: p.DocumentProfileRepo,
 		controlNumberRepo:   p.ControlNumberRepo,
 		messageRepo:         p.MessageRepo,
-		testCaseRepo:        p.TestCaseRepo,
+		flowRepo:            p.FlowRepo,
+		ladingProjects:      p.LadingProjects,
+		lading:              p.Lading,
+		flows:               p.Flows,
+		replayer:            p.Replayer,
+		locationRepo:        p.LocationRepo,
 		carrierInvoiceRepo:  p.CarrierInvoiceRepo,
 		inboundFileRepo:     p.InboundFileRepo,
 		invoiceRepo:         p.InvoiceRepo,
@@ -174,6 +184,8 @@ func New(p Params) *Service {
 		encryption:          p.Encryption,
 		validator:           p.Validator,
 		db:                  p.DB,
+		savepoints:          p.Savepoints,
+		shipmentTenderRepo:  p.ShipmentTenderRepo,
 		coordinator:         p.Coordinator,
 		transport:           p.Transport,
 		orderDerivation:     p.OrderDerivation,

@@ -1,19 +1,20 @@
 package shipmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/formulatemplateportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/testutil/mocks/accessorialchargeportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -38,11 +39,7 @@ func previewCreateService(
 			BuID:  entity.BusinessUnitID,
 		},
 	}).Return(control, nil).Once()
-	formula := formulatemplateportsmock.NewMockFormulaCalculator(t)
-	formula.EXPECT().
-		Calculate(mock.Anything, mock.AnythingOfType("*formulatemplatetypes.CalculateRequest")).
-		Return(&formulatemplatetypes.CalculateResponse{Amount: decimal.NewFromInt(1_250)}, nil).
-		Twice()
+	freight := decimal.NewFromInt(1_250)
 
 	return &service{
 		l:           zap.NewNop(),
@@ -50,7 +47,7 @@ func previewCreateService(
 		controlRepo: controlRepo,
 		validator:   newTestValidator(t),
 		commercial: newTestCommercialCalculator(t,
-			formula,
+			freight,
 			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
 		),
 		coordinator: newStateCoordinator(),
@@ -142,10 +139,11 @@ func unpricedCreateService(
 		repo:        shipmentportsmock.NewMockShipmentRepository(t),
 		controlRepo: controlRepo,
 		validator:   rateCoverageValidator(t, billingControlWith(t, disposition)),
-		commercial: newTestCommercialCalculator(t,
-			formulatemplateportsmock.NewMockFormulaCalculator(t),
-			accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
-		),
+		commercial: shipmentcommercial.New(shipmentcommercial.Params{
+			Logger:          zap.NewNop(),
+			RateEngine:      ratingtest.NewEngine(t),
+			AccessorialRepo: accessorialchargeportsmock.NewMockAccessorialChargeRepository(t),
+		}),
 		coordinator: newStateCoordinator(),
 	}
 }

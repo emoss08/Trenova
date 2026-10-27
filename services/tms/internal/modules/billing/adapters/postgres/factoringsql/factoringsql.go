@@ -1,40 +1,27 @@
 package factoringsql
 
 import (
-	"strings"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 )
 
-func ChargedBackInvoice() string {
-	return invoiceWithItem(factoring.SubmissionItemStatusChargedBack)
+func ChargedBackInvoicePred(inv *invoicedb.InvoicesTable) keel.Pred {
+	return invoiceWithItemPred(inv, factoring.SubmissionItemStatusChargedBack)
 }
 
-func LiveInvoice() string {
-	return invoiceWithItem(factoring.LiveSubmissionItemStatuses()...)
+func LiveInvoicePred(inv *invoicedb.InvoicesTable) keel.Pred {
+	return invoiceWithItemPred(inv, factoring.LiveSubmissionItemStatuses()...)
 }
 
-func invoiceWithItem(statuses ...factoring.SubmissionItemStatus) string {
-	quoted := make([]string, 0, len(statuses))
-	for _, status := range statuses {
-		quoted = append(quoted, "'"+string(status)+"'")
-	}
-	item := factoringcol.SubmissionItemColumns
-	inv := invoicecol.InvoiceColumns
-	return buncolgen.Expr(
-		"EXISTS (SELECT 1 FROM "+factoringcol.SubmissionItemTable.Name+
-			" AS "+factoringcol.SubmissionItemTable.Alias+
-			" WHERE {0} = {1} AND {2} = {3} AND {4} = {5} AND {6} IN ("+
-			strings.Join(quoted, ", ")+"))",
-		item.OrganizationID,
-		inv.OrganizationID,
-		item.BusinessUnitID,
-		inv.BusinessUnitID,
-		item.InvoiceID,
-		inv.ID,
-		item.Status,
-	)
+func invoiceWithItemPred(
+	inv *invoicedb.InvoicesTable,
+	statuses ...factoring.SubmissionItemStatus,
+) keel.Pred {
+	item := factoringdb.SubmissionItems.As("fsi")
+	return keel.Exists(item.Where(
+		item.InvoiceID.EqCol(inv.ID),
+		item.Status.In(statuses...),
+	))
 }

@@ -161,6 +161,7 @@ query DotRandomPools($input: DOTRandomPoolsInput!) {
       endCursor
     }
     totalCount
+    totalCountExact
   }
 }
 

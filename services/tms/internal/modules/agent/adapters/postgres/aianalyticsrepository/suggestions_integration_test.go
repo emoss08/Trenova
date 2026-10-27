@@ -6,9 +6,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -17,13 +20,12 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type suggestionFixture struct {
 	ctx      context.Context
-	db       *bun.DB
+	db       *keel.DB
 	tenant   pagination.TenantInfo
 	dispatch pulid.ID
 }
@@ -37,7 +39,7 @@ func (f suggestionFixture) agent(t *testing.T, name string) pulid.ID {
 		Name:           name,
 		Enabled:        true,
 	}
-	insert(f.ctx, t, f.db, definition)
+	insert(f.ctx, t, f.db, agentdefinitiondb.Definitions.Handle, definition)
 
 	return definition.ID
 }
@@ -60,11 +62,10 @@ func (f suggestionFixture) suggest(
 		Surface:          agentsuggestion.SurfaceHome,
 		Outcome:          outcome,
 	}
-	insert(f.ctx, t, f.db, row)
-	_, err := f.db.NewRaw(
-		"UPDATE agent_suggestions SET created_at = ?, updated_at = ? WHERE id = ?",
-		createdAt, createdAt, row.ID,
-	).Exec(f.ctx)
+	s := agentsuggestiondb.Suggestions
+	insert(f.ctx, t, f.db, s.Handle, row)
+	_, err := s.Where(s.ID.Eq(row.ID)).
+		Update(f.ctx, f.db, s.CreatedAt.To(createdAt), s.UpdatedAt.To(createdAt))
 	require.NoError(t, err)
 
 	return row.ID
@@ -73,12 +74,9 @@ func (f suggestionFixture) suggest(
 func (f suggestionFixture) stored(t *testing.T) []pulid.ID {
 	t.Helper()
 
-	var ids []pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		Table("agent_suggestions").
-		Column("id").
-		Where("organization_id = ?", f.tenant.OrgID).
-		Scan(f.ctx, &ids))
+	s := agentsuggestiondb.Suggestions
+	ids, err := keel.Into[pulid.ID](f.ctx, f.db, s.Pick(s.ID))
+	require.NoError(t, err)
 
 	return ids
 }
@@ -96,7 +94,8 @@ func TestSuggestionsCountEachOutcomeAndPassOverWhatWasLeftShown(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := suggestionFixture{ctx: ctx, db: db, tenant: seededTenant(ctx, t, db)}
+	ctx, tenant := seededTenant(ctx, t, db)
+	f := suggestionFixture{ctx: ctx, db: db, tenant: tenant}
 	f.dispatch = f.agent(t, "Dispatch")
 	receivables := f.agent(t, "Receivables")
 	billing := f.agent(t, "Billing")
@@ -160,7 +159,8 @@ func TestPruneDeletesSuggestionsOlderThanTheHorizon(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	f := suggestionFixture{ctx: ctx, db: db, tenant: seededTenant(ctx, t, db)}
+	ctx, tenant := seededTenant(ctx, t, db)
+	f := suggestionFixture{ctx: ctx, db: db, tenant: tenant}
 	f.dispatch = f.agent(t, "Dispatch")
 	receivables := f.agent(t, "Receivables")
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})

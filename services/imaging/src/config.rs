@@ -386,7 +386,7 @@ impl Validate for Config {
             ("deadlines.normalize_image", self.deadlines.normalize_image),
         ] {
             v.check(
-                value >= Duration::from_secs(1) && value <= Duration::from_secs(3600),
+                value >= Duration::from_secs(1) && value <= Duration::from_hours(1),
                 name,
                 "must be 1s to 1h",
             );
@@ -394,7 +394,7 @@ impl Validate for Config {
         v.file(&self.native.pdfium_library, "native.pdfium_library");
         v.check(
             self.drain_grace >= Duration::from_secs(1)
-                && self.drain_grace <= Duration::from_secs(600),
+                && self.drain_grace <= Duration::from_mins(10),
             "drain_grace",
             "must be 1s to 10m",
         );

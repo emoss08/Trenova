@@ -5,16 +5,17 @@ package shipmentservice
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbpool"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/billingqueuerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/app/billingqueueservice"
@@ -31,7 +32,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/app/orderderivation"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenteventservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -45,7 +48,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -59,17 +61,17 @@ type queryCounter struct {
 	byKey   map[string]int
 }
 
-func (q *queryCounter) BeforeQuery(ctx context.Context, _ *bun.QueryEvent) context.Context {
+func (q *queryCounter) BeforeQuery(ctx context.Context, _ *keel.QueryEvent) context.Context {
 	return ctx
 }
 
-func (q *queryCounter) AfterQuery(_ context.Context, event *bun.QueryEvent) {
+func (q *queryCounter) AfterQuery(_ context.Context, event *keel.QueryEvent) {
 	if !q.enabled.Load() {
 		return
 	}
-	key := event.Operation()
-	if match := statementTable.FindStringSubmatch(event.Query); match != nil {
-		key += " " + match[1]
+	key := event.Op
+	if event.Table != "" {
+		key += " " + event.Table
 	}
 	q.mu.Lock()
 	q.total++
@@ -101,8 +103,6 @@ func (q *queryCounter) stop() (int, string) {
 	return q.total, b.String()
 }
 
-var statementTable = regexp.MustCompile(`(?i)(?:FROM|INTO|UPDATE)\s+"([a-z_]+)"`)
-
 // countingGenerator hands out distinct invoice numbers, as the real sequence does.
 type countingGenerator struct {
 	testutil.TestSequenceGenerator
@@ -129,7 +129,7 @@ const maxStatementsPerShipment = 26
 type bulkTransferHarness struct {
 	svc        shipmentports.ShipmentService
 	counter    *queryCounter
-	db         *bun.DB
+	db         *keel.DB
 	ctx        context.Context
 	tenantInfo pagination.TenantInfo
 	fixture    *testutil.ShipmentIntegrationFixture
@@ -141,14 +141,18 @@ type bulkTransferHarness struct {
 func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
 	counter := &queryCounter{byKey: make(map[string]int)}
-	db.AddQueryHook(counter)
+	cfg := dbpool.KeelConfig(nil, []keel.Observer{counter})
+	cfg.DSN = dsn
+	observed, err := keel.Open(ctx, cfg)
+	require.NoError(t, err)
+	t.Cleanup(observed.Close)
 
 	logger := zap.NewNop()
-	conn := postgres.NewTestConnection(db)
+	conn := postgres.NewTestConnection(observed)
 
 	orderRepo := orderrepository.New(orderrepository.Params{DB: conn, Logger: logger})
 	allocationRepo := chargeallocationrepository.New(
@@ -222,6 +226,7 @@ func newBulkTransferHarness(t *testing.T) *bulkTransferHarness {
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
 	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
+	ctx = integrationTenantContext(ctx, tenantInfo)
 
 	return &bulkTransferHarness{
 		svc:        svc,
@@ -249,8 +254,7 @@ func (h *bulkTransferHarness) completedShipment(t *testing.T, n int) *shipment.S
 		OrderNumber:    fmt.Sprintf("ORD-BULK-%03d", n),
 		Status:         order.StatusCompleted,
 	}
-	_, err := h.db.NewInsert().Model(ord).Exec(h.ctx)
-	require.NoError(t, err)
+	require.NoError(t, orderdb.Orders.Create(h.ctx, h.db, ord))
 
 	graph := testutil.CreateShipmentGraph(t, h.ctx, h.db, h.fixture, h.tenantInfo,
 		testutil.ShipmentGraphParams{
@@ -261,14 +265,10 @@ func (h *bulkTransferHarness) completedShipment(t *testing.T, n int) *shipment.S
 	)
 
 	freight := decimal.NewFromInt(1200)
-	_, err = h.db.NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set("status = ?", shipment.StatusCompleted).
-		Set("order_id = ?", ord.ID).
-		Set("freight_charge_amount = ?", freight).
-		Set("total_charge_amount = ?", freight).
-		Where("id = ?", graph.Shipment.ID).
-		Exec(h.ctx)
+	_, err := keel.Exec(h.ctx, h.db,
+		"UPDATE shipments SET status = $1, order_id = $2, freight_charge_amount = $3, "+
+			"total_charge_amount = $3 WHERE id = $4",
+		string(shipment.StatusCompleted), ord.ID.String(), freight, graph.Shipment.ID.String())
 	require.NoError(t, err)
 
 	return graph.Shipment
@@ -290,15 +290,11 @@ func (h *bulkTransferHarness) addAccessorial(t *testing.T, shp *shipment.Shipmen
 		Amount:              decimal.NewFromInt(150),
 		Unit:                1,
 	}
-	_, err := h.db.NewInsert().Model(charge).Exec(h.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.AdditionalCharges.Create(h.ctx, h.db, charge))
 
-	_, err = h.db.NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set("other_charge_amount = ?", decimal.NewFromInt(150)).
-		Set("total_charge_amount = ?", decimal.NewFromInt(1350)).
-		Where("id = ?", shp.ID).
-		Exec(h.ctx)
+	_, err := keel.Exec(h.ctx, h.db,
+		"UPDATE shipments SET other_charge_amount = $1, total_charge_amount = $2 WHERE id = $3",
+		decimal.NewFromInt(150), decimal.NewFromInt(1350), shp.ID.String())
 	require.NoError(t, err)
 
 	return charge
@@ -343,8 +339,8 @@ func TestBulkTransferToBillingIntegration_QueriesPerShipment(t *testing.T) {
 	assert.LessOrEqualf(t, perShipment, float64(maxStatementsPerShipment),
 		"a bulk transfer spends %.1f statements per shipment:\n%s", perShipment, breakdown)
 
-	var kept shipment.AdditionalCharge
-	require.NoError(t, h.db.NewSelect().Model(&kept).Where("id = ?", charge.ID).Scan(h.ctx))
+	kept, err := shipmentdb.AdditionalCharges.Get(h.ctx, h.db, charge.ID)
+	require.NoError(t, err)
 	assert.True(t, kept.Amount.Equal(charge.Amount), "marking ready leaves the charges as they were")
 	assert.Equal(t, charge.Version, kept.Version)
 

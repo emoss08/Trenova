@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -62,7 +61,7 @@ func (s *Service) RequestChanges(
 
 	var submitterID *pulid.ID
 	var returned *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
 			Operation:    "RequestChanges",
 			From:         formulatemplate.StatusInReview,
@@ -201,7 +200,7 @@ func (s *Service) expireSubmission(
 	template.ReviewComment = "Submission expired after waiting for review"
 
 	var updated *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := s.repo.Update(txCtx, template)
 		if txErr != nil {
 			return txErr

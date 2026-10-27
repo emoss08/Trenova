@@ -6,11 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagefavorite/pagefavoritedb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/pagefavoriteports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -39,24 +39,16 @@ func (r *repository) List(
 	req *pagefavoriteports.ListPageFavoritesRequest,
 ) ([]*pagefavorite.PageFavorite, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*pagefavorite.PageFavorite, error) {
-		log := r.l.With(
-			zap.String("operation", "List"),
-			zap.String("userID", req.UserID.String()),
-		)
-
-		entities := make([]*pagefavorite.PageFavorite, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("pf.user_id = ?", req.UserID).
-					Where("pf.organization_id = ?", req.TenantInfo.OrgID).
-					Where("pf.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Order("pf.created_at DESC").
-			Scan(ctx)
+		pf := pagefavoritedb.PageFavorites
+		entities, err := pf.Where(pf.UserID.Eq(req.UserID)).
+			Order(pf.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to list page favorites", zap.Error(err))
+			r.l.Error(
+				"failed to list page favorites",
+				zap.String("userID", req.UserID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -72,28 +64,18 @@ func (r *repository) GetByURL(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagefavorite.PageFavorite, bool, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByURL"),
-				zap.String("pageURL", req.PageURL),
-				zap.String("userID", req.UserID.String()),
-			)
-
-			entity := new(pagefavorite.PageFavorite)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("pf.page_url = ?", req.PageURL).
-						Where("pf.user_id = ?", req.UserID).
-						Where("pf.organization_id = ?", req.TenantInfo.OrgID).
-						Where("pf.business_unit_id = ?", req.TenantInfo.BuID)
-				}).
-				Scan(ctx)
+			pf := pagefavoritedb.PageFavorites
+			entity, err := pf.Where(pf.PageURL.Eq(req.PageURL), pf.UserID.Eq(req.UserID)).
+				One(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, false, nil
+			}
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, false, nil
-				}
-				log.Error("failed to get page favorite by URL", zap.Error(err))
+				r.l.Error(
+					"failed to get page favorite by URL",
+					zap.String("pageURL", req.PageURL),
+					zap.Error(err),
+				)
 				return nil, false, err
 			}
 
@@ -107,14 +89,12 @@ func (r *repository) Create(
 	entity *pagefavorite.PageFavorite,
 ) (*pagefavorite.PageFavorite, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*pagefavorite.PageFavorite, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("pageURL", entity.PageURL),
-		)
-
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
-		if err != nil {
-			log.Error("failed to create page favorite", zap.Error(err))
+		if err := pagefavoritedb.PageFavorites.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create page favorite",
+				zap.String("pageURL", entity.PageURL),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -125,28 +105,20 @@ func (r *repository) Create(
 func (r *repository) Delete(
 	ctx context.Context,
 	id pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", id.String()),
-		)
-
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*pagefavorite.PageFavorite)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where("pf.id = ?", id).
-					Where("pf.organization_id = ?", tenantInfo.OrgID).
-					Where("pf.business_unit_id = ?", tenantInfo.BuID)
-			}).
-			Exec(ctx)
+		pf := pagefavoritedb.PageFavorites
+		rows, err := pf.Where(pf.ID.Eq(id)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to delete page favorite", zap.Error(err))
+			r.l.Error(
+				"failed to delete page favorite",
+				zap.String("id", id.String()),
+				zap.Error(err),
+			)
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, "PageFavorite", id.String())
+		return dberror.CheckAffected(rows, "PageFavorite", id.String())
 	})
 }

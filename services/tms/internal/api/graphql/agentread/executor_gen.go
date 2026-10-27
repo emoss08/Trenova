@@ -4,28 +4,68 @@ package agentread
 
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accessorialchargeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/accountingsyncexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/briefingexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/captureexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriercapacityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carrierintelligenceexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/carriersettlementexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/commodityexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/customerpaymentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/detentionexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/dispatchconsoleexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/documenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/driverportalexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/driversettlementexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/ediexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/emailprofileexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmentmanufacturerexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/equipmenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringcompanyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/factoringexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fiscalperiodexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetcodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fleetsafetyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/formulalibraryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/formulatemplateexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fuelpurchaseexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/fuelsurchargeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/hazardousmaterialexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/holdreasonexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/homelayoutexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/iftaexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundmessageexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/inboundreplyexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceadjustmentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoicedisputeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/invoiceexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalentryexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/journalreversalexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationcategoryexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/locationexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/manualjournalexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/orderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/performancereviewexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/preludeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/rateexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/recurringshipmentexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/reportexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/schedulingexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailureexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicefailurereasoncodeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/servicetypeexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/sharedexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmentexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/shipmenttypeexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tablechangealertexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/telematicsexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenantexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tenderexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/tractorexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/trailerexec"
+	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/triageexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/usstateexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workerchecklistexec"
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workercredentialexec"
@@ -38,27 +78,67 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/generated/exec/workertrainingexec"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlexec"
 	accessorialchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accessorialchargeresolver"
+	accountingsyncresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/accountingsyncresolver"
 	base "github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	briefingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/briefingresolver"
+	captureresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/captureresolver"
+	carriercapacityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriercapacityresolver"
 	carrierintelligenceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierintelligenceresolver"
 	carrierresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carrierresolver"
+	carriersettlementresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/carriersettlementresolver"
 	commodityresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/commodityresolver"
+	customerpaymentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerpaymentresolver"
 	customerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/customerresolver"
+	detentionresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/detentionresolver"
 	dispatchconsoleresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/dispatchconsoleresolver"
 	documenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/documenttyperesolver"
+	driverportalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/driverportalresolver"
+	driversettlementresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/driversettlementresolver"
+	ediresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/ediresolver"
+	emailprofileresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/emailprofileresolver"
 	equipmentmanufacturerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmentmanufacturerresolver"
 	equipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/equipmenttyperesolver"
+	factoringcompanyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/factoringcompanyresolver"
+	factoringresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/factoringresolver"
+	fiscalperiodresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalperiodresolver"
 	fleetcoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	fleetsafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
+	formulalibraryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/formulalibraryresolver"
+	formulatemplateresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/formulatemplateresolver"
+	fuelpurchaseresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fuelpurchaseresolver"
+	fuelsurchargeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargeresolver"
 	hazardousmaterialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/hazardousmaterialresolver"
 	holdreasonresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/holdreasonresolver"
+	homelayoutresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/homelayoutresolver"
+	iftaresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/iftaresolver"
+	inboundmessageresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/inboundmessageresolver"
+	inboundreplyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/inboundreplyresolver"
+	invoiceadjustmentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceadjustmentresolver"
+	invoicedisputeresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/invoicedisputeresolver"
+	invoiceresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/invoiceresolver"
+	journalentryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalentryresolver"
+	journalreversalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/journalreversalresolver"
 	locationcategoryresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationcategoryresolver"
 	locationresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/locationresolver"
+	manualjournalresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/manualjournalresolver"
+	orderresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/orderresolver"
 	performancereviewresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
+	rateresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
+	recurringshipmentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/recurringshipmentresolver"
+	reportresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/reportresolver"
+	schedulingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/schedulingresolver"
+	servicefailurereasoncoderesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailurereasoncoderesolver"
+	servicefailureresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicefailureresolver"
 	servicetyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/servicetyperesolver"
+	shipmentresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmentresolver"
 	shipmenttyperesolver "github.com/emoss08/trenova/internal/api/graphql/resolver/shipmenttyperesolver"
+	tablechangealertresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tablechangealertresolver"
+	telematicsresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/telematicsresolver"
 	tenantresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenantresolver"
+	tenderresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tenderresolver"
 	tractorresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/tractorresolver"
 	trailerresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/trailerresolver"
+	triageresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/triageresolver"
 	workerchecklistresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerchecklistresolver"
 	workercredentialresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workercredentialresolver"
 	workerdqfresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workerdqfresolver"
@@ -69,22 +149,69 @@ import (
 	workersafetyresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workersafetyresolver"
 	workertrainingresolver "github.com/emoss08/trenova/internal/api/graphql/resolver/workertrainingresolver"
 	config "github.com/emoss08/trenova/internal/infrastructure/config"
+	fiscalperiodservice "github.com/emoss08/trenova/internal/modules/accounting/app/fiscalperiodservice"
+	journalcardservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalcardservice"
+	journalentryservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
+	journalreversalservice "github.com/emoss08/trenova/internal/modules/accounting/app/journalreversalservice"
+	manualjournalservice "github.com/emoss08/trenova/internal/modules/accounting/app/manualjournalservice"
+	accountingsyncports "github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
+	glaccountports "github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
+	journalentryports "github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	agentports "github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	briefingports "github.com/emoss08/trenova/internal/modules/agent/ports/briefingports"
+	customerpaymentports "github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
+	factoringports "github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
+	invoiceadjustmentports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceadjustmentports"
+	invoiceports "github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
+	capturereleaseservice "github.com/emoss08/trenova/internal/modules/documents/app/capturereleaseservice"
+	captureservice "github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
+	inboundmessageservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
+	inboundreplyservice "github.com/emoss08/trenova/internal/modules/documents/app/inboundreplyservice"
+	triagebriefingservice "github.com/emoss08/trenova/internal/modules/documents/app/triagebriefingservice"
+	triageconflictservice "github.com/emoss08/trenova/internal/modules/documents/app/triageconflictservice"
+	triagecorrectionservice "github.com/emoss08/trenova/internal/modules/documents/app/triagecorrectionservice"
+	triagepeekservice "github.com/emoss08/trenova/internal/modules/documents/app/triagepeekservice"
+	triageruleservice "github.com/emoss08/trenova/internal/modules/documents/app/triageruleservice"
+	triageworkservice "github.com/emoss08/trenova/internal/modules/documents/app/triageworkservice"
+	ediinboundservice "github.com/emoss08/trenova/internal/modules/edi/app/ediinboundservice"
+	ediservice "github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	equipmentmanufacturerservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmentmanufacturerservice"
 	equipmenttypeservice "github.com/emoss08/trenova/internal/modules/equipment/app/equipmenttypeservice"
 	fleetcodeservice "github.com/emoss08/trenova/internal/modules/equipment/app/fleetcodeservice"
 	tractorservice "github.com/emoss08/trenova/internal/modules/equipment/app/tractorservice"
 	trailerservice "github.com/emoss08/trenova/internal/modules/equipment/app/trailerservice"
+	dashcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/dashcontrolservice"
 	orgstructureservice "github.com/emoss08/trenova/internal/modules/identity/app/orgstructureservice"
+	settlementcontrolservice "github.com/emoss08/trenova/internal/modules/identity/app/settlementcontrolservice"
 	permissionports "github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	tenantports "github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	kernelports "github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	detentionpolicyservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionpolicyservice"
+	detentionservice "github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
+	orderservice "github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
+	recurringshipmentservice "github.com/emoss08/trenova/internal/modules/operations/app/recurringshipmentservice"
+	routingguideservice "github.com/emoss08/trenova/internal/modules/operations/app/routingguideservice"
+	tenderservice "github.com/emoss08/trenova/internal/modules/operations/app/tenderservice"
+	servicefailureports "github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	shipmenteventports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	shipmentports "github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	trackingeventports "github.com/emoss08/trenova/internal/modules/operations/ports/trackingeventports"
+	carriercapacityservice "github.com/emoss08/trenova/internal/modules/parties/app/carriercapacityservice"
 	carrierintelservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierintelservice"
 	carrierservice "github.com/emoss08/trenova/internal/modules/parties/app/carrierservice"
 	customerservice "github.com/emoss08/trenova/internal/modules/parties/app/customerservice"
+	factoringcompanyservice "github.com/emoss08/trenova/internal/modules/parties/app/factoringcompanyservice"
 	locationcategoryservice "github.com/emoss08/trenova/internal/modules/places/app/locationcategoryservice"
 	locationservice "github.com/emoss08/trenova/internal/modules/places/app/locationservice"
 	carrierassignmentservice "github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
+	formulalibraryservice "github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
+	formulatemplateservice "github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	fuelsurchargeservice "github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
+	rateagreementservice "github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
+	ratematrixservice "github.com/emoss08/trenova/internal/modules/rating/app/ratematrixservice"
+	ratequoteservice "github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
+	ratezoneservice "github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
+	fuelsurchargeports "github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	accessorialchargeservice "github.com/emoss08/trenova/internal/modules/reference/app/accessorialchargeservice"
 	commodityservice "github.com/emoss08/trenova/internal/modules/reference/app/commodityservice"
 	documenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/documenttypeservice"
@@ -92,8 +219,19 @@ import (
 	holdreasonservice "github.com/emoss08/trenova/internal/modules/reference/app/holdreasonservice"
 	servicetypeservice "github.com/emoss08/trenova/internal/modules/reference/app/servicetypeservice"
 	shipmenttypeservice "github.com/emoss08/trenova/internal/modules/reference/app/shipmenttypeservice"
+	carriersettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
+	driverpayservice "github.com/emoss08/trenova/internal/modules/settlement/app/driverpayservice"
+	driversettlementservice "github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
+	fueldeskcardservice "github.com/emoss08/trenova/internal/modules/settlement/app/fueldeskcardservice"
+	fuelpurchaseservice "github.com/emoss08/trenova/internal/modules/settlement/app/fuelpurchaseservice"
+	iftaservice "github.com/emoss08/trenova/internal/modules/settlement/app/iftaservice"
+	carriersettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
+	driverpayports "github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
+	driversettlementports "github.com/emoss08/trenova/internal/modules/settlement/ports/driversettlementports"
 	driverportalservice "github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
 	performancereviewservice "github.com/emoss08/trenova/internal/modules/workforce/app/performancereviewservice"
+	schedulingservice "github.com/emoss08/trenova/internal/modules/workforce/app/schedulingservice"
+	telematicsservice "github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
 	workerchecklistservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerchecklistservice"
 	workercredentialservice "github.com/emoss08/trenova/internal/modules/workforce/app/workercredentialservice"
 	workerdqfservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerdqfservice"
@@ -104,6 +242,12 @@ import (
 	workerservice "github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	workertrainingservice "github.com/emoss08/trenova/internal/modules/workforce/app/workertrainingservice"
 	workerports "github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	emailservice "github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
+	homelayoutservice "github.com/emoss08/trenova/internal/modules/workspace/app/homelayoutservice"
+	notificationservice "github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
+	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
+	tablechangealertservice "github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
+	tableexportservice "github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"go.uber.org/fx"
 	zap "go.uber.org/zap"
 )
@@ -115,33 +259,126 @@ type ResolverParams struct {
 	fx.In
 
 	AccessorialChargeService     *accessorialchargeservice.Service
+	AccountingConnectionService  accountingsyncports.AccountingConnectionService
+	AccountingDriftService       accountingsyncports.AccountingDriftService
+	AccountingInboundService     accountingsyncports.AccountingInboundService
+	AccountingMappingService     accountingsyncports.AccountingMappingService
+	AccountingSyncService        accountingsyncports.AccountingSyncService
+	AnalyticsService             kernelports.AnalyticsService
 	AssignmentService            shipmentports.AssignmentService
+	BriefingService              briefingports.BriefingService
+	CaptureReleaseService        *capturereleaseservice.Service
+	CaptureService               *captureservice.Service
 	CarrierAssignmentService     *carrierassignmentservice.Service
+	CarrierCapacityService       *carriercapacityservice.Service
+	CarrierCostEventRepo         carriersettlementports.CarrierCostEventRepository
 	CarrierIntelService          *carrierintelservice.Service
 	CarrierService               *carrierservice.Service
+	CarrierSettlementBatchRepo   carriersettlementports.CarrierSettlementBatchRepository
+	CarrierSettlementRepo        carriersettlementports.CarrierSettlementRepository
+	CarrierSettlementService     *carriersettlementservice.Service
 	CommodityService             *commodityservice.Service
 	Config                       *config.Config `optional:"true"`
+	CustomerPaymentRepo          customerpaymentports.CustomerPaymentRepository
+	CustomerPaymentService       customerpaymentports.CustomerPaymentService
 	CustomerService              *customerservice.Service
+	DashControlService           *dashcontrolservice.Service
+	DetentionPolicyService       *detentionpolicyservice.Service
+	DetentionService             *detentionservice.Service
 	DispatchAutoAssignService    agentports.DispatchAutoAssignService
 	DispatchConsoleService       agentports.DispatchConsoleService
+	DistanceCalculationService   shipmentports.DistanceCalculationService `optional:"true"`
 	DocumentTypeService          *documenttypeservice.Service
+	DriverPayService             *driverpayservice.Service
 	DriverPortalService          *driverportalservice.Service
+	DriverSettlementRepo         driversettlementports.DriverSettlementRepository
+	DriverSettlementService      *driversettlementservice.Service
+	EDIInboundService            *ediinboundservice.Service
+	EDIService                   *ediservice.Service
+	EmailService                 *emailservice.Service
 	EquipmentManufacturerService *equipmentmanufacturerservice.Service
 	EquipmentTypeService         *equipmenttypeservice.Service
+	EscrowAccountRepo            driverpayports.EscrowAccountRepository
+	FactoringAgreementService    factoringports.AgreementService
+	FactoringCompanyService      *factoringcompanyservice.Service
+	FactoringLedgerService       factoringports.LedgerService
+	FactoringNoaService          factoringports.NoaService
+	FactoringReadinessService    factoringports.ReadinessService
+	FactoringRemittanceService   factoringports.RemittanceService
+	FactoringSubmissionService   factoringports.SubmissionService
+	FactoringTransportService    factoringports.TransportService
+	FiscalPeriodService          *fiscalperiodservice.Service
 	FleetCodeService             *fleetcodeservice.Service
+	FormulaLibraryService        *formulalibraryservice.Service
+	FormulaTemplateService       *formulatemplateservice.Service
+	FuelDeskCards                *fueldeskcardservice.Service
+	FuelIndexPriceRepo           fuelsurchargeports.FuelIndexPriceRepository
+	FuelIndexRepo                fuelsurchargeports.FuelIndexRepository
+	FuelPurchaseService          *fuelpurchaseservice.Service
+	FuelSurchargeProgramRepo     fuelsurchargeports.FuelSurchargeProgramRepository
+	FuelSurchargeService         *fuelsurchargeservice.Service
+	GLAccountRepo                glaccountports.GLAccountRepository
 	HazardousMaterialService     *hazardousmaterialservice.Service
 	HoldReasonService            *holdreasonservice.Service
+	HomeLayoutService            *homelayoutservice.Service
+	IFTAService                  *iftaservice.Service
+	InboundMessageService        *inboundmessageservice.Service
+	InboundReplyService          *inboundreplyservice.Service
+	InvoiceAdjustmentService     invoiceadjustmentports.InvoiceAdjustmentService
+	InvoiceDisputeRepo           invoiceports.InvoiceDisputeRepository
+	InvoiceDisputeService        invoiceports.InvoiceDisputeService
+	InvoiceService               invoiceports.InvoiceService
+	JournalCards                 *journalcardservice.Service
+	JournalEntryService          *journalentryservice.Service
+	JournalReversalService       *journalreversalservice.Service
+	JournalReview                journalentryports.JournalReviewService
 	LocationCategoryService      *locationcategoryservice.Service
 	LocationService              *locationservice.Service
 	Logger                       *zap.Logger
+	ManualJournalService         *manualjournalservice.Service
+	NotificationService          *notificationservice.Service
+	OrderService                 *orderservice.Service
 	OrgStructureService          *orgstructureservice.Service
 	OrganizationService          tenantports.OrganizationService
+	PayAdvanceRepo               driverpayports.PayAdvanceRepository
+	PayEventRepo                 driversettlementports.PayEventRepository
+	PayProfileRepo               driverpayports.PayProfileRepository
 	PerformanceReviewService     *performancereviewservice.Service
 	PermissionEngine             permissionports.PermissionEngine
+	RateAgreementService         *rateagreementservice.Service
+	RateMatrixService            *ratematrixservice.Service
+	RateQuoteService             *ratequoteservice.Service
+	RateZoneService              *ratezoneservice.Service
+	RecurringDeductionRepo       driverpayports.RecurringDeductionRepository
+	RecurringEarningRepo         driverpayports.RecurringEarningRepository
+	RecurringShipmentService     *recurringshipmentservice.Service
+	ReportingService             *reportingservice.Service
+	RoutingGuideService          *routingguideservice.Service
+	SchedulingService            *schedulingservice.Service
+	ServiceFailureReasonCodeSvc  servicefailureports.ServiceFailureReasonCodeService
+	ServiceFailureSvc            servicefailureports.ServiceFailureService
 	ServiceTypeService           *servicetypeservice.Service
+	SettlementBatchRepo          driversettlementports.SettlementBatchRepository
+	SettlementControlService     *settlementcontrolservice.Service
+	ShipmentCommentService       shipmentports.ShipmentCommentService
+	ShipmentEventService         shipmenteventports.ShipmentEventService
+	ShipmentImportAssistant      shipmentports.ShipmentImportAssistantService `optional:"true"`
+	ShipmentRatingReviewService  shipmentports.RatingReviewService
+	ShipmentService              shipmentports.ShipmentService
 	ShipmentTypeService          *shipmenttypeservice.Service
+	TableChangeAlertService      *tablechangealertservice.Service
+	TableExportService           *tableexportservice.Service
+	TelematicsService            *telematicsservice.Service
+	TenderService                *tenderservice.Service
+	TrackingEventService         trackingeventports.TrackingEventService
 	TractorService               *tractorservice.Service
 	TrailerService               *trailerservice.Service
+	TriageBriefingService        *triagebriefingservice.Service
+	TriageConflictService        *triageconflictservice.Service
+	TriageCorrectionService      *triagecorrectionservice.Service
+	TriagePeekService            *triagepeekservice.Service
+	TriageRuleService            *triageruleservice.Service
+	TriageWorkService            *triageworkservice.Service
 	WorkerChecklistService       *workerchecklistservice.Service
 	WorkerCredentialService      *workercredentialservice.Service
 	WorkerDQFService             *workerdqfservice.Service
@@ -156,28 +393,68 @@ type ResolverParams struct {
 
 var shards = []*gqlexec.Shard{
 	accessorialchargeexec.Shard,
+	accountingsyncexec.Shard,
+	briefingexec.Shard,
+	captureexec.Shard,
 	carrierexec.Shard,
+	carriercapacityexec.Shard,
 	carrierintelligenceexec.Shard,
+	carriersettlementexec.Shard,
 	commodityexec.Shard,
 	customerexec.Shard,
+	customerpaymentexec.Shard,
+	detentionexec.Shard,
 	dispatchconsoleexec.Shard,
 	documenttypeexec.Shard,
+	driverportalexec.Shard,
+	driversettlementexec.Shard,
+	ediexec.Shard,
+	emailprofileexec.Shard,
 	equipmentmanufacturerexec.Shard,
 	equipmenttypeexec.Shard,
+	factoringexec.Shard,
+	factoringcompanyexec.Shard,
+	fiscalperiodexec.Shard,
 	fleetcodeexec.Shard,
 	fleetsafetyexec.Shard,
+	formulalibraryexec.Shard,
+	formulatemplateexec.Shard,
+	fuelpurchaseexec.Shard,
+	fuelsurchargeexec.Shard,
 	hazardousmaterialexec.Shard,
 	holdreasonexec.Shard,
+	homelayoutexec.Shard,
+	iftaexec.Shard,
+	inboundmessageexec.Shard,
+	inboundreplyexec.Shard,
+	invoiceexec.Shard,
+	invoiceadjustmentexec.Shard,
+	invoicedisputeexec.Shard,
+	journalentryexec.Shard,
+	journalreversalexec.Shard,
 	locationexec.Shard,
 	locationcategoryexec.Shard,
+	manualjournalexec.Shard,
+	orderexec.Shard,
 	performancereviewexec.Shard,
 	preludeexec.Shard,
+	rateexec.Shard,
+	recurringshipmentexec.Shard,
+	reportexec.Shard,
+	schedulingexec.Shard,
+	servicefailureexec.Shard,
+	servicefailurereasoncodeexec.Shard,
 	servicetypeexec.Shard,
 	sharedexec.Shard,
+	shipmentexec.Shard,
 	shipmenttypeexec.Shard,
+	tablechangealertexec.Shard,
+	telematicsexec.Shard,
 	tenantexec.Shard,
+	tenderexec.Shard,
 	tractorexec.Shard,
 	trailerexec.Shard,
+	triageexec.Shard,
 	usstateexec.Shard,
 	workerexec.Shard,
 	workerchecklistexec.Shard,
@@ -194,6 +471,66 @@ var shards = []*gqlexec.Shard{
 // byte for byte as the client sends it.
 var operations = []Operation{
 	{
+		Name:     "DeskAccountingConnection",
+		Hash:     "sha256:9e7692ed66d7fa2774c37601c0bbda367337c09761889ab4e3f4059a83923fe3",
+		Document: "query DeskAccountingConnection($integrationType: AccountingSystem!) { accountingSyncStatus(integrationType: $integrationType) { available connection { authMethod autoSync certificateExpiresAt consecutiveFailures externalBooksClosedThrough externalCompanyName externalHomeCurrency externalMultiCurrencyEnabled id lastCheckedAt lastErrorCategory lastErrorMessage lastSuccessAt lastWebhookAt ledgerGranularity ledgerOpeningBalancesSentAt pausedAt pausedReason refreshTokenAbsoluteExpiresAt setupStep status syncEnabledAt syncMode syncStartDate } integrationType providerName } }",
+	},
+	{
+		Name:     "DeskAccountingSyncSummary",
+		Hash:     "sha256:462bf36e94621a410b0ed765fbfb335825761dc1fcf17f8c46d3f7fe921edf99",
+		Document: "query DeskAccountingSyncSummary($integrationType: AccountingSystem!) { accountingSyncSummary(integrationType: $integrationType) { activeBackfill { alreadyQueuedCount enqueuedCount id objectTypes rangeEnd rangeStart status } attention { count errorCategory oldestQueuedAt resolution sampleRecordId status } counts { count status } } }",
+	},
+	{
+		Name:     "DeskAccountingMappingDetail",
+		Hash:     "sha256:420173af6c4055b02de922b0e62e94aa474d3aac9ae76e58a57ac46779025975",
+		Document: "fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappingDetail($id: ID, $integrationType: AccountingSystem!, $key: String, $optionsQuery: String, $recordId: ID, $targetType: AccountingMappingTargetType) { accountingMappingDetail( integrationType: $integrationType id: $id targetType: $targetType recordId: $recordId key: $key optionsQuery: $optionsQuery ) { mapping { ...DeskAccountingMappingFields } options { accountType externalId itemType label number } } }",
+	},
+	{
+		Name:     "DeskAccountingSyncRecord",
+		Hash:     "sha256:68c36e40139103b93edee12e4ac5b5878c00d580e10084d3fb034320870c9995",
+		Document: "fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecord($id: ID!) { accountingSyncRecord(id: $id) { dependsOnRecordId ...DeskAccountingSyncRecordFields } }",
+	},
+	{
+		Name:     "DeskAccountingSyncAttempts",
+		Hash:     "sha256:0d53536090376407a3310cff90284049a61271eab7325dfa5e3a73f9660319b0",
+		Document: "query DeskAccountingSyncAttempts($id: ID!) { accountingSyncAttempts(recordId: $id) { attemptNumber durationMs errorCategory outcome startedAt } }",
+	},
+	{
+		Name:     "DeskAccountingDriftFindings",
+		Hash:     "sha256:a54b182dd54767c095e8b81d3cb98c7c2e937cbbb34a6203d6994cb256006d1c",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingDriftFindings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingDriftFindingTable(integrationType: $integrationType, input: $input) { edges { node { currencyCode detail { objectId objectNumber objectType providerMinor trenovaMinor } detectedAt differenceMinor directions externalUrl id kind objectId objectNumber objectType partyName providerMinor providerModifiedAt providerModifiedBy providerState pushed resolution resolutionNote status trenovaMinor trenovaState } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskAccountingDriftOverview",
+		Hash:     "sha256:b05ee1f5a969d6a9a61ff366179a5138ec5c62f4f148543032b03292aec8b052",
+		Document: "query DeskAccountingDriftOverview($integrationType: AccountingSystem!) { accountingDriftOverview(integrationType: $integrationType) { checkError checkedAt currencyCode toleranceMinor } }",
+	},
+	{
+		Name:     "DeskAccountingInboundChanges",
+		Hash:     "sha256:aa0299012831680e57effe5d687df6b89bc00be98f6367d2da70d123909b5841",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskAccountingInboundChanges($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $integrationType: AccountingSystem!) { accountingInboundChangeTable(integrationType: $integrationType, input: $input) { edges { node { amountMinor currencyCode detectedAt externalNumber externalUrl id kind lines { amountMinor documentKind objectId objectNumber openMinor } methodName partyName partyObjectId providerModifiedBy reason referenceNumber resolution status txnDate } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskAccountingMappings",
+		Hash:     "sha256:6f9bf7a0925150a289ac0d86d302e448d935b383cb0bc11fe58b058d9c4f4492",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingMappingFields on AccountingMapping { candidates { externalId name reason score } confidence confirmedAt externalId externalName id providerKind reason required source state targetLabel targetType trenovaKey trenovaObjectId } query DeskAccountingMappings($after: String, $filter: AccountingMappingFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingMappings( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { node { ...DeskAccountingMappingFields } } pageInfo { ...DataTablePageInfoFields } } }",
+	},
+	{
+		Name:     "DeskAccountingMappingSummary",
+		Hash:     "sha256:3db823baa840d21940fbbd39de9d6328665112b8aa1aa415fa882b43383c475f",
+		Document: "query DeskAccountingMappingSummary($integrationType: AccountingSystem!) { accountingMappingSummary(integrationType: $integrationType) { canCompleteSetup connection { setupStep status } groups { confirmed proposed targetType unmatched } integrationType providerName requiredConfirmed requiredTotal } }",
+	},
+	{
+		Name:     "DeskAccountingSyncRecords",
+		Hash:     "sha256:42eb3cae5423bd6d5afaf9ce2ba5daddd795e6187e1e9fca379f35a54acc2f2c",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncRecords($after: String, $filter: AccountingSyncRecordFilterInput, $first: Int, $integrationType: AccountingSystem!) { accountingSyncRecords( integrationType: $integrationType first: $first after: $after filter: $filter ) { edges { node { ...DeskAccountingSyncRecordFields } } pageInfo { ...DataTablePageInfoFields } } }",
+	},
+	{
+		Name:     "DeskAccountingSyncObjectStates",
+		Hash:     "sha256:416c045ec72a670b82b02fe4e2157cce1f15716df43ba5cef544d95d2a79a85f",
+		Document: "fragment DeskAccountingSyncRecordFields on AccountingSyncRecord { attemptCount documentDate errorCategory externalDocNumber externalUrl id nextAttemptAt objectId objectNumber objectType operation queuedAt resolution skippedReason sourceEvent status syncedAt } query DeskAccountingSyncObjectStates($integrationType: AccountingSystem, $objectIds: [ID!]!) { accountingSyncObjectStates( objectIds: $objectIds integrationType: $integrationType ) { objectId objectType providerName record { ...DeskAccountingSyncRecordFields } } }",
+	},
+	{
 		Name:     "DeskCarrierCard",
 		Hash:     "sha256:e2c9ecb82adffabead4f5fa05fffda23b2d62edf912f359397b420922b8dda63",
 		Document: "query DeskCarrierCard($id: ID!) { carrier(id: $id) { addressLine1 addressLine2 carrierType city code complianceStatus contacts { email id isPrimary name phone receivesRateConfirmations title } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { coverageAmount effectiveDate expirationDate id isVerified policyNumber policyType providerName } intelReviewRequired intelRiskLevel mcNumber name notes paymentMethod paymentTermDays phone postalCode qualifiedAt remitToName safetyRating scac state { abbreviation } status w9OnFile } }",
@@ -205,8 +542,23 @@ var operations = []Operation{
 	},
 	{
 		Name:     "CarrierTable",
-		Hash:     "sha256:24890c58a1d854d5479367fa1e4b5e19d0421b6863081f334b23aef9c9ab6f78",
-		Document: "fragment CarrierContactFields on CarrierContact { businessUnitId carrierId createdAt email id isPrimary name organizationId phone receivesRateConfirmations title updatedAt version } fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy { businessUnitId carrierId coverageAmount createdAt effectiveDate expirationDate id isVerified organizationId policyNumber policyType providerName updatedAt version } fragment CarrierTableRowFields on Carrier { addressLine1 addressLine2 businessUnitId carrierType city code complianceStatus contacts { ...CarrierContactFields } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { ...CarrierInsurancePolicyFields } intelBlockingCount intelReviewRequired intelRiskLevel is1099Eligible mcNumber name notes organizationId paymentMethod paymentTermDays phone postalCode qualifiedAt remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitStateId remitToName safetyRating scac stateId status taxId taxIdType updatedAt version w9OnFile } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carriers(input: $input) { edges { node { ...CarrierTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:e174f777c9e13d072c2d92fd20e2ae26f63ec024bdf73b1a2f59d4765d4d9aa5",
+		Document: "fragment CarrierContactFields on CarrierContact { businessUnitId carrierId createdAt email id isPrimary name organizationId phone receivesRateConfirmations title updatedAt version } fragment CarrierInsurancePolicyFields on CarrierInsurancePolicy { businessUnitId carrierId coverageAmount createdAt effectiveDate expirationDate id isVerified organizationId policyNumber policyType providerName updatedAt version } fragment CarrierTableRowFields on Carrier { addressLine1 addressLine2 businessUnitId carrierType city code complianceStatus contacts { ...CarrierContactFields } createdAt dbaName disqualifiedReason dotNumber email externalId id insurancePolicies { ...CarrierInsurancePolicyFields } intelBlockingCount intelReviewRequired intelRiskLevel is1099Eligible mcNumber name notes organizationId paymentMethod paymentTermDays phone postalCode qualifiedAt remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitStateId remitToName safetyRating scac stateId status taxId taxIdType updatedAt version w9OnFile } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carriers(input: $input) { edges { node { ...CarrierTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskCarrierCapacityPostings",
+		Hash:     "sha256:e6f4ec2b0e5ff43af207b44beb03c61afff83b8ed1ab66f043eccb08ff3172bc",
+		Document: "query DeskCarrierCapacityPostings($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!, $openOnly: Boolean = false) { carrierCapacityPostings(input: $input, openOnly: $openOnly) { edges { node { availableFrom availableTo carrier { id name } carrierId destinationState { abbreviation id } destinationStateId equipmentType { code id } equipmentTypeId id originLocation { city id name } originLocationId originRadiusMiles originState { abbreviation id } originStateId rate rateMethod source truckCount version } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskCarrierIntelEvents",
+		Hash:     "sha256:c91c587f0b0be85cf357b59ab377e09f7fd900aa49a6312e5a9fe986be9b1b15",
+		Document: "query DeskCarrierIntelEvents($filter: CarrierIntelEventFilterInput, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { carrierIntelEvents(input: $input, filter: $filter) { edges { node { acknowledgedAt action carrierId category detectedAt dotNumber id resolution resolvedAt severity status subjectName subjectType summary } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskCarrierInvoiceMatches",
+		Hash:     "sha256:b2e27f1bf3aa74a288238f76fd584509351b8f65e6910d8dd1b03bde7fb8bf9c",
+		Document: "query DeskCarrierInvoiceMatches($carrierId: ID, $limit: Int, $offset: Int, $status: CarrierInvoiceMatchStatus) { carrierInvoiceMatches( status: $status carrierId: $carrierId limit: $limit offset: $offset ) { items { carrier { id name } carrierId carrierSettlementId createdAt currencyCode documentAiExtractionId ediCarrierInvoiceId expectedTotalMinor id invoiceNumber invoiceTotalMinor matchedVia resolutionNote resolvedAt status varianceMinor } } }",
 	},
 	{
 		Name:     "DeskCustomerCard",
@@ -214,34 +566,329 @@ var operations = []Operation{
 		Document: "query DeskCustomerCard($id: ID!) { customer(id: $id) { addressLine1 addressLine2 billingProfile { applyLateCharges autoBill billingCurrency billingCycle billingNotes creditBalance creditHoldReason creditLimit creditStatus documentTypes { id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit fuelSurchargeMode gracePeriodDays invoiceDelivery lateChargeRate paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber taxExempt } city code createdAt dotNumber id mcNumber name postalCode state { abbreviation } status updatedAt } }",
 	},
 	{
+		Name:     "DeskCustomerUpdatePreferences",
+		Hash:     "sha256:67b5061d1af80f67302ffd934af26b6ed51d38b528b832b7c030719fd1be6fad",
+		Document: "query DeskCustomerUpdatePreferences($id: ID!) { customer(id: $id) { emailProfile { id toRecipients } id name statusUpdatePreference statusUpdateRecipients } }",
+	},
+	{
 		Name:     "CustomerTable",
-		Hash:     "sha256:b03bdf83cbfd113e6933f80dbe8d2689721f4abd1057e18d8b5b0510ff57f510",
-		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:de01ee3d2d72d6ed6fffa3cd29795e39588d66cd2e5152d0b6c15212259984c7",
+		Document: "fragment CustomerBillingProfileFields on CustomerBillingProfile { applyLateCharges arAccountId autoApplyAccessorials autoApprove autoBill autoCreditHold autoMarkReadyToBill autoSendInvoiceOnGeneration autoTransfer billingCurrency billingCycle billingCycleAnchorDay billingCycleTimezone billingNotes businessUnitId countLateOnlyOnAppointmentStops createdAt creditBalance creditHoldAutomatic creditHoldReason creditLimit creditReviewedAt creditStatus customerId customerInvoicePrefix defaultBillerId documentTypes { code color documentCategory documentClassification id name } ediInvoiceEnabled emailInvoiceEnabled enforceCreditLimit enforceCustomerBillingReq factoringCompanyId fuelSurchargeMode fuelSurchargeProgramId gracePeriodDays hasBillingControlOverrides id invoiceCopies invoiceDelivery invoiceDetail invoiceNumberFormat lastBilledPeriodEnd lateChargeRate maxShipmentsPerInvoice minConsolidatedAmount organizationId paymentTerm requireBOLNumber requireDeliveryNumber requirePONumber revenueAccountId sectionBy sendPaymentReminders sendStatements splitBy taxExempt taxExemptNumber updatedAt validateCustomerRates version } fragment CustomerEmailProfileFields on CustomerEmailProfile { attachmentName bccRecipients businessUnitId ccRecipients comment createdAt customerId id includeShipmentDetail organizationId readReceipt subject toRecipients updatedAt version } fragment CustomerTableRowFields on Customer { addressLine1 addressLine2 allowConsolidation billingProfile { ...CustomerBillingProfileFields } businessUnitId city code consolidationPriority createdAt emailProfile { ...CustomerEmailProfileFields } exclusiveConsolidation externalId id isGeocoded latitude longitude name organizationId placeId postalCode stateId status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CustomerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { customers(input: $input) { edges { node { ...CustomerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskDetentionCard",
+		Hash:     "sha256:5e22566af62198850a899cd84d9aa656bf1b876b9172a5de3d25bae74ade4214",
+		Document: "query DeskDetentionCard($id: ID!) { detentionOccurrence(id: $id) { collectability { band chainValid factors { detail earned key label possible remedy } score summary } currentlyBillable { asOf billableAmount billableMinutes } evidence { id kind observedAt source summary } notices { channel deliveryStatus failureReason id kind recipients satisfiesRequirement scheduledFor sentAt wasAutomatic } occurrence { appointmentEnd appointmentStart approvedAt approvedBy { id name } arrivedAt arrivedLate billableAmount billableMinutes calculationTrace capApplied clockStartAt clockStopAt convertedToLayover createdAt currency customerId customerName departedAt disputeNote disputedAt driverPayAmount driverPayMinutes freeMinutesGranted freeTimeExpiresAt id isOpen lateByMinutes location { city id state { abbreviation id } } locationId locationName netMargin noticeDeadlineAt noticeDueAt noticeSentAt notificationStatus policySnapshot rawDwellMinutes requiresApproval roundedMinutes scheduleType shipmentId shipmentProNumber status stopId stopType suppressedByGate updatedAt waivedAmount waivedAt waivedBy { id name } waiverNote waiverReason } } }",
+	},
+	{
+		Name:     "DeskDetentionOccurrences",
+		Hash:     "sha256:e440a15abba4e51834c35a1270b786cd03f289789d5f58daf927ef21031a3dbc",
+		Document: "query DeskDetentionOccurrences($includeAwaitingApproval: Boolean, $proNumber: String, $shipmentId: ID, $urgency: DetentionDeskUrgency) { detentionDesk( includeAwaitingApproval: $includeAwaitingApproval urgency: $urgency shipmentId: $shipmentId proNumber: $proNumber ) { amountAtRisk billableMinutes minutesUntilFreeEnds minutesUntilNoticeDue noticeWindowOpen occurrence { arrivedAt currency customerName freeTimeExpiresAt id locationName noticeSentAt notificationStatus requiresApproval shipmentId shipmentProNumber status stopType } urgency } }",
+	},
+	{
+		Name:     "DeskShipmentTenders",
+		Hash:     "sha256:714a1a9b05dabe017be72309fad074801cd5f0967467a6b0e4bd3046b159e07a",
+		Document: "fragment CarrierReference on Carrier { code dotNumber id mcNumber name scac status } query DeskShipmentTenders($shipmentId: ID!, $shipmentMoveId: ID) { tendersByShipment(shipmentId: $shipmentId, shipmentMoveId: $shipmentMoveId) { acceptedOfferId bounceCount createdAt escalationRound id mode offers { carrier { ...CarrierReference } carrierId channel counterNeedsApproval counterRate expiresAt id rank rate rateMethod respondedAt responseSource sentAt status } shipmentMoveId status } }",
 	},
 	{
 		Name:     "DocumentTypeTable",
-		Hash:     "sha256:407941510e99bf8b3133b28178542bd908f312b90789fa0c2de2b976f57aa482",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DocumentTypeTableRowFields on DocumentType { businessUnitId code color createdAt description documentCategory documentClassification id isSystem name organizationId updatedAt version } query DocumentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { documentTypes(input: $input) { edges { node { ...DocumentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:3764a593a9d705bbbb6b7c0dce6a72b4e7601c2a131107c98caa7fc13d048fb4",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DocumentTypeTableRowFields on DocumentType { businessUnitId code color createdAt description documentCategory documentClassification id isSystem name organizationId updatedAt version } query DocumentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { documentTypes(input: $input) { edges { node { ...DocumentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskEdiAckHealth",
+		Hash:     "sha256:a7e88cdb8e4e743726ee86472b606459e634fe74bb3029dab9913fe2c2381f3b",
+		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiAckHealth($overdueAfterSeconds: Int, $partnerId: ID, $sinceHours: Int, $transactionSet: String) { ediAckHealth( partnerId: $partnerId transactionSet: $transactionSet overdueAfterSeconds: $overdueAfterSeconds sinceHours: $sinceHours ) { ackStatusCounts { count status } answersEverySet asOf overdueAfterSeconds overdueByPartner { messages { deliverySentAt deliveryStatus generatedAt id invoiceId shipmentId transactionControlNumber transactionSet } oldestGeneratedAt overdueCount partnerCode partnerId partnerName } overdueCount overdueNotListed partners { ackStatusCounts { count status } partnerCode partnerId partnerName } recentDeadLettered { ...DeskEdiMessageRowFields } since } }",
+	},
+	{
+		Name:     "DeskEdiInboundFile",
+		Hash:     "sha256:6e2a63b4048a0ccdbe441f3eab16eeca50e48a5e49298eb0e63569969683b9ee",
+		Document: "query DeskEdiInboundFile($id: ID!, $includeRaw: Boolean = false) { ediInboundFile(id: $id) { communicationProfileName file { ediPartnerId failureReason fileName id interchangeControlNumber isaReceiverId isaSenderId method partner { code id name } processedAt rawPurgedAt receivedAt sizeBytes status transactionCount } messageCount messages { ackLastError ackStatus direction generatedAt groupControlNumber id invoiceId segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } raw @include(if: $includeRaw) { sizeBytes text truncated } } }",
+	},
+	{
+		Name:     "DeskEdiMessage",
+		Hash:     "sha256:d426f43a247a5f45d31ade5564aba5bb948bcfd68bf25637f1e45389cda1e680",
+		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiMessage($id: ID!, $includeRaw: Boolean = false) { ediMessage(id: $id) { decoded diagnosticCount diagnostics { code elementPosition message path segmentId severity suggestedFix } message { ackMessageId ackReceivedAt deliveryLastAttemptAt deliveryRemotePath ...DeskEdiMessageRowFields } raw @include(if: $includeRaw) { sizeBytes text truncated } } }",
+	},
+	{
+		Name:     "DeskEdiPartnerCard",
+		Hash:     "sha256:8d8bba3f37b7e6e66d67fba5780b48af240ba09bae4c926a7a389cb93d439ef8",
+		Document: "fragment DeskEdiPartnerMessageFields on EdiMessage { ackLastError ackReceivedAt ackStatus deliveryAttempts deliveryLastAttemptAt deliveryLastError deliverySentAt deliveryStatus direction generatedAt id interchangeControlNumber status transactionSet } query DeskEdiPartnerCard($id: ID!) { ediPartnerCard(id: $id) { activity { ackStatusCounts { count status } scorecard { avgAckSeconds deadLetteredCount deliverySuccessRate failedCount outboundTotal overdueAckCount p95AckSeconds receivedCount sentCount } series { bucketSeconds bucketStart failedCount outboundCount receivedCount sentCount } seriesSince sets { count deadLetteredCount direction failedCount lastAt transactionSet } since } attention { deadLettered { ...DeskEdiPartnerMessageFields } oldestOverdueAt overdueAckAgeSeconds overdueAckCount overdueAcks { ...DeskEdiPartnerMessageFields } quarantinedFiles { failureReason fileName id receivedAt remotePath sizeBytes } } carriers { carrierCode carrierId carrierName isDefault scac } customer { code id name } lading { active { activatedAt errorCount exchanges { acknowledgment acknowledgmentWithin direction map transactionSet } id interchange { ourGroupCode ourId ourQualifier separators theirGroupCode theirId theirQualifier usage version } number readiness { failing ready tests } status warningCount } project { activeVersionId id shadowVersionId updatedAt } shadow { id number shadowUntil status } } mappings { counts { count entityType } profileId updatedAt } partner { code connection { acceptedAt capabilities { invoice loadTenderInbound loadTenderOutbound shipmentStatus } id method rejectedAt rejectionReason requestedAt revokedAt status suspendedAt } contactEmail contactName contactPhone country customerId description enabledForInbound enabledForOutbound id internalOrganization { id name } internalOrganizationId kind name status timezone updatedAt } readiness { completedCount items { complete key label } ready totalCount } transports { certificates { expired issuer notAfter notBefore readable role subject } credentials { key onFile required secret } lastPollAttemptAt lastPollError lastPollSuccessAt profile { config id method name status } } } }",
+	},
+	{
+		Name:     "DeskEdiTransfer",
+		Hash:     "sha256:2c4ee84cf1acf4ab1b28f3ed65dbd85da8e7f16188a02cf8fe5644158c606e5d",
+		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfer($id: ID!) { ediTransfer(id: $id) { canAccept transfer { canDecide charges { additional { amount charge method } freight other total } commodities { commodity pieces weight } pieces shipmentTypeLabel stops { address city location pieces postalCode sequence state type weight windowCloses windowOpens } temperatureMax temperatureMin weight ...DeskEdiTransferRowFields } unresolvedMappings { entityType source } } }",
+	},
+	{
+		Name:     "DeskEdiCarrierInvoices",
+		Hash:     "sha256:62983ca1db106053475f19bb620857b5a6f24ba26aad1fb8f2b6075505d4b7c0",
+		Document: "query DeskEdiCarrierInvoices($limit: Int, $offset: Int, $reconciliationStatus: String) { ediCarrierInvoices( reconciliationStatus: $reconciliationStatus limit: $limit offset: $offset ) { items { carrierId currencyCode id invoiceDate invoiceNumber proNumber reconciliationStatus shipmentId shipmentReference suggestedCarrier { id name } totalAmount varianceAmount } } }",
+	},
+	{
+		Name:     "DeskEdiInboundFiles",
+		Hash:     "sha256:51a4791ac5e00ff8f0acf0a817da638c51717c83e3208f499809df6b2ab2df08",
+		Document: "query DeskEdiInboundFiles($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediInboundFiles(input: $input) { edges { node { ediPartnerId failureReason fileName id interchangeControlNumber isaSenderId method partner { code id name } processedAt rawPurgedAt receivedAt sizeBytes status transactionCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskEdiMessages",
+		Hash:     "sha256:c5e65daad0cb298bdbbe3dc00c1d30260270016bb0dcf8027d4d9646e6f33f1a",
+		Document: "fragment DeskEdiMessageRowFields on EdiMessage { ackLastError ackStatus deliveryAttempts deliveryLastError deliverySentAt deliveryStatus direction ediPartnerId generatedAt groupControlNumber id inboundFileId interchangeControlNumber invoiceId partner { code id name } rawPurgedAt segmentCount shipmentId status transactionControlNumber transactionSet transferId x12Version } query DeskEdiMessages($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediMessages(input: $input) { edges { node { ...DeskEdiMessageRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskEdiPartners",
+		Hash:     "sha256:f2de71dabf489d78d222255c244c3c1432ab919ce90dcda076027c014d459e48",
+		Document: "query DeskEdiPartners($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediPartners(input: $input) { edges { node { code customerId enabledForInbound enabledForOutbound id internalOrganization { id name } kind name status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskEdiTransfers",
+		Hash:     "sha256:e64d2e2419ac810373726f449870b145904d6b152c788bd149e2db4e3501c18d",
+		Document: "fragment DeskEdiTransferRowFields on EdiTransfer { bol counterparty { code id name } customerLabel direction failureReason id inboundMessageId processedAt rejectionReason serviceTypeLabel sourceShipmentId status stopCount submittedAt targetShipmentId } query DeskEdiTransfers($direction: EdiTransferDirection!, $inboundFileId: ID, $includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { ediTransfers( input: $input direction: $direction inboundFileId: $inboundFileId ) { edges { node { ...DeskEdiTransferRowFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskTractorCard",
+		Hash:     "sha256:7e891cf8b78a2c790d256fc2a4d6f22a889904c19d0eef1b48a232741c3df9a1",
+		Document: "query DeskTractorCard($id: ID!) { tractor(id: $id) { code createdAt equipmentManufacturer { id name } equipmentType { code description id } externalId fleetCode { code id } fuelType id iftaQualified lastKnownLocation { id latitude longitude name } leaseEndDate leaseReference lessorName licensePlateNumber make model ownerWorker { firstName id lastName } ownershipType primaryWorker { firstName id lastName } registrationExpiry registrationNumber secondaryWorker { firstName id lastName } state { abbreviation } status vin year } }",
+	},
+	{
+		Name:     "DeskTrailerCard",
+		Hash:     "sha256:0a228b3ed6cf7d63b60e5ab74e5316d0db769b5c08ecec9ccf5df21e0e74682c",
+		Document: "query DeskTrailerCard($id: ID!) { trailer(id: $id) { code createdAt equipmentManufacturer { id name } equipmentType { code description id } externalId fleetCode { code id } id lastInspectionDate lastKnownLocation { id latitude longitude name } leaseEndDate leaseReference lessorName licensePlateNumber make maxLoadWeight model ownerWorker { firstName id lastName } ownershipType registrationExpiry registrationNumber registrationState { abbreviation } status vin year } }",
 	},
 	{
 		Name:     "EquipmentManufacturerTable",
-		Hash:     "sha256:1ad59b9754cf4b8c511c8cf3af0762a6da6adf252d5bb3fd05b50b349bcdaec7",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer { businessUnitId createdAt description id name organizationId status updatedAt version } query EquipmentManufacturerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentManufacturers(input: $input) { edges { node { ...EquipmentManufacturerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:22cf7903ac1f555f7aba344af3e36c72abfa5ae920cbe4770359580bc3cec1fa",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableRowFields on EquipmentManufacturer { businessUnitId createdAt description id name organizationId status updatedAt version } query EquipmentManufacturerTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentManufacturers(input: $input) { edges { node { ...EquipmentManufacturerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskVehiclePositions",
+		Hash:     "sha256:0c986c67a9359bf90e930fca12fc8de79ac3c8ab034a876baddb44e457941232",
+		Document: "query DeskVehiclePositions($maxAgeSeconds: Int, $tractorIds: [ID!]) { vehiclePositions(maxAgeSeconds: $maxAgeSeconds, tractorIds: $tractorIds) { engineState formattedLocation latitude longitude primaryWorkerName recordedAt speedMph tractorCode tractorId } }",
 	},
 	{
 		Name:     "TractorTable",
-		Hash:     "sha256:19329f9543d8714fd002b65bb9f04fcacc89b404bbb21d62cd6f42b21b4553e5",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TractorTableRowFields on Tractor { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId fuelType id iftaQualified lastKnownLocationId lastKnownLocationName licensePlateNumber make model organizationId primaryWorker { ...WorkerTableReferenceFields } primaryWorkerId registrationExpiry registrationNumber secondaryWorker { ...WorkerTableReferenceFields } secondaryWorkerId state { ...UsStateTableFields } stateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } fragment WorkerTableReferenceFields on Worker { firstName id lastName wholeName } query TractorTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $includeWorkerDetails: Boolean = true, $input: DataTableConnectionInput!) { tractors( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails includeWorkerDetails: $includeWorkerDetails ) { edges { node { ...TractorTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:00df50eb815d6b02070a6286bffb003189a33b83a81cc40f26b5253e78832a71",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TractorTableRowFields on Tractor { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId fuelType id iftaQualified lastKnownLocationId lastKnownLocationName licensePlateNumber make model organizationId primaryWorker { ...WorkerTableReferenceFields } primaryWorkerId registrationExpiry registrationNumber secondaryWorker { ...WorkerTableReferenceFields } secondaryWorkerId state { ...UsStateTableFields } stateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } fragment WorkerTableReferenceFields on Worker { firstName id lastName wholeName } query TractorTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $includeWorkerDetails: Boolean = true, $input: DataTableConnectionInput!) { tractors( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails includeWorkerDetails: $includeWorkerDetails ) { edges { node { ...TractorTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "TrailerTable",
-		Hash:     "sha256:f5ca58d5c5853b2e6ac5dab10cf884d1c5ccce29cda55b95957215797da21f42",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TrailerTableRowFields on Trailer { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId id lastInspectionDate lastKnownLocationId lastKnownLocationName licensePlateNumber make maxLoadWeight model organizationId registrationExpiry registrationNumber registrationState { ...UsStateTableFields } registrationStateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } query TrailerTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { trailers( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails ) { edges { node { ...TrailerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:58bff7dc046d171e503b8c1dfd9fa27283c8092722d8c8728ec97a180ccee5f0",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentManufacturerTableFields on EquipmentManufacturer { id name } fragment EquipmentTypeTableFields on EquipmentType { code color id } fragment FleetCodeTableFields on FleetCode { code color id } fragment TrailerTableRowFields on Trailer { businessUnitId code createdAt customFields equipmentManufacturer { ...EquipmentManufacturerTableFields } equipmentManufacturerId equipmentType { ...EquipmentTypeTableFields } equipmentTypeId externalId fleetCode { ...FleetCodeTableFields } fleetCodeId id lastInspectionDate lastKnownLocationId lastKnownLocationName licensePlateNumber make maxLoadWeight model organizationId registrationExpiry registrationNumber registrationState { ...UsStateTableFields } registrationStateId status updatedAt version vin year } fragment UsStateTableFields on UsState { abbreviation id name } query TrailerTable($includeEquipmentDetails: Boolean = true, $includeFleetDetails: Boolean = true, $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { trailers( input: $input includeEquipmentDetails: $includeEquipmentDetails includeFleetDetails: $includeFleetDetails ) { edges { node { ...TrailerTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "EquipmentTypeTable",
-		Hash:     "sha256:434594d9f9c59a4377be5e555d4baa8f80e86e8a0eea9ec679c7cb7ba3b95f05",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:688c2aa2757f0eafb2e33b1bcabb78f8722b669ea8adf8d000f441123b4dbda3",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment EquipmentTypeConfigurationRowFields on EquipmentType { businessUnitId class code color createdAt description id interiorLength organizationId status updatedAt version } query EquipmentTypeTable($classes: [EquipmentClass!], $includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { equipmentTypes(input: $input, classes: $classes) { edges { node { ...EquipmentTypeConfigurationRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskServiceFailureCard",
+		Hash:     "sha256:7d4323708bcb3efbf221681a901f21a94388b1449b2fc0223369ad3e425cc422",
+		Document: "query DeskServiceFailureCard($id: ID!) @requiresRead(kind: \"service_failure_reason_code\") @requiresRead(kind: \"shipment\") { serviceFailure(id: $id) { actualArrival createdAt createdBy { id name } detectedAt gracePeriodMinutes id internalNotes lateMinutes notes number reasonCode { category code description id label } resolvedAt resolvedBy { id name } reviewedAt reviewedBy { id name } scheduledCutoff shipment { bol customer { code id name } id proNumber } shipmentId source status stop { id location { addressLine1 city code id latitude longitude name postalCode state { abbreviation } } sequence type } stopType type updatedAt voidReason voidedAt voidedBy { id name } x12ExceptionCode x12ReasonCodeOverride x12StatusCodeOverride } }",
+	},
+	{
+		Name:     "ServiceFailureReasonCodeTable",
+		Hash:     "sha256:e76cd043f89be55ce3659c8bd8a4cc485911bfdbec4bb06e07c6ace89e2bcbf1",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceFailureReasonCodeTableRowFields on ServiceFailureReasonCode { active appliesTo businessUnitId category code createdAt defaultExceptionCode defaultNote defaultReasonCode defaultStatusCode description externalMap id label organizationId sortOrder updatedAt version } query ServiceFailureReasonCodeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { serviceFailureReasonCodes(input: $input) { edges { node { ...ServiceFailureReasonCodeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "ServiceFailureTable",
+		Hash:     "sha256:d2aab2fb2579a0936c1a944e42adc493d62291e38721b587f8641fb77521dfa8",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceFailureTableRowFields on ServiceFailure { actualArrival detectedAt gracePeriodMinutes id internalNotes lateMinutes notes number reasonCode { code id label } reasonCodeId scheduledCutoff shipment { bol id proNumber } shipmentId shipmentMoveId source status stop { id location { city code id name state { abbreviation } } locationId sequence type } stopId stopType type version x12ExceptionCode x12ReasonCodeOverride x12StatusCodeOverride } query ServiceFailureTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!, $shipmentId: ID) { serviceFailures(input: $input, shipmentId: $shipmentId) { edges { node { ...ServiceFailureTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFactoringReadiness",
+		Hash:     "sha256:bd784b36bf1d48d076c04f024523a62ec71faec6ed5c2eeb4eb1aa0d5d2744f3",
+		Document: "fragment DeskFactoringInvoiceStateFields on FactoringInvoiceState { checks { code documentTypeId documentTypeName fix message passed shipmentId shipmentPro } customerId evaluatedAt factoringCompanyId failedChecks invoiceId openBalanceMinor readySince verdict } query DeskFactoringReadiness($invoiceId: ID!) { factoringReadiness(invoiceId: $invoiceId) { ...DeskFactoringInvoiceStateFields } }",
+	},
+	{
+		Name:     "DeskFactoringRemittance",
+		Hash:     "sha256:a1758dbf17ecd35d86c69e6bcaa3531d61ff95516b411c4a9bc0932bd2e4839e",
+		Document: "fragment DeskFactoringRemittanceFields on FactoringRemittance { appliedAt appliedCount currencyCode defaultKind discardReason error exceptionCount factoringCompany { code id name } factoringCompanyId fileName id lineCount matchedCount remittedOn source sourceFormat stagedAt status totalCashMinor unmappedHeaders version } query DeskFactoringRemittance($id: ID!, $matchStatuses: [FactoringRemittanceMatchStatus!]) { factoringRemittance(id: $id) { lines(matchStatuses: $matchStatuses) { advanceMinor cashMinor cells debtorName error faceMinor factorReference feeMinor id ignoredReason invoiceNumber kind matchStatus matchedBy matchedInvoiceNumber matchedSubmissionId occurredOn reason reserveEntryId reserveMinor rowNumber score submissionItemId suggestions { invoiceNumber itemId reason score submissionId } } ...DeskFactoringRemittanceFields } }",
+	},
+	{
+		Name:     "FactoringReserveBalance",
+		Hash:     "sha256:6fea8f65179421c995c0898686cd9f6fe366fc8d1ca2145a0149edb64b3a6af2",
+		Document: "query FactoringReserveBalance($factoringCompanyId: ID!) { factoringReserveBalance(factoringCompanyId: $factoringCompanyId) { advancedMinor chargedBackMinor entryCount factoringCompanyId feeMinor lastOccurredOn liabilityMinor releasedMinor reserveMinor } }",
+	},
+	{
+		Name:     "DeskFactoringSubmission",
+		Hash:     "sha256:5c7730826d90bc3fff0c3a99174b4ba7e5666010b599b8397c89ce234c3bcda6",
+		Document: "fragment DeskFactoringSubmissionFields on FactoringSubmission { attempts cancelReason createdAt currencyCode expectedAdvanceMinor expectedFeeMinor expectedReserveMinor faceMinor factoringCompany { code id name } factoringCompanyId failedAt id invoiceCount lastError number sentAt status transportMethod transportTarget version } query DeskFactoringSubmission($id: ID!) { factoringSubmission(id: $id) { items { advanceMinor chargebackReason chargedBackOn customerId expectedAdvanceMinor expectedDays expectedFeeMinor expectedReserveMinor faceMinor feeMinor fundedOn id invoiceId invoiceNumber packetDocumentId rejectionReason reserveMinor settledOn status } ...DeskFactoringSubmissionFields } }",
+	},
+	{
+		Name:     "DeskFactoringAgreements",
+		Hash:     "sha256:5830bdf2146c822817a6213365acfae32c0e49de6f9809559715950ad7b5f746",
+		Document: "query DeskFactoringAgreements($factoringCompanyId: ID!) { factoringAgreements(factoringCompanyId: $factoringCompanyId) { accountingTreatment advanceRateBp chargebackWindowDays documentTypes { id name } effectiveFrom effectiveTo factoringCompanyId feeTiers { daysFrom daysTo flatMinor rateBp } fundingDays id minimumFeeMinor recourse reserveRateBp status submissionTime } }",
+	},
+	{
+		Name:     "DeskFactoringNoas",
+		Hash:     "sha256:c7ec705200813d787785923c72ea3d415f0f8ab466b28215380098c3d4eac9f5",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskFactoringNoas($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringNoas(input: { table: $input }) { edges { node { acknowledgedAt customer { code id name } customerId expiresAt factoringCompany { code id name } factoringCompanyId id releaseReason releasedAt sentAt sentTo status version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFactoringInvoiceStates",
+		Hash:     "sha256:92d03730aa78c029adcee2868556193c3bbe6b357f66e81de304984258d13cba",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringInvoiceStateFields on FactoringInvoiceState { checks { code documentTypeId documentTypeName fix message passed shipmentId shipmentPro } customerId evaluatedAt factoringCompanyId failedChecks invoiceId openBalanceMinor readySince verdict } query DeskFactoringInvoiceStates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringInvoiceStates(input: { table: $input }) { edges { node { ...DeskFactoringInvoiceStateFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "FactoringSummary",
+		Hash:     "sha256:a3630012353a56eda687dfdff013185b2e091e3497b0c464995bbecfc536c3ae",
+		Document: "query FactoringSummary { factoringSummary { chargebacksDue { amountMinor count } funded { amountMinor count } notReady { amountMinor count } ready { amountMinor count } readyUnsubmitted { amountMinor count } reserveHeld { amountMinor count } submitted { amountMinor count } } }",
+	},
+	{
+		Name:     "DeskFactoringRemittances",
+		Hash:     "sha256:e00967a04762587588d0ba73f2636f8f830ffb12670f7f0e608fbd5eb423fd2e",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringRemittanceFields on FactoringRemittance { appliedAt appliedCount currencyCode defaultKind discardReason error exceptionCount factoringCompany { code id name } factoringCompanyId fileName id lineCount matchedCount remittedOn source sourceFormat stagedAt status totalCashMinor unmappedHeaders version } query DeskFactoringRemittances($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringRemittances(input: { table: $input }) { edges { node { ...DeskFactoringRemittanceFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFactoringSubmissions",
+		Hash:     "sha256:54e69d35a3b9d125f240c763b46b78371b72e4b854af77b00fd9d507199ea76c",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment DeskFactoringSubmissionFields on FactoringSubmission { attempts cancelReason createdAt currencyCode expectedAdvanceMinor expectedFeeMinor expectedReserveMinor faceMinor factoringCompany { code id name } factoringCompanyId failedAt id invoiceCount lastError number sentAt status transportMethod transportTarget version } query DeskFactoringSubmissions($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { factoringSubmissions(input: { table: $input }) { edges { node { ...DeskFactoringSubmissionFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFormulaLibraryCard",
+		Hash:     "sha256:eecb1fcaff2c172afd10f935e5c97821076fd74e9c71445245e5f63044f62512",
+		Document: "query DeskFormulaLibraryCard($id: ID!) { formulaLibrary(id: $id) { approvedAt approvedById createdAt currentVersionNumber description id imports { libraryId path versionNumber } name path reviewComment source sourceLibraryId sourceVersionNumber status submittedAt submittedById testCount updatedAt version } }",
+	},
+	{
+		Name:     "DeskFormulaTemplateCard",
+		Hash:     "sha256:08f1c28cd04da15bf54108d9f9960de19e39f58b50b31842bf232c893d051c78",
+		Document: "query DeskFormulaTemplateCard($id: ID!) { formulaTemplate(id: $id) { approvedAt approvedById createdAt currentVersionNumber description id imports { libraryId path versionNumber } inputs { default descriptor doc name required type } metadata name reviewComment source sourceTemplateId sourceVersionNumber status submittedAt submittedById testCount updatedAt usageCount version } }",
+	},
+	{
+		Name:     "DeskFormulaLibraries",
+		Hash:     "sha256:bf01586a3b00ef79c4e8e634dbbe7f9ff72bdacce21a367ad0835b9b75d06602",
+		Document: "query DeskFormulaLibraries($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaLibraries(input: $input) { edges { node { currentVersionNumber description id name path status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFormulaTemplates",
+		Hash:     "sha256:f478de9c3ce2962b7fe1e2588b24594c4bcc05e433a8105109df87e6209b16eb",
+		Document: "query DeskFormulaTemplates($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { formulaTemplates(input: $input) { edges { node { currentVersionNumber description id name status testCount } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFuelCards",
+		Hash:     "sha256:ef5a5ccaaf8049f3b8ca73c93523ef6c1762b08767703922c50ca33d5505d146",
+		Document: "query DeskFuelCards($includeTotalCount: Boolean = false, $input: FuelCardsInput!) { fuelCards(input: $input) { edges { node { assignedTractor { code id } assignedTractorId assignedWorker { id wholeName } assignedWorkerId cancelledAt discoveredAt expiresAt id label lastFour provider status } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskIftaJurisdictions",
+		Hash:     "sha256:c6b2439e792f8fc14711df7e41a9a1059a6580b37f3529fbc1215d65b935025e",
+		Document: "query DeskIftaJurisdictions($activeOnly: Boolean = false, $countryCode: String, $membersOnly: Boolean = false) { iftaJurisdictions( membersOnly: $membersOnly countryCode: $countryCode activeOnly: $activeOnly ) { code countryCode id isIftaMember name } }",
+	},
+	{
+		Name:     "DeskIftaMileageEntries",
+		Hash:     "sha256:d4c7d9a6daa4e52b093083079b58fb5ba700d50a38a347f6e42303ebe1d72de5",
+		Document: "query DeskIftaMileageEntries($includeTotalCount: Boolean = false, $input: IFTAMileageEntriesInput!) { iftaMileageEntries(input: $input) { edges { node { id jurisdiction { code id } jurisdictionId loaded miles notes quarter shipmentMoveId source tractor { code id } tractorId traveledAt year } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskIftaReturns",
+		Hash:     "sha256:978eefdb823fac0f18988a585b8b13b27f30c6b6e88660c6eed8748b5ba9d6bb",
+		Document: "query DeskIftaReturns($includeTotalCount: Boolean = false, $input: IFTAReturnsInput!) { iftaReturns(input: $input) { edges { node { amendmentNumber currencyCode filedAt filingReference finalizedAt id netDue problems { code fuelType jurisdictionCode message } quarter status totalGallons totalMiles totalTaxPaidGallons year } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFuelPurchaseImports",
+		Hash:     "sha256:8bdb70f94dc8df2e84e909022615c82da5b96e1cf1ecf12bb24d73d425f8bf10",
+		Document: "query DeskFuelPurchaseImports($includeTotalCount: Boolean = false, $input: FuelPurchaseImportsInput!) { fuelPurchaseImports(input: $input) { edges { node { committedAt committedCount error errorCount fileName id origin provider rowCount stagedAt status summary { alreadyImportedCount duplicateInFileCount newCount totalAmount totalGallons } } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFuelPurchases",
+		Hash:     "sha256:ae04af3f795b801602226248e18b5053e4a492fddb76489141e22f58f12144f2",
+		Document: "query DeskFuelPurchases($includeTotalCount: Boolean = false, $input: FuelPurchasesInput!) { fuelPurchases(input: $input) { edges { node { cardLastFour currencyCode fuelCardId fuelType gallons id importBatchId jurisdiction { code id } jurisdictionId purchasedAt quantity quantityUnit source taxPaid totalAmount tractor { code id } tractorId transactionReference vendor vendorCity worker { id wholeName } workerId } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "HomeLayout",
+		Hash:     "sha256:54555d91b387c7e74269ce62063e35106cd2b8291936c35a3d0642268410856f",
+		Document: "fragment HomeLayoutFields on HomeLayout { canCustomize density locked presetId presetName schemaVersion source version widgets { ...HomeWidgetFields } } fragment HomeWidgetFields on HomeWidget { config { cannedKey chartId columnId dashboardId definitionId limit metric metrics text windowDays } h id key title w } query HomeLayout { homeLayout { ...HomeLayoutFields } }",
+	},
+	{
+		Name:     "DeskInboundMessage",
+		Hash:     "sha256:016e6892c15eaa8777f52b0eaf4b4d5fe92479680c97fcbda10e3d9a12549b9a",
+		Document: "query DeskInboundMessage($id: ID!) { inboundMessage(id: $id) { actions { createdShipment { id } done exceptionKind id kind stopsDecision } attachments { contentType documentId failureText fileName filedAs filedShipmentId id kind pageCount } awaitingReply { until } classification confidence conflicts { attachmentId existingAmount existingDocumentId existingShipment { id } id kind newAmount resolution } dueAt failureText fromAddress fromName id loadDraft { fields { key value } source } mailbox { address name } mailboxId matchReason matchedCarrierId matchedCustomerId matchedShipmentId needsReview ownerId receivedAt replyDraft { body draftedByNova subject toAddress } reviewNote snooze { documentTypeId event until watchShipment { id } } status subject textBody threadKey toAddresses } }",
+	},
+	{
+		Name:     "DeskCaptureBatches",
+		Hash:     "sha256:8fd9ddb9d88549f4e0cb5ed13d326e969be39ddcc10c8050bfc4f6e0cd7645e8",
+		Document: "fragment DeskCaptureBatchFields on CaptureBatch { createdAt failureMessage filedItemCount id isEditable itemCount items { detectedKind failureMessage filedId filedType id pageCount position status suggestedDocumentTypeId suggestedId suggestedType suggestionConfidence suggestionReason version } jobName openItemCount receivedPageCount source sourceName status version } query DeskCaptureBatches($input: CaptureBatchesInput!) { captureBatches(input: $input) { edges { node { ...DeskCaptureBatchFields } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskCaptureBatch",
+		Hash:     "sha256:40c5149d4636da2a4ce1517fe6bc433598ea3431591644b8b62fe861f50416b1",
+		Document: "fragment DeskCaptureBatchFields on CaptureBatch { createdAt failureMessage filedItemCount id isEditable itemCount items { detectedKind failureMessage filedId filedType id pageCount position status suggestedDocumentTypeId suggestedId suggestedType suggestionConfidence suggestionReason version } jobName openItemCount receivedPageCount source sourceName status version } query DeskCaptureBatch($id: ID!) { captureBatch(id: $id) { ...DeskCaptureBatchFields } }",
+	},
+	{
+		Name:     "DeskEmailProfiles",
+		Hash:     "sha256:1851c9ccd67faf363b4c46c288e03d5dbdbe84132b8e7a8bd1348f61ab24cbb2",
+		Document: "query DeskEmailProfiles($input: DataTableConnectionInput!) { emailProfiles(input: $input) { edges { node { description id name replyToEmail senderEmail senderName status } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskInboundMessages",
+		Hash:     "sha256:eb1452916c4ec0f544584a2fb19703947e7822be96eae65ed0974547fb4b8591",
+		Document: "query DeskInboundMessages($input: InboundMessagesInput!) { inboundMessages(input: $input) { edges { node { attachmentCount classification confidence dueAt fromAddress fromName id mailbox { address name } mailboxId matchReason matchedCustomerId matchedShipmentId needsReview ownerId preview receivedAt status subject threadCount threadKey } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "TriageAssignees",
+		Hash:     "sha256:e2414df1870c17c547f73f2befc21285cbf55c5af765b1977d1863f55e99a6f7",
+		Document: "fragment TriageUserFields on User { id name thumbnailUrl username } query TriageAssignees { triageAssignees { user { ...TriageUserFields } waiting } }",
+	},
+	{
+		Name:     "TriageSettings",
+		Hash:     "sha256:77a40f1d9dd2cac2182abc1bd45a1b2b83400969bcf322869a7c329607fca2ea",
+		Document: "fragment TriageUserFields on User { id name thumbnailUrl username } query TriageSettings { triageSettings { endOfDayMinute onCallUser { ...TriageUserFields } onCallUserId timezone version } }",
+	},
+	{
+		Name:     "TodaysBriefing",
+		Hash:     "sha256:65f37d12e5d9c0d23e805a11cf6299ea753996a33e88ac4ebebc9d1c882091d0",
+		Document: "fragment BriefingFields on Briefing { briefingDate headline id narrated readAt roleKey sections { body items { label path value } key path read summary title } status withheldSections { key partial title } } query TodaysBriefing($input: TodaysBriefingInput!) { todaysBriefing(input: $input) { ...BriefingFields } }",
+	},
+	{
+		Name:     "DeskInvoiceDetail",
+		Hash:     "sha256:069d2dc8e358639942c0e5b64e52245e504037875c935a0de73a48c1709ba2c9",
+		Document: "query DeskInvoiceDetail($id: ID!) { invoice(id: $id) { appliedAmount billToCity billToCode billToName billToState billType currencyCode customerId disputeStatus dueDate ediSendStatus id invoiceDate isAdjustmentArtifact lastEdiError lastSendError lines { accessorialChargeId amount chargeCode description id lineNumber quantity shipmentProNumber type unitPrice } memo number openBalance orderId orderNumber otherAmount paymentTerm pdfDocumentId postedAt remittanceInstructions scope sendStatus sentAt serviceDate settlementStatus shipmentBol shipmentCount shipmentId shipmentProNumber status subtotalAmount supersededByInvoiceId supersedesInvoiceId totalAmount voidReason voidedAt } }",
+	},
+	{
+		Name:     "DeskInvoiceAdjustmentCard",
+		Hash:     "sha256:253123be7b2061be0e4cce9fa11fb3fa66c6aba1faef22e7199ad99c85918860",
+		Document: "query DeskInvoiceAdjustmentCard($id: ID!) { invoiceAdjustment(id: $id) { approvalRequired approvalStatus creditMemoInvoiceId creditTotalAmount executionError id kind lines { creditAmount creditQuantity description id lineNumber originalLineId rebillAmount rebillQuantity remainingEligibleAmount } originalInvoiceId policyReason reason rebillStrategy rebillTotalAmount rejectionReason replacementInvoiceId status submittedAt supportingDocumentIds } }",
+	},
+	{
+		Name:     "DeskInvoices",
+		Hash:     "sha256:c9af45dcf534adb10da4b10a76f78b3b35d72e2121e892e0645cdcd240de6934",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskInvoices($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { invoices(input: $input) { edges { node { billToName billType currencyCode customerId disputeStatus dueDate id invoiceDate number settlementStatus shipmentProNumber status totalAmount } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskInvoiceDisputes",
+		Hash:     "sha256:33201d434cd44727380c5e0f76fca31c8b86740337f7579d3c75934f9c43351f",
+		Document: "query DeskInvoiceDisputes($invoiceIds: [ID!]!) { invoiceDisputes(invoiceIds: $invoiceIds) { customerId disputedAmount id invoiceId notes openedAt reasonCode resolution resolutionAdjustmentId resolutionNotes resolvedAt status } }",
+	},
+	{
+		Name:     "DeskJournalEntryCard",
+		Hash:     "sha256:19b6ca90530f874add30a452d7613c9f3f904b1e4d3bbf03a9304dec06136629",
+		Document: "fragment DeskJournalCardEntryFields on JournalEntry { accountingDate approvedAt createdAt description entryNumber entryType id isApproved isAutoGenerated isPosted isReversal postedAt requiresApproval reversalDate reversalReason status totalCredit totalDebit } fragment DeskJournalCardLineFields on JournalCardLine { accountCode accountName category creditAmount customerId customerName debitAmount description glAccountId lineNumber locationId locationName } fragment DeskJournalCardPeriodFields on FiscalPeriod { closedAt endDate id name periodNumber startDate status } fragment DeskJournalCardPersonFields on User { id name } fragment DeskJournalCardPostingFields on JournalCardPosting { accountingDate period { ...DeskJournalCardPeriodFields } refusal } query DeskJournalEntryCard($id: ID!) @requiresRead(kind: \"fiscal_period\") { journalEntryCard(id: $id) { approvedBy { ...DeskJournalCardPersonFields } createdBy { ...DeskJournalCardPersonFields } entry { approvalNotes entryDate fiscalPeriodId referenceId referenceNumber referenceType rejectedAt rejectionReason reversalOfId reversedById ...DeskJournalCardEntryFields } lines { isReconciled ...DeskJournalCardLineFields } period { ...DeskJournalCardPeriodFields } postedBy { ...DeskJournalCardPersonFields } posting { ...DeskJournalCardPostingFields } rejectedBy { ...DeskJournalCardPersonFields } reversal { approvedAt cancelReason createdAt id postedAt reasonCode reasonText rejectionReason requestedAccountingDate status } reversalOf { ...DeskJournalCardEntryFields } reversalRequestedBy { ...DeskJournalCardPersonFields } reversedBy { ...DeskJournalCardEntryFields } source { batchNumber id sourceDocumentNumber sourceEventType sourceObjectId sourceObjectType status } } }",
+	},
+	{
+		Name:     "DeskManualJournalCard",
+		Hash:     "sha256:1c91df8041f2edb76527ad3a0a8d2d17411bd31c785ff3aa4972d6552da2226f",
+		Document: "fragment DeskJournalCardEntryFields on JournalEntry { accountingDate approvedAt createdAt description entryNumber entryType id isApproved isAutoGenerated isPosted isReversal postedAt requiresApproval reversalDate reversalReason status totalCredit totalDebit } fragment DeskJournalCardLineFields on JournalCardLine { accountCode accountName category creditAmount customerId customerName debitAmount description glAccountId lineNumber locationId locationName } fragment DeskJournalCardPeriodFields on FiscalPeriod { closedAt endDate id name periodNumber startDate status } fragment DeskJournalCardPersonFields on User { id name } fragment DeskJournalCardPostingFields on JournalCardPosting { accountingDate period { ...DeskJournalCardPeriodFields } refusal } query DeskManualJournalCard($id: ID!) @requiresRead(kind: \"fiscal_period\") { manualJournalCard(id: $id) { approvedBy { ...DeskJournalCardPersonFields } cancelledBy { ...DeskJournalCardPersonFields } createdBy { ...DeskJournalCardPersonFields } entries { ...DeskJournalCardEntryFields } journal { accountingDate approvedAt cancelReason cancelledAt createdAt currencyCode description id isBalanced postedBatchId reason rejectedAt rejectionReason requestNumber status totalCredit totalDebit updatedAt } lines { ...DeskJournalCardLineFields } postedAt postedBy { ...DeskJournalCardPersonFields } posting { ...DeskJournalCardPostingFields } rejectedBy { ...DeskJournalCardPersonFields } requestedPeriod { ...DeskJournalCardPeriodFields } } }",
+	},
+	{
+		Name:     "DeskFiscalPeriods",
+		Hash:     "sha256:c22d5b0498f147c9c963063c7884f23945675a97c198f3042a31c42176ed3276",
+		Document: "query DeskFiscalPeriods($input: DataTableConnectionInput!) { fiscalPeriods(input: $input) { edges { node { closedAt endDate fiscalYearId id isAdjusting lockedAt name periodNumber periodType reopenReason reopenedAt startDate status } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskJournalEntries",
+		Hash:     "sha256:bd92550ddfea9ad1b863ec925f8a74f5092f104f809350e1bdb23051ef59523d",
+		Document: "query DeskJournalEntries($input: DataTableConnectionInput!) { journalEntries(input: $input) { edges { node { accountingDate description entryDate entryNumber entryType fiscalPeriodId id isAutoGenerated isReversal referenceNumber referenceType status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskJournalReversals",
+		Hash:     "sha256:382e6ca816a39498faeaeaa777da093470eefbdb85add044b97019f75e1b18fe",
+		Document: "query DeskJournalReversals($input: DataTableConnectionInput!) { journalReversals(input: $input) { edges { node { approvedAt cancelReason createdAt id originalJournalEntryId postedAt reasonCode reasonText rejectionReason requestedAccountingDate resolvedFiscalPeriodId reversalJournalEntryId status } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DeskManualJournals",
+		Hash:     "sha256:2b8491c72820af80533bbfa7b71e23e336b13954455e017f1fa0b56ed556be14",
+		Document: "query DeskManualJournals($input: DataTableConnectionInput!) { manualJournals(input: $input) { edges { node { accountingDate approvedAt cancelReason createdAt currencyCode description id isBalanced postedBatchId reason rejectionReason requestNumber requestedFiscalPeriodId status totalCredit totalDebit } } pageInfo { endCursor hasNextPage } } }",
 	},
 	{
 		Name:     "DeskLocationCard",
@@ -250,48 +897,218 @@ var operations = []Operation{
 	},
 	{
 		Name:     "LocationTable",
-		Hash:     "sha256:db0953dee7cb9ece4aa05feb18d26f2986a6636cc3ad0b168e41c7ece0e7bd43",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationTableRowFields on Location { addressLine1 addressLine2 businessUnitId city code createdAt description id isGeocoded latitude locationCategory { color id name } locationCategoryId longitude name organizationId placeId postalCode state { abbreviation id name } stateId status updatedAt version } query LocationTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locations(input: $input) { edges { node { ...LocationTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:2d5ae8c4d8279f1da1a6583bb2bd8b176ed02b1fd1a9f16536d01e7fee7bcdd0",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationTableRowFields on Location { addressLine1 addressLine2 businessUnitId city code createdAt description id isGeocoded latitude locationCategory { color id name } locationCategoryId longitude name organizationId placeId postalCode state { abbreviation id name } stateId status updatedAt version } query LocationTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locations(input: $input) { edges { node { ...LocationTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "LocationCategoryTable",
-		Hash:     "sha256:5ca16e1292c673eceb32a9d1189fe4af156f3ffa10b7088854e40761fbf5e1bf",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationCategoryTableRowFields on LocationCategory { allowsOvernight businessUnitId color createdAt description facilityType hasRestroom hasSecureParking id name organizationId requiresAppointment type updatedAt version } query LocationCategoryTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locationCategories(input: $input) { edges { node { ...LocationCategoryTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:90c364f2f1f43cf3a0c8f1c6d662f6fb91c2364b66b97eae4b59056917383926",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment LocationCategoryTableRowFields on LocationCategory { allowsOvernight businessUnitId color createdAt description facilityType hasRestroom hasSecureParking id name organizationId requiresAppointment type updatedAt version } query LocationCategoryTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { locationCategories(input: $input) { edges { node { ...LocationCategoryTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "AccessorialChargeTable",
-		Hash:     "sha256:428bf0351875289ecd242e7153b17c69f386b3edb5106b4bc369b85341769d91",
-		Document: "fragment AccessorialChargeTableRowFields on AccessorialCharge { amount businessUnitId code createdAt description id method organizationId rateUnit status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query AccessorialChargeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { accessorialCharges(input: $input) { edges { node { ...AccessorialChargeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:f026ac4d573c423e867a719ef5ba51b4e4fd9c8dfb3828ac65235186a6b27822",
+		Document: "fragment AccessorialChargeTableRowFields on AccessorialCharge { amount businessUnitId code createdAt description id method organizationId rateUnit status updatedAt version } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query AccessorialChargeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { accessorialCharges(input: $input) { edges { node { ...AccessorialChargeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "CommodityTable",
-		Hash:     "sha256:02239b2db6c74085ddc074c2c20f287e0c6b1e42c2eeb5efdc2a731076b2a042",
-		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:efe2b17fa7712e1d9166f1e9d9674859516497799b0a96ba70edcd4571c748a3",
+		Document: "fragment CommodityTableRowFields on Commodity { businessUnitId createdAt description fragile freightClass hazardousMaterialId id linearFeetPerUnit loadingInstructions maxQuantityPerShipment maxTemperature minTemperature name organizationId stackable status updatedAt version weightPerUnit } fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CommodityTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { commodities(input: $input) { edges { node { ...CommodityTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "FleetCodeTable",
-		Hash:     "sha256:aa2917e7de6d4a5981909b298d418eeaa9d673b8eef470e6ed424667aa344b43",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment FleetCodeTableRowFields on FleetCode { businessUnitId code color createdAt deadheadGoal description id manager { id name } managerId mileageGoal organizationId revenueGoal status updatedAt version } query FleetCodeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { fleetCodes(input: $input) { edges { node { ...FleetCodeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:4625378765a75597fbfc1b6821d77b15edee201bb88c59a1fe86d90288f5f5e4",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment FleetCodeTableRowFields on FleetCode { businessUnitId code color createdAt deadheadGoal description id manager { id name } managerId mileageGoal organizationId revenueGoal status updatedAt version } query FleetCodeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { fleetCodes(input: $input) { edges { node { ...FleetCodeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "HazardousMaterialTable",
-		Hash:     "sha256:9be076a80d56dbcc7fa1ee6f0cdb7c67de04d63c2bbda28e685f21bd190afa5c",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HazardousMaterialTableRowFields on HazardousMaterial { businessUnitId class code createdAt description emergencyContact emergencyContactPhoneNumber ergGuideNumber handlingInstructions id inhalationHazard isReportableQuantity labelCodes marinePollutant name organizationId packingGroup placardRequired properShippingName quantityThreshold specialProvisions status subsidiaryHazardClass unNumber updatedAt version } query HazardousMaterialTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { hazardousMaterials(input: $input) { edges { node { ...HazardousMaterialTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:8a6c58c9d10e87fe7b895e91d59b4c5d67b881406844082505189a6cd200e0c2",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HazardousMaterialTableRowFields on HazardousMaterial { businessUnitId class code createdAt description emergencyContact emergencyContactPhoneNumber ergGuideNumber handlingInstructions id inhalationHazard isReportableQuantity labelCodes marinePollutant name organizationId packingGroup placardRequired properShippingName quantityThreshold specialProvisions status subsidiaryHazardClass unNumber updatedAt version } query HazardousMaterialTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { hazardousMaterials(input: $input) { edges { node { ...HazardousMaterialTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "HoldReasonTable",
-		Hash:     "sha256:b68375fa81667eca3b794d6327160d9216180ef9f0aec9bea33dd529ce119231",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:bb1f52d5592278dc3b16ea6c385a3eaed6985c36311a23f228d66079d1180d6a",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment HoldReasonTableRowFields on HoldReason { active businessUnitId code createdAt defaultBlocksBilling defaultBlocksDelivery defaultBlocksDispatch defaultSeverity defaultVisibleToCustomer description id label organizationId sortOrder type updatedAt version } query HoldReasonTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { holdReasons(input: $input) { edges { node { ...HoldReasonTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ServiceTypeTable",
-		Hash:     "sha256:ba2cc0fdc314c6c3e25d306f5ad63a4c09ac96b537a0bf60b874ea22eec70682",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceTypeTableRowFields on ServiceType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ServiceTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { serviceTypes(input: $input) { edges { node { ...ServiceTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:8662454fa5d28db4f6914176896d4b3b714ca182462196b3875116289184ace5",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ServiceTypeTableRowFields on ServiceType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ServiceTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { serviceTypes(input: $input) { edges { node { ...ServiceTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "ShipmentTypeTable",
-		Hash:     "sha256:2be2cf7c6760639a92a3977f36a489f31e14b4c27edae1049a9589cce837a534",
-		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ShipmentTypeTableRowFields on ShipmentType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ShipmentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { shipmentTypes(input: $input) { edges { node { ...ShipmentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:317685c4da72dc0125a332a31479b7eb7c96a1cd770f1e9be9b9c336adeba0c0",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment ShipmentTypeTableRowFields on ShipmentType { businessUnitId code color createdAt description id organizationId status updatedAt version } query ShipmentTypeTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { shipmentTypes(input: $input) { edges { node { ...ShipmentTypeTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskOrder",
+		Hash:     "sha256:88bafe6bfa1f1a4a15cc1b995cdc2534bab96f95332081d859f863ed0b6a2e10",
+		Document: "fragment CustomerReference on Customer { addressLine1 addressLine2 allowConsolidation city code consolidationPriority exclusiveConsolidation externalId id isGeocoded latitude longitude name placeId postalCode state { abbreviation countryIso3 countryName createdAt id name updatedAt } stateId status } query DeskOrder($id: ID!) { order(id: $id) { baseAmount bol charges { allocations { id } amount description id invoiceId invoicedAt } createdAt currencyCode customer { ...CustomerReference } id legs { bol id proNumber status } orderNumber poNumber quotedAmount status totalAmount updatedAt } }",
+	},
+	{
+		Name:     "OrderTable",
+		Hash:     "sha256:96ae44b28159963712f5492d618dcefbf5dde95a20b7ff795e3f47c7ade29aa5",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment OrderTableRowFields on Order { baseAmount bol businessUnitId createdAt currencyCode customer { code id name } customerId id orderNumber organizationId ownerId poNumber quotedAmount status totalAmount updatedAt version } query OrderTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { orders(input: $input) { edges { node { ...OrderTableRowFields } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskRateAgreementCard",
+		Hash:     "sha256:4cc1d2804606dca0e9d916bbe7edb442265ec4d9ccde2b18b4669725468e8cb5",
+		Document: "query DeskRateAgreementCard($id: ID!) { rateAgreement(id: $id) { accessorials { accessorialChargeId amount autoApply condition effectiveFrom effectiveTo freeUnits id maxAmount method rateUnit waived } agreementType approvedAt autoRenew billToCustomerId carrierId code contractRef currency currentVersion { changeMessage effectiveFrom effectiveTo id versionNumber } customerId description effectiveFrom effectiveTo fuelBinding { fuelSurchargeProgramId id waived } id inputs laneCount laneCountExact lanes(first: 50) { currency destinationCity destinationScopeType destinationScopeValue direction effectiveFrom effectiveTo formulaTemplateId hazmatOnly id inputs label originCity originScopeType originScopeValue priority tempControlOnly } name partyType priority renewalNoticeDays reviewComment status submittedAt } }",
+	},
+	{
+		Name:     "DeskRateMatrixCard",
+		Hash:     "sha256:0f2a562ca94bec4efab3edff9ab87045406a79b7d1b7a36b603333a8aed841e1",
+		Document: "query DeskRateMatrixCard($cellOffset: Int = 0, $id: ID!) { rateMatrix(id: $id) { cellCount cells(offset: $cellOffset, limit: 100) { d0Key d0KeyTo d0Max d0Min d1Key d1KeyTo d1Max d1Min d2Key d2KeyTo d2Max d2Min d3Key d3KeyTo d3Max d3Min deficitEligible id minCharge value } code description dimensions { id keyNormalization kind label matchMode position rangeOverflow } hasDraftChanges id name publishedVersionNumber status valueType } }",
+	},
+	{
+		Name:     "DeskRateAgreements",
+		Hash:     "sha256:02b23f3c7c374d02187dfb2fb3b380e8073d1ce7da4f0bf590a71fb842a4817b",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskRateAgreements($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { rateAgreements(input: $input) { edges { node { agreementType autoRenew carrierId code contractRef currency customerId effectiveFrom effectiveTo id inputs name partyType priority status } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskFuelIndexPrices",
+		Hash:     "sha256:94d907a128095cd6f2d585ace8fbe8b2a437709042bbc046cb18c954861936c1",
+		Document: "query DeskFuelIndexPrices($from: String, $fuelIndexId: ID!, $limit: Int, $to: String) { fuelIndexPriceHistory( indexId: $fuelIndexId from: $from to: $to limit: $limit ) { currency fuelIndexId id isManual price priceDate } }",
+	},
+	{
+		Name:     "DeskFuelProgramCurrentRates",
+		Hash:     "sha256:8c88804d9dbd1566dd95b6d46c51491da80e317f0c948a4f385013ae6a3bebfa",
+		Document: "query DeskFuelProgramCurrentRates { fuelProgramCurrentRates { flatAmount id percent price { id price priceDate } program { code fuelIndex { id name } fuelIndexId id method name } ratePerMile usedFallback } }",
+	},
+	{
+		Name:     "DeskCustomerPayments",
+		Hash:     "sha256:54b5ee7f8dff7f8ed4ec370a1a158abc4ada79b096aab04a2a35015a618c1675",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskCustomerPayments($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { customerPayments(input: $input) { edges { node { amountMinor applications { appliedAmountMinor id invoiceId shortPayAmountMinor } appliedAmountMinor currencyCode customerId id memo paymentDate paymentMethod referenceNumber reversedAt status unappliedAmountMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskReportRuns",
+		Hash:     "sha256:de77e627dbbbd505fe24a05dfe984ee8be19f79a466513ea0e67c033176b5f83",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskReportRuns($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { reportRuns(input: $input) { edges { node { cannedKey completedAt createdAt definitionId format id rowCount rowsStored status truncated } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskReportSchedules",
+		Hash:     "sha256:dbe796fc8196874edf880e1c92f74a2b19ffa222fac5f948b8efc178982f1929",
+		Document: "query DeskReportSchedules($definitionId: ID, $enabledOnly: Boolean, $limit: Int) { reportSchedules( definitionId: $definitionId enabledOnly: $enabledOnly limit: $limit ) { consecutiveFailures cronExpression definitionId emailRecipients enabled formats id mine nextRunAt timezone } }",
+	},
+	{
+		Name:     "DeskTableChangeAlerts",
+		Hash:     "sha256:5579824f1b0e45d6c94228ecca9892395b7d3d63bfa4f884c36d23cdbd8fa106",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DeskTableChangeAlerts($includeTotalCount: Boolean = false, $input: DataTableConnectionInput!) { tcaSubscriptions(input: $input) { edges { node { conditionMatch conditions eventTypes id name status tableName watchedColumns } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "CarrierSettlementDetail",
+		Hash:     "sha256:30368f798f729dfd25fe937fa96ec488d450acc1bf52324c08d66b714fa5bf24",
+		Document: "query CarrierSettlementDetail($id: ID!) @requiresRead(kind: \"carrier\") { carrierSettlement(id: $id) { adjustmentsMinor approvedAt approvedById batchId carrier { code id name paymentMethod paymentTermDays remitAddressLine1 remitAddressLine2 remitCity remitPostalCode remitState { abbreviation id } remitToName scac } carrierId createdAt currencyCode exchangeRate exchangeRateDate grossCostMinor id lines { amountMinor costEventId description eventType glAccountId id lineNumber moveId proNumber shipmentId } netPayableMinor notes paidAt paidById paidExchangeRate paidExchangeRateDate paidJournalBatchId payDate paymentMethod paymentReference periodEnd periodStart postedAt postedById postedJournalBatchId settlementNumber shipmentCount status submittedAt submittedById updatedAt version voidJournalBatchId voidReason voidedAt voidedById } }",
+	},
+	{
+		Name:     "SettlementDisputeDetail",
+		Hash:     "sha256:8892cb52526fc9deb5a079edd89debac790de0b3c125885da320b3597dfe7396",
+		Document: "query SettlementDisputeDetail($id: ID!) @requiresRead(kind: \"driver_settlement\") { settlementDispute(id: $id) { category createdAt description id resolutionLineId resolutionNote resolvedAt resolvedBy { id name } resolvedById settlement { currencyCode id netPayMinor periodEnd periodStart settlementNumber status } settlementId settlementLine { amountMinor category description id lineNumber proNumber } settlementLineId status submittedByUserId updatedAt version worker { firstName id lastName } workerId } }",
+	},
+	{
+		Name:     "DeskDriverSettlementStatement",
+		Hash:     "sha256:67cfc6d79e2a55fbdb58548ba569c10698d07f1a4bc0397c5ba8ef0494f23805",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskDriverSettlementStatement($id: ID!) { driverSettlement(id: $id) { approvedAt carryForwardInMinor carryForwardOutMinor classification currencyCode deductionsMinor disputes { category createdAt id resolvedAt settlementLineId status } exceptions { code message severity } grossEarningsMinor hasExceptions id lines { amountMinor category description id lineNumber payEventId proNumber quantity rate shipmentId } netPayMinor notes paidAt payDate payProfileName paymentMethod periodEnd periodStart postedAt reimbursementsMinor settlementNumber shipmentCount status submittedAt totalMiles voidReason voidedAt worker { ...WorkerReference } workerId } }",
+	},
+	{
+		Name:     "WorkerEarningsSummary",
+		Hash:     "sha256:604360bedc59b36d762fa6780dbfe073bfbfeb71015006a8a74717663ea17f9a",
+		Document: "query WorkerEarningsSummary($workerId: ID!) { workerEarningsSummary(workerId: $workerId) { accruedEventCount accruedGrossMinor escrowBalanceMinor outstandingAdvances workerId } }",
+	},
+	{
+		Name:     "PayAdvanceTable",
+		Hash:     "sha256:58bf10137365cf8c404af71680bcc4bf65543ff7d19c66c9c6fb5c81d3cda18c",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query PayAdvanceTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { payAdvances(input: $input) { edges { node { amountMinor createdAt currencyCode id issuedDate notes outstandingMinor recoveredMinor reference source status updatedAt version worker { firstName id lastName } workerId writeOffReason writtenOffMinor } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "CarrierSettlementTable",
+		Hash:     "sha256:6ec5046f3e73ba43551cfbc22eb00fcff03807b9b87fb55b0e62319ee22db1df",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query CarrierSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { carrierSettlements(input: $input) { edges { node { adjustmentsMinor batchId carrier { code id name scac } carrierId createdAt currencyCode grossCostMinor id netPayableMinor payDate paymentMethod paymentReference periodEnd periodStart settlementNumber shipmentCount status updatedAt version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DriverSettlementTable",
+		Hash:     "sha256:25c27c49cedb900ff6a7aae7280d2b3dc454d86dba72a22c515758330e7b475e",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverSettlementTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverSettlements(input: $input) { edges { node { batchId carryForwardInMinor carryForwardOutMinor classification createdAt currencyCode deductionsMinor grossEarningsMinor hasExceptions id netPayMinor payDate payProfileName periodEnd periodStart reimbursementsMinor settlementNumber shipmentCount status totalMiles updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DriverExpenseTable",
+		Hash:     "sha256:8b6c5cb7072b2c05bdc5de311291417c83fddc9453f66bdb701bdc6d6bf63864",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverExpenseTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverExpenses(input: $input) { edges { node { amountMinor createdAt currencyCode description id incurredDate payCode { code description id } receiptDocumentId reviewNote reviewedAt reviewedBy { id name } settlementLineId shipmentId status version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "EscrowAccountTable",
+		Hash:     "sha256:7a11ab6ce46aac8cfb4a703fa29d2beb1c2fb6625d202aa54f13013a28b616a9",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query EscrowAccountTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { escrowAccounts(input: $input) { edges { node { annualInterestRate balanceMinor closedDate createdAt currencyCode id lastInterestAccrualDate openedDate status targetAmountMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "WorkerPayAssignments",
+		Hash:     "sha256:1bf635cd5fa402d1768672762dcc0cca45e44bfd28abb08b7c7caa1a7efc6528",
+		Document: "query WorkerPayAssignments($workerId: ID!) { workerPayAssignments(workerId: $workerId) { createdAt effectiveFrom effectiveTo id notes payProfile { classification components { description id kind method rate } id name } payProfileId rateOverrides { componentId rate } splitPercent version workerId } }",
+	},
+	{
+		Name:     "DeskPayCodeOptions",
+		Hash:     "sha256:91147bd9c35da4c0fd47fb2eaae7baaaccd25ce739beeec3b79739624246089d",
+		Document: "query DeskPayCodeOptions($direction: PayCodeDirection) { payCodeOptions(direction: $direction) { code countsTowardGuarantee description direction glAccountId id isSystem name taxable } }",
+	},
+	{
+		Name:     "DriverPayEventTable",
+		Hash:     "sha256:70ee109cba82e2399600721495d980dbc89a957c40ff4adc8e9484ffb3eec7f8",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query DriverPayEventTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { driverPayEvents(input: $input) { edges { node { components { amountMinor description kind method quantity rate } createdAt currencyCode eventDate grossAmountMinor holdReason id moveId onHold proNumber settlementId shipmentId status totalMiles updatedAt version voidReason voidedAt worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "PayProfileTable",
+		Hash:     "sha256:88bb1880edbe34cefca7e2fe532f86eebb1332dd82d58a6ebdc6e87cc58b0e59",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query PayProfileTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { payProfiles(input: $input) { edges { node { activeAssignmentCount businessUnitId classification components { bands { maxMiles minMiles rate } description freeTimeMinutes id isActive kind maxAmountMinor method minAmountMinor rate revenueBasis sequence } createdAt currencyCode description guaranteedPeriodMinimumMinor id name organizationId perDiemDailyCapMinor perDiemRatePerMile status updatedAt version } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "RecurringDeductionTable",
+		Hash:     "sha256:e965464150966bbd5875254cd397555476a9959a229cd5907657ad56ec6aed67",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query RecurringDeductionTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { recurringDeductions(input: $input) { edges { node { amountMinor createdAt currencyCode deductedToDateMinor description endDate escrowAccountId frequency id payCode { code id name } payCodeId startDate status totalCapMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "RecurringEarningTable",
+		Hash:     "sha256:13b26c10465efd7cc79b6334437021132c540f3f9f1c3b12caff4a50be49b125",
+		Document: "fragment DataTablePageInfoFields on PageInfo { endCursor hasNextPage } query RecurringEarningTable($includeTotalCount: Boolean = true, $input: DataTableConnectionInput!) { recurringEarnings(input: $input) { edges { node { amountMinor createdAt currencyCode description endDate frequency id paidToDateMinor payCode { code id name } payCodeId startDate status totalCapMinor updatedAt version worker { firstName id lastName } workerId } } pageInfo { ...DataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskRecurringShipments",
+		Hash:     "sha256:f4754ca890da0c8086046bd3e9e02c0ddbf2471065717b4b3c71a06532ce5b8a",
+		Document: "fragment CustomerReference on Customer { addressLine1 addressLine2 allowConsolidation city code consolidationPriority exclusiveConsolidation externalId id isGeocoded latitude longitude name placeId postalCode state { abbreviation countryIso3 countryName createdAt id name updatedAt } stateId status } fragment LocationReference on Location { addressLine1 addressLine2 city code id latitude locationCategoryId longitude name postalCode state { abbreviation countryIso3 countryName createdAt id name updatedAt } stateId status timezone } query DeskRecurringShipments($includeTotalCount: Boolean!, $input: DataTableConnectionInput!) { recurringShipments(input: $input) { edges { node { autoGenerate cronExpression customer { ...CustomerReference } customerId destinationLocation { ...LocationReference } generationCount id lastGeneratedShipmentId name nextOccurrenceAt originLocation { ...LocationReference } sourceShipmentId status timezone } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
+	},
+	{
+		Name:     "DeskWorkerCard",
+		Hash:     "sha256:2593751ff11332364a3c1d31b3af5e9ff16060717cce261310f4013ca1cc1439",
+		Document: "query DeskWorkerCard($id: ID!) { worker(id: $id) { assignmentBlocked availableForDispatch canBeAssigned city createdAt driverType email emergencyContactName emergencyContactPhone externalId firstName fleetCode { code id } id lastName leaveType manager { id name } phoneNumber postalCode profile { cdlClass cdlRestrictions complianceStatus disqualificationReason eldExempt endorsement hazmatExpiry hireDate isQualified lastMvrCheck licenseExpiry licenseNumber licenseState { abbreviation } medicalCardExpiry mvrDueDate nextTrainingDue physicalDueDate safetyRating shortHaulExempt terminationDate twicExpiry } state { abbreviation } status type } }",
+	},
+	{
+		Name:     "DeskWorkerCredential",
+		Hash:     "sha256:43246c83f8dc68f9605ada0a2116bdbb5f190c8b62169c95b58acaa631bdf067",
+		Document: "fragment FleetCodeReference on FleetCode { code color id } fragment WorkerCredentialTypeReference on WorkerCredentialType { category code id isRequired isSystem name profileField renewalWindowDays requiresDocument requiresNumber sortOrder validityMonths } fragment WorkerReference on Worker { firstName fleetCode { ...FleetCodeReference } fleetCodeId id lastName profilePicUrl status type wholeName } query DeskWorkerCredential($id: ID!) { workerCredential(id: $id) { archiveReason archivedAt credentialType { ...WorkerCredentialTypeReference } credentialTypeId daysUntilExpiry documentId expiresAt health id issuedAt issuingAuthority notes status verifiedAt version worker { ...WorkerReference } workerId } }",
+	},
+	{
+		Name:     "DotRandomDraw",
+		Hash:     "sha256:c20b5525dc92b2ed8d5bf6878bf74630bc7675c5af5eb482ab4236ad5877d2b8",
+		Document: "query DotRandomDraw($id: ID!) { dotRandomDraw(id: $id) { alcoholSelected alcoholTarget drawnAt drugSelected drugTarget entries { completedAt drawId excuseReason id notifiedAt rank status substance testId version worker { firstName id lastName } workerId } finalizedAt id method notes periodEnd periodKey periodStart pool { alcoholRatePercent code drugRatePercent id name period } poolId poolSize seed status version } }",
+	},
+	{
+		Name:     "WorkerHosState",
+		Hash:     "sha256:cc49820a722034cd85add21c54f6a0f71735ab5ee21b8fda9bb4fa168950b241",
+		Document: "query WorkerHosState($workerId: ID!) { workerHosState(workerId: $workerId) { breakLimitMs breakRemainingMs currentTractorId currentVehicleId cycleLimitMs cycleRemainingMs cycleStartedAt cycleTomorrowMs cycleViolationMs driveLimitMs driveRemainingMs dutyStatus provider providerDriverId recordedAt rulesetCycle rulesetJurisdiction rulesetShift shiftDrivingViolationMs shiftLimitMs shiftRemainingMs workerId workerName } }",
+	},
+	{
+		Name:     "WorkerShiftAssignments",
+		Hash:     "sha256:bdc43fb2db6a4a94c02e8099c6920594d996aee4893d241a3d31b2c0b04d565c",
+		Document: "query WorkerShiftAssignments($activeOnly: Boolean, $workerId: ID!) @requiresRead(kind: \"shift_template\") { workerShiftAssignments(workerId: $workerId, activeOnly: $activeOnly) { cycleOffsetWeeks effectiveFrom effectiveTo id notes shiftTemplate { code color cycleWeeks daysOfWeek durationMinutes id name startMinute } shiftTemplateId version workerId } }",
+	},
+	{
+		Name:     "WorkerAvailabilityPreferences",
+		Hash:     "sha256:82ce6da812e6e6af74e5db8188ce3dbfc5048fd70c722a89a8277cb714d0e5a1",
+		Document: "query WorkerAvailabilityPreferences($workerId: ID!) { workerAvailabilityPreferences(workerId: $workerId) { dayOfWeek id note preference version workerId } }",
+	},
+	{
+		Name:     "ShiftSwapRequests",
+		Hash:     "sha256:ddc6208c93f72be57bee681f5003436a37fa8d7092ea6716e72cb13b012b3132",
+		Document: "query ShiftSwapRequests($limit: Int, $openOnly: Boolean, $since: Timestamp, $workerId: ID) { shiftSwapRequests( workerId: $workerId openOnly: $openOnly since: $since limit: $limit ) { counterpartyShiftDate counterpartyWorker { firstName id lastName } counterpartyWorkerId decidedAt id reason requestingWorker { firstName id lastName } requestingWorkerId respondedAt responseNote shiftDate status version } }",
 	},
 	{
 		Name:     "DeskWorkers",
@@ -317,6 +1134,16 @@ var operations = []Operation{
 		Name:     "DeskWorkerCredentialTypes",
 		Hash:     "sha256:936538a76b84f8c1517116ad68a8a7557102c7b7cdb3661acf72a4fcb80bdfcb",
 		Document: "query DeskWorkerCredentialTypes($input: WorkerCredentialTypesInput!) { workerCredentialTypes(input: $input) { edges { node { category code id isRequired name } } pageInfo { endCursor hasNextPage } } }",
+	},
+	{
+		Name:     "DotRandomDraws",
+		Hash:     "sha256:2b9cf8ff63760434e41734de883989c9ec2899d3622a3fe63e1a4cc8f6961db6",
+		Document: "query DotRandomDraws($poolId: ID) { dotRandomDraws(poolId: $poolId) { alcoholSelected alcoholTarget drawnAt drugSelected drugTarget finalizedAt id method notes periodEnd periodKey periodStart pool { code id name period } poolId poolSize seed status version } }",
+	},
+	{
+		Name:     "DotRandomPools",
+		Hash:     "sha256:d3d91f3a6c6916174f1291044ef51dbfc9ddd3630f33752682e5c5753b1ab441",
+		Document: "fragment DotRandomPoolFields on DOTRandomPool { alcoholRatePercent code createdAt description drugRatePercent id includedDriverTypes isDefault meetsDotMinimums name period status updatedAt version } query DotRandomPools($input: DOTRandomPoolsInput!) { dotRandomPools(input: $input) { edges { cursor node { ...DotRandomPoolFields } } pageInfo { endCursor hasNextPage } totalCount totalCountExact } }",
 	},
 	{
 		Name:     "DeskWorkerDotTests",
@@ -359,9 +1186,14 @@ var operations = []Operation{
 		Document: "query DeskWorkerRecognitions($workerId: ID!) { workerRecognitions(workerId: $workerId) { id kind occurredAt title visibleToWorker } }",
 	},
 	{
+		Name:     "ShiftTemplates",
+		Hash:     "sha256:fed89d4da0d0b311f889914ec96d500d1cb129fe34e089923b4ecbcb676e4a11",
+		Document: "query ShiftTemplates($activeOnly: Boolean, $limit: Int) { shiftTemplates(activeOnly: $activeOnly, limit: $limit) { activeAssignmentCount code color cycleWeeks daysOfWeek description durationMinutes id name startMinute status version } }",
+	},
+	{
 		Name:     "WorkerPtoTable",
-		Hash:     "sha256:abf71b65ef60aa73f2ba26a10bd87f0746377d78969a808aec7b3bb07ff60f2f",
-		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerPtoActorFields on User { id name } fragment WorkerPtoRowFields on WorkerPTO { approver { ...WorkerPtoActorFields } approverId autoApproved balanceAfterDays businessUnitId cancellationReason cancelledBy { ...WorkerPtoActorFields } cancelledById createdAt days endDate id organizationId reason rejectionReason rejector { ...WorkerPtoActorFields } rejectorId startDate status type updatedAt version worker { ...WorkerPtoWorkerFields } workerId } fragment WorkerPtoWorkerFields on Worker { firstName id lastName profilePicUrl wholeName } query WorkerPtoTable($includeTotalCount: Boolean = true, $input: WorkerPTOEntriesInput!) { workerPTOEntries(input: $input) { edges { node { ...WorkerPtoRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:3344589fc74d3c77ba7cf92de0d82071cbda0c7ecc087df9963161fc6e4633e8",
+		Document: "fragment WorkerDataTablePageInfoFields on PageInfo { endCursor hasNextPage } fragment WorkerPtoActorFields on User { id name } fragment WorkerPtoRowFields on WorkerPTO { approver { ...WorkerPtoActorFields } approverId autoApproved balanceAfterDays businessUnitId cancellationReason cancelledBy { ...WorkerPtoActorFields } cancelledById createdAt days endDate id organizationId reason rejectionReason rejector { ...WorkerPtoActorFields } rejectorId startDate status type updatedAt version worker { ...WorkerPtoWorkerFields } workerId } fragment WorkerPtoWorkerFields on Worker { firstName id lastName profilePicUrl wholeName } query WorkerPtoTable($includeTotalCount: Boolean = true, $input: WorkerPTOEntriesInput!) { workerPTOEntries(input: $input) { edges { node { ...WorkerPtoRowFields } } pageInfo { ...WorkerDataTablePageInfoFields } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 	{
 		Name:     "DeskWorkerTrainingRecords",
@@ -370,8 +1202,8 @@ var operations = []Operation{
 	},
 	{
 		Name:     "TrainingCourseTable",
-		Hash:     "sha256:3950fe64badf5834025ac8f16b197ff3d30925f841658c84a7182d628bf5b23d",
-		Document: "fragment TrainingCourseFields on TrainingCourse { businessUnitId category code contentUrl createdAt delivery description dueDaysAfterAssignment durationMinutes id isRequired name openRecordCount organizationId passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status updatedAt validityMonths version } query TrainingCourseTable($includeTotalCount: Boolean = true, $input: TrainingCoursesInput!) { trainingCourses(input: $input) { edges { cursor node { ...TrainingCourseFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) } }",
+		Hash:     "sha256:f49fe437f17370e0e6145abb7fbc948af4af4db8a6570b9e4ad62a68e33393a1",
+		Document: "fragment TrainingCourseFields on TrainingCourse { businessUnitId category code contentUrl createdAt delivery description dueDaysAfterAssignment durationMinutes id isRequired name openRecordCount organizationId passingScore renewalWindowDays requiredForDriverTypes requiresAcknowledgement sortOrder status updatedAt validityMonths version } query TrainingCourseTable($includeTotalCount: Boolean = true, $input: TrainingCoursesInput!) { trainingCourses(input: $input) { edges { cursor node { ...TrainingCourseFields } } pageInfo { endCursor hasNextPage } totalCount @include(if: $includeTotalCount) totalCountExact @include(if: $includeTotalCount) } }",
 	},
 }
 
@@ -387,13 +1219,41 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                     core,
 		AccessorialChargeService: p.AccessorialChargeService,
 	}
+	accountingsyncDeps := &accountingsyncresolver.Deps{
+		Core:                     core,
+		AccountingConnections:    p.AccountingConnectionService,
+		AccountingMappingService: p.AccountingMappingService,
+		AccountingSync:           p.AccountingSyncService,
+		AccountingInbound:        p.AccountingInboundService,
+		AccountingDrift:          p.AccountingDriftService,
+	}
+	briefingDeps := &briefingresolver.Deps{
+		Core:            core,
+		BriefingService: p.BriefingService,
+	}
+	captureDeps := &captureresolver.Deps{
+		Core:                  core,
+		CaptureService:        p.CaptureService,
+		CaptureReleaseService: p.CaptureReleaseService,
+	}
 	carrierDeps := &carrierresolver.Deps{
 		Core:           core,
 		CarrierService: p.CarrierService,
 	}
+	carriercapacityDeps := &carriercapacityresolver.Deps{
+		Core:                   core,
+		CarrierCapacityService: p.CarrierCapacityService,
+	}
 	carrierintelligenceDeps := &carrierintelligenceresolver.Deps{
 		Core:                core,
 		CarrierIntelService: p.CarrierIntelService,
+	}
+	carriersettlementDeps := &carriersettlementresolver.Deps{
+		Core:                       core,
+		CarrierSettlementService:   p.CarrierSettlementService,
+		CarrierSettlementRepo:      p.CarrierSettlementRepo,
+		CarrierSettlementBatchRepo: p.CarrierSettlementBatchRepo,
+		CarrierCostEventRepo:       p.CarrierCostEventRepo,
 	}
 	commodityDeps := &commodityresolver.Deps{
 		Core:             core,
@@ -402,6 +1262,18 @@ func NewSchema(p ResolverParams) Schema {
 	customerDeps := &customerresolver.Deps{
 		Core:            core,
 		CustomerService: p.CustomerService,
+	}
+	customerpaymentDeps := &customerpaymentresolver.Deps{
+		Core:                   core,
+		CustomerPaymentService: p.CustomerPaymentService,
+		CustomerPaymentRepo:    p.CustomerPaymentRepo,
+		CustomerService:        p.CustomerService,
+		InvoiceService:         p.InvoiceService,
+	}
+	detentionDeps := &detentionresolver.Deps{
+		Core:                   core,
+		DetentionService:       p.DetentionService,
+		DetentionPolicyService: p.DetentionPolicyService,
 	}
 	dispatchconsoleDeps := &dispatchconsoleresolver.Deps{
 		Core:                      core,
@@ -414,6 +1286,37 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		DocumentTypeService: p.DocumentTypeService,
 	}
+	driverportalDeps := &driverportalresolver.Deps{
+		Core:                    core,
+		TelematicsService:       p.TelematicsService,
+		NotificationService:     p.NotificationService,
+		DriverSettlementService: p.DriverSettlementService,
+		DriverPortalService:     p.DriverPortalService,
+		DashControlService:      p.DashControlService,
+	}
+	driversettlementDeps := &driversettlementresolver.Deps{
+		Core:                     core,
+		DriverPayService:         p.DriverPayService,
+		DriverSettlementService:  p.DriverSettlementService,
+		SettlementControlService: p.SettlementControlService,
+		PayProfileRepo:           p.PayProfileRepo,
+		RecurringDeductionRepo:   p.RecurringDeductionRepo,
+		RecurringEarningRepo:     p.RecurringEarningRepo,
+		PayAdvanceRepo:           p.PayAdvanceRepo,
+		EscrowAccountRepo:        p.EscrowAccountRepo,
+		DriverSettlementRepo:     p.DriverSettlementRepo,
+		SettlementBatchRepo:      p.SettlementBatchRepo,
+		PayEventRepo:             p.PayEventRepo,
+	}
+	ediDeps := &ediresolver.Deps{
+		Core:              core,
+		EdiService:        p.EDIService,
+		EdiInboundService: p.EDIInboundService,
+	}
+	emailprofileDeps := &emailprofileresolver.Deps{
+		Core:         core,
+		EmailService: p.EmailService,
+	}
 	equipmentmanufacturerDeps := &equipmentmanufacturerresolver.Deps{
 		Core:                         core,
 		EquipmentManufacturerService: p.EquipmentManufacturerService,
@@ -421,6 +1324,24 @@ func NewSchema(p ResolverParams) Schema {
 	equipmenttypeDeps := &equipmenttyperesolver.Deps{
 		Core:                 core,
 		EquipmentTypeService: p.EquipmentTypeService,
+	}
+	factoringDeps := &factoringresolver.Deps{
+		Core:                       core,
+		FactoringAgreementService:  p.FactoringAgreementService,
+		FactoringNoaService:        p.FactoringNoaService,
+		FactoringReadinessService:  p.FactoringReadinessService,
+		FactoringSubmissionService: p.FactoringSubmissionService,
+		FactoringLedgerService:     p.FactoringLedgerService,
+		FactoringRemittanceService: p.FactoringRemittanceService,
+		FactoringTransportService:  p.FactoringTransportService,
+	}
+	factoringcompanyDeps := &factoringcompanyresolver.Deps{
+		Core:                    core,
+		FactoringCompanyService: p.FactoringCompanyService,
+	}
+	fiscalperiodDeps := &fiscalperiodresolver.Deps{
+		Core:                core,
+		FiscalPeriodService: p.FiscalPeriodService,
 	}
 	fleetcodeDeps := &fleetcoderesolver.Deps{
 		Core:             core,
@@ -430,6 +1351,26 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                core,
 		WorkerSafetyService: p.WorkerSafetyService,
 	}
+	formulalibraryDeps := &formulalibraryresolver.Deps{
+		Core:                  core,
+		FormulaLibraryService: p.FormulaLibraryService,
+	}
+	formulatemplateDeps := &formulatemplateresolver.Deps{
+		Core:                   core,
+		FormulaTemplateService: p.FormulaTemplateService,
+	}
+	fuelpurchaseDeps := &fuelpurchaseresolver.Deps{
+		Core:                core,
+		FuelDeskCards:       p.FuelDeskCards,
+		FuelPurchaseService: p.FuelPurchaseService,
+	}
+	fuelsurchargeDeps := &fuelsurchargeresolver.Deps{
+		Core:                     core,
+		FuelSurchargeService:     p.FuelSurchargeService,
+		FuelIndexRepo:            p.FuelIndexRepo,
+		FuelIndexPriceRepo:       p.FuelIndexPriceRepo,
+		FuelSurchargeProgramRepo: p.FuelSurchargeProgramRepo,
+	}
 	hazardousmaterialDeps := &hazardousmaterialresolver.Deps{
 		Core:                     core,
 		HazardousMaterialService: p.HazardousMaterialService,
@@ -437,6 +1378,50 @@ func NewSchema(p ResolverParams) Schema {
 	holdreasonDeps := &holdreasonresolver.Deps{
 		Core:              core,
 		HoldReasonService: p.HoldReasonService,
+	}
+	homelayoutDeps := &homelayoutresolver.Deps{
+		Core:              core,
+		HomeLayoutService: p.HomeLayoutService,
+	}
+	iftaDeps := &iftaresolver.Deps{
+		Core:                       core,
+		IftaService:                p.IFTAService,
+		DistanceCalculationService: p.DistanceCalculationService,
+	}
+	inboundmessageDeps := &inboundmessageresolver.Deps{
+		Core:                  core,
+		InboundMessageService: p.InboundMessageService,
+	}
+	inboundreplyDeps := &inboundreplyresolver.Deps{
+		Core:                core,
+		InboundReplyService: p.InboundReplyService,
+		TriageWorkService:   p.TriageWorkService,
+		TriagePeekService:   p.TriagePeekService,
+	}
+	invoiceDeps := &invoiceresolver.Deps{
+		Core:            core,
+		CustomerService: p.CustomerService,
+		InvoiceService:  p.InvoiceService,
+	}
+	invoiceadjustmentDeps := &invoiceadjustmentresolver.Deps{
+		Core:                     core,
+		InvoiceAdjustmentService: p.InvoiceAdjustmentService,
+	}
+	invoicedisputeDeps := &invoicedisputeresolver.Deps{
+		Core:                  core,
+		InvoiceDisputeRepo:    p.InvoiceDisputeRepo,
+		InvoiceDisputeService: p.InvoiceDisputeService,
+	}
+	journalentryDeps := &journalentryresolver.Deps{
+		Core:                core,
+		GlAccountRepo:       p.GLAccountRepo,
+		JournalEntryService: p.JournalEntryService,
+		JournalCards:        p.JournalCards,
+		JournalReview:       p.JournalReview,
+	}
+	journalreversalDeps := &journalreversalresolver.Deps{
+		Core:                   core,
+		JournalReversalService: p.JournalReversalService,
 	}
 	locationDeps := &locationresolver.Deps{
 		Core:            core,
@@ -446,22 +1431,86 @@ func NewSchema(p ResolverParams) Schema {
 		Core:                    core,
 		LocationCategoryService: p.LocationCategoryService,
 	}
+	manualjournalDeps := &manualjournalresolver.Deps{
+		Core:                 core,
+		ManualJournalService: p.ManualJournalService,
+		JournalCards:         p.JournalCards,
+	}
+	orderDeps := &orderresolver.Deps{
+		Core:         core,
+		OrderService: p.OrderService,
+	}
 	performancereviewDeps := &performancereviewresolver.Deps{
 		Core:                     core,
 		PerformanceReviewService: p.PerformanceReviewService,
 		DriverPortalService:      p.DriverPortalService,
 	}
+	rateDeps := &rateresolver.Deps{
+		Core:                 core,
+		RateAgreementService: p.RateAgreementService,
+		RateZoneService:      p.RateZoneService,
+		RateMatrixService:    p.RateMatrixService,
+		RateQuoteService:     p.RateQuoteService,
+	}
+	recurringshipmentDeps := &recurringshipmentresolver.Deps{
+		Core:                     core,
+		RecurringShipmentService: p.RecurringShipmentService,
+	}
+	reportDeps := &reportresolver.Deps{
+		Core:               core,
+		TableExportService: p.TableExportService,
+		ReportingService:   p.ReportingService,
+	}
+	schedulingDeps := &schedulingresolver.Deps{
+		Core:              core,
+		SchedulingService: p.SchedulingService,
+	}
+	servicefailureDeps := &servicefailureresolver.Deps{
+		Core:              core,
+		ServiceFailureSvc: p.ServiceFailureSvc,
+	}
+	servicefailurereasoncodeDeps := &servicefailurereasoncoderesolver.Deps{
+		Core:                        core,
+		ServiceFailureReasonCodeSvc: p.ServiceFailureReasonCodeSvc,
+	}
 	servicetypeDeps := &servicetyperesolver.Deps{
 		Core:               core,
 		ServiceTypeService: p.ServiceTypeService,
+	}
+	shipmentDeps := &shipmentresolver.Deps{
+		Core:                        core,
+		AnalyticsService:            p.AnalyticsService,
+		ShipmentService:             p.ShipmentService,
+		ShipmentCommentService:      p.ShipmentCommentService,
+		ShipmentRatingReviewService: p.ShipmentRatingReviewService,
+		ShipmentEventService:        p.ShipmentEventService,
+		TrackingEventService:        p.TrackingEventService,
+		ShipmentImportAssistant:     p.ShipmentImportAssistant,
+		InvoiceService:              p.InvoiceService,
+		DriverSettlementRepo:        p.DriverSettlementRepo,
+		CarrierSettlementRepo:       p.CarrierSettlementRepo,
 	}
 	shipmenttypeDeps := &shipmenttyperesolver.Deps{
 		Core:                core,
 		ShipmentTypeService: p.ShipmentTypeService,
 	}
+	tablechangealertDeps := &tablechangealertresolver.Deps{
+		Core:                    core,
+		TableChangeAlertService: p.TableChangeAlertService,
+	}
+	telematicsDeps := &telematicsresolver.Deps{
+		Core:              core,
+		ShipmentService:   p.ShipmentService,
+		TelematicsService: p.TelematicsService,
+	}
 	tenantDeps := &tenantresolver.Deps{
 		Core:                core,
 		OrganizationService: p.OrganizationService,
+	}
+	tenderDeps := &tenderresolver.Deps{
+		Core:                core,
+		RoutingGuideService: p.RoutingGuideService,
+		TenderService:       p.TenderService,
 	}
 	tractorDeps := &tractorresolver.Deps{
 		Core:           core,
@@ -470,6 +1519,13 @@ func NewSchema(p ResolverParams) Schema {
 	trailerDeps := &trailerresolver.Deps{
 		Core:           core,
 		TrailerService: p.TrailerService,
+	}
+	triageDeps := &triageresolver.Deps{
+		Core:                    core,
+		TriageRuleService:       p.TriageRuleService,
+		TriageBriefingService:   p.TriageBriefingService,
+		TriageCorrectionService: p.TriageCorrectionService,
+		TriageConflictService:   p.TriageConflictService,
 	}
 	workerDeps := &workerresolver.Deps{
 		Core:          core,
@@ -510,18 +1566,60 @@ func NewSchema(p ResolverParams) Schema {
 		DriverPortalService:   p.DriverPortalService,
 	}
 	customerBillingProfile := &customerBillingProfileResolver{
-		customerCustomerBillingProfile: &customerCustomerBillingProfile{Deps: customerDeps},
+		customerCustomerBillingProfile:  &customerCustomerBillingProfile{Deps: customerDeps},
+		factoringCustomerBillingProfile: &factoringCustomerBillingProfile{Deps: factoringDeps},
+	}
+	inboundAttachment := &inboundAttachmentResolver{
+		inboundmessageInboundAttachment: &inboundmessageInboundAttachment{Deps: inboundmessageDeps},
+		inboundreplyInboundAttachment:   &inboundreplyInboundAttachment{Deps: inboundreplyDeps},
+	}
+	inboundMessage := &inboundMessageResolver{
+		inboundmessageInboundMessage: &inboundmessageInboundMessage{Deps: inboundmessageDeps},
+		inboundreplyInboundMessage:   &inboundreplyInboundMessage{Deps: inboundreplyDeps},
+		triageInboundMessage:         &triageInboundMessage{Deps: triageDeps},
+	}
+	invoice := &invoiceResolver{
+		factoringInvoice:      &factoringInvoice{Deps: factoringDeps},
+		invoiceInvoice:        &invoiceInvoice{Deps: invoiceDeps},
+		invoicedisputeInvoice: &invoicedisputeInvoice{Deps: invoicedisputeDeps},
 	}
 	mutation := &mutationResolver{
+		accountingsyncMutation:        &accountingsyncMutation{Deps: accountingsyncDeps},
+		briefingMutation:              &briefingMutation{Deps: briefingDeps},
+		captureMutation:               &captureMutation{Deps: captureDeps},
+		carriercapacityMutation:       &carriercapacityMutation{Deps: carriercapacityDeps},
 		carrierintelligenceMutation:   &carrierintelligenceMutation{Deps: carrierintelligenceDeps},
+		carriersettlementMutation:     &carriersettlementMutation{Deps: carriersettlementDeps},
+		customerpaymentMutation:       &customerpaymentMutation{Deps: customerpaymentDeps},
+		detentionMutation:             &detentionMutation{Deps: detentionDeps},
 		dispatchconsoleMutation:       &dispatchconsoleMutation{Deps: dispatchconsoleDeps},
+		driverportalMutation:          &driverportalMutation{Deps: driverportalDeps},
+		driversettlementMutation:      &driversettlementMutation{Deps: driversettlementDeps},
 		equipmentmanufacturerMutation: &equipmentmanufacturerMutation{Deps: equipmentmanufacturerDeps},
 		equipmenttypeMutation:         &equipmenttypeMutation{Deps: equipmenttypeDeps},
+		factoringMutation:             &factoringMutation{Deps: factoringDeps},
+		factoringcompanyMutation:      &factoringcompanyMutation{Deps: factoringcompanyDeps},
 		fleetsafetyMutation:           &fleetsafetyMutation{Deps: fleetsafetyDeps},
+		fuelpurchaseMutation:          &fuelpurchaseMutation{Deps: fuelpurchaseDeps},
+		fuelsurchargeMutation:         &fuelsurchargeMutation{Deps: fuelsurchargeDeps},
+		homelayoutMutation:            &homelayoutMutation{Deps: homelayoutDeps},
+		iftaMutation:                  &iftaMutation{Deps: iftaDeps},
+		inboundmessageMutation:        &inboundmessageMutation{Deps: inboundmessageDeps},
+		inboundreplyMutation:          &inboundreplyMutation{Deps: inboundreplyDeps},
+		invoiceMutation:               &invoiceMutation{Deps: invoiceDeps},
+		invoiceadjustmentMutation:     &invoiceadjustmentMutation{Deps: invoiceadjustmentDeps},
+		invoicedisputeMutation:        &invoicedisputeMutation{Deps: invoicedisputeDeps},
+		journalentryMutation:          &journalentryMutation{Deps: journalentryDeps},
+		orderMutation:                 &orderMutation{Deps: orderDeps},
 		performancereviewMutation:     &performancereviewMutation{Deps: performancereviewDeps},
+		reportMutation:                &reportMutation{Deps: reportDeps},
+		schedulingMutation:            &schedulingMutation{Deps: schedulingDeps},
+		shipmentMutation:              &shipmentMutation{Deps: shipmentDeps},
+		telematicsMutation:            &telematicsMutation{Deps: telematicsDeps},
 		tenantMutation:                &tenantMutation{Deps: tenantDeps},
 		tractorMutation:               &tractorMutation{Deps: tractorDeps},
 		trailerMutation:               &trailerMutation{Deps: trailerDeps},
+		triageMutation:                &triageMutation{Deps: triageDeps},
 		workerMutation:                &workerMutation{Deps: workerDeps},
 		workerchecklistMutation:       &workerchecklistMutation{Deps: workerchecklistDeps},
 		workercredentialMutation:      &workercredentialMutation{Deps: workercredentialDeps},
@@ -533,44 +1631,112 @@ func NewSchema(p ResolverParams) Schema {
 		workertrainingMutation:        &workertrainingMutation{Deps: workertrainingDeps},
 	}
 	query := &queryResolver{
-		accessorialchargeQuery:     &accessorialchargeQuery{Deps: accessorialchargeDeps},
-		carrierQuery:               &carrierQuery{Deps: carrierDeps},
-		carrierintelligenceQuery:   &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
-		commodityQuery:             &commodityQuery{Deps: commodityDeps},
-		customerQuery:              &customerQuery{Deps: customerDeps},
-		dispatchconsoleQuery:       &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
-		documenttypeQuery:          &documenttypeQuery{Deps: documenttypeDeps},
-		equipmentmanufacturerQuery: &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
-		equipmenttypeQuery:         &equipmenttypeQuery{Deps: equipmenttypeDeps},
-		fleetcodeQuery:             &fleetcodeQuery{Deps: fleetcodeDeps},
-		fleetsafetyQuery:           &fleetsafetyQuery{Deps: fleetsafetyDeps},
-		hazardousmaterialQuery:     &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
-		holdreasonQuery:            &holdreasonQuery{Deps: holdreasonDeps},
-		locationQuery:              &locationQuery{Deps: locationDeps},
-		locationcategoryQuery:      &locationcategoryQuery{Deps: locationcategoryDeps},
-		performancereviewQuery:     &performancereviewQuery{Deps: performancereviewDeps},
-		servicetypeQuery:           &servicetypeQuery{Deps: servicetypeDeps},
-		shipmenttypeQuery:          &shipmenttypeQuery{Deps: shipmenttypeDeps},
-		tenantQuery:                &tenantQuery{Deps: tenantDeps},
-		tractorQuery:               &tractorQuery{Deps: tractorDeps},
-		trailerQuery:               &trailerQuery{Deps: trailerDeps},
-		workerQuery:                &workerQuery{Deps: workerDeps},
-		workerchecklistQuery:       &workerchecklistQuery{Deps: workerchecklistDeps},
-		workercredentialQuery:      &workercredentialQuery{Deps: workercredentialDeps},
-		workerdqfQuery:             &workerdqfQuery{Deps: workerdqfDeps},
-		workerdrugalcoholQuery:     &workerdrugalcoholQuery{Deps: workerdrugalcoholDeps},
-		workerinjuryQuery:          &workerinjuryQuery{Deps: workerinjuryDeps},
-		workerleaveQuery:           &workerleaveQuery{Deps: workerleaveDeps},
-		workersafetyQuery:          &workersafetyQuery{Deps: workersafetyDeps},
-		workertrainingQuery:        &workertrainingQuery{Deps: workertrainingDeps},
+		accessorialchargeQuery:        &accessorialchargeQuery{Deps: accessorialchargeDeps},
+		accountingsyncQuery:           &accountingsyncQuery{Deps: accountingsyncDeps},
+		briefingQuery:                 &briefingQuery{Deps: briefingDeps},
+		captureQuery:                  &captureQuery{Deps: captureDeps},
+		carrierQuery:                  &carrierQuery{Deps: carrierDeps},
+		carriercapacityQuery:          &carriercapacityQuery{Deps: carriercapacityDeps},
+		carrierintelligenceQuery:      &carrierintelligenceQuery{Deps: carrierintelligenceDeps},
+		carriersettlementQuery:        &carriersettlementQuery{Deps: carriersettlementDeps},
+		commodityQuery:                &commodityQuery{Deps: commodityDeps},
+		customerQuery:                 &customerQuery{Deps: customerDeps},
+		customerpaymentQuery:          &customerpaymentQuery{Deps: customerpaymentDeps},
+		detentionQuery:                &detentionQuery{Deps: detentionDeps},
+		dispatchconsoleQuery:          &dispatchconsoleQuery{Deps: dispatchconsoleDeps},
+		documenttypeQuery:             &documenttypeQuery{Deps: documenttypeDeps},
+		driverportalQuery:             &driverportalQuery{Deps: driverportalDeps},
+		driversettlementQuery:         &driversettlementQuery{Deps: driversettlementDeps},
+		ediQuery:                      &ediQuery{Deps: ediDeps},
+		emailprofileQuery:             &emailprofileQuery{Deps: emailprofileDeps},
+		equipmentmanufacturerQuery:    &equipmentmanufacturerQuery{Deps: equipmentmanufacturerDeps},
+		equipmenttypeQuery:            &equipmenttypeQuery{Deps: equipmenttypeDeps},
+		factoringQuery:                &factoringQuery{Deps: factoringDeps},
+		factoringcompanyQuery:         &factoringcompanyQuery{Deps: factoringcompanyDeps},
+		fiscalperiodQuery:             &fiscalperiodQuery{Deps: fiscalperiodDeps},
+		fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
+		fleetsafetyQuery:              &fleetsafetyQuery{Deps: fleetsafetyDeps},
+		formulalibraryQuery:           &formulalibraryQuery{Deps: formulalibraryDeps},
+		formulatemplateQuery:          &formulatemplateQuery{Deps: formulatemplateDeps},
+		fuelpurchaseQuery:             &fuelpurchaseQuery{Deps: fuelpurchaseDeps},
+		fuelsurchargeQuery:            &fuelsurchargeQuery{Deps: fuelsurchargeDeps},
+		hazardousmaterialQuery:        &hazardousmaterialQuery{Deps: hazardousmaterialDeps},
+		holdreasonQuery:               &holdreasonQuery{Deps: holdreasonDeps},
+		homelayoutQuery:               &homelayoutQuery{Deps: homelayoutDeps},
+		iftaQuery:                     &iftaQuery{Deps: iftaDeps},
+		inboundmessageQuery:           &inboundmessageQuery{Deps: inboundmessageDeps},
+		inboundreplyQuery:             &inboundreplyQuery{Deps: inboundreplyDeps},
+		invoiceQuery:                  &invoiceQuery{Deps: invoiceDeps},
+		invoiceadjustmentQuery:        &invoiceadjustmentQuery{Deps: invoiceadjustmentDeps},
+		invoicedisputeQuery:           &invoicedisputeQuery{Deps: invoicedisputeDeps},
+		journalentryQuery:             &journalentryQuery{Deps: journalentryDeps},
+		journalreversalQuery:          &journalreversalQuery{Deps: journalreversalDeps},
+		locationQuery:                 &locationQuery{Deps: locationDeps},
+		locationcategoryQuery:         &locationcategoryQuery{Deps: locationcategoryDeps},
+		manualjournalQuery:            &manualjournalQuery{Deps: manualjournalDeps},
+		orderQuery:                    &orderQuery{Deps: orderDeps},
+		performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
+		rateQuery:                     &rateQuery{Deps: rateDeps},
+		recurringshipmentQuery:        &recurringshipmentQuery{Deps: recurringshipmentDeps},
+		reportQuery:                   &reportQuery{Deps: reportDeps},
+		schedulingQuery:               &schedulingQuery{Deps: schedulingDeps},
+		servicefailureQuery:           &servicefailureQuery{Deps: servicefailureDeps},
+		servicefailurereasoncodeQuery: &servicefailurereasoncodeQuery{Deps: servicefailurereasoncodeDeps},
+		servicetypeQuery:              &servicetypeQuery{Deps: servicetypeDeps},
+		shipmentQuery:                 &shipmentQuery{Deps: shipmentDeps},
+		shipmenttypeQuery:             &shipmenttypeQuery{Deps: shipmenttypeDeps},
+		tablechangealertQuery:         &tablechangealertQuery{Deps: tablechangealertDeps},
+		telematicsQuery:               &telematicsQuery{Deps: telematicsDeps},
+		tenantQuery:                   &tenantQuery{Deps: tenantDeps},
+		tenderQuery:                   &tenderQuery{Deps: tenderDeps},
+		tractorQuery:                  &tractorQuery{Deps: tractorDeps},
+		trailerQuery:                  &trailerQuery{Deps: trailerDeps},
+		triageQuery:                   &triageQuery{Deps: triageDeps},
+		workerQuery:                   &workerQuery{Deps: workerDeps},
+		workerchecklistQuery:          &workerchecklistQuery{Deps: workerchecklistDeps},
+		workercredentialQuery:         &workercredentialQuery{Deps: workercredentialDeps},
+		workerdqfQuery:                &workerdqfQuery{Deps: workerdqfDeps},
+		workerdrugalcoholQuery:        &workerdrugalcoholQuery{Deps: workerdrugalcoholDeps},
+		workerinjuryQuery:             &workerinjuryQuery{Deps: workerinjuryDeps},
+		workerleaveQuery:              &workerleaveQuery{Deps: workerleaveDeps},
+		workersafetyQuery:             &workersafetyQuery{Deps: workersafetyDeps},
+		workertrainingQuery:           &workertrainingQuery{Deps: workertrainingDeps},
 	}
 
 	return newSchema(shards, map[string]func() any{
-		"CustomerBillingProfile": func() any { return customerBillingProfile },
-		"Mutation":               func() any { return mutation },
-		"Query":                  func() any { return query },
-		"AccessorialCharge":      func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
-		"Carrier":                func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
+		"CustomerBillingProfile":    func() any { return customerBillingProfile },
+		"InboundAttachment":         func() any { return inboundAttachment },
+		"InboundMessage":            func() any { return inboundMessage },
+		"Invoice":                   func() any { return invoice },
+		"Mutation":                  func() any { return mutation },
+		"Query":                     func() any { return query },
+		"AccessorialCharge":         func() any { return &accessorialchargeresolver.AccessorialChargeResolver{Deps: accessorialchargeDeps} },
+		"AccountingAppCredential":   func() any { return &accountingsyncresolver.AccountingAppCredentialResolver{Deps: accountingsyncDeps} },
+		"AccountingAppSettings":     func() any { return &accountingsyncresolver.AccountingAppSettingsResolver{Deps: accountingsyncDeps} },
+		"AccountingConnection":      func() any { return &accountingsyncresolver.AccountingConnectionResolver{Deps: accountingsyncDeps} },
+		"AccountingDriftFinding":    func() any { return &accountingsyncresolver.AccountingDriftFindingResolver{Deps: accountingsyncDeps} },
+		"AccountingDriftFixPreview": func() any { return &accountingsyncresolver.AccountingDriftFixPreviewResolver{Deps: accountingsyncDeps} },
+		"AccountingInboundChange":   func() any { return &accountingsyncresolver.AccountingInboundChangeResolver{Deps: accountingsyncDeps} },
+		"AccountingInboundLine":     func() any { return &accountingsyncresolver.AccountingInboundLineResolver{Deps: accountingsyncDeps} },
+		"AccountingMapping":         func() any { return &accountingsyncresolver.AccountingMappingResolver{Deps: accountingsyncDeps} },
+		"AccountingReferenceObject": func() any { return &accountingsyncresolver.AccountingReferenceObjectResolver{Deps: accountingsyncDeps} },
+		"AccountingSyncAttempt":     func() any { return &accountingsyncresolver.AccountingSyncAttemptResolver{Deps: accountingsyncDeps} },
+		"AccountingSyncAttentionGroup": func() any {
+			return &accountingsyncresolver.AccountingSyncAttentionGroupResolver{Deps: accountingsyncDeps}
+		},
+		"AccountingSyncRecord":         func() any { return &accountingsyncresolver.AccountingSyncRecordResolver{Deps: accountingsyncDeps} },
+		"BriefingSection":              func() any { return &briefingresolver.BriefingSectionResolver{Deps: briefingDeps} },
+		"CaptureBatch":                 func() any { return &captureresolver.CaptureBatchResolver{Deps: captureDeps} },
+		"CaptureCoverSheet":            func() any { return &captureresolver.CaptureCoverSheetResolver{Deps: captureDeps} },
+		"CaptureDevice":                func() any { return &captureresolver.CaptureDeviceResolver{Deps: captureDeps} },
+		"CaptureItem":                  func() any { return &captureresolver.CaptureItemResolver{Deps: captureDeps} },
+		"CapturePage":                  func() any { return &captureresolver.CapturePageResolver{Deps: captureDeps} },
+		"CaptureRequest":               func() any { return &captureresolver.CaptureRequestResolver{Deps: captureDeps} },
+		"CaptureSettings":              func() any { return &captureresolver.CaptureSettingsResolver{Deps: captureDeps} },
+		"Carrier":                      func() any { return &carrierintelligenceresolver.CarrierResolver{Deps: carrierintelligenceDeps} },
+		"CarrierAssignment":            func() any { return &shipmentresolver.CarrierAssignmentResolver{Deps: shipmentDeps} },
+		"CarrierAssignmentAccessorial": func() any { return &shipmentresolver.CarrierAssignmentAccessorialResolver{Deps: shipmentDeps} },
+		"CarrierCapacityPosting":       func() any { return &carriercapacityresolver.CarrierCapacityPostingResolver{Deps: carriercapacityDeps} },
 		"CarrierEquipmentVerification": func() any {
 			return &carrierintelligenceresolver.CarrierEquipmentVerificationResolver{Deps: carrierintelligenceDeps}
 		},
@@ -614,41 +1780,165 @@ func NewSchema(p ResolverParams) Schema {
 		"CarrierMonitoringEnrollment": func() any {
 			return &carrierintelligenceresolver.CarrierMonitoringEnrollmentResolver{Deps: carrierintelligenceDeps}
 		},
+		"CarrierSettlement": func() any { return &carriersettlementresolver.CarrierSettlementResolver{Deps: carriersettlementDeps} },
 		"CarrierSourcingResult": func() any {
 			return &carrierintelligenceresolver.CarrierSourcingResultResolver{Deps: carrierintelligenceDeps}
 		},
-		"Commodity":           func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
-		"Customer":            func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
-		"DOTRandomDraw":       func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomDrawEntry":  func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
-		"DOTRandomPool":       func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
-		"DQFFile":             func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
-		"DQFItem":             func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
-		"DisciplinaryLadder":  func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
-		"DrugAlcoholStanding": func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
-		"FleetSafetyRank":     func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
-		"FleetSafetyTerminal": func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
-		"LeaveControl":        func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
-		"LeaveEntitlement":    func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
-		"LocationCategory":    func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
-		"OSHAAnnualSummary":   func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
-		"PTOChartDataPoint":   func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
-		"PerformanceReview":   func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
+		"ChargeAllocation": func() any { return &shipmentresolver.ChargeAllocationResolver{Deps: shipmentDeps} },
+		"Commodity":        func() any { return &commodityresolver.CommodityResolver{Deps: commodityDeps} },
+		"Customer":         func() any { return &carrierintelligenceresolver.CustomerResolver{Deps: carrierintelligenceDeps} },
+		"CustomerPayment":  func() any { return &customerpaymentresolver.CustomerPaymentResolver{Deps: customerpaymentDeps} },
+		"CustomerPaymentApplication": func() any {
+			return &customerpaymentresolver.CustomerPaymentApplicationResolver{Deps: customerpaymentDeps}
+		},
+		"DOTRandomDraw":          func() any { return &workerdrugalcoholresolver.DOTRandomDrawResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomDrawEntry":     func() any { return &workerdrugalcoholresolver.DOTRandomDrawEntryResolver{Deps: workerdrugalcoholDeps} },
+		"DOTRandomPool":          func() any { return &workerdrugalcoholresolver.DOTRandomPoolResolver{Deps: workerdrugalcoholDeps} },
+		"DQFFile":                func() any { return &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps} },
+		"DQFItem":                func() any { return &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps} },
+		"DetentionOccurrence":    func() any { return &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps} },
+		"DetentionPreviewResult": func() any { return &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps} },
+		"DisciplinaryLadder":     func() any { return &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps} },
+		"DriverPayEvent":         func() any { return &driversettlementresolver.DriverPayEventResolver{Deps: driversettlementDeps} },
+		"DriverPayEventComponent": func() any {
+			return &driversettlementresolver.DriverPayEventComponentResolver{Deps: driversettlementDeps}
+		},
+		"DriverSettlement":     func() any { return &driversettlementresolver.DriverSettlementResolver{Deps: driversettlementDeps} },
+		"DriverSettlementLine": func() any { return &driversettlementresolver.DriverSettlementLineResolver{Deps: driversettlementDeps} },
+		"DriverSettlementLineGroup": func() any {
+			return &driversettlementresolver.DriverSettlementLineGroupResolver{Deps: driversettlementDeps}
+		},
+		"DrugAlcoholStanding":          func() any { return &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps} },
+		"EdiCarrierInvoice":            func() any { return &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps} },
+		"EdiFlowInstance":              func() any { return &ediresolver.EdiFlowInstanceResolver{Deps: ediDeps} },
+		"EdiLadingVersion":             func() any { return &ediresolver.EdiLadingVersionResolver{Deps: ediDeps} },
+		"EdiMessage":                   func() any { return &ediresolver.EdiMessageResolver{Deps: ediDeps} },
+		"EdiTransfer":                  func() any { return &ediresolver.EdiTransferResolver{Deps: ediDeps} },
+		"EscrowAccount":                func() any { return &driversettlementresolver.EscrowAccountResolver{Deps: driversettlementDeps} },
+		"FactoringAgreement":           func() any { return &factoringresolver.FactoringAgreementResolver{Deps: factoringDeps} },
+		"FactoringCheck":               func() any { return &factoringresolver.FactoringCheckResolver{Deps: factoringDeps} },
+		"FactoringCompany":             func() any { return &factoringresolver.FactoringCompanyResolver{Deps: factoringDeps} },
+		"FactoringFundingPlan":         func() any { return &factoringresolver.FactoringFundingPlanResolver{Deps: factoringDeps} },
+		"FactoringInvoiceState":        func() any { return &factoringresolver.FactoringInvoiceStateResolver{Deps: factoringDeps} },
+		"FactoringMovement":            func() any { return &factoringresolver.FactoringMovementResolver{Deps: factoringDeps} },
+		"FactoringNoa":                 func() any { return &factoringresolver.FactoringNoaResolver{Deps: factoringDeps} },
+		"FactoringPlannedLine":         func() any { return &factoringresolver.FactoringPlannedLineResolver{Deps: factoringDeps} },
+		"FactoringPlannedMovement":     func() any { return &factoringresolver.FactoringPlannedMovementResolver{Deps: factoringDeps} },
+		"FactoringRemittance":          func() any { return &factoringresolver.FactoringRemittanceResolver{Deps: factoringDeps} },
+		"FactoringRemittanceLine":      func() any { return &factoringresolver.FactoringRemittanceLineResolver{Deps: factoringDeps} },
+		"FactoringRemittancePlan":      func() any { return &factoringresolver.FactoringRemittancePlanResolver{Deps: factoringDeps} },
+		"FactoringReserveEntry":        func() any { return &factoringresolver.FactoringReserveEntryResolver{Deps: factoringDeps} },
+		"FactoringReserveMovementPlan": func() any { return &factoringresolver.FactoringReserveMovementPlanResolver{Deps: factoringDeps} },
+		"FactoringSubmission":          func() any { return &factoringresolver.FactoringSubmissionResolver{Deps: factoringDeps} },
+		"FactoringSubmissionItem":      func() any { return &factoringresolver.FactoringSubmissionItemResolver{Deps: factoringDeps} },
+		"FactoringSubmissionPlan":      func() any { return &factoringresolver.FactoringSubmissionPlanResolver{Deps: factoringDeps} },
+		"FactoringTransport":           func() any { return &factoringresolver.FactoringTransportResolver{Deps: factoringDeps} },
+		"FleetSafetyRank":              func() any { return &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps} },
+		"FleetSafetyTerminal":          func() any { return &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps} },
+		"FormulaLibraryImport":         func() any { return &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps} },
+		"FormulaLibraryVersion":        func() any { return &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps} },
+		"FormulaTemplate":              func() any { return &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps} },
+		"FormulaTemplateTable":         func() any { return &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps} },
+		"FuelCard":                     func() any { return &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps} },
+		"FuelCardDeskCard":             func() any { return &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps} },
+		"FuelFeedStatus":               func() any { return &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps} },
+		"FuelHeldSpend":                func() any { return &fuelpurchaseresolver.FuelHeldSpendResolver{Deps: fuelpurchaseDeps} },
+		"FuelJurisdictionGallons":      func() any { return &fuelpurchaseresolver.FuelJurisdictionGallonsResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchase":                 func() any { return &fuelpurchaseresolver.FuelPurchaseResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchaseIFTA":             func() any { return &fuelpurchaseresolver.FuelPurchaseIFTAResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchaseImportBatch":      func() any { return &fuelpurchaseresolver.FuelPurchaseImportBatchResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchaseImportRow":        func() any { return &fuelpurchaseresolver.FuelPurchaseImportRowResolver{Deps: fuelpurchaseDeps} },
+		"FuelPurchaseImportSummary":    func() any { return &fuelpurchaseresolver.FuelPurchaseImportSummaryResolver{Deps: fuelpurchaseDeps} },
+		"FuelSpend":                    func() any { return &fuelpurchaseresolver.FuelSpendResolver{Deps: fuelpurchaseDeps} },
+		"IFTAFleetMPG":                 func() any { return &iftaresolver.IFTAFleetMPGResolver{Deps: iftaDeps} },
+		"IFTAJurisdiction":             func() any { return &iftaresolver.IFTAJurisdictionResolver{Deps: iftaDeps} },
+		"IFTAJurisdictionMileageEntry": func() any { return &iftaresolver.IFTAJurisdictionMileageEntryResolver{Deps: iftaDeps} },
+		"IFTAPeriod":                   func() any { return &iftaresolver.IFTAPeriodResolver{Deps: iftaDeps} },
+		"IFTAReturn":                   func() any { return &iftaresolver.IFTAReturnResolver{Deps: iftaDeps} },
+		"IFTAReturnLine":               func() any { return &iftaresolver.IFTAReturnLineResolver{Deps: iftaDeps} },
+		"IFTAReturnProblem":            func() any { return &iftaresolver.IFTAReturnProblemResolver{Deps: iftaDeps} },
+		"IFTATaxRate":                  func() any { return &iftaresolver.IFTATaxRateResolver{Deps: iftaDeps} },
+		"InboundActivity":              func() any { return &inboundmessageresolver.InboundActivityResolver{Deps: inboundmessageDeps} },
+		"InboundMailbox":               func() any { return &inboundmessageresolver.InboundMailboxResolver{Deps: inboundmessageDeps} },
+		"InboundMailboxCredentials":    func() any { return &inboundmessageresolver.InboundMailboxCredentialsResolver{Deps: inboundmessageDeps} },
+		"InboundReply":                 func() any { return &inboundreplyresolver.InboundReplyResolver{Deps: inboundreplyDeps} },
+		"InboundSnooze":                func() any { return &inboundmessageresolver.InboundSnoozeResolver{Deps: inboundmessageDeps} },
+		"InboundSplitDocument":         func() any { return &inboundmessageresolver.InboundSplitDocumentResolver{Deps: inboundmessageDeps} },
+		"InvoiceAdjustment":            func() any { return &invoiceadjustmentresolver.InvoiceAdjustmentResolver{Deps: invoiceadjustmentDeps} },
+		"InvoiceAdjustmentApprovalQueueItem": func() any {
+			return &invoiceadjustmentresolver.InvoiceAdjustmentApprovalQueueItemResolver{Deps: invoiceadjustmentDeps}
+		},
+		"InvoiceAdjustmentLine": func() any {
+			return &invoiceadjustmentresolver.InvoiceAdjustmentLineResolver{Deps: invoiceadjustmentDeps}
+		},
+		"InvoiceChargeGroup":   func() any { return &invoiceresolver.InvoiceChargeGroupResolver{Deps: invoiceDeps} },
+		"InvoiceDispute":       func() any { return &invoicedisputeresolver.InvoiceDisputeResolver{Deps: invoicedisputeDeps} },
+		"InvoiceLine":          func() any { return &invoiceresolver.InvoiceLineResolver{Deps: invoiceDeps} },
+		"JournalCardLine":      func() any { return &journalentryresolver.JournalCardLineResolver{Deps: journalentryDeps} },
+		"JournalCardPosting":   func() any { return &journalentryresolver.JournalCardPostingResolver{Deps: journalentryDeps} },
+		"JournalEntry":         func() any { return &journalentryresolver.JournalEntryResolver{Deps: journalentryDeps} },
+		"JournalEntryLine":     func() any { return &journalentryresolver.JournalEntryLineResolver{Deps: journalentryDeps} },
+		"JournalReviewSummary": func() any { return &journalentryresolver.JournalReviewSummaryResolver{Deps: journalentryDeps} },
+		"JournalSourceInfo":    func() any { return &journalentryresolver.JournalSourceInfoResolver{Deps: journalentryDeps} },
+		"LeaveControl":         func() any { return &workerleaveresolver.LeaveControlResolver{Deps: workerleaveDeps} },
+		"LeaveEntitlement":     func() any { return &workerleaveresolver.LeaveEntitlementResolver{Deps: workerleaveDeps} },
+		"LocationCategory":     func() any { return &locationcategoryresolver.LocationCategoryResolver{Deps: locationcategoryDeps} },
+		"MyPTOBalance":         func() any { return &driverportalresolver.MyPTOBalanceResolver{Deps: driverportalDeps} },
+		"OSHAAnnualSummary":    func() any { return &workerinjuryresolver.OSHAAnnualSummaryResolver{Deps: workerinjuryDeps} },
+		"Order":                func() any { return &orderresolver.OrderResolver{Deps: orderDeps} },
+		"PTOChartDataPoint":    func() any { return &workerresolver.PTOChartDataPointResolver{Deps: workerDeps} },
+		"PayCode":              func() any { return &driversettlementresolver.PayCodeResolver{Deps: driversettlementDeps} },
+		"PayMileageBand":       func() any { return &driversettlementresolver.PayMileageBandResolver{Deps: driversettlementDeps} },
+		"PayProfile":           func() any { return &driversettlementresolver.PayProfileResolver{Deps: driversettlementDeps} },
+		"PayProfileComponent":  func() any { return &driversettlementresolver.PayProfileComponentResolver{Deps: driversettlementDeps} },
+		"PayRateOverride":      func() any { return &driversettlementresolver.PayRateOverrideResolver{Deps: driversettlementDeps} },
+		"PerformanceReview":    func() any { return &performancereviewresolver.PerformanceReviewResolver{Deps: performancereviewDeps} },
 		"PerformanceReviewTemplate": func() any {
 			return &performancereviewresolver.PerformanceReviewTemplateResolver{Deps: performancereviewDeps}
 		},
-		"PortalTraining":          func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
-		"ReviewRating":            func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
-		"SafetyScorecard":         func() any { return &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps} },
-		"Tractor":                 func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
-		"Trailer":                 func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
-		"TrainingCourse":          func() any { return &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps} },
-		"User":                    func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
-		"Worker":                  func() any { return &workerresolver.WorkerResolver{Deps: workerDeps} },
-		"WorkerChecklist":         func() any { return &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps} },
-		"WorkerChecklistItem":     func() any { return &workerchecklistresolver.WorkerChecklistItemResolver{Deps: workerchecklistDeps} },
-		"WorkerChecklistProgress": func() any { return &workerchecklistresolver.WorkerChecklistProgressResolver{Deps: workerchecklistDeps} },
-		"WorkerChecklistTemplate": func() any { return &workerchecklistresolver.WorkerChecklistTemplateResolver{Deps: workerchecklistDeps} },
+		"PortalCredential":             func() any { return &driverportalresolver.PortalCredentialResolver{Deps: driverportalDeps} },
+		"PortalTraining":               func() any { return &workertrainingresolver.PortalTrainingResolver{Deps: workertrainingDeps} },
+		"RateAgreement":                func() any { return &rateresolver.RateAgreementResolver{Deps: rateDeps} },
+		"RateMatrix":                   func() any { return &rateresolver.RateMatrixResolver{Deps: rateDeps} },
+		"RateMatrixVersion":            func() any { return &rateresolver.RateMatrixVersionResolver{Deps: rateDeps} },
+		"ReportSchedule":               func() any { return &reportresolver.ReportScheduleResolver{Deps: reportDeps} },
+		"ReviewRating":                 func() any { return &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps} },
+		"SafetyScorecard":              func() any { return &workersafetyresolver.SafetyScorecardResolver{Deps: workersafetyDeps} },
+		"ServiceFailure":               func() any { return &servicefailureresolver.ServiceFailureResolver{Deps: servicefailureDeps} },
+		"ServiceFailureShipment":       func() any { return &servicefailureresolver.ServiceFailureShipmentResolver{Deps: servicefailureDeps} },
+		"ServiceFailureStop":           func() any { return &servicefailureresolver.ServiceFailureStopResolver{Deps: servicefailureDeps} },
+		"SettlementControl":            func() any { return &driversettlementresolver.SettlementControlResolver{Deps: driversettlementDeps} },
+		"SettlementException":          func() any { return &driversettlementresolver.SettlementExceptionResolver{Deps: driversettlementDeps} },
+		"ShiftTemplate":                func() any { return &schedulingresolver.ShiftTemplateResolver{Deps: schedulingDeps} },
+		"Shipment":                     func() any { return &shipmentresolver.ShipmentResolver{Deps: shipmentDeps} },
+		"ShipmentCustomer":             func() any { return &shipmentresolver.ShipmentCustomerResolver{Deps: shipmentDeps} },
+		"ShipmentMove":                 func() any { return &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps} },
+		"ShipmentMoveJurisdictionMile": func() any { return &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps} },
+		"ShipmentRatingDetail":         func() any { return &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps} },
+		"ShipmentRatingReviewApproval": func() any { return &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps} },
+		"TCASubscription":              func() any { return &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps} },
+		"Tender":                       func() any { return &tenderresolver.TenderResolver{Deps: tenderDeps} },
+		"TenderOffer":                  func() any { return &tenderresolver.TenderOfferResolver{Deps: tenderDeps} },
+		"Tractor":                      func() any { return &tractorresolver.TractorResolver{Deps: tractorDeps} },
+		"Trailer":                      func() any { return &trailerresolver.TrailerResolver{Deps: trailerDeps} },
+		"TrainingCourse":               func() any { return &workertrainingresolver.TrainingCourseResolver{Deps: workertrainingDeps} },
+		"TriageAction":                 func() any { return &inboundreplyresolver.TriageActionResolver{Deps: inboundreplyDeps} },
+		"TriageAssignee":               func() any { return &inboundmessageresolver.TriageAssigneeResolver{Deps: inboundmessageDeps} },
+		"TriageBriefing":               func() any { return &triageresolver.TriageBriefingResolver{Deps: triageDeps} },
+		"TriageConflict":               func() any { return &triageresolver.TriageConflictResolver{Deps: triageDeps} },
+		"TriageDeckItem":               func() any { return &triageresolver.TriageDeckItemResolver{Deps: triageDeps} },
+		"TriageHandOff":                func() any { return &inboundmessageresolver.TriageHandOffResolver{Deps: inboundmessageDeps} },
+		"TriageReplyTemplate":          func() any { return &inboundreplyresolver.TriageReplyTemplateResolver{Deps: inboundreplyDeps} },
+		"TriageRule":                   func() any { return &triageresolver.TriageRuleResolver{Deps: triageDeps} },
+		"TriageSettings":               func() any { return &inboundmessageresolver.TriageSettingsResolver{Deps: inboundmessageDeps} },
+		"TriageStopTimes":              func() any { return &inboundreplyresolver.TriageStopTimesResolver{Deps: inboundreplyDeps} },
+		"TriageView":                   func() any { return &inboundmessageresolver.TriageViewResolver{Deps: inboundmessageDeps} },
+		"User":                         func() any { return &tenantresolver.UserResolver{Deps: tenantDeps} },
+		"Worker":                       func() any { return &workerresolver.WorkerResolver{Deps: workerDeps} },
+		"WorkerChecklist":              func() any { return &workerchecklistresolver.WorkerChecklistResolver{Deps: workerchecklistDeps} },
+		"WorkerChecklistItem":          func() any { return &workerchecklistresolver.WorkerChecklistItemResolver{Deps: workerchecklistDeps} },
+		"WorkerChecklistProgress":      func() any { return &workerchecklistresolver.WorkerChecklistProgressResolver{Deps: workerchecklistDeps} },
+		"WorkerChecklistTemplate":      func() any { return &workerchecklistresolver.WorkerChecklistTemplateResolver{Deps: workerchecklistDeps} },
 		"WorkerChecklistTemplateItem": func() any {
 			return &workerchecklistresolver.WorkerChecklistTemplateItemResolver{Deps: workerchecklistDeps}
 		},
@@ -665,6 +1955,7 @@ func NewSchema(p ResolverParams) Schema {
 		"WorkerLeaveCase":              func() any { return &workerleaveresolver.WorkerLeaveCaseResolver{Deps: workerleaveDeps} },
 		"WorkerLeaveEntry":             func() any { return &workerleaveresolver.WorkerLeaveEntryResolver{Deps: workerleaveDeps} },
 		"WorkerPTO":                    func() any { return &workerresolver.WorkerPTOResolver{Deps: workerDeps} },
+		"WorkerPayAssignment":          func() any { return &driversettlementresolver.WorkerPayAssignmentResolver{Deps: driversettlementDeps} },
 		"WorkerProfile":                func() any { return &workerresolver.WorkerProfileResolver{Deps: workerDeps} },
 		"WorkerRecognition":            func() any { return &workersafetyresolver.WorkerRecognitionResolver{Deps: workersafetyDeps} },
 		"WorkerSafetyEvent":            func() any { return &workersafetyresolver.WorkerSafetyEventResolver{Deps: workersafetyDeps} },
@@ -678,18 +1969,63 @@ func Operations() []Operation {
 
 type customerBillingProfileResolver struct {
 	*customerCustomerBillingProfile
+	*factoringCustomerBillingProfile
+}
+
+type inboundAttachmentResolver struct {
+	*inboundmessageInboundAttachment
+	*inboundreplyInboundAttachment
+}
+
+type inboundMessageResolver struct {
+	*inboundmessageInboundMessage
+	*inboundreplyInboundMessage
+	*triageInboundMessage
+}
+
+type invoiceResolver struct {
+	*factoringInvoice
+	*invoiceInvoice
+	*invoicedisputeInvoice
 }
 
 type mutationResolver struct {
+	*accountingsyncMutation
+	*briefingMutation
+	*captureMutation
+	*carriercapacityMutation
 	*carrierintelligenceMutation
+	*carriersettlementMutation
+	*customerpaymentMutation
+	*detentionMutation
 	*dispatchconsoleMutation
+	*driverportalMutation
+	*driversettlementMutation
 	*equipmentmanufacturerMutation
 	*equipmenttypeMutation
+	*factoringMutation
+	*factoringcompanyMutation
 	*fleetsafetyMutation
+	*fuelpurchaseMutation
+	*fuelsurchargeMutation
+	*homelayoutMutation
+	*iftaMutation
+	*inboundmessageMutation
+	*inboundreplyMutation
+	*invoiceMutation
+	*invoiceadjustmentMutation
+	*invoicedisputeMutation
+	*journalentryMutation
+	*orderMutation
 	*performancereviewMutation
+	*reportMutation
+	*schedulingMutation
+	*shipmentMutation
+	*telematicsMutation
 	*tenantMutation
 	*tractorMutation
 	*trailerMutation
+	*triageMutation
 	*workerMutation
 	*workerchecklistMutation
 	*workercredentialMutation
@@ -703,26 +2039,66 @@ type mutationResolver struct {
 
 type queryResolver struct {
 	*accessorialchargeQuery
+	*accountingsyncQuery
+	*briefingQuery
+	*captureQuery
 	*carrierQuery
+	*carriercapacityQuery
 	*carrierintelligenceQuery
+	*carriersettlementQuery
 	*commodityQuery
 	*customerQuery
+	*customerpaymentQuery
+	*detentionQuery
 	*dispatchconsoleQuery
 	*documenttypeQuery
+	*driverportalQuery
+	*driversettlementQuery
+	*ediQuery
+	*emailprofileQuery
 	*equipmentmanufacturerQuery
 	*equipmenttypeQuery
+	*factoringQuery
+	*factoringcompanyQuery
+	*fiscalperiodQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
+	*formulalibraryQuery
+	*formulatemplateQuery
+	*fuelpurchaseQuery
+	*fuelsurchargeQuery
 	*hazardousmaterialQuery
 	*holdreasonQuery
+	*homelayoutQuery
+	*iftaQuery
+	*inboundmessageQuery
+	*inboundreplyQuery
+	*invoiceQuery
+	*invoiceadjustmentQuery
+	*invoicedisputeQuery
+	*journalentryQuery
+	*journalreversalQuery
 	*locationQuery
 	*locationcategoryQuery
+	*manualjournalQuery
+	*orderQuery
 	*performancereviewQuery
+	*rateQuery
+	*recurringshipmentQuery
+	*reportQuery
+	*schedulingQuery
+	*servicefailureQuery
+	*servicefailurereasoncodeQuery
 	*servicetypeQuery
+	*shipmentQuery
 	*shipmenttypeQuery
+	*tablechangealertQuery
+	*telematicsQuery
 	*tenantQuery
+	*tenderQuery
 	*tractorQuery
 	*trailerQuery
+	*triageQuery
 	*workerQuery
 	*workerchecklistQuery
 	*workercredentialQuery
@@ -735,53 +2111,129 @@ type queryResolver struct {
 }
 
 type (
-	customerCustomerBillingProfile = customerresolver.CustomerBillingProfileResolver
-	carrierintelligenceMutation    = carrierintelligenceresolver.MutationResolver
-	dispatchconsoleMutation        = dispatchconsoleresolver.MutationResolver
-	equipmentmanufacturerMutation  = equipmentmanufacturerresolver.MutationResolver
-	equipmenttypeMutation          = equipmenttyperesolver.MutationResolver
-	fleetsafetyMutation            = fleetsafetyresolver.MutationResolver
-	performancereviewMutation      = performancereviewresolver.MutationResolver
-	tenantMutation                 = tenantresolver.MutationResolver
-	tractorMutation                = tractorresolver.MutationResolver
-	trailerMutation                = trailerresolver.MutationResolver
-	workerMutation                 = workerresolver.MutationResolver
-	workerchecklistMutation        = workerchecklistresolver.MutationResolver
-	workercredentialMutation       = workercredentialresolver.MutationResolver
-	workerdqfMutation              = workerdqfresolver.MutationResolver
-	workerdrugalcoholMutation      = workerdrugalcoholresolver.MutationResolver
-	workerinjuryMutation           = workerinjuryresolver.MutationResolver
-	workerleaveMutation            = workerleaveresolver.MutationResolver
-	workersafetyMutation           = workersafetyresolver.MutationResolver
-	workertrainingMutation         = workertrainingresolver.MutationResolver
-	accessorialchargeQuery         = accessorialchargeresolver.QueryResolver
-	carrierQuery                   = carrierresolver.QueryResolver
-	carrierintelligenceQuery       = carrierintelligenceresolver.QueryResolver
-	commodityQuery                 = commodityresolver.QueryResolver
-	customerQuery                  = customerresolver.QueryResolver
-	dispatchconsoleQuery           = dispatchconsoleresolver.QueryResolver
-	documenttypeQuery              = documenttyperesolver.QueryResolver
-	equipmentmanufacturerQuery     = equipmentmanufacturerresolver.QueryResolver
-	equipmenttypeQuery             = equipmenttyperesolver.QueryResolver
-	fleetcodeQuery                 = fleetcoderesolver.QueryResolver
-	fleetsafetyQuery               = fleetsafetyresolver.QueryResolver
-	hazardousmaterialQuery         = hazardousmaterialresolver.QueryResolver
-	holdreasonQuery                = holdreasonresolver.QueryResolver
-	locationQuery                  = locationresolver.QueryResolver
-	locationcategoryQuery          = locationcategoryresolver.QueryResolver
-	performancereviewQuery         = performancereviewresolver.QueryResolver
-	servicetypeQuery               = servicetyperesolver.QueryResolver
-	shipmenttypeQuery              = shipmenttyperesolver.QueryResolver
-	tenantQuery                    = tenantresolver.QueryResolver
-	tractorQuery                   = tractorresolver.QueryResolver
-	trailerQuery                   = trailerresolver.QueryResolver
-	workerQuery                    = workerresolver.QueryResolver
-	workerchecklistQuery           = workerchecklistresolver.QueryResolver
-	workercredentialQuery          = workercredentialresolver.QueryResolver
-	workerdqfQuery                 = workerdqfresolver.QueryResolver
-	workerdrugalcoholQuery         = workerdrugalcoholresolver.QueryResolver
-	workerinjuryQuery              = workerinjuryresolver.QueryResolver
-	workerleaveQuery               = workerleaveresolver.QueryResolver
-	workersafetyQuery              = workersafetyresolver.QueryResolver
-	workertrainingQuery            = workertrainingresolver.QueryResolver
+	customerCustomerBillingProfile  = customerresolver.CustomerBillingProfileResolver
+	factoringCustomerBillingProfile = factoringresolver.CustomerBillingProfileResolver
+	inboundmessageInboundAttachment = inboundmessageresolver.InboundAttachmentResolver
+	inboundreplyInboundAttachment   = inboundreplyresolver.InboundAttachmentResolver
+	inboundmessageInboundMessage    = inboundmessageresolver.InboundMessageResolver
+	inboundreplyInboundMessage      = inboundreplyresolver.InboundMessageResolver
+	triageInboundMessage            = triageresolver.InboundMessageResolver
+	factoringInvoice                = factoringresolver.InvoiceResolver
+	invoiceInvoice                  = invoiceresolver.InvoiceResolver
+	invoicedisputeInvoice           = invoicedisputeresolver.InvoiceResolver
+	accountingsyncMutation          = accountingsyncresolver.MutationResolver
+	briefingMutation                = briefingresolver.MutationResolver
+	captureMutation                 = captureresolver.MutationResolver
+	carriercapacityMutation         = carriercapacityresolver.MutationResolver
+	carrierintelligenceMutation     = carrierintelligenceresolver.MutationResolver
+	carriersettlementMutation       = carriersettlementresolver.MutationResolver
+	customerpaymentMutation         = customerpaymentresolver.MutationResolver
+	detentionMutation               = detentionresolver.MutationResolver
+	dispatchconsoleMutation         = dispatchconsoleresolver.MutationResolver
+	driverportalMutation            = driverportalresolver.MutationResolver
+	driversettlementMutation        = driversettlementresolver.MutationResolver
+	equipmentmanufacturerMutation   = equipmentmanufacturerresolver.MutationResolver
+	equipmenttypeMutation           = equipmenttyperesolver.MutationResolver
+	factoringMutation               = factoringresolver.MutationResolver
+	factoringcompanyMutation        = factoringcompanyresolver.MutationResolver
+	fleetsafetyMutation             = fleetsafetyresolver.MutationResolver
+	fuelpurchaseMutation            = fuelpurchaseresolver.MutationResolver
+	fuelsurchargeMutation           = fuelsurchargeresolver.MutationResolver
+	homelayoutMutation              = homelayoutresolver.MutationResolver
+	iftaMutation                    = iftaresolver.MutationResolver
+	inboundmessageMutation          = inboundmessageresolver.MutationResolver
+	inboundreplyMutation            = inboundreplyresolver.MutationResolver
+	invoiceMutation                 = invoiceresolver.MutationResolver
+	invoiceadjustmentMutation       = invoiceadjustmentresolver.MutationResolver
+	invoicedisputeMutation          = invoicedisputeresolver.MutationResolver
+	journalentryMutation            = journalentryresolver.MutationResolver
+	orderMutation                   = orderresolver.MutationResolver
+	performancereviewMutation       = performancereviewresolver.MutationResolver
+	reportMutation                  = reportresolver.MutationResolver
+	schedulingMutation              = schedulingresolver.MutationResolver
+	shipmentMutation                = shipmentresolver.MutationResolver
+	telematicsMutation              = telematicsresolver.MutationResolver
+	tenantMutation                  = tenantresolver.MutationResolver
+	tractorMutation                 = tractorresolver.MutationResolver
+	trailerMutation                 = trailerresolver.MutationResolver
+	triageMutation                  = triageresolver.MutationResolver
+	workerMutation                  = workerresolver.MutationResolver
+	workerchecklistMutation         = workerchecklistresolver.MutationResolver
+	workercredentialMutation        = workercredentialresolver.MutationResolver
+	workerdqfMutation               = workerdqfresolver.MutationResolver
+	workerdrugalcoholMutation       = workerdrugalcoholresolver.MutationResolver
+	workerinjuryMutation            = workerinjuryresolver.MutationResolver
+	workerleaveMutation             = workerleaveresolver.MutationResolver
+	workersafetyMutation            = workersafetyresolver.MutationResolver
+	workertrainingMutation          = workertrainingresolver.MutationResolver
+	accessorialchargeQuery          = accessorialchargeresolver.QueryResolver
+	accountingsyncQuery             = accountingsyncresolver.QueryResolver
+	briefingQuery                   = briefingresolver.QueryResolver
+	captureQuery                    = captureresolver.QueryResolver
+	carrierQuery                    = carrierresolver.QueryResolver
+	carriercapacityQuery            = carriercapacityresolver.QueryResolver
+	carrierintelligenceQuery        = carrierintelligenceresolver.QueryResolver
+	carriersettlementQuery          = carriersettlementresolver.QueryResolver
+	commodityQuery                  = commodityresolver.QueryResolver
+	customerQuery                   = customerresolver.QueryResolver
+	customerpaymentQuery            = customerpaymentresolver.QueryResolver
+	detentionQuery                  = detentionresolver.QueryResolver
+	dispatchconsoleQuery            = dispatchconsoleresolver.QueryResolver
+	documenttypeQuery               = documenttyperesolver.QueryResolver
+	driverportalQuery               = driverportalresolver.QueryResolver
+	driversettlementQuery           = driversettlementresolver.QueryResolver
+	ediQuery                        = ediresolver.QueryResolver
+	emailprofileQuery               = emailprofileresolver.QueryResolver
+	equipmentmanufacturerQuery      = equipmentmanufacturerresolver.QueryResolver
+	equipmenttypeQuery              = equipmenttyperesolver.QueryResolver
+	factoringQuery                  = factoringresolver.QueryResolver
+	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
+	fiscalperiodQuery               = fiscalperiodresolver.QueryResolver
+	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
+	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
+	formulalibraryQuery             = formulalibraryresolver.QueryResolver
+	formulatemplateQuery            = formulatemplateresolver.QueryResolver
+	fuelpurchaseQuery               = fuelpurchaseresolver.QueryResolver
+	fuelsurchargeQuery              = fuelsurchargeresolver.QueryResolver
+	hazardousmaterialQuery          = hazardousmaterialresolver.QueryResolver
+	holdreasonQuery                 = holdreasonresolver.QueryResolver
+	homelayoutQuery                 = homelayoutresolver.QueryResolver
+	iftaQuery                       = iftaresolver.QueryResolver
+	inboundmessageQuery             = inboundmessageresolver.QueryResolver
+	inboundreplyQuery               = inboundreplyresolver.QueryResolver
+	invoiceQuery                    = invoiceresolver.QueryResolver
+	invoiceadjustmentQuery          = invoiceadjustmentresolver.QueryResolver
+	invoicedisputeQuery             = invoicedisputeresolver.QueryResolver
+	journalentryQuery               = journalentryresolver.QueryResolver
+	journalreversalQuery            = journalreversalresolver.QueryResolver
+	locationQuery                   = locationresolver.QueryResolver
+	locationcategoryQuery           = locationcategoryresolver.QueryResolver
+	manualjournalQuery              = manualjournalresolver.QueryResolver
+	orderQuery                      = orderresolver.QueryResolver
+	performancereviewQuery          = performancereviewresolver.QueryResolver
+	rateQuery                       = rateresolver.QueryResolver
+	recurringshipmentQuery          = recurringshipmentresolver.QueryResolver
+	reportQuery                     = reportresolver.QueryResolver
+	schedulingQuery                 = schedulingresolver.QueryResolver
+	servicefailureQuery             = servicefailureresolver.QueryResolver
+	servicefailurereasoncodeQuery   = servicefailurereasoncoderesolver.QueryResolver
+	servicetypeQuery                = servicetyperesolver.QueryResolver
+	shipmentQuery                   = shipmentresolver.QueryResolver
+	shipmenttypeQuery               = shipmenttyperesolver.QueryResolver
+	tablechangealertQuery           = tablechangealertresolver.QueryResolver
+	telematicsQuery                 = telematicsresolver.QueryResolver
+	tenantQuery                     = tenantresolver.QueryResolver
+	tenderQuery                     = tenderresolver.QueryResolver
+	tractorQuery                    = tractorresolver.QueryResolver
+	trailerQuery                    = trailerresolver.QueryResolver
+	triageQuery                     = triageresolver.QueryResolver
+	workerQuery                     = workerresolver.QueryResolver
+	workerchecklistQuery            = workerchecklistresolver.QueryResolver
+	workercredentialQuery           = workercredentialresolver.QueryResolver
+	workerdqfQuery                  = workerdqfresolver.QueryResolver
+	workerdrugalcoholQuery          = workerdrugalcoholresolver.QueryResolver
+	workerinjuryQuery               = workerinjuryresolver.QueryResolver
+	workerleaveQuery                = workerleaveresolver.QueryResolver
+	workersafetyQuery               = workersafetyresolver.QueryResolver
+	workertrainingQuery             = workertrainingresolver.QueryResolver
 )

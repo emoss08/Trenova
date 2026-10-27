@@ -4,15 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const (
+	defaultLedgerLimit = 100
+	maxLedgerLimit     = 500
 )
 
 type Params struct {
@@ -46,9 +49,12 @@ func (r *repository) AppendEntries(
 		if len(records) == 0 {
 			return nil
 		}
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(&records).Exec(ctx); err != nil {
+
+		err := carriersettlementdb.LedgerEntries.CreateMany(ctx, r.db.Keel(ctx), records)
+		if err != nil {
 			return fmt.Errorf("append carrier ledger entries: %w", err)
 		}
+
 		return nil
 	})
 }
@@ -61,26 +67,20 @@ func (r *repository) ListByCarrier(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carriersettlement.LedgerEntry, error) {
-			cols := carriersettlementcol.LedgerEntryColumns
 			limit := req.Limit
-			if limit <= 0 || limit > 500 {
-				limit = 100
+			if limit <= 0 || limit > maxLedgerLimit {
+				limit = defaultLedgerLimit
 			}
-			items := make([]*carriersettlement.LedgerEntry, 0, limit)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carriersettlementcol.LedgerEntryScopeTenant(sq, req.TenantInfo).
-						Where(cols.CarrierID.Eq(), req.CarrierID)
-				}).
-				Order(cols.TransactionDate.OrderDesc()).
-				Order(cols.LineNumber.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx)
+
+			le := carriersettlementdb.LedgerEntries
+			items, err := le.Where(le.CarrierID.Eq(req.CarrierID)).
+				Order(le.TransactionDate.Desc(), le.LineNumber.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list carrier ledger entries: %w", err)
 			}
+
 			return items, nil
 		},
 	)

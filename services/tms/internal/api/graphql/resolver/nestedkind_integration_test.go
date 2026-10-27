@@ -9,14 +9,15 @@ import (
 	"testing"
 
 	"github.com/99designs/gqlgen/client"
-	"github.com/bytedance/sonic"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
 	"github.com/emoss08/trenova/internal/api/graphql/generated"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlext"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/equipment/adapters/postgres/equipmentmanufacturerrepository"
@@ -96,6 +97,7 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 	enforced.Database.RLS.Mode = config.RLSModeEnforce
 	scopes := readscopeservice.New(readscopeservice.Params{
 		Config:   enforced,
+		DB:       owner,
 		Engine:   noWorkerRead,
 		Registry: permission.NewRegistry(),
 	})
@@ -225,8 +227,12 @@ func screenClient(
 	root := FromServices(&Services{
 		Core: &base.Core{L: logger, PermissionEngine: engine},
 		TractorService: tractorservice.New(tractorservice.Params{
-			Logger:                    logger,
-			Repo:                      tractorrepository.New(tractorrepository.Params{DB: conn, Logger: logger}),
+			Logger: logger,
+			Repo: tractorrepository.New(tractorrepository.Params{
+				DB:        conn,
+				Logger:    logger,
+				Locations: crossref.LocationColumns(),
+			}),
 			CustomFieldsValuesService: customFields,
 		}),
 	})
@@ -258,7 +264,10 @@ func writeTractorWithDriver(
 
 	logger := zap.NewNop()
 	bu, org := tenant.Actor.BusinessUnitID, tenant.Actor.OrganizationID
-	kind, err := equipmenttyperepository.New(equipmenttyperepository.Params{DB: conn, Logger: logger}).
+	kind, err := equipmenttyperepository.New(equipmenttyperepository.Params{
+		DB:     conn,
+		Logger: logger,
+	}).
 		Create(ctx, &equipmenttype.EquipmentType{
 			BusinessUnitID: bu, OrganizationID: org, Status: domaintypes.StatusActive,
 			Code: "TRC", Class: equipmenttype.ClassTractor, DeckType: equipmenttype.DeckTypeFlatbed,
@@ -287,7 +296,11 @@ func writeTractorWithDriver(
 		})
 	require.NoError(t, err)
 
-	_, err = tractorrepository.New(tractorrepository.Params{DB: conn, Logger: logger}).
+	_, err = tractorrepository.New(tractorrepository.Params{
+		DB:        conn,
+		Logger:    logger,
+		Locations: crossref.LocationColumns(),
+	}).
 		Create(ctx, &tractor.Tractor{
 			BusinessUnitID: bu, OrganizationID: org, Status: domaintypes.EquipmentStatusAvailable,
 			Code: "T1", EquipmentTypeID: kind.ID, EquipmentManufacturerID: maker.ID,

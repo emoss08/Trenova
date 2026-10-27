@@ -2,30 +2,30 @@ package inboundreplyrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
 const (
-	replyEntity            = "InboundReply"
-	repliesPerMessageHint  = 2
 	statusRankSent         = 0
 	statusRankSending      = 1
 	statusRankOther        = 2
 	threadKeyLookupMaximum = 50
+)
+
+var (
+	replyErrors   = dberror.Mapping{Entity: "InboundReply"}
+	messageErrors = dberror.Mapping{Entity: "InboundMessage"}
 )
 
 type Params struct {
@@ -44,12 +44,8 @@ func New(p Params) inboundmessageports.InboundReplyRepository {
 
 func (r *repository) Create(ctx context.Context, entity *triage.Reply) (*triage.Reply, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.Reply, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := triagedb.Replies.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, replyErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -58,29 +54,16 @@ func (r *repository) Create(ctx context.Context, entity *triage.Reply) (*triage.
 
 func (r *repository) Update(ctx context.Context, entity *triage.Reply) (*triage.Reply, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.Reply, error) {
-		previous := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(triagecol.ReplyColumns.Version.Eq(), previous).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = previous
-
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, replyEntity, entity.ID.String()); err != nil {
-			entity.Version = previous
-
-			return nil, err
-		}
-
-		return entity, nil
+		return save(ctx, r.db.Keel(ctx), entity)
 	})
+}
+
+func save(ctx context.Context, db *keel.DB, entity *triage.Reply) (*triage.Reply, error) {
+	if err := triagedb.Replies.Save(ctx, db, entity); err != nil {
+		return nil, replyErrors.Map(err, entity.ID.String())
+	}
+
+	return entity, nil
 }
 
 func (r *repository) GetByID(
@@ -88,14 +71,9 @@ func (r *repository) GetByID(
 	req inboundmessageports.GetInboundReplyRequest,
 ) (*triage.Reply, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.Reply, error) {
-		entity := new(triage.Reply)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(triagecol.ReplyColumns.ID.Eq(), req.ID).
-			Apply(triagecol.ReplyApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, replyEntity)
+		entity, err := triagedb.Replies.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, replyErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -107,18 +85,19 @@ func (r *repository) GetByIDs(
 	req inboundmessageports.GetInboundRepliesRequest,
 ) ([]*triage.Reply, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triage.Reply, error) {
-		entities := make([]*triage.Reply, 0, len(req.IDs))
 		if len(req.IDs) == 0 {
-			return entities, nil
+			return []*triage.Reply{}, nil
 		}
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(triagecol.ReplyColumns.ID.In(), bun.List(req.IDs)).
-			Apply(triagecol.ReplyApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
+		rp := triagedb.Replies
+		entities, err := rp.Where(rp.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
+		}
+		if entities == nil {
+			entities = []*triage.Reply{}
 		}
 
 		return entities, nil
@@ -130,14 +109,10 @@ func (r *repository) GetByIdempotencyKey(
 	req inboundmessageports.GetInboundReplyByKeyRequest,
 ) (*triage.Reply, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.Reply, error) {
-		entity := new(triage.Reply)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(triagecol.ReplyColumns.IdempotencyKey.Eq(), req.IdempotencyKey).
-			Apply(triagecol.ReplyApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, replyEntity)
+		rp := triagedb.Replies
+		entity, err := rp.Where(rp.IdempotencyKey.Eq(req.IdempotencyKey)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, replyErrors.Map(err, req.IdempotencyKey)
 		}
 
 		return entity, nil
@@ -146,41 +121,29 @@ func (r *repository) GetByIdempotencyKey(
 
 func (r *repository) UpsertDraft(ctx context.Context, entity *triage.Reply) (*triage.Reply, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.Reply, error) {
-		tenantInfo := pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		}
-		if err := r.lockMessage(ctx, tenantInfo, entity.MessageID); err != nil {
+		db := r.db.Keel(ctx)
+		if err := lockMessage(ctx, db, entity.MessageID); err != nil {
 			return nil, err
 		}
 
-		existing := new(triage.Reply)
-		cols := triagecol.ReplyColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(existing).
-			Where(cols.MessageID.Eq(), entity.MessageID).
-			Where(cols.Status.Eq(), triage.ReplyDraft).
-			Apply(triagecol.ReplyApplyTenant(tenantInfo)).
-			Order(cols.CreatedAt.OrderDesc()).
+		rp := triagedb.Replies
+		drafts, err := rp.Where(rp.MessageID.Eq(entity.MessageID), rp.Status.Eq(triage.ReplyDraft)).
+			Order(rp.CreatedAt.Desc()).
 			Limit(1).
-			Scan(ctx)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+			List(ctx, db)
+		if err != nil {
 			return nil, err
 		}
-		if err != nil {
+		if len(drafts) == 0 {
 			entity.Status = triage.ReplyDraft
-			if _, err = r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return nil, err
+			if err = rp.Create(ctx, db, entity); err != nil {
+				return nil, replyErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
 		}
 
+		existing := drafts[0]
 		existing.Subject = entity.Subject
 		existing.Body = entity.Body
 		existing.DraftedByNova = entity.DraftedByNova
@@ -193,25 +156,17 @@ func (r *repository) UpsertDraft(ctx context.Context, entity *triage.Reply) (*tr
 			existing.CreatedByID = entity.CreatedByID
 		}
 
-		return r.Update(ctx, existing)
+		return save(ctx, db, existing)
 	})
 }
 
-func (r *repository) lockMessage(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	messageID pulid.ID,
-) error {
-	var id pulid.ID
-	if err := r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		Column(inboundmessagecol.InboundMessageColumns.ID.Bare()).
-		Where(inboundmessagecol.InboundMessageColumns.ID.Eq(), messageID).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(tenantInfo)).
-		For("UPDATE").
-		Scan(ctx, &id); err != nil {
-		return dberror.HandleNotFoundError(err, "InboundMessage")
+func lockMessage(ctx context.Context, db *keel.DB, messageID pulid.ID) error {
+	m := inboundmessagedb.InboundMessages
+	if _, err := m.Pick(m.ID).
+		Where(m.ID.Eq(messageID)).
+		Lock(keel.ForUpdate).
+		One(ctx, db); err != nil {
+		return messageErrors.Map(err, messageID.String())
 	}
 
 	return nil
@@ -222,26 +177,14 @@ func (r *repository) DeleteDraft(
 	req inboundmessageports.InboundReplyMessageRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := triagecol.ReplyColumns
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*triage.Reply)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return triagecol.ReplyScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.MessageID.Eq(), req.MessageID).
-					Where(cols.Status.Eq(), triage.ReplyDraft)
-			}).
-			Exec(ctx)
+		rp := triagedb.Replies
+		n, err := rp.Where(rp.MessageID.Eq(req.MessageID), rp.Status.Eq(triage.ReplyDraft)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, err
 		}
 
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return 0, err
-		}
-
-		return int(affected), nil
+		return int(n), nil
 	})
 }
 
@@ -255,16 +198,14 @@ func (r *repository) ListByMessageIDs(
 			return grouped, nil
 		}
 
-		cols := triagecol.ReplyColumns
-		entities := make([]*triage.Reply, 0, len(req.MessageIDs)*repliesPerMessageHint)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.MessageID.In(), bun.List(req.MessageIDs)).
-			Where(cols.Status.Ne(), triage.ReplyDraft).
-			Apply(triagecol.ReplyApplyTenant(req.TenantInfo)).
-			Order(cols.MessageID.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
+		rp := triagedb.Replies
+		entities, err := rp.Where(
+			rp.MessageID.In(req.MessageIDs...),
+			rp.Status.Ne(triage.ReplyDraft),
+		).
+			Order(rp.MessageID.Asc(), rp.CreatedAt.Asc(), rp.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
 		}
 
@@ -280,62 +221,47 @@ func (r *repository) DraftsByMessageIDs(
 	ctx context.Context,
 	req inboundmessageports.InboundRepliesByMessagesRequest,
 ) (map[pulid.ID]*triage.Reply, error) {
-	return r.distinctByMessage(ctx, &distinctRequest{
-		tenantInfo: req.TenantInfo,
-		messageIDs: req.MessageIDs,
-		draftsOnly: true,
-	})
+	return r.distinctByMessage(ctx, req.MessageIDs, true)
 }
 
 func (r *repository) LatestByMessageIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	messageIDs []pulid.ID,
 ) (map[pulid.ID]*triage.Reply, error) {
-	return r.distinctByMessage(ctx, &distinctRequest{
-		tenantInfo: tenantInfo,
-		messageIDs: messageIDs,
-	})
-}
-
-type distinctRequest struct {
-	tenantInfo pagination.TenantInfo
-	messageIDs []pulid.ID
-	draftsOnly bool
+	return r.distinctByMessage(ctx, messageIDs, false)
 }
 
 func (r *repository) distinctByMessage(
 	ctx context.Context,
-	req *distinctRequest,
+	messageIDs []pulid.ID,
+	draftsOnly bool,
 ) (map[pulid.ID]*triage.Reply, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]*triage.Reply, error) {
-		latest := make(map[pulid.ID]*triage.Reply, len(req.messageIDs))
-		if len(req.messageIDs) == 0 {
+		latest := make(map[pulid.ID]*triage.Reply, len(messageIDs))
+		if len(messageIDs) == 0 {
 			return latest, nil
 		}
 
-		cols := triagecol.ReplyColumns
-		entities := make([]*triage.Reply, 0, len(req.messageIDs))
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			DistinctOn(cols.MessageID.Qualified()).
-			Where(cols.MessageID.In(), bun.List(req.messageIDs)).
-			Apply(triagecol.ReplyApplyTenant(req.tenantInfo))
-		if req.draftsOnly {
-			query = query.Where(cols.Status.Eq(), triage.ReplyDraft)
-		}
-		if err := query.
-			OrderExpr(cols.MessageID.OrderAsc()).
-			OrderExpr(
-				"CASE "+cols.Status.Qualified()+" WHEN ? THEN ? WHEN ? THEN ? ELSE ? END",
-				triage.ReplySent, statusRankSent,
-				triage.ReplySending, statusRankSending,
-				statusRankOther,
+		rp := triagedb.Replies
+		entities, err := rp.DistinctOn(rp.MessageID).
+			Where(
+				rp.MessageID.In(messageIDs...),
+				keel.When(draftsOnly, rp.Status.Eq(triage.ReplyDraft)),
 			).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			OrderExpr(cols.ID.OrderDesc()).
-			Scan(ctx); err != nil {
+			Order(
+				rp.MessageID.Asc(),
+				keel.CaseInt64().
+					When(rp.Status.Eq(triage.ReplySent), statusRank(statusRankSent)).
+					When(rp.Status.Eq(triage.ReplySending), statusRank(statusRankSending)).
+					Else(statusRank(statusRankOther)).
+					Asc(),
+				rp.CreatedAt.Desc(),
+				rp.ID.Desc(),
+			).
+			Limit(len(messageIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
 		}
 
@@ -349,7 +275,7 @@ func (r *repository) distinctByMessage(
 
 func (r *repository) ThreadKeyForMessageKeys(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	messageKeys []string,
 ) (threadKey string, found bool, err error) {
 	if len(messageKeys) == 0 {
@@ -360,21 +286,16 @@ func (r *repository) ThreadKeyForMessageKeys(
 	}
 
 	type threadRow struct {
-		MessageKey string `bun:"message_key"`
-		ThreadKey  string `bun:"thread_key"`
+		MessageKey string
+		ThreadKey  string
 	}
 
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (string, bool, error) {
-		cols := triagecol.ReplyColumns
-		rows := make([]threadRow, 0, len(messageKeys))
-		if scanErr := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*triage.Reply)(nil)).
-			Column(cols.MessageKey.Bare(), cols.ThreadKey.Bare()).
-			Where(cols.MessageKey.In(), bun.List(messageKeys)).
-			Where(cols.ThreadKey.Ne(), "").
-			Apply(triagecol.ReplyApplyTenant(tenantInfo)).
-			Scan(ctx, &rows); scanErr != nil {
+		rp := triagedb.Replies
+		rows, scanErr := keel.Into[threadRow](ctx, r.db.Keel(ctx), rp.
+			Pick(rp.MessageKey, rp.ThreadKey).
+			Where(rp.MessageKey.In(messageKeys...), rp.ThreadKey.Ne("")))
+		if scanErr != nil {
 			return "", false, scanErr
 		}
 		if len(rows) == 0 {
@@ -393,4 +314,8 @@ func (r *repository) ThreadKeyForMessageKeys(
 
 		return "", false, nil
 	})
+}
+
+func statusRank(rank int64) keel.Int64Expr {
+	return keel.Int64(rank)
 }

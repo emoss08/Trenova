@@ -162,10 +162,17 @@ var capabilityBundles = []Bundle{
 				Resource:   ResourceRateAgreement,
 				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit, OpDuplicate},
 			},
-			{Resource: ResourceRateMatrix, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
+			{
+				Resource:   ResourceRateMatrix,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpSubmit},
+			},
 			{Resource: ResourceRateZone, Operations: []Operation{OpRead, OpCreate, OpUpdate}},
 			{
 				Resource:   ResourceFormulaTemplate,
+				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDuplicate, OpSubmit},
+			},
+			{
+				Resource:   ResourceFormulaLibrary,
 				Operations: []Operation{OpRead, OpCreate, OpUpdate, OpDuplicate, OpSubmit},
 			},
 			{
@@ -536,7 +543,7 @@ var capabilityBundles = []Bundle{
 			{Resource: ResourceInsight, Operations: []Operation{OpRead}},
 			{Resource: ResourceWebResearch, Operations: []Operation{OpRead}},
 			{Resource: ResourcePortalAutomation, Operations: []Operation{OpRead}},
-			{Resource: ResourceDataAnalysis, Operations: []Operation{OpRead}},
+			{Resource: ResourceCodeMode, Operations: []Operation{OpRead}},
 		},
 	},
 	{

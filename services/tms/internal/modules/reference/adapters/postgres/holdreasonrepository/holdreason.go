@@ -3,20 +3,21 @@ package holdreasonrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/holdreasonports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var holdReasonErrors = dberror.Mapping{Entity: "HoldReason"}
 
 type Params struct {
 	fx.In
@@ -37,21 +38,6 @@ func New(p Params) holdreasonports.HoldReasonRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *holdreasonports.ListHoldReasonRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"hr",
-		req.Filter,
-		(*holdreason.HoldReason)(nil),
-	)
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *holdreasonports.ListHoldReasonRequest,
@@ -60,114 +46,42 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*holdreason.HoldReason], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			entities := make([]*holdreason.HoldReason, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
+			hr := holdreasondb.HoldReasons
+			result, err := listquery.List(ctx, r.db.Keel(ctx), hr.Query(),
+				&listquery.Request[holdreason.HoldReason]{
+					Filter: req.Filter,
+					Then:   []keel.Order{hr.SortOrder.Asc(), hr.CreatedAt.Desc()},
+				})
 			if err != nil {
-				log.Error("failed to scan and count hold reasons", zap.Error(err))
+				r.l.Error("failed to list hold reasons", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*holdreason.HoldReason]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *holdreasonports.ListHoldReasonConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		holdreasoncol.HoldReasonTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*holdreason.HoldReason)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *holdreasonports.ListHoldReasonConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		holdreasoncol.HoldReasonTable.Alias,
-		req.Filter,
-		(*holdreason.HoldReason)(nil),
-	)
-}
-
-func applyHoldReasonColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(holdreasoncol.HoldReasonTable.All())
-	}
-
-	return q.Column(columns...)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *holdreasonports.ListHoldReasonConnectionRequest,
 ) (*pagination.CursorListResult[*holdreason.HoldReason], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*holdreason.HoldReason], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*holdreason.HoldReason)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count hold reasons", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*holdreason.HoldReason]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*holdreason.HoldReason) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyHoldReasonColumns(sq, req.HoldReasonColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				holdreasondb.HoldReasons.Query(),
+				&listquery.Request[holdreason.HoldReason]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.HoldReasonColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan hold reasons", zap.Error(err))
+				r.l.Error("failed to list hold reasons", zap.Error(err))
 				return nil, err
 			}
 
@@ -181,24 +95,12 @@ func (r *repository) GetByID(
 	req holdreasonports.GetHoldReasonByIDRequest,
 ) (*holdreason.HoldReason, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*holdreason.HoldReason, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(holdreason.HoldReason)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("hr.id = ?", req.ID).
-					Where("hr.organization_id = ?", req.TenantInfo.OrgID).
-					Where("hr.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Scan(ctx)
+		hr := holdreasondb.HoldReasons
+		entity, err := hr.Where(hr.ID.Eq(req.ID)).
+			Cache(resultcache.Reference()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get hold reason", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "HoldReason")
+			return nil, holdReasonErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -210,17 +112,13 @@ func (r *repository) Create(
 	entity *holdreason.HoldReason,
 ) (*holdreason.HoldReason, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*holdreason.HoldReason, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create hold reason", zap.Error(err))
-			return nil, err
+		if err := holdreasondb.HoldReasons.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create hold reason",
+				zap.String("code", entity.Code),
+				zap.Error(err),
+			)
+			return nil, holdReasonErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -232,29 +130,13 @@ func (r *repository) Update(
 	entity *holdreason.HoldReason,
 ) (*holdreason.HoldReason, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*holdreason.HoldReason, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update hold reason", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "HoldReason", entity.ID.String()); err != nil {
-			return nil, err
+		if err := holdreasondb.HoldReasons.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update hold reason",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, holdReasonErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -265,31 +147,22 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *holdreasonports.HoldReasonSelectOptionsRequest,
 ) (*pagination.ListResult[*holdreason.HoldReason], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*holdreason.HoldReason], error) {
-			return dbhelper.SelectOptions[*holdreason.HoldReason](
+			hr := holdreasondb.HoldReasons
+			q := hr.Pick(hr.ID, hr.Code, hr.Label, hr.Type).
+				Where(hr.Active.IsTrue()).
+				Cache(resultcache.Reference()...)
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						"id",
-						"code",
-						"label",
-						"type",
-					},
-					OrgColumn: "hr.organization_id",
-					BuColumn:  "hr.business_unit_id",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where("hr.active = ?", true)
-					},
-					EntityName: "HoldReason",
-					SearchColumns: []string{
-						"hr.code",
-						"hr.label",
-					},
+				func(s string) keel.Pred {
+					return keel.Or(hr.Code.ContainsFold(s), hr.Label.ContainsFold(s))
 				},
 			)
 		},

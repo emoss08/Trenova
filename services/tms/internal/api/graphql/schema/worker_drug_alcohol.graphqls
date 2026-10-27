@@ -243,13 +243,15 @@ type DOTRandomPoolConnection {
   edges: [DOTRandomPoolEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
 One selection round. The seed and method are the evidence of how the draw was
 made: the same seed over the same roster reproduces the same names.
 """
-type DOTRandomDraw {
+type DOTRandomDraw @kind(resource: "dot_random_pool") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -277,7 +279,7 @@ type DOTRandomDraw {
   entries: [DOTRandomDrawEntry!]!
 }
 
-type DOTRandomDrawEntry {
+type DOTRandomDrawEntry @kind(resource: "dot_random_pool") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -462,7 +464,11 @@ extend type Query {
   workerDrugAlcoholStanding(workerId: ID!): DrugAlcoholStanding!
   dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
   dotRandomPool(id: ID!): DOTRandomPool!
-  dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
+  "Random selection rounds, newest first: one pool's, or every pool's."
+  dotRandomDraws(
+    "The pool whose rounds are read. Leave it out for every pool's."
+    poolId: ID
+  ): [DOTRandomDraw!]!
   dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
   """
   Selections the worker still owes a collection for.

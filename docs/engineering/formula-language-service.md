@@ -1,135 +1,239 @@
 # Formula language service
 
-The Formula Studio's editor understands the formula language as you type: it underlines what
-is wrong, offers the fix, shows what a name is, helps with a call's arguments and formats the
-formula. None of that is written in TypeScript. The language (its grammar, types, checks,
-messages, formatter and catalog of functions) lives in one Rust crate, `services/crates/rules`,
-compiled to the WebAssembly module the server prices with. The browser loads the same module
-and asks it (`client/packages/shared/src/rules/formula.ts`). The editor only draws the answers.
+The Formula Studio and the library studio edit one Tariff file each. As you type, the editor
+colours it, underlines what is wrong and offers the fix, completes what may be written at the
+cursor, shows what a name is and what it came to on the last preview, helps with a call's
+arguments, jumps to a declaration (into an imported library), renames a binding everywhere,
+draws inferred types and parameter names inline, folds blocks and formats the file. Beside it the
+outline, the tests panel and the readiness list follow every change. None of that is written in
+TypeScript. The language (its lexer, parser, checker, evaluator, formatter, editor features,
+messages and standard library) lives in one Rust crate, `services/crates/rules`, compiled to the
+WebAssembly module the server rates with. The browser loads the same module and asks it
+(`client/packages/shared/src/rules/tariff.ts`). The editor only draws the answers.
 
-Read [rules-engine.md](rules-engine.md) first: "The formula language" for what a formula means,
-"The static formula operations" for the exact shapes and diagnostic codes, "The formula server
-API" for what crosses HTTP, and "Hosts" for how the browser loads the module.
+Read [formula-language.md](formula-language.md) first for what a Tariff file means ("Module
+operations" lists every `tariff.*` operation and "Wire values" their value forms), and
+[rules-engine.md](rules-engine.md) "Hosts" for how the browser loads the module.
 
-**The rule that bites:** never parse, check or format the formula language in TypeScript. A
-check, a message, a function or a formatting rule is changed in the crate, with a Rust test,
-and the module is rebuilt (`task rust:wasm-rules`). The browser and the server then agree
-because they run the same bytes. Only two pieces of TypeScript read formula text, and both
-only colour it: the CodeMirror highlighter (`expr-language.ts`) and the Desk card's
-`tokenizeFormula` (`formula-template-card.ts`). They take their keywords, word operators and
-function names from the module's catalog, and neither decides whether a formula is right.
+**The rule that bites:** never lex, parse, check, evaluate or format Tariff in TypeScript. A
+check, a message, a completion, a formatting rule or a standard library function is changed in
+the crate, with a Rust test, and the module is rebuilt (`task rust:wasm-rules`). The browser and
+the server agree because they run the same bytes. Even colour comes from the module
+(`tariff.tokens`), so there is no TypeScript grammar to drift.
 
 ## The wrappers
 
-`@trenova/shared/rules/formula` types the five static operations. Each is synchronous on a
-loaded `RulesRuntime`, and every position in and out is UTF-16 code units, which is what
-CodeMirror counts.
+`@trenova/shared/rules/tariff` types every operation the client calls. Each is synchronous on a
+loaded `RulesRuntime`; every position and range in and out is UTF-16 code units, which is what
+CodeMirror counts. A refused request throws `RulesRequestError {op, code, detail}`.
 
 | Wrapper | Operation | Used for |
 | --- | --- | --- |
-| `formulaCatalog(rules)` | `formula.catalog` | every function, built-in, disabled and reserved name; read once per loaded runtime (memoised in a `WeakMap`) and validated with `formulaCatalogSchema` |
-| `formulaCheck(rules, {source, expect, schema, tables})` | `formula.check` | diagnostics with fixes, `resultType`, the reads, `bindings`, `statements`, `lookupTables`, `empty`, `pending` |
-| `formulaFormat(rules, {source, width})` | `formula.format` | the format command and Nova's proposals |
-| `formulaSignature(rules, {source, position})` | `formula.signature` | signature help |
-| `formulaIdentifier(rules, {source, position, schema})` | `formula.identifier` | the hover card |
+| `tariffCheck(rules, {source, kind, context})` | `tariff.check` | diagnostics with fixes, the header, the declared inputs, the imports, the outline (items and folding) and the charges |
+| `tariffTokens(rules, source)` | `tariff.tokens` | the editor's highlighting and every read-only view of a source (`TariffCode`) |
+| `tariffFormat(rules, source)` | `tariff.format` | the format command and Nova's proposals; `formatted: null` with the syntax errors that stop it |
+| `tariffSetName(rules, source, name)` | `tariff.setName` | the template's name field and its starters: the source with its header naming `name`, and the one edit that makes it |
+| `tariffTest(rules, {source, context})` | `tariff.test` | the tests panel (tests and properties, a property's cases and counterexample), the outline's dots, readiness, the coverage gutter and Nova's proposal card |
+| `tariffScaffoldTest(rules, {source, context, record, inputs, name})` | `tariff.scaffoldTest` | "Save as test" on the sample load (a real shipment is scaffolded on the server) |
+| `tariffCatalog(rules)` | `tariff.catalog` | the reference pane and the definition dialog for a standard library name; memoised per runtime in a `WeakMap` |
+| `tariffComplete`, `tariffHover`, `tariffSignature`, `tariffDefinition`, `tariffRename`, `tariffPrepareRename`, `tariffInlays` | `tariff.complete`, `.hover`, `.signature`, `.definition`, `.rename` (with and without `newName`), `.inlays` | the editor's features at a cursor or over the visible range |
+| `tariffReferences(rules, {source, kind, context, offset, includeDeclaration?})` | `tariff.references` | the marks on every use of the name at the cursor and Find references |
+| `tariffActions(rules, {source, kind, context, from, to})` | `tariff.actions` | Promote to input: the refactorings for a selection, each a set of edits and the range to select after |
 
-The answers of the four per-keystroke operations are typed, not re-validated: they come from
-the committed artifact, and validating every keystroke's answer would cost more than the call.
+`wireContext` sends the context the check was given: the libraries (path, version id, source),
+the rate tables' shapes, the accessorial codes (left out while unknown, so codes go unchecked)
+and the settings. A file kind (`tariff` or `library`) is sent to every editor operation, so a
+library's header is never read as a tariff's.
 
-## What the editor knows
+## The context
 
-`KnownIdentifiers` (`components/formula-editor/known-identifiers.ts`) is built by
-`buildKnownIdentifiers(catalog, schema, inputs)` from two sources:
-
-- `GET /formula-templates/schema` (`{schemaId, variables}`, through `useFormulaSchema`): the
-  record's fields, and each list's item fields named `list[].field`, kept apart as
-  `itemFields` for the hover card on `.weight`;
-- `formula.catalog`: the documented functions the reference pane lists, every callable name
-  (built-ins included), the disabled names with the checker's message, the keywords (the
-  reserved words that are not functions) and the word operators.
-
-The template's inputs are added to the variables. `schema` is what `formula.check` and
-`formula.identifier` read; it is `null` until the schema has loaded, and the check then answers
-`pending: true`, holds back every unknown name and field, and still checks the language. The
-problems panel says names are not checked yet. `useKnownIdentifiers(rules, schemaId, inputs)`
-memoises the whole on the runtime, the schema response and the inputs.
+`useTariffCheckContext()` (`apps/web/src/hooks/use-tariff-check-context.ts`) reads
+`GET /formula-templates/context` once per five minutes. The server answers `{context,
+libraries}`: the context the module checks against, and each approved library as the Studio
+names it (`path`, `libraryId`, `name`, `description`, `versionNumber`). The hook answers
+`{context, libraries, isError, refetch}`. `context` is `null` until it has loaded; every caller
+then checks against `EMPTY_TARIFF_CONTEXT`, and a failed load shows a warning with Retry above
+the source, because the check cannot see the organisation's libraries, tables or codes.
+Organisation libraries come in their approved versions; a library is never in its own context.
 
 ## The editor
 
-All in `client/apps/web/src/components/formula-editor/`:
+All in `client/apps/web/src/components/formula-editor/`. `TariffEditor` takes `kind`, `value`,
+`onChange`, `context`, the last preview's `trace`, the last test run's `coverage`, `highlight`
+(a range something outside the editor points at), `onView`, `onOpenDefinition` and `onFormat`, and builds its extensions once,
+reading the runtime, the kind, the context and the trace through getters
+(`TariffLanguageService` in `tariff-service.ts`), so new knowledge never rebuilds the editor.
+`TariffEditorField` is the react-hook-form binding.
 
 | File | What it does |
 | --- | --- |
-| `formula-check.ts` | `checkExpression`: `formula.check` against the editor's knowledge. The studio's analysis and the linter ask for the same text within a keystroke of each other, so the last 24 answers are kept per `KnownIdentifiers` (new knowledge starts afresh). |
-| `expr-lint.ts` | The CodeMirror linter, 300 ms after the last edit: each diagnostic but `empty` becomes an underline with its translated message, and each fix an action (a `replace` fix applies its changes; a `declare` fix adds an input through `StudioContext.declareInput`). |
-| `expr-hover.ts` | The hover card: `formula.identifier` names what is under the cursor and its kind, and the card shows what the catalog or the schema says about it and what it came to on the last preview. |
-| `expr-signature.ts` | Signature help: `formula.signature` finds the call and the argument; the signature and description come from the catalog. A `StateField` calls the module synchronously on every cursor move. It tracks the editor's focus and leaves with it, as the hover card does, so neither floats over a dialog. |
-| `editor-format.ts` | `formatEditorDocument`, bound to Shift-Alt-F and the format button. A refused formula (empty, not parsing, holding a comment) is left exactly as written, and the page says why. |
-| `expr-language.ts` | The highlighter (a `StreamLanguage`, presentation only) and the completions. |
-| `expr-inline-values.ts` | What each statement came to on the preview load, drawn at the end of its line from the server's `statements` trace. Nothing is evaluated in the browser. |
-| `editor-theme.ts` (`languageServiceTheme`) | The chrome for all of the above, from tokens only. |
+| `tariff-service.ts` | `checkTariffSource`: `tariff.check` with an LRU of four answers keyed by source, kind and context identity, so the linter, the folding, the Studio and the outline ask once per text |
+| `tariff-highlight.ts` | a `ViewPlugin` over `tariff.tokens`: the module is asked once per text and only the tokens in the visible ranges become decorations (`visibleTokenDecorations`), classed `cm-tariff-<kind>` and `cm-syntax-<role>` |
+| `tariff-lint.ts` | the linter, 250 ms after the last edit: each finding becomes an underline with its translated message and its fixes as actions (`applyTariffFix`, one undoable change); a library's finding is placed on the `use` line that imports it (`toTariffLint`) |
+| `tariff-complete.ts` | completion: the module's items in its order (`sort`), filtered client-side by what is typed, a snippet's LSP tab stops (`$0`, `${1:x}`) as CodeMirror fields through `codeMirrorSnippet`, which CodeMirror's own `snippet` would otherwise insert as text, and an item's own `range` (`.` rewritten to `?.` on an optional) replacing the list's |
+| `tariff-hover.ts` | the hover card: the declaration as Tariff code coloured from the module's tokens (`appendTariffCode`), the type and unit, the doc, and what a binding came to on the last preview (`values` is that preview's trace) |
+| `cursor-tooltip.ts` | a card opened from the keyboard at the cursor (the hover card, a line's findings); it closes when the cursor moves, the text changes or on Escape |
+| `tariff-signature.ts` | signature help: the parameter being written in bold, its doc under it; a `StateField` asks on every cursor move |
+| `tariff-navigate.ts` | F12 or Mod-click: `tariff.definition` moves to a declaration in this file, or opens the library it is declared in (`onOpenDefinition({module, range, name})`); F2: prepare, then a rename panel that applies every edit as one change or shows why the name cannot be renamed |
+| `tariff-inlays.ts` | inferred types after bindings, parameter names before positional arguments and, with a trace, each binding's value, for the visible range; `refreshTariffInlays` redraws them when the trace changes |
+| `tariff-fold.ts` | folding from the outline's `folding` ranges (`foldAt` keeps the braces) |
+| `tariff-format.ts` | Shift-Alt-F and the format button; a file with syntax errors is left as written and the caller is told why |
+| `tariff-references.ts` | once the cursor rests 300 ms on a name, `tariff.references` marks its uses in the file (`cm-tariff-occurrence`, a write or the declaration also `-write`, on the `--editor-reference` tokens); Shift-F12 (`findReferences`) hands the whole list to the service's `showReferences` |
+| `references-dialog.tsx` | Find references: the uses "In this file" and "In libraries", each with its line, the use set in the reference tint; Enter or a click goes to a use in this file or opens the library at it (`onOpenDefinition`), the arrow keys, Home and End move between rows. `TariffEditor` owns it, so every editor has it |
+| `tariff-actions.ts` | Promote to input (Mod-.): `tariff.actions` for the selection, a menu at the cursor (arrows, Enter, Escape), the chosen action's edits as one change (`userEvent: "refactor"`), then rename opened at its `select` |
+| `tariff-notice.ts` | the one-line notice at the cursor when a command has nothing to do there ("Nothing here can be promoted to an input"); it leaves with the next edit, move or click, or after 2.5 s |
+| `tariff-coverage.ts` | the last test run's coverage: a gutter bar (`--editor-coverage-gap`) beside each line of the outermost regions no case reached, a tooltip naming the kind of region, the regions mapped through edits until the next run; with no coverage the gutter is reconfigured away (`setTariffCoverage`) |
+| `tariff-doc.ts` | `tariffDocText` and `appendTariffDoc` (an author's doc as written, a built-in's `Message` translated), and `unlessUnanswered` |
+| `tariff-commands.ts` | what the bindings share without importing each other: the editor's format command (`tariffEditorCommands`), `requestEditorSave` and Tariff's `//` comment tokens |
+| `tariff-vim.ts`, `use-tariff-vim.ts` | Vim keys (below) |
+| `editor-theme.ts` | the chrome for all of the above, from tokens only |
 
-`useExprExtensions(rules, known, …)` builds the extensions once and reads the runtime and the
-knowledge through getters, so a new schema or a renamed input reconfigures only the
-highlighter's compartment.
+`tariffServiceFacet` carries the service into the commands bound to keys (go to definition at
+the cursor, rename, the hover card at the cursor), so a key binding needs only the view.
+`tariff-lint.ts` also moves between findings (`jumpToDiagnostic`, optionally of one severity) and
+opens the cursor line's findings with their fixes (`showLineDiagnostics`).
 
-## The Studio
+### Vim keys
 
-`routes/formula-template/_components/studio/model/expression-analysis.ts` (`analyzeExpression`)
-is a thin view of `formula.check`: the problems, the error and warning counts, the reads,
-`bindings`, `statements`, `lookupTables`, `resultType` (Integer and Duration included) and
-`pending`. The rate trace, the readiness checks, the problems panel and Nova's proposal cards
-all read it, so none of them can disagree with the underlines.
+A person can turn on Vim keys for the formula editor, from the Studio's status bar or Settings →
+Preferences. The choice is kept on the device (`useEditorPreferenceStore`, beside the theme and
+reduce motion). A full editor that can be edited then fills a `Compartment` with
+`@replit/codemirror-vim`, which `useTariffVim` imports the first time the keys are turned on, so
+nobody else downloads it; the mini editor and read-only sources keep the editor's own keys.
 
-- **Problems** (`sections/expression-problems.tsx`) lists the findings errors first, with each
-  fix beside it, and adds what the server found when it ran the preview: the evaluation error
-  (with its range when it is on the main expression) and the findings on the breakdown lines,
-  placed by their `scope` (`model/preview-scope.ts`) while the line still reads as it was
-  checked.
-- **Nova** (`ai/formula-draft.ts`): `formattedOrAsWritten` runs every proposal through
-  `formula.format` before it lands, and an input the proposal no longer reads (by the check's
-  `inputReads`, so a name in a string, a comment or a `let` is no read) is let go.
-- **The preview's answer** (`lib/formula-preview.ts`): `previewFailure` is the evaluation error,
-  otherwise the first error-severity diagnostic; `previewWarnings` and `unguardedFields` read
-  the `nullable` diagnostics.
+The bindings are AstroNvim's defaults on top of Vim's, defined once in `tariff-vim.ts` because
+Vim's mappings are global to the page:
+
+| Keys | Does |
+| --- | --- |
+| `jj`, `jk` (insert, 500 ms apart at most) | leave insert mode, as `better-escape.nvim` does |
+| Space | the leader; it no longer moves right |
+| `gd` | go to definition, leaving the cursor at the name's start in normal mode |
+| `K` | the hover card at the cursor |
+| `gl`, `<Space>ld` | the cursor line's findings with their fixes |
+| `]d` `[d`, `]e` `[e`, `]w` `[w` | the next or previous finding, error or warning, wrapping |
+| `<Space>la`, `gra`, `<Space>lD` | the lint panel, which lists every finding and its fixes |
+| `<Space>lf` | format, reported as the format key reports it |
+| `<Space>lr`, `grn` | rename |
+| `<Space>lR`, `grr` | Find references |
+| `gcc`, `gc{motion}`, `<Space>/` (normal and visual) | toggle `//` comments |
+| `<Space>w`, `:w` | save, through the page's own Ctrl+S |
+
+Save is a DOM event (`EDITOR_SAVE_EVENT`) the Studios' `useStudioShortcuts` answers as Ctrl+S, so
+the rules for when a save may run live in one place. A new key goes in `TARIFF_VIM_NORMAL_KEYS`
+with a test in `__tests__/tariff-vim.test.ts`, which presses keys through `Vim.handleKey` on a
+mounted editor.
+
+`unlessUnanswered` wraps every assisting call. A request the module refuses is a caller bug, so it
+is logged once per operation for the developer, but it never breaks typing: the editor carries on
+as if the operation had nothing to offer. A trap or any other failure still throws.
+
+## The Studios
+
+The template studio (`routes/formula-template/_components/studio/`) and the library studio
+(`routes/formula-library/_components/studio/`) share their pieces from
+`apps/web/src/components/tariff-studio/`:
+
+- `useTariffWorkbench({rules, source, kind, context, tablesStamp})`: the check, the error and
+  warning counts, the test count, the tests (`useTariffTests`, run with `tariff.test` once the
+  source has rested 400 ms, and not at all while it has errors) and each test's verdict by name.
+  The context carries only the shapes of tables with an exact axis, so a run that answers
+  `needs` loads those cells (`useTariffTableCells`, `POST /formula-templates/context/cells`,
+  cached in the query cache per rate table stamp), lays them into the context and runs again:
+  three loads by combination, then the tables whole, as the server does. A test waiting for
+  cells has status `needs`; the tests panel says so, and offers Retry when a load fails. Everything a
+  Studio shows (the underlines, the outline, the tests panel, readiness, Nova's card) reads this
+  one answer, so none can disagree.
+- Properties are tests everywhere: the workbench's `testCount` counts `test` and `property` outline
+  items (`isTestItem`, `lib/tariff-outline.ts`), a failed property fails the run, blocks review and
+  submit and draws a red dot. The workbench hands the editor `coverage` (the run's, or null while
+  there is none). `TestsPanel` marks a property and its cases (and skipped), shows a failed one's
+  `Counterexample` (each varied value, a monotone failure's out-of-order pair, a refusal) with
+  "Save as test" (`onSaveAsTest`, the counterexample's `test` appended through the binding), and
+  "Tests reach {reached} of {total} regions" with the unreached regions to reveal
+  (`unreachedRegions`, outermost first, `lib/tariff-coverage.ts`). `tariffReadiness` adds a
+  `coverage` warning listing those regions; the submit dialogs show it beside the server's checks
+  where the server sends no `coverage` row (`withLiveChecks`), each region a link into the source.
+- `SourceStatusBar` carries the editor's menu (`EditorActionsMenu`: Go to definition, Find
+  references, Rename and, in a tariff, Promote to input, each with its key).
+- `ChoicesView` (`components/tariff-bill/`) draws what each `best` or `worst` chose: the preview's
+  `choices` (the module's wire form) under the bill, and the shipment's
+  `ratingDetail.choices` (GraphQL, read by `readStoredTariffChoices`) on its billing card.
+- `useTariffEditorBinding({read, write})`: reveal a range, apply a fix and append a block
+  (a test from "Save as test", Nova, or the tests panel's "Add a test") through the editor, so each
+  lands in its undo history; before the editor has loaded they are written to the form.
+- A template's name is its source's `tariff "…"` header. The server sets `name` from the header
+  on every write and takes no name in the payload; Duplicate, Fork and Import rewrite the header
+  (`tariff.setName`) when they name a copy. In the Studio the name field writes the header through
+  the editor (`setName`, one undoable change, focus stays in the field) and the form's `name`
+  follows the header, so readiness, Nova's draft and the field's errors read it. A change to the
+  header alone is a rename, not a material change (`hasMaterialChange`, mirroring the server), so
+  renaming an approved template keeps it approved.
+- The edit pages seat the form through `useSeatedForm` (`hooks/use-seated-form.ts`). Only a
+  newer `version` replaces the form, and only while it has no edits; an older one (the cache
+  before a save's refetch lands) never does. A save sends the seated version, never the query
+  cache's, and reseats on what the server returned, keeping what was typed while it was in
+  flight. A newer version that arrives while the form has edits is held: the source section
+  shows `NewerVersionNotice`, a save opens the comparison instead of being sent, and the person
+  either loads the saved version or keeps their edits over it, which seats the form on that
+  version so the next save is checked against it (`components/tariff-studio/newer-version.tsx`).
+  Each page is keyed by the record's id, so a jump to another record starts its own seat. Never
+  hand the editor a value that is not newer than what it holds: `@uiw/react-codemirror` defers a
+  `value` that arrives within its typing window and applies it later even when a newer one has
+  arrived since, so a stale reset lands after the correct one and the editor shows a source the
+  form no longer holds.
+- `OutlinePanel`, `ProblemsList`, `TestsPanel`, `ReferencePane` (the context's tables, codes and
+  libraries, the standard library and the language from `tariff.catalog`), `DefinitionDialog`,
+  `SourceStatusBar`, `ReadinessView` and `tariffReadiness` (the live copy of the server's
+  readiness, keyed as the server keys it; a library must have a test, a tariff only warns),
+  `ReviewDiffView`, `ReviewHistoryView`, `SourceDiff`, `TariffNovaPane` and `ProposalCard`, the
+  skeletons and the shortcuts.
+
+Nova works on the same file two ways. Its conversation (`TariffNovaPane`, a thread opened with
+`POST /formula-templates/ai/thread/` or `POST /formula-libraries/ai/thread/`) reads the editor
+as the page draft (`formula` or `formulaLibrary`) and answers with a `formula_propose` or
+`formula_library_propose` edit carrying a `SourceProposal`. The server offers one only when it
+checks clean and every one of its tests (at least one) passes; `ProposalCard` lands it in the
+editor, draws the changed lines with the unchanged runs folded (`diffHunks`), checks and tests it
+again against the Studio's context and, for a tariff, rates it on the sample load and three
+shipments. The template studio's one-shots answer in place: Explain (`/ai/explain`, the preview
+with one sentence per traced step), Suggest tests (`/ai/suggest-tests`, blocks already run
+against the draft, added one by one), Describe inputs (`/ai/describe-inputs`, doc comments
+written above the inputs as one undoable change, `inputDocEdits`), Why does this fail
+(`/ai/explain-test`, under a failing test) and the reviewer's note (`/:id/review-note`).
+
+The preview is rated on the server (`POST /formula-templates/test`): the sample record or a real
+shipment, with the sample inputs; the answer is the bill, a refusal or an error, the trace and the
+lookups, and the server's run of the tests. `BillView` and `TraceView`
+(`components/tariff-bill/`) draw it, and a range in the trace or a bill line lights the source.
 
 ## Waiting for the module
 
-Render code calls the module synchronously, so every component that does so renders only
-once it has loaded. `useRules()` suspends until then, behind the screen's own skeleton:
-
-- the Studio: `StudioProvider` calls it, under a `Suspense` with `StudioSkeleton` in
-  `formula-studio.tsx`, inside the route's lazy boundary;
-- `ExpressionEditor` calls it too, so every editor (the main formula, and each breakdown line in
-  `breakdown-definition-editor.tsx`) is safe on its own;
-- Nova's `ProposalCard`, which formats and checks the proposal as it renders;
-- the Desk formula template card, whose highlighter reads the catalog; the card registry's
-  `Suspense` shows its skeleton.
-
-`main.tsx` preloads the module on idle, so it is usually ready before any of these mount.
-Nothing starts a load in render or `useMemo` other than through `useRules()`.
-
-A 1,000-node formula (the parser's limit) checks in well under a millisecond in the test
-runner (`rules/formula.test.ts` holds it under 50 ms), so the linter keeps its 300 ms delay
-for typing, not for cost.
+Render code calls the module synchronously, so every component that does so renders only once
+it has loaded. `useRules()` suspends until then, behind the screen's own skeleton: the Studios'
+providers (`StudioSkeleton`), `TariffEditor`, `TariffCode` (the Desk card and every read-only
+source), Nova's `ProposalCard` and the definition dialog. `main.tsx` preloads the module on idle,
+so it is usually ready first. Nothing starts a load in render or `useMemo` other than through
+`useRules()`.
 
 ## Messages
 
-Every diagnostic, fix label, function description and example, disabled-name message and
-evaluation error is a `{message, args}` from the crate, whose template is the catalog key;
-`task i18n` extracts the templates. An argument may itself be a `{message, args}` (a value's
-description such as "a duration"). Show one only with `translateMessage(message, t)` from
-`@trenova/shared/i18n/message`, which translates nested arguments first; `task i18n-check`
-reports `t(x.message, ...x.args)` written by hand. Templates are ICU: never a bare `{` or `}`,
-and never leading, trailing or repeated spaces (the extractor refuses them).
+Every diagnostic, fix label, refusal, evaluation error and built-in doc is a `{message, args}`
+from the crate, whose template is the catalog key; `task i18n` extracts the templates. An argument
+may itself be a message. Show one only with `translateMessage(message, t)` from
+`@trenova/shared/i18n/message`. An author's doc comment and a charge label are the author's words
+and are shown as written.
 
 ## Tests
 
-`client/packages/shared/src/rules/formula.test.ts` runs the wrappers against the real module
-(the Vitest setups load it from disk): the documented `formula.check` example exactly, UTF-16
-positions, a pending schema, formatting, signature and identifier lookups, a nested message
-translated in Spanish, the 1,000-node timing, and a handful of `testdata/conformance.json`
-cases end to end with the server's `shipment.describe.json` schema. The web app's tests drive
-the linter, hover, signature help, the analysis and the consumers through the same module,
-with fixtures from the documented contract (`__tests__/formula-fixtures.ts`). The language
-itself is tested in the crate (`tests/formula_*.rs`).
+`client/packages/shared/src/rules/tariff.test.ts` runs every wrapper against the real module (the
+Vitest setups load it from disk): the check's inputs and outline, a failing test's values, a
+rated preview with its trace, formatting, tokens, the catalog, scaffolding and each editor
+operation. `components/formula-editor/__tests__/tariff-editor-features.test.ts` drives each editor
+feature in a mounted `EditorView` against the same module: completion (with the `?.` rewrite and a
+refused request), hover, signature help, go to definition in the file and into a library, rename
+and its refusal, inlay hints, folding, lint placement, highlighting of the visible range and
+formatting; `tariff-editor-refactor.test.ts` the marks at the cursor, Find references, Promote to
+input (one change, then rename), the coverage gutter and its tooltip, and the new keywords and
+snippets; `tariff-editor.test.tsx` the references dialog and the coverage prop through
+`TariffEditor` itself. The language itself is tested in the crate (`tests/tariff_*.rs`).

@@ -9,10 +9,10 @@ import (
 )
 
 type TrainingConsent struct {
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	Granted        bool     `bun:"granted"`
-	GrantedAt      int64    `bun:"granted_at"`
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
+	Granted        bool
+	GrantedAt      int64
 }
 
 func (c TrainingConsent) TenantInfo() pagination.TenantInfo {
@@ -47,9 +47,9 @@ type ListWithdrawnTrainingExamplesRequest struct {
 }
 
 type WithdrawnTrainingExample struct {
-	ID        pulid.ID `bun:"id"`
-	ExampleID string   `bun:"example_id"`
-	Split     string   `bun:"split"`
+	ID        pulid.ID
+	ExampleID string
+	Split     string
 }
 
 type AITrainingExportRepository interface {

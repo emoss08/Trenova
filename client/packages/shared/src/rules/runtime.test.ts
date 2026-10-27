@@ -7,6 +7,7 @@ import {
   isRulesLoaded,
   rulesSync,
 } from "./runtime";
+import { TARIFF_OPERATIONS } from "./tariff";
 import { RULES_WASM_BYTES, RULES_WASM_SHA256 } from "./test-module";
 
 // A module that speaks the ABI and traps on an instance's first call, then answers {"ok":1}:
@@ -51,7 +52,8 @@ describe("RulesRuntime", () => {
     const version = rulesSync().version();
     expect(version.version).toMatch(/^\d+\.\d+\.\d+$/);
     expect(version.operations).toContain(RULES_VERSION_OP);
-    expect(version.operations).toContain("formula.evaluate");
+    expect(version.operations).toEqual(expect.arrayContaining([...TARIFF_OPERATIONS]));
+    expect(TARIFF_OPERATIONS.filter((op) => op.startsWith("formula."))).toEqual([]);
   });
 
   it("returns the output as JSON text from callRaw", () => {

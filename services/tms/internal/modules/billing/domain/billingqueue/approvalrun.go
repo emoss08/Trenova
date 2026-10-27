@@ -1,17 +1,9 @@
 package billingqueue
 
 import (
-	"context"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
-)
-
-var (
-	_ bun.BeforeAppendModelHook = (*ApprovalRun)(nil)
-	_ bun.BeforeAppendModelHook = (*ApprovalRunItem)(nil)
 )
 
 // MaxApprovalRunItems bounds one bulk approval to what a queue table shows.
@@ -61,48 +53,31 @@ const (
 
 // ApprovalRun is one press of Approve over several queue items.
 type ApprovalRun struct {
-	bun.BaseModel `bun:"table:billingqueue_approval_runs,alias:bqar" json:"-"`
+	keel.Table `keel:"billingqueue_approval_runs"`
 
-	ID                  pulid.ID          `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID      pulid.ID          `json:"businessUnitId"      bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID      pulid.ID          `json:"organizationId"      bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RequestedByID       pulid.ID          `json:"requestedById"       bun:"requested_by_id,type:VARCHAR(100),notnull"`
-	IdempotencyKey      string            `json:"idempotencyKey"      bun:"idempotency_key,type:VARCHAR(100),notnull"`
-	Status              ApprovalRunStatus `json:"status"              bun:"status,type:VARCHAR(20),notnull"`
-	TotalCount          int               `json:"totalCount"          bun:"total_count,type:INTEGER,notnull"`
-	ApprovedCount       int               `json:"approvedCount"       bun:"approved_count,type:INTEGER,notnull"`
-	FailedCount         int               `json:"failedCount"         bun:"failed_count,type:INTEGER,notnull"`
-	SkippedCount        int               `json:"skippedCount"        bun:"skipped_count,type:INTEGER,notnull"`
-	CommitAt            int64             `json:"commitAt"            bun:"commit_at,type:BIGINT,notnull"`
-	FailureMessage      string            `json:"failureMessage"      bun:"failure_message,type:TEXT,nullzero"`
-	CancelRequestedAt   *int64            `json:"cancelRequestedAt"   bun:"cancel_requested_at,type:BIGINT,nullzero"`
-	CancelRequestedByID *pulid.ID         `json:"cancelRequestedById" bun:"cancel_requested_by_id,type:VARCHAR(100),nullzero"`
-	TemporalWorkflowID  string            `json:"-"                   bun:"temporal_workflow_id,type:VARCHAR(255),nullzero"`
-	TemporalRunID       string            `json:"-"                   bun:"temporal_run_id,type:VARCHAR(255),nullzero"`
-	StartedAt           *int64            `json:"startedAt"           bun:"started_at,type:BIGINT,nullzero"`
-	CompletedAt         *int64            `json:"completedAt"         bun:"completed_at,type:BIGINT,nullzero"`
-	Version             int64             `json:"version"             bun:"version,type:BIGINT,notnull"`
-	CreatedAt           int64             `json:"createdAt"           bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt           int64             `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull"`
+	ID                  pulid.ID          `json:"id"                  keel:"id,pk,autoid:bqar_"`
+	BusinessUnitID      pulid.ID          `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	OrganizationID      pulid.ID          `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	RequestedByID       pulid.ID          `json:"requestedById"       keel:"requested_by_id"`
+	IdempotencyKey      string            `json:"idempotencyKey"      keel:"idempotency_key"`
+	Status              ApprovalRunStatus `json:"status"              keel:"status"`
+	TotalCount          int               `json:"totalCount"          keel:"total_count"`
+	ApprovedCount       int               `json:"approvedCount"       keel:"approved_count"`
+	FailedCount         int               `json:"failedCount"         keel:"failed_count"`
+	SkippedCount        int               `json:"skippedCount"        keel:"skipped_count"`
+	CommitAt            int64             `json:"commitAt"            keel:"commit_at"`
+	FailureMessage      string            `json:"failureMessage"      keel:"failure_message,nullzero"`
+	CancelRequestedAt   *int64            `json:"cancelRequestedAt"   keel:"cancel_requested_at"`
+	CancelRequestedByID *pulid.ID         `json:"cancelRequestedById" keel:"cancel_requested_by_id"`
+	TemporalWorkflowID  string            `json:"-"                   keel:"temporal_workflow_id,nullzero"`
+	TemporalRunID       string            `json:"-"                   keel:"temporal_run_id,nullzero"`
+	StartedAt           *int64            `json:"startedAt"           keel:"started_at"`
+	CompletedAt         *int64            `json:"completedAt"         keel:"completed_at"`
+	Version             int64             `json:"version"             keel:"version,version"`
+	CreatedAt           int64             `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64             `json:"updatedAt"           keel:"updated_at,autoupdate"`
 
-	Items []*ApprovalRunItem `json:"items,omitempty" bun:"rel:has-many,join:id=run_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-}
-
-func (r *ApprovalRun) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("bqar_")
-		}
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
-	}
-
-	return nil
+	Items []*ApprovalRunItem `json:"items,omitempty" keel:"many:run_id"`
 }
 
 func (r *ApprovalRun) GetID() pulid.ID             { return r.ID }
@@ -115,39 +90,22 @@ func (r *ApprovalRun) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 
 // ApprovalRunItem is one item inside a bulk approval.
 type ApprovalRunItem struct {
-	bun.BaseModel `bun:"table:billingqueue_approval_run_items,alias:bqari" json:"-"`
+	keel.Table `keel:"billingqueue_approval_run_items"`
 
-	ID             pulid.ID            `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID            `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RunID          pulid.ID            `json:"runId"          bun:"run_id,type:VARCHAR(100),notnull"`
-	ItemID         pulid.ID            `json:"itemId"         bun:"item_id,type:VARCHAR(100),notnull"`
-	Sequence       int                 `json:"sequence"       bun:"sequence,type:INTEGER,notnull"`
-	Status         ApprovalItemStatus  `json:"status"         bun:"status,type:VARCHAR(20),notnull"`
-	FailureCode    ApprovalFailureCode `json:"failureCode"    bun:"failure_code,type:VARCHAR(30),nullzero"`
-	ErrorMessage   string              `json:"errorMessage"   bun:"error_message,type:TEXT,nullzero"`
-	InvoiceID      *pulid.ID           `json:"invoiceId"      bun:"invoice_id,type:VARCHAR(100),nullzero"`
-	InvoiceNumber  string              `json:"invoiceNumber"  bun:"invoice_number,type:VARCHAR(100),nullzero"`
-	ProcessedAt    *int64              `json:"processedAt"    bun:"processed_at,type:BIGINT,nullzero"`
-	CreatedAt      int64               `json:"createdAt"      bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt      int64               `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull"`
-}
-
-func (i *ApprovalRunItem) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if i.ID.IsNil() {
-			i.ID = pulid.MustNew("bqari_")
-		}
-		i.CreatedAt = now
-		i.UpdatedAt = now
-	case *bun.UpdateQuery:
-		i.UpdatedAt = now
-	}
-
-	return nil
+	ID             pulid.ID            `json:"id"             keel:"id,pk,autoid:bqari_"`
+	BusinessUnitID pulid.ID            `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID            `json:"organizationId" keel:"organization_id,pk,tenant"`
+	RunID          pulid.ID            `json:"runId"          keel:"run_id"`
+	ItemID         pulid.ID            `json:"itemId"         keel:"item_id"`
+	Sequence       int                 `json:"sequence"       keel:"sequence"`
+	Status         ApprovalItemStatus  `json:"status"         keel:"status"`
+	FailureCode    ApprovalFailureCode `json:"failureCode"    keel:"failure_code,nullzero"`
+	ErrorMessage   string              `json:"errorMessage"   keel:"error_message,nullzero"`
+	InvoiceID      *pulid.ID           `json:"invoiceId"      keel:"invoice_id"`
+	InvoiceNumber  string              `json:"invoiceNumber"  keel:"invoice_number,nullzero"`
+	ProcessedAt    *int64              `json:"processedAt"    keel:"processed_at"`
+	CreatedAt      int64               `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64               `json:"updatedAt"      keel:"updated_at,autoupdate"`
 }
 
 func (i *ApprovalRunItem) GetID() pulid.ID             { return i.ID }

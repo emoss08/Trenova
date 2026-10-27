@@ -72,7 +72,7 @@ func TestImportDraftTools_HandTheChangeToThePersonsOwnPage(t *testing.T) {
 		newAcceptFieldTool(),
 		newAcceptAllConfidentTool(),
 		newSetFieldValueTool(),
-		provideSetRequiredFieldTool(nil, nil, nil, nil, &fakePermissions{}),
+		provideSetRequiredFieldTool(nil, nil, nil, &fakePermissions{}),
 		provideSetStopLocationTool(nil, &fakePermissions{}),
 		newSetStopScheduleTool(),
 	}
@@ -159,7 +159,7 @@ func TestSetRequiredField_ResolvesTheRecordsOwnName(t *testing.T) {
 
 	found := &customer.Customer{ID: pulid.MustNew("cus_"), Code: "ACME", Name: "Acme Foods"}
 	tool := provideSetRequiredFieldTool(
-		&fakeDraftCustomers{found: found}, nil, nil, nil, &fakePermissions{allowed: true},
+		&fakeDraftCustomers{found: found}, nil, nil, &fakePermissions{allowed: true},
 	)
 
 	result, err := tool.Query(t.Context(), chatParams(map[string]any{
@@ -180,7 +180,7 @@ func TestSetRequiredField_RefusesARecordThePersonMayNotRead(t *testing.T) {
 
 	found := &customer.Customer{ID: pulid.MustNew("cus_"), Code: "ACME", Name: "Acme Foods"}
 	tool := provideSetRequiredFieldTool(
-		&fakeDraftCustomers{found: found}, nil, nil, nil, &fakePermissions{allowed: false},
+		&fakeDraftCustomers{found: found}, nil, nil, &fakePermissions{allowed: false},
 	)
 
 	_, err := tool.Query(t.Context(), chatParams(map[string]any{
@@ -194,16 +194,18 @@ func TestSetRequiredField_RefusesAnUnknownFieldOrRecord(t *testing.T) {
 	t.Parallel()
 
 	tool := provideSetRequiredFieldTool(
-		&fakeDraftCustomers{}, nil, nil, nil, &fakePermissions{allowed: true},
+		&fakeDraftCustomers{}, nil, nil, &fakePermissions{allowed: true},
 	)
 
-	_, err := tool.Query(t.Context(), chatParams(map[string]any{
-		"field":    "carrierId",
-		"recordId": pulid.MustNew("cus_").String(),
-	}, ""))
-	require.Error(t, err)
+	for _, field := range []string{"carrierId", "formulaTemplateId"} {
+		_, err := tool.Query(t.Context(), chatParams(map[string]any{
+			"field":    field,
+			"recordId": pulid.MustNew("cus_").String(),
+		}, ""))
+		require.Error(t, err, field)
+	}
 
-	_, err = tool.Query(t.Context(), chatParams(map[string]any{
+	_, err := tool.Query(t.Context(), chatParams(map[string]any{
 		"field":    string(pagedraft.RequiredCustomer),
 		"recordId": pulid.MustNew("cus_").String(),
 	}, ""))

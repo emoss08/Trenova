@@ -2,9 +2,13 @@ import { DataTableSkeleton } from "@trenova/shared/components/data-table/data-ta
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { ActivityView } from "../../ai-control-tabs";
 import { FigsSkeleton, HeroSkeleton, type FigSkeleton } from "../kit/tab-skeleton";
+import { AnalysisRunsSkeleton } from "./analysis-runs-skeleton";
+
+/** The views that are a data table; analyses are a history of their own. */
+export type ActivityTableView = Exclude<ActivityView, "analyses">;
 
 /** What each activity table shows at first, so its skeleton has the loaded table's columns. */
-export const ACTIVITY_TABLE_COLUMNS: Record<ActivityView, number> = {
+export const ACTIVITY_TABLE_COLUMNS: Record<ActivityTableView, number> = {
   runs: 6,
   proposals: 6,
   plans: 5,
@@ -40,7 +44,11 @@ export function ActivityTabSkeleton({ view }: { view: ActivityView }) {
   return (
     <div className="tabp" aria-busy="true" aria-label={t("Loading activity")}>
       <ActivityHeadSkeleton />
-      <DataTableSkeleton columnCount={ACTIVITY_TABLE_COLUMNS[view]} aria-hidden />
+      {view === "analyses" ? (
+        <AnalysisRunsSkeleton />
+      ) : (
+        <DataTableSkeleton columnCount={ACTIVITY_TABLE_COLUMNS[view]} aria-hidden />
+      )}
     </div>
   );
 }

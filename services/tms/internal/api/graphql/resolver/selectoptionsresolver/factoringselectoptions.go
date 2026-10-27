@@ -48,7 +48,7 @@ func (r *Deps) resolveFactoringCompanySelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		factoringCompanySelectOptionItem,
 	)
 }

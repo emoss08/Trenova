@@ -28,12 +28,10 @@ func TestTenderResponseRequest_IsTheRequestTheSendMakes(t *testing.T) {
 	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	transfer := externalTender(edi.TransferStatusRejected)
 	transfer.RejectionReason = "No capacity Friday"
-	profileID := pulid.MustNew("edipdp_")
 	actor := pulid.MustNew("usr_")
 
-	req := tenderResponseRequest(tenant, transfer, profileID, actor)
+	req := tenderResponseRequest(tenant, transfer, actor)
 
-	assert.Equal(t, profileID, req.PartnerDocumentProfileID)
 	assert.Equal(t, transfer.TargetPartnerID, req.EDIPartnerID)
 	assert.Equal(t, transfer.ID, req.TransferID)
 	assert.Equal(t, edi.TransactionSet990, req.TransactionSet)

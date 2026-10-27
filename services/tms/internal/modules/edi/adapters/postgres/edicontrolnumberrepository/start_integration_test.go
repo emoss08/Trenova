@@ -5,60 +5,35 @@ package edicontrolnumberrepository_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicontrolnumberrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
 func TestStartControlNumber_CreatesASequenceAndNeverMovesItBack(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	_, err := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	repo := edicontrolnumberrepository.New(edicontrolnumberrepository.Params{
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
 	})
-	var org seededControlNumberOrg
-	require.NoError(t, db.NewSelect().Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
-	var documentType seededDocumentType
-	require.NoError(t, db.NewSelect().
-		Table("edi_document_types").
-		Column("id").
-		Where("transaction_set = ?", edi.TransactionSet214).
-		Where("direction = ?", edi.DocumentDirectionOutbound).
-		Limit(1).
-		Scan(ctx, &documentType))
-	partner := &edi.EDIPartner{
-		BusinessUnitID: org.BusinessUnitID,
-		OrganizationID: org.ID,
-		Kind:           edi.PartnerKindExternal,
-		Code:           "CTRLNUM-START",
-		Name:           "Control Number Start Partner",
-	}
-	_, err = db.NewInsert().Model(partner).Exec(ctx)
-	require.NoError(t, err)
+	scope := editest.FirstTenant(t, ctx, db)
+	ctx, tenant := scope.Ctx, scope.Info
+	documentType := seededDocumentType(t, ctx, db, edi.TransactionSet214)
+	partner := createPartner(t, ctx, db, "CTRLNUM-START")
 
 	start := func(next int64) *edi.EDIControlNumberSequence {
 		sequence, startErr := repo.StartControlNumber(ctx, &ediports.ResetEDIControlNumberRequest{
-			TenantInfo:     pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+			TenantInfo:     tenant,
 			PartnerID:      partner.ID,
 			DocumentTypeID: documentType.ID,
 			Kind:           edi.ControlNumberKindInterchange,
@@ -72,10 +47,8 @@ func TestStartControlNumber_CreatesASequenceAndNeverMovesItBack(t *testing.T) {
 	assert.Equal(t, int64(2000), start(2000).NextValue, "a later start moves it forward")
 	assert.Equal(t, int64(2000), start(1500).NextValue, "an earlier start never reissues numbers")
 
-	count, err := db.NewSelect().
-		Model((*edi.EDIControlNumberSequence)(nil)).
-		Where("edi_partner_id = ?", partner.ID).
-		Count(ctx)
+	cn := edidb.EDIControlNumberSequences
+	count, err := cn.Where(cn.EDIPartnerID.Eq(partner.ID)).Count(ctx, db)
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, count)
 }

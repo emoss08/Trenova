@@ -4,14 +4,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,14 +40,10 @@ func (r *repository) ListDocumentTypes(
 	req ediports.ListEDIDocumentTypesRequest,
 ) ([]*edi.EDIDocumentType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIDocumentType, error) {
-		entities := make([]*edi.EDIDocumentType, 0, 8)
-		cols := edicol.EDIDocumentTypeColumns
-		query := r.db.DBForContext(ctx).NewSelect().Model(&entities).Order(cols.Code.OrderAsc())
-		query = filterDocumentTypesQuery(query, req)
-		if err := query.Scan(ctx); err != nil {
-			return nil, err
-		}
-		return entities, nil
+		dt := edidb.EDIDocumentTypes
+		return dt.Where(documentTypeFilters(&req)...).
+			Order(dt.Code.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -59,88 +55,59 @@ func (r *repository) SelectDocumentTypeOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIDocumentType], error) {
-			entities := make(
-				[]*edi.EDIDocumentType,
-				0,
-				req.SelectQueryRequest.Pagination.SafeLimit(),
+			search := *req.SelectQueryRequest
+			search.Query = strings.TrimSpace(search.Query)
+
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				documentTypeOptionsQuery(req),
+				&search,
+				documentTypeSearch,
 			)
-			cols := edicol.EDIDocumentTypeColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column(
-					cols.ID.Bare(),
-					cols.Code.Bare(),
-					cols.Name.Bare(),
-					cols.Standard.Bare(),
-					cols.TransactionSet.Bare(),
-					cols.Direction.Bare(),
-					cols.DefaultVersion.Bare(),
-					cols.Status.Bare(),
-					cols.CreatedAt.Bare(),
-				).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return filterDocumentTypesQuery(sq, ediports.ListEDIDocumentTypesRequest{
-						Standard:       req.Standard,
-						TransactionSet: req.TransactionSet,
-						Direction:      req.Direction,
-						Status:         req.Status,
-					})
-				}).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return applyDocumentTypeSearch(sq, req.SelectQueryRequest.Query)
-				})
-
-			total, err := query.
-				Order(cols.Code.OrderAsc()).
-				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
-				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDIDocumentType]{
-				Items: entities,
-				Total: int(total),
-			}, nil
 		},
 	)
 }
 
-func filterDocumentTypesQuery(
-	query *bun.SelectQuery,
-	req ediports.ListEDIDocumentTypesRequest,
-) *bun.SelectQuery {
-	cols := edicol.EDIDocumentTypeColumns
-	if req.Standard != "" {
-		query = query.Where(cols.Standard.Eq(), req.Standard)
-	}
-	if req.TransactionSet != "" {
-		query = query.Where(cols.TransactionSet.Eq(), req.TransactionSet)
-	}
-	if req.Direction != "" {
-		query = query.Where(cols.Direction.Eq(), req.Direction)
-	}
-	if req.Status != "" {
-		query = query.Where(cols.Status.Eq(), req.Status)
-	}
-	return query
+func documentTypeOptionsQuery(
+	req *ediports.EDIDocumentTypeSelectOptionsRequest,
+) *keel.Query[*edi.EDIDocumentType] {
+	dt := edidb.EDIDocumentTypes
+	return dt.Pick(
+		dt.ID,
+		dt.Code,
+		dt.Name,
+		dt.Standard,
+		dt.TransactionSet,
+		dt.Direction,
+		dt.DefaultVersion,
+		dt.Status,
+		dt.CreatedAt,
+	).
+		Where(documentTypeFilters(&ediports.ListEDIDocumentTypesRequest{
+			Standard:       req.Standard,
+			TransactionSet: req.TransactionSet,
+			Direction:      req.Direction,
+			Status:         req.Status,
+		})...).
+		Order(dt.Code.Asc())
 }
 
-func applyDocumentTypeSearch(query *bun.SelectQuery, search string) *bun.SelectQuery {
-	search = strings.TrimSpace(search)
-	if search == "" {
-		return query
+func documentTypeSearch(s string) keel.Pred {
+	dt := edidb.EDIDocumentTypes
+	return keel.Or(
+		dt.Code.ContainsFold(s),
+		dt.Name.ContainsFold(s),
+		dt.DefaultVersion.ContainsFold(s),
+	)
+}
+
+func documentTypeFilters(req *ediports.ListEDIDocumentTypesRequest) []keel.Pred {
+	dt := edidb.EDIDocumentTypes
+	return []keel.Pred{
+		keel.When(req.Standard != "", dt.Standard.Eq(req.Standard)),
+		keel.When(req.TransactionSet != "", dt.TransactionSet.Eq(req.TransactionSet)),
+		keel.When(req.Direction != "", dt.Direction.Eq(req.Direction)),
+		keel.When(req.Status != "", dt.Status.Eq(req.Status)),
 	}
-
-	term := "%" + strings.ToLower(search) + "%"
-	cols := edicol.EDIDocumentTypeColumns
-
-	return query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.WhereOr(cols.Code.LowerLike(), term).
-			WhereOr(cols.Name.LowerLike(), term).
-			WhereOr(cols.DefaultVersion.LowerLike(), term)
-	})
 }

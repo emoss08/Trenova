@@ -5,12 +5,11 @@ import (
 	"math"
 	"testing"
 
+	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -233,15 +232,12 @@ func TestAlertValidation(t *testing.T) {
 	assert.False(t, multiErr.HasErrors())
 }
 
-func measureDigest(columnID string, total any) *reportports.ReportDigest {
-	return &reportports.ReportDigest{
-		Columns: []reportports.ReportResultColumn{
-			textColumn("Customer"),
-			{ID: columnID, Label: "Revenue", Type: reportcatalog.FieldDecimal},
-		},
-		Rows:   []reportports.ReportRow{{"ACME", total}},
-		Totals: reportports.ReportRow{nil, total},
-	}
+func measureDigest(t *testing.T, columnID, amount string) *reportports.ReportDigest {
+	t.Helper()
+	revenue := moneyColumn("Revenue")
+	revenue.ID = columnID
+	return captureDigest(t, 5, []table.Column{textColumn("Customer"), revenue},
+		detail("ACME", amount), total(nil, amount))
 }
 
 // The gap this closes: "revenue fell below target" is a number no row count
@@ -258,14 +254,14 @@ func TestMeasureAlertReadsTheGrandTotal(t *testing.T) {
 	// Below target — the condition holds, so it delivers.
 	deliver, _ := alertActivities(repo).evaluateAlert(
 		t.Context(), alertRun(3), alertSchedule(alert, false),
-		measureDigest("c_revenue", decimal.NewFromInt(80_000)),
+		measureDigest(t, "c_revenue", "80000"),
 	)
 	assert.True(t, deliver)
 
 	// Above target — nothing to say.
 	deliver, reason := alertActivities(repo).evaluateAlert(
 		t.Context(), alertRun(3), alertSchedule(alert, false),
-		measureDigest("c_revenue", decimal.NewFromInt(120_000)),
+		measureDigest(t, "c_revenue", "120000"),
 	)
 	assert.False(t, deliver)
 	assert.Equal(t, alertSkipConditionUnmet, reason)
@@ -287,7 +283,7 @@ func TestMeasureAlertIgnoresRowCount(t *testing.T) {
 
 	deliver, _ := alertActivities(repo).evaluateAlert(
 		t.Context(), alertRun(500), alertSchedule(alert, false),
-		measureDigest("c_revenue", decimal.NewFromInt(5)),
+		measureDigest(t, "c_revenue", "5"),
 	)
 
 	assert.False(t, deliver, "500 rows but the total is under threshold")
@@ -306,11 +302,8 @@ func TestMeasureAlertDoesNotFireOnAMissingTotal(t *testing.T) {
 
 	for name, digest := range map[string]*reportports.ReportDigest{
 		"no digest at all": nil,
-		"column absent":    measureDigest("c_other", decimal.NewFromInt(5)),
-		"totals empty": {
-			Columns: []reportports.ReportResultColumn{textColumn("Customer")},
-			Rows:    []reportports.ReportRow{{"ACME"}},
-		},
+		"column absent":    measureDigest(t, "c_other", "5"),
+		"totals empty":     captureDigest(t, 5, []table.Column{textColumn("Customer")}, detail("ACME")),
 	} {
 		t.Run(name, func(t *testing.T) {
 			deliver, _ := alertActivities(repo).evaluateAlert(

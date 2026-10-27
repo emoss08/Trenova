@@ -4,51 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/fleetcodecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
-)
-
-var (
-	moveFromAssignmentJoin = "JOIN " + shipmentcol.ShipmentMoveTable.As(
-		shipmentcol.ShipmentMoveTable.Alias) +
-		" ON " + shipmentcol.ShipmentMoveColumns.ID.EqColumn(
-		shipmentcol.AssignmentColumns.ShipmentMoveID) +
-		" AND " + shipmentcol.ShipmentMoveColumns.OrganizationID.EqColumn(
-		shipmentcol.AssignmentColumns.OrganizationID) +
-		" AND " + shipmentcol.ShipmentMoveColumns.BusinessUnitID.EqColumn(
-		shipmentcol.AssignmentColumns.BusinessUnitID)
-
-	fleetCodeJoin = "LEFT JOIN " + fleetcodecol.FleetCodeTable.As(
-		fleetcodecol.FleetCodeTable.Alias,
-	) +
-		" ON " + fleetcodecol.FleetCodeColumns.ID.EqColumn(
-		workercol.WorkerColumns.FleetCodeID,
-	) +
-		" AND " + fleetcodecol.FleetCodeColumns.OrganizationID.EqColumn(
-		workercol.WorkerColumns.OrganizationID,
-	) +
-		" AND " + fleetcodecol.FleetCodeColumns.BusinessUnitID.EqColumn(
-		workercol.WorkerColumns.BusinessUnitID,
-	)
-
-	workerStateJoin = "LEFT JOIN " + usstatecol.UsStateTable.As(usstatecol.UsStateTable.Alias) +
-		" ON " + usstatecol.UsStateColumns.ID.EqColumn(workercol.WorkerColumns.StateID)
 )
 
 func (r *repository) ListBoardDrivers(
@@ -56,74 +27,71 @@ func (r *repository) ListBoardDrivers(
 	filter *shipmentports.DispatchBoardFilter,
 ) ([]*shipmentports.BoardDriver, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipmentports.BoardDriver, error) {
-		cols := workercol.WorkerColumns
-		entities := make([]*shipmentports.BoardDriver, 0, boardLimit(filter.Limit))
+		w := workerdb.Workers
+		fc := fleetcodedb.FleetCodes
+		us := usstatedb.UsStates
+		wt := tractordb.Tractors.As("wtrac")
+		isAvailable := wt.Status.Eq(domaintypes.EquipmentStatusAvailable)
 
-		const tractorLateral = `LEFT JOIN LATERAL (
-		SELECT trac.id,
-			trac.code,
-			trac.equipment_type_id,
-			trac.fleet_code_id,
-			trac.status
-		FROM tractors AS trac
-		WHERE trac.primary_worker_id = wrk.id
-			AND trac.organization_id = wrk.organization_id
-			AND trac.business_unit_id = wrk.business_unit_id
-		ORDER BY (trac.status = ?) DESC, trac.code ASC
-		LIMIT 1
-	) AS wtrac ON TRUE`
+		tractorOf := wt.
+			Pick(wt.ID, wt.Code, wt.EquipmentTypeID, wt.FleetCodeID, wt.Status).
+			Where(wt.PrimaryWorkerID.EqCol(w.ID)).
+			Order(keel.Desc(isAvailable), wt.Code.Asc()).
+			Limit(1)
 
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model((*worker.Worker)(nil)).
-			ColumnExpr(cols.ID.As("worker_id")).
-			ColumnExpr(cols.FirstName.As("first_name")).
-			ColumnExpr(cols.LastName.As("last_name")).
-			ColumnExpr(cols.Type.As("worker_type")).
-			ColumnExpr(cols.DriverType.As("driver_type")).
-			ColumnExpr(cols.FleetCodeID.As("fleet_code_id")).
-			ColumnExpr(cols.City.As("city")).
-			ColumnExpr(cols.PostalCode.As("postal_code")).
-			ColumnExpr(cols.ProfilePicURL.As("profile_pic_url")).
-			ColumnExpr(cols.AssignmentBlocked.Expr("COALESCE({}, '') AS assignment_note")).
-			ColumnExpr(cols.AvailableForDispatch.As("available_for_dispatch")).
-			ColumnExpr(fleetcodecol.FleetCodeColumns.Code.Expr("COALESCE({}, '') AS fleet_code_name")).
-			ColumnExpr(usstatecol.UsStateColumns.Abbreviation.Expr("COALESCE({}, '') AS state_abbr")).
-			ColumnExpr("COALESCE(wtrac.id, '') AS tractor_id").
-			ColumnExpr("COALESCE(wtrac.code, '') AS tractor_code").
-			ColumnExpr("COALESCE(wtrac.equipment_type_id, '') AS tractor_type_id").
-			ColumnExpr("COALESCE(wtrac.fleet_code_id, '') AS tractor_fleet_id").
-			ColumnExpr("COALESCE(wtrac.status = ?, FALSE) AS tractor_status_ok",
-				domaintypes.EquipmentStatusAvailable).
-			ColumnExpr("COALESCE(oa.open_assignments, 0) AS open_assignments").
-			Join(fleetCodeJoin).
-			Join(workerStateJoin).
-			Join(tractorLateral, domaintypes.EquipmentStatusAvailable).
-			Join(openAssignmentLateral, bun.List(openMoveStatuses)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerScopeTenant(sq, filter.TenantInfo)
-				sq = applyDriverFilters(sq, filter)
+		preds := driverFilters(filter)
+		if filter.Query != "" {
+			preds = append(preds, keel.Or(
+				w.FirstName.ContainsFold(filter.Query),
+				w.LastName.ContainsFold(filter.Query),
+				wt.Code.ContainsFold(filter.Query),
+			))
+		}
 
-				if filter.Query != "" {
-					pattern := searchPattern(filter.Query)
-					sq = sq.WhereGroup(" AND ", func(g *bun.SelectQuery) *bun.SelectQuery {
-						return g.Where(cols.FirstName.ILike(), pattern).
-							WhereOr(cols.LastName.ILike(), pattern).
-							WhereOr("wtrac.code ILIKE ?", pattern)
-					})
-				}
-				return sq
-			}).
-			Order(cols.LastName.OrderAsc()).
-			Order(cols.FirstName.OrderAsc()).
-			Order(cols.ID.OrderAsc()).
-			Limit(int64(boardLimit(filter.Limit)))
+		q := w.
+			LeftJoin(fc, fc.ID.EqCol(w.FleetCodeID)).
+			LeftJoin(us, us.ID.EqCol(w.StateID)).
+			LeftJoinLateral(tractorOf).
+			Pick(
+				w.ID,
+				w.FirstName,
+				w.LastName,
+				w.Type,
+				w.DriverType,
+				text(w.FleetCodeID),
+				text(fc.Code),
+				text(w.City),
+				text(us.Abbreviation),
+				enumText(w.PostalCode),
+				text(w.ProfilePicURL),
+				text(w.AssignmentBlocked),
+				w.AvailableForDispatch,
+				text(wt.ID),
+				text(wt.Code),
+				text(wt.EquipmentTypeID),
+				text(wt.FleetCodeID),
+				keel.BoolOf(isAvailable).Coalesce(false),
+				zero(openAssignments(w)),
+			).
+			Where(preds...).
+			Order(w.LastName.Asc(), w.FirstName.Asc(), w.ID.Asc()).
+			Limit(boardLimit(filter.Limit))
 
-		if err := q.Scan(ctx, &entities); err != nil {
+		rows, err := keel.Into[shipmentports.BoardDriver](ctx, r.db.Keel(ctx), q)
+		if err != nil {
 			return nil, fmt.Errorf("list dispatch board drivers: %w", err)
 		}
 
-		return entities, nil
+		return pointers(rows), nil
 	})
+}
+
+func liveStops(moveID keel.Expr) (*shipmentdb.StopsTable, []keel.Pred) {
+	st := shipmentdb.Stops.As("win")
+	return st, []keel.Pred{
+		st.ShipmentMoveID.EqCol(moveID),
+		st.Status.Ne(shipment.StopStatusCanceled),
+	}
 }
 
 func (r *repository) ListWorkerCommitments(
@@ -138,63 +106,56 @@ func (r *repository) ListWorkerCommitments(
 				return []*shipmentports.WorkerCommitment{}, nil
 			}
 
-			asnCols := shipmentcol.AssignmentColumns
-			moveCols := shipmentcol.ShipmentMoveColumns
-			entities := make([]*shipmentports.WorkerCommitment, 0, len(req.WorkerIDs))
+			asn := shipmentdb.Assignments
+			sm := shipmentdb.ShipmentMoves
+			sp := shipmentdb.Shipments
+			dest := destination
 
-			const windowLateral = `JOIN LATERAL (
-		SELECT MIN(stp.scheduled_window_start) AS window_start,
-			MAX(COALESCE(stp.scheduled_window_end, stp.scheduled_window_start)) AS window_end
-		FROM stops AS stp
-		WHERE stp.shipment_move_id = sm.id
-			AND stp.organization_id = sm.organization_id
-			AND stp.business_unit_id = sm.business_unit_id
-			AND stp.status <> ?
-	) AS win ON TRUE`
+			st, live := liveStops(sm.ID)
+			windowStart := keel.Scalar(st.Pick(st.ScheduledWindowStart.Min()).Where(live...))
+			windowEnd := keel.Scalar(st.
+				Pick(
+					st.ScheduledWindowEnd.Coalesce(st.ScheduledWindowStart).Max(),
+				).
+				Where(live...))
 
-			q := r.db.DBForContext(ctx).NewSelect().
-				Model((*shipment.Assignment)(nil)).
-				ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
-				ColumnExpr(asnCols.ShipmentMoveID.As("move_id")).
-				ColumnExpr(asnCols.TrailerID.Expr("COALESCE({}, '') AS trailer_id")).
-				ColumnExpr(moveCols.ShipmentID.As("shipment_id")).
-				ColumnExpr(moveCols.Status.As("move_status")).
-				ColumnExpr(shipmentcol.ShipmentColumns.ProNumber.Expr("COALESCE({}, '') AS pro_number")).
-				ColumnExpr("COALESCE(win.window_start, 0) AS window_start").
-				ColumnExpr("COALESCE(win.window_end, 0) AS window_end").
-				ColumnExpr("COALESCE(dest.location_id, '') AS destination_id").
-				ColumnExpr("COALESCE(dest.city, '') AS destination_city").
-				ColumnExpr("COALESCE(dest.state_abbr, '') AS destination_st").
-				ColumnExpr("dest.latitude AS dest_latitude").
-				ColumnExpr("dest.longitude AS dest_longitude").
-				Join(moveFromAssignmentJoin).
-				Join("LEFT "+shipmentJoin).
-				Join(windowLateral, shipment.StopStatusCanceled).
-				Join(stopEdgeLateral(destinationAlias, orderDescending), shipment.StopStatusCanceled).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
-						Where(asnCols.ArchivedAt.IsNull()).
-						Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
-						Where(moveCols.Status.In(), bun.List(openMoveStatuses))
+			q := joinEdge(asn.
+				Join(sm, sm.ID.EqCol(asn.ShipmentMoveID)).
+				LeftJoin(sp, sp.ID.EqCol(sm.ShipmentID)), dest, sm.ID).
+				Pick(
+					asn.PrimaryWorkerID,
+					asn.ShipmentMoveID,
+					sm.ShipmentID,
+					text(sp.ProNumber),
+					sm.Status,
+					zero(windowStart),
+					zero(windowEnd),
+					text(dest.stop.LocationID),
+					text(dest.loc.City),
+					text(dest.state.Abbreviation),
+					dest.loc.Latitude,
+					dest.loc.Longitude,
+					text(asn.TrailerID),
+				).
+				Where(
+					asn.ArchivedAt.IsNull(),
+					asn.PrimaryWorkerID.In(req.WorkerIDs...),
+					sm.Status.In(openMoveStatuses...),
+					keel.When(req.WindowEnd > 0,
+						zero(windowStart).Lte(req.WindowEnd)),
+					keel.When(
+						req.WindowStart > 0,
+						keel.Int64Of(windowEnd).Coalesce(windowStart, 0).Gte(req.WindowStart),
+					),
+				).
+				Order(keel.Asc(windowStart))
 
-					if req.WindowEnd > 0 {
-						sq = sq.Where("COALESCE(win.window_start, 0) <= ?", req.WindowEnd)
-					}
-					if req.WindowStart > 0 {
-						sq = sq.Where(
-							"COALESCE(win.window_end, win.window_start, 0) >= ?",
-							req.WindowStart,
-						)
-					}
-					return sq
-				}).
-				Order("win.window_start ASC")
-
-			if err := q.Scan(ctx, &entities); err != nil {
+			rows, err := keel.Into[shipmentports.WorkerCommitment](ctx, r.db.Keel(ctx), q)
+			if err != nil {
 				return nil, fmt.Errorf("list worker commitments: %w", err)
 			}
 
-			return entities, nil
+			return pointers(rows), nil
 		},
 	)
 }
@@ -208,35 +169,21 @@ func (r *repository) ListWorkerTimeOff(
 			return []*shipmentports.WorkerTimeOff{}, nil
 		}
 
-		cols := workercol.WorkerPTOColumns
-		entities := make([]*shipmentports.WorkerTimeOff, 0, len(req.WorkerIDs))
-
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model((*worker.WorkerPTO)(nil)).
-			ColumnExpr(cols.WorkerID.As("worker_id")).
-			ColumnExpr(cols.StartDate.As("start_date")).
-			ColumnExpr(cols.EndDate.As("end_date")).
-			ColumnExpr(cols.Type.As("pto_type")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerPTOScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), worker.PTOStatusApproved).
-					Where(cols.WorkerID.In(), bun.List(req.WorkerIDs))
-
-				if req.WindowEnd > 0 {
-					sq = sq.Where(cols.StartDate.Lte(), req.WindowEnd)
-				}
-				if req.WindowStart > 0 {
-					sq = sq.Where(cols.EndDate.Gte(), req.WindowStart)
-				}
-				return sq
-			}).
-			Order(cols.StartDate.OrderAsc())
-
-		if err := q.Scan(ctx, &entities); err != nil {
+		pto := workerdb.WorkerPTOs
+		rows, err := keel.Into[shipmentports.WorkerTimeOff](ctx, r.db.Keel(ctx), pto.
+			Pick(pto.WorkerID, pto.StartDate, pto.EndDate, pto.Type).
+			Where(
+				pto.Status.Eq(worker.PTOStatusApproved),
+				pto.WorkerID.In(req.WorkerIDs...),
+				keel.When(req.WindowEnd > 0, pto.StartDate.Lte(req.WindowEnd)),
+				keel.When(req.WindowStart > 0, pto.EndDate.Gte(req.WindowStart)),
+			).
+			Order(pto.StartDate.Asc()))
+		if err != nil {
 			return nil, fmt.Errorf("list worker time off: %w", err)
 		}
 
-		return entities, nil
+		return pointers(rows), nil
 	})
 }
 
@@ -249,60 +196,54 @@ func (r *repository) ListWorkerWorkload(
 			return []*shipmentports.WorkerWorkload{}, nil
 		}
 
-		asnCols := shipmentcol.AssignmentColumns
-		moveCols := shipmentcol.ShipmentMoveColumns
-		entities := make([]*shipmentports.WorkerWorkload, 0, len(req.WorkerIDs))
+		asn := shipmentdb.Assignments
+		sm := shipmentdb.ShipmentMoves
+		sp := shipmentdb.Shipments
+		st, live := liveStops(sm.ID)
+		departure := keel.Scalar(st.
+			Pick(st.ActualDeparture).
+			Where(live...).
+			Order(st.Sequence.Desc()).
+			Limit(1))
 
-		const departureLateral = `LEFT JOIN LATERAL (
-		SELECT stp.actual_departure
-		FROM stops AS stp
-		WHERE stp.shipment_move_id = sm.id
-			AND stp.organization_id = sm.organization_id
-			AND stp.business_unit_id = sm.business_unit_id
-			AND stp.status <> ?
-		ORDER BY stp.sequence DESC
-		LIMIT 1
-	) AS dep ON TRUE`
+		perShipment := keel.CTE(
+			"wl",
+			[]string{"worker_id", "move_count", "total_miles", "shipment_revenue", "last_ended_at"},
+			asn.
+				Join(sm, sm.ID.EqCol(asn.ShipmentMoveID)).
+				LeftJoin(sp, sp.ID.EqCol(sm.ShipmentID)).
+				Group(asn.PrimaryWorkerID, sm.ShipmentID).
+				Pick(
+					asn.PrimaryWorkerID,
+					keel.Count(),
+					keel.CastFloat64(keel.Float64Of(sm.Distance.Sum()).Coalesce(0)),
+					keel.CastFloat64(keel.NumericOf(sp.TotalChargeAmount.Max()).Coalesce(0)),
+					keel.Int64Of(departure).Coalesce(asn.CreatedAt).Max(),
+				).
+				Where(
+					asn.PrimaryWorkerID.In(req.WorkerIDs...),
+					sm.Status.Ne(shipment.MoveStatusCanceled),
+					keel.When(req.Since > 0, asn.CreatedAt.Gte(req.Since)),
+				),
+		)
 
-		perShipment := r.db.DBForContext(ctx).NewSelect().
-			Model((*shipment.Assignment)(nil)).
-			ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
-			ColumnExpr("COUNT(*)::int AS move_count").
-			ColumnExpr(buncolgen.Expr(
-				"COALESCE(SUM({0}), 0)::float8 AS total_miles", moveCols.Distance)).
-			ColumnExpr(buncolgen.Expr(
-				"COALESCE(MAX({0}), 0)::float8 AS shipment_revenue",
-				shipmentcol.ShipmentColumns.TotalChargeAmount)).
-			ColumnExpr(buncolgen.Expr(
-				"MAX(COALESCE(dep.actual_departure, {0})) AS last_ended_at", asnCols.CreatedAt)).
-			Join(moveFromAssignmentJoin).
-			Join("LEFT "+shipmentJoin).
-			Join(departureLateral, shipment.StopStatusCanceled).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
-					Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
-					Where(moveCols.Status.NotEq(), shipment.MoveStatusCanceled)
-				if req.Since > 0 {
-					sq = sq.Where(asnCols.CreatedAt.Gte(), req.Since)
-				}
-				return sq
-			}).
-			GroupExpr(asnCols.PrimaryWorkerID.Qualified() + ", " + moveCols.ShipmentID.Qualified())
-
-		q := r.db.DBForContext(ctx).NewSelect().
-			TableExpr("(?) AS wl", perShipment).
-			ColumnExpr("wl.worker_id AS worker_id").
-			ColumnExpr("SUM(wl.move_count)::int AS move_count").
-			ColumnExpr("SUM(wl.total_miles)::float8 AS total_miles").
-			ColumnExpr("SUM(wl.shipment_revenue)::float8 AS total_revenue").
-			ColumnExpr("MAX(wl.last_ended_at) AS last_ended_at").
-			GroupExpr("wl.worker_id")
-
-		if err := q.Scan(ctx, &entities); err != nil {
+		workerID := perShipment.Col("worker_id")
+		rows, err := keel.Into[shipmentports.WorkerWorkload](ctx, r.db.Keel(ctx), perShipment.
+			Query().
+			With(perShipment).
+			Group(workerID).
+			Pick(
+				workerID,
+				keel.CastInt64(keel.NumericOf(perShipment.Col("move_count").Sum())),
+				keel.CastFloat64(keel.Float64Of(perShipment.Col("total_miles").Sum())),
+				keel.CastFloat64(keel.Float64Of(perShipment.Col("shipment_revenue").Sum())),
+				perShipment.Col("last_ended_at").Max(),
+			))
+		if err != nil {
 			return nil, fmt.Errorf("list worker workload: %w", err)
 		}
 
-		return entities, nil
+		return pointers(rows), nil
 	})
 }
 
@@ -318,40 +259,31 @@ func (r *repository) ListWorkerLaneExperience(
 				return []*shipmentports.WorkerLaneExperience{}, nil
 			}
 
-			asnCols := shipmentcol.AssignmentColumns
-			shipCols := shipmentcol.ShipmentColumns
-			entities := make([]*shipmentports.WorkerLaneExperience, 0, len(req.WorkerIDs))
-
-			q := r.db.DBForContext(ctx).NewSelect().
-				Model((*shipment.Assignment)(nil)).
-				ColumnExpr(asnCols.PrimaryWorkerID.As("worker_id")).
-				ColumnExpr(shipCols.CustomerID.As("customer_id")).
-				ColumnExpr("COUNT(*)::int AS move_count").
-				Join(moveFromAssignmentJoin).
-				Join(shipmentJoin).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
-						Where(asnCols.PrimaryWorkerID.In(), bun.List(req.WorkerIDs)).
-						Where(shipCols.CustomerID.In(), bun.List(req.CustomerIDs))
-					if req.Since > 0 {
-						sq = sq.Where(asnCols.CreatedAt.Gte(), req.Since)
-					}
-					return sq
-				}).
-				GroupExpr(asnCols.PrimaryWorkerID.Qualified() + ", " + shipCols.CustomerID.Qualified())
-
-			if err := q.Scan(ctx, &entities); err != nil {
+			asn := shipmentdb.Assignments
+			sm := shipmentdb.ShipmentMoves
+			sp := shipmentdb.Shipments
+			rows, err := keel.Into[shipmentports.WorkerLaneExperience](ctx, r.db.Keel(ctx), asn.
+				Join(sm, sm.ID.EqCol(asn.ShipmentMoveID)).
+				Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+				Group(asn.PrimaryWorkerID, sp.CustomerID).
+				Pick(asn.PrimaryWorkerID, sp.CustomerID, keel.Count()).
+				Where(
+					asn.PrimaryWorkerID.In(req.WorkerIDs...),
+					sp.CustomerID.In(req.CustomerIDs...),
+					keel.When(req.Since > 0, asn.CreatedAt.Gte(req.Since)),
+				))
+			if err != nil {
 				return nil, fmt.Errorf("list worker lane experience: %w", err)
 			}
 
-			return entities, nil
+			return pointers(rows), nil
 		},
 	)
 }
 
 func (r *repository) ListWorkersByIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerIDs []pulid.ID,
 ) ([]*worker.Worker, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.Worker, error) {
@@ -359,17 +291,11 @@ func (r *repository) ListWorkersByIDs(
 			return []*worker.Worker{}, nil
 		}
 
-		cols := workercol.WorkerColumns
-		entities := make([]*worker.Worker, 0, len(workerIDs))
-
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Relation(workercol.WorkerRelations.Profile).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, tenantInfo).
-					Where(cols.ID.In(), bun.List(workerIDs))
-			}).
-			Scan(ctx)
+		w := workerdb.Workers
+		entities, err := w.Where(w.ID.In(workerIDs...)).
+			Load(w.Profile()).
+			Limit(len(workerIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list workers by ids: %w", err)
 		}
@@ -389,30 +315,23 @@ func (r *repository) ListEquipmentByIDs(
 			tractors := make([]*tractor.Tractor, 0, len(req.TractorIDs))
 			trailers := make([]*trailer.Trailer, 0, len(req.TrailerIDs))
 
+			tc := tractordb.Tractors
+			tl := trailerdb.Trailers
+			var items []keel.BatchItem
 			if len(req.TractorIDs) > 0 {
-				err := r.db.DBForContext(ctx).NewSelect().
-					Model(&tractors).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return tractorcol.TractorScopeTenant(sq, req.TenantInfo).
-							Where(tractorcol.TractorColumns.ID.In(), bun.List(req.TractorIDs))
-					}).
-					Scan(ctx)
-				if err != nil {
-					return nil, nil, fmt.Errorf("list tractors by ids: %w", err)
-				}
+				items = append(items, keel.ListInto(
+					tc.Where(tc.ID.In(req.TractorIDs...)).Limit(len(req.TractorIDs)),
+					&tractors,
+				))
 			}
-
 			if len(req.TrailerIDs) > 0 {
-				err := r.db.DBForContext(ctx).NewSelect().
-					Model(&trailers).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return trailercol.TrailerScopeTenant(sq, req.TenantInfo).
-							Where(trailercol.TrailerColumns.ID.In(), bun.List(req.TrailerIDs))
-					}).
-					Scan(ctx)
-				if err != nil {
-					return nil, nil, fmt.Errorf("list trailers by ids: %w", err)
-				}
+				items = append(items, keel.ListInto(
+					tl.Where(tl.ID.In(req.TrailerIDs...)).Limit(len(req.TrailerIDs)),
+					&trailers,
+				))
+			}
+			if err := keel.Batch(ctx, r.db.Keel(ctx), items...); err != nil {
+				return nil, nil, fmt.Errorf("list equipment by ids: %w", err)
 			}
 
 			return tractors, trailers, nil

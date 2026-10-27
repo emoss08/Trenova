@@ -3,15 +3,11 @@ package shipmenttrackingrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -48,39 +44,20 @@ func (r *repository) ListTrackingShipments(
 			ids = ids[:MaxTrackingShipments]
 		}
 
-		sm := shipmentcol.ShipmentMoveColumns
-		stp := shipmentcol.StopColumns
-		rel := shipmentcol.ShipmentRelations
-		moves := shipmentcol.ShipmentMoveRelations
-		stops := shipmentcol.StopRelations
+		sp := shipmentdb.Shipments
+		moves := sp.Moves()
+		stops := moves.Stops()
+		location := stops.Location()
 
-		entities := make([]*shipment.Shipment, 0, len(ids))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(shipmentcol.ShipmentColumns.ID.In(), bun.List(ids))
-			}).
-			Relation(rel.Customer).
-			RelationWithOpts(rel.Moves, bun.RelationOpts{
-				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(sm.Sequence.OrderAsc())
-				},
-			}).
-			RelationWithOpts(buncolgen.Rel(rel.Moves, moves.Stops), bun.RelationOpts{
-				Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Order(stp.Sequence.OrderAsc())
-				},
-			}).
-			Relation(buncolgen.Rel(rel.Moves, moves.Stops, stops.Location)).
-			Relation(buncolgen.Rel(
-				rel.Moves,
-				moves.Stops,
-				stops.Location,
-				locationcol.LocationRelations.State,
-			)).
-			Scan(ctx)
+		entities, err := sp.Where(sp.ID.In(ids...)).
+			Load(
+				sp.Customer(),
+				moves.Order(moves.Sequence.Asc()).Load(
+					stops.Order(stops.Sequence.Asc()).Load(location.Load(location.State())),
+				),
+			).
+			Limit(len(ids)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to load tracking shipments", zap.Error(err))
 			return nil, err

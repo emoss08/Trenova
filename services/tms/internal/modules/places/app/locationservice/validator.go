@@ -5,8 +5,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -24,12 +26,14 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(p.DB, locationdb.LocationsSchema())
+
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*location.Location]().
 			WithModelName("Location").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(p.DB)).
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
 			WithUniqueField(
 				"code",
 				"code",
@@ -40,39 +44,18 @@ func NewValidator(p ValidatorParams) *Validator {
 				"stateId",
 				"State does not exist",
 				func(l *location.Location) pulid.ID { return l.StateID },
-				validationframework.NewUSStateReferenceCheck(p.DB),
+				validationframework.KeelReferenceCheck(p.DB, usstatedb.UsStatesSchema()),
 			).
 			WithCustomReferenceCheck(
 				"locationCategoryId",
 				"Location category does not exist",
 				func(l *location.Location) pulid.ID { return l.LocationCategoryID },
-				createLocationCategoryCheck(p.DB),
+				validationframework.KeelReferenceCheck(
+					p.DB,
+					locationcategorydb.LocationCategoriesSchema(),
+				),
 			).
 			Build(),
-	}
-}
-
-func createLocationCategoryCheck(
-	db *postgres.Connection,
-) validationframework.CustomReferenceCheckFunc {
-	return func(ctx context.Context, orgID, buID pulid.ID, refID pulid.ID) (bool, error) {
-		return dbtx.Read(ctx, db, func(ctx context.Context) (bool, error) {
-			if refID.IsNil() {
-				return true, nil
-			}
-
-			exists, err := db.DBForContext(ctx).NewSelect().
-				TableExpr("location_categories").
-				ColumnExpr("1").
-				Where("id = ?", refID).
-				Where("organization_id = ?", orgID).
-				Where("business_unit_id = ?", buID).
-				Exists(ctx)
-			if err != nil {
-				return false, err
-			}
-			return exists, nil
-		})
 	}
 }
 

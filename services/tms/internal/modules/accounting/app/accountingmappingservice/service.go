@@ -26,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -37,7 +36,7 @@ type Params struct {
 	fx.In
 
 	Logger             *zap.Logger
-	DB                 kernelports.DBConnection
+	DB                 kernelports.Transactor
 	Connections        accountingsyncports.AccountingConnectionRepository
 	References         accountingsyncports.AccountingReferenceObjectRepository
 	Mappings           accountingsyncports.AccountingMappingRepository
@@ -61,7 +60,7 @@ type Params struct {
 
 type Service struct {
 	l                  *zap.Logger
-	db                 kernelports.DBConnection
+	db                 kernelports.Transactor
 	connections        accountingsyncports.AccountingConnectionRepository
 	references         accountingsyncports.AccountingReferenceObjectRepository
 	mappings           accountingsyncports.AccountingMappingRepository
@@ -371,7 +370,7 @@ func (s *Service) Confirm(
 		return nil, err
 	}
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, change := range plan.Changes {
 			if _, updateErr := s.mappings.Update(txCtx, change.After); updateErr != nil {
 				return updateErr

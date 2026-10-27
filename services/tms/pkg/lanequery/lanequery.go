@@ -1,190 +1,80 @@
 package lanequery
 
 import (
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 )
 
 const (
-	OriginStateColumn      = "origin_state"
-	DestinationStateColumn = "destination_state"
-	StatusColumn           = "status"
-	CountColumn            = "count"
+	endpointsCTE          = "lane_endpoints"
+	originLocationID      = "origin_location_id"
+	destinationLocationID = "destination_location_id"
 
-	endpointsCTE             = "lane_endpoints"
-	pairsCTE                 = "lane_pairs"
-	pairsAlias               = "lp"
 	originLocationAlias      = "loc_orig"
 	destinationLocationAlias = "loc_dest"
 	originStateAlias         = "ust_orig"
 	destinationStateAlias    = "ust_dest"
-
-	pickupLocationIDs     = "pickup_location_ids"
-	deliveryLocationIDs   = "delivery_location_ids"
-	originLocationID      = "origin_location_id"
-	destinationLocationID = "destination_location_id"
-	shipmentCount         = "shipment_count"
 )
 
 type Options struct {
-	Tenant         *pagination.TenantInfo
-	ShipmentFilter func(*bun.SelectQuery) *bun.SelectQuery
-	GroupByStatus  bool
+	Shipments []keel.Pred
+	Limit     int
 }
 
-var (
-	shipmentCols = shipmentcol.ShipmentColumns
-	moveCols     = shipmentcol.ShipmentMoveColumns
-	stopCols     = shipmentcol.StopColumns
+func New(opts Options) keel.Projection {
+	return lanes(opts)
+}
 
-	moveFromShipmentJoin = "JOIN " + shipmentcol.ShipmentMoveTable.As(
-		shipmentcol.ShipmentMoveTable.Alias) +
-		" ON " + moveCols.ShipmentID.EqColumn(shipmentCols.ID) +
-		" AND " + moveCols.OrganizationID.EqColumn(shipmentCols.OrganizationID) +
-		" AND " + moveCols.BusinessUnitID.EqColumn(shipmentCols.BusinessUnitID)
+func lanes(opts Options) *keel.Query[*keel.Row] {
+	endpoints := keel.CTE(endpointsCTE, []string{originLocationID, destinationLocationID},
+		shipmentEndpoints(opts.Shipments))
+	origin := endpoints.Col(originLocationID)
+	destination := endpoints.Col(destinationLocationID)
 
-	stopFromMoveJoin = "JOIN " + shipmentcol.StopTable.As(shipmentcol.StopTable.Alias) +
-		" ON " + stopCols.ShipmentMoveID.EqColumn(moveCols.ID) +
-		" AND " + stopCols.OrganizationID.EqColumn(moveCols.OrganizationID) +
-		" AND " + stopCols.BusinessUnitID.EqColumn(moveCols.BusinessUnitID)
+	originLocation := locationdb.Locations.As(originLocationAlias)
+	destinationLocation := locationdb.Locations.As(destinationLocationAlias)
+	originState := usstatedb.UsStates.As(originStateAlias)
+	destinationState := usstatedb.UsStates.As(destinationStateAlias)
+	count := keel.Count()
 
-	pickupLocationIDsExpr   = stopLocationIDsExpr(pickupLocationIDs)
-	deliveryLocationIDsExpr = stopLocationIDsExpr(deliveryLocationIDs)
-	originLocationIDExpr    = pickupLocationIDs + "[1] AS " + originLocationID
-	destinationLocationExpr = deliveryLocationIDs + "[cardinality(" + deliveryLocationIDs +
-		")] AS " + destinationLocationID
-	shipmentCountSumExpr = "SUM(" + pairsAlias + "." + shipmentCount + ")::int AS " + CountColumn
-
-	pairOrganizationID = shipmentCols.OrganizationID.WithAlias(pairsAlias)
-	pairBusinessUnitID = shipmentCols.BusinessUnitID.WithAlias(pairsAlias)
-	pairStatus         = shipmentCols.Status.WithAlias(pairsAlias)
-
-	originTenantLocationJoin = locationJoin(originLocationAlias, originLocationID) +
-		locationTenantCondition(originLocationAlias)
-	destinationTenantLocationJoin = locationJoin(destinationLocationAlias, destinationLocationID) +
-		locationTenantCondition(destinationLocationAlias)
-	originPairLocationJoin = locationJoin(originLocationAlias, originLocationID) +
-		locationPairCondition(originLocationAlias)
-	destinationPairLocationJoin = locationJoin(destinationLocationAlias, destinationLocationID) +
-		locationPairCondition(destinationLocationAlias)
-	originStateJoin      = stateJoin(originStateAlias, originLocationAlias)
-	destinationStateJoin = stateJoin(destinationStateAlias, destinationLocationAlias)
-
-	originAbbreviation      = usstatecol.UsStateColumns.Abbreviation.WithAlias(originStateAlias)
-	destinationAbbreviation = usstatecol.UsStateColumns.Abbreviation.WithAlias(
-		destinationStateAlias,
-	)
-)
-
-func New(db bun.IDB, opts Options) *bun.SelectQuery {
-	endpoints := db.NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		ColumnExpr(pickupLocationIDsExpr, bun.List(shipment.PickupStopTypes())).
-		ColumnExpr(deliveryLocationIDsExpr, bun.List(shipment.DeliveryStopTypes())).
-		Join(moveFromShipmentJoin).
-		Join(stopFromMoveJoin).
-		GroupExpr(shipmentCols.ID.Qualified())
-
-	pairs := db.NewSelect().
-		TableExpr(endpointsCTE).
-		ColumnExpr(originLocationIDExpr).
-		ColumnExpr(destinationLocationExpr).
-		ColumnExpr(buncolgen.Count(shipmentCount)).
-		Where(pickupLocationIDs + " IS NOT NULL").
-		Where(deliveryLocationIDs + " IS NOT NULL").
-		GroupExpr(originLocationID).
-		GroupExpr(destinationLocationID)
-
-	lanes := db.NewSelect().
-		TableExpr(pairsCTE + " AS " + pairsAlias).
-		ColumnExpr(originAbbreviation.As(OriginStateColumn)).
-		ColumnExpr(destinationAbbreviation.As(DestinationStateColumn)).
-		ColumnExpr(shipmentCountSumExpr).
-		GroupExpr(originAbbreviation.Qualified()).
-		GroupExpr(destinationAbbreviation.Qualified())
-
-	if opts.Tenant != nil {
-		endpoints = endpoints.Apply(shipmentcol.ShipmentApplyTenant(*opts.Tenant))
-		lanes = lanes.
-			Join(originTenantLocationJoin, opts.Tenant.OrgID, opts.Tenant.BuID).
-			Join(originStateJoin).
-			Join(destinationTenantLocationJoin, opts.Tenant.OrgID, opts.Tenant.BuID).
-			Join(destinationStateJoin)
-	} else {
-		endpoints = endpoints.
-			ColumnExpr(shipmentCols.OrganizationID.Qualified()).
-			ColumnExpr(shipmentCols.BusinessUnitID.Qualified()).
-			GroupExpr(shipmentCols.OrganizationID.Qualified()).
-			GroupExpr(shipmentCols.BusinessUnitID.Qualified())
-		pairs = pairs.
-			ColumnExpr(shipmentCols.OrganizationID.Bare()).
-			ColumnExpr(shipmentCols.BusinessUnitID.Bare()).
-			GroupExpr(shipmentCols.OrganizationID.Bare()).
-			GroupExpr(shipmentCols.BusinessUnitID.Bare())
-		lanes = lanes.
-			Join(originPairLocationJoin).
-			Join(originStateJoin).
-			Join(destinationPairLocationJoin).
-			Join(destinationStateJoin)
+	q := endpoints.Query().With(endpoints).
+		Join(originLocation, originLocation.ID.EqCol(origin)).
+		Join(originState, originState.ID.EqCol(originLocation.StateID)).
+		Join(destinationLocation, destinationLocation.ID.EqCol(destination)).
+		Join(destinationState, destinationState.ID.EqCol(destinationLocation.StateID)).
+		Where(origin.IsNotNull(), destination.IsNotNull()).
+		Group(originState.Abbreviation, destinationState.Abbreviation).
+		Pick(originState.Abbreviation, destinationState.Abbreviation, count).
+		Order(
+			keel.Desc(count),
+			originState.Abbreviation.Asc(),
+			destinationState.Abbreviation.Asc(),
+		)
+	if opts.Limit > 0 {
+		q = q.Limit(opts.Limit)
 	}
 
-	if opts.GroupByStatus {
-		endpoints = endpoints.
-			ColumnExpr(shipmentCols.Status.Qualified()).
-			GroupExpr(shipmentCols.Status.Qualified())
-		pairs = pairs.
-			ColumnExpr(shipmentCols.Status.Bare()).
-			GroupExpr(shipmentCols.Status.Bare())
-		lanes = lanes.
-			ColumnExpr(pairStatus.Qualified()).
-			GroupExpr(pairStatus.Qualified())
-	}
-
-	if opts.ShipmentFilter != nil {
-		endpoints = endpoints.Apply(opts.ShipmentFilter)
-	}
-
-	return lanes.
-		With(endpointsCTE, endpoints).
-		With(pairsCTE, pairs)
+	return q
 }
 
-func stopLocationIDsExpr(label string) string {
-	return buncolgen.Expr(
-		"array_agg({0} ORDER BY {1}, {2}) FILTER (WHERE {3} IN (?)) AS "+label,
-		stopCols.LocationID,
-		moveCols.Sequence,
-		stopCols.Sequence,
-		stopCols.Type,
-	)
-}
+func shipmentEndpoints(filter []keel.Pred) *keel.Query[*shipment.Shipment] {
+	s := shipmentdb.Shipments
+	m := shipmentdb.ShipmentMoves
+	st := shipmentdb.Stops
 
-func locationJoin(alias, pairLocationID string) string {
-	return "JOIN " + locationcol.LocationTable.As(alias) +
-		" ON " + locationcol.LocationColumns.ID.WithAlias(alias).Qualified() +
-		" = " + pairsAlias + "." + pairLocationID
-}
-
-func locationTenantCondition(alias string) string {
-	cols := locationcol.LocationColumns
-	return " AND " + cols.OrganizationID.WithAlias(alias).Eq() +
-		" AND " + cols.BusinessUnitID.WithAlias(alias).Eq()
-}
-
-func locationPairCondition(alias string) string {
-	cols := locationcol.LocationColumns
-	return " AND " + cols.OrganizationID.WithAlias(alias).EqColumn(pairOrganizationID) +
-		" AND " + cols.BusinessUnitID.WithAlias(alias).EqColumn(pairBusinessUnitID)
-}
-
-func stateJoin(stateAlias, locationAlias string) string {
-	return "JOIN " + usstatecol.UsStateTable.As(stateAlias) +
-		" ON " + usstatecol.UsStateColumns.ID.WithAlias(stateAlias).EqColumn(
-		locationcol.LocationColumns.StateID.WithAlias(locationAlias),
-	)
+	return s.Join(m, m.ShipmentID.EqCol(s.ID)).
+		Join(st, st.ShipmentMoveID.EqCol(m.ID)).
+		Where(filter...).
+		Group(s.ID).
+		Pick(
+			keel.StringArrayOf(keel.ArrayAgg(st.LocationID).
+				OrderBy(m.Sequence.Asc(), st.Sequence.Asc()).
+				Filter(st.Type.In(shipment.PickupStopTypes()...))).At(1),
+			keel.StringArrayOf(keel.ArrayAgg(st.LocationID).
+				OrderBy(m.Sequence.Desc(), st.Sequence.Desc()).
+				Filter(st.Type.In(shipment.DeliveryStopTypes()...))).At(1),
+		)
 }

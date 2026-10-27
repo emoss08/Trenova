@@ -3,12 +3,14 @@ package ediconnectiondraft
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/pkg/lading"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -34,11 +36,6 @@ type setupService interface {
 		req *ediservice.UpsertEDICommunicationProfileRequest,
 		actor *permissionports.RequestActor,
 	) (*edi.EDICommunicationProfile, error)
-	UpsertPartnerDocumentProfile(
-		ctx context.Context,
-		req *ediservice.UpsertEDIPartnerDocumentProfileRequest,
-		actor *permissionports.RequestActor,
-	) (*edi.EDIPartnerDocumentProfile, error)
 	SaveMappingProfile(
 		ctx context.Context,
 		req *ediports.SaveMappingItemsRequest,
@@ -48,31 +45,42 @@ type setupService interface {
 		req *ediports.ResetEDIControlNumberRequest,
 		actor *permissionports.RequestActor,
 	) (*edi.EDIControlNumberSequence, error)
-	ValidatePartnerSettings(
+}
+
+type projectStore interface {
+	Import(
 		ctx context.Context,
-		req *ediservice.ValidatePartnerSettingsRequest,
-	) ([]edix12.Diagnostic, error)
+		req *edilading.ImportRequest,
+		actor *permissionports.RequestActor,
+	) (*edi.LadingVersion, error)
+	Samples(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		version *edi.LadingVersion,
+	) ([]lading.Sample, error)
 }
 
 type Params struct {
 	fx.In
 
 	Repo          ediports.EDIConnectionDraftRepository
-	Templates     ediports.EDITemplateRepository
 	DocumentTypes ediports.EDIDocumentTypeRepository
 	Setup         *ediservice.Service
 	Validator     *ediservice.Validator
-	DB            kernelports.DBConnection
+	Lading        *edilading.Runtime
+	Projects      *edilading.Projects
+	DB            kernelports.Transactor
 	Logger        *zap.Logger
 }
 
 type Service struct {
 	repo          ediports.EDIConnectionDraftRepository
-	templates     ediports.EDITemplateRepository
 	documentTypes ediports.EDIDocumentTypeRepository
 	setup         setupService
 	validator     *ediservice.Validator
-	db            kernelports.DBConnection
+	lading        *edilading.Runtime
+	projects      projectStore
+	db            kernelports.Transactor
 	l             *zap.Logger
 }
 
@@ -81,10 +89,11 @@ var _ ediports.EDIConnectionDraftService = (*Service)(nil)
 func New(p Params) *Service { //nolint:gocritic // fx params are passed by value
 	return &Service{
 		repo:          p.Repo,
-		templates:     p.Templates,
 		documentTypes: p.DocumentTypes,
 		setup:         p.Setup,
 		validator:     p.Validator,
+		lading:        p.Lading,
+		projects:      p.Projects,
 		db:            p.DB,
 		l:             p.Logger.Named("service.edi-connection-draft"),
 	}

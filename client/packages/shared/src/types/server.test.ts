@@ -197,6 +197,30 @@ describe("createLimitOffsetResponse collection shapes", () => {
     ).toThrow();
   });
 
+  it("keeps a REST cursor list's estimated total and its own paging", () => {
+    expect(
+      schema.parse({
+        results: [{ id: "row_1" }],
+        count: 1_250_000,
+        totalCount: 1_250_000,
+        totalCountExact: false,
+        next: "https://app.trenova.test/api/v1/edi/transfers/?after=b2Zmc2V0&limit=1",
+        previous: "",
+        hasNextPage: true,
+        endCursor: "b2Zmc2V0",
+      }),
+    ).toEqual({
+      results: [{ id: "row_1" }],
+      count: 1_250_000,
+      totalCount: 1_250_000,
+      totalCountExact: false,
+      next: "https://app.trenova.test/api/v1/edi/transfers/?after=b2Zmc2V0&limit=1",
+      prev: null,
+      hasNextPage: true,
+      endCursor: "b2Zmc2V0",
+    });
+  });
+
   it("rejects a pageInfo that omits mode", () => {
     expect(() =>
       schema.parse({

@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 func (s *Service) ListTransferChanges(
@@ -81,10 +80,10 @@ func (s *Service) reviewTransferChange(
 		ctx,
 		"apply a reviewed transfer change to the linked shipments of both organizations in one transaction",
 	)
-	err = s.db.WithTx(
+	err = s.db.Transact(
 		reviewCtx,
 		kernelports.TxOptions{},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			if status == edi.TransferChangeStatusApplied {
 				if txErr := s.applyApprovedTransferChange(
 					txCtx,

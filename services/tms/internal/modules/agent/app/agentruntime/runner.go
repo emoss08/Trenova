@@ -2,10 +2,11 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
+	"maps"
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -629,6 +630,8 @@ func (s *Service) emitToolStarted(effects TurnEffects, call *agentports.ToolCall
 // dispatchCall is a call the loop has decided to make, with what the turn
 // knew when it decided.
 func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) DispatchCall {
+	continues := t.continueScript(call)
+
 	return DispatchCall{
 		Call:                 *call,
 		CompletionText:       completionText,
@@ -642,23 +645,27 @@ func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) Di
 		Model:                t.result.Model,
 		Provider:             t.providerKind,
 		ProviderID:           t.result.ProviderID,
+		ScriptContinues:      continues,
 		ScriptPosition:       t.scriptPosition(call),
 	}
 }
 
 // scriptPosition is how many calls to the script tool the turn has made up to
-// and including this one, zero for any other tool.
+// and including this one, zero for any other tool. A call that continues a
+// script is not counted: it finishes what that script began.
 func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
-	if call.Name != agentextension.ToolRunScript {
+	if call.Name != codemode.ToolRunScript {
 		return 0
 	}
 	position := 0
 	for idx := range t.result.Messages {
 		for _, made := range t.result.Messages[idx].ToolCalls {
-			if made.Name != agentextension.ToolRunScript {
+			if made.Name != codemode.ToolRunScript {
 				continue
 			}
-			position++
+			if !t.finishes(made.ID) {
+				position++
+			}
 			if made.ID == call.ID {
 				return position
 			}
@@ -666,6 +673,101 @@ func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
 	}
 
 	return position + 1
+}
+
+// finishes reports whether the call with id continues a script that read a
+// dataset and showed nothing: it finishes that analysis rather than starting
+// another, so the turn's script count leaves it out.
+func (t *Turn) finishes(id string) bool {
+	earlier, continues := t.continuing[id]
+
+	return continues && t.continuable[earlier] == codemode.ContinueFree
+}
+
+// continueScript is the arguments of the script of this turn that call
+// continues, its code the whole of what ran before: one whose answer said it
+// may be continued and that no other call has continued. It claims that
+// script for call, so a second call naming it runs nothing. Nil when call
+// continues nothing it may.
+func (t *Turn) continueScript(call *agentports.ToolCall) map[string]any {
+	if call.Name != codemode.ToolRunScript {
+		return nil
+	}
+	earlier := strings.TrimSpace(stringArg(call.Arguments, codemode.ParamScriptContinues))
+	if earlier == "" {
+		return nil
+	}
+	if t.continuable[earlier] == codemode.ContinueNone {
+		return nil
+	}
+	for other, continued := range t.continuing {
+		if continued == earlier && other != call.ID {
+			return nil
+		}
+	}
+	arguments := t.continuedArguments(earlier, 0)
+	if arguments == nil {
+		return nil
+	}
+	if t.continuing == nil {
+		t.continuing = make(map[string]string, 1)
+	}
+	t.continuing[call.ID] = earlier
+
+	return arguments
+}
+
+// continuedArguments is what the script call with id ran: its own arguments,
+// or for a call that itself continued one, the code of every script before it
+// and then its own, over the datasets and inputs of the first. A chain is
+// never longer than the scripts a turn runs.
+func (t *Turn) continuedArguments(id string, depth int) map[string]any {
+	arguments := t.scriptArguments(id)
+	earlier, chained := t.continuing[id]
+	if arguments == nil || !chained {
+		return arguments
+	}
+	if depth > 2*codemode.ScriptsPerTurn {
+		return nil
+	}
+	base := t.continuedArguments(earlier, depth+1)
+	if base == nil {
+		return nil
+	}
+	whole := maps.Clone(base)
+	whole[codemode.ParamScriptCode] = strings.TrimRight(stringArg(base, codemode.ParamScriptCode),
+		"\n") + "\n\n" + stringArg(arguments, codemode.ParamScriptCode)
+	for _, key := range []string{codemode.ParamScriptTitle, codemode.ParamScriptPurpose} {
+		if own := strings.TrimSpace(stringArg(arguments, key)); own != "" {
+			whole[key] = own
+		}
+	}
+
+	return whole
+}
+
+// scriptArguments is what the turn's script call with id was asked to run.
+func (t *Turn) scriptArguments(id string) map[string]any {
+	for idx := range t.result.Messages {
+		for _, made := range t.result.Messages[idx].ToolCalls {
+			if made.ID == id && made.Name == codemode.ToolRunScript {
+				return made.Arguments
+			}
+		}
+	}
+
+	return nil
+}
+
+// noteContinuable keeps a script a later call of the turn may continue.
+func (t *Turn) noteContinuable(call *agentports.ToolCall, outcome *toolOutcome) {
+	if outcome.continuation == codemode.ContinueNone || call.ID == "" {
+		return
+	}
+	if t.continuable == nil {
+		t.continuable = make(map[string]codemode.Continuation, 1)
+	}
+	t.continuable[call.ID] = outcome.continuation
 }
 
 // settleDispatched folds what a dispatched call came to into the turn: the
@@ -698,6 +800,7 @@ func (s *Service) settleDispatched(
 	if !outcome.failed {
 		t.noteToolMemories(effects, call.Name)
 		t.noteShown(&call)
+		t.noteContinuable(&call, &outcome)
 		t.noteWorld(effects, &call, &outcome)
 	}
 }
@@ -855,7 +958,11 @@ func (s *Service) observe(
 		outcome.shown = shown
 	}
 
+	mistake, fixable := errors.AsType[*agentports.PublishMistake](err)
 	switch {
+	case outcome.publishes && fixable:
+		return failedOutcome("Tool %q did not keep the document: %s. Fix the call and send "+
+			"it again.", publishArtifactName, mistake.Reason)
 	case outcome.publishes && err != nil:
 		return failedOutcome("Tool %q could not keep the document: %s. Put the text in your "+
 			"reply instead.", publishArtifactName, err.Error())

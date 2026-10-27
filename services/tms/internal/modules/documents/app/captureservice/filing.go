@@ -26,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
@@ -163,6 +162,8 @@ type ListBatchesInput struct {
 	Search      string `json:"search"`
 	CreatedFrom int64  `json:"createdFrom"`
 	CreatedTo   int64  `json:"createdTo"`
+	// IncludeItems reads each stack's items with the page.
+	IncludeItems bool `json:"includeItems"`
 }
 
 // ListBatches is the intake queue. A person whose data scope is their own
@@ -182,15 +183,16 @@ func (s *Service) ListBatches(
 	}
 
 	req := &captureports.ListCaptureBatchesRequest{
-		Filter:      in.Filter,
-		Cursor:      in.Cursor,
-		Statuses:    in.Statuses,
-		Source:      in.Source,
-		TargetType:  in.TargetType,
-		TargetID:    in.TargetID,
-		Search:      stringutils.TruncateRunes(strings.TrimSpace(in.Search), maxBatchSearchLength),
-		CreatedFrom: in.CreatedFrom,
-		CreatedTo:   in.CreatedTo,
+		Filter:       in.Filter,
+		Cursor:       in.Cursor,
+		Statuses:     in.Statuses,
+		Source:       in.Source,
+		TargetType:   in.TargetType,
+		TargetID:     in.TargetID,
+		Search:       stringutils.TruncateRunes(strings.TrimSpace(in.Search), maxBatchSearchLength),
+		CreatedFrom:  in.CreatedFrom,
+		CreatedTo:    in.CreatedTo,
+		IncludeItems: in.IncludeItems,
 	}
 	if in.Mine || !seesEveryone(result) {
 		req.UserID = in.TenantInfo.UserID
@@ -320,7 +322,7 @@ func (s *Service) EditItems(
 
 	tenantInfo := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	var updated *capture.CaptureBatch
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, page := range pages {
 			if _, pageErr := s.pages.Update(txCtx, page); pageErr != nil {
 				return pageErr
@@ -749,7 +751,7 @@ func (s *Service) RecordFiled(
 	var filed *capture.CaptureItem
 	var batch *capture.CaptureBatch
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		item, err := s.items.GetByID(
 			txCtx,
 			captureports.GetCaptureItemByIDRequest{ID: itemID, TenantInfo: scope},
@@ -899,7 +901,7 @@ func (s *Service) DiscardItem(
 	item.Status = capture.ItemDiscarded
 	scope := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	var settled *capture.CaptureBatch
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, updateErr := s.items.Update(txCtx, item); updateErr != nil {
 			return updateErr
 		}
@@ -978,7 +980,7 @@ func (s *Service) discardBatch(
 	scope := pagination.TenantInfo{OrgID: batch.OrganizationID, BuID: batch.BusinessUnitID}
 	var discarded *capture.CaptureBatch
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		items, err := s.items.ListByBatch(txCtx, captureports.ListCaptureItemsRequest{
 			BatchID:    batch.ID,
 			TenantInfo: scope,

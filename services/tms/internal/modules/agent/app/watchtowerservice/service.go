@@ -112,7 +112,7 @@ func ItemCursor(item *watchtower.Item, orderByDue bool) (string, error) {
 	if orderByDue {
 		key = item.DueSortKey()
 	}
-	encoded, err := pagination.EncodeCursor(pagination.Cursor{CreatedAt: key, ID: item.ID})
+	encoded, err := pagination.EncodePositionCursor(pagination.PositionCursor{At: key, ID: item.ID})
 	if err != nil {
 		return "", fmt.Errorf("encode watchtower cursor: %w", err)
 	}
@@ -194,7 +194,7 @@ func (s *Service) List(
 		listReq.OverdueAt = s.now()
 	}
 	if req.After != "" {
-		decoded, dErr := pagination.DecodeCursor(req.After)
+		decoded, dErr := pagination.DecodePositionCursor(req.After)
 		if dErr != nil {
 			return nil, errortypes.NewValidationError(
 				"after",
@@ -204,9 +204,9 @@ func (s *Service) List(
 		}
 		listReq.BeforeID = decoded.ID
 		if req.OrderByDue {
-			listReq.BeforeDueAt = decoded.CreatedAt
+			listReq.BeforeDueAt = decoded.At
 		} else {
-			listReq.BeforeOccurredAt = decoded.CreatedAt
+			listReq.BeforeOccurredAt = decoded.At
 		}
 	}
 

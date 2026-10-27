@@ -1,4 +1,4 @@
-import { usePermission } from "@/hooks/use-permission";
+import { usePermission, useReviewApproval } from "@/hooks/use-permission";
 import { formulaTemplateRoutes } from "@/lib/formula-template-routes";
 import { Button } from "@trenova/shared/components/ui/button";
 import {
@@ -49,9 +49,8 @@ import { useStudio } from "./studio-context";
 
 const USAGE_LABELS: Readonly<Record<string, string>> = defineLabels({
   shipment: "Shipments",
-  rate_matrix: "Rate matrices",
   rate_agreement_rule: "Rate agreement rules",
-  rate_agreement_accessorial: "Rate agreement accessorials",
+  rate_agreement: "Rate agreements",
   billing_control_fallback: "Billing fallback",
 });
 
@@ -64,7 +63,7 @@ export function usageConsequence(
   switch (status) {
     case "Active":
       return t(
-        "Editing the formula returns it to Draft; shipments keep rating with v{0} until the new version is approved. Name and description edits are safe.",
+        "Editing the source returns it to Draft; shipments keep rating with v{0} until the new version is approved. Name and description edits are safe.",
         version,
       );
     case "InReview":
@@ -323,7 +322,7 @@ export function StudioTopBar({
   const { control } = useFormContext();
   const name = (useWatch({ control, name: "name" }) as string | undefined)?.trim() ?? "";
   const { allowed: canSubmit } = usePermission(Resource.FormulaTemplate, Operation.Submit);
-  const { allowed: canApprove } = usePermission(Resource.FormulaTemplate, Operation.Approve);
+  const approval = useReviewApproval(Resource.FormulaTemplate, template?.submittedById);
   const { allowed: canReject } = usePermission(Resource.FormulaTemplate, Operation.Reject);
 
   const status = template?.status;
@@ -378,7 +377,7 @@ export function StudioTopBar({
       )}
       {mode === "edit" && status === "InReview" && (
         <>
-          {canApprove && (
+          {approval.allowed && (
             <Button
               type="button"
               variant="outline"
@@ -390,6 +389,23 @@ export function StudioTopBar({
               <CheckIcon className="text-success size-3.5" />
               {t("Approve")}
             </Button>
+          )}
+          {approval.needsSecondReviewer && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span>
+                    <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled>
+                      <CheckIcon className="size-3.5" />
+                      {t("Approve")}
+                    </Button>
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {t("You submitted this, so another reviewer has to approve it")}
+              </TooltipContent>
+            </Tooltip>
           )}
           {canReject && (
             <Button

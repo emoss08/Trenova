@@ -72,9 +72,9 @@ func (r *MatchRecurringShipmentsRequest) Validate() *errortypes.MultiError {
 }
 
 type LanePatternSummary struct {
-	ShipmentCount   int   `json:"shipmentCount"   bun:"shipment_count"`
-	FirstShipmentAt int64 `json:"firstShipmentAt" bun:"first_shipment_at"`
-	LastShipmentAt  int64 `json:"lastShipmentAt"  bun:"last_shipment_at"`
+	ShipmentCount   int   `json:"shipmentCount"`
+	FirstShipmentAt int64 `json:"firstShipmentAt"`
+	LastShipmentAt  int64 `json:"lastShipmentAt"`
 }
 
 type MatchRecurringShipmentsResponse struct {

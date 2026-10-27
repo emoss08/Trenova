@@ -10,6 +10,12 @@ import "strings"
 // caller's own records and so need no permission beyond being signed in. Every
 // name is listed: a resolver called My<Thing> earns no exemption by its name.
 var Resolvers = map[string][]string{
+	"the home page is the calling user's own layout (HomeLayoutService keys it by the " +
+		"user), read or changed only for them": {
+		"MutationResolver.ResetHomeLayout",
+		"MutationResolver.UpdateHomeLayout",
+		"QueryResolver.HomeLayout",
+	},
 	"the driver portal resolves the worker linked to the calling user " +
 		"(driverportalservice.ResolveWorker) and reads or acts only on that worker": {
 		"MutationResolver.AcknowledgeMyDisciplinaryAction",

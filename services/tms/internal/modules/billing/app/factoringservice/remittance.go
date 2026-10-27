@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -34,7 +33,7 @@ const (
 type RemittanceParams struct {
 	fx.In
 
-	DB          kernelports.DBConnection
+	DB          kernelports.Transactor
 	Remittances factoringports.RemittanceRepository
 	Submissions factoringports.SubmissionRepository
 	Ledger      factoringports.LedgerService
@@ -51,7 +50,7 @@ type RemittanceParams struct {
 }
 
 type RemittanceService struct {
-	db          kernelports.DBConnection
+	db          kernelports.Transactor
 	remittances factoringports.RemittanceRepository
 	submissions factoringports.SubmissionRepository
 	ledger      factoringports.LedgerService
@@ -234,7 +233,7 @@ func (s *RemittanceService) Rematch(
 		return nil, err
 	}
 	var before, updated *factoring.Remittance
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, err := s.lock(txCtx, req.TenantInfo, req.ID, req.Version)
 		if err != nil {
 			return err
@@ -279,7 +278,7 @@ func (s *RemittanceService) UpdateLine(
 	}
 	var before, updated *factoring.Remittance
 	var comment string
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, err := s.lock(txCtx, req.TenantInfo, req.RemittanceID, req.Version)
 		if err != nil {
 			return err
@@ -570,7 +569,7 @@ func (s *RemittanceService) Discard(
 		return nil, err
 	}
 	var before, updated *factoring.Remittance
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		rem, err := s.lock(txCtx, req.TenantInfo, req.ID, req.Version)
 		if err != nil {
 			return err

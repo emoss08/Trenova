@@ -1,0 +1,871 @@
+{
+ "cases": [
+  {
+   "name": "a clean tariff reports its header, inputs, imports and charges",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"Dry van TL\"",
+      "",
+      "use org.fees.{ fee }",
+      "",
+      "/// Paid per loaded mile.",
+      "input rate: Money/mi = $2.35/mi",
+      "input minimumCharge: Money",
+      "",
+      "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+      "for stop in shipment.stops {",
+      "  charge \"Stop {stop.sequence}\" as DET = fee()",
+      "}",
+      "minimum minimumCharge"
+     ],
+     "context": {
+      "codes": [
+       {
+        "code": "DET",
+        "active": true
+       }
+      ],
+      "libraries": [
+       {
+        "path": "org.fees",
+        "version": "v3",
+        "source": "library \"org.fees\"\nfn fee() -> Money = $5\n"
+       }
+      ]
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": true,
+     "header": {
+      "kind": "tariff",
+      "name": "Dry van TL"
+     },
+     "diagnostics": [],
+     "inputs": [
+      {
+       "name": "rate",
+       "doc": "Paid per loaded mile.",
+       "type": "Money/mi",
+       "descriptor": {
+        "kind": "quantity",
+        "dimension": "Money/Distance",
+        "unit": "$/mi"
+       },
+       "required": false,
+       "default": {
+        "$q": "2.35",
+        "u": "$/mi"
+       },
+       "range": {
+        "from": 75,
+        "to": 79
+       }
+      },
+      {
+       "name": "minimumCharge",
+       "doc": null,
+       "type": "Money",
+       "descriptor": {
+        "kind": "money"
+       },
+       "required": true,
+       "default": null
+      }
+     ],
+     "imports": [
+      {
+       "path": "org.fees",
+       "version": "v3"
+      }
+     ],
+     "charges": [
+      {
+       "label": "Linehaul",
+       "code": null
+      },
+      {
+       "label": "Stop {stop.sequence}",
+       "code": "DET"
+      }
+     ],
+     "outline": {
+      "items": [
+       {
+        "kind": "header",
+        "name": "Dry van TL"
+       },
+       {
+        "kind": "input",
+        "name": "rate"
+       },
+       {
+        "kind": "input",
+        "name": "minimumCharge"
+       },
+       {
+        "kind": "charge",
+        "name": "Linehaul",
+        "depth": 0
+       },
+       {
+        "kind": "charge",
+        "name": "Stop {stop.sequence}",
+        "code": "DET",
+        "depth": 1
+       },
+       {
+        "kind": "total",
+        "name": "minimum"
+       }
+      ],
+      "folding": [
+       {
+        "kind": "block",
+        "range": {
+         "from": 216,
+         "to": 266
+        }
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "ranges are UTF-16 code units",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"Tarifa año 𝄞\"",
+      "charge \"x\" = 5 lb"
+     ]
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "range": {
+        "from": 36,
+        "to": 40
+       },
+       "severity": "error",
+       "code": "type-mismatch",
+       "message": {
+        "message": "A charge's amount must be money, but {0} is {1}",
+        "args": [
+         "`5 lb`",
+         {
+          "message": "a weight"
+         }
+        ]
+       },
+       "fixes": [],
+       "related": []
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "a fix's changes and a related place are UTF-16 ranges too",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"é\"",
+      "let miles = shipment.distance",
+      "charge \"x\" = $1/mi * mils"
+     ]
+    }
+   },
+   "response": {
+    "ok": {
+     "diagnostics": [
+      {
+       "code": "unused",
+       "severity": "warning",
+       "range": {
+        "from": 15,
+        "to": 20
+       }
+      },
+      {
+       "code": "unknown-name",
+       "range": {
+        "from": 62,
+        "to": 66
+       },
+       "fixes": [
+        {
+         "label": {
+          "message": "Change to {0}",
+          "args": [
+           "`miles`"
+          ]
+         },
+         "changes": [
+          {
+           "range": {
+            "from": 62,
+            "to": 66
+           },
+           "insert": "miles"
+          }
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "a finding in an imported library names the module",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"t\"",
+      "use org.bad.{ fee }",
+      "charge \"x\" = fee()"
+     ],
+     "context": {
+      "libraries": [
+       {
+        "path": "org.bad",
+        "source": "library \"org.bad\"\nfn fee() -> Money = 5 lb\n"
+       }
+      ]
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "code": "type-mismatch",
+       "module": "org.bad",
+       "range": {
+        "from": 38,
+        "to": 42
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "syntax findings come first",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"t\"",
+      "charge \"x\" = 5 lb",
+      "let = 3"
+     ]
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "code": "syntax"
+      },
+      {
+       "code": "type-mismatch"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "the expected kind is checked by the loader",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "library \"t\""
+     ],
+     "kind": "tariff"
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "header": {
+      "kind": "library",
+      "name": "t"
+     },
+     "diagnostics": [
+      {
+       "code": "file-kind"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "an unknown kind is a request error",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": "tariff \"t\"",
+     "kind": "spreadsheet"
+    }
+   },
+   "response": {
+    "error": {
+     "code": "invalid_input"
+    }
+   }
+  },
+  {
+   "name": "an unknown field is a request error",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": "tariff \"t\"",
+     "nope": 1
+    }
+   },
+   "response": {
+    "error": {
+     "code": "invalid_input"
+    }
+   }
+  },
+  {
+   "name": "contract values are checked against the inputs",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"t\"",
+      "type Break = { from: Weight, rate: Money/cwt, minimum: Money? }",
+      "input rate: Money/mi",
+      "input breaks: List<Break> = []",
+      "input drops: Int = 1",
+      "input mode: RatingMode = Sell",
+      "input waived: Bool = false",
+      "input start: Date = @2026-01-01",
+      "charge \"x\" = rate * shipment.distance + $1 * breaks.len * drops",
+      "note \"{mode} {waived} {start}\""
+     ],
+     "values": {
+      "rule": {
+       "rat": {
+        "$q": "2",
+        "u": "$/mi"
+       },
+       "drops": {
+        "$n": "1.5"
+       },
+       "mode": "Sel",
+       "waived": null,
+       "start": {
+        "$date": "2026-02-30"
+       }
+      },
+      "agreement": {
+       "breaks": [
+        {
+         "from": {
+          "$q": "0",
+          "u": "lb"
+         },
+         "rate": {
+          "$q": "20",
+          "u": "$/cwt"
+         }
+        },
+        {
+         "from": {
+          "$q": "500",
+          "u": "lb"
+         },
+         "rate": {
+          "$q": "18",
+          "u": "$/cwt"
+         },
+         "minimum": {
+          "$q": "75",
+          "u": "$"
+         }
+        },
+        {
+         "from": {
+          "$q": "1000",
+          "u": "lb"
+         },
+         "rate": {
+          "$q": "15",
+          "u": "$/cwt"
+         },
+         "extra": true
+        }
+       ],
+       "drops": 2
+      }
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "code": "input-value",
+       "path": "rule.drops",
+       "message": {
+        "message": "{0} is not a whole number",
+        "args": [
+         "1.5"
+        ]
+       }
+      },
+      {
+       "code": "input-value",
+       "path": "rule.mode",
+       "message": {
+        "message": "\"{0}\" is not a {1}",
+        "args": [
+         "Sel",
+         "RatingMode"
+        ]
+       }
+      },
+      {
+       "code": "input-value",
+       "path": "rule.rat",
+       "message": {
+        "message": "{0} isn't an input of this tariff. Did you mean {1}?",
+        "args": [
+         "`rat`",
+         "`rate`"
+        ]
+       }
+      },
+      {
+       "code": "input-value",
+       "path": "rule.start",
+       "message": {
+        "message": "\"{0}\" is not a date (YYYY-MM-DD)",
+        "args": [
+         "2026-02-30"
+        ]
+       }
+      },
+      {
+       "code": "input-value",
+       "path": "rule.waived",
+       "message": {
+        "message": "Expected {0}, got {1}"
+       }
+      },
+      {
+       "code": "input-value",
+       "path": "agreement.breaks[2].extra",
+       "message": {
+        "message": "{0} is not a field of {1}",
+        "args": [
+         "extra",
+         "Break"
+        ]
+       }
+      },
+      {
+       "code": "input-value",
+       "path": "agreement.drops",
+       "message": {
+        "message": "Expected {0}, got {1}"
+       }
+      },
+      {
+       "code": "input-value",
+       "path": "rule.rate",
+       "message": {
+        "message": "{0} has no default, so the rule or the agreement must set it",
+        "args": [
+         "`rate`"
+        ]
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "a wrong unit and a missing field are named by path",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"t\"",
+      "type Break = { from: Weight, rate: Money/cwt }",
+      "input breaks: List<Break> = []",
+      "input other: List<Break> = []",
+      "charge \"x\" = $1 * (breaks.len + other.len)"
+     ],
+     "values": {
+      "rule": {
+       "breaks": [
+        {
+         "from": {
+          "$q": "0",
+          "u": "lb"
+         },
+         "rate": {
+          "$q": "15",
+          "u": "$/mi"
+         }
+        }
+       ],
+       "other": [
+        {
+         "rate": {
+          "$q": "1",
+          "u": "$/cwt"
+         }
+        }
+       ]
+      }
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "code": "input-value",
+       "path": "rule.breaks[0].rate"
+      },
+      {
+       "code": "input-value",
+       "path": "rule.other[0].from"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "contract values that fit leave the check ok",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"t\"",
+      "input rate: Money/mi",
+      "input at: DateTime = @2026-01-01T00:00Z",
+      "charge \"x\" = rate * shipment.distance",
+      "note \"{at}\""
+     ],
+     "values": {
+      "rule": {
+       "at": {
+        "$date": "2026-10-22T08:00:00-05:00"
+       }
+      },
+      "agreement": {
+       "rate": {
+        "$q": "1.5",
+        "u": "$/km"
+       }
+      }
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": true,
+     "diagnostics": []
+    }
+   }
+  },
+  {
+   "name": "an input's constraint is reported folded, and a contract value outside it is refused by path",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"Dry van TL\"",
+      "",
+      "/// Paid per loaded mile.",
+      "input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi",
+      "input freeStops: List<Int> = [] where 0..=10",
+      "input minimumCharge: Money? = none where $0..",
+      "",
+      "best \"Linehaul\" {",
+      "  option \"Per mile\" {",
+      "    charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+      "  }",
+      "  option \"Flat\" {",
+      "    charge \"Flat rate\" = $900",
+      "  }",
+      "}",
+      "charge \"Stops\" = $5 * freeStops.len",
+      "minimum minimumCharge ?? $0"
+     ],
+     "values": {
+      "rule": {
+       "rate": {
+        "$q": "235",
+        "u": "$/mi"
+       }
+      },
+      "agreement": {
+       "freeStops": [
+        {
+         "$n": "2"
+        },
+        {
+         "$n": "12"
+        }
+       ]
+      }
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "severity": "error",
+       "code": "input-value",
+       "path": "rule.rate",
+       "message": {
+        "message": "{0} must be from {1} to {2}; {3} is outside it",
+        "args": [
+         "`rate`",
+         "$0.50/mi",
+         "$15.00/mi",
+         "$235.00/mi"
+        ]
+       },
+       "fixes": [],
+       "related": []
+      },
+      {
+       "severity": "error",
+       "code": "input-value",
+       "path": "agreement.freeStops[1]",
+       "message": {
+        "message": "{0} must be from {1} to {2}; {3} is outside it",
+        "args": [
+         "`freeStops[1]`",
+         "0",
+         "10",
+         "12"
+        ]
+       },
+       "fixes": [],
+       "related": []
+      }
+     ],
+     "inputs": [
+      {
+       "name": "rate",
+       "constraint": {
+        "range": {
+         "min": {
+          "$q": "0.5",
+          "u": "$/mi"
+         },
+         "max": {
+          "$q": "15",
+          "u": "$/mi"
+         },
+         "maxInclusive": true
+        }
+       }
+      },
+      {
+       "name": "freeStops",
+       "constraint": {
+        "range": {
+         "min": {
+          "$n": "0"
+         },
+         "max": {
+          "$n": "10"
+         },
+         "maxInclusive": true
+        }
+       }
+      },
+      {
+       "name": "minimumCharge",
+       "constraint": {
+        "range": {
+         "min": {
+          "$q": "0",
+          "u": "$"
+         },
+         "max": null,
+         "maxInclusive": false
+        }
+       }
+      }
+     ],
+     "charges": [
+      {
+       "label": "Linehaul",
+       "code": null
+      },
+      {
+       "label": "Flat rate",
+       "code": null
+      },
+      {
+       "label": "Stops",
+       "code": null
+      }
+     ],
+     "outline": {
+      "items": [
+       {
+        "kind": "header"
+       },
+       {
+        "kind": "input"
+       },
+       {
+        "kind": "input"
+       },
+       {
+        "kind": "input"
+       },
+       {
+        "kind": "choice",
+        "name": "Linehaul",
+        "depth": 0
+       },
+       {
+        "kind": "option",
+        "name": "Per mile",
+        "depth": 1
+       },
+       {
+        "kind": "charge",
+        "name": "Linehaul",
+        "depth": 2
+       },
+       {
+        "kind": "option",
+        "name": "Flat",
+        "depth": 1
+       },
+       {
+        "kind": "charge",
+        "name": "Flat rate",
+        "depth": 2
+       },
+       {
+        "kind": "charge",
+        "name": "Stops",
+        "depth": 0
+       },
+       {
+        "kind": "total",
+        "name": "minimum"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "name": "a list constraint and inputs without one",
+   "request": {
+    "op": "tariff.check",
+    "input": {
+     "source": [
+      "tariff \"t\"",
+      "input service: Text = \"Standard\" where [\"Standard\", \"Guaranteed\"]",
+      "input fee: Money = $1",
+      "charge \"x\" = fee",
+      "note \"{service}\""
+     ],
+     "values": {
+      "rule": {
+       "service": "Expedited"
+      }
+     }
+    }
+   },
+   "response": {
+    "ok": {
+     "ok": false,
+     "diagnostics": [
+      {
+       "code": "input-value",
+       "path": "rule.service",
+       "message": {
+        "message": "{0} must be one of {1}; {2} isn't",
+        "args": [
+         "`service`",
+         "[Standard, Guaranteed]",
+         "Expedited"
+        ]
+       }
+      }
+     ],
+     "inputs": [
+      {
+       "name": "service",
+       "constraint": {
+        "oneOf": [
+         "Standard",
+         "Guaranteed"
+        ]
+       }
+      },
+      {
+       "name": "fee",
+       "constraint": null
+      }
+     ]
+    }
+   }
+  },
+  {
+   "name": "the catalog lists modules, types, methods, units, keywords and the schema",
+   "request": {
+    "op": "tariff.catalog",
+    "input": {}
+   },
+   "response": {
+    "ok": {
+     "modules": [
+      {
+       "path": "std.ltl"
+      },
+      {
+       "path": "std.fuel"
+      },
+      {
+       "path": "std.time"
+      },
+      {
+       "path": "std.accessorials"
+      },
+      {
+       "path": "std.tiers"
+      }
+     ]
+    }
+   }
+  }
+ ]
+}

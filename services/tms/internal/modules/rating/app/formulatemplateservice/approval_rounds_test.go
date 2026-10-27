@@ -1,6 +1,7 @@
 package formulatemplateservice
 
 import (
+	"github.com/emoss08/trenova/shared/i18n"
 	"context"
 	"testing"
 
@@ -65,7 +66,6 @@ func TestSubmit_OpensARoundAgainstTheApprovedBase(t *testing.T) {
 	reviews := primeReviews(deps, nil)
 
 	template := newTestTemplate()
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -101,7 +101,6 @@ func TestSubmit_AfterChangesRequestedStaysInTheSameRound(t *testing.T) {
 	})
 
 	template := newTestTemplate()
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
 	template.Status = formulatemplate.StatusDraft
 
 	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
@@ -276,13 +275,13 @@ func TestSubmissionAgeCheck(t *testing.T) {
 		return template
 	}
 
-	assert.Equal(t, ReadinessPass, submissionAgeCheck(inReview(&fresh), now).Status)
-	assert.Equal(t, ReadinessWarn, submissionAgeCheck(inReview(&aging), now).Status)
-	assert.Equal(t, ReadinessFail, submissionAgeCheck(inReview(&stale), now).Status)
+	assert.Equal(t, ReadinessPass, submissionAgeCheck(i18n.Default, inReview(&fresh), now).Status)
+	assert.Equal(t, ReadinessWarn, submissionAgeCheck(i18n.Default, inReview(&aging), now).Status)
+	assert.Equal(t, ReadinessFail, submissionAgeCheck(i18n.Default, inReview(&stale), now).Status)
 
 	draft := newTestTemplate()
 	draft.Status = formulatemplate.StatusDraft
-	assert.Equal(t, ReadinessPass, submissionAgeCheck(draft, now).Status,
+	assert.Equal(t, ReadinessPass, submissionAgeCheck(i18n.Default, draft, now).Status,
 		"age only matters while a decision is pending")
 }
 
@@ -293,8 +292,15 @@ func approvableTemplate(deps *testDeps) *formulatemplate.FormulaTemplate {
 	template.Status = formulatemplate.StatusInReview
 	template.SubmittedByID = &submitterID
 	template.SubmittedAt = &submittedAt
-	deps.testCaseRepo.cases = append(deps.testCaseRepo.cases, newTestCase("exact match", 250, 0.01))
+	allowApprovalReads(deps)
 	return template
+}
+
+func allowApprovalReads(deps *testDeps) {
+	deps.versionRepo.On("GetLatestByStatus", mock.Anything, mock.Anything).
+		Return((*formulatemplate.FormulaTemplateVersion)(nil), nil).Maybe()
+	deps.repo.On("CountUsages", mock.Anything, mock.Anything).
+		Return(&formulatemplateports.GetTemplateUsageResponse{}, nil).Maybe()
 }
 
 func TestApprove_TheApprovedSnapshotTakesEffectWhenApproved(t *testing.T) {
@@ -399,5 +405,52 @@ func TestApprove_RefusesAnyoneWhoAuthoredTheRevision(t *testing.T) {
 	})
 	require.Error(t, err, "the approver edited the revision even though someone else submitted it")
 	assert.Contains(t, err.Error(), "authored")
+	deps.repo.AssertNotCalled(t, "Update")
+}
+
+func TestApprove_ApproveOwnLetsTheSubmitterWhoAuthoredItApproveAndTheAuditSaysSo(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	primeReviews(deps, &formulatemplate.Review{
+		Round: 2, Decision: formulatemplate.ReviewDecisionSubmitted, BaseVersionNumber: 4,
+	})
+	logged := captureAudit(deps)
+	template := approvableTemplate(deps)
+	author := newTenantInfo()
+	template.SubmittedByID = &author.UserID
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+	deps.repo.On("Update", mock.Anything, mock.Anything).Return(template, nil)
+	deps.versionRepo.On("Create", mock.Anything, mock.Anything).
+		Return(&formulatemplate.FormulaTemplateVersion{}, nil)
+	deps.versionRepo.On("ListAuthorIDsSince", mock.Anything, mock.Anything).
+		Return([]pulid.ID{author.UserID}, nil)
+
+	req := &ApprovalActionRequest{TenantInfo: author, EntityID: template.ID, MayApproveOwn: true}
+	approved, err := deps.svc.Approve(t.Context(), req)
+	require.NoError(t, err)
+	assert.Equal(t, formulatemplate.StatusActive, approved.Status)
+	assert.Equal(t,
+		"Formula template approved by its author, without a second reviewer",
+		logged.last(t).Comment,
+	)
+}
+
+func TestApprove_WithoutApproveOwnTheSubmitterIsStillRefused(t *testing.T) {
+	t.Parallel()
+	deps := setupTest(t)
+	primeReviews(deps, nil)
+	template := approvableTemplate(deps)
+	author := newTenantInfo()
+	template.SubmittedByID = &author.UserID
+
+	deps.repo.On("GetByID", mock.Anything, mock.Anything).Return(template, nil)
+
+	_, err := deps.svc.Approve(t.Context(), &ApprovalActionRequest{
+		TenantInfo: author,
+		EntityID:   template.ID,
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "submitter")
 	deps.repo.AssertNotCalled(t, "Update")
 }

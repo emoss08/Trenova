@@ -104,14 +104,14 @@ type AccumulateMilesRequest struct {
 }
 
 type MileRow struct {
-	TractorID        pulid.ID        `json:"tractorId"        bun:"tractor_id"`
-	CountryCode      string          `json:"countryCode"      bun:"country_code"`
-	JurisdictionCode string          `json:"jurisdictionCode" bun:"jurisdiction_code"`
-	JurisdictionID   pulid.ID        `json:"jurisdictionId"   bun:"jurisdiction_id"`
-	Miles            decimal.Decimal `json:"miles"            bun:"miles"`
-	LoadedMiles      decimal.Decimal `json:"loadedMiles"      bun:"loaded_miles"`
-	EmptyMiles       decimal.Decimal `json:"emptyMiles"       bun:"empty_miles"`
-	MoveCount        int             `json:"moveCount"        bun:"move_count"`
+	TractorID        pulid.ID        `json:"tractorId"`
+	CountryCode      string          `json:"countryCode"`
+	JurisdictionCode string          `json:"jurisdictionCode"`
+	JurisdictionID   pulid.ID        `json:"jurisdictionId"`
+	Miles            decimal.Decimal `json:"miles"`
+	LoadedMiles      decimal.Decimal `json:"loadedMiles"`
+	EmptyMiles       decimal.Decimal `json:"emptyMiles"`
+	MoveCount        int             `json:"moveCount"`
 }
 
 func (r *MileRow) HasTractor() bool { return !r.TractorID.IsNil() }
@@ -135,9 +135,9 @@ func (a *MoveAggregate) Add(moveID pulid.ID, miles decimal.Decimal) {
 }
 
 type MoveMismatch struct {
-	MoveID          pulid.ID        `json:"moveId"          bun:"move_id"`
-	MoveDistance    decimal.Decimal `json:"moveDistance"    bun:"move_distance"`
-	AttributedMiles decimal.Decimal `json:"attributedMiles" bun:"attributed_miles"`
+	MoveID          pulid.ID        `json:"moveId"`
+	MoveDistance    decimal.Decimal `json:"moveDistance"`
+	AttributedMiles decimal.Decimal `json:"attributedMiles"`
 }
 
 type MileAccumulation struct {
@@ -146,12 +146,6 @@ type MileAccumulation struct {
 	Unattributed MoveAggregate  `json:"unattributed"`
 	NoTractor    MoveAggregate  `json:"noTractor"`
 	Mismatches   []MoveMismatch `json:"mismatches"`
-}
-
-type IFTAJurisdictionCacheRepository interface {
-	GetAll(ctx context.Context) ([]*ifta.Jurisdiction, error)
-	Set(ctx context.Context, jurisdictions []*ifta.Jurisdiction) error
-	Invalidate(ctx context.Context) error
 }
 
 type IFTARepository interface {

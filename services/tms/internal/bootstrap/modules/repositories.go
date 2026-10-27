@@ -1,14 +1,12 @@
 package modules
 
 import (
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/m2msync"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tableinsight"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"go.uber.org/fx"
 )
 
 var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
-	m2msync.NewSyncer,
 	tableinsight.NewCustomerSource,
 	tableinsight.NewInvoiceSource,
 	tableinsight.NewLocationSource,

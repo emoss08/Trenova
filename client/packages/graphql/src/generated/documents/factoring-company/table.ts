@@ -2,4 +2,4 @@
 import type { TypedDocumentString, FactoringCompanyTableQuery, FactoringCompanyTableQueryVariables, FactoringCompanyTableRowFieldsFragment } from "../../graphql";
 
 export const FactoringCompanyTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"FactoringCompanyTableRowFields"}} as unknown as TypedDocumentString<FactoringCompanyTableRowFieldsFragment, unknown>;
-export const FactoringCompanyTableDocument = {"__meta__":{"kind":"query","name":"FactoringCompanyTable","hash":"sha256:8bfc1b2a7ef617601e52fb0c214c84b0b48345b604b1f178343b7e06b8b8a376"}} as unknown as TypedDocumentString<FactoringCompanyTableQuery, FactoringCompanyTableQueryVariables>;
+export const FactoringCompanyTableDocument = {"__meta__":{"kind":"query","name":"FactoringCompanyTable","hash":"sha256:e3d023b8860732a18322ae37b85725b101d65d0625d4324989ca60c6ffec315d"}} as unknown as TypedDocumentString<FactoringCompanyTableQuery, FactoringCompanyTableQueryVariables>;

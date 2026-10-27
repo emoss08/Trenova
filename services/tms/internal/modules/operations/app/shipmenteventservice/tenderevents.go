@@ -317,11 +317,12 @@ func BuildTenderBounced(
 }
 
 // TenderCounter is a carrier's counter-offer, for the event that records it.
+// It carries no margin: every reader of the shipment reads its activity, and
+// the offer itself carries the margin to the margins field group alone.
 type TenderCounter struct {
 	CarrierName   string
 	OfferedRate   string
 	CounterRate   string
-	MarginPercent string
 	NeedsApproval bool
 	AutoAccepted  bool
 	Source        tender.ResponseSource
@@ -343,7 +344,6 @@ func BuildTenderCountered(
 			"carrierName":   counter.CarrierName,
 			"offeredRate":   counter.OfferedRate,
 			"counterRate":   counter.CounterRate,
-			"marginPercent": counter.MarginPercent,
 			"needsApproval": counter.NeedsApproval,
 			"autoAccepted":  counter.AutoAccepted,
 			"source":        string(counter.Source),

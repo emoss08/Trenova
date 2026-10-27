@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -93,18 +92,17 @@ func (f *fakeTrustRepo) MarkTierChange(
 
 // fakeDB runs a transaction's body in place.
 type fakeDB struct {
-	kernelports.DBConnection
 	transactions int
 }
 
-func (f *fakeDB) WithTx(
+func (f *fakeDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	f.transactions++
 
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 type fakeDefinitions struct {

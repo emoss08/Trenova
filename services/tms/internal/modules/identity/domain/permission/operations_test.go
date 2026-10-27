@@ -386,7 +386,7 @@ func TestGrantingOperations_NamesEveryOperationThatBringsIt(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, []Operation{OpDelete, OpManage}, GrantingOperations(OpDelete))
-	assert.Equal(t, []Operation{OpApprove}, GrantingOperations(OpApprove))
+	assert.Equal(t, []Operation{OpApprove, OpApproveOwn}, GrantingOperations(OpApprove))
 	assert.Contains(t, GrantingOperations(OpUpdate), OpApprove)
 	assert.Contains(t, GrantingOperations(OpUpdate), OpManage)
 	assert.NotContains(t, GrantingOperations(OpUpdate), OpCreate)

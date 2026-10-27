@@ -15,14 +15,9 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-// clearScheduledVersions drops any pending effective dates on a template whose
-// approved content is no longer what it was. A schedule set against the old
-// approval would otherwise fire, unreviewed, the moment the template is
-// approved again.
 func (s *Service) clearScheduledVersions(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
@@ -62,7 +57,7 @@ func (s *Service) CreateVersion(
 		return nil, err
 	}
 
-	if err = s.validateTemplate(ctx, template); err != nil {
+	if err = s.prepareContent(ctx, template); err != nil {
 		return nil, err
 	}
 
@@ -96,7 +91,7 @@ func (s *Service) CreateVersion(
 	template.CurrentVersionNumber = newVersionNumber
 
 	var createdVersion *formulatemplate.FormulaTemplateVersion
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, txErr := s.repo.Update(txCtx, template); txErr != nil {
 			log.Error("failed to update template version number", zap.Error(txErr))
 			return txErr
@@ -182,9 +177,7 @@ func (s *Service) Rollback(
 	resolved := currentTemplate.ApplyVersionFull(targetVersion)
 	resolved.CurrentVersionNumber = currentTemplate.CurrentVersionNumber + 1
 
-	// Old content can name a rate table that has since been removed; a
-	// rollback must fail on that here, not at the next approval.
-	if err = s.validateTemplate(ctx, resolved); err != nil {
+	if err = s.prepareContent(ctx, resolved); err != nil {
 		return nil, err
 	}
 
@@ -203,7 +196,7 @@ func (s *Service) Rollback(
 	}
 
 	var updatedTemplate *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		updated, txErr := s.repo.Update(txCtx, resolved)
 		if txErr != nil {
 			log.Error("failed to update template", zap.Error(txErr))
@@ -282,12 +275,16 @@ func (s *Service) Fork(
 	seed := snapshot
 	seed.OrganizationID = req.TenantInfo.OrgID
 	seed.BusinessUnitID = req.TenantInfo.BuID
-	seed.Name = req.NewName
+	seed.Source, err = s.renamed(ctx, seed.Source, req.NewName)
+	if err != nil {
+		log.Error("failed to name the forked source", zap.Error(err))
+		return nil, err
+	}
 	seed.SourceTemplateID = &req.SourceTemplateID
 	seed.SourceVersionNumber = &sourceVersionNum
 	forkedTemplate := seed.Build()
 
-	if err = s.validateTemplate(ctx, forkedTemplate); err != nil {
+	if err = s.prepareContent(ctx, forkedTemplate); err != nil {
 		return nil, err
 	}
 
@@ -297,7 +294,7 @@ func (s *Service) Fork(
 	}
 
 	var createdTemplate *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		created, txErr := s.repo.Create(txCtx, forkedTemplate)
 		if txErr != nil {
 			log.Error("failed to create forked template", zap.Error(txErr))
@@ -509,11 +506,6 @@ func (s *Service) createApprovedSnapshot(
 	return err
 }
 
-// resolveTemplateSnapshot picks the content a fork starts from. A version the
-// caller asked for by number must exist: forking "v3" and quietly receiving
-// the latest content instead would be a copy of the wrong thing with the
-// right label on it. Only when no version was named does the latest snapshot,
-// and failing that the row itself, stand in.
 func (s *Service) resolveTemplateSnapshot(
 	ctx context.Context,
 	log *zap.Logger,

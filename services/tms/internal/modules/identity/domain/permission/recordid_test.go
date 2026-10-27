@@ -2,353 +2,197 @@ package permission_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/keel/schema"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal/manualjournaldb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait/agentwaitdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit/aiauditdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis/analysisdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower/watchtowerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer/billingtransferdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment/invoiceadjustmentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun/invoicerundb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode/fleetcodedb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity/carriercapacitydb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary/formulalibrarydb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation/rateconfirmationdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport/rateimportdb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase/fuelpurchasedb"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta/iftadb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit/permitdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email/emaildb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert/tablechangealertdb"
+
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/manualjournal"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentwait"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/billingtransfer"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoiceadjustment"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoicerun"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carriercapacity"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateconfirmation"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/rateimport"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/fuelpurchase"
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/permit"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablechangealert"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type minter func(context.Context) (pulid.ID, error)
 
-// mint inserts nothing: it runs the entity's own insert hook, which is where
-// the domain gives a new record its id, and reads the id back.
-func mint[T any, P interface {
-	*T
-	bun.BeforeAppendModelHook
-}](id func(P) pulid.ID) minter {
-	return func(ctx context.Context) (pulid.ID, error) {
-		entity := P(new(T))
-		err := entity.BeforeAppendModel(ctx, &bun.InsertQuery{})
+var errNoIDPrefix = errors.New("the model's keel table mints no id: tag its id autoid:<prefix>")
 
-		return id(entity), err
+func prefixed(table *schema.Table) minter {
+	return func(context.Context) (pulid.ID, error) {
+		if table.IDPrefix == "" {
+			return pulid.Nil, fmt.Errorf("%s: %w", table.Name, errNoIDPrefix)
+		}
+
+		return pulid.MustNew(table.IDPrefix), nil
 	}
 }
 
 var minters = map[permission.Resource]minter{
-	permission.ResourceShipment: mint(func(e *shipment.Shipment) pulid.ID { return e.ID }),
-	permission.ResourceShipmentMove: mint(
-		func(e *shipment.ShipmentMove) pulid.ID { return e.ID },
-	),
-	permission.ResourceShipmentComment: mint(
-		func(e *shipment.ShipmentComment) pulid.ID { return e.ID },
-	),
-	permission.ResourceOrder: mint(func(e *order.Order) pulid.ID { return e.ID }),
-	permission.ResourceRecurringShipment: mint(
-		func(e *recurringshipment.RecurringShipment) pulid.ID { return e.ID },
-	),
-	permission.ResourceServiceFailure: mint(
-		func(e *servicefailure.ServiceFailure) pulid.ID { return e.ID },
-	),
-	permission.ResourceCustomer: mint(func(e *customer.Customer) pulid.ID { return e.ID }),
-	permission.ResourceFactoringCompany: mint(
-		func(e *factoringcompany.FactoringCompany) pulid.ID { return e.ID },
-	),
-	permission.ResourceCarrier:  mint(func(e *carrier.Carrier) pulid.ID { return e.ID }),
-	permission.ResourceLocation: mint(func(e *location.Location) pulid.ID { return e.ID }),
-	permission.ResourceWorker:   mint(func(e *worker.Worker) pulid.ID { return e.ID }),
-	permission.ResourceTractor:  mint(func(e *tractor.Tractor) pulid.ID { return e.ID }),
-	permission.ResourceTrailer:  mint(func(e *trailer.Trailer) pulid.ID { return e.ID }),
-	permission.ResourceCommodity: mint(
-		func(e *commodity.Commodity) pulid.ID { return e.ID },
-	),
-	permission.ResourceHazardousMaterial: mint(
-		func(e *hazardousmaterial.HazardousMaterial) pulid.ID { return e.ID },
-	),
-	permission.ResourceDocument: mint(func(e *document.Document) pulid.ID { return e.ID }),
-	permission.ResourceInvoice:  mint(func(e *invoice.Invoice) pulid.ID { return e.ID }),
-	permission.ResourceInvoiceDispute: mint(
-		func(e *invoice.InvoiceDispute) pulid.ID { return e.ID },
-	),
-	permission.ResourceFactoringAgreement: mint(
-		func(e *factoring.Agreement) pulid.ID { return e.ID },
-	),
-	permission.ResourceFactoringNoa: mint(func(e *factoring.Noa) pulid.ID { return e.ID }),
-	permission.ResourceFactoringSubmission: mint(
-		func(e *factoring.Submission) pulid.ID { return e.ID },
-	),
-	permission.ResourceFactoringReserve: mint(
-		func(e *factoring.ReserveEntry) pulid.ID { return e.ID },
-	),
-	permission.ResourceFactoringRemittance: mint(
-		func(e *factoring.Remittance) pulid.ID { return e.ID },
-	),
-	permission.ResourceInvoiceRun: mint(
-		func(e *invoicerun.InvoiceRun) pulid.ID { return e.ID },
-	),
-	permission.ResourceRateAgreement: mint(
-		func(e *rateagreement.RateAgreement) pulid.ID { return e.ID },
-	),
-	permission.ResourceCustomerPayment: mint(
-		func(e *customerpayment.Payment) pulid.ID { return e.ID },
-	),
-	permission.ResourceReport: mint(
-		func(e *report.ReportDefinition) pulid.ID { return e.ID },
-	),
-	permission.ResourceDashboard: mint(func(e *report.Dashboard) pulid.ID { return e.ID }),
-	permission.ResourceWorkerCredential: mint(
-		func(e *worker.WorkerCredential) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerTraining: mint(
-		func(e *worker.WorkerTrainingRecord) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerSafetyEvent: mint(
-		func(e *worker.WorkerSafetyEvent) pulid.ID { return e.ID },
-	),
-	permission.ResourcePerformanceReview: mint(
-		func(e *worker.PerformanceReview) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerInjury: mint(
-		func(e *worker.WorkerInjury) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerLeave: mint(
-		func(e *worker.WorkerLeaveCase) pulid.ID { return e.ID },
-	),
-	permission.ResourceDriverSettlement: mint(
-		func(e *driversettlement.Settlement) pulid.ID { return e.ID },
-	),
-	permission.ResourceSettlementDispute: mint(
-		func(e *driversettlement.Dispute) pulid.ID { return e.ID },
-	),
-	permission.ResourceCaptureBatch: mint(
-		func(e *capture.CaptureBatch) pulid.ID { return e.ID },
-	),
-	permission.ResourceOrganization: mint(
-		func(e *tenant.Organization) pulid.ID { return e.ID },
-	),
-	permission.ResourceUser: mint(
-		func(e *tenant.User) pulid.ID { return e.ID },
-	),
-	permission.ResourceAgentRun: mint(
-		func(e *agent.AgentRun) pulid.ID { return e.ID },
-	),
-	permission.ResourceAgentMemory: mint(
-		func(e *agent.Memory) pulid.ID { return e.ID },
-	),
-	permission.ResourceInsight: mint(
-		func(e *insight.Insight) pulid.ID { return e.ID },
-	),
-	permission.ResourceTableChangeAlert: mint(
-		func(e *tablechangealert.TCASubscription) pulid.ID { return e.ID },
-	),
-	permission.ResourceEmailProfile: mint(
-		func(e *email.Profile) pulid.ID { return e.ID },
-	),
-	permission.ResourceInboundMessage: mint(
-		func(e *inboundmessage.InboundMessage) pulid.ID { return e.ID },
-	),
-	permission.ResourceInboundMailbox: mint(
-		func(e *inboundmessage.Mailbox) pulid.ID { return e.ID },
-	),
-	permission.ResourceShipmentStop: mint(
-		func(e *shipment.Stop) pulid.ID { return e.ID },
-	),
-	permission.ResourceShipmentHold: mint(
-		func(e *shipment.ShipmentHold) pulid.ID { return e.ID },
-	),
-	permission.ResourceHoldReason: mint(
-		func(e *holdreason.HoldReason) pulid.ID { return e.ID },
-	),
-	permission.ResourceServiceFailureReasonCode: mint(
-		func(e *servicefailure.ReasonCode) pulid.ID { return e.ID },
-	),
-	permission.ResourcePermit: mint(
-		func(e *permit.Permit) pulid.ID { return e.ID },
-	),
-	permission.ResourceServiceType: mint(
-		func(e *servicetype.ServiceType) pulid.ID { return e.ID },
-	),
-	permission.ResourceShipmentType: mint(
-		func(e *shipmenttype.ShipmentType) pulid.ID { return e.ID },
-	),
-	permission.ResourceDocumentType: mint(
-		func(e *documenttype.DocumentType) pulid.ID { return e.ID },
-	),
-	permission.ResourceEquipmentType: mint(
-		func(e *equipmenttype.EquipmentType) pulid.ID { return e.ID },
-	),
-	permission.ResourceEquipmentManufacturer: mint(
-		func(e *equipmentmanufacturer.EquipmentManufacturer) pulid.ID { return e.ID },
-	),
-	permission.ResourceFleetCode: mint(
-		func(e *fleetcode.FleetCode) pulid.ID { return e.ID },
-	),
-	permission.ResourceLocationCategory: mint(
-		func(e *locationcategory.LocationCategory) pulid.ID { return e.ID },
-	),
-	permission.ResourceCarrierCapacityPosting: mint(
-		func(e *carriercapacity.Posting) pulid.ID { return e.ID },
-	),
-	permission.ResourceRateConfirmation: mint(
-		func(e *rateconfirmation.RateConfirmation) pulid.ID { return e.ID },
-	),
-	permission.ResourceCarrierSettlement: mint(
-		func(e *carriersettlement.CarrierSettlement) pulid.ID { return e.ID },
-	),
-	permission.ResourceCarrierInvoiceMatch: mint(
-		func(e *carriersettlement.InvoiceMatch) pulid.ID { return e.ID },
-	),
-	permission.ResourceRoutingGuide: mint(
-		func(e *tender.RoutingGuide) pulid.ID { return e.ID },
-	),
-	permission.ResourceTender: mint(
-		func(e *tender.Tender) pulid.ID { return e.ID },
-	),
-	permission.ResourceAccessorialCharge: mint(
-		func(e *accessorialcharge.AccessorialCharge) pulid.ID { return e.ID },
-	),
-	permission.ResourceFormulaTemplate: mint(
-		func(e *formulatemplate.FormulaTemplate) pulid.ID { return e.ID },
-	),
-	permission.ResourceRateMatrix: mint(
-		func(e *ratematrix.RateMatrix) pulid.ID { return e.ID },
-	),
-	permission.ResourceGeneralLedgerAccount: mint(
-		func(e *glaccount.GLAccount) pulid.ID { return e.ID },
-	),
-	permission.ResourceFiscalPeriod: mint(
-		func(e *fiscalperiod.FiscalPeriod) pulid.ID { return e.ID },
-	),
-	permission.ResourceManualJournal: mint(
-		func(e *manualjournal.Request) pulid.ID { return e.ID },
-	),
-	permission.ResourceJournalEntry: mint(
-		func(e *journalentry.JournalEntry) pulid.ID { return e.ID },
-	),
-	permission.ResourceBankReceipt: mint(
-		func(e *bankreceipt.BankReceipt) pulid.ID { return e.ID },
-	),
-	permission.ResourceBankReceiptWorkItem: mint(
-		func(e *bankreceiptworkitem.WorkItem) pulid.ID { return e.ID },
-	),
-	permission.ResourcePayCode: mint(
-		func(e *driverpay.PayCode) pulid.ID { return e.ID },
-	),
-	permission.ResourcePayAdvance: mint(
-		func(e *driverpay.PayAdvance) pulid.ID { return e.ID },
-	),
-	permission.ResourceEscrowAccount: mint(
-		func(e *driverpay.EscrowAccount) pulid.ID { return e.ID },
-	),
-	permission.ResourceRecurringDeduction: mint(
-		func(e *driverpay.RecurringDeduction) pulid.ID { return e.ID },
-	),
-	permission.ResourceRecurringEarning: mint(
-		func(e *driverpay.RecurringEarning) pulid.ID { return e.ID },
-	),
-	permission.ResourceDriverExpense: mint(
-		func(e *driverpay.Expense) pulid.ID { return e.ID },
-	),
-	permission.ResourceFuelCard: mint(
-		func(e *fuelpurchase.FuelCard) pulid.ID { return e.ID },
-	),
-	permission.ResourceFuelPurchase: mint(
-		func(e *fuelpurchase.FuelPurchase) pulid.ID { return e.ID },
-	),
-	permission.ResourceFuelPurchaseImport: mint(
-		func(e *fuelpurchase.ImportBatch) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerPTO: mint(
-		func(e *worker.WorkerPTO) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerChecklist: mint(
-		func(e *worker.WorkerChecklist) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerChecklistTemplate: mint(
-		func(e *worker.WorkerChecklistTemplate) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerCredentialType: mint(
-		func(e *worker.WorkerCredentialType) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerRecognition: mint(
-		func(e *worker.WorkerRecognition) pulid.ID { return e.ID },
-	),
-	permission.ResourceWorkerDOTTest: mint(
-		func(e *worker.WorkerDOTTest) pulid.ID { return e.ID },
-	),
-	permission.ResourceTrainingCourse: mint(
-		func(e *worker.TrainingCourse) pulid.ID { return e.ID },
-	),
-	permission.ResourcePerformanceReviewTemplate: mint(
-		func(e *worker.PerformanceReviewTemplate) pulid.ID { return e.ID },
-	),
-	permission.ResourceShiftTemplate: mint(
-		func(e *worker.ShiftTemplate) pulid.ID { return e.ID },
-	),
-	permission.ResourceShiftSwap: mint(
-		func(e *worker.ShiftSwapRequest) pulid.ID { return e.ID },
-	),
+	permission.ResourceShipment:                  prefixed(shipmentdb.ShipmentsSchema()),
+	permission.ResourceShipmentMove:              prefixed(shipmentdb.ShipmentMovesSchema()),
+	permission.ResourceShipmentComment:           prefixed(shipmentdb.ShipmentCommentsSchema()),
+	permission.ResourceOrder:                     prefixed(orderdb.OrdersSchema()),
+	permission.ResourceRecurringShipment:         prefixed(recurringshipmentdb.RecurringShipmentsSchema()),
+	permission.ResourceServiceFailure:            prefixed(servicefailuredb.ServiceFailuresSchema()),
+	permission.ResourceCustomer:                  prefixed(customerdb.CustomersSchema()),
+	permission.ResourceFactoringCompany:          prefixed(factoringcompanydb.FactoringCompaniesSchema()),
+	permission.ResourceCarrier:                   prefixed(carrierdb.CarriersSchema()),
+	permission.ResourceLocation:                  prefixed(locationdb.LocationsSchema()),
+	permission.ResourceWorker:                    prefixed(workerdb.WorkersSchema()),
+	permission.ResourceTractor:                   prefixed(tractordb.TractorsSchema()),
+	permission.ResourceTrailer:                   prefixed(trailerdb.TrailersSchema()),
+	permission.ResourceCommodity:                 prefixed(commoditydb.CommoditiesSchema()),
+	permission.ResourceHazardousMaterial:         prefixed(hazardousmaterialdb.HazardousMaterialsSchema()),
+	permission.ResourceDocument:                  prefixed(documentdb.DocumentsSchema()),
+	permission.ResourceInvoice:                   prefixed(invoicedb.InvoicesSchema()),
+	permission.ResourceInvoiceDispute:            prefixed(invoicedb.InvoiceDisputesSchema()),
+	permission.ResourceFactoringAgreement:        prefixed(factoringdb.AgreementsSchema()),
+	permission.ResourceFactoringNoa:              prefixed(factoringdb.NoasSchema()),
+	permission.ResourceFactoringSubmission:       prefixed(factoringdb.SubmissionsSchema()),
+	permission.ResourceFactoringReserve:          prefixed(factoringdb.ReserveEntriesSchema()),
+	permission.ResourceFactoringRemittance:       prefixed(factoringdb.RemittancesSchema()),
+	permission.ResourceInvoiceRun:                prefixed(invoicerundb.InvoiceRunsSchema()),
+	permission.ResourceRateAgreement:             prefixed(rateagreementdb.RateAgreementsSchema()),
+	permission.ResourceCustomerPayment:           prefixed(customerpaymentdb.PaymentsSchema()),
+	permission.ResourceReport:                    prefixed(reportdb.ReportDefinitionsSchema()),
+	permission.ResourceDashboard:                 prefixed(reportdb.DashboardsSchema()),
+	permission.ResourceWorkerCredential:          prefixed(workerdb.WorkerCredentialsSchema()),
+	permission.ResourceWorkerTraining:            prefixed(workerdb.WorkerTrainingRecordsSchema()),
+	permission.ResourceWorkerSafetyEvent:         prefixed(workerdb.WorkerSafetyEventsSchema()),
+	permission.ResourcePerformanceReview:         prefixed(workerdb.PerformanceReviewsSchema()),
+	permission.ResourceWorkerInjury:              prefixed(workerdb.WorkerInjuriesSchema()),
+	permission.ResourceWorkerLeave:               prefixed(workerdb.WorkerLeaveCasesSchema()),
+	permission.ResourceDriverSettlement:          prefixed(driversettlementdb.SettlementsSchema()),
+	permission.ResourceSettlementDispute:         prefixed(driversettlementdb.DisputesSchema()),
+	permission.ResourceCaptureBatch:              prefixed(capturedb.CaptureBatchesSchema()),
+	permission.ResourceOrganization:              prefixed(tenantdb.OrganizationsSchema()),
+	permission.ResourceUser:                      prefixed(tenantdb.UsersSchema()),
+	permission.ResourceAgentRun:                  prefixed(agentdb.AgentRunsSchema()),
+	permission.ResourceAgentMemory:               prefixed(agentdb.MemoriesSchema()),
+	permission.ResourceInsight:                   prefixed(insightdb.InsightsSchema()),
+	permission.ResourceTableChangeAlert:          prefixed(tablechangealertdb.TCASubscriptionsSchema()),
+	permission.ResourceEmailProfile:              prefixed(emaildb.ProfilesSchema()),
+	permission.ResourceInboundMessage:            prefixed(inboundmessagedb.InboundMessagesSchema()),
+	permission.ResourceInboundMailbox:            prefixed(inboundmessagedb.MailboxesSchema()),
+	permission.ResourceShipmentStop:              prefixed(shipmentdb.StopsSchema()),
+	permission.ResourceShipmentHold:              prefixed(shipmentdb.ShipmentHoldsSchema()),
+	permission.ResourceHoldReason:                prefixed(holdreasondb.HoldReasonsSchema()),
+	permission.ResourceServiceFailureReasonCode:  prefixed(servicefailuredb.ReasonCodesSchema()),
+	permission.ResourcePermit:                    prefixed(permitdb.PermitsSchema()),
+	permission.ResourceServiceType:               prefixed(servicetypedb.ServiceTypesSchema()),
+	permission.ResourceShipmentType:              prefixed(shipmenttypedb.ShipmentTypesSchema()),
+	permission.ResourceDocumentType:              prefixed(documenttypedb.DocumentTypesSchema()),
+	permission.ResourceEquipmentType:             prefixed(equipmenttypedb.EquipmentTypesSchema()),
+	permission.ResourceEquipmentManufacturer:     prefixed(equipmentmanufacturerdb.EquipmentManufacturersSchema()),
+	permission.ResourceFleetCode:                 prefixed(fleetcodedb.FleetCodesSchema()),
+	permission.ResourceLocationCategory:          prefixed(locationcategorydb.LocationCategoriesSchema()),
+	permission.ResourceCarrierCapacityPosting:    prefixed(carriercapacitydb.PostingsSchema()),
+	permission.ResourceRateConfirmation:          prefixed(rateconfirmationdb.RateConfirmationsSchema()),
+	permission.ResourceCarrierSettlement:         prefixed(carriersettlementdb.CarrierSettlementsSchema()),
+	permission.ResourceCarrierInvoiceMatch:       prefixed(carriersettlementdb.InvoiceMatchesSchema()),
+	permission.ResourceRoutingGuide:              prefixed(tenderdb.RoutingGuidesSchema()),
+	permission.ResourceTender:                    prefixed(tenderdb.TendersSchema()),
+	permission.ResourceAccessorialCharge:         prefixed(accessorialchargedb.AccessorialChargesSchema()),
+	permission.ResourceFormulaTemplate:           prefixed(formulatemplatedb.FormulaTemplatesSchema()),
+	permission.ResourceFormulaLibrary:            prefixed(formulalibrarydb.FormulaLibrariesSchema()),
+	permission.ResourceRateMatrix:                prefixed(ratematrixdb.RateMatrixesSchema()),
+	permission.ResourceGeneralLedgerAccount:      prefixed(glaccountdb.GLAccountsSchema()),
+	permission.ResourceFiscalPeriod:              prefixed(fiscalperioddb.FiscalPeriodsSchema()),
+	permission.ResourceManualJournal:             prefixed(manualjournaldb.RequestsSchema()),
+	permission.ResourceJournalEntry:              prefixed(journalentrydb.JournalEntriesSchema()),
+	permission.ResourceBankReceipt:               prefixed(bankreceiptdb.BankReceiptsSchema()),
+	permission.ResourceBankReceiptWorkItem:       prefixed(bankreceiptworkitemdb.WorkItemsSchema()),
+	permission.ResourcePayCode:                   prefixed(driverpaydb.PayCodesSchema()),
+	permission.ResourcePayAdvance:                prefixed(driverpaydb.PayAdvancesSchema()),
+	permission.ResourceEscrowAccount:             prefixed(driverpaydb.EscrowAccountsSchema()),
+	permission.ResourceRecurringDeduction:        prefixed(driverpaydb.RecurringDeductionsSchema()),
+	permission.ResourceRecurringEarning:          prefixed(driverpaydb.RecurringEarningsSchema()),
+	permission.ResourceDriverExpense:             prefixed(driverpaydb.ExpensesSchema()),
+	permission.ResourceFuelCard:                  prefixed(fuelpurchasedb.FuelCardsSchema()),
+	permission.ResourceFuelPurchase:              prefixed(fuelpurchasedb.FuelPurchasesSchema()),
+	permission.ResourceFuelPurchaseImport:        prefixed(fuelpurchasedb.ImportBatchesSchema()),
+	permission.ResourceWorkerPTO:                 prefixed(workerdb.WorkerPTOsSchema()),
+	permission.ResourceWorkerChecklist:           prefixed(workerdb.WorkerChecklistsSchema()),
+	permission.ResourceWorkerChecklistTemplate:   prefixed(workerdb.WorkerChecklistTemplatesSchema()),
+	permission.ResourceWorkerCredentialType:      prefixed(workerdb.WorkerCredentialTypesSchema()),
+	permission.ResourceWorkerRecognition:         prefixed(workerdb.WorkerRecognitionsSchema()),
+	permission.ResourceWorkerDOTTest:             prefixed(workerdb.WorkerDOTTestsSchema()),
+	permission.ResourceTrainingCourse:            prefixed(workerdb.TrainingCoursesSchema()),
+	permission.ResourcePerformanceReviewTemplate: prefixed(workerdb.PerformanceReviewTemplatesSchema()),
+	permission.ResourceShiftTemplate:             prefixed(workerdb.ShiftTemplatesSchema()),
+	permission.ResourceShiftSwap:                 prefixed(workerdb.ShiftSwapRequestsSchema()),
 	permission.ResourceJournalReversal: func(context.Context) (pulid.ID, error) {
 		return pulid.MustNew(journalreversal.IDPrefix), nil
 	},
@@ -399,181 +243,66 @@ func TestResource_Noun(t *testing.T) {
 }
 
 var kindMinters = map[permission.RecordKind]minter{
-	permission.KindEmploymentVerification: mint(
-		func(e *worker.WorkerEmploymentVerification) pulid.ID { return e.ID },
-	),
-	permission.KindClearinghouseQuery: mint(
-		func(e *worker.WorkerClearinghouseQuery) pulid.ID { return e.ID },
-	),
-	permission.KindDOTRandomPool: mint(func(e *worker.DOTRandomPool) pulid.ID { return e.ID }),
-	permission.KindDOTRandomDraw: mint(func(e *worker.DOTRandomDraw) pulid.ID { return e.ID }),
-	permission.KindDOTRandomSelection: mint(
-		func(e *worker.DOTRandomDrawEntry) pulid.ID { return e.ID },
-	),
-	permission.KindAIAuditEvent:  mint(func(e *aiaudit.AIAuditEvent) pulid.ID { return e.ID }),
-	permission.KindAIAuditExport: mint(func(e *aiaudit.AIAuditExport) pulid.ID { return e.ID }),
-	permission.KindAssistantThread: mint(
-		func(e *conversation.Thread) pulid.ID { return e.ID },
-	),
-	permission.KindWait: mint(
-		func(e *agentwait.Wait) pulid.ID { return e.ID },
-	),
-	permission.KindPortalSite: mint(
-		func(e *agentextension.PortalSite) pulid.ID { return e.ID },
-	),
-	permission.KindPortalRun: mint(
-		func(e *agentextension.PortalRun) pulid.ID { return e.ID },
-	),
-	permission.KindAnalysisRun: mint(
-		func(e *agentextension.AnalysisRun) pulid.ID { return e.ID },
-	),
-	permission.KindWebWatch: mint(
-		func(e *agentextension.WebWatch) pulid.ID { return e.ID },
-	),
-	permission.KindWatchtowerItem: mint(
-		func(e *watchtower.Item) pulid.ID { return e.ID },
-	),
-	permission.KindAccountingConnection: mint(
-		func(e *accountingsync.AccountingConnection) pulid.ID { return e.ID },
-	),
-	permission.KindAccountingMapping: mint(
-		func(e *accountingsync.AccountingMapping) pulid.ID { return e.ID },
-	),
-	permission.KindAccountingSyncRecord: mint(
-		func(e *accountingsync.AccountingSyncRecord) pulid.ID { return e.ID },
-	),
-	permission.KindAccountingInboundChange: mint(
-		func(e *accountingsync.AccountingInboundChange) pulid.ID { return e.ID },
-	),
-	permission.KindAccountingDriftFinding: mint(
-		func(e *accountingsync.AccountingDriftFinding) pulid.ID { return e.ID },
-	),
-	permission.KindCarrierIntelligenceEvent: mint(
-		func(e *carrierintel.CarrierIntelEvent) pulid.ID { return e.ID },
-	),
-	permission.KindInsurancePolicy: mint(
-		func(e *carrier.CarrierInsurancePolicy) pulid.ID { return e.ID },
-	),
-	permission.KindCarrierAssignment: mint(
-		func(e *shipment.CarrierAssignment) pulid.ID { return e.ID },
-	),
-	permission.KindAdditionalCharge: mint(
-		func(e *shipment.AdditionalCharge) pulid.ID { return e.ID },
-	),
-	permission.KindBillingTransferRun: mint(
-		func(e *billingtransfer.BillingTransferRun) pulid.ID { return e.ID },
-	),
-	permission.KindDetentionOccurrence: mint(
-		func(e *detention.DetentionOccurrence) pulid.ID { return e.ID },
-	),
-	permission.KindTenderOffer: mint(
-		func(e *tender.TenderOffer) pulid.ID { return e.ID },
-	),
-	permission.KindOrderCharge: mint(
-		func(e *order.OrderCharge) pulid.ID { return e.ID },
-	),
-	permission.KindBillingQueueItem: mint(
-		func(e *billingqueue.BillingQueueItem) pulid.ID { return e.ID },
-	),
-	permission.KindInvoiceLine: mint(
-		func(e *invoice.InvoiceLine) pulid.ID { return e.ID },
-	),
-	permission.KindInvoiceAdjustment: mint(
-		func(e *invoiceadjustment.InvoiceAdjustment) pulid.ID { return e.ID },
-	),
-	permission.KindInvoiceRunGroup: mint(
-		func(e *invoicerun.InvoiceRunGroup) pulid.ID { return e.ID },
-	),
-	permission.KindInvoiceRunItem: mint(
-		func(e *invoicerun.InvoiceRunGroupItem) pulid.ID { return e.ID },
-	),
-	permission.KindCreditMemoApplication: mint(
-		func(e *customerpayment.CreditMemoApplication) pulid.ID { return e.ID },
-	),
-	permission.KindRateAgreementLane: func(ctx context.Context) (pulid.ID, error) {
-		rule := &rateagreement.RateAgreementRule{LaneKey: rateagreement.RadiusLaneKey}
-		err := rule.BeforeAppendModel(ctx, &bun.InsertQuery{})
-
-		return rule.ID, err
-	},
-	permission.KindRateImport: mint(
-		func(e *rateimport.RateImportBatch) pulid.ID { return e.ID },
-	),
-	permission.KindFuelIndex: mint(
-		func(e *fuelsurcharge.FuelIndex) pulid.ID { return e.ID },
-	),
-	permission.KindFuelIndexPrice: mint(
-		func(e *fuelsurcharge.FuelIndexPrice) pulid.ID { return e.ID },
-	),
-	permission.KindReportRun: mint(
-		func(e *report.ReportRun) pulid.ID { return e.ID },
-	),
-	permission.KindReportSchedule: mint(
-		func(e *report.ReportSchedule) pulid.ID { return e.ID },
-	),
-	permission.KindEDIPartner: mint(
-		func(e *edi.EDIPartner) pulid.ID { return e.ID },
-	),
-	permission.KindEDIInboundFile: mint(
-		func(e *edi.EDIInboundFile) pulid.ID { return e.ID },
-	),
-	permission.KindEDITransfer: mint(
-		func(e *edi.EDITransfer) pulid.ID { return e.ID },
-	),
-	permission.KindEDIMessage: mint(
-		func(e *edi.EDIMessage) pulid.ID { return e.ID },
-	),
-	permission.KindEDIShipmentLink: mint(
-		func(e *edi.ShipmentLink) pulid.ID { return e.ID },
-	),
-	permission.KindEDITenderChange: mint(
-		func(e *edi.TenderChange) pulid.ID { return e.ID },
-	),
-	permission.KindEDITransferChange: mint(
-		func(e *edi.TransferChange) pulid.ID { return e.ID },
-	),
-	permission.KindEDICarrierInvoice: mint(
-		func(e *edi.CarrierInvoice) pulid.ID { return e.ID },
-	),
-	permission.KindScannedDocument: mint(
-		func(e *capture.CaptureItem) pulid.ID { return e.ID },
-	),
-	permission.KindIFTAJurisdiction: mint(
-		func(e *ifta.Jurisdiction) pulid.ID { return e.ID },
-	),
-	permission.KindIFTAReturn: mint(
-		func(e *ifta.Return) pulid.ID { return e.ID },
-	),
-	permission.KindIFTAMileageEntry: mint(
-		func(e *ifta.JurisdictionMileageEntry) pulid.ID { return e.ID },
-	),
-	permission.KindUSState: mint(
-		func(e *usstate.UsState) pulid.ID { return e.ID },
-	),
-	permission.KindPayEvent: mint(
-		func(e *driversettlement.PayEvent) pulid.ID { return e.ID },
-	),
-	permission.KindPayProfile: mint(
-		func(e *driverpay.PayProfile) pulid.ID { return e.ID },
-	),
-	permission.KindPayAssignment: mint(
-		func(e *driverpay.WorkerPayAssignment) pulid.ID { return e.ID },
-	),
-	permission.KindPayrollExport: mint(
-		func(e *worker.PayrollExport) pulid.ID { return e.ID },
-	),
-	permission.KindShiftAssignment: mint(
-		func(e *worker.WorkerShiftAssignment) pulid.ID { return e.ID },
-	),
-	permission.KindChecklistItem: mint(
-		func(e *worker.WorkerChecklistItem) pulid.ID { return e.ID },
-	),
-	permission.KindSafetyViolation: mint(
-		func(e *worker.WorkerSafetyViolation) pulid.ID { return e.ID },
-	),
-	permission.KindLeaveDay: mint(
-		func(e *worker.WorkerLeaveEntry) pulid.ID { return e.ID },
-	),
+	permission.KindEmploymentVerification:   prefixed(workerdb.WorkerEmploymentVerificationsSchema()),
+	permission.KindClearinghouseQuery:       prefixed(workerdb.WorkerClearinghouseQueriesSchema()),
+	permission.KindDOTRandomPool:            prefixed(workerdb.DOTRandomPoolsSchema()),
+	permission.KindDOTRandomDraw:            prefixed(workerdb.DOTRandomDrawsSchema()),
+	permission.KindDOTRandomSelection:       prefixed(workerdb.DOTRandomDrawEntriesSchema()),
+	permission.KindAIAuditEvent:             prefixed(aiauditdb.AIAuditEventsSchema()),
+	permission.KindAIAuditExport:            prefixed(aiauditdb.AIAuditExportsSchema()),
+	permission.KindAssistantThread:          prefixed(conversationdb.ThreadsSchema()),
+	permission.KindWait:                     prefixed(agentwaitdb.WaitsSchema()),
+	permission.KindPortalSite:               prefixed(agentextensiondb.PortalSitesSchema()),
+	permission.KindPortalRun:                prefixed(agentextensiondb.PortalRunsSchema()),
+	permission.KindAnalysisRun:              prefixed(analysisdb.RunsSchema()),
+	permission.KindWebWatch:                 prefixed(agentextensiondb.WebWatchesSchema()),
+	permission.KindWatchtowerItem:           prefixed(watchtowerdb.ItemsSchema()),
+	permission.KindAccountingConnection:     prefixed(accountingsyncdb.AccountingConnectionsSchema()),
+	permission.KindAccountingMapping:        prefixed(accountingsyncdb.AccountingMappingsSchema()),
+	permission.KindAccountingSyncRecord:     prefixed(accountingsyncdb.AccountingSyncRecordsSchema()),
+	permission.KindAccountingInboundChange:  prefixed(accountingsyncdb.AccountingInboundChangesSchema()),
+	permission.KindAccountingDriftFinding:   prefixed(accountingsyncdb.AccountingDriftFindingsSchema()),
+	permission.KindCarrierIntelligenceEvent: prefixed(carrierinteldb.CarrierIntelEventsSchema()),
+	permission.KindInsurancePolicy:          prefixed(carrierdb.CarrierInsurancePoliciesSchema()),
+	permission.KindCarrierAssignment:        prefixed(shipmentdb.CarrierAssignmentsSchema()),
+	permission.KindAdditionalCharge:         prefixed(shipmentdb.AdditionalChargesSchema()),
+	permission.KindBillingTransferRun:       prefixed(billingtransferdb.BillingTransferRunsSchema()),
+	permission.KindDetentionOccurrence:      prefixed(detentiondb.DetentionOccurrencesSchema()),
+	permission.KindTenderOffer:              prefixed(tenderdb.TenderOffersSchema()),
+	permission.KindOrderCharge:              prefixed(orderdb.OrderChargesSchema()),
+	permission.KindBillingQueueItem:         prefixed(billingqueuedb.BillingQueueItemsSchema()),
+	permission.KindInvoiceLine:              prefixed(invoicedb.InvoiceLinesSchema()),
+	permission.KindInvoiceAdjustment:        prefixed(invoiceadjustmentdb.InvoiceAdjustmentsSchema()),
+	permission.KindInvoiceRunGroup:          prefixed(invoicerundb.InvoiceRunGroupsSchema()),
+	permission.KindInvoiceRunItem:           prefixed(invoicerundb.InvoiceRunGroupItemsSchema()),
+	permission.KindCreditMemoApplication:    prefixed(customerpaymentdb.CreditMemoApplicationsSchema()),
+	permission.KindRateAgreementLane:        prefixed(rateagreementdb.RateAgreementRulesSchema()),
+	permission.KindRateImport:               prefixed(rateimportdb.RateImportBatchesSchema()),
+	permission.KindFuelIndex:                prefixed(fuelsurchargedb.FuelIndexesSchema()),
+	permission.KindFuelIndexPrice:           prefixed(fuelsurchargedb.FuelIndexPricesSchema()),
+	permission.KindReportRun:                prefixed(reportdb.ReportRunsSchema()),
+	permission.KindReportSchedule:           prefixed(reportdb.ReportSchedulesSchema()),
+	permission.KindEDIPartner:               prefixed(edidb.EDIPartnersSchema()),
+	permission.KindEDIInboundFile:           prefixed(edidb.EDIInboundFilesSchema()),
+	permission.KindEDITransfer:              prefixed(edidb.EDITransfersSchema()),
+	permission.KindEDIMessage:               prefixed(edidb.EDIMessagesSchema()),
+	permission.KindEDIShipmentLink:          prefixed(edidb.ShipmentLinksSchema()),
+	permission.KindEDITenderChange:          prefixed(edidb.TenderChangesSchema()),
+	permission.KindEDITransferChange:        prefixed(edidb.TransferChangesSchema()),
+	permission.KindEDICarrierInvoice:        prefixed(edidb.CarrierInvoicesSchema()),
+	permission.KindScannedDocument:          prefixed(capturedb.CaptureItemsSchema()),
+	permission.KindIFTAJurisdiction:         prefixed(iftadb.JurisdictionsSchema()),
+	permission.KindIFTAReturn:               prefixed(iftadb.ReturnsSchema()),
+	permission.KindIFTAMileageEntry:         prefixed(iftadb.JurisdictionMileageEntriesSchema()),
+	permission.KindUSState:                  prefixed(usstatedb.UsStatesSchema()),
+	permission.KindPayEvent:                 prefixed(driversettlementdb.PayEventsSchema()),
+	permission.KindPayProfile:               prefixed(driverpaydb.PayProfilesSchema()),
+	permission.KindPayAssignment:            prefixed(driverpaydb.WorkerPayAssignmentsSchema()),
+	permission.KindPayrollExport:            prefixed(workerdb.PayrollExportsSchema()),
+	permission.KindShiftAssignment:          prefixed(workerdb.WorkerShiftAssignmentsSchema()),
+	permission.KindChecklistItem:            prefixed(workerdb.WorkerChecklistItemsSchema()),
+	permission.KindSafetyViolation:          prefixed(workerdb.WorkerSafetyViolationsSchema()),
+	permission.KindLeaveDay:                 prefixed(workerdb.WorkerLeaveEntriesSchema()),
 }
 
 // A declared kind's prefix is held to the domain's as a resource's is: a

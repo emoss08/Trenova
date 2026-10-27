@@ -4,36 +4,42 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const maxIndexedContentChars = 100000
 
 type Projection struct {
-	bun.BaseModel `bun:"table:document_search_projections,alias:dsp" json:"-"`
+	keel.Table `keel:"document_search_projections"`
 
-	ID                  pulid.ID `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID      pulid.ID `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID      pulid.ID `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	ResourceID          string   `json:"resourceId"          bun:"resource_id,type:VARCHAR(100),notnull"`
-	ResourceType        string   `json:"resourceType"        bun:"resource_type,type:VARCHAR(100),notnull"`
-	FileName            string   `json:"fileName"            bun:"file_name,type:VARCHAR(255),notnull"`
-	OriginalName        string   `json:"originalName"        bun:"original_name,type:VARCHAR(255),notnull"`
-	Description         string   `json:"description"         bun:"description,type:TEXT,nullzero"`
-	Tags                []string `json:"tags"                bun:"tags,type:VARCHAR(100)[],default:'{}'"`
-	Status              string   `json:"status"              bun:"status,type:VARCHAR(100),notnull"`
-	ContentStatus       string   `json:"contentStatus"       bun:"content_status,type:VARCHAR(100),notnull"`
-	DetectedKind        string   `json:"detectedKind"        bun:"detected_kind,type:VARCHAR(100),nullzero"`
-	ShipmentDraftStatus string   `json:"shipmentDraftStatus" bun:"shipment_draft_status,type:VARCHAR(100),notnull"`
-	ContentText         string   `json:"contentText"         bun:"content_text,type:TEXT,nullzero"`
-	CreatedAt           int64    `json:"createdAt"           bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt           int64    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull"`
+	ID                  pulid.ID `json:"id"                  keel:"id,pk"`
+	OrganizationID      pulid.ID `json:"organizationId"      keel:"organization_id,pk,tenant"`
+	BusinessUnitID      pulid.ID `json:"businessUnitId"      keel:"business_unit_id,pk,tenant"`
+	ResourceID          string   `json:"resourceId"          keel:"resource_id"`
+	ResourceType        string   `json:"resourceType"        keel:"resource_type"`
+	FileName            string   `json:"fileName"            keel:"file_name"`
+	OriginalName        string   `json:"originalName"        keel:"original_name"`
+	Description         string   `json:"description"         keel:"description,nullzero"`
+	Tags                []string `json:"tags"                keel:"tags"`
+	Status              string   `json:"status"              keel:"status"`
+	ContentStatus       string   `json:"contentStatus"       keel:"content_status"`
+	DetectedKind        string   `json:"detectedKind"        keel:"detected_kind,nullzero"`
+	ShipmentDraftStatus string   `json:"shipmentDraftStatus" keel:"shipment_draft_status"`
+	ContentText         string   `json:"contentText"         keel:"content_text,nullzero"`
+	CreatedAt           int64    `json:"createdAt"           keel:"created_at,autocreate"`
+	UpdatedAt           int64    `json:"updatedAt"           keel:"updated_at,autoupdate"`
+}
+
+func (p *Projection) BeforeUpdate(_ context.Context) error {
+	p.stripNUL()
+
+	return nil
 }
 
 func Build(doc *document.Document, contentText string) *Projection {
@@ -62,27 +68,29 @@ func Build(doc *document.Document, contentText string) *Projection {
 	}
 }
 
-func (p *Projection) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	p.FileName = stringutils.StripNUL(p.FileName)
-	p.OriginalName = stringutils.StripNUL(p.OriginalName)
-	p.Description = stringutils.StripNUL(p.Description)
-	p.ContentText = stringutils.StripNUL(p.ContentText)
-
+func (p *Projection) BeforeCreate(_ context.Context) error {
+	p.stripNUL()
 	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.CreatedAt == 0 {
-			p.CreatedAt = now
-		}
-		if p.UpdatedAt == 0 {
-			p.UpdatedAt = now
-		}
-	case *bun.UpdateQuery:
+	if p.CreatedAt == 0 {
+		p.CreatedAt = now
+	}
+	if p.UpdatedAt == 0 {
 		p.UpdatedAt = now
 	}
 
 	return nil
+}
+
+func (p *Projection) BeforeSave(_ context.Context) error {
+	p.stripNUL()
+	return nil
+}
+
+func (p *Projection) stripNUL() {
+	p.FileName = stringutils.StripNUL(p.FileName)
+	p.OriginalName = stringutils.StripNUL(p.OriginalName)
+	p.Description = stringutils.StripNUL(p.Description)
+	p.ContentText = stringutils.StripNUL(p.ContentText)
 }
 
 func (p *Projection) Validate(multiErr *errortypes.MultiError) {
@@ -139,6 +147,15 @@ func (p *Projection) Validate(multiErr *errortypes.MultiError) {
 				Error("A tag must be between 1 and 100 characters")),
 		),
 	))
+}
+
+func (Projection) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "fk_document_search_projections_document",
+			Message: "Document does not exist",
+		},
+	}
 }
 
 const (

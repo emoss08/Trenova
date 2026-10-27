@@ -95,14 +95,42 @@ type ListScheduledVersionsRequest struct {
 	TemplateID pulid.ID
 }
 
-// GetLatestVersionByStatusRequest asks for the newest snapshot a template took
-// while in a given status. With StatusActive it answers "what was the last
-// approved content", which is what a shipment was charged with when nothing
-// more specific was recorded on it.
 type GetLatestVersionByStatusRequest struct {
 	TenantInfo pagination.TenantInfo
 	TemplateID pulid.ID
 	Status     formulatemplate.Status
+}
+
+type ListLibraryUsagesRequest struct {
+	TenantInfo    pagination.TenantInfo
+	LibraryID     pulid.ID
+	VersionNumber *int64
+	Limit         int
+}
+
+type ListMatrixUsagesRequest struct {
+	TenantInfo    pagination.TenantInfo
+	RateMatrixID  pulid.ID
+	VersionNumber *int64
+	Limit         int
+}
+
+type MatrixUsage struct {
+	TemplateID          pulid.ID               `json:"templateId"`
+	TemplateName        string                 `json:"templateName"`
+	TemplateStatus      formulatemplate.Status `json:"templateStatus"`
+	TemplateVersion     int64                  `json:"templateVersion"`
+	VersionStatus       formulatemplate.Status `json:"versionStatus"`
+	MatrixVersionNumber int64                  `json:"matrixVersionNumber"`
+}
+
+type LibraryUsage struct {
+	TemplateID           pulid.ID               `json:"templateId"`
+	TemplateName         string                 `json:"templateName"`
+	TemplateStatus       formulatemplate.Status `json:"templateStatus"`
+	TemplateVersion      int64                  `json:"templateVersion"`
+	VersionStatus        formulatemplate.Status `json:"versionStatus"`
+	LibraryVersionNumber int64                  `json:"libraryVersionNumber"`
 }
 
 type FormulaTemplateVersionRepository interface {
@@ -167,7 +195,6 @@ type FormulaTemplateVersionRepository interface {
 		req *ListVersionAuthorsRequest,
 	) ([]pulid.ID, error)
 
-	// GetLatestByStatus returns nil, nil when the template never held that status.
 	GetLatestByStatus(
 		ctx context.Context,
 		req *GetLatestVersionByStatusRequest,
@@ -177,4 +204,14 @@ type FormulaTemplateVersionRepository interface {
 		ctx context.Context,
 		req *ListScheduledVersionsRequest,
 	) (int64, error)
+
+	ListLibraryUsages(
+		ctx context.Context,
+		req *ListLibraryUsagesRequest,
+	) ([]*LibraryUsage, error)
+
+	ListMatrixUsages(
+		ctx context.Context,
+		req *ListMatrixUsagesRequest,
+	) ([]*MatrixUsage, error)
 }

@@ -2,31 +2,24 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/uptrace/bun"
 )
 
-const enableAuditRetentionSQL = "SET LOCAL trenova.audit_retention = 'on'"
+type AuditRetentionDelete func(ctx context.Context, db *keel.DB) (int64, error)
 
 func DeleteUnderAuditRetention(
 	ctx context.Context,
 	conn *Connection,
-	build func(tx bun.Tx) *bun.DeleteQuery,
+	del AuditRetentionDelete,
 ) (int64, error) {
 	var deleted int64
-	err := conn.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
-		if err := enableAuditRetention(ctx, tx); err != nil {
-			return err
-		}
-
-		result, err := build(tx).Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		deleted, err = result.RowsAffected()
+	err := conn.Transact(ctx, kernelports.TxOptions{
+		Settings: []kernelports.TxSetting{{Name: "trenova.audit_retention", Value: "on"}},
+	}, func(ctx context.Context) error {
+		var err error
+		deleted, err = del(ctx, conn.Keel(ctx))
 		return err
 	})
 	if err != nil {
@@ -34,12 +27,4 @@ func DeleteUnderAuditRetention(
 	}
 
 	return deleted, nil
-}
-
-func enableAuditRetention(ctx context.Context, tx bun.Tx) error {
-	if _, err := tx.ExecContext(ctx, enableAuditRetentionSQL); err != nil {
-		return fmt.Errorf("enable audit retention for this transaction: %w", err)
-	}
-
-	return nil
 }

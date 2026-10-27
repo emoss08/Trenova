@@ -4,26 +4,38 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory/locationcategorydb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge/accessorialchargedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial/hazardousmaterialdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule/hazmatsegregationruledb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype/shipmenttypedb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type ShipmentIntegrationFixture struct {
@@ -49,7 +61,7 @@ type ShipmentGraphParams struct {
 func SeedShipmentIntegrationFixture(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	data *seedtest.TestData,
 	tenantInfo pagination.TenantInfo,
 ) *ShipmentIntegrationFixture {
@@ -67,7 +79,7 @@ func SeedShipmentIntegrationFixture(
 func CreateShipmentGraph(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	fixture *ShipmentIntegrationFixture,
 	tenantInfo pagination.TenantInfo,
 	params ShipmentGraphParams,
@@ -89,9 +101,8 @@ func CreateShipmentGraph(
 		Status:            shipment.StatusNew,
 		ProNumber:         params.ProNumber,
 		BOL:               params.BOL,
-		RatingUnit:        1,
 	}
-	_, err := db.NewInsert().Model(shipmentEntity).Exec(ctx)
+	err := shipmentdb.Shipments.Create(tenantContext(ctx, tenantInfo), db, shipmentEntity)
 	require.NoError(t, err)
 
 	moves := make([]*shipment.ShipmentMove, 0, len(params.MoveStatuses))
@@ -105,7 +116,7 @@ func CreateShipmentGraph(
 			Loaded:         true,
 			Sequence:       int64(idx),
 		}
-		_, err = db.NewInsert().Model(move).Exec(ctx)
+		err = shipmentdb.ShipmentMoves.Create(tenantContext(ctx, tenantInfo), db, move)
 		require.NoError(t, err)
 
 		stops := []*shipment.Stop{
@@ -136,7 +147,7 @@ func CreateShipmentGraph(
 				ScheduledWindowEnd:   new(now + int64(idx*10_000) + 9_000),
 			},
 		}
-		_, err = db.NewInsert().Model(&stops).Exec(ctx)
+		err = shipmentdb.Stops.CreateMany(tenantContext(ctx, tenantInfo), db, stops)
 		require.NoError(t, err)
 		move.Stops = stops
 		moves = append(moves, move)
@@ -151,7 +162,7 @@ func CreateShipmentGraph(
 func MustCreateLocation(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	fixture *ShipmentIntegrationFixture,
 	tenantInfo pagination.TenantInfo,
 	code string,
@@ -171,7 +182,7 @@ func MustCreateLocation(
 		City:               "Charlotte",
 		PostalCode:         "28202",
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := locationdb.Locations.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -179,7 +190,7 @@ func MustCreateLocation(
 func mustCreateServiceType(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 ) *servicetype.ServiceType {
 	t.Helper()
@@ -191,7 +202,7 @@ func mustCreateServiceType(
 		Code:           "LTL",
 		Color:          "#112233",
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := servicetypedb.ServiceTypes.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -199,7 +210,7 @@ func mustCreateServiceType(
 func mustCreateShipmentType(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 ) *shipmenttype.ShipmentType {
 	t.Helper()
@@ -211,7 +222,7 @@ func mustCreateShipmentType(
 		Code:           "STD",
 		Color:          "#334455",
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := shipmenttypedb.ShipmentTypes.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -219,7 +230,7 @@ func mustCreateShipmentType(
 func mustCreateCustomer(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	data *seedtest.TestData,
 	tenantInfo pagination.TenantInfo,
 ) *customer.Customer {
@@ -237,7 +248,7 @@ func mustCreateCustomer(
 		PostalCode:         "28202",
 		AllowConsolidation: true,
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := customerdb.Customers.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -245,22 +256,19 @@ func mustCreateCustomer(
 func mustCreateFormulaTemplate(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 ) *formulatemplate.FormulaTemplate {
 	t.Helper()
 
 	entity := &formulatemplate.FormulaTemplate{
-		BusinessUnitID:      tenantInfo.BuID,
-		OrganizationID:      tenantInfo.OrgID,
-		Name:                "Integration Freight Template",
-		Type:                formulatemplate.TemplateTypeFreightCharge,
-		Expression:          "1",
-		Status:              formulatemplate.StatusActive,
-		SchemaID:            "shipment",
-		VariableDefinitions: []*formulatypes.VariableDefinition{},
+		BusinessUnitID: tenantInfo.BuID,
+		OrganizationID: tenantInfo.OrgID,
+		Name:           "Integration Freight Template",
+		Source:         "tariff \"Integration Freight Template\"\n\ncharge \"Freight\" = $1\n",
+		Status:         formulatemplate.StatusActive,
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := formulatemplatedb.FormulaTemplates.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -268,7 +276,7 @@ func mustCreateFormulaTemplate(
 func mustCreateLocationCategory(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 ) *locationcategory.LocationCategory {
 	t.Helper()
@@ -280,7 +288,7 @@ func mustCreateLocationCategory(
 		Type:           locationcategory.CategoryCustomerLocation,
 		Color:          "#445566",
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := locationcategorydb.LocationCategories.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -288,7 +296,7 @@ func mustCreateLocationCategory(
 func MustCreateAccessorialCharge(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 	code string,
 	method accessorialcharge.Method,
@@ -307,7 +315,7 @@ func MustCreateAccessorialCharge(
 		RateUnit:       rateUnit,
 		Amount:         decimal.RequireFromString(amount),
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := accessorialchargedb.AccessorialCharges.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -315,7 +323,7 @@ func MustCreateAccessorialCharge(
 func MustCreateHazardousMaterial(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 	code string,
 	name string,
@@ -334,7 +342,7 @@ func MustCreateHazardousMaterial(
 		PackingGroup:       hazardousmaterial.PackingGroupII,
 		ProperShippingName: name,
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := hazardousmaterialdb.HazardousMaterials.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -342,7 +350,7 @@ func MustCreateHazardousMaterial(
 func MustCreateCommodity(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 	name string,
 	hazmatID pulid.ID,
@@ -357,7 +365,7 @@ func MustCreateCommodity(
 		Name:                name,
 		Description:         name + " commodity",
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := commoditydb.Commodities.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -365,7 +373,7 @@ func MustCreateCommodity(
 func MustCreateHazmatSegregationRule(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 	name string,
 	classA hazardousmaterial.HazardousClass,
@@ -392,7 +400,7 @@ func MustCreateHazmatSegregationRule(
 		entity.MinimumDistance = new(float64(10))
 		entity.DistanceUnit = "FT"
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
+	err := hazmatsegregationruledb.HazmatSegregationRules.Create(tenantContext(ctx, tenantInfo), db, entity)
 	require.NoError(t, err)
 	return entity
 }
@@ -407,4 +415,8 @@ func float64Ptr(v float64) *float64 {
 //go:fix inline
 func int64Ptr(v int64) *int64 {
 	return new(v)
+}
+
+func tenantContext(ctx context.Context, info pagination.TenantInfo) context.Context {
+	return dbscope.WithTenant(ctx, info.DBTenant())
 }

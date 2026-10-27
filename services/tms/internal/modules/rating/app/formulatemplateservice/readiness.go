@@ -2,28 +2,18 @@ package formulatemplateservice
 
 import (
 	"context"
-	"fmt"
-	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/contextvariablecache"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/ratetablecache"
-	"github.com/emoss08/trenova/shared/money"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/shopspring/decimal"
 	"go.uber.org/zap"
 )
-
-const storedTotalField = "currentTotalCharge"
 
 const (
 	ReadinessPass = "pass"
@@ -33,10 +23,12 @@ const (
 
 const (
 	ReadinessCheckDetails    = "details"
-	ReadinessCheckExpression = "expression"
-	ReadinessCheckNullables  = "nullableFields"
-	ReadinessCheckScenarios  = "scenarios"
-	ReadinessCheckBreakdown  = "breakdown"
+	ReadinessCheckSource     = "source"
+	ReadinessCheckTests      = "tests"
+	ReadinessCheckLibraries  = "libraries"
+	ReadinessCheckTables     = "tables"
+	ReadinessCheckDependents = "dependents"
+	ReadinessCheckCoverage   = "coverage"
 	ReadinessCheckStatus     = "status"
 	ReadinessCheckReviewer   = "reviewer"
 	ReadinessCheckAge        = "submissionAge"
@@ -60,28 +52,30 @@ func (c *ReadinessCheck) refusalMessage() string {
 	if c.refusal != "" {
 		return c.refusal
 	}
-
 	return c.Detail
 }
 
 type ReadinessResponse struct {
-	CanSubmit        bool              `json:"canSubmit"`
-	CanApprove       bool              `json:"canApprove"`
-	Checks           []ReadinessCheck  `json:"checks"`
-	ScenarioTotal    int               `json:"scenarioTotal"`
-	ScenarioPassed   int               `json:"scenarioPassed"`
-	ScenarioFailing  []string          `json:"scenarioFailing,omitempty"`
-	PendingSchedules []ScheduledWindow `json:"pendingSchedules"`
+	CanSubmit        bool                    `json:"canSubmit"`
+	CanApprove       bool                    `json:"canApprove"`
+	Checks           []ReadinessCheck        `json:"checks"`
+	TestTotal        int                     `json:"testTotal"`
+	TestPassed       int                     `json:"testPassed"`
+	TestFailing      []string                `json:"testFailing,omitempty"`
+	Coverage         *tariff.CoverageSummary `json:"coverage"`
+	Dependents       []DependentFailure      `json:"dependents"`
+	PendingSchedules []ScheduledWindow       `json:"pendingSchedules"`
 }
 
 type submissionGate struct {
-	details    ReadinessCheck
-	expression ReadinessCheck
-	scenarios  ReadinessCheck
+	details ReadinessCheck
+	source  ReadinessCheck
+	tests   ReadinessCheck
+	content *contentCheck
 }
 
 func (g *submissionGate) checks() []ReadinessCheck {
-	return []ReadinessCheck{g.details, g.expression, g.scenarios}
+	return []ReadinessCheck{g.details, g.source, g.tests}
 }
 
 func (g *submissionGate) blocking() bool {
@@ -90,7 +84,6 @@ func (g *submissionGate) blocking() bool {
 			return true
 		}
 	}
-
 	return false
 }
 
@@ -117,29 +110,63 @@ func (s *Service) Readiness(
 		return nil, err
 	}
 
-	ctx = contextvariablecache.With(ratetablecache.With(ctx))
+	resp := &ReadinessResponse{
+		Checks:     make([]ReadinessCheck, 0, 8),
+		Dependents: []DependentFailure{},
+	}
 
-	resp := &ReadinessResponse{Checks: make([]ReadinessCheck, 0, 8)}
-
-	gate, err := s.evaluateSubmissionGate(ctx, template, req.TenantInfo, resp)
+	gate, err := s.evaluateSubmissionGate(ctx, template)
 	if err != nil {
-		log.Error("failed to evaluate scenarios for readiness", zap.Error(err))
+		log.Error("failed to check the template's source", zap.Error(err))
+		return nil, err
+	}
+	resp.TestTotal = len(gate.content.tests.Tests)
+	resp.TestPassed = gate.content.passedTests()
+	resp.TestFailing = gate.content.failingTests()
+	resp.Coverage = tariff.SummarizeCoverage(template.Source, gate.content.tests.Coverage)
+	locale := i18n.FromContext(ctx)
+
+	libraries, err := s.libraryReadiness(ctx, template)
+	if err != nil {
+		log.Error("failed to compare imported library versions", zap.Error(err))
 		return nil, err
 	}
 
-	statusCheck, reviewerCheck := reviewStateChecks(template, req.TenantInfo.UserID)
-	ageCheck := submissionAgeCheck(template, timeutils.NowUnix())
+	dependents := ReadinessCheck{
+		Key:   ReadinessCheckDependents,
+		Label: i18n.Translate(locale, "Contracts still fit"),
+	}
+	if gate.content.checks() {
+		result, gateErr := s.checkDependents(ctx, template, gate.content)
+		if gateErr != nil {
+			log.Error("failed to check the template's dependents", zap.Error(gateErr))
+			return nil, gateErr
+		}
+		resp.Dependents = result.Failures
+		dependents = dependentsReadiness(ctx, result)
+	} else {
+		dependents.Status = ReadinessWarn
+		dependents.Detail = i18n.Translate(
+			locale,
+			"Fix the source first; contracts are checked against its inputs",
+		)
+	}
+
+	statusCheck, reviewerCheck := reviewStateChecks(locale, template, req.TenantInfo.UserID)
+	ageCheck := submissionAgeCheck(locale, template, timeutils.NowUnix())
 
 	resp.Checks = append(resp.Checks,
 		gate.details,
-		gate.expression,
-		s.nullableReadiness(ctx, template),
-		gate.scenarios,
+		gate.source,
+		gate.tests,
+		coverageReadiness(locale, gate.content, resp.Coverage),
+		libraries,
+		tableReadiness(locale, template, gate.content),
+		dependents,
+		statusCheck,
+		reviewerCheck,
+		ageCheck,
 	)
-	if breakdownCheck, ok := s.breakdownReadiness(ctx, template, req.TenantInfo); ok {
-		resp.Checks = append(resp.Checks, breakdownCheck)
-	}
-	resp.Checks = append(resp.Checks, statusCheck, reviewerCheck, ageCheck)
 
 	resp.PendingSchedules, err = s.pendingSchedules(ctx, template.ID, req.TenantInfo)
 	if err != nil {
@@ -152,7 +179,8 @@ func (s *Service) Readiness(
 	resp.CanApprove = !blocking &&
 		template.Status == formulatemplate.StatusInReview &&
 		reviewerCheck.Status != ReadinessFail &&
-		ageCheck.Status != ReadinessFail
+		ageCheck.Status != ReadinessFail &&
+		dependents.Status != ReadinessFail
 
 	return resp, nil
 }
@@ -160,19 +188,31 @@ func (s *Service) Readiness(
 func (s *Service) evaluateSubmissionGate(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
-	resp *ReadinessResponse,
 ) (*submissionGate, error) {
-	scenarios, err := s.scenarioReadiness(ctx, template, tenantInfo, resp)
+	content, err := s.checkContent(ctx, &contentRequest{
+		tenant: templateTenant(template),
+		source: template.Source,
+		mode:   tariff.LibrariesLatest,
+	})
 	if err != nil {
 		return nil, err
 	}
 
+	return newSubmissionGate(ctx, template, content), nil
+}
+
+func newSubmissionGate(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+	content *contentCheck,
+) *submissionGate {
+	locale := i18n.FromContext(ctx)
 	return &submissionGate{
-		details:    detailsReadiness(template),
-		expression: s.expressionReadiness(ctx, template),
-		scenarios:  scenarios,
-	}, nil
+		details: detailsReadiness(locale, template),
+		source:  sourceReadiness(locale, content),
+		tests:   testsReadiness(locale, content),
+		content: content,
+	}
 }
 
 func submittable(status formulatemplate.Status) bool {
@@ -180,299 +220,321 @@ func submittable(status formulatemplate.Status) bool {
 }
 
 func reviewStateChecks(
+	locale i18n.Locale,
 	template *formulatemplate.FormulaTemplate,
 	userID pulid.ID,
 ) (ReadinessCheck, ReadinessCheck) {
-	status := ReadinessCheck{Key: ReadinessCheckStatus, Label: "Review state"}
+	status := ReadinessCheck{
+		Key:   ReadinessCheckStatus,
+		Label: i18n.Translate(locale, "Review state"),
+	}
 	switch template.Status {
 	case formulatemplate.StatusDraft, formulatemplate.StatusInactive:
 		status.Status = ReadinessPass
-		status.Detail = "Ready to submit for review"
+		status.Detail = i18n.Translate(locale, "Ready to submit for review")
 	case formulatemplate.StatusInReview:
 		status.Status = ReadinessPass
-		status.Detail = "In review; awaiting a decision"
+		status.Detail = i18n.Translate(locale, "In review; awaiting a decision")
 	case formulatemplate.StatusActive:
 		status.Status = ReadinessPass
-		status.Detail = "Active; editing the content will return it to draft"
+		status.Detail = i18n.Translate(
+			locale,
+			"Active; editing the source will return it to draft",
+		)
 	default:
 		status.Status = ReadinessWarn
-		status.Detail = "Unknown status " + template.Status.String()
+		status.Detail = i18n.Translate(locale, "Unknown status {0}", template.Status.String())
 	}
 
-	reviewer := ReadinessCheck{Key: ReadinessCheckReviewer, Label: "Independent reviewer"}
+	reviewer := ReadinessCheck{
+		Key:   ReadinessCheckReviewer,
+		Label: i18n.Translate(locale, "Independent reviewer"),
+	}
 	switch {
 	case template.Status != formulatemplate.StatusInReview:
 		reviewer.Status = ReadinessPass
-		reviewer.Detail = "Applies once the template is in review"
+		reviewer.Detail = i18n.Translate(locale, "Applies once the template is in review")
 	case template.SubmittedByID != nil && *template.SubmittedByID == userID:
 		reviewer.Status = ReadinessFail
-		reviewer.Detail = "You submitted this template; someone else must approve it"
+		reviewer.Detail = i18n.Translate(
+			locale,
+			"You submitted this template; someone else must approve it",
+		)
 	default:
 		reviewer.Status = ReadinessPass
-		reviewer.Detail = "You did not submit this template"
+		reviewer.Detail = i18n.Translate(locale, "You did not submit this template")
 	}
 
 	return status, reviewer
 }
 
-func detailsReadiness(template *formulatemplate.FormulaTemplate) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckDetails, Label: "Name and description"}
+func detailsReadiness(
+	locale i18n.Locale,
+	template *formulatemplate.FormulaTemplate,
+) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:   ReadinessCheckDetails,
+		Label: i18n.Translate(locale, "Name and description"),
+	}
 
 	nameMissing := strings.TrimSpace(template.Name) == ""
 	descriptionMissing := strings.TrimSpace(template.Description) == ""
 	switch {
 	case nameMissing && descriptionMissing:
 		check.Status = ReadinessFail
-		check.Detail = "Name and description are missing"
+		check.Detail = i18n.Translate(locale, "Name and description are missing")
 	case nameMissing:
 		check.Status = ReadinessFail
-		check.Detail = "Name is missing"
+		check.Detail = i18n.Translate(locale, "Name is missing")
 	case descriptionMissing:
 		check.Status = ReadinessFail
-		check.Detail = "Description is missing"
+		check.Detail = i18n.Translate(locale, "Description is missing")
 	default:
 		check.Status = ReadinessPass
-		check.Detail = "Named and described"
+		check.Detail = i18n.Translate(locale, "Named and described")
 	}
 
 	return check
 }
 
-func (s *Service) expressionReadiness(
-	ctx context.Context,
-	template *formulatemplate.FormulaTemplate,
-) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckExpression, Label: "Expression is valid"}
+func sourceReadiness(locale i18n.Locale, content *contentCheck) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:   ReadinessCheckSource,
+		Label: i18n.Translate(locale, "Source checks clean"),
+	}
+	if content.checks() {
+		check.Status = ReadinessPass
+		check.Detail = i18n.Translate(
+			locale,
+			"No errors against the schema, the rate tables and the charge codes",
+		)
+		return check
+	}
 
-	candidate := *template
-	candidate.NormalizeRounding()
+	check.Status = ReadinessFail
+	check.Detail = i18n.Translate(locale, "The source does not check")
+	if first := content.checked.Check.FirstError(); first != nil {
+		check.Detail = first.Message.Localize(locale)
+	}
+	check.refusal = i18n.Translate(
+		locale,
+		"Fix the source's errors before submitting: {0}",
+		check.Detail,
+	)
+	return check
+}
 
-	domainErrs := errortypes.NewMultiError()
-	candidate.Validate(domainErrs)
-	for _, fieldErr := range domainErrs.Errors {
-		if fieldErr.Field == "name" || fieldErr.Field == "description" {
-			continue
-		}
+func testsReadiness(locale i18n.Locale, content *contentCheck) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:   ReadinessCheckTests,
+		Label: i18n.Translate(locale, "Tests pass"),
+	}
+	total := 0
+	if content.tests != nil {
+		total = len(content.tests.Tests)
+	}
+	passed := content.passedTests()
+
+	switch {
+	case !content.checks():
 		check.Status = ReadinessFail
-		check.Detail = fieldErr.Error()
-		return check
-	}
-
-	if err := s.validateExpression(ctx, &candidate); err != nil {
+		check.Detail = i18n.Translate(locale, "The tests run once the source checks")
+	case total == 0:
 		check.Status = ReadinessFail
-		check.Detail = expressionErrorMessage(ctx, err)
-		return check
+		check.Detail = i18n.Translate(locale, "Add at least one test")
+		check.refusal = i18n.Translate(locale, "Add at least one test block before submitting")
+	case content.tests.Error != nil:
+		check.Status = ReadinessFail
+		check.Detail = i18n.Translate(locale, "The tests could not run")
+	case passed < total:
+		check.Status = ReadinessFail
+		check.Detail = i18n.Translate(locale, "{0} of {1} pass", passed, total)
+		check.refusal = i18n.Translate(
+			locale,
+			"Only {0} of {1} tests pass ({2}); fix the formula or the tests before submitting",
+			passed,
+			total,
+			strings.Join(tariff.FailingTests(locale, content.tests), "; "),
+		)
+	default:
+		check.Status = ReadinessPass
+		check.Detail = i18n.Translate(locale, "{0} of {1} pass", passed, total)
 	}
 
-	check.Status = ReadinessPass
-	check.Detail = "Checks clean, and every rate table it names exists"
 	return check
 }
 
-func (s *Service) nullableReadiness(
-	ctx context.Context,
-	template *formulatemplate.FormulaTemplate,
+func coverageReadiness(
+	locale i18n.Locale,
+	content *contentCheck,
+	coverage *tariff.CoverageSummary,
 ) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckNullables, Label: "Safe on every shipment"}
-
-	fields := make([]string, 0, 2)
-	readsStoredTotal := false
-	checked, err := s.formulaService.CheckTemplate(ctx, template)
-	if err == nil {
-		for _, item := range checked {
-			for _, name := range item.Check.Unguarded() {
-				fields = appendUnique(fields, name)
-			}
-			readsStoredTotal = readsStoredTotal || item.Check.ReadsField(storedTotalField)
-		}
+	verdict := tariff.CoverageCheck(locale, content.checks(), coverage)
+	return ReadinessCheck{
+		Key:    ReadinessCheckCoverage,
+		Label:  verdict.Label,
+		Status: verdict.Status,
+		Detail: verdict.Detail,
 	}
-
-	details := make([]string, 0, 2)
-	if len(fields) > 0 {
-		details = append(details, fmt.Sprintf(
-			"%s can be empty: %s",
-			stringutils.CountNoun(len(fields), "value", "values"),
-			strings.Join(fields, ", "),
-		))
-	}
-	if template.Type == formulatemplate.TemplateTypeFreightCharge && readsStoredTotal {
-		details = append(details, storedTotalField+
-			" is the total stored before this rating, so the freight charge trails by one save")
-	}
-	if len(details) > 0 {
-		check.Status = ReadinessWarn
-		check.Detail = strings.Join(details, "; ")
-		return check
-	}
-
-	check.Status = ReadinessPass
-	check.Detail = "Every optional field is guarded"
-	return check
 }
 
-func (s *Service) scenarioReadiness(
+func (s *Service) libraryReadiness(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
-	resp *ReadinessResponse,
 ) (ReadinessCheck, error) {
-	check := ReadinessCheck{Key: ReadinessCheckScenarios, Label: "Scenarios pass"}
+	locale := i18n.FromContext(ctx)
+	check := ReadinessCheck{
+		Key:   ReadinessCheckLibraries,
+		Label: i18n.Translate(locale, "Library versions"),
+	}
+	if len(template.Imports) == 0 {
+		check.Status = ReadinessPass
+		check.Detail = i18n.Translate(locale, "Imports no organization library")
+		return check, nil
+	}
 
-	cases, err := s.testCaseRepo.ListByTemplate(ctx, formulatemplateports.ListTestCasesRequest{
-		TenantInfo: tenantInfo,
-		TemplateID: template.ID,
-	})
+	latest, err := s.resolver.LatestLibraries(ctx, templateTenant(template), template.Source)
 	if err != nil {
 		return check, err
 	}
-
-	if len(cases) == 0 {
-		check.Status = ReadinessFail
-		check.Detail = "Add at least one"
-		check.refusal = "Add at least one test scenario before submitting"
-		return check, nil
+	newest := make(map[string]tarifftypes.Import, len(latest))
+	for _, version := range latest {
+		newest[version.Path()] = version.Pin()
 	}
 
-	run := s.runCasesAgainstCandidate(
-		ctx,
-		template.SchemaID,
-		tenantInfo,
-		cases,
-		template.ScenarioContent(),
-	)
-
-	resp.ScenarioTotal = run.Total
-	resp.ScenarioPassed = run.Passed
-	check.Detail = fmt.Sprintf("%d of %d pass", run.Passed, run.Total)
-
-	if run.Failed == 0 {
-		check.Status = ReadinessPass
-		return check, nil
-	}
-
-	for _, result := range run.Results {
-		if !result.Passed {
-			resp.ScenarioFailing = append(resp.ScenarioFailing, result.Name)
+	stale := make([]string, 0, len(template.Imports))
+	for _, imp := range template.Imports {
+		current, ok := newest[imp.Path]
+		if ok && current.VersionNumber != imp.VersionNumber {
+			stale = append(stale, i18n.Translate(
+				locale,
+				"{0} v{1} (v{2} is approved)",
+				imp.Path,
+				imp.VersionNumber,
+				current.VersionNumber,
+			))
 		}
 	}
-	check.Status = ReadinessFail
-	check.refusal = fmt.Sprintf(
-		"Only %d of %d test scenarios pass; fix the formula or the scenarios before submitting",
-		run.Passed,
-		run.Total,
+	if len(stale) > 0 {
+		check.Status = ReadinessWarn
+		check.Detail = i18n.Translate(
+			locale,
+			"Approval pins the newest approved versions: {0}",
+			strings.Join(stale, ", "),
+		)
+		return check, nil
+	}
+
+	check.Status = ReadinessPass
+	check.Detail = i18n.Translate(
+		locale,
+		"Pins {0, plural, one {# library} other {# libraries}} at the newest approved version",
+		len(template.Imports),
 	)
 	return check, nil
 }
 
-func (s *Service) breakdownReadiness(
-	ctx context.Context,
+func tableReadiness(
+	locale i18n.Locale,
 	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
-) (ReadinessCheck, bool) {
-	lines := make([]*formulatypes.BreakdownDefinition, 0, len(template.BreakdownDefinitions))
-	for _, def := range template.BreakdownDefinitions {
-		if def != nil {
-			lines = append(lines, def)
+	content *contentCheck,
+) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:    ReadinessCheckTables,
+		Label:  i18n.Translate(locale, "Rate table versions"),
+		Status: ReadinessPass,
+	}
+	latest := []tarifftypes.TablePin{}
+	if content != nil && content.checked != nil {
+		latest = content.checked.Tables
+	}
+	if len(latest) == 0 {
+		check.Detail = i18n.Translate(locale, "Reads no rate table")
+		return check
+	}
+
+	pinned := make(map[pulid.ID]int64, len(template.Tables))
+	for _, pin := range template.Tables {
+		pinned[pin.RateMatrixID] = pin.VersionNumber
+	}
+	newer := make([]string, 0, len(latest))
+	for _, pin := range latest {
+		current, ok := pinned[pin.RateMatrixID]
+		if ok && current != pin.VersionNumber {
+			newer = append(newer, i18n.Translate(
+				locale,
+				"{0} v{1} (v{2} is published)",
+				pin.Code,
+				current,
+				pin.VersionNumber,
+			))
 		}
 	}
-	if len(lines) == 0 {
-		return ReadinessCheck{}, false
-	}
-
-	check := ReadinessCheck{Key: ReadinessCheckBreakdown, Label: "Breakdown reconciles"}
-
-	req := candidateRequest(template.SchemaID, tenantInfo, template.ScenarioContent(), nil)
-	req.Breakdowns = lines
-	result, err := s.TestExpression(ctx, req)
-	if err != nil || result.FirstErrorDiagnostic() != nil || result.Result == nil {
+	if len(newer) > 0 {
 		check.Status = ReadinessWarn
-		check.Detail = "The formula does not run on the sample load, so the lines cannot be checked"
-		return check, true
-	}
-
-	failed := 0
-	sum := decimal.Zero
-	for _, item := range result.Breakdown {
-		if item.Error != "" {
-			failed++
-			continue
-		}
-		sum = sum.Add(item.Amount)
-	}
-	if failed > 0 {
-		check.Status = ReadinessWarn
-		check.Detail = fmt.Sprintf(
-			"%s fail on the sample load",
-			stringutils.CountNoun(failed, "line", "lines"),
+		check.Detail = i18n.Translate(
+			locale,
+			"Approval pins the newest published versions: {0}",
+			strings.Join(newer, ", "),
 		)
-		return check, true
+		return check
 	}
 
-	raw := result.RawAmount()
-	policy := template.ChargePolicy()
-	if sum.Sub(policy.RoundingMode.Round(raw, policy.RoundingPrecision)).
-		Abs().
-		GreaterThan(formula.BreakdownReconcileTolerance) {
-		check.Status = ReadinessWarn
-		check.Detail = fmt.Sprintf(
-			"Lines don't add up to the formula: they come to %s and the formula to %s",
-			money.FormatDollars(sum),
-			money.FormatDollars(raw),
-		)
-		return check, true
-	}
-
-	if result.Guardrail != nil && result.Guardrail.Applied {
-		check.Status = ReadinessWarn
-		check.Detail = fmt.Sprintf(
-			"The %s moved the total from %s, so the invoice lines won't match it",
-			boundNoun(result.Guardrail),
-			money.FormatDollars(raw),
-		)
-		return check, true
-	}
-
-	check.Status = ReadinessPass
-	check.Detail = "Lines explain the total"
-	return check, true
+	check.Detail = i18n.Translate(
+		locale,
+		"Pins {0, plural, one {# rate table} other {# rate tables}} at the newest published version",
+		len(latest),
+	)
+	return check
 }
 
-func (r *TestExpressionResponse) RawAmount() decimal.Decimal {
+func dependentsReadiness(ctx context.Context, gate *dependentsGate) ReadinessCheck {
+	locale := i18n.FromContext(ctx)
+	check := ReadinessCheck{
+		Key:   ReadinessCheckDependents,
+		Label: i18n.Translate(locale, "Contracts still fit"),
+	}
 	switch {
-	case r.Guardrail != nil:
-		return r.Guardrail.RawAmount
-	case r.Rounding != nil:
-		return r.Rounding.UnroundedAmount
+	case gate.blocking():
+		check.Status = ReadinessFail
+		check.Detail = errortypes.LocalizedText(ctx, dependentsRefusal(locale, gate))
+	case !gate.Checked:
+		check.Status = ReadinessPass
+		check.Detail = i18n.Translate(
+			locale,
+			"The inputs are declared as in the approved version, so every contract still fits",
+		)
+	case gate.Sets == 0:
+		check.Status = ReadinessPass
+		check.Detail = i18n.Translate(
+			locale,
+			"No contract or shipment sets this template's inputs yet",
+		)
+	default:
+		check.Status = ReadinessPass
+		check.Detail = i18n.Translate(
+			locale,
+			"Every contract and shipment fits ({0, plural, one {# distinct set of values} other {# distinct sets of values}} checked)",
+			gate.Sets,
+		)
 	}
-
-	if r.Result == nil {
-		return decimal.Zero
-	}
-	return *r.Result
-}
-
-func boundNoun(guardrail *formulatemplatetypes.GuardrailResult) string {
-	if guardrail != nil && guardrail.Bound == "max" {
-		return "maximum"
-	}
-
-	return "minimum"
-}
-
-func appendUnique(values []string, value string) []string {
-	if slices.Contains(values, value) {
-		return values
-	}
-	return append(values, value)
+	return check
 }
 
 const agingSubmissionAfter int64 = 7 * 24 * 60 * 60
 
-func submissionAgeCheck(template *formulatemplate.FormulaTemplate, now int64) ReadinessCheck {
-	check := ReadinessCheck{Key: ReadinessCheckAge, Label: "Submission age"}
+func submissionAgeCheck(
+	locale i18n.Locale,
+	template *formulatemplate.FormulaTemplate,
+	now int64,
+) ReadinessCheck {
+	check := ReadinessCheck{
+		Key:   ReadinessCheckAge,
+		Label: i18n.Translate(locale, "Submission age"),
+	}
 	if template.Status != formulatemplate.StatusInReview || template.SubmittedAt == nil {
 		check.Status = ReadinessPass
-		check.Detail = "Applies once the template is in review"
+		check.Detail = i18n.Translate(locale, "Applies once the template is in review")
 		return check
 	}
 
@@ -481,16 +543,21 @@ func submissionAgeCheck(template *formulatemplate.FormulaTemplate, now int64) Re
 	switch {
 	case formulatemplate.SubmissionIsStale(template.SubmittedAt, now):
 		check.Status = ReadinessFail
-		check.Detail = fmt.Sprintf(
-			"Submitted %d days ago; older than the 14-day limit, so it must be resubmitted",
+		check.Detail = i18n.Translate(
+			locale,
+			"Submitted {0, plural, one {# day} other {# days}} ago; older than the 14-day limit, so it must be resubmitted",
 			days,
 		)
 	case waited > agingSubmissionAfter:
 		check.Status = ReadinessWarn
-		check.Detail = fmt.Sprintf("Submitted %d days ago; decide soon or it expires at 14", days)
+		check.Detail = i18n.Translate(
+			locale,
+			"Submitted {0, plural, one {# day} other {# days}} ago; decide soon or it expires at 14",
+			days,
+		)
 	default:
 		check.Status = ReadinessPass
-		check.Detail = "Submitted recently"
+		check.Detail = i18n.Translate(locale, "Submitted recently")
 	}
 	return check
 }

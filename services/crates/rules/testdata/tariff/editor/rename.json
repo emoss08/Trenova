@@ -1,0 +1,988 @@
+{
+ "cases": [
+  {
+   "name": "a let and its references",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = shipment.distance",
+    "charge \"x\" = $1/mi * miles",
+    "note \"{miles}\""
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "miles"
+      },
+      "insert": "distance"
+     },
+     {
+      "range": {
+       "text": "miles"
+      },
+      "insert": "distance"
+     },
+     {
+      "range": {
+       "text": "miles"
+      },
+      "insert": "distance"
+     }
+    ]
+   },
+   "input": {
+    "newName": "distance"
+   }
+  },
+  {
+   "name": "an input and its given",
+   "source": [
+    "tariff \"t\"",
+    "input ra|te: Money = $1",
+    "charge \"x\" = rate",
+    "test \"t\" {",
+    "  given input.rate = $2",
+    "  expect total == $2",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "rate"
+      }
+     },
+     {
+      "range": {
+       "text": "rate"
+      }
+     },
+     {
+      "range": {
+       "text": "rate"
+      }
+     }
+    ]
+   },
+   "input": {
+    "newName": "fee"
+   }
+  },
+  {
+   "name": "a parameter and its named arguments",
+   "source": [
+    "tariff \"t\"",
+    "fn fee(a|mount: Money) -> Money = amount",
+    "charge \"x\" = fee(amount: $1)"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "amount"
+      },
+      "insert": "value"
+     },
+     {
+      "range": {
+       "text": "amount"
+      }
+     },
+     {
+      "range": {
+       "text": "amount"
+      }
+     }
+    ]
+   },
+   "input": {
+    "newName": "value"
+   }
+  },
+  {
+   "name": "a function",
+   "source": [
+    "tariff \"t\"",
+    "fn fee() -> Money = $1",
+    "charge \"x\" = fe|e() + fee()"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "insert": "price"
+     },
+     {
+      "insert": "price"
+     },
+     {
+      "insert": "price"
+     }
+    ]
+   },
+   "input": {
+    "newName": "price"
+   }
+  },
+  {
+   "name": "a type",
+   "source": [
+    "tariff \"t\"",
+    "type Fe|e = { a: Money }",
+    "input f: Fee = { a: $1 }",
+    "charge \"x\" = f.a"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "insert": "Price"
+     },
+     {
+      "insert": "Price"
+     }
+    ]
+   },
+   "input": {
+    "newName": "Price"
+   }
+  },
+  {
+   "name": "a record field everywhere",
+   "source": [
+    "tariff \"t\"",
+    "type Fee = { amo|unt: Money }",
+    "input f: Fee = { amount: $1 }",
+    "charge \"x\" = f.amount",
+    "let y = match f {",
+    "  { amount: a } => a",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "amount"
+      },
+      "insert": "value"
+     },
+     {
+      "insert": "value"
+     },
+     {
+      "insert": "value"
+     },
+     {
+      "insert": "value"
+     }
+    ]
+   },
+   "input": {
+    "newName": "value"
+   }
+  },
+  {
+   "name": "an enum variant everywhere",
+   "source": [
+    "tariff \"t\"",
+    "enum Zone { North, South }",
+    "input z: Zone = Nor|th",
+    "let r = match z {",
+    "  North => 1",
+    "  Zone.South => 2",
+    "}",
+    "charge \"x\" = $1 * r",
+    "note \"{z == Zone.North}\""
+   ],
+   "expect": {
+    "edits": [
+     {
+      "insert": "Up"
+     },
+     {
+      "insert": "Up"
+     },
+     {
+      "insert": "Up"
+     },
+     {
+      "insert": "Up"
+     }
+    ]
+   },
+   "input": {
+    "newName": "Up"
+   }
+  },
+  {
+   "name": "a module alias gains an as",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "let p = fu|el.perMile($1/gal, peg: $1/gal, mpg: 6)",
+    "charge \"x\" = $1/mi * shipment.distance * 0 + p * shipment.distance"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": ""
+      },
+      "insert": " as f"
+     },
+     {
+      "range": {
+       "text": "fuel"
+      },
+      "insert": "f"
+     }
+    ]
+   },
+   "input": {
+    "newName": "f"
+   }
+  },
+  {
+   "name": "an explicit alias changes",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel as fu",
+    "let p = f|u.perMile($1/gal, peg: $1/gal, mpg: 6)",
+    "charge \"x\" = p * shipment.distance"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "fu"
+      },
+      "insert": "g"
+     },
+     {
+      "range": {
+       "text": "fu"
+      },
+      "insert": "g"
+     }
+    ]
+   },
+   "input": {
+    "newName": "g"
+   }
+  },
+  {
+   "name": "prepare gives the name and its range",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "expect": {
+    "range": {
+     "text": "miles"
+    },
+    "placeholder": "miles"
+   }
+  },
+  {
+   "name": "prepare refuses a root",
+   "source": [
+    "tariff \"t\"",
+    "let w = ship|ment.weight",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is part of the record a tariff rates, so it can't be renamed",
+     "args": [
+      "`shipment`"
+     ]
+    }
+   }
+  },
+  {
+   "name": "a root can't be renamed",
+   "source": [
+    "tariff \"t\"",
+    "let w = ship|ment.weight",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "error": {
+     "args": [
+      "`shipment`"
+     ]
+    }
+   },
+   "input": {
+    "newName": "load"
+   }
+  },
+  {
+   "name": "a schema field can't be renamed",
+   "source": [
+    "tariff \"t\"",
+    "let w = shipment.wei|ght",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is a field of the record a tariff rates, so it can't be renamed"
+    }
+   },
+   "input": {
+    "newName": "mass"
+   }
+  },
+  {
+   "name": "a keyword can't be renamed",
+   "source": [
+    "tariff \"t\"",
+    "le|t a = 1",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is a keyword, so it can't be renamed"
+    }
+   }
+  },
+  {
+   "name": "a standard library function can't be renamed",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit }",
+    "let r = defi|cit([], actual: 1 lb)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is declared in the standard library ({1}), so it can't be renamed",
+     "args": [
+      "`deficit`",
+      "`std.ltl`"
+     ]
+    }
+   },
+   "input": {
+    "newName": "d"
+   }
+  },
+  {
+   "name": "an organisation library name renames in its library",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ hazmat }",
+    "charge \"x\" = haz|mat(1 mi)"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is declared in the library {1}; rename it there, then update this file's import"
+    }
+   },
+   "input": {
+    "newName": "h"
+   }
+  },
+  {
+   "name": "a test is named by its text",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "te|st \"t\" {",
+    "  expect total == $1",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is a keyword, so it can't be renamed"
+    }
+   }
+  },
+  {
+   "name": "a new name that is not a name",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = 1",
+    "charge \"x\" = $1 * miles"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} isn't a name: a name is a letter followed by letters, digits and `_`"
+    }
+   },
+   "input": {
+    "newName": "9lives"
+   }
+  },
+  {
+   "name": "a new name of the wrong case",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = 1",
+    "charge \"x\" = $1 * miles"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} can't name {1}: names are camelCase, like `extraDropFee`"
+    }
+   },
+   "input": {
+    "newName": "Miles"
+   }
+  },
+  {
+   "name": "a type must be PascalCase",
+   "source": [
+    "tariff \"t\"",
+    "type Fe|e = { a: Money }",
+    "input f: Fee = { a: $1 }",
+    "charge \"x\" = f.a"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} can't name {1}: types, enums and variants are PascalCase, like `ExtraDrop`"
+    }
+   },
+   "input": {
+    "newName": "fee"
+   }
+  },
+  {
+   "name": "a constant may be UPPERCASE",
+   "source": [
+    "tariff \"t\"",
+    "const ba|se: Money = $1",
+    "charge \"x\" = base"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "insert": "BASE"
+     },
+     {
+      "insert": "BASE"
+     }
+    ]
+   },
+   "input": {
+    "newName": "BASE"
+   }
+  },
+  {
+   "name": "a keyword as the new name",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = 1",
+    "charge \"x\" = $1 * miles"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is a keyword, so it can't be a name"
+    }
+   },
+   "input": {
+    "newName": "match"
+   }
+  },
+  {
+   "name": "a collision with a binding in scope",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1",
+    "let b| = 2",
+    "charge \"x\" = $1 * a * b"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is already {1} here; pick another name",
+     "args": [
+      "`a`",
+      {
+       "message": "a name in scope"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "a"
+   }
+  },
+  {
+   "name": "a collision with a root",
+   "source": [
+    "tariff \"t\"",
+    "let b| = 2",
+    "charge \"x\" = $1 * b"
+   ],
+   "expect": {
+    "error": {
+     "args": [
+      "`lane`",
+      {
+       "message": "a schema root"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "lane"
+   }
+  },
+  {
+   "name": "a collision with a function",
+   "source": [
+    "tariff \"t\"",
+    "fn fee() -> Money = $1",
+    "let b| = 2",
+    "charge \"x\" = fee() * b"
+   ],
+   "expect": {
+    "error": {
+     "args": [
+      "`fee`",
+      {
+       "message": "declared in this file"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "fee"
+   }
+  },
+  {
+   "name": "names in separate blocks don't collide",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  let a = 1",
+    "  charge \"x\" = $1 * a",
+    "}",
+    "if shipment.reefer {",
+    "  let b| = 2",
+    "  charge \"y\" = $1 * b",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "insert": "a"
+     },
+     {
+      "insert": "a"
+     }
+    ]
+   },
+   "input": {
+    "newName": "a"
+   }
+  },
+  {
+   "name": "a file binding and a function's local don't collide",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1",
+    "fn f() -> Int {",
+    "  let b| = 2",
+    "  return b",
+    "}",
+    "charge \"x\" = $1 * a * f()"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "insert": "a"
+     },
+     {
+      "insert": "a"
+     }
+    ]
+   },
+   "input": {
+    "newName": "a"
+   }
+  },
+  {
+   "name": "a variant that would be ambiguous",
+   "source": [
+    "tariff \"t\"",
+    "enum Zone { North, South }",
+    "input z: Zone = Nor|th",
+    "charge \"x\" = $1",
+    "note \"{z}\""
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is also a variant of {1}, so a bare {0} would be ambiguous; pick another name"
+    }
+   },
+   "input": {
+    "newName": "Pickup"
+   }
+  },
+  {
+   "name": "a field that already exists",
+   "source": [
+    "tariff \"t\"",
+    "type Fee = { amo|unt: Money, floor: Money }",
+    "input f: Fee = { amount: $1, floor: $1 }",
+    "charge \"x\" = f.amount + f.floor"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} already has a field {1}"
+    }
+   },
+   "input": {
+    "newName": "floor"
+   }
+  },
+  {
+   "name": "the same name renames nothing",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = 1",
+    "charge \"x\" = $1 * miles"
+   ],
+   "expect": {
+    "edits": []
+   },
+   "input": {
+    "newName": "miles"
+   }
+  },
+  {
+   "name": "renaming in a broken file",
+   "source": [
+    "tariff \"t\"",
+    "let mi|les = 1",
+    "let bad = (",
+    "charge \"x\" = $1 * miles"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "insert": "m"
+     },
+     {
+      "insert": "m"
+     }
+    ]
+   },
+   "input": {
+    "newName": "m"
+   }
+  },
+  {
+   "name": "non-ASCII around the name keeps UTF-16 ranges",
+   "source": [
+    "tariff \"t\"",
+    "let café = \"🚚\"",
+    "let mi|les = 1",
+    "note \"🚚 {miles}\"",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "miles"
+      }
+     },
+     {
+      "range": {
+       "text": "miles"
+      }
+     }
+    ]
+   },
+   "input": {
+    "newName": "m"
+   }
+  },
+  {
+   "name": "nothing to rename on a literal",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1|2",
+    "charge \"x\" = $1 * a"
+   ],
+   "expect": {
+    "error": {
+     "message": "There is no name here to rename"
+    }
+   },
+   "input": {
+    "newName": "m"
+   }
+  },
+  {
+   "name": "new syntax: a vary name, its reads and a monotone target",
+   "source": [
+    "tariff \"t\"",
+    "fn f(w: Weight) -> Money = $1/lb * w",
+    "property \"p\" {",
+    "  vary |w in 1 lb..2 lb",
+    "  assume w > 1 lb",
+    "  expect f(w) nondecreasing in w",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "w"
+      },
+      "insert": "weight"
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "insert": "weight"
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "insert": "weight"
+     },
+     {
+      "range": {
+       "text": "w"
+      },
+      "insert": "weight"
+     }
+    ]
+   },
+   "input": {
+    "newName": "weight"
+   }
+  },
+  {
+   "name": "new syntax: prepare on a vary name",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary we|ight in 1 lb..2 lb",
+    "  expect total >= $1/lb * weight",
+    "}"
+   ],
+   "expect": {
+    "range": {
+     "text": "weight"
+    },
+    "placeholder": "weight"
+   }
+  },
+  {
+   "name": "new syntax: a vary name can't take another vary's name",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary |a in 1 lb..2 lb",
+    "  vary b in 1 mi..2 mi",
+    "  expect total >= $1/lb * a + $1/mi * b",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is already {1} here; pick another name",
+     "args": [
+      "`b`",
+      {
+       "message": "a name in scope"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "b"
+   }
+  },
+  {
+   "name": "new syntax: a vary name can't take an input's name",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary |a in 1 lb..2 lb",
+    "  expect total >= $1/lb * a",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} is already {1} here; pick another name",
+     "args": [
+      "`rate`",
+      {
+       "message": "declared in this file"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "rate"
+   }
+  },
+  {
+   "name": "new syntax: a vary name must be camelCase",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary |a in 1 lb..2 lb",
+    "  expect total >= $1/lb * a",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "{0} can't name {1}: names are camelCase, like `extraDropFee`",
+     "args": [
+      "`Weight`",
+      {
+       "message": "a binding"
+      }
+     ]
+    }
+   },
+   "input": {
+    "newName": "Weight"
+   }
+  },
+  {
+   "name": "new syntax: an input renames in a vary and a monotone target",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary input.rate",
+    "  expect total nondecreasing in input.ra|te",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "rate"
+      },
+      "insert": "perMile"
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "insert": "perMile"
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "insert": "perMile"
+     },
+     {
+      "range": {
+       "text": "rate"
+      },
+      "insert": "perMile"
+     }
+    ]
+   },
+   "input": {
+    "newName": "perMile"
+   }
+  },
+  {
+   "name": "new syntax: a choice is renamed by its text",
+   "source": [
+    "tariff \"t\"",
+    "best \"Line|haul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "A choice is named by its label, which is text: edit it between the quotes, and in every `chosen` that names it"
+    }
+   }
+  },
+  {
+   "name": "new syntax: chosen's label is text",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(\"Line|haul\") == \"A\"",
+    "}"
+   ],
+   "expect": {
+    "error": {
+     "message": "A choice is named by its label, which is text: edit it between the quotes, and in every `chosen` that names it"
+    }
+   },
+   "input": {
+    "newName": "Flat"
+   }
+  },
+  {
+   "name": "new syntax: a let inside an option",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    let f|ee = $1",
+    "    charge \"A\" = fee",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"B\" = $2",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "edits": [
+     {
+      "range": {
+       "text": "fee"
+      },
+      "insert": "flat"
+     },
+     {
+      "range": {
+       "text": "fee"
+      },
+      "insert": "flat"
+     }
+    ]
+   },
+   "input": {
+    "newName": "flat"
+   }
+  },
+  {
+   "name": "prepare refuses the bill",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "let w = bi|ll.freight",
+    "charge \"x\" = w"
+   ],
+   "expect": {
+    "error": {
+     "message": "`bill` is the bill so far, so it can't be renamed"
+    }
+   }
+  }
+ ]
+}

@@ -71,7 +71,10 @@ So there are four ways in, from least to most disruptive:
 
 Each candidate gives what is there today, what Rust changes, what it costs, and what to fix in Go first.
 
-### R1. Document and imaging worker
+### R1. Document and imaging worker (done)
+
+The imaging worker (`services/imaging`, `docs/engineering/imaging-worker.md`) does every
+document and image computation; the TMS calls it through `kernelports.Imaging`.
 
 **Today.** Nearly every document operation goes through four PDFium WASM instances with 1,024 MB of
 linear memory each (`internal/infrastructure/config/config.go:1736-1762`). The pool is warmed in the
@@ -156,8 +159,10 @@ protocol drift. Effort is small, because the Rust code already exists.
 **Status.** Done. `services/crates/rules` (`trenova-rules`) holds all five rule sets in the
 table below, compiled to one `wasm32-unknown-unknown` module that the TMS runs in wazero and the
 web app loads lazily. expr-lang is gone from the TMS, the browser's parser, checker and formatter
-are deleted, the conformance corpus lives in the crate, the evaluator is metered and exact, and
-every Go and TypeScript copy named below is deleted. See
+are deleted, and every Go and TypeScript copy named below is deleted. The expr-flavoured formula
+language itself has since been replaced by Tariff, a statically typed rating language the crate
+owns ([formula-language.md](../../engineering/formula-language.md)), with its corpora under
+`testdata/tariff/` and a metered, exact evaluator. See
 [rules-engine.md](../../engineering/rules-engine.md). The rest of this section is the analysis
 as it was written.
 
@@ -213,8 +218,8 @@ is PL/pgSQL, `SECURITY DEFINER`, with `SET search_path`. Each call:
 `(SELECT trenova_rls.org_id())`, so they run once per statement per occurrence, not per row. But
 nothing caches the result: the standard policy (`standard_expr`, lines 256-267) verifies twice per
 table reference, read-scope policies add more, and policies that reference other tables pull in theirs.
-A five-table join verifies the same token about ten times. Bun sends simple queries with
-client-interpolated parameters, so nothing is reused across statements. Estimated at 10–30 µs per call
+A five-table join verifies the same token about ten times, and nothing is reused across
+statements. Estimated at 10–30 µs per call
 (unmeasured), that adds roughly 0.1–0.4 ms to a typical statement.
 
 **With Rust.** A pgrx `claims()` that verifies once per transaction (keyed by the token and the local
@@ -258,41 +263,22 @@ against Meilisearch's, and the `LEAKPROOF` question in R4 applies to its operato
 
 **Fix now regardless.** Set `AttributesToRetrieve`.
 
-### R6. An X12 core crate
+### R6. An X12 core crate (in progress)
 
-**Today.** `modules/edi/app/edix12inspect/inspector.go` (521 lines) reads separators from fixed ISA
-offsets, splits segments with `strings.Split`, finds byte offsets with `strings.Index` per chunk, runs a
-regex per segment ID, and allocates a struct for every element. Validation (`validation.go`) is
-structural only: envelope order and ISA/GS/ST control counts. `dictionary.go` covers 16 segments. Loops,
-segment repeat counts and code lists are not checked against any implementation guide. The 204, 210,
-214, 990, 997 and 999 mappings are hand-written (`ediinboundservice/parse.go`, 1,142 lines). The repo has
-no fuzz tests (`testing.F` appears nowhere).
+The `trenova-edi` crate (`services/crates/edi`, one WebAssembly module run by wazero through
+`pkg/x12`, and by the browser next) is the only X12 reader: separators, envelopes, a loop walker
+driven by base and partner guides, element and syntax-note checks, 997/999 written from the
+reading, a writer, proptest and three cargo-fuzz targets (`docs/engineering/edi-x12.md`).
+`edix12inspect` and the inbound pipeline read through it, rejected transactions are not routed,
+and acknowledgments report real errors. The browser loader, maps in place of `parse.go` and
+the flat templates, and the designer follow (`docs/notes/edi/self-serve-edi.md`, order of work).
 
-**With Rust.** A tokenizer that borrows slices of the input instead of copying them, loops and repeat
-counts modeled as types driven by the partner's guide, `cargo-fuzz` from day one, and a WASM build so the
-browser inspector and `dev/edi-partner-sim` use the same parser.
+### R7. A local sandbox for code mode (done)
 
-**What improves.** Robustness and correctness on untrusted partner files, plus guide-driven validation
-that fits the agent-led onboarding in `docs/engineering/edi-spec-onboarding.md`. Volume is low, so this
-is not about speed.
-
-**Alternative.** Go's native fuzzing covers part of the robustness gap without a port. Typed loop
-modeling and copy-free parsing are where Rust is clearly better.
-
-### R7. A local sandbox for code mode
-
-**Today.** Every `agent_run_script` call starts a remote E2B sandbox (`shared/e2b/client.go`). Reads and
-answers pass through files the script polls every 10 ms (`docs/engineering/agent-code-mode.md`, §5.2),
-and each script spends part of the vendor's daily limit.
-
-**With Rust.** Code mode is read-only and talks over stdout, which maps directly onto CPython built for
-WASI. Run it in a small Rust sidecar on `wasmtime`, whose fuel metering and epoch interruption give hard
-CPU and time limits, or under wazero inside the process. Self-hosters would no longer need an E2B
-account, and each read skips the remote round trip.
-
-**Limits.** Data analysis (`report_analyze_data`) needs pandas, numpy and matplotlib, which do not run
-under plain WASI, so it stays on E2B. The win comes from WASM, so wazero alone (no Rust) is also an
-option.
+Scripts and data analysis run in Monty, compiled to WebAssembly by the `trenova-scripts` crate and
+run in wazero inside the worker (`docs/engineering/agent-code-mode.md`, §5). E2B is gone: no vendor
+account, no remote round trip per read, and no pandas, numpy or matplotlib, whose place the SDK's
+datasets, statistics helpers and chart specs take.
 
 ### R8. `capture-imaging` in the Dash driver portal
 
@@ -372,13 +358,13 @@ only if it shows up in a profile.
 
 | # | Candidate | Main gain | Seam | Effort (rough) | Prerequisite |
 | --- | --- | --- | --- | --- | --- |
-| R1 | Document and imaging worker | Memory, throughput, one imaging library | Sidecar, or wazero for pure parts | Large | Binary encryption envelope; page cache |
+| R1 | Document and imaging worker | Memory, throughput, one imaging library | Sidecar (done) | Large | Binary encryption envelope; page cache |
 | R2 | Capture companion uploads results | Server CPU per scanned page | Existing desktop crate | Small | Shared JSON fixtures; CI path filter |
 | R3 | Shared calculation crate | One answer in browser and server; hard timeouts | Browser WASM plus wazero | Large | Fix TS rounding with shared fixtures first |
 | R4 | pgrx `claims()` | Per-statement overhead under RLS | Postgres extension | Medium | Measure; SQL fixes |
 | R5 | `pg_search` | Search under RLS, one fewer service | Postgres extension | Medium | — |
-| R6 | X12 core crate | Robust, guide-driven parsing | wazero plus browser WASM | Medium | — |
-| R7 | Local code-mode sandbox | No vendor, lower latency | wasmtime sidecar or wazero | Medium | — |
+| R6 | X12 core crate | Robust, guide-driven parsing | wazero plus browser WASM (reading done) | Medium | — |
+| R7 | Local code-mode sandbox | No vendor, lower latency | wazero (done) | Medium | — |
 | R8 | Imaging in Dash | Small uploads over cellular | Browser WASM | Small–medium | PWA basics |
 | R9 | Spreadsheet parsing | Memory, sandboxing | wazero | Small | Go limits and streaming first |
 | R10 | i18n extractor | One parse, real ICU checks | CLI | Small | Try `oxc-parser` first |
@@ -422,7 +408,7 @@ output. Trimming the spec to the endpoints used would cut compile time more than
    the formula language as its anchor.
 4. **Database:** run the R4 measurements and SQL fixes, then decide on pgrx. Evaluate R5 at the same time,
    since both rule out managed Postgres.
-5. **As needs arise:** R6 when EDI onboarding volume grows, R7 when the E2B cost or dependency bites, R11
+5. **As needs arise:** R11
    only at scale, the rest when a profile points at them.
 
 ## 6. What to measure before porting

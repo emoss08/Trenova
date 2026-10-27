@@ -141,6 +141,7 @@ describe("data table GraphQL query fetching", () => {
         hasNextPage: true,
         endCursor: "cursor-et-2",
         totalCount: null,
+        totalCountExact: true,
       },
     });
   });
@@ -241,6 +242,7 @@ describe("data table GraphQL query fetching", () => {
         hasNextPage: true,
         endCursor: "cursor-et-1",
         totalCount: 12,
+        totalCountExact: true,
       },
     });
   });
@@ -274,6 +276,7 @@ describe("data table GraphQL query fetching", () => {
         hasNextPage: false,
         endCursor: null,
         totalCount: 0,
+        totalCountExact: true,
       },
     });
   });

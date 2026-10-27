@@ -1,9 +1,9 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import { carrierTaxIdTypeChoices } from "@/lib/choices";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import { useFormContext } from "react-hook-form";
 
@@ -50,6 +50,7 @@ export function CarrierTaxForm() {
               name="w9OnFile"
               label={t("W-9 on file")}
               description={t("A completed W-9 form has been received from this carrier.")}
+              outlined
             />
           </FormControl>
           <FormControl>
@@ -58,6 +59,7 @@ export function CarrierTaxForm() {
               name="is1099Eligible"
               label={t("1099 Eligible")}
               description={t("Payments to this carrier should be included in 1099 reporting.")}
+              outlined
             />
           </FormControl>
         </FormGroup>

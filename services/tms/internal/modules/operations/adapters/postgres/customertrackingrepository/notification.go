@@ -4,18 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
-	"github.com/emoss08/trenova/pkg/buncolgen/customertrackingcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var notificationErrors = dberror.Mapping{Entity: "Customer status notification"}
 
 type notificationRepository struct {
 	db *postgres.Connection
@@ -34,45 +36,36 @@ func (r *notificationRepository) InsertOnce(
 	entity *customertracking.Notification,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := customertrackingcol.NotificationColumns
-		result, err := r.db.DBForContext(ctx).NewInsert().
-			Model(entity).
-			On("CONFLICT (?, ?, ?, ?, ?) DO NOTHING",
-				bun.Ident(cols.OrganizationID.Bare()),
-				bun.Ident(cols.BusinessUnitID.Bare()),
-				bun.Ident(cols.ShipmentID.Bare()),
-				bun.Ident(cols.Event.Bare()),
-				bun.Ident(cols.SubjectKey.Bare()),
-			).
-			Exec(ctx)
+		n := customertrackingdb.Notifications
+		inserted, err := n.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*customertracking.Notification{entity},
+			n.OrganizationID,
+			n.BusinessUnitID,
+			n.ShipmentID,
+			n.Event,
+			n.SubjectKey,
+		)
 		if err != nil {
-			return false, fmt.Errorf("insert customer status notification: %w", err)
+			return false, fmt.Errorf(
+				"insert customer status notification: %w",
+				notificationErrors.Map(err, entity.ID.String()),
+			)
 		}
-		rows, err := result.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("insert customer status notification rows affected: %w", err)
-		}
-		return rows == 1, nil
+		return inserted == 1, nil
 	})
 }
 
 func (r *notificationRepository) GetByID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*customertracking.Notification, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customertracking.Notification, error) {
-		cols := customertrackingcol.NotificationColumns
-		entity := new(customertracking.Notification)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customertrackingcol.NotificationScopeTenant(sq, tenantInfo).
-					Where(cols.ID.Eq(), id)
-			}).
-			Scan(ctx)
+		entity, err := customertrackingdb.Notifications.Get(ctx, r.db.Keel(ctx), id)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Customer status notification")
+			return nil, notificationErrors.Map(err, id.String())
 		}
 		return entity, nil
 	})
@@ -80,24 +73,18 @@ func (r *notificationRepository) GetByID(
 
 func (r *notificationRepository) ListForShipment(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*customertracking.Notification, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customertracking.Notification, error) {
-			cols := customertrackingcol.NotificationColumns
-			entities := make([]*customertracking.Notification, 0, 4)
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return customertrackingcol.NotificationScopeTenant(sq, tenantInfo).
-						Where(cols.ShipmentID.Eq(), shipmentID)
-				}).
-				Order(cols.OccurredAt.OrderDesc(), cols.ID.OrderDesc()).
+			n := customertrackingdb.Notifications
+			entities, err := n.Where(n.ShipmentID.Eq(shipmentID)).
+				Order(n.OccurredAt.Desc(), n.ID.Desc()).
 				Limit(maxShipmentLedger).
-				Scan(ctx)
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list customer status notifications: %w", err)
 			}
@@ -108,7 +95,7 @@ func (r *notificationRepository) ListForShipment(
 
 func (r *notificationRepository) ListDue(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	now int64,
 	limit int,
 ) ([]*customertracking.Notification, error) {
@@ -120,18 +107,14 @@ func (r *notificationRepository) ListDue(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customertracking.Notification, error) {
-			cols := customertrackingcol.NotificationColumns
-			entities := make([]*customertracking.Notification, 0, limit)
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return customertrackingcol.NotificationScopeTenant(sq, tenantInfo).
-						Where(cols.Status.Eq(), customertracking.NotificationStatusPending).
-						Where(cols.NextAttemptAt.Lte(), now)
-				}).
-				Order(cols.NextAttemptAt.OrderAsc(), cols.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx)
+			n := customertrackingdb.Notifications
+			entities, err := n.Where(
+				n.Status.Eq(customertracking.NotificationStatusPending),
+				n.NextAttemptAt.Lte(now),
+			).
+				Order(n.NextAttemptAt.Asc(), n.ID.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list due customer status notifications: %w", err)
 			}
@@ -146,17 +129,14 @@ func (r *notificationRepository) ListTenantsWithDue(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "find organizations with customer status emails due")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		cols := customertrackingcol.NotificationColumns
-		rows := make([]tenantRow, 0, 8)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model((*customertracking.Notification)(nil)).
-			ColumnExpr(cols.OrganizationID.As(orgColumn)).
-			ColumnExpr(cols.BusinessUnitID.As(buColumn)).
-			Where(cols.Status.Eq(), customertracking.NotificationStatusPending).
-			Where(cols.NextAttemptAt.Lte(), now).
-			GroupExpr(cols.OrganizationID.String()).
-			GroupExpr(cols.BusinessUnitID.String()).
-			Scan(ctx, &rows)
+		n := customertrackingdb.Notifications
+		rows, err := keel.Into[tenantRow](ctx, r.db.Keel(ctx), n.AllTenants().
+			Group(n.OrganizationID, n.BusinessUnitID).
+			Pick(n.OrganizationID, n.BusinessUnitID).
+			Where(
+				n.Status.Eq(customertracking.NotificationStatusPending),
+				n.NextAttemptAt.Lte(now),
+			))
 		if err != nil {
 			return nil, fmt.Errorf("list tenants with due customer status notifications: %w", err)
 		}
@@ -169,36 +149,35 @@ func (r *notificationRepository) Record(
 	outcome *customertrackingports.DeliveryOutcome,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := customertrackingcol.NotificationColumns
-		q := r.db.DBForContext(ctx).NewUpdate().
-			Model((*customertracking.Notification)(nil)).
-			Set(cols.Status.Set(), outcome.Status).
-			Set(cols.Recipients.Set(), pgArray(outcome.Recipients)).
-			Set(cols.Attempts.Set(), outcome.Attempts).
-			Set(cols.NextAttemptAt.Set(), outcome.NextAttemptAt).
-			Set(cols.UpdatedAt.Set(), outcome.At)
-		q = setNullable(q, cols.SkipReason.Bare(), string(outcome.SkipReason))
-		q = setNullable(q, cols.LastError.Bare(), outcome.LastError)
-		q = setNullableID(q, cols.LinkID.Bare(), outcome.LinkID)
-		q = setNullableID(q, cols.EmailMessageID.Bare(), outcome.EmailMessageID)
-		if outcome.SentAt != nil {
-			q = q.Set(cols.SentAt.Set(), *outcome.SentAt)
-		} else {
-			q = q.Set(cols.SentAt.SetNull())
+		n := customertrackingdb.Notifications
+		recipients := outcome.Recipients
+		if recipients == nil {
+			recipients = []string{}
 		}
-		result, err := q.
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return customertrackingcol.NotificationScopeTenantUpdate(uq, outcome.TenantInfo).
-					Where(cols.ID.Eq(), outcome.ID).
-					Where(cols.Status.Eq(), customertracking.NotificationStatusPending)
-			}).
-			Exec(ctx)
+		sentAt := n.SentAt.ToNull()
+		if outcome.SentAt != nil {
+			sentAt = n.SentAt.To(*outcome.SentAt)
+		}
+
+		rows, err := n.Where(
+			n.ID.Eq(outcome.ID),
+			n.Status.Eq(customertracking.NotificationStatusPending),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			n.Status.To(outcome.Status),
+			n.Recipients.To(recipients),
+			n.Attempts.To(outcome.Attempts),
+			n.NextAttemptAt.To(outcome.NextAttemptAt),
+			n.UpdatedAt.To(outcome.At),
+			n.SkipReason.To(outcome.SkipReason),
+			n.LastError.To(outcome.LastError),
+			n.LinkID.To(outcome.LinkID),
+			n.EmailMessageID.To(outcome.EmailMessageID),
+			sentAt,
+		)
 		if err != nil {
 			return false, fmt.Errorf("record customer status notification outcome: %w", err)
-		}
-		rows, err := result.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("record customer status notification rows affected: %w", err)
 		}
 		return rows == 1, nil
 	})

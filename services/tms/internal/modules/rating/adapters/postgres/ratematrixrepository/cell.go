@@ -3,123 +3,23 @@ package ratematrixrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/ratematrixcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix/ratematrixdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-// axisColumns maps a dimension's position to the cell columns that hold it.
-// The mapping is positional by design: it is what lets four axes live in fixed
-// columns that one composite index can serve.
-type axisColumns struct {
-	key     buncolgen.Column
-	minimum buncolgen.Column
-	maximum buncolgen.Column
-}
+func cellsQuery(
+	req *ratematrixports.ListRateMatrixCellsRequest,
+) *keel.Query[*ratematrix.RateMatrixCell] {
+	c := ratematrixdb.RateMatrixCells
 
-func columnsForAxis(position int16) (axisColumns, bool) {
-	cols := ratematrixcol.RateMatrixCellColumns
-
-	switch position {
-	case 0:
-		return axisColumns{key: cols.D0Key, minimum: cols.D0Min, maximum: cols.D0Max}, true
-	case 1:
-		return axisColumns{key: cols.D1Key, minimum: cols.D1Min, maximum: cols.D1Max}, true
-	case 2:
-		return axisColumns{key: cols.D2Key, minimum: cols.D2Min, maximum: cols.D2Max}, true
-	case 3:
-		return axisColumns{key: cols.D3Key, minimum: cols.D3Min, maximum: cols.D3Max}, true
-	default:
-		return axisColumns{}, false
-	}
-}
-
-// LookupCells fetches only the cells that could price one lookup.
-//
-// Exact axes narrow by the candidate keys — several, because a place can belong
-// to more than one zone. Banded axes narrow to the bands that contain the
-// quantity, which is the half-open comparison the domain then re-applies when
-// it picks the winner. Nothing here loads a whole matrix: a class tariff runs
-// to hundreds of thousands of cells, and rating happens on every shipment
-// write.
-func (r *repository) LookupCells(
-	ctx context.Context,
-	req *ratematrixports.LookupRateMatrixCellsRequest,
-) ([]*ratematrix.RateMatrixCell, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*ratematrix.RateMatrixCell, error) {
-		log := r.l.With(
-			zap.String("operation", "LookupCells"),
-			zap.String("matrixId", req.RateMatrixID.String()),
-		)
-
-		cols := ratematrixcol.RateMatrixCellColumns
-		entities := make([]*ratematrix.RateMatrixCell, 0, len(req.Axes)*2)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-					Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
-
-				for _, axis := range req.Axes {
-					sq = applyAxisFilter(sq, axis)
-				}
-
-				return sq
-			}).
-			Scan(ctx)
-		if err != nil {
-			log.Error("failed to look up rate matrix cells", zap.Error(err))
-			return nil, err
-		}
-
-		return entities, nil
-	})
-}
-
-func applyAxisFilter(
-	q *bun.SelectQuery,
-	axis ratematrixports.MatrixAxisQuery,
-) *bun.SelectQuery {
-	columns, ok := columnsForAxis(axis.Position)
-	if !ok {
-		return q
-	}
-
-	if len(axis.Keys) > 0 {
-		return q.Where(columns.key.In(), bun.List(axis.Keys))
-	}
-
-	if !axis.Quantity.Valid {
-		return q
-	}
-
-	// Bands are half open on the upper bound: a quantity sitting exactly on a
-	// boundary belongs to the band above. An open bound means the band runs to
-	// infinity in that direction.
-	return q.
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(columns.minimum.IsNull()).
-				WhereOr(columns.minimum.Lte(), axis.Quantity.Decimal)
-		}).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(columns.maximum.IsNull()).
-				WhereOr(columns.maximum.Gt(), axis.Quantity.Decimal)
-		})
+	return c.Where(c.RateMatrixID.Eq(req.RateMatrixID), c.VersionNumber.Eq(req.VersionNumber))
 }
 
 func (r *repository) ListCells(
@@ -130,235 +30,263 @@ func (r *repository) ListCells(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*ratematrix.RateMatrixCell], error) {
-			log := r.l.With(
-				zap.String("operation", "ListCells"),
-				zap.String("matrixId", req.RateMatrixID.String()),
+			c := ratematrixdb.RateMatrixCells
+			page := req.Filter.Pagination
+			rows := cellsQuery(req).
+				Order(
+					c.D0Key.Asc(), c.D1Key.Asc(), c.D2Key.Asc(), c.D3Key.Asc(),
+					c.D0Min.Asc(), c.D1Min.Asc(), c.D2Min.Asc(), c.D3Min.Asc(),
+					c.ID.Asc(),
+				).
+				Limit(page.SafeLimit()).
+				Offset(page.SafeOffset())
+
+			var items []*ratematrix.RateMatrixCell
+			var total keel.RowCount
+			err := keel.Batch(
+				ctx,
+				r.db.Keel(ctx),
+				keel.ListInto(rows, &items),
+				keel.CountEstimateInto(cellsQuery(req), pagination.ExactTotalUpTo, &total),
 			)
-
-			cols := ratematrixcol.RateMatrixCellColumns
-			entities := make([]*ratematrix.RateMatrixCell, 0, req.Filter.Pagination.SafeLimit())
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-						Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
-				}).
-				Order(cols.D0Key.OrderAsc()).
-				Order(cols.D1Key.OrderAsc()).
-				Order(cols.D2Min.OrderAsc()).
-				Order(cols.D3Min.OrderAsc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to list rate matrix cells", zap.Error(err))
+				r.l.Error("failed to list rate matrix cells",
+					zap.String("matrixId", req.RateMatrixID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
-			return &pagination.ListResult[*ratematrix.RateMatrixCell]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.Result(items, total), nil
 		},
 	)
 }
 
-// ReplaceCells swaps a matrix's entire cell set in one transaction.
-//
-// Rate sheets arrive whole and are loaded whole, so replacing beats diffing:
-// there is no identity in a cell worth preserving, and a diff would have to be
-// certain it had matched every axis exactly to avoid leaving a stale row behind
-// still pricing an intersection the new sheet dropped.
-//
-// The insert is batched because a class tariff is large enough that one
-// statement would hold locks far longer than the work deserves.
 func (r *repository) ReplaceCells(
 	ctx context.Context,
 	req *ratematrixports.ReplaceRateMatrixCellsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "ReplaceCells"),
-			zap.String("matrixId", req.RateMatrixID.String()),
-			zap.Int("cells", len(req.Cells)),
-		)
-
-		cols := ratematrixcol.RateMatrixCellColumns
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, dErr := r.db.DBForContext(c).
-				NewDelete().
-				Model((*ratematrix.RateMatrixCell)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return ratematrixcol.RateMatrixCellScopeTenantDelete(dq, req.TenantInfo).
-						Where(cols.RateMatrixID.Eq(), req.RateMatrixID)
-				}).
-				Exec(c); dErr != nil {
-				return dErr
-			}
-
-			for _, cell := range req.Cells {
-				if cell == nil {
-					continue
-				}
-				cell.ID = pulid.Nil
-				cell.RateMatrixID = req.RateMatrixID
-				cell.OrganizationID = req.TenantInfo.OrgID
-				cell.BusinessUnitID = req.TenantInfo.BuID
-			}
-
-			if iErr := r.insertCellBatches(c, req.Cells); iErr != nil {
-				return iErr
-			}
-
-			return r.bumpMatrixVersion(c, req)
-		})
+		db := r.db.Keel(ctx)
+		err := deleteVersionCells(ctx, db, req.RateMatrixID, ratematrix.DraftVersion)
+		if err == nil {
+			_, err = ratematrixdb.RateMatrixCells.Copy(ctx, db, draftCells(req))
+		}
 		if err != nil {
-			log.Error("failed to replace rate matrix cells", zap.Error(err))
-			return dberror.MapRetryableTransactionError(
-				err,
-				"Rate matrix is busy. Retry the request.",
+			r.l.Error("failed to replace rate matrix cells",
+				zap.String("matrixId", req.RateMatrixID.String()),
+				zap.Int("cells", len(req.Cells)),
+				zap.Error(err),
 			)
+			return mapRateMatrixError(err, req.RateMatrixID.String())
 		}
 
 		return nil
 	})
 }
 
-func (r *repository) insertCellBatches(
+func draftCells(req *ratematrixports.ReplaceRateMatrixCellsRequest) []*ratematrix.RateMatrixCell {
+	kept := make([]*ratematrix.RateMatrixCell, 0, len(req.Cells))
+	for _, cell := range req.Cells {
+		if cell == nil {
+			continue
+		}
+		cell.ID = pulid.Nil
+		cell.RateMatrixID = req.RateMatrixID
+		cell.VersionNumber = ratematrix.DraftVersion
+		cell.OrganizationID = req.TenantInfo.OrgID
+		cell.BusinessUnitID = req.TenantInfo.BuID
+		kept = append(kept, cell)
+	}
+
+	return kept
+}
+
+func deleteVersionCells(
 	ctx context.Context,
-	cells []*ratematrix.RateMatrixCell,
+	db *keel.DB,
+	matrixID pulid.ID,
+	versionNumber int64,
 ) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		for start := 0; start < len(cells); start += cellInsertBatch {
-			end := min(start+cellInsertBatch, len(cells))
+	c := ratematrixdb.RateMatrixCells
+	_, err := c.Where(c.RateMatrixID.Eq(matrixID), c.VersionNumber.Eq(versionNumber)).
+		Delete(ctx, db)
 
-			batch := cells[start:end]
-			if len(batch) == 0 {
-				continue
-			}
+	return err
+}
 
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&batch).
-				Exec(ctx); err != nil {
-				return err
-			}
+func (r *repository) CopyVersion(
+	ctx context.Context,
+	req *ratematrixports.CopyVersionRequest,
+) (int64, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
+		copied, err := copyVersion(ctx, r.db.Keel(ctx), req)
+		if err != nil {
+			r.l.Error("failed to copy rate matrix version",
+				zap.String("matrixId", req.RateMatrixID.String()),
+				zap.Int64("from", req.From),
+				zap.Int64("to", req.To),
+				zap.Error(err),
+			)
+			return 0, mapRateMatrixError(err, req.RateMatrixID.String())
 		}
 
-		return nil
+		return copied, nil
 	})
 }
 
-// GetLookupData reads every matrix a formula's lookup() or lookup2() call
-// could address.
-//
-// The axis-count restriction (one or two) is applied in the database, not
-// after the load: a class tariff with four axes and a hundred thousand cells
-// must never ride along just to be discarded. What survives the filter is
-// lookup-table sized — dozens to hundreds of cells — which is why loading it
-// whole is affordable here and nowhere else.
-func (r *repository) GetLookupData(
+func copyVersion(
 	ctx context.Context,
-	req *ratematrixports.GetRateMatrixLookupDataRequest,
-) ([]*ratematrixports.RateMatrixLookupData, error) {
-	return dbtx.Read(
-		ctx,
-		r.db,
-		func(ctx context.Context) ([]*ratematrixports.RateMatrixLookupData, error) {
-			log := r.l.With(zap.String("operation", "GetLookupData"))
+	db *keel.DB,
+	req *ratematrixports.CopyVersionRequest,
+) (int64, error) {
+	d := ratematrixdb.RateMatrixDimensions
+	if _, err := d.Where(d.RateMatrixID.Eq(req.RateMatrixID), d.VersionNumber.Eq(req.To)).
+		Delete(ctx, db); err != nil {
+		return 0, err
+	}
+	if err := deleteVersionCells(ctx, db, req.RateMatrixID, req.To); err != nil {
+		return 0, err
+	}
 
-			matrixCols := ratematrixcol.RateMatrixColumns
-			dimCols := ratematrixcol.RateMatrixDimensionColumns
+	if _, err := copyDimensions(ctx, db, req); err != nil {
+		return 0, err
+	}
 
-			matrices := make([]*ratematrix.RateMatrix, 0, 8)
+	return copyCells(ctx, db, req)
+}
 
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&matrices).
-				Relation(buncolgen.Rel(ratematrixcol.RateMatrixRelations.Dimensions), orderDimensions).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return ratematrixcol.RateMatrixScopeTenant(sq, req.TenantInfo).
-						Where(matrixCols.Status.Eq(), domaintypes.StatusActive).
-						Where(
-							"(SELECT count(*) FROM rate_matrix_dimensions AS rmd WHERE " +
-								dimCols.RateMatrixID.Qualified() + " = " + matrixCols.ID.Qualified() +
-								" AND " + dimCols.OrganizationID.Qualified() + " = " + matrixCols.OrganizationID.Qualified() +
-								") IN (1, 2)",
-						)
-				}).
-				Scan(ctx)
-			if err != nil {
-				log.Error("failed to load lookup matrices", zap.Error(err))
-				return nil, err
-			}
-
-			if len(matrices) == 0 {
-				return nil, nil
-			}
-
-			matrixIDs := make([]pulid.ID, 0, len(matrices))
-			for _, matrix := range matrices {
-				matrixIDs = append(matrixIDs, matrix.ID)
-			}
-
-			cellCols := ratematrixcol.RateMatrixCellColumns
-			cells := make([]*ratematrix.RateMatrixCell, 0, len(matrices)*16)
-
-			err = r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&cells).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return ratematrixcol.RateMatrixCellScopeTenant(sq, req.TenantInfo).
-						Where(cellCols.RateMatrixID.In(), bun.List(matrixIDs))
-				}).
-				Scan(ctx)
-			if err != nil {
-				log.Error("failed to load lookup matrix cells", zap.Error(err))
-				return nil, err
-			}
-
-			cellsByMatrix := make(map[pulid.ID][]*ratematrix.RateMatrixCell, len(matrices))
-			for _, cell := range cells {
-				cellsByMatrix[cell.RateMatrixID] = append(cellsByMatrix[cell.RateMatrixID], cell)
-			}
-
-			data := make([]*ratematrixports.RateMatrixLookupData, 0, len(matrices))
-			for _, matrix := range matrices {
-				data = append(data, &ratematrixports.RateMatrixLookupData{
-					Matrix: matrix,
-					Cells:  cellsByMatrix[matrix.ID],
-				})
-			}
-
-			return data, nil
-		},
+func copiedID(prefix string) keel.StringExpr {
+	return keel.Concat(
+		keel.Text(prefix),
+		keel.GenRandomUUID().Replace("-", "").Substr(1, 26).Upper(),
 	)
 }
 
-// bumpMatrixVersion records that the matrix's content changed even though no
-// header field did, so lookup stamps and optimistic locks both see a new
-// sheet as a new matrix.
-func (r *repository) bumpMatrixVersion(
+func copiedNow() keel.Int64Expr {
+	return keel.NowEpoch()
+}
+
+func copyDimensions(
 	ctx context.Context,
-	req *ratematrixports.ReplaceRateMatrixCellsRequest,
-) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		matrixCols := ratematrixcol.RateMatrixColumns
+	db *keel.DB,
+	req *ratematrixports.CopyVersionRequest,
+) (int64, error) {
+	d := ratematrixdb.RateMatrixDimensions
+	src := d.Where(d.RateMatrixID.Eq(req.RateMatrixID), d.VersionNumber.Eq(req.From)).Pick(
+		copiedID(d.TableRef().Table.IDPrefix), d.RateMatrixID, versionNumber(req.To), d.Position,
+		d.Kind, d.MatchMode, d.Label, d.KeyNormalization, d.RangeOverflow,
+		copiedNow(), copiedNow(),
+	)
 
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*ratematrix.RateMatrix)(nil)).
-			Set("? = ? + 1", bun.Ident(matrixCols.Version.Name), bun.Ident(matrixCols.Version.Name)).
-			Set(matrixCols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return ratematrixcol.RateMatrixScopeTenantUpdate(uq, req.TenantInfo).
-					Where(matrixCols.ID.Eq(), req.RateMatrixID)
-			}).
-			Exec(ctx)
+	return d.InsertFrom(ctx, db, src,
+		d.ID, d.RateMatrixID, d.VersionNumber, d.Position,
+		d.Kind, d.MatchMode, d.Label, d.KeyNormalization, d.RangeOverflow,
+		d.CreatedAt, d.UpdatedAt,
+	)
+}
 
-		return err
+func copyCells(
+	ctx context.Context,
+	db *keel.DB,
+	req *ratematrixports.CopyVersionRequest,
+) (int64, error) {
+	c := ratematrixdb.RateMatrixCells
+	src := c.Where(c.RateMatrixID.Eq(req.RateMatrixID), c.VersionNumber.Eq(req.From)).Pick(
+		copiedID(c.TableRef().Table.IDPrefix), c.RateMatrixID, versionNumber(req.To),
+		c.D0Key, c.D1Key, c.D2Key, c.D3Key,
+		c.D0KeyTo, c.D1KeyTo, c.D2KeyTo, c.D3KeyTo,
+		c.D0Min, c.D0Max, c.D1Min, c.D1Max, c.D2Min, c.D2Max, c.D3Min, c.D3Max,
+		c.Value, c.MinCharge, c.DeficitEligible,
+		copiedNow(), copiedNow(),
+	)
+
+	return c.InsertFrom(ctx, db, src,
+		c.ID, c.RateMatrixID, c.VersionNumber,
+		c.D0Key, c.D1Key, c.D2Key, c.D3Key,
+		c.D0KeyTo, c.D1KeyTo, c.D2KeyTo, c.D3KeyTo,
+		c.D0Min, c.D0Max, c.D1Min, c.D1Max, c.D2Min, c.D2Max, c.D3Min, c.D3Max,
+		c.Value, c.MinCharge, c.DeficitEligible,
+		c.CreatedAt, c.UpdatedAt,
+	)
+}
+
+type positionColumns struct {
+	key     keel.StringCol
+	keyTo   keel.StringCol
+	minimum keel.Col
+}
+
+func columnsAt(position int16) positionColumns {
+	c := ratematrixdb.RateMatrixCells
+	switch position {
+	case 0:
+		return positionColumns{key: c.D0Key, keyTo: c.D0KeyTo, minimum: c.D0Min.Col}
+	case 1:
+		return positionColumns{key: c.D1Key, keyTo: c.D1KeyTo, minimum: c.D1Min.Col}
+	case 2:
+		return positionColumns{key: c.D2Key, keyTo: c.D2KeyTo, minimum: c.D2Min.Col}
+	default:
+		return positionColumns{key: c.D3Key, keyTo: c.D3KeyTo, minimum: c.D3Min.Col}
+	}
+}
+
+func misfitAt(position int16, dimension *ratematrix.RateMatrixDimension) keel.Pred {
+	columns := columnsAt(position)
+	switch {
+	case dimension == nil:
+		return keel.Or(columns.key.Ne(""), columns.keyTo.Ne(""), columns.minimum.IsNotNull())
+	case dimension.IsPostalRange():
+		return keel.Or(columns.key.Eq(""), columns.keyTo.Eq(""), columns.minimum.IsNotNull())
+	case dimension.MatchMode == ratematrix.MatchModeExact:
+		return keel.Or(columns.key.Eq(""), columns.keyTo.Ne(""), columns.minimum.IsNotNull())
+	default:
+		return keel.Or(columns.key.Ne(""), columns.keyTo.Ne(""), columns.minimum.IsNull())
+	}
+}
+
+func misfitQuery(
+	req *ratematrixports.CountMisfitCellsRequest,
+) *keel.Query[*ratematrix.RateMatrixCell] {
+	byPosition := make(map[int16]*ratematrix.RateMatrixDimension, len(req.Dimensions))
+	for _, dimension := range req.Dimensions {
+		if dimension != nil {
+			byPosition[dimension.Position] = dimension
+		}
+	}
+
+	misfits := make([]keel.Pred, 0, ratematrix.MaxDimensions)
+	for position := range int16(ratematrix.MaxDimensions) {
+		misfits = append(misfits, misfitAt(position, byPosition[position]))
+	}
+
+	c := ratematrixdb.RateMatrixCells
+
+	return c.Where(
+		c.RateMatrixID.Eq(req.RateMatrixID),
+		c.VersionNumber.Eq(req.VersionNumber),
+		keel.Or(misfits...),
+	)
+}
+
+func (r *repository) CountMisfitCells(
+	ctx context.Context,
+	req *ratematrixports.CountMisfitCellsRequest,
+) (int64, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
+		count, err := misfitQuery(req).Count(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to count rate matrix cells that do not fit their axes",
+				zap.String("matrixId", req.RateMatrixID.String()),
+				zap.Error(err),
+			)
+			return 0, err
+		}
+
+		return count, nil
 	})
+}
+
+func versionNumber(n int64) keel.Int64Expr {
+	return keel.Int64(n)
 }

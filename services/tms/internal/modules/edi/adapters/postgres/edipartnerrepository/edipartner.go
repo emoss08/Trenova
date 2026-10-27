@@ -3,24 +3,27 @@ package edipartnerrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediscope"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	partnerErrors           = dberror.Mapping{Entity: "EDIPartner"}
+	reciprocalPartnerErrors = dberror.Mapping{Entity: "ReciprocalEDIPartner"}
+	mappingProfileErrors    = dberror.Mapping{Entity: "EDIMappingProfile"}
 )
 
 type Params struct {
@@ -42,39 +45,6 @@ func New(p Params) ediports.EDIPartnerRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *ediports.ListEDIPartnersRequest,
-) *bun.SelectQuery {
-	cols := edicol.EDIPartnerColumns
-	rel := edicol.EDIPartnerRelations
-
-	q = querybuilder.ApplyFilters(
-		q,
-		"ep",
-		req.Filter,
-		(*edi.EDIPartner)(nil),
-	)
-
-	if req.CustomerID.IsNotNil() {
-		q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
-	}
-	if req.EnabledForOutbound {
-		q = q.Where(cols.EnabledForOutbound.IsTrue())
-	}
-	if req.Status != "" {
-		q = q.Where(cols.Status.Eq(), req.Status)
-	}
-
-	return q.
-		Relation(rel.InternalOrganization).
-		Relation(rel.Connection).
-		Relation(rel.DefaultTransport).
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *ediports.ListEDIPartnersRequest,
@@ -83,22 +53,39 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
-			entities := make([]*edi.EDIPartner, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
+			ep := edidb.EDIPartners
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				listedPartners(req),
+				&listquery.Request[edi.EDIPartner]{
+					Filter: req.Filter,
+					Shape:  withLinks,
+					Then:   []keel.Order{ep.CreatedAt.Desc()},
+				},
+			)
+		},
+	)
+}
 
-			return &pagination.ListResult[*edi.EDIPartner]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+func (r *repository) ListCursor(
+	ctx context.Context,
+	req *ediports.ListEDIPartnersRequest,
+) (*pagination.CursorListResult[*edi.EDIPartner], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIPartner], error) {
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				listedPartners(req),
+				&listquery.Request[edi.EDIPartner]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withLinks,
+				},
+			)
 		},
 	)
 }
@@ -107,49 +94,46 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *ediports.EDIPartnerSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIPartner], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIPartner], error) {
-			col := edicol.EDIPartnerColumns
-
-			return dbhelper.SelectOptions[*edi.EDIPartner](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				partnerOptionsQuery(req),
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						col.ID,
-						col.BusinessUnitID,
-						col.OrganizationID,
-						col.Kind,
-						col.Code,
-						col.Name,
-						col.InternalOrganizationID,
-						col.EDIConnectionID,
-						col.DefaultTransportID,
-						col.EnabledForInbound,
-						col.EnabledForOutbound,
-					},
-					OrgColumnRef:     &col.OrganizationID,
-					BuColumnRef:      &col.BusinessUnitID,
-					SearchColumnRefs: []buncolgen.Column{col.Name, col.Code},
-					EntityName:       "EDIPartner",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						if req.Kind != "" {
-							q = q.Where(col.Kind.Eq(), req.Kind)
-						}
-
-						if req.EnabledForOutbound {
-							q = q.Where(col.EnabledForOutbound.IsTrue())
-						}
-
-						return q
-					},
-				},
+				partnerSearch,
 			)
 		},
 	)
+}
+
+func partnerOptionsQuery(
+	req *ediports.EDIPartnerSelectOptionsRequest,
+) *keel.Query[*edi.EDIPartner] {
+	ep := edidb.EDIPartners
+	return ep.Pick(
+		ep.ID,
+		ep.BusinessUnitID,
+		ep.OrganizationID,
+		ep.Kind,
+		ep.Code,
+		ep.Name,
+		ep.InternalOrganizationID,
+		ep.EDIConnectionID,
+		ep.DefaultTransportID,
+		ep.EnabledForInbound,
+		ep.EnabledForOutbound,
+	).Where(
+		keel.When(req.Kind != "", ep.Kind.Eq(req.Kind)),
+		keel.When(req.EnabledForOutbound, ep.EnabledForOutbound.IsTrue()),
+	)
+}
+
+func partnerSearch(s string) keel.Pred {
+	ep := edidb.EDIPartners
+	return keel.Or(ep.Name.ContainsFold(s), ep.Code.ContainsFold(s))
 }
 
 func (r *repository) GetByID(
@@ -157,23 +141,15 @@ func (r *repository) GetByID(
 	req ediports.GetEDIPartnerByIDRequest,
 ) (*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
-		entity := new(edi.EDIPartner)
-		cols := edicol.EDIPartnerColumns
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo))
+		ep := edidb.EDIPartners
+		q := ediscope.Tenant(ctx, ep.Where(ep.ID.Eq(req.ID)), req.TenantInfo)
 		if req.IncludeLinks {
-			rel := edicol.EDIPartnerRelations
-			query = query.
-				Relation(rel.Customer).
-				Relation(rel.InternalOrganization).
-				Relation(rel.Connection)
+			q.Load(ep.Customer(), ep.InternalOrganization(), ep.Connection())
 		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIPartner")
+
+		entity, err := q.One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, partnerErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -182,18 +158,11 @@ func (r *repository) GetByID(
 
 func (r *repository) Create(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, err := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); err != nil {
-				return err
-			}
-			_, err := r.ensureMappingProfile(c, entity)
-			return err
-		})
-		if err != nil {
+		db := r.db.Keel(ctx)
+		if err := edidb.EDIPartners.Create(ctx, db, entity); err != nil {
+			return nil, partnerErrors.Map(err, entity.ID.String())
+		}
+		if err := ensureMappingProfile(ctx, db, entity); err != nil {
 			return nil, err
 		}
 
@@ -201,46 +170,24 @@ func (r *repository) Create(ctx context.Context, entity *edi.EDIPartner) (*edi.E
 	})
 }
 
-func (r *repository) ensureMappingProfile(
-	ctx context.Context,
-	partner *edi.EDIPartner,
-) (*edi.EDIMappingProfile, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMappingProfile, error) {
-		profile := new(edi.EDIMappingProfile)
-		cols := edicol.EDIMappingProfileColumns
+func ensureMappingProfile(ctx context.Context, db *keel.DB, partner *edi.EDIPartner) error {
+	mp := edidb.EDIMappingProfiles
+	exists, err := mp.Where(mp.EDIPartnerID.Eq(partner.ID)).Exists(ctx, db)
+	if err != nil || exists {
+		return err
+	}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(profile).
-			Relation(edicol.EDIMappingProfileRelations.Entries).
-			Where(cols.OrganizationID.Eq(), partner.OrganizationID).
-			Where(cols.BusinessUnitID.Eq(), partner.BusinessUnitID).
-			Where(cols.EDIPartnerID.Eq(), partner.ID).
-			Scan(ctx)
-		if err == nil {
-			return profile, nil
-		}
-		if !dberror.IsNotFoundError(err) {
-			return nil, err
-		}
+	profile := &edi.EDIMappingProfile{
+		BusinessUnitID: partner.BusinessUnitID,
+		OrganizationID: partner.OrganizationID,
+		EDIPartnerID:   partner.ID,
+		Name:           partner.Name + " Mapping Profile",
+	}
+	if err = mp.Create(ctx, db, profile); err != nil {
+		return mappingProfileErrors.Map(err, profile.ID.String())
+	}
 
-		profile = &edi.EDIMappingProfile{
-			BusinessUnitID: partner.BusinessUnitID,
-			OrganizationID: partner.OrganizationID,
-			EDIPartnerID:   partner.ID,
-			Name:           partner.Name + " Mapping Profile",
-		}
-
-		if _, err = r.db.DBForContext(ctx).
-			NewInsert().
-			Model(profile).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
-		}
-
-		return profile, nil
-	})
+	return nil
 }
 
 func (r *repository) GetReadiness(
@@ -254,85 +201,74 @@ func (r *repository) GetReadiness(
 			if len(req.PartnerIDs) == 0 {
 				return []*ediports.EDIPartnerReadinessRow{}, nil
 			}
-			cols := edicol.EDIPartnerColumns
-			rows := make([]*ediports.EDIPartnerReadinessRow, 0, len(req.PartnerIDs))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*edi.EDIPartner)(nil)).
-				ColumnExpr("ep.id AS partner_id").
-				ColumnExpr("COALESCE(ep.contact_email, '') AS contact_email").
-				ColumnExpr("COALESCE(ep.timezone, '') AS timezone").
-				ColumnExpr("ep.enabled_for_inbound AS enabled_for_inbound").
-				ColumnExpr("ep.enabled_for_outbound AS enabled_for_outbound").
-				ColumnExpr("ep.kind::text AS kind").
-				ColumnExpr(
-					"EXISTS (SELECT 1 FROM edi_communication_profiles ecp WHERE ecp.edi_partner_id = ep.id AND ecp.organization_id = ep.organization_id AND ecp.business_unit_id = ep.business_unit_id AND ecp.status = 'Active') AS has_active_profile",
-				).
-				ColumnExpr(
-					"EXISTS (SELECT 1 FROM edi_mapping_profile_items empi WHERE empi.edi_partner_id = ep.id AND empi.organization_id = ep.organization_id AND empi.business_unit_id = ep.business_unit_id) AS has_mapping_profile",
-				).
-				ColumnExpr(
-					"EXISTS (SELECT 1 FROM edi_partner_document_profiles epdp WHERE epdp.edi_partner_id = ep.id AND epdp.organization_id = ep.organization_id AND epdp.business_unit_id = ep.business_unit_id AND epdp.status = 'Active' AND epdp.direction = 'Inbound') AS has_inbound_doc_profile",
-				).
-				ColumnExpr(
-					"EXISTS (SELECT 1 FROM edi_partner_document_profiles epdp WHERE epdp.edi_partner_id = ep.id AND epdp.organization_id = ep.organization_id AND epdp.business_unit_id = ep.business_unit_id AND epdp.status = 'Active' AND epdp.direction = 'Outbound') AS has_outbound_doc_profile",
-				).
-				ColumnExpr(
-					"EXISTS (SELECT 1 FROM edi_test_cases etc JOIN edi_partner_document_profiles epdp ON epdp.id = etc.partner_document_profile_id AND epdp.organization_id = etc.organization_id AND epdp.business_unit_id = etc.business_unit_id WHERE epdp.edi_partner_id = ep.id AND etc.organization_id = ep.organization_id AND etc.business_unit_id = ep.business_unit_id AND etc.last_run_passed IS TRUE) AS has_passing_test_case",
-				).
-				Where(cols.ID.In(), bun.List(req.PartnerIDs)).
-				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Scan(ctx, &rows)
+
+			rows, err := keel.Into[ediports.EDIPartnerReadinessRow](
+				ctx,
+				r.db.Keel(ctx),
+				readinessQuery(req),
+			)
 			if err != nil {
 				return nil, err
 			}
-			return rows, nil
+
+			out := make([]*ediports.EDIPartnerReadinessRow, len(rows))
+			for i := range rows {
+				out[i] = &rows[i]
+			}
+
+			return out, nil
 		},
 	)
 }
 
+func readinessQuery(req *ediports.GetEDIPartnerReadinessRequest) *keel.Query[*edi.EDIPartner] {
+	ep := edidb.EDIPartners
+	cp := edidb.EDICommunicationProfiles
+	mi := edidb.EDIMappingProfileItems
+	lp := edidb.LadingProjects
+
+	return ep.Pick(
+		ep.ID,
+		ep.ContactEmail.Coalesce(""),
+		ep.Timezone.Coalesce(""),
+		keel.Exists(cp.Where(cp.EDIPartnerID.EqCol(ep.ID), cp.Status.Eq(domaintypes.StatusActive))),
+		keel.Exists(mi.Where(mi.EDIPartnerID.EqCol(ep.ID))),
+		keel.Exists(lp.Where(lp.EDIPartnerID.EqCol(ep.ID))),
+		keel.Exists(lp.Where(lp.EDIPartnerID.EqCol(ep.ID), lp.ActiveVersionID.IsNotNull())),
+		ep.EnabledForInbound,
+		ep.EnabledForOutbound,
+		keel.CastText(ep.Kind),
+	).Where(ep.ID.In(req.PartnerIDs...))
+}
+
 func (r *repository) Update(ctx context.Context, entity *edi.EDIPartner) (*edi.EDIPartner, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
-		ov := entity.Version
-		entity.Version++
-		cols := edicol.EDIPartnerColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Column(
-				cols.Kind.Bare(),
-				cols.Status.Bare(),
-				cols.Code.Bare(),
-				cols.Name.Bare(),
-				cols.Description.Bare(),
-				cols.InternalOrganizationID.Bare(),
-				cols.EDIConnectionID.Bare(),
-				cols.CustomerID.Bare(),
-				cols.DefaultTransportID.Bare(),
-				cols.DefaultMappingProfileID.Bare(),
-				cols.Timezone.Bare(),
-				cols.Country.Bare(),
-				cols.ContactName.Bare(),
-				cols.ContactEmail.Bare(),
-				cols.ContactPhone.Bare(),
-				cols.EnabledForInbound.Bare(),
-				cols.EnabledForOutbound.Bare(),
-				cols.Settings.Bare(),
-				cols.Version.Bare(),
-				cols.UpdatedAt.Bare(),
-			).
-			Returning("*").
-			Exec(ctx)
+		ep := edidb.EDIPartners
+		err := ep.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			ep.Kind,
+			ep.Status,
+			ep.Code,
+			ep.Name,
+			ep.Description,
+			ep.InternalOrganizationID,
+			ep.EDIConnectionID,
+			ep.CustomerID,
+			ep.DefaultTransportID,
+			ep.DefaultMappingProfileID,
+			ep.Timezone,
+			ep.Country,
+			ep.ContactName,
+			ep.ContactEmail,
+			ep.ContactPhone,
+			ep.EnabledForInbound,
+			ep.EnabledForOutbound,
+			ep.Settings,
+		)
 		if err != nil {
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "EDIPartner", entity.ID.String()); err != nil {
-			return nil, err
+			return nil, partnerErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -348,29 +284,25 @@ func (r *repository) GetReciprocalInternalPartner(
 		"read the receiving organization's internal partner record for an internal tender",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
-		entity := new(edi.EDIPartner)
-		cols := edicol.EDIPartnerColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Join(`JOIN "organizations" AS "target_org"`).
-			JoinOn(tenantcol.OrganizationColumns.ID.WithAlias("target_org").EqColumn(cols.OrganizationID)).
-			JoinOn(
-				tenantcol.OrganizationColumns.BusinessUnitID.WithAlias("target_org").
-					EqColumn(cols.BusinessUnitID),
+		ep := edidb.EDIPartners
+		org := tenantdb.Organizations
+		entity, err := ep.AllTenants().
+			Where(
+				ep.OrganizationID.Eq(req.TargetOrganizationID),
+				ep.BusinessUnitID.Eq(req.BusinessUnitID),
+				ep.InternalOrganizationID.Eq(req.SourceOrganizationID),
+				ep.Kind.Eq(edi.PartnerKindInternal),
+				ep.Status.Eq(domaintypes.StatusActive),
+				ep.EnabledForInbound.IsTrue(),
+				keel.Exists(org.AllTenants().Where(
+					org.ID.EqCol(ep.OrganizationID),
+					org.BusinessUnitID.EqCol(ep.BusinessUnitID),
+				)),
 			).
-			Where(cols.OrganizationID.Eq(), req.TargetOrganizationID).
-			Where(cols.BusinessUnitID.Eq(), req.BusinessUnitID).
-			Where(cols.InternalOrganizationID.Eq(), req.SourceOrganizationID).
-			Where(cols.Kind.Eq(), edi.PartnerKindInternal).
-			Where(cols.Status.Eq(), domaintypes.StatusActive).
-			Where(cols.EnabledForInbound.IsTrue()).
-			Order(cols.CreatedAt.OrderAsc()).
-			Limit(1).
-			Scan(ctx)
+			Order(ep.CreatedAt.Asc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ReciprocalEDIPartner")
+			return nil, reciprocalPartnerErrors.Map(err, req.SourceOrganizationID.String())
 		}
 
 		return entity, nil
@@ -382,27 +314,7 @@ func (r *repository) ListOutboundPartnersByCustomerIDs(
 	req ediports.ListEDIPartnersByCustomerIDsRequest,
 ) ([]*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIPartner, error) {
-		if len(req.CustomerIDs) == 0 {
-			return []*edi.EDIPartner{}, nil
-		}
-
-		cols := edicol.EDIPartnerColumns
-		entities := make([]*edi.EDIPartner, 0, len(req.CustomerIDs))
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.CustomerID.In(), bun.List(req.CustomerIDs)).
-			Where(cols.Status.Eq(), domaintypes.StatusActive).
-			Where(cols.EnabledForOutbound.IsTrue()).
-			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return entities, nil
+		return r.outboundPartners(ctx, &req, nil)
 	})
 }
 
@@ -411,106 +323,44 @@ func (r *repository) ListInternalOutboundPartnersByCustomerIDs(
 	req ediports.ListEDIPartnersByCustomerIDsRequest,
 ) ([]*edi.EDIPartner, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIPartner, error) {
-		if len(req.CustomerIDs) == 0 {
-			return []*edi.EDIPartner{}, nil
-		}
-
-		cols := edicol.EDIPartnerColumns
-		entities := make([]*edi.EDIPartner, 0, len(req.CustomerIDs))
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.CustomerID.In(), bun.List(req.CustomerIDs)).
-			Where(cols.Kind.Eq(), edi.PartnerKindInternal).
-			Where(cols.Status.Eq(), domaintypes.StatusActive).
-			Where(cols.EnabledForOutbound.IsTrue()).
-			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return entities, nil
+		return r.outboundPartners(
+			ctx,
+			&req,
+			edidb.EDIPartners.Kind.Eq(edi.PartnerKindInternal),
+		)
 	})
 }
 
-func (r *repository) ListCursor(
+func (r *repository) outboundPartners(
 	ctx context.Context,
-	req *ediports.ListEDIPartnersRequest,
-) (*pagination.CursorListResult[*edi.EDIPartner], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIPartner], error) {
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*edi.EDIPartner)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"ep",
-							req.Filter,
-							(*edi.EDIPartner)(nil),
-						)
-						return applyPartnerListFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
+	req *ediports.ListEDIPartnersByCustomerIDsRequest,
+	kind keel.Pred,
+) ([]*edi.EDIPartner, error) {
+	if len(req.CustomerIDs) == 0 {
+		return []*edi.EDIPartner{}, nil
+	}
 
-			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIPartner]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*edi.EDIPartner) *bun.SelectQuery {
-					rel := edicol.EDIPartnerRelations
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(edicol.EDIPartnerTable.All()).
-						Relation(rel.InternalOrganization).
-						Relation(rel.Connection).
-						Relation(rel.DefaultTransport)
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						"ep",
-						req.Filter,
-						req.Cursor,
-						(*edi.EDIPartner)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return applyPartnerListFilters(sq, req), nil
-				},
-			})
-		},
+	ep := edidb.EDIPartners
+	return ep.Where(
+		ep.CustomerID.In(req.CustomerIDs...),
+		kind,
+		ep.Status.Eq(domaintypes.StatusActive),
+		ep.EnabledForOutbound.IsTrue(),
+	).
+		Order(ep.CreatedAt.Asc()).
+		All(ctx, r.db.Keel(ctx))
+}
+
+func listedPartners(req *ediports.ListEDIPartnersRequest) *keel.Query[*edi.EDIPartner] {
+	ep := edidb.EDIPartners
+	return ep.Where(
+		keel.When(req.CustomerID.IsNotNil(), ep.CustomerID.Eq(req.CustomerID)),
+		keel.When(req.EnabledForOutbound, ep.EnabledForOutbound.IsTrue()),
+		keel.When(req.Status != "", ep.Status.Eq(req.Status)),
 	)
 }
 
-func applyPartnerListFilters(
-	q *bun.SelectQuery,
-	req *ediports.ListEDIPartnersRequest,
-) *bun.SelectQuery {
-	cols := edicol.EDIPartnerColumns
-	if req.CustomerID.IsNotNil() {
-		q = q.Where(cols.CustomerID.Eq(), req.CustomerID)
-	}
-	if req.EnabledForOutbound {
-		q = q.Where(cols.EnabledForOutbound.IsTrue())
-	}
-	if req.Status != "" {
-		q = q.Where(cols.Status.Eq(), req.Status)
-	}
-	return q
+func withLinks(q *keel.Query[*edi.EDIPartner]) *keel.Query[*edi.EDIPartner] {
+	ep := edidb.EDIPartners
+	return q.Load(ep.InternalOrganization(), ep.Connection(), ep.DefaultTransport())
 }

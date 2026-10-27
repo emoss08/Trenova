@@ -51,7 +51,6 @@ type Params struct {
 	Plans        platformplanports.PlanService            `                                   optional:"true"`
 	Sites        agentextensionports.PortalSiteRepository
 	Runs         agentextensionports.PortalRunRepository
-	Analyses     agentextensionports.AnalysisRunRepository
 	Watches      agentextensionports.WebWatchRepository
 	Findings     agentextensionports.WebWatchFindingRepository
 	Workflows    kernelports.WorkflowStarter `                                   optional:"true"`
@@ -67,12 +66,10 @@ type Service struct {
 	connectors map[agentextension.Type]agentextensionports.ExtensionConnector
 	webSearch  map[agentextension.Type]agentextensionports.WebSearchProvider
 	browsers   map[agentextension.Type]agentextensionports.BrowserProvider
-	sandboxes  map[agentextension.Type]agentextensionports.SandboxProvider
 	watchers   map[agentextension.Type]agentextensionports.WebWatchProvider
 	plans      platformplanports.PlanService
 	sites      agentextensionports.PortalSiteRepository
 	runs       agentextensionports.PortalRunRepository
-	analyses   agentextensionports.AnalysisRunRepository
 	watches    agentextensionports.WebWatchRepository
 	findings   agentextensionports.WebWatchFindingRepository
 	workflows  kernelports.WorkflowStarter
@@ -94,10 +91,6 @@ func New(p Params) *Service {
 		map[agentextension.Type]agentextensionports.BrowserProvider,
 		len(p.Connectors),
 	)
-	sandboxes := make(
-		map[agentextension.Type]agentextensionports.SandboxProvider,
-		len(p.Connectors),
-	)
 	watchers := make(
 		map[agentextension.Type]agentextensionports.WebWatchProvider,
 		len(p.Connectors),
@@ -114,9 +107,6 @@ func New(p Params) *Service {
 		if provider, ok := connector.(agentextensionports.BrowserProvider); ok {
 			browsers[typ] = provider
 		}
-		if provider, ok := connector.(agentextensionports.SandboxProvider); ok {
-			sandboxes[typ] = provider
-		}
 		if provider, ok := connector.(agentextensionports.WebWatchProvider); ok {
 			watchers[typ] = provider
 		}
@@ -131,12 +121,10 @@ func New(p Params) *Service {
 		connectors: connectors,
 		webSearch:  webSearch,
 		browsers:   browsers,
-		sandboxes:  sandboxes,
 		watchers:   watchers,
 		plans:      p.Plans,
 		sites:      p.Sites,
 		runs:       p.Runs,
-		analyses:   p.Analyses,
 		watches:    p.Watches,
 		findings:   p.Findings,
 		workflows:  p.Workflows,
@@ -259,17 +247,8 @@ func servedTools(
 	)
 }
 
-// servedToolsOf lists every tool the vendor can serve: its capability's, and
-// those of each capability a setting of it switches on.
 func servedToolsOf(spec *agentextension.Spec) []agentextensionports.AgentExtensionTool {
-	tools := servedTools(capabilityDefinitions[spec.Capability].Tools, *spec)
-	for _, c := range agentextension.AllCapabilities() {
-		if c != spec.Capability && spec.Serves(c) {
-			tools = append(tools, servedTools(capabilityDefinitions[c].Tools, *spec)...)
-		}
-	}
-
-	return tools
+	return servedTools(capabilityDefinitions[spec.Capability].Tools, *spec)
 }
 
 func catalogItem(
@@ -512,25 +491,6 @@ func (s *Service) checkCapabilityFree(
 	return multiErr
 }
 
-// switchedOff says an enabled extension could serve the capability but the
-// setting that switches it on is off.
-func switchedOff(
-	installed []*agentextension.Extension,
-	capability agentextension.Capability,
-) bool {
-	for _, record := range installed {
-		spec, ok := agentextension.SpecFor(record.Type)
-		if !ok || !record.Ready(spec) || spec.Capability == capability || !spec.Serves(capability) {
-			continue
-		}
-		if !slices.Contains(spec.ServedBy(record.Configuration), capability) {
-			return true
-		}
-	}
-
-	return false
-}
-
 func enabledFor(
 	installed []*agentextension.Extension,
 	capability agentextension.Capability,
@@ -739,11 +699,6 @@ func (s *Service) serving(
 
 	served, ok := agentextension.ActiveFrom(records)[capability]
 	if !ok {
-		if switchedOff(records, capability) {
-			return nil, &ToolError{Message: label + " is turned off for this organization. " +
-				"An administrator can turn it on in the extension's settings under AI Control, " +
-				"Extensions."}
-		}
 		if enabledFor(records, capability, "") != nil {
 			return nil, &ToolError{Message: label + " is not set up for this organization. " +
 				"An administrator can finish setting it up under AI Control, Extensions."}

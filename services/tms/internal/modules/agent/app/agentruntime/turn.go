@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
@@ -64,6 +65,11 @@ type Turn struct {
 	questions map[string]struct{}
 	decisions map[pulid.ID]struct{}
 	shown     map[string][]string
+	// continuable is every script of the turn a later call may continue, by
+	// its call id, with how; continuing is every call that continues one, by
+	// its own call id, with the id of the script it continues.
+	continuable map[string]codemode.Continuation
+	continuing  map[string]string
 	// callIDs is every tool call id the conversation holds, so a provider
 	// that reuses one is given a fresh id rather than a clash.
 	callIDs map[string]struct{}
@@ -180,11 +186,14 @@ type DispatchCall struct {
 	// Model, Provider and ProviderID are what answered the completion that
 	// asked for the call, and ScriptPosition is how many scripts the turn has
 	// asked for up to and including this one; the code-mode gate reads the
-	// answering provider's settings and the count.
-	Model          string          `json:"model,omitempty"`
-	Provider       aiprovider.Kind `json:"provider,omitempty"`
-	ProviderID     pulid.ID        `json:"providerId,omitempty"`
-	ScriptPosition int             `json:"scriptPosition,omitempty"`
+	// answering provider's settings and the count. ScriptContinues is the
+	// arguments of the script of the turn the call continues, which the count
+	// leaves out.
+	Model           string          `json:"model,omitempty"`
+	Provider        aiprovider.Kind `json:"provider,omitempty"`
+	ProviderID      pulid.ID        `json:"providerId,omitempty"`
+	ScriptPosition  int             `json:"scriptPosition,omitempty"`
+	ScriptContinues map[string]any  `json:"scriptContinues,omitempty"`
 }
 
 // ToolOutcome is what one tool call came to.
@@ -212,6 +221,9 @@ type ToolOutcome struct {
 	// Shown is what the call put in front of the person, which the loop
 	// keeps when it is a table, for the pass over the final reply.
 	Shown *agentports.ShownArtifact `json:"shown,omitempty"`
+	// Continuation is how a later call of the turn may continue the script
+	// the call ran.
+	Continuation codemode.Continuation `json:"continuation,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -235,6 +247,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		Memories:       o.memories,
 		SavedMemory:    o.saved,
 		Shown:          o.shown,
+		Continuation:   o.continuation,
 		Data:           o.data,
 		RanWith:        o.ranWith,
 	}
@@ -256,6 +269,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		memories:       o.Memories,
 		saved:          o.SavedMemory,
 		shown:          o.Shown,
+		continuation:   o.Continuation,
 		data:           o.Data,
 		ranWith:        o.RanWith,
 	}
@@ -330,6 +344,10 @@ type TurnState struct {
 	// ToolMemories are the carried memories about a tool the turn has not
 	// called yet.
 	ToolMemories map[string][]pulid.ID `json:"toolMemories,omitempty"`
+	// Continuable are the scripts a later call may continue, by call id, and
+	// Continuing each call that continues one, with the id it continues.
+	Continuable map[string]codemode.Continuation `json:"continuable,omitempty"`
+	Continuing  map[string]string                `json:"continuing,omitempty"`
 
 	ProviderKind aiprovider.Kind `json:"providerKind,omitempty"`
 }
@@ -380,6 +398,8 @@ func (t *Turn) State() TurnState {
 		TaintOpened:     slices.Clone(t.opened),
 		World:           t.world.clone(),
 		ToolMemories:    cloneToolMemories(t.toolMemories),
+		Continuable:     maps.Clone(t.continuable),
+		Continuing:      maps.Clone(t.continuing),
 		ProviderKind:    t.providerKind,
 	}
 }
@@ -445,6 +465,8 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		external:     state.ExternalContent,
 		world:        state.World.clone(),
 		toolMemories: cloneToolMemories(state.ToolMemories),
+		continuable:  maps.Clone(state.Continuable),
+		continuing:   maps.Clone(state.Continuing),
 		providerKind: state.ProviderKind,
 	}
 }
@@ -1051,6 +1073,7 @@ func (s *Service) DispatchStep(
 			provider:   call.Provider,
 			providerID: call.ProviderID,
 			position:   call.ScriptPosition,
+			continues:  call.ScriptContinues,
 		},
 	})
 	outcome.summary = summarizeOutcome(call.Call, outcome)

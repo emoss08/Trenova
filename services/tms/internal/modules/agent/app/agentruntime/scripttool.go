@@ -4,11 +4,11 @@ import (
 	"context"
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/observability/aitrace"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -52,8 +52,11 @@ func (s *Service) runScriptTool(
 		req,
 		tool,
 		call,
-		&queryExtras{broker: broker, stepKey: p.stepKey},
+		&queryExtras{broker: broker, stepKey: p.stepKey, continues: p.gate.continues},
 	)
+	if !outcome.failed {
+		outcome.continuation = scriptContinuation(outcome.data)
+	}
 	marks := broker.taintMarks()
 	outcome.taint = append(outcome.taint, marks...)
 
@@ -122,16 +125,64 @@ func (s *Service) withoutScripts(
 	}
 	kept = slices.DeleteFunc(slices.Clone(held), isScriptRunner)
 	reached = beyond
-	if _, found := beyond[agentextension.ToolRunScript]; found {
+	if _, found := beyond[codemode.ToolRunScript]; found {
 		reached = maps.Clone(beyond)
-		delete(reached, agentextension.ToolRunScript)
+		delete(reached, codemode.ToolRunScript)
 	}
 
 	return kept, reached
 }
 
 func isScriptRunner(name string) bool {
-	return name == agentextension.ToolRunScript
+	return name == codemode.ToolRunScript
+}
+
+// inheritScriptName gives a continuation the title and purpose of the script
+// it continues when it leaves them out, before its arguments are checked: it
+// finishes that script, under its name. Sonnet sent continuations with only
+// continues and code, as the parameter asks, and the required title refused
+// them.
+func inheritScriptName(arguments, continues map[string]any) map[string]any {
+	if continues == nil {
+		return arguments
+	}
+	inherited := make(map[string]any, len(arguments)+2)
+	maps.Copy(inherited, arguments)
+	for _, key := range []string{codemode.ParamScriptTitle, codemode.ParamScriptPurpose} {
+		if strings.TrimSpace(stringArg(inherited, key)) != "" {
+			continue
+		}
+		if earlier := stringArg(continues, key); earlier != "" {
+			inherited[key] = earlier
+		}
+	}
+
+	return inherited
+}
+
+func scriptContinuation(data any) codemode.Continuation {
+	continuable, ok := data.(codemode.Continuable)
+	if !ok {
+		return codemode.ContinueNone
+	}
+
+	return continuable.ScriptContinuation()
+}
+
+// continuationRefusal refuses a call that continues a script it may not,
+// before its arguments are checked: a continuation leaves out what the
+// script it continues already has, and told "title is required" a model
+// never learned that the script it named was the trouble.
+func continuationRefusal(call *agentports.ToolCall, gate scriptGate) (toolOutcome, bool) {
+	continues := strings.TrimSpace(stringArg(call.Arguments, codemode.ParamScriptContinues))
+	if continues == "" || gate.continues != nil {
+		return toolOutcome{}, false
+	}
+
+	return refusedOutcome(aitrace.OutcomeFailed, "it continues no script it may",
+		"Tool %q was not run: continues names no script of this turn that ran to the end, or "+
+			"one another call already continued. Send the whole script without continues.",
+		call.Name), true
 }
 
 func scriptCompleted(data any) bool {

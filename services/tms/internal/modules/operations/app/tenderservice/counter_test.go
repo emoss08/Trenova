@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/dispatchcontrol"
@@ -198,7 +200,7 @@ func setupCounter(t *testing.T, policy func(*dispatchcontrol.DispatchControl)) *
 	entity := sentWaterfall(tenantInfo)
 	control := &dispatchcontrol.DispatchControl{
 		TenderCounterOffersEnabled:      true,
-		TenderCounterMarginFloorPercent: decimal.NewFromInt(10),
+		TenderCounterMarginFloorPercent: decimal.NewNullDecimal(decimal.NewFromInt(10)),
 		TenderCounterDecisionMinutes:    60,
 		TenderExhaustedAction:           dispatchcontrol.TenderExhaustedActionNotify,
 	}
@@ -220,7 +222,7 @@ func setupCounter(t *testing.T, policy func(*dispatchcontrol.DispatchControl)) *
 	}
 	deps.svc = &Service{
 		l:                zap.NewNop(),
-		db:               testDBConnection{},
+		db:               dbtest.NopConnection{},
 		repo:             deps.repo,
 		assignmentRepo:   deps.moves,
 		shipmentRepo:     deps.shipments,
@@ -273,7 +275,12 @@ func TestACounterWithinTheFloorWaitsForAPersonByDefault(t *testing.T) {
 	assert.False(t, deps.offer.CounterNeedsApproval)
 	assert.True(t, decimal.NewFromFloat(12.5).Equal(deps.offer.CounterMargin.Decimal))
 	assert.Equal(t, result.DecisionDeadline, *deps.offer.ExpiresAt)
-	assert.Contains(t, deps.repo.revoked, deps.offer.ID, "the carrier's link closes once it counters")
+	assert.Contains(
+		t,
+		deps.repo.revoked,
+		deps.offer.ID,
+		"the carrier's link closes once it counters",
+	)
 
 	countered := deps.events.eventsOfType(shipmentevent.TypeTenderCountered)
 	require.Len(t, countered, 1)
@@ -305,7 +312,10 @@ func TestACounterBelowTheFloorNeedsApprovalEvenWithAutoAccept(t *testing.T) {
 	countered := deps.events.eventsOfType(shipmentevent.TypeTenderCountered)
 	require.Len(t, countered, 1)
 	assert.Equal(t, true, countered[0].Metadata["needsApproval"])
-	assert.Equal(t, "5", countered[0].Metadata["marginPercent"])
+	assert.NotContains(t, countered[0].Metadata, "marginPercent",
+		"every reader of the shipment reads its activity, so the event states no margin")
+	assert.True(t, decimal.NewFromInt(5).Equal(deps.offer.CounterMargin.Decimal),
+		"the offer keeps the margin for the margins field group")
 }
 
 func TestACounterThatArrivesAfterTheOfferMovedOnIsLate(t *testing.T) {
@@ -473,7 +483,11 @@ func TestACounterNobodyDecidedLapses(t *testing.T) {
 	assert.Equal(t, tender.OfferStatusExpired, deps.offer.Status)
 	decided := deps.events.eventsOfType(shipmentevent.TypeTenderCounterDecided)
 	require.Len(t, decided, 1)
-	assert.Equal(t, "Nobody decided on the counter-offer before it lapsed", decided[0].Metadata["reason"])
+	assert.Equal(
+		t,
+		"Nobody decided on the counter-offer before it lapsed",
+		decided[0].Metadata["reason"],
+	)
 	assert.Empty(t, deps.events.eventsOfType(shipmentevent.TypeTenderExpired))
 }
 
@@ -506,7 +520,12 @@ func TestTakingACounterPaysTheCarrierItsCounterRate(t *testing.T) {
 	deps.svc.assigner = assigner
 	deps.svc.carrierAssignmentRepo = &stubCarrierAssignmentRepo{}
 
-	result, err := deps.svc.AcceptOffer(t.Context(), deps.tenant, deps.offer.ID, tender.ResponseSourceManual)
+	result, err := deps.svc.AcceptOffer(
+		t.Context(),
+		deps.tenant,
+		deps.offer.ID,
+		tender.ResponseSourceManual,
+	)
 
 	require.NoError(t, err)
 	assert.False(t, result.Ignored)

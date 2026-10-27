@@ -7,26 +7,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
-	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -44,11 +39,21 @@ const (
 	defaultStaleLimit = 500
 	maxStaleLimit     = 5000
 
-	outcomeAlias = "_outcome"
-
 	defaultErroredLimit = 500
 	maxErroredLimit     = 2000
 )
+
+var outcomeColumnNames = []string{
+	"organization_id",
+	"business_unit_id",
+	colSourceType,
+	colSourceID,
+	"model_key",
+	"generation",
+	"chunk_count",
+	"last_error",
+	"next_attempt_at",
+}
 
 func (r *repository) MarkStale(
 	ctx context.Context,
@@ -109,23 +114,24 @@ func (r *repository) MarkStale(
 			}
 		}
 
-		cols := airetrievalcol.IndexEntryColumns
-		res, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entries).
-			On(conflictTarget(airetrievalcol.IndexEntryTable)+" DO UPDATE").
-			Set(cols.Status.Set(), airetrieval.IndexStatusPending).
-			Set(cols.Generation.IncConflict(1)).
-			Set(cols.Attempts.Set(), 0).
-			Set(cols.LastError.SetNull()).
-			Set(cols.NextAttemptAt.SetNull()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Exec(ctx)
-		if err != nil {
+		e := airetrievaldb.IndexEntries
+		if _, err := e.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			entries,
+			keel.OnConflict(e.OrganizationID, e.BusinessUnitID, e.SourceType, e.SourceID, e.ModelKey).
+				Set(
+					e.Status.To(airetrieval.IndexStatusPending),
+					e.Generation.Increment(1),
+					e.Attempts.To(0),
+					e.LastError.ToNull(),
+					e.NextAttemptAt.ToNull(),
+				),
+		); err != nil {
 			return 0, fmt.Errorf("mark retrieval sources stale: %w", err)
 		}
 
-		return rowsAffected(res)
+		return len(entries), nil
 	})
 }
 
@@ -164,39 +170,40 @@ func (r *repository) ClaimIndexEntries(
 			now = timeutils.NowUnix()
 		}
 
-		cols := airetrievalcol.IndexEntryColumns
-		dba := r.db.DBForContext(ctx)
-
-		picked := dba.NewSelect().
-			Model((*airetrieval.IndexEntry)(nil)).
-			Column(airetrievalcol.IndexEntryTable.PrimaryKey...).
-			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
-			Where(cols.ModelKey.Eq(), req.ModelKey).
-			Where(cols.Status.Eq(), airetrieval.IndexStatusPending).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where(cols.LeaseExpiresAt.IsNull()).WhereOr(cols.LeaseExpiresAt.Lte(), now)
-			}).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where(cols.NextAttemptAt.IsNull()).WhereOr(cols.NextAttemptAt.Lte(), now)
-			}).
-			OrderExpr(cols.UpdatedAt.OrderAsc()).
-			OrderExpr(cols.SourceID.OrderAsc()).
-			Limit(int64(limit)).
-			For("UPDATE SKIP LOCKED")
+		e := airetrievaldb.IndexEntries
+		pickedEntries := airetrievaldb.IndexEntries.As("picked_entry")
+		pickedQuery := pickedEntries.
+			Where(
+				pickedEntries.ModelKey.Eq(req.ModelKey),
+				pickedEntries.Status.Eq(airetrieval.IndexStatusPending),
+				keel.Or(
+					pickedEntries.LeaseExpiresAt.IsNull(),
+					pickedEntries.LeaseExpiresAt.Lte(now),
+				),
+				keel.Or(pickedEntries.NextAttemptAt.IsNull(), pickedEntries.NextAttemptAt.Lte(now)),
+			).
+			Pick(pickedEntries.SourceType, pickedEntries.SourceID).
+			Order(pickedEntries.UpdatedAt.Asc(), pickedEntries.SourceID.Asc()).
+			Limit(limit).
+			Lock(keel.ForUpdate, keel.SkipLocked)
 		if len(req.SourceTypes) > 0 {
-			picked = picked.Where(cols.SourceType.In(), bun.List(req.SourceTypes))
+			pickedQuery.Where(pickedEntries.SourceType.In(req.SourceTypes...))
 		}
+		picked := keel.CTE("picked", []string{colSourceType, colSourceID}, pickedQuery)
 
-		entries := make([]*airetrieval.IndexEntry, 0, limit)
-		if err := dba.NewUpdate().
-			Model((*airetrieval.IndexEntry)(nil)).
-			Set(cols.LeaseExpiresAt.Set(), now+int64(lease/time.Second)).
-			Set(cols.Attempts.Inc(1)).
-			Set(cols.LastAttemptAt.Set(), now).
-			Set(cols.UpdatedAt.Set(), now).
-			Where(indexEntryKeyTuple()+" IN (?)", picked).
-			Returning(airetrievalcol.IndexEntryTable.All()).
-			Scan(ctx, &entries); err != nil {
+		entries, err := e.With(picked).
+			Join(picked,
+				picked.Col(colSourceType).EqCol(e.SourceType),
+				picked.Col(colSourceID).EqCol(e.SourceID),
+			).
+			Where(e.ModelKey.Eq(req.ModelKey)).
+			UpdateReturning(ctx, r.db.Keel(ctx),
+				e.LeaseExpiresAt.To(now+int64(lease/time.Second)),
+				e.Attempts.Increment(1),
+				e.LastAttemptAt.To(now),
+				e.UpdatedAt.To(now),
+			)
+		if err != nil {
 			return nil, fmt.Errorf("claim index entries: %w", err)
 		}
 
@@ -211,62 +218,58 @@ func (r *repository) ClaimIndexEntries(
 	})
 }
 
-func indexEntryKeyTuple() string {
-	cols := airetrievalcol.IndexEntryColumns
-
-	return buncolgen.Expr("({0}, {1}, {2}, {3}, {4})",
-		cols.OrganizationID,
-		cols.BusinessUnitID,
-		cols.SourceType,
-		cols.SourceID,
-		cols.ModelKey,
-	)
-}
-
 type outcomeRow struct {
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100)"`
-	SourceType     string   `bun:"source_type,type:VARCHAR(30)"`
-	SourceID       pulid.ID `bun:"source_id,type:VARCHAR(100)"`
-	ModelKey       string   `bun:"model_key,type:VARCHAR(300)"`
-	Generation     int64    `bun:"generation,type:BIGINT"`
-	ChunkCount     int      `bun:"chunk_count,type:INTEGER"`
-	LastError      *string  `bun:"last_error,type:TEXT"`
-	NextAttemptAt  *int64   `bun:"next_attempt_at,type:BIGINT"`
+	OrganizationID string
+	BusinessUnitID string
+	SourceType     string
+	SourceID       string
+	ModelKey       string
+	Generation     int64
+	ChunkCount     int64
+	LastError      string
+	NextAttemptAt  int64
 }
 
-var outcomeColumns = struct {
-	OrganizationID buncolgen.Column
-	BusinessUnitID buncolgen.Column
-	SourceType     buncolgen.Column
-	SourceID       buncolgen.Column
-	ModelKey       buncolgen.Column
-	Generation     buncolgen.Column
-	ChunkCount     buncolgen.Column
-	LastError      buncolgen.Column
-	NextAttemptAt  buncolgen.Column
-}{
-	OrganizationID: airetrievalcol.IndexEntryColumns.OrganizationID.WithAlias(outcomeAlias),
-	BusinessUnitID: airetrievalcol.IndexEntryColumns.BusinessUnitID.WithAlias(outcomeAlias),
-	SourceType:     airetrievalcol.IndexEntryColumns.SourceType.WithAlias(outcomeAlias),
-	SourceID:       airetrievalcol.IndexEntryColumns.SourceID.WithAlias(outcomeAlias),
-	ModelKey:       airetrievalcol.IndexEntryColumns.ModelKey.WithAlias(outcomeAlias),
-	Generation:     airetrievalcol.IndexEntryColumns.Generation.WithAlias(outcomeAlias),
-	ChunkCount:     airetrievalcol.IndexEntryColumns.ChunkCount.WithAlias(outcomeAlias),
-	LastError:      airetrievalcol.IndexEntryColumns.LastError.WithAlias(outcomeAlias),
-	NextAttemptAt:  airetrievalcol.IndexEntryColumns.NextAttemptAt.WithAlias(outcomeAlias),
+func outcomeTable(rows []outcomeRow) *keel.CTETable {
+	orgs := make([]string, 0, len(rows))
+	bus := make([]string, 0, len(rows))
+	types := make([]string, 0, len(rows))
+	ids := make([]string, 0, len(rows))
+	keys := make([]string, 0, len(rows))
+	generations := make([]int64, 0, len(rows))
+	chunks := make([]int64, 0, len(rows))
+	errs := make([]string, 0, len(rows))
+	retries := make([]int64, 0, len(rows))
+	for index := range rows {
+		row := &rows[index]
+		orgs = append(orgs, row.OrganizationID)
+		bus = append(bus, row.BusinessUnitID)
+		types = append(types, row.SourceType)
+		ids = append(ids, row.SourceID)
+		keys = append(keys, row.ModelKey)
+		generations = append(generations, row.Generation)
+		chunks = append(chunks, row.ChunkCount)
+		errs = append(errs, row.LastError)
+		retries = append(retries, row.NextAttemptAt)
+	}
+
+	return keel.Unnest("outcome", outcomeColumnNames,
+		orgs, bus, types, ids, keys, generations, chunks, errs, retries)
 }
 
-func matchOutcomeKey(q *bun.UpdateQuery) *bun.UpdateQuery {
-	cols := airetrievalcol.IndexEntryColumns
-	o := outcomeColumns
+func matchOutcome(
+	q *keel.Query[*airetrieval.IndexEntry],
+	outcome *keel.CTETable,
+) *keel.Query[*airetrieval.IndexEntry] {
+	e := airetrievaldb.IndexEntries
 
-	return q.
-		Where(cols.OrganizationID.EqColumn(o.OrganizationID)).
-		Where(cols.BusinessUnitID.EqColumn(o.BusinessUnitID)).
-		Where(cols.SourceType.EqColumn(o.SourceType)).
-		Where(cols.SourceID.EqColumn(o.SourceID)).
-		Where(cols.ModelKey.EqColumn(o.ModelKey))
+	return q.With(outcome).Join(outcome,
+		outcome.Col("organization_id").EqCol(e.OrganizationID),
+		outcome.Col("business_unit_id").EqCol(e.BusinessUnitID),
+		outcome.Col(colSourceType).EqCol(e.SourceType),
+		outcome.Col(colSourceID).EqCol(e.SourceID),
+		outcome.Col("model_key").EqCol(e.ModelKey),
+	)
 }
 
 func outcomeRows(
@@ -299,24 +302,23 @@ func outcomeRows(
 		seen[key] = struct{}{}
 
 		row := outcomeRow{
-			OrganizationID: key.OrganizationID,
-			BusinessUnitID: key.BusinessUnitID,
+			OrganizationID: key.OrganizationID.String(),
+			BusinessUnitID: key.BusinessUnitID.String(),
 			SourceType:     key.SourceType.String(),
-			SourceID:       key.SourceID,
+			SourceID:       key.SourceID.String(),
 			ModelKey:       key.ModelKey,
 			Generation:     outcome.Generation,
 		}
 
 		switch status {
 		case airetrieval.IndexStatusIndexed:
-			row.ChunkCount = outcome.ChunkCount
+			row.ChunkCount = int64(outcome.ChunkCount)
 		case airetrieval.IndexStatusFailed:
 			if strings.TrimSpace(outcome.Error) == "" {
 				return nil, invalid("a failed outcome says why")
 			}
 			if outcome.RetryAt > 0 {
-				retryAt := outcome.RetryAt
-				row.NextAttemptAt = &retryAt
+				row.NextAttemptAt = outcome.RetryAt
 			}
 		case airetrieval.IndexStatusSkipped:
 		case airetrieval.IndexStatusPending:
@@ -324,8 +326,7 @@ func outcomeRows(
 		}
 
 		if message := strings.TrimSpace(outcome.Error); message != "" {
-			truncated := stringutils.TruncateRunes(message, maxErrorChars)
-			row.LastError = &truncated
+			row.LastError = stringutils.TruncateRunes(message, maxErrorChars)
 		}
 
 		rows = append(rows, row)
@@ -376,27 +377,22 @@ func (r *repository) markEntries(
 				now = timeutils.NowUnix()
 			}
 
-			err = r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(ctx context.Context, tx bun.Tx) error {
-					res, txErr := applyOutcome(tx, rows, status, now).Exec(ctx)
-					if txErr != nil {
-						return fmt.Errorf("record index outcomes: %w", txErr)
-					}
-					if result.Applied, txErr = rowsAffected(res); txErr != nil {
-						return txErr
-					}
+			err = r.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+				db := r.db.Keel(ctx)
+				applied, txErr := applyOutcome(ctx, db, rows, status, now)
+				if txErr != nil {
+					return fmt.Errorf("record index outcomes: %w", txErr)
+				}
+				result.Applied = int(applied)
 
-					res, txErr = releaseSuperseded(tx, rows, now).Exec(ctx)
-					if txErr != nil {
-						return fmt.Errorf("release superseded index entries: %w", txErr)
-					}
-					result.Superseded, txErr = rowsAffected(res)
+				superseded, txErr := releaseSuperseded(ctx, db, rows, now)
+				if txErr != nil {
+					return fmt.Errorf("release superseded index entries: %w", txErr)
+				}
+				result.Superseded = int(superseded)
 
-					return txErr
-				},
-			)
+				return nil
+			})
 			if err != nil {
 				return agentports.MarkIndexEntriesResult{}, err
 			}
@@ -407,57 +403,58 @@ func (r *repository) markEntries(
 }
 
 func applyOutcome(
-	tx bun.Tx,
+	ctx context.Context,
+	db *keel.DB,
 	rows []outcomeRow,
 	status airetrieval.IndexStatus,
 	now int64,
-) *bun.UpdateQuery {
-	cols := airetrievalcol.IndexEntryColumns
-	o := outcomeColumns
-
-	q := tx.NewUpdate().
-		With(outcomeAlias, tx.NewValues(&rows)).
-		Model((*airetrieval.IndexEntry)(nil)).
-		TableExpr(outcomeAlias).
-		Set(cols.LeaseExpiresAt.SetNull()).
-		Set(cols.UpdatedAt.Set(), now).
-		Set(cols.LastError.SetExpr(o.LastError.Qualified()))
-
+) (int64, error) {
+	e := airetrievaldb.IndexEntries
+	outcome := outcomeTable(rows)
+	sets := []keel.Assignment{
+		e.LeaseExpiresAt.ToNull(),
+		e.UpdatedAt.To(now),
+		e.LastError.ToExpr(keel.StringOf(outcome.Col("last_error")).NullIf("")),
+	}
 	if status == airetrieval.IndexStatusFailed {
-		q = q.
-			Set(
-				cols.Status.SetExpr(
-					"CASE WHEN "+o.NextAttemptAt.Qualified()+" IS NULL THEN ? ELSE ? END",
-				),
-				airetrieval.IndexStatusFailed,
-				airetrieval.IndexStatusPending,
-			).
-			Set(cols.NextAttemptAt.SetExpr(o.NextAttemptAt.Qualified()))
+		sets = append(sets,
+			e.Status.ToExpr(keel.CaseString().
+				When(
+					keel.Int64Of(outcome.Col("next_attempt_at")).Eq(0),
+					keel.Text(string(airetrieval.IndexStatusFailed)),
+				).
+				Else(keel.Text(string(airetrieval.IndexStatusPending)))),
+			e.NextAttemptAt.ToExpr(keel.Int64Of(outcome.Col("next_attempt_at")).NullIf(0)),
+		)
 	} else {
-		q = q.
-			Set(cols.Status.Set(), status).
-			Set(cols.ChunkCount.SetExpr(o.ChunkCount.Qualified())).
-			Set(cols.NextAttemptAt.SetNull()).
-			Set(cols.IndexedAt.Set(), now)
+		sets = append(sets,
+			e.Status.To(status),
+			e.ChunkCount.ToExpr(outcome.Col("chunk_count")),
+			e.NextAttemptAt.ToNull(),
+			e.IndexedAt.To(now),
+		)
 	}
 
-	return q.
-		Apply(matchOutcomeKey).
-		Where(cols.Generation.EqColumn(o.Generation))
+	return matchOutcome(e.Query(), outcome).
+		Where(e.Generation.EqCol(outcome.Col("generation"))).
+		Update(ctx, db, sets...)
 }
 
-func releaseSuperseded(tx bun.Tx, rows []outcomeRow, now int64) *bun.UpdateQuery {
-	cols := airetrievalcol.IndexEntryColumns
+func releaseSuperseded(
+	ctx context.Context,
+	db *keel.DB,
+	rows []outcomeRow,
+	now int64,
+) (int64, error) {
+	e := airetrievaldb.IndexEntries
+	outcome := outcomeTable(rows)
 
-	return tx.NewUpdate().
-		With(outcomeAlias, tx.NewValues(&rows)).
-		Model((*airetrieval.IndexEntry)(nil)).
-		TableExpr(outcomeAlias).
-		Set(cols.LeaseExpiresAt.SetNull()).
-		Set(cols.UpdatedAt.Set(), now).
-		Apply(matchOutcomeKey).
-		Where(cols.Generation.Expr("{} <> "+outcomeColumns.Generation.Qualified())).
-		Where(cols.Status.Eq(), airetrieval.IndexStatusPending)
+	return matchOutcome(e.Query(), outcome).
+		Where(
+			e.Generation.NeCol(outcome.Col("generation")),
+			e.Status.Eq(airetrieval.IndexStatusPending),
+		).
+		Update(ctx, db, e.LeaseExpiresAt.ToNull(), e.UpdatedAt.To(now))
 }
 
 func (r *repository) CountIndexEntries(
@@ -472,67 +469,99 @@ func (r *repository) CountIndexEntries(
 			return nil, err
 		}
 
-		cols := airetrievalcol.IndexEntryColumns
-		counts := make(
-			[]agentports.IndexEntryCount,
-			0,
-			len(airetrieval.AllSourceTypes())*len(airetrieval.AllIndexStatuses()),
-		)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*airetrieval.IndexEntry)(nil)).
-			Column(cols.SourceType.String(), cols.Status.String()).
-			ColumnExpr(buncolgen.Count("count")).
-			ColumnExpr(buncolgen.Max(cols.IndexedAt, "last_indexed_at")).
-			ColumnExpr(buncolgen.Max(cols.LastAttemptAt, "last_attempt_at")).
-			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
-			Where(cols.ModelKey.Eq(), req.ModelKey).
-			GroupExpr(cols.SourceType.Qualified()).
-			GroupExpr(cols.Status.Qualified()).
-			OrderExpr(cols.SourceType.OrderAsc()).
-			OrderExpr(cols.Status.OrderAsc()).
-			Scan(ctx, &counts); err != nil {
+		e := airetrievaldb.IndexEntries
+		counts, err := keel.Into[agentports.IndexEntryCount](ctx, r.db.Keel(ctx), e.
+			Where(e.ModelKey.Eq(req.ModelKey)).
+			Group(e.SourceType, e.Status).
+			Pick(e.SourceType, e.Status, keel.Count(), e.IndexedAt.Max(), e.LastAttemptAt.Max()).
+			Order(e.SourceType.Asc(), e.Status.Asc()))
+		if err != nil {
 			return nil, fmt.Errorf("count index entries: %w", err)
+		}
+		if counts == nil {
+			counts = []agentports.IndexEntryCount{}
 		}
 
 		return counts, nil
 	})
 }
 
-type sourceTable struct {
-	model          any
-	id             buncolgen.Column
-	organizationID buncolgen.Column
-	businessUnitID buncolgen.Column
-	updatedAt      buncolgen.Column
-	applyTenant    func(pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery
+func staleIndexEntry(
+	entry *airetrievaldb.IndexEntriesTable,
+	updatedAt keel.Int64Col,
+) keel.Pred {
+	return keel.Or(
+		entry.SourceID.IsNull(),
+		keel.And(
+			entry.Status.In(airetrieval.IndexStatusIndexed, airetrieval.IndexStatusSkipped),
+			keel.Int64Of(updatedAt).GteExpr(entry.IndexedAt.Coalesce(0)),
+		),
+		keel.And(
+			entry.Status.Eq(airetrieval.IndexStatusFailed),
+			keel.Int64Of(updatedAt).GteExpr(entry.LastAttemptAt.Coalesce(0)),
+		),
+	)
 }
 
-var sourceTables = map[airetrieval.SourceType]sourceTable{
-	airetrieval.SourceTypeMemory: {
-		model:          (*agent.Memory)(nil),
-		id:             agentcol.MemoryColumns.ID,
-		organizationID: agentcol.MemoryColumns.OrganizationID,
-		businessUnitID: agentcol.MemoryColumns.BusinessUnitID,
-		updatedAt:      agentcol.MemoryColumns.UpdatedAt,
-		applyTenant:    agentcol.MemoryApplyTenant,
-	},
-	airetrieval.SourceTypeDocument: {
-		model:          (*document.Document)(nil),
-		id:             documentcol.DocumentColumns.ID,
-		organizationID: documentcol.DocumentColumns.OrganizationID,
-		businessUnitID: documentcol.DocumentColumns.BusinessUnitID,
-		updatedAt:      documentcol.DocumentColumns.UpdatedAt,
-		applyTenant:    documentcol.DocumentApplyTenant,
-	},
-	airetrieval.SourceTypeInboundMessage: {
-		model:          (*inboundmessage.InboundMessage)(nil),
-		id:             inboundmessagecol.InboundMessageColumns.ID,
-		organizationID: inboundmessagecol.InboundMessageColumns.OrganizationID,
-		businessUnitID: inboundmessagecol.InboundMessageColumns.BusinessUnitID,
-		updatedAt:      inboundmessagecol.InboundMessageColumns.UpdatedAt,
-		applyTenant:    inboundmessagecol.InboundMessageApplyTenant,
-	},
+type staleSource struct {
+	ID        keelkinds.PulidIDCol
+	UpdatedAt keel.Int64Col
+}
+
+func staleSources[T any](
+	q *keel.Query[*T],
+	source staleSource,
+	req *agentports.FindStaleAIRetrievalSourcesRequest,
+	limit int,
+) keel.Projection {
+	entry := airetrievaldb.IndexEntries.As("stale_entry")
+	q.LeftJoin(entry,
+		entry.SourceID.EqCol(source.ID),
+		entry.SourceType.Eq(req.SourceType),
+		entry.ModelKey.Eq(req.ModelKey),
+	).
+		Where(staleIndexEntry(entry, source.UpdatedAt)).
+		Order(source.ID.Asc()).
+		Limit(limit)
+	if req.AfterID.IsNotNil() {
+		q.Where(source.ID.Gt(req.AfterID))
+	}
+
+	return q.Pick(source.ID)
+}
+
+func staleSourceQuery(
+	req *agentports.FindStaleAIRetrievalSourcesRequest,
+	limit int,
+) (keel.Projection, bool) {
+	switch req.SourceType {
+	case airetrieval.SourceTypeMemory:
+		m := agentdb.Memories
+		return staleSources(
+			m.Query(),
+			staleSource{ID: m.ID, UpdatedAt: m.UpdatedAt},
+			req,
+			limit,
+		), true
+	case airetrieval.SourceTypeDocument:
+		d := documentdb.Documents
+		return staleSources(
+			d.Query(),
+			staleSource{ID: d.ID, UpdatedAt: d.UpdatedAt},
+			req,
+			limit,
+		), true
+	case airetrieval.SourceTypeInboundMessage:
+		m := inboundmessagedb.InboundMessages
+		return staleSources(
+			m.Query(),
+			staleSource{ID: m.ID, UpdatedAt: m.UpdatedAt},
+			req,
+			limit,
+		), true
+	default:
+		return nil, false
+	}
 }
 
 func (r *repository) FindStaleSources(
@@ -550,59 +579,23 @@ func (r *repository) FindStaleSources(
 			return nil, err
 		}
 
-		table, ok := sourceTables[req.SourceType]
-		if !ok {
-			return nil, invalid("source type %q is not one retrieval indexes", req.SourceType)
-		}
-
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultStaleLimit
 		}
 		limit = intutils.Clamp(limit, 1, maxStaleLimit)
 
-		entry := airetrievalcol.IndexEntryColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(table.model).
-			ColumnExpr(table.id.Qualified()).
-			Apply(table.applyTenant(req.TenantInfo)).
-			Join("LEFT JOIN "+airetrievalcol.IndexEntryTable.As(airetrievalcol.IndexEntryTable.Alias)).
-			JoinOn(entry.OrganizationID.EqColumn(table.organizationID)).
-			JoinOn(entry.BusinessUnitID.EqColumn(table.businessUnitID)).
-			JoinOn(entry.SourceID.EqColumn(table.id)).
-			JoinOn(entry.SourceType.Eq(), req.SourceType).
-			JoinOn(entry.ModelKey.Eq(), req.ModelKey).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(entry.SourceID.IsNull()).
-					WhereOr(
-						buncolgen.Expr(
-							"{0} IN (?) AND {1} >= COALESCE({2}, 0)",
-							entry.Status, table.updatedAt, entry.IndexedAt,
-						),
-						bun.List([]airetrieval.IndexStatus{
-							airetrieval.IndexStatusIndexed,
-							airetrieval.IndexStatusSkipped,
-						}),
-					).
-					WhereOr(
-						buncolgen.Expr(
-							"{0} = ? AND {1} >= COALESCE({2}, 0)",
-							entry.Status, table.updatedAt, entry.LastAttemptAt,
-						),
-						airetrieval.IndexStatusFailed,
-					)
-			}).
-			OrderExpr(table.id.OrderAsc()).
-			Limit(int64(limit))
-		if req.AfterID.IsNotNil() {
-			q = q.Where(table.id.Gt(), req.AfterID)
+		q, ok := staleSourceQuery(req, limit)
+		if !ok {
+			return nil, invalid("source type %q is not one retrieval indexes", req.SourceType)
 		}
 
-		ids := make([]pulid.ID, 0, limit)
-		if err := q.Scan(ctx, &ids); err != nil {
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), q)
+		if err != nil {
 			return nil, fmt.Errorf("find stale %s sources: %w", req.SourceType, err)
+		}
+		if ids == nil {
+			ids = []pulid.ID{}
 		}
 
 		return ids, nil
@@ -629,18 +622,16 @@ func (r *repository) AverageIndexChunks(
 			return average, invalid("source type %q is not one retrieval indexes", req.SourceType)
 		}
 
-		cols := airetrievalcol.IndexEntryColumns
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*airetrieval.IndexEntry)(nil)).
-			ColumnExpr(buncolgen.Count("entries")).
-			ColumnExpr(cols.ChunkCount.Expr("COALESCE(AVG({}), 0) AS average_chunks")).
-			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
-			Where(cols.SourceType.Eq(), req.SourceType).
-			Where(cols.ModelKey.Eq(), req.ModelKey).
-			Where(cols.Status.Eq(), airetrieval.IndexStatusIndexed).
-			Where(cols.ChunkCount.Gt(), 0).
-			Scan(ctx, &average); err != nil {
+		e := airetrievaldb.IndexEntries
+		average, err := keel.IntoOne[agentports.IndexChunkAverage](ctx, r.db.Keel(ctx), e.
+			Where(
+				e.SourceType.Eq(req.SourceType),
+				e.ModelKey.Eq(req.ModelKey),
+				e.Status.Eq(airetrieval.IndexStatusIndexed),
+				e.ChunkCount.Gt(0),
+			).
+			Pick(keel.Count(), keel.CastFloat64(keel.NumericOf(e.ChunkCount.Avg()).Coalesce(0))))
+		if err != nil {
 			return agentports.IndexChunkAverage{}, fmt.Errorf(
 				"average %s chunks per source: %w",
 				req.SourceType,
@@ -686,31 +677,27 @@ func (r *repository) ListErroredIndexEntries(
 		}
 		limit = intutils.Clamp(limit, 1, maxErroredLimit)
 
-		cols := airetrievalcol.IndexEntryColumns
-		entries := make([]*airetrieval.IndexEntry, 0, limit)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entries).
-			Apply(airetrievalcol.IndexEntryApplyTenant(req.TenantInfo)).
-			Where(cols.ModelKey.In(), bun.List(modelKeys)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(cols.Status.Eq(), airetrieval.IndexStatusFailed).
-					WhereOr(
-						buncolgen.Expr("{0} = ? AND {1} IS NOT NULL", cols.Status, cols.LastError),
-						airetrieval.IndexStatusPending,
-					)
-			}).
-			OrderExpr(cols.LastAttemptAt.Expr("{} DESC NULLS LAST")).
-			OrderExpr(cols.SourceType.OrderAsc()).
-			OrderExpr(cols.SourceID.OrderAsc()).
-			OrderExpr(cols.ModelKey.OrderAsc()).
-			Limit(int64(limit))
+		e := airetrievaldb.IndexEntries
+		q := e.Where(
+			e.ModelKey.In(modelKeys...),
+			keel.Or(
+				e.Status.Eq(airetrieval.IndexStatusFailed),
+				keel.And(e.Status.Eq(airetrieval.IndexStatusPending), e.LastError.IsNotNull()),
+			),
+		).
+			Order(
+				e.LastAttemptAt.Desc().NullsLast(),
+				e.SourceType.Asc(),
+				e.SourceID.Asc(),
+				e.ModelKey.Asc(),
+			).
+			Limit(limit)
 		if req.SourceType != "" {
-			q = q.Where(cols.SourceType.Eq(), req.SourceType)
+			q.Where(e.SourceType.Eq(req.SourceType))
 		}
 
-		if err := q.Scan(ctx); err != nil {
+		entries, err := q.List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list errored index entries: %w", err)
 		}
 

@@ -10,16 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/lrucache"
-	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
 
-const (
-	agentNameCacheSize = 1024
-	agentNameCacheTTL  = 10 * time.Minute
-	agentNameTimeout   = 2 * time.Second
-)
+const agentNameTimeout = 2 * time.Second
 
 type agentDefinitionReader interface {
 	GetByID(
@@ -28,26 +22,15 @@ type agentDefinitionReader interface {
 	) (*agentdefinition.Definition, error)
 }
 
-type agentNameKey struct {
-	organizationID pulid.ID
-	businessUnitID pulid.ID
-	definitionID   pulid.ID
-}
-
 type agentCredits struct {
 	definitions agentDefinitionReader
-	names       lrucache.Cache[agentNameKey, string]
 	logger      *zap.Logger
 }
 
 func newAgentCredits(definitions agentDefinitionReader, logger *zap.Logger) *agentCredits {
 	return &agentCredits{
 		definitions: definitions,
-		names: lrucache.NewExpirable[agentNameKey, string](
-			agentNameCacheSize,
-			agentNameCacheTTL,
-		),
-		logger: logger,
+		logger:      logger,
 	}
 }
 
@@ -63,15 +46,6 @@ func (c *agentCredits) nameOf(entry *audit.Entry) string {
 	if c == nil || c.definitions == nil ||
 		entry.PrincipalID.Prefix() != agentdefinition.IDPrefix {
 		return ""
-	}
-
-	key := agentNameKey{
-		organizationID: entry.OrganizationID,
-		businessUnitID: entry.BusinessUnitID,
-		definitionID:   entry.PrincipalID,
-	}
-	if name, ok := c.names.Get(key); ok {
-		return name
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), agentNameTimeout)
@@ -99,8 +73,6 @@ func (c *agentCredits) nameOf(entry *audit.Entry) string {
 
 		return ""
 	}
-
-	c.names.Add(key, definition.Name)
 
 	return definition.Name
 }

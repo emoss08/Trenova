@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield/customfielddb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -25,7 +26,9 @@ func NewValidator(p ValidatorParams) *Validator {
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*customfield.CustomFieldDefinition]().
 			WithModelName("Custom Field Definition").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithUniquenessChecker(
+				validationframework.NewKeelChecker(p.DB, customfielddb.CustomFieldDefinitionsSchema()),
+			).
 			WithCompositeUniqueFields(
 				"resource_type_name",
 				"Custom field with this name already exists for this resource type",

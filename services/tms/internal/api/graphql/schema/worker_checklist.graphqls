@@ -84,6 +84,8 @@ type WorkerChecklistTemplateConnection {
   edges: [WorkerChecklistTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerChecklistProgress {

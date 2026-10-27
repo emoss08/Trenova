@@ -205,7 +205,7 @@ describe("DeskReportRunBody", () => {
     const card = finishedCard();
     draw({
       ...withRun({ rowCount: 0 }, card),
-      sample: { ...card.sample!, rows: [], totals: null, more: false },
+      sample: { ...card.sample!, rows: [], totals: null, truncated: false },
     });
     expect(await screen.findByText("Nothing matched")).toBeInTheDocument();
   });

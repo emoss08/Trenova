@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -130,18 +131,13 @@ func (l *syncLedger) byCallID() map[string]agentports.RunStep {
 	return steps
 }
 
-type codeModeExtensions struct{}
+type noExtensions struct{}
 
-func (codeModeExtensions) ActiveCapabilities(
+func (noExtensions) ActiveCapabilities(
 	context.Context,
 	pagination.TenantInfo,
 ) (agentextension.Active, error) {
-	return agentextension.Active{
-		agentextension.CapabilityCodeMode: {
-			Type:         agentextension.TypeE2B,
-			Availability: agentextension.AvailabilitySelectedAgents,
-		},
-	}, nil
+	return agentextension.Active{}, nil
 }
 
 type scriptStep func(ctx context.Context, broker codemode.Broker) codemode.Reply
@@ -154,13 +150,13 @@ type stubScriptTool struct {
 	data    any
 }
 
-func (t *stubScriptTool) Name() string                { return agentextension.ToolRunScript }
+func (t *stubScriptTool) Name() string                { return codemode.ToolRunScript }
 func (t *stubScriptTool) Description() string         { return "Run a read-only script." }
 func (t *stubScriptTool) ParamSchema() map[string]any { return map[string]any{"type": "object"} }
 
 func (t *stubScriptTool) Policy() agentports.ToolPolicy {
 	return agentports.ToolPolicy{
-		Name:          agentextension.ToolRunScript,
+		Name:          codemode.ToolRunScript,
 		Kind:          agent.ToolKindQuery,
 		Resource:      permission.ResourceCodeMode,
 		Operation:     permission.OpRead,
@@ -220,11 +216,11 @@ func newScriptHarness(
 	tools := append([]agentports.AgentQueryTool{script}, reads...)
 	rt := newRuntime(&scriptedCompletion{}, &stubQueryRegistry{Tools: tools},
 		&stubActionRegistry{Tools: actions}, permissions)
-	rt.extensions = codeModeExtensions{}
+	rt.extensions = noExtensions{}
 	rt.codeMode = codemode.Gate{}
 	rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
 
-	names := []string{agentextension.ToolRunScript}
+	names := make([]string, 0, len(reads)+len(actions))
 	for _, tool := range reads {
 		names = append(names, tool.Name())
 	}
@@ -259,7 +255,7 @@ func (h *scriptHarness) run(ctx context.Context, steps ...scriptStep) ToolOutcom
 	return h.rt.DispatchStep(ctx, h.req, DispatchCall{
 		Call: agentports.ToolCall{
 			ID:        "call_script",
-			Name:      agentextension.ToolRunScript,
+			Name:      codemode.ToolRunScript,
 			Arguments: map[string]any{},
 		},
 		Taint:          &agent.RunTaint{},
@@ -532,7 +528,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
 	denied := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:     agentports.ToolCall{ID: "call_haiku", Name: agentextension.ToolRunScript},
+		Call:     agentports.ToolCall{ID: "call_haiku", Name: codemode.ToolRunScript},
 		Taint:    &agent.RunTaint{},
 		Model:    "claude-haiku-5-5",
 		Provider: aiprovider.KindAnthropicMessages,
@@ -548,7 +544,7 @@ func TestScriptToolIsGatedPerProvider(t *testing.T) {
 	h.req.CodeMode = codemode.OverrideDefault
 
 	fourth := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_fourth", Name: agentextension.ToolRunScript},
+		Call:           agentports.ToolCall{ID: "call_fourth", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Model:          scriptModel,
 		Provider:       aiprovider.KindAnthropicMessages,
@@ -584,13 +580,13 @@ func TestOpenTurnOffersTheScriptToolOnlyWhileTheGateIsOpen(t *testing.T) {
 	h.rt.scripts = scripts
 
 	closed := h.rt.OpenTurn(t.Context(), h.req)
-	assert.False(t, closed.tools.offers(agentextension.ToolRunScript))
+	assert.False(t, closed.tools.offers(codemode.ToolRunScript))
 
 	scripts.set(aiprovider.ScriptSettings{Scripts: true})
-	assert.False(t, closed.tools.offers(agentextension.ToolRunScript),
+	assert.False(t, closed.tools.offers(codemode.ToolRunScript),
 		"turning scripts on mid-turn adds nothing to a turn already open")
 	open := h.rt.OpenTurn(t.Context(), h.req)
-	assert.True(t, open.tools.offers(agentextension.ToolRunScript))
+	assert.True(t, open.tools.offers(codemode.ToolRunScript))
 }
 
 func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
@@ -606,7 +602,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	scripts.set(aiprovider.ScriptSettings{})
 	h.script.steps = []scriptStep{read(1, "shipment_list", nil)}
 	turnedOff := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_second", Name: agentextension.ToolRunScript},
+		Call:           agentports.ToolCall{ID: "call_second", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Ordinal:        1,
 		Model:          scriptModel,
@@ -619,7 +615,7 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 
 	scripts.set(aiprovider.ScriptSettings{Scripts: true})
 	failover := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
-		Call:           agentports.ToolCall{ID: "call_failover", Name: agentextension.ToolRunScript},
+		Call:           agentports.ToolCall{ID: "call_failover", Name: codemode.ToolRunScript},
 		Taint:          &agent.RunTaint{},
 		Model:          "claude-haiku-5-5",
 		Provider:       aiprovider.KindAnthropicMessages,
@@ -629,6 +625,141 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	})
 	assert.True(t, failover.Failed, "a failover to a provider without scripts runs no code")
 	assert.Contains(t, scripts.asked, scriptProvider)
+}
+
+// A model that analyzed a report in a script that only printed shows what it
+// found by continuing that script with the lines that show. The continuation
+// costs the turn no script of its own, and a script is continued once.
+func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
+	t.Parallel()
+
+	earlier := agentports.ToolCall{
+		ID:        "call_printed",
+		Name:      codemode.ToolRunScript,
+		Arguments: map[string]any{"code": "total = len(lanes)"},
+	}
+	continuation := func(id string) agentports.ToolCall {
+		return agentports.ToolCall{
+			ID:   id,
+			Name: codemode.ToolRunScript,
+			Arguments: map[string]any{
+				codemode.ParamScriptContinues: "call_printed",
+				"code":                        "show_figure('Lanes', total)",
+			},
+		}
+	}
+	shows, again := continuation("call_shows"), continuation("call_again")
+	asked := func(call agentports.ToolCall) conversation.Message {
+		return conversation.Message{
+			Role: conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{
+				{ID: call.ID, Name: call.Name, Arguments: call.Arguments},
+			},
+		}
+	}
+	turn := &Turn{result: &agentports.RunResult{Messages: []conversation.Message{
+		asked(earlier), asked(shows), asked(again),
+	}}}
+
+	assert.Nil(t, turn.continueScript(&shows), "only a script its answer marked continuable")
+
+	turn.noteContinuable(&earlier, &toolOutcome{continuation: codemode.ContinueFree})
+	assert.Equal(t, earlier.Arguments, turn.continueScript(&shows))
+	assert.Equal(t, earlier.Arguments, turn.continueScript(&shows), "asking again is the same claim")
+	assert.Equal(t, 1, turn.scriptPosition(&shows), "the continuation is not counted")
+
+	assert.Nil(t, turn.continueScript(&again), "a script is continued once")
+	assert.Equal(t, 2, turn.scriptPosition(&again))
+}
+
+// A script that showed something may be continued too, to add to it, but that
+// is one more of the turn's scripts; and a continuation continued again runs
+// after everything before it.
+func TestATurnCountsAContinuationThatAddsAndChainsItsCode(t *testing.T) {
+	t.Parallel()
+
+	script := func(id string, arguments map[string]any) agentports.ToolCall {
+		return agentports.ToolCall{ID: id, Name: codemode.ToolRunScript, Arguments: arguments}
+	}
+	shown := script("call_shown", map[string]any{
+		"title": "Lanes", "code": "rows = lanes", "datasets": []any{"lanes"},
+	})
+	adds := script("call_adds", map[string]any{
+		codemode.ParamScriptContinues: "call_shown", "code": "show_chart('bar', x, y)",
+	})
+	more := script("call_more", map[string]any{
+		codemode.ParamScriptContinues: "call_adds", "code": "show_table(rows)",
+	})
+	asked := func(call agentports.ToolCall) conversation.Message {
+		return conversation.Message{
+			Role: conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{
+				{ID: call.ID, Name: call.Name, Arguments: call.Arguments},
+			},
+		}
+	}
+	turn := &Turn{result: &agentports.RunResult{Messages: []conversation.Message{
+		asked(shown), asked(adds), asked(more),
+	}}}
+
+	turn.noteContinuable(&shown, &toolOutcome{continuation: codemode.ContinueCounted})
+	require.NotNil(t, turn.continueScript(&adds))
+	assert.Equal(t, 2, turn.scriptPosition(&adds), "adding to a script is another script")
+
+	turn.noteContinuable(&adds, &toolOutcome{continuation: codemode.ContinueCounted})
+	chained := turn.continueScript(&more)
+	require.NotNil(t, chained)
+	assert.Equal(t, "rows = lanes\n\nshow_chart('bar', x, y)", chained["code"])
+	assert.Equal(t, "Lanes", chained["title"])
+	assert.Equal(t, []any{"lanes"}, chained["datasets"])
+	assert.Equal(t, 3, turn.scriptPosition(&more))
+}
+
+func TestAContinuationKeepsTheNameOfTheScriptItContinues(t *testing.T) {
+	t.Parallel()
+
+	earlier := map[string]any{
+		codemode.ParamScriptTitle:   "Lane performance analysis",
+		codemode.ParamScriptPurpose: "Totals and the weakest lanes.",
+		codemode.ParamScriptCode:    "total = len(lanes)",
+	}
+	sent := map[string]any{
+		codemode.ParamScriptContinues: "call_printed",
+		codemode.ParamScriptCode:      "show_figure('Lanes', total)",
+	}
+
+	inherited := inheritScriptName(sent, earlier)
+	assert.Equal(t, "Lane performance analysis", inherited[codemode.ParamScriptTitle])
+	assert.Equal(t, "Totals and the weakest lanes.", inherited[codemode.ParamScriptPurpose])
+	assert.NotContains(t, sent, codemode.ParamScriptTitle, "the call as sent is left alone")
+
+	sent[codemode.ParamScriptTitle] = "Top lanes"
+	assert.Equal(t, "Top lanes", inheritScriptName(sent, earlier)[codemode.ParamScriptTitle],
+		"a title of its own is kept")
+	assert.Equal(t, sent, inheritScriptName(sent, nil), "a script of its own is untouched")
+}
+
+func TestScriptToolRefusesAContinuationOfNothingItMayContinue(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
+	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+
+	refused := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
+		Call: agentports.ToolCall{
+			ID:        "call_continues",
+			Name:      codemode.ToolRunScript,
+			Arguments: map[string]any{codemode.ParamScriptContinues: "call_unknown"},
+		},
+		Taint:          &agent.RunTaint{},
+		Model:          scriptModel,
+		Provider:       aiprovider.KindAnthropicMessages,
+		ProviderID:     scriptProvider,
+		ScriptPosition: 1,
+	})
+	assert.True(t, refused.Failed)
+	assert.Contains(t, refused.Content, "continues names no script of this turn")
+	assert.Zero(t, h.script.calls, "no sandbox is asked for")
 }
 
 func TestScriptTraceAndSteps(t *testing.T) {
@@ -660,7 +791,7 @@ func TestScriptTraceAndSteps(t *testing.T) {
 	}
 
 	anchor := aitrace.ForRun(h.req.StepOwner, h.req.Delegation)
-	parent := aitracetest.One(t, anchor.TraceID, "execute_tool "+agentextension.ToolRunScript)
+	parent := aitracetest.One(t, anchor.TraceID, "execute_tool "+codemode.ToolRunScript)
 	assert.Equal(t, anchor.RootSpanID, parent.Parent.SpanID(), "the script hangs under the turn")
 	reads := aitracetest.Named(anchor.TraceID, "execute_tool shipment_list")
 	require.Len(t, reads, 3)
@@ -703,5 +834,46 @@ func TestScriptIndexListsOnlyHeldReadsAScriptMayCall(t *testing.T) {
 		"not the script tool itself, and not a web read")
 	encoded, err := sonic.Marshal(broker.Index())
 	require.NoError(t, err)
-	assert.False(t, strings.Contains(string(encoded), agentextension.ToolRunScript))
+	assert.False(t, strings.Contains(string(encoded), codemode.ToolRunScript))
+}
+
+func TestEveryAgentThatHoldsAReadHoldsTheScriptTool(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("shipment_list", map[string]any{}, nil)
+	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+	require.NotContains(t, h.req.Definition.ToolNames, codemode.ToolRunScript)
+
+	assert.Contains(t, h.rt.heldTools(h.req.Definition), codemode.ToolRunScript,
+		"no agent is configured with it; holding a tool for its work is enough")
+	assert.True(t, h.rt.OpenTurn(t.Context(), h.req).tools.offers(codemode.ToolRunScript))
+	assert.False(t, h.run(t.Context(), read(1, "shipment_list", nil)).Failed)
+
+	switchedOff := *h.req.Definition
+	switchedOff.DisabledToolNames = []string{codemode.ToolRunScript}
+	assert.NotContains(t, h.rt.heldTools(&switchedOff), codemode.ToolRunScript,
+		"an administrator may switch it off for one agent")
+
+	noReads := testDefinition()
+	assert.NotContains(t, h.rt.heldTools(noReads), codemode.ToolRunScript,
+		"an agent with only the core tools has nothing to script")
+}
+
+func TestATurnThatNarrowsItsToolsStillCarriesTheScriptTool(t *testing.T) {
+	t.Parallel()
+
+	service, names := wideRuntime(t)
+	registry, ok := service.queryTools.(*stubQueryRegistry)
+	require.True(t, ok)
+	registry.Tools = append(registry.Tools, &stubScriptTool{})
+
+	set := service.newToolSet(t.Context(), toolSetRequest{
+		definition: testDefinition(names...),
+		actor:      testActor(),
+		input:      "for every customer with open loads, the count and the earliest pickup",
+	})
+
+	require.True(t, set.disclosed)
+	assert.True(t, set.offers(codemode.ToolRunScript),
+		"a fan-out question shows itself only after the first read, so the tool is there from the start")
 }

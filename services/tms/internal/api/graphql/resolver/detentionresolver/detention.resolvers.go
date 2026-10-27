@@ -260,13 +260,18 @@ func (r *QueryResolver) DetentionPolicy(ctx context.Context, id string) (*gqlmod
 	return detentionPolicyToModel(entity), nil
 }
 
-func (r *QueryResolver) DetentionDesk(ctx context.Context) ([]*gqlmodel.DetentionDeskEntry, error) {
+func (r *QueryResolver) DetentionDesk(ctx context.Context, includeAwaitingApproval *bool, urgency *gqlmodel.DetentionDeskUrgency, shipmentID *string, proNumber *string) ([]*gqlmodel.DetentionDeskEntry, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceDetention, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	entries, err := r.DetentionService.ListDesk(ctx, base.TenantInfo(authCtx))
+	filter, err := detentionDeskFilter(includeAwaitingApproval, urgency, shipmentID, proNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	entries, err := r.DetentionService.ListDeskEntries(ctx, base.TenantInfo(authCtx), filter)
 	if err != nil {
 		return nil, err
 	}
@@ -471,4 +476,12 @@ func (r *DetentionOccurrenceResolver) Location(ctx context.Context, obj *gqlmode
 		return nil, nil
 	}
 	return base.OptionalMatch(loaders.LocationByID(ctx, obj.LocationID))
+}
+
+func (r *DetentionOccurrenceResolver) CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionOccurrence) (map[string]any, error) {
+	return r.visibleTrace(ctx, obj.CalculationTrace), nil
+}
+
+func (r *DetentionPreviewResultResolver) CalculationTrace(ctx context.Context, obj *gqlmodel.DetentionPreviewResult) (map[string]any, error) {
+	return r.visibleTrace(ctx, obj.CalculationTrace), nil
 }

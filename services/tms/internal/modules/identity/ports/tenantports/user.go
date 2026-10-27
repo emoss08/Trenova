@@ -16,11 +16,11 @@ type GetUserByIDRequest struct {
 }
 
 type UserOrganizationResult struct {
-	OrganizationID   pulid.ID `bun:"organization_id"`
-	OrganizationName string   `bun:"organization_name"`
-	BusinessUnitID   pulid.ID `bun:"business_unit_id"`
-	IsDefault        bool     `bun:"is_default"`
-	JoinedAt         int64    `bun:"joined_at"`
+	OrganizationID   pulid.ID
+	OrganizationName string
+	BusinessUnitID   pulid.ID
+	IsDefault        bool
+	JoinedAt         int64
 }
 
 type UserOrganizationResponse struct {
@@ -130,14 +130,6 @@ type UserRepository interface {
 		ctx context.Context,
 		userID pulid.ID,
 	) ([]*tenant.OrganizationMembership, error)
-	GetOrganizationsByBusinessUnit(
-		ctx context.Context,
-		businessUnitID pulid.ID,
-	) ([]*tenant.Organization, error)
-	GetOrganizationByID(
-		ctx context.Context,
-		organizationID pulid.ID,
-	) (*tenant.Organization, error)
 	ListOrganizationMemberships(
 		ctx context.Context,
 		userID, businessUnitID pulid.ID,

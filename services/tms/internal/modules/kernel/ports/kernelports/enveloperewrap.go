@@ -4,7 +4,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
 
@@ -38,21 +38,26 @@ type EnvelopeRow struct {
 type EnvelopeScopes func(row *EnvelopeRow, field string) []SecretScope
 
 type EnvelopeColumn struct {
-	Name           string
-	Table          buncolgen.TableInfo
-	ID             buncolgen.Column
-	OrganizationID buncolgen.Column
-	BusinessUnitID buncolgen.Column
-	Value          buncolgen.Column
-	Extra          []buncolgen.Column
-	JSONMap        bool
-	Rebind         bool
-	Scopes         EnvelopeScopes
+	Name    string
+	Value   keel.Expr
+	Extra   []keel.Expr
+	JSONMap bool
+	Rebind  bool
+	Scopes  EnvelopeScopes
 }
 
 type EnvelopeObject struct {
 	Column  EnvelopeColumn
-	Version *buncolgen.Column
+	Version keel.Expr
+}
+
+func EnvelopeColumnName(column keel.Expr) string {
+	table, index, ok := keel.ColumnOf(column)
+	if !ok {
+		return ""
+	}
+
+	return table.Columns[index].Name
 }
 
 type EnvelopeSources struct {
@@ -81,7 +86,6 @@ type SwapEnvelopeVersionRequest struct {
 }
 
 type EnvelopeRepository interface {
-	ListTenants(ctx context.Context) ([]pagination.TenantInfo, error)
 	ListRows(ctx context.Context, req *ListEnvelopeRowsRequest) ([]*EnvelopeRow, error)
 	Present(ctx context.Context, column *EnvelopeColumn, row *EnvelopeRow) (bool, error)
 	Swap(ctx context.Context, req *SwapEnvelopeRequest) (bool, error)

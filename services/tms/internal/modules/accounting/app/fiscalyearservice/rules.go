@@ -4,11 +4,13 @@ import (
 	"context"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/uptrace/bun"
 )
 
 func createDateValidationRule() validationframework.TenantedRule[*fiscalyear.FiscalYear] {
@@ -127,7 +129,7 @@ func createCurrentYearRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
 				if entity.IsCurrent && entity.Status != fiscalyear.StatusOpen {
 					multiErr.Add(
 						"status",
@@ -140,19 +142,11 @@ func createCurrentYearRule(
 					return nil
 				}
 
-				q := db.DBForContext(ctx).NewSelect().
-					Model((*fiscalyear.FiscalYear)(nil)).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.Where("fy.organization_id = ?", valCtx.OrganizationID).
-							Where("fy.business_unit_id = ?", valCtx.BusinessUnitID).
-							Where("fy.is_current = ?", true)
-					})
-
-				if valCtx.IsUpdate() {
-					q = q.Where("fy.id != ?", entity.ID)
-				}
-
-				count, err := q.Count(ctx)
+				fy := fiscalyeardb.FiscalYears
+				exists, err := fy.Where(
+					fy.IsCurrent.IsTrue(),
+					keel.When(valCtx.IsUpdate(), fy.ID.Ne(entity.ID)),
+				).Exists(ctx, db.Keel(ctx))
 				if err != nil {
 					multiErr.Add(
 						"__all__",
@@ -162,7 +156,7 @@ func createCurrentYearRule(
 					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 				}
 
-				if count > 0 {
+				if exists {
 					multiErr.Add(
 						"isCurrent",
 						errortypes.ErrInvalid,
@@ -188,21 +182,13 @@ func createOverlappingYearsRule(
 			valCtx *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			return db.RunScoped(ctx, true, func(ctx context.Context) error {
-				q := db.DBForContext(ctx).NewSelect().
-					Model((*fiscalyear.FiscalYear)(nil)).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.Where("fy.organization_id = ?", valCtx.OrganizationID).
-							Where("fy.business_unit_id = ?", valCtx.BusinessUnitID).
-							Where("start_date <= ?", entity.EndDate).
-							Where("end_date >= ?", entity.StartDate)
-					})
-
-				if valCtx.IsUpdate() {
-					q = q.Where("fy.id != ?", entity.ID)
-				}
-
-				count, err := q.Count(ctx)
+			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
+				fy := fiscalyeardb.FiscalYears
+				exists, err := fy.Where(
+					fy.StartDate.Lte(entity.EndDate),
+					fy.EndDate.Gte(entity.StartDate),
+					keel.When(valCtx.IsUpdate(), fy.ID.Ne(entity.ID)),
+				).Exists(ctx, db.Keel(ctx))
 				if err != nil {
 					multiErr.Add(
 						"__all__",
@@ -212,7 +198,7 @@ func createOverlappingYearsRule(
 					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 				}
 
-				if count > 0 {
+				if exists {
 					multiErr.Add(
 						"startDate",
 						errortypes.ErrInvalid,

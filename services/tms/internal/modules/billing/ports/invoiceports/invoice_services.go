@@ -510,7 +510,7 @@ type InvoiceEDISendPlan struct {
 	AutoSend            bool                  `json:"autoSend"`
 	PartnerID           pulid.ID              `json:"partnerId"`
 	PartnerName         string                `json:"partnerName"`
-	DocumentProfileID   pulid.ID              `json:"documentProfileId"`
+	LadingVersionID     pulid.ID              `json:"ladingVersionId"`
 	CommunicationMethod string                `json:"communicationMethod"`
 	Status              invoice.EDISendStatus `json:"status"`
 	LastMessageID       pulid.ID              `json:"lastMessageId"`

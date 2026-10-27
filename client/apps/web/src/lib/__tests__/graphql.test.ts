@@ -41,6 +41,7 @@ describe("fetchGraphQLSelectOptions", () => {
               endCursor: selectOptionCursor,
             },
             totalCount: 3,
+            totalCountExact: true,
           },
         },
       }),
@@ -75,6 +76,7 @@ describe("fetchGraphQLSelectOptions", () => {
         },
       ],
       count: 3,
+      totalCountExact: true,
       next: "graphql-select-options://20",
       prev: "graphql-select-options://0",
       pageInfo: {
@@ -82,6 +84,7 @@ describe("fetchGraphQLSelectOptions", () => {
         hasNextPage: true,
         endCursor: selectOptionCursor,
         totalCount: 3,
+        totalCountExact: true,
       },
     });
 
@@ -98,6 +101,28 @@ describe("fetchGraphQLSelectOptions", () => {
         },
       },
     });
+  });
+
+  it("carries an estimated total as inexact", async () => {
+    fetchMock.mockResolvedValueOnce(
+      createGraphQLResponse({
+        data: {
+          selectOptions: {
+            edges: [],
+            pageInfo: { hasNextPage: true, endCursor: null },
+            totalCount: 1_250_000,
+            totalCountExact: false,
+          },
+        },
+      }),
+    );
+
+    const response = await fetchGraphQLSelectOptions({ resource: "TRACTOR", page: 1 });
+
+    expect(response.count).toBe(1_250_000);
+    expect(response.totalCountExact).toBe(false);
+    expect(response.pageInfo?.totalCountExact).toBe(false);
+    expect(response.next).toBe("graphql-select-options://20");
   });
 
   it("uses ids for selected-value lookups and ignores page offset", async () => {

@@ -2,6 +2,8 @@ package loaders
 
 import (
 	"context"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -186,6 +188,93 @@ func batchGroupFunc[T any](fetch fetchGroupsByIDFunc[T]) batchFetchFunc[[]T] {
 			}
 			for _, idx := range indexesByID[id] {
 				values[idx] = group
+			}
+		}
+
+		return values, errs
+	}
+}
+
+type fetchFirstByIDFunc[T any] func(
+	ctx context.Context,
+	ids []pulid.ID,
+	first int,
+) (map[pulid.ID][]T, error)
+
+func firstKey(id string, first int) string {
+	return strconv.Itoa(first) + ":" + id
+}
+
+func parseFirstKey(key string) (pulid.ID, int, error) {
+	prefix, id, found := strings.Cut(key, ":")
+	if !found {
+		return pulid.Nil, 0, errortypes.NewValidationError(
+			"first",
+			errortypes.ErrInvalid,
+			"First is missing from the loader key",
+		)
+	}
+	first, err := strconv.Atoi(prefix)
+	if err != nil || first < 1 {
+		return pulid.Nil, 0, errortypes.NewValidationError(
+			"first",
+			errortypes.ErrInvalid,
+			"First must be a positive number",
+		)
+	}
+	parsed, err := parseLoaderID(id)
+	if err != nil {
+		return pulid.Nil, 0, err
+	}
+
+	return parsed, first, nil
+}
+
+type firstWindow struct {
+	ids         []pulid.ID
+	indexesByID map[pulid.ID][]int
+}
+
+func batchFirstFunc[T any](fetch fetchFirstByIDFunc[T]) batchFetchFunc[[]T] {
+	return func(ctx context.Context, keys []string) ([][]T, []error) {
+		values := make([][]T, len(keys))
+		errs := make([]error, len(keys))
+
+		windows := make(map[int]*firstWindow)
+		firsts := make([]int, 0, 1)
+		for idx, key := range keys {
+			id, first, err := parseFirstKey(key)
+			if err != nil {
+				errs[idx] = err
+				continue
+			}
+			w, ok := windows[first]
+			if !ok {
+				w = &firstWindow{indexesByID: make(map[pulid.ID][]int)}
+				windows[first] = w
+				firsts = append(firsts, first)
+			}
+			if _, seen := w.indexesByID[id]; !seen {
+				w.ids = append(w.ids, id)
+			}
+			w.indexesByID[id] = append(w.indexesByID[id], idx)
+		}
+
+		for _, first := range firsts {
+			w := windows[first]
+			groups, err := fetch(ctx, w.ids, first)
+			for _, id := range w.ids {
+				group := groups[id]
+				if group == nil {
+					group = []T{}
+				}
+				for _, idx := range w.indexesByID[id] {
+					if err != nil {
+						errs[idx] = err
+						continue
+					}
+					values[idx] = group
+				}
 			}
 		}
 

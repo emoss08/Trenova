@@ -36,8 +36,12 @@ enum InvoiceAdjustmentRebillStrategy {
   Manual
 }
 
-"A credit, rebill, reversal, or write-off raised against a posted invoice."
-type InvoiceAdjustment {
+"""
+A credit, rebill, reversal, or write-off raised against a posted invoice. Its
+fields follow the invoice's sensitivities: what it credits is the invoice's
+money.
+"""
+type InvoiceAdjustment @kind(resource: "invoice") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -76,6 +80,8 @@ type InvoiceAdjustment {
   updatedAt: Timestamp!
   "The corrected invoice lines, in line order."
   lines: [InvoiceAdjustmentLine!]!
+  "The documents the submitter attached as support for the adjustment."
+  supportingDocumentIds: [ID!]!
 }
 
 "How much of one original invoice line an adjustment credits and rebills."
@@ -152,6 +158,8 @@ type InvoiceAdjustmentApprovalQueueConnection {
   edges: [InvoiceAdjustmentApprovalQueueEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """

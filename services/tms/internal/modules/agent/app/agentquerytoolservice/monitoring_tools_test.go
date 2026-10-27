@@ -2,31 +2,25 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"slices"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/dispatchconsoleservice"
 	"github.com/emoss08/trenova/internal/modules/operations/app/shipmenttracking"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -78,16 +72,22 @@ type fakeTelematics struct {
 	positions []*telematics.VehiclePosition
 	hos       []*telematics.WorkerHOSState
 	maxAge    int64
+	tractors  []pulid.ID
 }
 
 func (f *fakeTelematics) ListVehiclePositions(
 	_ context.Context,
-	_ pagination.TenantInfo,
-	maxAgeSeconds int64,
+	req *telematicsports.ListVehiclePositionsRequest,
 ) ([]*telematics.VehiclePosition, error) {
-	f.maxAge = maxAgeSeconds
+	f.maxAge = req.MaxAgeSeconds
+	f.tractors = req.TractorIDs
+	if len(req.TractorIDs) == 0 {
+		return f.positions, nil
+	}
 
-	return f.positions, nil
+	return slices.DeleteFunc(slices.Clone(f.positions), func(p *telematics.VehiclePosition) bool {
+		return !slices.Contains(req.TractorIDs, p.TractorID)
+	}), nil
 }
 
 func (f *fakeTelematics) ListWorkerHOSStates(
@@ -97,20 +97,6 @@ func (f *fakeTelematics) ListWorkerHOSStates(
 	_ int,
 ) ([]*telematics.WorkerHOSState, error) {
 	return f.hos, nil
-}
-
-func (f *fakeTelematics) GetWorkerHOSState(
-	_ context.Context,
-	_ pagination.TenantInfo,
-	workerID pulid.ID,
-) (*telematics.WorkerHOSState, error) {
-	for _, state := range f.hos {
-		if state.WorkerID == workerID {
-			return state, nil
-		}
-	}
-
-	return nil, nil
 }
 
 func trackedShipment() (*shipment.Shipment, *shipment.ShipmentMove) {
@@ -238,6 +224,8 @@ func TestGetShipmentTracking_ComposesStopsAssignmentPositionAndHours(t *testing.
 		snapshot.Position.TractorID,
 		"only the assigned tractor's position is used",
 	)
+	assert.Equal(t, []pulid.ID{tractorID}, feed.tractors,
+		"the read names the assigned tractors rather than reading the fleet")
 	require.NotNil(t, snapshot.Driver)
 	assert.EqualValues(t, 240, snapshot.Driver.DriveRemainingMinutes)
 	require.NotNil(t, snapshot.Estimate)
@@ -282,95 +270,6 @@ func TestGetShipmentTracking_FindsAShipmentByExactProNumber(t *testing.T) {
 	_, err = tool.Query(t.Context(), testParams(map[string]any{}))
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "shipmentId or proNumber")
-}
-
-func TestListVehiclePositions_NarrowsToTheTractorsAskedFor(t *testing.T) {
-	t.Parallel()
-
-	wanted := pulid.MustNew("trc_")
-	feed := &fakeTelematics{positions: []*telematics.VehiclePosition{
-		{
-			TractorID: wanted, Latitude: 32.7, Longitude: -96.8, SpeedMph: 61,
-			EngineState: telematics.EngineStateOn, RecordedAt: 1_790_000_000 - 300,
-			Tractor: &tractor.Tractor{
-				Code:          "T-104",
-				PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
-			},
-		},
-		{TractorID: pulid.MustNew("trc_"), RecordedAt: 1_790_000_000},
-	}}
-	tool := newListVehiclePositionsTool(feed, &fakePermissions{allowed: true})
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{
-		"tractorIds":    []any{wanted.String()},
-		"maxAgeMinutes": 30,
-	}))
-	require.NoError(t, err)
-
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	rows, ok := outcome.Items.([]vehiclePositionRow)
-	require.True(t, ok)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "T-104", rows[0].Tractor)
-	assert.Equal(t, "Maria Ortiz", rows[0].Driver)
-	assert.EqualValues(t, 30*60, feed.maxAge)
-	assert.Contains(t, outcome.SearchedFor, "readings newer than 30 minutes")
-
-	_, err = tool.Query(t.Context(), testParams(map[string]any{"tractorIds": []any{"nope"}}))
-	require.Error(t, err)
-}
-
-func TestGetWorkerHOS_ReadsTheClocksAndMarksAStaleReading(t *testing.T) {
-	t.Parallel()
-
-	workerID := pulid.MustNew("wrk_")
-	feed := &fakeTelematics{hos: []*telematics.WorkerHOSState{{
-		WorkerID:         workerID,
-		DutyStatus:       telematics.DutyStatusDriving,
-		DriveRemainingMs: 90 * 60_000,
-		ShiftRemainingMs: 5 * 3_600_000,
-		RecordedAt:       1,
-		Worker:           &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
-	}}}
-	tool := newGetWorkerHOSTool(feed)
-
-	result, err := tool.Query(
-		t.Context(),
-		testParams(map[string]any{"workerId": workerID.String()}),
-	)
-	require.NoError(t, err)
-
-	row, ok := result.(workerHOSRow)
-	require.True(t, ok)
-	assert.Equal(t, "Maria Ortiz", row.Name)
-	require.NotNil(t, row.DriveRemainingMinutes)
-	assert.EqualValues(t, 90, *row.DriveRemainingMinutes)
-	assert.True(t, row.Stale)
-	assert.Contains(t, row.Note, "do not stop")
-	assert.NotEmpty(t, row.Note)
-
-	unmapped, err := tool.Query(
-		t.Context(),
-		testParams(map[string]any{"workerId": pulid.MustNew("wrk_").String()}),
-	)
-	require.NoError(t, err)
-
-	none, ok := unmapped.(workerHOSRow)
-	require.True(t, ok)
-	assert.Equal(t, "Unknown", none.DutyStatus)
-	assert.True(t, none.Stale)
-	assert.Contains(t, none.Note, "No ELD has reported hours of service")
-	/*
-		gpt-6-luna read "plan on nothing" and zeros on every clock as "no hours
-		left" and proposed no assignment for a driver the person named. Unknown
-		clocks are left out, and the note says unreported hours are a concern
-		to name beside the proposal, not a reason to withhold it.
-	*/
-	assert.Nil(t, none.DriveRemainingMinutes, "an unknown clock is absent, not zero")
-	assert.Nil(t, none.CycleRemainingMinutes)
-	assert.Contains(t, none.Note, "do not stop")
-	assert.NotContains(t, none.Note, "plan on nothing")
 }
 
 type fakeBoard struct {
@@ -463,232 +362,6 @@ func TestGetDispatchBoard_ReadsMovesDriversAndUrgency(t *testing.T) {
 	assert.Equal(t, permission.ResourceShipmentMove, tool.Policy().Resource)
 }
 
-type fakeFailures struct {
-	items   []*servicefailure.ServiceFailure
-	request *servicefailureports.ListServiceFailuresRequest
-}
-
-func (f *fakeFailures) List(
-	_ context.Context,
-	req *servicefailureports.ListServiceFailuresRequest,
-) (*pagination.ListResult[*servicefailure.ServiceFailure], error) {
-	f.request = req
-
-	return &pagination.ListResult[*servicefailure.ServiceFailure]{
-		Items: f.items,
-		Total: len(f.items),
-	}, nil
-}
-
-func TestListServiceFailures_FiltersOnStatusAndRendersTheRow(t *testing.T) {
-	t.Parallel()
-
-	reasonID := pulid.MustNew("sfrc_")
-	failures := &fakeFailures{items: []*servicefailure.ServiceFailure{{
-		ID: pulid.MustNew("sf_"), Number: "SF-1", ShipmentID: pulid.MustNew("shp_"),
-		ShipmentMoveID: pulid.MustNew("smv_"), StopID: pulid.MustNew("stp_"),
-		Type: servicefailure.TypeLateDelivery, Source: servicefailure.SourceDetected,
-		Status: servicefailure.StatusOpen, StopType: shipment.StopTypeDelivery,
-		ScheduledCutoff: 1_790_000_000, ActualArrival: 1_790_000_000 + 2700, LateMinutes: 45,
-		ReasonCodeID: &reasonID, ReasonCode: &servicefailure.ReasonCode{Code: "WX", Label: "Weather"},
-		DetectedAt: 1_790_000_000 + 2700, Version: 2,
-	}}}
-	tool := newListServiceFailuresTool(failures)
-
-	result, err := tool.Query(t.Context(), testParams(filterParams(
-		map[string]any{"field": "status", "operator": "eq", "value": "Open"},
-	)))
-	require.NoError(t, err)
-
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	require.Equal(t, 1, outcome.Count)
-	rows := outcome.Items.([]any)
-	row, ok := rows[0].(serviceFailureRow)
-	require.True(t, ok)
-	assert.Equal(t, "SF-1", row.Number)
-	assert.EqualValues(t, 45, row.LateMinutes)
-	assert.Equal(t, "WX Weather", row.ReasonCode)
-	assert.EqualValues(t, 2, row.Version)
-	assert.NotEmpty(t, row.ScheduledCutoff)
-
-	require.NotNil(t, failures.request)
-	require.Len(t, failures.request.Filter.FieldFilters, 1)
-	assert.Equal(t, "status", failures.request.Filter.FieldFilters[0].Field)
-
-	_, err = tool.Query(t.Context(), testParams(filterParams(
-		map[string]any{"field": "status", "operator": "eq", "value": "Closed"},
-	)))
-	require.Error(
-		t,
-		err,
-		"a status outside the set is refused, not passed through to match nothing",
-	)
-	assert.Equal(t, permission.ResourceServiceFailure, tool.Policy().Resource)
-}
-
-type fakeReasonCodes struct {
-	codes   []*servicefailure.ReasonCode
-	request *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest
-}
-
-func (f *fakeReasonCodes) SelectOptions(
-	_ context.Context,
-	req *servicefailureports.ServiceFailureReasonCodeSelectOptionsRequest,
-) (*pagination.ListResult[*servicefailure.ReasonCode], error) {
-	f.request = req
-
-	return &pagination.ListResult[*servicefailure.ReasonCode]{Items: f.codes}, nil
-}
-
-func TestListServiceFailureReasonCodes_ListsActiveCodesForTheStopKind(t *testing.T) {
-	t.Parallel()
-
-	codes := &fakeReasonCodes{codes: []*servicefailure.ReasonCode{
-		{
-			ID:        pulid.MustNew("sfrc_"),
-			Code:      "WX",
-			Label:     "Weather",
-			Category:  servicefailure.ReasonCategoryWeather,
-			AppliesTo: servicefailure.ReasonCodeAppliesToAll,
-			Active:    true,
-		},
-		{ID: pulid.MustNew("sfrc_"), Code: "OLD", Label: "Retired", Active: false},
-	}}
-	tool := newListServiceFailureReasonCodesTool(codes)
-
-	result, err := tool.Query(
-		t.Context(),
-		testParams(map[string]any{"appliesTo": "Delivery", "query": "wea"}),
-	)
-	require.NoError(t, err)
-
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	rows, ok := outcome.Items.([]reasonCodeRow)
-	require.True(t, ok)
-	require.Len(t, rows, 1, "a retired code is not offered")
-	assert.Equal(t, "WX", rows[0].Code)
-	assert.Equal(t, "Weather", rows[0].Category)
-
-	require.NotNil(t, codes.request)
-	assert.Equal(t, servicefailure.ReasonCodeAppliesToDelivery, codes.request.AppliesTo)
-	assert.Equal(t, "wea", codes.request.SelectQueryRequest.Query)
-}
-
-type fakeDesk struct {
-	entries  []*detentionservice.DeskEntry
-	awaiting []*detentionservice.DeskEntry
-}
-
-func (f *fakeDesk) ListDesk(
-	_ context.Context,
-	_ pagination.TenantInfo,
-) ([]*detentionservice.DeskEntry, error) {
-	return f.entries, nil
-}
-
-func (f *fakeDesk) ListAwaitingApproval(
-	_ context.Context,
-	_ pagination.TenantInfo,
-) ([]*detentionservice.DeskEntry, error) {
-	return f.awaiting, nil
-}
-
-func TestListDetentionDesk_CarriesTheChargesWaitingOnApproval(t *testing.T) {
-	t.Parallel()
-
-	held := &detentionservice.DeskEntry{
-		Occurrence: &detention.DetentionOccurrence{
-			ID:               pulid.MustNew("dto_"),
-			ShipmentID:       pulid.MustNew("shp_"),
-			Status:           detention.OccurrenceStatusPending,
-			RequiresApproval: true,
-			Currency:         "USD",
-		},
-		AmountAtRisk: decimal.NewFromInt(420),
-		Urgency:      detentionservice.UrgencyAwaitingApproval,
-	}
-	desk := &fakeDesk{
-		entries: []*detentionservice.DeskEntry{{
-			Occurrence: &detention.DetentionOccurrence{
-				ID:     pulid.MustNew("dto_"),
-				Status: detention.OccurrenceStatusAccruing,
-			},
-			Urgency: "Normal",
-		}},
-		awaiting: []*detentionservice.DeskEntry{held},
-	}
-	tool := newListDetentionDeskTool(desk)
-
-	rowsFor := func(params map[string]any) []detentionDeskRow {
-		t.Helper()
-		result, err := tool.Query(t.Context(), testParams(params))
-		require.NoError(t, err)
-		outcome, ok := result.(searchOutcome)
-		require.True(t, ok)
-		rows, ok := outcome.Items.([]detentionDeskRow)
-		require.True(t, ok)
-		return rows
-	}
-
-	all := rowsFor(map[string]any{})
-	require.Len(t, all, 2)
-	assert.Equal(t, "AwaitingApproval", all[1].Urgency)
-	assert.Equal(t, "420.00", all[1].AmountAtRisk)
-
-	onlyHeld := rowsFor(map[string]any{"urgency": "AwaitingApproval"})
-	require.Len(t, onlyHeld, 1)
-	assert.Equal(t, held.Occurrence.ID.String(), onlyHeld[0].OccurrenceID)
-	assert.True(t, onlyHeld[0].RequiresApproval)
-
-	assert.Empty(t, rowsFor(map[string]any{"urgency": "NoticeOverdue"}))
-}
-
-func TestListDetentionDesk_RendersTheOpenOccurrencesByUrgency(t *testing.T) {
-	t.Parallel()
-
-	arrived := int64(1_790_000_000 - 5400)
-	desk := &fakeDesk{entries: []*detentionservice.DeskEntry{
-		{
-			Occurrence: &detention.DetentionOccurrence{
-				ID: pulid.MustNew(
-					"dto_",
-				), ShipmentID: pulid.MustNew("shp_"), ShipmentProNumber: "S1",
-				CustomerName: "Acme", LocationName: "Houston DC", StopType: shipment.StopTypeDelivery,
-				Status: detention.OccurrenceStatusAccruing, NotificationStatus: detention.NotificationStatusPending,
-				ArrivedAt: &arrived, FreeTimeExpiresAt: 1_790_000_000 - 1800, BillableMinutes: 30,
-				Currency: "USD", RequiresApproval: true,
-			},
-			MinutesUntilFreeEnds: -30, NoticeWindowOpen: true,
-			AmountAtRisk: decimal.NewFromFloat(37.5), Urgency: "NoticeOverdue",
-		},
-		{
-			Occurrence: &detention.DetentionOccurrence{
-				ID:     pulid.MustNew("dto_"),
-				Status: detention.OccurrenceStatusAccruing,
-			},
-			Urgency: "NoticeDueSoon",
-		},
-	}}
-	tool := newListDetentionDeskTool(desk)
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{"urgency": "NoticeOverdue"}))
-	require.NoError(t, err)
-
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	rows, ok := outcome.Items.([]detentionDeskRow)
-	require.True(t, ok)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "S1", rows[0].ProNumber)
-	assert.Equal(t, "37.50", rows[0].AmountAtRisk)
-	assert.True(t, rows[0].NoticeWindowOpen)
-	assert.True(t, rows[0].RequiresApproval)
-	assert.NotEmpty(t, rows[0].ArrivedAt)
-	assert.Equal(t, permission.ResourceDetention, tool.Policy().Resource)
-}
-
 type fakeWeather struct {
 	features []*weatheralertports.WeatherAlertFeature
 }
@@ -760,11 +433,7 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 			&fakeTelematics{},
 			&fakeStopEtaReader{},
 		),
-		newListVehiclePositionsTool(&fakeTelematics{}, &fakePermissions{}),
-		newGetWorkerHOSTool(&fakeTelematics{}),
 		newGetDispatchBoardTool(&fakeBoard{}),
-		newListServiceFailureReasonCodesTool(&fakeReasonCodes{}),
-		newListDetentionDeskTool(&fakeDesk{}),
 		newListWeatherAlertsTool(&fakeWeather{}),
 	}
 	for _, tool := range tools {
@@ -773,62 +442,4 @@ func TestMonitoringTools_RejectAMismatchedActor(t *testing.T) {
 		_, err := tool.Query(t.Context(), params)
 		require.ErrorIs(t, err, ErrTenantMismatch, tool.Name())
 	}
-}
-
-// A position is a tractor's, and the tool is gated on tractors; the name of
-// the person driving it is a worker's, and a reader who may not open workers
-// does not learn who is where from the fleet map either. An agent principal
-// reads workers within the platform's allow-list, so it still sees the name.
-func TestListVehiclePositions_NamesTheDriverOnlyToAReaderOfWorkers(t *testing.T) {
-	t.Parallel()
-
-	feed := &fakeTelematics{positions: []*telematics.VehiclePosition{{
-		TractorID: pulid.MustNew("trc_"), RecordedAt: 1_790_000_000,
-		Tractor: &tractor.Tractor{
-			Code:          "T-104",
-			PrimaryWorker: &worker.Worker{FirstName: "Maria", LastName: "Ortiz"},
-		},
-	}}}
-	noWorkers := &fakePermissions{readable: map[string]*permissionports.ResourcePermissionDetail{
-		permission.ResourceTractor.String(): {
-			Operations: []permission.Operation{permission.OpRead},
-		},
-	}}
-
-	rows := vehicleRows(
-		t,
-		newListVehiclePositionsTool(feed, noWorkers),
-		testParams(map[string]any{}),
-	)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "T-104", rows[0].Tractor)
-	assert.Empty(t, rows[0].Driver, "a reader without worker access is not told who is driving")
-
-	agentParams := testParams(map[string]any{})
-	agentParams.Actor = &permissionports.RequestActor{
-		PrincipalType:  permissionports.PrincipalTypeAgent,
-		PrincipalID:    pulid.MustNew("agd_"),
-		OrganizationID: agentParams.OrganizationID,
-		BusinessUnitID: agentParams.BusinessUnitID,
-	}
-	rows = vehicleRows(t, newListVehiclePositionsTool(feed, noWorkers), agentParams)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "Maria Ortiz", rows[0].Driver)
-}
-
-func vehicleRows(
-	t *testing.T,
-	tool agentports.AgentQueryTool,
-	params *agentports.QueryToolParams,
-) []vehiclePositionRow {
-	t.Helper()
-
-	result, err := tool.Query(t.Context(), params)
-	require.NoError(t, err)
-	outcome, ok := result.(searchOutcome)
-	require.True(t, ok)
-	rows, ok := outcome.Items.([]vehiclePositionRow)
-	require.True(t, ok)
-
-	return rows
 }

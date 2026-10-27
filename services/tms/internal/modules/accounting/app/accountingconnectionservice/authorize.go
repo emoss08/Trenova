@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/tokenutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -559,7 +558,7 @@ func (s *Service) saveConnection(
 	owner, grant, facts, provider, now := in.owner, in.grant, in.facts, in.provider, in.now
 	var conn *accountingsync.AccountingConnection
 	var previous map[string]any
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		existing, lockErr := s.connections.LockByTypeWithTokens(
 			txCtx,
 			accountingsyncports.GetAccountingConnectionRequest{

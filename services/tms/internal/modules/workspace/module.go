@@ -35,7 +35,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/pagefavoriteservice"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	reportingcompiler "github.com/emoss08/trenova/internal/modules/workspace/app/reporting/compiler"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/sidebarpreferenceservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableconfigurationservice"
@@ -43,7 +42,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"go.uber.org/fx"
 )
 
@@ -55,6 +53,7 @@ func SharedOptions() fx.Option {
 			tableconfigurationrepository.New,
 			pagefavoriterepository.New,
 			reportrepository.NewDefinitionRepository,
+			reportrepository.NewCatalogVersionRepository,
 			reportrepository.NewDashboardRepository,
 			reportrepository.NewRunRepository,
 			reportrepository.NewScheduleRepository,
@@ -89,10 +88,6 @@ func SharedOptions() fx.Option {
 			bulkeditservice.NewCarrierEditor,
 			bulkeditservice.NewShipmentEditor,
 			homelayoutservice.New,
-			fx.Annotate(
-				reportingcompiler.New,
-				fx.As(new(reportports.ReportCompiler)),
-			),
 			reportingservice.New,
 			auditservice.New,
 			auditservice.NewSecurityAuditor,

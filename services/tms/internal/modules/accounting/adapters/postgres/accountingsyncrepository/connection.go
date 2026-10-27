@@ -5,22 +5,27 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
+	"github.com/emoss08/trenova/pkg/listquery"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const connectionEntity = "Accounting connection"
+const (
+	connectionEntity      = "Accounting connection"
+	defaultConnectionPage = 100
+)
+
+var connectionErrors = dberror.Mapping{Entity: connectionEntity}
 
 type ConnectionParams struct {
 	fx.In
@@ -43,22 +48,9 @@ func NewConnectionRepository(
 	}
 }
 
-func tokenColumns() []string {
-	cols := accountingsynccol.AccountingConnectionColumns
-	return []string{
-		cols.AccessTokenCiphertext.String(),
-		cols.RefreshTokenCiphertext.String(),
-		cols.ClientKeyCiphertext.String(),
-	}
-}
-
-func refreshColumns() []string {
-	cols := accountingsynccol.AccountingConnectionColumns
-	return []string{
-		cols.ReferenceRefreshStartedAt.String(),
-		cols.ReferenceRefreshedAt.String(),
-		cols.ReferenceRefreshError.String(),
-	}
+func withoutTokens() *keel.Query[*accountingsync.AccountingConnection] {
+	ac := accountingsyncdb.AccountingConnections
+	return ac.Omit(ac.AccessTokenCiphertext, ac.RefreshTokenCiphertext, ac.ClientKeyCiphertext)
 }
 
 func activeStatuses() []accountingsync.ConnectionStatus {
@@ -77,17 +69,12 @@ func (r *connectionRepository) GetByType(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			entity := new(accountingsync.AccountingConnection)
-			cols := accountingsynccol.AccountingConnectionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				ExcludeColumn(tokenColumns()...).
-				Where(cols.IntegrationType.Eq(), req.IntegrationType).
-				Apply(accountingsynccol.AccountingConnectionApplyTenant(req.TenantInfo)).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, connectionEntity)
+			ac := accountingsyncdb.AccountingConnections
+			entity, err := withoutTokens().
+				Where(ac.IntegrationType.Eq(req.IntegrationType)).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, connectionErrors.Map(err, "")
 			}
 
 			return entity, nil
@@ -103,17 +90,10 @@ func (r *connectionRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			entity := new(accountingsync.AccountingConnection)
-			cols := accountingsynccol.AccountingConnectionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				ExcludeColumn(tokenColumns()...).
-				Where(cols.ID.Eq(), req.ID).
-				Apply(accountingsynccol.AccountingConnectionApplyTenant(req.TenantInfo)).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, connectionEntity)
+			ac := accountingsyncdb.AccountingConnections
+			entity, err := withoutTokens().Where(ac.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, connectionErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -123,26 +103,14 @@ func (r *connectionRepository) GetByID(
 
 func (r *connectionRepository) ListByTenant(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*accountingsync.AccountingConnection, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
-			entities := make([]*accountingsync.AccountingConnection, 0, 1)
-			cols := accountingsynccol.AccountingConnectionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				ExcludeColumn(tokenColumns()...).
-				Apply(accountingsynccol.AccountingConnectionApplyTenant(tenantInfo)).
-				Order(cols.IntegrationType.OrderAsc()).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ac := accountingsyncdb.AccountingConnections
+			return withoutTokens().Order(ac.IntegrationType.Asc()).All(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -163,21 +131,15 @@ func (r *connectionRepository) ListHoldingRealm(
 				return []*accountingsync.AccountingConnection{}, nil
 			}
 
-			entities := make([]*accountingsync.AccountingConnection, 0, len(req.RealmIDs))
-			cols := accountingsynccol.AccountingConnectionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				ExcludeColumn(tokenColumns()...).
-				Where(cols.IntegrationType.Eq(), req.IntegrationType).
-				Where(cols.ExternalRealmID.In(), bun.List(req.RealmIDs)).
-				Where(cols.Status.NotEq(), accountingsync.ConnectionStatusDisconnected).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ac := accountingsyncdb.AccountingConnections
+			return withoutTokens().
+				AllTenants().
+				Where(
+					ac.IntegrationType.Eq(req.IntegrationType),
+					ac.ExternalRealmID.In(req.RealmIDs...),
+					ac.Status.Ne(accountingsync.ConnectionStatusDisconnected),
+				).
+				All(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -196,29 +158,19 @@ func (r *connectionRepository) ListDueForHealthCheck(
 		func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
 			limit := req.Limit
 			if limit <= 0 {
-				limit = 100
+				limit = defaultConnectionPage
 			}
 
-			entities := make([]*accountingsync.AccountingConnection, 0, limit)
-			cols := accountingsynccol.AccountingConnectionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				ExcludeColumn(tokenColumns()...).
-				Where(cols.Status.In(), bun.List(activeStatuses())).
-				WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.LastCheckedAt.IsNull()).
-						WhereOr(cols.LastCheckedAt.Lt(), req.CheckedBefore)
-				}).
-				OrderExpr(cols.LastCheckedAt.Expr("{} ASC NULLS FIRST")).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ac := accountingsyncdb.AccountingConnections
+			return withoutTokens().
+				AllTenants().
+				Where(
+					ac.Status.In(activeStatuses()...),
+					keel.Or(ac.LastCheckedAt.IsNull(), ac.LastCheckedAt.Lt(req.CheckedBefore)),
+				).
+				Order(ac.LastCheckedAt.Asc().NullsFirst(), ac.ID.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -231,17 +183,12 @@ func (r *connectionRepository) LockByTypeWithTokens(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			entity := new(accountingsync.AccountingConnection)
-			cols := accountingsynccol.AccountingConnectionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where(cols.IntegrationType.Eq(), req.IntegrationType).
-				Apply(accountingsynccol.AccountingConnectionApplyTenant(req.TenantInfo)).
-				For("UPDATE").
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, connectionEntity)
+			ac := accountingsyncdb.AccountingConnections
+			entity, err := ac.Where(ac.IntegrationType.Eq(req.IntegrationType)).
+				Lock(keel.ForUpdate).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, connectionErrors.Map(err, "")
 			}
 
 			return entity, nil
@@ -257,17 +204,12 @@ func (r *connectionRepository) LockWithTokens(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			entity := new(accountingsync.AccountingConnection)
-			cols := accountingsynccol.AccountingConnectionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where(cols.ID.Eq(), req.ID).
-				Apply(accountingsynccol.AccountingConnectionApplyTenant(req.TenantInfo)).
-				For("UPDATE").
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, connectionEntity)
+			ac := accountingsyncdb.AccountingConnections
+			entity, err := ac.Where(ac.ID.Eq(req.ID)).
+				Lock(keel.ForUpdate).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, connectionErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -283,12 +225,9 @@ func (r *connectionRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return nil, err
+			err := accountingsyncdb.AccountingConnections.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				return nil, connectionErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -304,28 +243,22 @@ func (r *connectionRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingConnection, error) {
-			cols := accountingsynccol.AccountingConnectionColumns
+			ac := accountingsyncdb.AccountingConnections
 			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				ExcludeColumn(append(tokenColumns(), refreshColumns()...)...).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Exec(ctx)
+			err := ac.SaveExcept(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				ac.AccessTokenCiphertext,
+				ac.RefreshTokenCiphertext,
+				ac.ClientKeyCiphertext,
+				ac.ReferenceRefreshStartedAt,
+				ac.ReferenceRefreshedAt,
+				ac.ReferenceRefreshError,
+			)
 			if err != nil {
 				entity.Version = ov
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				connectionEntity,
-				entity.ID.String(),
-			); err != nil {
-				entity.Version = ov
-				return nil, err
+				return nil, connectionErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -338,30 +271,24 @@ func (r *connectionRepository) StoreTokens(
 	req accountingsyncports.StoreAccountingTokensRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := accountingsynccol.AccountingConnectionColumns
-
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*accountingsync.AccountingConnection)(nil)).
-			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return accountingsynccol.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Set(cols.AccessTokenExpiresAt.Set(), req.AccessTokenExpiresAt).
-			Set(cols.RefreshTokenExpiresAt.Set(), req.RefreshTokenExpiresAt).
-			Set(cols.LastRefreshedAt.Set(), req.RefreshedAt).
-			Set(cols.UpdatedAt.Set(), req.At)
-
-		query = setOrNull(query, cols.AccessTokenCiphertext, req.AccessTokenCiphertext)
-		query = setOrNull(query, cols.RefreshTokenCiphertext, req.RefreshTokenCiphertext)
-		query = setOrNull(query, cols.ClientKeyCiphertext, req.ClientKeyCiphertext)
-
-		results, err := query.Exec(ctx)
+		ac := accountingsyncdb.AccountingConnections
+		n, err := ac.Where(ac.ID.Eq(req.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			ac.AccessTokenExpiresAt.To(req.AccessTokenExpiresAt),
+			ac.RefreshTokenExpiresAt.To(req.RefreshTokenExpiresAt),
+			listquery.OptionalInt64(ac.LastRefreshedAt, req.RefreshedAt),
+			ac.UpdatedAt.To(req.At),
+			stringOrNull(ac.AccessTokenCiphertext, req.AccessTokenCiphertext),
+			stringOrNull(ac.RefreshTokenCiphertext, req.RefreshTokenCiphertext),
+			stringOrNull(ac.ClientKeyCiphertext, req.ClientKeyCiphertext),
+			keepConnectionVersion(),
+		)
 		if err != nil {
 			return err
 		}
 
-		return dberror.CheckRowsAffected(results, connectionEntity, req.ID.String())
+		return dberror.CheckAffected(n, connectionEntity, req.ID.String())
 	})
 }
 
@@ -378,20 +305,19 @@ func (r *connectionRepository) MarkWebhookReceived(
 			return 0, nil
 		}
 
-		cols := accountingsynccol.AccountingConnectionColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*accountingsync.AccountingConnection)(nil)).
-			Set(cols.LastWebhookAt.Set(), req.ReceivedAt).
-			Where(cols.IntegrationType.Eq(), req.IntegrationType).
-			Where(cols.ExternalRealmID.In(), bun.List(req.RealmIDs)).
-			Where(cols.Status.NotEq(), accountingsync.ConnectionStatusDisconnected).
-			Exec(ctx)
-		if err != nil {
-			return 0, err
-		}
-
-		return results.RowsAffected()
+		ac := accountingsyncdb.AccountingConnections
+		return ac.AllTenants().
+			Where(
+				ac.IntegrationType.Eq(req.IntegrationType),
+				ac.ExternalRealmID.In(req.RealmIDs...),
+				ac.Status.Ne(accountingsync.ConnectionStatusDisconnected),
+			).
+			Update(
+				ctx,
+				r.db.Keel(ctx),
+				ac.LastWebhookAt.To(req.ReceivedAt),
+				keepConnectionVersion(),
+			)
 	})
 }
 
@@ -404,36 +330,30 @@ func (r *connectionRepository) MarkReferenceRefresh(
 			return nil
 		}
 
-		cols := accountingsynccol.AccountingConnectionColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*accountingsync.AccountingConnection)(nil)).
-			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return accountingsynccol.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			})
+		ac := accountingsyncdb.AccountingConnections
+		sets := []keel.Assignment{keepConnectionVersion()}
 		switch {
 		case req.StartedAt != nil:
-			query = query.
-				Set(cols.ReferenceRefreshStartedAt.Set(), *req.StartedAt).
-				Set(cols.ReferenceRefreshError.SetNull())
+			sets = append(sets,
+				ac.ReferenceRefreshStartedAt.To(*req.StartedAt),
+				ac.ReferenceRefreshError.ToNull(),
+			)
 		default:
-			query = setOrNull(
-				query.Set(cols.ReferenceRefreshStartedAt.SetNull()),
-				cols.ReferenceRefreshError,
-				req.Error,
+			sets = append(sets,
+				ac.ReferenceRefreshStartedAt.ToNull(),
+				stringOrNull(ac.ReferenceRefreshError, req.Error),
 			)
 			if req.RefreshedAt != nil {
-				query = query.Set(cols.ReferenceRefreshedAt.Set(), *req.RefreshedAt)
+				sets = append(sets, ac.ReferenceRefreshedAt.To(*req.RefreshedAt))
 			}
 		}
 
-		results, err := query.Exec(ctx)
+		n, err := ac.Where(ac.ID.Eq(req.ID)).Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return err
 		}
 
-		return dberror.CheckRowsAffected(results, connectionEntity, req.ID.String())
+		return dberror.CheckAffected(n, connectionEntity, req.ID.String())
 	})
 }
 
@@ -442,36 +362,28 @@ func (r *connectionRepository) SaveChangeFeed(
 	req *accountingsyncports.SaveAccountingChangeFeedRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := accountingsynccol.AccountingConnectionColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*accountingsync.AccountingConnection)(nil)).
-			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return accountingsynccol.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			})
-		if req.OnlyIfEmpty {
-			query = query.Where(cols.ChangeCursor.IsNull())
+		ac := accountingsyncdb.AccountingConnections
+		sets := []keel.Assignment{
+			keepConnectionVersion(),
+			stringOrNull(ac.ChangesErrorCategory.StringCol, string(req.ErrorCategory)),
+			stringOrNull(ac.ChangesErrorMessage, req.ErrorMessage),
 		}
 		if req.Cursor != "" {
-			query = query.Set(cols.ChangeCursor.Set(), req.Cursor)
+			sets = append(sets, ac.ChangeCursor.To(req.Cursor))
 		}
 		if req.ReadAt != nil {
-			query = query.Set(cols.ChangesReadAt.Set(), *req.ReadAt)
+			sets = append(sets, ac.ChangesReadAt.To(*req.ReadAt))
 		}
-		query = setOrNull(query, cols.ChangesErrorCategory, string(req.ErrorCategory))
-		query = setOrNull(query, cols.ChangesErrorMessage, req.ErrorMessage)
 
-		results, err := query.Exec(ctx)
-		if err != nil {
-			return false, err
-		}
-		affected, err := results.RowsAffected()
+		n, err := ac.Where(
+			ac.ID.Eq(req.ID),
+			keel.When(req.OnlyIfEmpty, ac.ChangeCursor.IsNull()),
+		).Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return false, err
 		}
 
-		return affected > 0, nil
+		return n > 0, nil
 	})
 }
 
@@ -480,20 +392,16 @@ func (r *connectionRepository) SaveDriftCheck(
 	req *accountingsyncports.SaveAccountingDriftCheckRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := accountingsynccol.AccountingConnectionColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*accountingsync.AccountingConnection)(nil)).
-			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
-				return accountingsynccol.AccountingConnectionScopeTenantUpdate(q, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			})
-		if req.CheckedAt != nil {
-			query = query.Set(cols.DriftCheckedAt.Set(), *req.CheckedAt)
+		ac := accountingsyncdb.AccountingConnections
+		sets := []keel.Assignment{
+			keepConnectionVersion(),
+			stringOrNull(ac.DriftErrorCategory.StringCol, string(req.ErrorCategory)),
+			stringOrNull(ac.DriftErrorMessage, req.ErrorMessage),
 		}
-		query = setOrNull(query, cols.DriftErrorCategory, string(req.ErrorCategory))
-		query = setOrNull(query, cols.DriftErrorMessage, req.ErrorMessage)
-		if _, err := query.Exec(ctx); err != nil {
+		if req.CheckedAt != nil {
+			sets = append(sets, ac.DriftCheckedAt.To(*req.CheckedAt))
+		}
+		if _, err := ac.Where(ac.ID.Eq(req.ID)).Update(ctx, r.db.Keel(ctx), sets...); err != nil {
 			return fmt.Errorf("save the drift check: %w", err)
 		}
 		return nil
@@ -511,34 +419,31 @@ func (r *connectionRepository) ListActive(
 		func(ctx context.Context) ([]*accountingsync.AccountingConnection, error) {
 			limit := req.Limit
 			if limit <= 0 {
-				limit = 100
+				limit = defaultConnectionPage
 			}
 
-			entities := make([]*accountingsync.AccountingConnection, 0, limit)
-			cols := accountingsynccol.AccountingConnectionColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				ExcludeColumn(tokenColumns()...).
-				Where(cols.Status.In(), bun.List(activeStatuses())).
-				Order(cols.ID.OrderAsc()).
-				Limit(int64(limit))
-			if !req.AfterID.IsNil() {
-				query = query.Where(cols.ID.Gt(), req.AfterID)
-			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ac := accountingsyncdb.AccountingConnections
+			return withoutTokens().
+				AllTenants().
+				Where(
+					ac.Status.In(activeStatuses()...),
+					keel.When(!req.AfterID.IsNil(), ac.ID.Gt(req.AfterID)),
+				).
+				Order(ac.ID.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 		},
 	)
 }
 
-func setOrNull(q *bun.UpdateQuery, col buncolgen.Column, value string) *bun.UpdateQuery {
+func keepConnectionVersion() keel.Assignment {
+	ac := accountingsyncdb.AccountingConnections
+	return ac.Version.ToExpr(ac.Version)
+}
+
+func stringOrNull(col keel.StringCol, value string) keel.Assignment {
 	if value == "" {
-		return q.Set(col.SetNull())
+		return col.ToNull()
 	}
-	return q.Set(col.Set(), value)
+	return col.To(value)
 }

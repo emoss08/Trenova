@@ -105,10 +105,16 @@ var translatorCalls = map[string]int{
 }
 
 var labelledGeneratedFiles = map[string]struct{}{
-	"catalog_gen.go": {},
+	"viewwords_gen.go": {},
 }
 
-func isTranslatorCall(fun ast.Expr) (int, bool) {
+const analyticsMessagesFile = "analytics.messages.json"
+
+func isTranslatorCall(fun ast.Expr, inI18n bool) (int, bool) {
+	if ident, isIdent := fun.(*ast.Ident); isIdent && inI18n {
+		idx, ok := translatorCalls[ident.Name]
+		return idx, ok
+	}
 	sel, ok := fun.(*ast.SelectorExpr)
 	if !ok {
 		return 0, false
@@ -158,6 +164,9 @@ func (e *extractor) walkDir(root string) error {
 			}
 			return nil
 		}
+		if filepath.Base(path) == analyticsMessagesFile {
+			return e.readAnalyticsMessages(path)
+		}
 		if !strings.HasSuffix(path, ".go") {
 			return nil
 		}
@@ -175,6 +184,37 @@ func (e *extractor) walkDir(root string) error {
 	})
 }
 
+func (e *extractor) readAnalyticsMessages(path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("read %s: %w", path, err)
+	}
+	var messages map[string]string
+	if err = sonic.Unmarshal(data, &messages); err != nil {
+		return fmt.Errorf("decode %s: %w", path, err)
+	}
+	rel, err := filepath.Rel(e.repoRoot, path)
+	if err != nil {
+		rel = path
+	}
+	keys := make([]string, 0, len(messages))
+	for key := range messages {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, key := range keys {
+		if strings.TrimSpace(messages[key]) == "" {
+			continue
+		}
+		e.entries = append(e.entries, entry{
+			Message: messages[key],
+			File:    filepath.ToSlash(rel),
+			Callee:  "analytics:" + key,
+		})
+	}
+	return nil
+}
+
 func (e *extractor) parseFile(path string) error {
 	file, err := parser.ParseFile(e.fset, path, nil, 0)
 	if err != nil {
@@ -182,6 +222,7 @@ func (e *extractor) parseFile(path string) error {
 	}
 
 	discarded := discardedCalls(file)
+	inI18n := file.Name.Name == "i18n"
 
 	rel, err := filepath.Rel(e.repoRoot, path)
 	if err != nil {
@@ -209,7 +250,7 @@ func (e *extractor) parseFile(path string) error {
 			return true
 		}
 
-		if idx, ok := isTranslatorCall(call.Fun); ok {
+		if idx, ok := isTranslatorCall(call.Fun, inI18n); ok {
 			if idx < len(call.Args) {
 				if msg, isLiteral := stringLiteral(call.Args[idx]); isLiteral &&
 					strings.TrimSpace(msg) != "" {

@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 // ConsolidatedInvoiceParams is a set of legs that should become one invoice
@@ -116,7 +115,7 @@ func (s *Service) CreateConsolidated(
 	}
 
 	var created *invoice.Invoice
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		created, txErr = s.createConsolidatedTx(txCtx, params, number, customerID, actor)
 		return txErr
@@ -138,6 +137,9 @@ func (s *Service) createConsolidatedTx(
 	anchor := params.QueueItems[0]
 
 	if err := s.guardDetentionHolds(txCtx, params.TenantInfo, legIDs(params.Legs)); err != nil {
+		return nil, err
+	}
+	if err := shipment.RatingReviewHoldError(params.Legs); err != nil {
 		return nil, err
 	}
 

@@ -93,9 +93,10 @@ type AgentToolSafetyEdge struct {
 }
 
 type AgentToolSafetyPage struct {
-	Edges       []AgentToolSafetyEdge
-	HasNextPage bool
-	TotalCount  *int
+	Edges           []AgentToolSafetyEdge
+	HasNextPage     bool
+	TotalCount      *int
+	TotalCountExact bool
 }
 
 type AgentToolPolicyEdge struct {
@@ -105,9 +106,10 @@ type AgentToolPolicyEdge struct {
 }
 
 type AgentToolPolicyPage struct {
-	Edges       []AgentToolPolicyEdge
-	HasNextPage bool
-	TotalCount  *int
+	Edges           []AgentToolPolicyEdge
+	HasNextPage     bool
+	TotalCount      *int
+	TotalCountExact bool
 }
 
 type AgentSafetySummary struct {

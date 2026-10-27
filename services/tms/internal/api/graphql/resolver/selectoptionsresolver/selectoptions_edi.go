@@ -45,7 +45,7 @@ func (r *Deps) resolveEDICommunicationProfileSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediCommunicationProfileSelectOptionItem,
 	)
 }
@@ -85,7 +85,7 @@ func (r *Deps) resolveEDIDocumentTypeSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediDocumentTypeSelectOptionItem,
 	)
 }
@@ -126,7 +126,7 @@ func (r *Deps) resolveEDITransactionSetSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediTransactionSetSelectOptionItem,
 	)
 }
@@ -166,7 +166,7 @@ func (r *Deps) resolveEDIMappingProfileSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediMappingProfileSelectOptionItem,
 	)
 }
@@ -206,101 +206,8 @@ func (r *Deps) resolveEDIPartnerSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediPartnerSelectOptionItem,
-	)
-}
-
-func (r *Deps) resolveEDIPartnerDocumentProfileSelectOptions(
-	ctx context.Context,
-	req *SelectOptionsRequest,
-) (*gqlmodel.SelectOptionConnection, error) {
-	if len(req.IDs) > 0 {
-		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.EdiService.GetPartnerDocumentProfile(
-				ctx,
-				ediports.GetEDIPartnerDocumentProfileByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, ediPartnerDocumentProfileSelectOptionItem(entity))
-		}
-
-		return selectOptionConnection(items, len(items), 0)
-	}
-
-	result, err := r.EdiService.SelectPartnerDocumentProfileOptions(
-		ctx,
-		&ediports.EDIPartnerDocumentProfileSelectOptionsRequest{
-			SelectQueryRequest: req.SelectQuery,
-			PartnerID:          selectOptionIDFilter(req.Filters, "partnerId"),
-			TransactionSet: edi.TransactionSet(
-				selectOptionStringFilter(req.Filters, "transactionSet"),
-			),
-			Direction: edi.DocumentDirection(
-				selectOptionStringFilter(req.Filters, "direction"),
-			),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return selectOptionListConnection(
-		result,
-		req.SelectQuery.Pagination.SafeOffset(),
-		ediPartnerDocumentProfileSelectOptionItem,
-	)
-}
-
-func (r *Deps) resolveEDITemplateSelectOptions(
-	ctx context.Context,
-	req *SelectOptionsRequest,
-) (*gqlmodel.SelectOptionConnection, error) {
-	if len(req.IDs) > 0 {
-		items := make([]selectOptionConnectionItem, 0, len(req.IDs))
-		for _, id := range req.IDs {
-			entity, err := r.EdiService.GetTemplate(
-				ctx,
-				ediports.GetEDITemplateByIDRequest{
-					ID:         id,
-					TenantInfo: req.TenantInfo,
-				},
-			)
-			if err != nil {
-				return nil, err
-			}
-			items = append(items, ediTemplateSelectOptionItem(entity))
-		}
-
-		return selectOptionConnection(items, len(items), 0)
-	}
-
-	result, err := r.EdiService.SelectTemplateOptions(
-		ctx,
-		&ediports.EDITemplateSelectOptionsRequest{
-			SelectQueryRequest: req.SelectQuery,
-			TransactionSet: edi.TransactionSet(
-				selectOptionStringFilter(req.Filters, "transactionSet"),
-			),
-			Direction: edi.DocumentDirection(
-				selectOptionStringFilter(req.Filters, "direction"),
-			),
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return selectOptionListConnection(
-		result,
-		req.SelectQuery.Pagination.SafeOffset(),
-		ediTemplateSelectOptionItem,
 	)
 }
 
@@ -341,7 +248,7 @@ func (r *Deps) resolveEDIConnectionSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediConnectionSelectOptionItem,
 	)
 }
@@ -383,7 +290,7 @@ func (r *Deps) resolveEDITransferSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		ediTransferSelectOptionItemFor(req.TenantInfo.OrgID),
 	)
 }

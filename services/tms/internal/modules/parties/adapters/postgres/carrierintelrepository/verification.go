@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const verificationEntityName = "CarrierEquipmentVerification"
+
+var verificationErrors = dberror.Mapping{Entity: verificationEntityName}
 
 type verificationRepository struct {
 	db *postgres.Connection
@@ -39,11 +39,8 @@ func (r *verificationRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierEquipmentVerification, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := carrierinteldb.CarrierEquipmentVerifications.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				r.l.Error("failed to create carrier equipment verification", zap.Error(err))
 				return nil, fmt.Errorf("create carrier equipment verification: %w", err)
 			}
@@ -55,24 +52,16 @@ func (r *verificationRepository) Create(
 
 func (r *verificationRepository) GetByID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*carrierintel.CarrierEquipmentVerification, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierEquipmentVerification, error) {
-			entity := new(carrierintel.CarrierEquipmentVerification)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierEquipmentVerificationScopeTenant(sq, tenantInfo).
-						Where(carrierintelcol.CarrierEquipmentVerificationColumns.ID.Eq(), id)
-				}).
-				Scan(ctx)
+			entity, err := carrierinteldb.CarrierEquipmentVerifications.Get(ctx, r.db.Keel(ctx), id)
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, verificationEntityName)
+				return nil, verificationErrors.Map(err, id.String())
 			}
 
 			return entity, nil
@@ -82,7 +71,7 @@ func (r *verificationRepository) GetByID(
 
 func (r *verificationRepository) ListByAssignmentIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	assignmentIDs []pulid.ID,
 ) ([]*carrierintel.CarrierEquipmentVerification, error) {
 	return dbtx.Read(
@@ -93,17 +82,10 @@ func (r *verificationRepository) ListByAssignmentIDs(
 				return []*carrierintel.CarrierEquipmentVerification{}, nil
 			}
 
-			cols := carrierintelcol.CarrierEquipmentVerificationColumns
-			entities := make([]*carrierintel.CarrierEquipmentVerification, 0, len(assignmentIDs))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierEquipmentVerificationScopeTenant(sq, tenantInfo).
-						Where(cols.CarrierAssignmentID.In(), bun.List(assignmentIDs))
-				}).
-				Order(cols.VerifiedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Scan(ctx)
+			v := carrierinteldb.CarrierEquipmentVerifications
+			entities, err := v.Where(v.CarrierAssignmentID.In(assignmentIDs...)).
+				Order(v.VerifiedAt.Desc(), v.ID.Desc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list carrier equipment verifications", zap.Error(err))
 				return nil, fmt.Errorf("list carrier equipment verifications: %w", err)
@@ -122,22 +104,16 @@ func (r *verificationRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierEquipmentVerification, error) {
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Returning("*").
-				Exec(ctx)
+			err := carrierinteldb.CarrierEquipmentVerifications.Save(ctx, r.db.Keel(ctx), entity)
+			if dberror.IsNotFoundError(err) {
+				return nil, dberror.CreateVersionMismatchError(
+					verificationEntityName,
+					entity.ID.String(),
+				)
+			}
 			if err != nil {
 				r.l.Error("failed to update carrier equipment verification", zap.Error(err))
 				return nil, fmt.Errorf("update carrier equipment verification: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				verificationEntityName,
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
 			}
 
 			return entity, nil

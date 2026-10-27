@@ -3,28 +3,22 @@ package insightrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/detention"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/detention/detentiondb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
-
-// The aggregates behind the detectors.
-//
-// These are read-only reporting queries over whole periods, closer in shape to
-// the analytics providers than to an entity repository, and they are written as
-// explicit column expressions for the same reason those are: a FILTER clause
-// counting two windows in one pass does not decompose into column helpers
-// without becoming harder to read than the SQL it replaces.
-//
-// Every one is tenant-scoped in its WHERE clause on the driving table and again
-// on each join, because a join that forgets it is the way cross-tenant data
-// leaks into a report.
 
 type MetricsParams struct {
 	fx.In
@@ -45,17 +39,49 @@ func NewMetrics(p MetricsParams) insightports.InsightMetricsRepository {
 	}
 }
 
-// onTimeCondition is the definition of a delivery made on time: arrival no later
-// than the close of its scheduled window, falling back to the window start where
-// no end was given. It matches what the shipment analytics provider already
-// reports, so the insight panel and the dashboard cannot disagree about a number
-// a person can see in both places.
-const onTimeCondition = `stp.actual_arrival <= COALESCE(stp.scheduled_window_end, stp.scheduled_window_start)`
-
-// minOnTimeStops mirrors the detector's volume floor so the query does not carry
-// back hundreds of customers the detector will immediately discard. The detector
-// enforces it too; this is a cost optimisation, not the rule.
 const minOnTimeStops = 12
+
+func customerOnTimeQuery(
+	req insightports.InsightWindowRequest,
+) *keel.Query[*shipment.Stop] {
+	stp := shipmentdb.Stops
+	smv := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+	cus := customerdb.Customers
+
+	priorStart := req.WindowStart - (req.WindowEnd - req.WindowStart)
+	current := keel.And(
+		stp.ActualArrival.Gte(req.WindowStart),
+		stp.ActualArrival.Lt(req.WindowEnd),
+	)
+	prior := keel.And(stp.ActualArrival.Gte(priorStart), stp.ActualArrival.Lt(req.WindowStart))
+	onTime := keel.Int64Of(stp.ActualArrival).
+		LteExpr(stp.ScheduledWindowEnd.Coalesce(stp.ScheduledWindowStart))
+	currentTotal := keel.Count().Filter(current)
+
+	return stp.Join(smv, smv.ID.EqCol(stp.ShipmentMoveID)).
+		Join(sp, sp.ID.EqCol(smv.ShipmentID)).
+		Join(cus, cus.ID.EqCol(sp.CustomerID)).
+		Group(cus.ID, cus.Name).
+		Pick(
+			cus.ID,
+			cus.Name,
+			currentTotal,
+			keel.Count().Filter(keel.And(current, onTime)),
+			keel.Count().Filter(prior),
+			keel.Count().Filter(keel.And(prior, onTime)),
+		).
+		Where(
+			stp.Status.Eq(shipment.StopStatusCompleted),
+			stp.Type.In(shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery),
+			stp.ActualArrival.IsNotNull(),
+			stp.ActualArrival.Gt(0),
+			stp.ScheduledWindowStart.Gt(0),
+			stp.ActualArrival.Gte(priorStart),
+			stp.ActualArrival.Lt(req.WindowEnd),
+		).
+		Having(currentTotal.Gte(minOnTimeStops))
+}
 
 func (r *metricsRepository) CustomerOnTimeComparison(
 	ctx context.Context,
@@ -65,64 +91,46 @@ func (r *metricsRepository) CustomerOnTimeComparison(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]insightports.CustomerOnTimeRow, error) {
-			log := r.l.With(zap.String("operation", "CustomerOnTimeComparison"))
-
-			// The prior period is the same length immediately before the window, so the
-			// two are comparable without a seasonality argument.
-			priorStart := req.WindowStart - (req.WindowEnd - req.WindowStart)
-
-			rows := make([]insightports.CustomerOnTimeRow, 0)
-
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr("stops AS stp").
-				ColumnExpr("cus.id AS customer_id").
-				ColumnExpr("cus.name AS customer_name").
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival < ?)::bigint AS current_total",
-					req.WindowStart, req.WindowEnd,
-				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival < ? AND "+onTimeCondition+")::bigint AS current_on_time",
-					req.WindowStart, req.WindowEnd,
-				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival < ?)::bigint AS prior_total",
-					priorStart, req.WindowStart,
-				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival < ? AND "+onTimeCondition+")::bigint AS prior_on_time",
-					priorStart, req.WindowStart,
-				).
-				Join("JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id AND smv.organization_id = stp.organization_id AND smv.business_unit_id = stp.business_unit_id").
-				Join("JOIN shipments AS sp ON sp.id = smv.shipment_id AND sp.organization_id = smv.organization_id AND sp.business_unit_id = smv.business_unit_id").
-				Join("JOIN customers AS cus ON cus.id = sp.customer_id AND cus.organization_id = sp.organization_id AND cus.business_unit_id = sp.business_unit_id").
-				Where("stp.organization_id = ?", req.TenantInfo.OrgID).
-				Where("stp.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("stp.status = ?", shipment.StopStatusCompleted).
-				Where("stp.type IN (?)", bun.In([]shipment.StopType{
-					shipment.StopTypeDelivery,
-					shipment.StopTypeSplitDelivery,
-				})).
-				Where("stp.actual_arrival IS NOT NULL").
-				Where("stp.actual_arrival > 0").
-				// A stop with no scheduled window cannot be late, because nothing was
-				// promised. Counting it as on time would flatter the number.
-				Where("stp.scheduled_window_start > 0").
-				Where("stp.actual_arrival >= ?", priorStart).
-				Where("stp.actual_arrival < ?", req.WindowEnd).
-				GroupExpr("cus.id, cus.name").
-				Having("COUNT(*) FILTER (WHERE stp.actual_arrival >= ? AND stp.actual_arrival < ?) >= ?",
-					req.WindowStart, req.WindowEnd, minOnTimeStops).
-				Scan(ctx, &rows)
+			rows, err := keel.Into[insightports.CustomerOnTimeRow](
+				ctx,
+				r.db.Keel(ctx),
+				customerOnTimeQuery(req),
+			)
 			if err != nil {
-				log.Error("failed to read on-time comparison", zap.Error(err))
+				r.l.Error("failed to read on-time comparison",
+					zap.String("operation", "CustomerOnTimeComparison"),
+					zap.Error(err))
 
 				return nil, err
 			}
 
-			return rows, nil
+			return nonNil(rows), nil
 		},
 	)
+}
+
+func unbilledShipmentsQuery(
+	req insightports.UnbilledShipmentsRequest,
+) *keel.Query[*shipment.Shipment] {
+	sp := shipmentdb.Shipments
+	cus := customerdb.Customers
+
+	return sp.Join(cus, cus.ID.EqCol(sp.CustomerID)).
+		Group(cus.ID, cus.Name).
+		Pick(
+			cus.ID,
+			cus.Name,
+			keel.Count(),
+			keel.CastText(keel.NumericOf(sp.TotalChargeAmount.Sum()).Coalesce(0)),
+			sp.ActualDeliveryDate.Min(),
+		).
+		Where(
+			sp.ActualDeliveryDate.IsNotNull(),
+			sp.ActualDeliveryDate.Gt(0),
+			sp.ActualDeliveryDate.Lt(req.DeliveredBefore),
+			sp.BilledAt.IsNull(),
+			sp.Status.In(shipment.BillingTransferCandidateStatuses()...),
+		)
 }
 
 func (r *metricsRepository) UnbilledDeliveredShipments(
@@ -133,38 +141,51 @@ func (r *metricsRepository) UnbilledDeliveredShipments(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]insightports.UnbilledShipmentRow, error) {
-			log := r.l.With(zap.String("operation", "UnbilledDeliveredShipments"))
-
-			rows := make([]insightports.UnbilledShipmentRow, 0)
-
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr("shipments AS sp").
-				ColumnExpr("cus.id AS customer_id").
-				ColumnExpr("cus.name AS customer_name").
-				ColumnExpr("COUNT(*)::bigint AS shipment_count").
-				ColumnExpr("COALESCE(SUM(sp.total_charge_amount), 0)::text AS total_amount").
-				ColumnExpr("MIN(sp.actual_delivery_date)::bigint AS oldest_delivery").
-				Join("JOIN customers AS cus ON cus.id = sp.customer_id AND cus.organization_id = sp.organization_id AND cus.business_unit_id = sp.business_unit_id").
-				Where("sp.organization_id = ?", req.TenantInfo.OrgID).
-				Where("sp.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("sp.actual_delivery_date IS NOT NULL").
-				Where("sp.actual_delivery_date > 0").
-				Where("sp.actual_delivery_date < ?", req.DeliveredBefore).
-				// Billed is the only thing that ends this: a shipment marked ready to
-				// bill but never invoiced is exactly the case worth reporting.
-				Where("sp.billed_at IS NULL").
-				Where("sp.status IN (?)", bun.In(shipment.BillingTransferCandidateStatuses())).
-				GroupExpr("cus.id, cus.name").
-				Scan(ctx, &rows)
+			rows, err := keel.Into[insightports.UnbilledShipmentRow](
+				ctx,
+				r.db.Keel(ctx),
+				unbilledShipmentsQuery(req),
+			)
 			if err != nil {
-				log.Error("failed to read unbilled shipments", zap.Error(err))
+				r.l.Error("failed to read unbilled shipments",
+					zap.String("operation", "UnbilledDeliveredShipments"),
+					zap.Error(err))
 
 				return nil, err
 			}
 
-			return rows, nil
+			return nonNil(rows), nil
 		},
 	)
+}
+
+func unbilledDetentionQuery(
+	req insightports.InsightWindowRequest,
+) *keel.Query[*detention.DetentionOccurrence] {
+	dto := detentiondb.DetentionOccurrences
+	loc := locationdb.Locations
+
+	return dto.Join(loc, loc.ID.EqCol(dto.LocationID)).
+		Group(loc.ID, loc.Name).
+		Pick(
+			loc.ID,
+			loc.Name,
+			keel.Count(),
+			keel.CastText(keel.NumericOf(dto.BillableAmount.Sum()).Coalesce(0)),
+			keel.CastInt64(keel.NumericOf(dto.RawDwellMinutes.Sum()).Coalesce(0)),
+		).
+		Where(
+			dto.ClockStartAt.Gte(req.WindowStart),
+			dto.ClockStartAt.Lt(req.WindowEnd),
+			dto.Status.In(
+				detention.OccurrenceStatusWaived,
+				detention.OccurrenceStatusNotBillable,
+				detention.OccurrenceStatusPending,
+				detention.OccurrenceStatusApproved,
+			),
+			dto.IsOpen.Eq(false),
+			keel.NumericOf(dto.BillableAmount).Gt(0),
+		)
 }
 
 func (r *metricsRepository) UnbilledDetention(
@@ -175,44 +196,53 @@ func (r *metricsRepository) UnbilledDetention(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]insightports.UnbilledDetentionRow, error) {
-			log := r.l.With(zap.String("operation", "UnbilledDetention"))
-
-			rows := make([]insightports.UnbilledDetentionRow, 0)
-
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr("detention_occurrences AS dto").
-				ColumnExpr("loc.id AS location_id").
-				ColumnExpr("loc.name AS location_name").
-				ColumnExpr("COUNT(*)::bigint AS occurrence_count").
-				ColumnExpr("COALESCE(SUM(dto.billable_amount), 0)::text AS unbilled_amount").
-				ColumnExpr("COALESCE(SUM(dto.raw_dwell_minutes), 0)::bigint AS total_dwell_minutes").
-				Join("JOIN locations AS loc ON loc.id = dto.location_id AND loc.organization_id = dto.organization_id AND loc.business_unit_id = dto.business_unit_id").
-				Where("dto.organization_id = ?", req.TenantInfo.OrgID).
-				Where("dto.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("dto.clock_start_at >= ?", req.WindowStart).
-				Where("dto.clock_start_at < ?", req.WindowEnd).
-				// Still accruing means the clock is running and nobody has decided yet,
-				// which is not money lost. These four are decisions that ended with the
-				// charge unbilled.
-				Where("dto.status IN (?)", bun.In([]detention.OccurrenceStatus{
-					detention.OccurrenceStatusWaived,
-					detention.OccurrenceStatusNotBillable,
-					detention.OccurrenceStatusPending,
-					detention.OccurrenceStatusApproved,
-				})).
-				Where("dto.is_open = ?", false).
-				Where("dto.billable_amount > 0").
-				GroupExpr("loc.id, loc.name").
-				Scan(ctx, &rows)
+			rows, err := keel.Into[insightports.UnbilledDetentionRow](
+				ctx,
+				r.db.Keel(ctx),
+				unbilledDetentionQuery(req),
+			)
 			if err != nil {
-				log.Error("failed to read unbilled detention", zap.Error(err))
+				r.l.Error("failed to read unbilled detention",
+					zap.String("operation", "UnbilledDetention"),
+					zap.Error(err))
 
 				return nil, err
 			}
 
-			return rows, nil
+			return nonNil(rows), nil
 		},
 	)
+}
+
+func customerEmptyMilesQuery(
+	req insightports.InsightWindowRequest,
+) *keel.Query[*shipment.ShipmentMove] {
+	smv := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+	cus := customerdb.Customers
+
+	emptyMiles := keel.Float64Of(smv.Distance.Sum().Filter(smv.Loaded.Eq(false))).Coalesce(0)
+	totalMiles := keel.Float64Of(smv.Distance.Sum()).Coalesce(0)
+
+	return smv.Join(sp, sp.ID.EqCol(smv.ShipmentID)).
+		Join(cus, cus.ID.EqCol(sp.CustomerID)).
+		Group(cus.ID, cus.Name).
+		Pick(
+			cus.ID,
+			cus.Name,
+			keel.CastText(emptyMiles),
+			keel.CastText(totalMiles),
+			keel.Count(),
+			keel.CastText(keel.Sum(emptyMiles).OverWindow(keel.Window{})),
+			keel.CastText(keel.Sum(totalMiles).OverWindow(keel.Window{})),
+		).
+		Where(
+			smv.Status.Eq(shipment.MoveStatusCompleted),
+			smv.Distance.IsNotNull(),
+			smv.Distance.Gt(0),
+			sp.ActualDeliveryDate.Gte(req.WindowStart),
+			sp.ActualDeliveryDate.Lt(req.WindowEnd),
+		)
 }
 
 func (r *metricsRepository) CustomerEmptyMiles(
@@ -223,43 +253,49 @@ func (r *metricsRepository) CustomerEmptyMiles(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]insightports.CustomerEmptyMilesRow, error) {
-			log := r.l.With(zap.String("operation", "CustomerEmptyMiles"))
-
-			rows := make([]insightports.CustomerEmptyMilesRow, 0)
-
-			// The organization's own averages ride along on every row as a window
-			// function rather than a second query, so the customer and the baseline are
-			// guaranteed to describe the same set of moves. Computing them separately is
-			// how a comparison quietly starts comparing different periods.
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr("shipment_moves AS smv").
-				ColumnExpr("cus.id AS customer_id").
-				ColumnExpr("cus.name AS customer_name").
-				ColumnExpr("COALESCE(SUM(smv.distance) FILTER (WHERE smv.loaded = FALSE), 0)::text AS empty_miles").
-				ColumnExpr("COALESCE(SUM(smv.distance), 0)::text AS total_miles").
-				ColumnExpr("COUNT(*)::bigint AS move_count").
-				ColumnExpr("SUM(COALESCE(SUM(smv.distance) FILTER (WHERE smv.loaded = FALSE), 0)) OVER ()::text AS org_empty_miles").
-				ColumnExpr("SUM(COALESCE(SUM(smv.distance), 0)) OVER ()::text AS org_total_miles").
-				Join("JOIN shipments AS sp ON sp.id = smv.shipment_id AND sp.organization_id = smv.organization_id AND sp.business_unit_id = smv.business_unit_id").
-				Join("JOIN customers AS cus ON cus.id = sp.customer_id AND cus.organization_id = sp.organization_id AND cus.business_unit_id = sp.business_unit_id").
-				Where("smv.organization_id = ?", req.TenantInfo.OrgID).
-				Where("smv.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("smv.status = ?", shipment.MoveStatusCompleted).
-				Where("smv.distance IS NOT NULL").
-				Where("smv.distance > 0").
-				Where("sp.actual_delivery_date >= ?", req.WindowStart).
-				Where("sp.actual_delivery_date < ?", req.WindowEnd).
-				GroupExpr("cus.id, cus.name").
-				Scan(ctx, &rows)
+			rows, err := keel.Into[insightports.CustomerEmptyMilesRow](
+				ctx,
+				r.db.Keel(ctx),
+				customerEmptyMilesQuery(req),
+			)
 			if err != nil {
-				log.Error("failed to read empty miles", zap.Error(err))
+				r.l.Error("failed to read empty miles",
+					zap.String("operation", "CustomerEmptyMiles"),
+					zap.Error(err))
 
 				return nil, err
 			}
 
-			return rows, nil
+			return nonNil(rows), nil
 		},
 	)
+}
+
+func expiringCredentialsQuery(
+	req insightports.ExpiringCredentialsRequest,
+) *keel.Query[*worker.WorkerCredential] {
+	wcred := workerdb.WorkerCredentials
+	wct := workerdb.WorkerCredentialTypes
+	wrk := workerdb.Workers
+
+	return wcred.Join(wct, wct.ID.EqCol(wcred.CredentialTypeID)).
+		Join(wrk, wrk.ID.EqCol(wcred.WorkerID)).
+		Group(wct.ID, wct.Name).
+		Pick(
+			wct.ID,
+			wct.Name,
+			keel.BoolOr(keel.BoolOf(wct.IsRequired)),
+			wcred.WorkerID.CountDistinct(),
+			wcred.ExpiresAt.Min(),
+			wcred.WorkerID.CountDistinct().Filter(wcred.ExpiresAt.Lt(req.From)),
+		).
+		Where(
+			wcred.ExpiresAt.IsNotNull(),
+			wcred.ExpiresAt.Gt(0),
+			wcred.ExpiresAt.Lt(req.Through),
+			wcred.ArchivedAt.IsNull(),
+			wrk.Status.Eq(domaintypes.StatusActive),
+		)
 }
 
 func (r *metricsRepository) ExpiringCredentials(
@@ -270,43 +306,28 @@ func (r *metricsRepository) ExpiringCredentials(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]insightports.ExpiringCredentialRow, error) {
-			log := r.l.With(zap.String("operation", "ExpiringCredentials"))
-
-			rows := make([]insightports.ExpiringCredentialRow, 0)
-
-			err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr("worker_credentials AS wcred").
-				ColumnExpr("wct.id AS credential_type_id").
-				ColumnExpr("wct.name AS credential_type_name").
-				ColumnExpr("bool_or(wct.is_required) AS is_required").
-				ColumnExpr("COUNT(DISTINCT wcred.worker_id)::bigint AS worker_count").
-				ColumnExpr("MIN(wcred.expires_at)::bigint AS earliest_expiry").
-				ColumnExpr(
-					"COUNT(DISTINCT wcred.worker_id) FILTER (WHERE wcred.expires_at < ?)::bigint AS already_expired",
-					req.From,
-				).
-				Join("JOIN worker_credential_types AS wct ON wct.id = wcred.credential_type_id AND wct.organization_id = wcred.organization_id AND wct.business_unit_id = wcred.business_unit_id").
-				Join("JOIN workers AS wrk ON wrk.id = wcred.worker_id AND wrk.organization_id = wcred.organization_id AND wrk.business_unit_id = wcred.business_unit_id").
-				Where("wcred.organization_id = ?", req.TenantInfo.OrgID).
-				Where("wcred.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("wcred.expires_at IS NOT NULL").
-				Where("wcred.expires_at > 0").
-				Where("wcred.expires_at < ?", req.Through).
-				// An archived credential has been superseded or the worker has left; it
-				// is not a compliance exposure.
-				Where("wcred.archived_at IS NULL").
-				// A worker who is no longer active cannot be taken off the road by an
-				// expiring credential.
-				Where("wrk.status = ?", domaintypes.StatusActive).
-				GroupExpr("wct.id, wct.name").
-				Scan(ctx, &rows)
+			rows, err := keel.Into[insightports.ExpiringCredentialRow](
+				ctx,
+				r.db.Keel(ctx),
+				expiringCredentialsQuery(req),
+			)
 			if err != nil {
-				log.Error("failed to read expiring credentials", zap.Error(err))
+				r.l.Error("failed to read expiring credentials",
+					zap.String("operation", "ExpiringCredentials"),
+					zap.Error(err))
 
 				return nil, err
 			}
 
-			return rows, nil
+			return nonNil(rows), nil
 		},
 	)
+}
+
+func nonNil[T any](rows []T) []T {
+	if rows == nil {
+		return []T{}
+	}
+
+	return rows
 }

@@ -202,49 +202,49 @@ type ExpiringCredentialsRequest struct {
 }
 
 type CustomerOnTimeRow struct {
-	CustomerID    pulid.ID `bun:"customer_id"`
-	CustomerName  string   `bun:"customer_name"`
-	CurrentTotal  int64    `bun:"current_total"`
-	CurrentOnTime int64    `bun:"current_on_time"`
-	PriorTotal    int64    `bun:"prior_total"`
-	PriorOnTime   int64    `bun:"prior_on_time"`
+	CustomerID    pulid.ID
+	CustomerName  string
+	CurrentTotal  int64
+	CurrentOnTime int64
+	PriorTotal    int64
+	PriorOnTime   int64
 }
 
 type UnbilledShipmentRow struct {
-	CustomerID     pulid.ID `bun:"customer_id"`
-	CustomerName   string   `bun:"customer_name"`
-	ShipmentCount  int64    `bun:"shipment_count"`
-	TotalAmount    string   `bun:"total_amount"`
-	OldestDelivery int64    `bun:"oldest_delivery"`
+	CustomerID     pulid.ID
+	CustomerName   string
+	ShipmentCount  int64
+	TotalAmount    string
+	OldestDelivery int64
 }
 
 type UnbilledDetentionRow struct {
-	LocationID        pulid.ID `bun:"location_id"`
-	LocationName      string   `bun:"location_name"`
-	OccurrenceCount   int64    `bun:"occurrence_count"`
-	UnbilledAmount    string   `bun:"unbilled_amount"`
-	TotalDwellMinutes int64    `bun:"total_dwell_minutes"`
+	LocationID        pulid.ID
+	LocationName      string
+	OccurrenceCount   int64
+	UnbilledAmount    string
+	TotalDwellMinutes int64
 }
 
 type CustomerEmptyMilesRow struct {
-	CustomerID    pulid.ID `bun:"customer_id"`
-	CustomerName  string   `bun:"customer_name"`
-	EmptyMiles    string   `bun:"empty_miles"`
-	TotalMiles    string   `bun:"total_miles"`
-	MoveCount     int64    `bun:"move_count"`
-	OrgEmptyMiles string   `bun:"org_empty_miles"`
-	OrgTotalMiles string   `bun:"org_total_miles"`
+	CustomerID    pulid.ID
+	CustomerName  string
+	EmptyMiles    string
+	TotalMiles    string
+	MoveCount     int64
+	OrgEmptyMiles string
+	OrgTotalMiles string
 }
 
 type ExpiringCredentialRow struct {
-	CredentialTypeID   pulid.ID `bun:"credential_type_id"`
-	CredentialTypeName string   `bun:"credential_type_name"`
-	IsRequired         bool     `bun:"is_required"`
-	WorkerCount        int64    `bun:"worker_count"`
+	CredentialTypeID   pulid.ID
+	CredentialTypeName string
+	IsRequired         bool
+	WorkerCount        int64
 	// EarliestExpiry is the soonest a credential in this group runs out, which is
 	// what decides how urgent the group is.
-	EarliestExpiry int64 `bun:"earliest_expiry"`
+	EarliestExpiry int64
 	// AlreadyExpired counts those past their date, which are a different problem
 	// from those merely approaching one.
-	AlreadyExpired int64 `bun:"already_expired"`
+	AlreadyExpired int64
 }

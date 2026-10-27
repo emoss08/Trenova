@@ -10,10 +10,10 @@ import {
 import { Alert, AlertDescription } from "@trenova/shared/components/ui/alert";
 import { Button } from "@trenova/shared/components/ui/button";
 import { FormControl, FormGroup } from "@trenova/shared/components/ui/form";
-import { MAX_MATRIX_DIMENSIONS } from "@trenova/shared/lib/rate-matrix";
+import { isPostalRangeAxis, MAX_MATRIX_DIMENSIONS } from "@trenova/shared/lib/rate-matrix";
 import type { RateMatrix, RateMatrixDimension } from "@trenova/shared/types/rate";
 import { AlertTriangleIcon, PlusIcon } from "@trenova/shared/components/icons";
-import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
+import { useFieldArray, useFormContext, useFormState, useWatch } from "react-hook-form";
 
 /**
  * The axes are the shape of the sheet, and changing them after rates exist
@@ -23,9 +23,12 @@ import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 export function DimensionEditor() {
   const t = useT();
 
-  const { control } = useFormContext<RateMatrix>();
+  const { control, setValue } = useFormContext<RateMatrix>();
   const { fields, append, replace } = useFieldArray({ control, name: "dimensions" });
   const dimensions = (useWatch({ control, name: "dimensions" }) ?? []) as RateMatrixDimension[];
+  // One to four axes is a rule on the whole list, so its message belongs to no one axis.
+  const { errors } = useFormState({ control, name: "dimensions" });
+  const listError = errors.dimensions?.message ?? errors.dimensions?.root?.message;
 
   const atCapacity = fields.length >= MAX_MATRIX_DIMENSIONS;
 
@@ -51,6 +54,8 @@ export function DimensionEditor() {
         </p>
       )}
 
+      {listError && <p className="text-destructive text-xs">{listError}</p>}
+
       {fields.length > 0 && (
         <Alert>
           <AlertTriangleIcon className="size-4" />
@@ -64,6 +69,7 @@ export function DimensionEditor() {
 
       {fields.map((field, index) => {
         const matchMode = dimensions[index]?.matchMode;
+        const postal = dimensions[index] ? isPostalRangeAxis(dimensions[index]) : false;
 
         return (
           <div key={field.id} className="bg-card rounded-md border p-4">
@@ -90,6 +96,14 @@ export function DimensionEditor() {
                   placeholder={t("Select dimension")}
                   description={t("What about the shipment this axis reads")}
                   options={rateMatrixDimensionKindChoices}
+                  onValueChange={(kind) => {
+                    if (kind !== "ZipRange") return;
+                    // A postal range axis is matched by range, keeps codes as entered and has
+                    // no overflow policy: the server refuses anything else.
+                    setValue(`dimensions.${index}.matchMode`, "Range", { shouldDirty: true });
+                    setValue(`dimensions.${index}.keyNormalization`, "None", { shouldDirty: true });
+                    setValue(`dimensions.${index}.rangeOverflow`, "Error", { shouldDirty: true });
+                  }}
                 />
               </FormControl>
               <FormControl>
@@ -99,16 +113,25 @@ export function DimensionEditor() {
                   name={`dimensions.${index}.matchMode` as never}
                   label={t("Match mode")}
                   placeholder={t("Select match mode")}
+                  isReadOnly={postal}
                   description={
-                    matchMode === "Range"
-                      ? "Bands, each covering from its floor up to but not including the next"
-                      : "An exact key, like a zone code or a freight class"
+                    postal
+                      ? t("Postal ranges, each covering its first through its last postal code")
+                      : matchMode === "Range"
+                        ? t("Bands, each covering from its floor up to but not including the next")
+                        : t("An exact key, like a zone code or a freight class")
                   }
                   options={rateMatrixMatchModeChoices}
                 />
               </FormControl>
               <FormControl cols="full">
-                {matchMode === "Range" ? (
+                {postal ? (
+                  <p className="text-muted-foreground text-xs">
+                    {t(
+                      "A postal code matches the range whose ends its first characters fall between, compared character by character after trimming and upper-casing. One that no range holds finds no rate.",
+                    )}
+                  </p>
+                ) : matchMode === "Range" ? (
                   <SelectField
                     control={control}
                     name={`dimensions.${index}.rangeOverflow` as never}

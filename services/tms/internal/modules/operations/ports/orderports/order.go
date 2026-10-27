@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 type ListOrdersRequest struct {
@@ -46,10 +45,10 @@ type OrderSelectOptionsRequest struct {
 // ShipmentAttachRef is the minimal shipment projection the order service needs to
 // validate an attach: current parent order, customer, and leg status.
 type ShipmentAttachRef struct {
-	ID         pulid.ID        `bun:"id"`
-	OrderID    pulid.ID        `bun:"order_id"`
-	CustomerID pulid.ID        `bun:"customer_id"`
-	Status     shipment.Status `bun:"status"`
+	ID         pulid.ID
+	OrderID    pulid.ID
+	CustomerID pulid.ID
+	Status     shipment.Status
 }
 
 type MarkOrderChargesInvoicedRequest struct {
@@ -112,11 +111,6 @@ type OrderRepository interface {
 		ctx context.Context,
 		entity *order.Order,
 	) (*order.Order, error)
-	CreateInTx(
-		ctx context.Context,
-		tx bun.IDB,
-		entity *order.Order,
-	) error
 	Update(
 		ctx context.Context,
 		entity *order.Order,

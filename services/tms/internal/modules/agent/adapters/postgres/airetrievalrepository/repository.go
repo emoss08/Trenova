@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pgvector"
 	"go.uber.org/fx"
@@ -84,10 +83,6 @@ func (r *repository) vectorReady(ctx context.Context) (bool, error) {
 	}
 
 	return availability.Available, nil
-}
-
-func conflictTarget(table buncolgen.TableInfo) string {
-	return "CONFLICT (" + strings.Join(table.PrimaryKey, ", ") + ")"
 }
 
 func invalid(format string, args ...any) error {

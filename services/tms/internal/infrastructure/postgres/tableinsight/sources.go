@@ -2,21 +2,13 @@ package tableinsight
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/ordercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicefailurecol"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure/servicefailuredb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"go.uber.org/fx"
 )
 
@@ -31,123 +23,108 @@ const (
 	fieldStateID = "stateId"
 )
 
-func facet(column *buncolgen.Column) dbhelper.InsightColumn {
-	return dbhelper.InsightColumn{Column: *column, Facetable: true}
-}
-
-func sum(column *buncolgen.Column) dbhelper.InsightColumn {
-	return dbhelper.InsightColumn{Column: *column, Summable: true}
-}
-
-func timeline(column *buncolgen.Column) dbhelper.InsightColumn {
-	return dbhelper.InsightColumn{Column: *column, Timeline: true}
-}
-
 func NewCustomerSource(p Params) Result {
-	cols := customercol.CustomerColumns
+	c := customerdb.Customers
 	return New(&Config{
 		Resource: permission.ResourceCustomer,
 		DB:       p.DB,
-		IDColumn: cols.ID,
-		Base:     Filtered((*customer.Customer)(nil), customercol.CustomerTable.Alias),
-		Columns: dbhelper.InsightColumns{
-			fieldStatus:  facet(&cols.Status),
-			fieldStateID: facet(&cols.StateID),
+		IDColumn: c.ID.Col,
+		Base:     Filtered(c.Handle),
+		Columns: Columns{
+			fieldStatus:  Facet(c.Status.Col),
+			fieldStateID: Facet(c.StateID.Col),
 		},
 	})
 }
 
 func NewInvoiceSource(p Params) Result {
-	cols := invoicecol.InvoiceColumns
+	i := invoicedb.Invoices
 	return New(&Config{
 		Resource: permission.ResourceInvoice,
 		DB:       p.DB,
-		IDColumn: cols.ID,
-		Base:     Filtered((*invoice.Invoice)(nil), invoicecol.InvoiceTable.Alias),
-		Columns: dbhelper.InsightColumns{
-			fieldStatus:         facet(&cols.Status),
-			"settlementStatus":  facet(&cols.SettlementStatus),
-			"disputeStatus":     facet(&cols.DisputeStatus),
-			"sendStatus":        facet(&cols.SendStatus),
-			"billType":          facet(&cols.BillType),
-			"customerId":        facet(&cols.CustomerID),
-			"shipperCustomerId": facet(&cols.ShipperCustomerID),
-			"totalAmount":       sum(&cols.TotalAmount),
-			"subtotalAmount":    sum(&cols.SubtotalAmount),
-			"otherAmount":       sum(&cols.OtherAmount),
-			"appliedAmount":     sum(&cols.AppliedAmount),
-			"invoiceDate":       timeline(&cols.InvoiceDate),
-			"postedAt":          timeline(&cols.PostedAt),
+		IDColumn: i.ID.Col,
+		Base:     Filtered(i.Handle),
+		Columns: Columns{
+			fieldStatus:         Facet(i.Status.Col),
+			"settlementStatus":  Facet(i.SettlementStatus.Col),
+			"disputeStatus":     Facet(i.DisputeStatus.Col),
+			"sendStatus":        Facet(i.SendStatus.Col),
+			"billType":          Facet(i.BillType.Col),
+			"customerId":        Facet(i.CustomerID.Col),
+			"shipperCustomerId": Facet(i.ShipperCustomerID.Col),
+			"totalAmount":       Sum(i.TotalAmount.Col),
+			"subtotalAmount":    Sum(i.SubtotalAmount.Col),
+			"otherAmount":       Sum(i.OtherAmount.Col),
+			"appliedAmount":     Sum(i.AppliedAmount.Col),
+			"invoiceDate":       Timeline(i.InvoiceDate.Col),
+			"postedAt":          Timeline(i.PostedAt.Col),
 		},
 	})
 }
 
 func NewLocationSource(p Params) Result {
-	cols := locationcol.LocationColumns
+	l := locationdb.Locations
 	return New(&Config{
 		Resource: permission.ResourceLocation,
 		DB:       p.DB,
-		IDColumn: cols.ID,
-		Base:     Filtered((*location.Location)(nil), locationcol.LocationTable.Alias),
-		Columns: dbhelper.InsightColumns{
-			fieldStatus:          facet(&cols.Status),
-			"locationCategoryId": facet(&cols.LocationCategoryID),
-			fieldStateID:         facet(&cols.StateID),
+		IDColumn: l.ID.Col,
+		Base:     Filtered(l.Handle),
+		Columns: Columns{
+			fieldStatus:          Facet(l.Status.Col),
+			"locationCategoryId": Facet(l.LocationCategoryID.Col),
+			fieldStateID:         Facet(l.StateID.Col),
 		},
 	})
 }
 
 func NewCarrierSource(p Params) Result {
-	cols := carriercol.CarrierColumns
+	c := carrierdb.Carriers
 	return New(&Config{
 		Resource: permission.ResourceCarrier,
 		DB:       p.DB,
-		IDColumn: cols.ID,
-		Base:     Filtered((*carrier.Carrier)(nil), carriercol.CarrierTable.Alias),
-		Columns: dbhelper.InsightColumns{
-			fieldStatus:        facet(&cols.Status),
-			"carrierType":      facet(&cols.CarrierType),
-			"complianceStatus": facet(&cols.ComplianceStatus),
-			fieldStateID:       facet(&cols.StateID),
+		IDColumn: c.ID.Col,
+		Base:     Filtered(c.Handle),
+		Columns: Columns{
+			fieldStatus:        Facet(c.Status.Col),
+			"carrierType":      Facet(c.CarrierType.Col),
+			"complianceStatus": Facet(c.ComplianceStatus.Col),
+			fieldStateID:       Facet(c.StateID.Col),
 		},
 	})
 }
 
 func NewOrderSource(p Params) Result {
-	cols := ordercol.OrderColumns
+	o := orderdb.Orders
 	return New(&Config{
 		Resource: permission.ResourceOrder,
 		DB:       p.DB,
-		IDColumn: cols.ID,
-		Base:     Filtered((*order.Order)(nil), ordercol.OrderTable.Alias),
-		Columns: dbhelper.InsightColumns{
-			fieldStatus:    facet(&cols.Status),
-			"customerId":   facet(&cols.CustomerID),
-			"ownerId":      facet(&cols.OwnerID),
-			"enteredById":  facet(&cols.EnteredByID),
-			"quotedAmount": sum(&cols.QuotedAmount),
-			"baseAmount":   sum(&cols.BaseAmount),
-			"totalAmount":  sum(&cols.TotalAmount),
-			"createdAt":    timeline(&cols.CreatedAt),
+		IDColumn: o.ID.Col,
+		Base:     Filtered(o.Handle),
+		Columns: Columns{
+			fieldStatus:    Facet(o.Status.Col),
+			"customerId":   Facet(o.CustomerID.Col),
+			"ownerId":      Facet(o.OwnerID.Col),
+			"enteredById":  Facet(o.EnteredByID.Col),
+			"quotedAmount": Sum(o.QuotedAmount.Col),
+			"baseAmount":   Sum(o.BaseAmount.Col),
+			"totalAmount":  Sum(o.TotalAmount.Col),
+			"createdAt":    Timeline(o.CreatedAt.Col),
 		},
 	})
 }
 
 func NewServiceFailureSource(p Params) Result {
-	cols := servicefailurecol.ServiceFailureColumns
+	sf := servicefailuredb.ServiceFailures
 	return New(&Config{
 		Resource: permission.ResourceServiceFailure,
 		DB:       p.DB,
-		IDColumn: cols.ID,
-		Base: Filtered(
-			(*servicefailure.ServiceFailure)(nil),
-			servicefailurecol.ServiceFailureTable.Alias,
-		),
-		Columns: dbhelper.InsightColumns{
-			fieldStatus:    facet(&cols.Status),
-			"type":         facet(&cols.Type),
-			"stopType":     facet(&cols.StopType),
-			"reasonCodeId": facet(&cols.ReasonCodeID),
+		IDColumn: sf.ID.Col,
+		Base:     Filtered(sf.Handle),
+		Columns: Columns{
+			fieldStatus:    Facet(sf.Status.Col),
+			"type":         Facet(sf.Type.Col),
+			"stopType":     Facet(sf.StopType.Col),
+			"reasonCodeId": Facet(sf.ReasonCodeID.Col),
 		},
 	})
 }

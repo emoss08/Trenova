@@ -536,7 +536,7 @@ func (t Template) StarterTools() []string {
 		return []string{
 			"factoring_list_readiness",
 			"factoring_get_readiness",
-			"factoring_get_agreement",
+			"factoring_list_agreements",
 			"factoring_list_noas",
 			"factoring_create_noa",
 			"factoring_send_noa",
@@ -589,11 +589,16 @@ func (t Template) StarterTools() []string {
 		}
 	case TemplateFormulaAssistant:
 		return []string{
-			"formula_describe_schema",
-			"formula_test_expression",
+			"formula_describe_language",
+			"formula_check",
+			"formula_run_tests",
+			"formula_preview",
 			"formula_propose",
+			"formula_library_propose",
 			toolListFormulaTemplates,
 			toolGetFormulaTemplate,
+			"formula_list_libraries",
+			"formula_get_library",
 			"rate_list_agreements",
 			"rate_get_agreement",
 			"rate_get_matrix",

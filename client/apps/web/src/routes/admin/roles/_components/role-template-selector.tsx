@@ -11,7 +11,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import type { AddPermission, FieldSensitivity } from "@trenova/shared/types/role";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { permissionBundlesQuery } from "./role-bundle-picker";
+import { PERMISSION_CATALOG_STALE_TIME, permissionCatalog } from "@/lib/queries/permission-catalog";
 
 const EMPTY_TEMPLATE = "empty";
 
@@ -31,7 +31,10 @@ export function RoleTemplateSelector({
   onSelectTemplate,
 }: RoleTemplateSelectorProps) {
   const t = useT();
-  const { data, isLoading } = useQuery(permissionBundlesQuery);
+  const { data, isLoading } = useQuery({
+    ...permissionCatalog.bundles(),
+    staleTime: PERMISSION_CATALOG_STALE_TIME,
+  });
   const templates = useMemo(() => data?.templates ?? [], [data?.templates]);
 
   const items = useMemo(

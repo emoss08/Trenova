@@ -12,6 +12,7 @@ import { apiService } from "@/services/api";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link01Icon, RefreshCw01Icon } from "@trenova/shared/components/icons";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import type { EDIConnectionTestResult } from "@trenova/shared/types/edi";
 import { Operation, Resource } from "@trenova/shared/types/permission";
@@ -198,8 +199,8 @@ function PartnerCard({
   const standing = partnerStanding(card, items.length, t);
   const figure = deliveryFigure(card, t);
   const neighbors = neighborsIn(order, id);
-  const usage = partnerUsage(card.documentProfiles);
-  const address = internal ? null : partnerAddress(card.documentProfiles);
+  const usage = partnerUsage(card);
+  const address = internal ? null : partnerAddress(card);
   const exchange = internal ? connectionExchange(card, t) : partnerExchange(card, t);
   const traded = card.activity.sets.length > 0;
   const checks = readinessChecks(card, t);
@@ -395,7 +396,7 @@ function PartnerCard({
 
       {address && (
         <CardSection title={t("How it's addressed")}>
-          <AddressLabel address={address} usage={usage} />
+          <AddressLabel address={address} />
         </CardSection>
       )}
 
@@ -425,7 +426,11 @@ function PartnerCard({
           title={t("Latest messages")}
           aside={
             messages.total ? (
-              <span>{t("{0, plural, one {# in all} other {# in all}}", messages.total)}</span>
+              <span>
+                {messages.totalExact
+                  ? t("{0, plural, one {# in all} other {# in all}}", messages.total)
+                  : t("About {0} in all", formatRowTotal(messages.total, false))}
+              </span>
             ) : undefined
           }
         >

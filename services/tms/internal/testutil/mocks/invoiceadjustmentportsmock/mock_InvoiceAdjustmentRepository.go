@@ -929,7 +929,7 @@ func (_c *MockInvoiceAdjustmentRepository_ListApprovalQueue_Call) RunAndReturn(r
 }
 
 // ListBatchQueue provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) ListBatchQueue(ctx context.Context, req invoiceadjustmentports.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
+func (_mock *MockInvoiceAdjustmentRepository) ListBatchQueue(ctx context.Context, req *invoiceadjustmentports.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -938,17 +938,17 @@ func (_mock *MockInvoiceAdjustmentRepository) ListBatchQueue(ctx context.Context
 
 	var r0 *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceadjustmentports.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustmentports.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceadjustmentports.ListBatchQueueRequest) *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustmentports.ListBatchQueueRequest) *pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch])
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, invoiceadjustmentports.ListBatchQueueRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustmentports.ListBatchQueueRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -968,15 +968,15 @@ func (_e *MockInvoiceAdjustmentRepository_Expecter) ListBatchQueue(ctx any, req 
 	return &MockInvoiceAdjustmentRepository_ListBatchQueue_Call{Call: _e.mock.On("ListBatchQueue", ctx, req)}
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) Run(run func(ctx context.Context, req invoiceadjustmentports.ListBatchQueueRequest)) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) Run(run func(ctx context.Context, req *invoiceadjustmentports.ListBatchQueueRequest)) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 invoiceadjustmentports.ListBatchQueueRequest
+		var arg1 *invoiceadjustmentports.ListBatchQueueRequest
 		if args[1] != nil {
-			arg1 = args[1].(invoiceadjustmentports.ListBatchQueueRequest)
+			arg1 = args[1].(*invoiceadjustmentports.ListBatchQueueRequest)
 		}
 		run(
 			arg0,
@@ -991,13 +991,13 @@ func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) Return(listResult
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) RunAndReturn(run func(ctx context.Context, req invoiceadjustmentports.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListBatchQueue_Call) RunAndReturn(run func(ctx context.Context, req *invoiceadjustmentports.ListBatchQueueRequest) (*pagination.ListResult[*invoiceadjustment.InvoiceAdjustmentBatch], error)) *MockInvoiceAdjustmentRepository_ListBatchQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListReconciliationQueue provides a mock function for the type MockInvoiceAdjustmentRepository
-func (_mock *MockInvoiceAdjustmentRepository) ListReconciliationQueue(ctx context.Context, req invoiceadjustmentports.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
+func (_mock *MockInvoiceAdjustmentRepository) ListReconciliationQueue(ctx context.Context, req *invoiceadjustmentports.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
@@ -1006,17 +1006,17 @@ func (_mock *MockInvoiceAdjustmentRepository) ListReconciliationQueue(ctx contex
 
 	var r0 *pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceadjustmentports.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustmentports.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, invoiceadjustmentports.ListReconciliationQueueRequest) *pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *invoiceadjustmentports.ListReconciliationQueueRequest) *pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem])
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, invoiceadjustmentports.ListReconciliationQueueRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *invoiceadjustmentports.ListReconciliationQueueRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -1036,15 +1036,15 @@ func (_e *MockInvoiceAdjustmentRepository_Expecter) ListReconciliationQueue(ctx 
 	return &MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call{Call: _e.mock.On("ListReconciliationQueue", ctx, req)}
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) Run(run func(ctx context.Context, req invoiceadjustmentports.ListReconciliationQueueRequest)) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) Run(run func(ctx context.Context, req *invoiceadjustmentports.ListReconciliationQueueRequest)) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 invoiceadjustmentports.ListReconciliationQueueRequest
+		var arg1 *invoiceadjustmentports.ListReconciliationQueueRequest
 		if args[1] != nil {
-			arg1 = args[1].(invoiceadjustmentports.ListReconciliationQueueRequest)
+			arg1 = args[1].(*invoiceadjustmentports.ListReconciliationQueueRequest)
 		}
 		run(
 			arg0,
@@ -1059,7 +1059,7 @@ func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) Return(l
 	return _c
 }
 
-func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) RunAndReturn(run func(ctx context.Context, req invoiceadjustmentports.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error)) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
+func (_c *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call) RunAndReturn(run func(ctx context.Context, req *invoiceadjustmentports.ListReconciliationQueueRequest) (*pagination.ListResult[*invoiceadjustmentports.InvoiceAdjustmentReconciliationQueueItem], error)) *MockInvoiceAdjustmentRepository_ListReconciliationQueue_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -4,16 +4,18 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/formulatypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/sliceutils"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 )
 
 func formulaTemplateColumns(ctx context.Context, nodePathPrefix string) []string {
@@ -46,51 +48,74 @@ func formulaTemplateConnectionToModel(
 	}
 
 	return &gqlmodel.FormulaTemplateConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
-func formulaTemplateVariableDefinitionsToModel(
-	definitions []*formulatypes.VariableDefinition,
-) []*gqlmodel.FormulaTemplateVariableDefinition {
-	items := make([]*gqlmodel.FormulaTemplateVariableDefinition, 0, len(definitions))
-	for _, definition := range definitions {
-		if definition == nil {
-			continue
+func formulaInputDeclarationsToModel(
+	inputs []tarifftypes.InputDecl,
+) ([]*gqlmodel.FormulaInputDeclaration, error) {
+	items := make([]*gqlmodel.FormulaInputDeclaration, 0, len(inputs))
+	for i := range inputs {
+		input := &inputs[i]
+		descriptor, err := decodeWire(input.Descriptor)
+		if err != nil {
+			return nil, err
 		}
-		items = append(items, &gqlmodel.FormulaTemplateVariableDefinition{
-			Name:         definition.Name,
-			Type:         string(definition.Type),
-			Description:  definition.Description,
-			Required:     definition.Required,
-			DefaultValue: definition.DefaultValue,
-			Source:       sliceutils.StringPtrValue(definition.Source),
+		defaultValue, err := decodeWire(input.Default)
+		if err != nil {
+			return nil, err
+		}
+		constraint, err := constraintToModel(input.Constraint)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, &gqlmodel.FormulaInputDeclaration{
+			Name:       input.Name,
+			Doc:        input.Doc,
+			Type:       input.Type,
+			Descriptor: descriptor,
+			Required:   input.Required,
+			Default:    defaultValue,
+			Constraint: constraint,
 		})
 	}
-	return items
+	return items, nil
 }
 
-func formulaTemplateBreakdownDefinitionsToModel(
-	definitions []*formulatypes.BreakdownDefinition,
-) []*gqlmodel.FormulaTemplateBreakdownDefinition {
-	items := make([]*gqlmodel.FormulaTemplateBreakdownDefinition, 0, len(definitions))
-	for _, definition := range definitions {
-		if definition == nil {
-			continue
-		}
-		items = append(items, &gqlmodel.FormulaTemplateBreakdownDefinition{
-			Name:       definition.Name,
-			Label:      definition.Label,
-			Expression: definition.Expression,
-		})
+func constraintToModel(constraint *rules.TariffConstraint) (any, error) {
+	if constraint == nil {
+		return nil, nil //nolint:nilnil // an input without a where clause accepts every value
 	}
-	return items
+	encoded, err := sonic.Marshal(constraint)
+	if err != nil {
+		return nil, err
+	}
+	return decodeWire(encoded)
 }
 
-// formulaTemplateStats reads the per-row counts through the request's
-// dataloader, so a page of templates resolves them in one query.
+func decodeWire(raw rules.RawJSON) (any, error) {
+	var decoded any
+	if len(raw) == 0 {
+		return decoded, nil
+	}
+	err := sonic.Unmarshal(raw, &decoded)
+	return decoded, err
+}
+
+func pinnedMatrix(
+	ctx context.Context,
+	pin *tarifftypes.TablePin,
+) (*ratematrix.RateMatrix, error) {
+	if pin == nil || pin.RateMatrixID.IsNil() || !loaders.Available(ctx) {
+		return nil, nil
+	}
+	return loaders.RateMatrixByID(ctx, pin.RateMatrixID.String())
+}
+
 func formulaTemplateStats(
 	ctx context.Context,
 	obj *formulatemplate.FormulaTemplate,

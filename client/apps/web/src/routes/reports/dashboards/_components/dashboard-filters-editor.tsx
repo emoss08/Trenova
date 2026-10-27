@@ -25,6 +25,7 @@ import {
 import { CatalogFieldTree } from "../../builder/_components/catalog-field-tree";
 import { refKey } from "./dashboard-state";
 import type { FilterCandidate } from "./use-tile-report";
+import { isFieldAvailable } from "@/lib/report-catalog-access";
 
 type DashboardFiltersEditorProps = {
   index: CatalogIndex;
@@ -167,7 +168,7 @@ function CustomFieldPicker({
           entityKey={entity}
           className="min-h-0 flex-1"
           filterFields={(field, crossesToMany) =>
-            field.filterable && field.accessible && !crossesToMany
+            field.filterable && isFieldAvailable(field) && !crossesToMany
           }
           onSelectField={(selection) => {
             onAdd(entity, selection.ref, defaultOperator(selection.field.type));
@@ -215,7 +216,7 @@ export function DashboardFiltersEditor({
     const byReport = new Map<string, FilterCandidate[]>();
     for (const candidate of offered) {
       const field = resolveField(index, candidate.entity, candidate.ref);
-      if (!field?.filterable || !field.accessible) continue;
+      if (!field?.filterable || !isFieldAvailable(field)) continue;
       for (const report of candidate.reports.length > 0 ? candidate.reports : ["Other"]) {
         const bucket = byReport.get(report) ?? [];
         bucket.push(candidate);

@@ -88,6 +88,18 @@ models:
     fields:
       hold:
         resolver: true
+  RateAgreement:
+    fields:
+      lanes:
+        resolver: true
+      laneCount:
+        resolver: true
+      laneCountExact:
+        resolver: true
+  RateMatrix:
+    fields:
+      cells:
+        resolver: true
   Shipment:
     fields:
       orderNumber:
@@ -102,7 +114,11 @@ models:
         resolver: true
   ShipmentRatingDetail:
     fields:
-      expression:
+      trace:
+        resolver: true
+  ShipmentRatingReviewApproval:
+    fields:
+      approvedBy:
         resolver: true
   ShipmentCustomer:
     fields:
@@ -1956,6 +1972,10 @@ models:
   FactoringRemittanceLineAction:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/ports/factoringports.RemittanceLineAction
+  ReportSchedule:
+    fields:
+      mine:
+        resolver: true
   FactoringRemittance:
     model:
       - github.com/emoss08/trenova/internal/modules/billing/domain/factoring.Remittance
@@ -1973,6 +1993,8 @@ models:
       createdById:
         resolver: true
       factoringCompany:
+        resolver: true
+      lines:
         resolver: true
   FactoringRemittanceSuggestion:
     model:
@@ -2051,6 +2073,8 @@ models:
       netDeltaAmount:
         resolver: true
       rerateVariancePercent:
+        resolver: true
+      supportingDocumentIds:
         resolver: true
   InvoiceAdjustmentLine:
     model:
@@ -3060,6 +3084,9 @@ models:
   BriefingItem:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.Item
+  BriefingWithheldSection:
+    model:
+      - github.com/emoss08/trenova/internal/modules/agent/domain/briefing.WithheldSection
   WatchtowerItem:
     model:
       - github.com/emoss08/trenova/internal/modules/agent/domain/watchtower.Item
@@ -3912,9 +3939,43 @@ models:
   FormulaTemplateStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.Status
-  FormulaTemplateType:
+  FormulaReviewDecision:
     model:
-      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.TemplateType
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.ReviewDecision
+  FormulaLibraryImport:
+    model:
+      - github.com/emoss08/trenova/pkg/tarifftypes.Import
+  FormulaLibrary:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary.FormulaLibrary
+  FormulaLibraryVersion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary.FormulaLibraryVersion
+  FormulaLibraryReview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary.FormulaLibraryReview
+  FormulaTemplateTable:
+    model:
+      - github.com/emoss08/trenova/pkg/tarifftypes.TablePin
+    fields:
+      latestVersionNumber:
+        resolver: true
+      archived:
+        resolver: true
+  RateMatrixVersion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixVersion
+    fields:
+      dimensions:
+        resolver: true
+      cells:
+        resolver: true
+  RateMatrixReview:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/domain/ratematrix.RateMatrixReview
+  RateMatrixUsage:
+    model:
+      - github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports.MatrixUsage
   FormulaTemplate:
     model:
       - github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate.FormulaTemplate
@@ -4328,9 +4389,6 @@ models:
   DetentionRoundingMode:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.RoundingMode
-  RateRoundingMode:
-    model:
-      - github.com/emoss08/trenova/pkg/ratetypes.RoundingMode
   DetentionRateSource:
     model:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.RateSource
@@ -4348,11 +4406,17 @@ models:
       - github.com/emoss08/trenova/internal/modules/operations/domain/detention.CapScope
   DetentionOccurrence:
     fields:
+      calculationTrace:
+        resolver: true
       location:
         resolver: true
       approvedBy:
         resolver: true
       waivedBy:
+        resolver: true
+  DetentionPreviewResult:
+    fields:
+      calculationTrace:
         resolver: true
   DetentionOccurrenceStatus:
     model:
@@ -4488,27 +4552,12 @@ models:
   EdiInboundFileStatus:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.InboundFileStatus
-  EdiTemplateStatus:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.TemplateStatus
-  EdiStandard:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIStandard
   EdiMappingEntityType:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.MappingEntityType
-  EdiDocumentStatus:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.DocumentStatus
   EdiConnectionCapabilities:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.ConnectionCapabilities
-  EdiX12Envelope:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.X12EnvelopeSettings
-  EdiAcknowledgmentConfig:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.AcknowledgmentConfig
   EdiConnection:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIConnection
@@ -4527,27 +4576,33 @@ models:
   EdiMessage:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMessage
-  EdiTestCase:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDITestCase
-  EdiPartnerDocumentProfile:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIPartnerDocumentProfile
   EdiInboundFile:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIInboundFile
-  EdiTemplate:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDITemplate
-  EdiTemplateVersion:
-    model:
-      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDITemplateVersion
   EdiMappingProfile:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfile
   EdiMappingProfileItem:
     model:
       - github.com/emoss08/trenova/internal/modules/edi/domain/edi.EDIMappingProfileItem
+  EdiLadingVersionStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingVersionStatus
+  EdiFlowInstanceStatus:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.FlowInstanceStatus
+  EdiLadingReadiness:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingReadiness
+  EdiLadingVersion:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingVersion
+  EdiLadingProject:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.LadingProject
+  EdiFlowInstance:
+    model:
+      - github.com/emoss08/trenova/internal/modules/edi/domain/edi.FlowInstance
   EquipmentManufacturer:
     model:
       - github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer.EquipmentManufacturer
@@ -4998,6 +5053,12 @@ models:
     model:
       - github.com/emoss08/trenova/internal/modules/workspace/domain/audit.Entry
     fields:
+      changes:
+        resolver: true
+      previousState:
+        resolver: true
+      currentState:
+        resolver: true
       resource:
         resolver: true
       operation:

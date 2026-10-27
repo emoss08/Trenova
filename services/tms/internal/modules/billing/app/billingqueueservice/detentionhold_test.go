@@ -76,6 +76,7 @@ func newHoldFixture(t *testing.T, billType billingqueue.BillType) *holdFixture {
 		realtime:         realtime,
 		validator:        testValidator(),
 		detentionBilling: f.detention,
+		shipmentRepo:     unheldShipments(t),
 	}
 
 	return f

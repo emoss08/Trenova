@@ -1,35 +1,28 @@
-// Package insightrepository stores operational findings and reads the
-// aggregates the detectors measure them from.
 package insightrepository
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/insightcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/insight"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/insight/insightdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	// defaultActiveLimit bounds an unbounded read. A home widget asks for a
-	// handful; this only catches a caller that forgot to say.
 	defaultActiveLimit = 50
 	defaultPageLimit   = 25
 	maxPageLimit       = 100
-	// maxHistoryLimit bounds the trend behind one finding. A dozen refreshes is
-	// several days of history at the scheduled cadence, which is as far back as a
-	// 30-day rolling window stays comparable.
-	maxHistoryLimit = 12
+	maxHistoryLimit    = 12
 )
 
 type Params struct {
@@ -51,53 +44,35 @@ func New(p Params) insightports.InsightRepository {
 	}
 }
 
-// severityOrder sorts by urgency rather than alphabetically, which would put
-// Critical after Info and bury the thing worth reading.
-const severityOrder = `CASE ins.severity
-	WHEN 'Critical' THEN 3
-	WHEN 'Warning' THEN 2
-	WHEN 'Info' THEN 1
-	ELSE 0 END DESC`
+func severityRank() keel.Expr {
+	severity := insightdb.Insights.Severity
+	rank := keel.Int64
+
+	return keel.CaseInt64().
+		When(severity.Eq(insight.SeverityCritical), rank(3)).
+		When(severity.Eq(insight.SeverityWarning), rank(2)).
+		When(severity.Eq(insight.SeverityInfo), rank(1)).
+		Else(rank(0))
+}
+
+func urgentFirst() []keel.Order {
+	return []keel.Order{keel.Desc(severityRank()), insightdb.Insights.DetectedAt.Desc()}
+}
 
 func (r *repository) ListActive(
 	ctx context.Context,
 	req insightports.ListActiveInsightsRequest,
 ) ([]*insight.Insight, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*insight.Insight, error) {
-		log := r.l.With(zap.String("operation", "ListActive"))
-
-		limit := req.Limit
-		if limit <= 0 || limit > defaultActiveLimit {
-			limit = defaultActiveLimit
-		}
-
-		cols := insightcol.InsightColumns
-		entities := make([]*insight.Insight, 0, limit)
-
 		if len(req.AllowedDetectorKeys) == 0 {
-			// No detector is visible to this reader, so there is nothing to ask the
-			// database for. Returning early also keeps an empty IN () out of the query,
-			// which Postgres treats as matching nothing but Bun renders awkwardly.
-			return entities, nil
+			return []*insight.Insight{}, nil
 		}
 
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
-			Where(cols.Status.Eq(), insight.StatusActive).
-			Where(cols.DetectorKey.In(), bun.In([]string(req.AllowedDetectorKeys)))
-
-		if len(req.Categories) > 0 {
-			query = query.Where(cols.Category.In(), bun.In(req.Categories))
-		}
-
-		if err := query.
-			OrderExpr(severityOrder).
-			Order(cols.DetectedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
-			log.Error("failed to list active insights", zap.Error(err))
+		entities, err := activeQuery(&req).List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list active insights",
+				zap.String("operation", "ListActive"),
+				zap.Error(err))
 
 			return nil, err
 		}
@@ -106,12 +81,22 @@ func (r *repository) ListActive(
 	})
 }
 
-// List browses the whole history a page at a time.
-//
-// Every filter is applied in the query, including the detector permission, so
-// the total is a count of what this reader can actually receive. A page that
-// filtered afterwards would report a total nobody can reach and hand back short
-// pages with no explanation.
+func activeQuery(req *insightports.ListActiveInsightsRequest) *keel.Query[*insight.Insight] {
+	limit := req.Limit
+	if limit <= 0 || limit > defaultActiveLimit {
+		limit = defaultActiveLimit
+	}
+
+	in := insightdb.Insights
+	return in.Where(
+		in.Status.Eq(insight.StatusActive),
+		in.DetectorKey.In(req.AllowedDetectorKeys...),
+		keel.When(len(req.Categories) > 0, in.Category.In(req.Categories...)),
+	).
+		Order(urgentFirst()...).
+		Limit(limit)
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req insightports.ListInsightsQuery,
@@ -120,57 +105,58 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*insight.Insight], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			cols := insightcol.InsightColumns
-			limit, offset := pageBounds(req.Limit, req.Offset)
-			entities := make([]*insight.Insight, 0, limit)
-
 			if len(req.AllowedDetectorKeys) == 0 {
-				return &pagination.ListResult[*insight.Insight]{Items: entities, Total: 0}, nil
+				return &pagination.ListResult[*insight.Insight]{
+					Items:      []*insight.Insight{},
+					TotalExact: true,
+				}, nil
 			}
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
-				Where(cols.DetectorKey.In(), bun.In([]string(req.AllowedDetectorKeys)))
+			limit, offset := pageBounds(req.Limit, req.Offset)
+			filtered := listFilter(&req)
 
-			if len(req.Statuses) > 0 {
-				query = query.Where(cols.Status.In(), bun.In(req.Statuses))
-			} else {
-				// Someone opening the page is asking what needs attention now. Seeing what
-				// was dismissed or has since resolved is a deliberate act, not the default.
-				query = query.Where(cols.Status.Eq(), insight.StatusActive)
-			}
-
-			if len(req.Categories) > 0 {
-				query = query.Where(cols.Category.In(), bun.In(req.Categories))
-			}
-
-			if len(req.Severities) > 0 {
-				query = query.Where(cols.Severity.In(), bun.In(req.Severities))
-			}
-
-			total, err := query.
-				OrderExpr(severityOrder).
-				Order(cols.DetectedAt.OrderDesc()).
-				Limit(int64(limit)).
-				Offset(int64(offset)).
-				ScanAndCount(ctx)
-			if err != nil {
-				log.Error("failed to scan and count insights", zap.Error(err))
+			var (
+				entities []*insight.Insight
+				total    keel.RowCount
+			)
+			if err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.ListInto(
+					filtered.Clone().Order(urgentFirst()...).Limit(limit).Offset(offset),
+					&entities,
+				),
+				keel.CountEstimateInto(filtered, pagination.ExactTotalUpTo, &total),
+			); err != nil {
+				r.l.Error("failed to scan and count insights",
+					zap.String("operation", "List"),
+					zap.Error(err))
 
 				return nil, err
 			}
+			if entities == nil {
+				entities = []*insight.Insight{}
+			}
 
-			return &pagination.ListResult[*insight.Insight]{Items: entities, Total: int(total)}, nil
+			return listquery.Result(entities, total), nil
 		},
 	)
 }
 
-// pageBounds keeps a caller that asked for nothing, or for everything, inside
-// what one page is meant to be.
+func listFilter(req *insightports.ListInsightsQuery) *keel.Query[*insight.Insight] {
+	in := insightdb.Insights
+
+	status := in.Status.Eq(insight.StatusActive)
+	if len(req.Statuses) > 0 {
+		status = in.Status.In(req.Statuses...)
+	}
+
+	return in.Where(
+		in.DetectorKey.In(req.AllowedDetectorKeys...),
+		status,
+		keel.When(len(req.Categories) > 0, in.Category.In(req.Categories...)),
+		keel.When(len(req.Severities) > 0, in.Severity.In(req.Severities...)),
+	)
+}
+
 func pageBounds(limit, offset int) (int, int) {
 	if limit <= 0 || limit > maxPageLimit {
 		limit = defaultPageLimit
@@ -188,18 +174,12 @@ func (r *repository) GetByID(
 	req insightports.GetInsightByIDRequest,
 ) (*insight.Insight, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
-		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
-
-		cols := insightcol.InsightColumns
-		entity := new(insight.Insight)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
-			Where(cols.ID.Eq(), req.ID).
-			Scan(ctx); err != nil {
-			log.Error("failed to get insight", zap.Error(err))
+		entity, err := insightdb.Insights.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			r.l.Error("failed to get insight",
+				zap.String("operation", "GetByID"),
+				zap.String("id", req.ID.String()),
+				zap.Error(err))
 
 			return nil, dberror.HandleNotFoundError(err, "Insight")
 		}
@@ -208,43 +188,28 @@ func (r *repository) GetByID(
 	})
 }
 
-// ListHistory reads earlier runs of the same finding, newest first.
-//
-// Superseded rows are exactly what makes this possible: a refresh does not
-// overwrite, it closes the old row and writes a new one, so the table is already
-// a record of how a condition moved. Nothing here filters by detector permission
-// because the caller has established that for the insight this history belongs
-// to — the rows share its dedupe key, so they share its detector.
 func (r *repository) ListHistory(
 	ctx context.Context,
 	req insightports.ListInsightHistoryRequest,
 ) ([]*insight.Insight, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*insight.Insight, error) {
-		log := r.l.With(zap.String("operation", "ListHistory"))
-
 		limit := req.Limit
 		if limit <= 0 || limit > maxHistoryLimit {
 			limit = maxHistoryLimit
 		}
 
-		cols := insightcol.InsightColumns
-		entities := make([]*insight.Insight, 0, limit)
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
-			Where(cols.DedupeKey.Eq(), req.DedupeKey)
-
-		if !req.ExcludeID.IsNil() {
-			query = query.Where(cols.ID.Ne(), req.ExcludeID)
-		}
-
-		if err := query.
-			Order(cols.DetectedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
-			log.Error("failed to list insight history", zap.Error(err))
+		in := insightdb.Insights
+		entities, err := in.Where(
+			in.DedupeKey.Eq(req.DedupeKey),
+			keel.When(!req.ExcludeID.IsNil(), in.ID.Ne(req.ExcludeID)),
+		).
+			Order(in.DetectedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to list insight history",
+				zap.String("operation", "ListHistory"),
+				zap.Error(err))
 
 			return nil, err
 		}
@@ -253,105 +218,73 @@ func (r *repository) ListHistory(
 	})
 }
 
-// Dismiss records a person's judgement that a finding is not worth acting on.
-//
-// It is restricted to an active insight: dismissing one that a refresh has
-// already resolved or superseded would resurrect a row nobody is looking at and
-// suppress a finding that is no longer being made.
+func keepInsightVersion() keel.Assignment {
+	in := insightdb.Insights
+	return in.Version.ToExpr(in.Version)
+}
+
 func (r *repository) Dismiss(
 	ctx context.Context,
 	req insightports.DismissInsightQuery,
 ) (*insight.Insight, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
-		log := r.l.With(zap.String("operation", "Dismiss"), zap.String("id", req.ID.String()))
-
-		cols := insightcol.InsightColumns
-		entity := new(insight.Insight)
-		now := timeutils.NowUnix()
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return insightcol.InsightScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.Eq(), insight.StatusActive)
-			}).
-			Set(cols.Status.Set(), insight.StatusDismissed).
-			Set(cols.DismissedAt.Set(), now).
-			Set(cols.DismissedByID.Set(), req.UserID).
-			Set(cols.DismissReason.Set(), req.Reason).
-			Set(cols.UpdatedAt.Set(), now).
-			Returning("*").
-			Exec(ctx)
+		in := insightdb.Insights
+		rows, err := in.Where(in.ID.Eq(req.ID), in.Status.Eq(insight.StatusActive)).
+			UpdateReturning(ctx, r.db.Keel(ctx),
+				in.Status.To(insight.StatusDismissed),
+				in.DismissedAt.To(timeutils.NowUnix()),
+				in.DismissedByID.To(req.UserID),
+				in.DismissReason.To(req.Reason),
+				keepInsightVersion(),
+			)
 		if err != nil {
-			log.Error("failed to dismiss insight", zap.Error(err))
+			r.l.Error("failed to dismiss insight",
+				zap.String("operation", "Dismiss"),
+				zap.String("id", req.ID.String()),
+				zap.Error(err))
 
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "Insight", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(rows)), "Insight", req.ID.String()); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
-// Restore returns a dismissed finding to active.
-//
-// Only a dismissed one: a resolved insight describes a condition a later refresh
-// could no longer find, and putting that back would be asserting something the
-// data does not support. The dismissal columns are cleared rather than kept, so
-// the next refresh stops suppressing the finding and the card behaves as though
-// it had never been waved away.
 func (r *repository) Restore(
 	ctx context.Context,
 	req insightports.RestoreInsightQuery,
 ) (*insight.Insight, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*insight.Insight, error) {
-		log := r.l.With(zap.String("operation", "Restore"), zap.String("id", req.ID.String()))
-
-		cols := insightcol.InsightColumns
-		entity := new(insight.Insight)
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return insightcol.InsightScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.Eq(), insight.StatusDismissed)
-			}).
-			Set(cols.Status.Set(), insight.StatusActive).
-			Set(cols.DismissedAt.SetNull()).
-			Set(cols.DismissedByID.SetNull()).
-			Set(cols.DismissReason.SetNull()).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Returning("*").
-			Exec(ctx)
+		in := insightdb.Insights
+		rows, err := in.Where(in.ID.Eq(req.ID), in.Status.Eq(insight.StatusDismissed)).
+			UpdateReturning(ctx, r.db.Keel(ctx),
+				in.Status.To(insight.StatusActive),
+				in.DismissedAt.ToNull(),
+				in.DismissedByID.ToNull(),
+				in.DismissReason.ToNull(),
+				keepInsightVersion(),
+			)
 		if err != nil {
-			log.Error("failed to restore insight", zap.Error(err))
+			r.l.Error("failed to restore insight",
+				zap.String("operation", "Restore"),
+				zap.String("id", req.ID.String()),
+				zap.Error(err))
 
 			return nil, err
 		}
 
-		if err = dberror.CheckRowsAffected(results, "Insight", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(int64(len(rows)), "Insight", req.ID.String()); err != nil {
 			return nil, err
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
-// ReplaceDetectorFindings applies one detector's whole result in a transaction.
-//
-// The three steps only make sense together. Superseding the previous run before
-// inserting the new one keeps the unique index on active dedupe keys satisfied;
-// resolving what the detector no longer finds is what makes a fixed problem
-// disappear from the home screen rather than sitting there indefinitely. Doing
-// them in separate transactions would leave a reader looking at a moment where a
-// finding had been superseded and not yet replaced.
 func (r *repository) ReplaceDetectorFindings(
 	ctx context.Context,
 	req insightports.ReplaceDetectorFindingsRequest,
@@ -360,43 +293,12 @@ func (r *repository) ReplaceDetectorFindings(
 		ctx,
 		r.db,
 		func(ctx context.Context) (insightports.ReplaceDetectorFindingsResult, error) {
-			log := r.l.With(
-				zap.String("operation", "ReplaceDetectorFindings"),
-				zap.String("detector", req.DetectorKey),
-			)
-
-			var result insightports.ReplaceDetectorFindingsResult
-
-			err := r.db.DBForContext(ctx).
-				RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-					suppressed, err := r.suppressedKeys(txCtx, tx, req)
-					if err != nil {
-						return err
-					}
-
-					keep := make([]*insight.Insight, 0, len(req.Insights))
-					for _, entity := range req.Insights {
-						if _, isSuppressed := suppressed[entity.DedupeKey]; isSuppressed {
-							result.Suppressed++
-							continue
-						}
-						keep = append(keep, entity)
-					}
-
-					counts, err := r.applyReplacement(txCtx, tx, req, keep)
-					if err != nil {
-						return err
-					}
-
-					result.Superseded = counts.Superseded
-					result.Resolved = counts.Resolved
-					result.Created = counts.Created
-					result.Detected = counts.Detected
-
-					return nil
-				})
+			result, err := r.replace(ctx, &req)
 			if err != nil {
-				log.Error("failed to replace detector findings", zap.Error(err))
+				r.l.Error("failed to replace detector findings",
+					zap.String("operation", "ReplaceDetectorFindings"),
+					zap.String("detector", req.DetectorKey),
+					zap.Error(err))
 
 				return insightports.ReplaceDetectorFindingsResult{}, err
 			}
@@ -406,24 +308,52 @@ func (r *repository) ReplaceDetectorFindings(
 	)
 }
 
-// suppressedKeys reads the dedupe keys a person dismissed recently enough that
-// the finding should not come back.
-func (r *repository) suppressedKeys(
+func (r *repository) replace(
 	ctx context.Context,
-	tx bun.Tx,
-	req insightports.ReplaceDetectorFindingsRequest,
-) (map[string]struct{}, error) {
-	cols := insightcol.InsightColumns
-	keys := make([]string, 0)
+	req *insightports.ReplaceDetectorFindingsRequest,
+) (insightports.ReplaceDetectorFindingsResult, error) {
+	var result insightports.ReplaceDetectorFindingsResult
+	db := r.db.Keel(ctx)
 
-	if err := tx.NewSelect().
-		Model((*insight.Insight)(nil)).
-		Column(cols.DedupeKey.String()).
-		Apply(insightcol.InsightApplyTenant(req.TenantInfo)).
-		Where(cols.DetectorKey.Eq(), req.DetectorKey).
-		Where(cols.Status.Eq(), insight.StatusDismissed).
-		Where(cols.DismissedAt.Gte(), req.SuppressedBefore).
-		Scan(ctx, &keys); err != nil {
+	suppressed, err := suppressedKeys(ctx, db, req)
+	if err != nil {
+		return result, err
+	}
+
+	keep := make([]*insight.Insight, 0, len(req.Insights))
+	for _, entity := range req.Insights {
+		if _, isSuppressed := suppressed[entity.DedupeKey]; isSuppressed {
+			result.Suppressed++
+			continue
+		}
+		keep = append(keep, entity)
+	}
+
+	counts, err := applyReplacement(ctx, db, req, keep)
+	if err != nil {
+		return result, err
+	}
+
+	result.Superseded = counts.Superseded
+	result.Resolved = counts.Resolved
+	result.Created = counts.Created
+	result.Detected = counts.Detected
+
+	return result, nil
+}
+
+func suppressedKeys(
+	ctx context.Context,
+	db *keel.DB,
+	req *insightports.ReplaceDetectorFindingsRequest,
+) (map[string]struct{}, error) {
+	in := insightdb.Insights
+	keys, err := keel.Into[string](ctx, db, in.Pick(in.DedupeKey).Where(
+		in.DetectorKey.Eq(req.DetectorKey),
+		in.Status.Eq(insight.StatusDismissed),
+		in.DismissedAt.Gte(req.SuppressedBefore),
+	))
+	if err != nil {
 		return nil, fmt.Errorf("read suppressed findings: %w", err)
 	}
 
@@ -435,10 +365,10 @@ func (r *repository) suppressedKeys(
 	return suppressed, nil
 }
 
-func (r *repository) applyReplacement(
+func applyReplacement(
 	ctx context.Context,
-	tx bun.Tx,
-	req insightports.ReplaceDetectorFindingsRequest,
+	db *keel.DB,
+	req *insightports.ReplaceDetectorFindingsRequest,
 	keep []*insight.Insight,
 ) (insightports.ReplaceDetectorFindingsResult, error) {
 	var result insightports.ReplaceDetectorFindingsResult
@@ -448,22 +378,22 @@ func (r *repository) applyReplacement(
 		current = append(current, entity.DedupeKey)
 	}
 
-	superseded, err := r.closeActive(ctx, tx, closeParams{
-		req:    req,
-		status: insight.StatusSuperseded,
-		keys:   current,
-		within: true,
+	superseded, err := closeActive(ctx, db, closeParams{
+		detectorKey: req.DetectorKey,
+		status:      insight.StatusSuperseded,
+		keys:        current,
+		within:      true,
 	})
 	if err != nil {
 		return result, err
 	}
 	result.Superseded = len(superseded)
 
-	resolved, err := r.closeActive(ctx, tx, closeParams{
-		req:    req,
-		status: insight.StatusResolved,
-		keys:   current,
-		within: false,
+	resolved, err := closeActive(ctx, db, closeParams{
+		detectorKey: req.DetectorKey,
+		status:      insight.StatusResolved,
+		keys:        current,
+		within:      false,
 	})
 	if err != nil {
 		return result, err
@@ -474,7 +404,7 @@ func (r *repository) applyReplacement(
 		return result, nil
 	}
 
-	if _, err = tx.NewInsert().Model(&keep).Exec(ctx); err != nil {
+	if err = insightdb.Insights.CreateMany(ctx, db, keep); err != nil {
 		return result, fmt.Errorf("insert findings: %w", err)
 	}
 	result.Created = len(keep)
@@ -483,8 +413,6 @@ func (r *repository) applyReplacement(
 	return result, nil
 }
 
-// newlyDetected keeps the inserted findings whose dedupe key had no active
-// row before this run: the ones a person has not seen yet.
 func newlyDetected(inserted []*insight.Insight, superseded []string) []*insight.Insight {
 	seen := make(map[string]struct{}, len(superseded))
 	for _, key := range superseded {
@@ -502,51 +430,47 @@ func newlyDetected(inserted []*insight.Insight, superseded []string) []*insight.
 }
 
 type closeParams struct {
-	req    insightports.ReplaceDetectorFindingsRequest
-	status insight.Status
-	keys   []string
-	// within selects whether to close the rows whose dedupe key is in keys
-	// (superseded by a fresher run) or the rows whose key is not (the condition
-	// has stopped being true).
-	within bool
+	detectorKey string
+	status      insight.Status
+	keys        []string
+	within      bool
 }
 
-// closeActive moves the matching active rows to the given status and returns
-// the dedupe keys it closed, which is how the caller tells a finding seen
-// again from one seen for the first time.
-func (r *repository) closeActive(
-	ctx context.Context,
-	tx bun.Tx,
-	params closeParams,
-) ([]string, error) {
-	cols := insightcol.InsightColumns
-	now := timeutils.NowUnix()
+func closeActiveQuery(params closeParams) *keel.Query[*insight.Insight] {
+	in := insightdb.Insights
 
-	query := tx.NewUpdate().
-		Model((*insight.Insight)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return insightcol.InsightScopeTenantUpdate(uq, params.req.TenantInfo).
-				Where(cols.DetectorKey.Eq(), params.req.DetectorKey).
-				Where(cols.Status.Eq(), insight.StatusActive)
-		}).
-		Set(cols.Status.Set(), params.status).
-		Set(cols.UpdatedAt.Set(), now)
-
+	var keys keel.Pred
 	switch {
 	case len(params.keys) > 0 && params.within:
-		query = query.Where(cols.DedupeKey.In(), bun.In(params.keys))
+		keys = in.DedupeKey.In(params.keys...)
 	case len(params.keys) > 0:
-		query = query.Where(cols.DedupeKey.NotIn(), bun.In(params.keys))
+		keys = in.DedupeKey.NotIn(params.keys...)
 	case params.within:
-		// Nothing was found this run, so nothing is being superseded. Without
-		// this guard the empty key list would match every active row and mark it
-		// superseded as well as resolved.
+		return nil
+	}
+
+	return in.Pick(in.DedupeKey).Where(
+		in.DetectorKey.Eq(params.detectorKey),
+		in.Status.Eq(insight.StatusActive),
+		keys,
+	)
+}
+
+func closeActive(ctx context.Context, db *keel.DB, params closeParams) ([]string, error) {
+	query := closeActiveQuery(params)
+	if query == nil {
 		return nil, nil
 	}
 
-	closed := make([]string, 0)
-	if err := query.Returning(cols.DedupeKey.String()).Scan(ctx, &closed); err != nil {
+	in := insightdb.Insights
+	rows, err := query.UpdateReturning(ctx, db, in.Status.To(params.status), keepInsightVersion())
+	if err != nil {
 		return nil, fmt.Errorf("close active findings as %s: %w", params.status, err)
+	}
+
+	closed := make([]string, 0, len(rows))
+	for _, row := range rows {
+		closed = append(closed, row.DedupeKey)
 	}
 
 	return closed, nil

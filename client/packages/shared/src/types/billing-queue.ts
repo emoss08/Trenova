@@ -9,6 +9,7 @@ import {
   optionalStringSchema,
 } from "./helpers";
 import { customerReferenceSchema } from "./customer";
+import { tariffFormInputValuesSchema } from "./tariff-form";
 import { billingHoldReasonSchema } from "./detention";
 import {
   chargeAllocationKindSchema,
@@ -103,6 +104,18 @@ export const detentionHoldSchema = z.object({
   reason: billingHoldReasonSchema,
 });
 export type DetentionHold = z.infer<typeof detentionHoldSchema>;
+
+/**
+ * The reviews a tariff asked for on the item's shipment, keeping the item from being approved
+ * until a person approves the rating.
+ */
+export const ratingReviewHoldSchema = z.object({
+  shipmentId: z.string(),
+  reasons: z.array(z.string()).default([]),
+  ratedAt: z.number().nullish(),
+  formulaTemplateName: z.string().nullish(),
+});
+export type RatingReviewHold = z.infer<typeof ratingReviewHoldSchema>;
 
 /** Why a biller set an item aside. */
 export const billingQueueHoldReasonSchema = z.enum([
@@ -256,7 +269,8 @@ export const billingQueueItemSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
   businessUnitId: z.string(),
-  shipmentId: z.string(),
+  /** Absent on a credit or debit memo's item, which bills a customer rather than a shipment. */
+  shipmentId: nullableStringSchema,
   /** The customer this item bills. A split shipment has one item per payer. */
   billToCustomerId: nullableStringSchema,
   /** This payer's share of the shipment's charges. */
@@ -294,6 +308,7 @@ export const billingQueueItemSchema = z.object({
     .array(detentionHoldSchema)
     .nullish()
     .transform((value) => value ?? []),
+  ratingReviewHold: ratingReviewHoldSchema.nullish().transform((value) => value ?? null),
   holdReasonCode: nullableEnumSchema(billingQueueHoldReasonSchema),
   heldAt: z.number().nullish(),
   heldById: nullableStringSchema,
@@ -461,7 +476,8 @@ export type BillingQueueStats = z.infer<typeof billingQueueStatsSchema>;
 
 export const billingQueueUpdateChargesSchema = z.object({
   formulaTemplateId: z.string().optional(),
-  baseRate: z.string().optional(),
+  /** The tariff's input values for the shipment, replacing what it carries. */
+  tariffInputs: tariffFormInputValuesSchema.optional(),
   additionalCharges: z
     .array(
       z.object({

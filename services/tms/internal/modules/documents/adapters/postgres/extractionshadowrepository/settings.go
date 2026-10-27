@@ -4,21 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/extractionshadowcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/extractionshadow/extractionshadowdb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/extractionshadowports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const settingsEntity = "ExtractionShadowSettings"
+var settingsErrors = dberror.Mapping{Entity: "ExtractionShadowSettings"}
 
 type Params struct {
 	fx.In
@@ -41,22 +40,16 @@ func NewSettings(p Params) extractionshadowports.ExtractionShadowSettingsReposit
 
 func (r *settingsRepository) Get(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*extractionshadow.ShadowSettings, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*extractionshadow.ShadowSettings, error) {
-			entity := new(extractionshadow.ShadowSettings)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return extractionshadowcol.ShadowSettingsScopeTenant(sq, tenant)
-				}).
-				Scan(ctx)
+			entity, err := extractionshadowdb.ShadowSettingses.Cache(resultcache.Settings()...).
+				One(ctx, r.db.Keel(ctx))
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, settingsEntity)
+				return nil, settingsErrors.Map(err, "")
 			}
 
 			return entity, nil
@@ -72,72 +65,28 @@ func (r *settingsRepository) Save(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*extractionshadow.ShadowSettings, error) {
+			s := extractionshadowdb.ShadowSettingses
+			db := r.db.Keel(ctx)
+
 			if entity.ID.IsNil() {
-				return r.insert(ctx, entity)
+				if err := s.Create(ctx, db, entity); err != nil {
+					if dberror.IsUniqueConstraintViolation(err) {
+						return nil, errortypes.NewBusinessError(
+							"Someone else changed the shadow settings; reload them and try again",
+						).WithInternal(err)
+					}
+					r.l.Error("failed to create extraction shadow settings", zap.Error(err))
+
+					return nil, fmt.Errorf("create extraction shadow settings: %w", err)
+				}
+
+				return entity, nil
 			}
 
-			cols := extractionshadowcol.ShadowSettingsColumns
-			previous := entity.Version
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return extractionshadowcol.ShadowSettingsScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(cols.ID.Eq(), entity.ID).
-						Where(cols.Version.Eq(), previous)
-				}).
-				ExcludeColumn(
-					cols.ID.Bare(),
-					cols.OrganizationID.Bare(),
-					cols.BusinessUnitID.Bare(),
-					cols.CreatedAt.Bare(),
-					cols.Version.Bare(),
-				).
-				Set(cols.Version.Inc(1)).
-				Exec(ctx)
-			if err != nil {
+			if err := s.Save(ctx, db, entity); err != nil {
 				r.l.Error("failed to save extraction shadow settings", zap.Error(err))
 
-				return nil, fmt.Errorf("save extraction shadow settings: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				settingsEntity,
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
-			}
-			entity.Version = previous + 1
-
-			return entity, nil
-		},
-	)
-}
-
-func (r *settingsRepository) insert(
-	ctx context.Context,
-	entity *extractionshadow.ShadowSettings,
-) (*extractionshadow.ShadowSettings, error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*extractionshadow.ShadowSettings, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				if dberror.IsUniqueConstraintViolation(err) {
-					return nil, errortypes.NewBusinessError(
-						"Someone else changed the shadow settings; reload them and try again",
-					).WithInternal(err)
-				}
-				r.l.Error("failed to create extraction shadow settings", zap.Error(err))
-
-				return nil, fmt.Errorf("create extraction shadow settings: %w", err)
+				return nil, settingsErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil

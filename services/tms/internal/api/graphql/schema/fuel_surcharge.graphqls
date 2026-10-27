@@ -75,9 +75,11 @@ type FuelIndexConnection {
   edges: [FuelIndexEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
-type FuelIndexPrice {
+type FuelIndexPrice @kind(resource: "fuel_surcharge_program") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -151,9 +153,11 @@ type FuelSurchargeProgramConnection {
   edges: [FuelSurchargeProgramEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
-type FuelIndexLatestPrice {
+type FuelIndexLatestPrice @kind(resource: "fuel_surcharge_program") {
   index: FuelIndex!
   latest: FuelIndexPrice
   previous: FuelIndexPrice
@@ -161,7 +165,12 @@ type FuelIndexLatestPrice {
   delta: Decimal
 }
 
-type FuelProgramCurrentRate {
+"""
+A fuel surcharge program's surcharge this week, from the index price in effect.
+"""
+type FuelProgramCurrentRate @kind(resource: "fuel_surcharge_program") {
+  "The program's id: a program has one current rate."
+  id: ID!
   program: FuelSurchargeProgram!
   price: FuelIndexPrice
   ratePerMile: Decimal
@@ -258,7 +267,17 @@ input GenerateFuelTableInput {
 extend type Query {
   fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
   fuelIndex(id: ID!): FuelIndex
-  fuelIndexPriceHistory(indexId: ID!, from: String, to: String, limit: Int): [FuelIndexPrice!]!
+  "The prices on file for one fuel index, newest first."
+  fuelIndexPriceHistory(
+    "The fuel index whose prices are read."
+    indexId: ID!
+    "The earliest price day to include, as YYYY-MM-DD."
+    from: String
+    "The latest price day to include, as YYYY-MM-DD."
+    to: String
+    "How many prices to read, at most 520; 104 when left out."
+    limit: Int
+  ): [FuelIndexPrice!]!
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
   fuelSurchargeProgram(id: ID!): FuelSurchargeProgram

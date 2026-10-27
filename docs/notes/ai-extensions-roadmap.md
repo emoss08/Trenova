@@ -34,11 +34,9 @@ line decides several of the obvious candidates:
   is a proposal whose preview is the exact task the browser gets, run from the approval and
   followed by a workflow and a wait; every task is recorded with the pages it reached and its
   session recording.
-- **Data analysis** (`analyze_data`) on E2B; see
-  [agent-data-analysis.md](../engineering/agent-data-analysis.md). Python over the report runs a
-  person ran and the files they attached, in a fresh sandbox with all egress denied, stopped when
-  it ends; charts are kept with the run and drawn on the Desk. Chosen over Daytona because E2B
-  closes egress at sandbox creation and runs a code interpreter that returns charts as images.
+- **Data analysis** was built on E2B and has since moved into Trenova: an agent's scripts read
+  report runs and attached files as datasets and show figures, tables and charts drawn from specs
+  (see [agent-code-mode.md](../engineering/agent-code-mode.md)). No vendor, no egress, no cost.
 
 - **Web watching** (`watch_web`, `list_web_watches`, `stop_web_watch`) on Exa Monitors; see
   [agent-web-watching.md](../engineering/agent-web-watching.md). A scheduled search that hands

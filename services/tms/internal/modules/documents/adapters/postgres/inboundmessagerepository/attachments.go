@@ -5,14 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
-
-const attachmentsPerMessageHint = 2
 
 func (r *repository) ListAttachmentsByMessageIDs(
 	ctx context.Context,
@@ -27,19 +23,11 @@ func (r *repository) ListAttachmentsByMessageIDs(
 				return grouped, nil
 			}
 
-			cols := inboundmessagecol.InboundAttachmentColumns
-			entities := make(
-				[]*inboundmessage.InboundAttachment,
-				0,
-				len(req.MessageIDs)*attachmentsPerMessageHint,
-			)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(cols.MessageID.In(), bun.List(req.MessageIDs)).
-				Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
-				Order(cols.MessageID.OrderAsc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-				Scan(ctx); err != nil {
+			a := inboundmessagedb.InboundAttachments
+			entities, err := a.Where(a.MessageID.In(req.MessageIDs...)).
+				Order(a.MessageID.Asc(), a.CreatedAt.Asc(), a.ID.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, err
 			}
 
@@ -60,14 +48,9 @@ func (r *repository) GetAttachmentByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*inboundmessage.InboundAttachment, error) {
-			entity := new(inboundmessage.InboundAttachment)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where(inboundmessagecol.InboundAttachmentColumns.ID.Eq(), req.ID).
-				Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "InboundAttachment")
+			entity, err := inboundmessagedb.InboundAttachments.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, attachmentErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -83,21 +66,14 @@ func (r *repository) GetAttachmentsByIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessage.InboundAttachment, error) {
-			entities := make([]*inboundmessage.InboundAttachment, 0, len(req.IDs))
 			if len(req.IDs) == 0 {
-				return entities, nil
+				return []*inboundmessage.InboundAttachment{}, nil
 			}
 
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(inboundmessagecol.InboundAttachmentColumns.ID.In(), bun.List(req.IDs)).
-				Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			a := inboundmessagedb.InboundAttachments
+			return orEmptyAttachments(a.Where(a.ID.In(req.IDs...)).
+				Limit(len(req.IDs)).
+				List(ctx, r.db.Keel(ctx)))
 		},
 	)
 }

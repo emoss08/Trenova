@@ -163,14 +163,22 @@ func (noopAuditService) List(
 	context.Context,
 	*auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{Items: []*audit.Entry{}, Total: 0}, nil
+	return &pagination.ListResult[*audit.Entry]{
+		Items:      []*audit.Entry{},
+		Total:      0,
+		TotalExact: true,
+	}, nil
 }
 
 func (noopAuditService) ListByResourceID(
 	context.Context,
 	*auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{Items: []*audit.Entry{}, Total: 0}, nil
+	return &pagination.ListResult[*audit.Entry]{
+		Items:      []*audit.Entry{},
+		Total:      0,
+		TotalExact: true,
+	}, nil
 }
 
 func (noopAuditService) GetByID(

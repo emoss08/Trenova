@@ -1,0 +1,40 @@
+# The Desk's fuel purchase import list, read by the agent's
+# fuel_list_purchase_imports: each staged statement or feed run, where it
+# stands, and how many of its rows are ready to commit, already on file,
+# duplicated or in error, without the column mapping and the per-jurisdiction
+# breakdown the review page loads.
+query DeskFuelPurchaseImports(
+  $input: FuelPurchaseImportsInput!
+  $includeTotalCount: Boolean = false
+) {
+  fuelPurchaseImports(input: $input) {
+    edges {
+      node {
+        id
+        provider
+        origin
+        status
+        fileName
+        rowCount
+        errorCount
+        committedCount
+        error
+        stagedAt
+        committedAt
+        summary {
+          newCount
+          alreadyImportedCount
+          duplicateInFileCount
+          totalGallons
+          totalAmount
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

@@ -4,90 +4,72 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
+	"github.com/stretchr/testify/require"
 )
-
-func renderDB() *bun.DB {
-	return bun.NewDB(nil, pgdialect.New())
-}
-
-func testTenant() pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-}
 
 func TestReserveIncrementsOnlyBelowTheLimit(t *testing.T) {
 	t.Parallel()
 
-	sql := buildReserve(renderDB(), agentextensionports.ReserveExtensionRequestParams{
-		TenantInfo: testTenant(),
-		Type:       agentextension.TypeExa,
-		Day:        20260923,
-		Limit:      250,
-		Now:        1_790_000_000,
-	}).String()
+	src, conflict, cols := reserve(&agentextensionports.ReserveExtensionRequestParams{
+		Type:  agentextension.TypeExa,
+		Day:   20260923,
+		Limit: 250,
+		Now:   1_790_000_000,
+	})
+	sql, args, err := agentextensiondb.ExtensionUsageDailies.UpsertFromSQL(
+		keeltest.TenantContext(t),
+		keeltest.RenderDB(t),
+		src,
+		conflict,
+		cols...,
+	)
+	require.NoError(t, err)
 
 	assert.Contains(t, sql,
-		"ON CONFLICT (organization_id, business_unit_id, extension_type, day) DO UPDATE", sql)
-	assert.Contains(t, sql, "requests = agextu.requests + 1", sql)
-	assert.Contains(t, sql, "updated_at = EXCLUDED.updated_at", sql)
-	assert.Contains(t, sql, "WHERE (agextu.requests < 250)", sql)
-	assert.Contains(t, sql, "'Exa'", sql)
-	assert.Contains(t, sql, "20260923", sql)
+		`ON CONFLICT ("organization_id", "business_unit_id", "extension_type", "day") DO UPDATE SET`)
+	assert.Contains(t, sql, `"requests" = aeud."requests" + $`)
+	assert.Contains(t, sql, `"updated_at" = EXCLUDED."updated_at"`)
+	assert.Contains(t, sql, `WHERE aeud."requests" < $`)
+	assert.Contains(t, args, "Exa")
+	assert.Contains(t, args, int64(250))
 }
 
 func TestRecordOutcomeAddsToTheTenantsDay(t *testing.T) {
 	t.Parallel()
 
-	tenant := testTenant()
-	sql := buildRecordOutcome(renderDB(), agentextensionports.RecordExtensionOutcomeParams{
-		TenantInfo: tenant,
-		Type:       agentextension.TypeExa,
-		Day:        20260923,
-		Failed:     true,
-		CostUSD:    decimal.RequireFromString("0.005"),
-		Now:        1_790_000_000,
-	}).String()
+	q, sets := recordOutcome(agentextensionports.RecordExtensionOutcomeParams{
+		Type:    agentextension.TypeExa,
+		Day:     20260923,
+		Failed:  true,
+		CostUSD: decimal.RequireFromString("0.005"),
+		Now:     1_790_000_000,
+	})
+	sql, args := keeltest.Render(t, q.Limit(1))
 
-	assert.Contains(t, sql, "failures = failures + 1", sql)
-	assert.Contains(t, sql, "cost_usd = cost_usd + '0.005'", sql)
-	assert.Contains(t, sql, tenant.OrgID.String(), sql)
-	assert.Contains(t, sql, tenant.BuID.String(), sql)
-	assert.Contains(t, sql, "extension_type = 'Exa'", sql)
-}
-
-func TestRecordOutcomeNeverSubtractsCost(t *testing.T) {
-	t.Parallel()
-
-	sql := buildRecordOutcome(renderDB(), agentextensionports.RecordExtensionOutcomeParams{
-		TenantInfo: testTenant(),
-		Type:       agentextension.TypeExa,
-		Day:        20260923,
-		CostUSD:    decimal.NewFromInt(-3),
-	}).String()
-
-	assert.Contains(t, sql, "failures = failures + 0", sql)
-	assert.Contains(t, sql, "cost_usd = cost_usd + '0'", sql)
+	assert.Contains(t, sql, `aeud."organization_id" = $1 AND aeud."business_unit_id" = $2`)
+	assert.Contains(t, sql, `aeud."extension_type" = 'Exa' AND aeud."day" = $3`)
+	assert.Equal(t, []any{"org_1", "bu_1", int64(20260923)}, args)
+	assert.Len(t, sets, 3)
 }
 
 func TestSummarizeReadsTheMonthForOneTenant(t *testing.T) {
 	t.Parallel()
 
-	tenant := testTenant()
-	sql := buildSummarize(renderDB(), agentextensionports.SummarizeExtensionUsageParams{
-		TenantInfo: tenant,
-		FromDay:    20260901,
-		Today:      20260923,
-	}).String()
+	sql, args := keeltest.Render(t, summarize(agentextensionports.SummarizeExtensionUsageParams{
+		FromDay: 20260901,
+		Today:   20260923,
+	}))
 
-	assert.Contains(t, sql, "FILTER (WHERE agextu.day = 20260923)", sql)
-	assert.Contains(t, sql, "agextu.day >= 20260901", sql)
-	assert.Contains(t, sql, "agextu.day <= 20260923", sql)
-	assert.Contains(t, sql, tenant.OrgID.String(), sql)
-	assert.Contains(t, sql, `GROUP BY "agextu"."extension_type"`, sql)
+	assert.Contains(t, sql, `FILTER (WHERE aeud."day" = $`)
+	assert.Contains(t, sql, `aeud."day" >= $`)
+	assert.Contains(t, sql, `aeud."day" <= $`)
+	assert.Contains(t, sql, `GROUP BY aeud."extension_type"`)
+	assert.Contains(t, args, int64(20260901))
+	assert.Contains(t, args, int64(20260923))
+	assert.Contains(t, args, "org_1")
 }

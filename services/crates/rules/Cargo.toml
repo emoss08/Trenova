@@ -1,6 +1,6 @@
 [package]
 name = "trenova-rules"
-description = "The rules the browser and the server must agree on: the formula language (grammar, checker, formatter, metered evaluator), charge allocation, report number formatting, lane specificity and rate matrix bands. Compiled to one WebAssembly module that both run."
+description = "The rules the browser and the server must agree on: Tariff, the rating language (parser, checker, formatter, editor features, metered evaluator and standard library), charge allocation, report number formatting, lane specificity and rate matrix bands. Compiled to one WebAssembly module that both run."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,6 +11,7 @@ publish.workspace = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+trenova-module-kit.workspace = true
 regex-lite.workspace = true
 rust_decimal.workspace = true
 serde.workspace = true

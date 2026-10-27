@@ -1,3 +1,4 @@
+import type { ReportDefinitionInput } from "@/lib/graphql/reports";
 import {
   CannedReportsDocument,
   DrillThroughReportDocument,
@@ -14,7 +15,6 @@ import {
   ReportViewsDocument,
   type ReportDefinitionsTableQuery,
   type ReportDrillInput,
-  type ReportIrInput,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
 import { fetchReportRunDeskCard } from "@/lib/graphql/report-desk-card";
@@ -108,7 +108,11 @@ export const reports = createQueryKeys("reports", {
         signal,
       }),
   }),
-  preview: (definition: ReportIrInput, params?: Record<string, unknown>, supersede = false) => ({
+  preview: (
+    definition: ReportDefinitionInput,
+    params?: Record<string, unknown>,
+    supersede = false,
+  ) => ({
     queryKey: [definition, params, supersede],
     queryFn: async ({ signal }) =>
       requestGraphQL({

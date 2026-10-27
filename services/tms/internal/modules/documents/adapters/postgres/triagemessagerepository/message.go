@@ -5,15 +5,14 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -42,33 +41,29 @@ func (r *repository) ClaimRule(
 	req *triageports.ClaimRuleRequest,
 ) (*triageports.ClaimedRule, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triageports.ClaimedRule, error) {
-		versions := make([]int64, 0, 1)
-		if _, err := claimRuleQuery(r.db.DBForContext(ctx), req).Exec(ctx, &versions); err != nil {
+		m := inboundmessagedb.InboundMessages
+		claimed, err := claimRuleQuery(req).UpdateReturning(
+			ctx,
+			r.db.Keel(ctx),
+			m.HandledByRuleID.To(req.RuleID),
+			m.HandledAction.To(req.Action),
+			m.UpdatedAt.To(req.At),
+		)
+		if err != nil {
 			return nil, err
 		}
-		if len(versions) == 0 {
+		if len(claimed) == 0 {
 			return &triageports.ClaimedRule{}, nil
 		}
 
-		return &triageports.ClaimedRule{Claimed: true, Version: versions[0]}, nil
+		return &triageports.ClaimedRule{Claimed: true, Version: claimed[0].Version}, nil
 	})
 }
 
-func claimRuleQuery(db bun.IDB, req *triageports.ClaimRuleRequest) *bun.UpdateQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func claimRuleQuery(req *triageports.ClaimRuleRequest) *keel.Query[*inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 
-	return db.NewUpdate().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		Set(cols.HandledByRuleID.Set(), req.RuleID).
-		Set(cols.HandledAction.Set(), req.Action).
-		Set(cols.Version.Inc(1)).
-		Set(cols.UpdatedAt.Set(), req.At).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return inboundmessagecol.InboundMessageScopeTenantUpdate(uq, req.TenantInfo).
-				Where(cols.ID.Eq(), req.MessageID).
-				Where(cols.HandledByRuleID.IsNull())
-		}).
-		Returning(cols.Version.Bare())
+	return m.Pick(m.Version).Where(m.ID.Eq(req.MessageID), m.HandledByRuleID.IsNull())
 }
 
 func (r *repository) CorrectClassification(
@@ -76,43 +71,30 @@ func (r *repository) CorrectClassification(
 	req *triageports.CorrectClassificationRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := inboundmessagecol.InboundMessageColumns
-
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			Set(cols.Classification.Set(), req.Classification).
-			Set(cols.ClassificationCorrected.Set(), true).
-			Set(cols.Version.Inc(1)).
-			Set(cols.UpdatedAt.Set(), req.At)
+		m := inboundmessagedb.InboundMessages
+		sets := []keel.Assignment{
+			m.Classification.To(req.Classification),
+			m.ClassificationCorrected.To(true),
+			m.UpdatedAt.To(req.At),
+		}
 		if req.TargetSeconds > 0 {
-			query = query.Set(
-				cols.DueAt.SetExpr("CASE WHEN status IN (?) THEN received_at + ? ELSE {} END"),
-				bun.List([]inboundmessage.Status{
-					inboundmessage.StatusInReview,
-					inboundmessage.StatusQuarantined,
-				}),
-				req.TargetSeconds,
-			)
+			sets = append(sets, m.DueAt.ToExpr(keel.CaseInt64().
+				When(
+					m.Status.In(inboundmessage.StatusInReview, inboundmessage.StatusQuarantined),
+					m.ReceivedAt.Add(keel.Int64(req.TargetSeconds)),
+				).
+				Else(m.DueAt)))
 		}
 
-		result, err := query.
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return inboundmessagecol.InboundMessageScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.MessageID).
-					Where(cols.Classification.Expr("{} IS DISTINCT FROM ?"), req.Classification)
-			}).
-			Exec(ctx)
+		n, err := m.Where(
+			m.ID.Eq(req.MessageID),
+			m.Classification.IsDistinctFrom(req.Classification),
+		).Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return false, err
 		}
 
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return false, err
-		}
-
-		return affected == 1, nil
+		return n == 1, nil
 	})
 }
 
@@ -121,49 +103,46 @@ func (r *repository) SaveTriageFields(
 	req *triageports.SaveTriageFieldsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := inboundmessagecol.InboundMessageColumns
-
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			Set(cols.Version.Inc(1)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix())
+		m := inboundmessagedb.InboundMessages
+		sets := make([]keel.Assignment, 0, 2)
 		if req.Facts != nil {
 			encoded, err := jsonOrNull(*req.Facts)
 			if err != nil {
 				return fmt.Errorf("encode facts: %w", err)
 			}
-			query = query.Set(cols.Facts.SetExpr("?::jsonb"), encoded)
+			sets = append(sets, jsonbOrNull(m.Facts, encoded))
 		}
 		if req.Conflicts != nil {
 			encoded, err := jsonOrNull(*req.Conflicts)
 			if err != nil {
 				return fmt.Errorf("encode conflicts: %w", err)
 			}
-			query = query.Set(cols.Conflicts.SetExpr("?::jsonb"), encoded)
+			sets = append(sets, jsonbOrNull(m.Conflicts, encoded))
 		}
 
-		result, err := query.
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return inboundmessagecol.InboundMessageScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.MessageID).
-					Where(cols.Version.Eq(), req.Version)
-			}).
-			Exec(ctx)
+		if len(sets) == 0 {
+			sets = append(sets, m.Version.Increment(1))
+		}
+
+		n, err := m.Where(m.ID.Eq(req.MessageID), m.Version.Eq(req.Version)).
+			Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return err
 		}
-
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return err
-		}
-		if affected != 1 {
+		if n != 1 {
 			return triageports.ErrMessageChanged
 		}
 
 		return nil
 	})
+}
+
+func jsonbOrNull(col keel.JSONBCol, encoded *string) keel.Assignment {
+	if encoded == nil {
+		return col.ToNull()
+	}
+
+	return col.ToExpr(keel.JSONB([]byte(*encoded)))
 }
 
 func jsonOrNull[T any](values []T) (*string, error) {
@@ -187,20 +166,17 @@ func (r *repository) OriginalClassification(
 		ctx,
 		r.db,
 		func(ctx context.Context) (inboundmessage.Classification, bool, error) {
-			cols := triagecol.ActivityColumns
-			classes := make([]inboundmessage.Classification, 0, 1)
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*triage.Activity)(nil)).
-				ColumnExpr(cols.FromClassification.Qualified()).
-				Apply(triagecol.ActivityApplyTenant(req.TenantInfo)).
-				Where(cols.MessageID.Eq(), req.MessageID).
-				Where(cols.Kind.Eq(), triage.ActivityCorrected).
-				Where(cols.FromClassification.IsNotNull()).
-				Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-				Limit(1).
-				Scan(ctx, &classes); err != nil {
+			a := triagedb.Activities
+			classes, err := keel.Into[inboundmessage.Classification](ctx, r.db.Keel(ctx), a.
+				Pick(a.FromClassification).
+				Where(
+					a.MessageID.Eq(req.MessageID),
+					a.Kind.Eq(triage.ActivityCorrected),
+					a.FromClassification.IsNotNull(),
+				).
+				Order(a.CreatedAt.Asc(), a.ID.Asc()).
+				Limit(1))
+			if err != nil {
 				return "", false, err
 			}
 			if len(classes) == 0 {

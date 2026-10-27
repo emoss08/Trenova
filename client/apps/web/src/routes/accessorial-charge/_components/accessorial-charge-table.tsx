@@ -7,7 +7,7 @@ import {
 import { Resource } from "@trenova/shared/types/permission";
 import { useMemo } from "react";
 import { getColumns } from "./accessorial-charge-columns";
-import { AccessorialChargePanel } from "./accessorial-charge-panel";
+import { AccessorialChargePanel } from "@/components/accessorial-charge/accessorial-charge-panel";
 
 export default function AccessorialChargeTable() {
   const t = useT();

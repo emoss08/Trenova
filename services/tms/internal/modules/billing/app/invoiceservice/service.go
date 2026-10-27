@@ -58,7 +58,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -68,7 +67,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   kernelports.DBConnection
+	DB                   kernelports.Transactor
 	Repo                 invoiceports.InvoiceRepository
 	BillingQueueRepo     billingqueueports.BillingQueueRepository
 	ShipmentRepo         shipmentports.ShipmentRepository
@@ -105,21 +104,21 @@ type Params struct {
 	AccountingPolicy     *accountingcontrolpolicyservice.Service
 	BillingPolicy        *billingcontrolpolicyservice.Service
 
-	EDIPartnerRepo              ediports.EDIPartnerRepository                `optional:"true"`
-	EDIDocumentProfileRepo      ediports.EDIPartnerDocumentProfileRepository `optional:"true"`
-	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository   `optional:"true"`
-	LateChargeRepo              latechargeports.LateChargeRepository         `optional:"true"`
-	AccountingSync              accountingsyncports.AccountingSyncEnqueuer   `optional:"true"`
-	EmailSenders                emailports.EmailSenderResolver               `optional:"true"`
-	GLAccounts                  glaccountports.GLAccountRepository           `optional:"true"`
-	Config                      *config.Config                               `optional:"true"`
+	EDIPartnerRepo              ediports.EDIPartnerRepository              `optional:"true"`
+	EDILadingProjects           ediports.LadingProjectRepository           `optional:"true"`
+	EDICommunicationProfileRepo ediports.EDICommunicationProfileRepository `optional:"true"`
+	LateChargeRepo              latechargeports.LateChargeRepository       `optional:"true"`
+	AccountingSync              accountingsyncports.AccountingSyncEnqueuer `optional:"true"`
+	EmailSenders                emailports.EmailSenderResolver             `optional:"true"`
+	GLAccounts                  glaccountports.GLAccountRepository         `optional:"true"`
+	Config                      *config.Config                             `optional:"true"`
 	Permissions                 permissionports.PermissionEngine
 }
 
 type Service struct {
 	permissions          permissionports.PermissionEngine
 	l                    *zap.Logger
-	db                   kernelports.DBConnection
+	db                   kernelports.Transactor
 	repo                 invoiceports.InvoiceRepository
 	billingQueueRepo     billingqueueports.BillingQueueRepository
 	shipmentRepo         shipmentports.ShipmentRepository
@@ -157,7 +156,7 @@ type Service struct {
 	billingPolicy        *billingcontrolpolicyservice.Service
 
 	ediPartnerRepo              ediports.EDIPartnerRepository
-	ediDocumentProfileRepo      ediports.EDIPartnerDocumentProfileRepository
+	ediLadingProjects           ediports.LadingProjectRepository
 	ediCommunicationProfileRepo ediports.EDICommunicationProfileRepository
 	lateChargeRepo              latechargeports.LateChargeRepository
 	accountingSync              accountingsyncports.AccountingSyncEnqueuer
@@ -237,7 +236,7 @@ func NewService(p Params) *Service { //nolint:gocritic // mirrors New
 		accountingPolicy:            p.AccountingPolicy,
 		billingPolicy:               p.BillingPolicy,
 		ediPartnerRepo:              p.EDIPartnerRepo,
-		ediDocumentProfileRepo:      p.EDIDocumentProfileRepo,
+		ediLadingProjects:           p.EDILadingProjects,
 		ediCommunicationProfileRepo: p.EDICommunicationProfileRepo,
 		lateChargeRepo:              p.LateChargeRepo,
 		accountingSync:              p.AccountingSync,
@@ -441,6 +440,9 @@ func (s *Service) planDraftFromItem(
 	if err = s.guardItemDetentionHolds(ctx, req.TenantInfo, item); err != nil {
 		return nil, err
 	}
+	if err = guardItemRatingReview(item, dependencies.Shipment); err != nil {
+		return nil, err
+	}
 
 	entity, err := s.buildInvoiceEntity(ctx, &buildInvoiceParams{
 		Anchor:         item,
@@ -533,7 +535,7 @@ func (s *Service) Post( //nolint:funlen // legacy workflow
 
 	var posted *invoice.Invoice
 	newlyPosted := false
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, getErr := s.repo.GetByID(txCtx, invoiceports.GetInvoiceByIDRequest{
 			ID:         req.InvoiceID,
 			TenantInfo: req.TenantInfo,
@@ -1232,6 +1234,7 @@ func (s *Service) buildInvoiceEntity(
 		OffCycleReason:     p.OffCycleReason,
 		IsSplitBill:        p.IsSplitBill,
 		Lines:              lines,
+		RatingNotes:        invoicelines.RatingNotes(p.Legs...),
 	}
 
 	applyInvoiceDetail(entity, p.Customer)
@@ -1502,6 +1505,7 @@ func (s *Service) buildAdjustmentOriginInvoiceEntity(
 		SupersedesInvoiceID:       adjustment.SourceInvoiceID,
 		SourceInvoiceAdjustmentID: adjustment.SourceAdjustmentID,
 		Lines:                     lines,
+		RatingNotes:               invoicelines.RatingNotes(shp),
 	}
 	if shp != nil {
 		entity.ShipmentID = shp.ID

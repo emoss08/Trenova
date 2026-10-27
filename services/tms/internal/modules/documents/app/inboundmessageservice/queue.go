@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -53,7 +52,7 @@ func (s *Service) runTransition(ctx context.Context, t *transition) (*transition
 	}
 
 	now := s.now()
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		states, err := s.queueRepo.QueueStates(txCtx, inboundmessageports.QueueStatesRequest{
 			TenantInfo: t.tenant,
 			IDs:        t.ids,

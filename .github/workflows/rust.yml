@@ -1,8 +1,8 @@
 name: Rust services
 
 # The services Cargo workspace (services/Cargo.toml): every backend Rust crate, the
-# contracts in services/proto, the trenova-rules WebAssembly module and its committed
-# copies, and the imaging worker's image. desktop/capture has its own workflow
+# contracts in services/proto, the trenova-rules, trenova-scripts and trenova-edi WebAssembly
+# modules and their committed copies, and the imaging worker's image. desktop/capture has its own workflow
 # (native-capture.yml).
 
 on:
@@ -23,9 +23,18 @@ on:
       - "services/tms/pkg/rules/rules.wasm.sha256"
       - "client/packages/shared/src/rules/rules.wasm"
       - "client/packages/shared/src/rules/rules.wasm.sha256"
+      # The trenova-scripts WebAssembly module's committed copy.
+      - "services/tms/pkg/scriptvm/scripts.wasm"
+      - "services/tms/pkg/scriptvm/scripts.wasm.sha256"
+      # The trenova-edi WebAssembly module's committed copy.
+      - "services/tms/pkg/x12/edi.wasm"
+      - "services/tms/pkg/x12/edi.wasm.sha256"
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
+      # The crate checks every Tariff example in these two docs.
+      - "docs/engineering/formula-language.md"
+      - "docs/engineering/tariff-cheat-sheet.md"
       - ".github/workflows/rust.yml"
   pull_request:
     branches:
@@ -42,9 +51,18 @@ on:
       - "services/tms/pkg/rules/rules.wasm.sha256"
       - "client/packages/shared/src/rules/rules.wasm"
       - "client/packages/shared/src/rules/rules.wasm.sha256"
+      # The trenova-scripts WebAssembly module's committed copy.
+      - "services/tms/pkg/scriptvm/scripts.wasm"
+      - "services/tms/pkg/scriptvm/scripts.wasm.sha256"
+      # The trenova-edi WebAssembly module's committed copy.
+      - "services/tms/pkg/x12/edi.wasm"
+      - "services/tms/pkg/x12/edi.wasm.sha256"
       - "desktop/capture/rust-toolchain.toml"
       - "deploy/Dockerfile.imaging"
       - "deploy/Dockerfile.imaging.dockerignore"
+      # The crate checks every Tariff example in these two docs.
+      - "docs/engineering/formula-language.md"
+      - "docs/engineering/tariff-cheat-sheet.md"
       - ".github/workflows/rust.yml"
   workflow_dispatch:
 
@@ -93,7 +111,7 @@ jobs:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.94"
+          toolchain: "1.96"
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
@@ -120,19 +138,19 @@ jobs:
       - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.94"
+          toolchain: "1.96"
           targets: wasm32-unknown-unknown
           components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: services
           key: wasm-rules
-      # The pinned binaryen release build-wasm.sh downloads and verifies; keyed on the script,
-      # which holds the version and checksums.
+      # The pinned binaryen release the build downloads and verifies; keyed on the shared
+      # script, which holds the version and checksums.
       - uses: actions/cache@v4
         with:
           path: services/target/binaryen
-          key: binaryen-${{ runner.os }}-${{ hashFiles('services/crates/rules/scripts/build-wasm.sh') }}
+          key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
       - name: Clippy for wasm32-unknown-unknown
         run: cargo clippy -p trenova-rules --target wasm32-unknown-unknown --locked -- -D warnings
       - name: The committed rules.wasm copies match a fresh build
@@ -140,6 +158,62 @@ jobs:
         run: |
           if ! services/crates/rules/scripts/build-wasm.sh check; then
             echo "::error::Run 'task rust:wasm-rules' and commit services/tms/pkg/rules and client/packages/shared/src/rules."
+            exit 1
+          fi
+
+  wasm-scripts:
+    name: Scripts WebAssembly module
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.96"
+          targets: wasm32-wasip1
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services
+          key: wasm-scripts
+      - uses: actions/cache@v4
+        with:
+          path: services/target/binaryen
+          key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
+      - name: Clippy for wasm32-wasip1
+        run: cargo clippy -p trenova-scripts --target wasm32-wasip1 --locked -- -D warnings
+      - name: The committed scripts.wasm matches a fresh build
+        working-directory: .
+        run: |
+          if ! services/crates/scripts/scripts/build-wasm.sh check; then
+            echo "::error::Run 'task rust:wasm-scripts' and commit services/tms/pkg/scriptvm."
+            exit 1
+          fi
+
+  wasm-edi:
+    name: EDI WebAssembly module
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.96"
+          targets: wasm32-unknown-unknown
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: services
+          key: wasm-edi
+      - uses: actions/cache@v4
+        with:
+          path: services/target/binaryen
+          key: binaryen-${{ runner.os }}-${{ hashFiles('services/scripts/wasm-module.sh') }}
+      - name: Clippy for wasm32-unknown-unknown
+        run: cargo clippy -p trenova-edi --target wasm32-unknown-unknown --locked -- -D warnings
+      - name: The committed edi.wasm matches a fresh build
+        working-directory: .
+        run: |
+          if ! services/crates/edi/scripts/build-wasm.sh check; then
+            echo "::error::Run 'task rust:wasm-edi' and commit services/tms/pkg/x12."
             exit 1
           fi
 
@@ -198,6 +272,8 @@ jobs:
             services/crates/sandbox/fuzz
             services/imaging/fuzz
             services/crates/rules/fuzz
+            services/crates/scripts/fuzz
+            services/crates/edi/fuzz
       - run: cargo install cargo-fuzz --locked --version 0.13.2
       - name: Sandbox frame protocol
         working-directory: services/crates/sandbox/fuzz
@@ -210,11 +286,26 @@ jobs:
           cargo +nightly fuzz run image_decode -- -max_total_time=90 -rss_limit_mb=2048
           cargo +nightly fuzz run exif_orientation -- -max_total_time=30 -rss_limit_mb=1024
           cargo +nightly fuzz run worker_job -- -max_total_time=30 -rss_limit_mb=1024
-      - name: Formula language
+      - name: Tariff
         working-directory: services/crates/rules/fuzz
         run: |
-          cargo +nightly fuzz run formula_check -- -max_total_time=60 -rss_limit_mb=1024
-          cargo +nightly fuzz run formula_format -- -max_total_time=30 -rss_limit_mb=1024
+          cargo +nightly fuzz run tariff_parse -- -max_total_time=45 -rss_limit_mb=1024
+          cargo +nightly fuzz run tariff_format -- -max_total_time=30 -rss_limit_mb=1024
+          cargo +nightly fuzz run tariff_check -- -max_total_time=60 -rss_limit_mb=1024
+          cargo +nightly fuzz run tariff_evaluate -- -max_total_time=60 -rss_limit_mb=1024
+      - name: Agent scripts
+        working-directory: services/crates/scripts/fuzz
+        run: |
+          mkdir -p corpus/script_session corpus/request
+          cargo +nightly fuzz run script_session corpus/script_session seeds/script_session -- -dict=script_session.dict -max_total_time=90 -rss_limit_mb=1024
+          cargo +nightly fuzz run request corpus/request seeds/request -- -max_total_time=30 -rss_limit_mb=1024
+      - name: X12
+        working-directory: services/crates/edi/fuzz
+        run: |
+          mkdir -p corpus/x12_read corpus/x12_guide corpus/dispatch
+          cargo +nightly fuzz run x12_read corpus/x12_read seeds/x12_read -- -max_total_time=60 -rss_limit_mb=1024
+          cargo +nightly fuzz run x12_guide corpus/x12_guide -- -max_total_time=45 -rss_limit_mb=1024
+          cargo +nightly fuzz run dispatch corpus/dispatch -- -max_total_time=30 -rss_limit_mb=1024
 
   image:
     name: Imaging image

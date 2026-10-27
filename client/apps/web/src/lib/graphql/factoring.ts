@@ -149,6 +149,7 @@ export type FactoringReserveEntryFilter =
 export type FactoringReserveEntryPage = {
   entries: FactoringReserveEntry[];
   totalCount: number;
+  totalCountExact: boolean;
 };
 
 /** The readiness queue, one row per evaluated invoice, keyed by the invoice it describes. */
@@ -548,7 +549,13 @@ export async function listFactoringReserveEntries(
   const entries = data.factoringReserveEntries.edges.map((edge) =>
     getFragmentData(FactoringReserveEntryFieldsFragmentDoc, edge.node),
   );
-  return { entries, totalCount: data.factoringReserveEntries.totalCount ?? entries.length };
+  return {
+    entries,
+    totalCount: data.factoringReserveEntries.totalCount ?? entries.length,
+    totalCountExact:
+      data.factoringReserveEntries.totalCount == null ||
+      data.factoringReserveEntries.totalCountExact !== false,
+  };
 }
 
 export async function fetchFactoringFundingPlan(

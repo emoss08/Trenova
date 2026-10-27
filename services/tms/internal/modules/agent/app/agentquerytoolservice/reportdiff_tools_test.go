@@ -2,27 +2,54 @@ package agentquerytoolservice
 
 import (
 	"testing"
+	"time"
 
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func revenueRows(rows ...[]any) *reportrows.Envelope {
-	return &reportrows.Envelope{
-		Meta: reportrows.Meta{Title: "Revenue by Customer", GeneratedAt: 1784131200},
-		Schema: []reportrows.Column{
-			{ID: "customer", Label: "Customer", Type: reportcatalog.FieldString},
-			{ID: "revenue", Label: "Revenue", Type: reportcatalog.FieldDecimal},
-		},
-		Rows:    rows,
-		Summary: reportrows.Summary{RowCount: int64(len(rows))},
+func testEnvelope(
+	t *testing.T,
+	title string,
+	columns []table.Column,
+	rows ...[]any,
+) *export.Envelope {
+	t.Helper()
+	builder := table.NewBuilder(columns)
+	for _, row := range rows {
+		require.NoError(t, builder.Append(row...))
 	}
+	return &export.Envelope{
+		Meta:     export.Meta{Title: title, GeneratedAt: time.Unix(1784131200, 0)},
+		Location: time.UTC,
+		Table:    builder.Table(),
+		RowCount: int64(len(rows)),
+	}
+}
+
+func testColumn(id, label string, kind value.Type) table.Column {
+	return table.Column{
+		ID:      id,
+		Label:   label,
+		Type:    kind,
+		Display: format.Resolve(kind, format.Hint{}, nil),
+	}
+}
+
+func revenueRows(t *testing.T, rows ...[]any) *export.Envelope {
+	t.Helper()
+	return testEnvelope(t, "Revenue by Customer", []table.Column{
+		testColumn("customer", "Customer", value.String),
+		testColumn("revenue", "Revenue", value.Decimal),
+	}, rows...)
 }
 
 func succeededRun(id pulid.ID, rowsKey string) *report.ReportRun {
@@ -55,81 +82,12 @@ func comparisonTools(t *testing.T) comparisonFixture {
 		succeededRun(later, "reports/later.rows.json"),
 		succeededRun(earlier, "reports/earlier.rows.json"),
 	}
-	service.rows = map[pulid.ID]*reportrows.Envelope{
-		earlier: revenueRows([]any{"ACME", "1000.00"}, []any{"Globex", "500.00"}),
-		later:   revenueRows([]any{"ACME", "1250.50"}, []any{"Umbrella", "80.00"}),
+	service.rows = map[pulid.ID]*export.Envelope{
+		earlier: revenueRows(t, []any{"ACME", "1000.00"}, []any{"Globex", "500.00"}),
+		later:   revenueRows(t, []any{"ACME", "1250.50"}, []any{"Umbrella", "80.00"}),
 	}
 
 	return comparisonFixture{service: service, tools: tools, earlier: earlier, later: later}
-}
-
-/*
-Nothing hands out run ids. report_compare_runs needs two of them, and a tool
-nobody can supply arguments for is a tool that does not exist — the same
-reachability gap report_list_dashboards closed for tiles.
-*/
-func TestListReportRuns_NamesTheRunsAndHowToCompareThem(t *testing.T) {
-	t.Parallel()
-
-	fixture := comparisonTools(t)
-
-	result, err := fixture.tools["report_list_runs"].Query(
-		t.Context(), testParams(map[string]any{}),
-	)
-	require.NoError(t, err)
-
-	payload, ok := result.(map[string]any)
-	require.True(t, ok)
-	rows, ok := payload["runs"].([]reportRunRow)
-	require.True(t, ok)
-	require.Len(t, rows, 2)
-
-	assert.Equal(t, fixture.later.String(), rows[0].RunID)
-	assert.True(t, rows[0].Comparable)
-	assert.Contains(t, payload["note"], "2 of these 2 runs can be compared")
-}
-
-// A succeeded run whose rows were never stored looks identical to one that can
-// be compared, and the difference is not recoverable — so the row says which
-// it is rather than leaving it to be inferred from the status.
-func TestListReportRuns_SaysWhichRunsCannotBeCompared(t *testing.T) {
-	t.Parallel()
-
-	fixture := comparisonTools(t)
-	fixture.service.runs[1].RowsKey = ""
-	fixture.service.runs[0].Status = report.RunStatusFailed
-
-	result, err := fixture.tools["report_list_runs"].Query(
-		t.Context(), testParams(map[string]any{}),
-	)
-	require.NoError(t, err)
-
-	payload, _ := result.(map[string]any)
-	rows, _ := payload["runs"].([]reportRunRow)
-	require.Len(t, rows, 2)
-
-	assert.False(t, rows[0].Comparable)
-	assert.Contains(t, rows[0].Reason, "ended as "+string(report.RunStatusFailed))
-	assert.False(t, rows[1].Comparable)
-	assert.Contains(t, rows[1].Reason, "before its rows were stored")
-	assert.Contains(t, payload["note"], "None of these runs can be compared")
-}
-
-func TestListReportRuns_CapsTheListAndPassesTheFilters(t *testing.T) {
-	t.Parallel()
-
-	fixture := comparisonTools(t)
-	definitionID := pulid.MustNew("rdef_")
-
-	_, err := fixture.tools["report_list_runs"].Query(t.Context(), testParams(map[string]any{
-		"definitionId": definitionID.String(),
-		"limit":        500,
-	}))
-	require.NoError(t, err)
-
-	require.NotNil(t, fixture.service.listedRuns)
-	assert.Equal(t, definitionID, fixture.service.listedRuns.DefinitionID)
-	assert.Equal(t, maxListedRuns, fixture.service.listedRuns.Limit)
 }
 
 // "What changed since last week" cannot be answered from the newest run alone:
@@ -215,10 +173,11 @@ func TestCompareReportRuns_RefusesRunsOfDifferentShapes(t *testing.T) {
 	t.Parallel()
 
 	fixture := comparisonTools(t)
-	widened := revenueRows([]any{"ACME", "1250.50", float64(3)})
-	widened.Schema = append(widened.Schema, reportrows.Column{
-		ID: "shipments", Label: "Shipments", Type: reportcatalog.FieldInt,
-	})
+	widened := testEnvelope(t, "Revenue by Customer", []table.Column{
+		testColumn("customer", "Customer", value.String),
+		testColumn("revenue", "Revenue", value.Decimal),
+		testColumn("shipments", "Shipments", value.Int),
+	}, []any{"ACME", "1250.50", int64(3)})
 	fixture.service.rows[fixture.later] = widened
 
 	_, err := fixture.tools["report_compare_runs"].Query(
@@ -279,7 +238,7 @@ func TestCompareReportRuns_CarriesTruncationIntoTheAnswer(t *testing.T) {
 	t.Parallel()
 
 	fixture := comparisonTools(t)
-	fixture.service.rows[fixture.earlier].Summary.Truncated = true
+	fixture.service.rows[fixture.earlier].Table.Truncated = true
 
 	result, err := fixture.tools["report_compare_runs"].Query(
 		t.Context(),

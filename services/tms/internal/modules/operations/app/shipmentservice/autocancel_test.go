@@ -34,7 +34,7 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 		}).
 		Return(&tenant.ShipmentControl{
 			AutoCancelShipments:          true,
-			AutoCancelShipmentsThreshold: new(int8(21)),
+			AutoCancelShipmentsThreshold: new(int16(21)),
 		}, nil).
 		Once()
 
@@ -42,7 +42,7 @@ func TestServiceGetAutoCancelableShipments_UsesThreshold(t *testing.T) {
 	repo.EXPECT().
 		GetAutoCancelableShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.GetAutoCancelableShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
-		}), int8(21)).
+		}), int16(21)).
 		Return([]*shipment.Shipment{{ID: pulid.MustNew("shp_")}}, nil).
 		Once()
 
@@ -106,7 +106,7 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 		}).
 		Return(&tenant.ShipmentControl{
 			AutoCancelShipments:          true,
-			AutoCancelShipmentsThreshold: new(int8(30)),
+			AutoCancelShipmentsThreshold: new(int16(30)),
 		}, nil).
 		Once()
 
@@ -114,7 +114,7 @@ func TestServiceAutoCancelShipments_PublishesBulkInvalidation(t *testing.T) {
 	repo.EXPECT().
 		AutoCancelShipments(mock.Anything, mock.MatchedBy(func(req *shipmentports.AutoCancelShipmentsRequest) bool {
 			return req.TenantInfo.OrgID == orgID && req.TenantInfo.BuID == buID
-		}), int8(30)).
+		}), int16(30)).
 		Return([]*shipment.Shipment{{
 			ID:             pulid.MustNew("shp_"),
 			OrganizationID: orgID,

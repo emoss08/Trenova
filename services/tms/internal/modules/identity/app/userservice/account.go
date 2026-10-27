@@ -8,12 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/realtimeinvalidation"
@@ -171,19 +171,19 @@ func (s *Service) UpdateMyProfile(
 		return nil, err
 	}
 
-	cols := tenantcol.UserColumns
+	cols := tenantdb.Users
 	columns := make([]string, 0, 3)
 	if req.JobTitle != nil {
 		user.JobTitle = *req.JobTitle
-		columns = append(columns, cols.JobTitle.String())
+		columns = append(columns, columnName(cols.JobTitle.Col))
 	}
 	if req.PhoneNumber != nil {
 		user.PhoneNumber = *req.PhoneNumber
-		columns = append(columns, cols.PhoneNumber.String())
+		columns = append(columns, columnName(cols.PhoneNumber.Col))
 	}
 	if req.AvatarStyle != nil {
 		user.AvatarStyle = *req.AvatarStyle
-		columns = append(columns, cols.AvatarStyle.String())
+		columns = append(columns, columnName(cols.AvatarStyle.Col))
 	}
 
 	return s.updateColumns(ctx, &columnUpdate{
@@ -219,7 +219,7 @@ func (s *Service) SetMyAssistantHidden(
 		tenantInfo: tenantInfo,
 		user:       user,
 		original:   original,
-		columns:    []string{tenantcol.UserColumns.AssistantHidden.String()},
+		columns:    []string{columnName(tenantdb.Users.AssistantHidden.Col)},
 		comment:    comment,
 	})
 }
@@ -250,17 +250,17 @@ func (s *Service) UpdateMyAvailability(
 
 	user.ApplyAvailability(&req)
 
-	cols := tenantcol.UserColumns
+	cols := tenantdb.Users
 	return s.updateColumns(ctx, &columnUpdate{
 		tenantInfo: tenantInfo,
 		user:       user,
 		original:   original,
 		columns: []string{
-			cols.AvailabilityStatus.String(),
-			cols.FocusUntil.String(),
-			cols.AwayBackOn.String(),
-			cols.AwayDelegateUserID.String(),
-			cols.AwayNote.String(),
+			columnName(cols.AvailabilityStatus.Col),
+			columnName(cols.FocusUntil.Col),
+			columnName(cols.AwayBackOn.Col),
+			columnName(cols.AwayDelegateUserID.Col),
+			columnName(cols.AwayNote.Col),
 		},
 		comment: "Availability updated",
 	})
@@ -342,7 +342,10 @@ func (s *Service) ListAvatars(
 	return out, nil
 }
 
-func (s *Service) ListMySessions(ctx context.Context, scope SessionScope) ([]SessionSummary, error) {
+func (s *Service) ListMySessions(
+	ctx context.Context,
+	scope SessionScope,
+) ([]SessionSummary, error) {
 	sessions, err := s.sr.ListForUser(ctx, scope.TenantInfo.UserID)
 	if err != nil {
 		return nil, err
@@ -446,7 +449,11 @@ func (s *Service) RevokeMyOtherSessions(ctx context.Context, scope SessionScope)
 	return revoked, nil
 }
 
-func (s *Service) recordRevocation(ctx context.Context, tenantInfo pagination.TenantInfo, count int) {
+func (s *Service) recordRevocation(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	count int,
+) {
 	if s.authEvents == nil {
 		return
 	}

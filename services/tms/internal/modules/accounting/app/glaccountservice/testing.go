@@ -1,8 +1,9 @@
 package glaccountservice
 
 import (
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -16,12 +17,13 @@ func NewTestValidator() *Validator {
 }
 
 func NewTestValidatorWithDB(conn *postgres.Connection) *Validator {
+	checker := validationframework.NewKeelChecker(conn, glaccountdb.GLAccountsSchema())
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*glaccount.GLAccount]().
 			WithModelName("GLAccount").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(conn)).
-			WithReferenceChecker(validationframework.NewBunReferenceCheckerScoped(conn)).
+			WithUniquenessChecker(checker).
+			WithReferenceChecker(checker).
 			WithUniqueField(
 				"accountCode",
 				"account_code",

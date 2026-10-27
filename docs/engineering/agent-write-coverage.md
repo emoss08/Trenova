@@ -86,36 +86,36 @@ matches anything fails too, so the file cannot drift behind the tools.
 | Category | Means | Writes |
 | --- | --- | --- |
 | `security` | Sign-in, sessions, passwords, API keys, SSO, identity providers, roles, permissions and every other grant of access. Never agent-operated: an agent that could widen access could widen its own. | 87 |
-| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 270 |
+| `configuration` | Organization-wide settings, controls, lookup tables, templates and integration connections an administrator sets once and every later write depends on. | 267 |
 | `user-preference` | A person's own interface state: saved table views, the sidebar, favorites, notification read state, a profile picture. | 40 |
-| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 56 |
-| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 107 |
+| `infrastructure` | Plumbing a client, a provider or the platform drives rather than a decision a person makes: upload sessions, inbound webhooks, presence signals, the GraphQL transport, repair operations. | 53 |
+| `agent-administration` | Defining, configuring, evaluating and overseeing agents, including deciding what they propose. An agent that did this would be grading its own work. | 108 |
 | `counterparty` | Done by someone other than the organization's staff acting for themselves: a driver in their own portal, a customer or carrier through a public link. An agent acts for the organization and must not act as them. | 35 |
 | `read-only` | Sent as a POST or a mutation but only computes, previews, validates or tests, and changes nothing. | 56 |
-| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 49 |
+| `attestation` | A sign-off a named, accountable person must make: certifying a regulatory summary, filing a return, overriding a failed vetting. | 52 |
 | `duplicate` | Another surface for a write listed elsewhere that the analysis could not merge on its own. The reason names the write it duplicates. | 10 |
 
 ## Totals
 
-1170 writes: 639 GraphQL mutations and 531 REST writes, after merging 71 REST routes into the mutation they duplicate.
+1168 writes: 640 GraphQL mutations and 528 REST writes, after merging 71 REST routes into the mutation they duplicate.
 
 | Decision | Writes |
 | --- | --- |
-| Covered by a tool | 460 |
-| Exempt | 710 |
+| Covered by a tool | 459 |
+| Exempt | 708 |
 | — Security | 87 |
-| — Configuration | 270 |
+| — Configuration | 267 |
 | — User preference | 40 |
-| — Infrastructure | 56 |
-| — Agent administration | 107 |
+| — Infrastructure | 53 |
+| — Agent administration | 108 |
 | — Counterparty | 35 |
 | — Read-only | 56 |
-| — Attestation | 49 |
+| — Attestation | 52 |
 | — Duplicate | 10 |
-| **Pending** | **0** |
-| Total | 1170 |
+| **Pending** | **1** |
+| Total | 1168 |
 
-Of the 460 writes an agent should be able to make, 460 have a tool (100%).
+Of the 460 writes an agent should be able to make, 459 have a tool (99%).
 
 ## Pending
 
@@ -123,6 +123,7 @@ The writes no tool performs yet, and what the tool would do.
 
 | Domain | Write | What the tool would do |
 | --- | --- | --- |
+| edi | `POST /api/v1/edi/flows/instances/:instanceID/release/` | Release a held or escalated EDI flow once the planner has dealt with what held it |
 
 ## By domain
 
@@ -188,14 +189,12 @@ The writes no tool performs yet, and what the tool would do.
 | distanceprofile | 5 | 0 | 5 | 0 |
 | document | 16 | 4 | 12 | 0 |
 | documentcontrol | 1 | 0 | 1 | 0 |
-| documentoperations | 3 | 0 | 3 | 0 |
 | documentpacketrule | 3 | 0 | 3 | 0 |
-| documentparsingrule | 9 | 0 | 9 | 0 |
 | documenttemplate | 12 | 0 | 12 | 0 |
 | documenttype | 3 | 0 | 3 | 0 |
 | driverportal | 31 | 3 | 28 | 0 |
 | driversettlement | 34 | 29 | 5 | 0 |
-| edi | 56 | 22 | 34 | 0 |
+| edi | 51 | 21 | 29 | 1 |
 | email | 9 | 0 | 9 | 0 |
 | equipmentmanufacturer | 4 | 0 | 4 | 0 |
 | equipmenttype | 4 | 0 | 4 | 0 |
@@ -209,7 +208,8 @@ The writes no tool performs yet, and what the tool would do.
 | fiscalyear | 7 | 0 | 7 | 0 |
 | fleetcode | 3 | 0 | 3 | 0 |
 | fleetsafety | 3 | 3 | 0 | 0 |
-| formulatemplate | 29 | 0 | 29 | 0 |
+| formulalibrary | 10 | 0 | 10 | 0 |
+| formulatemplate | 27 | 0 | 27 | 0 |
 | fuelpurchase | 13 | 7 | 6 | 0 |
 | fuelsurcharge | 9 | 2 | 7 | 0 |
 | glaccount | 5 | 0 | 5 | 0 |
@@ -257,7 +257,7 @@ The writes no tool performs yet, and what the tool would do.
 | rateconfirmation | 4 | 4 | 0 | 0 |
 | rateconfirmationpublic | 1 | 0 | 1 | 0 |
 | rateimport | 3 | 2 | 1 | 0 |
-| ratematrix | 4 | 0 | 4 | 0 |
+| ratematrix | 10 | 0 | 10 | 0 |
 | ratequote | 3 | 0 | 3 | 0 |
 | ratesimulation | 1 | 1 | 0 | 0 |
 | ratezone | 3 | 0 | 3 | 0 |
@@ -272,7 +272,7 @@ The writes no tool performs yet, and what the tool would do.
 | servicefailure | 9 | 7 | 2 | 0 |
 | servicefailurereasoncode | 6 | 0 | 6 | 0 |
 | servicetype | 4 | 0 | 4 | 0 |
-| shipment | 33 | 21 | 12 | 0 |
+| shipment | 34 | 21 | 13 | 0 |
 | shipmentboard | 4 | 3 | 1 | 0 |
 | shipmentcontrol | 1 | 0 | 1 | 0 |
 | shipmentmove | 4 | 4 | 0 | 0 |
@@ -967,14 +967,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `PUT /api/v1/document-controls/`<br>documentcontrolhandler.update | Exempt, configuration: An organization-wide control an administrator sets once; every later write depends on it. |
 
-### documentoperations
-
-| Write | Decision |
-| --- | --- |
-| `POST /api/v1/admin/document-operations/:documentID/reextract/`<br>documentoperationshandler.reextract | Exempt, infrastructure: A repair operation for when processing failed; the platform retries on its own. |
-| `POST /api/v1/admin/document-operations/:documentID/regenerate-preview/`<br>documentoperationshandler.regeneratePreview | Exempt, infrastructure: A repair operation for when processing failed; the platform retries on its own. |
-| `POST /api/v1/admin/document-operations/:documentID/resync-search/`<br>documentoperationshandler.resyncSearch | Exempt, infrastructure: A repair operation for when processing failed; the platform retries on its own. |
-
 ### documentpacketrule
 
 | Write | Decision |
@@ -982,20 +974,6 @@ Tools that change something no person-facing write does, such as sending a messa
 | `DELETE /api/v1/document-packet-rules/:ruleID/`<br>documentpacketrulehandler.delete | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `POST /api/v1/document-packet-rules/`<br>documentpacketrulehandler.create | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 | `PUT /api/v1/document-packet-rules/:ruleID/`<br>documentpacketrulehandler.update | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-
-### documentparsingrule
-
-| Write | Decision |
-| --- | --- |
-| `DELETE /api/v1/document-parsing-rules/:ruleSetID/`<br>documentparsingrulehandler.deleteRuleSet | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `DELETE /api/v1/document-parsing-rules/fixtures/:fixtureID/`<br>documentparsingrulehandler.deleteFixture | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/`<br>documentparsingrulehandler.createRuleSet | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/:ruleSetID/fixtures/`<br>documentparsingrulehandler.saveFixture<br>also `PUT /api/v1/document-parsing-rules/fixtures/:fixtureID/` | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/:ruleSetID/versions/`<br>documentparsingrulehandler.createVersion | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/versions/:versionID/publish/`<br>documentparsingrulehandler.publishVersion | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `POST /api/v1/document-parsing-rules/versions/:versionID/simulate/`<br>documentparsingrulehandler.simulateVersion | Exempt, read-only: Runs a parsing rule version against a sample and saves nothing. |
-| `PUT /api/v1/document-parsing-rules/:ruleSetID/`<br>documentparsingrulehandler.updateRuleSet | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
-| `PUT /api/v1/document-parsing-rules/versions/:versionID/`<br>documentparsingrulehandler.updateVersion | Exempt, configuration: Templates and rules an administrator authors, reviews and publishes; they decide how every later record is produced. |
 
 ### documenttemplate
 
@@ -1101,43 +1079,42 @@ Tools that change something no person-facing write does, such as sending a messa
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/`<br>edihandler.deleteMappingProfileItem | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/`<br>edihandler.deleteMappingItem | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `DELETE /api/v1/edi/test-cases/:testCaseID/`<br>edihandler.deleteTestCase | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
+| `DELETE /api/v1/edi/lading/versions/:versionID/shadow/`<br>edihandler.stopLadingShadow | Exempt, configuration: Stops comparing a certified Lading version with the active one; the person who started the shadow decides when it has run long enough. |
+| `DELETE /api/v1/edi/mapping-profiles/:profileID/items/:mappingItemID/`<br>edihandler.deleteMappingProfileItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `DELETE /api/v1/edi/partners/:partnerID/mapping-profile/items/:mappingItemID/`<br>edihandler.deleteMappingItem | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/as2/inbound/`<br>edihandler.receiveAS2Message | Exempt, infrastructure: Receives AS2 messages a trading partner sends; no person makes this call. |
-| `POST /api/v1/edi/catalog/partner-settings/validate/`<br>edihandler.validatePartnerSettings | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/communication-profiles/`<br>edihandler.createCommunicationProfile | Tool: `edi_apply_connection_draft` |
 | `POST /api/v1/edi/communication-profiles/:profileID/poll/`<br>edihandler.pollCommunicationProfile | Exempt, infrastructure: Polls a partner mailbox now; the scheduler polls on its own. |
 | `POST /api/v1/edi/communication-profiles/:profileID/test-connection/`<br>edihandler.testCommunicationProfileConnection | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/communication-profiles/inspect-certificate/`<br>edihandler.inspectCertificate | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
-| `POST /api/v1/edi/connections/`<br>edihandler.createConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/connections/:connectionID/accept/`<br>edihandler.acceptConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/connections/:connectionID/reject/`<br>edihandler.rejectConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/connections/:connectionID/revoke/`<br>edihandler.revokeConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edihandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/control-numbers/reset/`<br>edihandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/document-profiles/`<br>edihandler.createPartnerDocumentProfile | Tool: `edi_apply_connection_draft` |
+| `POST /api/v1/edi/connections/`<br>edihandler.createConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/connections/:connectionID/accept/`<br>edihandler.acceptConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/connections/:connectionID/reject/`<br>edihandler.rejectConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/connections/:connectionID/revoke/`<br>edihandler.revokeConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/connections/:connectionID/suspend/`<br>edihandler.suspendConnection | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
+| `POST /api/v1/edi/control-numbers/reset/`<br>edihandler.resetControlNumber | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/documents/generate/`<br>edihandler.generateDocument | Tool: `edi_send_status_update` |
 | `POST /api/v1/edi/documents/preview/`<br>edihandler.previewDocument | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
+| `POST /api/v1/edi/flows/instances/:instanceID/release/`<br>edihandler.releaseFlowInstance | Pending: Release a held or escalated EDI flow once the planner has dealt with what held it |
 | `POST /api/v1/edi/inbound-files/:fileID/reprocess/`<br>edihandler.reprocessInboundFile | Tool: `edi_reprocess_inbound_file` |
 | `POST /api/v1/edi/inbound-files/bulk-reprocess/`<br>edihandler.bulkReprocessInboundFiles | Tool: `edi_reprocess_inbound_file` |
+| `POST /api/v1/edi/lading/projects/`<br>edihandler.createLadingProject | Tool: `edi_apply_connection_draft` |
+| `POST /api/v1/edi/lading/projects/:projectID/drafts/`<br>edihandler.newLadingDraft | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
+| `POST /api/v1/edi/lading/versions/:versionID/activate/`<br>edihandler.activateLadingVersion | Exempt, attestation: Putting a certified Lading version live for a trading partner is the decision of the person accountable for that partner's EDI. |
+| `POST /api/v1/edi/lading/versions/:versionID/archive/`<br>edihandler.archiveLadingVersion | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
+| `POST /api/v1/edi/lading/versions/:versionID/certify/`<br>edihandler.certifyLadingVersion | Exempt, attestation: Certifying a Lading version attests that its tests, coverage and replay were reviewed by a person. |
+| `POST /api/v1/edi/lading/versions/:versionID/replays/`<br>edihandler.startLadingReplay | Exempt, read-only: Replays a Lading version on the partner's past messages and records the differences; nothing is sent or changed. |
+| `POST /api/v1/edi/lading/versions/:versionID/run/`<br>edihandler.runLadingVersion | Exempt, read-only: Runs a map of a Lading version on an input and saves nothing. |
+| `POST /api/v1/edi/lading/versions/:versionID/shadow/`<br>edihandler.startLadingShadow | Exempt, configuration: Compares a certified Lading version with the active one on live traffic, sending nothing; part of putting a version live. |
+| `POST /api/v1/edi/lading/versions/:versionID/test/`<br>edihandler.testLadingVersion | Exempt, read-only: Runs a Lading version's tests and records their result; nothing a partner sees changes. |
 | `POST /api/v1/edi/load-tenders/`<br>edihandler.submitLoadTender | Tool: `edi_send_tender` |
 | `POST /api/v1/edi/messages/:messageID/replay/`<br>edihandler.replayMessageDelivery | Tool: `edi_replay_message` |
 | `POST /api/v1/edi/messages/:messageID/retry-delivery/`<br>edihandler.retryMessageDelivery | Tool: `edi_retry_message` |
 | `POST /api/v1/edi/messages/bulk-retry-delivery/`<br>edihandler.bulkRetryMessageDelivery | Tool: `edi_retry_message` |
 | `POST /api/v1/edi/partners/`<br>edihandler.createPartner | Tool: `edi_apply_connection_draft` |
-| `POST /api/v1/edi/partners/internal-pairs/`<br>edihandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/templates/`<br>edihandler.createTemplate | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/templates/:templateID/draft/`<br>edihandler.createDraftVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/templates/:templateID/versions/:versionID/activate/`<br>edihandler.activateTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/templates/:templateID/versions/:versionID/archive/`<br>edihandler.archiveTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/templates/:templateID/versions/:versionID/certify/`<br>edihandler.certifyTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/templates/:templateID/versions/:versionID/rollback/`<br>edihandler.rollbackTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/templates/:templateID/versions/:versionID/validate/`<br>edihandler.validateTemplateVersion | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
+| `POST /api/v1/edi/partners/internal-pairs/`<br>edihandler.createInternalPartnerPair | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `POST /api/v1/edi/tender-changes/:changeID/apply/`<br>edihandler.applyTenderChange | Tool: `edi_review_tender_change` |
 | `POST /api/v1/edi/tender-changes/:changeID/reject/`<br>edihandler.rejectTenderChange | Tool: `edi_review_tender_change` |
-| `POST /api/v1/edi/test-cases/`<br>edihandler.createTestCase | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `POST /api/v1/edi/test-cases/:testCaseID/preview/`<br>edihandler.previewTestCase | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `POST /api/v1/edi/transfer-changes/:changeID/apply/`<br>edihandler.applyTransferChange | Tool: `edi_review_transfer_change` |
 | `POST /api/v1/edi/transfer-changes/:changeID/reject/`<br>edihandler.rejectTransferChange | Tool: `edi_review_transfer_change` |
 | `POST /api/v1/edi/transfers/:transferID/approve/`<br>edihandler.approveTransfer | Tool: `edi_accept_tender` |
@@ -1148,15 +1125,11 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/edi/transfers/bulk-reject/`<br>edihandler.bulkRejectTransfers | Exempt, duplicate: Runs POST /api/v1/edi/transfers/:transferID/reject/ once per selected tender; edi_decline_tender answers one tender per proposal so each is previewed and pinned to its own version. |
 | `POST /api/v1/edi/x12/inspect/`<br>edihandler.inspectX12 | Exempt, read-only: Validates, inspects, previews or tests EDI setup and saves nothing. |
 | `PUT /api/v1/edi/communication-profiles/:profileID/`<br>edihandler.updateCommunicationProfile | Tool: `edi_apply_connection_draft` |
-| `PUT /api/v1/edi/document-profiles/:profileID/`<br>edihandler.updatePartnerDocumentProfile | Tool: `edi_apply_connection_draft` |
-| `PUT /api/v1/edi/mapping-profiles/:profileID/items/`<br>edihandler.updateMappingProfileItems | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
+| `PUT /api/v1/edi/lading/projects/:projectID/settings/`<br>edihandler.updateLadingSettings | Exempt, configuration: A partner's Lading settings, such as automatic acceptance, are policy an EDI administrator sets for the partner. |
+| `PUT /api/v1/edi/lading/versions/:versionID/`<br>edihandler.saveLadingDraft | Exempt, configuration: Lading project files an EDI developer writes, tests and certifies in the Lading studio; an agent drafts them through edi_apply_connection_draft. |
+| `PUT /api/v1/edi/mapping-profiles/:profileID/items/`<br>edihandler.updateMappingProfileItems | Exempt, configuration: Trading partner setup: partners, connections, mappings and communication profiles an EDI administrator maintains. |
 | `PUT /api/v1/edi/partners/:partnerID/`<br>edihandler.updatePartner | Tool: `edi_apply_connection_draft` |
 | `PUT /api/v1/edi/partners/:partnerID/mapping-profile/`<br>edihandler.updateMappingProfile | Tool: `edi_apply_connection_draft` |
-| `PUT /api/v1/edi/templates/:templateID/`<br>edihandler.updateTemplate | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `PUT /api/v1/edi/templates/:templateID/versions/:versionID/`<br>edihandler.updateTemplateVersion | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `PUT /api/v1/edi/templates/:templateID/versions/:versionID/script-libraries/`<br>edihandler.replaceTemplateScriptLibraries | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `PUT /api/v1/edi/templates/:templateID/versions/:versionID/segments/`<br>edihandler.replaceTemplateSegments | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
-| `PUT /api/v1/edi/test-cases/:testCaseID/`<br>edihandler.updateTestCase | Exempt, configuration: Trading partner setup: partners, connections, mappings, templates and communication profiles an EDI administrator maintains and certifies. |
 
 ### email
 
@@ -1299,11 +1272,25 @@ Tools that change something no person-facing write does, such as sending a messa
 | `mutation recordSafetyViolation` | Tool: `worker_record_safety_violation` |
 | `mutation updateSafetyViolation` | Tool: `worker_update_safety_violation` |
 
+### formulalibrary
+
+| Write | Decision |
+| --- | --- |
+| `POST /api/v1/formula-libraries/`<br>formulalibraryhandler.create | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `POST /api/v1/formula-libraries/:libraryID/approve`<br>formulalibraryhandler.approve | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `POST /api/v1/formula-libraries/:libraryID/archive`<br>formulalibraryhandler.archive | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `POST /api/v1/formula-libraries/:libraryID/reject`<br>formulalibraryhandler.reject | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `POST /api/v1/formula-libraries/:libraryID/request-changes`<br>formulalibraryhandler.requestChanges | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `POST /api/v1/formula-libraries/:libraryID/rollback`<br>formulalibraryhandler.rollback | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `POST /api/v1/formula-libraries/:libraryID/submit`<br>formulalibraryhandler.submit | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `POST /api/v1/formula-libraries/ai/thread/`<br>formulalibraryhandler.openAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
+| `POST /api/v1/formula-libraries/duplicate`<br>formulalibraryhandler.duplicate | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+| `PUT /api/v1/formula-libraries/:libraryID/`<br>formulalibraryhandler.update | Exempt, configuration: Formula libraries are shared rating logic an administrator authors, tests and approves before any template imports them. |
+
 ### formulatemplate
 
 | Write | Decision |
 | --- | --- |
-| `DELETE /api/v1/formula-templates/:templateID/test-cases/:testCaseID`<br>formulatemplatehandler.deleteTestCase | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `PATCH /api/v1/formula-templates/:templateID/`<br>formulatemplatehandler.patch | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/effective-date`<br>formulatemplatehandler.updateVersionEffectiveDate | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `PATCH /api/v1/formula-templates/:templateID/versions/:versionNumber/tags`<br>formulatemplatehandler.updateVersionTags | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
@@ -1317,21 +1304,20 @@ Tools that change something no person-facing write does, such as sending a messa
 | `POST /api/v1/formula-templates/:templateID/review-note`<br>formulatemplatehandler.reviewNote | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
 | `POST /api/v1/formula-templates/:templateID/rollback`<br>formulatemplatehandler.rollback | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/:templateID/submit`<br>formulatemplatehandler.submit | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/test-cases`<br>formulatemplatehandler.createTestCase | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/:templateID/test-cases/:testCaseID/explain`<br>formulatemplatehandler.explainScenario | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
-| `POST /api/v1/formula-templates/:templateID/test-cases/run`<br>formulatemplatehandler.runTestCases | Exempt, read-only: Evaluates a pricing formula against samples or past shipments and saves nothing. |
 | `POST /api/v1/formula-templates/:templateID/versions`<br>formulatemplatehandler.createVersion | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/ai/describe-inputs`<br>formulatemplatehandler.describeInputs | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
 | `POST /api/v1/formula-templates/ai/explain`<br>formulatemplatehandler.explainFormula | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
-| `POST /api/v1/formula-templates/ai/suggest-scenarios`<br>formulatemplatehandler.suggestScenarios | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
+| `POST /api/v1/formula-templates/ai/explain-test`<br>formulatemplatehandler.explainTest | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
+| `POST /api/v1/formula-templates/ai/suggest-tests`<br>formulatemplatehandler.suggestTests | Exempt, read-only: Asks the formula assistant to explain, describe or suggest from the engine's figures; nothing is saved, and the person applies anything it writes. |
 | `POST /api/v1/formula-templates/ai/thread/`<br>formulatemplatehandler.openAssistantThread | Exempt, agent-administration: Talking to the assistant is how a person reaches an agent; agents hand work to one another through delegate_task instead. |
 | `POST /api/v1/formula-templates/bulk-update-status`<br>formulatemplatehandler.bulkUpdateStatus | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
+| `POST /api/v1/formula-templates/context/cells`<br>formulatemplatehandler.getContextCells | Exempt, read-only: Reads the rate table cells a formula's tests need in the browser; nothing is saved. |
 | `POST /api/v1/formula-templates/duplicate`<br>formulatemplatehandler.duplicate | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/import`<br>formulatemplatehandler.importTemplates | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 | `POST /api/v1/formula-templates/install-standards`<br>formulatemplatehandler.installStandards | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `POST /api/v1/formula-templates/test`<br>formulatemplatehandler.testExpression | Exempt, read-only: Evaluates a pricing formula against samples or past shipments and saves nothing. |
+| `POST /api/v1/formula-templates/scaffold-test`<br>formulatemplatehandler.scaffoldTest | Exempt, read-only: Writes a test block from a shipment's facts and returns it for the person to place in the source; nothing is saved. |
+| `POST /api/v1/formula-templates/test`<br>formulatemplatehandler.preview | Exempt, read-only: Evaluates a pricing formula against samples or past shipments and saves nothing. |
 | `PUT /api/v1/formula-templates/:templateID/`<br>formulatemplatehandler.update | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
-| `PUT /api/v1/formula-templates/:templateID/test-cases/:testCaseID`<br>formulatemplatehandler.updateTestCase | Exempt, configuration: Pricing formulas are rating logic an administrator authors, tests and approves before any rate uses them. |
 
 ### fuelpurchase
 
@@ -1834,6 +1820,12 @@ Tools that change something no person-facing write does, such as sending a messa
 | --- | --- |
 | `DELETE /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.delete | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 | `POST /api/v1/rate-matrices/`<br>ratematrixhandler.create | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/approve/`<br>ratematrixhandler.approve | Exempt, configuration: Publishing a rate matrix version is a reviewer's decision on pricing every tariff can pin; it waits for a person who did not write the draft. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/archive/`<br>ratematrixhandler.archive | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/reject/`<br>ratematrixhandler.reject | Exempt, configuration: Rejecting a rate matrix draft is a reviewer's decision on pricing; it waits for a person who did not write the draft. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/request-changes/`<br>ratematrixhandler.requestChanges | Exempt, configuration: Returning a rate matrix draft for changes is a reviewer's decision on pricing; it waits for a person who did not write the draft. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/restore/`<br>ratematrixhandler.restore | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
+| `POST /api/v1/rate-matrices/:rateMatrixID/submit/`<br>ratematrixhandler.submit | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 | `PUT /api/v1/rate-matrices/:rateMatrixID/`<br>ratematrixhandler.update | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 | `PUT /api/v1/rate-matrices/:rateMatrixID/cells/`<br>ratematrixhandler.replaceCells | Exempt, configuration: A rate matrix is a pricing table an administrator builds and agreements point at; an agent drafts and amends agreements against the matrices that exist. |
 
@@ -1995,6 +1987,7 @@ Tools that change something no person-facing write does, such as sending a messa
 | Write | Decision |
 | --- | --- |
 | `mutation acknowledgeShipmentComment` | Exempt, attestation: Acknowledging a comment says that the person it was addressed to has read it; only that person can say so. |
+| `mutation approveShipmentRatingReview` | Exempt, attestation: Approving the reviews a tariff asked for is the sign-off that releases a held rating to billing; a named person must make it, and the service refuses an agent. |
 | `mutation autoRateShipment`<br>twin `POST /api/v1/shipments/:shipmentID/auto-rate/` | Tool: `shipment_rerate` |
 | `mutation bulkTransferShipmentsToBilling`<br>twin `POST /api/v1/shipments/bulk-transfer-to-billing/` | Tool: `billing_transfer` |
 | `mutation calculateShipmentDistance`<br>twin `POST /api/v1/shipments/calculate-distance/` | Exempt, read-only: Computes a figure or a check for the shipment form and saves nothing. |

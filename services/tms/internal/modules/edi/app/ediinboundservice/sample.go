@@ -1,7 +1,7 @@
 package ediinboundservice
 
 import (
-	"strings"
+	"context"
 
 	"github.com/emoss08/trenova/internal/modules/edi/app/edix12inspect"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
@@ -24,25 +24,26 @@ type ParsedSample struct {
 }
 
 type ParsedSampleTransaction struct {
-	TransactionSet edi.TransactionSet  `json:"transactionSet"`
-	ControlNumber  string              `json:"controlNumber"`
-	Payload        edi.DocumentPayload `json:"payload"`
+	TransactionSet edi.TransactionSet `json:"transactionSet"`
+	ControlNumber  string             `json:"controlNumber"`
 }
 
-func ParseSample(rawX12 string) (*ParsedSample, error) {
-	interchange, err := parseInterchange(rawX12)
+func ParseSample(ctx context.Context, rawX12 string) (*ParsedSample, error) {
+	interchange, problem, err := parseInterchange(ctx, rawX12)
 	if err != nil {
 		return nil, err
 	}
+	if problem != nil {
+		return nil, problem
+	}
 
-	isa := findSegment(interchange.inspection.Segments, "ISA")
 	sample := &ParsedSample{
 		SenderQualifier:     interchange.senderQualifier,
 		SenderID:            interchange.senderID,
 		ReceiverQualifier:   interchange.receiverQualifier,
 		ReceiverID:          interchange.receiverID,
-		InterchangeVersion:  strings.TrimSpace(elementValue(isa, 12)),
-		UsageIndicator:      strings.TrimSpace(elementValue(isa, 15)),
+		InterchangeVersion:  interchange.version,
+		UsageIndicator:      interchange.usage,
 		ApplicationSender:   interchange.applicationSender,
 		ApplicationReceiver: interchange.applicationReceiver,
 		FunctionalGroupID:   interchange.functionalGroupID,
@@ -50,15 +51,14 @@ func ParseSample(rawX12 string) (*ParsedSample, error) {
 		Inspection:          interchange.inspection.InspectOverview,
 		Transactions:        make([]ParsedSampleTransaction, 0, len(interchange.transactions)),
 	}
-	if gs := findSegment(interchange.inspection.Segments, "GS"); gs != nil {
-		sample.GroupVersion = strings.TrimSpace(elementValue(gs, 8))
+	if len(interchange.groups) > 0 {
+		sample.GroupVersion = interchange.groups[0].version
 	}
 	for index := range interchange.transactions {
 		transaction := &interchange.transactions[index]
 		sample.Transactions = append(sample.Transactions, ParsedSampleTransaction{
 			TransactionSet: transaction.set,
 			ControlNumber:  transaction.controlNumber,
-			Payload:        transaction.documentPayload(),
 		})
 	}
 

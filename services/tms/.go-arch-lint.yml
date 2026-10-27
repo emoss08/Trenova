@@ -270,6 +270,7 @@ components:
   rating-test:
     in:
       - internal/modules/rating/ratingtest
+      - internal/modules/rating/ratingtest/**
   operations-domain:
     in:
       - internal/modules/operations/domain
@@ -438,6 +439,9 @@ components:
   testutil:
     in:
       - internal/testutil/**
+  seeds:
+    in:
+      - internal/seeds/**
   infrastructure:
     in:
       - internal/infrastructure/**
@@ -450,6 +454,13 @@ components:
   pkg:
     in:
       - pkg/**
+  schema:
+    in:
+      - schema
+      - schema/**
+  keeltables:
+    in:
+      - internal/keeltables
 deps:
   kernel-domain:
     mayDependOn:
@@ -3524,6 +3535,8 @@ deps:
     anyProjectDeps: true
   testutil:
     anyProjectDeps: true
+  seeds:
+    anyProjectDeps: true
   infrastructure:
     mayDependOn:
       - kernel-domain
@@ -3575,7 +3588,10 @@ deps:
       - agent-ports
       - agent-contracts
       - infrastructure
+      - seeds
       - pkg
+      - schema
+      - keeltables
       - agent-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (4 imports)
       - bootstrap # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
       - documents-app # TODO(build-arch): infrastructure imports module code beyond domain, ports and contracts (1 imports)
@@ -3611,3 +3627,8 @@ deps:
       - reference-domain # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (2 imports)
       - settlement-domain # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (4 imports)
       - workspace-domain # TODO(build-arch): pkg imports a module (rule 7); move the shared type into pkg or invert (2 imports)
+  schema:
+    mayDependOn:
+      - schema
+  keeltables:
+    anyProjectDeps: true

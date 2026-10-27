@@ -103,29 +103,35 @@ var Shard = &gqlexec.Shard{
 				Marshal: gqlexec.Marshal(marshalNTimestamp2int64),
 			},
 			{
-				Name:     "changes",
-				ChildErr: errNoChild3,
+				Name:       "changes",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return obj.Changes, nil
+					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").Changes(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
 			{
-				Name:     "previousState",
-				ChildErr: errNoChild3,
+				Name:       "previousState",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return obj.PreviousState, nil
+					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").PreviousState(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
 			{
-				Name:     "currentState",
-				ChildErr: errNoChild3,
+				Name:       "currentState",
+				IsResolver: true,
+				Concurrent: true,
+				ChildErr:   errNoChild3,
 				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
 					obj := o.(*audit.Entry)
-					return obj.CurrentState, nil
+					return gqlexec.Resolver[resolverAuditEntry](ec, "AuditEntry").CurrentState(ctx, obj)
 				},
 				Marshal: gqlexec.Marshal(marshalOJSON2map),
 			},
@@ -292,6 +298,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild5,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AuditEntryConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AuditEntryEdge", Fields: []*gqlexec.Field{
 			{
@@ -367,6 +383,9 @@ var Shard = &gqlexec.Shard{
 }
 
 type resolverAuditEntry interface {
+	Changes(ctx context.Context, obj *audit.Entry) (map[string]any, error)
+	PreviousState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
+	CurrentState(ctx context.Context, obj *audit.Entry) (map[string]any, error)
 	Resource(ctx context.Context, obj *audit.Entry) (string, error)
 	Operation(ctx context.Context, obj *audit.Entry) (string, error)
 	EntityRef(ctx context.Context, obj *audit.Entry) (*string, error)

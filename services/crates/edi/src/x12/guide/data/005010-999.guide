@@ -1,0 +1,19 @@
+guide x12.005010.999 | Implementation Acknowledgment
+set 999 FA 005010X231A1
+
+ST M 1
+AK1 M 1
+loop 2000 O 999999 | Transaction Set Response Header
+  AK2 M 1
+  loop 2100 O 999999 | Error Identification
+    IK3 M 1
+    CTX O 10
+    loop 2110 O 99 | Implementation Data Element Note
+      IK4 M 1
+      CTX O 10
+    end
+  end
+  IK5 M 1
+end
+AK9 M 1
+SE M 1

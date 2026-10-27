@@ -26,7 +26,6 @@ vi.mock("@/lib/graphql/accounts-receivable", () => ({
   fetchArDsoTrend: mocks.fetchArDsoTrend,
   fetchArAgingTrend: vi.fn().mockResolvedValue([]),
   fetchArCashFlowForecast: vi.fn().mockResolvedValue([]),
-  fetchArCollectionPerformance: vi.fn().mockResolvedValue(null),
   fetchArTopOverdueCustomers: vi.fn().mockResolvedValue([]),
   fetchArCollectionsWorklist: vi.fn().mockResolvedValue([]),
 }));
@@ -44,10 +43,11 @@ const BUCKETS = {
   totalOpenMinor: 0,
 };
 
-function kpis(overview: Partial<Record<string, number>> = {}) {
+function kpis(overview: Partial<Record<string, number | boolean>> = {}) {
   return {
     asOfDate: 1_757_000_000,
     overview: {
+      hasInvoiced: false,
       totalOpenMinor: 0,
       overdueMinor: 0,
       unappliedCashMinor: 0,
@@ -61,17 +61,33 @@ function kpis(overview: Partial<Record<string, number>> = {}) {
     },
     currentDsoDays: 0,
     dsoDeltaDays: 0,
-    cei: 0,
-    avgDaysToPay: 0,
     overduePercent: 0,
-    writeOffRatio: 0,
-    disputeRate: 0,
-    shortPayRate: 0,
+    collection: {
+      totals: {
+        periodStart: 1_749_000_000,
+        periodEnd: 1_757_000_000,
+        beginningOpenMinor: 0,
+        endingOpenMinor: 0,
+        endingCurrentMinor: 0,
+        creditSalesMinor: 0,
+        collectedMinor: 0,
+        avgDaysToPay: 0,
+        shortPayMinor: 0,
+        shortPayApplicationCount: 0,
+        applicationCount: 0,
+        disputedInvoiceCount: 0,
+        postedInvoiceCount: 0,
+      },
+      cei: 0,
+      writeOffRatio: 0,
+      disputeRate: 0,
+      shortPayRate: 0,
+    },
   };
 }
 
-function week(over: Partial<{ billedMinor: number; arBalanceMinor: number }> = {}) {
-  return { periodEnd: 1_756_000_000, dsoDays: 0, arBalanceMinor: 0, billedMinor: 0, ...over };
+function week() {
+  return { periodEnd: 1_756_000_000, dsoDays: 0, arBalanceMinor: 0, billedMinor: 0 };
 }
 
 beforeEach(() => {
@@ -84,11 +100,16 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
+const STREAMED_BRIEF_TIMEOUT_MS = 5_000;
+const PAGE_TIMEOUT_MS = 3_000;
+
 describe("accounting dashboard empty state", () => {
   it("draws the dashboard it will become when nothing has ever been invoiced", async () => {
     renderAccountingPage(<AccountingDashboardPage />);
 
-    expect(await screen.findByText("Nothing on the books yet")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nothing on the books yet", undefined, { timeout: PAGE_TIMEOUT_MS }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the billing queue" })).toHaveAttribute(
       "href",
       "/billing/queue",
@@ -98,8 +119,8 @@ describe("accounting dashboard empty state", () => {
 
   // A clear book with history is a healthy dashboard, not an empty one: the
   // figures should read as zero, with the trend still drawn.
-  it("keeps the dashboard when the book is clear today but carried billing this year", async () => {
-    mocks.fetchArDsoTrend.mockResolvedValue([week(), week({ billedMinor: 125_000 })]);
+  it("keeps the dashboard when the book is clear today but has invoiced before", async () => {
+    mocks.fetchArDashboardKpis.mockResolvedValue(kpis({ hasInvoiced: true }));
     renderAccountingPage(<AccountingDashboardPage />);
 
     expect(await screen.findByText("AR outstanding")).toBeInTheDocument();
@@ -107,26 +128,70 @@ describe("accounting dashboard empty state", () => {
   });
 
   it("leads a dashboard with history with the day's brief", async () => {
-    mocks.fetchArDsoTrend.mockResolvedValue([week(), week({ billedMinor: 125_000 })]);
+    mocks.fetchArDashboardKpis.mockResolvedValue(kpis({ hasInvoiced: true }));
     renderAccountingPage(<AccountingDashboardPage />);
 
-    await waitFor(() =>
-      expect(screen.getByRole("region", { name: "Accounting brief" })).toHaveTextContent(
-        /Nothing is owed to you and no cash is waiting to be applied\./,
-      ),
+    await waitFor(
+      () =>
+        expect(screen.getByRole("region", { name: "Accounting brief" })).toHaveTextContent(
+          /Nothing is owed to you and no cash is waiting to be applied\./,
+        ),
+      { timeout: STREAMED_BRIEF_TIMEOUT_MS },
     );
+  });
+
+  it("decides a never-invoiced book from the KPIs without reading the trend", async () => {
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    expect(
+      await screen.findByText("Nothing on the books yet", undefined, { timeout: PAGE_TIMEOUT_MS }),
+    ).toBeInTheDocument();
+    expect(mocks.fetchArDsoTrend).not.toHaveBeenCalled();
   });
 
   it("does not brief a book that has never invoiced", async () => {
     renderAccountingPage(<AccountingDashboardPage />);
 
-    expect(await screen.findByText("Nothing on the books yet")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Nothing on the books yet", undefined, { timeout: PAGE_TIMEOUT_MS }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Accounting brief" })).not.toBeInTheDocument();
+  });
+
+  it("holds the dashboard's skeleton, and reads no panel, until the KPIs answer", async () => {
+    mocks.fetchArDashboardKpis.mockReturnValue(new Promise(() => {}));
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    expect(
+      await screen.findByRole("generic", { name: "Loading the accounting dashboard" }),
+    ).toHaveAttribute("aria-busy", "true");
+    expect(screen.queryByText("Nothing on the books yet")).not.toBeInTheDocument();
+    expect(mocks.fetchArDsoTrend).not.toHaveBeenCalled();
+  });
+
+  it("shows the dashboard when the KPIs cannot be read, for each panel to say what failed", async () => {
+    mocks.fetchArDashboardKpis.mockRejectedValue(new Error("down"));
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    await waitFor(() => expect(mocks.fetchArDsoTrend).toHaveBeenCalled());
+    expect(screen.queryByText("Nothing on the books yet")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("generic", { name: "Loading the accounting dashboard" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("asks for KPIs that cannot be read no more than once again", async () => {
+    mocks.fetchArDashboardKpis.mockRejectedValue(new Error("down"));
+    renderAccountingPage(<AccountingDashboardPage />);
+
+    await waitFor(() => expect(mocks.fetchArDsoTrend).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(mocks.fetchArDashboardKpis.mock.calls.length).toBeLessThanOrEqual(2);
   });
 
   it("keeps the dashboard while an invoice is open", async () => {
     mocks.fetchArDashboardKpis.mockResolvedValue(
-      kpis({ openInvoiceCount: 2, totalOpenMinor: 40_000 }),
+      kpis({ hasInvoiced: true, openInvoiceCount: 2, totalOpenMinor: 40_000 }),
     );
     renderAccountingPage(<AccountingDashboardPage />);
 

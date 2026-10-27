@@ -6,6 +6,7 @@ import { TimezoneField } from "@/components/fields/timezone-field";
 import { applyLocale } from "@/components/navigation/language-submenu";
 import { usePermission } from "@/hooks/use-permission";
 import { useAssistantStore } from "@/stores/assistant-store";
+import { useEditorPreferenceStore } from "@/stores/editor-preference-store";
 import { useMotionPreferenceStore } from "@/stores/motion-preference-store";
 import { useNavigationStore } from "@/stores/navigation-store";
 import { apiService } from "@/services/api";
@@ -40,6 +41,8 @@ type DisplayValues = {
   theme: ThemeChoice;
   sidebar: "open" | "folded";
   reduceMotion: boolean;
+  vimKeys: boolean;
+  codeLigatures: boolean;
 };
 
 type AssistantValues = {
@@ -185,11 +188,15 @@ function useDisplayRows() {
   const { theme, setTheme } = useTheme();
   const sidebarCollapsed = useNavigationStore((state) => state.sidebarCollapsed);
   const reduceMotion = useMotionPreferenceStore((state) => state.reduceMotion);
+  const vimKeys = useEditorPreferenceStore((state) => state.vimKeys);
+  const codeLigatures = useEditorPreferenceStore((state) => state.codeLigatures);
   const form = useForm<DisplayValues>({
     defaultValues: {
       theme: theme as ThemeChoice,
       sidebar: sidebarCollapsed ? "folded" : "open",
       reduceMotion,
+      vimKeys,
+      codeLigatures,
     },
   });
   const themeValue = useWatch({ control: form.control, name: "theme" });
@@ -201,6 +208,8 @@ function useDisplayRows() {
       setTheme(next.theme);
       useNavigationStore.getState().setSidebarCollapsed(next.sidebar === "folded");
       useMotionPreferenceStore.getState().setReduceMotion(next.reduceMotion);
+      useEditorPreferenceStore.getState().setVimKeys(next.vimKeys);
+      useEditorPreferenceStore.getState().setCodeLigatures(next.codeLigatures);
     },
   });
 
@@ -243,6 +252,28 @@ function useDisplayRows() {
             name="reduceMotion"
             label={t("Reduce motion")}
             description={t("Fewer slides, springs and other movement.")}
+            className="p-0"
+          />
+        </SettingsRow>
+        <SettingsRow id="vim-keys">
+          <SwitchField
+            control={form.control}
+            name="vimKeys"
+            label={t("Vim keys in the formula editor")}
+            description={t(
+              "Normal, insert and visual modes with AstroNvim's keys: jj or jk leaves insert mode and Space is the leader.",
+            )}
+            className="p-0"
+          />
+        </SettingsRow>
+        <SettingsRow id="code-ligatures">
+          <SwitchField
+            control={form.control}
+            name="codeLigatures"
+            label={t("Ligatures in code")}
+            description={t(
+              "Draws pairs like => and != as one sign in the formula editor and wherever code is shown.",
+            )}
             className="p-0"
           />
         </SettingsRow>

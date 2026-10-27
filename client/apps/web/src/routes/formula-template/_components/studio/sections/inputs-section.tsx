@@ -1,114 +1,46 @@
-import { coerceVariableDefaultValue } from "@/components/formula-editor/variable-definition-editor";
+import { TariffInputsFields } from "@/components/tariff-inputs/tariff-inputs-fields";
+import { NovaButton } from "@/components/tariff-studio/nova-button";
+import { inputDocEdits } from "@/components/tariff-studio/source-edits";
 import { describeApiError } from "@/lib/api-error-message";
 import { apiService } from "@/services/api";
-import { Button } from "@trenova/shared/components/ui/button";
-import { Input } from "@trenova/shared/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@trenova/shared/components/ui/select";
-import { Switch } from "@trenova/shared/components/ui/switch";
-import { Textarea } from "@trenova/shared/components/ui/textarea";
-import { useT } from "@trenova/shared/i18n/use-t";
-import { cn } from "@trenova/shared/lib/utils";
-import type {
-  FormulaTemplateFormValues,
-  VariableValueType,
-} from "@trenova/shared/types/formula-template";
-import { PlusIcon, Trash01Icon, VariableIcon } from "@trenova/shared/components/icons";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
-import { NovaButton } from "../ai/nova-button";
-import { sanitizeIdentifier } from "../model/expression-analysis";
+import { VariableIcon } from "@trenova/shared/components/icons";
+import { Button } from "@trenova/shared/components/ui/button";
+import { useT } from "@trenova/shared/i18n/use-t";
+import { FormProvider, useWatch } from "react-hook-form";
 import { useStudio } from "../studio-context";
 import { SectionHead } from "./section-head";
 
-const INPUT_TYPES: readonly VariableValueType[] = ["Number", "String", "Boolean"];
-
-function Tag({ tone, children }: { tone: "neutral" | "danger" | "warning"; children: string }) {
-  return (
-    <span
-      className={cn(
-        "shrink-0 rounded-badge px-1.5 text-2xs",
-        tone === "danger" && "bg-danger-subtle text-danger-subtle-foreground",
-        tone === "warning" && "bg-warning-subtle text-warning-subtle-foreground",
-        tone === "neutral" && "bg-surface-hover text-foreground-muted",
-      )}
-    >
-      {children}
-    </span>
-  );
-}
-
-function defaultText(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return "";
-}
-
 /**
- * The values this template adds to the schema, as a table: name, type,
- * default, whether a lane must set it, and a line for what it means. Lanes
- * and rate agreements override each default.
+ * The tariff's contract interface, read from its `input` declarations: each input with its
+ * label (the doc comment), its name and type (a link to its declaration) and its default, as the
+ * rate agreement rule form will ask for it. The values set here are the preview's sample inputs; they belong to the preview, not
+ * to the template, and an input left alone takes its default.
  */
 export function InputsSection() {
   const t = useT();
-  const { known, analysis, draftContent, focusInput, clearFocusInput } = useStudio();
-  const form = useFormContext<FormulaTemplateFormValues>();
-  const { control } = form;
-  const { fields, append, remove } = useFieldArray({ control, name: "variableDefinitions" });
-  const variables = useWatch({ control, name: "variableDefinitions" }) ?? [];
-  const [described, setDescribed] = useState<ReadonlySet<string>>(() => new Set());
-
-  const schemaNames = useMemo(
-    () => new Set(known.variables.filter((variable) => !variable.custom).map((v) => v.name)),
-    [known.variables],
-  );
-  const missing = variables.filter(
-    (variable) => variable.name && !(variable.description ?? "").trim(),
-  ).length;
-
+  const { check, errors, previewInputs, reveal, draftContent, applyFix } = useStudio();
+  const declarations = check.inputs;
+  const undescribed = declarations.filter((declaration) => !declaration.doc).length;
+  // Nova writes a doc comment for each input declared without one; they land in the editor as
+  // one change, so a single undo takes them all back.
   const describe = useMutation({
     mutationFn: () => apiService.formulaTemplateService.describeInputs(draftContent()),
-    onSuccess: ({ descriptions }) => {
-      const current = form.getValues("variableDefinitions") ?? [];
-      const filled: string[] = [];
-      current.forEach((variable, index) => {
-        const text = descriptions[variable.name]?.trim();
-        if (text && !(variable.description ?? "").trim()) {
-          form.setValue(`variableDefinitions.${index}.description`, text, { shouldDirty: true });
-          filled.push(variable.name);
-        }
-      });
-      setDescribed((previous) => new Set([...previous, ...filled]));
+    onSuccess: (answer) => {
+      // Placed against the file as it is now, which the check was made from.
+      const changes = inputDocEdits(draftContent().source, check.inputs, answer.descriptions);
+      if (changes.length === 0) {
+        toast(t("Nova had nothing to add: every input is described."));
+        return;
+      }
+      applyFix({ changes });
     },
-    onError: (error) => {
-      toast.error(t("Nova could not describe the inputs"), {
-        description: describeApiError(error),
-      });
-    },
+    onError: (error) =>
+      toast.error(describeApiError(error, t("Nova could not describe the inputs."))),
   });
-
-  const add = () =>
-    append({ name: "", type: "Number", description: "", required: false, defaultValue: undefined });
-
-  // An input declared from the editor lands with its default ready to type,
-  // the one thing it still needs.
-  const rowsRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!focusInput || !rowsRef.current) return;
-    const row = rowsRef.current.querySelector<HTMLElement>(`[data-input="${focusInput}"]`);
-    if (!row) return;
-    const target = row.querySelector<HTMLElement>("[data-default]") ?? row;
-    target.focus();
-    row.classList.add("fs-settle");
-    clearFocusInput();
-  }, [focusInput, clearFocusInput, fields.length]);
+  const sample = useWatch({ control: previewInputs.control, name: "inputs" });
+  const changed = Object.values(sample ?? {}).filter((value) => value !== undefined).length;
 
   return (
     <section className="flex flex-col gap-3">
@@ -117,218 +49,47 @@ export function InputsSection() {
         icon={VariableIcon}
         title={t("Inputs")}
         description={t(
-          "Values this template adds to the schema. Lanes and rate agreements can override each default.",
+          "What a rate agreement sets for this tariff. The values here only price the preview.",
         )}
       >
-        {missing > 0 && (
+        {undescribed > 0 && (
           <NovaButton
             busy={describe.isPending}
-            disabled={describe.isPending}
+            disabled={errors > 0 || describe.isPending}
             onClick={() => describe.mutate()}
           >
-            {describe.isPending ? t("Writing…") : t("Describe {0}", missing)}
+            {t("Describe {0, plural, one {# input} other {# inputs}}", undescribed)}
           </NovaButton>
         )}
-        <Button type="button" variant="outline" size="xs" className="gap-1" onClick={add}>
-          <PlusIcon className="size-3" />
-          {t("Add input")}
-        </Button>
+        {changed > 0 && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            onClick={() => previewInputs.reset({ inputs: {} })}
+          >
+            {t("Reset {0, plural, one {# sample value} other {# sample values}}", changed)}
+          </Button>
+        )}
       </SectionHead>
 
-      {fields.length === 0 ? (
-        <div className="text-foreground-muted flex items-center justify-between gap-3 rounded-lg border border-dashed px-3 py-2.5 text-sm">
-          <span>
+      <div className="bg-card rounded-lg border p-3">
+        {declarations.length === 0 ? (
+          <p className="text-foreground-muted text-sm">
             {t(
-              "No inputs. Shipment variables cover most methods; add one for a fee or percentage lanes should set.",
+              "This tariff declares no inputs. Write input rate: Money/mi = $2.35/mi to let each contract set its own rate.",
             )}
-          </span>
-          <Button type="button" variant="ghost" size="xs" className="gap-1" onClick={add}>
-            <PlusIcon className="size-3" />
-            {t("Add input")}
-          </Button>
-        </div>
-      ) : (
-        <div ref={rowsRef} className="bg-card overflow-hidden rounded-lg border">
-          <div className="bg-sunken text-foreground-subtle grid grid-cols-[minmax(0,1.6fr)_7rem_minmax(0,1fr)_4.5rem_1.75rem] items-center gap-2 border-b px-3 py-1.5 text-xs font-medium">
-            <span>{t("Name")}</span>
-            <span>{t("Type")}</span>
-            <span>{t("Default")}</span>
-            <span>{t("Required")}</span>
-            <span className="sr-only">{t("Remove")}</span>
-          </div>
-          {fields.map((field, index) => {
-            const variable = variables[index] ?? field;
-            const name = variable.name ?? "";
-            const unused = name !== "" && !analysis.pending && !analysis.inputReads.has(name);
-            const taken =
-              name !== "" &&
-              (schemaNames.has(name) ||
-                variables.filter((other) => other.name === name).length > 1);
-            const noDefault =
-              name !== "" &&
-              variable.type !== "Boolean" &&
-              !variable.required &&
-              (variable.defaultValue === undefined ||
-                variable.defaultValue === null ||
-                variable.defaultValue === "");
-            return (
-              <div
-                key={field.id}
-                data-input={name || undefined}
-                className="flex flex-col gap-1 border-b px-3 py-2 last:border-b-0"
-              >
-                <div className="grid grid-cols-[minmax(0,1.6fr)_7rem_minmax(0,1fr)_4.5rem_1.75rem] items-center gap-2">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <Controller
-                      control={control}
-                      name={`variableDefinitions.${index}.name`}
-                      render={({ field: nameField, fieldState }) => (
-                        <Input
-                          ref={nameField.ref}
-                          value={nameField.value ?? ""}
-                          onBlur={nameField.onBlur}
-                          onChange={(event) =>
-                            nameField.onChange(sanitizeIdentifier(event.target.value))
-                          }
-                          aria-label={t("Input name")}
-                          aria-invalid={taken || fieldState.invalid || undefined}
-                          placeholder="fuelSurchargePercent"
-                          inputContainerClassName="min-w-0 flex-1"
-                          className="font-mono"
-                        />
-                      )}
-                    />
-                    {unused && <Tag tone="neutral">{t("not read")}</Tag>}
-                    {taken && <Tag tone="danger">{t("name taken")}</Tag>}
-                    {noDefault && !taken && <Tag tone="warning">{t("needs a default")}</Tag>}
-                  </div>
-                  <Controller
-                    control={control}
-                    name={`variableDefinitions.${index}.type`}
-                    render={({ field: typeField }) => (
-                      <Select
-                        value={
-                          typeField.value && INPUT_TYPES.includes(typeField.value)
-                            ? typeField.value
-                            : "Number"
-                        }
-                        onValueChange={(next) => {
-                          const type = next as VariableValueType;
-                          typeField.onChange(type);
-                          form.setValue(
-                            `variableDefinitions.${index}.defaultValue`,
-                            type === "Boolean" ? false : type === "String" ? "" : undefined,
-                            { shouldDirty: true },
-                          );
-                        }}
-                      >
-                        <SelectTrigger className="w-full" aria-label={t("Input type")}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {INPUT_TYPES.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {t(type)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  <Controller
-                    control={control}
-                    name={`variableDefinitions.${index}.defaultValue`}
-                    render={({ field: defaultField }) =>
-                      variable.type === "Boolean" ? (
-                        <span className="flex items-center gap-2 text-xs">
-                          <Switch
-                            size="sm"
-                            checked={defaultField.value === true}
-                            onCheckedChange={(checked) => defaultField.onChange(checked)}
-                            aria-label={t("Default")}
-                          />
-                          <span className="text-foreground-muted font-mono">
-                            {defaultField.value === true ? "true" : "false"}
-                          </span>
-                        </span>
-                      ) : (
-                        <Input
-                          data-default
-                          value={defaultText(defaultField.value)}
-                          onBlur={defaultField.onBlur}
-                          onChange={(event) =>
-                            defaultField.onChange(
-                              variable.type === "Number"
-                                ? coerceVariableDefaultValue("Number", event.target.value)
-                                : event.target.value,
-                            )
-                          }
-                          inputMode={variable.type === "Number" ? "decimal" : undefined}
-                          aria-label={t("Default value")}
-                          placeholder="—"
-                          className="font-mono"
-                        />
-                      )
-                    }
-                  />
-                  <Controller
-                    control={control}
-                    name={`variableDefinitions.${index}.required`}
-                    render={({ field: requiredField }) => (
-                      <Switch
-                        size="sm"
-                        checked={requiredField.value === true}
-                        onCheckedChange={(checked) => requiredField.onChange(checked)}
-                        aria-label={t("Required")}
-                      />
-                    )}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-xs"
-                    aria-label={t("Remove input {0}", name || t("untitled"))}
-                    onClick={() => remove(index)}
-                  >
-                    <Trash01Icon className="size-3.5" />
-                  </Button>
-                </div>
-                <Controller
-                  control={control}
-                  name={`variableDefinitions.${index}.description`}
-                  render={({ field: descriptionField }) => (
-                    <Textarea
-                      bare
-                      ref={descriptionField.ref}
-                      value={descriptionField.value ?? ""}
-                      onBlur={descriptionField.onBlur}
-                      onChange={(event) => {
-                        descriptionField.onChange(event.target.value);
-                        if (described.has(name)) {
-                          setDescribed((previous) => {
-                            const next = new Set(previous);
-                            next.delete(name);
-                            return next;
-                          });
-                        }
-                      }}
-                      minRows={1}
-                      aria-label={t("Input description")}
-                      placeholder={t("Description lanes see when they override it")}
-                      className={cn(
-                        "placeholder:text-foreground-subtle px-0 text-xs md:text-xs",
-                        described.has(name)
-                          ? "text-accent-violet-on-subtle"
-                          : "text-foreground-muted",
-                      )}
-                    />
-                  )}
-                />
-              </div>
-            );
-          })}
-        </div>
-      )}
+          </p>
+        ) : (
+          <FormProvider {...previewInputs}>
+            <TariffInputsFields
+              declarations={declarations}
+              name="inputs"
+              onReveal={(declaration) => declaration.range && reveal(declaration.range)}
+            />
+          </FormProvider>
+        )}
+      </div>
     </section>
   );
 }

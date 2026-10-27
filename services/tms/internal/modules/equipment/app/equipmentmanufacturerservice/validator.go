@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer/equipmentmanufacturerdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"go.uber.org/fx"
@@ -21,11 +22,16 @@ type Validator struct {
 }
 
 func NewValidator(p ValidatorParams) *Validator {
+	checker := validationframework.NewKeelChecker(
+		p.DB,
+		equipmentmanufacturerdb.EquipmentManufacturersSchema(),
+	)
+
 	return &Validator{
 		validator: validationframework.
 			NewTenantedValidatorBuilder[*equipmentmanufacturer.EquipmentManufacturer]().
 			WithModelName("Equipment Manufacturer").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithUniquenessChecker(checker).
 			WithUniqueField(
 				"name",
 				"name",

@@ -2,22 +2,35 @@ package organizationrepository
 
 import (
 	"context"
+	"reflect"
+	"slices"
 	"strings"
+	"unsafe"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	byIDsScopeReason         = "load organizations of the caller's business unit, including ones it shares no membership with"
+	selectOptionsScopeReason = "list organizations of the caller's business unit to pick a counterparty from"
+	loginSlugScopeReason     = "resolve an organization from its public login slug before any tenant is known"
+
+	businessUnitScope = "business-unit"
+)
+
+var organizationErrors = dberror.Mapping{Entity: "Organization"}
 
 type Params struct {
 	fx.In
@@ -41,12 +54,24 @@ func New(p Params) tenantports.OrganizationRepository {
 	}
 }
 
-//nolint:govet // existing scoped variable reuse is local and behavior-preserving
+func organizationLoads(includeState, includeBU bool) []keel.Loader {
+	o := tenantdb.Organizations
+	loads := make([]keel.Loader, 0, 2)
+	if includeState {
+		loads = append(loads, o.State())
+	}
+	if includeBU {
+		loads = append(loads, o.BusinessUnit())
+	}
+
+	return loads
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req tenantports.GetOrganizationByIDRequest,
 ) (*tenant.Organization, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
 		log := r.l.With(
 			zap.String("operation", "GetByID"),
 			zap.Any("request", req),
@@ -55,11 +80,8 @@ func (r *repository) GetByID(
 		cachedOrg, err := r.cache.GetByID(ctx, req.TenantInfo.OrgID)
 		if err == nil && cachedOrg.ID.IsNotNil() &&
 			cachedOrg.BusinessUnitID == req.TenantInfo.BuID {
-			log.Debug("organization found in cache", zap.String("orgID", cachedOrg.ID.String()))
-
 			needsRefresh := (req.IncludeState && cachedOrg.State == nil) ||
 				(req.IncludeBU && cachedOrg.BusinessUnit == nil)
-
 			if !needsRefresh {
 				return cachedOrg, nil
 			}
@@ -70,26 +92,16 @@ func (r *repository) GetByID(
 			)
 		}
 
-		org := new(tenant.Organization)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(org).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("org.id = ?", req.TenantInfo.OrgID).
-					Where("org.business_unit_id = ?", req.TenantInfo.BuID)
-			})
-
-		if req.IncludeState {
-			q.Relation("State")
-		}
-
-		if req.IncludeBU {
-			q.Relation("BusinessUnit")
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		o := tenantdb.Organizations
+		org, err := o.Where(
+			o.ID.Eq(req.TenantInfo.OrgID),
+			o.BusinessUnitID.Eq(req.TenantInfo.BuID),
+		).
+			Load(organizationLoads(req.IncludeState, req.IncludeBU)...).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
 			log.Error("failed to get organization from database", zap.Error(err))
-			return nil, err
+			return nil, organizationErrors.Map(err, req.TenantInfo.OrgID.String())
 		}
 
 		return org, nil
@@ -100,39 +112,23 @@ func (r *repository) GetByIDs(
 	ctx context.Context,
 	req tenantports.GetOrganizationsByIDsQuery,
 ) ([]*tenant.Organization, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"load organizations of the caller's business unit, including ones it shares no membership with",
-	)
+	ctx = dbscope.WithSystem(ctx, byIDsScopeReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*tenant.Organization, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
-
 		if len(req.OrganizationIDs) == 0 {
 			return []*tenant.Organization{}, nil
 		}
 
-		entities := make([]*tenant.Organization, 0, len(req.OrganizationIDs))
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("org.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("org.id IN (?)", bun.List(req.OrganizationIDs))
-			})
-
-		if req.IncludeState {
-			q.Relation("State")
-		}
-
-		if req.IncludeBU {
-			q.Relation("BusinessUnit")
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get organizations from database", zap.Error(err))
+		o := tenantdb.Organizations
+		entities, err := o.AllTenants().
+			Where(
+				o.BusinessUnitID.Eq(req.TenantInfo.BuID),
+				o.ID.In(req.OrganizationIDs...),
+			).
+			Load(organizationLoads(req.IncludeState, req.IncludeBU)...).
+			Limit(len(req.OrganizationIDs)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get organizations from database", zap.Error(err))
 			return nil, err
 		}
 
@@ -144,55 +140,39 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *tenantports.SelectOrganizationOptionsRequest,
 ) (*pagination.ListResult[*tenant.Organization], error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"list organizations of the caller's business unit to pick a counterparty from",
-	)
+	ctx = dbscope.WithSystem(ctx, selectOptionsScopeReason)
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*tenant.Organization], error) {
-			entities := make(
-				[]*tenant.Organization,
-				0,
-				req.SelectQueryRequest.Pagination.SafeLimit(),
+			o := tenantdb.Organizations
+			current := req.SelectQueryRequest.TenantInfo
+			q := o.AllTenants().
+				Pick(o.ID, o.BusinessUnitID, o.Name, o.ScacCode, o.City, o.StateID, o.LogoURL).
+				Where(
+					o.BusinessUnitID.Eq(current.BuID),
+					keel.When(req.Scope != businessUnitScope, o.ID.Eq(current.OrgID)),
+					keel.When(req.ExcludeCurrent, o.ID.Ne(current.OrgID)),
+				).
+				Order(o.Name.Asc())
+
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				q,
+				req.SelectQueryRequest,
+				func(s string) keel.Pred {
+					search := strings.TrimSpace(s)
+					if search == "" {
+						return nil
+					}
+					return keel.Or(
+						o.Name.ContainsFold(search),
+						o.ScacCode.ContainsFold(search),
+						o.City.ContainsFold(search),
+					)
+				},
 			)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column("id", "business_unit_id", "name", "scac_code", "city", "state_id", "logo_url").
-				Where("org.business_unit_id = ?", req.SelectQueryRequest.TenantInfo.BuID)
-
-			if req.Scope != "business-unit" {
-				query = query.Where("org.id = ?", req.SelectQueryRequest.TenantInfo.OrgID)
-			}
-			if req.ExcludeCurrent {
-				query = query.Where("org.id <> ?", req.SelectQueryRequest.TenantInfo.OrgID)
-			}
-
-			search := strings.TrimSpace(req.SelectQueryRequest.Query)
-			if search != "" {
-				term := "%" + strings.ToLower(search) + "%"
-				query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.WhereOr("lower(org.name) LIKE ?", term).
-						WhereOr("lower(org.scac_code) LIKE ?", term).
-						WhereOr("lower(org.city) LIKE ?", term)
-				})
-			}
-
-			total, err := query.
-				Order("org.name ASC").
-				Limit(int64(req.SelectQueryRequest.Pagination.SafeLimit())).
-				Offset(int64(req.SelectQueryRequest.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*tenant.Organization]{
-				Items: entities,
-				Total: int(total),
-			}, nil
 		},
 	)
 }
@@ -201,18 +181,12 @@ func (r *repository) GetByLoginSlug(
 	ctx context.Context,
 	loginSlug string,
 ) (*tenant.Organization, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"resolve an organization from its public login slug before any tenant is known",
-	)
+	ctx = dbscope.WithSystem(ctx, loginSlugScopeReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
-		org := new(tenant.Organization)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(org).
-			Where("org.login_slug = ?", loginSlug).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Organization")
+		o := tenantdb.Organizations
+		org, err := o.AllTenants().Where(o.LoginSlug.Eq(loginSlug)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, organizationErrors.Map(err, loginSlug)
 		}
 
 		return org, nil
@@ -224,18 +198,16 @@ func (r *repository) ListLoginSlugsByPrefix(
 	prefix string,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
-		var slugs []string
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*tenant.Organization)(nil)).
-			Column("login_slug").
-			Where("login_slug = ?", prefix).
-			WhereOr("login_slug LIKE ?", prefix+"-%").
-			Scan(ctx, &slugs); err != nil {
-			return nil, err
+		o := tenantdb.Organizations
+		q := o.Pick(o.LoginSlug)
+		if dbscope.IsSystem(ctx) {
+			q = q.AllTenants()
 		}
 
-		return slugs, nil
+		return keel.Into[string](ctx, r.db.Keel(ctx), q.Where(keel.Or(
+			o.LoginSlug.Eq(prefix),
+			o.LoginSlug.HasPrefix(prefix+"-"),
+		)))
 	})
 }
 
@@ -244,45 +216,49 @@ func (r *repository) Update(
 	org *tenant.Organization,
 ) (*tenant.Organization, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("orgID", org.ID.String()),
-		)
+		o := tenantdb.Organizations
+		db := r.db.Keel(ctx)
 
-		ov := org.Version
-		org.Version++
-
-		results, rErr := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(org).
-			WherePK().
-			Where(tenantcol.OrganizationColumns.BusinessUnitID.Eq(), org.BusinessUnitID).
-			Where("version = ?", ov).
-			OmitZero().
-			Value(
-				tenantcol.OrganizationColumns.BrokerageEnabled.String(),
-				"?",
-				org.BrokerageEnabled,
-			).
-			Value(
-				tenantcol.OrganizationColumns.AssetOperationsEnabled.String(),
-				"?",
-				org.AssetOperationsEnabled,
-			).
-			Returning("*").
-			Exec(ctx)
-
-		if rErr != nil {
-			log.Error("failed to update organization in database", zap.Error(rErr))
-			return nil, rErr
+		stored, err := o.Where(o.ID.Eq(org.ID), o.BusinessUnitID.Eq(org.BusinessUnitID)).
+			One(ctx, db)
+		if err != nil {
+			return nil, organizationErrors.Map(err, org.ID.String())
 		}
+		keepStoredWhereZero(org, stored, o.BrokerageEnabled, o.AssetOperationsEnabled)
 
-		if err := dberror.CheckRowsAffected(results, "Organization", org.ID.String()); err != nil {
-			return nil, err
+		if err = o.Save(ctx, db, org); err != nil {
+			r.l.Error(
+				"failed to update organization in database",
+				zap.String("orgID", org.ID.String()),
+				zap.Error(err),
+			)
+			return nil, organizationErrors.Map(err, org.ID.String())
 		}
 
 		return org, nil
 	})
+}
+
+func keepStoredWhereZero(org, stored *tenant.Organization, written ...keel.Expr) {
+	table := tenantdb.OrganizationsSchema()
+	always := make([]int32, 0, len(written)+2)
+	always = append(always, table.Version, table.AutoUpdate)
+	for _, e := range written {
+		if _, index, ok := keel.ColumnOf(e); ok {
+			always = append(always, index)
+		}
+	}
+
+	dst, src := unsafe.Pointer(org), unsafe.Pointer(stored)
+	for _, index := range table.Update {
+		if slices.Contains(always, index) {
+			continue
+		}
+		field := reflect.ValueOf(table.Ptr(dst, index)).Elem()
+		if field.IsZero() {
+			field.Set(reflect.ValueOf(table.Ptr(src, index)).Elem())
+		}
+	}
 }
 
 func (r *repository) ClearLogoURL(
@@ -291,35 +267,26 @@ func (r *repository) ClearLogoURL(
 	version int64,
 ) (*tenant.Organization, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.Organization, error) {
-		log := r.l.With(
-			zap.String("operation", "ClearLogoURL"),
-			zap.String("orgID", orgID.String()),
-		)
-
-		org := &tenant.Organization{
-			ID:      orgID,
-			Version: version + 1,
-		}
-
-		results, rErr := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(org).
-			Set("logo_url = ''").
-			Set("version = ?", org.Version).
-			Where("org.id = ?", orgID).
-			Where("org.version = ?", version).
-			Returning("*").
-			Exec(ctx)
-
-		if rErr != nil {
-			log.Error("failed to clear organization logo URL", zap.Error(rErr))
-			return nil, rErr
-		}
-
-		if err := dberror.CheckRowsAffected(results, "Organization", orgID.String()); err != nil {
+		o := tenantdb.Organizations
+		rows, err := o.Where(o.ID.Eq(orgID), o.Version.Eq(version)).
+			UpdateReturning(ctx, r.db.Keel(ctx), o.LogoURL.To(""))
+		if err != nil {
+			r.l.Error(
+				"failed to clear organization logo URL",
+				zap.String("orgID", orgID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
-		return org, nil
+		if err = dberror.CheckAffected(
+			int64(len(rows)),
+			"Organization",
+			orgID.String(),
+		); err != nil {
+			return nil, err
+		}
+
+		return rows[0], nil
 	})
 }

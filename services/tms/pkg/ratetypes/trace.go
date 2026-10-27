@@ -1,6 +1,10 @@
 package ratetypes
 
-import "github.com/shopspring/decimal"
+import (
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
+	"github.com/shopspring/decimal"
+)
 
 // The trace is the answer to "why did I get this rate".
 //
@@ -15,19 +19,14 @@ import "github.com/shopspring/decimal"
 type ComponentKind string
 
 const (
-	ComponentKindLinehaul           = ComponentKind("Linehaul")
-	ComponentKindWeightBreak        = ComponentKind("WeightBreak")
-	ComponentKindDeficitBump        = ComponentKind("DeficitBump")
-	ComponentKindDiscount           = ComponentKind("Discount")
-	ComponentKindAbsoluteMinCharge  = ComponentKind("AbsoluteMinCharge")
+	ComponentKindFreight            = ComponentKind("Freight")
 	ComponentKindMinimumCharge      = ComponentKind("MinimumCharge")
 	ComponentKindMaximumCharge      = ComponentKind("MaximumCharge")
-	ComponentKindDeficitDistance    = ComponentKind("DeficitDistance")
+	ComponentKindRounding           = ComponentKind("Rounding")
 	ComponentKindAccessorial        = ComponentKind("Accessorial")
 	ComponentKindFuelSurcharge      = ComponentKind("FuelSurcharge")
 	ComponentKindDetention          = ComponentKind("Detention")
 	ComponentKindCurrencyConversion = ComponentKind("CurrencyConversion")
-	ComponentKindRounding           = ComponentKind("Rounding")
 	ComponentKindManualOverride     = ComponentKind("ManualOverride")
 )
 
@@ -41,8 +40,7 @@ type ComponentSource string
 
 const (
 	ComponentSourceAgreementRule       = ComponentSource("AgreementRule")
-	ComponentSourceRateMatrix          = ComponentSource("RateMatrix")
-	ComponentSourceFormulaTemplate     = ComponentSource("FormulaTemplate")
+	ComponentSourceTariff              = ComponentSource("Tariff")
 	ComponentSourceFuelProgram         = ComponentSource("FuelProgram")
 	ComponentSourceDetentionPolicy     = ComponentSource("DetentionPolicy")
 	ComponentSourceAccessorialSchedule = ComponentSource("AccessorialSchedule")
@@ -104,13 +102,11 @@ type Candidate struct {
 	Amount decimal.NullDecimal `json:"amount,omitempty"`
 }
 
-// Guardrail records a bound that changed the answer.
-type Guardrail struct {
-	Kind    ComponentKind   `json:"kind"`
-	Applied bool            `json:"applied"`
-	Bound   decimal.Decimal `json:"bound"`
-	Raw     decimal.Decimal `json:"raw"`
-	Result  decimal.Decimal `json:"result"`
+// Skip records a charge something other than the tariff would have generated,
+// left out because the tariff billed its code itself.
+type Skip struct {
+	Code   string `json:"code"`
+	Source string `json:"source"`
 }
 
 // FXConversion records the exchange applied, so a rate stays reproducible after
@@ -174,13 +170,6 @@ type Inputs struct {
 	CommodityIDs   []string `json:"commodityIds,omitempty"`
 	FreightClasses []string `json:"freightClasses,omitempty"`
 
-	// FreightClassUsed and its provenance are recorded separately because a
-	// class dispute is the most common LTL billing adjustment, and "we measured
-	// 8.2 pcf, which classifies as 92.5" is the entire argument.
-	FreightClassUsed   string              `json:"freightClassUsed,omitempty"`
-	FreightClassSource string              `json:"freightClassSource,omitempty"`
-	DensityPcf         decimal.NullDecimal `json:"densityPcf,omitempty"`
-
 	HasHazmat           bool `json:"hasHazmat"`
 	RequiresTempControl bool `json:"requiresTempControl"`
 }
@@ -207,8 +196,18 @@ type Trace struct {
 	// the runner up.
 	TieBreak string `json:"tieBreak,omitempty"`
 
+	TemplateID      string               `json:"templateId,omitempty"`
+	TemplateName    string               `json:"templateName,omitempty"`
+	TemplateVersion int64                `json:"templateVersion,omitempty"`
+	TariffInputs    tarifftypes.Inputs   `json:"tariffInputs,omitempty"`
+	Bill            *tarifftypes.Bill    `json:"bill,omitempty"`
+	Refusal         string               `json:"refusal,omitempty"`
+	Choices         []tarifftypes.Choice `json:"choices,omitempty"`
+	Skipped         []Skip               `json:"skipped,omitempty"`
+	Statements      rules.RawJSON        `json:"statements,omitempty"`
+	Lookups         rules.RawJSON        `json:"lookups,omitempty"`
+
 	Components []Component   `json:"components,omitempty"`
-	Guardrails []Guardrail   `json:"guardrails,omitempty"`
 	FX         *FXConversion `json:"fx,omitempty"`
 	Totals     Totals        `json:"totals"`
 

@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/detentionports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -16,10 +17,11 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var chargeErrors = dberror.Mapping{Entity: "Shipment additional charge"}
 
 type Params struct {
 	fx.In
@@ -43,36 +45,37 @@ func New(p Params) shipmentports.ShipmentAdditionalChargeRepository {
 	}
 }
 
-func (r *repository) SyncForShipment(
-	ctx context.Context,
-	tx bun.IDB,
-	entity *shipment.Shipment,
-) error {
+func (r *repository) SyncForShipment(ctx context.Context, entity *shipment.Shipment) error {
 	if entity.AdditionalCharges == nil {
 		return nil
 	}
 
-	existingCharges, err := r.getExistingCharges(ctx, tx, entity)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		return r.syncForShipment(ctx, entity)
+	})
+}
+
+func (r *repository) syncForShipment(ctx context.Context, entity *shipment.Shipment) error {
+	existingCharges, err := r.getExistingCharges(ctx, entity)
 	if err != nil {
 		return err
 	}
 
 	updatedChargeIDs := make(map[pulid.ID]struct{}, len(entity.AdditionalCharges))
+	inserts := make([]*shipment.AdditionalCharge, 0, len(entity.AdditionalCharges))
 	for _, charge := range entity.AdditionalCharges {
 		if charge == nil {
 			continue
 		}
 
-		r.normalizeCharge(entity, charge)
+		normalizeCharge(entity, charge)
 
 		switch {
 		case charge.ID.IsNil():
 			charge.ID = pulid.MustNew("ac_")
-			if err = r.insertCharge(ctx, tx, charge); err != nil {
-				return err
-			}
+			inserts = append(inserts, charge)
 		case existingCharges[charge.ID] != nil:
-			if err = r.updateCharge(ctx, tx, charge, existingCharges[charge.ID]); err != nil {
+			if err = r.updateCharge(ctx, charge, existingCharges[charge.ID]); err != nil {
 				return err
 			}
 			updatedChargeIDs[charge.ID] = struct{}{}
@@ -82,13 +85,22 @@ func (r *repository) SyncForShipment(
 		}
 	}
 
+	if len(inserts) > 0 {
+		if err = shipmentdb.AdditionalCharges.CreateMany(ctx, r.db.Keel(ctx), inserts); err != nil {
+			return fmt.Errorf(
+				"insert shipment additional charges: %w",
+				chargeErrors.Map(err, inserts[0].ID.String()),
+			)
+		}
+	}
+
 	deleteIDs := make([]pulid.ID, 0, len(existingCharges))
 	deletedDetention := false
 	for id, existing := range existingCharges {
 		if _, ok := updatedChargeIDs[id]; ok {
 			continue
 		}
-		if _, ok := r.findChargeInPayload(entity, id); ok {
+		if inPayload(entity, id) {
 			continue
 		}
 		deleteIDs = append(deleteIDs, id)
@@ -96,27 +108,22 @@ func (r *repository) SyncForShipment(
 	}
 
 	if len(deleteIDs) > 0 {
-		if _, err = tx.NewDelete().
-			Model((*shipment.AdditionalCharge)(nil)).
-			Where("id IN (?)", bun.List(deleteIDs)).
-			Where("shipment_id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Exec(ctx); err != nil {
+		ac := shipmentdb.AdditionalCharges
+		if _, err = ac.Where(ac.ID.In(deleteIDs...), ac.ShipmentID.Eq(entity.ID)).
+			Delete(ctx, r.db.Keel(ctx)); err != nil {
 			return fmt.Errorf("delete shipment additional charges: %w", err)
 		}
 	}
 
-	if err = r.linkDetentionOccurrences(ctx, tx, entity, deletedDetention); err != nil {
+	if err = r.linkDetentionOccurrences(ctx, entity, deletedDetention); err != nil {
 		return err
 	}
 
-	return r.reconcileHeaderTotals(ctx, tx, entity)
+	return r.reconcileHeaderTotals(ctx, entity)
 }
 
 func (r *repository) linkDetentionOccurrences(
 	ctx context.Context,
-	tx bun.IDB,
 	entity *shipment.Shipment,
 	deletedDetention bool,
 ) error {
@@ -137,7 +144,7 @@ func (r *repository) linkDetentionOccurrences(
 		return nil
 	}
 
-	if err := r.occurrenceRepo.LinkCharges(ctx, tx, &detentionports.LinkOccurrenceChargesRequest{
+	if err := r.occurrenceRepo.LinkCharges(ctx, &detentionports.LinkOccurrenceChargesRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -151,11 +158,7 @@ func (r *repository) linkDetentionOccurrences(
 	return nil
 }
 
-func (r *repository) reconcileHeaderTotals(
-	ctx context.Context,
-	tx bun.IDB,
-	entity *shipment.Shipment,
-) error {
+func (r *repository) reconcileHeaderTotals(ctx context.Context, entity *shipment.Shipment) error {
 	freight := entity.FreightChargeAmount.Decimal
 	totals, err := shipment.AdditionalChargeTotals(ctx, entity.AdditionalCharges, freight)
 	if err != nil {
@@ -172,15 +175,15 @@ func (r *repository) reconcileHeaderTotals(
 	entity.OtherChargeAmount = decimal.NewNullDecimal(other)
 	entity.TotalChargeAmount = decimal.NewNullDecimal(total)
 
-	sp := shipmentcol.ShipmentColumns
-	if _, err := tx.NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set(sp.OtherChargeAmount.Set(), other).
-		Set(sp.TotalChargeAmount.Set(), total).
-		Where(sp.ID.Eq(), entity.ID).
-		Where(sp.OrganizationID.Eq(), entity.OrganizationID).
-		Where(sp.BusinessUnitID.Eq(), entity.BusinessUnitID).
-		Exec(ctx); err != nil {
+	sp := shipmentdb.Shipments
+	if _, err = sp.Where(sp.ID.Eq(entity.ID)).Update(
+		ctx,
+		r.db.Keel(ctx),
+		sp.OtherChargeAmount.To(entity.OtherChargeAmount),
+		sp.TotalChargeAmount.To(entity.TotalChargeAmount),
+		sp.Version.ToExpr(sp.Version),
+		sp.UpdatedAt.ToExpr(sp.UpdatedAt),
+	); err != nil {
 		return fmt.Errorf("reconcile shipment charge totals: %w", err)
 	}
 
@@ -189,16 +192,11 @@ func (r *repository) reconcileHeaderTotals(
 
 func (r *repository) getExistingCharges(
 	ctx context.Context,
-	tx bun.IDB,
 	entity *shipment.Shipment,
 ) (map[pulid.ID]*shipment.AdditionalCharge, error) {
-	charges := make([]*shipment.AdditionalCharge, 0)
-	if err := tx.NewSelect().
-		Model(&charges).
-		Where("shipment_id = ?", entity.ID).
-		Where("organization_id = ?", entity.OrganizationID).
-		Where("business_unit_id = ?", entity.BusinessUnitID).
-		Scan(ctx); err != nil {
+	ac := shipmentdb.AdditionalCharges
+	charges, err := ac.Where(ac.ShipmentID.Eq(entity.ID)).All(ctx, r.db.Keel(ctx))
+	if err != nil {
 		return nil, fmt.Errorf("get existing shipment additional charges: %w", err)
 	}
 
@@ -210,74 +208,65 @@ func (r *repository) getExistingCharges(
 	return result, nil
 }
 
-func (r *repository) normalizeCharge(entity *shipment.Shipment, charge *shipment.AdditionalCharge) {
+func normalizeCharge(entity *shipment.Shipment, charge *shipment.AdditionalCharge) {
 	charge.ShipmentID = entity.ID
 	charge.OrganizationID = entity.OrganizationID
 	charge.BusinessUnitID = entity.BusinessUnitID
 }
 
-func (r *repository) insertCharge(
+func (r *repository) updateCharge(
 	ctx context.Context,
-	tx bun.IDB,
 	charge *shipment.AdditionalCharge,
+	existing *shipment.AdditionalCharge,
 ) error {
-	_, err := tx.NewInsert().Model(charge).Returning("*").Exec(ctx)
+	ac := shipmentdb.AdditionalCharges
+	n, err := ac.Where(
+		ac.ID.Eq(charge.ID),
+		ac.ShipmentID.Eq(charge.ShipmentID),
+		ac.Version.Eq(existing.Version),
+	).Update(
+		ctx,
+		r.db.Keel(ctx),
+		ac.AccessorialChargeID.To(charge.AccessorialChargeID),
+		ac.IsSystemGenerated.To(charge.IsSystemGenerated),
+		ac.IsDetention.To(charge.IsDetention),
+		ac.Method.To(charge.Method),
+		ac.Amount.To(charge.Amount),
+		ac.Unit.To(charge.Unit),
+		ac.FuelSurchargeProgramID.ToExpr(keel.Val(charge.FuelSurchargeProgramID)),
+		ac.FuelSurchargeDetail.To(charge.FuelSurchargeDetail),
+		ac.RateAgreementAccessorialID.ToExpr(keel.Val(charge.RateAgreementAccessorialID)),
+		ac.RateQuoteID.ToExpr(keel.Val(charge.RateQuoteID)),
+	)
 	if err != nil {
-		return fmt.Errorf("insert shipment additional charge %s: %w", charge.ID, err)
+		return fmt.Errorf(
+			"update shipment additional charge %s: %w",
+			charge.ID,
+			chargeErrors.Map(err, charge.ID.String()),
+		)
 	}
+
+	if err = dberror.CheckAffected(
+		n,
+		"Shipment additional charge",
+		charge.ID.String(),
+	); err != nil {
+		return err
+	}
+
+	charge.Version = existing.Version + 1
+	charge.CreatedAt = existing.CreatedAt
+	charge.UpdatedAt = timeutils.NowUnix()
 
 	return nil
 }
 
-func (r *repository) updateCharge(
-	ctx context.Context,
-	tx bun.IDB,
-	charge *shipment.AdditionalCharge,
-	existing *shipment.AdditionalCharge,
-) error {
-	ov := existing.Version
-	charge.Version = ov + 1
-	charge.UpdatedAt = timeutils.NowUnix()
-
-	cols := shipmentcol.AdditionalChargeColumns
-	results, err := tx.NewUpdate().
-		Model(charge).
-		Column(
-			cols.AccessorialChargeID.Bare(),
-			cols.IsSystemGenerated.Bare(),
-			cols.IsDetention.Bare(),
-			cols.Method.Bare(),
-			cols.Amount.Bare(),
-			cols.Unit.Bare(),
-			cols.FuelSurchargeProgramID.Bare(),
-			cols.FuelSurchargeDetail.Bare(),
-			cols.RateAgreementAccessorialID.Bare(),
-			cols.RateQuoteID.Bare(),
-			cols.Version.Bare(),
-			cols.UpdatedAt.Bare(),
-		).
-		Where("id = ?", charge.ID).
-		Where("shipment_id = ?", charge.ShipmentID).
-		Where("organization_id = ?", charge.OrganizationID).
-		Where("business_unit_id = ?", charge.BusinessUnitID).
-		Where("version = ?", ov).
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("update shipment additional charge %s: %w", charge.ID, err)
-	}
-
-	return dberror.CheckRowsAffected(results, "Shipment additional charge", charge.ID.String())
-}
-
-func (r *repository) findChargeInPayload(
-	entity *shipment.Shipment,
-	id pulid.ID,
-) (*shipment.AdditionalCharge, bool) {
+func inPayload(entity *shipment.Shipment, id pulid.ID) bool {
 	for _, charge := range entity.AdditionalCharges {
 		if charge != nil && charge.ID == id {
-			return charge, true
+			return true
 		}
 	}
 
-	return nil, false
+	return false
 }

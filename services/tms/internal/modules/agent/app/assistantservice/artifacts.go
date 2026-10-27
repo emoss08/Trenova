@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
@@ -244,6 +245,11 @@ func (r *artifactRecorder) publish(
 	callID string,
 	document agentports.PublishedDocument,
 ) (*agentports.ShownArtifact, error) {
+	body, err := r.withAnalyses(document.Body, document.Analyses)
+	if err != nil {
+		return nil, err
+	}
+	document.Body = body
 	artifact := documentArtifact(callID, document, r.author())
 
 	if !document.ArtifactID.IsNil() {
@@ -924,11 +930,15 @@ var (
 )
 
 var (
-	errUnknownDocument = errors.New(
-		"there is no document with that artifactId in this conversation; leave artifactId " +
-			"out to publish a new one",
-	)
-	errDocumentNotKept = errors.New("it could not be saved")
+	errUnknownDocument error = &agentports.PublishMistake{
+		Reason: "there is no document with that artifactId in this conversation; leave " +
+			"artifactId out to publish a new one",
+	}
+	errDocumentNotKept       = errors.New("it could not be saved")
+	errUnknownAnalysis error = &agentports.PublishMistake{
+		Reason: "an analysis it names is not one an analysis_run result kept in this " +
+			"conversation; name each by the artifactId of its analysis",
+	}
 )
 
 // documentArtifact is a write-up the model published, kept as markdown with
@@ -1017,7 +1027,7 @@ func artifactFromObservation(observation agentports.ToolObservation) *assistanta
 		return draftEditArtifact(observation.Call.ID, result)
 	case name == toolDraftEDIConnection:
 		return connectionDraftArtifact(observation.Call.ID, result)
-	case name == agentextension.ToolAnalyzeData:
+	case name == codemode.ToolRunScript:
 		return analysisArtifact(observation.Call.ID, result, observation.Call.Arguments)
 	case name == agentextension.ToolReadPortal:
 		return portalTaskArtifact(observation.Call.ID, result)

@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -105,7 +104,7 @@ func (s *Service) Dismiss(
 
 	var updated *accountingsync.AccountingDriftFinding
 	var previous map[string]any
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		finding, txErr := s.findingByID(txCtx, req.TenantInfo, req.ID, true)
 		if txErr != nil {
 			return txErr

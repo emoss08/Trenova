@@ -57,6 +57,7 @@ type FindingInput struct {
 	POD              *PODState
 	Detention        []*DetentionDwell
 	DetentionHolds   []*DetentionHold
+	RatingReview     *RatingReviewHold
 	Duplicates       []*DuplicateRef
 	CreditHold       bool
 	CreditHoldReason string
@@ -95,6 +96,17 @@ func Findings(in FindingInput) []*Issue {
 				hold.BillableAmount,
 			) + " detention" + where + " waits on an approver",
 			Reasoning: "The item can't be approved until this detention charge is approved or dropped on the shipment.",
+		})
+	}
+
+	if hold := in.RatingReview; hold != nil {
+		out = append(out, &Issue{
+			CheckKey:   CheckCharges,
+			Code:       IssueRatingAwaitingReview,
+			SubjectKey: hold.ShipmentID.String(),
+			Summary:    "The tariff held this rating for review",
+			Reasoning: "The item can't be approved until a person approves the rating: " +
+				hold.Summary() + ".",
 		})
 	}
 

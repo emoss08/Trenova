@@ -6,21 +6,25 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+const newerAlias = "nwr"
+
+var (
+	messageErrors    = dberror.Mapping{Entity: "InboundMessage"}
+	attachmentErrors = dberror.Mapping{Entity: "InboundAttachment"}
 )
 
 type Params struct {
@@ -52,149 +56,84 @@ var settledStatuses = []inboundmessage.Status{
 	inboundmessage.StatusIgnored,
 }
 
-type folderColumns struct {
-	alias             string
-	ID                buncolgen.Column
-	OrganizationID    buncolgen.Column
-	BusinessUnitID    buncolgen.Column
-	Status            buncolgen.Column
-	Classification    buncolgen.Column
-	MailboxID         buncolgen.Column
-	MatchedShipmentID buncolgen.Column
-	ReceivedAt        buncolgen.Column
-	ThreadKey         buncolgen.Column
-	OwnerID           buncolgen.Column
-	Parked            buncolgen.Column
-}
+func narrow(req *inboundmessageports.ListInboundMessagesRequest) []keel.Pred {
+	m := inboundmessagedb.InboundMessages
 
-func newFolderColumns(alias string) folderColumns {
-	cols := inboundmessagecol.InboundMessageColumns
-
-	return folderColumns{
-		alias:             alias,
-		ID:                cols.ID.WithAlias(alias),
-		OrganizationID:    cols.OrganizationID.WithAlias(alias),
-		BusinessUnitID:    cols.BusinessUnitID.WithAlias(alias),
-		Status:            cols.Status.WithAlias(alias),
-		Classification:    cols.Classification.WithAlias(alias),
-		MailboxID:         cols.MailboxID.WithAlias(alias),
-		MatchedShipmentID: cols.MatchedShipmentID.WithAlias(alias),
-		ReceivedAt:        cols.ReceivedAt.WithAlias(alias),
-		ThreadKey:         cols.ThreadKey.WithAlias(alias),
-		OwnerID:           cols.OwnerID.WithAlias(alias),
-		Parked:            cols.Parked.WithAlias(alias),
-	}
-}
-
-const newerAlias = "nwr"
-
-var (
-	folderCols = newFolderColumns(inboundmessagecol.InboundMessageTable.Alias)
-	newerCols  = newFolderColumns(newerAlias)
-)
-
-func narrow(
-	db bun.IDB,
-	sq *bun.SelectQuery,
-	req *inboundmessageports.ListInboundMessagesRequest,
-) *bun.SelectQuery {
-	sq = applyFolder(sq, req, folderCols)
-	if req.ThreadKey != "" {
-		sq = sq.Where(folderCols.ThreadKey.Eq(), req.ThreadKey)
-	}
+	preds := applyFolder(m, req)
+	preds = append(preds, keel.When(req.ThreadKey != "", m.ThreadKey.Eq(req.ThreadKey)))
 	if req.CollapseThreads && req.ThreadKey == "" {
-		sq = sq.Where("NOT EXISTS (?)", newerInFolder(db, req))
+		preds = append(preds, keel.NotExists(newerInFolder(req)))
 	}
 
-	return sq
+	return preds
 }
 
 func applyFolder(
-	sq *bun.SelectQuery,
+	m *inboundmessagedb.InboundMessagesTable,
 	req *inboundmessageports.ListInboundMessagesRequest,
-	c folderColumns,
-) *bun.SelectQuery {
-	sq = applyLane(sq, req.Lane, req.ViewerID, c)
-	if len(req.Statuses) > 0 {
-		sq = sq.Where(c.Status.In(), bun.List(req.Statuses))
+) []keel.Pred {
+	return []keel.Pred{
+		lane(m, req.Lane, req.ViewerID),
+		keel.When(len(req.Statuses) > 0, m.Status.In(req.Statuses...)),
+		keel.When(req.Classification != "", m.Classification.Eq(req.Classification)),
+		keel.When(req.MailboxID.IsNotNil(), m.MailboxID.Eq(req.MailboxID)),
+		keel.When(req.ShipmentID.IsNotNil(), m.MatchedShipmentID.Eq(req.ShipmentID)),
+		keel.When(req.OwnerID.IsNotNil(), m.OwnerID.Eq(req.OwnerID)),
+		keel.When(req.Since > 0, m.ReceivedAt.Gte(req.Since)),
 	}
-	if req.Classification != "" {
-		sq = sq.Where(c.Classification.Eq(), req.Classification)
-	}
-	if req.MailboxID.IsNotNil() {
-		sq = sq.Where(c.MailboxID.Eq(), req.MailboxID)
-	}
-	if req.ShipmentID.IsNotNil() {
-		sq = sq.Where(c.MatchedShipmentID.Eq(), req.ShipmentID)
-	}
-	if req.OwnerID.IsNotNil() {
-		sq = sq.Where(c.OwnerID.Eq(), req.OwnerID)
-	}
-	if req.Since > 0 {
-		sq = sq.Where(c.ReceivedAt.Gte(), req.Since)
-	}
-
-	return sq
 }
 
-func applyLane(
-	sq *bun.SelectQuery,
-	lane inboundmessageports.Lane,
+func lane(
+	m *inboundmessagedb.InboundMessagesTable,
+	l inboundmessageports.Lane,
 	viewerID pulid.ID,
-	c folderColumns,
-) *bun.SelectQuery {
-	switch lane {
+) keel.Pred {
+	switch l {
 	case inboundmessageports.LaneWaiting:
-		return sq.Where(c.Status.In(), bun.List(needsReviewStatuses)).Where(c.Parked.IsNull())
+		return keel.And(m.Status.In(needsReviewStatuses...), m.Parked.IsNull())
 	case inboundmessageports.LaneAssignedToMe:
-		return sq.Where(c.Status.In(), bun.List(needsReviewStatuses)).
-			Where(c.Parked.IsNull()).
-			Where(c.OwnerID.Eq(), viewerID)
+		return keel.And(
+			m.Status.In(needsReviewStatuses...),
+			m.Parked.IsNull(),
+			m.OwnerID.Eq(viewerID),
+		)
 	case inboundmessageports.LaneWaitingOnThem:
-		return sq.Where(c.Parked.Eq(), inboundmessage.ParkingAwaitingReply)
+		return m.Parked.Eq(inboundmessage.ParkingAwaitingReply)
 	case inboundmessageports.LaneSnoozed:
-		return sq.Where(c.Parked.Eq(), inboundmessage.ParkingSnoozed)
+		return m.Parked.Eq(inboundmessage.ParkingSnoozed)
 	case inboundmessageports.LaneHandled:
-		return sq.Where(c.Status.Eq(), inboundmessage.StatusActioned)
+		return m.Status.Eq(inboundmessage.StatusActioned)
 	case inboundmessageports.LaneIgnored:
-		return sq.Where(c.Status.Eq(), inboundmessage.StatusIgnored)
+		return m.Status.Eq(inboundmessage.StatusIgnored)
 	case inboundmessageports.LaneEverything:
-		return sq
+		return nil
 	default:
-		return sq
+		return nil
 	}
 }
 
 func newerInFolder(
-	db bun.IDB,
 	req *inboundmessageports.ListInboundMessagesRequest,
-) *bun.SelectQuery {
-	probe := db.NewSelect().
-		TableExpr(inboundmessagecol.InboundMessageTable.As(newerAlias)).
-		ColumnExpr("1").
-		Where(newerCols.OrganizationID.EqColumn(folderCols.OrganizationID)).
-		Where(newerCols.BusinessUnitID.EqColumn(folderCols.BusinessUnitID)).
-		Where(newerCols.ThreadKey.EqColumn(folderCols.ThreadKey)).
-		Where(buncolgen.Expr(
-			"({0} > {1} OR ({0} = {1} AND {2} > {3}))",
-			newerCols.ReceivedAt, folderCols.ReceivedAt, newerCols.ID, folderCols.ID,
-		))
-	probe = applyFolder(probe, req, newerCols)
+) *keel.Query[*inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	nwr := inboundmessagedb.InboundMessages.As(newerAlias)
+
+	probe := nwr.Pick(nwr.ID).Where(
+		nwr.ThreadKey.EqCol(m.ThreadKey),
+		keel.Tuple(nwr.ReceivedAt, nwr.ID).Gt(keel.Tuple(m.ReceivedAt, m.ID)),
+	).Where(applyFolder(nwr, req)...)
 	if req.Filter != nil && strings.TrimSpace(req.Filter.Query) != "" {
-		probe = searchPredicate(probe, newerAlias, req.Filter.Query)
+		probe = searchPredicate(probe, req.Filter.Query)
 	}
 
 	return probe
 }
 
-func searchPredicate(sq *bun.SelectQuery, alias, query string) *bun.SelectQuery {
-	entity := (*inboundmessage.InboundMessage)(nil)
-	fieldConfig := querybuilder.GetFieldConfiguration(entity)
-
-	return querybuilder.NewWithPostgresSearch(sq, alias, fieldConfig, entity).
-		WithPredicatesOnly().
-		ApplyTextSearchFilter(query, querybuilder.ExtractSearchFields(fieldConfig)).
-		GetQuery()
+func searchPredicate(
+	q *keel.Query[*inboundmessage.InboundMessage],
+	query string,
+) *keel.Query[*inboundmessage.InboundMessage] {
+	return listquery.Filter(q, &pagination.QueryOptions{Query: query})
 }
 
 func (r *repository) List(
@@ -205,29 +144,25 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*inboundmessage.InboundMessage], error) {
-			entities := make([]*inboundmessage.InboundMessage, 0, req.Filter.Pagination.SafeLimit())
-			cols := inboundmessagecol.InboundMessageColumns
-
-			dba := r.db.DBForContext(ctx)
-			query := narrow(dba, dba.NewSelect().Model(&entities).Relation("Mailbox"), req)
-
-			total, err := querybuilder.ApplyFilters(
-				query, "imsg", req.Filter, (*inboundmessage.InboundMessage)(nil),
-			).
-				Order(cols.ReceivedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*inboundmessage.InboundMessage]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			m := inboundmessagedb.InboundMessages
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				m.Where(narrow(req)...),
+				&listquery.Request[inboundmessage.InboundMessage]{
+					Filter: req.Filter,
+					Shape:  withMailbox,
+					Then:   []keel.Order{m.ReceivedAt.Desc()},
+				},
+			)
 		},
 	)
+}
+
+func withMailbox(
+	q *keel.Query[*inboundmessage.InboundMessage],
+) *keel.Query[*inboundmessage.InboundMessage] {
+	return q.Load(inboundmessagedb.InboundMessages.Mailbox())
 }
 
 func (r *repository) ListCursor(
@@ -238,51 +173,14 @@ func (r *repository) ListCursor(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*inboundmessage.InboundMessage], error) {
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*inboundmessage.InboundMessage)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return narrow(dba, querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							inboundmessagecol.InboundMessageTable.Alias,
-							req.Filter,
-							(*inboundmessage.InboundMessage)(nil),
-						), req)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			return dbhelper.CursorList(
+			return listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*inboundmessage.InboundMessage]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*inboundmessage.InboundMessage) *bun.SelectQuery {
-						return dba.NewSelect().Model(entities).Relation("Mailbox")
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							inboundmessagecol.InboundMessageTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*inboundmessage.InboundMessage)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-
-						return narrow(dba, sq, req), nil
-					},
+				r.db.Keel(ctx),
+				inboundmessagedb.InboundMessages.Where(narrow(req)...),
+				&listquery.Request[inboundmessage.InboundMessage]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withMailbox,
 				},
 			)
 		},
@@ -294,21 +192,15 @@ func (r *repository) GetByID(
 	req inboundmessageports.GetInboundMessageByIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
-		entity := new(inboundmessage.InboundMessage)
-		cols := inboundmessagecol.InboundMessageColumns
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("Mailbox").
-			Where(cols.ID.Eq(), req.ID).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo))
+		m := inboundmessagedb.InboundMessages
+		loads := []keel.Loader{m.Mailbox()}
 		if req.IncludeAttachments {
-			query = query.Relation("Attachments")
+			loads = append(loads, m.Attachments())
 		}
 
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InboundMessage")
+		entity, err := m.Where(m.ID.Eq(req.ID)).Load(loads...).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, messageErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -323,16 +215,13 @@ func (r *repository) GetByProviderID(
 	req inboundmessageports.GetInboundMessageByProviderIDRequest,
 ) (*inboundmessage.InboundMessage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
-		entity := new(inboundmessage.InboundMessage)
-		cols := inboundmessagecol.InboundMessageColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.MailboxID.Eq(), req.MailboxID).
-			Where(cols.ProviderMessageID.Eq(), req.ProviderMessageID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "InboundMessage")
+		m := inboundmessagedb.InboundMessages
+		entity, err := m.Where(
+			m.MailboxID.Eq(req.MailboxID),
+			m.ProviderMessageID.Eq(req.ProviderMessageID),
+		).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, messageErrors.Map(err, req.ProviderMessageID)
 		}
 
 		return entity, nil
@@ -350,27 +239,24 @@ func (r *repository) Create(
 	attachments []*inboundmessage.InboundAttachment,
 ) (*inboundmessage.InboundMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-			if _, iErr := tx.NewInsert().Model(entity).Returning("*").Exec(c); iErr != nil {
-				return iErr
-			}
-			if len(attachments) == 0 {
-				return nil
-			}
+		db := r.db.Keel(ctx)
+		if err := inboundmessagedb.InboundMessages.Create(ctx, db, entity); err != nil {
+			return nil, err
+		}
 
+		if len(attachments) > 0 {
 			for _, attachment := range attachments {
 				attachment.MessageID = entity.ID
 				attachment.OrganizationID = entity.OrganizationID
 				attachment.BusinessUnitID = entity.BusinessUnitID
 			}
-			if _, iErr := tx.NewInsert().Model(&attachments).Returning("*").Exec(c); iErr != nil {
-				return iErr
+			if err := inboundmessagedb.InboundAttachments.CreateMany(
+				ctx,
+				db,
+				attachments,
+			); err != nil {
+				return nil, err
 			}
-
-			return nil
-		})
-		if err != nil {
-			return nil, err
 		}
 
 		entity.Attachments = attachments
@@ -384,27 +270,8 @@ func (r *repository) Update(
 	entity *inboundmessage.InboundMessage,
 ) (*inboundmessage.InboundMessage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*inboundmessage.InboundMessage, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"InboundMessage",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := inboundmessagedb.InboundMessages.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, messageErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -421,19 +288,9 @@ func (r *repository) UpdateAttachment(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*inboundmessage.InboundAttachment, error) {
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Returning("*").
-				Exec(ctx)
+			err := inboundmessagedb.InboundAttachments.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				results, "InboundAttachment", entity.ID.String(),
-			); err != nil {
-				return nil, err
+				return nil, attachmentErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -444,26 +301,16 @@ func (r *repository) UpdateAttachment(
 func (r *repository) ListAttachments(
 	ctx context.Context,
 	messageID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*inboundmessage.InboundAttachment, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessage.InboundAttachment, error) {
-			entities := make([]*inboundmessage.InboundAttachment, 0, 4)
-			cols := inboundmessagecol.InboundAttachmentColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(cols.MessageID.Eq(), messageID).
-				Apply(inboundmessagecol.InboundAttachmentApplyTenant(tenantInfo)).
-				Order(cols.CreatedAt.OrderAsc()).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			a := inboundmessagedb.InboundAttachments
+			return orEmptyAttachments(a.Where(a.MessageID.Eq(messageID)).
+				Order(a.CreatedAt.Asc()).
+				All(ctx, r.db.Keel(ctx)))
 		},
 	)
 }
@@ -480,17 +327,16 @@ func (r *repository) CountBreakdown(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]inboundmessageports.InboundMessageCount, error) {
-			rows := make(
-				[]inboundmessageports.InboundMessageCount,
-				0,
-				len(inboundmessage.AllStatuses()),
+			rows, err := keel.Into[inboundmessageports.InboundMessageCount](
+				ctx,
+				r.db.Keel(ctx),
+				countBreakdownQuery(req),
 			)
-
-			if err := countBreakdownQuery(
-				r.db.DBForContext(ctx),
-				req,
-			).Scan(ctx, &rows); err != nil {
+			if err != nil {
 				return nil, err
+			}
+			if rows == nil {
+				rows = []inboundmessageports.InboundMessageCount{}
 			}
 
 			return rows, nil
@@ -498,19 +344,16 @@ func (r *repository) CountBreakdown(
 	)
 }
 
-func countBreakdownQuery(
-	db bun.IDB,
-	req inboundmessageports.CountInboundMessagesRequest,
-) *bun.SelectQuery {
+func countBreakdownQuery(req inboundmessageports.CountInboundMessagesRequest) keel.Projection {
 	open, settled := censusStatuses(req.Statuses)
 	if len(settled) == 0 {
-		return openCensusQuery(db, req, open)
+		return openCensusQuery(req, open)
 	}
 	if len(open) == 0 {
-		return settledCensusQuery(db, req, settled)
+		return settledCensusQuery(req, settled)
 	}
 
-	return openCensusQuery(db, req, open).UnionAll(settledCensusQuery(db, req, settled))
+	return keel.UnionAll(openCensusQuery(req, open), settledCensusQuery(req, settled))
 }
 
 func censusStatuses(
@@ -534,64 +377,50 @@ func censusStatuses(
 }
 
 func censusBase(
-	db bun.IDB,
 	req inboundmessageports.CountInboundMessagesRequest,
 	statuses []inboundmessage.Status,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	query := db.NewSelect().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		ColumnExpr(cols.Status.Qualified()).
-		ColumnExpr(cols.Classification.Expr("COALESCE({}, '')")+" AS classification").
-		ColumnExpr(cols.MailboxID.Qualified()).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.Status.In(), bun.List(statuses))
-	if req.Since > 0 {
-		query = query.Where(cols.ReceivedAt.Gte(), req.Since)
-	}
+) *keel.Query[*inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 
-	return query
+	return m.Where(
+		m.Status.In(statuses...),
+		keel.When(req.Since > 0, m.ReceivedAt.Gte(req.Since)),
+	)
 }
 
 func openCensusQuery(
-	db bun.IDB,
 	req inboundmessageports.CountInboundMessagesRequest,
 	statuses []inboundmessage.Status,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
-	classification := cols.Classification.Expr("COALESCE({}, '')")
-	parked := cols.Parked.Expr("COALESCE({}, '')")
-	mine := cols.OwnerID.Expr("COALESCE({} = ?, FALSE)")
-	overdue := cols.DueAt.Expr("COALESCE({} < ?, FALSE)")
+) *keel.Query[*inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
+	classification := m.Classification.Coalesce("")
+	parked := m.Parked.Coalesce("")
+	mine := keel.BoolOf(keel.StringOf(m.OwnerID).EqExpr(keel.Text(req.ViewerID.String()))).
+		Coalesce(false)
+	overdue := keel.BoolOf(m.DueAt.Lt(req.Now)).Coalesce(false)
 
-	return censusBase(db, req, statuses).
-		ColumnExpr(parked+" AS parked").
-		ColumnExpr(mine+" AS mine", req.ViewerID.String()).
-		ColumnExpr(overdue+" AS overdue", req.Now).
-		ColumnExpr(buncolgen.Count("count")).
-		GroupExpr(cols.Status.Qualified()).
-		GroupExpr(classification).
-		GroupExpr(cols.MailboxID.Qualified()).
-		GroupExpr(parked).
-		GroupExpr(mine, req.ViewerID.String()).
-		GroupExpr(overdue, req.Now)
+	return censusBase(req, statuses).
+		Pick(m.Status, classification, m.MailboxID, parked, mine, overdue, keel.Count()).
+		Group(m.Status, classification, m.MailboxID, parked, mine, overdue)
 }
 
 func settledCensusQuery(
-	db bun.IDB,
 	req inboundmessageports.CountInboundMessagesRequest,
 	statuses []inboundmessage.Status,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+) *keel.Query[*inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 
-	return censusBase(db, req, statuses).
-		ColumnExpr("'' AS parked").
-		ColumnExpr("FALSE AS mine").
-		ColumnExpr("FALSE AS overdue").
-		ColumnExpr(buncolgen.Count("count")).
-		GroupExpr(cols.Status.Qualified()).
-		GroupExpr(cols.Classification.Qualified()).
-		GroupExpr(cols.MailboxID.Qualified())
+	return censusBase(req, statuses).
+		Pick(
+			m.Status,
+			m.Classification.Coalesce(""),
+			m.MailboxID,
+			keel.Text(""),
+			keel.Bool(false),
+			keel.Bool(false),
+			keel.Count(),
+		).
+		Group(m.Status, m.Classification, m.MailboxID)
 }
 
 // CountAttachmentsByMessageIDs answers the paperclip on a page of list rows in
@@ -606,26 +435,22 @@ func (r *repository) CountAttachmentsByMessageIDs(
 			return counts, nil
 		}
 
-		cols := inboundmessagecol.InboundAttachmentColumns
-		rows := make([]struct {
-			MessageID pulid.ID `bun:"message_id"`
-			Count     int      `bun:"count"`
-		}, 0, len(req.MessageIDs))
+		type attachmentCount struct {
+			MessageID pulid.ID
+			Count     int64
+		}
 
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*inboundmessage.InboundAttachment)(nil)).
-			ColumnExpr(cols.MessageID.Qualified()).
-			ColumnExpr("COUNT(*) AS count").
-			Where(cols.MessageID.In(), bun.In(req.MessageIDs)).
-			Apply(inboundmessagecol.InboundAttachmentApplyTenant(req.TenantInfo)).
-			GroupExpr(cols.MessageID.Qualified()).
-			Scan(ctx, &rows); err != nil {
+		a := inboundmessagedb.InboundAttachments
+		rows, err := keel.Into[attachmentCount](ctx, r.db.Keel(ctx), a.
+			Pick(a.MessageID, keel.Count()).
+			Where(a.MessageID.In(req.MessageIDs...)).
+			Group(a.MessageID))
+		if err != nil {
 			return nil, err
 		}
 
 		for _, row := range rows {
-			counts[row.MessageID] = row.Count
+			counts[row.MessageID] = int(row.Count)
 		}
 
 		return counts, nil
@@ -647,24 +472,11 @@ func (r *repository) ListRecentForReview(
 				limit = 10
 			}
 
-			entities := make([]*inboundmessage.InboundMessage, 0, limit)
-			cols := inboundmessagecol.InboundMessageColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(cols.Status.In(), bun.In([]inboundmessage.Status{
-					inboundmessage.StatusInReview,
-					inboundmessage.StatusQuarantined,
-				})).
-				Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-				Order(cols.ReceivedAt.OrderDesc()).
-				Limit(int64(limit)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			m := inboundmessagedb.InboundMessages
+			return orEmptyMessages(m.Where(m.Status.In(needsReviewStatuses...)).
+				Order(m.ReceivedAt.Desc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx)))
 		},
 	)
 }
@@ -678,31 +490,21 @@ func (r *repository) DeleteBefore(
 	req inboundmessageports.DeleteInboundMessagesBeforeRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := inboundmessagecol.InboundMessageColumns
+		m := inboundmessagedb.InboundMessages
+		expired := inboundmessagedb.InboundMessages.As("expired")
 
-		ids := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			Column("id").
-			Where(cols.ReceivedAt.Lt(), req.Before).
-			Where(cols.Status.In(), bun.In([]inboundmessage.Status{
-				inboundmessage.StatusActioned,
-				inboundmessage.StatusIgnored,
-				inboundmessage.StatusQuarantined,
-			})).
-			Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-			Limit(int64(req.Limit))
-
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*inboundmessage.InboundMessage)(nil)).
-			Where("id IN (?)", ids).
-			Exec(ctx)
-		if err != nil {
-			return 0, err
-		}
-
-		return results.RowsAffected()
+		return m.Where(m.ID.InQuery(expired.
+			Pick(expired.ID).
+			Where(
+				expired.ReceivedAt.Lt(req.Before),
+				expired.Status.In(
+					inboundmessage.StatusActioned,
+					inboundmessage.StatusIgnored,
+					inboundmessage.StatusQuarantined,
+				),
+			).
+			Limit(max(req.Limit, 1)),
+		)).Delete(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -716,43 +518,20 @@ func (r *repository) ListSettledBefore(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*inboundmessage.InboundMessage, error) {
-			entities := make([]*inboundmessage.InboundMessage, 0, req.Limit)
-			if err := settledBeforeQuery(
-				r.db.DBForContext(ctx),
-				req,
-				&entities,
-			).Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			return orEmptyMessages(settledBeforeQuery(req).List(ctx, r.db.Keel(ctx)))
 		},
 	)
 }
 
 func settledBeforeQuery(
-	db bun.IDB,
 	req inboundmessageports.ListSettledInboundMessagesRequest,
-	entities *[]*inboundmessage.InboundMessage,
-) *bun.SelectQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+) *keel.Query[*inboundmessage.InboundMessage] {
+	m := inboundmessagedb.InboundMessages
 
-	return db.NewSelect().
-		Model(entities).
-		Column(
-			cols.ID.Bare(),
-			cols.OrganizationID.Bare(),
-			cols.BusinessUnitID.Bare(),
-			cols.HTMLKey.Bare(),
-		).
-		Apply(inboundmessagecol.InboundMessageApplyTenant(req.TenantInfo)).
-		Where(cols.Status.In(), bun.In([]inboundmessage.Status{
-			inboundmessage.StatusActioned,
-			inboundmessage.StatusIgnored,
-		})).
-		Where(cols.ReceivedAt.Lt(), req.Before).
-		Order(cols.ReceivedAt.OrderAsc()).
-		Limit(int64(req.Limit))
+	return m.Pick(m.ID, m.OrganizationID, m.BusinessUnitID, m.HTMLKey).
+		Where(m.Status.In(settledStatuses...), m.ReceivedAt.Lt(req.Before)).
+		Order(m.ReceivedAt.Asc()).
+		Limit(max(req.Limit, 1))
 }
 
 // DeleteByIDs removes messages inside one tenant. Their attachment rows go
@@ -766,12 +545,8 @@ func (r *repository) DeleteByIDs(
 			return 0, nil
 		}
 
-		result, err := deleteByIDsQuery(r.db.DBForContext(ctx), req).Exec(ctx)
-		if err != nil {
-			return 0, err
-		}
-
-		deleted, err := result.RowsAffected()
+		m := inboundmessagedb.InboundMessages
+		deleted, err := m.Where(m.ID.In(req.IDs...)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, err
 		}
@@ -780,15 +555,30 @@ func (r *repository) DeleteByIDs(
 	})
 }
 
-func deleteByIDsQuery(
-	db bun.IDB,
-	req inboundmessageports.DeleteInboundMessagesRequest,
-) *bun.DeleteQuery {
-	cols := inboundmessagecol.InboundMessageColumns
+func orEmptyMessages(
+	entities []*inboundmessage.InboundMessage,
+	err error,
+) ([]*inboundmessage.InboundMessage, error) {
+	if err != nil {
+		return nil, err
+	}
+	if entities == nil {
+		return []*inboundmessage.InboundMessage{}, nil
+	}
 
-	return db.NewDelete().
-		Model((*inboundmessage.InboundMessage)(nil)).
-		Where(cols.ID.In(), bun.In(req.IDs)).
-		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-		Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
+	return entities, nil
+}
+
+func orEmptyAttachments(
+	entities []*inboundmessage.InboundAttachment,
+	err error,
+) ([]*inboundmessage.InboundAttachment, error) {
+	if err != nil {
+		return nil, err
+	}
+	if entities == nil {
+		return []*inboundmessage.InboundAttachment{}, nil
+	}
+
+	return entities, nil
 }

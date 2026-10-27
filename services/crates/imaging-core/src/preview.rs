@@ -154,11 +154,7 @@ fn flush(data: &mut Vec<u8>, sums: &mut [u32], column_count: &[u32], rows: u32, 
     }
     for (index, sum) in sums.iter_mut().enumerate() {
         let count = column_count[index / channels] * rows;
-        let average = if count == 0 {
-            255
-        } else {
-            (*sum + count / 2) / count
-        };
+        let average = (*sum + count / 2).checked_div(count).unwrap_or(255);
         data.push(u8::try_from(average).unwrap_or(u8::MAX));
         *sum = 0;
     }

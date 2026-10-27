@@ -1,6 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { CapabilityGate } from "@/components/capability-gate";
 import { NumberField } from "@/components/fields/number-field";
+import { useProtectedFieldAccess } from "@/hooks/use-protected-fields";
 import { SelectField } from "@/components/fields/select-field";
 import { UserAutocompleteField } from "@/components/autocomplete-fields";
 import { ScoringWeightForm } from "./scoring-weight-form";
@@ -510,6 +511,7 @@ function ExceptionQueueForm() {
 function TenderNegotiationForm() {
   const t = useT();
   const { control } = useFormContext<DispatchControl>();
+  const marginsWithheld = !useProtectedFieldAccess("Margins");
 
   const counterOffersEnabled = useWatch({ control, name: "tenderCounterOffersEnabled" });
   const exhaustedAction = useWatch({ control, name: "tenderExhaustedAction" });
@@ -546,10 +548,15 @@ function TenderNegotiationForm() {
                   name="tenderCounterMarginFloorPercent"
                   valueType="string"
                   label={t("Margin floor")}
-                  description={t(
-                    "A counter that leaves less margin than this on the shipment's charges needs someone who can approve tenders.",
-                  )}
-                  placeholder="10"
+                  description={
+                    marginsWithheld
+                      ? t("Your role does not include margins.")
+                      : t(
+                          "A counter that leaves less margin than this on the shipment's charges needs someone who can approve tenders.",
+                        )
+                  }
+                  placeholder={marginsWithheld ? t("Hidden") : "10"}
+                  disabled={marginsWithheld}
                   sideText="%"
                   decimalScale={4}
                   allowNegative

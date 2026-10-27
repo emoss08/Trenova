@@ -183,6 +183,9 @@ type ListCaptureBatchesRequest struct {
 	// seconds, inclusive; zero leaves that side open.
 	CreatedFrom int64 `json:"createdFrom"`
 	CreatedTo   int64 `json:"createdTo"`
+	// IncludeItems loads each listed stack's items in one more query for the
+	// page, so a list that shows them reads no stack twice.
+	IncludeItems bool `json:"includeItems"`
 }
 
 // ListStaleCaptureBatchesRequest finds batches stuck in a status longer than
@@ -383,10 +386,10 @@ type ListCaptureRecordLabelsRequest struct {
 // CaptureRecordLabel is how a person recognises a record a capture is filed
 // onto: a shipment's PRO and BOL, a worker's name, a unit's number and plate.
 type CaptureRecordLabel struct {
-	ResourceType string   `json:"resourceType" bun:"-"`
-	ID           pulid.ID `json:"id"           bun:"id"`
-	Title        string   `json:"title"        bun:"title"`
-	Subtitle     string   `json:"subtitle"     bun:"subtitle"`
+	ResourceType string   `json:"resourceType"`
+	ID           pulid.ID `json:"id"`
+	Title        string   `json:"title"`
+	Subtitle     string   `json:"subtitle"`
 }
 
 // GetID lets a label be loaded by id.

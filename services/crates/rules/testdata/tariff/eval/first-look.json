@@ -1,0 +1,413 @@
+[
+  {
+    "name": "the first look rates a two-drop hazmat load by hand",
+    "source": "tariff \"Dry van TL\"\n\n/// Truckload linehaul with fuel, extra drops, hazmat and detention.\n\nuse std.fuel.{ stepPercent }\nuse std.accessorials.{ detention }\nuse org.accessorials.{ hazmat }\n\n/// Paid per loaded mile.\ninput rate: Money/mi = $2.35/mi\n/// Fuel is priced off this peg, one step per 5 cents.\ninput fuelPeg: Money/gal = $1.20/gal\ninput minimumCharge: Money = $450\ninput extraDropFee: Money = $75\n\nlet miles = shipment.distance\nlet linehaul = rate * miles\nlet drops = shipment.stops.count(s => s.kind == Delivery)\n\ncharge \"Linehaul\" (quantity: miles, rate: rate)\n\nlet price = fuel.price ?? fail \"No fuel price on {rating.date}\"\ncharge \"Fuel surcharge\" as FSC = linehaul * stepPercent(price, peg: fuelPeg, step: $0.05/gal, perStep: 0.5%)\n\nif drops > 1 {\n  charge \"Extra drops\" as XDROP (quantity: drops - 1, rate: extraDropFee)\n}\n\nif shipment.hazmat {\n  charge \"Hazmat\" as HAZ = hazmat(miles)\n}\n\nfor stop in shipment.stops where stop.dwell != none {\n  let owed = detention(stop.dwell ?? 0 h, rate: $65/h)\n  if owed > $0 {\n    charge \"Detention, stop {stop.sequence}\" as DET = owed\n  }\n}\n\nminimum minimumCharge\nround to cents\n",
+    "context": {
+      "libraries": [
+        {
+          "path": "org.accessorials",
+          "source": "library \"org.accessorials\"\n\n/// Hazardous material: ten cents a mile, at least $50.\nfn hazmat(miles: Distance) -> Money = ($0.10/mi * miles).max($50)\n"
+        }
+      ],
+      "codes": [
+        {
+          "code": "FSC",
+          "active": true
+        },
+        {
+          "code": "XDROP",
+          "active": true
+        },
+        {
+          "code": "HAZ",
+          "active": true
+        },
+        {
+          "code": "DET",
+          "active": true
+        }
+      ]
+    },
+    "facts": {
+      "shipment": {
+        "distance": {
+          "$q": "812",
+          "u": "mi"
+        },
+        "hazmat": true,
+        "stops": [
+          {
+            "sequence": {
+              "$n": "1"
+            },
+            "kind": "Pickup",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": {
+              "$date": "2026-01-05T08:00:00Z"
+            },
+            "departure": {
+              "$date": "2026-01-05T09:00:00Z"
+            },
+            "dwell": {
+              "$q": "1",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC",
+              "requiresAppointment": false
+            }
+          },
+          {
+            "sequence": {
+              "$n": "2"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": {
+              "$date": "2026-01-05T14:00:00Z"
+            },
+            "departure": {
+              "$date": "2026-01-05T17:30:00Z"
+            },
+            "dwell": {
+              "$q": "3.5",
+              "u": "h"
+            },
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC",
+              "requiresAppointment": false
+            }
+          },
+          {
+            "sequence": {
+              "$n": "3"
+            },
+            "kind": "Delivery",
+            "status": "New",
+            "appointment": false,
+            "window": {
+              "start": null,
+              "end": null
+            },
+            "arrival": null,
+            "departure": null,
+            "dwell": null,
+            "pieces": null,
+            "weight": null,
+            "location": {
+              "city": "",
+              "state": "",
+              "zip": "",
+              "zip3": "",
+              "country": "",
+              "timezone": "UTC",
+              "requiresAppointment": false
+            }
+          }
+        ],
+        "pickup": {
+          "sequence": {
+            "$n": "1"
+          },
+          "kind": "Pickup",
+          "status": "New",
+          "appointment": false,
+          "window": {
+            "start": null,
+            "end": null
+          },
+          "arrival": {
+            "$date": "2026-01-05T08:00:00Z"
+          },
+          "departure": {
+            "$date": "2026-01-05T09:00:00Z"
+          },
+          "dwell": {
+            "$q": "1",
+            "u": "h"
+          },
+          "pieces": null,
+          "weight": null,
+          "location": {
+            "city": "",
+            "state": "",
+            "zip": "",
+            "zip3": "",
+            "country": "",
+            "timezone": "UTC",
+            "requiresAppointment": false
+          }
+        },
+        "delivery": {
+          "sequence": {
+            "$n": "3"
+          },
+          "kind": "Delivery",
+          "status": "New",
+          "appointment": false,
+          "window": {
+            "start": null,
+            "end": null
+          },
+          "arrival": null,
+          "departure": null,
+          "dwell": null,
+          "pieces": null,
+          "weight": null,
+          "location": {
+            "city": "",
+            "state": "",
+            "zip": "",
+            "zip3": "",
+            "country": "",
+            "timezone": "UTC",
+            "requiresAppointment": false
+          }
+        }
+      },
+      "fuel": {
+        "price": {
+          "$q": "3.20",
+          "u": "$/gal"
+        }
+      }
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "kind": "charge",
+            "label": "Linehaul",
+            "code": null,
+            "freight": true,
+            "amount": {
+              "$q": "1908.2",
+              "u": "$"
+            },
+            "quantity": {
+              "$q": "812",
+              "u": "mi"
+            },
+            "rate": {
+              "$q": "2.35",
+              "u": "$/mi"
+            }
+          },
+          {
+            "kind": "charge",
+            "label": "Fuel surcharge",
+            "code": "FSC",
+            "freight": false,
+            "amount": {
+              "$q": "381.64",
+              "u": "$"
+            },
+            "quantity": null,
+            "rate": null
+          },
+          {
+            "kind": "charge",
+            "label": "Extra drops",
+            "code": "XDROP",
+            "amount": {
+              "$q": "75",
+              "u": "$"
+            },
+            "quantity": {
+              "$n": "1"
+            },
+            "rate": {
+              "$q": "75",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "charge",
+            "label": "Hazmat",
+            "code": "HAZ",
+            "amount": {
+              "$q": "81.2",
+              "u": "$"
+            }
+          },
+          {
+            "kind": "charge",
+            "label": "Detention, stop 2",
+            "code": "DET",
+            "amount": {
+              "$q": "97.5",
+              "u": "$"
+            }
+          }
+        ],
+        "freightTotal": {
+          "$q": "1908.2",
+          "u": "$"
+        },
+        "accessorialTotal": {
+          "$q": "635.34",
+          "u": "$"
+        },
+        "total": {
+          "$q": "2543.54",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "the first look refuses without a fuel price",
+    "source": "tariff \"Dry van TL\"\n\n/// Truckload linehaul with fuel, extra drops, hazmat and detention.\n\nuse std.fuel.{ stepPercent }\nuse std.accessorials.{ detention }\nuse org.accessorials.{ hazmat }\n\n/// Paid per loaded mile.\ninput rate: Money/mi = $2.35/mi\n/// Fuel is priced off this peg, one step per 5 cents.\ninput fuelPeg: Money/gal = $1.20/gal\ninput minimumCharge: Money = $450\ninput extraDropFee: Money = $75\n\nlet miles = shipment.distance\nlet linehaul = rate * miles\nlet drops = shipment.stops.count(s => s.kind == Delivery)\n\ncharge \"Linehaul\" (quantity: miles, rate: rate)\n\nlet price = fuel.price ?? fail \"No fuel price on {rating.date}\"\ncharge \"Fuel surcharge\" as FSC = linehaul * stepPercent(price, peg: fuelPeg, step: $0.05/gal, perStep: 0.5%)\n\nif drops > 1 {\n  charge \"Extra drops\" as XDROP (quantity: drops - 1, rate: extraDropFee)\n}\n\nif shipment.hazmat {\n  charge \"Hazmat\" as HAZ = hazmat(miles)\n}\n\nfor stop in shipment.stops where stop.dwell != none {\n  let owed = detention(stop.dwell ?? 0 h, rate: $65/h)\n  if owed > $0 {\n    charge \"Detention, stop {stop.sequence}\" as DET = owed\n  }\n}\n\nminimum minimumCharge\nround to cents\n",
+    "context": {
+      "libraries": [
+        {
+          "path": "org.accessorials",
+          "source": "library \"org.accessorials\"\n\n/// Hazardous material: ten cents a mile, at least $50.\nfn hazmat(miles: Distance) -> Money = ($0.10/mi * miles).max($50)\n"
+        }
+      ],
+      "codes": [
+        {
+          "code": "FSC",
+          "active": true
+        },
+        {
+          "code": "XDROP",
+          "active": true
+        },
+        {
+          "code": "HAZ",
+          "active": true
+        },
+        {
+          "code": "DET",
+          "active": true
+        }
+      ]
+    },
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "No fuel price on 2026-01-05T12:00:00Z"
+      }
+    }
+  },
+  {
+    "name": "the first look's own test refuses against the sample record, which has no fuel price",
+    "tests": "tariff \"Dry van TL\"\n\n/// Truckload linehaul with fuel, extra drops, hazmat and detention.\n\nuse std.fuel.{ stepPercent }\nuse std.accessorials.{ detention }\nuse org.accessorials.{ hazmat }\n\n/// Paid per loaded mile.\ninput rate: Money/mi = $2.35/mi\n/// Fuel is priced off this peg, one step per 5 cents.\ninput fuelPeg: Money/gal = $1.20/gal\ninput minimumCharge: Money = $450\ninput extraDropFee: Money = $75\n\nlet miles = shipment.distance\nlet linehaul = rate * miles\nlet drops = shipment.stops.count(s => s.kind == Delivery)\n\ncharge \"Linehaul\" (quantity: miles, rate: rate)\n\nlet price = fuel.price ?? fail \"No fuel price on {rating.date}\"\ncharge \"Fuel surcharge\" as FSC = linehaul * stepPercent(price, peg: fuelPeg, step: $0.05/gal, perStep: 0.5%)\n\nif drops > 1 {\n  charge \"Extra drops\" as XDROP (quantity: drops - 1, rate: extraDropFee)\n}\n\nif shipment.hazmat {\n  charge \"Hazmat\" as HAZ = hazmat(miles)\n}\n\nfor stop in shipment.stops where stop.dwell != none {\n  let owed = detention(stop.dwell ?? 0 h, rate: $65/h)\n  if owed > $0 {\n    charge \"Detention, stop {stop.sequence}\" as DET = owed\n  }\n}\n\nminimum minimumCharge\nround to cents\n\ntest \"a two-drop load bills one extra drop\" {\n  given shipment.stops = [pickup(), delivery(), delivery()]\n  expect charge(XDROP) == $75\n}\n",
+    "context": {
+      "libraries": [
+        {
+          "path": "org.accessorials",
+          "source": "library \"org.accessorials\"\n\n/// Hazardous material: ten cents a mile, at least $50.\nfn hazmat(miles: Distance) -> Money = ($0.10/mi * miles).max($50)\n"
+        }
+      ],
+      "codes": [
+        {
+          "code": "FSC",
+          "active": true
+        },
+        {
+          "code": "XDROP",
+          "active": true
+        },
+        {
+          "code": "HAZ",
+          "active": true
+        },
+        {
+          "code": "DET",
+          "active": true
+        }
+      ]
+    },
+    "expect": [
+      {
+        "name": "a two-drop load bills one extra drop",
+        "status": "failed",
+        "failures": [
+          {
+            "message": {
+              "message": "The rating was refused: {0}",
+              "args": [
+                "No fuel price on 2026-01-05T12:00:00Z"
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "the first look's tests pass once the fuel price is given",
+    "tests": "tariff \"Dry van TL\"\n\n/// Truckload linehaul with fuel, extra drops, hazmat and detention.\n\nuse std.fuel.{ stepPercent }\nuse std.accessorials.{ detention }\nuse org.accessorials.{ hazmat }\n\n/// Paid per loaded mile.\ninput rate: Money/mi = $2.35/mi\n/// Fuel is priced off this peg, one step per 5 cents.\ninput fuelPeg: Money/gal = $1.20/gal\ninput minimumCharge: Money = $450\ninput extraDropFee: Money = $75\n\nlet miles = shipment.distance\nlet linehaul = rate * miles\nlet drops = shipment.stops.count(s => s.kind == Delivery)\n\ncharge \"Linehaul\" (quantity: miles, rate: rate)\n\nlet price = fuel.price ?? fail \"No fuel price on {rating.date}\"\ncharge \"Fuel surcharge\" as FSC = linehaul * stepPercent(price, peg: fuelPeg, step: $0.05/gal, perStep: 0.5%)\n\nif drops > 1 {\n  charge \"Extra drops\" as XDROP (quantity: drops - 1, rate: extraDropFee)\n}\n\nif shipment.hazmat {\n  charge \"Hazmat\" as HAZ = hazmat(miles)\n}\n\nfor stop in shipment.stops where stop.dwell != none {\n  let owed = detention(stop.dwell ?? 0 h, rate: $65/h)\n  if owed > $0 {\n    charge \"Detention, stop {stop.sequence}\" as DET = owed\n  }\n}\n\nminimum minimumCharge\nround to cents\n\ntest \"a two-drop load bills one extra drop\" {\n  given fuel.price = $3.20/gal\n  given shipment.stops = [pickup(), delivery(), delivery()]\n  expect charge(XDROP) == $75\n}\n\ntest \"the full load: linehaul, fuel, drops, hazmat and detention\" {\n  given fuel.price = $3.20/gal\n  given shipment.distance = 812 mi\n  given shipment.hazmat = true\n  given shipment.stops = [\n    pickup(arrival: @2026-01-05T08:00Z, departure: @2026-01-05T09:00Z),\n    delivery(arrival: @2026-01-05T14:00Z, departure: @2026-01-05T17:30Z),\n    delivery(),\n  ]\n  expect charge(\"Linehaul\") == $1908.20\n  expect charge(FSC) == $381.64\n  expect charge(XDROP) == $75\n  expect charge(HAZ) == $81.20\n  expect charge(\"Detention, stop 2\") == $97.50\n  expect charge(DET) == $97.50\n  expect total == $2543.54\n  expect lines.len == 5\n}\n\ntest \"a short load bills the minimum\" {\n  given fuel.price = $1.00/gal\n  given shipment.distance = 100 mi\n  expect charge(\"Linehaul\") == $235\n  expect total == $450\n  expect lines.any(l => l.kind == Minimum and l.amount == $215)\n}\n\ntest \"no fuel price refuses\" {\n  expect fails \"No fuel price on 2026-01-05T12:00:00Z\"\n}\n",
+    "context": {
+      "libraries": [
+        {
+          "path": "org.accessorials",
+          "source": "library \"org.accessorials\"\n\n/// Hazardous material: ten cents a mile, at least $50.\nfn hazmat(miles: Distance) -> Money = ($0.10/mi * miles).max($50)\n"
+        }
+      ],
+      "codes": [
+        {
+          "code": "FSC",
+          "active": true
+        },
+        {
+          "code": "XDROP",
+          "active": true
+        },
+        {
+          "code": "HAZ",
+          "active": true
+        },
+        {
+          "code": "DET",
+          "active": true
+        }
+      ]
+    },
+    "expect": [
+      {
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "status": "passed",
+        "failures": []
+      },
+      {
+        "status": "passed",
+        "failures": []
+      }
+    ]
+  }
+]

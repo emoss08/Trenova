@@ -351,28 +351,12 @@ function control(revised) {
   ];
 }
 
-function template(name, met, unmet, extra = {}) {
-  return {
-    templateId: `edtpl_${name.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`,
-    name,
-    starter: true,
-    current: "",
-    change: "Add",
-    met,
-    unmet,
-    considered: [],
-    unverified: [],
-    note: "",
-    ...extra,
-  };
-}
-
 const MS1_UNMET = {
   segmentId: "MS1",
   elementPosition: 1,
   usage: "Mandatory",
   codes: [],
-  problem: "The template never writes MS1.",
+  problem: "The drafted map never writes MS1.",
   source: doc(5, "MS1 Equipment Location is mandatory on every status.", "6"),
 };
 
@@ -422,31 +406,66 @@ function setFields(set, direction, group, ack) {
   return rows;
 }
 
-function documentProfiles(revised) {
-  const status = "Inactive";
-  const profile = (set, direction, group, tpl, ack, withControl) => {
-    const fields = setFields(set, direction, group, ack);
+function sets(revised) {
+  const set = (transactionSet, direction, group, requirements, unmet, ack, withControl) => {
+    const fields = setFields(transactionSet, direction, group, ack);
     return {
-      transactionSet: set,
+      transactionSet,
       direction,
-      profileId: revised ? `edidp_acme_${set}` : "",
-      name: `Acme Retail Group ${set} ${direction.toLowerCase()}`,
-      status,
+      documentTypeId: `edidt_x12_${transactionSet}_${direction.toLowerCase()}`,
       change: revised ? (withControl ? "Change" : "Same") : "Add",
       fields: revised ? fields.map((entry) => same(entry)) : fields,
-      template: revised ? { ...tpl, change: "Same", current: tpl.name } : tpl,
+      requirements,
+      unmet,
+      unverified: [],
       controlNumbers: withControl ? control(revised) : [],
     };
   };
-  const ms1Template = revised
-    ? template("Shipment status 214", 5, [])
-    : template("Shipment status 214", 4, [MS1_UNMET]);
   return [
-    profile("204", "Inbound", "SM", template("Load tender 204", 6, []), false, false),
-    profile("990", "Outbound", "GF", template("Tender response 990", 3, []), true, true),
-    profile("214", "Outbound", "QM", ms1Template, true, true),
-    profile("210", "Outbound", "IM", template("Freight invoice 210", 4, []), true, true),
+    set("204", "Inbound", "SM", 2, [], false, false),
+    set("990", "Outbound", "GF", 0, [], true, true),
+    set("214", "Outbound", "QM", 2, revised ? [] : [MS1_UNMET], true, true),
+    set("210", "Outbound", "IM", 0, [], true, true),
   ];
+}
+
+function project(revised) {
+  const file = (path, kind, change) => ({ path, kind, change });
+  return {
+    projectId: revised ? "ldp_acme_retail" : "",
+    role: "carrier",
+    change: revised ? "Change" : "Add",
+    files: revised
+      ? [
+          file("partner.lading", "partner", "Change"),
+          file("maps/tender.lading", "map", "Same"),
+          file("maps/status.lading", "map", "Same"),
+          file("flows/tender.lading", "flow", "Same"),
+          file("guides/214.lading", "guide", "Change"),
+        ]
+      : [
+          file("partner.lading", "partner", "Add"),
+          file("maps/tender.lading", "map", "Add"),
+          file("maps/answer.lading", "map", "Add"),
+          file("maps/status.lading", "map", "Add"),
+          file("maps/invoice.lading", "map", "Add"),
+          file("flows/tender.lading", "flow", "Add"),
+          file("guides/204.lading", "guide", "Add"),
+          file("guides/214.lading", "guide", "Add"),
+        ],
+    errors: 0,
+    warnings: revised ? 0 : 1,
+    diagnostics: revised
+      ? []
+      : [
+          {
+            path: "maps/status.lading",
+            severity: "warning",
+            code: "x12-mandatory-unwritten",
+            message: "MS1 is required by guide acmeretail.214 and nothing writes it",
+          },
+        ],
+  };
 }
 
 function mappings(revised) {
@@ -558,7 +577,6 @@ function heldBlockers() {
 export function ediConnectionDraft(stage) {
   const revised = stage === "revised";
   const guide = revised ? REVISED_GUIDE : GUIDE;
-  const profiles = documentProfiles(revised);
   const transportProfile = transport(stage);
   const held = stage === "held";
   return {
@@ -593,7 +611,8 @@ export function ediConnectionDraft(stage) {
       ...transportProfile,
       fields: transportProfile.fields.filter((field) => field.status !== "Held"),
     },
-    documentProfiles: profiles,
+    sets: sets(revised),
+    project: project(revised),
     mappings: mappings(revised),
     mappingCount: 4,
     truncated: false,

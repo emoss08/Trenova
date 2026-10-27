@@ -8,22 +8,24 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -36,7 +38,7 @@ type laneFixture struct {
 func seedLaneFixture(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	data *seedtest.TestData,
 	code string,
 ) *laneFixture {
@@ -58,8 +60,7 @@ func seedLaneFixture(
 		City:           "Atlanta",
 		PostalCode:     "30303",
 	}
-	_, err := db.NewInsert().Model(cust).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, cust)
 
 	agreement := &rateagreement.RateAgreement{
 		ID:             pulid.MustNew("ragr_"),
@@ -74,21 +75,17 @@ func seedLaneFixture(
 		Currency:       "USD",
 		EffectiveFrom:  100,
 	}
-	_, err = db.NewInsert().Model(agreement).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, agreement)
 
 	template := &formulatemplate.FormulaTemplate{
 		ID:             pulid.MustNew("ft_"),
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Per Mile " + code,
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "baseRate * totalDistance",
+		Source:         perMileTariff,
 		Status:         formulatemplate.StatusActive,
-		SchemaID:       "shipment",
 	}
-	_, err = db.NewInsert().Model(template).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, template)
 
 	return &laneFixture{tenantInfo: tenantInfo, agreement: agreement, templateID: template.ID}
 }
@@ -109,8 +106,8 @@ func (f *laneFixture) rule(
 		DestinationScopeType:  "State",
 		DestinationScopeValue: "FL",
 		Direction:             rateagreement.DirectionDirectional,
-		FormulaTemplateID:     &f.templateID,
-		Rate:                  decimal.NewNullDecimal(decimal.RequireFromString("2.00")),
+		FormulaTemplateID:     f.templateID,
+		Inputs:                perMileRate("2.00"),
 		EffectiveFrom:         100,
 	}
 	if mutate != nil {
@@ -123,15 +120,14 @@ func (f *laneFixture) rule(
 func insertRules(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	rules ...*rateagreement.RateAgreementRule,
 ) {
 	t.Helper()
 
 	require.NoError(t, rateagreement.ApplyLanes(ctx, rules))
 	for _, rule := range rules {
-		_, err := db.NewInsert().Model(rule).Exec(ctx)
-		require.NoError(t, err)
+		insertRow(t, ctx, db, rule)
 	}
 }
 
@@ -151,12 +147,10 @@ func laneIDs(rules []*rateagreement.RateAgreementRule) []pulid.ID {
 func TestListLanes_PagesLiveLanesMostSpecificFirstAndCountsTheRest(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
 	fixture := seedLaneFixture(t, ctx, db, data, "LN-PAGE")
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
 	future := timeutils.NowUnix() + 1_000_000
 
@@ -193,27 +187,6 @@ func TestListLanes_PagesLiveLanesMostSpecificFirstAndCountsTheRest(t *testing.T)
 	})
 	expectedIDs := laneIDs(expected)
 
-	breaks := []*rateagreement.RateAgreementRuleBreak{
-		{
-			OrganizationID:      fixture.tenantInfo.OrgID,
-			BusinessUnitID:      fixture.tenantInfo.BuID,
-			RateAgreementRuleID: expected[0].ID,
-			FromWeight:          decimal.Zero,
-			ToWeight:            decimal.NewNullDecimal(decimal.NewFromInt(5_000)),
-			Rate:                decimal.RequireFromString("2.50"),
-		},
-		{
-			OrganizationID:      fixture.tenantInfo.OrgID,
-			BusinessUnitID:      fixture.tenantInfo.BuID,
-			RateAgreementRuleID: expected[0].ID,
-			FromWeight:          decimal.NewFromInt(5_000),
-			Rate:                decimal.RequireFromString("2.25"),
-			SortOrder:           1,
-		},
-	}
-	_, err := db.NewInsert().Model(&breaks).Exec(ctx)
-	require.NoError(t, err)
-
 	request := func(limit, offset int) *rateagreementports.ListRateAgreementLanesRequest {
 		return &rateagreementports.ListRateAgreementLanesRequest{
 			TenantInfo:      fixture.tenantInfo,
@@ -230,8 +203,7 @@ func TestListLanes_PagesLiveLanesMostSpecificFirstAndCountsTheRest(t *testing.T)
 	assert.Equal(t, 2, first.Retired, "one inactive rule and one closed-out rule")
 	assert.Equal(t, 2, first.Limit)
 	assert.Equal(t, 0, first.Offset)
-	require.Len(t, first.Lanes[0].Breaks, 2, "each lane carries its breaks")
-	assert.Empty(t, first.Lanes[1].Breaks)
+	assert.True(t, perMileRate("2.00").Equal(first.Lanes[0].Inputs), "each lane carries its inputs")
 
 	second, err := repo.ListLanes(ctx, request(2, 2))
 	require.NoError(t, err)
@@ -267,12 +239,10 @@ func TestListLanes_PagesLiveLanesMostSpecificFirstAndCountsTheRest(t *testing.T)
 func TestListLanes_AgreementWithoutRulesCountsZero(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
 	fixture := seedLaneFixture(t, ctx, db, data, "LN-EMPTY")
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
 	page, err := repo.ListLanes(ctx, &rateagreementports.ListRateAgreementLanesRequest{
 		TenantInfo:      fixture.tenantInfo,
@@ -289,17 +259,15 @@ func TestListLanes_AgreementWithoutRulesCountsZero(t *testing.T) {
 func TestListLanes_AgreementOutsideTheTenantIsNotFound(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
-	other := seedtest.SeedAdditionalTenant(t, ctx, db, "LN")
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
+	other := rdb.B.Data
 	fixture := seedLaneFixture(t, ctx, db, data, "LN-TENANT")
 	insertRules(t, ctx, db, fixture.rule(nil))
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
-	_, err := repo.ListLanes(ctx, &rateagreementports.ListRateAgreementLanesRequest{
+	_, err := repo.ListLanes(rdb.B.Ctx, &rateagreementports.ListRateAgreementLanesRequest{
 		TenantInfo: pagination.TenantInfo{
 			OrgID: other.Organization.ID,
 			BuID:  other.BusinessUnit.ID,
@@ -323,10 +291,8 @@ func TestListLanes_AgreementOutsideTheTenantIsNotFound(t *testing.T) {
 func TestGetByID_OmitRulesKeepsAccessorialsAndFuelBinding(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
 	fixture := seedLaneFixture(t, ctx, db, data, "LN-OMIT")
 	insertRules(t, ctx, db, fixture.rule(nil))
 
@@ -348,10 +314,7 @@ func TestGetByID_OmitRulesKeepsAccessorialsAndFuelBinding(t *testing.T) {
 		Method:         accessorialcharge.MethodFlat,
 		Amount:         decimal.NewFromInt(60),
 	}
-	_, err := db.NewInsert().
-		Model(&[]*accessorialcharge.AccessorialCharge{charge, detention}).
-		Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, charge, detention)
 
 	index := &fuelsurcharge.FuelIndex{
 		OrganizationID: fixture.tenantInfo.OrgID,
@@ -362,8 +325,7 @@ func TestGetByID_OmitRulesKeepsAccessorialsAndFuelBinding(t *testing.T) {
 		Currency:       "USD",
 		IsActive:       true,
 	}
-	_, err = db.NewInsert().Model(index).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, index)
 
 	program := &fuelsurcharge.FuelSurchargeProgram{
 		OrganizationID:       fixture.tenantInfo.OrgID,
@@ -382,8 +344,7 @@ func TestGetByID_OmitRulesKeepsAccessorialsAndFuelBinding(t *testing.T) {
 		MissingPriceFallback: fuelsurcharge.FallbackUseLatestAvailable,
 		Status:               fuelsurcharge.ProgramStatusActive,
 	}
-	_, err = db.NewInsert().Model(program).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, program)
 
 	accessorial := &rateagreement.RateAgreementAccessorial{
 		OrganizationID:      fixture.tenantInfo.OrgID,
@@ -393,8 +354,7 @@ func TestGetByID_OmitRulesKeepsAccessorialsAndFuelBinding(t *testing.T) {
 		Method:              accessorialcharge.MethodFlat,
 		Amount:              decimal.NewFromInt(75),
 	}
-	_, err = db.NewInsert().Model(accessorial).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, accessorial)
 
 	binding := &rateagreement.RateAgreementFuelBinding{
 		OrganizationID:         fixture.tenantInfo.OrgID,
@@ -402,10 +362,9 @@ func TestGetByID_OmitRulesKeepsAccessorialsAndFuelBinding(t *testing.T) {
 		RateAgreementID:        fixture.agreement.ID,
 		FuelSurchargeProgramID: program.ID,
 	}
-	_, err = db.NewInsert().Model(binding).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, binding)
 
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
 	withoutRules, err := repo.GetByID(ctx, &rateagreementports.GetRateAgreementByIDRequest{
 		RateAgreementID: fixture.agreement.ID,
@@ -438,4 +397,15 @@ func TestGetByID_OmitRulesKeepsAccessorialsAndFuelBinding(t *testing.T) {
 	assert.Empty(t, headerOnly.Rules)
 	assert.Empty(t, headerOnly.Accessorials)
 	assert.Nil(t, headerOnly.FuelBinding)
+}
+
+const perMileTariff = "tariff \"Per Mile\"\n\ninput rate: Money/mi\n\n" +
+	"charge \"Per Mile\" (quantity: shipment.distance, rate: rate)\n"
+
+func perMileRate(rate string) tarifftypes.Inputs {
+	return tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString(rate), "$/mi")}
+}
+
+func flatRate(amount string) tarifftypes.Inputs {
+	return tarifftypes.Inputs{"rate": rules.MoneyValue(decimal.RequireFromString(amount))}
 }

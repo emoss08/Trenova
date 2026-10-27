@@ -2,29 +2,32 @@ package billingqueuereviewrepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
-// CreateApprovalRun writes the run and one Pending row per item together, so
-// the run's report is complete before the worker picks it up.
+var (
+	runErrors     = dberror.Mapping{Entity: "Approval run"}
+	runItemErrors = dberror.Mapping{Entity: "Approval run item"}
+)
+
 func (r *repository) CreateApprovalRun(
 	ctx context.Context,
 	req *billingqueueports.CreateApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.ApprovalRun, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 		run := req.Run
-		if _, err := db.NewInsert().Model(run).Exec(ctx); err != nil {
-			return nil, err
+		if err := billingqueuedb.ApprovalRuns.Create(ctx, db, run); err != nil {
+			return nil, runErrors.Map(err, run.ID.String())
 		}
 
 		items := make([]*billingqueue.ApprovalRunItem, 0, len(req.ItemIDs))
@@ -39,8 +42,8 @@ func (r *repository) CreateApprovalRun(
 			})
 		}
 		if len(items) > 0 {
-			if _, err := db.NewInsert().Model(&items).Exec(ctx); err != nil {
-				return nil, fmt.Errorf("seed approval run items: %w", err)
+			if err := billingqueuedb.ApprovalRunItems.CreateMany(ctx, db, items); err != nil {
+				return nil, runItemErrors.Map(err, run.ID.String())
 			}
 		}
 		run.Items = items
@@ -49,79 +52,73 @@ func (r *repository) CreateApprovalRun(
 	})
 }
 
+func approvalRunWithItems() *keel.Query[*billingqueue.ApprovalRun] {
+	run := billingqueuedb.ApprovalRuns
+	items := run.Items()
+	return run.Load(items.Order(items.Sequence.Asc()))
+}
+
 func (r *repository) GetApprovalRun(
 	ctx context.Context,
 	req *billingqueueports.GetApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueue.ApprovalRun, error) {
-		run := new(billingqueue.ApprovalRun)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(run).
-			Apply(tenantWhere("bqar", req.TenantInfo)).
-			Where("bqar.id = ?", req.RunID)
+		run := billingqueuedb.ApprovalRuns
+		q := run.Query()
 		if req.IncludeItems {
-			q = q.Relation("Items", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order("bqari.sequence ASC")
-			})
-		}
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Approval run")
+			q = approvalRunWithItems()
 		}
 
-		return run, nil
+		entity, err := q.Where(run.ID.Eq(req.RunID)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, runErrors.Map(err, req.RunID.String())
+		}
+
+		return entity, nil
 	})
 }
 
 func (r *repository) GetApprovalRunByKey(
 	ctx context.Context,
-	ti pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	key string,
 ) (*billingqueue.ApprovalRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*billingqueue.ApprovalRun, error) {
-		run := new(billingqueue.ApprovalRun)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(run).
-			Apply(tenantWhere("bqar", ti)).
-			Where("bqar.idempotency_key = ?", key).
-			Relation("Items", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order("bqari.sequence ASC")
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Approval run")
+		entity, err := approvalRunWithItems().
+			Where(billingqueuedb.ApprovalRuns.IdempotencyKey.Eq(key)).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, runErrors.Map(err, "")
 		}
 
-		return run, nil
+		return entity, nil
 	})
 }
 
-// MarkApprovalRunRunning and RequestApprovalRunUndo race for the same row, and
-// each only wins while the run is still Scheduled with no undo on it. That
-// single conditional update is the whole guarantee that an undo either stops
-// every write or none.
+func scheduledRun(runID pulid.ID) *keel.Query[*billingqueue.ApprovalRun] {
+	run := billingqueuedb.ApprovalRuns
+	return run.Where(
+		run.ID.Eq(runID),
+		run.Status.Eq(billingqueue.ApprovalRunScheduled),
+		run.CancelRequestedAt.IsNull(),
+	)
+}
+
 func (r *repository) MarkApprovalRunRunning(
 	ctx context.Context,
 	req *billingqueueports.MarkApprovalRunRunningRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		now := timeutils.NowUnix()
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Table("billingqueue_approval_runs").
-			Set("status = ?", billingqueue.ApprovalRunRunning).
-			Set("started_at = ?", now).
-			Set("temporal_workflow_id = ?", req.TemporalWorkflowID).
-			Set("temporal_run_id = ?", req.TemporalRunID).
-			Set("updated_at = ?", now).
-			Set("version = version + 1").
-			Where("id = ?", req.RunID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Where("status = ?", billingqueue.ApprovalRunScheduled).
-			Where("cancel_requested_at IS NULL").
-			Exec(ctx)
+		run := billingqueuedb.ApprovalRuns
+		n, err := scheduledRun(req.RunID).Update(ctx, r.db.Keel(ctx),
+			run.Status.To(billingqueue.ApprovalRunRunning),
+			run.StartedAt.To(timeutils.NowUnix()),
+			run.TemporalWorkflowID.To(req.TemporalWorkflowID),
+			run.TemporalRunID.To(req.TemporalRunID),
+		)
 		if err != nil {
-			return false, fmt.Errorf("start approval run: %w", err)
+			return false, runErrors.Map(err, req.RunID.String())
 		}
-		n, _ := res.RowsAffected()
 
 		return n > 0, nil
 	})
@@ -132,23 +129,14 @@ func (r *repository) RequestApprovalRunUndo(
 	req *billingqueueports.RequestApprovalRunUndoRequest,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		now := timeutils.NowUnix()
-		res, err := r.db.DBForContext(ctx).NewUpdate().
-			Table("billingqueue_approval_runs").
-			Set("cancel_requested_at = ?", now).
-			Set("cancel_requested_by_id = ?", req.RequestedByID).
-			Set("updated_at = ?", now).
-			Set("version = version + 1").
-			Where("id = ?", req.RunID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Where("status = ?", billingqueue.ApprovalRunScheduled).
-			Where("cancel_requested_at IS NULL").
-			Exec(ctx)
+		run := billingqueuedb.ApprovalRuns
+		n, err := scheduledRun(req.RunID).Update(ctx, r.db.Keel(ctx),
+			run.CancelRequestedAt.To(timeutils.NowUnix()),
+			run.CancelRequestedByID.ToExpr(keel.Val(req.RequestedByID)),
+		)
 		if err != nil {
-			return false, fmt.Errorf("undo approval run: %w", err)
+			return false, runErrors.Map(err, req.RunID.String())
 		}
-		n, _ := res.RowsAffected()
 
 		return n > 0, nil
 	})
@@ -159,34 +147,34 @@ func (r *repository) SetApprovalRunWorkflow(
 	req *billingqueueports.MarkApprovalRunRunningRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := r.db.DBForContext(ctx).NewUpdate().
-			Table("billingqueue_approval_runs").
-			Set("temporal_workflow_id = ?", req.TemporalWorkflowID).
-			Set("temporal_run_id = ?", req.TemporalRunID).
-			Where("id = ?", req.RunID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Exec(ctx)
+		run := billingqueuedb.ApprovalRuns
+		_, err := run.Where(run.ID.Eq(req.RunID)).Update(ctx, r.db.Keel(ctx),
+			run.TemporalWorkflowID.To(req.TemporalWorkflowID),
+			run.TemporalRunID.To(req.TemporalRunID),
+			run.Version.ToExpr(run.Version),
+			run.UpdatedAt.ToExpr(run.UpdatedAt),
+		)
 
-		return err
+		return runErrors.Map(err, req.RunID.String())
 	})
 }
 
 func (r *repository) ListPendingApprovalRunItems(
 	ctx context.Context,
-	ti pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	runID pulid.ID,
 ) ([]*billingqueue.ApprovalRunItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*billingqueue.ApprovalRunItem, error) {
-		items := make([]*billingqueue.ApprovalRunItem, 0)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(&items).
-			Apply(tenantWhere("bqari", ti)).
-			Where("bqari.run_id = ?", runID).
-			Where("bqari.status = ?", billingqueue.ApprovalItemPending).
-			Order("bqari.sequence ASC").
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list pending approval run items: %w", err)
+		item := billingqueuedb.ApprovalRunItems
+		items, err := item.Where(
+			item.RunID.Eq(runID),
+			item.Status.Eq(billingqueue.ApprovalItemPending),
+		).Order(item.Sequence.Asc()).All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, err
+		}
+		if items == nil {
+			return []*billingqueue.ApprovalRunItem{}, nil
 		}
 
 		return items, nil
@@ -198,91 +186,76 @@ func (r *repository) RecordApprovalRunItem(
 	req *billingqueueports.RecordApprovalRunItemRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		item := req.Item
-		now := timeutils.NowUnix()
-		_, err := r.db.DBForContext(ctx).NewUpdate().
-			Table("billingqueue_approval_run_items").
-			Set("status = ?", item.Status).
-			Set("failure_code = ?", nullable(string(item.FailureCode))).
-			Set("error_message = ?", nullable(item.ErrorMessage)).
-			Set("invoice_id = ?", item.InvoiceID).
-			Set("invoice_number = ?", nullable(item.InvoiceNumber)).
-			Set("processed_at = ?", now).
-			Set("updated_at = ?", now).
-			Where("run_id = ?", item.RunID).
-			Where("item_id = ?", item.ItemID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Where("status = ?", billingqueue.ApprovalItemPending).
-			Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("record approval run item: %w", err)
-		}
+		entry := req.Item
+		item := billingqueuedb.ApprovalRunItems
+		_, err := item.Where(
+			item.RunID.Eq(entry.RunID),
+			item.ItemID.Eq(entry.ItemID),
+			item.Status.Eq(billingqueue.ApprovalItemPending),
+		).Update(ctx, r.db.Keel(ctx),
+			item.Status.To(entry.Status),
+			item.FailureCode.ToExpr(keel.Val(nullable(string(entry.FailureCode)))),
+			item.ErrorMessage.ToExpr(keel.Val(nullable(entry.ErrorMessage))),
+			item.InvoiceID.ToExpr(keel.Val(entry.InvoiceID)),
+			item.InvoiceNumber.ToExpr(keel.Val(nullable(entry.InvoiceNumber))),
+			item.ProcessedAt.To(timeutils.NowUnix()),
+		)
 
-		return nil
+		return runItemErrors.Map(err, entry.ItemID.String())
 	})
 }
 
-// FinalizeApprovalRun closes a run: whatever is still Pending is marked
-// Skipped with the leftover code, and the counters are taken from the item
-// rows rather than carried, so a retried activity cannot count twice.
+type runCounts struct {
+	Approved int
+	Failed   int
+	Skipped  int
+}
+
 func (r *repository) FinalizeApprovalRun(
 	ctx context.Context,
 	req *billingqueueports.FinalizeApprovalRunRequest,
 ) (*billingqueue.ApprovalRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*billingqueue.ApprovalRun, error) {
-		db := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 		now := timeutils.NowUnix()
 		leftover := req.LeftoverCode
 		if leftover == "" {
 			leftover = billingqueue.ApprovalFailureUnexpected
 		}
 
-		if _, err := db.NewUpdate().
-			Table("billingqueue_approval_run_items").
-			Set("status = ?", billingqueue.ApprovalItemSkipped).
-			Set("failure_code = ?", leftover).
-			Set("processed_at = ?", now).
-			Set("updated_at = ?", now).
-			Where("run_id = ?", req.RunID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Where("status = ?", billingqueue.ApprovalItemPending).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("skip leftover approval run items: %w", err)
+		item := billingqueuedb.ApprovalRunItems
+		if _, err := item.Where(
+			item.RunID.Eq(req.RunID),
+			item.Status.Eq(billingqueue.ApprovalItemPending),
+		).Update(ctx, db,
+			item.Status.To(billingqueue.ApprovalItemSkipped),
+			item.FailureCode.To(leftover),
+			item.ProcessedAt.To(now),
+		); err != nil {
+			return nil, runItemErrors.Map(err, req.RunID.String())
 		}
 
-		var counts struct {
-			Approved int `bun:"approved"`
-			Failed   int `bun:"failed"`
-			Skipped  int `bun:"skipped"`
-		}
-		if err := db.NewSelect().
-			TableExpr("billingqueue_approval_run_items AS bqari").
-			ColumnExpr("COUNT(*) FILTER (WHERE bqari.status = 'Approved') AS approved").
-			ColumnExpr("COUNT(*) FILTER (WHERE bqari.status = 'Failed') AS failed").
-			ColumnExpr("COUNT(*) FILTER (WHERE bqari.status = 'Skipped') AS skipped").
-			Apply(tenantWhere("bqari", req.TenantInfo)).
-			Where("bqari.run_id = ?", req.RunID).
-			Scan(ctx, &counts); err != nil {
-			return nil, fmt.Errorf("count approval run items: %w", err)
+		counts, err := keel.IntoOne[runCounts](ctx, db, item.
+			Pick(
+				keel.Count().Filter(item.Status.Eq(billingqueue.ApprovalItemApproved)),
+				keel.Count().Filter(item.Status.Eq(billingqueue.ApprovalItemFailed)),
+				keel.Count().Filter(item.Status.Eq(billingqueue.ApprovalItemSkipped)),
+			).
+			Where(item.RunID.Eq(req.RunID)))
+		if err != nil {
+			return nil, err
 		}
 
-		if _, err := db.NewUpdate().
-			Table("billingqueue_approval_runs").
-			Set("status = ?", req.Status).
-			Set("failure_message = ?", nullable(req.FailureMessage)).
-			Set("completed_at = ?", now).
-			Set("updated_at = ?", now).
-			Set("version = version + 1").
-			Set("approved_count = ?", counts.Approved).
-			Set("failed_count = ?", counts.Failed).
-			Set("skipped_count = ?", counts.Skipped).
-			Where("id = ?", req.RunID).
-			Where("organization_id = ?", req.TenantInfo.OrgID).
-			Where("business_unit_id = ?", req.TenantInfo.BuID).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("finalize approval run: %w", err)
+		run := billingqueuedb.ApprovalRuns
+		if _, err = run.Where(run.ID.Eq(req.RunID)).Update(ctx, db,
+			run.Status.To(req.Status),
+			run.FailureMessage.ToExpr(keel.Val(nullable(req.FailureMessage))),
+			run.CompletedAt.To(now),
+			run.ApprovedCount.To(int64(counts.Approved)),
+			run.FailedCount.To(int64(counts.Failed)),
+			run.SkippedCount.To(int64(counts.Skipped)),
+		); err != nil {
+			return nil, runErrors.Map(err, req.RunID.String())
 		}
 
 		return r.GetApprovalRun(ctx, &billingqueueports.GetApprovalRunRequest{

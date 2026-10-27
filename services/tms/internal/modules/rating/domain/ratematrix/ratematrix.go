@@ -12,24 +12,20 @@ package ratematrix
 
 import (
 	"context"
+	"slices"
+	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/ratetypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*RateMatrix)(nil)
 	_ validationframework.TenantedEntity = (*RateMatrix)(nil)
 	_ domaintypes.PostgresSearchable     = (*RateMatrix)(nil)
 )
@@ -38,56 +34,110 @@ const (
 	maxCodeLength        = 64
 	maxNameLength        = 100
 	maxDescriptionLength = 500
-	maxRoundingPrecision = 6
+
+	DraftVersion int64 = 0
 )
 
 type RateMatrix struct {
-	bun.BaseModel             `bun:"table:rate_matrices,alias:rmx" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                        json:"-"`
+	keel.Table `keel:"rate_matrices"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rmx_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(64),notnull"`
-	Name        string             `json:"name"        bun:"name,type:VARCHAR(100),notnull"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	Currency    string             `json:"currency"    bun:"currency,type:VARCHAR(3),notnull,default:'USD'"`
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code        string                 `json:"code"        keel:"code"`
+	Name        string                 `json:"name"        keel:"name"`
+	Description string                 `json:"description" keel:"description,nullzero"`
+	ValueType   string                 `json:"valueType"   keel:"value_type"`
+	Status      formulatemplate.Status `json:"status"      keel:"status"`
 
-	// FormulaTemplateID says what a cell's number means. The template prices the
-	// shipment with the matched cell's value bound as its base rate, so the same
-	// grid is a per-mile tariff or a flat table depending on which template the
-	// matrix names.
-	FormulaTemplateID pulid.ID `json:"formulaTemplateId" bun:"formula_template_id,type:VARCHAR(100),notnull"`
+	SubmittedByID          *pulid.ID  `json:"submittedById"          keel:"submitted_by_id"`
+	SubmittedAt            *int64     `json:"submittedAt"            keel:"submitted_at"`
+	ApprovedByID           *pulid.ID  `json:"approvedById"           keel:"approved_by_id"`
+	ApprovedAt             *int64     `json:"approvedAt"             keel:"approved_at"`
+	ReviewComment          string     `json:"reviewComment"          keel:"review_comment,nullzero"`
+	PublishedVersionNumber int64      `json:"publishedVersionNumber" keel:"published_version_number"`
+	PublishedAt            *int64     `json:"publishedAt"            keel:"published_at"`
+	HasDraftChanges        bool       `json:"hasDraftChanges"        keel:"has_draft_changes"`
+	DraftCellCount         int64      `json:"draftCellCount"         keel:"draft_cell_count"`
+	DraftEditorIDs         []pulid.ID `json:"draftEditorIds"         keel:"draft_editor_ids,jsonb"`
 
-	RoundingMode      ratetypes.RoundingMode `json:"roundingMode"      bun:"rounding_mode,type:rate_rounding_mode_enum,notnull,default:'HalfUp'"`
-	RoundingPrecision int16                  `json:"roundingPrecision" bun:"rounding_precision,type:SMALLINT,notnull,default:2"`
+	Version      int64  `json:"version"   keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+	SearchVector string `json:"-"         keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-"         keel:"rank,computed"`
 
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	BusinessUnit *tenant.BusinessUnit   `json:"-"`
+	Organization *tenant.Organization   `json:"-"`
+	Dimensions   []*RateMatrixDimension `json:"dimensions,omitempty" keel:"many:rate_matrix_id"`
+}
 
-	BusinessUnit    *tenant.BusinessUnit             `json:"-"                         bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization    *tenant.Organization             `json:"-"                         bun:"rel:belongs-to,join:organization_id=id"`
-	FormulaTemplate *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty" bun:"rel:belongs-to,join:formula_template_id=id"`
-	Dimensions      []*RateMatrixDimension           `json:"dimensions,omitempty"      bun:"rel:has-many,join:id=rate_matrix_id"`
+func (rm *RateMatrix) BeforeUpdate(_ context.Context) error {
+	if rm.DraftEditorIDs == nil {
+		rm.DraftEditorIDs = []pulid.ID{}
+	}
+
+	return nil
 }
 
 // applyDefaults fills in the values the database would have defaulted, so a
 // payload that omits them validates the same way it will be stored.
 func (rm *RateMatrix) applyDefaults() {
 	if rm.Status == "" {
-		rm.Status = domaintypes.StatusActive
+		rm.Status = formulatemplate.StatusDraft
 	}
-	if rm.Currency == "" {
-		rm.Currency = money.DefaultCurrencyCode
+	if rm.DraftEditorIDs == nil {
+		rm.DraftEditorIDs = []pulid.ID{}
 	}
-	if rm.RoundingMode == "" {
-		rm.RoundingMode = ratetypes.RoundingModeHalfUp
+	rm.ValueType = strings.TrimSpace(rm.ValueType)
+}
+
+func (rm *RateMatrix) IsPublished() bool {
+	return rm.PublishedVersionNumber > 0
+}
+
+func (rm *RateMatrix) IsServed() bool {
+	return rm.IsPublished() && rm.Status != formulatemplate.StatusInactive
+}
+
+func (rm *RateMatrix) RecordEditor(userID pulid.ID) {
+	if userID.IsNil() || slices.Contains(rm.DraftEditorIDs, userID) {
+		return
 	}
+	rm.DraftEditorIDs = append(slices.Clone(rm.DraftEditorIDs), userID)
+}
+
+func (rm *RateMatrix) EditedBy(userID pulid.ID) bool {
+	return slices.Contains(rm.DraftEditorIDs, userID)
+}
+
+func (rm *RateMatrix) ClearApproval() {
+	rm.SubmittedByID = nil
+	rm.SubmittedAt = nil
+	rm.ApprovedByID = nil
+	rm.ApprovedAt = nil
+	rm.ReviewComment = ""
+}
+
+func (rm *RateMatrix) HasMaterialChange(other *RateMatrix) bool {
+	if other == nil {
+		return true
+	}
+	if rm.ValueType != other.ValueType || rm.Code != other.Code ||
+		len(rm.Dimensions) != len(other.Dimensions) {
+		return true
+	}
+	mine, theirs := rm.OrderedDimensions(), other.OrderedDimensions()
+	if len(mine) != len(theirs) {
+		return true
+	}
+	for i := range mine {
+		if !mine[i].SameShape(theirs[i]) {
+			return true
+		}
+	}
+	return false
 }
 
 func (rm *RateMatrix) Validate(multiErr *errortypes.MultiError) {
@@ -110,26 +160,18 @@ func (rm *RateMatrix) Validate(multiErr *errortypes.MultiError) {
 			validation.Length(0, maxDescriptionLength).
 				Error("Description cannot be longer than 500 characters"),
 		),
-		validation.Field(&rm.FormulaTemplateID,
-			validation.Required.Error("Formula template is required"),
-		),
-		validation.Field(&rm.Currency,
-			validation.Required.Error("Currency is required"),
-			validation.Length(3, 3).Error("Currency must be a three letter code"),
+		validation.Field(&rm.ValueType,
+			validation.Required.Error("Value type is required"),
+			validation.By(validateValueType),
 		),
 		validation.Field(&rm.Status,
 			validation.Required.Error("Status is required"),
-			validation.In(domaintypes.StatusActive, domaintypes.StatusInactive).
-				Error("Status is invalid"),
-		),
-		validation.Field(&rm.RoundingMode,
-			validation.Required.Error("Rounding mode is required"),
-			domainvalidation.ValidEnum[ratetypes.RoundingMode]("Rounding mode is invalid"),
-		),
-		validation.Field(&rm.RoundingPrecision,
-			validation.Min(int16(0)).Error("Rounding precision cannot be negative"),
-			validation.Max(int16(maxRoundingPrecision)).
-				Error("Rounding precision cannot exceed 6"),
+			validation.In(
+				formulatemplate.StatusDraft,
+				formulatemplate.StatusInReview,
+				formulatemplate.StatusActive,
+				formulatemplate.StatusInactive,
+			).Error("Status is invalid"),
 		),
 	))
 
@@ -148,6 +190,7 @@ func (rm *RateMatrix) StampDimensions() {
 		dimension.RateMatrixID = rm.ID
 		dimension.OrganizationID = rm.OrganizationID
 		dimension.BusinessUnitID = rm.BusinessUnitID
+		dimension.VersionNumber = DraftVersion
 	}
 }
 
@@ -230,20 +273,21 @@ func (rm *RateMatrix) OrderedDimensions() []*RateMatrixDimension {
 	return trimmed
 }
 
-func (rm *RateMatrix) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rm.ID.IsNil() {
-			rm.ID = pulid.MustNew("rmx_")
-		}
-		rm.CreatedAt = now
-		rm.UpdatedAt = now
-	case *bun.UpdateQuery:
-		rm.UpdatedAt = now
+func (rm *RateMatrix) BeforeCreate(ctx context.Context) error {
+	if rm.Status == "" {
+		rm.Status = formulatemplate.StatusDraft
+	}
+	if rm.DraftEditorIDs == nil {
+		rm.DraftEditorIDs = []pulid.ID{}
 	}
 
+	return nil
+}
+
+func (rm *RateMatrix) BeforeSave(_ context.Context) error {
+	if rm.DraftEditorIDs == nil {
+		rm.DraftEditorIDs = []pulid.ID{}
+	}
 	return nil
 }
 
@@ -280,6 +324,15 @@ func (rm *RateMatrix) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 				Weight: domaintypes.SearchWeightB,
 			},
 			{Name: "status", Type: domaintypes.FieldTypeEnum},
+		},
+	}
+}
+
+func (RateMatrix) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_matrices_code",
+			Message: "A rate matrix with this code already exists in your organization",
 		},
 	}
 }

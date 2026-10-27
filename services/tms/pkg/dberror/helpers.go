@@ -4,18 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"strings"
 	"sync"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/uptrace/bun/driver/pgdriver"
 )
-
-var ErrCheckRowNil = errors.New("check rows affected: result is nil")
 
 type ConcurrencyEvent struct {
 	Kind   string
@@ -55,7 +52,7 @@ func HandleNotFoundError(err error, entityName string) error {
 }
 
 func IsNotFoundError(err error) bool {
-	return errors.Is(err, sql.ErrNoRows)
+	return errors.Is(err, sql.ErrNoRows) || errors.Is(err, keel.ErrNotFound)
 }
 
 func CreateVersionMismatchError(entityName, entityID string) error {
@@ -91,16 +88,7 @@ func CreateBulkVersionMismatchError(entityName string, entityIDs []pulid.ID) err
 	)
 }
 
-func CheckRowsAffected(result sql.Result, entityName, entityID string) error {
-	if result == nil {
-		return ErrCheckRowNil
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("get rows affected: %w", err)
-	}
-
+func CheckAffected(rows int64, entityName, entityID string) error {
 	if rows == 0 {
 		return CreateVersionMismatchError(entityName, entityID)
 	}
@@ -108,16 +96,7 @@ func CheckRowsAffected(result sql.Result, entityName, entityID string) error {
 	return nil
 }
 
-func CheckFound(result sql.Result, entityName string) error {
-	if result == nil {
-		return ErrCheckRowNil
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("get rows affected: %w", err)
-	}
-
+func CheckFoundCount(rows int64, entityName string) error {
 	if rows == 0 {
 		return errortypes.NewNotFoundError("{0} not found within your organization", entityName)
 	}
@@ -125,16 +104,7 @@ func CheckFound(result sql.Result, entityName string) error {
 	return nil
 }
 
-func CheckBulkRowsAffected(result sql.Result, entityName string, entityIDs []pulid.ID) error {
-	if result == nil {
-		return ErrCheckRowNil
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("get rows affected: %w", err)
-	}
-
+func CheckBulkAffected(rows int64, entityName string, entityIDs []pulid.ID) error {
 	if rows == 0 {
 		return CreateBulkVersionMismatchError(entityName, entityIDs)
 	}
@@ -172,18 +142,14 @@ func DriverError(err error) error {
 		return pgErr
 	}
 
-	var pgDriverErr pgdriver.Error
-	if errors.As(err, &pgDriverErr) {
-		return pgDriverErr
-	}
-
 	return nil
 }
 
 // IsReadOnlyTransaction reports a write attempted inside a read-only
 // transaction, such as a preview's snapshot.
 func IsReadOnlyTransaction(err error) bool {
-	return ExtractCode(err) == pgerrcode.ReadOnlySQLTransaction
+	return errors.Is(err, keel.ErrReadOnly) ||
+		ExtractCode(err) == pgerrcode.ReadOnlySQLTransaction
 }
 
 func IsRowLevelSecurityViolation(err error) bool {
@@ -197,7 +163,7 @@ func IsRowLevelSecurityViolation(err error) bool {
 }
 
 func IsRetryableTransactionError(err error) bool {
-	if errors.Is(err, context.DeadlineExceeded) {
+	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, keel.ErrWaitLimit) {
 		return true
 	}
 
@@ -218,7 +184,11 @@ func MapRetryableTransactionError(err error, message string) error {
 	}
 
 	code := ExtractCode(err)
-	if code == "" && errors.Is(err, context.DeadlineExceeded) {
+	switch {
+	case code != "":
+	case errors.Is(err, keel.ErrWaitLimit):
+		code = "wait_limit"
+	case errors.Is(err, context.DeadlineExceeded):
 		code = "context_deadline_exceeded"
 	}
 
@@ -273,15 +243,6 @@ func extractPostgresErrorDetails(err error) (postgresErrorDetails, bool) {
 			code:       pgErr.Code,
 			constraint: pgErr.ConstraintName,
 			message:    pgErr.Message,
-		}, true
-	}
-
-	var pgDriverErr pgdriver.Error
-	if errors.As(err, &pgDriverErr) {
-		return postgresErrorDetails{
-			code:       pgDriverErr.Field('C'),
-			constraint: pgDriverErr.Field('n'),
-			message:    pgDriverErr.Field('M'),
 		}, true
 	}
 

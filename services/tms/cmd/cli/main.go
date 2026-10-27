@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/cmd/cli/redis"
 	"github.com/emoss08/trenova/cmd/cli/update"
 	"github.com/emoss08/trenova/cmd/cli/worker"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domainregistry"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 
@@ -193,70 +192,11 @@ func generateSQL(
 ) {
 	tableName := searchable.GetTableName()
 	fmt.Printf("ALTER TABLE \"%s\" ADD COLUMN IF NOT EXISTS search_vector tsvector;\n\n", tableName)
-	fmt.Println("--bun:split")
 	fmt.Printf(
 		"CREATE INDEX IF NOT EXISTS idx_%s_search_vector ON \"%s\" USING GIN(search_vector);\n\n",
 		tableName,
 		tableName,
 	)
-	fmt.Println("--bun:split")
-	if len(config.Relationships) > 0 {
-		fmt.Printf("-- 3. Relationship Indexes (only commonly queried relationships)\n")
-		fmt.Printf("-- Note: Only add these if you actually filter/join on these relationships\n")
-		for _, rel := range config.Relationships {
-			if !rel.Queryable {
-				continue
-			}
-
-			switch rel.Type {
-			case dbtype.RelationshipTypeBelongsTo:
-				fmt.Printf(
-					"-- Index for %s (belongs-to) - ADD ONLY if you JOIN or filter on this\n",
-					rel.Field,
-				)
-				fmt.Printf("-- CREATE INDEX IF NOT EXISTS idx_%s_%s ON \"%s\"(\"%s\");\n\n",
-					tableName, rel.ForeignKey, tableName, rel.ForeignKey)
-
-			case dbtype.RelationshipTypeHasOne, dbtype.RelationshipTypeHasMany:
-				fmt.Printf(
-					"-- Index for %s (%s) - UNCOMMENT only if you query from the reverse side\n",
-					rel.Field,
-					rel.Type,
-				)
-				fmt.Printf("-- CREATE INDEX IF NOT EXISTS idx_%s_%s ON \"%s\"(\"%s\");\n\n",
-					rel.TargetTable, rel.ForeignKey, rel.TargetTable, rel.ForeignKey)
-
-			case dbtype.RelationshipTypeManyToMany:
-				fmt.Printf(
-					"-- Indexes for %s (many-to-many) - IMPORTANT for M2M queries\n",
-					rel.Field,
-				)
-
-				fmt.Printf("-- Primary lookup index (from %s to %s)\n", tableName, rel.TargetTable)
-				fmt.Printf("CREATE INDEX IF NOT EXISTS idx_%s_%s ON \"%s\"(\"%s\");\n",
-					rel.JoinTable, rel.JoinTableSourceKey, rel.JoinTable, rel.JoinTableSourceKey)
-
-				fmt.Printf("-- Reverse lookup index (from %s to %s)\n", rel.TargetTable, tableName)
-				fmt.Printf("CREATE INDEX IF NOT EXISTS idx_%s_%s ON \"%s\"(\"%s\");\n",
-					rel.JoinTable, rel.JoinTableTargetKey, rel.JoinTable, rel.JoinTableTargetKey)
-
-				fmt.Printf(
-					"-- Optional: Composite index for covering index scans (uncomment if needed)\n",
-				)
-				fmt.Printf(
-					"-- CREATE INDEX IF NOT EXISTS idx_%s_%s_%s ON \"%s\"(\"%s\", \"%s\");\n\n",
-					rel.JoinTable,
-					rel.JoinTableSourceKey,
-					rel.JoinTableTargetKey,
-					rel.JoinTable,
-					rel.JoinTableSourceKey,
-					rel.JoinTableTargetKey,
-				)
-			}
-		}
-		fmt.Println("--bun:split")
-	}
-
 	var searchFields []string
 	for _, field := range config.SearchableFields {
 		if field.Type == domaintypes.FieldTypeText {
@@ -284,7 +224,6 @@ $$ LANGUAGE plpgsql;
 
 `, tableName, strings.Join(searchFields, " || \n        "))
 
-	fmt.Println("--bun:split")
 	fmt.Printf(`DROP TRIGGER IF EXISTS %s_search_update ON "%s";
 CREATE TRIGGER %s_search_update
     BEFORE INSERT OR UPDATE ON "%s"
@@ -294,7 +233,6 @@ CREATE TRIGGER %s_search_update
 `,
 		tableName, tableName, tableName, tableName, tableName)
 
-	fmt.Println("--bun:split")
 	fmt.Printf("UPDATE \"%s\" SET search_vector = %s;\n",
 		tableName, strings.ReplaceAll(strings.Join(searchFields, " || \n    "), "NEW.", ""))
 }

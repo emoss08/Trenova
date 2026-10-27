@@ -26,7 +26,7 @@ const CLOSE_BEFORE_INSTALL: [&str; 3] = [
     "trenova-capture-scan-x86.exe",
 ];
 /// Downloads older than this are leftovers of an interrupted update.
-const STALE_DOWNLOAD: Duration = Duration::from_secs(86_400);
+const STALE_DOWNLOAD: Duration = Duration::from_hours(24);
 /// Windows Installer's "done, reboot to finish" codes.
 const REBOOT_REQUIRED: [i32; 2] = [3010, 1641];
 

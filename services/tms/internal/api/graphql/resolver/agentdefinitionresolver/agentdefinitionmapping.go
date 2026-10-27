@@ -3,14 +3,13 @@ package agentdefinitionresolver
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/loaders"
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -40,15 +39,13 @@ func definitionColumns(
 		return selection.Columns
 	}
 
-	columns := sliceutils.AppendIfMissing(
-		selection.Columns,
-		agentdefinitioncol.DefinitionColumns.Template.Bare(),
-	)
+	d := agentdefinitiondb.Definitions
+	columns := selection.Columns
+	for _, column := range projection.ColumnNames(d.Template.Col, d.ToolNames.Col) {
+		columns = sliceutils.AppendIfMissing(columns, column)
+	}
 
-	return sliceutils.AppendIfMissing(
-		columns,
-		agentdefinitioncol.DefinitionColumns.ToolNames.Bare(),
-	)
+	return columns
 }
 
 func agentDefinitionConnectionToModel(
@@ -66,9 +63,10 @@ func agentDefinitionConnectionToModel(
 	}
 
 	return &gqlmodel.AgentDefinitionConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

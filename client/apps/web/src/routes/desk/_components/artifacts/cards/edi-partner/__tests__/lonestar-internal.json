@@ -41,7 +41,11 @@
       }
     },
     "customer": null,
-    "documentProfiles": [],
+    "lading": {
+      "project": null,
+      "active": null,
+      "shadow": null
+    },
     "transports": [
       {
         "profile": {

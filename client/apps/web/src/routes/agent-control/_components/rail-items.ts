@@ -2,6 +2,7 @@ import type { AIControlTab, RailView } from "../ai-control-tabs";
 import { retrievalRailStatus, type RetrievalRailState } from "./retrieval/retrieval-model";
 import type { AiAuditVerificationStatus } from "@trenova/graphql/generated/graphql";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal, type RowTotal } from "@trenova/shared/lib/row-total";
 
 export type {
   ActivityView,
@@ -26,9 +27,9 @@ export type RailCounts = {
   providersTotal: number;
   agentsEnabled: number;
   agentsTotal: number;
-  pendingProposals: number;
-  runsLast24h: number;
-  memoriesActive: number;
+  pendingProposals: RowTotal;
+  runsLast24h: RowTotal;
+  memoriesActive: RowTotal;
   extensionsOn: number;
   extensionsTotal: number;
   /** Agents whose latest scored suite run regressed. */
@@ -111,9 +112,11 @@ export function buildRailItems(
     items.push({
       tab: "memory",
       status: counts
-        ? counts.memoriesActive === 0
+        ? counts.memoriesActive.count === 0
           ? t("Nothing recorded")
-          : t("{0, plural, one {# active} other {# active}}", counts.memoriesActive)
+          : counts.memoriesActive.exact
+            ? t("{0, plural, one {# active} other {# active}}", counts.memoriesActive.count)
+            : t("About {0} active", formatRowTotal(counts.memoriesActive.count, false))
         : "",
       attention: false,
       children: [],
@@ -167,12 +170,18 @@ export function buildRailItems(
   }
 
   if (permissions.runs) {
-    const pending = counts?.pendingProposals ?? 0;
+    const pending = counts?.pendingProposals.count ?? 0;
+    const pendingExact = counts?.pendingProposals.exact ?? true;
     const children: RailItem["children"] = [{ view: "runs", label: t("Runs") }];
     if (permissions.proposals) {
       children.push({
         view: "proposals",
-        label: pending > 0 ? t("Proposals · {0}", pending) : t("Proposals"),
+        label:
+          pending === 0
+            ? t("Proposals")
+            : pendingExact
+              ? t("Proposals · {0}", pending)
+              : t("Proposals · about {0}", formatRowTotal(pending, false)),
       });
       children.push({ view: "plans", label: t("Plans") });
     }
@@ -180,13 +189,18 @@ export function buildRailItems(
     if (permissions.exceptions) {
       children.push({ view: "exceptions", label: t("Exceptions") });
     }
+    children.push({ view: "analyses", label: t("Analyses") });
     items.push({
       tab: "activity",
       status:
         pending > 0
-          ? t("{0, plural, one {# awaiting decision} other {# awaiting decision}}", pending)
+          ? pendingExact
+            ? t("{0, plural, one {# awaiting decision} other {# awaiting decision}}", pending)
+            : t("About {0} awaiting decision", formatRowTotal(pending, false))
           : counts
-            ? t("{0, plural, one {# run today} other {# runs today}}", counts.runsLast24h)
+            ? counts.runsLast24h.exact
+              ? t("{0, plural, one {# run today} other {# runs today}}", counts.runsLast24h.count)
+              : t("About {0} runs today", formatRowTotal(counts.runsLast24h.count, false))
             : "",
       attention: pending > 0 && permissions.proposals,
       children,
@@ -252,13 +266,25 @@ export function tabCounts(
         ? { text: `${counts.providersEnabled}/${counts.providersTotal}` }
         : null,
     extensions: counts.extensionsOn > 0 ? { text: t("{0} on", counts.extensionsOn) } : null,
-    memory: counts.memoriesActive > 0 ? { text: String(counts.memoriesActive) } : null,
+    memory:
+      counts.memoriesActive.count === 0
+        ? null
+        : {
+            text: counts.memoriesActive.exact
+              ? formatRowTotal(counts.memoriesActive.count, true)
+              : t("about {0}", formatRowTotal(counts.memoriesActive.count, false)),
+          },
     retrieval:
       counts.retrieval && !counts.retrieval.available ? { text: t("words only"), tone: "w" } : null,
     quality:
       counts.qualityRegressions > 0
         ? { text: t("{0} regressed", counts.qualityRegressions), tone: "d" }
         : null,
-    activity: { text: t("{0} waiting", counts.pendingProposals), tone: "w" },
+    activity: {
+      text: counts.pendingProposals.exact
+        ? t("{0} waiting", counts.pendingProposals.count)
+        : t("About {0} waiting", formatRowTotal(counts.pendingProposals.count, false)),
+      tone: "w",
+    },
   };
 }

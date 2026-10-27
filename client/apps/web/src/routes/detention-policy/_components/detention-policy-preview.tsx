@@ -26,7 +26,8 @@ import type {
 import { useQueries } from "@tanstack/react-query";
 import { AlertTriangleIcon, Beaker02Icon, ChevronDownIcon } from "@trenova/shared/components/icons";
 import { AnimatePresence, m, useInView } from "motion/react";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import { WithheldValue } from "@trenova/shared/components/withheld-value";
 import { useFormContext, useWatch } from "react-hook-form";
 
 /**
@@ -186,7 +187,7 @@ function StatCell({
   className,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
   className?: string;
 }) {
   return (
@@ -224,6 +225,8 @@ function ScenarioResult({
   const [receiptOpen, setReceiptOpen] = useState(false);
   const suppressed = result.suppressedByGate;
   const currency = result.policySnapshot.currency || "USD";
+  const netMargin = result.netMargin;
+  const paysOutMore = netMargin !== null && netMargin < 0;
 
   return (
     <>
@@ -252,14 +255,15 @@ function ScenarioResult({
           </div>
           <div className="shrink-0 text-right">
             <p className="text-xs text-muted-foreground font-medium">{t("Net margin")}</p>
-            <p
-              className={cn(
-                "mt-0.5 text-sm font-medium tabular-nums",
-                deltaToneClass(result.netMargin),
-              )}
-            >
-              {formatSignedCurrency(result.netMargin, currency)}
-            </p>
+            {netMargin === null ? (
+              <WithheldValue group="Margins" className="mt-0.5" />
+            ) : (
+              <p
+                className={cn("mt-0.5 text-sm font-medium tabular-nums", deltaToneClass(netMargin))}
+              >
+                {formatSignedCurrency(netMargin, currency)}
+              </p>
+            )}
           </div>
         </div>
 
@@ -270,15 +274,15 @@ function ScenarioResult({
         {(suppressed ||
           result.arrivedLate ||
           result.capApplied !== "None" ||
-          result.netMargin < 0 ||
+          paysOutMore ||
           result.billableAmount === 0) && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {suppressed && <Signal tone="bad">{t("Suppressed — notice missed")}</Signal>}
-            {result.netMargin < 0 && (
+            {paysOutMore && netMargin !== null && (
               <Signal tone="warn">
                 {t(
                   "Pays out {0} more than it bills",
-                  formatCurrency(Math.abs(result.netMargin), currency),
+                  formatCurrency(Math.abs(netMargin), currency),
                 )}
               </Signal>
             )}
@@ -297,7 +301,13 @@ function ScenarioResult({
         <StatCell label={t("Gross")} value={formatCurrency(result.grossAmount, currency)} />
         <StatCell
           label={t("Driver pay")}
-          value={formatCurrency(result.driverPayAmount, currency)}
+          value={
+            result.driverPayAmount === null ? (
+              <WithheldValue group="Margins" />
+            ) : (
+              formatCurrency(result.driverPayAmount, currency)
+            )
+          }
         />
         <StatCell label={t("Status")} value={OCCURRENCE_STATUS_LABEL[result.status]} />
       </div>

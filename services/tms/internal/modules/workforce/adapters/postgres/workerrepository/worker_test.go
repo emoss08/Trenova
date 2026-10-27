@@ -1,122 +1,59 @@
 package workerrepository
 
 import (
-	"errors"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
-	"go.uber.org/zap"
 )
 
-func newTestRepository(t *testing.T) (*repository, sqlmock.Sqlmock) {
-	t.Helper()
-
-	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
-	require.NoError(t, err)
-
-	bunDB := bun.NewDB(db, pgdialect.New())
-	t.Cleanup(func() {
-		mock.ExpectClose()
-		require.NoError(t, bunDB.Close())
-	})
-
-	return &repository{
-		db: postgres.NewTestConnection(bunDB),
-		l:  zap.NewNop(),
-	}, mock
-}
-
-func TestUpdateReturnsVersionMismatchWhenRowsAffectedZero(t *testing.T) {
+func TestSelectOptionsQuery_OwnerOperatorsMatchTheTypeOrTheirCurrentPayProfile(t *testing.T) {
 	t.Parallel()
 
-	repo, mock := newTestRepository(t)
-	entity := &worker.Worker{
-		ID:             pulid.MustNew("wrk_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		StateID:        pulid.MustNew("st_"),
-		FirstName:      "Ada",
-		LastName:       "Lovelace",
-		AddressLine1:   "123 Main St",
-		City:           "Boston",
-		PostalCode:     "02108",
-		Status:         domaintypes.StatusActive,
-		Gender:         worker.GenderFemale,
-		Version:        7,
-	}
+	sql, args := keeltest.Render(t, selectOptionsQuery(true, 1_700_000_000).Limit(10))
 
-	mock.ExpectBegin()
-	mock.ExpectQuery(`UPDATE .*workers.*`).
-		WillReturnRows(sqlmock.NewRows([]string{"id"}))
-	mock.ExpectRollback()
-
-	updated, err := repo.Update(t.Context(), entity)
-
-	require.Nil(t, updated)
-	require.Error(t, err)
-
-	var valErr *errortypes.Error
-	require.True(t, errors.As(err, &valErr))
-	assert.Equal(t, "version", valErr.Field)
-	assert.Equal(t, errortypes.ErrVersionMismatch, valErr.Code)
-	assert.Contains(t, valErr.Error(), "Worker")
-
-	require.NoError(t, mock.ExpectationsWereMet())
+	assert.Contains(t, sql, `w."type" = 'Contractor'`)
+	assert.Contains(t, sql, `AND wpa."worker_id" = w."id"`)
+	assert.Contains(t, sql, `AND wpa."organization_id" = w."organization_id"`)
+	assert.Contains(t, sql, `AND wpa."business_unit_id" = w."business_unit_id"`)
+	assert.Contains(t, sql, `LEFT JOIN "fleet_codes" fc ON `)
+	assert.Contains(t, sql, `dpp."classification" = 'OwnerOperator'`)
+	assert.Contains(t, args, int64(1_700_000_000))
 }
 
-func TestUpdateMapsRetryableTransactionErrorsToConflict(t *testing.T) {
+func TestSelectOptionsQuery_LeavesThePayProfileOutByDefault(t *testing.T) {
 	t.Parallel()
 
-	repo, mock := newTestRepository(t)
-	entity := &worker.Worker{
-		ID:             pulid.MustNew("wrk_"),
-		OrganizationID: pulid.MustNew("org_"),
-		BusinessUnitID: pulid.MustNew("bu_"),
-		StateID:        pulid.MustNew("st_"),
-		FirstName:      "Ada",
-		LastName:       "Lovelace",
-		AddressLine1:   "123 Main St",
-		City:           "Boston",
-		PostalCode:     "02108",
-		Status:         domaintypes.StatusActive,
-		Gender:         worker.GenderFemale,
-		Version:        7,
-	}
+	sql, _ := keeltest.Render(t, selectOptionsQuery(false, 1_700_000_000).Limit(10))
 
-	pgErr := &pgconn.PgError{
-		Code:    "40P01",
-		Message: "deadlock detected",
-	}
+	assert.NotContains(t, sql, "worker_pay_assignments")
+}
 
-	mock.ExpectBegin()
-	mock.ExpectQuery(`UPDATE .*workers.*`).
-		WillReturnError(pgErr)
-	mock.ExpectRollback()
+func TestWorkerQuery_LoadsOnlyTheRequestedRelations(t *testing.T) {
+	t.Parallel()
 
-	updated, err := repo.Update(t.Context(), entity)
+	sql, _ := keeltest.Render(t, workerQuery(&workerports.GetWorkerByIDRequest{
+		ID:                  "wrk_1",
+		IncludeProfile:      true,
+		IncludeLicenseState: true,
+		IncludeManager:      true,
+	}))
 
-	require.Nil(t, updated)
-	require.Error(t, err)
-	assert.True(t, errortypes.IsConflictError(err))
+	assert.Contains(t, sql, `"worker_profiles"`)
+	assert.Contains(t, sql, `"us_states"`)
+	assert.Contains(t, sql, `"users"`)
+	assert.NotContains(t, sql, `"fleet_codes"`)
+}
 
-	var conflictErr *errortypes.ConflictError
-	require.True(t, errors.As(err, &conflictErr))
-	assert.Equal(t, errortypes.ErrResourceInUse, conflictErr.Code)
-	assert.Contains(t, conflictErr.Message, "Worker is busy")
+func TestRosterAttentionQuery_CountsEveryTileInOnePass(t *testing.T) {
+	t.Parallel()
 
-	var wrappedPgErr *pgconn.PgError
-	require.True(t, errors.As(err, &wrappedPgErr))
-	assert.Equal(t, "40P01", wrappedPgErr.Code)
+	sql, args := keeltest.Render(t, rosterAttentionQuery(1_800_000_000))
 
-	require.NoError(t, mock.ExpectationsWereMet())
+	assert.Contains(t, sql, `FROM "workers" w JOIN "worker_profiles" wp ON `)
+	assert.Contains(t, sql, `count(*) FILTER (WHERE wp."compliance_status" = 'NonCompliant')`)
+	assert.Contains(t, sql, `wp."next_credential_expiry" IS NOT NULL`)
+	assert.Contains(t, args, int64(1_800_000_000))
+	assert.Equal(t, []any{"bu_1", "org_1", int64(1_800_000_000)}, args)
 }

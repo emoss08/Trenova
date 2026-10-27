@@ -3,17 +3,17 @@ package inboundmessagerepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/zap"
 )
 
@@ -31,17 +31,19 @@ func NewTargetRepository(p Params) inboundmessageports.TriageTargetRepository {
 
 func (r *targetRepository) List(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*triage.ResponseTarget, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triage.ResponseTarget, error) {
-		targets := make([]*triage.ResponseTarget, 0, 8)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&targets).
-			Apply(triagecol.ResponseTargetApplyTenant(tenantInfo)).
-			Order(triagecol.ResponseTargetColumns.Classification.OrderAsc()).
-			Scan(ctx); err != nil {
+		t := triagedb.ResponseTargets
+		targets, err := t.Query().
+			Order(t.Classification.Asc()).
+			Cache(resultcache.Settings()...).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
+		}
+		if targets == nil {
+			targets = []*triage.ResponseTarget{}
 		}
 
 		return targets, nil
@@ -53,16 +55,10 @@ func (r *targetRepository) Save(
 	req inboundmessageports.SaveTargetsRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		dba := r.db.DBForContext(ctx)
-		cols := triagecol.ResponseTargetColumns
+		db := r.db.Keel(ctx)
+		t := triagedb.ResponseTargets
 		if len(req.Reset) > 0 {
-			if _, err := dba.NewDelete().
-				Model((*triage.ResponseTarget)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return triagecol.ResponseTargetScopeTenantDelete(dq, req.TenantInfo).
-						Where(cols.Classification.In(), bun.List(req.Reset))
-				}).
-				Exec(ctx); err != nil {
+			if _, err := t.Where(t.Classification.In(req.Reset...)).Delete(ctx, db); err != nil {
 				return err
 			}
 		}
@@ -70,13 +66,13 @@ func (r *targetRepository) Save(
 			return nil
 		}
 
-		_, err := dba.NewInsert().
-			Model(&req.Upsert).
-			On("CONFLICT (organization_id, business_unit_id, classification) DO UPDATE").
-			Set(cols.Minutes.SetExcluded()).
-			Set(cols.UpdatedByID.SetExcluded()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Exec(ctx)
+		_, err := t.Upsert(
+			ctx,
+			db,
+			req.Upsert,
+			keel.OnConflict(t.OrganizationID, t.BusinessUnitID, t.Classification).
+				Update(t.Minutes, t.UpdatedByID),
+		)
 
 		return err
 	})
@@ -99,20 +95,17 @@ func (r *settingsRepository) Get(
 	tenantInfo pagination.TenantInfo,
 ) (*triage.Settings, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*triage.Settings, error) {
-		settings := new(triage.Settings)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(settings).
-			Apply(triagecol.SettingsApplyTenant(tenantInfo)).
-			Scan(ctx)
-		if errors.Is(err, sql.ErrNoRows) {
-			return triage.DefaultSettings(tenantInfo.OrgID, tenantInfo.BuID), nil
-		}
+		rows, err := triagedb.Settingses.Limit(1).
+			Cache(resultcache.Settings()...).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, err
 		}
+		if len(rows) == 0 {
+			return triage.DefaultSettings(tenantInfo.OrgID, tenantInfo.BuID), nil
+		}
 
-		return settings, nil
+		return rows[0], nil
 	})
 }
 
@@ -121,47 +114,38 @@ func (r *settingsRepository) Save(
 	settings *triage.Settings,
 ) (*triage.Settings, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*triage.Settings, error) {
-		dba := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
+		s := triagedb.Settingses
 		ov := settings.Version
-		settings.Version++
-		cols := triagecol.SettingsColumns
 
 		if ov == 0 {
-			results, err := dba.NewInsert().
-				Model(settings).
-				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-				Returning("*").
-				Exec(ctx)
+			settings.Version = 1
+			inserted, err := s.CreateOrSkip(
+				ctx,
+				db,
+				[]*triage.Settings{settings},
+				s.OrganizationID,
+				s.BusinessUnitID,
+			)
 			if err != nil {
 				settings.Version = ov
 				return nil, err
 			}
-			if affected, aErr := results.RowsAffected(); aErr == nil && affected > 0 {
+			if inserted > 0 {
 				return settings, nil
 			}
+			settings.Version = ov
 		}
 
-		results, err := dba.NewUpdate().
-			Model(settings).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			ExcludeColumn(cols.CreatedAt.Bare()).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := s.Save(ctx, db, settings); err != nil {
 			settings.Version = ov
+			if dberror.IsVersionConflict(err) {
+				return nil, errortypes.NewConflictError(
+					"Someone else changed these settings. Reload them and try again.",
+				)
+			}
+
 			return nil, err
-		}
-		affected, err := results.RowsAffected()
-		if err != nil {
-			settings.Version = ov
-			return nil, err
-		}
-		if affected == 0 {
-			settings.Version = ov
-			return nil, errortypes.NewConflictError(
-				"Someone else changed these settings. Reload them and try again.",
-			)
 		}
 
 		return settings, nil

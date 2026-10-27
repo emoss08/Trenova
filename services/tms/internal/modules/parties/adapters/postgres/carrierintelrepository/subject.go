@@ -4,34 +4,30 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tendercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const (
 	defaultCarrierSubjectLimit = 1000
 	maxCarrierSubjectLimit     = 5000
-	brokerCustomerCapacity     = 16
 	customerEntityName         = "Customer"
 	organizationEntityName     = "Organization"
 )
@@ -80,88 +76,47 @@ func NewSubjectRepository(p Params) carrierintelports.CarrierIntelSubjectReposit
 	}
 }
 
-func assignmentActivityQuery(db bun.IDB) *bun.SelectQuery {
-	carr := carriercol.CarrierColumns
-	casn := shipmentcol.CarrierAssignmentColumns
-	return db.NewSelect().
-		Model((*shipment.CarrierAssignment)(nil)).
-		Where(casn.CarrierID.EqColumn(carr.ID)).
-		Where(casn.OrganizationID.EqColumn(carr.OrganizationID)).
-		Where(casn.BusinessUnitID.EqColumn(carr.BusinessUnitID))
-}
-
-func tenderOfferActivityQuery(db bun.IDB) *bun.SelectQuery {
-	carr := carriercol.CarrierColumns
-	tof := tendercol.TenderOfferColumns
-	return db.NewSelect().
-		Model((*tender.TenderOffer)(nil)).
-		Where(tof.CarrierID.EqColumn(carr.ID)).
-		Where(tof.OrganizationID.EqColumn(carr.OrganizationID)).
-		Where(tof.BusinessUnitID.EqColumn(carr.BusinessUnitID))
-}
-
 func buildCarrierSubjectsQuery(
-	db bun.IDB,
 	req *carrierintelports.ListCarrierIntelSubjectsRequest,
 	limit int,
-) *bun.SelectQuery {
-	cols := carriercol.CarrierColumns
-	casn := shipmentcol.CarrierAssignmentColumns
-	tof := tendercol.TenderOfferColumns
+) *keel.Query[*carrier.Carrier] {
+	c := carrierdb.Carriers
+	ca := shipmentdb.CarrierAssignments
+	to := tenderdb.TenderOffers
 
-	lastAssignment := assignmentActivityQuery(db).ColumnExpr(casn.CreatedAt.Expr("MAX({})"))
-	lastOffer := tenderOfferActivityQuery(db).ColumnExpr(tof.CreatedAt.Expr("MAX({})"))
+	lastAssignment := keel.Scalar(ca.Pick(ca.CreatedAt.Max()).Where(ca.CarrierID.EqCol(c.ID)))
+	lastOffer := keel.Scalar(to.Pick(to.CreatedAt.Max()).Where(to.CarrierID.EqCol(c.ID)))
 
-	q := db.NewSelect().
-		Model((*carrier.Carrier)(nil)).
-		Column(
-			cols.ID.Bare(),
-			cols.Name.Bare(),
-			cols.DOTNumber.Bare(),
-			cols.MCNumber.Bare(),
-			cols.CarrierType.Bare(),
+	q := c.Pick(
+		c.ID,
+		c.Name.Coalesce(""),
+		c.DOTNumber,
+		c.MCNumber.Coalesce(""),
+		c.CarrierType,
+		keel.Int64Of(lastAssignment).Greatest(keel.Int64Of(lastOffer)),
+	).
+		Where(
+			c.DOTNumber.IsNotNull(),
+			keel.When(req.ActiveOnly, c.Status.Eq(carrier.StatusActive)),
+			keel.When(len(req.CarrierIDs) > 0, c.ID.In(req.CarrierIDs...)),
+			keel.When(!req.AfterID.IsNil(), c.ID.Gt(req.AfterID)),
 		).
-		ColumnExpr(
-			"GREATEST((?), (?)) AS ?",
-			lastAssignment,
-			lastOffer,
-			bun.Ident(carrierintelcol.CarrierMonitoringEnrollmentColumns.LastUsedAt.Bare()),
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return carriercol.CarrierScopeTenant(sq, req.TenantInfo).
-				Where(cols.DOTNumber.IsNotNull())
-		}).
-		Order(cols.ID.OrderAsc()).
-		Limit(int64(limit))
+		Order(c.ID.Asc()).
+		Limit(limit)
 
-	if req.ActiveOnly {
-		q = q.Where(cols.Status.Eq(), carrier.StatusActive)
-	}
-	if len(req.CarrierIDs) > 0 {
-		q = q.Where(cols.ID.In(), bun.List(req.CarrierIDs))
-	}
-	if !req.AfterID.IsNil() {
-		q = q.Where(cols.ID.Gt(), req.AfterID)
-	}
 	if req.UsedSince != nil {
-		since := *req.UsedSince
-		recentAssignment := assignmentActivityQuery(db).
-			ColumnExpr("1").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(casn.CreatedAt.Gte(), since).
-					WhereOr(casn.Status.In(), bun.List(openCarrierAssignmentStatuses))
-			})
-		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = sq.Where("EXISTS (?)", recentAssignment)
-			if req.IncludeOpenTenders {
-				openOffer := tenderOfferActivityQuery(db).
-					ColumnExpr("1").
-					Where(tof.Status.In(), bun.List(openTenderOfferStatuses))
-				sq = sq.WhereOr("EXISTS (?)", openOffer)
-			}
-			return sq
-		})
+		recentAssignment := keel.Exists(ca.Pick(ca.ID).Where(
+			ca.CarrierID.EqCol(c.ID),
+			keel.Or(
+				ca.CreatedAt.Gte(*req.UsedSince),
+				ca.Status.In(openCarrierAssignmentStatuses...),
+			),
+		))
+		openOffer := keel.Exists(to.Pick(to.ID).Where(
+			to.CarrierID.EqCol(c.ID),
+			to.Status.In(openTenderOfferStatuses...),
+		))
+		q = q.Where(keel.Or(recentAssignment, keel.When(req.IncludeOpenTenders, openOffer)))
 	}
 
 	return q
@@ -181,9 +136,12 @@ func (r *subjectRepository) ListCarrierSubjects(
 				maxCarrierSubjectLimit,
 			)
 
-			rows := make([]carrierSubjectRow, 0, limit)
-			if err := buildCarrierSubjectsQuery(r.db.DBForContext(ctx), req, limit).
-				Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[carrierSubjectRow](
+				ctx,
+				r.db.Keel(ctx),
+				buildCarrierSubjectsQuery(req, limit),
+			)
+			if err != nil {
 				r.l.Error("failed to list carrier intel carrier subjects", zap.Error(err))
 				return nil, fmt.Errorf("list carrier intel carrier subjects: %w", err)
 			}
@@ -220,37 +178,31 @@ func customerSubject(row *customerSubjectRow) carrierintelports.CarrierIntelSubj
 	}
 }
 
-func customerSubjectColumns(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := customercol.CustomerColumns
-	return q.Column(
-		cols.ID.Bare(),
-		cols.Name.Bare(),
-		cols.DOTNumber.Bare(),
-		cols.MCNumber.Bare(),
-	)
+func customerSubjectQuery(preds ...keel.Pred) *keel.Query[*customer.Customer] {
+	c := customerdb.Customers
+	return c.Pick(
+		c.ID,
+		c.Name.Coalesce(""),
+		c.DOTNumber.Coalesce(""),
+		c.MCNumber.Coalesce(""),
+	).Where(preds...)
 }
 
 func (r *subjectRepository) ListBrokerCustomerSubjects(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]carrierintelports.CarrierIntelSubject, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]carrierintelports.CarrierIntelSubject, error) {
-			cols := customercol.CustomerColumns
-			rows := make([]customerSubjectRow, 0, brokerCustomerCapacity)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*customer.Customer)(nil)).
-				Apply(customerSubjectColumns).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return customercol.CustomerScopeTenant(sq, tenantInfo).
-						Where(cols.BrokerVettingEnabled.IsTrue()).
-						Where(cols.DOTNumber.IsNotNull())
-				}).
-				Order(cols.ID.OrderAsc()).
-				Scan(ctx, &rows)
+			c := customerdb.Customers
+			rows, err := keel.Into[customerSubjectRow](
+				ctx,
+				r.db.Keel(ctx),
+				customerSubjectQuery(c.BrokerVettingEnabled.IsTrue(), c.DOTNumber.IsNotNull()).
+					Order(c.ID.Asc()),
+			)
 			if err != nil {
 				r.l.Error("failed to list carrier intel broker customer subjects", zap.Error(err))
 				return nil, fmt.Errorf("list carrier intel broker customer subjects: %w", err)
@@ -274,34 +226,26 @@ func (r *subjectRepository) GetOrganizationSubject(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
-			cols := tenantcol.OrganizationColumns
-			var (
-				name      string
-				dotNumber string
-			)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*tenant.Organization)(nil)).
-				Column(cols.Name.Bare(), cols.DOTNumber.Bare()).
-				Where(cols.ID.Eq(), tenantInfo.OrgID).
-				Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-				Scan(ctx, &name, &dotNumber)
+			o := tenantdb.Organizations
+			org, err := o.Pick(o.ID, o.Name, o.DOTNumber).
+				Where(o.ID.Eq(tenantInfo.OrgID)).
+				One(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, dberror.HandleNotFoundError(err, organizationEntityName)
+			}
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, dberror.HandleNotFoundError(err, organizationEntityName)
-				}
 				r.l.Error("failed to get carrier intel organization subject", zap.Error(err))
 				return nil, fmt.Errorf("get carrier intel organization subject: %w", err)
 			}
-			if dotNumber == "" {
+			if org.DOTNumber == "" {
 				return nil, nil //nolint:nilnil // an organization without a DOT number cannot be monitored
 			}
 
 			return &carrierintelports.CarrierIntelSubject{
 				SubjectType: carrierintel.SubjectTypeOrganization,
 				SubjectID:   tenantInfo.OrgID.String(),
-				Name:        name,
-				DOTNumber:   dotNumber,
+				Name:        org.Name,
+				DOTNumber:   org.DOTNumber,
 			}, nil
 		},
 	)
@@ -309,32 +253,28 @@ func (r *subjectRepository) GetOrganizationSubject(
 
 func (r *subjectRepository) GetCustomerSubject(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	customerID pulid.ID,
 ) (*carrierintelports.CarrierIntelSubject, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintelports.CarrierIntelSubject, error) {
-			row := new(customerSubjectRow)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*customer.Customer)(nil)).
-				Apply(customerSubjectColumns).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return customercol.CustomerScopeTenant(sq, tenantInfo).
-						Where(customercol.CustomerColumns.ID.Eq(), customerID)
-				}).
-				Scan(ctx, row)
+			c := customerdb.Customers
+			row, err := keel.IntoOne[customerSubjectRow](
+				ctx,
+				r.db.Keel(ctx),
+				customerSubjectQuery(c.ID.Eq(customerID)),
+			)
+			if dberror.IsNotFoundError(err) {
+				return nil, dberror.HandleNotFoundError(err, customerEntityName)
+			}
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, dberror.HandleNotFoundError(err, customerEntityName)
-				}
 				r.l.Error("failed to get carrier intel customer subject", zap.Error(err))
 				return nil, fmt.Errorf("get carrier intel customer subject: %w", err)
 			}
 
-			subject := customerSubject(row)
+			subject := customerSubject(&row)
 			return &subject, nil
 		},
 	)
@@ -342,7 +282,7 @@ func (r *subjectRepository) GetCustomerSubject(
 
 func (r *subjectRepository) ListExistingCarrierDOTs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	dotNumbers []string,
 ) (map[string]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]pulid.ID, error) {
@@ -350,18 +290,14 @@ func (r *subjectRepository) ListExistingCarrierDOTs(
 			return map[string]pulid.ID{}, nil
 		}
 
-		cols := carriercol.CarrierColumns
-		rows := make([]carrierDOTRow, 0, len(dotNumbers))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carrier.Carrier)(nil)).
-			Column(cols.ID.Bare(), cols.DOTNumber.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriercol.CarrierScopeTenant(sq, tenantInfo).
-					Where(cols.DOTNumber.In(), bun.List(dotNumbers))
-			}).
-			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx, &rows)
+		c := carrierdb.Carriers
+		rows, err := keel.Into[carrierDOTRow](
+			ctx,
+			r.db.Keel(ctx),
+			c.Pick(c.ID, c.DOTNumber).
+				Where(c.DOTNumber.In(dotNumbers...)).
+				Order(c.CreatedAt.Asc(), c.ID.Asc()),
+		)
 		if err != nil {
 			r.l.Error("failed to list existing carrier DOT numbers", zap.Error(err))
 			return nil, fmt.Errorf("list existing carrier DOT numbers: %w", err)

@@ -1,10 +1,7 @@
 package modules
 
 import (
-	"context"
-
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -27,10 +24,6 @@ func (f *defaultValidationEngineFactory) CreateEngineWithConfig(
 
 func ProvideValidationEngineFactory() ValidationEngineFactory {
 	return &defaultValidationEngineFactory{}
-}
-
-type TenantedValidatorProvider interface {
-	CreateValidatorFactory(getDB func(context.Context) (*bun.DB, error)) any
 }
 
 type ValidationContextFactory interface {

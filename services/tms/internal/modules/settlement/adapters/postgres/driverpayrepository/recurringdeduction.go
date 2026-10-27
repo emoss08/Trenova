@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var recurringDeductionErrors = dberror.Mapping{Entity: "RecurringDeduction"}
 
 type recurringDeductionRepository struct {
 	db *postgres.Connection
@@ -39,39 +38,19 @@ func (r *recurringDeductionRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*driverpay.RecurringDeduction], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*driverpay.RecurringDeduction, 0, limit)
+			rd := driverpaydb.RecurringDeductions
+			q := rd.Where(
+				searchPred(req.Filter.Query, rd.Description),
+				when(!req.WorkerID.IsNil(), rd.WorkerID.Eq(req.WorkerID)),
+				when(req.Status != "", rd.Status.Eq(req.Status)),
+			).Load(rd.Worker(), rd.PayCode()).Order(rd.CreatedAt.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where("rded.organization_id = ?", req.Filter.TenantInfo.OrgID).
-				Where("rded.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-				Relation("PayCode", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-				Order("rded.created_at DESC").
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				query = query.Where("rded.description ILIKE ?", "%"+req.Filter.Query+"%")
-			}
-			if !req.WorkerID.IsNil() {
-				query = query.Where("rded.worker_id = ?", req.WorkerID)
-			}
-			if req.Status != "" {
-				query = query.Where("rded.status = ?", req.Status)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list recurring deductions: %w", err)
 			}
 
-			return &pagination.ListResult[*driverpay.RecurringDeduction]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -80,60 +59,27 @@ func (r *recurringDeductionRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListRecurringDeductionConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.RecurringDeduction], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.RecurringDeduction], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*driverpay.RecurringDeduction)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"rded",
-							req.Filter,
-							(*driverpay.RecurringDeduction)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count recurring deductions", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			rd := driverpaydb.RecurringDeductions
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*driverpay.RecurringDeduction]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*driverpay.RecurringDeduction) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(driverpaycol.RecurringDeductionTable.All()).
-							Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-							Relation("PayCode", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							"rded",
-							req.Filter,
-							req.Cursor,
-							(*driverpay.RecurringDeduction)(nil),
-						)
+				r.db.Keel(ctx),
+				rd.Query(),
+				&listquery.Request[driverpay.RecurringDeduction]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[*driverpay.RecurringDeduction],
+					) *keel.Query[*driverpay.RecurringDeduction] {
+						return q.Load(rd.Worker(), rd.PayCode())
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan recurring deductions", zap.Error(err))
+				r.l.Error("failed to list recurring deductions", zap.Error(err))
 				return nil, err
 			}
 
@@ -147,19 +93,14 @@ func (r *recurringDeductionRepository) GetByID(
 	req driverpayports.GetRecurringDeductionByIDRequest,
 ) (*driverpay.RecurringDeduction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.RecurringDeduction, error) {
-		entity := new(driverpay.RecurringDeduction)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("rded.id = ?", req.ID).
-			Where("rded.organization_id = ?", req.TenantInfo.OrgID).
-			Where("rded.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Relation("PayCode", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Scan(ctx)
+		rd := driverpaydb.RecurringDeductions
+		entity, err := rd.Where(rd.ID.Eq(req.ID)).
+			Load(rd.Worker(), rd.PayCode()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "RecurringDeduction")
+			return nil, recurringDeductionErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -169,25 +110,17 @@ func (r *recurringDeductionRepository) ListActiveForWorker(
 	req driverpayports.ListActiveDeductionsForWorkerRequest,
 ) ([]*driverpay.RecurringDeduction, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.RecurringDeduction, error) {
-		items := make([]*driverpay.RecurringDeduction, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("rded.organization_id = ?", req.TenantInfo.OrgID).
-			Where("rded.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("rded.worker_id = ?", req.WorkerID).
-			Where("rded.status = ?", driverpay.DeductionStatusActive).
-			Where("rded.start_date <= ?", req.AsOf).
-			Where("rded.end_date IS NULL OR rded.end_date > ?", req.AsOf).
-			// Priority first: when pay will not cover every deduction, a court
-			// order has to be taken before a voluntary one. Creation order is the
-			// tie-break, which is what this used to sort by alone.
-			Order("rded.priority ASC").
-			Order("rded.created_at ASC").
-			Scan(ctx)
+		rd := driverpaydb.RecurringDeductions
+		items, err := rd.Where(
+			rd.WorkerID.Eq(req.WorkerID),
+			rd.Status.Eq(driverpay.DeductionStatusActive),
+			rd.StartDate.Lte(req.AsOf),
+			openAfter(rd.EndDate, req.AsOf),
+		).Order(rd.Priority.Asc(), rd.CreatedAt.Asc()).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list active deductions for worker: %w", err)
 		}
+
 		return items, nil
 	})
 }
@@ -197,18 +130,13 @@ func (r *recurringDeductionRepository) Create(
 	entity *driverpay.RecurringDeduction,
 ) (*driverpay.RecurringDeduction, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.RecurringDeduction, error) {
-		if entity.ID.IsNil() {
-			entity.ID = pulid.MustNew("rded_")
+		if err := driverpaydb.RecurringDeductions.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, recurringDeductionErrors.Map(err, entity.ID.String())
 		}
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create recurring deduction: %w", err)
-		}
+
 		return r.GetByID(ctx, driverpayports.GetRecurringDeductionByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:         entity.ID,
+			TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		})
 	})
 }
@@ -218,41 +146,28 @@ func (r *recurringDeductionRepository) Update(
 	entity *driverpay.RecurringDeduction,
 ) (*driverpay.RecurringDeduction, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.RecurringDeduction, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("pay_code_id = ?", entity.PayCodeID).
-			Set("status = ?", entity.Status).
-			Set("frequency = ?", entity.Frequency).
-			Set("description = ?", entity.Description).
-			Set("amount_minor = ?", entity.AmountMinor).
-			Set("total_cap_minor = ?", entity.TotalCapMinor).
-			Set("deducted_to_date_minor = ?", entity.DeductedToDateMinor).
-			Set("start_date = ?", entity.StartDate).
-			Set("end_date = ?", entity.EndDate).
-			Set("escrow_account_id = ?", entity.EscrowAccountID).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update recurring deduction: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"RecurringDeduction",
-			entity.ID.String(),
+		rd := driverpaydb.RecurringDeductions
+		if err := rd.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			rd.PayCodeID,
+			rd.Status,
+			rd.Frequency,
+			rd.Description,
+			rd.AmountMinor,
+			rd.TotalCapMinor,
+			rd.DeductedToDateMinor,
+			rd.StartDate,
+			rd.EndDate,
+			rd.EscrowAccountID,
 		); err != nil {
-			return nil, err
+			return nil, recurringDeductionErrors.Map(err, entity.ID.String())
 		}
+
 		return r.GetByID(ctx, driverpayports.GetRecurringDeductionByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:         entity.ID,
+			TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		})
 	})
 }

@@ -2,21 +2,25 @@ package rbacrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	edgeErrors       = dberror.Mapping{Entity: "Role hierarchy edge"}
+	roleErrors       = dberror.Mapping{Entity: "Role"}
+	constraintErrors = dberror.Mapping{Entity: "Role constraint"}
 )
 
 type Params struct {
@@ -38,20 +42,33 @@ func New(p Params) permissionports.RBACRepository {
 	}
 }
 
+func forTenant[T any](
+	ctx context.Context,
+	q *keel.Query[*T],
+	preds ...keel.Pred,
+) *keel.Query[*T] {
+	if dbscope.IsSystem(ctx) {
+		q = q.AllTenants()
+	}
+
+	return q.Where(preds...)
+}
+
+type rolePermissionCount struct {
+	RoleID          pulid.ID
+	PermissionCount int
+}
+
 func (r *repository) ListRoleHierarchyEdges(
 	ctx context.Context,
 	orgID pulid.ID,
 ) ([]*permission.RoleHierarchyEdge, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.RoleHierarchyEdge, error) {
-		edges := make([]*permission.RoleHierarchyEdge, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&edges).
-			Relation("SeniorRole").
-			Relation("JuniorRole").
-			Where("rhe.organization_id = ?", orgID).
-			Order("rhe.created_at ASC").
-			Scan(ctx)
-		return edges, err
+		rhe := permissiondb.RoleHierarchyEdges
+		return forTenant(ctx, rhe.Query(), rhe.OrganizationID.Eq(orgID)).
+			Load(rhe.SeniorRole(), rhe.JuniorRole()).
+			Order(rhe.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -72,24 +89,24 @@ func (r *repository) UpsertRoleHierarchyEdge(
 			return permissionports.ErrCircularRoleHierarchy
 		}
 
-		edge := &permission.RoleHierarchyEdge{
-			SeniorRoleID:   req.SeniorRoleID,
-			JuniorRoleID:   req.JuniorRoleID,
-			OrganizationID: req.OrganizationID,
-			BusinessUnitID: req.BusinessUnitID,
-			CreatedBy:      req.ActorID,
+		rhe := permissiondb.RoleHierarchyEdges
+		if _, err = rhe.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*permission.RoleHierarchyEdge{{
+				SeniorRoleID:   req.SeniorRoleID,
+				JuniorRoleID:   req.JuniorRoleID,
+				OrganizationID: req.OrganizationID,
+				BusinessUnitID: req.BusinessUnitID,
+				CreatedBy:      req.ActorID,
+			}},
+			rhe.SeniorRoleID,
+			rhe.JuniorRoleID,
+		); err != nil {
+			return edgeErrors.Map(err, "")
 		}
 
-		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			if _, err = tx.NewInsert().
-				Model(edge).
-				On(`CONFLICT ("senior_role_id", "junior_role_id") DO NOTHING`).
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			return r.syncParentRoleIDs(ctx, tx, req.SeniorRoleID)
-		})
+		return r.syncParentRoleIDs(ctx, req.SeniorRoleID)
 	})
 }
 
@@ -98,25 +115,23 @@ func (r *repository) DeleteRoleHierarchyEdge(
 	req permissionports.DeleteRoleHierarchyEdgeRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		var seniorRoleID pulid.ID
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			edge := new(permission.RoleHierarchyEdge)
-			if scanErr := tx.NewSelect().
-				Model(edge).
-				Where("rhe.id = ?", req.EdgeID).
-				Where("rhe.organization_id = ?", req.OrganizationID).
-				Scan(ctx); scanErr != nil {
-				return dberror.HandleNotFoundError(scanErr, "Role hierarchy edge")
-			}
+		rhe := permissiondb.RoleHierarchyEdges
+		db := r.db.Keel(ctx)
+		edge, err := forTenant(
+			ctx,
+			rhe.Query(),
+			rhe.ID.Eq(req.EdgeID),
+			rhe.OrganizationID.Eq(req.OrganizationID),
+		).One(ctx, db)
+		if err != nil {
+			return edgeErrors.Map(err, req.EdgeID.String())
+		}
 
-			seniorRoleID = edge.SeniorRoleID
-			if _, delErr := tx.NewDelete().Model(edge).WherePK().Exec(ctx); delErr != nil {
-				return delErr
-			}
+		if _, err = forTenant(ctx, rhe.Query(), rhe.ID.Eq(edge.ID)).Delete(ctx, db); err != nil {
+			return edgeErrors.Map(err, edge.ID.String())
+		}
 
-			return r.syncParentRoleIDs(ctx, tx, seniorRoleID)
-		})
-		return err
+		return r.syncParentRoleIDs(ctx, edge.SeniorRoleID)
 	})
 }
 
@@ -168,61 +183,65 @@ func (r *repository) GetAuthorizedRoles(
 	userID, orgID pulid.ID,
 ) ([]*permission.Role, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.Role, error) {
-		roles := make([]*permission.Role, 0)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&roles).
-			Join("JOIN user_role_assignments AS ura ON ura.role_id = r.id").
-			Where("ura.user_id = ?", userID).
-			Where("ura.organization_id = ?", orgID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("ura.expires_at IS NULL").
-					WhereOr("ura.expires_at > " + dbhelper.NowEpoch)
-			}).
-			Order("r.name ASC").
-			Scan(ctx)
-		return roles, err
+		ro := permissiondb.Roles
+		ura := permissiondb.UserRoleAssignments
+		return forTenant(
+			ctx,
+			ro.Join(ura, ura.RoleID.EqCol(ro.ID)),
+			ura.UserID.Eq(userID),
+			ura.OrganizationID.Eq(orgID),
+			keel.Or(
+				ura.ExpiresAt.IsNull(),
+				keel.NowEpoch().LtExpr(ura.ExpiresAt),
+			),
+		).
+			Order(ro.Name.Asc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
-// rolePermissionCountQuery counts the distinct resource/operation grants a role carries,
-// following the same inheritance edge the permission engine follows when it merges a
-// role's permissions: parent_role_ids, walked transitively. Counting only a role's own
-// resource_permissions rows would report 0 for a role that exists purely to inherit.
-const rolePermissionCountQuery = `
-WITH RECURSIVE role_closure AS (
-	SELECT r.id AS root_id, r.id AS role_id, r.parent_role_ids
-	FROM roles r
-	WHERE r.id IN (?)
-	UNION
-	SELECT c.root_id, p.id, p.parent_role_ids
-	FROM role_closure c
-	JOIN roles p ON p.id = ANY(c.parent_role_ids)
-)
-SELECT c.root_id AS role_id,
-	COUNT(DISTINCT rp.resource || ':' || op) AS permission_count
-FROM role_closure c
-LEFT JOIN resource_permissions rp ON rp.role_id = c.role_id
-LEFT JOIN LATERAL unnest(rp.operations) AS op ON TRUE
-GROUP BY c.root_id`
+func rolePermissionCounts(ctx context.Context, roleIDs []pulid.ID) keel.Projection {
+	ro := permissiondb.Roles
+	parent := ro.As("parent_role")
+	closure := keel.RecursiveCTE(
+		"role_closure",
+		[]string{"root_id", "role_id", "parent_role_ids"},
+		forTenant(ctx, ro.Pick(ro.ID, ro.ID, ro.ParentRoleIDs), ro.ID.In(roleIDs...)),
+	)
+	closure.Recurse(forTenant(
+		ctx,
+		parent.Pick(closure.Col("root_id"), parent.ID, parent.ParentRoleIDs).
+			Join(closure, parent.ID.InArray(keel.StringArrayOf(closure.Col("parent_role_ids")))),
+	)).Distinct()
+
+	rp := permissiondb.ResourcePermissions
+	op := keel.Rows("op", []string{"op"}, rp.Operations.Unnest())
+	root := closure.Col("root_id")
+
+	return forTenant(ctx, closure.Query().
+		With(closure).
+		LeftJoin(rp, rp.RoleID.EqCol(closure.Col("role_id"))).
+		LeftJoinLateral(op).
+		Pick(root, keel.CountOf(rp.Resource.Cat(keel.Text(":"), keel.StringOf(op.Col("op")))).Distinct()).
+		Group(root))
+}
 
 func (r *repository) CountRolePermissions(
 	ctx context.Context,
 	roleIDs []pulid.ID,
 ) (map[pulid.ID]int, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		counts := make(map[pulid.ID]int, len(roleIDs))
 		if len(roleIDs) == 0 {
 			return counts, nil
 		}
 
-		rows := make([]struct {
-			RoleID          pulid.ID `bun:"role_id"`
-			PermissionCount int      `bun:"permission_count"`
-		}, 0, len(roleIDs))
-
-		if err := r.db.DBForContext(ctx).
-			NewRaw(rolePermissionCountQuery, bun.List(roleIDs)).
-			Scan(ctx, &rows); err != nil {
+		rows, err := keel.Into[rolePermissionCount](
+			ctx,
+			r.db.Keel(ctx),
+			rolePermissionCounts(ctx, roleIDs),
+		)
+		if err != nil {
 			return nil, err
 		}
 
@@ -237,22 +256,16 @@ func (r *repository) ListRoleConstraints(
 	ctx context.Context,
 	req permissionports.ListRoleConstraintsRequest,
 ) ([]*permission.RoleConstraint, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*permission.RoleConstraint, error) {
-		constraints := make([]*permission.RoleConstraint, 0)
-		query := r.db.DBForContext(ctx).NewSelect().
-			Model(&constraints).
-			Where("rc.organization_id = ?", req.OrganizationID).
-			Order("rc.created_at DESC")
-		if req.Type != "" {
-			query = query.Where("rc.type = ?", req.Type)
-		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, err
-		}
-		if err := r.loadConstraintRoles(ctx, constraints); err != nil {
-			return nil, err
-		}
-		return constraints, nil
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*permission.RoleConstraint, error) {
+		rc := permissiondb.RoleConstraints
+		return withConstraintRoles(forTenant(
+			ctx,
+			rc.Query(),
+			rc.OrganizationID.Eq(req.OrganizationID),
+			keel.When(req.Type != "", rc.Type.Eq(req.Type)),
+		)).
+			Order(rc.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -260,17 +273,16 @@ func (r *repository) GetRoleConstraint(
 	ctx context.Context,
 	orgID, constraintID pulid.ID,
 ) (*permission.RoleConstraint, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*permission.RoleConstraint, error) {
-		constraint := new(permission.RoleConstraint)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(constraint).
-			Where("rc.id = ?", constraintID).
-			Where("rc.organization_id = ?", orgID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Role constraint")
-		}
-		if err := r.loadConstraintRoles(ctx, []*permission.RoleConstraint{constraint}); err != nil {
-			return nil, err
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*permission.RoleConstraint, error) {
+		rc := permissiondb.RoleConstraints
+		constraint, err := withConstraintRoles(forTenant(
+			ctx,
+			rc.Query(),
+			rc.ID.Eq(constraintID),
+			rc.OrganizationID.Eq(orgID),
+		)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, constraintErrors.Map(err, constraintID.String())
 		}
 		return constraint, nil
 	})
@@ -282,56 +294,56 @@ func (r *repository) SaveRoleConstraint(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		constraint := req.Constraint
-		return r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			if constraint.ID.IsNil() {
-				if _, err := tx.NewInsert().Model(constraint).Returning("*").Exec(ctx); err != nil {
-					return err
-				}
-			} else {
-				result, err := tx.NewUpdate().
-					Model(constraint).
-					WherePK().
-					Where("organization_id = ?", constraint.OrganizationID).
-					Where("business_unit_id = ?", constraint.BusinessUnitID).
-					Column("name", "description", "type", "max_roles", "enabled", "updated_at").
-					Returning("*").
-					Exec(ctx)
-				if err != nil {
-					return err
-				}
-				if err = dberror.CheckRowsAffected(
-					result,
-					"Role constraint",
+		rc := permissiondb.RoleConstraints
+		db := r.db.Keel(ctx)
+
+		if constraint.ID.IsNil() {
+			if err := rc.Create(ctx, db, constraint); err != nil {
+				return constraintErrors.Map(err, "")
+			}
+		} else if err := rc.Save(
+			ctx,
+			db,
+			constraint,
+			rc.Name,
+			rc.Description,
+			rc.Type,
+			rc.MaxRoles,
+			rc.Enabled,
+		); err != nil {
+			if dberror.IsNotFoundError(err) {
+				return dberror.CreateVersionMismatchError(
+					constraintErrors.Entity,
 					constraint.ID.String(),
-				); err != nil {
-					return err
-				}
+				)
 			}
+			return constraintErrors.Map(err, constraint.ID.String())
+		}
 
-			if _, err := tx.NewDelete().
-				Model((*permission.RoleConstraintRole)(nil)).
-				Where("role_constraint_id = ?", constraint.ID).
-				Where("organization_id = ?", constraint.OrganizationID).
-				Where("business_unit_id = ?", constraint.BusinessUnitID).
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			members := make([]*permission.RoleConstraintRole, 0, len(req.RoleIDs))
-			for _, roleID := range req.RoleIDs {
-				members = append(members, &permission.RoleConstraintRole{
-					RoleConstraintID: constraint.ID,
-					RoleID:           roleID,
-					OrganizationID:   constraint.OrganizationID,
-					BusinessUnitID:   constraint.BusinessUnitID,
-				})
-			}
-			if len(members) == 0 {
-				return nil
-			}
-			_, err := tx.NewInsert().Model(&members).Exec(ctx)
+		rcr := permissiondb.RoleConstraintRoles
+		if _, err := forTenant(
+			ctx,
+			rcr.Query(),
+			rcr.RoleConstraintID.Eq(constraint.ID),
+		).Delete(ctx, db); err != nil {
 			return err
-		})
+		}
+
+		if len(req.RoleIDs) == 0 {
+			return nil
+		}
+
+		members := make([]*permission.RoleConstraintRole, 0, len(req.RoleIDs))
+		for _, roleID := range req.RoleIDs {
+			members = append(members, &permission.RoleConstraintRole{
+				RoleConstraintID: constraint.ID,
+				RoleID:           roleID,
+				OrganizationID:   constraint.OrganizationID,
+				BusinessUnitID:   constraint.BusinessUnitID,
+			})
+		}
+
+		return rcr.CreateMany(ctx, db, members)
 	})
 }
 
@@ -340,11 +352,13 @@ func (r *repository) DeleteRoleConstraint(
 	orgID, constraintID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		_, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*permission.RoleConstraint)(nil)).
-			Where("id = ?", constraintID).
-			Where("organization_id = ?", orgID).
-			Exec(ctx)
+		rc := permissiondb.RoleConstraints
+		_, err := forTenant(
+			ctx,
+			rc.Query(),
+			rc.ID.Eq(constraintID),
+			rc.OrganizationID.Eq(orgID),
+		).Delete(ctx, r.db.Keel(ctx))
 		return err
 	})
 }
@@ -381,32 +395,28 @@ func (r *repository) RunPreflight(
 	ctx context.Context,
 	orgID pulid.ID,
 ) (*permissionports.RBACPreflightReport, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*permissionports.RBACPreflightReport, error) {
 			report := &permissionports.RBACPreflightReport{}
 
-			var assignments []struct {
-				UserID pulid.ID `bun:"user_id"`
-			}
-			if err := r.db.DBForContext(ctx).NewSelect().
-				TableExpr("user_role_assignments").
-				ColumnExpr("DISTINCT user_id").
-				Where("organization_id = ?", orgID).
-				Scan(ctx, &assignments); err != nil {
+			ura := permissiondb.UserRoleAssignments
+			userIDs, err := keel.Into[pulid.ID](
+				ctx,
+				r.db.Keel(ctx),
+				forTenant(ctx, ura.Query(), ura.OrganizationID.Eq(orgID)).
+					Group(ura.UserID).
+					Pick(ura.UserID),
+			)
+			if err != nil {
 				return nil, err
 			}
 
-			for _, assignment := range assignments {
-				violations, err := r.ValidateStaticSeparationOfDuty(
-					ctx,
-					assignment.UserID,
-					orgID,
-					nil,
-				)
-				if err != nil {
-					return nil, err
+			for _, userID := range userIDs {
+				violations, vErr := r.ValidateStaticSeparationOfDuty(ctx, userID, orgID, nil)
+				if vErr != nil {
+					return nil, vErr
 				}
 				report.SSDViolations = append(report.SSDViolations, violations...)
 			}
@@ -418,109 +428,63 @@ func (r *repository) RunPreflight(
 
 func (r *repository) getInheritedRoleIDs(ctx context.Context, roleID pulid.ID) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		var edgeIDs []pulid.ID
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*permission.RoleHierarchyEdge)(nil)).
-			Column("junior_role_id").
-			Where("senior_role_id = ?", roleID).
-			Scan(ctx, &edgeIDs); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		db := r.db.Keel(ctx)
+		juniors, err := r.juniorRoleIDs(ctx, roleID)
+		if err != nil {
 			return nil, err
 		}
-		if len(edgeIDs) > 0 {
-			return edgeIDs, nil
+		if len(juniors) > 0 {
+			return juniors, nil
 		}
 
-		role := new(permission.Role)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(role).
-			Column("parent_role_ids").
-			Where("r.id = ?", roleID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Role")
+		ro := permissiondb.Roles
+		role, err := forTenant(ctx, ro.Pick(ro.ParentRoleIDs), ro.ID.Eq(roleID)).One(ctx, db)
+		if err != nil {
+			return nil, roleErrors.Map(err, roleID.String())
 		}
 		return role.ParentRoleIDs, nil
 	})
 }
 
-func (r *repository) syncParentRoleIDs(
-	ctx context.Context,
-	tx bun.Tx,
-	seniorRoleID pulid.ID,
-) error {
-	var juniorRoleIDs []pulid.ID
-	if err := tx.NewSelect().
-		Model((*permission.RoleHierarchyEdge)(nil)).
-		Column("junior_role_id").
-		Where("senior_role_id = ?", seniorRoleID).
-		Scan(ctx, &juniorRoleIDs); err != nil && !errors.Is(err, sql.ErrNoRows) {
+func (r *repository) juniorRoleIDs(ctx context.Context, seniorRoleID pulid.ID) ([]pulid.ID, error) {
+	rhe := permissiondb.RoleHierarchyEdges
+	return keel.Into[pulid.ID](
+		ctx,
+		r.db.Keel(ctx),
+		forTenant(ctx, rhe.Pick(rhe.JuniorRoleID), rhe.SeniorRoleID.Eq(seniorRoleID)),
+	)
+}
+
+func (r *repository) syncParentRoleIDs(ctx context.Context, seniorRoleID pulid.ID) error {
+	juniors, err := r.juniorRoleIDs(ctx, seniorRoleID)
+	if err != nil {
 		return err
 	}
 
-	_, err := tx.NewUpdate().
-		Model((*permission.Role)(nil)).
-		Set("parent_role_ids = ?", pgdialect.Array(juniorRoleIDs)).
-		Where("id = ?", seniorRoleID).
-		Exec(ctx)
+	parents := make([]string, len(juniors))
+	for i, id := range juniors {
+		parents[i] = id.String()
+	}
+
+	ro := permissiondb.Roles
+	_, err = forTenant(ctx, ro.Query(), ro.ID.Eq(seniorRoleID)).
+		Update(ctx, r.db.Keel(ctx), ro.ParentRoleIDs.To(parents))
 	return err
 }
 
-func (r *repository) loadConstraintRoles(
-	ctx context.Context,
-	constraints []*permission.RoleConstraint,
-) error {
-	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
-		if len(constraints) == 0 {
-			return nil
-		}
-
-		ids := make([]pulid.ID, 0, len(constraints))
-		byID := make(map[pulid.ID]*permission.RoleConstraint, len(constraints))
-		for _, constraint := range constraints {
-			ids = append(ids, constraint.ID)
-			byID[constraint.ID] = constraint
-		}
-
-		var rows []struct {
-			ConstraintID   pulid.ID                    `bun:"role_constraint_id"`
-			RoleID         pulid.ID                    `bun:"role_id"`
-			BusinessUnitID pulid.ID                    `bun:"business_unit_id"`
-			OrganizationID pulid.ID                    `bun:"organization_id"`
-			Name           string                      `bun:"name"`
-			Description    string                      `bun:"description"`
-			MaxSensitivity permission.FieldSensitivity `bun:"max_sensitivity"`
-			IsSystem       bool                        `bun:"is_system"`
-		}
-		if err := r.db.DBForContext(ctx).NewSelect().
-			TableExpr("role_constraint_roles AS rcr").
-			ColumnExpr("rcr.role_constraint_id").
-			ColumnExpr("r.id AS role_id").
-			ColumnExpr("r.business_unit_id").
-			ColumnExpr("r.organization_id").
-			ColumnExpr("r.name").
-			ColumnExpr("r.description").
-			ColumnExpr("r.max_sensitivity").
-			ColumnExpr("r.is_system").
-			Join("JOIN roles AS r ON r.id = rcr.role_id").
-			Where("rcr.role_constraint_id IN (?)", bun.List(ids)).
-			Scan(ctx, &rows); err != nil {
-			return err
-		}
-
-		for _, row := range rows {
-			if constraint := byID[row.ConstraintID]; constraint != nil {
-				constraint.Roles = append(constraint.Roles, &permission.Role{
-					ID:             row.RoleID,
-					BusinessUnitID: row.BusinessUnitID,
-					OrganizationID: row.OrganizationID,
-					Name:           row.Name,
-					Description:    row.Description,
-					MaxSensitivity: row.MaxSensitivity,
-					IsSystem:       row.IsSystem,
-				})
-			}
-		}
-		return nil
-	})
+func withConstraintRoles(
+	q *keel.Query[*permission.RoleConstraint],
+) *keel.Query[*permission.RoleConstraint] {
+	roles := permissiondb.RoleConstraints.Roles()
+	return q.Load(roles.Pick(
+		roles.ID,
+		roles.BusinessUnitID,
+		roles.OrganizationID,
+		roles.Name,
+		roles.Description,
+		roles.MaxSensitivity,
+		roles.IsSystem,
+	))
 }
 
 func (r *repository) validateConstraints(

@@ -7,16 +7,17 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -144,19 +145,22 @@ func TestSearch_UsesThePartialHNSWIndexForItsDimensions(t *testing.T) {
 	require.NoError(t, err)
 
 	var explained []string
-	err = h.db.RunInTx(h.ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		for _, setting := range []string{
-			"SET LOCAL enable_seqscan = off",
-			"SET LOCAL enable_sort = off",
-			setIterativeScan,
-		} {
-			if _, execErr := tx.ExecContext(ctx, setting); execErr != nil {
-				return execErr
-			}
+	settings := kernelports.TxOptions{Settings: []kernelports.TxSetting{
+		{Name: "enable_seqscan", Value: "off"},
+		{Name: "enable_sort", Value: "off"},
+		{Name: "hnsw.iterative_scan", Value: "relaxed_order"},
+	}}
+	err = h.conn.Transact(h.ctx, settings, func(ctx context.Context) error {
+		db := h.conn.Keel(ctx)
+
+		query, args, renderErr := searchQuery(req, plan).ToSQL(ctx, db)
+		if renderErr != nil {
+			return renderErr
 		}
 
-		query := searchQuery(tx, req, plan).String()
-		return tx.NewRaw("EXPLAIN "+query).Scan(ctx, &explained)
+		var queryErr error
+		explained, queryErr = keel.QueryAll(ctx, db, pgx.RowTo[string], "EXPLAIN "+query, args...)
+		return queryErr
 	})
 	require.NoError(t, err)
 
@@ -234,14 +238,10 @@ func TestReplaceChunks_KeepsUnchangedHashesAndDropsRemovedChunks(t *testing.T) {
 func (h *harness) rowVersion(t *testing.T, sourceID pulid.ID, chunkIndex int) string {
 	t.Helper()
 
-	cols := airetrievalcol.EmbeddingColumns
-	var version string
-	err := h.db.NewSelect().
-		Model((*airetrieval.Embedding)(nil)).
-		ColumnExpr(airetrievalcol.EmbeddingTable.Alias+".xmin::text").
-		Where(cols.SourceID.Eq(), sourceID).
-		Where(cols.ChunkIndex.Eq(), chunkIndex).
-		Scan(h.ctx, &version)
+	e := airetrievaldb.Embeddings
+	version, err := keel.IntoOne[string](h.ctx, h.db, e.
+		Where(e.SourceID.Eq(sourceID), e.ChunkIndex.Eq(int64(chunkIndex))).
+		Pick(keel.Raw("xmin::text")))
 	require.NoError(t, err)
 
 	return version

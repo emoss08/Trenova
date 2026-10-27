@@ -174,6 +174,69 @@ func TestRun_SaysWhenADocumentCouldNotBeKept(t *testing.T) {
 	assert.Contains(t, result.Messages[2].Content, "Put the text in your reply")
 }
 
+// A document that publishes an analysis names it, and the recorder adds it
+// from what the analysis kept; the same analysis named twice is added once.
+func TestRun_PublishesTheAnalysesADocumentNames(t *testing.T) {
+	t.Parallel()
+
+	analysis := pulid.MustNew("art_")
+	observer := &recordingObserver{shown: &agentports.ShownArtifact{
+		ID: pulid.MustNew("art_"), Kind: "document", Title: "Lane brief",
+	}}
+	runWithObserver(t, observer.observe, nil,
+		toolTurn(publishArtifactName, map[string]any{
+			"title":    "Lane brief",
+			"body":     "Revenue is spread thin.",
+			"analyses": []any{analysis.String(), analysis.String()},
+		}),
+		textTurn("The brief is beside the conversation."),
+	)
+
+	require.Len(t, observer.seen, 1)
+	document, ok := observer.seen[0].Data.(agentports.PublishedDocument)
+	require.True(t, ok)
+	assert.Equal(t, []pulid.ID{analysis}, document.Analyses)
+}
+
+// An analysis named by something that is not an id is refused before
+// anything is kept.
+func TestRun_RefusesAnAnalysisThatIsNotAnID(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{}
+	result, _ := runWithObserver(t, observer.observe, nil,
+		toolTurn(publishArtifactName, map[string]any{
+			"title": "Brief", "body": "# Brief", "analyses": []any{"lanes"},
+		}),
+		textTurn("Sorry."),
+	)
+
+	assert.Empty(t, observer.seen)
+	assert.True(t, result.Messages[2].ToolFailed)
+	assert.Contains(t, result.Messages[2].Content, "artifactId an analysis_run result kept")
+}
+
+// A publish the model can fix is answered as one: it is told to send the call
+// again, never to put the text in its reply, which for an analysis would be
+// the retyping that publishing it replaces.
+func TestRun_AFixablePublishIsSentAgainNotRetyped(t *testing.T) {
+	t.Parallel()
+
+	observer := &recordingObserver{err: &agentports.PublishMistake{
+		Reason: "an analysis it names is not one this conversation kept",
+	}}
+	result, _ := runWithObserver(t, observer.observe, nil,
+		toolTurn(publishArtifactName, map[string]any{"title": "Brief", "body": "# Brief"}),
+		textTurn("Sorry."),
+	)
+
+	content := result.Messages[2].Content
+	assert.True(t, result.Messages[2].ToolFailed)
+	assert.Contains(t, content, "an analysis it names is not one this conversation kept")
+	assert.Contains(t, content, "Fix the call and send it again")
+	assert.NotContains(t, content, "Put the text in your reply")
+}
+
 // A publish with nothing in it is refused before anything is kept.
 func TestRun_RefusesAnEmptyDocument(t *testing.T) {
 	t.Parallel()

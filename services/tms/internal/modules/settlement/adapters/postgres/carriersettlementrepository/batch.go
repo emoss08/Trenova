@@ -2,25 +2,24 @@ package carriersettlementrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+const batchAggregateCTE = "agg"
+
+var batchErrors = dberror.Mapping{Entity: "CarrierSettlementBatch"}
 
 type batchRepository struct {
 	db *postgres.Connection
@@ -42,34 +41,18 @@ func (r *batchRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CarrierSettlementBatch], error) {
-			cols := carriersettlementcol.CarrierSettlementBatchColumns
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*carriersettlement.CarrierSettlementBatch, 0, limit)
+			b := carriersettlementdb.CarrierSettlementBatches
+			q := b.Where(
+				when(req.Filter.Query != "", b.Name.ContainsFold(req.Filter.Query)),
+				when(req.Status != "", b.Status.Eq(req.Status)),
+			).Order(b.PeriodEnd.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Apply(carriersettlementcol.CarrierSettlementBatchApplyTenant(req.Filter.TenantInfo)).
-				Order(cols.PeriodEnd.OrderDesc()).
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				query = query.Where(cols.Name.ILike(), "%"+req.Filter.Query+"%")
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list carrier settlement batches: %w", err)
 			}
 
-			return &pagination.ListResult[*carriersettlement.CarrierSettlementBatch]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -78,58 +61,21 @@ func (r *batchRepository) ListConnection(
 	ctx context.Context,
 	req *carriersettlementports.ListCarrierSettlementBatchConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CarrierSettlementBatch], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*carriersettlement.CarrierSettlementBatch], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*carriersettlement.CarrierSettlementBatch)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							carriersettlementcol.CarrierSettlementBatchTable.Alias,
-							req.Filter,
-							(*carriersettlement.CarrierSettlementBatch)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count carrier settlement batches", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*carriersettlement.CarrierSettlementBatch]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*carriersettlement.CarrierSettlementBatch) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(carriersettlementcol.CarrierSettlementBatchTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							carriersettlementcol.CarrierSettlementBatchTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*carriersettlement.CarrierSettlementBatch)(nil),
-						)
-					},
+				r.db.Keel(ctx),
+				carriersettlementdb.CarrierSettlementBatches.Query(),
+				&listquery.Request[carriersettlement.CarrierSettlementBatch]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan carrier settlement batches", zap.Error(err))
+				r.l.Error("failed to list carrier settlement batches", zap.Error(err))
 				return nil, err
 			}
 
@@ -146,31 +92,18 @@ func (r *batchRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-			cols := carriersettlementcol.CarrierSettlementBatchColumns
-			entity := new(carriersettlement.CarrierSettlementBatch)
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carriersettlementcol.CarrierSettlementBatchScopeTenant(sq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.ID)
-				})
+			b := carriersettlementdb.CarrierSettlementBatches
+			q := b.Where(b.ID.Eq(req.ID))
 			if req.IncludeSettlements {
-				query = query.Relation(
-					carriersettlementcol.CarrierSettlementBatchRelations.Settlements,
-					func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Order(
-							carriersettlementcol.CarrierSettlementColumns.SettlementNumber.OrderAsc(),
-						)
-					},
-				).Relation(buncolgen.Rel(
-					carriersettlementcol.CarrierSettlementBatchRelations.Settlements,
-					carriersettlementcol.CarrierSettlementRelations.Carrier,
-				))
+				s := b.Settlements()
+				q = q.Load(s.Order(s.SettlementNumber.Asc()).Load(s.Carrier()))
 			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "CarrierSettlementBatch")
+
+			entity, err := q.One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, batchErrors.Map(err, req.ID.String())
 			}
+
 			return entity, nil
 		},
 	)
@@ -178,33 +111,26 @@ func (r *batchRepository) GetByID(
 
 func (r *batchRepository) GetForPeriod(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	periodStart, periodEnd int64,
 ) (*carriersettlement.CarrierSettlementBatch, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-			cols := carriersettlementcol.CarrierSettlementBatchColumns
-			entity := new(carriersettlement.CarrierSettlementBatch)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carriersettlementcol.CarrierSettlementBatchScopeTenant(sq, tenantInfo).
-						Where(cols.PeriodStart.Eq(), periodStart).
-						Where(cols.PeriodEnd.Eq(), periodEnd).
-						Where(cols.Status.NotEq(), carriersettlement.BatchStatusCanceled)
-				}).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(1).
-				Scan(ctx)
+			b := carriersettlementdb.CarrierSettlementBatches
+			entity, err := b.Where(
+				b.PeriodStart.Eq(periodStart),
+				b.PeriodEnd.Eq(periodEnd),
+				b.Status.Ne(carriersettlement.BatchStatusCanceled),
+			).Order(b.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, nil
+			}
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return nil, nil //nolint:nilnil // nil batch means no batch exists for the period
-				}
 				return nil, fmt.Errorf("get carrier settlement batch for period: %w", err)
 			}
+
 			return entity, nil
 		},
 	)
@@ -219,29 +145,29 @@ func (r *batchRepository) RecalculateAggregates(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-			if _, err := r.db.DBForContext(ctx).NewRaw(`
-		UPDATE carrier_settlement_batches AS b SET
-			settlement_count = agg.settlement_count,
-			total_gross_minor = agg.total_gross_minor,
-			total_net_minor = agg.total_net_minor,
-			updated_at = `+dbhelper.NowEpoch+`
-		FROM (
-			SELECT
-				COUNT(*) FILTER (WHERE s.status != 'Voided') AS settlement_count,
-				COALESCE(SUM(s.gross_cost_minor) FILTER (WHERE s.status != 'Voided'), 0) AS total_gross_minor,
-				COALESCE(SUM(s.net_payable_minor) FILTER (WHERE s.status != 'Voided'), 0) AS total_net_minor
-			FROM carrier_settlements s
-			WHERE s.batch_id = ?
-				AND s.organization_id = ?
-				AND s.business_unit_id = ?
-		) AS agg
-		WHERE b.id = ?
-			AND b.organization_id = ?
-			AND b.business_unit_id = ?
-	`,
-				batchID, tenantInfo.OrgID, tenantInfo.BuID,
-				batchID, tenantInfo.OrgID, tenantInfo.BuID,
-			).Exec(ctx); err != nil {
+			s := carriersettlementdb.CarrierSettlements
+			b := carriersettlementdb.CarrierSettlementBatches
+			live := s.Status.Ne(carriersettlement.StatusVoided)
+			agg := keel.CTE(
+				batchAggregateCTE,
+				[]string{"settlement_count", "total_gross_minor", "total_net_minor"},
+				s.Pick(
+					keel.Count().Filter(live),
+					keel.Int64Of(s.GrossCostMinor.Sum().Filter(live)).Coalesce(0),
+					keel.Int64Of(s.NetPayableMinor.Sum().Filter(live)).Coalesce(0),
+				).Where(s.BatchID.Eq(batchID)),
+			)
+
+			if _, err := b.With(agg).
+				Join(agg).
+				Where(b.ID.Eq(batchID)).
+				Update(
+					ctx,
+					r.db.Keel(ctx),
+					b.SettlementCount.ToExpr(agg.Col("settlement_count")),
+					b.TotalGrossMinor.ToExpr(agg.Col("total_gross_minor")),
+					b.TotalNetMinor.ToExpr(agg.Col("total_net_minor")),
+				); err != nil {
 				return nil, fmt.Errorf("recalculate carrier settlement batch aggregates: %w", err)
 			}
 
@@ -261,12 +187,11 @@ func (r *batchRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-			if entity.ID.IsNil() {
-				entity.ID = pulid.MustNew("carstlb_")
+			err := carriersettlementdb.CarrierSettlementBatches.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				return nil, batchErrors.Map(err, entity.ID.String())
 			}
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create carrier settlement batch: %w", err)
-			}
+
 			return entity, nil
 		},
 	)
@@ -280,41 +205,26 @@ func (r *batchRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.CarrierSettlementBatch, error) {
-			cols := carriersettlementcol.CarrierSettlementBatchColumns
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return carriersettlementcol.CarrierSettlementBatchScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(cols.ID.Eq(), entity.ID).
-						Where(cols.Version.Eq(), entity.Version)
-				}).
-				Set(cols.Status.Set(), entity.Status).
-				Set(cols.Name.Set(), entity.Name).
-				Set(cols.SettlementCount.Set(), entity.SettlementCount).
-				Set(cols.TotalGrossMinor.Set(), entity.TotalGrossMinor).
-				Set(cols.TotalNetMinor.Set(), entity.TotalNetMinor).
-				Set(cols.Notes.Set(), entity.Notes).
-				Set(cols.GeneratedByID.Set(), entity.GeneratedByID).
-				Set(cols.GeneratedAt.Set(), entity.GeneratedAt).
-				Set(cols.CompletedAt.Set(), entity.CompletedAt).
-				Set(cols.CanceledByID.Set(), entity.CanceledByID).
-				Set(cols.CanceledAt.Set(), entity.CanceledAt).
-				Set(cols.Version.Inc(1)).
-				Exec(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("update carrier settlement batch: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				"CarrierSettlementBatch",
-				entity.ID.String(),
+			b := carriersettlementdb.CarrierSettlementBatches
+			if err := b.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				b.Status,
+				b.Name,
+				b.SettlementCount,
+				b.TotalGrossMinor,
+				b.TotalNetMinor,
+				b.Notes,
+				b.GeneratedByID,
+				b.GeneratedAt,
+				b.CompletedAt,
+				b.CanceledByID,
+				b.CanceledAt,
 			); err != nil {
-				return nil, err
+				return nil, batchErrors.Map(err, entity.ID.String())
 			}
+
 			return entity, nil
 		},
 	)

@@ -2,28 +2,27 @@ package chargeallocationrepository
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/billingqueuecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var allocationErrors = dberror.Mapping{Entity: "Charge allocation"}
 
 type Params struct {
 	fx.In
@@ -44,42 +43,36 @@ func New(p Params) shipmentports.ChargeAllocationRepository {
 	}
 }
 
-func (r *repository) SyncForShipment(
-	ctx context.Context,
-	tx bun.IDB,
-	entity *shipment.Shipment,
-) error {
+func (r *repository) SyncForShipment(ctx context.Context, entity *shipment.Shipment) error {
 	if entity == nil {
 		return nil
 	}
-	ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 
-	if entity.ChargeAllocations != nil {
-		if err := r.syncShipmentRows(ctx, tx, entity); err != nil {
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		if entity.ChargeAllocations != nil {
+			if err := r.syncShipmentRows(ctx, entity); err != nil {
+				return err
+			}
+		}
+
+		if err := r.followCustomerChange(ctx, entity); err != nil {
 			return err
 		}
-	}
 
-	if err := r.followCustomerChange(ctx, tx, entity); err != nil {
-		return err
-	}
+		if err := r.dropOrphans(ctx, entity); err != nil {
+			return err
+		}
 
-	if err := r.dropOrphans(ctx, tx, entity); err != nil {
-		return err
-	}
-
-	return r.RefreshQueueSnapshots(ctx, tx, ti, entity.ID)
+		return r.RefreshQueueSnapshots(ctx, pagination.TenantInfo{
+			OrgID: entity.OrganizationID,
+			BuID:  entity.BusinessUnitID,
+		}, entity.ID)
+	})
 }
 
-func (r *repository) syncShipmentRows(
-	ctx context.Context,
-	tx bun.IDB,
-	entity *shipment.Shipment,
-) error {
-	cols := shipmentcol.ChargeAllocationColumns
-	ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-
-	existing, err := r.existingForShipment(ctx, tx, ti, entity.ID)
+func (r *repository) syncShipmentRows(ctx context.Context, entity *shipment.Shipment) error {
+	ca := shipmentdb.ChargeAllocations
+	existing, err := r.existing(ctx, ca.ShipmentID.Eq(entity.ID))
 	if err != nil {
 		return err
 	}
@@ -95,12 +88,11 @@ func (r *repository) syncShipmentRows(
 
 		switch {
 		case allocation.ID.IsNil():
-			allocation.ID = pulid.MustNew("chal_")
-			if err = r.insert(ctx, tx, allocation); err != nil {
+			if err = r.insert(ctx, allocation); err != nil {
 				return err
 			}
 		case existing[allocation.ID] != nil:
-			if err = r.update(ctx, tx, allocation, existing[allocation.ID]); err != nil {
+			if err = r.update(ctx, allocation, existing[allocation.ID]); err != nil {
 				return err
 			}
 		default:
@@ -110,6 +102,15 @@ func (r *repository) syncShipmentRows(
 		kept[allocation.ID] = struct{}{}
 	}
 
+	return r.deleteUnkept(ctx, existing, kept, "chargeAllocations")
+}
+
+func (r *repository) deleteUnkept(
+	ctx context.Context,
+	existing map[pulid.ID]*shipment.ChargeAllocation,
+	kept map[pulid.ID]struct{},
+	field string,
+) error {
 	deleteIDs := make([]pulid.ID, 0, len(existing))
 	for id, row := range existing {
 		if _, ok := kept[id]; ok {
@@ -117,7 +118,7 @@ func (r *repository) syncShipmentRows(
 		}
 		if row.IsInvoiced() {
 			return errortypes.NewValidationError(
-				"chargeAllocations",
+				field,
 				errortypes.ErrInvalidOperation,
 				"An allocation already carried on an invoice cannot be removed",
 			)
@@ -128,22 +129,11 @@ func (r *repository) syncShipmentRows(
 		return nil
 	}
 
-	if _, err = tx.NewDelete().
-		Model((*shipment.ChargeAllocation)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return shipmentcol.ChargeAllocationScopeTenantDelete(dq, ti).
-				Where(cols.ID.In(), bun.List(deleteIDs))
-		}).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("delete charge allocations: %w", err)
-	}
-
-	return nil
+	ca := shipmentdb.ChargeAllocations
+	_, err := ca.Where(ca.ID.In(deleteIDs...)).Delete(ctx, r.db.Keel(ctx))
+	return allocationErrors.Map(err, "")
 }
 
-// normalize seats tenancy and the charge target on a row. A row that arrived
-// pointing at a charge by position takes that charge's freshly minted id, which
-// is what lets a new accessorial and its split be saved together.
 func (r *repository) normalize(
 	entity *shipment.Shipment,
 	allocation *shipment.ChargeAllocation,
@@ -201,21 +191,13 @@ func (r *repository) normalize(
 	return nil
 }
 
-func (r *repository) insert(
-	ctx context.Context,
-	tx bun.IDB,
-	allocation *shipment.ChargeAllocation,
-) error {
-	if _, err := tx.NewInsert().Model(allocation).Returning("*").Exec(ctx); err != nil {
-		return fmt.Errorf("insert charge allocation %s: %w", allocation.ID, err)
-	}
-
-	return nil
+func (r *repository) insert(ctx context.Context, allocation *shipment.ChargeAllocation) error {
+	err := shipmentdb.ChargeAllocations.Create(ctx, r.db.Keel(ctx), allocation)
+	return allocationErrors.Map(err, allocation.ID.String())
 }
 
 func (r *repository) update(
 	ctx context.Context,
-	tx bun.IDB,
 	allocation, existing *shipment.ChargeAllocation,
 ) error {
 	if existing.IsInvoiced() && (existing.BillToCustomerID != allocation.BillToCustomerID ||
@@ -229,50 +211,29 @@ func (r *repository) update(
 		)
 	}
 
-	ov := existing.Version
-	allocation.Version = ov + 1
-	allocation.UpdatedAt = timeutils.NowUnix()
+	allocation.Version = existing.Version
 	allocation.InvoiceID = existing.InvoiceID
 	allocation.InvoicedAt = existing.InvoicedAt
 
-	cols := shipmentcol.ChargeAllocationColumns
-	result, err := tx.NewUpdate().
-		Model(allocation).
-		Column(
-			cols.BillToCustomerID.Bare(),
-			cols.Method.Bare(),
-			cols.Percent.Bare(),
-			cols.Amount.Bare(),
-			cols.Sequence.Bare(),
-			cols.Version.Bare(),
-			cols.UpdatedAt.Bare(),
-		).
-		WherePK().
-		Where(cols.Version.Eq(), ov).
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("update charge allocation %s: %w", allocation.ID, err)
-	}
+	ca := shipmentdb.ChargeAllocations
+	err := ca.Save(ctx, r.db.Keel(ctx), allocation,
+		ca.BillToCustomerID,
+		ca.Method,
+		ca.Percent,
+		ca.Amount,
+		ca.Sequence,
+	)
 
-	return dberror.CheckRowsAffected(result, "Charge allocation", allocation.ID.String())
+	return allocationErrors.Map(err, allocation.ID.String())
 }
 
-func (r *repository) existingForShipment(
+func (r *repository) existing(
 	ctx context.Context,
-	tx bun.IDB,
-	ti pagination.TenantInfo,
-	shipmentID pulid.ID,
+	scope keel.Pred,
 ) (map[pulid.ID]*shipment.ChargeAllocation, error) {
-	cols := shipmentcol.ChargeAllocationColumns
-	rows := make([]*shipment.ChargeAllocation, 0)
-	if err := tx.NewSelect().
-		Model(&rows).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return shipmentcol.ChargeAllocationScopeTenant(sq, ti).
-				Where(cols.ShipmentID.Eq(), shipmentID)
-		}).
-		Scan(ctx); err != nil {
-		return nil, fmt.Errorf("get existing charge allocations: %w", err)
+	rows, err := shipmentdb.ChargeAllocations.Where(scope).All(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return nil, err
 	}
 
 	result := make(map[pulid.ID]*shipment.ChargeAllocation, len(rows))
@@ -283,150 +244,83 @@ func (r *repository) existingForShipment(
 	return result, nil
 }
 
-// followCustomerChange moves uninvoiced rows that named the shipment's previous
-// customer as payer onto the new one, so "the customer pays" keeps meaning the
-// customer after a reassignment.
-func (r *repository) followCustomerChange(
-	ctx context.Context,
-	tx bun.IDB,
-	entity *shipment.Shipment,
-) error {
+func (r *repository) followCustomerChange(ctx context.Context, entity *shipment.Shipment) error {
 	if entity.PreviousCustomerID.IsNil() || entity.PreviousCustomerID == entity.CustomerID {
 		return nil
 	}
 
-	cols := shipmentcol.ChargeAllocationColumns
-	ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-	if _, err := tx.NewUpdate().
-		Model((*shipment.ChargeAllocation)(nil)).
-		Set(cols.BillToCustomerID.Set(), entity.CustomerID).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return shipmentcol.ChargeAllocationScopeTenantUpdate(uq, ti).
-				Where(cols.ShipmentID.Eq(), entity.ID).
-				Where(cols.BillToCustomerID.Eq(), entity.PreviousCustomerID).
-				Where(cols.InvoiceID.IsNull())
-		}).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("follow customer change on charge allocations: %w", err)
-	}
+	ca := shipmentdb.ChargeAllocations
+	_, err := ca.Where(
+		ca.ShipmentID.Eq(entity.ID),
+		ca.BillToCustomerID.Eq(entity.PreviousCustomerID),
+		ca.InvoiceID.IsNull(),
+	).Update(ctx, r.db.Keel(ctx),
+		ca.BillToCustomerID.To(entity.CustomerID),
+		ca.Version.ToExpr(ca.Version),
+	)
 
-	return nil
+	return allocationErrors.Map(err, "")
 }
 
-// dropOrphans removes accessorial allocations whose charge is gone. The charge
-// delete cascades in the database, but a charge replaced in the same save keeps
-// the row alive only if the payload re-targets it, which normalize enforces.
-func (r *repository) dropOrphans(
-	ctx context.Context,
-	tx bun.IDB,
-	entity *shipment.Shipment,
-) error {
-	cols := shipmentcol.ChargeAllocationColumns
-	ac := shipmentcol.AdditionalChargeColumns
-	ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-	if _, err := tx.NewDelete().
-		Model((*shipment.ChargeAllocation)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return shipmentcol.ChargeAllocationScopeTenantDelete(dq, ti).
-				Where(cols.ShipmentID.Eq(), entity.ID).
-				Where(cols.ChargeKind.Eq(), shipment.ChargeAllocationKindAccessorial).
-				Where(cols.InvoiceID.IsNull()).
-				Where(`NOT EXISTS (SELECT 1 FROM additional_charges AS ac WHERE ` +
-					ac.ID.Qualified() + ` = ` + cols.AdditionalChargeID.Qualified() + `)`)
-		}).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("drop orphaned charge allocations: %w", err)
-	}
+func (r *repository) dropOrphans(ctx context.Context, entity *shipment.Shipment) error {
+	ca := shipmentdb.ChargeAllocations
+	ac := shipmentdb.AdditionalCharges
+	_, err := ca.Where(
+		ca.ShipmentID.Eq(entity.ID),
+		ca.ChargeKind.Eq(shipment.ChargeAllocationKindAccessorial),
+		ca.InvoiceID.IsNull(),
+		keel.NotExists(ac.Where(ac.ID.EqCol(ca.AdditionalChargeID))),
+	).Delete(ctx, r.db.Keel(ctx))
 
-	return nil
+	return allocationErrors.Map(err, "")
 }
 
 func (r *repository) SyncForOrderCharge(
 	ctx context.Context,
-	tx bun.IDB,
 	req *shipmentports.SyncOrderChargeAllocationsRequest,
 ) error {
 	if req == nil || req.Allocations == nil {
 		return nil
 	}
-	cols := shipmentcol.ChargeAllocationColumns
 
-	existingRows := make([]*shipment.ChargeAllocation, 0)
-	if err := tx.NewSelect().
-		Model(&existingRows).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
-				Where(cols.OrderChargeID.Eq(), req.OrderChargeID)
-		}).
-		Scan(ctx); err != nil {
-		return fmt.Errorf("get existing order charge allocations: %w", err)
-	}
-	existing := make(map[pulid.ID]*shipment.ChargeAllocation, len(existingRows))
-	for _, row := range existingRows {
-		existing[row.ID] = row
-	}
-
-	kept := make(map[pulid.ID]struct{}, len(req.Allocations))
-	for _, allocation := range req.Allocations {
-		if allocation == nil {
-			continue
-		}
-		allocation.OrganizationID = req.TenantInfo.OrgID
-		allocation.BusinessUnitID = req.TenantInfo.BuID
-		allocation.ChargeKind = shipment.ChargeAllocationKindOrderCharge
-		chargeID := req.OrderChargeID
-		allocation.OrderChargeID = &chargeID
-		allocation.ShipmentID = nil
-		allocation.AdditionalChargeID = nil
-		allocation.AdditionalChargeIndex = nil
-
-		var err error
-		switch {
-		case allocation.ID.IsNil():
-			allocation.ID = pulid.MustNew("chal_")
-			err = r.insert(ctx, tx, allocation)
-		case existing[allocation.ID] != nil:
-			err = r.update(ctx, tx, allocation, existing[allocation.ID])
-		default:
-			err = errortypes.NewBusinessError("Order charge contains an unknown allocation").
-				WithParam("chargeAllocationId", allocation.ID.String())
-		}
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		ca := shipmentdb.ChargeAllocations
+		existing, err := r.existing(ctx, ca.OrderChargeID.Eq(req.OrderChargeID))
 		if err != nil {
 			return err
 		}
-		kept[allocation.ID] = struct{}{}
-	}
 
-	deleteIDs := make([]pulid.ID, 0, len(existing))
-	for id, row := range existing {
-		if _, ok := kept[id]; ok {
-			continue
+		kept := make(map[pulid.ID]struct{}, len(req.Allocations))
+		for _, allocation := range req.Allocations {
+			if allocation == nil {
+				continue
+			}
+			allocation.OrganizationID = req.TenantInfo.OrgID
+			allocation.BusinessUnitID = req.TenantInfo.BuID
+			allocation.ChargeKind = shipment.ChargeAllocationKindOrderCharge
+			chargeID := req.OrderChargeID
+			allocation.OrderChargeID = &chargeID
+			allocation.ShipmentID = nil
+			allocation.AdditionalChargeID = nil
+			allocation.AdditionalChargeIndex = nil
+
+			switch {
+			case allocation.ID.IsNil():
+				err = r.insert(ctx, allocation)
+			case existing[allocation.ID] != nil:
+				err = r.update(ctx, allocation, existing[allocation.ID])
+			default:
+				err = errortypes.NewBusinessError("Order charge contains an unknown allocation").
+					WithParam("chargeAllocationId", allocation.ID.String())
+			}
+			if err != nil {
+				return err
+			}
+			kept[allocation.ID] = struct{}{}
 		}
-		if row.IsInvoiced() {
-			return errortypes.NewValidationError(
-				"allocations",
-				errortypes.ErrInvalidOperation,
-				"An allocation already carried on an invoice cannot be removed",
-			)
-		}
-		deleteIDs = append(deleteIDs, id)
-	}
-	if len(deleteIDs) == 0 {
-		return nil
-	}
 
-	if _, err := tx.NewDelete().
-		Model((*shipment.ChargeAllocation)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return shipmentcol.ChargeAllocationScopeTenantDelete(dq, req.TenantInfo).
-				Where(cols.ID.In(), bun.List(deleteIDs))
-		}).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("delete order charge allocations: %w", err)
-	}
-
-	return nil
+		return r.deleteUnkept(ctx, existing, kept, "allocations")
+	})
 }
 
 func (r *repository) ListByShipmentIDs(
@@ -442,19 +336,14 @@ func (r *repository) ListByShipmentIDs(
 				return result, nil
 			}
 
-			cols := shipmentcol.ChargeAllocationColumns
-			rows := make([]*shipment.ChargeAllocation, 0, len(req.ShipmentIDs))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&rows).
-				Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
-						Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
-				}).
-				Order(cols.ShipmentID.OrderAsc(), cols.Sequence.OrderAsc(), cols.ID.OrderAsc()).
-				Scan(ctx); err != nil {
+			ca := shipmentdb.ChargeAllocations
+			rows, err := ca.Where(ca.ShipmentID.In(req.ShipmentIDs...)).
+				Load(ca.BillToCustomer()).
+				Order(ca.ShipmentID.Asc(), ca.Sequence.Asc(), ca.ID.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list charge allocations by shipment", zap.Error(err))
-				return nil, fmt.Errorf("list charge allocations by shipment: %w", err)
+				return nil, err
 			}
 
 			for _, row := range rows {
@@ -482,19 +371,14 @@ func (r *repository) ListByOrderChargeIDs(
 				return result, nil
 			}
 
-			cols := shipmentcol.ChargeAllocationColumns
-			rows := make([]*shipment.ChargeAllocation, 0, len(req.OrderChargeIDs))
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(&rows).
-				Relation(shipmentcol.ChargeAllocationRelations.BillToCustomer).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return shipmentcol.ChargeAllocationScopeTenant(sq, req.TenantInfo).
-						Where(cols.OrderChargeID.In(), bun.List(req.OrderChargeIDs))
-				}).
-				Order(cols.OrderChargeID.OrderAsc(), cols.Sequence.OrderAsc(), cols.ID.OrderAsc()).
-				Scan(ctx); err != nil {
+			ca := shipmentdb.ChargeAllocations
+			rows, err := ca.Where(ca.OrderChargeID.In(req.OrderChargeIDs...)).
+				Load(ca.BillToCustomer()).
+				Order(ca.OrderChargeID.Asc(), ca.Sequence.Asc(), ca.ID.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list charge allocations by order charge", zap.Error(err))
-				return nil, fmt.Errorf("list charge allocations by order charge: %w", err)
+				return nil, err
 			}
 
 			for _, row := range rows {
@@ -518,23 +402,18 @@ func (r *repository) MarkInvoiced(
 			return 0, nil
 		}
 
-		cols := shipmentcol.ChargeAllocationColumns
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*shipment.ChargeAllocation)(nil)).
-			Set(cols.InvoiceID.Set(), req.InvoiceID).
-			Set(cols.InvoicedAt.Set(), req.InvoicedAt).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return shipmentcol.ChargeAllocationScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.AllocationIDs)).
-					Where(cols.InvoiceID.IsNull())
-			}).
-			Exec(ctx)
+		ca := shipmentdb.ChargeAllocations
+		n, err := ca.Where(ca.ID.In(req.AllocationIDs...), ca.InvoiceID.IsNull()).
+			Update(ctx, r.db.Keel(ctx),
+				ca.InvoiceID.To(req.InvoiceID),
+				ca.InvoicedAt.To(req.InvoicedAt),
+				ca.Version.ToExpr(ca.Version),
+			)
 		if err != nil {
-			return 0, fmt.Errorf("mark charge allocations invoiced: %w", err)
+			return 0, allocationErrors.Map(err, req.InvoiceID.String())
 		}
 
-		return result.RowsAffected()
+		return n, nil
 	})
 }
 
@@ -547,28 +426,23 @@ func (r *repository) ClearInvoice(
 			return 0, nil
 		}
 
-		cols := shipmentcol.ChargeAllocationColumns
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*shipment.ChargeAllocation)(nil)).
-			Set(cols.InvoiceID.SetNull()).
-			Set(cols.InvoicedAt.SetNull()).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return shipmentcol.ChargeAllocationScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.InvoiceID.Eq(), req.InvoiceID)
-			}).
-			Exec(ctx)
+		ca := shipmentdb.ChargeAllocations
+		n, err := ca.Where(ca.InvoiceID.Eq(req.InvoiceID)).Update(ctx, r.db.Keel(ctx),
+			ca.InvoiceID.ToNull(),
+			ca.InvoicedAt.ToNull(),
+			ca.Version.ToExpr(ca.Version),
+		)
 		if err != nil {
-			return 0, fmt.Errorf("clear charge allocation invoice: %w", err)
+			return 0, allocationErrors.Map(err, req.InvoiceID.String())
 		}
 
-		return result.RowsAffected()
+		return n, nil
 	})
 }
 
 func (r *repository) LockedIDs(
 	ctx context.Context,
-	ti pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	allocationIDs []pulid.ID,
 ) (map[pulid.ID]struct{}, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]struct{}, error) {
@@ -577,23 +451,9 @@ func (r *repository) LockedIDs(
 			return locked, nil
 		}
 
-		cols := shipmentcol.ChargeAllocationColumns
-		inv := invoicecol.InvoiceColumns
-		ids := make([]pulid.ID, 0, len(allocationIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*shipment.ChargeAllocation)(nil)).
-			ColumnExpr(cols.ID.Qualified()).
-			Join("JOIN invoices AS inv").
-			JoinOn(inv.ID.Qualified()+" = "+cols.InvoiceID.Qualified()).
-			JoinOn(inv.OrganizationID.Qualified()+" = "+cols.OrganizationID.Qualified()).
-			JoinOn(inv.BusinessUnitID.Qualified()+" = "+cols.BusinessUnitID.Qualified()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ChargeAllocationScopeTenant(sq, ti).
-					Where(cols.ID.In(), bun.List(allocationIDs)).
-					Where(inv.Status.Eq(), invoice.StatusPosted)
-			}).
-			Scan(ctx, &ids); err != nil {
-			return nil, fmt.Errorf("find locked charge allocations: %w", err)
+		ids, err := keel.Into[pulid.ID](ctx, r.db.Keel(ctx), lockedAllocations(allocationIDs))
+		if err != nil {
+			return nil, err
 		}
 
 		for _, id := range ids {
@@ -604,57 +464,55 @@ func (r *repository) LockedIDs(
 	})
 }
 
-// RefreshQueueSnapshots rewrites each open queue item's allocated total from the
-// shipment's current charges. The queue list, statement previews and the
-// reconciliation check all read the snapshot rather than recomputing shares.
+func lockedAllocations(allocationIDs []pulid.ID) *keel.Query[*shipment.ChargeAllocation] {
+	ca := shipmentdb.ChargeAllocations
+	inv := invoicedb.Invoices
+	return ca.Pick(ca.ID).
+		Join(inv, inv.ID.EqCol(ca.InvoiceID)).
+		Where(ca.ID.In(allocationIDs...), inv.Status.Eq(invoice.StatusPosted))
+}
+
 func (r *repository) RefreshQueueSnapshots(
 	ctx context.Context,
-	tx bun.IDB,
-	ti pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) error {
 	if shipmentID.IsNil() {
 		return nil
 	}
 
-	sp := shipmentcol.ShipmentColumns
-	shp := new(shipment.Shipment)
-	if err := tx.NewSelect().
-		Model(shp).
-		Relation(shipmentcol.ShipmentRelations.AdditionalCharges).
-		Relation(shipmentcol.ShipmentRelations.ChargeAllocations).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return shipmentcol.ShipmentScopeTenant(sq, ti).Where(sp.ID.Eq(), shipmentID)
-		}).
-		Scan(ctx); err != nil {
-		return fmt.Errorf("load shipment for allocation snapshot: %w", err)
-	}
-
-	resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
-	if err != nil {
-		return err
-	}
-
-	bqi := billingqueuecol.BillingQueueItemColumns
-	for _, share := range resolution.Shares {
-		if _, err = tx.NewUpdate().
-			Model((*billingqueue.BillingQueueItem)(nil)).
-			Set(bqi.AllocatedTotalAmount.Set(), share.TotalAmount).
-			Set(bqi.AllocatedTotalAmountMinor.Set(), money.MinorUnits(share.TotalAmount)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return billingqueuecol.BillingQueueItemScopeTenantUpdate(uq, ti).
-					Where(bqi.ShipmentID.Eq(), shipmentID).
-					Where(bqi.BillToCustomerID.Eq(), share.PayerID).
-					Where(bqi.BillType.Eq(), billingqueue.BillTypeInvoice).
-					Where(bqi.Status.NotIn(), bun.List([]billingqueue.Status{
-						billingqueue.StatusPosted,
-						billingqueue.StatusCanceled,
-					}))
-			}).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("refresh billing queue allocated totals: %w", err)
+	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		db := r.db.Keel(ctx)
+		sh := shipmentdb.Shipments
+		shp, err := sh.Where(sh.ID.Eq(shipmentID)).
+			Load(sh.AdditionalCharges(), sh.ChargeAllocations()).
+			One(ctx, db)
+		if err != nil {
+			return dberror.HandleNotFoundError(err, "Shipment")
 		}
-	}
 
-	return nil
+		resolution, err := shipment.ResolveShares(ctx, shp, shp.ChargeAllocations)
+		if err != nil {
+			return err
+		}
+
+		bq := billingqueuedb.BillingQueueItems
+		for _, share := range resolution.Shares {
+			if _, err = bq.Where(
+				bq.ShipmentID.Eq(shipmentID),
+				bq.BillToCustomerID.Eq(share.PayerID),
+				bq.BillType.Eq(billingqueue.BillTypeInvoice),
+				bq.Status.NotIn(billingqueue.StatusPosted, billingqueue.StatusCanceled),
+			).Update(ctx, db,
+				bq.AllocatedTotalAmount.To(share.TotalAmount),
+				bq.AllocatedTotalAmountMinor.To(money.MinorUnits(share.TotalAmount)),
+				bq.Version.ToExpr(bq.Version),
+				bq.UpdatedAt.ToExpr(bq.UpdatedAt),
+			); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }

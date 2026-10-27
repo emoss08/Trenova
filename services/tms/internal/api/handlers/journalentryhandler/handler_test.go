@@ -1,19 +1,19 @@
 package journalentryhandler_test
 
 import (
+	"context"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalsourceportsmock"
-	"context"
 	"net/http"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/api/handlers/journalentryhandler"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
-	"github.com/emoss08/trenova/internal/modules/accounting/app/journalentryservice"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -37,8 +37,9 @@ func TestListEntries(t *testing.T) {
 		RunAndReturn(func(_ context.Context, req *journalentryports.ListJournalEntriesRequest) (*pagination.ListResult[*journalentry.JournalEntry], error) {
 			assert.Equal(t, sharedtestutil.TestOrgID, req.Filter.TenantInfo.OrgID)
 			return &pagination.ListResult[*journalentry.JournalEntry]{
-				Items: []*journalentry.JournalEntry{entry},
-				Total: 1,
+				Items:      []*journalentry.JournalEntry{entry},
+				Total:      1,
+				TotalExact: true,
 			}, nil
 		}).
 		Once()

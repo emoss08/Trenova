@@ -10,8 +10,8 @@
 //! Freight and order charges arrive with their total already known.
 
 use crate::allocation::input::ChargeInput;
-use crate::ops::RequestError;
 use rust_decimal::Decimal;
+use trenova_module_kit::ops::RequestError;
 
 const HUNDRED: Decimal = Decimal::ONE_HUNDRED;
 

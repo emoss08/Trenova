@@ -3,7 +3,6 @@ package reportresolver
 import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/pkg/reportrows"
 )
 
 func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRunDeskCard {
@@ -17,7 +16,6 @@ func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRu
 		},
 		Parameters: make([]*gqlmodel.ReportRunDeskParameter, 0, len(card.Parameters)),
 		Timezone:   card.Timezone,
-		Sample:     reportRunSampleToModel(card.Sample),
 		Withheld:   nilIfEmpty(string(card.Withheld)),
 		Sort:       make([]*gqlmodel.ReportRunDeskSort, 0, len(card.Sort)),
 	}
@@ -25,31 +23,30 @@ func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRu
 		definitionID := card.Report.DefinitionID.String()
 		model.Report.DefinitionID = &definitionID
 	}
+	if card.Sample != nil {
+		model.Sample = reportPreviewToModel(card.Sample)
+	}
 
 	for i := range card.Parameters {
 		parameter := &card.Parameters[i]
 		model.Parameters = append(model.Parameters, &gqlmodel.ReportRunDeskParameter{
 			Name:        parameter.Name,
 			Label:       parameter.Label,
-			Type:        string(parameter.Type),
+			Type:        parameter.Type,
 			Value:       parameter.Value,
 			IsDefault:   parameter.IsDefault,
-			RefEntity:   nilIfEmpty(parameter.RefEntity),
+			Entity:      nilIfEmpty(parameter.Entity),
 			WindowStart: nilIfZero(parameter.WindowStart),
 			WindowEnd:   nilIfZero(parameter.WindowEnd),
 		})
 	}
 
 	if card.Previous != nil {
-		columnIDs := make([]string, 0, len(card.Previous.Schema))
-		for i := range card.Previous.Schema {
-			columnIDs = append(columnIDs, card.Previous.Schema[i].ID)
-		}
 		model.Previous = &gqlmodel.ReportRunDeskPrevious{
 			RunID:       card.Previous.RunID.String(),
 			CompletedAt: int(card.Previous.CompletedAt),
 			RowCount:    int(card.Previous.RowCount),
-			ColumnIds:   columnIDs,
+			ColumnIds:   emptyIfNil(card.Previous.ColumnIDs),
 			Totals:      card.Previous.Totals,
 		}
 	}
@@ -60,50 +57,17 @@ func reportRunDeskCardToModel(card *reportingservice.RunCard) *gqlmodel.ReportRu
 
 	if card.Chart != nil {
 		model.Chart = &gqlmodel.ReportRunDeskChart{
-			Type:      string(card.Chart.Type),
-			XColumnID: nilIfEmpty(card.Chart.XColumnID),
-			SeriesIds: emptyIfNil(card.Chart.SeriesIDs),
+			Type:   string(card.Chart.Type),
+			X:      nilIfEmpty(card.Chart.X),
+			Series: emptyIfNil(card.Chart.Series),
 		}
 	}
 
 	for _, sort := range card.Sort {
 		model.Sort = append(model.Sort, &gqlmodel.ReportRunDeskSort{
-			ColumnID:  sort.ColumnID,
-			Direction: string(sort.Direction),
+			Column: sort.Column,
+			Desc:   sort.Desc,
 		})
-	}
-
-	return model
-}
-
-func reportRunSampleToModel(sample *reportrows.Sample) *gqlmodel.ReportRunSample {
-	if sample == nil {
-		return nil
-	}
-
-	columns := make([]*gqlmodel.ReportPreviewColumn, 0, len(sample.Schema))
-	for i := range sample.Schema {
-		column := &sample.Schema[i]
-		columns = append(columns, &gqlmodel.ReportPreviewColumn{
-			ID:      column.ID,
-			Label:   column.Label,
-			Type:    string(column.Type),
-			Format:  nilIfEmpty(string(column.Format)),
-			Display: reportDisplayToModel(&column.Display),
-		})
-	}
-
-	rows := sample.Rows
-	if rows == nil {
-		rows = [][]any{}
-	}
-	model := &gqlmodel.ReportRunSample{
-		Columns: columns,
-		Rows:    rows,
-		More:    sample.More,
-	}
-	if len(sample.Totals) > 0 {
-		model.Totals = sample.Totals
 	}
 
 	return model

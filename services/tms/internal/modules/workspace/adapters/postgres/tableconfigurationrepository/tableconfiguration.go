@@ -3,21 +3,23 @@ package tableconfigurationrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tableconfigurationcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration/tableconfigurationdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tableconfigurationports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const entityName = "TableConfiguration"
+
+var configurationErrors = dberror.Mapping{Entity: entityName}
 
 type Params struct {
 	fx.In
@@ -38,58 +40,33 @@ func New(p Params) tableconfigurationports.TableConfigurationRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *tableconfigurationports.ListTableConfigurationsRequest,
-) *bun.SelectQuery {
-	log := r.l.With(
-		zap.String("operation", "filterQuery"),
-		zap.Any("req", req),
-	)
-
-	q = querybuilder.ApplyFilters(
-		q,
-		"tc",
-		req.Filter,
-		(*tableconfiguration.TableConfiguration)(nil),
-	)
-
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.
-			WhereGroup(" AND ", func(privateSq *bun.SelectQuery) *bun.SelectQuery {
-				return privateSq.
-					Where("tc.user_id = ?", req.Filter.TenantInfo.UserID).
-					Where("tc.visibility = ?", tableconfiguration.VisibilityPrivate)
-			}).
-			WhereGroup(" OR ", func(publicSq *bun.SelectQuery) *bun.SelectQuery {
-				return publicSq.
-					Where("tc.organization_id = ?", req.Filter.TenantInfo.OrgID).
-					Where("tc.visibility = ?", tableconfiguration.VisibilityPublic)
-			})
-	})
-
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("tc.organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("tc.business_unit_id = ?", req.Filter.TenantInfo.BuID)
-	})
-
-	if req.Resource != "" {
-		q = q.Where("tc.resource = ?", req.Resource)
+func (r *repository) visibleTo(
+	tenantInfo pagination.TenantInfo,
+	resource string,
+	visibility string,
+) []keel.Pred {
+	tc := tableconfigurationdb.TableConfigurations
+	preds := []keel.Pred{
+		keel.Or(
+			keel.And(
+				tc.UserID.Eq(tenantInfo.UserID),
+				tc.Visibility.Eq(tableconfiguration.VisibilityPrivate),
+			),
+			tc.Visibility.Eq(tableconfiguration.VisibilityPublic),
+		),
+		keel.When(resource != "", tc.Resource.Eq(resource)),
 	}
 
-	if req.Visibility != "" {
-		v, err := tableconfiguration.VisibilityFromString(req.Visibility)
+	if visibility != "" {
+		v, err := tableconfiguration.VisibilityFromString(visibility)
 		if err != nil {
-			log.Error("failed to parse visibility", zap.Error(err))
-			return q
+			r.l.Error("failed to parse visibility", zap.Error(err))
+			return preds
 		}
-		q = q.Where("tc.visibility = ?", v)
+		preds = append(preds, tc.Visibility.Eq(v))
 	}
 
-	q = q.Order("tc.is_default DESC", "tc.created_at DESC")
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
+	return preds
 }
 
 func (r *repository) List(
@@ -100,185 +77,64 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*tableconfiguration.TableConfiguration], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			tc := tableconfigurationdb.TableConfigurations
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				tc.Where(r.visibleTo(req.Filter.TenantInfo, req.Resource, req.Visibility)...),
+				&listquery.Request[tableconfiguration.TableConfiguration]{
+					Filter: req.Filter,
+					Then:   []keel.Order{tc.IsDefault.Desc(), tc.CreatedAt.Desc()},
+				},
 			)
-
-			entities := make(
-				[]*tableconfiguration.TableConfiguration,
-				0,
-				req.Filter.Pagination.SafeLimit(),
-			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count table configurations", zap.Error(err))
+				r.l.Error("failed to list table configurations", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*tableconfiguration.TableConfiguration]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) scopeQuery(
-	q *bun.SelectQuery,
-	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
-) *bun.SelectQuery {
-	log := r.l.With(zap.String("operation", "scopeQuery"))
-	tenantInfo := req.Filter.TenantInfo
-
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.
-			WhereGroup(" AND ", func(privateSq *bun.SelectQuery) *bun.SelectQuery {
-				return privateSq.
-					Where("tc.user_id = ?", tenantInfo.UserID).
-					Where("tc.visibility = ?", tableconfiguration.VisibilityPrivate)
-			}).
-			WhereGroup(" OR ", func(publicSq *bun.SelectQuery) *bun.SelectQuery {
-				return publicSq.
-					Where("tc.organization_id = ?", tenantInfo.OrgID).
-					Where("tc.visibility = ?", tableconfiguration.VisibilityPublic)
-			})
-	})
-
-	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("tc.organization_id = ?", tenantInfo.OrgID).
-			Where("tc.business_unit_id = ?", tenantInfo.BuID)
-	})
-
-	if req.Resource != "" {
-		q = q.Where("tc.resource = ?", req.Resource)
-	}
-
-	if req.LimitToResources {
-		if len(req.ReadableResources) == 0 {
-			q = q.Where("FALSE")
-		} else {
-			q = q.Where(
-				tableconfigurationcol.TableConfigurationColumns.Resource.In(),
-				bun.In(req.ReadableResources),
-			)
-		}
-	}
-
-	if req.Visibility != "" {
-		v, err := tableconfiguration.VisibilityFromString(req.Visibility)
-		if err != nil {
-			log.Error("failed to parse visibility", zap.Error(err))
-			return q
-		}
-		q = q.Where("tc.visibility = ?", v)
-	}
-
-	return q
-}
-
-func applyTableConfigurationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		q = q.ColumnExpr(tableconfigurationcol.TableConfigurationTable.All())
-	} else {
-		q = q.Column(columns...)
-	}
-
-	return q.Relation(
-		tableconfigurationcol.TableConfigurationRelations.User,
-		func(uq *bun.SelectQuery) *bun.SelectQuery {
-			return uq.Column("id", "name", "email_address", "profile_pic_url")
-		},
-	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
-) (*bun.SelectQuery, error) {
-	q, err := querybuilder.ApplyCursorFilters(
-		q,
-		tableconfigurationcol.TableConfigurationTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*tableconfiguration.TableConfiguration)(nil),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	return r.scopeQuery(q, req), nil
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFiltersWithoutSort(
-		q,
-		tableconfigurationcol.TableConfigurationTable.Alias,
-		req.Filter,
-		(*tableconfiguration.TableConfiguration)(nil),
-	)
-
-	return r.scopeQuery(q, req)
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *tableconfigurationports.ListTableConfigurationConnectionRequest,
 ) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*tableconfiguration.TableConfiguration], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*tableconfiguration.TableConfiguration)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count table configurations", zap.Error(err))
-					return nil, err
+			tc := tableconfigurationdb.TableConfigurations
+			q := tc.Where(r.visibleTo(req.Filter.TenantInfo, req.Resource, req.Visibility)...)
+			if req.LimitToResources {
+				readable := tc.Resource.In(req.ReadableResources...)
+				if len(req.ReadableResources) == 0 {
+					readable = keel.Not(keel.True())
 				}
-				totalCount = new(int(total))
+				q = q.Where(readable)
 			}
 
-			result, err := dbhelper.CursorList(
+			user := tc.User()
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*tableconfiguration.TableConfiguration]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*tableconfiguration.TableConfiguration) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyTableConfigurationColumns(
-									sq,
-									req.TableConfigurationColumns,
-								)
-							})
+				r.db.Keel(ctx),
+				q,
+				&listquery.Request[tableconfiguration.TableConfiguration]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.TableConfigurationColumns,
+					Shape: func(
+						q *keel.Query[*tableconfiguration.TableConfiguration],
+					) *keel.Query[*tableconfiguration.TableConfiguration] {
+						return q.Load(
+							user.Pick(user.ID, user.Name, user.EmailAddress, user.ProfilePicURL),
+						)
 					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan table configurations", zap.Error(err))
+				r.l.Error("failed to list table configuration connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -295,14 +151,13 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
-			log := r.l.With(
-				zap.String("operation", "Create"),
-				zap.String("name", entity.Name),
-			)
-
-			_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
+			err := tableconfigurationdb.TableConfigurations.Create(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to create table configuration", zap.Error(err))
+				r.l.Error(
+					"failed to create table configuration",
+					zap.String("name", entity.Name),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -319,25 +174,14 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-
-			_, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
+			err := tableconfigurationdb.TableConfigurations.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update table configuration", zap.Error(err))
-				return nil, err
+				r.l.Error(
+					"failed to update table configuration",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, configurationErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -353,24 +197,18 @@ func (r *repository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("configurationID", req.ConfigurationID.String()),
+			entity, err := tableconfigurationdb.TableConfigurations.Get(
+				ctx,
+				r.db.Keel(ctx),
+				req.ConfigurationID,
 			)
-
-			entity := new(tableconfiguration.TableConfiguration)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("tc.id = ?", req.ConfigurationID).
-						Where("tc.organization_id = ?", req.TenantInfo.OrgID).
-						Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
-				}).
-				Scan(ctx)
 			if err != nil {
-				log.Error("failed to get table configuration", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "TableConfiguration")
+				r.l.Error(
+					"failed to get table configuration",
+					zap.String("configurationID", req.ConfigurationID.String()),
+					zap.Error(err),
+				)
+				return nil, configurationErrors.Map(err, req.ConfigurationID.String())
 			}
 
 			return entity, nil
@@ -381,29 +219,21 @@ func (r *repository) GetByID(
 func (r *repository) Delete(
 	ctx context.Context,
 	configurationID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("configurationID", configurationID.String()),
-		)
-
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*tableconfiguration.TableConfiguration)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where("tc.id = ?", configurationID).
-					Where("tc.organization_id = ?", tenantInfo.OrgID).
-					Where("tc.business_unit_id = ?", tenantInfo.BuID)
-			}).
-			Exec(ctx)
+		tc := tableconfigurationdb.TableConfigurations
+		rows, err := tc.Where(tc.ID.Eq(configurationID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to delete table configuration", zap.Error(err))
+			r.l.Error(
+				"failed to delete table configuration",
+				zap.String("configurationID", configurationID.String()),
+				zap.Error(err),
+			)
 			return err
 		}
 
-		return dberror.CheckRowsAffected(result, "TableConfiguration", configurationID.String())
+		return dberror.CheckAffected(rows, entityName, configurationID.String())
 	})
 }
 
@@ -415,42 +245,25 @@ func (r *repository) GetDefaultForResource(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tableconfiguration.TableConfiguration, error) {
-			log := r.l.With(
-				zap.String("operation", "GetDefaultForResource"),
-				zap.String("resource", req.Resource),
-			)
-
-			entity := new(tableconfiguration.TableConfiguration)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("tc.user_id = ?", req.TenantInfo.UserID).
-						Where("tc.resource = ?", req.Resource).
-						Where("tc.is_default = ?", true).
-						Where("tc.organization_id = ?", req.TenantInfo.OrgID).
-						Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
-				}).
-				Scan(ctx)
+			tc := tableconfigurationdb.TableConfigurations
+			db := r.db.Keel(ctx)
+			entity, err := tc.Where(
+				tc.UserID.Eq(req.TenantInfo.UserID),
+				tc.Resource.Eq(req.Resource),
+				tc.IsDefault.IsTrue(),
+			).First(ctx, db)
 			if err == nil {
 				return entity, nil
 			}
 
-			orgDefault := new(tableconfiguration.TableConfiguration)
-			err = r.db.DBForContext(ctx).
-				NewSelect().
-				Model(orgDefault).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("tc.resource = ?", req.Resource).
-						Where("tc.is_org_default = ?", true).
-						Where("tc.visibility = ?", tableconfiguration.VisibilityPublic).
-						Where("tc.organization_id = ?", req.TenantInfo.OrgID).
-						Where("tc.business_unit_id = ?", req.TenantInfo.BuID)
-				}).
-				Scan(ctx)
+			orgDefault, err := tc.Where(
+				tc.Resource.Eq(req.Resource),
+				tc.IsOrgDefault.IsTrue(),
+				tc.Visibility.Eq(tableconfiguration.VisibilityPublic),
+			).First(ctx, db)
 			if err != nil {
-				log.Debug("no default table configuration found", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "TableConfiguration")
+				r.l.Debug("no default table configuration found", zap.Error(err))
+				return nil, configurationErrors.Map(err, req.Resource)
 			}
 
 			return orgDefault, nil
@@ -461,28 +274,22 @@ func (r *repository) GetDefaultForResource(
 func (r *repository) ClearOrgDefaultForResource(
 	ctx context.Context,
 	resource string,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "ClearOrgDefaultForResource"),
-			zap.String("resource", resource),
+		tc := tableconfigurationdb.TableConfigurations
+		_, err := tc.Where(tc.Resource.Eq(resource), tc.IsOrgDefault.IsTrue()).Update(
+			ctx,
+			r.db.Keel(ctx),
+			tc.IsOrgDefault.To(false),
+			tc.Version.ToExpr(tc.Version),
 		)
-
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tableconfiguration.TableConfiguration)(nil)).
-			Set("is_org_default = ?", false).
-			Set("updated_at = "+dbhelper.NowEpoch).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("tc.resource = ?", resource).
-					Where("tc.is_org_default = ?", true).
-					Where("tc.organization_id = ?", tenantInfo.OrgID).
-					Where("tc.business_unit_id = ?", tenantInfo.BuID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to clear org default table configuration", zap.Error(err))
+			r.l.Error(
+				"failed to clear org default table configuration",
+				zap.String("resource", resource),
+				zap.Error(err),
+			)
 			return err
 		}
 
@@ -494,30 +301,27 @@ func (r *repository) ClearDefaultForResource(
 	ctx context.Context,
 	userID pulid.ID,
 	resource string,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "ClearDefaultForResource"),
-			zap.String("userID", userID.String()),
-			zap.String("resource", resource),
+		tc := tableconfigurationdb.TableConfigurations
+		_, err := tc.Where(
+			tc.UserID.Eq(userID),
+			tc.Resource.Eq(resource),
+			tc.IsDefault.IsTrue(),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			tc.IsDefault.To(false),
+			tc.Version.ToExpr(tc.Version),
 		)
-
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tableconfiguration.TableConfiguration)(nil)).
-			Set("is_default = ?", false).
-			Set("updated_at = "+dbhelper.NowEpoch).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("tc.user_id = ?", userID).
-					Where("tc.resource = ?", resource).
-					Where("tc.is_default = ?", true).
-					Where("tc.organization_id = ?", tenantInfo.OrgID).
-					Where("tc.business_unit_id = ?", tenantInfo.BuID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to clear default table configuration", zap.Error(err))
+			r.l.Error(
+				"failed to clear default table configuration",
+				zap.String("userID", userID.String()),
+				zap.String("resource", resource),
+				zap.Error(err),
+			)
 			return err
 		}
 

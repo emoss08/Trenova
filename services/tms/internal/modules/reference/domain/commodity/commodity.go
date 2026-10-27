@@ -4,20 +4,17 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Commodity)(nil)
 	_ validationframework.TenantedEntity = (*Commodity)(nil)
 	_ domaintypes.PostgresSearchable     = (*Commodity)(nil)
 )
@@ -79,40 +76,46 @@ func (fc FreightClass) IsValid() bool {
 	return slices.Contains(FreightClasses, fc)
 }
 
+// Freight commodities
 type Commodity struct {
-	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
+	keel.Table `keel:"commodities,report=Freight"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID                     pulid.ID           `json:"id"                     keel:"id,pk,autoid:com_"`
+	BusinessUnitID         pulid.ID           `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	OrganizationID         pulid.ID           `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	HazardousMaterialID    pulid.ID           `json:"hazardousMaterialId"    keel:"hazardous_material_id,nullzero"`
+	Status                 domaintypes.Status `json:"status"                 keel:"status"`
+	Name                   string             `json:"name"                   keel:"name"`
+	Description            string             `json:"description"            keel:"description"`
+	MinTemperature         *int               `json:"minTemperature"         keel:"min_temperature,dimension"`
+	MaxTemperature         *int               `json:"maxTemperature"         keel:"max_temperature,dimension"`
+	WeightPerUnit          *float64           `json:"weightPerUnit"          keel:"weight_per_unit"`
+	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit"      keel:"linear_feet_per_unit"`
+	LengthPerUnit          *float64           `json:"lengthPerUnit"          keel:"length_per_unit"`
+	WidthPerUnit           *float64           `json:"widthPerUnit"           keel:"width_per_unit"`
+	HeightPerUnit          *float64           `json:"heightPerUnit"          keel:"height_per_unit"`
+	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment" keel:"max_quantity_per_shipment"`
+	FreightClass           FreightClass       `json:"freightClass"           keel:"freight_class,nullzero"`
+	LoadingInstructions    string             `json:"loadingInstructions"    keel:"loading_instructions,nullzero"`
+	Stackable              bool               `json:"stackable"              keel:"stackable"`
+	Fragile                bool               `json:"fragile"                keel:"fragile"`
+	SearchVector           string             `json:"-"                      keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                   string             `json:"-"                      keel:"rank,computed"`
+	Version                int64              `json:"version"                keel:"version,version"`
+	CreatedAt              int64              `json:"createdAt"              keel:"created_at,autocreate"`
+	UpdatedAt              int64              `json:"updatedAt"              keel:"updated_at,autoupdate"`
 
-	ID                     pulid.ID           `json:"id"                     bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID         pulid.ID           `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID         pulid.ID           `json:"organizationId"         bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	HazardousMaterialID    pulid.ID           `json:"hazardousMaterialId"    bun:"hazardous_material_id,type:VARCHAR(100),nullzero"`
-	Status                 domaintypes.Status `json:"status"                 bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name                   string             `json:"name"                   bun:"name,type:VARCHAR(100),notnull"`
-	Description            string             `json:"description"            bun:"description,type:TEXT,notnull"`
-	MinTemperature         *int               `json:"minTemperature"         bun:"min_temperature,type:INTEGER,nullzero"`
-	MaxTemperature         *int               `json:"maxTemperature"         bun:"max_temperature,type:INTEGER,nullzero"`
-	WeightPerUnit          *float64           `json:"weightPerUnit"          bun:"weight_per_unit,type:NUMERIC(10,2),nullzero"`
-	LinearFeetPerUnit      *float64           `json:"linearFeetPerUnit"      bun:"linear_feet_per_unit,type:NUMERIC(10,2),nullzero"`
-	LengthPerUnit          *float64           `json:"lengthPerUnit"          bun:"length_per_unit,type:NUMERIC(10,2),nullzero"`
-	WidthPerUnit           *float64           `json:"widthPerUnit"           bun:"width_per_unit,type:NUMERIC(10,2),nullzero"`
-	HeightPerUnit          *float64           `json:"heightPerUnit"          bun:"height_per_unit,type:NUMERIC(10,2),nullzero"`
-	MaxQuantityPerShipment *float64           `json:"maxQuantityPerShipment" bun:"max_quantity_per_shipment,type:NUMERIC(10,2),nullzero"`
-	FreightClass           FreightClass       `json:"freightClass"           bun:"freight_class,type:freight_class_enum,nullzero"`
-	LoadingInstructions    string             `json:"loadingInstructions"    bun:"loading_instructions,type:TEXT,nullzero"`
-	Stackable              bool               `json:"stackable"              bun:"stackable,type:BOOLEAN"`
-	Fragile                bool               `json:"fragile"                bun:"fragile,type:BOOLEAN"`
-	SearchVector           string             `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                   string             `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`
-	Version                int64              `json:"version"                bun:"version,type:BIGINT"`
-	CreatedAt              int64              `json:"createdAt"              bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt              int64              `json:"updatedAt"              bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	BusinessUnit      *tenant.BusinessUnit                 `json:"businessUnit,omitempty"`
+	Organization      *tenant.Organization                 `json:"organization,omitempty"`
+	HazardousMaterial *hazardousmaterial.HazardousMaterial `json:"hazardousMaterial,omitempty" keel:"belongs:hazardous_material_id"`
+}
 
-	// Relationships
-	BusinessUnit      *tenant.BusinessUnit                 `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *tenant.Organization                 `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
-	HazardousMaterial *hazardousmaterial.HazardousMaterial `json:"hazardousMaterial,omitempty" bun:"rel:belongs-to,join:hazardous_material_id=id"`
+func (c *Commodity) BeforeCreate(_ context.Context) error {
+	if c.Status == "" {
+		c.Status = domaintypes.StatusActive
+	}
+
+	return nil
 }
 
 func (c *Commodity) Validate(multiErr *errortypes.MultiError) {
@@ -186,19 +189,15 @@ func (c *Commodity) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
-func (c *Commodity) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("com_")
-		}
-
-		c.CreatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
+func (Commodity) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_commodities_name",
+			Message: "Commodity with this name already exists in your organization",
+		},
+		{
+			Name:    "fk_commodities_hazardous_material",
+			Message: "Hazardous material does not exist or belongs to a different organization",
+		},
 	}
-
-	return nil
 }

@@ -1,8 +1,7 @@
 package locationcategory
 
 import (
-	"context"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -10,44 +9,39 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*LocationCategory)(nil)
 	_ validationframework.TenantedEntity = (*LocationCategory)(nil)
 	_ domaintypes.PostgresSearchable     = (*LocationCategory)(nil)
 	_ pagination.CursorEntity            = (*LocationCategory)(nil)
 )
 
+// Classification of locations
 type LocationCategory struct {
-	bun.BaseModel             `bun:"table:location_categories,alias:lc" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                             json:"-"`
+	keel.Table          `keel:"location_categories,report=Parties"`
+	ID                  pulid.ID     `keel:"id,pk,autoid:lc_"                         json:"id"`
+	BusinessUnitID      pulid.ID     `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID      pulid.ID     `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Name                string       `keel:"name"                                     json:"name"`
+	Description         string       `keel:"description,nullzero"                     json:"description"`
+	Type                Category     `keel:"type"                                     json:"type"`
+	FacilityType        FacilityType `keel:"facility_type,nullzero"                   json:"facilityType"`
+	Color               string       `keel:"color,nullzero"                           json:"color"`
+	HasSecureParking    bool         `keel:"has_secure_parking"                       json:"hasSecureParking"`
+	RequiresAppointment bool         `keel:"requires_appointment"                     json:"requiresAppointment"`
+	AllowsOvernight     bool         `keel:"allows_overnight"                         json:"allowsOvernight"`
+	HasRestroom         bool         `keel:"has_restroom"                             json:"hasRestroom"`
+	Version             int64        `keel:"version,version"                          json:"version"`
+	CreatedAt           int64        `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt           int64        `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector        string       `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
+	Rank                string       `keel:"rank,computed"                            json:"-"`
 
-	ID                  pulid.ID     `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID      pulid.ID     `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID      pulid.ID     `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	Name                string       `json:"name"                bun:"name,type:VARCHAR(100),notnull"`
-	Description         string       `json:"description"         bun:"description,type:TEXT,nullzero"`
-	Type                Category     `json:"type"                bun:"type,type:location_category_type,notnull"`
-	FacilityType        FacilityType `json:"facilityType"        bun:"facility_type,type:facility_type,nullzero"`
-	Color               string       `json:"color"               bun:"color,type:VARCHAR(10),nullzero"`
-	HasSecureParking    bool         `json:"hasSecureParking"    bun:"has_secure_parking,type:BOOLEAN"`
-	RequiresAppointment bool         `json:"requiresAppointment" bun:"requires_appointment,type:BOOLEAN"`
-	AllowsOvernight     bool         `json:"allowsOvernight"     bun:"allows_overnight,type:BOOLEAN"`
-	HasRestroom         bool         `json:"hasRestroom"         bun:"has_restroom,type:BOOLEAN"`
-	Version             int64        `json:"version"             bun:"version,type:BIGINT"`
-	CreatedAt           int64        `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64        `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector        string       `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                string       `json:"-"                   bun:"rank,type:VARCHAR(100),scanonly"`
-
-	// Relationships
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
 }
 
 func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
@@ -67,22 +61,6 @@ func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
 			is.HexColor.Error("Color must be a valid hex color"),
 		),
 	))
-}
-
-func (lc *LocationCategory) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if lc.ID.IsNil() {
-			lc.ID = pulid.MustNew("lc_")
-		}
-		lc.CreatedAt = now
-	case *bun.UpdateQuery:
-		lc.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (lc *LocationCategory) GetID() pulid.ID {
@@ -120,6 +98,15 @@ func (lc *LocationCategory) GetPostgresSearchConfig() domaintypes.PostgresSearch
 				Type:   domaintypes.FieldTypeText,
 				Weight: domaintypes.SearchWeightB,
 			},
+		},
+	}
+}
+
+func (LocationCategory) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_location_categories_name",
+			Message: "Location category with this name already exists in your organization",
 		},
 	}
 }

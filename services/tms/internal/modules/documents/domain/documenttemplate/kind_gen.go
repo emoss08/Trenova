@@ -170,6 +170,9 @@ const (
 	KindNotificationReportDeliveryFailed Kind = "notification.report_delivery_email_failed"
 	// KindNotificationReportScheduleSkipped reports a skipped or disabled schedule.
 	KindNotificationReportScheduleSkipped Kind = "notification.report_schedule_skipped"
+	// KindNotificationReportNeedsAttention tells an owner their saved reports
+	// no longer validate against the report catalog.
+	KindNotificationReportNeedsAttention Kind = "notification.report_needs_attention"
 
 	// KindNotificationCommentMention tells someone they were named in a comment.
 	KindNotificationCommentMention Kind = "notification.shipment_comment_mention"
@@ -237,6 +240,7 @@ func AllKinds() []Kind {
 		KindNotificationReportDelivered,
 		KindNotificationReportDeliveryFailed,
 		KindNotificationReportScheduleSkipped,
+		KindNotificationReportNeedsAttention,
 		KindNotificationCommentMention,
 		KindNotificationCommentReply,
 		KindNotificationInvoiceShared,

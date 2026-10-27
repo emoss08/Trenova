@@ -19,29 +19,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type fakeDB struct{}
 
-func (fakeDB) DB() *bun.DB { return nil }
-
-func (fakeDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (fakeDB) WithTx(
+func (fakeDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
-
-func (fakeDB) HealthCheck(context.Context) error { return nil }
-
-func (fakeDB) IsHealthy(context.Context) bool { return true }
-
-func (fakeDB) Close() error { return nil }
 
 type fakeOrganizations struct {
 	org       *tenant.Organization

@@ -2,12 +2,13 @@ package customerpaymentservice
 
 import (
 	"context"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/customerpaymentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
@@ -28,7 +29,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestValidatorRejectsOverApplication(t *testing.T) {
@@ -661,16 +661,10 @@ func TestPostAndApplyRecognizesShortPay(t *testing.T) {
 
 type fakePaymentDB struct{}
 
-func (fakePaymentDB) DB() *bun.DB                          { return nil }
-func (fakePaymentDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (fakePaymentDB) WithTx(
+func (fakePaymentDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
-func (fakePaymentDB) HealthCheck(context.Context) error { return nil }
-func (fakePaymentDB) IsHealthy(context.Context) bool    { return true }
-func (fakePaymentDB) Close() error                      { return nil }

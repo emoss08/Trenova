@@ -6,88 +6,90 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicommunicationprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediconnectiondraftrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicontrolnumberrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edidocumenttyperepository"
+	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediladingrepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edimappingprofilerepository"
-	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnerdocumentprofilerepository"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnerrepository"
-	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edipartnersettingrepository"
-	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/editemplaterepository"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-type seededTenant struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
-func realService(t *testing.T) (context.Context, *bun.DB, *Service, pagination.TenantInfo) {
+func realService(t *testing.T) (context.Context, *keel.DB, *Service, pagination.TenantInfo) {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	_, err := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	).Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
-	var org seededTenant
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Where("NOT EXISTS (SELECT 1 FROM edi_partners AS ep WHERE ep.organization_id = organizations.id)").
-		Limit(1).
-		Scan(ctx, &org))
+	var orgID, buID string
+	require.NoError(t, db.Pool().QueryRow(ctx, `SELECT id, business_unit_id FROM organizations
+		WHERE NOT EXISTS (SELECT 1 FROM edi_partners ep WHERE ep.organization_id = organizations.id)
+		ORDER BY id LIMIT 1`).Scan(&orgID, &buID))
+	scope := editest.TenantOf(ctx, pagination.TenantInfo{OrgID: pulid.ID(orgID), BuID: pulid.ID(buID)})
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
-	templates := editemplaterepository.New(editemplaterepository.Params{DB: conn, Logger: logger})
 	documentTypes := edidocumenttyperepository.New(edidocumenttyperepository.Params{DB: conn, Logger: logger})
+	partners := edipartnerrepository.New(edipartnerrepository.Params{DB: conn, Logger: logger})
 	validator := ediservice.NewValidator()
 	setup := ediservice.New(ediservice.Params{
-		Logger:              logger,
-		PartnerRepo:         edipartnerrepository.New(edipartnerrepository.Params{DB: conn, Logger: logger}),
-		ProfileRepo:         edicommunicationprofilerepository.New(edicommunicationprofilerepository.Params{DB: conn, Logger: logger}),
-		DocumentProfileRepo: edipartnerdocumentprofilerepository.New(edipartnerdocumentprofilerepository.Params{DB: conn, Logger: logger}),
-		MappingProfileRepo:  edimappingprofilerepository.New(edimappingprofilerepository.Params{DB: conn, Logger: logger}),
-		ControlNumberRepo:   edicontrolnumberrepository.New(edicontrolnumberrepository.Params{DB: conn, Logger: logger}),
-		PartnerSettingRepo:  edipartnersettingrepository.New(edipartnersettingrepository.Params{DB: conn, Logger: logger}),
-		TemplateRepo:        templates,
-		DocumentTypeRepo:    documentTypes,
-		Validator:           validator,
-		DB:                  conn,
+		Logger:             logger,
+		PartnerRepo:        partners,
+		ProfileRepo:        edicommunicationprofilerepository.New(edicommunicationprofilerepository.Params{DB: conn, Logger: logger}),
+		MappingProfileRepo: edimappingprofilerepository.New(edimappingprofilerepository.Params{DB: conn, Logger: logger}),
+		ControlNumberRepo:  edicontrolnumberrepository.New(edicontrolnumberrepository.Params{DB: conn, Logger: logger}),
+		DocumentTypeRepo:   documentTypes,
+		Validator:          validator,
+		DB:                 conn,
+		Savepoints:         conn,
+	})
+	orgs := tenantportsmock.NewMockOrganizationRepository(t)
+	orgs.EXPECT().GetByID(mock.Anything, mock.Anything).
+		Return(&tenant.Organization{Name: "Trenova Logistics", ScacCode: "TRNV", Timezone: "America/Chicago"}, nil).
+		Maybe()
+	ladingRepos := ediladingrepository.Params{DB: conn, Logger: logger}
+	runtime := edilading.NewRuntime(edilading.RuntimeParams{
+		Logger:   logger,
+		Projects: ediladingrepository.NewProjects(ladingRepos),
+		Orgs:     orgs,
+	})
+	projects := edilading.NewProjects(edilading.ProjectsParams{
+		Logger:   logger,
+		Runtime:  runtime,
+		Projects: ediladingrepository.NewProjects(ladingRepos),
+		Replays:  ediladingrepository.NewReplays(ladingRepos),
+		Partners: partners,
 	})
 	service := New(Params{
 		Repo:          ediconnectiondraftrepository.New(ediconnectiondraftrepository.Params{DB: conn, Logger: logger}),
-		Templates:     templates,
 		DocumentTypes: documentTypes,
 		Setup:         setup,
 		Validator:     validator,
+		Lading:        runtime,
+		Projects:      projects,
 		DB:            conn,
 		Logger:        logger,
 	})
-	return ctx, db, service, pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	return scope.Ctx, db, service, scope.Info
 }
 
 func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *testing.T) {
@@ -109,35 +111,47 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 	require.NoError(t, err)
 	require.True(t, applied.Created)
 
-	partner := new(edi.EDIPartner)
-	require.NoError(t, db.NewSelect().Model(partner).Where("id = ?", applied.PartnerID).Scan(ctx))
+	ep := edidb.EDIPartners
+	partner, err := ep.Get(ctx, db, applied.PartnerID)
+	require.NoError(t, err)
 	assert.Equal(t, "ACMERETAIL", partner.Code)
 	assert.Equal(t, domaintypes.StatusInactive, partner.Status)
 	assert.True(t, partner.EnabledForInbound)
 	assert.True(t, partner.EnabledForOutbound)
 
-	var transports []*edi.EDICommunicationProfile
-	require.NoError(t, db.NewSelect().Model(&transports).Where("edi_partner_id = ?", partner.ID).Scan(ctx))
+	cp := edidb.EDICommunicationProfiles
+	transports, err := cp.Where(cp.EDIPartnerID.Eq(partner.ID)).All(ctx, db)
+	require.NoError(t, err)
 	require.Len(t, transports, 1)
 	assert.Equal(t, edi.ConnectionMethodAS2, transports[0].Method)
 	assert.Equal(t, domaintypes.StatusInactive, transports[0].Status)
 	assert.Empty(t, transports[0].EncryptedSecrets)
 	assert.Equal(t, "ACMERETAILAS2", transports[0].Config["partnerAS2Id"])
 
-	var profiles []*edi.EDIPartnerDocumentProfile
-	require.NoError(t, db.NewSelect().Model(&profiles).Where("edi_partner_id = ?", partner.ID).Scan(ctx))
-	require.Len(t, profiles, 4)
-	for _, profile := range profiles {
-		assert.Equal(t, edi.DocumentStatusInactive, profile.Status)
-		assert.True(t, profile.TemplateID.IsNotNil())
-		if profile.Direction == edi.DocumentDirectionOutbound {
-			assert.Equal(t, "007912345", profile.Envelope.InterchangeReceiverID)
-			assert.True(t, profile.Acknowledgment.Expected)
-		}
+	lp := edidb.LadingProjects
+	project, err := lp.Where(lp.EDIPartnerID.Eq(partner.ID)).One(ctx, db)
+	require.NoError(t, err)
+	assert.True(t, project.ActiveVersionID.IsNil(), "a drafted project runs nothing until it is certified")
+	lv := edidb.LadingVersions
+	versions, err := lv.Where(lv.ProjectID.Eq(project.ID)).All(ctx, db)
+	require.NoError(t, err)
+	require.Len(t, versions, 1)
+	drafted := versions[0]
+	assert.Equal(t, edi.LadingVersionStatusDraft, drafted.Status)
+	assert.Equal(t, "Drafted from acme-retail-edi-guide.pdf", drafted.Notes)
+	paths := make([]string, 0, len(drafted.Files))
+	for _, file := range drafted.Files {
+		paths = append(paths, file.Path)
 	}
+	assert.Contains(t, paths, "guides/214.lading")
+	assert.Contains(t, paths, "guides/204.lading")
+	require.NotNil(t, drafted.Manifest.Partner)
+	require.NotNil(t, drafted.Manifest.Partner.Interchange)
+	assert.Equal(t, "007912345", drafted.Manifest.Partner.Interchange.Them.ID)
 
-	var sequences []*edi.EDIControlNumberSequence
-	require.NoError(t, db.NewSelect().Model(&sequences).Where("edi_partner_id = ?", partner.ID).Scan(ctx))
+	cn := edidb.EDIControlNumberSequences
+	sequences, err := cn.Where(cn.EDIPartnerID.Eq(partner.ID)).All(ctx, db)
+	require.NoError(t, err)
 	require.Len(t, sequences, 3)
 	for _, sequence := range sequences {
 		assert.Equal(t, int64(1000), sequence.NextValue)
@@ -156,9 +170,9 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 	assert.Equal(t, partner.ID, rerun.Partner.PartnerID)
 	assert.Equal(t, ediports.ChangeKindChange, rerun.Partner.Change)
 	assert.Equal(t, ediports.ChangeKindSame, rerun.Transport.Change)
-	for _, profile := range rerun.DocumentProfiles {
-		assert.Equal(t, ediports.ChangeKindSame, profile.Change, "%s %s", profile.TransactionSet, profile.Direction)
-	}
+	require.NotNil(t, rerun.Project)
+	assert.Equal(t, project.ID, rerun.Project.ProjectID)
+	assert.Equal(t, ediports.ChangeKindSame, rerun.Project.Change, "the drafted project already says this")
 	assert.Equal(t, 1, rerun.Changes)
 
 	_, err = service.ApplyConnectionDraft(ctx, &ediports.ApplyConnectionDraftRequest{
@@ -168,13 +182,11 @@ func TestApplyConnectionDraft_WritesTheWholeConnectionAndARerunIsAChangeSet(t *t
 	})
 	require.NoError(t, err)
 
-	count, err := db.NewSelect().Model((*edi.EDIPartner)(nil)).
-		Where("organization_id = ?", tenant.OrgID).
-		Where("LOWER(code) = ?", "acmeretail").
-		Count(ctx)
+	count, err := ep.Where(ep.Code.Lower().Eq("acmeretail")).Count(ctx, db)
 	require.NoError(t, err)
 	assert.EqualValues(t, 1, count, "a re-run never creates a second partner")
-	require.NoError(t, db.NewSelect().Model(partner).Where("id = ?", partner.ID).Scan(ctx))
+	partner, err = ep.Get(ctx, db, partner.ID)
+	require.NoError(t, err)
 	assert.Equal(t, "Whitfield", partner.ContactName)
 	assert.Equal(t, domaintypes.StatusInactive, partner.Status)
 

@@ -1,26 +1,26 @@
 package ediservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"context"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
+	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
-	"github.com/emoss08/trenova/internal/modules/operations/app/internaledilifecycle"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestService_ApplyTransferChange_CancelsLinkedShipment(t *testing.T) {
@@ -247,7 +247,7 @@ func newTransferChangeApplyFixture(
 		eventRepo:          shipmenteventportsmock.NewMockShipmentEventRepository(t),
 	}
 	fixture.service = &Service{
-		db:                 transferChangeApplyDB{},
+		db:                 dbtest.NopConnection{},
 		transferChangeRepo: fixture.transferChangeRepo,
 		shipmentLinkRepo:   fixture.shipmentLinkRepo,
 		shipmentRepo:       fixture.shipmentRepo,
@@ -419,19 +419,4 @@ func transferLifecycleStop(
 		Sequence:             sequence,
 		ScheduledWindowStart: 500 + sequence,
 	}
-}
-
-type transferChangeApplyDB struct{}
-
-func (transferChangeApplyDB) DB() *bun.DB                          { return nil }
-func (transferChangeApplyDB) DBForContext(context.Context) bun.IDB { return nil }
-func (transferChangeApplyDB) HealthCheck(context.Context) error    { return nil }
-func (transferChangeApplyDB) IsHealthy(context.Context) bool       { return true }
-func (transferChangeApplyDB) Close() error                         { return nil }
-func (transferChangeApplyDB) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
 }

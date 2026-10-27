@@ -11,6 +11,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
@@ -83,6 +84,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
 	"github.com/emoss08/trenova/internal/modules/places/domain/storedmileage"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
@@ -463,6 +465,8 @@ type AIAuditEventConnection struct {
 	Edges      []*AIAuditEventEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIAuditEventEdge struct {
@@ -474,6 +478,8 @@ type AIAuditExportConnection struct {
 	Edges      []*AIAuditExportEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIAuditExportEdge struct {
@@ -485,6 +491,8 @@ type AICorrectionConnection struct {
 	Edges      []*AICorrectionEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AICorrectionEdge struct {
@@ -496,6 +504,8 @@ type AIFeedbackConnection struct {
 	Edges      []*AIFeedbackEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIFeedbackEdge struct {
@@ -514,6 +524,8 @@ type AIProviderConnection struct {
 	Edges      []*AIProviderEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIProviderDraftTestInput struct {
@@ -601,6 +613,8 @@ type AIRetrievalFailedEntryConnection struct {
 	Edges      []*AIRetrievalFailedEntryEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIRetrievalFailedEntryEdge struct {
@@ -651,6 +665,8 @@ type AIUsageFeatureConnection struct {
 	Edges      []*AIUsageFeatureEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AIUsageFeatureEdge struct {
@@ -662,6 +678,8 @@ type AccessorialChargeConnection struct {
 	Edges      []*AccessorialChargeEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccessorialChargeEdge struct {
@@ -673,6 +691,8 @@ type AccountTypeConnection struct {
 	Edges      []*AccountTypeEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccountTypeEdge struct {
@@ -684,6 +704,8 @@ type AccountingDriftFindingConnection struct {
 	Edges      []*AccountingDriftFindingEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccountingDriftFindingEdge struct {
@@ -695,6 +717,8 @@ type AccountingInboundChangeConnection struct {
 	Edges      []*AccountingInboundChangeEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccountingInboundChangeEdge struct {
@@ -706,6 +730,15 @@ type AccountingMappingConnection struct {
 	Edges      []*AccountingMappingEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+// One mapping, and the accounting system records it could be set to.
+type AccountingMappingDetail struct {
+	Mapping *accountingsync.AccountingMapping `json:"mapping"`
+	// Usable records of the kind the mapping maps to whose names match optionsQuery, best first, at most ten. Empty without optionsQuery.
+	Options []*accountingsync.AccountingReferenceObject `json:"options"`
 }
 
 type AccountingMappingEdge struct {
@@ -730,6 +763,8 @@ type AccountingSyncRecordConnection struct {
 	Edges      []*AccountingSyncRecordEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AccountingSyncRecordEdge struct {
@@ -944,6 +979,8 @@ type AgentDefinitionConnection struct {
 	Edges      []*AgentDefinitionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentDefinitionEdge struct {
@@ -967,6 +1004,8 @@ type AgentEvalCaseConnection struct {
 	Edges      []*AgentEvalCaseEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentEvalCaseCuratedInput struct {
@@ -1011,6 +1050,8 @@ type AgentEvaluationConnection struct {
 	Edges      []*AgentEvaluationEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentEvaluationEdge struct {
@@ -1022,6 +1063,8 @@ type AgentExceptionConnection struct {
 	Edges      []*AgentExceptionEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentExceptionEdge struct {
@@ -1061,6 +1104,8 @@ type AgentMemoryConnection struct {
 	Edges      []*AgentMemoryEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentMemoryEdge struct {
@@ -1084,6 +1129,8 @@ type AgentPlanConnection struct {
 	Edges      []*AgentPlanEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentPlanDecisionInput struct {
@@ -1121,6 +1168,8 @@ type AgentProposalConnection struct {
 	Edges      []*AgentProposalEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentProposalDecisionInput struct {
@@ -1158,6 +1207,8 @@ type AgentQualityAgentConnection struct {
 	Edges      []*AgentQualityAgentEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentQualityAgentEdge struct {
@@ -1177,6 +1228,8 @@ type AgentReflectionConnection struct {
 	Edges      []*AgentReflectionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentReflectionEdge struct {
@@ -1188,6 +1241,8 @@ type AgentRunConnection struct {
 	Edges      []*AgentRunEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentRunEdge struct {
@@ -1199,6 +1254,8 @@ type AgentRunEventConnection struct {
 	Edges      []*AgentRunEventEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentRunEventEdge struct {
@@ -1253,6 +1310,8 @@ type AgentSuiteRunCaseConnection struct {
 	Edges      []*AgentSuiteRunCaseEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One case of a suite run: its replay, with the checks, scores and judge's note.
@@ -1265,6 +1324,8 @@ type AgentSuiteRunConnection struct {
 	Edges      []*AgentSuiteRunEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentSuiteRunEdge struct {
@@ -1328,6 +1389,8 @@ type AgentToolPolicyConnection struct {
 	PageInfo *PageInfo              `json:"pageInfo"`
 	// Every tool matching the filters. Counted only when selected.
 	TotalCount *int `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentToolPolicyEdge struct {
@@ -1360,6 +1423,8 @@ type AgentToolSafetyConnection struct {
 	PageInfo *PageInfo              `json:"pageInfo"`
 	// Every held tool matching the filters. Counted only when selected.
 	TotalCount *int `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentToolSafetyEdge struct {
@@ -1392,6 +1457,8 @@ type AgentWorstRatedAnswerConnection struct {
 	PageInfo *PageInfo                    `json:"pageInfo"`
 	// Every answer matching the filters. Counted only when selected.
 	TotalCount *int `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AgentWorstRatedAnswerEdge struct {
@@ -1413,6 +1480,8 @@ type APIKeyConnection struct {
 	Edges      []*APIKeyEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount *int          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type APIKeyEdge struct {
@@ -1543,6 +1612,8 @@ type AuditEntryConnection struct {
 	Edges      []*AuditEntryEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AuditEntryEdge struct {
@@ -1554,6 +1625,8 @@ type AuthEventConnection struct {
 	Edges      []*AuthEventEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type AuthEventEdge struct {
@@ -1715,6 +1788,8 @@ type BillingTransferRunItemConnection struct {
 	Edges      []*BillingTransferRunItemEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount int                           `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type BillingTransferRunItemEdge struct {
@@ -1887,9 +1962,11 @@ type CapacityMatch struct {
 	PickupAt        *int     `json:"pickupAt,omitempty"`
 	Revenue         string   `json:"revenue"`
 	DeadheadMiles   *float64 `json:"deadheadMiles,omitempty"`
-	Quote           *string  `json:"quote,omitempty"`
-	MarginPercent   *float64 `json:"marginPercent,omitempty"`
-	FitPercent      *float64 `json:"fitPercent,omitempty"`
+	// What the carrier would cost. Null to a reader without the margins field group, since beside the revenue it gives the margin.
+	Quote *string `json:"quote,omitempty"`
+	// Null to a reader without the margins field group.
+	MarginPercent *float64 `json:"marginPercent,omitempty"`
+	FitPercent    *float64 `json:"fitPercent,omitempty"`
 }
 
 // The ring drawn around a capacity avatar: hours of service left for a driver, acceptance for a carrier.
@@ -1923,6 +2000,8 @@ type CaptureBatchConnection struct {
 	Edges      []*CaptureBatchEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CaptureBatchEdge struct {
@@ -2006,6 +2085,8 @@ type CarrierCapacityPostingConnection struct {
 	Edges      []*CarrierCapacityPostingEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierCapacityPostingEdge struct {
@@ -2042,12 +2123,16 @@ type CarrierConnection struct {
 	Edges      []*CarrierEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierCostEventConnection struct {
 	Edges      []*CarrierCostEventEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierCostEventEdge struct {
@@ -2121,6 +2206,8 @@ type CarrierIntelEventConnection struct {
 	Edges      []*CarrierIntelEventEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierIntelEventCounts struct {
@@ -2135,13 +2222,17 @@ type CarrierIntelEventEdge struct {
 }
 
 type CarrierIntelEventFilterInput struct {
-	Statuses    []carrierintel.EventStatus `json:"statuses,omitempty"`
-	Severities  []carrierintel.Severity    `json:"severities,omitempty"`
-	Categories  []carrierintel.Section     `json:"categories,omitempty"`
-	CarrierID   *string                    `json:"carrierId,omitempty"`
-	SubjectType *carrierintel.SubjectType  `json:"subjectType,omitempty"`
-	SubjectID   *string                    `json:"subjectId,omitempty"`
-	OpenOnly    *bool                      `json:"openOnly,omitempty"`
+	Statuses   []carrierintel.EventStatus `json:"statuses,omitempty"`
+	Severities []carrierintel.Severity    `json:"severities,omitempty"`
+	Categories []carrierintel.Section     `json:"categories,omitempty"`
+	// Only this carrier's events.
+	CarrierID *string `json:"carrierId,omitempty"`
+	// Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number.
+	SubjectType *carrierintel.SubjectType `json:"subjectType,omitempty"`
+	// Only events about this subject, by its id or DOT number as the event names it.
+	SubjectID *string `json:"subjectId,omitempty"`
+	// Only events nobody has resolved or dismissed yet: Open and Acknowledged.
+	OpenOnly *bool `json:"openOnly,omitempty"`
 }
 
 type CarrierIntelFetchResult struct {
@@ -2239,12 +2330,16 @@ type CarrierInvoiceMatchActionInput struct {
 type CarrierInvoiceMatchList struct {
 	Items      []*carriersettlement.InvoiceMatch `json:"items"`
 	TotalCount int                               `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierMonitoringEnrollmentConnection struct {
 	Edges      []*CarrierMonitoringEnrollmentEdge `json:"edges"`
 	PageInfo   *PageInfo                          `json:"pageInfo"`
 	TotalCount *int                               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierMonitoringEnrollmentEdge struct {
@@ -2266,6 +2361,8 @@ type CarrierSettlementBatchConnection struct {
 	Edges      []*CarrierSettlementBatchEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierSettlementBatchEdge struct {
@@ -2277,6 +2374,8 @@ type CarrierSettlementConnection struct {
 	Edges      []*CarrierSettlementEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CarrierSettlementEdge struct {
@@ -2361,6 +2460,8 @@ type CommodityConnection struct {
 	Edges      []*CommodityEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CommodityEdge struct {
@@ -2454,22 +2555,23 @@ type CostCategoryUpdateInput struct {
 }
 
 type CostingControl struct {
-	ID                   string          `json:"id"`
-	BusinessUnitID       string          `json:"businessUnitId"`
-	OrganizationID       string          `json:"organizationId"`
-	FuelIndexID          *string         `json:"fuelIndexId,omitempty"`
-	FuelIndex            *FuelIndex      `json:"fuelIndex,omitempty"`
-	UseLiveFuelPrice     bool            `json:"useLiveFuelPrice"`
-	MilesPerGallon       string          `json:"milesPerGallon"`
-	IncludeDeadheadMiles bool            `json:"includeDeadheadMiles"`
-	GlActualsEnabled     bool            `json:"glActualsEnabled"`
-	GlRollingMonths      int             `json:"glRollingMonths"`
-	PlannedMonthlyMiles  *int            `json:"plannedMonthlyMiles,omitempty"`
-	TargetMarginPercent  *string         `json:"targetMarginPercent,omitempty"`
-	Version              int             `json:"version"`
-	CreatedAt            int             `json:"createdAt"`
-	UpdatedAt            int             `json:"updatedAt"`
-	Categories           []*CostCategory `json:"categories"`
+	ID                   string     `json:"id"`
+	BusinessUnitID       string     `json:"businessUnitId"`
+	OrganizationID       string     `json:"organizationId"`
+	FuelIndexID          *string    `json:"fuelIndexId,omitempty"`
+	FuelIndex            *FuelIndex `json:"fuelIndex,omitempty"`
+	UseLiveFuelPrice     bool       `json:"useLiveFuelPrice"`
+	MilesPerGallon       string     `json:"milesPerGallon"`
+	IncludeDeadheadMiles bool       `json:"includeDeadheadMiles"`
+	GlActualsEnabled     bool       `json:"glActualsEnabled"`
+	GlRollingMonths      int        `json:"glRollingMonths"`
+	PlannedMonthlyMiles  *int       `json:"plannedMonthlyMiles,omitempty"`
+	// The margin the organization aims for. Null to a reader without the margins field group.
+	TargetMarginPercent *string         `json:"targetMarginPercent,omitempty"`
+	Version             int             `json:"version"`
+	CreatedAt           int             `json:"createdAt"`
+	UpdatedAt           int             `json:"updatedAt"`
+	Categories          []*CostCategory `json:"categories"`
 }
 
 type CostingControlInput struct {
@@ -2701,6 +2803,8 @@ type CustomFieldDefinitionConnection struct {
 	Edges      []*CustomFieldDefinitionEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CustomFieldDefinitionEdge struct {
@@ -2712,19 +2816,23 @@ type CustomerConnection struct {
 	Edges      []*CustomerEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CustomerDetentionStat struct {
-	CustomerID      string `json:"customerId"`
-	CustomerName    string `json:"customerName"`
-	StopCount       int    `json:"stopCount"`
-	BreachCount     int    `json:"breachCount"`
-	BilledAmount    string `json:"billedAmount"`
-	DriverPayAmount string `json:"driverPayAmount"`
-	NetMargin       string `json:"netMargin"`
-	WaivedAmount    string `json:"waivedAmount"`
-	DisputeCount    int    `json:"disputeCount"`
-	SuppressedCount int    `json:"suppressedCount"`
+	CustomerID   string `json:"customerId"`
+	CustomerName string `json:"customerName"`
+	StopCount    int    `json:"stopCount"`
+	BreachCount  int    `json:"breachCount"`
+	BilledAmount string `json:"billedAmount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin       *string `json:"netMargin,omitempty"`
+	WaivedAmount    string  `json:"waivedAmount"`
+	DisputeCount    int     `json:"disputeCount"`
+	SuppressedCount int     `json:"suppressedCount"`
 }
 
 type CustomerEdge struct {
@@ -2742,6 +2850,8 @@ type CustomerPaymentConnection struct {
 	Edges      []*CustomerPaymentEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type CustomerPaymentEdge struct {
@@ -2753,6 +2863,8 @@ type DOTRandomPoolConnection struct {
 	Edges      []*DOTRandomPoolEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DOTRandomPoolEdge struct {
@@ -3051,9 +3163,11 @@ type DetentionBacktestBucket struct {
 	ProposedAmount string `json:"proposedAmount"`
 	BaselineAmount string `json:"baselineAmount"`
 	// proposedAmount minus baselineAmount.
-	Delta           string `json:"delta"`
-	DriverPayAmount string `json:"driverPayAmount"`
-	NetMargin       string `json:"netMargin"`
+	Delta string `json:"delta"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin *string `json:"netMargin,omitempty"`
 }
 
 type DetentionBacktestInput struct {
@@ -3066,17 +3180,20 @@ type DetentionBacktestInput struct {
 }
 
 type DetentionBacktestResult struct {
-	StopsEvaluated      int                        `json:"stopsEvaluated"`
-	StopsMatched        int                        `json:"stopsMatched"`
-	StopsBillable       int                        `json:"stopsBillable"`
-	StopsForfeited      int                        `json:"stopsForfeited"`
-	StopsSuppressed     int                        `json:"stopsSuppressed"`
-	ProposedRevenue     string                     `json:"proposedRevenue"`
-	BaselineRevenue     string                     `json:"baselineRevenue"`
-	RevenueDelta        string                     `json:"revenueDelta"`
-	ProposedDriverPay   string                     `json:"proposedDriverPay"`
-	ProposedNetMargin   string                     `json:"proposedNetMargin"`
-	NegativeMarginStops int                        `json:"negativeMarginStops"`
+	StopsEvaluated  int    `json:"stopsEvaluated"`
+	StopsMatched    int    `json:"stopsMatched"`
+	StopsBillable   int    `json:"stopsBillable"`
+	StopsForfeited  int    `json:"stopsForfeited"`
+	StopsSuppressed int    `json:"stopsSuppressed"`
+	ProposedRevenue string `json:"proposedRevenue"`
+	BaselineRevenue string `json:"baselineRevenue"`
+	RevenueDelta    string `json:"revenueDelta"`
+	// Null to a reader without the margins field group.
+	ProposedDriverPay *string `json:"proposedDriverPay,omitempty"`
+	// Null to a reader without the margins field group.
+	ProposedNetMargin *string `json:"proposedNetMargin,omitempty"`
+	// Null to a reader without the margins field group.
+	NegativeMarginStops *int                       `json:"negativeMarginStops,omitempty"`
 	ByCustomer          []*DetentionBacktestBucket `json:"byCustomer"`
 	ByFacility          []*DetentionBacktestBucket `json:"byFacility"`
 	From                int                        `json:"from"`
@@ -3105,7 +3222,9 @@ type DetentionDeskEntry struct {
 	MinutesUntilNoticeDue *int                 `json:"minutesUntilNoticeDue,omitempty"`
 	NoticeWindowOpen      bool                 `json:"noticeWindowOpen"`
 	AmountAtRisk          string               `json:"amountAtRisk"`
-	Urgency               DetentionDeskUrgency `json:"urgency"`
+	// The minutes it bills: a running clock's as of now, a stopped charge's as recorded.
+	BillableMinutes int                  `json:"billableMinutes"`
+	Urgency         DetentionDeskUrgency `json:"urgency"`
 }
 
 type DetentionDisputeInput struct {
@@ -3176,34 +3295,36 @@ type DetentionOccurrence struct {
 	CustomerID     string `json:"customerId"`
 	LocationID     string `json:"locationId"`
 	// The stop's location, null to someone who may not read locations or when it has been removed.
-	Location           *location.Location           `json:"location,omitempty"`
-	DetentionPolicyID  *string                      `json:"detentionPolicyId,omitempty"`
-	PolicySnapshot     map[string]any               `json:"policySnapshot,omitempty"`
-	CalculationTrace   map[string]any               `json:"calculationTrace,omitempty"`
-	StopType           string                       `json:"stopType"`
-	ScheduleType       string                       `json:"scheduleType"`
-	AppointmentStart   *int                         `json:"appointmentStart,omitempty"`
-	AppointmentEnd     *int                         `json:"appointmentEnd,omitempty"`
-	ArrivedAt          *int                         `json:"arrivedAt,omitempty"`
-	DepartedAt         *int                         `json:"departedAt,omitempty"`
-	ClockStartAt       int                          `json:"clockStartAt"`
-	ClockStopAt        *int                         `json:"clockStopAt,omitempty"`
-	FreeTimeExpiresAt  int                          `json:"freeTimeExpiresAt"`
-	NoticeDueAt        *int                         `json:"noticeDueAt,omitempty"`
-	NoticeDeadlineAt   *int                         `json:"noticeDeadlineAt,omitempty"`
-	IsOpen             bool                         `json:"isOpen"`
-	ArrivedLate        bool                         `json:"arrivedLate"`
-	LateByMinutes      int                          `json:"lateByMinutes"`
-	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
-	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
-	BillableMinutes    int                          `json:"billableMinutes"`
-	RoundedMinutes     int                          `json:"roundedMinutes"`
-	BillableUnits      string                       `json:"billableUnits"`
-	GrossAmount        string                       `json:"grossAmount"`
-	BillableAmount     string                       `json:"billableAmount"`
-	DriverPayMinutes   int                          `json:"driverPayMinutes"`
-	DriverPayAmount    string                       `json:"driverPayAmount"`
-	NetMargin          string                       `json:"netMargin"`
+	Location           *location.Location `json:"location,omitempty"`
+	DetentionPolicyID  *string            `json:"detentionPolicyId,omitempty"`
+	PolicySnapshot     map[string]any     `json:"policySnapshot,omitempty"`
+	CalculationTrace   map[string]any     `json:"calculationTrace,omitempty"`
+	StopType           string             `json:"stopType"`
+	ScheduleType       string             `json:"scheduleType"`
+	AppointmentStart   *int               `json:"appointmentStart,omitempty"`
+	AppointmentEnd     *int               `json:"appointmentEnd,omitempty"`
+	ArrivedAt          *int               `json:"arrivedAt,omitempty"`
+	DepartedAt         *int               `json:"departedAt,omitempty"`
+	ClockStartAt       int                `json:"clockStartAt"`
+	ClockStopAt        *int               `json:"clockStopAt,omitempty"`
+	FreeTimeExpiresAt  int                `json:"freeTimeExpiresAt"`
+	NoticeDueAt        *int               `json:"noticeDueAt,omitempty"`
+	NoticeDeadlineAt   *int               `json:"noticeDeadlineAt,omitempty"`
+	IsOpen             bool               `json:"isOpen"`
+	ArrivedLate        bool               `json:"arrivedLate"`
+	LateByMinutes      int                `json:"lateByMinutes"`
+	FreeMinutesGranted int                `json:"freeMinutesGranted"`
+	RawDwellMinutes    int                `json:"rawDwellMinutes"`
+	BillableMinutes    int                `json:"billableMinutes"`
+	RoundedMinutes     int                `json:"roundedMinutes"`
+	BillableUnits      string             `json:"billableUnits"`
+	GrossAmount        string             `json:"grossAmount"`
+	BillableAmount     string             `json:"billableAmount"`
+	DriverPayMinutes   int                `json:"driverPayMinutes"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin          *string                      `json:"netMargin,omitempty"`
 	CapApplied         detention.CapKind            `json:"capApplied"`
 	ConvertedToLayover bool                         `json:"convertedToLayover"`
 	Currency           string                       `json:"currency"`
@@ -3306,6 +3427,8 @@ type DetentionPolicyConnection struct {
 	Edges      []*DetentionPolicyEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DetentionPolicyEdge struct {
@@ -3374,15 +3497,17 @@ type DetentionPolicyTier struct {
 }
 
 type DetentionPreviewResult struct {
-	PolicySnapshot     map[string]any               `json:"policySnapshot"`
-	RawDwellMinutes    int                          `json:"rawDwellMinutes"`
-	FreeMinutesGranted int                          `json:"freeMinutesGranted"`
-	BillableMinutes    int                          `json:"billableMinutes"`
-	RoundedMinutes     int                          `json:"roundedMinutes"`
-	BillableAmount     string                       `json:"billableAmount"`
-	GrossAmount        string                       `json:"grossAmount"`
-	DriverPayAmount    string                       `json:"driverPayAmount"`
-	NetMargin          string                       `json:"netMargin"`
+	PolicySnapshot     map[string]any `json:"policySnapshot"`
+	RawDwellMinutes    int            `json:"rawDwellMinutes"`
+	FreeMinutesGranted int            `json:"freeMinutesGranted"`
+	BillableMinutes    int            `json:"billableMinutes"`
+	RoundedMinutes     int            `json:"roundedMinutes"`
+	BillableAmount     string         `json:"billableAmount"`
+	GrossAmount        string         `json:"grossAmount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin          *string                      `json:"netMargin,omitempty"`
 	ArrivedLate        bool                         `json:"arrivedLate"`
 	CapApplied         detention.CapKind            `json:"capApplied"`
 	Status             detention.OccurrenceStatus   `json:"status"`
@@ -3871,6 +3996,8 @@ type DistanceOverrideConnection struct {
 	Edges      []*DistanceOverrideEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DistanceOverrideEdge struct {
@@ -3882,6 +4009,8 @@ type DistanceProfileConnection struct {
 	Edges      []*DistanceProfileEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DistanceProfileEdge struct {
@@ -3893,6 +4022,8 @@ type DocumentPacketRuleConnection struct {
 	Edges      []*DocumentPacketRuleEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DocumentPacketRuleEdge struct {
@@ -3904,6 +4035,8 @@ type DocumentTemplateAssignmentConnection struct {
 	Edges      []*DocumentTemplateAssignmentEdge `json:"edges"`
 	PageInfo   *PageInfo                         `json:"pageInfo"`
 	TotalCount *int                              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DocumentTemplateAssignmentEdge struct {
@@ -3915,6 +4048,8 @@ type DocumentTemplateConnection struct {
 	Edges      []*DocumentTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // One finding from parsing or rendering a template. Severity is advisory in a
@@ -4019,6 +4154,8 @@ type DocumentTypeConnection struct {
 	Edges      []*DocumentTypeEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DocumentTypeEdge struct {
@@ -4055,6 +4192,8 @@ type DriverExpenseConnection struct {
 	Edges      []*DriverExpenseEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DriverExpenseEdge struct {
@@ -4082,6 +4221,8 @@ type DriverPayEventConnection struct {
 	Edges      []*DriverPayEventEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DriverPayEventEdge struct {
@@ -4098,6 +4239,8 @@ type DriverSettlementConnection struct {
 	Edges      []*DriverSettlementEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type DriverSettlementEdge struct {
@@ -4113,15 +4256,47 @@ type EIASeriesOption struct {
 	FuelType fuelsurcharge.FuelType `json:"fuelType"`
 }
 
+// How partners are acknowledging what this organization sent them.
+type EDIAckHealth struct {
+	// When the figures were read.
+	AsOf int `json:"asOf"`
+	// Start of the window the counts by status cover.
+	Since int `json:"since"`
+	// How long an acknowledgment may be pending before it is overdue, in seconds.
+	OverdueAfterSeconds int `json:"overdueAfterSeconds"`
+	// True when the call asked about 997s or 999s, so the counts cover every set they answer.
+	AnswersEverySet bool                 `json:"answersEverySet"`
+	AckStatusCounts []*EDIAckStatusCount `json:"ackStatusCounts"`
+	// Each partner's counts by acknowledgment status, in the window.
+	Partners []*EDIPartnerAckCounts `json:"partners"`
+	// How many messages are overdue, whenever they were sent.
+	OverdueCount int `json:"overdueCount"`
+	// The overdue messages by partner, oldest first.
+	OverdueByPartner []*EDIOverduePartnerAcks `json:"overdueByPartner"`
+	// How many overdue messages are counted but not listed.
+	OverdueNotListed int `json:"overdueNotListed"`
+	// Messages dead-lettered recently, newest first.
+	RecentDeadLettered []*edi.EDIMessage `json:"recentDeadLettered"`
+}
+
+type EDIAckStatusCount struct {
+	Status edi.MessageAcknowledgmentStatus `json:"status"`
+	Count  int                             `json:"count"`
+}
+
 type EDICarrierInvoiceList struct {
 	Items      []*edi.CarrierInvoice `json:"items"`
 	TotalCount int                   `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDICommunicationProfileConnection struct {
 	Edges      []*EDICommunicationProfileEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDICommunicationProfileEdge struct {
@@ -4129,15 +4304,68 @@ type EDICommunicationProfileEdge struct {
 	Cursor string                       `json:"cursor"`
 }
 
+type EDIFlowInstanceConnection struct {
+	Edges      []*EDIFlowInstanceEdge `json:"edges"`
+	PageInfo   *PageInfo              `json:"pageInfo"`
+	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type EDIFlowInstanceEdge struct {
+	Node   *edi.FlowInstance `json:"node"`
+	Cursor string            `json:"cursor"`
+}
+
 type EDIInboundFileConnection struct {
 	Edges      []*EDIInboundFileEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+// One inbound EDI file as its detail reads it, with the transaction sets parsed from it.
+type EDIInboundFileDetail struct {
+	File *edi.EDIInboundFile `json:"file"`
+	// The communication profile the file was picked up through.
+	CommunicationProfileName *string `json:"communicationProfileName,omitempty"`
+	MessageCount             int     `json:"messageCount"`
+	// The transaction sets parsed from the file, the first 50.
+	Messages []*edi.EDIMessage `json:"messages"`
+	// The raw file as it was received, its first 16 KB; null once purged under the retention policy.
+	Raw *EDIRawText `json:"raw,omitempty"`
 }
 
 type EDIInboundFileEdge struct {
 	Node   *edi.EDIInboundFile `json:"node"`
 	Cursor string              `json:"cursor"`
+}
+
+// A set a Lading version exchanges with the partner.
+type EDILadingExchange struct {
+	TransactionSet string                `json:"transactionSet"`
+	Direction      edi.DocumentDirection `json:"direction"`
+	Map            string                `json:"map"`
+	// The acknowledgment that answers it: the one Trenova sends back for an inbound set, the one the flow expects for an outbound set. Null when none is.
+	Acknowledgment *string `json:"acknowledgment,omitempty"`
+	// Seconds the flow waits for that acknowledgment, for an outbound set.
+	AcknowledgmentWithin *int `json:"acknowledgmentWithin,omitempty"`
+}
+
+// The X12 envelope a Lading version writes and expects.
+type EDILadingInterchange struct {
+	TheirQualifier *string `json:"theirQualifier,omitempty"`
+	TheirID        *string `json:"theirId,omitempty"`
+	OurQualifier   *string `json:"ourQualifier,omitempty"`
+	OurID          *string `json:"ourId,omitempty"`
+	TheirGroupCode *string `json:"theirGroupCode,omitempty"`
+	OurGroupCode   *string `json:"ourGroupCode,omitempty"`
+	Version        *string `json:"version,omitempty"`
+	// test or production.
+	Usage *string `json:"usage,omitempty"`
+	// Element, segment, component and repetition separators, in that order.
+	Separators []string `json:"separators"`
 }
 
 type EDIMappingCount struct {
@@ -4149,6 +4377,8 @@ type EDIMappingProfileConnection struct {
 	Edges      []*EDIMappingProfileEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDIMappingProfileEdge struct {
@@ -4160,11 +4390,53 @@ type EDIMessageConnection struct {
 	Edges      []*EDIMessageEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+// One EDI message as its detail reads it: the document it decoded to and every finding.
+type EDIMessageDetail struct {
+	Message *edi.EDIMessage `json:"message"`
+	// What the document says, decoded from its X12.
+	Decoded         any `json:"decoded,omitempty"`
+	DiagnosticCount int `json:"diagnosticCount"`
+	// The validation findings, the first 50.
+	Diagnostics []*EDIMessageDiagnostic `json:"diagnostics"`
+	// The raw X12 as it was sent or received, its first 16 KB; null once purged under the retention policy.
+	Raw *EDIRawText `json:"raw,omitempty"`
+}
+
+// One validation finding on an EDI message, naming the segment and element it is about.
+type EDIMessageDiagnostic struct {
+	Severity        string  `json:"severity"`
+	Code            string  `json:"code"`
+	SegmentID       *string `json:"segmentId,omitempty"`
+	ElementPosition *int    `json:"elementPosition,omitempty"`
+	Path            *string `json:"path,omitempty"`
+	Message         string  `json:"message"`
+	SuggestedFix    *string `json:"suggestedFix,omitempty"`
 }
 
 type EDIMessageEdge struct {
 	Node   *edi.EDIMessage `json:"node"`
 	Cursor string          `json:"cursor"`
+}
+
+type EDIOverduePartnerAcks struct {
+	PartnerID         string `json:"partnerId"`
+	PartnerName       string `json:"partnerName"`
+	PartnerCode       string `json:"partnerCode"`
+	OverdueCount      int    `json:"overdueCount"`
+	OldestGeneratedAt int    `json:"oldestGeneratedAt"`
+	// The partner's oldest overdue messages, a few at most.
+	Messages []*edi.EDIMessage `json:"messages"`
+}
+
+type EDIPartnerAckCounts struct {
+	PartnerID       string               `json:"partnerId"`
+	PartnerName     string               `json:"partnerName"`
+	PartnerCode     string               `json:"partnerCode"`
+	AckStatusCounts []*EDIAckStatusCount `json:"ackStatusCounts"`
 }
 
 type EDIPartnerActivity struct {
@@ -4194,14 +4466,15 @@ type EDIPartnerAttention struct {
 // Credentials are named and said to be on file or not; no secret value or private key is
 // ever returned.
 type EDIPartnerCard struct {
-	Partner          *edi.EDIPartner                  `json:"partner"`
-	Customer         *EDIPartnerCustomer              `json:"customer,omitempty"`
-	DocumentProfiles []*edi.EDIPartnerDocumentProfile `json:"documentProfiles"`
-	Transports       []*EDIPartnerTransport           `json:"transports"`
-	Readiness        *EDIPartnerCardReadiness         `json:"readiness"`
-	Mappings         *EDIPartnerMappingSummary        `json:"mappings"`
-	Activity         *EDIPartnerActivity              `json:"activity"`
-	Attention        *EDIPartnerAttention             `json:"attention"`
+	Partner  *edi.EDIPartner     `json:"partner"`
+	Customer *EDIPartnerCustomer `json:"customer,omitempty"`
+	// The partner's Lading project and the versions running.
+	Lading     *EDIPartnerLading         `json:"lading"`
+	Transports []*EDIPartnerTransport    `json:"transports"`
+	Readiness  *EDIPartnerCardReadiness  `json:"readiness"`
+	Mappings   *EDIPartnerMappingSummary `json:"mappings"`
+	Activity   *EDIPartnerActivity       `json:"activity"`
+	Attention  *EDIPartnerAttention      `json:"attention"`
 	// The carriers reached through the partner; null for someone who may not read carriers.
 	Carriers []*EDIPartnerCarrier `json:"carriers,omitempty"`
 }
@@ -4225,6 +4498,8 @@ type EDIPartnerConnection struct {
 	Edges      []*EDIPartnerEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EDIPartnerCustomer struct {
@@ -4238,6 +4513,14 @@ type EDIPartnerEdge struct {
 	Cursor string          `json:"cursor"`
 }
 
+type EDIPartnerLading struct {
+	Project *edi.LadingProject `json:"project,omitempty"`
+	// The version Trenova runs for the partner.
+	Active *edi.LadingVersion `json:"active,omitempty"`
+	// The version compared with it on live traffic, if one is.
+	Shadow *edi.LadingVersion `json:"shadow,omitempty"`
+}
+
 type EDIPartnerMappingSummary struct {
 	ProfileID *string            `json:"profileId,omitempty"`
 	UpdatedAt *int               `json:"updatedAt,omitempty"`
@@ -4246,6 +4529,7 @@ type EDIPartnerMappingSummary struct {
 
 type EDIPartnerReadinessItem struct {
 	Key      string `json:"key"`
+	Label    string `json:"label"`
 	Complete bool   `json:"complete"`
 }
 
@@ -4293,6 +4577,14 @@ type EDIPartnerTransport struct {
 	Certificates  []*EDITransportCertificate `json:"certificates"`
 }
 
+// The raw X12 of a message or file, cut to its first 16 KB.
+type EDIRawText struct {
+	Text string `json:"text"`
+	// Whether the X12 is longer than the text shown.
+	Truncated bool `json:"truncated"`
+	SizeBytes int  `json:"sizeBytes"`
+}
+
 type EDISummary struct {
 	DeliveryStatusCounts        []*EDISummaryStatusCount   `json:"deliveryStatusCounts"`
 	AckStatusCounts             []*EDISummaryStatusCount   `json:"ackStatusCounts"`
@@ -4318,37 +4610,67 @@ type EDISummaryStatusCount struct {
 	Count  int    `json:"count"`
 }
 
-type EDITemplateConnection struct {
-	Edges      []*EDITemplateEdge `json:"edges"`
-	PageInfo   *PageInfo          `json:"pageInfo"`
-	TotalCount *int               `json:"totalCount,omitempty"`
+type EDITenderCharge struct {
+	Charge string  `json:"charge"`
+	Method *string `json:"method,omitempty"`
+	Amount string  `json:"amount"`
 }
 
-type EDITemplateEdge struct {
-	Node   *edi.EDITemplate `json:"node"`
-	Cursor string           `json:"cursor"`
+type EDITenderCharges struct {
+	Freight    *string            `json:"freight,omitempty"`
+	Other      *string            `json:"other,omitempty"`
+	Total      *string            `json:"total,omitempty"`
+	Additional []*EDITenderCharge `json:"additional"`
 }
 
-type EDITestCaseConnection struct {
-	Edges      []*EDITestCaseEdge `json:"edges"`
-	PageInfo   *PageInfo          `json:"pageInfo"`
-	TotalCount *int               `json:"totalCount,omitempty"`
+type EDITenderCommodity struct {
+	Commodity string `json:"commodity"`
+	Weight    int    `json:"weight"`
+	Pieces    int    `json:"pieces"`
 }
 
-type EDITestCaseEdge struct {
-	Node   *edi.EDITestCase `json:"node"`
-	Cursor string           `json:"cursor"`
+type EDITenderStop struct {
+	Sequence int    `json:"sequence"`
+	Type     string `json:"type"`
+	// The stop's location: its name, label or code.
+	Location     *string `json:"location,omitempty"`
+	Address      *string `json:"address,omitempty"`
+	City         *string `json:"city,omitempty"`
+	State        *string `json:"state,omitempty"`
+	PostalCode   *string `json:"postalCode,omitempty"`
+	WindowOpens  *int    `json:"windowOpens,omitempty"`
+	WindowCloses *int    `json:"windowCloses,omitempty"`
+	Pieces       *int    `json:"pieces,omitempty"`
+	Weight       *int    `json:"weight,omitempty"`
 }
 
 type EDITransferConnection struct {
 	Edges      []*EDITransferEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+// One load tender as its card reads it, with what accepting it still waits on.
+type EDITransferDetail struct {
+	Transfer *edi.EDITransfer `json:"transfer"`
+	// The partner's codes not yet mapped, read only for an inbound tender that can still be decided; accepting it waits on them.
+	UnresolvedMappings []*EDITransferMappingNeed `json:"unresolvedMappings"`
+	// Whether the tender can be accepted now: inbound, still open, and every code mapped.
+	CanAccept bool `json:"canAccept"`
 }
 
 type EDITransferEdge struct {
 	Node   *edi.EDITransfer `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// A partner's code a tender carries that this organization has not mapped to its own record.
+type EDITransferMappingNeed struct {
+	EntityType edi.MappingEntityType `json:"entityType"`
+	// The partner's code or label for it.
+	Source string `json:"source"`
 }
 
 type EDITransportCertificate struct {
@@ -4391,6 +4713,8 @@ type EmailProfileConnection struct {
 	Edges      []*EmailProfileEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EmailProfileEdge struct {
@@ -4450,6 +4774,8 @@ type EquipmentManufacturerConnection struct {
 	Edges      []*EquipmentManufacturerEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EquipmentManufacturerEdge struct {
@@ -4479,6 +4805,8 @@ type EquipmentTypeConnection struct {
 	Edges      []*EquipmentTypeEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EquipmentTypeEdge struct {
@@ -4517,6 +4845,8 @@ type EscrowAccountConnection struct {
 	Edges      []*EscrowAccountEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type EscrowAccountEdge struct {
@@ -4535,6 +4865,8 @@ type ExternalIdentityConnection struct {
 	Edges      []*ExternalIdentityEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExternalIdentityEdge struct {
@@ -4546,6 +4878,8 @@ type ExtractionEvalCaseConnection struct {
 	Edges      []*ExtractionEvalCaseEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExtractionEvalCaseEdge struct {
@@ -4557,6 +4891,8 @@ type ExtractionEvalResultConnection struct {
 	Edges      []*ExtractionEvalResultEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExtractionEvalResultEdge struct {
@@ -4568,6 +4904,8 @@ type ExtractionEvalRunConnection struct {
 	Edges      []*ExtractionEvalRunEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExtractionEvalRunEdge struct {
@@ -4579,6 +4917,8 @@ type ExtractionShadowResultConnection struct {
 	Edges      []*ExtractionShadowResultEdge `json:"edges"`
 	PageInfo   *PageInfo                     `json:"pageInfo"`
 	TotalCount *int                          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ExtractionShadowResultEdge struct {
@@ -4600,11 +4940,13 @@ type FacilityDetentionStat struct {
 	MedianDwellMinutes float64 `json:"medianDwellMinutes"`
 	P90DwellMinutes    float64 `json:"p90DwellMinutes"`
 	BilledAmount       string  `json:"billedAmount"`
-	DriverPayAmount    string  `json:"driverPayAmount"`
-	NetMargin          string  `json:"netMargin"`
-	WaivedAmount       string  `json:"waivedAmount"`
-	DisputeCount       int     `json:"disputeCount"`
-	SuppressedCount    int     `json:"suppressedCount"`
+	// What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin.
+	DriverPayAmount *string `json:"driverPayAmount,omitempty"`
+	// Null to a reader without the margins field group.
+	NetMargin       *string `json:"netMargin,omitempty"`
+	WaivedAmount    string  `json:"waivedAmount"`
+	DisputeCount    int     `json:"disputeCount"`
+	SuppressedCount int     `json:"suppressedCount"`
 }
 
 type FactoringAgreementInput struct {
@@ -4632,6 +4974,8 @@ type FactoringCompanyConnection struct {
 	Edges      []*FactoringCompanyEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringCompanyEdge struct {
@@ -4679,6 +5023,8 @@ type FactoringInvoiceStateConnection struct {
 	Edges      []*FactoringInvoiceStateEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringInvoiceStateEdge struct {
@@ -4697,6 +5043,8 @@ type FactoringNoaConnection struct {
 	Edges      []*FactoringNoaEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringNoaEdge struct {
@@ -4727,6 +5075,8 @@ type FactoringRemittanceConnection struct {
 	Edges      []*FactoringRemittanceEdge `json:"edges"`
 	PageInfo   *PageInfo                  `json:"pageInfo"`
 	TotalCount *int                       `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringRemittanceEdge struct {
@@ -4738,6 +5088,8 @@ type FactoringRemittanceLineConnection struct {
 	Edges      []*FactoringRemittanceLineEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringRemittanceLineEdge struct {
@@ -4767,6 +5119,8 @@ type FactoringReserveEntryConnection struct {
 	Edges      []*FactoringReserveEntryEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringReserveEntryEdge struct {
@@ -4799,6 +5153,8 @@ type FactoringSubmissionConnection struct {
 	Edges      []*FactoringSubmissionEdge `json:"edges"`
 	PageInfo   *PageInfo                  `json:"pageInfo"`
 	TotalCount *int                       `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FactoringSubmissionEdge struct {
@@ -4853,10 +5209,25 @@ type FilterGroupInput struct {
 	Filters []*FieldFilterInput `json:"filters"`
 }
 
+type FiscalPeriodConnection struct {
+	Edges      []*FiscalPeriodEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type FiscalPeriodEdge struct {
+	Node   *fiscalperiod.FiscalPeriod `json:"node"`
+	Cursor string                     `json:"cursor"`
+}
+
 type FiscalYearConnection struct {
 	Edges      []*FiscalYearEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FiscalYearEdge struct {
@@ -4868,6 +5239,8 @@ type FleetCodeConnection struct {
 	Edges      []*FleetCodeEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FleetCodeEdge struct {
@@ -4875,12 +5248,15 @@ type FleetCodeEdge struct {
 	Cursor string               `json:"cursor"`
 }
 
+// What the fleet's loads cost over a window. The margin figures, and the revenue
+// that would let a reader work the margin out from the cost, are null to a reader
+// without the margins field group.
 type FleetCostSummary struct {
 	AvgCpm             string  `json:"avgCpm"`
 	AvgMarginPercent   *string `json:"avgMarginPercent,omitempty"`
 	ShipmentCount      int     `json:"shipmentCount"`
-	UnprofitableCount  int     `json:"unprofitableCount"`
-	TotalRevenue       string  `json:"totalRevenue"`
+	UnprofitableCount  *int    `json:"unprofitableCount,omitempty"`
+	TotalRevenue       *string `json:"totalRevenue,omitempty"`
 	TotalEstimatedCost string  `json:"totalEstimatedCost"`
 	TotalMiles         float64 `json:"totalMiles"`
 	EmptyMiles         float64 `json:"emptyMiles"`
@@ -4907,16 +5283,44 @@ type FormSubmissionField struct {
 	Value string `json:"value"`
 }
 
-type FormulaTemplateBreakdownDefinition struct {
-	Name       string `json:"name"`
-	Label      string `json:"label"`
-	Expression string `json:"expression"`
+// An input a formula declares. Its value comes from the rate agreement rule, then the agreement, then this default.
+type FormulaInputDeclaration struct {
+	Name string `json:"name"`
+	// The input's doc comment, which labels it in the inputs form.
+	Doc string `json:"doc"`
+	// The type as written in the source, such as Money/mi or List<Break>.
+	Type string `json:"type"`
+	// The type's structure, which the inputs form is built from. Its shape is the module's type descriptor.
+	Descriptor any  `json:"descriptor,omitempty"`
+	Required   bool `json:"required"`
+	// The default as a wire value, or null when the input has none.
+	Default any `json:"default,omitempty"`
+	// The values the input accepts, from its where clause, or null when it has none:
+	// {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
+	// minimum is inclusive and an open end is null) or {"oneOf": [wire, ...]}. For a
+	// list input it bounds each item.
+	Constraint any `json:"constraint,omitempty"`
+}
+
+type FormulaLibraryConnection struct {
+	Edges      []*FormulaLibraryEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+type FormulaLibraryEdge struct {
+	Node   *formulalibrary.FormulaLibrary `json:"node"`
+	Cursor string                         `json:"cursor"`
 }
 
 type FormulaTemplateConnection struct {
 	Edges      []*FormulaTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FormulaTemplateEdge struct {
@@ -4924,20 +5328,12 @@ type FormulaTemplateEdge struct {
 	Cursor string                           `json:"cursor"`
 }
 
-type FormulaTemplateVariableDefinition struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Description string `json:"description"`
-	Required    bool   `json:"required"`
-	// Formula variable defaults can be scalar, array, object, or null by template design.
-	DefaultValue any     `json:"defaultValue,omitempty"`
-	Source       *string `json:"source,omitempty"`
-}
-
 type FuelCardConnection struct {
 	Edges      []*FuelCardEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelCardEdge struct {
@@ -5025,6 +5421,8 @@ type FuelIndexConnection struct {
 	Edges      []*FuelIndexEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelIndexEdge struct {
@@ -5072,7 +5470,10 @@ type FuelIndexPriceInput struct {
 	Price       string `json:"price"`
 }
 
+// A fuel surcharge program's surcharge this week, from the index price in effect.
 type FuelProgramCurrentRate struct {
+	// The program's id: a program has one current rate.
+	ID           string                 `json:"id"`
 	Program      *FuelSurchargeProgram  `json:"program"`
 	Price        *FuelIndexPrice        `json:"price,omitempty"`
 	RatePerMile  *string                `json:"ratePerMile,omitempty"`
@@ -5086,6 +5487,8 @@ type FuelPurchaseConnection struct {
 	Edges      []*FuelPurchaseEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelPurchaseEdge struct {
@@ -5097,6 +5500,8 @@ type FuelPurchaseImportBatchConnection struct {
 	Edges      []*FuelPurchaseImportBatchEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelPurchaseImportBatchEdge struct {
@@ -5142,6 +5547,8 @@ type FuelPurchaseImportRowConnection struct {
 	Edges      []*FuelPurchaseImportRowEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelPurchaseImportRowEdge struct {
@@ -5253,6 +5660,8 @@ type FuelSurchargeProgramConnection struct {
 	Edges      []*FuelSurchargeProgramEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type FuelSurchargeProgramEdge struct {
@@ -5376,6 +5785,8 @@ type HazardousMaterialConnection struct {
 	Edges      []*HazardousMaterialEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type HazardousMaterialEdge struct {
@@ -5387,6 +5798,8 @@ type HazmatSegregationRuleConnection struct {
 	Edges      []*HazmatSegregationRuleEdge `json:"edges"`
 	PageInfo   *PageInfo                    `json:"pageInfo"`
 	TotalCount *int                         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type HazmatSegregationRuleEdge struct {
@@ -5404,6 +5817,8 @@ type HoldReasonConnection struct {
 	Edges      []*HoldReasonEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type HoldReasonEdge struct {
@@ -5541,6 +5956,8 @@ type IFTAJurisdictionMileageEntryConnection struct {
 	Edges      []*IFTAJurisdictionMileageEntryEdge `json:"edges"`
 	PageInfo   *PageInfo                           `json:"pageInfo"`
 	TotalCount *int                                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type IFTAJurisdictionMileageEntryEdge struct {
@@ -5587,6 +6004,8 @@ type IFTAReturnConnection struct {
 	Edges      []*IFTAReturnEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type IFTAReturnEdge struct {
@@ -5609,6 +6028,8 @@ type IFTATaxRateConnection struct {
 	Edges      []*IFTATaxRateEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type IFTATaxRateEdge struct {
@@ -5674,6 +6095,8 @@ type InboundMessageConnection struct {
 	Edges      []*InboundMessageEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type InboundMessageEdge struct {
@@ -5714,6 +6137,8 @@ type InvoiceAdjustmentApprovalQueueConnection struct {
 	Edges      []*InvoiceAdjustmentApprovalQueueEdge `json:"edges"`
 	PageInfo   *PageInfo                             `json:"pageInfo"`
 	TotalCount *int                                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type InvoiceAdjustmentApprovalQueueEdge struct {
@@ -5735,6 +6160,8 @@ type InvoiceConnection struct {
 	Edges      []*InvoiceEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type InvoiceEdge struct {
@@ -5811,6 +6238,8 @@ type JournalEntryConnection struct {
 	Edges      []*JournalEntryEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type JournalEntryEdge struct {
@@ -5828,6 +6257,8 @@ type JournalReversalConnection struct {
 	Edges      []*JournalReversalEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type JournalReversalEdge struct {
@@ -5853,6 +6284,8 @@ type JurisdictionRuleConnection struct {
 	Edges      []*JurisdictionRuleEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type JurisdictionRuleEdge struct {
@@ -5864,6 +6297,8 @@ type JurisdictionRuleOverrideConnection struct {
 	Edges      []*JurisdictionRuleOverrideEdge `json:"edges"`
 	PageInfo   *PageInfo                       `json:"pageInfo"`
 	TotalCount *int                            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type JurisdictionRuleOverrideEdge struct {
@@ -5913,6 +6348,8 @@ type LocationCategoryConnection struct {
 	Edges      []*LocationCategoryEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type LocationCategoryEdge struct {
@@ -5924,6 +6361,8 @@ type LocationConnection struct {
 	Edges      []*LocationEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type LocationEdge struct {
@@ -5976,6 +6415,8 @@ type MFAAuthenticatorConnection struct {
 	Edges      []*MFAAuthenticatorEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type MFAAuthenticatorEdge struct {
@@ -5987,6 +6428,8 @@ type ManualJournalConnection struct {
 	Edges      []*ManualJournalEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ManualJournalEdge struct {
@@ -6044,6 +6487,8 @@ type MyAgentConnection struct {
 	Edges      []*MyAgentEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type MyAgentEdge struct {
@@ -6092,6 +6537,8 @@ type MyCarrierIntelligence struct {
 type MySettlementList struct {
 	Items []*driversettlement.Settlement `json:"items"`
 	Total int                            `json:"total"`
+	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
+	TotalExact bool `json:"totalExact"`
 }
 
 type NextUncoveredPickup struct {
@@ -6105,6 +6552,8 @@ type NotificationConnection struct {
 	Edges      []*NotificationEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type NotificationEdge struct {
@@ -6177,6 +6626,8 @@ type OrderConnection struct {
 	Edges      []*OrderEdge `json:"edges"`
 	PageInfo   *PageInfo    `json:"pageInfo"`
 	TotalCount *int         `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type OrderEdge struct {
@@ -6270,6 +6721,8 @@ type PTOPolicyConnection struct {
 	Edges      []*PTOPolicyEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PTOPolicyEdge struct {
@@ -6305,6 +6758,84 @@ type PTOPolicyRuleInput struct {
 	OnTermination       *worker.PTOTerminationAction `json:"onTermination,omitempty"`
 }
 
+// What a screen needs and what a person or a role would see on it, from the
+// page access manifest. It never carries record data.
+type PageAccess struct {
+	// The route the location is, such as /shipments/:id.
+	Path string `json:"path"`
+	// The screen's English name from the navigation, or empty.
+	Name       string                   `json:"name"`
+	Operations []string                 `json:"operations"`
+	Requires   []*PageAccessRequirement `json:"requires"`
+	Endpoints  []*PageAccessEndpoint    `json:"endpoints"`
+	Kinds      []*PageAccessKind        `json:"kinds"`
+	// How many selected fields of linked records come back null.
+	Withheld int `json:"withheld"`
+	// The route, or a kind the screen reads as root records, is refused.
+	Blocked bool `json:"blocked"`
+}
+
+type PageAccessDraftPermissionInput struct {
+	Resource   string   `json:"resource"`
+	Operations []string `json:"operations"`
+}
+
+// A REST endpoint a screen calls, and what its route checks before its handler.
+type PageAccessEndpoint struct {
+	Method   string                   `json:"method"`
+	Path     string                   `json:"path"`
+	Requires []*PageAccessRequirement `json:"requires"`
+}
+
+// One field a screen selects on a linked record. A name written Type.field is a
+// field of a record that is part of the kind, which has no view of its own.
+type PageAccessField struct {
+	Name     string             `json:"name"`
+	InView   bool               `json:"inView"`
+	Decision PageAccessDecision `json:"decision"`
+}
+
+// One kind a screen depends on, and what the reader sees of it there.
+type PageAccessKind struct {
+	Resource     string             `json:"resource"`
+	ResourceName string             `json:"resourceName"`
+	Use          PageAccessUse      `json:"use"`
+	CanRead      bool               `json:"canRead"`
+	Fields       []*PageAccessField `json:"fields"`
+	Withheld     int                `json:"withheld"`
+}
+
+type PageAccessPreviewInput struct {
+	// A path in the app, such as /shipments/shp_123.
+	Location string `json:"location"`
+	// A saved role to preview. Exactly one of roleId and draft is set.
+	RoleID *string `json:"roleId,omitempty"`
+	// The role being edited.
+	Draft *PageAccessRoleDraftInput `json:"draft,omitempty"`
+}
+
+// A permission a screen's route or one of its REST endpoints checks.
+type PageAccessRequirement struct {
+	Resource      string `json:"resource"`
+	ResourceName  string `json:"resourceName"`
+	Operation     string `json:"operation"`
+	OperationName string `json:"operationName"`
+	Allowed       bool   `json:"allowed"`
+}
+
+// A role as the role editor holds it before it is saved.
+type PageAccessRoleDraftInput struct {
+	MaxSensitivity string                            `json:"maxSensitivity"`
+	ParentRoleIds  []string                          `json:"parentRoleIds,omitempty"`
+	Permissions    []*PageAccessDraftPermissionInput `json:"permissions"`
+}
+
+// A screen of the page access manifest.
+type PageAccessScreen struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
+}
+
 type PageInfo struct {
 	HasNextPage bool    `json:"hasNextPage"`
 	EndCursor   *string `json:"endCursor,omitempty"`
@@ -6319,6 +6850,8 @@ type PayAdvanceConnection struct {
 	Edges      []*PayAdvanceEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PayAdvanceEdge struct {
@@ -6330,6 +6863,8 @@ type PayCodeConnection struct {
 	Edges      []*PayCodeEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PayCodeEdge struct {
@@ -6367,6 +6902,8 @@ type PayProfileConnection struct {
 	Edges      []*PayProfileEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PayProfileEdge struct {
@@ -6401,6 +6938,8 @@ type PendingDecisionConnection struct {
 	Edges      []*PendingDecisionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PendingDecisionEdge struct {
@@ -6450,6 +6989,8 @@ type PerformanceReviewTemplateConnection struct {
 	Edges      []*PerformanceReviewTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo                        `json:"pageInfo"`
 	TotalCount *int                             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type PerformanceReviewTemplateEdge struct {
@@ -6570,43 +7111,77 @@ type Query struct {
 // are what decide the price of a shipment; the agreement itself carries the terms
 // they are all written under.
 type RateAgreement struct {
-	ID                   string                 `json:"id"`
-	BusinessUnitID       string                 `json:"businessUnitId"`
-	OrganizationID       string                 `json:"organizationId"`
-	PartyType            RateAgreementPartyType `json:"partyType"`
-	CustomerID           *string                `json:"customerId,omitempty"`
-	CarrierID            *string                `json:"carrierId,omitempty"`
-	Code                 string                 `json:"code"`
-	Name                 string                 `json:"name"`
-	Description          string                 `json:"description"`
-	AgreementType        RateAgreementType      `json:"agreementType"`
-	Status               RateAgreementStatus    `json:"status"`
-	ContractRef          string                 `json:"contractRef"`
-	Priority             int                    `json:"priority"`
-	EffectiveFrom        int                    `json:"effectiveFrom"`
-	EffectiveTo          *int                   `json:"effectiveTo,omitempty"`
-	AutoRenew            bool                   `json:"autoRenew"`
-	RenewalNoticeDays    int                    `json:"renewalNoticeDays"`
-	Currency             string                 `json:"currency"`
-	DefaultMinCharge     *string                `json:"defaultMinCharge,omitempty"`
-	DefaultMaxCharge     *string                `json:"defaultMaxCharge,omitempty"`
-	MarginFloorPercent   *string                `json:"marginFloorPercent,omitempty"`
-	MaxPayPercentOfSell  *string                `json:"maxPayPercentOfSell,omitempty"`
-	SubmittedByID        *string                `json:"submittedById,omitempty"`
-	SubmittedAt          *int                   `json:"submittedAt,omitempty"`
-	ApprovedByID         *string                `json:"approvedById,omitempty"`
-	ApprovedAt           *int                   `json:"approvedAt,omitempty"`
-	ReviewComment        string                 `json:"reviewComment"`
-	CurrentVersionNumber int                    `json:"currentVersionNumber"`
-	Version              int                    `json:"version"`
-	CreatedAt            int                    `json:"createdAt"`
-	UpdatedAt            int                    `json:"updatedAt"`
+	ID                string                 `json:"id"`
+	BusinessUnitID    string                 `json:"businessUnitId"`
+	OrganizationID    string                 `json:"organizationId"`
+	PartyType         RateAgreementPartyType `json:"partyType"`
+	CustomerID        *string                `json:"customerId,omitempty"`
+	CarrierID         *string                `json:"carrierId,omitempty"`
+	Code              string                 `json:"code"`
+	Name              string                 `json:"name"`
+	Description       string                 `json:"description"`
+	AgreementType     RateAgreementType      `json:"agreementType"`
+	Status            RateAgreementStatus    `json:"status"`
+	ContractRef       string                 `json:"contractRef"`
+	Priority          int                    `json:"priority"`
+	EffectiveFrom     int                    `json:"effectiveFrom"`
+	EffectiveTo       *int                   `json:"effectiveTo,omitempty"`
+	AutoRenew         bool                   `json:"autoRenew"`
+	RenewalNoticeDays int                    `json:"renewalNoticeDays"`
+	Currency          string                 `json:"currency"`
+	// Values every rule's tariff prices with unless the rule sets its own, by input name. Each value is a Tariff wire value.
+	Inputs               map[string]any `json:"inputs"`
+	MarginFloorPercent   *string        `json:"marginFloorPercent,omitempty"`
+	MaxPayPercentOfSell  *string        `json:"maxPayPercentOfSell,omitempty"`
+	SubmittedByID        *string        `json:"submittedById,omitempty"`
+	SubmittedAt          *int           `json:"submittedAt,omitempty"`
+	ApprovedByID         *string        `json:"approvedById,omitempty"`
+	ApprovedAt           *int           `json:"approvedAt,omitempty"`
+	ReviewComment        string         `json:"reviewComment"`
+	CurrentVersionNumber int            `json:"currentVersionNumber"`
+	// The customer invoices for this agreement's freight go to, when not the party itself.
+	BillToCustomerID *string `json:"billToCustomerId,omitempty"`
+	// The live lanes: active rules in force now or starting later, most specific
+	// first. first takes at most 100.
+	Lanes []*RateAgreementLane `json:"lanes"`
+	// How many live lanes the agreement holds.
+	LaneCount int `json:"laneCount"`
+	// Whether laneCount was counted; false when it is the planner's estimate of more lanes than it counts.
+	LaneCountExact bool `json:"laneCountExact"`
+	// The accessorial schedule. Read by rateAgreement only.
+	Accessorials []*RateAgreementAccessorial `json:"accessorials,omitempty"`
+	// The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only.
+	FuelBinding *RateAgreementFuelBinding `json:"fuelBinding,omitempty"`
+	// The version of the header terms in force now. Read by rateAgreement only.
+	CurrentVersion *RateAgreementVersion `json:"currentVersion,omitempty"`
+	Version        int                   `json:"version"`
+	CreatedAt      int                   `json:"createdAt"`
+	UpdatedAt      int                   `json:"updatedAt"`
+}
+
+// An accessorial an agreement prices, and on what terms.
+type RateAgreementAccessorial struct {
+	ID                  string  `json:"id"`
+	AccessorialChargeID string  `json:"accessorialChargeId"`
+	Method              string  `json:"method"`
+	RateUnit            string  `json:"rateUnit"`
+	Waived              bool    `json:"waived"`
+	AutoApply           bool    `json:"autoApply"`
+	FreeUnits           *int    `json:"freeUnits,omitempty"`
+	EffectiveFrom       *int    `json:"effectiveFrom,omitempty"`
+	EffectiveTo         *int    `json:"effectiveTo,omitempty"`
+	Amount              string  `json:"amount"`
+	MaxAmount           *string `json:"maxAmount,omitempty"`
+	// The Tariff condition a shipment meets for the charge to apply; empty applies always.
+	Condition string `json:"condition"`
 }
 
 type RateAgreementConnection struct {
 	Edges      []*RateAgreementEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RateAgreementEdge struct {
@@ -6614,8 +7189,50 @@ type RateAgreementEdge struct {
 	Cursor string         `json:"cursor"`
 }
 
-// A multi-dimensional rate table — origin zone by destination zone by weight break
-// by class, and any subset of that.
+// How an agreement prices fuel: the program it binds, or a waiver.
+type RateAgreementFuelBinding struct {
+	ID                     string `json:"id"`
+	FuelSurchargeProgramID string `json:"fuelSurchargeProgramId"`
+	Waived                 bool   `json:"waived"`
+}
+
+// One priced lane of a rate agreement: where it applies, when, and the tariff
+// and inputs it prices with.
+type RateAgreementLane struct {
+	ID                    string `json:"id"`
+	Label                 string `json:"label"`
+	OriginScopeType       string `json:"originScopeType"`
+	OriginScopeValue      string `json:"originScopeValue"`
+	OriginCity            string `json:"originCity"`
+	DestinationScopeType  string `json:"destinationScopeType"`
+	DestinationScopeValue string `json:"destinationScopeValue"`
+	DestinationCity       string `json:"destinationCity"`
+	Direction             string `json:"direction"`
+	Priority              int    `json:"priority"`
+	EffectiveFrom         int    `json:"effectiveFrom"`
+	EffectiveTo           *int   `json:"effectiveTo,omitempty"`
+	HazmatOnly            bool   `json:"hazmatOnly"`
+	TempControlOnly       bool   `json:"tempControlOnly"`
+	// The tariff that prices the lane.
+	FormulaTemplateID string `json:"formulaTemplateId"`
+	Currency          string `json:"currency"`
+	// The values the lane's tariff prices with, by input name. Each value is a Tariff wire value.
+	Inputs map[string]any `json:"inputs"`
+}
+
+// The header terms of an agreement as they stood for a window.
+type RateAgreementVersion struct {
+	ID            string `json:"id"`
+	VersionNumber int    `json:"versionNumber"`
+	EffectiveFrom int    `json:"effectiveFrom"`
+	EffectiveTo   *int   `json:"effectiveTo,omitempty"`
+	ChangeMessage string `json:"changeMessage"`
+}
+
+// A rate table a tariff looks values up in: one to four axes, such as origin zone
+// by destination zone, and a value of one Tariff type in every cell. The matrix
+// is a draft that editors change; approving a submitted draft publishes it as the
+// next numbered version, which formula template versions pin.
 type RateMatrix struct {
 	ID             string `json:"id"`
 	BusinessUnitID string `json:"businessUnitId"`
@@ -6623,22 +7240,76 @@ type RateMatrix struct {
 	Code           string `json:"code"`
 	Name           string `json:"name"`
 	Description    string `json:"description"`
-	Status         string `json:"status"`
-	// The formula template that says what a cell's number means. The same grid is a
-	// per-mile tariff or a flat table depending on which template prices it, so the
-	// list has to show it — the numbers alone do not say.
-	FormulaTemplateID   string `json:"formulaTemplateId"`
-	FormulaTemplateName string `json:"formulaTemplateName"`
-	Currency            string `json:"currency"`
-	Version             int    `json:"version"`
-	CreatedAt           int    `json:"createdAt"`
-	UpdatedAt           int    `json:"updatedAt"`
+	// Draft while it has unpublished changes, InReview once submitted, Active when
+	// the draft is the newest published version, Inactive once archived.
+	Status formulatemplate.Status `json:"status"`
+	// What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int.
+	ValueType string `json:"valueType"`
+	// The draft's axes, by position. Read by rateMatrix only.
+	Dimensions []*RateMatrixDimension `json:"dimensions,omitempty"`
+	// How many cells the draft holds.
+	CellCount int `json:"cellCount"`
+	// The draft's cells, a page at a time: offset skips that many, and limit takes
+	// at most 100.
+	Cells []*RateMatrixCell `json:"cells"`
+	// The newest published version, which tariffs read by default; 0 before the first.
+	PublishedVersionNumber int  `json:"publishedVersionNumber"`
+	PublishedAt            *int `json:"publishedAt,omitempty"`
+	// Whether the draft differs from the newest published version.
+	HasDraftChanges bool    `json:"hasDraftChanges"`
+	SubmittedByID   *string `json:"submittedById,omitempty"`
+	SubmittedAt     *int    `json:"submittedAt,omitempty"`
+	ApprovedByID    *string `json:"approvedById,omitempty"`
+	ApprovedAt      *int    `json:"approvedAt,omitempty"`
+	ReviewComment   string  `json:"reviewComment"`
+	Version         int     `json:"version"`
+	CreatedAt       int     `json:"createdAt"`
+	UpdatedAt       int     `json:"updatedAt"`
+}
+
+// One cell of a rate matrix: a key or a range on each axis, by position (d0 is
+// the first axis), and the value it holds. On a ZipRange axis the key is the
+// range's first postal code and keyTo its last, both inclusive.
+type RateMatrixCell struct {
+	ID              string  `json:"id"`
+	D0Key           string  `json:"d0Key"`
+	D1Key           string  `json:"d1Key"`
+	D2Key           string  `json:"d2Key"`
+	D3Key           string  `json:"d3Key"`
+	D0KeyTo         string  `json:"d0KeyTo"`
+	D1KeyTo         string  `json:"d1KeyTo"`
+	D2KeyTo         string  `json:"d2KeyTo"`
+	D3KeyTo         string  `json:"d3KeyTo"`
+	D0Min           *string `json:"d0Min,omitempty"`
+	D0Max           *string `json:"d0Max,omitempty"`
+	D1Min           *string `json:"d1Min,omitempty"`
+	D1Max           *string `json:"d1Max,omitempty"`
+	D2Min           *string `json:"d2Min,omitempty"`
+	D2Max           *string `json:"d2Max,omitempty"`
+	D3Min           *string `json:"d3Min,omitempty"`
+	D3Max           *string `json:"d3Max,omitempty"`
+	DeficitEligible bool    `json:"deficitEligible"`
+	Value           string  `json:"value"`
+	MinCharge       *string `json:"minCharge,omitempty"`
 }
 
 type RateMatrixConnection struct {
 	Edges      []*RateMatrixEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 	TotalCount *int              `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
+}
+
+// One axis of a rate matrix: what it keys on and how a value matches it.
+type RateMatrixDimension struct {
+	ID               string `json:"id"`
+	Position         int    `json:"position"`
+	Kind             string `json:"kind"`
+	MatchMode        string `json:"matchMode"`
+	Label            string `json:"label"`
+	KeyNormalization string `json:"keyNormalization"`
+	RangeOverflow    string `json:"rangeOverflow"`
 }
 
 type RateMatrixEdge struct {
@@ -6680,6 +7351,8 @@ type RateQuoteConnection struct {
 	Edges      []*RateQuoteEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RateQuoteEdge struct {
@@ -6707,6 +7380,8 @@ type RateZoneConnection struct {
 	Edges      []*RateZoneEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RateZoneEdge struct {
@@ -6933,6 +7608,8 @@ type RecurringDeductionConnection struct {
 	Edges      []*RecurringDeductionEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RecurringDeductionEdge struct {
@@ -6944,6 +7621,8 @@ type RecurringEarningConnection struct {
 	Edges      []*RecurringEarningEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount *int                    `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RecurringEarningEdge struct {
@@ -6955,6 +7634,8 @@ type RecurringShipmentConnection struct {
 	Edges      []*RecurringShipmentEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RecurringShipmentEdge struct {
@@ -7015,34 +7696,55 @@ type ReportBand struct {
 	Edges []float64 `json:"edges"`
 }
 
-type ReportBandInput struct {
-	Width *float64  `json:"width,omitempty"`
-	Edges []float64 `json:"edges,omitempty"`
-}
-
+// The report catalog as the caller may use it: every kind they can read, and
+// every kind they cannot read that they can still reach through a join, with
+// only its reference-view fields available.
 type ReportCatalog struct {
-	Version  string                 `json:"version"`
+	Version string `json:"version"`
+	// The engine's rules a builder offers: operators per value type with their
+	// operands, having operators, aggregations, date buckets, transforms, bands,
+	// window functions, chart types, the display vocabulary, formula functions and
+	// operators, column naming and definition limits.
+	Rules    map[string]any         `json:"rules"`
 	Entities []*ReportCatalogEntity `json:"entities"`
 }
 
 type ReportCatalogEdge struct {
-	Name        string `json:"name"`
-	Label       string `json:"label"`
-	Target      string `json:"target"`
-	Cardinality string `json:"cardinality"`
-	Traversable bool   `json:"traversable"`
+	// The edge's name in a definition path.
+	Name        string  `json:"name"`
+	Label       string  `json:"label"`
+	Description *string `json:"description,omitempty"`
+	// The key of the entity the edge leads to.
+	Target string `json:"target"`
+	// Whether the edge leads to many records, so its fields are aggregated.
+	ToMany bool `json:"toMany"`
+	// Whether the edge picks one record of a list, such as a shipment's first stop.
+	Pick bool `json:"pick"`
+	// Whether the caller may follow the edge in a report and, when not, what they lack.
+	Access ReportFieldAccess `json:"access"`
+	// Whether the edge is in its source kind's reference view.
+	InReferenceView bool `json:"inReferenceView"`
+	// The kind whose read the caller lacks to follow the edge, when access is
+	// NeedsKindRead.
+	NeedsReadOf *ReportCatalogKind `json:"needsReadOf,omitempty"`
 }
 
 type ReportCatalogEntity struct {
-	Key               string                `json:"key"`
-	Resource          string                `json:"resource"`
-	Label             string                `json:"label"`
-	PluralLabel       string                `json:"pluralLabel"`
-	Description       *string               `json:"description,omitempty"`
-	Category          string                `json:"category"`
-	OwnScopeSupported bool                  `json:"ownScopeSupported"`
-	Fields            []*ReportCatalogField `json:"fields"`
-	Edges             []*ReportCatalogEdge  `json:"edges"`
+	Key               string  `json:"key"`
+	Resource          string  `json:"resource"`
+	Label             string  `json:"label"`
+	PluralLabel       string  `json:"pluralLabel"`
+	Description       *string `json:"description,omitempty"`
+	Category          string  `json:"category"`
+	OwnScopeSupported bool    `json:"ownScopeSupported"`
+	// Whether the caller may read the kind. A report starts only from a kind the
+	// caller reads; one they cannot read is reached through a join, and only its
+	// reference-view fields are available.
+	Readable bool `json:"readable"`
+	// Whether a run may export the kind's own fields.
+	Exportable bool                  `json:"exportable"`
+	Fields     []*ReportCatalogField `json:"fields"`
+	Edges      []*ReportCatalogEdge  `json:"edges"`
 }
 
 type ReportCatalogEnumValue struct {
@@ -7051,42 +7753,37 @@ type ReportCatalogEnumValue struct {
 }
 
 type ReportCatalogField struct {
-	Key          string                    `json:"key"`
-	Label        string                    `json:"label"`
-	Description  *string                   `json:"description,omitempty"`
-	Type         string                    `json:"type"`
-	Format       *string                   `json:"format,omitempty"`
-	Nullable     bool                      `json:"nullable"`
+	// The field's key in a definition path, such as customer.name.
+	Key         string  `json:"key"`
+	Label       string  `json:"label"`
+	Description *string `json:"description,omitempty"`
+	// The value type: string, int, decimal, float, bool, date, timestamp, epoch, enum or json.
+	Type string `json:"type"`
+	// The display kind the field carries, such as money, weight or percent.
+	Format *string `json:"format,omitempty"`
+	// Whether reports aggregate the field by default rather than group by it.
+	Measure      bool                      `json:"measure"`
 	EnumValues   []*ReportCatalogEnumValue `json:"enumValues"`
 	Aggregations []string                  `json:"aggregations"`
-	Filterable   bool                      `json:"filterable"`
-	Groupable    bool                      `json:"groupable"`
-	Accessible   bool                      `json:"accessible"`
-	Sensitivity  string                    `json:"sensitivity"`
+	// The filter operators a condition on the field can use, in builder order.
+	Operators  []string `json:"operators"`
+	Filterable bool     `json:"filterable"`
+	Groupable  bool     `json:"groupable"`
+	// Whether the caller may use the field in a report and, when not, what they lack.
+	Access ReportFieldAccess `json:"access"`
+	// Whether the field is in its kind's reference view, so a report can show it
+	// through a join from a record the caller reads without the kind's own read.
+	InReferenceView bool `json:"inReferenceView"`
+	// The protected field group the field belongs to, and whether the caller holds it.
+	Protection  *ReportFieldProtection `json:"protection,omitempty"`
+	Sensitivity string                 `json:"sensitivity"`
 }
 
-type ReportChartGoalInput struct {
-	Value    *float64 `json:"value,omitempty"`
-	ColumnID *string  `json:"columnId,omitempty"`
-	Label    *string  `json:"label,omitempty"`
-}
-
-type ReportChartInput struct {
-	ID            string                `json:"id"`
-	Type          string                `json:"type"`
-	Title         *string               `json:"title,omitempty"`
-	XColumnID     *string               `json:"xColumnId,omitempty"`
-	SeriesIds     []string              `json:"seriesIds,omitempty"`
-	Stacked       *bool                 `json:"stacked,omitempty"`
-	HideLegend    *bool                 `json:"hideLegend,omitempty"`
-	ShowValues    *bool                 `json:"showValues,omitempty"`
-	Curved        *bool                 `json:"curved,omitempty"`
-	Limit         *int                  `json:"limit,omitempty"`
-	CompareID     *string               `json:"compareId,omitempty"`
-	Goal          *ReportChartGoalInput `json:"goal,omitempty"`
-	LatColumnID   *string               `json:"latColumnId,omitempty"`
-	LngColumnID   *string               `json:"lngColumnId,omitempty"`
-	LabelColumnID *string               `json:"labelColumnId,omitempty"`
+// A kind of record, as the report catalog names it.
+type ReportCatalogKind struct {
+	Resource string `json:"resource"`
+	// The kind's plural label, such as Customers.
+	Label string `json:"label"`
 }
 
 type ReportColumnDisplay struct {
@@ -7105,29 +7802,8 @@ type ReportColumnDisplay struct {
 	NullText      string               `json:"nullText"`
 	Rules         []*ReportDisplayRule `json:"rules"`
 	Band          *ReportBand          `json:"band,omitempty"`
-}
-
-type ReportColumnInput struct {
-	ID        string                  `json:"id"`
-	Ref       *ReportFieldRefInput    `json:"ref,omitempty"`
-	Kind      string                  `json:"kind"`
-	Agg       *string                 `json:"agg,omitempty"`
-	Bucket    *string                 `json:"bucket,omitempty"`
-	Band      *ReportBandInput        `json:"band,omitempty"`
-	Label     *string                 `json:"label,omitempty"`
-	Computed  *ReportComputedInput    `json:"computed,omitempty"`
-	Transform *ReportTransformInput   `json:"transform,omitempty"`
-	Display   *ReportDisplayInput     `json:"display,omitempty"`
-	Filter    *ReportFilterGroupInput `json:"filter,omitempty"`
-}
-
-type ReportComputedInput struct {
-	Op         string   `json:"op"`
-	LeftID     *string  `json:"leftId,omitempty"`
-	RightID    *string  `json:"rightId,omitempty"`
-	LeftValue  *float64 `json:"leftValue,omitempty"`
-	RightValue *float64 `json:"rightValue,omitempty"`
-	Format     *string  `json:"format,omitempty"`
+	// Labels for enum values, by value.
+	Labels map[string]any `json:"labels,omitempty"`
 }
 
 type ReportDashboard struct {
@@ -7144,18 +7820,20 @@ type ReportDashboard struct {
 	UpdatedAt   int            `json:"updatedAt"`
 }
 
+// A dashboard filter applied to every tile whose report starts from its entity.
 type ReportDashboardFilterInput struct {
-	ID       string               `json:"id"`
-	Label    *string              `json:"label,omitempty"`
-	Entity   string               `json:"entity"`
-	Ref      *ReportFieldRefInput `json:"ref"`
-	Operator string               `json:"operator"`
-	Default  any                  `json:"default,omitempty"`
+	ID     string  `json:"id"`
+	Label  *string `json:"label,omitempty"`
+	Entity string  `json:"entity"`
+	// The filtered field's path from the entity.
+	Field   string `json:"field"`
+	Op      string `json:"op"`
+	Default any    `json:"default,omitempty"`
 }
 
 type ReportDashboardLayoutInput struct {
 	Tiles      []*ReportDashboardTileInput   `json:"tiles"`
-	Parameters []*ReportParameterDefInput    `json:"parameters,omitempty"`
+	Parameters []*ReportParameterInput       `json:"parameters,omitempty"`
 	Filters    []*ReportDashboardFilterInput `json:"filters,omitempty"`
 }
 
@@ -7203,6 +7881,8 @@ type ReportDefinitionConnection struct {
 	Edges      []*ReportDefinitionEdge `json:"edges"`
 	PageInfo   *PageInfo               `json:"pageInfo"`
 	TotalCount int                     `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ReportDefinitionEdge struct {
@@ -7220,23 +7900,6 @@ type ReportDefinitionRevision struct {
 	CreatedAt      int            `json:"createdAt"`
 }
 
-type ReportDisplayInput struct {
-	Style         *string                   `json:"style,omitempty"`
-	Decimals      *int                      `json:"decimals,omitempty"`
-	Grouping      *bool                     `json:"grouping,omitempty"`
-	Currency      *string                   `json:"currency,omitempty"`
-	Negative      *string                   `json:"negative,omitempty"`
-	Notation      *string                   `json:"notation,omitempty"`
-	Prefix        *string                   `json:"prefix,omitempty"`
-	Suffix        *string                   `json:"suffix,omitempty"`
-	DateStyle     *string                   `json:"dateStyle,omitempty"`
-	BoolStyle     *string                   `json:"boolStyle,omitempty"`
-	DurationUnit  *string                   `json:"durationUnit,omitempty"`
-	DurationStyle *string                   `json:"durationStyle,omitempty"`
-	NullText      *string                   `json:"nullText,omitempty"`
-	Rules         []*ReportDisplayRuleInput `json:"rules,omitempty"`
-}
-
 type ReportDisplayRule struct {
 	Op    string  `json:"op"`
 	Value float64 `json:"value"`
@@ -7244,19 +7907,15 @@ type ReportDisplayRule struct {
 	Tone  string  `json:"tone"`
 }
 
-type ReportDisplayRuleInput struct {
-	Op    string   `json:"op"`
-	Value float64  `json:"value"`
-	Upper *float64 `json:"upper,omitempty"`
-	Tone  string   `json:"tone"`
-}
-
 type ReportDrillInput struct {
-	Definition *ReportIRInput           `json:"definition"`
+	// A report definition in keel analytics IR version 2.
+	Definition map[string]any           `json:"definition"`
 	Params     map[string]any           `json:"params,omitempty"`
 	Dimensions []*ReportDrillValueInput `json:"dimensions"`
 	ColumnID   *string                  `json:"columnId,omitempty"`
-	Limit      *int                     `json:"limit,omitempty"`
+	// The pivot values of the cell drilled into, when the report pivots.
+	PivotValues []string `json:"pivotValues,omitempty"`
+	Limit       *int     `json:"limit,omitempty"`
 }
 
 type ReportDrillValueInput struct {
@@ -7264,117 +7923,102 @@ type ReportDrillValueInput struct {
 	Value    any    `json:"value,omitempty"`
 }
 
-type ReportFieldRefInput struct {
-	Path  []string `json:"path,omitempty"`
-	Field string   `json:"field"`
+type ReportFieldProtection struct {
+	Group permission.FieldGroup `json:"group"`
+	// Whether the caller's role grants the group.
+	Held bool `json:"held"`
 }
 
-type ReportFilterGroupInput struct {
-	Op      string                    `json:"op"`
-	Filters []*ReportFilterInput      `json:"filters,omitempty"`
-	Groups  []*ReportFilterGroupInput `json:"groups,omitempty"`
-}
-
-type ReportFilterInput struct {
-	Ref       *ReportFieldRefInput  `json:"ref"`
-	Operator  string                `json:"operator"`
-	Value     any                   `json:"value,omitempty"`
-	Param     *string               `json:"param,omitempty"`
-	Agg       *string               `json:"agg,omitempty"`
-	Transform *ReportTransformInput `json:"transform,omitempty"`
-}
-
-type ReportIRInput struct {
-	Entity     string                     `json:"entity"`
-	Columns    []*ReportColumnInput       `json:"columns"`
-	Filters    *ReportFilterGroupInput    `json:"filters,omitempty"`
-	Having     *ReportFilterGroupInput    `json:"having,omitempty"`
-	Sort       []*ReportSortInput         `json:"sort,omitempty"`
-	Limit      *int                       `json:"limit,omitempty"`
-	Pivot      *ReportPivotInput          `json:"pivot,omitempty"`
-	Parameters []*ReportParameterDefInput `json:"parameters,omitempty"`
-	Totals     *bool                      `json:"totals,omitempty"`
-	Charts     []*ReportChartInput        `json:"charts,omitempty"`
-}
-
-type ReportParameterDefInput struct {
-	Name          string   `json:"name"`
-	Label         *string  `json:"label,omitempty"`
-	Type          string   `json:"type"`
-	Required      *bool    `json:"required,omitempty"`
-	Default       any      `json:"default,omitempty"`
-	Multi         *bool    `json:"multi,omitempty"`
-	AllowedValues []string `json:"allowedValues,omitempty"`
-	RefEntity     *string  `json:"refEntity,omitempty"`
-}
-
-type ReportPivotInput struct {
-	Ref          *ReportFieldRefInput `json:"ref"`
-	Values       []string             `json:"values"`
-	Labels       []string             `json:"labels,omitempty"`
-	MeasureIds   []string             `json:"measureIds"`
-	IncludeOther *bool                `json:"includeOther,omitempty"`
+// A parameter a dashboard asks for once and binds to its tiles' report parameters.
+type ReportParameterInput struct {
+	Name  string  `json:"name"`
+	Label *string `json:"label,omitempty"`
+	// The value type: string, int, decimal, float, bool, date, timestamp, epoch or enum.
+	Type     string `json:"type"`
+	Required *bool  `json:"required,omitempty"`
+	Multi    *bool  `json:"multi,omitempty"`
+	Default  any    `json:"default,omitempty"`
+	// The values the parameter may take, when it is limited to a list.
+	Allowed []any `json:"allowed,omitempty"`
+	// The entity whose records the parameter picks, for a record picker.
+	Entity *string `json:"entity,omitempty"`
 }
 
 type ReportPreview struct {
-	Columns   []*ReportPreviewColumn `json:"columns"`
-	Rows      any                    `json:"rows"`
-	Totals    any                    `json:"totals,omitempty"`
-	Truncated bool                   `json:"truncated"`
+	Columns []*ReportPreviewColumn `json:"columns"`
+	// Detail and subtotal rows, each an array of values in column order.
+	Rows any `json:"rows"`
+	// Each row's grouping level: 0 for a detail row, and n for a subtotal that
+	// rolls up the n innermost grouping columns.
+	Levels []int `json:"levels"`
+	// The grand total row, when the report asks for one.
+	Totals    any  `json:"totals,omitempty"`
+	Truncated bool `json:"truncated"`
+	// The cursor of the next page when the preview was paged and more rows follow.
+	Cursor   *string `json:"cursor,omitempty"`
+	Timezone string  `json:"timezone"`
+	// The rollup that answered the report instead of the base tables, when one did.
+	Rollup *string `json:"rollup,omitempty"`
 }
 
 type ReportPreviewColumn struct {
 	ID      string               `json:"id"`
 	Label   string               `json:"label"`
 	Type    string               `json:"type"`
-	Format  *string              `json:"format,omitempty"`
 	Display *ReportColumnDisplay `json:"display"`
+	// The highest sensitivity of the fields the column reads.
+	Sensitivity *string `json:"sensitivity,omitempty"`
 }
 
 type ReportRun struct {
-	ID                string          `json:"id"`
-	DefinitionID      *string         `json:"definitionId,omitempty"`
-	RevisionID        *string         `json:"revisionId,omitempty"`
-	CannedKey         *string         `json:"cannedKey,omitempty"`
-	CannedVersion     *string         `json:"cannedVersion,omitempty"`
-	RequestedByID     string          `json:"requestedById"`
-	Trigger           string          `json:"trigger"`
-	Params            map[string]any  `json:"params,omitempty"`
-	Format            string          `json:"format"`
-	Status            string          `json:"status"`
-	RowCount          int             `json:"rowCount"`
-	ByteSize          int             `json:"byteSize"`
-	DurationMs        int             `json:"durationMs"`
-	Truncated         bool            `json:"truncated"`
+	ID            string         `json:"id"`
+	DefinitionID  *string        `json:"definitionId,omitempty"`
+	RevisionID    *string        `json:"revisionId,omitempty"`
+	CannedKey     *string        `json:"cannedKey,omitempty"`
+	CannedVersion *string        `json:"cannedVersion,omitempty"`
+	RequestedByID string         `json:"requestedById"`
+	Trigger       string         `json:"trigger"`
+	Params        map[string]any `json:"params,omitempty"`
+	Format        string         `json:"format"`
+	Status        string         `json:"status"`
+	RowCount      int            `json:"rowCount"`
+	ByteSize      int            `json:"byteSize"`
+	DurationMs    int            `json:"durationMs"`
+	Truncated     bool           `json:"truncated"`
+	// Whether the run's rows were stored, so it can be compared with another run.
+	RowsStored        bool            `json:"rowsStored"`
 	Error             *ReportRunError `json:"error,omitempty"`
 	ArtifactExpiresAt *int            `json:"artifactExpiresAt,omitempty"`
-	CacheHit          bool            `json:"cacheHit"`
-	QueuedAt          *int            `json:"queuedAt,omitempty"`
-	StartedAt         *int            `json:"startedAt,omitempty"`
-	CompletedAt       *int            `json:"completedAt,omitempty"`
-	Version           int             `json:"version"`
-	CreatedAt         int             `json:"createdAt"`
+	// Whether the run's rows came from the report result cache rather than a statement.
+	CacheHit    bool `json:"cacheHit"`
+	QueuedAt    *int `json:"queuedAt,omitempty"`
+	StartedAt   *int `json:"startedAt,omitempty"`
+	CompletedAt *int `json:"completedAt,omitempty"`
+	Version     int  `json:"version"`
+	CreatedAt   int  `json:"createdAt"`
 }
 
 type ReportRunConnection struct {
 	Edges      []*ReportRunEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount int              `json:"totalCount"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // A report run as the Desk draws it: the run, the report it ran with the
-// parameters it ran with, a bounded sample of its result and the person's
-// previous run of the same report to compare it with.
+// parameters it ran with, a sample of its result and the person's previous run
+// of the same report to compare it with.
 type ReportRunDeskCard struct {
 	Run        *ReportRun                `json:"run"`
 	Report     *ReportRunDeskReport      `json:"report"`
 	Parameters []*ReportRunDeskParameter `json:"parameters"`
-	// The organization's time zone, in which the sample's dates and the parameter windows are written.
+	// The organization's time zone, in which the parameter windows are written.
 	Timezone string `json:"timezone"`
-	// The columns, first rows and grand totals of the result. Absent while the run
-	// is going, for a run that finished before samples were kept, after the run
-	// expired, and when the result is withheld.
-	Sample *ReportRunSample `json:"sample,omitempty"`
+	// The first rows and the grand total of the result, as a preview carries them.
+	// Absent while the run is going, for a run that finished before samples were
+	// kept, after the run expired, and when the result is withheld.
+	Sample *ReportPreview `json:"sample,omitempty"`
 	// Why a finished run's result is not shown: access (the person can no longer
 	// read everything it shows) or changed (the report no longer runs as it did).
 	Withheld *string `json:"withheld,omitempty"`
@@ -7388,9 +8032,9 @@ type ReportRunDeskCard struct {
 }
 
 type ReportRunDeskChart struct {
-	Type      string   `json:"type"`
-	XColumnID *string  `json:"xColumnId,omitempty"`
-	SeriesIds []string `json:"seriesIds"`
+	Type   string   `json:"type"`
+	X      *string  `json:"x,omitempty"`
+	Series []string `json:"series"`
 }
 
 type ReportRunDeskParameter struct {
@@ -7399,9 +8043,10 @@ type ReportRunDeskParameter struct {
 	Type  string `json:"type"`
 	Value any    `json:"value,omitempty"`
 	// The run did not set it, so it took the report's default.
-	IsDefault bool    `json:"isDefault"`
-	RefEntity *string `json:"refEntity,omitempty"`
-	// The range a relative or date-range parameter filtered on, as of when the run started.
+	IsDefault bool `json:"isDefault"`
+	// The kind of record the parameter's values are ids of.
+	Entity *string `json:"entity,omitempty"`
+	// The range a relative date parameter filtered on, as of when the run started.
 	WindowStart *int `json:"windowStart,omitempty"`
 	WindowEnd   *int `json:"windowEnd,omitempty"`
 }
@@ -7424,8 +8069,8 @@ type ReportRunDeskReport struct {
 }
 
 type ReportRunDeskSort struct {
-	ColumnID  string `json:"columnId"`
-	Direction string `json:"direction"`
+	Column string `json:"column"`
+	Desc   bool   `json:"desc"`
 }
 
 type ReportRunEdge struct {
@@ -7439,40 +8084,33 @@ type ReportRunError struct {
 	Detail  *string `json:"detail,omitempty"`
 }
 
-type ReportRunSample struct {
-	Columns []*ReportPreviewColumn `json:"columns"`
-	// Rows as arrays in column order: decimals as exact strings, dates as epoch seconds.
-	Rows   any `json:"rows"`
-	Totals any `json:"totals,omitempty"`
-	// The result holds more rows than the sample.
-	More bool `json:"more"`
-}
-
 type ReportRunsFilterInput struct {
 	DefinitionID *string  `json:"definitionId,omitempty"`
 	Statuses     []string `json:"statuses,omitempty"`
 }
 
 type ReportSchedule struct {
-	ID                  string               `json:"id"`
-	DefinitionID        string               `json:"definitionId"`
-	CronExpression      string               `json:"cronExpression"`
-	Timezone            string               `json:"timezone"`
-	Formats             []string             `json:"formats"`
-	EmailRecipients     []string             `json:"emailRecipients"`
-	EmailAttach         bool                 `json:"emailAttach"`
-	EmailInline         bool                 `json:"emailInline"`
-	NotifyUserIds       []string             `json:"notifyUserIds"`
-	Alert               *ReportScheduleAlert `json:"alert,omitempty"`
-	AlertFiring         bool                 `json:"alertFiring"`
-	Enabled             bool                 `json:"enabled"`
-	RunAsID             string               `json:"runAsId"`
-	LastRunID           *string              `json:"lastRunId,omitempty"`
-	NextRunAt           *int                 `json:"nextRunAt,omitempty"`
-	ConsecutiveFailures int                  `json:"consecutiveFailures"`
-	Version             int                  `json:"version"`
-	CreatedAt           int                  `json:"createdAt"`
-	UpdatedAt           int                  `json:"updatedAt"`
+	ID              string               `json:"id"`
+	DefinitionID    string               `json:"definitionId"`
+	CronExpression  string               `json:"cronExpression"`
+	Timezone        string               `json:"timezone"`
+	Formats         []string             `json:"formats"`
+	EmailRecipients []string             `json:"emailRecipients"`
+	EmailAttach     bool                 `json:"emailAttach"`
+	EmailInline     bool                 `json:"emailInline"`
+	NotifyUserIds   []string             `json:"notifyUserIds"`
+	Alert           *ReportScheduleAlert `json:"alert,omitempty"`
+	AlertFiring     bool                 `json:"alertFiring"`
+	Enabled         bool                 `json:"enabled"`
+	RunAsID         string               `json:"runAsId"`
+	// Whether the person reading set the schedule up, and so may change or remove it.
+	Mine                bool    `json:"mine"`
+	LastRunID           *string `json:"lastRunId,omitempty"`
+	NextRunAt           *int    `json:"nextRunAt,omitempty"`
+	ConsecutiveFailures int     `json:"consecutiveFailures"`
+	Version             int     `json:"version"`
+	CreatedAt           int     `json:"createdAt"`
+	UpdatedAt           int     `json:"updatedAt"`
 }
 
 type ReportScheduleAlert struct {
@@ -7489,17 +8127,6 @@ type ReportScheduleAlertInput struct {
 	ColumnID            *string  `json:"columnId,omitempty"`
 	Value               *float64 `json:"value,omitempty"`
 	SuppressWhileFiring *bool    `json:"suppressWhileFiring,omitempty"`
-}
-
-type ReportSortInput struct {
-	ColumnID  string `json:"columnId"`
-	Direction string `json:"direction"`
-}
-
-type ReportTransformInput struct {
-	Op        string   `json:"op"`
-	Precision *int     `json:"precision,omitempty"`
-	Factor    *float64 `json:"factor,omitempty"`
 }
 
 type ReportView struct {
@@ -7605,9 +8232,10 @@ type ResolvedCategoryRate struct {
 }
 
 type ResolvedCostProfile struct {
-	TotalCpm             string                  `json:"totalCpm"`
-	VariableCpm          string                  `json:"variableCpm"`
-	FixedCpm             string                  `json:"fixedCpm"`
+	TotalCpm    string `json:"totalCpm"`
+	VariableCpm string `json:"variableCpm"`
+	FixedCpm    string `json:"fixedCpm"`
+	// Null to a reader without the margins field group.
 	TargetMarginPercent  *string                 `json:"targetMarginPercent,omitempty"`
 	IncludeDeadheadMiles bool                    `json:"includeDeadheadMiles"`
 	AsOfDate             string                  `json:"asOfDate"`
@@ -7690,6 +8318,8 @@ type RiskDecisionConnection struct {
 	Edges      []*RiskDecisionEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RiskDecisionEdge struct {
@@ -7701,11 +8331,39 @@ type RoleConnection struct {
 	Edges      []*RoleEdge `json:"edges"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
 	TotalCount *int        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RoleEdge struct {
 	Node   *permission.Role `json:"node"`
 	Cursor string           `json:"cursor"`
+}
+
+// What granting and withholding a resource's read means, in sentences built from
+// the permission registry, the resource's reference view and the kinds that link
+// to it, translated for the request.
+type RoleResourceGuide struct {
+	Resource string `json:"resource"`
+	Name     string `json:"name"`
+	Granted  string `json:"granted"`
+	Withheld string `json:"withheld"`
+	// The view's fields above the role's sensitivity ceiling, or null when none are.
+	Ceiling *string               `json:"ceiling,omitempty"`
+	Screens []*RoleResourceScreen `json:"screens"`
+}
+
+type RoleResourceGuideInput struct {
+	// At most 64 resources, such as one category of the role editor.
+	Resources      []string `json:"resources"`
+	MaxSensitivity string   `json:"maxSensitivity"`
+}
+
+// A screen a resource's grant changes, and how it depends on the resource.
+type RoleResourceScreen struct {
+	Path string        `json:"path"`
+	Name string        `json:"name"`
+	Use  PageAccessUse `json:"use"`
 }
 
 // The composed board. It is derived on every read and never stored: a stored week
@@ -7769,6 +8427,8 @@ type RoutingGuideConnection struct {
 	Edges      []*RoutingGuideEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type RoutingGuideEdge struct {
@@ -7803,6 +8463,8 @@ type SCIMDirectoryConnection struct {
 	Edges      []*SCIMDirectoryEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SCIMDirectoryEdge struct {
@@ -7814,6 +8476,8 @@ type SCIMGroupRoleMappingConnection struct {
 	Edges      []*SCIMGroupRoleMappingEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SCIMGroupRoleMappingEdge struct {
@@ -7892,14 +8556,15 @@ type SaveReportDashboardInput struct {
 }
 
 type SaveReportDefinitionInput struct {
-	Name          string         `json:"name"`
-	Description   *string        `json:"description,omitempty"`
-	Category      *string        `json:"category,omitempty"`
-	Tags          []string       `json:"tags,omitempty"`
-	Visibility    *string        `json:"visibility,omitempty"`
-	Status        *string        `json:"status,omitempty"`
-	DefaultFormat *string        `json:"defaultFormat,omitempty"`
-	Definition    *ReportIRInput `json:"definition"`
+	Name          string   `json:"name"`
+	Description   *string  `json:"description,omitempty"`
+	Category      *string  `json:"category,omitempty"`
+	Tags          []string `json:"tags,omitempty"`
+	Visibility    *string  `json:"visibility,omitempty"`
+	Status        *string  `json:"status,omitempty"`
+	DefaultFormat *string  `json:"defaultFormat,omitempty"`
+	// A report definition in keel analytics IR version 2.
+	Definition map[string]any `json:"definition"`
 }
 
 type SaveTelematicsFormMappingInput struct {
@@ -7936,6 +8601,8 @@ type SelectOptionConnection struct {
 	Edges      []*SelectOptionEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SelectOptionEdge struct {
@@ -7983,6 +8650,8 @@ type ServiceFailureConnection struct {
 	Edges      []*ServiceFailureEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ServiceFailureEdge struct {
@@ -7994,6 +8663,8 @@ type ServiceFailureReasonCodeConnection struct {
 	Edges      []*ServiceFailureReasonCodeEdge `json:"edges"`
 	PageInfo   *PageInfo                       `json:"pageInfo"`
 	TotalCount *int                            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ServiceFailureReasonCodeEdge struct {
@@ -8005,6 +8676,8 @@ type ServiceTypeConnection struct {
 	Edges      []*ServiceTypeEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 	TotalCount *int               `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ServiceTypeEdge struct {
@@ -8082,6 +8755,8 @@ type SettlementBatchConnection struct {
 	Edges      []*SettlementBatchEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SettlementBatchEdge struct {
@@ -8093,6 +8768,8 @@ type SettlementDisputeConnection struct {
 	Edges      []*SettlementDisputeEdge `json:"edges"`
 	PageInfo   *PageInfo                `json:"pageInfo"`
 	TotalCount *int                     `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type SettlementDisputeEdge struct {
@@ -8124,18 +8801,20 @@ type Shipment struct {
 	ShipmentTypeID   string       `json:"shipmentTypeId"`
 	CustomerID       string       `json:"customerId"`
 	// The customer billed by default. Null means the shipment's customer pays.
-	BillToCustomerID      *string                        `json:"billToCustomerId,omitempty"`
-	FreightTerms          shipment.FreightTerms          `json:"freightTerms"`
-	TractorTypeID         *string                        `json:"tractorTypeId,omitempty"`
-	TrailerTypeID         *string                        `json:"trailerTypeId,omitempty"`
-	OwnerID               *string                        `json:"ownerId,omitempty"`
-	EnteredByID           *string                        `json:"enteredById,omitempty"`
-	CanceledByID          *string                        `json:"canceledById,omitempty"`
-	FormulaTemplateID     string                         `json:"formulaTemplateId"`
-	ConsolidationGroupID  *string                        `json:"consolidationGroupId,omitempty"`
-	OrderID               *string                        `json:"orderId,omitempty"`
-	OrderNumber           *string                        `json:"orderNumber,omitempty"`
-	OrderStatus           *order.Status                  `json:"orderStatus,omitempty"`
+	BillToCustomerID *string               `json:"billToCustomerId,omitempty"`
+	FreightTerms     shipment.FreightTerms `json:"freightTerms"`
+	TractorTypeID    *string               `json:"tractorTypeId,omitempty"`
+	TrailerTypeID    *string               `json:"trailerTypeId,omitempty"`
+	OwnerID          *string               `json:"ownerId,omitempty"`
+	EnteredByID      *string               `json:"enteredById,omitempty"`
+	CanceledByID     *string               `json:"canceledById,omitempty"`
+	// The tariff that rates the shipment. Null when it is rated by hand.
+	FormulaTemplateID    *string       `json:"formulaTemplateId,omitempty"`
+	ConsolidationGroupID *string       `json:"consolidationGroupId,omitempty"`
+	OrderID              *string       `json:"orderId,omitempty"`
+	OrderNumber          *string       `json:"orderNumber,omitempty"`
+	OrderStatus          *order.Status `json:"orderStatus,omitempty"`
+	// The shipment's estimated cost and margin. Null to a reader without the margins field group.
 	ProfitabilityEstimate *ShipmentProfitabilityEstimate `json:"profitabilityEstimate,omitempty"`
 	Status                ShipmentStatus                 `json:"status"`
 	TenderStatus          *ShipmentTenderStatus          `json:"tenderStatus,omitempty"`
@@ -8143,28 +8822,31 @@ type Shipment struct {
 	ProNumber             string                         `json:"proNumber"`
 	BOL                   *string                        `json:"bol,omitempty"`
 	// The customer's own identifier for the load, such as an EDI 204 shipment ID or an order number; unique per customer among live shipments.
-	ExternalReference      *string               `json:"externalReference,omitempty"`
-	CancelReason           string                `json:"cancelReason"`
-	OtherChargeAmount      string                `json:"otherChargeAmount"`
-	FreightChargeAmount    string                `json:"freightChargeAmount"`
-	BaseRate               string                `json:"baseRate"`
-	TotalChargeAmount      string                `json:"totalChargeAmount"`
-	Pieces                 *int                  `json:"pieces,omitempty"`
-	Weight                 *int                  `json:"weight,omitempty"`
-	TemperatureMin         *int                  `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int                  `json:"temperatureMax,omitempty"`
-	ActualDeliveryDate     *int                  `json:"actualDeliveryDate,omitempty"`
-	ActualShipDate         *int                  `json:"actualShipDate,omitempty"`
-	CanceledAt             *int                  `json:"canceledAt,omitempty"`
-	BillingTransferStatus  *string               `json:"billingTransferStatus,omitempty"`
-	TransferredToBillingAt *int                  `json:"transferredToBillingAt,omitempty"`
-	MarkedReadyToBillAt    *int                  `json:"markedReadyToBillAt,omitempty"`
-	BilledAt               *int                  `json:"billedAt,omitempty"`
-	RatingUnit             int                   `json:"ratingUnit"`
-	FuelSurchargeLocked    bool                  `json:"fuelSurchargeLocked"`
-	RatingDetail           *ShipmentRatingDetail `json:"ratingDetail,omitempty"`
+	ExternalReference *string `json:"externalReference,omitempty"`
+	CancelReason      string  `json:"cancelReason"`
+	OtherChargeAmount string  `json:"otherChargeAmount"`
+	// The sum of the freight lines.
+	FreightChargeAmount string `json:"freightChargeAmount"`
+	// The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value.
+	TariffInputs map[string]any `json:"tariffInputs"`
+	// The freight the shipment bills, line by line, as its last rating produced it.
+	FreightLines           []*ShipmentFreightLine `json:"freightLines"`
+	TotalChargeAmount      string                 `json:"totalChargeAmount"`
+	Pieces                 *int                   `json:"pieces,omitempty"`
+	Weight                 *int                   `json:"weight,omitempty"`
+	TemperatureMin         *int                   `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int                   `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int                   `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int                   `json:"actualShipDate,omitempty"`
+	CanceledAt             *int                   `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string                `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int                   `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int                   `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int                   `json:"billedAt,omitempty"`
+	FuelSurchargeLocked    bool                   `json:"fuelSurchargeLocked"`
+	RatingDetail           *ShipmentRatingDetail  `json:"ratingDetail,omitempty"`
 	// Whether this shipment still carries the rate its contract applied. It goes
-	// false the moment somebody edits the rating method, the base rate, or one of
+	// false the moment somebody edits the tariff, its inputs, or one of
 	// the contract's own accessorial charges.
 	AutoRated bool `json:"autoRated"`
 	// When the contract priced this shipment. Null if none ever did.
@@ -8225,22 +8907,30 @@ type ShipmentActiveShipmentsBreakdown struct {
 }
 
 type ShipmentAdditionalCharge struct {
-	ID                     *string                    `json:"id,omitempty"`
-	BusinessUnitID         string                     `json:"businessUnitId"`
-	OrganizationID         string                     `json:"organizationId"`
-	ShipmentID             string                     `json:"shipmentId"`
-	AccessorialChargeID    string                     `json:"accessorialChargeId"`
-	IsSystemGenerated      bool                       `json:"isSystemGenerated"`
-	Method                 string                     `json:"method"`
-	Amount                 string                     `json:"amount"`
-	Unit                   int                        `json:"unit"`
-	FuelSurchargeProgramID *string                    `json:"fuelSurchargeProgramId,omitempty"`
-	FuelSurchargeDetail    map[string]any             `json:"fuelSurchargeDetail,omitempty"`
-	IsDetention            bool                       `json:"isDetention"`
-	Version                int                        `json:"version"`
-	CreatedAt              int                        `json:"createdAt"`
-	UpdatedAt              int                        `json:"updatedAt"`
-	AccessorialCharge      *ShipmentAccessorialCharge `json:"accessorialCharge,omitempty"`
+	ID                     *string        `json:"id,omitempty"`
+	BusinessUnitID         string         `json:"businessUnitId"`
+	OrganizationID         string         `json:"organizationId"`
+	ShipmentID             string         `json:"shipmentId"`
+	AccessorialChargeID    string         `json:"accessorialChargeId"`
+	IsSystemGenerated      bool           `json:"isSystemGenerated"`
+	Method                 string         `json:"method"`
+	Amount                 string         `json:"amount"`
+	Unit                   int            `json:"unit"`
+	FuelSurchargeProgramID *string        `json:"fuelSurchargeProgramId,omitempty"`
+	FuelSurchargeDetail    map[string]any `json:"fuelSurchargeDetail,omitempty"`
+	IsDetention            bool           `json:"isDetention"`
+	// Whether the shipment's tariff billed this charge.
+	IsTariff bool `json:"isTariff"`
+	// The tariff's label for the charge.
+	Label    string  `json:"label"`
+	Quantity *string `json:"quantity,omitempty"`
+	Rate     *string `json:"rate,omitempty"`
+	// The rate's unit, such as $/mi.
+	RateUnit          string                     `json:"rateUnit"`
+	Version           int                        `json:"version"`
+	CreatedAt         int                        `json:"createdAt"`
+	UpdatedAt         int                        `json:"updatedAt"`
+	AccessorialCharge *ShipmentAccessorialCharge `json:"accessorialCharge,omitempty"`
 }
 
 type ShipmentAdditionalChargeInput struct {
@@ -8701,6 +9391,8 @@ type ShipmentCommentConnection struct {
 	Edges      []*ShipmentCommentEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ShipmentCommentCountResponse struct {
@@ -8868,6 +9560,8 @@ type ShipmentConnection struct {
 	Edges      []*ShipmentEdge `json:"edges"`
 	PageInfo   *PageInfo       `json:"pageInfo"`
 	TotalCount *int            `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 // What the rate agreements charge for a shipment, either as a preview of what
@@ -8881,27 +9575,37 @@ type ShipmentContractRate struct {
 	AgreementName string  `json:"agreementName"`
 	RuleID        *string `json:"ruleId,omitempty"`
 	RuleLabel     string  `json:"ruleLabel"`
-	// The rating method the contract seats on the shipment.
+	// The tariff the contract seats on the shipment.
 	FormulaTemplateID   *string `json:"formulaTemplateId,omitempty"`
 	FormulaTemplateName string  `json:"formulaTemplateName"`
-	// The rate that method prices with. Null when the rule defers to the shipment.
-	BaseRate          *string `json:"baseRate,omitempty"`
-	LinehaulAmount    string  `json:"linehaulAmount"`
-	OtherChargeAmount string  `json:"otherChargeAmount"`
-	TotalChargeAmount string  `json:"totalChargeAmount"`
-	// What the shipment charged before, so a dialog can state the change.
-	PreviousLinehaulAmount string                             `json:"previousLinehaulAmount"`
-	Accessorials           []*ShipmentContractRateAccessorial `json:"accessorials"`
-	Explanation            string                             `json:"explanation"`
+	TemplateVersion     int     `json:"templateVersion"`
+	// The inputs the contract prices with, by name. Each value is a Tariff wire value.
+	Inputs map[string]any `json:"inputs"`
+	// The tariff's reason for refusing to rate the shipment.
+	Refusal           string                 `json:"refusal"`
+	FreightLines      []*ShipmentFreightLine `json:"freightLines"`
+	FreightAmount     string                 `json:"freightAmount"`
+	OtherChargeAmount string                 `json:"otherChargeAmount"`
+	TotalChargeAmount string                 `json:"totalChargeAmount"`
+	// What the shipment charged for freight before, so a dialog can state the change.
+	PreviousFreightAmount string `json:"previousFreightAmount"`
+	// The accessorials the contract bills: the tariff's own coded lines and the agreement's schedule.
+	Charges     []*ShipmentContractRateCharge `json:"charges"`
+	Explanation string                        `json:"explanation"`
 }
 
-// One charge a contract applies automatically to every shipment it prices.
-type ShipmentContractRateAccessorial struct {
-	AccessorialChargeID string                   `json:"accessorialChargeId"`
-	Description         string                   `json:"description"`
-	Method              accessorialcharge.Method `json:"method"`
-	Amount              string                   `json:"amount"`
-	Unit                int                      `json:"unit"`
+// One accessorial a contract bills on a shipment it prices.
+type ShipmentContractRateCharge struct {
+	AccessorialChargeID string `json:"accessorialChargeId"`
+	Code                string `json:"code"`
+	Description         string `json:"description"`
+	// Tariff when the tariff billed it, RateAgreement when the agreement's schedule did.
+	Owner    string  `json:"owner"`
+	Label    string  `json:"label"`
+	Amount   string  `json:"amount"`
+	Quantity *string `json:"quantity,omitempty"`
+	Rate     *string `json:"rate,omitempty"`
+	RateUnit string  `json:"rateUnit"`
 }
 
 type ShipmentCoverageSuggestions struct {
@@ -9061,16 +9765,15 @@ type ShipmentEventsInput struct {
 }
 
 type ShipmentFormulaTemplate struct {
-	ID                  string                               `json:"id"`
-	OrganizationID      string                               `json:"organizationId"`
-	BusinessUnitID      string                               `json:"businessUnitId"`
-	Name                string                               `json:"name"`
-	Description         string                               `json:"description"`
-	Type                string                               `json:"type"`
-	Expression          string                               `json:"expression"`
-	Status              string                               `json:"status"`
-	SchemaID            string                               `json:"schemaId"`
-	VariableDefinitions []*ShipmentFormulaVariableDefinition `json:"variableDefinitions"`
+	ID             string `json:"id"`
+	OrganizationID string `json:"organizationId"`
+	BusinessUnitID string `json:"businessUnitId"`
+	Name           string `json:"name"`
+	Description    string `json:"description"`
+	// The formula's Tariff source.
+	Source    string `json:"source"`
+	Status    string `json:"status"`
+	TestCount int    `json:"testCount"`
 	// Formula template metadata is admin-defined and intentionally open-ended.
 	Metadata             map[string]any `json:"metadata,omitempty"`
 	Version              int            `json:"version"`
@@ -9081,14 +9784,16 @@ type ShipmentFormulaTemplate struct {
 	UpdatedAt            int            `json:"updatedAt"`
 }
 
-type ShipmentFormulaVariableDefinition struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Description string `json:"description"`
-	Required    bool   `json:"required"`
-	// Formula variable defaults can be scalar, array, object, or null by template design.
-	DefaultValue any     `json:"defaultValue,omitempty"`
-	Source       *string `json:"source,omitempty"`
+// One freight line of a shipment's bill.
+type ShipmentFreightLine struct {
+	Label    string  `json:"label"`
+	Quantity *string `json:"quantity,omitempty"`
+	// The quantity's unit, such as mi or cwt.
+	QuantityUnit string  `json:"quantityUnit"`
+	Rate         *string `json:"rate,omitempty"`
+	// The rate's unit, such as $/mi.
+	RateUnit string `json:"rateUnit"`
+	Amount   string `json:"amount"`
 }
 
 type ShipmentHazmatInput struct {
@@ -9160,41 +9865,42 @@ type ShipmentInput struct {
 	ShipmentTypeID   string  `json:"shipmentTypeId"`
 	CustomerID       string  `json:"customerId"`
 	// Null bills the shipment to its customer.
-	BillToCustomerID     *string                `json:"billToCustomerId,omitempty"`
-	FreightTerms         *shipment.FreightTerms `json:"freightTerms,omitempty"`
-	TractorTypeID        *string                `json:"tractorTypeId,omitempty"`
-	TrailerTypeID        *string                `json:"trailerTypeId,omitempty"`
-	OwnerID              *string                `json:"ownerId,omitempty"`
-	EnteredByID          *string                `json:"enteredById,omitempty"`
-	CanceledByID         *string                `json:"canceledById,omitempty"`
-	FormulaTemplateID    string                 `json:"formulaTemplateId"`
-	ConsolidationGroupID *string                `json:"consolidationGroupId,omitempty"`
-	OrderID              *string                `json:"orderId,omitempty"`
-	Status               *ShipmentStatus        `json:"status,omitempty"`
-	TenderStatus         *ShipmentTenderStatus  `json:"tenderStatus,omitempty"`
-	EntryMethod          *ShipmentEntryMethod   `json:"entryMethod,omitempty"`
-	ProNumber            *string                `json:"proNumber,omitempty"`
-	BOL                  *string                `json:"bol,omitempty"`
+	BillToCustomerID *string                `json:"billToCustomerId,omitempty"`
+	FreightTerms     *shipment.FreightTerms `json:"freightTerms,omitempty"`
+	TractorTypeID    *string                `json:"tractorTypeId,omitempty"`
+	TrailerTypeID    *string                `json:"trailerTypeId,omitempty"`
+	OwnerID          *string                `json:"ownerId,omitempty"`
+	EnteredByID      *string                `json:"enteredById,omitempty"`
+	CanceledByID     *string                `json:"canceledById,omitempty"`
+	// Null rates the shipment by hand at its freight charge amount.
+	FormulaTemplateID    *string               `json:"formulaTemplateId,omitempty"`
+	ConsolidationGroupID *string               `json:"consolidationGroupId,omitempty"`
+	OrderID              *string               `json:"orderId,omitempty"`
+	Status               *ShipmentStatus       `json:"status,omitempty"`
+	TenderStatus         *ShipmentTenderStatus `json:"tenderStatus,omitempty"`
+	EntryMethod          *ShipmentEntryMethod  `json:"entryMethod,omitempty"`
+	ProNumber            *string               `json:"proNumber,omitempty"`
+	BOL                  *string               `json:"bol,omitempty"`
 	// The customer's own identifier for the load. A second live shipment for the same customer with this reference is refused.
-	ExternalReference      *string `json:"externalReference,omitempty"`
-	CancelReason           *string `json:"cancelReason,omitempty"`
-	OtherChargeAmount      *string `json:"otherChargeAmount,omitempty"`
-	FreightChargeAmount    *string `json:"freightChargeAmount,omitempty"`
-	BaseRate               *string `json:"baseRate,omitempty"`
-	TotalChargeAmount      *string `json:"totalChargeAmount,omitempty"`
-	Pieces                 *int    `json:"pieces,omitempty"`
-	Weight                 *int    `json:"weight,omitempty"`
-	TemperatureMin         *int    `json:"temperatureMin,omitempty"`
-	TemperatureMax         *int    `json:"temperatureMax,omitempty"`
-	ActualDeliveryDate     *int    `json:"actualDeliveryDate,omitempty"`
-	ActualShipDate         *int    `json:"actualShipDate,omitempty"`
-	CanceledAt             *int    `json:"canceledAt,omitempty"`
-	BillingTransferStatus  *string `json:"billingTransferStatus,omitempty"`
-	TransferredToBillingAt *int    `json:"transferredToBillingAt,omitempty"`
-	MarkedReadyToBillAt    *int    `json:"markedReadyToBillAt,omitempty"`
-	BilledAt               *int    `json:"billedAt,omitempty"`
-	RatingUnit             *int    `json:"ratingUnit,omitempty"`
-	FuelSurchargeLocked    *bool   `json:"fuelSurchargeLocked,omitempty"`
+	ExternalReference   *string `json:"externalReference,omitempty"`
+	CancelReason        *string `json:"cancelReason,omitempty"`
+	OtherChargeAmount   *string `json:"otherChargeAmount,omitempty"`
+	FreightChargeAmount *string `json:"freightChargeAmount,omitempty"`
+	// The values the tariff prices with, by input name, as Tariff wire values. Omitted inputs take the template's defaults.
+	TariffInputs           map[string]any `json:"tariffInputs,omitempty"`
+	TotalChargeAmount      *string        `json:"totalChargeAmount,omitempty"`
+	Pieces                 *int           `json:"pieces,omitempty"`
+	Weight                 *int           `json:"weight,omitempty"`
+	TemperatureMin         *int           `json:"temperatureMin,omitempty"`
+	TemperatureMax         *int           `json:"temperatureMax,omitempty"`
+	ActualDeliveryDate     *int           `json:"actualDeliveryDate,omitempty"`
+	ActualShipDate         *int           `json:"actualShipDate,omitempty"`
+	CanceledAt             *int           `json:"canceledAt,omitempty"`
+	BillingTransferStatus  *string        `json:"billingTransferStatus,omitempty"`
+	TransferredToBillingAt *int           `json:"transferredToBillingAt,omitempty"`
+	MarkedReadyToBillAt    *int           `json:"markedReadyToBillAt,omitempty"`
+	BilledAt               *int           `json:"billedAt,omitempty"`
+	FuelSurchargeLocked    *bool          `json:"fuelSurchargeLocked,omitempty"`
 	// Why this shipment is billed at something other than its contract rate. It is
 	// the only rating field a caller may write: everything else the rater owns is
 	// an ordinary field, and everything else the system owns is restored on save.
@@ -9497,19 +10203,18 @@ func (this ShipmentOwnershipEvent) GetShipment() *ShipmentEventShipmentReference
 }
 
 type ShipmentPreviousRateSummary struct {
-	ShipmentID          string `json:"shipmentId"`
-	ProNumber           string `json:"proNumber"`
-	CustomerID          string `json:"customerId"`
-	ServiceTypeID       string `json:"serviceTypeId"`
-	ShipmentTypeID      string `json:"shipmentTypeId"`
-	FormulaTemplateID   string `json:"formulaTemplateId"`
-	FreightChargeAmount string `json:"freightChargeAmount"`
-	OtherChargeAmount   string `json:"otherChargeAmount"`
-	TotalChargeAmount   string `json:"totalChargeAmount"`
-	RatingUnit          int    `json:"ratingUnit"`
-	Pieces              *int   `json:"pieces,omitempty"`
-	Weight              *int   `json:"weight,omitempty"`
-	CreatedAt           int    `json:"createdAt"`
+	ShipmentID          string  `json:"shipmentId"`
+	ProNumber           string  `json:"proNumber"`
+	CustomerID          string  `json:"customerId"`
+	ServiceTypeID       string  `json:"serviceTypeId"`
+	ShipmentTypeID      string  `json:"shipmentTypeId"`
+	FormulaTemplateID   *string `json:"formulaTemplateId,omitempty"`
+	FreightChargeAmount string  `json:"freightChargeAmount"`
+	OtherChargeAmount   string  `json:"otherChargeAmount"`
+	TotalChargeAmount   string  `json:"totalChargeAmount"`
+	Pieces              *int    `json:"pieces,omitempty"`
+	Weight              *int    `json:"weight,omitempty"`
+	CreatedAt           int     `json:"createdAt"`
 }
 
 type ShipmentPreviousRatesInput struct {
@@ -9524,6 +10229,8 @@ type ShipmentPreviousRatesInput struct {
 type ShipmentPreviousRatesResponse struct {
 	Items []*ShipmentPreviousRateSummary `json:"items"`
 	Total int                            `json:"total"`
+	// Whether total was counted; false when it is the planner's estimate of a list too large to count.
+	TotalExact bool `json:"totalExact"`
 }
 
 type ShipmentProfitability struct {
@@ -9545,11 +10252,12 @@ type ShipmentProfitability struct {
 type ShipmentProfitabilityAnalytics struct {
 	AvgCpm float64 `json:"avgCpm"`
 	// Null when the reader does not hold the margins field group.
-	AvgMarginPct      *float64 `json:"avgMarginPct,omitempty"`
-	HasMargin         bool     `json:"hasMargin"`
-	UnprofitableCount int      `json:"unprofitableCount"`
-	ShipmentCount     int      `json:"shipmentCount"`
-	TotalMiles        float64  `json:"totalMiles"`
+	AvgMarginPct *float64 `json:"avgMarginPct,omitempty"`
+	HasMargin    bool     `json:"hasMargin"`
+	// How many loads lost money. Null when the reader does not hold the margins field group.
+	UnprofitableCount *int    `json:"unprofitableCount,omitempty"`
+	ShipmentCount     int     `json:"shipmentCount"`
+	TotalMiles        float64 `json:"totalMiles"`
 }
 
 type ShipmentProfitabilityEstimate struct {
@@ -9581,15 +10289,6 @@ type ShipmentQuickFilterInput struct {
 	WindowEndMinutes *int `json:"windowEndMinutes,omitempty"`
 }
 
-// One line of the arithmetic that produced the rate, in the order it was applied.
-type ShipmentRatingBreakdownItem struct {
-	Name   string  `json:"name"`
-	Label  string  `json:"label"`
-	Amount float64 `json:"amount"`
-	// Set when the line could not be evaluated, in which case the amount is zero.
-	Error string `json:"error"`
-}
-
 // Why a shipment is priced the way it is.
 //
 // The contract fields are filled in when a rate agreement priced the load. They
@@ -9598,32 +10297,49 @@ type ShipmentRatingBreakdownItem struct {
 type ShipmentRatingDetail struct {
 	FormulaTemplateID   string `json:"formulaTemplateId"`
 	FormulaTemplateName string `json:"formulaTemplateName"`
-	Expression          string `json:"expression"`
-	// Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended.
-	ResolvedVariables map[string]any `json:"resolvedVariables"`
-	Result            float64        `json:"result"`
-	RatedAt           int            `json:"ratedAt"`
-	// Zero when the rate did not come from a versioned formula template.
-	VersionNumber int                            `json:"versionNumber"`
-	Breakdown     []*ShipmentRatingBreakdownItem `json:"breakdown"`
-	Guardrail     *ShipmentRatingGuardrail       `json:"guardrail,omitempty"`
-	RateQuoteID   string                         `json:"rateQuoteId"`
-	AgreementID   string                         `json:"agreementId"`
-	AgreementName string                         `json:"agreementName"`
-	RuleID        string                         `json:"ruleId"`
-	RuleLabel     string                         `json:"ruleLabel"`
+	RatedAt             int    `json:"ratedAt"`
+	// The template version that rated the shipment. Zero when it was rated by hand.
+	VersionNumber int `json:"versionNumber"`
+	// The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand.
+	Bill *TariffBill `json:"bill,omitempty"`
+	// The tariff's reason for refusing to rate the shipment.
+	Refusal string `json:"refusal"`
+	// Every best and worst the tariff evaluated, in the order they ran.
+	Choices []*TariffChoice `json:"choices"`
+	// The inputs the tariff priced with, by name. Each value is a Tariff wire value.
+	Inputs  map[string]any        `json:"inputs"`
+	Skipped []*ShipmentRatingSkip `json:"skipped"`
+	// The values each statement of the tariff took and the table lookups it made, for the
+	// people who may read formula templates. Null for everyone else and for a hand rate.
+	Trace         map[string]any `json:"trace,omitempty"`
+	RateQuoteID   string         `json:"rateQuoteId"`
+	AgreementID   string         `json:"agreementId"`
+	AgreementName string         `json:"agreementName"`
+	RuleID        string         `json:"ruleId"`
+	RuleLabel     string         `json:"ruleLabel"`
 	// The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound.
 	Source      string `json:"source"`
 	Explanation string `json:"explanation"`
+	// True while the bill's reviews wait on a person's approval, which holds the shipment out of billing.
+	AwaitingReview bool `json:"awaitingReview"`
+	// Who approved the reviews this rating carries, and when. Null until a person approves them.
+	ReviewApproval *ShipmentRatingReviewApproval `json:"reviewApproval,omitempty"`
 }
 
-// A bound that changed the answer — a minimum or maximum charge that took over from the computed rate.
-type ShipmentRatingGuardrail struct {
-	Applied   bool     `json:"applied"`
-	Bound     string   `json:"bound"`
-	RawResult float64  `json:"rawResult"`
-	MinCharge *float64 `json:"minCharge,omitempty"`
-	MaxCharge *float64 `json:"maxCharge,omitempty"`
+// A person's approval of the reviews a tariff asked for. A re-rate that comes back with the
+// same reviews keeps it; different reviews hold the shipment again.
+type ShipmentRatingReviewApproval struct {
+	Reviews      []string     `json:"reviews"`
+	ApprovedByID string       `json:"approvedById"`
+	ApprovedAt   int          `json:"approvedAt"`
+	ApprovedBy   *tenant.User `json:"approvedBy,omitempty"`
+}
+
+// A charge the shipment's other engines left out because the tariff already billed its code.
+type ShipmentRatingSkip struct {
+	Code string `json:"code"`
+	// RateAgreement, Detention or FuelSurcharge.
+	Source string `json:"source"`
 }
 
 type ShipmentReadyToDispatch struct {
@@ -9856,6 +10572,8 @@ type ShipmentTypeConnection struct {
 	Edges      []*ShipmentTypeEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 	TotalCount *int                `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type ShipmentTypeEdge struct {
@@ -10076,6 +10794,8 @@ type StoredMileageConnection struct {
 	Edges      []*StoredMileageEdge `json:"edges"`
 	PageInfo   *PageInfo            `json:"pageInfo"`
 	TotalCount *int                 `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type StoredMileageEdge struct {
@@ -10095,6 +10815,8 @@ type TCASubscriptionConnection struct {
 	Edges      []*TCASubscriptionEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TCASubscriptionEdge struct {
@@ -10106,6 +10828,8 @@ type TableConfigurationConnection struct {
 	Edges      []*TableConfigurationEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 	TotalCount *int                      `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TableConfigurationEdge struct {
@@ -10171,6 +10895,75 @@ type TableLayout struct {
 type TableLayoutInput struct {
 	Resource string         `json:"resource"`
 	Layout   map[string]any `json:"layout"`
+}
+
+// The bill a tariff produced for a shipment.
+type TariffBill struct {
+	Currency string            `json:"currency"`
+	Lines    []*TariffBillLine `json:"lines"`
+	Notes    []string          `json:"notes"`
+	// What the tariff asks a person to check before the shipment bills. A shipment whose
+	// bill has reviews is rated but held out of billing until a person approves the rating.
+	Reviews          []string            `json:"reviews"`
+	FreightTotal     string              `json:"freightTotal"`
+	AccessorialTotal string              `json:"accessorialTotal"`
+	Total            string              `json:"total"`
+	Exchange         *TariffBillExchange `json:"exchange,omitempty"`
+}
+
+// The conversion a bill was priced through when the tariff's currency differs from the billing currency.
+type TariffBillExchange struct {
+	Currency string `json:"currency"`
+	Rate     string `json:"rate"`
+}
+
+// One line of a bill a tariff produced. Freight lines have no code; accessorial lines carry their catalog code.
+type TariffBillLine struct {
+	// Charge, Minimum, Maximum or Rounding.
+	Kind         string  `json:"kind"`
+	Label        string  `json:"label"`
+	Code         string  `json:"code"`
+	Quantity     *string `json:"quantity,omitempty"`
+	QuantityUnit string  `json:"quantityUnit"`
+	Rate         *string `json:"rate,omitempty"`
+	RateUnit     string  `json:"rateUnit"`
+	Amount       string  `json:"amount"`
+	// Set when the charge's own minimum or maximum changed its amount.
+	Limit *TariffLineLimit `json:"limit,omitempty"`
+	// freight on the adjustment of a minimum or maximum that bounds the freight lines; empty otherwise.
+	On string `json:"on"`
+}
+
+// A best or worst block the tariff evaluated: the methods it weighed and the one it
+// kept. A choice inside a loop appears once for each time it ran.
+type TariffChoice struct {
+	Label string `json:"label"`
+	// best keeps the lowest subtotal, worst the highest.
+	Kind string `json:"kind"`
+	// The currency the subtotals are in: the tariff's own, before any conversion the bill shows.
+	Currency string `json:"currency"`
+	// The label of the option kept. Null when every option refused.
+	Chosen  *string               `json:"chosen,omitempty"`
+	Options []*TariffChoiceOption `json:"options"`
+}
+
+// One method a choice weighed: what it would have billed, or why it did not apply.
+type TariffChoiceOption struct {
+	Label string `json:"label"`
+	// chosen when the choice kept this option, lost when another won, refused when it did not apply.
+	Status string `json:"status"`
+	// The exact sum of the charge lines the option billed, before rounding. Null when it refused.
+	Subtotal *string `json:"subtotal,omitempty"`
+	// Why the option did not apply, in the reader's language when the engine wrote it. Null unless it refused.
+	Refusal *string `json:"refusal,omitempty"`
+}
+
+// How a charge's own minimum or maximum changed its amount.
+type TariffLineLimit struct {
+	// Minimum or Maximum.
+	Kind string `json:"kind"`
+	// The amount the charge came to before its limit.
+	Computed string `json:"computed"`
 }
 
 // One person on a manager's team.
@@ -10309,6 +11102,8 @@ type TractorConnection struct {
 	Edges      []*TractorEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TractorEdge struct {
@@ -10386,6 +11181,8 @@ type TrailerConnection struct {
 	Edges      []*TrailerEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 	TotalCount *int           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TrailerEdge struct {
@@ -10457,6 +11254,8 @@ type TrainingCourseConnection struct {
 	Edges      []*TrainingCourseEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 	TotalCount *int                  `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type TrainingCourseEdge struct {
@@ -10970,16 +11769,17 @@ type UpdateReportDashboardInput struct {
 }
 
 type UpdateReportDefinitionInput struct {
-	ID            string         `json:"id"`
-	Version       int            `json:"version"`
-	Name          string         `json:"name"`
-	Description   *string        `json:"description,omitempty"`
-	Category      *string        `json:"category,omitempty"`
-	Tags          []string       `json:"tags,omitempty"`
-	Visibility    *string        `json:"visibility,omitempty"`
-	Status        *string        `json:"status,omitempty"`
-	DefaultFormat *string        `json:"defaultFormat,omitempty"`
-	Definition    *ReportIRInput `json:"definition"`
+	ID            string   `json:"id"`
+	Version       int      `json:"version"`
+	Name          string   `json:"name"`
+	Description   *string  `json:"description,omitempty"`
+	Category      *string  `json:"category,omitempty"`
+	Tags          []string `json:"tags,omitempty"`
+	Visibility    *string  `json:"visibility,omitempty"`
+	Status        *string  `json:"status,omitempty"`
+	DefaultFormat *string  `json:"defaultFormat,omitempty"`
+	// A report definition in keel analytics IR version 2.
+	Definition map[string]any `json:"definition"`
 }
 
 type UpdateReportScheduleInput struct {
@@ -11107,6 +11907,8 @@ type UserConnection struct {
 	Edges      []*UserEdge `json:"edges"`
 	PageInfo   *PageInfo   `json:"pageInfo"`
 	TotalCount *int        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type UserEdge struct {
@@ -11311,6 +12113,8 @@ type WorkerChecklistTemplateConnection struct {
 	Edges      []*WorkerChecklistTemplateEdge `json:"edges"`
 	PageInfo   *PageInfo                      `json:"pageInfo"`
 	TotalCount *int                           `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerChecklistTemplateEdge struct {
@@ -11357,6 +12161,8 @@ type WorkerConnection struct {
 	Edges      []*WorkerEdge `json:"edges"`
 	PageInfo   *PageInfo     `json:"pageInfo"`
 	TotalCount *int          `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerCredentialInput struct {
@@ -11377,6 +12183,8 @@ type WorkerCredentialTypeConnection struct {
 	Edges      []*WorkerCredentialTypeEdge `json:"edges"`
 	PageInfo   *PageInfo                   `json:"pageInfo"`
 	TotalCount *int                        `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerCredentialTypeEdge struct {
@@ -11509,6 +12317,8 @@ type WorkerPTOConnection struct {
 	Edges      []*WorkerPTOEdge `json:"edges"`
 	PageInfo   *PageInfo        `json:"pageInfo"`
 	TotalCount *int             `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerPTOEdge struct {
@@ -11537,6 +12347,8 @@ type WorkerPTOLedgerConnection struct {
 	Edges      []*WorkerPTOLedgerEdge `json:"edges"`
 	PageInfo   *PageInfo              `json:"pageInfo"`
 	TotalCount *int                   `json:"totalCount,omitempty"`
+	// Whether totalCount was counted; false when it is the planner's estimate of a list too large to count.
+	TotalCountExact bool `json:"totalCountExact"`
 }
 
 type WorkerPTOLedgerEdge struct {
@@ -12271,6 +13083,8 @@ const (
 	DetentionDeskUrgencyAccruing       DetentionDeskUrgency = "Accruing"
 	DetentionDeskUrgencyFreeTimeEnding DetentionDeskUrgency = "FreeTimeEnding"
 	DetentionDeskUrgencyNormal         DetentionDeskUrgency = "Normal"
+	// A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived.
+	DetentionDeskUrgencyAwaitingApproval DetentionDeskUrgency = "AwaitingApproval"
 )
 
 var AllDetentionDeskUrgency = []DetentionDeskUrgency{
@@ -12280,11 +13094,12 @@ var AllDetentionDeskUrgency = []DetentionDeskUrgency{
 	DetentionDeskUrgencyAccruing,
 	DetentionDeskUrgencyFreeTimeEnding,
 	DetentionDeskUrgencyNormal,
+	DetentionDeskUrgencyAwaitingApproval,
 }
 
 func (e DetentionDeskUrgency) IsValid() bool {
 	switch e {
-	case DetentionDeskUrgencyLost, DetentionDeskUrgencyNoticeOverdue, DetentionDeskUrgencyNoticeDueSoon, DetentionDeskUrgencyAccruing, DetentionDeskUrgencyFreeTimeEnding, DetentionDeskUrgencyNormal:
+	case DetentionDeskUrgencyLost, DetentionDeskUrgencyNoticeOverdue, DetentionDeskUrgencyNoticeDueSoon, DetentionDeskUrgencyAccruing, DetentionDeskUrgencyFreeTimeEnding, DetentionDeskUrgencyNormal, DetentionDeskUrgencyAwaitingApproval:
 		return true
 	}
 	return false
@@ -13037,6 +13852,130 @@ func (e NotificationState) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// What the field guard does with one field of a linked record.
+type PageAccessDecision string
+
+const (
+	PageAccessDecisionVisible PageAccessDecision = "VISIBLE"
+	// Outside the kind's reference view, and the reader cannot read the kind.
+	PageAccessDecisionWithheldKind PageAccessDecision = "WITHHELD_KIND"
+	// Above the reader's sensitivity ceiling.
+	PageAccessDecisionWithheldSensitivity PageAccessDecision = "WITHHELD_SENSITIVITY"
+)
+
+var AllPageAccessDecision = []PageAccessDecision{
+	PageAccessDecisionVisible,
+	PageAccessDecisionWithheldKind,
+	PageAccessDecisionWithheldSensitivity,
+}
+
+func (e PageAccessDecision) IsValid() bool {
+	switch e {
+	case PageAccessDecisionVisible, PageAccessDecisionWithheldKind, PageAccessDecisionWithheldSensitivity:
+		return true
+	}
+	return false
+}
+
+func (e PageAccessDecision) String() string {
+	return string(e)
+}
+
+func (e *PageAccessDecision) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PageAccessDecision(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PageAccessDecision", str)
+	}
+	return nil
+}
+
+func (e PageAccessDecision) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PageAccessDecision) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PageAccessDecision) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// How a screen depends on one kind of record (docs/engineering/reference-views.md).
+type PageAccessUse string
+
+const (
+	// The screen's route, or a REST endpoint it calls, checks the kind.
+	PageAccessUseRequired PageAccessUse = "REQUIRED"
+	// The screen reads records of the kind as root records, which needs the kind's read.
+	PageAccessUseRead PageAccessUse = "READ"
+	// The screen asks for fields beyond the kind's reference view with @requiresRead.
+	PageAccessUseDeclared PageAccessUse = "DECLARED"
+	// The screen shows the kind only through its reference view.
+	PageAccessUseReference PageAccessUse = "REFERENCE"
+)
+
+var AllPageAccessUse = []PageAccessUse{
+	PageAccessUseRequired,
+	PageAccessUseRead,
+	PageAccessUseDeclared,
+	PageAccessUseReference,
+}
+
+func (e PageAccessUse) IsValid() bool {
+	switch e {
+	case PageAccessUseRequired, PageAccessUseRead, PageAccessUseDeclared, PageAccessUseReference:
+		return true
+	}
+	return false
+}
+
+func (e PageAccessUse) String() string {
+	return string(e)
+}
+
+func (e *PageAccessUse) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PageAccessUse(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PageAccessUse", str)
+	}
+	return nil
+}
+
+func (e PageAccessUse) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *PageAccessUse) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e PageAccessUse) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 // Which switch keeps a waiting decision from being taken.
 type PendingDecisionHoldReason string
 
@@ -13452,6 +14391,73 @@ func (e RateQuotePurpose) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// Whether a caller may use a catalog field or edge in a report, decided by the
+// policy the report engine applies, so a field marked Available compiles and
+// any other is refused.
+type ReportFieldAccess string
+
+const (
+	// The caller may use it.
+	ReportFieldAccessAvailable ReportFieldAccess = "Available"
+	// It is outside its kind's reference view, and the caller cannot read the
+	// kind. Through a join, only the kind's reference-view fields can be used.
+	ReportFieldAccessNeedsKindRead ReportFieldAccess = "NeedsKindRead"
+	// It is ranked above the caller's sensitivity ceiling.
+	ReportFieldAccessWithheldByCeiling ReportFieldAccess = "WithheldByCeiling"
+	// It is in a protected field group the caller's role does not grant.
+	ReportFieldAccessNeedsFieldGroup ReportFieldAccess = "NeedsFieldGroup"
+)
+
+var AllReportFieldAccess = []ReportFieldAccess{
+	ReportFieldAccessAvailable,
+	ReportFieldAccessNeedsKindRead,
+	ReportFieldAccessWithheldByCeiling,
+	ReportFieldAccessNeedsFieldGroup,
+}
+
+func (e ReportFieldAccess) IsValid() bool {
+	switch e {
+	case ReportFieldAccessAvailable, ReportFieldAccessNeedsKindRead, ReportFieldAccessWithheldByCeiling, ReportFieldAccessNeedsFieldGroup:
+		return true
+	}
+	return false
+}
+
+func (e ReportFieldAccess) String() string {
+	return string(e)
+}
+
+func (e *ReportFieldAccess) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ReportFieldAccess(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ReportFieldAccess", str)
+	}
+	return nil
+}
+
+func (e ReportFieldAccess) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *ReportFieldAccess) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e ReportFieldAccess) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
 type SelectOptionResource string
 
 const (
@@ -13480,6 +14486,7 @@ const (
 	SelectOptionResourceGlAccount                 SelectOptionResource = "GL_ACCOUNT"
 	SelectOptionResourceIFTAFuelType              SelectOptionResource = "IFTA_FUEL_TYPE"
 	SelectOptionResourceHazardousMaterial         SelectOptionResource = "HAZARDOUS_MATERIAL"
+	SelectOptionResourceJournalEntry              SelectOptionResource = "JOURNAL_ENTRY"
 	SelectOptionResourceLocation                  SelectOptionResource = "LOCATION"
 	SelectOptionResourceLocationCategory          SelectOptionResource = "LOCATION_CATEGORY"
 	SelectOptionResourceOrder                     SelectOptionResource = "ORDER"
@@ -13501,8 +14508,6 @@ const (
 	SelectOptionResourceEDIDocumentType           SelectOptionResource = "EDI_DOCUMENT_TYPE"
 	SelectOptionResourceEDIMappingProfile         SelectOptionResource = "EDI_MAPPING_PROFILE"
 	SelectOptionResourceEDIPartner                SelectOptionResource = "EDI_PARTNER"
-	SelectOptionResourceEDIPartnerDocumentProfile SelectOptionResource = "EDI_PARTNER_DOCUMENT_PROFILE"
-	SelectOptionResourceEDITemplate               SelectOptionResource = "EDI_TEMPLATE"
 	SelectOptionResourceEDITransactionSet         SelectOptionResource = "EDI_TRANSACTION_SET"
 	SelectOptionResourceEmailProfile              SelectOptionResource = "EMAIL_PROFILE"
 	SelectOptionResourceShiftTemplate             SelectOptionResource = "SHIFT_TEMPLATE"
@@ -13545,6 +14550,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceGlAccount,
 	SelectOptionResourceIFTAFuelType,
 	SelectOptionResourceHazardousMaterial,
+	SelectOptionResourceJournalEntry,
 	SelectOptionResourceLocation,
 	SelectOptionResourceLocationCategory,
 	SelectOptionResourceOrder,
@@ -13566,8 +14572,6 @@ var AllSelectOptionResource = []SelectOptionResource{
 	SelectOptionResourceEDIDocumentType,
 	SelectOptionResourceEDIMappingProfile,
 	SelectOptionResourceEDIPartner,
-	SelectOptionResourceEDIPartnerDocumentProfile,
-	SelectOptionResourceEDITemplate,
 	SelectOptionResourceEDITransactionSet,
 	SelectOptionResourceEmailProfile,
 	SelectOptionResourceShiftTemplate,
@@ -13586,7 +14590,7 @@ var AllSelectOptionResource = []SelectOptionResource{
 
 func (e SelectOptionResource) IsValid() bool {
 	switch e {
-	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceAiProvider, SelectOptionResourceCaptureDevice, SelectOptionResourceCaptureProfile, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFactoringCompany, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDIPartnerDocumentProfile, SelectOptionResourceEDITemplate, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
+	case SelectOptionResourceAccessorialCharge, SelectOptionResourceAccountType, SelectOptionResourceAiProvider, SelectOptionResourceCaptureDevice, SelectOptionResourceCaptureProfile, SelectOptionResourceCarrier, SelectOptionResourceCommodity, SelectOptionResourceCustomer, SelectOptionResourceDetentionPolicy, SelectOptionResourceDistanceProfile, SelectOptionResourceDocumentType, SelectOptionResourceEDIConnection, SelectOptionResourceEDITransfer, SelectOptionResourceEquipmentManufacturer, SelectOptionResourceEquipmentType, SelectOptionResourceFactoringCompany, SelectOptionResourceFleetCode, SelectOptionResourceFormulaTemplate, SelectOptionResourceFiscalPeriod, SelectOptionResourceFiscalYear, SelectOptionResourceFuelIndex, SelectOptionResourceFuelSurchargeProgram, SelectOptionResourceGlAccount, SelectOptionResourceIFTAFuelType, SelectOptionResourceHazardousMaterial, SelectOptionResourceJournalEntry, SelectOptionResourceLocation, SelectOptionResourceLocationCategory, SelectOptionResourceOrder, SelectOptionResourceOrganization, SelectOptionResourceRateAgreement, SelectOptionResourceRateMatrix, SelectOptionResourceRateZone, SelectOptionResourceRole, SelectOptionResourceServiceFailureReasonCode, SelectOptionResourceServiceType, SelectOptionResourceShipment, SelectOptionResourceShipmentType, SelectOptionResourceTractor, SelectOptionResourceTrailer, SelectOptionResourceUsState, SelectOptionResourceUser, SelectOptionResourceWorker, SelectOptionResourceEDICommunicationProfile, SelectOptionResourceEDIDocumentType, SelectOptionResourceEDIMappingProfile, SelectOptionResourceEDIPartner, SelectOptionResourceEDITransactionSet, SelectOptionResourceEmailProfile, SelectOptionResourceShiftTemplate, SelectOptionResourceWorkerPolicy, SelectOptionResourceJobPosition, SelectOptionResourceFuelCard, SelectOptionResourceBenefitPlan, SelectOptionResourceIFTAJurisdiction, SelectOptionResourcePayCode, SelectOptionResourcePayProfile, SelectOptionResourcePerformanceReviewTemplate, SelectOptionResourcePTOPolicy, SelectOptionResourceTrainingCourse, SelectOptionResourceWorkerCredentialType:
 		return true
 	}
 	return false

@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -70,6 +69,13 @@ func (s *Service) List(
 	req *fiscalperiodports.ListFiscalPeriodsRequest,
 ) (*pagination.ListResult[*fiscalperiod.FiscalPeriod], error) {
 	return s.repo.List(ctx, req)
+}
+
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *fiscalperiodports.ListFiscalPeriodConnectionRequest,
+) (*pagination.CursorListResult[*fiscalperiod.FiscalPeriod], error) {
+	return s.repo.ListConnection(ctx, req)
 }
 
 func (s *Service) Get(
@@ -496,10 +502,10 @@ func (s *Service) runTransition(
 	if s.db == nil {
 		err = run(ctx, false)
 	} else {
-		err = s.db.WithTx(
+		err = s.db.Transact(
 			ctx,
 			kernelports.TxOptions{LockTimeout: fiscalPeriodLockTimeout},
-			func(txCtx context.Context, _ bun.Tx) error {
+			func(txCtx context.Context) error {
 				return run(txCtx, true)
 			},
 		)

@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -405,6 +406,28 @@ func TestSystemPrompt_TellsTheAgentNotToCalculate(t *testing.T) {
 	assert.Contains(t, prompt, "Do not calculate")
 	assert.Contains(t, prompt, "how far away they are",
 		"the reason it need not calculate is that the tool already did")
+}
+
+/*
+An agent that may run a script has a tool that calculates. Told "do not
+calculate" with the script rule added after it, Billing exceptions listed the
+open loads it had read and left the counting to the person, so the agent that
+holds analysis_run reads one rule: a figure across records is the script's.
+*/
+func TestSystemPrompt_AnAgentThatRunsScriptsWorksFiguresOutWithThem(t *testing.T) {
+	t.Parallel()
+
+	prompt := definitionWithInstructions("Help.").
+		BuildSystemPrompt(agentdefinition.RuntimeContext{
+			Tools: []agentdefinition.ToolSummary{{Name: codemode.ToolRunScript}},
+		})
+
+	assert.NotContains(t, prompt, "- Do not calculate. Every figure",
+		"the rule that forbids the arithmetic the script does is gone")
+	assert.Contains(t, prompt, "is worked out with analysis_run")
+	assert.Contains(t, prompt, "rather than listing the records")
+	assert.Contains(t, prompt, "it is how you read records and work out figures",
+		"the boundary on writing software does not cover the script's Python")
 }
 
 // Lacking the tool is still no licence to work an answer out by hand, but it

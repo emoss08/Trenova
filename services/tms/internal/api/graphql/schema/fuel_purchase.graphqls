@@ -139,6 +139,8 @@ type FuelCardConnection {
   edges: [FuelCardEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -207,6 +209,8 @@ type FuelPurchaseConnection {
   edges: [FuelPurchaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -243,7 +247,7 @@ A fuel card statement staged for review. The bytes live on a Document bound to
 the batch; staging reads that document, parses every row, resolves cards,
 tractors and jurisdictions, and reports what would commit.
 """
-type FuelPurchaseImportBatch {
+type FuelPurchaseImportBatch @kind(resource: "fuel_purchase_import") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -354,6 +358,8 @@ type FuelPurchaseImportRowConnection {
   edges: [FuelPurchaseImportRowEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -484,6 +490,8 @@ type FuelPurchaseImportBatchConnection {
   edges: [FuelPurchaseImportBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CancelFuelCardInput {

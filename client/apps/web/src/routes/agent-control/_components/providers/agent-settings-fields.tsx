@@ -124,7 +124,7 @@ export function ScriptFields({ chatLabel }: { chatLabel: string }) {
         name="scripts"
         label={t("Scripts")}
         note={t(
-          "Lets this provider's model answer fan-out, reconciliation and report questions with one short read-only Python script instead of many tool calls. Off by default.",
+          "Lets this provider's model answer fan-out, reconciliation and report questions with one short read-only Python script instead of many tool calls. On by default.",
         )}
         disabled={!allowed}
         why={t("Only a provider that handles {0} may answer with a script.", chatLabel)}

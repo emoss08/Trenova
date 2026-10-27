@@ -5,7 +5,7 @@ import {
   type SegmentedControlItem,
 } from "@trenova/shared/components/ui/segmented-control";
 import { organization } from "@/lib/queries/organization";
-import { getAvailableOperations, getAvailableResources } from "@/lib/role-api";
+import { PERMISSION_CATALOG_STALE_TIME, permissionCatalog } from "@/lib/queries/permission-catalog";
 import { cn } from "@trenova/shared/lib/utils";
 import { apiService } from "@/services/api";
 import type { AccessPolicy } from "@trenova/shared/types/iam";
@@ -19,7 +19,14 @@ import {
 } from "@trenova/shared/components/icons";
 import { memo, useCallback, useMemo, useState } from "react";
 import { AccessPolicyPanel, type AccessPolicyPanelMode } from "./policies/policy-panel";
-import { EmptyState, ErrorState, PanelSearch, PanelToolbar, RowSkeleton, SecuritySection } from "./shared";
+import {
+  EmptyState,
+  ErrorState,
+  PanelSearch,
+  PanelToolbar,
+  RowSkeleton,
+  SecuritySection,
+} from "./shared";
 import { RoleActivationSetting } from "./role-activation-setting";
 import { useSecurityAccess } from "./use-security-access";
 
@@ -32,12 +39,12 @@ export function PoliciesTab({ organizationId }: { organizationId: string }) {
   const access = useSecurityAccess().accessPolicies;
   const policiesQuery = useQuery(organization.accessPolicies(organizationId));
   const resourcesQuery = useQuery({
-    queryKey: ["permissions", "resources"],
-    queryFn: getAvailableResources,
+    ...permissionCatalog.resources(),
+    staleTime: PERMISSION_CATALOG_STALE_TIME,
   });
   const operationsQuery = useQuery({
-    queryKey: ["permissions", "operations"],
-    queryFn: getAvailableOperations,
+    ...permissionCatalog.operations(),
+    staleTime: PERMISSION_CATALOG_STALE_TIME,
   });
   const [panelMode, setPanelMode] = useState<AccessPolicyPanelMode>("create");
   const [panelOpen, setPanelOpen] = useState(false);

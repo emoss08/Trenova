@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
@@ -13,14 +14,12 @@ import (
 	"github.com/emoss08/trenova/pkg/approvalworkflow"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-// ApprovalActionRequest is kept as the package's own name for the shared
-// request so existing callers and handlers read unchanged.
 type ApprovalActionRequest = approvalworkflow.Request
 
 type templateTransition = approvalworkflow.Transition[*formulatemplate.FormulaTemplate, formulatemplate.Status]
@@ -36,7 +35,7 @@ func (s *Service) Submit(
 	req *SubmitRequest,
 ) (*formulatemplate.FormulaTemplate, error) {
 	var submitted *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).
 			Apply(txCtx, &req.ApprovalActionRequest, templateTransition{
 				Operation:    "Submit",
@@ -120,7 +119,8 @@ func (s *Service) ApproveFrom(
 	}
 
 	var approved *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	var pinned *contentCheck
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
 			Operation:    "Approve",
 			From:         formulatemplate.StatusInReview,
@@ -132,13 +132,15 @@ func (s *Service) ApproveFrom(
 				template *formulatemplate.FormulaTemplate,
 				r *ApprovalActionRequest,
 			) error {
-				if template.SubmittedByID != nil &&
-					*template.SubmittedByID == r.TenantInfo.UserID {
-					return errortypes.NewValidationError(
+				if err := r.RefuseOwn(
+					template.SubmittedByID != nil && *template.SubmittedByID == r.TenantInfo.UserID,
+					errortypes.NewValidationError(
 						"approvedById",
 						errortypes.ErrInvalid,
 						"A template cannot be approved by its submitter",
-					)
+					),
+				); err != nil {
+					return err
 				}
 
 				if formulatemplate.SubmissionIsStale(
@@ -148,15 +150,16 @@ func (s *Service) ApproveFrom(
 					return staleSubmissionError()
 				}
 
-				if err := s.refuseRevisionAuthor(vCtx, template, r.TenantInfo); err != nil {
+				if err := s.refuseRevisionAuthor(vCtx, template, r); err != nil {
 					return err
 				}
 
-				if err := s.validateTemplate(vCtx, template); err != nil {
+				content, err := s.approvalContent(vCtx, template)
+				if err != nil {
 					return err
 				}
-
-				return s.requirePassingTestCases(vCtx, template, r.TenantInfo)
+				pinned = content
+				return nil
 			},
 			Apply: func(
 				template *formulatemplate.FormulaTemplate,
@@ -167,6 +170,7 @@ func (s *Service) ApproveFrom(
 				template.ApprovedByID = &userID
 				template.ApprovedAt = &now
 				template.ReviewComment = r.Comment
+				applyContent(template, pinned)
 				template.CurrentVersionNumber++
 			},
 			AfterSave: func(
@@ -209,11 +213,46 @@ func (s *Service) ApproveFrom(
 	return approved, nil
 }
 
+func (s *Service) approvalContent(
+	ctx context.Context,
+	template *formulatemplate.FormulaTemplate,
+) (*contentCheck, error) {
+	content, err := s.checkContent(ctx, &contentRequest{
+		tenant: templateTenant(template),
+		source: template.Source,
+		mode:   tariff.LibrariesLatest,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if refusal := content.refusal(); refusal != nil {
+		return nil, refusal
+	}
+
+	gate := newSubmissionGate(ctx, template, content)
+	multiErr := errortypes.NewMultiError()
+	gate.addRefusals(multiErr)
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	dependents, err := s.checkDependents(ctx, template, content)
+	if err != nil {
+		return nil, err
+	}
+	if refusal := dependentsRefusal(i18n.FromContext(ctx), dependents); refusal != nil {
+		return nil, refusal
+	}
+
+	return content, nil
+}
+
 func (s *Service) refuseRevisionAuthor(
 	ctx context.Context,
 	template *formulatemplate.FormulaTemplate,
-	tenantInfo pagination.TenantInfo,
+	req *ApprovalActionRequest,
 ) error {
+	tenantInfo := req.TenantInfo
 	var baseVersion int64
 	latest, err := s.reviewRepo.Latest(ctx, template.ID, tenantInfo)
 	if err != nil {
@@ -235,15 +274,14 @@ func (s *Service) refuseRevisionAuthor(
 		return err
 	}
 
-	if slices.Contains(authors, tenantInfo.UserID) {
-		return errortypes.NewValidationError(
+	return req.RefuseOwn(
+		slices.Contains(authors, tenantInfo.UserID),
+		errortypes.NewValidationError(
 			"approvedById",
 			errortypes.ErrInvalid,
 			"You authored part of this revision, so another reviewer must approve it",
-		)
-	}
-
-	return nil
+		),
+	)
 }
 
 func (s *Service) Reject(
@@ -262,7 +300,7 @@ func (s *Service) Reject(
 
 	var submitterID *pulid.ID
 	var rejected *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		result, txErr := s.approvals(ctx).Apply(txCtx, req, templateTransition{
 			Operation:    "Reject",
 			From:         formulatemplate.StatusInReview,
@@ -325,8 +363,6 @@ func (s *Service) Reject(
 	return rejected, nil
 }
 
-// approvals binds the shared review cycle to this service's repository, status
-// rules and audit log.
 func (s *Service) approvals(
 	ctx context.Context,
 ) approvalworkflow.Engine[*formulatemplate.FormulaTemplate, formulatemplate.Status] {

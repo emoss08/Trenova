@@ -6,13 +6,17 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/exceptionsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/watchtowerports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/tender/tenderdb"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -21,12 +25,11 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type harness struct {
 	ctx     context.Context
-	db      *bun.DB
+	db      *keel.DB
 	reader  watchtowerports.ExceptionSourceReader
 	tenant  pagination.TenantInfo
 	data    *seedtest.TestData
@@ -61,27 +64,27 @@ func (h *harness) shipment(t *testing.T, code string, status shipment.Status) *t
 		ShipmentID:   pulid.MustNew("shp_"),
 		MoveStatuses: []shipment.MoveStatus{shipment.MoveStatusNew},
 	})
-	h.exec(t, `UPDATE shipments SET status = ?, owner_id = ? WHERE id = ?`,
-		status, h.data.User.ID, graph.Shipment.ID)
+	h.exec(t, `UPDATE shipments SET status = $1, owner_id = $2 WHERE id = $3`,
+		string(status), h.data.User.ID.String(), graph.Shipment.ID.String())
 	return graph
 }
 
 func (h *harness) exec(t *testing.T, query string, args ...any) {
 	t.Helper()
-	_, err := h.db.NewRaw(query, args...).Exec(h.ctx)
+	_, err := keel.Exec(h.ctx, h.db, query, args...)
 	require.NoError(t, err)
 }
 
 func (h *harness) window(t *testing.T, stop *shipment.Stop, end int64) {
 	t.Helper()
-	h.exec(t, `UPDATE stops SET scheduled_window_start = ?, scheduled_window_end = ? WHERE id = ?`,
-		end-1800, end, stop.ID)
+	h.exec(t, `UPDATE stops SET scheduled_window_start = $1, scheduled_window_end = $2 WHERE id = $3`,
+		end-1800, end, stop.ID.String())
 }
 
 func (h *harness) arrive(t *testing.T, stop *shipment.Stop, at int64) {
 	t.Helper()
-	h.exec(t, `UPDATE stops SET actual_arrival = ?, status = ? WHERE id = ?`,
-		at, shipment.StopStatusCompleted, stop.ID)
+	h.exec(t, `UPDATE stops SET actual_arrival = $1, status = $2 WHERE id = $3`,
+		at, string(shipment.StopStatusCompleted), stop.ID.String())
 }
 
 func TestListMissedStopsFindsClosedWindowsWithoutAnArrival(t *testing.T) {
@@ -140,7 +143,7 @@ func (h *harness) podType(t *testing.T) *documenttype.DocumentType {
 		Code:           documenttype.CodePOD,
 		Name:           "Proof of delivery",
 	}
-	_, err := h.db.NewInsert().Model(docType).Exec(h.ctx)
+	err := documenttypedb.DocumentTypes.Create(h.ctx, h.db, docType)
 	require.NoError(t, err)
 	return docType
 }
@@ -171,7 +174,7 @@ func (h *harness) attach(t *testing.T, shipmentID pulid.ID, docType *documenttyp
 		entity.RejectedAt = &rejectedAt
 		entity.RejectionReason = "Illegible"
 	}
-	_, err := h.db.NewInsert().Model(entity).Exec(h.ctx)
+	err := documentdb.Documents.Create(h.ctx, h.db, entity)
 	require.NoError(t, err)
 }
 
@@ -226,9 +229,9 @@ func (h *harness) tender(t *testing.T, graph *testutil.ShipmentGraph, status ten
 	if status == tender.StatusExhausted {
 		entity.ExhaustedAt = &createdAt
 	}
-	_, err := h.db.NewInsert().Model(entity).Exec(h.ctx)
+	err := tenderdb.Tenders.Create(h.ctx, h.db, entity)
 	require.NoError(t, err)
-	h.exec(t, `UPDATE tenders SET created_at = ? WHERE id = ?`, createdAt, entity.ID)
+	h.exec(t, `UPDATE tenders SET created_at = $1 WHERE id = $2`, createdAt, entity.ID.String())
 	return entity
 }
 
@@ -244,8 +247,8 @@ func TestListExhaustedTendersOnlyForStillUncoveredMoves(t *testing.T) {
 
 	assigned := h.shipment(t, "TND-3", shipment.StatusAssigned)
 	h.tender(t, assigned, tender.StatusExhausted, h.now-600)
-	h.exec(t, `UPDATE shipment_moves SET status = ? WHERE id = ?`,
-		shipment.MoveStatusAssigned, assigned.Moves[0].ID)
+	h.exec(t, `UPDATE shipment_moves SET status = $1 WHERE id = $2`,
+		string(shipment.MoveStatusAssigned), assigned.Moves[0].ID.String())
 
 	rows, err := h.reader.ListExhaustedTenders(h.ctx, &watchtowerports.ListExhaustedTendersRequest{
 		TenantInfo: h.tenant,

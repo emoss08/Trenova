@@ -1,76 +1,119 @@
 package agentquerytoolservice
 
 import (
+	"github.com/bytedance/sonic"
 	"context"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/formulaassistantservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
+const toolPerMileSource = "tariff \"Per Mile\"\n\ninput rate: Money/mi\n\n" +
+	"charge \"Per Mile\" (quantity: shipment.distance, rate: rate)\n"
+
 type fakeWorkbench struct {
-	referenced string
-	tenant     pagination.TenantInfo
-	tested     *formulaassistantservice.TestRequest
-	proposed   *formulaassistantservice.ProposeRequest
-	proposal   *pagedraft.FormulaProposal
+	tenant   pagination.TenantInfo
+	checked  *formulaassistantservice.CheckRequest
+	previews *formulaassistantservice.PreviewRequest
+	proposed *formulaassistantservice.ProposeRequest
+	outcome  *formulaassistantservice.Checked
+	proposal *pagedraft.SourceProposal
 }
 
-func (f *fakeWorkbench) Reference(
+func (f *fakeWorkbench) Language(
 	_ context.Context,
 	tenant pagination.TenantInfo,
-	schemaID string,
-) (*formulaassistantservice.Reference, error) {
+) (*formulaassistantservice.Language, error) {
 	f.tenant = tenant
-	f.referenced = schemaID
-
-	return &formulaassistantservice.Reference{
-		SchemaID: formulaassistantservice.SchemaIDOrDefault(schemaID),
+	return &formulaassistantservice.Language{
+		Catalog: rules.RawJSON(testCatalog),
+		Context: &rules.TariffContext{
+			Tables: []rules.TariffTable{{
+				Code:      "ZONES",
+				Name:      "Zone rates",
+				ValueType: "Money/cwt",
+				Axes:      []rules.TariffAxis{{Match: "exact", Kind: "zip3", Label: "Origin"}},
+			}},
+			Libraries: []rules.TariffLibrary{{
+				Path:   "org.accessorials",
+				Source: "library \"org.accessorials\"\n\nfn hazmat(miles: Distance) -> Money = $1\n",
+			}},
+			Codes: &[]rules.TariffChargeCode{
+				{Code: "FSC", Description: "Fuel surcharge", Active: true},
+				{Code: "OLD", Description: "Retired", Active: false},
+			},
+			Settings: rules.TariffSettings{DistanceUnit: "mi"},
+		},
+		Libraries: []formulatemplateservice.StudioLibrary{{
+			Path:          "org.accessorials",
+			Name:          "accessorials",
+			Description:   "Hazmat and residential fees",
+			VersionNumber: 2,
+		}},
 	}, nil
 }
 
-func (f *fakeWorkbench) Test(
-	_ context.Context,
-	req *formulaassistantservice.TestRequest,
-) (*formulaassistantservice.TestOutcome, error) {
-	f.tested = req
+func (f *fakeWorkbench) outcomeOrDefault() *formulaassistantservice.Checked {
+	if f.outcome != nil {
+		return f.outcome
+	}
+	return &formulaassistantservice.Checked{
+		OK:       true,
+		Kind:     "tariff",
+		Name:     "Per Mile",
+		Findings: []tariff.Finding{},
+		Inputs:   []formulaassistantservice.Input{{Name: "rate", Type: "Money/mi", Required: true}},
+		Imports:  []string{},
+		Charges:  []string{"Per Mile"},
+		Tests:    tariff.TestSummary{Total: 1, Passed: 1, Tests: []tariff.TestOutcome{}},
+	}
+}
 
-	return &formulaassistantservice.TestOutcome{
-		SchemaID: formulaassistantservice.SchemaIDOrDefault(req.SchemaID),
-		Check:    pagedraft.FormulaCheck{Valid: true, Result: "1250"},
+func (f *fakeWorkbench) Check(
+	_ context.Context,
+	req *formulaassistantservice.CheckRequest,
+) (*formulaassistantservice.Checked, error) {
+	f.checked = req
+	return f.outcomeOrDefault(), nil
+}
+
+func (f *fakeWorkbench) Preview(
+	_ context.Context,
+	req *formulaassistantservice.PreviewRequest,
+) (*formulaassistantservice.Preview, error) {
+	f.previews = req
+	return &formulaassistantservice.Preview{
+		Checked: f.outcomeOrDefault(),
+		Bill:    &tarifftypes.Bill{Total: decimal.NewFromInt(865)},
 	}, nil
 }
 
 func (f *fakeWorkbench) Propose(
 	_ context.Context,
 	req *formulaassistantservice.ProposeRequest,
-) (*pagedraft.FormulaProposal, error) {
+) (*formulaassistantservice.Proposed, error) {
 	f.proposed = req
-	if f.proposal != nil {
-		return f.proposal, nil
-	}
-
-	return &pagedraft.FormulaProposal{
-		SchemaID:    formulaassistantservice.SchemaIDOrDefault(req.SchemaID),
-		Expression:  req.Expression,
-		Variables:   req.Variables,
-		Explanation: req.Explanation,
-		Check:       pagedraft.FormulaCheck{Valid: true, Result: "875"},
-	}, nil
+	return &formulaassistantservice.Proposed{Checked: f.outcomeOrDefault(), Proposal: f.proposal}, nil
 }
 
 type authorPermissions struct {
 	permissionports.PermissionEngine
 
+	resource   permission.Resource
 	operations []permission.Operation
 }
 
@@ -79,8 +122,7 @@ func (p *authorPermissions) Check(
 	req *permissionports.PermissionCheckRequest,
 ) (*permissionports.PermissionCheckResult, error) {
 	for _, operation := range p.operations {
-		if req.Resource == permission.ResourceFormulaTemplate.String() &&
-			req.Operation == operation {
+		if req.Resource == p.resource.String() && req.Operation == operation {
 			return &permissionports.PermissionCheckResult{Allowed: true}, nil
 		}
 	}
@@ -92,151 +134,177 @@ func TestFormulaTools_Policies(t *testing.T) {
 	t.Parallel()
 
 	workbench := &fakeWorkbench{}
-	describe := newDescribeFormulaSchemaTool(workbench).Policy()
+	describe := (&describeFormulaLanguageTool{workbench: workbench}).Policy()
 	assert.Equal(t, permission.ResourceFormulaTemplate, describe.Resource)
 	assert.Equal(t, agent.ToolEffectLookup, describe.Effect)
 
-	test := newTestFormulaExpressionTool(workbench, &fakePermissions{}).Policy()
-	assert.Equal(t, permission.ResourceFormulaTemplate, test.Resource)
-	assert.Equal(t, agent.ToolKindQuery, test.Kind)
+	for _, policy := range []string{
+		(&checkFormulaTool{workbench: workbench}).Policy().Name,
+		(&runFormulaTestsTool{workbench: workbench}).Policy().Name,
+	} {
+		assert.NotEmpty(t, policy)
+	}
+	preview := (&previewFormulaTool{workbench: workbench}).Policy()
+	assert.Equal(t, agent.ToolKindQuery, preview.Kind)
 
-	propose := newProposeFormulaTool(workbench, &fakePermissions{}).Policy()
-	assert.Equal(t, agent.ToolScopeSelf, propose.Scope)
-	assert.Equal(t, agent.ToolEffectPresent, propose.Effect)
-	assert.True(t, pagedraft.IsEditTool(newProposeFormulaTool(workbench, nil).Name()))
+	formula := newProposeSourceTool(&proposeFormulaSpec, workbench, &fakePermissions{})
+	assert.Equal(t, agent.ToolScopeSelf, formula.Policy().Scope)
+	assert.Equal(t, agent.ToolEffectPresent, formula.Policy().Effect)
+	assert.Equal(t, permission.ResourceFormulaTemplate, formula.Policy().Resource)
+	assert.True(t, pagedraft.IsEditTool(formula.Name()))
+
+	library := newProposeSourceTool(&proposeLibrarySpec, workbench, &fakePermissions{})
+	assert.Equal(t, "formula_library_propose", library.Name())
+	assert.Equal(t, permission.ResourceFormulaLibrary, library.Policy().Resource)
+	assert.True(t, pagedraft.IsEditTool(library.Name()))
 }
 
-func TestDescribeFormulaSchema_ReadsTheCallersTenant(t *testing.T) {
+func TestDescribeFormulaLanguage_ListsEverythingShortenedFromTheCallersTenant(t *testing.T) {
 	t.Parallel()
 
 	workbench := &fakeWorkbench{}
-	params := chatParams(map[string]any{"schemaId": "shipment"}, "")
+	params := chatParams(map[string]any{}, "")
 
-	result, err := newDescribeFormulaSchemaTool(workbench).Query(t.Context(), params)
+	result, err := (&describeFormulaLanguageTool{workbench: workbench}).Query(t.Context(), params)
 	require.NoError(t, err)
 
-	view, ok := result.(*formulaSchemaView)
+	view, ok := result.(*formulaLanguageView)
 	require.True(t, ok)
-	assert.Equal(t, "shipment", view.SchemaID)
 	assert.Equal(t, params.OrganizationID, workbench.tenant.OrgID)
-	assert.Equal(t, params.BusinessUnitID, workbench.tenant.BuID)
+	assert.Contains(t, lineNames(view.Record), "shipment.distance")
+	assert.Contains(t, lineNames(view.Record), "shipment.temperature.min")
+	assert.Contains(t, lineNames(view.Record), "Stop.dwell")
+	assert.Equal(t, "Distance", lineOf(view.Record, "shipment.distance").Type)
+	assert.Equal(t, "The trip's distance.", lineOf(view.Record, "shipment.distance").Doc,
+		"the full list keeps the first sentence")
+	assert.Equal(t, []string{"mi", "km"}, view.Units["Distance"])
+	require.Len(t, view.Tables, 1)
+	assert.Equal(t, []string{"Origin: exact (zip3)"}, view.Tables[0].Axes)
+	assert.Equal(t, []string{"FSC: Fuel surcharge"}, view.Codes)
+	require.Len(t, view.Libraries, 1)
+	assert.Empty(t, view.Libraries[0].Source, "the full list leaves sources out")
+	require.Len(t, view.Modules, 1)
+	assert.Equal(t, "fn stepPercent(price: Money/gal) -> Percent",
+		view.Modules[0].Declarations[0].Name)
+	assert.Equal(t, "mi", view.DistanceUnit)
 }
 
-func TestTestFormulaExpression_PricesScenariosWithTheEngine(t *testing.T) {
+func TestDescribeFormulaLanguage_FindsWhatPeopleCallIt(t *testing.T) {
 	t.Parallel()
 
 	workbench := &fakeWorkbench{}
-	tool := newTestFormulaExpressionTool(workbench, &fakePermissions{allowed: true})
-
-	result, err := tool.Query(t.Context(), chatParams(map[string]any{
-		"expression": "max(totalDistance * ratePerMile, 350)",
-		"variables":  map[string]any{"ratePerMile": 2.5},
-		"scenarios": []any{
-			map[string]any{
-				"name":        "Long haul",
-				"description": "A 500 mile dry van load.",
-				"variables":   map[string]any{"totalDistance": 500},
-			},
-		},
-	}, ""))
+	result, err := (&describeFormulaLanguageTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"query": "reefer"}, ""))
 	require.NoError(t, err)
+	view := result.(*formulaLanguageView)
+	assert.Contains(t, lineNames(view.Record), "shipment.temperature.min")
+	assert.NotContains(t, lineNames(view.Record), "shipment.distance")
+	assert.Equal(t, "The coldest the load may ride. Set on reefer loads only.",
+		lineOf(view.Record, "shipment.temperature.min").Doc, "a match is described in full")
 
-	tested := result.(testedFormula)
-	assert.True(t, tested.Check.Valid)
-	assert.Contains(t, tested.Note, "formula engine")
-	assert.Empty(t, tested.ShipmentID)
-	require.Len(t, workbench.tested.Scenarios, 1)
-	assert.Equal(t, "Long haul", workbench.tested.Scenarios[0].Name)
-	assert.Equal(t, 2.5, workbench.tested.Variables["ratePerMile"])
-	assert.True(t, workbench.tested.ShipmentID.IsNil())
-	assert.Nil(t, workbench.tested.Policy, "no policy given means the engine's default")
+	result, err = (&describeFormulaLanguageTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"query": "accessorials"}, ""))
+	require.NoError(t, err)
+	view = result.(*formulaLanguageView)
+	require.Len(t, view.Libraries, 1)
+	assert.Contains(t, view.Libraries[0].Source, "fn hazmat")
+
+	result, err = (&describeFormulaLanguageTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"query": "xyzzy"}, ""))
+	require.NoError(t, err)
+	assert.Contains(t, result.(*formulaLanguageView).Note, "an input the formula declares")
 }
 
-func TestTestFormulaExpression_PricesWithThePageDraftsPolicy(t *testing.T) {
+func TestCheckAndRunTests_PassTheWholeSourceAndItsKind(t *testing.T) {
 	t.Parallel()
 
 	workbench := &fakeWorkbench{}
-	tool := newTestFormulaExpressionTool(workbench, &fakePermissions{allowed: true})
-
-	_, err := tool.Query(t.Context(), chatParams(map[string]any{
-		"expression": "totalDistance * ratePerMile",
-		"policy": map[string]any{
-			"minCharge":         350.5,
-			"maxCharge":         nil,
-			"roundingMode":      "Down",
-			"roundingPrecision": 0,
-		},
-	}, ""))
+	source := "  " + toolPerMileSource
+	result, err := (&checkFormulaTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"source": source}, ""))
 	require.NoError(t, err)
+	assert.True(t, result.(checkedFormula).OK)
+	assert.Equal(t, source, workbench.checked.Source, "the source is passed as written")
+	assert.Equal(t, formulaassistantservice.KindTemplate, workbench.checked.Kind)
 
-	policy := workbench.tested.Policy
-	require.NotNil(t, policy)
-	require.NotNil(t, policy.MinCharge)
-	assert.Equal(t, "350.5", *policy.MinCharge)
-	assert.Nil(t, policy.MaxCharge, "null removes the maximum")
-	assert.Equal(t, "Down", policy.RoundingMode)
-	require.NotNil(t, policy.RoundingPrecision)
-	assert.Equal(t, 0, *policy.RoundingPrecision)
+	_, err = (&runFormulaTestsTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"source": "library \"org.x\"\n", "kind": "library"}, ""))
+	require.NoError(t, err)
+	assert.Equal(t, formulaassistantservice.KindLibrary, workbench.checked.Kind)
 
-	properties := tool.ParamSchema()["properties"].(map[string]any)
-	assert.Contains(t, properties, "policy")
+	_, err = (&checkFormulaTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"source": toolPerMileSource, "kind": "condition"}, ""))
+	require.Error(t, err)
+	_, err = (&checkFormulaTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{}, ""))
+	require.Error(t, err)
 
-	_, err = tool.Query(t.Context(), chatParams(map[string]any{
-		"expression": "totalDistance * ratePerMile",
-		"policy":     map[string]any{"minCharge": "two hundred"},
-	}, ""))
-	require.Error(t, err, "a policy that is not the schema's shape is refused")
+	workbench.outcome = &formulaassistantservice.Checked{
+		Findings: []tariff.Finding{{Severity: "error", Message: "There is no `ratee`"}},
+	}
+	tested, err := (&runFormulaTestsTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"source": toolPerMileSource}, ""))
+	require.NoError(t, err)
+	assert.Contains(t, tested.(testedFormula).Note, "no test ran")
+	assert.NotNil(t, tested.(testedFormula).Findings)
 }
 
-func TestTestFormulaExpression_PricesAShipmentOnlyForAPersonWhoMayReadIt(t *testing.T) {
+func TestPreviewFormula_RatesAShipmentOnlyForAPersonWhoMayReadIt(t *testing.T) {
 	t.Parallel()
 
 	shipmentID := pulid.MustNew("shp_")
 	workbench := &fakeWorkbench{}
 
-	allowed := newTestFormulaExpressionTool(workbench, &fakePermissions{allowed: true})
+	allowed := &previewFormulaTool{
+		workbench: workbench,
+		access:    newFieldAccess(&fakePermissions{allowed: true}),
+	}
 	result, err := allowed.Query(t.Context(), chatParams(map[string]any{
-		"expression": "totalDistance * 2",
+		"source":     toolPerMileSource,
 		"shipmentId": shipmentID.String(),
+		"inputs":     map[string]any{"rate": map[string]any{"$q": "2.10", "u": "$/mi"}},
 	}, ""))
 	require.NoError(t, err)
-	assert.Equal(t, shipmentID.String(), result.(testedFormula).ShipmentID)
-	assert.Equal(t, shipmentID, workbench.tested.ShipmentID)
+	previewed := result.(previewedFormula)
+	assert.Equal(t, shipmentID.String(), previewed.ShipmentID)
+	assert.Equal(t, "865", previewed.Bill.Total.String())
+	assert.Equal(t, shipmentID, workbench.previews.ShipmentID)
+	assert.JSONEq(t, `{"$q":"2.10","u":"$/mi"}`, string(workbench.previews.Inputs["rate"]))
 
-	denied := newTestFormulaExpressionTool(&fakeWorkbench{}, &fakePermissions{allowed: false})
+	denied := &previewFormulaTool{
+		workbench: &fakeWorkbench{},
+		access:    newFieldAccess(&fakePermissions{allowed: false}),
+	}
 	_, err = denied.Query(t.Context(), chatParams(map[string]any{
-		"expression": "totalDistance * 2",
+		"source":     toolPerMileSource,
 		"shipmentId": shipmentID.String(),
 	}, ""))
 	require.ErrorContains(t, err, "may not read shipments")
 
 	_, err = allowed.Query(t.Context(), chatParams(map[string]any{
-		"expression": "totalDistance * 2",
+		"source":     toolPerMileSource,
 		"shipmentId": "not-an-id",
 	}, ""))
 	require.Error(t, err)
-
-	_, err = allowed.Query(t.Context(), chatParams(map[string]any{}, ""))
-	require.Error(t, err)
 }
 
-func TestProposeFormula_HandsTheEnginesProposalToThePage(t *testing.T) {
+func TestProposeFormula_HandsACheckedProposalToThePage(t *testing.T) {
 	t.Parallel()
 
-	workbench := &fakeWorkbench{}
-	tool := newProposeFormulaTool(workbench,
-		&authorPermissions{operations: []permission.Operation{permission.OpUpdate}})
+	workbench := &fakeWorkbench{proposal: &pagedraft.SourceProposal{
+		Source:      toolPerMileSource,
+		Explanation: "Bills the miles.",
+		Tests:       pagedraft.ProposalTests{Total: 1, Passed: 1},
+	}}
+	tool := newProposeSourceTool(&proposeFormulaSpec, workbench, &authorPermissions{
+		resource:   permission.ResourceFormulaTemplate,
+		operations: []permission.Operation{permission.OpUpdate},
+	})
 
 	result, err := tool.Query(t.Context(), chatParams(map[string]any{
-		"expression":  "max(totalDistance * ratePerMile, minimumCharge)",
-		"explanation": "Charges per mile, never less than the minimum.",
-		"variables": []any{
-			map[string]any{"name": "ratePerMile", "type": "Number", "defaultValue": 2.5},
-			map[string]any{"name": "minimumCharge", "type": "Number", "defaultValue": 350},
-		},
-		"scenarios": []any{
-			map[string]any{"name": "Short", "variables": map[string]any{"totalDistance": 40}},
-		},
+		"source":      toolPerMileSource,
+		"explanation": "Bills the miles.",
+		"name":        "Per Mile",
 	}, ""))
 	require.NoError(t, err)
 
@@ -244,202 +312,286 @@ func TestProposeFormula_HandsTheEnginesProposalToThePage(t *testing.T) {
 	assert.Equal(t, pagedraft.SurfaceFormula, edit.Surface)
 	assert.Equal(t, pagedraft.ActionProposeFormula, edit.Action)
 	require.NotNil(t, edit.Formula)
-	assert.Equal(t, "875", edit.Formula.Check.Result)
-	require.Len(t, workbench.proposed.Variables, 2)
-	assert.Equal(t, pagedraft.VariableNumber, workbench.proposed.Variables[0].Type)
-	require.Len(t, workbench.proposed.Scenarios, 1)
-	assert.Nil(t, workbench.proposed.Details.Policy, "no policy given keeps the editor's")
-
-	edited := result.(pagedraft.EditResult)
-	assert.Equal(t, "The page applied this to the editor; the person can undo it. It shows "+
-		"in the page draft on your next turn. "+pricedByEngineNote, edited.Note)
+	assert.Nil(t, edit.Library)
+	assert.Equal(t, formulaassistantservice.KindTemplate, workbench.proposed.Kind)
+	assert.Equal(t, "Per Mile", workbench.proposed.Name)
+	assert.Contains(t, result.(pagedraft.EditResult).Note, pricedByEngineNote)
 	assert.Contains(t, tool.Description(), "Never describe a change without making it.")
 }
 
-func TestProposeFormula_CarriesTheChargePolicyToTheProposal(t *testing.T) {
+func TestProposeLibrary_LandsInTheLibraryEditor(t *testing.T) {
 	t.Parallel()
 
-	workbench := &fakeWorkbench{}
-	tool := newProposeFormulaTool(workbench,
-		&authorPermissions{operations: []permission.Operation{permission.OpUpdate}})
-
-	_, err := tool.Query(t.Context(), chatParams(map[string]any{
-		"expression":  "totalDistance * ratePerMile",
-		"explanation": "Per mile, never less than the minimum.",
-		"policy": map[string]any{
-			"minCharge":         250,
-			"maxCharge":         1999.99,
-			"roundingMode":      "HalfEven",
-			"roundingPrecision": 2,
-		},
-	}, ""))
-	require.NoError(t, err)
-
-	policy := workbench.proposed.Details.Policy
-	require.NotNil(t, policy)
-	require.NotNil(t, policy.MinCharge)
-	assert.Equal(t, "250", *policy.MinCharge)
-	require.NotNil(t, policy.MaxCharge)
-	assert.Equal(t, "1999.99", *policy.MaxCharge)
-	assert.Equal(t, "HalfEven", policy.RoundingMode)
-	require.NotNil(t, policy.RoundingPrecision)
-	assert.Equal(t, 2, *policy.RoundingPrecision)
-
-	schema := tool.ParamSchema()["properties"].(map[string]any)["policy"].(map[string]any)
-	assert.Equal(t, false, schema["additionalProperties"])
-	fields := schema["properties"].(map[string]any)
-	for _, name := range []string{"minCharge", "maxCharge", "roundingMode", "roundingPrecision"} {
-		assert.Contains(t, fields, name)
-	}
-	assert.Equal(t, []string{"number", "null"}, fields["minCharge"].(map[string]any)["type"])
-	assert.Equal(t, 4, fields["roundingPrecision"].(map[string]any)["maximum"])
-}
-
-func TestProposeFormula_PassesTheTemplateDetailsAndBreakdown(t *testing.T) {
-	t.Parallel()
-
-	workbench := &fakeWorkbench{}
-	tool := newProposeFormulaTool(workbench,
-		&authorPermissions{operations: []permission.Operation{permission.OpCreate}})
-
-	_, err := tool.Query(t.Context(), chatParams(map[string]any{
-		"expression":   "totalDistance * ratePerMile + handling",
-		"explanation":  "Per mile plus handling.",
-		"name":         "Per mile with handling",
-		"description":  "Linehaul by the mile plus a handling fee.",
-		"templateType": "FreightCharge",
-		"breakdown": []any{
-			map[string]any{
-				"name":       "linehaul",
-				"label":      "Linehaul",
-				"expression": "totalDistance * ratePerMile",
-			},
-			map[string]any{"name": "handlingFee", "label": "Handling", "expression": "handling"},
-		},
-	}, ""))
-	require.NoError(t, err)
-
-	details := workbench.proposed.Details
-	assert.Equal(t, "Per mile with handling", details.Name)
-	assert.Equal(t, "Linehaul by the mile plus a handling fee.", details.Description)
-	assert.Equal(t, "FreightCharge", details.TemplateType)
-	require.Len(t, details.Breakdown, 2)
-	assert.Equal(t, "handlingFee", details.Breakdown[1].Name)
-
-	properties := tool.ParamSchema()["properties"].(map[string]any)
-	for _, name := range []string{"name", "description", "templateType", "breakdown"} {
-		assert.Contains(t, properties, name)
-	}
-}
-
-func TestProposeFormula_TellsTheModelWhenTheEngineCouldNotRunIt(t *testing.T) {
-	t.Parallel()
-
-	workbench := &fakeWorkbench{proposal: &pagedraft.FormulaProposal{
-		Expression: "totalDistance *",
-		Check:      pagedraft.FormulaCheck{Valid: false, Error: "unexpected end of expression"},
+	workbench := &fakeWorkbench{proposal: &pagedraft.SourceProposal{
+		Source: "library \"org.accessorials\"\n",
+		Tests:  pagedraft.ProposalTests{Total: 2, Passed: 2},
 	}}
-	tool := newProposeFormulaTool(workbench,
-		&authorPermissions{operations: []permission.Operation{permission.OpCreate}})
+	tool := newProposeSourceTool(&proposeLibrarySpec, workbench, &authorPermissions{
+		resource:   permission.ResourceFormulaLibrary,
+		operations: []permission.Operation{permission.OpCreate},
+	})
 
 	result, err := tool.Query(t.Context(), chatParams(map[string]any{
-		"expression":  "totalDistance *",
-		"explanation": "Per mile.",
+		"source":      "library \"org.accessorials\"\n",
+		"explanation": "Adds a liftgate fee.",
 	}, ""))
 	require.NoError(t, err)
 
-	edited := result.(pagedraft.EditResult)
-	assert.Contains(t, edited.Note, "unexpected end of expression")
-	assert.Contains(t, edited.Note, "propose it again")
+	edit := draftEditOf(t, result)
+	assert.Equal(t, pagedraft.SurfaceFormulaLibrary, edit.Surface)
+	assert.Equal(t, pagedraft.ActionProposeLibrary, edit.Action)
+	require.NotNil(t, edit.Library)
+	assert.Nil(t, edit.Formula)
+	assert.Equal(t, formulaassistantservice.KindLibrary, workbench.proposed.Kind)
 }
 
-func TestProposeFormula_RefusesAPersonWhoMayOnlyReadFormulas(t *testing.T) {
+func TestProposeFormula_TellsTheModelWhyNothingWasShown(t *testing.T) {
+	t.Parallel()
+
+	author := &authorPermissions{
+		resource:   permission.ResourceFormulaTemplate,
+		operations: []permission.Operation{permission.OpCreate},
+	}
+	params := chatParams(map[string]any{
+		"source":      toolPerMileSource,
+		"explanation": "Bills the miles.",
+	}, "")
+
+	failing := &fakeWorkbench{outcome: &formulaassistantservice.Checked{
+		Findings: []tariff.Finding{{Severity: "error", Message: "There is no `ratee`"}},
+	}}
+	result, err := newProposeSourceTool(&proposeFormulaSpec, failing, author).Query(t.Context(), params)
+	require.NoError(t, err)
+	refused := result.(refusedProposal)
+	assert.False(t, refused.Applied)
+	assert.Contains(t, refused.Note, "does not check")
+	assert.NotNil(t, refused.Findings)
+
+	untested := &fakeWorkbench{outcome: &formulaassistantservice.Checked{OK: true}}
+	result, err = newProposeSourceTool(&proposeFormulaSpec, untested, author).Query(t.Context(), params)
+	require.NoError(t, err)
+	assert.Contains(t, result.(refusedProposal).Note, "no tests")
+
+	red := &fakeWorkbench{outcome: &formulaassistantservice.Checked{
+		OK:    true,
+		Tests: tariff.TestSummary{Total: 2, Passed: 1},
+	}}
+	result, err = newProposeSourceTool(&proposeFormulaSpec, red, author).Query(t.Context(), params)
+	require.NoError(t, err)
+	assert.Contains(t, result.(refusedProposal).Note, "a test fails")
+}
+
+func TestProposeFormula_RefusesAPersonWhoMayOnlyRead(t *testing.T) {
 	t.Parallel()
 
 	workbench := &fakeWorkbench{}
-	tool := newProposeFormulaTool(workbench,
-		&authorPermissions{operations: []permission.Operation{permission.OpRead}})
+	tool := newProposeSourceTool(&proposeFormulaSpec, workbench, &authorPermissions{
+		resource:   permission.ResourceFormulaTemplate,
+		operations: []permission.Operation{permission.OpRead},
+	})
 
 	_, err := tool.Query(t.Context(), chatParams(map[string]any{
-		"expression":  "totalDistance * 2",
+		"source":      toolPerMileSource,
 		"explanation": "Two dollars a mile.",
 	}, ""))
-	require.ErrorContains(t, err, "may read formulas but not write them")
+	require.ErrorContains(t, err, "may read but not write a formula template")
 	assert.Nil(t, workbench.proposed)
 
-	_, err = tool.Query(t.Context(), chatParams(map[string]any{
-		"expression": "totalDistance * 2",
+	library := newProposeSourceTool(&proposeLibrarySpec, workbench, &authorPermissions{
+		resource:   permission.ResourceFormulaTemplate,
+		operations: []permission.Operation{permission.OpCreate},
+	})
+	_, err = library.Query(t.Context(), chatParams(map[string]any{
+		"source":      "library \"org.x\"\n",
+		"explanation": "A library.",
 	}, ""))
-	require.Error(t, err)
+	require.ErrorContains(t, err, "formula library", "a template author is not a library author")
 }
 
-type stubFormulaTemplates struct {
-	formulatemplateports.FormulaTemplateRepository
+func formulaGetTool(t *testing.T, spec getSpec, reader agentports.GraphQLReader) *graphQLGetTool {
+	t.Helper()
 
-	entity *formulatemplate.FormulaTemplate
-	last   formulatemplateports.GetFormulaTemplateByIDRequest
-}
-
-func (s *stubFormulaTemplates) GetByID(
-	_ context.Context,
-	req formulatemplateports.GetFormulaTemplateByIDRequest,
-) (*formulatemplate.FormulaTemplate, error) {
-	s.last = req
-
-	return s.entity, nil
-}
-
-func TestGetFormulaTemplate_IsAReadOfFormulaTemplates(t *testing.T) {
-	t.Parallel()
-
-	tool := newGetFormulaTemplateTool(&stubFormulaTemplates{}, &fakePermissions{})
-	policy := tool.Policy()
-
-	assert.Equal(t, "formula_get_template", tool.Name())
-	assert.Equal(t, permission.ResourceFormulaTemplate, policy.Resource)
-	assert.Equal(t, agent.ToolKindQuery, policy.Kind)
-	assert.Contains(t, tool.Description(), "formula_list_templates")
-}
-
-/*
-A formula is explained or changed from the template whole: its expression,
-its own variables with their defaults and the limits its price is held to.
-The list gives only the name and status, so the get returns the record.
-*/
-func TestGetFormulaTemplate_ReturnsTheTemplateWholeFromTheCallersTenant(t *testing.T) {
-	t.Parallel()
-
-	id := pulid.MustNew("ft_")
-	repo := &stubFormulaTemplates{entity: &formulatemplate.FormulaTemplate{
-		ID:         id,
-		Name:       "Reefer per mile",
-		Expression: "baseRate * totalDistance + reeferFee",
-		Status:     formulatemplate.StatusActive,
-		SchemaID:   "shipment",
-	}}
-	tool := newGetFormulaTemplateTool(repo, &fakePermissions{allowed: true})
-	params := testParams(map[string]any{"formulaTemplateId": id.String()})
-
-	result, err := tool.Query(t.Context(), params)
+	tool, err := newGraphQLGetTool(&spec, reader, &fakePermissions{allowed: true})
 	require.NoError(t, err)
 
-	assert.Equal(t, id, repo.last.TemplateID)
-	assert.Equal(t, params.OrganizationID, repo.last.TenantInfo.OrgID)
-	assert.Equal(t, params.BusinessUnitID, repo.last.TenantInfo.BuID)
-	document := encodedDocument(t, result)
-	assert.Equal(t, "Reefer per mile", document["name"])
-	assert.Equal(t, "baseRate * totalDistance + reeferFee", document["expression"])
+	return tool
 }
 
-func TestGetFormulaTemplate_RefusesSomethingThatIsNotAnID(t *testing.T) {
+// A formula is explained or changed from the template whole: its Tariff
+// source and the inputs it declares. The list gives only the name and
+// status, so the get reads the card.
+func TestGetFormulaTemplate_ReadsTheSourceWholeThroughTheCard(t *testing.T) {
 	t.Parallel()
 
-	repo := &stubFormulaTemplates{}
-	tool := newGetFormulaTemplateTool(repo, &fakePermissions{allowed: true})
+	id := pulid.MustNew("ft_").String()
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskFormulaTemplateCard": {Data: map[string]any{"formulaTemplate": map[string]any{
+			"id": id, "name": "Per Mile", "status": "Active", "source": toolPerMileSource,
+			"inputs":  []any{map[string]any{"name": "rate", "type": "Money/mi", "required": true}},
+			"imports": []any{}, "approvedAt": nil,
+		}}},
+	}}
+	tool := formulaGetTool(t, formulaTemplateGetSpec(), reader)
+	assert.Equal(t, permission.ResourceFormulaTemplate, tool.Policy().Resource)
+	assert.Equal(t, agent.ToolKindQuery, tool.Policy().Kind)
 
-	_, err := tool.Query(t.Context(), testParams(map[string]any{
-		"formulaTemplateId": "Reefer per mile",
-	}))
+	result, err := tool.Query(t.Context(), keyedCall(map[string]any{"formulaTemplateId": id}))
+	require.NoError(t, err)
+
+	sent := reader.sent("DeskFormulaTemplateCard")
+	require.NotNil(t, sent)
+	assert.Equal(t, map[string]any{"id": id}, sent.Variables)
+	document := encodedDocument(t, result)
+	assert.Equal(t, "Per Mile", document["name"])
+	assert.Equal(t, toolPerMileSource, document["source"])
+	assert.Len(t, document["inputs"], 1)
+	assert.NotContains(t, document, "approvedAt", "a null is never carried")
+
+	_, err = tool.Query(t.Context(), keyedCall(map[string]any{"formulaTemplateId": "Per Mile"}))
 	require.Error(t, err)
-	assert.True(t, repo.last.TemplateID.IsNil(), "nothing is read for a name passed as an id")
+	assert.Len(t, reader.requests, 1, "nothing is read for a name passed as an id")
+}
+
+func TestGetFormulaLibrary_ReadsTheSourceWholeThroughTheCard(t *testing.T) {
+	t.Parallel()
+
+	id := pulid.MustNew("fl_").String()
+	reader := &keyedReader{answers: map[string]*agentports.GraphQLReadResult{
+		"DeskFormulaLibraryCard": {Data: map[string]any{"formulaLibrary": map[string]any{
+			"id": id, "name": "accessorials", "path": "org.accessorials",
+			"source": "library \"org.accessorials\"\n",
+		}}},
+	}}
+	tool := formulaGetTool(t, formulaLibraryGetSpec(), reader)
+	assert.Equal(t, permission.ResourceFormulaLibrary, tool.Policy().Resource)
+
+	result, err := tool.Query(t.Context(), keyedCall(map[string]any{"formulaLibraryId": id}))
+	require.NoError(t, err)
+	assert.Equal(t, map[string]any{"id": id}, reader.sent("DeskFormulaLibraryCard").Variables)
+	assert.Equal(t, "library \"org.accessorials\"\n", encodedDocument(t, result)["source"])
+}
+
+// What each summary promises, the card's operation selects, and the lists
+// read the Desk's compact rows rather than the source.
+func TestFormulaReads_SelectWhatTheirSummariesPromise(t *testing.T) {
+	t.Parallel()
+
+	selected := func(tool string) map[string]bool {
+		out := make(map[string]bool)
+		for _, field := range graphQLReads[tool].Fields {
+			out[field.Name] = field.Selected
+		}
+		return out
+	}
+	for tool, want := range map[string][]string{
+		toolGetFormulaTemplate:   {"source", "inputs", "imports", "status", "currentVersionNumber"},
+		toolGetFormulaLibrary:    {"source", "imports", "status", "currentVersionNumber"},
+		toolListFormulaTemplates: {"name", "description", "status", "testCount"},
+		toolListFormulaLibraries: {"path", "description", "status", "testCount"},
+	} {
+		fields := selected(tool)
+		for _, field := range want {
+			assert.True(t, fields[field], "%s selects %s", tool, field)
+		}
+	}
+	for _, tool := range []string{toolListFormulaTemplates, toolListFormulaLibraries} {
+		assert.False(t, selected(tool)["source"], "%s selects no source", tool)
+	}
+}
+
+func lineNames(lines []languageLine) []string {
+	names := make([]string, 0, len(lines))
+	for _, line := range lines {
+		names = append(names, line.Name)
+	}
+	return names
+}
+
+func lineOf(lines []languageLine, name string) languageLine {
+	for _, line := range lines {
+		if line.Name == name {
+			return line
+		}
+	}
+	return languageLine{}
+}
+
+const testCatalog = `{
+  "schema": {
+    "roots": [
+      {"name": "shipment", "doc": "The shipment being rated.", "fields": [
+        {"name": "distance", "type": "Distance", "doc": "The trip's distance. Loaded miles only.", "fields": []},
+        {"name": "temperature", "type": "{ min: Temperature? }", "doc": "The reefer setting.", "fields": [
+          {"name": "min", "type": "Temperature?", "doc": "The coldest the load may ride. Set on reefer loads only.", "fields": []}
+        ]}
+      ]},
+      {"name": "tables", "type": "tables", "doc": "The organisation's rate matrices.", "fields": []}
+    ],
+    "records": [
+      {"name": "Stop", "fields": [{"name": "dwell", "type": "Duration?", "doc": "Time at the stop.", "fields": []}]}
+    ]
+  },
+  "types": [{"name": "Money", "doc": {"message": "An amount of money."}}],
+  "units": [{"dimension": "Distance", "unit": "mi"}, {"dimension": "Distance", "unit": "km"}],
+  "methods": [{"name": "round", "receiver": "Number", "signature": "round(places: Int = 0) -> Number", "doc": {"message": "Rounds half away from zero."}}],
+  "tableMethods": [{"name": "cell", "doc": {"message": "The matching cell."}}],
+  "modules": [{"path": "std.fuel", "doc": "Fuel surcharges.", "declarations": [
+    {"kind": "fn", "name": "stepPercent", "signature": "fn stepPercent(price: Money/gal) -> Percent", "doc": "A stepped fuel surcharge."}
+  ]}]
+}`
+
+func TestRunTests_ReportsPropertiesAndTheRegionsNoTestReaches(t *testing.T) {
+	t.Parallel()
+
+	workbench := &fakeWorkbench{}
+	workbench.outcome = workbench.outcomeOrDefault()
+	workbench.outcome.Tests = tariff.TestSummary{
+		Total:  1,
+		Passed: 0,
+		Tests: []tariff.TestOutcome{{
+			Name:   "heavier never bills less",
+			Kind:   "property",
+			Status: "failed",
+			Cases:  24,
+			Counterexample: &tariff.Counterexample{
+				Values: []tariff.VariedValue{{Target: "shipment.weight", Value: "999 lb"}},
+				Monotone: &tariff.MonotoneFailure{
+					Target:     "shipment.weight",
+					Expression: "total",
+					Direction:  "nondecreasing",
+					Before:     tariff.MonotoneSide{At: "999 lb", Result: "$310.00"},
+					After:      tariff.MonotoneSide{At: "1,000 lb", Result: "$250.00"},
+				},
+				Test: "test \"heavier never bills less: 999 lb\" {\n}\n",
+			},
+		}},
+		Coverage: &tariff.CoverageReport{
+			CoverageSummary: &tariff.CoverageSummary{
+				Reached: 18,
+				Total:   21,
+				Unreached: []tariff.UnreachedRegion{{
+					Kind:    "if",
+					At:      tariff.SourcePosition{Line: 12, Column: 1},
+					Excerpt: "if weight > 45_000 lb {",
+				}},
+			},
+			Summary: "Tests reach 18 of 21 regions",
+		},
+	}
+
+	result, err := (&runFormulaTestsTool{workbench: workbench}).Query(t.Context(),
+		chatParams(map[string]any{"source": toolPerMileSource}, ""))
+	require.NoError(t, err)
+
+	tested := result.(testedFormula)
+	assert.Contains(t, tested.Note, "tests.coverage.unreached")
+	encoded, err := sonic.Marshal(tested)
+	require.NoError(t, err)
+	text := string(encoded)
+	assert.Contains(t, text, `"kind":"property"`)
+	assert.Contains(t, text, `"cases":24`)
+	assert.Contains(t, text, `"before":{"at":"999 lb","result":"$310.00"}`)
+	assert.Contains(t, text, `"test":"test \"heavier never bills less: 999 lb\" {\n}\n"`)
+	assert.Contains(t, text, `"summary":"Tests reach 18 of 21 regions"`)
+	assert.Contains(t, text, `"excerpt":"if weight > 45_000 lb {"`)
 }

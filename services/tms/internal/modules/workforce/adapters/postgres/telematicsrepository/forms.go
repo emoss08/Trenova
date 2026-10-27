@@ -4,46 +4,64 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/telematicscol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/telematics/telematicsdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/telematicsports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
+
+var formMappingErrors = dberror.Mapping{Entity: "FormMapping"}
 
 func (r *repository) UpsertFormSubmission(
 	ctx context.Context,
 	submission *telematics.FormSubmission,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := telematicscol.FormSubmissionColumns
-		result, err := r.db.DBForContext(ctx).NewInsert().
-			Model(submission).
-			On("CONFLICT (organization_id, business_unit_id, provider, provider_submission_id) DO UPDATE").
-			Set(cols.TemplateName.SetExcluded()).
-			Set(cols.WorkerID.SetExcluded()).
-			Set(cols.ShipmentID.SetExcluded()).
-			Set(cols.ShipmentMoveID.SetExcluded()).
-			Set(cols.StopID.SetExcluded()).
-			Set(cols.SubmittedAt.SetExcluded()).
-			Set(cols.Fields.SetExcluded()).
-			Set(cols.Applied.SetExcluded()).
-			Set(cols.AppliedFields.SetExcluded()).
-			Set(cols.AppliedAt.SetExcluded()).
-			Exec(ctx)
+		fs := telematicsdb.FormSubmissions
+		stored, err := fs.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*telematics.FormSubmission{submission},
+			keel.OnConflict(fs.OrganizationID, fs.BusinessUnitID, fs.Provider, fs.ProviderSubmissionID).
+				Update(
+					fs.TemplateName,
+					fs.WorkerID,
+					fs.ShipmentID,
+					fs.ShipmentMoveID,
+					fs.StopID,
+					fs.SubmittedAt,
+					fs.Fields,
+					fs.Applied,
+					fs.AppliedFields,
+					fs.AppliedAt,
+				),
+		)
 		if err != nil {
 			return false, fmt.Errorf("upsert form submission: %w", err)
 		}
-		rows, err := result.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("upsert form submission rows affected: %w", err)
-		}
-		return rows > 0, nil
+
+		return len(stored) > 0, nil
 	})
+}
+
+func formSubmissionsQuery(
+	req *telematicsports.ListFormSubmissionsRequest,
+) *keel.Query[*telematics.FormSubmission] {
+	fs := telematicsdb.FormSubmissions
+	q := fs.Where(
+		keel.When(req.ShipmentID.IsNotNil(), fs.ShipmentID.Eq(req.ShipmentID)),
+		keel.When(req.WorkerID.IsNotNil(), fs.WorkerID.Eq(req.WorkerID)),
+		keel.When(req.Since > 0, fs.SubmittedAt.Gte(req.Since)),
+	).Order(fs.SubmittedAt.Desc())
+	if req.Limit > 0 {
+		q = q.Limit(req.Limit)
+	}
+
+	return q
 }
 
 func (r *repository) ListFormSubmissions(
@@ -51,33 +69,11 @@ func (r *repository) ListFormSubmissions(
 	req *telematicsports.ListFormSubmissionsRequest,
 ) ([]*telematics.FormSubmission, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.FormSubmission, error) {
-		cols := telematicscol.FormSubmissionColumns
-
-		entities := make([]*telematics.FormSubmission, 0)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = telematicscol.FormSubmissionScopeTenant(sq, req.TenantInfo)
-				if !req.ShipmentID.IsNil() {
-					sq = sq.Where(cols.ShipmentID.Eq(), req.ShipmentID)
-				}
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				if req.Since > 0 {
-					sq = sq.Where(cols.SubmittedAt.Gte(), req.Since)
-				}
-				return sq
-			}).
-			Order(cols.SubmittedAt.OrderDesc())
-
-		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
-		}
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := formSubmissionsQuery(req).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list form submissions: %w", err)
 		}
+
 		return entities, nil
 	})
 }
@@ -87,49 +83,39 @@ func (r *repository) ListFormMappings(
 	req *telematicsports.ListFormMappingsRequest,
 ) ([]*telematics.FormMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*telematics.FormMapping, error) {
-		cols := telematicscol.FormMappingColumns
+		fm := telematicsdb.FormMappings
+		var enabled keel.Pred
+		if req.Enabled != nil {
+			enabled = fm.Enabled.Eq(*req.Enabled)
+		}
 
-		entities := make([]*telematics.FormMapping, 0)
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			Relation(telematicscol.FormMappingRelations.Items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = telematicscol.FormMappingScopeTenant(sq, req.TenantInfo)
-				if req.Provider != "" {
-					sq = sq.Where(cols.Provider.Eq(), req.Provider)
-				}
-				if req.Enabled != nil {
-					sq = sq.Where(cols.Enabled.Eq(), *req.Enabled)
-				}
-				return sq
-			}).
-			Order(cols.CreatedAt.OrderDesc())
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := fm.Where(
+			keel.When(req.Provider != "", fm.Provider.Eq(req.Provider)),
+			enabled,
+		).
+			Load(fm.Items()).
+			Order(fm.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list form mappings: %w", err)
 		}
+
 		return entities, nil
 	})
 }
 
 func (r *repository) GetFormMapping(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*telematics.FormMapping, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*telematics.FormMapping, error) {
-		entity := new(telematics.FormMapping)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Relation(telematicscol.FormMappingRelations.Items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return telematicscol.FormMappingScopeTenant(sq, tenantInfo).
-					Where(telematicscol.FormMappingColumns.ID.Eq(), id)
-			}).
-			Scan(ctx)
+		fm := telematicsdb.FormMappings
+		entity, err := fm.Where(fm.ID.Eq(id)).Load(fm.Items()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "FormMapping")
+			return nil, formMappingErrors.Map(err, id.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -140,92 +126,73 @@ func (r *repository) SaveFormMapping(
 	items []*telematics.FormMappingItem,
 ) (*telematics.FormMapping, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*telematics.FormMapping, error) {
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			if mapping.ID.IsNil() {
-				mapping.ID = telematics.NewFormMappingID()
-				mapping.Version = 0
-				if _, insErr := tx.NewInsert().Model(mapping).Exec(ctx); insErr != nil {
-					return insErr
-				}
-			} else {
-				ov := mapping.Version
-				mapping.Version++
-				result, updErr := tx.NewUpdate().
-					Model(mapping).
-					WherePK().
-					Where(telematicscol.FormMappingColumns.Version.Eq(), ov).
-					OmitZero().
-					Returning("*").
-					Exec(ctx)
-				if updErr != nil {
-					return updErr
-				}
-				if raErr := dberror.CheckRowsAffected(
-					result,
-					"FormMapping",
-					mapping.ID.String(),
-				); raErr != nil {
-					return raErr
-				}
-				if _, delErr := tx.NewDelete().
-					Model((*telematics.FormMappingItem)(nil)).
-					Where(telematicscol.FormMappingItemColumns.MappingID.Eq(), mapping.ID).
-					Where(telematicscol.FormMappingItemColumns.OrganizationID.Eq(), mapping.OrganizationID).
-					Where(telematicscol.FormMappingItemColumns.BusinessUnitID.Eq(), mapping.BusinessUnitID).
-					Exec(ctx); delErr != nil {
-					return delErr
-				}
-			}
-
-			if len(items) == 0 {
-				return nil
-			}
-			for _, item := range items {
-				item.ID = telematics.NewFormMappingItemID()
-				item.MappingID = mapping.ID
-				item.OrganizationID = mapping.OrganizationID
-				item.BusinessUnitID = mapping.BusinessUnitID
-			}
-			if _, insErr := tx.NewInsert().Model(&items).Exec(ctx); insErr != nil {
-				return insErr
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, fmt.Errorf("save form mapping: %w", err)
+		if err := r.saveFormMapping(ctx, mapping, items); err != nil {
+			return nil, fmt.Errorf(
+				"save form mapping: %w",
+				formMappingErrors.Map(err, mapping.ID.String()),
+			)
 		}
+
 		mapping.Items = items
 		return mapping, nil
 	})
 }
 
+func (r *repository) saveFormMapping(
+	ctx context.Context,
+	mapping *telematics.FormMapping,
+	items []*telematics.FormMappingItem,
+) error {
+	db := r.db.Keel(ctx)
+	fm := telematicsdb.FormMappings
+	fi := telematicsdb.FormMappingItems
+
+	if mapping.ID.IsNil() {
+		mapping.ID = telematics.NewFormMappingID()
+		mapping.Version = 0
+		if err := fm.Create(ctx, db, mapping); err != nil {
+			return err
+		}
+	} else {
+		if err := fm.Save(ctx, db, mapping); err != nil {
+			return err
+		}
+		if _, err := fi.Where(fi.MappingID.Eq(mapping.ID)).Delete(ctx, db); err != nil {
+			return err
+		}
+	}
+
+	if len(items) == 0 {
+		return nil
+	}
+
+	for _, item := range items {
+		item.ID = telematics.NewFormMappingItemID()
+		item.MappingID = mapping.ID
+		item.OrganizationID = mapping.OrganizationID
+		item.BusinessUnitID = mapping.BusinessUnitID
+	}
+
+	return fi.CreateMany(ctx, db, items)
+}
+
 func (r *repository) DeleteFormMapping(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		err := r.db.DBForContext(ctx).RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			if _, delErr := tx.NewDelete().
-				Model((*telematics.FormMappingItem)(nil)).
-				Where(telematicscol.FormMappingItemColumns.MappingID.Eq(), id).
-				Where(telematicscol.FormMappingItemColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-				Where(telematicscol.FormMappingItemColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
-				Exec(ctx); delErr != nil {
-				return delErr
-			}
-			_, delErr := tx.NewDelete().
-				Model((*telematics.FormMapping)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return telematicscol.FormMappingScopeTenantDelete(dq, tenantInfo).
-						Where(telematicscol.FormMappingColumns.ID.Eq(), id)
-				}).
-				Exec(ctx)
-			return delErr
-		})
-		if err != nil {
+		db := r.db.Keel(ctx)
+		fi := telematicsdb.FormMappingItems
+		if _, err := fi.Where(fi.MappingID.Eq(id)).Delete(ctx, db); err != nil {
 			return fmt.Errorf("delete form mapping: %w", err)
 		}
+
+		fm := telematicsdb.FormMappings
+		if _, err := fm.Where(fm.ID.Eq(id)).Delete(ctx, db); err != nil {
+			return fmt.Errorf("delete form mapping: %w", err)
+		}
+
 		return nil
 	})
 }

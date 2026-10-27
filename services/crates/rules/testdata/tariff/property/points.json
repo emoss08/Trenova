@@ -1,0 +1,220 @@
+[
+ {
+  "name": "a weight range over a match with weight breaks takes the breaks and their neighbours",
+  "source": "tariff \"LTL\"\nlet w = shipment.weight ?? 0 lb\nlet perCwt = match w {\n  ..500 lb => $30/cwt\n  500 lb..1_000 lb => $31/cwt\n  1_000 lb..2_000 lb => $25/cwt\n  _ => $20/cwt\n}\ncharge \"Linehaul\" = perCwt * w\nproperty \"p\" {\n  vary shipment.weight in 1 lb..5_000 lb\n  expect total nondecreasing in shipment.weight\n}",
+  "property": "p",
+  "axes": [
+   [
+    "1 lb",
+    "2 lb",
+    "250 lb",
+    "499 lb",
+    "500 lb",
+    "501 lb",
+    "750 lb",
+    "999 lb",
+    "1000 lb",
+    "1001 lb",
+    "1250 lb",
+    "1500 lb",
+    "1749 lb",
+    "1999 lb",
+    "2000 lb",
+    "2001 lb",
+    "2375 lb",
+    "2750 lb",
+    "3125 lb",
+    "3500 lb",
+    "3874 lb",
+    "4249 lb",
+    "4624 lb",
+    "4999 lb"
+   ]
+  ]
+ },
+ {
+  "name": "a money range steps by its written cents",
+  "source": "tariff \"t\"\ninput rate: Money/mi = $0.55/mi\ncharge \"x\" = rate * shipment.distance\nproperty \"p\" {\n  vary input.rate in $0.50/mi..$0.60/mi\n  expect total >= $0\n}",
+  "property": "p",
+  "axes": [
+   [
+    "$0.50/mi",
+    "$0.51/mi",
+    "$0.52/mi",
+    "$0.53/mi",
+    "$0.54/mi",
+    "$0.55/mi",
+    "$0.56/mi",
+    "$0.57/mi",
+    "$0.58/mi",
+    "$0.59/mi"
+   ]
+  ]
+ },
+ {
+  "name": "a weight range steps by its written tenths",
+  "source": "tariff \"t\"\ncharge \"x\" = $1/lb * (shipment.weight ?? 0 lb)\nproperty \"p\" {\n  vary shipment.weight in 0.5 lb..2.5 lb\n  expect total >= $0\n}",
+  "property": "p",
+  "axes": [
+   [
+    "0.5 lb",
+    "0.6 lb",
+    "0.7 lb",
+    "0.8 lb",
+    "0.9 lb",
+    "1 lb",
+    "1.1 lb",
+    "1.2 lb",
+    "1.3 lb",
+    "1.4 lb",
+    "1.5 lb",
+    "1.6 lb",
+    "1.7 lb",
+    "1.8 lb",
+    "1.9 lb",
+    "2 lb",
+    "2.1 lb",
+    "2.2 lb",
+    "2.3 lb",
+    "2.4 lb"
+   ]
+  ]
+ },
+ {
+  "name": "dates step by a day and date-times by a minute",
+  "source": "tariff \"t\"\ncharge \"x\" = $1\nproperty \"p\" {\n  vary d in @2026-01-01..@2026-01-06\n  vary t in @2026-01-01T00:00Z..=@2026-01-01T00:03Z\n  expect d.year == 2026 and t.hour == 0\n}",
+  "property": "p",
+  "axes": [
+   [
+    "2026-01-01",
+    "2026-01-02",
+    "2026-01-03",
+    "2026-01-04",
+    "2026-01-05"
+   ],
+   [
+    "2026-01-01T00:00:00Z",
+    "2026-01-01T00:01:00Z",
+    "2026-01-01T00:02:00Z",
+    "2026-01-01T00:03:00Z"
+   ]
+  ]
+ },
+ {
+  "name": "a rate table's band edges are landmarks",
+  "source": "tariff \"t\"\nlet rate = tables.Breaks[shipment.weight ?? 0 lb] ?? $0/cwt\ncharge \"x\" = rate * (shipment.weight ?? 0 lb)\nproperty \"p\" {\n  vary shipment.weight in 100 lb..=1_000 lb\n  expect total >= $0\n}",
+  "context": {
+   "tables": [
+    {
+     "code": "Breaks",
+     "valueType": "Money/cwt",
+     "axes": [
+      {
+       "match": "Range",
+       "kind": "WeightBreak"
+      }
+     ],
+     "cells": [
+      {
+       "at": [
+        {
+         "min": "0",
+         "max": "700"
+        }
+       ],
+       "value": "20"
+      },
+      {
+       "at": [
+        {
+         "min": "700"
+        }
+       ],
+       "value": "15"
+      }
+     ]
+    }
+   ]
+  },
+  "property": "p",
+  "axes": [
+   [
+    "100 lb",
+    "101 lb",
+    "175 lb",
+    "212 lb",
+    "250 lb",
+    "287 lb",
+    "325 lb",
+    "362 lb",
+    "400 lb",
+    "474 lb",
+    "511 lb",
+    "549 lb",
+    "586 lb",
+    "624 lb",
+    "661 lb",
+    "699 lb",
+    "700 lb",
+    "701 lb",
+    "775 lb",
+    "812 lb",
+    "850 lb",
+    "924 lb",
+    "999 lb",
+    "1000 lb"
+   ]
+  ]
+ },
+ {
+  "name": "an input varies over its constraint at the constraint's written precision",
+  "source": "tariff \"t\"\ninput rate: Money/mi = $0.52/mi where $0.50/mi..=$0.55/mi\ncharge \"x\" = rate * shipment.distance\nproperty \"p\" {\n  vary input.rate\n  expect total >= $0\n}",
+  "property": "p",
+  "axes": [
+   [
+    "$0.50/mi",
+    "$0.51/mi",
+    "$0.52/mi",
+    "$0.53/mi",
+    "$0.54/mi",
+    "$0.55/mi"
+   ]
+  ]
+ },
+ {
+  "name": "enums take every variant and an optional one also none",
+  "source": "tariff \"t\"\ncharge \"x\" = $1\nproperty \"p\" {\n  vary rating.mode\n  vary shipment.freightClass\n  vary shipment.hazmat\n  expect total == $1\n}",
+  "property": "p",
+  "axes": [
+   [
+    "Sell",
+    "Buy"
+   ],
+   [
+    "Class50",
+    "Class55",
+    "Class60",
+    "Class65",
+    "Class70",
+    "Class77_5",
+    "Class85",
+    "Class92_5",
+    "Class100",
+    "Class110",
+    "Class125",
+    "Class150",
+    "Class175",
+    "Class200",
+    "Class250",
+    "Class300",
+    "Class400",
+    "Class500",
+    "none"
+   ],
+   [
+    "false",
+    "true"
+   ]
+  ]
+ }
+]

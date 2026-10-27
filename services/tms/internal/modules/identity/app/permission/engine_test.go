@@ -1,22 +1,22 @@
 package permission
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"errors"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/iamportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -935,10 +935,54 @@ func TestGetResourcePermissions_RegularUser(t *testing.T) {
 	assert.Equal(t, "shipment", result.Resource)
 	assert.Equal(t, permission.DataScopeOwn, result.DataScope)
 	assert.Contains(t, result.Operations, permission.OpRead)
-	assert.Empty(t, result.AccessibleFields,
-		"a list of only the classified fields would withhold every unclassified one; "+
-			"MaxSensitivity governs")
 	userRepo.AssertExpectations(t)
+	roleRepo.AssertExpectations(t)
+	cacheRepo.AssertExpectations(t)
+}
+
+func TestGetResourcePermissionsBatch_ReadsThePermissionsOnce(t *testing.T) {
+	t.Parallel()
+
+	eng, roleRepo, cacheRepo, _ := setupTestEngine(t)
+	ctx := t.Context()
+	userID := pulid.MustNew("usr_")
+	orgID := pulid.MustNew("org_")
+	roleID := pulid.MustNew("rol_")
+
+	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).Return(nil, nil).Once()
+	roleRepo.On("GetUserRoleAssignments", ctx, userID, orgID).
+		Return([]*permission.UserRoleAssignment{
+			{ID: pulid.MustNew("ura_"), RoleID: roleID, UserID: userID, OrganizationID: orgID},
+		}, nil).Once()
+	roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{roleID}).Return([]*permission.Role{
+		{
+			ID:             roleID,
+			Name:           "Viewer",
+			MaxSensitivity: permission.SensitivityInternal,
+			Permissions: []*permission.ResourcePermission{
+				{
+					ID:         pulid.MustNew("rp_"),
+					RoleID:     roleID,
+					Resource:   "shipment",
+					Operations: []permission.Operation{permission.OpRead},
+					DataScope:  permission.DataScopeOwn,
+				},
+			},
+		},
+	}, nil).Once()
+	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
+		Return(nil).Once()
+
+	details, err := eng.GetResourcePermissionsBatch(
+		ctx, userID, orgID, []string{"shipment", "customer", "shipment", "not_a_resource"},
+	)
+
+	require.NoError(t, err)
+	require.Len(t, details, 2, "each registered resource once; an unknown one has no entry")
+	assert.Contains(t, details["shipment"].Operations, permission.OpRead)
+	assert.Equal(t, permission.DataScopeOwn, details["shipment"].DataScope)
+	assert.Empty(t, details["customer"].Operations)
+	assert.Equal(t, permission.SensitivityInternal, details["customer"].MaxSensitivity)
 	roleRepo.AssertExpectations(t)
 	cacheRepo.AssertExpectations(t)
 }
@@ -1575,7 +1619,7 @@ func TestCheckBatch_Empty(t *testing.T) {
 	cacheRepo.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
 }
 
-func policyCacheReadOnlyPerms() *permissionports.CachedPermissions {
+func readOnlyShipmentPerms() *permissionports.CachedPermissions {
 	return &permissionports.CachedPermissions{
 		MaxSensitivity: string(permission.SensitivityInternal),
 		Resources: map[string]*permissionports.CachedResourcePermission{
@@ -1588,14 +1632,12 @@ func policyCacheReadOnlyPerms() *permissionports.CachedPermissions {
 	}
 }
 
-func TestCheck_AccessPolicyCacheHitSkipsDatabase(t *testing.T) {
+func TestCheck_AnEnabledDenyPolicyFromTheRepositoryDenies(t *testing.T) {
 	t.Parallel()
 
 	eng, _, cacheRepo, _ := setupTestEngine(t)
 	iamRepo := iamportsmock.NewMockIAMRepository(t)
-	policyCache := iamportsmock.NewMockAccessPolicyCacheRepository(t)
 	eng.iamRepo = iamRepo
-	eng.policyCache = policyCache
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -1603,9 +1645,9 @@ func TestCheck_AccessPolicyCacheHitSkipsDatabase(t *testing.T) {
 	lookup := iamports.IAMTenantPolicyLookupRequest{OrganizationID: orgID, BusinessUnitID: buID}
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).
-		Return(policyCacheReadOnlyPerms(), nil).
+		Return(readOnlyShipmentPerms(), nil).
 		Once()
-	policyCache.EXPECT().GetEnabled(ctx, lookup).Return([]*iam.AccessPolicy{
+	iamRepo.EXPECT().ListEnabledTenantAccessPolicies(ctx, lookup).Return([]*iam.AccessPolicy{
 		{
 			ID:        pulid.MustNew("ap_"),
 			Resource:  "shipment",
@@ -1613,7 +1655,7 @@ func TestCheck_AccessPolicyCacheHitSkipsDatabase(t *testing.T) {
 			Effect:    iam.PolicyEffectDeny,
 			Enabled:   true,
 		},
-	}, true, nil).Once()
+	}, nil).Once()
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         userID,
@@ -1626,31 +1668,27 @@ func TestCheck_AccessPolicyCacheHitSkipsDatabase(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, result.Allowed)
 	assert.Equal(t, "iam_policy_denied", result.Reason)
-	iamRepo.AssertNotCalled(t, "ListEnabledTenantAccessPolicies", mock.Anything, mock.Anything)
-	policyCache.AssertNotCalled(t, "SetEnabled", mock.Anything, mock.Anything, mock.Anything)
 }
 
-func TestCheck_AccessPolicyCacheMissPopulatesCache(t *testing.T) {
+func TestCheck_NoEnabledPoliciesLeaveTheRoleDecision(t *testing.T) {
 	t.Parallel()
 
 	eng, _, cacheRepo, _ := setupTestEngine(t)
 	iamRepo := iamportsmock.NewMockIAMRepository(t)
-	policyCache := iamportsmock.NewMockAccessPolicyCacheRepository(t)
 	eng.iamRepo = iamRepo
-	eng.policyCache = policyCache
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 	lookup := iamports.IAMTenantPolicyLookupRequest{OrganizationID: orgID, BusinessUnitID: buID}
-	policies := []*iam.AccessPolicy{}
 
 	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).
-		Return(policyCacheReadOnlyPerms(), nil).
+		Return(readOnlyShipmentPerms(), nil).
 		Once()
-	policyCache.EXPECT().GetEnabled(ctx, lookup).Return(nil, false, nil).Once()
-	iamRepo.EXPECT().ListEnabledTenantAccessPolicies(ctx, lookup).Return(policies, nil).Once()
-	policyCache.EXPECT().SetEnabled(ctx, lookup, policies).Return(nil).Once()
+	iamRepo.EXPECT().
+		ListEnabledTenantAccessPolicies(ctx, lookup).
+		Return([]*iam.AccessPolicy{}, nil).
+		Once()
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         userID,
@@ -1664,57 +1702,12 @@ func TestCheck_AccessPolicyCacheMissPopulatesCache(t *testing.T) {
 	assert.True(t, result.Allowed)
 }
 
-func TestCheck_AccessPolicyCacheFailureFallsBackToDatabase(t *testing.T) {
+func TestCheckBatch_ReadsTheAccessPoliciesOncePerBatch(t *testing.T) {
 	t.Parallel()
 
 	eng, _, cacheRepo, _ := setupTestEngine(t)
 	iamRepo := iamportsmock.NewMockIAMRepository(t)
-	policyCache := iamportsmock.NewMockAccessPolicyCacheRepository(t)
 	eng.iamRepo = iamRepo
-	eng.policyCache = policyCache
-	ctx := t.Context()
-	userID := pulid.MustNew("usr_")
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-	lookup := iamports.IAMTenantPolicyLookupRequest{OrganizationID: orgID, BusinessUnitID: buID}
-	policies := []*iam.AccessPolicy{
-		{
-			ID:        pulid.MustNew("ap_"),
-			Resource:  "shipment",
-			Operation: string(permission.OpRead),
-			Effect:    iam.PolicyEffectDeny,
-			Enabled:   true,
-		},
-	}
-
-	cacheRepo.On("Get", ctx, allRolesKey(userID, orgID)).
-		Return(policyCacheReadOnlyPerms(), nil).
-		Once()
-	policyCache.EXPECT().GetEnabled(ctx, lookup).Return(nil, false, errors.New("redis down")).Once()
-	iamRepo.EXPECT().ListEnabledTenantAccessPolicies(ctx, lookup).Return(policies, nil).Once()
-	policyCache.EXPECT().SetEnabled(ctx, lookup, policies).Return(errors.New("redis down")).Once()
-
-	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
-		UserID:         userID,
-		BusinessUnitID: buID,
-		OrganizationID: orgID,
-		Resource:       "shipment",
-		Operation:      permission.OpRead,
-	})
-
-	require.NoError(t, err)
-	assert.False(t, result.Allowed)
-	assert.Equal(t, "iam_policy_denied", result.Reason)
-}
-
-func TestCheckBatch_AccessPolicyCacheReadOncePerBatch(t *testing.T) {
-	t.Parallel()
-
-	eng, _, cacheRepo, _ := setupTestEngine(t)
-	iamRepo := iamportsmock.NewMockIAMRepository(t)
-	policyCache := iamportsmock.NewMockAccessPolicyCacheRepository(t)
-	eng.iamRepo = iamRepo
-	eng.policyCache = policyCache
 	ctx := t.Context()
 	userID := pulid.MustNew("usr_")
 	orgID := pulid.MustNew("org_")
@@ -1731,7 +1724,10 @@ func TestCheckBatch_AccessPolicyCacheReadOncePerBatch(t *testing.T) {
 		},
 		ExpiresAt: timeutils.NowUnix() + 3600,
 	}, nil).Once()
-	policyCache.EXPECT().GetEnabled(ctx, lookup).Return([]*iam.AccessPolicy{}, true, nil).Once()
+	iamRepo.EXPECT().
+		ListEnabledTenantAccessPolicies(ctx, lookup).
+		Return([]*iam.AccessPolicy{}, nil).
+		Once()
 
 	result, err := eng.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
 		UserID:         userID,
@@ -1749,7 +1745,6 @@ func TestCheckBatch_AccessPolicyCacheReadOncePerBatch(t *testing.T) {
 	for _, r := range result.Results {
 		assert.True(t, r.Allowed)
 	}
-	iamRepo.AssertNotCalled(t, "ListEnabledTenantAccessPolicies", mock.Anything, mock.Anything)
 }
 
 func TestCheck_AllowsWhatAGrantImpliesAtEvaluation(t *testing.T) {

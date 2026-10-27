@@ -91,7 +91,7 @@ type Params struct {
 	Budgets     agentports.AgentBudgetService `optional:"true"`
 	Runs        agentports.AgentRunRepository
 	Definitions agentdefinitionports.AgentDefinitionRepository
-	DB          kernelports.DBConnection
+	DB          kernelports.Transactor
 	Zones       agentports.TenantTimezoneReader `optional:"true"`
 }
 
@@ -105,7 +105,7 @@ type Service struct {
 	budgets      agentports.AgentBudgetService
 	definitions  definitionResolver
 	runs         RunReader
-	db           kernelports.DBConnection
+	db           kernelports.Transactor
 	zones        agentports.TenantTimezoneReader
 	// schemas holds each tool's compiled schema, against which an approver's
 	// changes are checked.

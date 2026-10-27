@@ -62,7 +62,7 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
     "edi-mapping-profile-list",
     "edi-message-list",
     "edi-partner-list",
-    "edi-test-case-list",
+    "edi-flow-instance-list",
   ],
   equipment_manufacturer: ["equipment-manufacturer-list"],
   equipment_type: ["equipment-type-list"],
@@ -82,7 +82,9 @@ const RECORD_CHANGE_KEYS: Record<string, QueryKeyRoot[]> = {
   pay_advance: ["pay-advance-list"],
   pay_code: ["pay-code-list"],
   rate_agreement: ["rate-agreement-list"],
-  rate_matrix: ["rate-matrix-list"],
+  // A published version moves every template's pinned tables. The Studio's context follows on
+  // its own, when a cell load answers at a newer stamp.
+  rate_matrix: ["rate-matrix-list", "rateMatrix", "formulaTemplateTables"],
   rate_zone: ["rate-zone-list"],
   recurring_deduction: ["recurring-deduction-list"],
   recurring_earning: ["recurring-earning-list"],

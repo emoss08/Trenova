@@ -4,36 +4,34 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	mappingEntity      = "Accounting mapping"
-	mappingInsertBatch = 500
-	mappingLabelField  = "targetLabel"
+	mappingEntity     = "Accounting mapping"
+	mappingLabelField = "targetLabel"
 )
+
+var mappingErrors = dberror.Mapping{Entity: mappingEntity}
 
 type MappingParams struct {
 	fx.In
@@ -62,135 +60,69 @@ func (r *mappingRepository) ListByConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingsync.AccountingMapping, error) {
-			entities := make([]*accountingsync.AccountingMapping, 0)
-			cols := accountingsynccol.AccountingMappingColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(accountingsynccol.AccountingMappingApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Order(cols.TargetType.OrderAsc(), cols.ID.OrderAsc())
-			if len(req.TargetTypes) > 0 {
-				query = query.Where(cols.TargetType.In(), bun.List(req.TargetTypes))
-			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			am := accountingsyncdb.AccountingMappings
+			return am.Where(
+				am.ConnectionID.Eq(req.ConnectionID),
+				keel.When(len(req.TargetTypes) > 0, am.TargetType.In(req.TargetTypes...)),
+			).
+				Order(am.TargetType.Asc(), am.ID.Asc()).
+				All(ctx, r.db.Keel(ctx))
 		},
 	)
 }
 
-func (r *mappingRepository) applyMappingFilters(
-	q *bun.SelectQuery,
-	req *accountingsyncports.ListAccountingMappingsConnectionRequest,
-) *bun.SelectQuery {
-	cols := accountingsynccol.AccountingMappingColumns
-	q = q.Where(cols.ConnectionID.Qualified()+" = ?", req.ConnectionID)
-	if len(req.TargetTypes) > 0 {
-		q = q.Where(cols.TargetType.Qualified()+" IN (?)", bun.List(req.TargetTypes))
+func mappingFilters(req *accountingsyncports.ListAccountingMappingsConnectionRequest) []keel.Pred {
+	am := accountingsyncdb.AccountingMappings
+	term := stringutils.NormalizeName(req.Search)
+
+	return []keel.Pred{
+		am.ConnectionID.Eq(req.ConnectionID),
+		keel.When(len(req.TargetTypes) > 0, am.TargetType.In(req.TargetTypes...)),
+		keel.When(len(req.States) > 0, am.State.In(req.States...)),
+		keel.When(req.RequiredOnly, requiredTargets()),
+		keel.When(term != "", am.SearchLabel.Contains(term)),
 	}
-	if len(req.States) > 0 {
-		q = q.Where(cols.State.Qualified()+" IN (?)", bun.List(req.States))
-	}
-	if req.RequiredOnly {
-		q = q.WhereGroup(" AND ", requiredTargetsGroup)
-	}
-	if term := stringutils.NormalizeName(req.Search); term != "" {
-		q = q.Where(
-			cols.SearchLabel.Qualified()+" LIKE ?",
-			"%"+stringutils.EscapeLikePattern(term)+"%",
-		)
-	}
-	return q
 }
 
-func requiredTargetsGroup(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := accountingsynccol.AccountingMappingColumns
+func requiredTargets() keel.Pred {
+	am := accountingsyncdb.AccountingMappings
+	var required []keel.Pred
 	for _, target := range accountingsync.AllMappingTargetTypes() {
 		for _, key := range target.Keys() {
 			if !accountingsync.IsRequiredTarget(target, key) {
 				continue
 			}
-			q = q.WhereOr(
-				"("+cols.TargetType.Qualified()+" = ? AND "+cols.TrenovaKey.Qualified()+" = ?)",
-				target,
-				key,
-			)
+			required = append(required, keel.And(am.TargetType.Eq(target), am.TrenovaKey.Eq(key)))
 		}
 	}
-	return q
+	return keel.Or(required...)
 }
 
 func (r *mappingRepository) ListConnection(
 	ctx context.Context,
 	req *accountingsyncports.ListAccountingMappingsConnectionRequest,
 ) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*accountingsync.AccountingMapping], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
 			if req.Filter != nil && len(req.Filter.Sort) == 0 {
 				req.Filter.Sort = []domaintypes.SortField{
 					{Field: mappingLabelField, Direction: dbtype.SortDirectionAsc},
 				}
 			}
 
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*accountingsync.AccountingMapping)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							accountingsynccol.AccountingMappingTable.Alias,
-							req.Filter,
-							(*accountingsync.AccountingMapping)(nil),
-						)
-						return r.applyMappingFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count accounting mappings", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*accountingsync.AccountingMapping]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*accountingsync.AccountingMapping) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(items).
-							ColumnExpr(accountingsynccol.AccountingMappingTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							accountingsynccol.AccountingMappingTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*accountingsync.AccountingMapping)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-						return r.applyMappingFilters(sq, req), nil
-					},
+				r.db.Keel(ctx),
+				accountingsyncdb.AccountingMappings.Where(mappingFilters(req)...),
+				&listquery.Request[accountingsync.AccountingMapping]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
 				},
 			)
 			if err != nil {
-				log.Error("failed to list accounting mappings", zap.Error(err))
+				r.l.Error("failed to list accounting mappings", zap.Error(err))
 				return nil, err
 			}
 
@@ -207,16 +139,9 @@ func (r *mappingRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
-			entity := new(accountingsync.AccountingMapping)
-			cols := accountingsynccol.AccountingMappingColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Where(cols.ID.Eq(), req.ID).
-				Apply(accountingsynccol.AccountingMappingApplyTenant(req.TenantInfo)).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, mappingEntity)
+			entity, err := accountingsyncdb.AccountingMappings.Get(ctx, r.db.Keel(ctx), req.ID)
+			if err != nil {
+				return nil, mappingErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -236,19 +161,8 @@ func (r *mappingRepository) GetByIDs(
 				return []*accountingsync.AccountingMapping{}, nil
 			}
 
-			entities := make([]*accountingsync.AccountingMapping, 0, len(req.IDs))
-			cols := accountingsynccol.AccountingMappingColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(cols.ID.In(), bun.List(req.IDs)).
-				Apply(accountingsynccol.AccountingMappingApplyTenant(req.TenantInfo)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			am := accountingsyncdb.AccountingMappings
+			return am.Where(am.ID.In(req.IDs...)).Limit(len(req.IDs)).List(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -261,22 +175,19 @@ func (r *mappingRepository) GetByTarget(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
-			entity := new(accountingsync.AccountingMapping)
-			cols := accountingsynccol.AccountingMappingColumns
-
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Apply(accountingsynccol.AccountingMappingApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Where(cols.TargetType.Eq(), req.TargetType)
+			am := accountingsyncdb.AccountingMappings
+			key := am.TrenovaKey.Eq(req.TrenovaKey)
 			if req.TargetType.KeyedByObject() {
-				query = query.Where(cols.TrenovaObjectID.Eq(), req.TrenovaObjectID)
-			} else {
-				query = query.Where(cols.TrenovaKey.Eq(), req.TrenovaKey)
+				key = am.TrenovaObjectID.Eq(req.TrenovaObjectID)
 			}
-			if err := query.Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, mappingEntity)
+
+			entity, err := am.Where(
+				am.ConnectionID.Eq(req.ConnectionID),
+				am.TargetType.Eq(req.TargetType),
+				key,
+			).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, mappingErrors.Map(err, "")
 			}
 
 			return entity, nil
@@ -289,23 +200,20 @@ func (r *mappingRepository) CreateMissing(
 	entities []*accountingsync.AccountingMapping,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		var created int64
-		for start := 0; start < len(entities); start += mappingInsertBatch {
-			batch := entities[start:min(start+mappingInsertBatch, len(entities))]
-			results, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&batch).
-				On("CONFLICT (organization_id, business_unit_id, connection_id, target_type, " +
-					"COALESCE(trenova_object_id, ''), COALESCE(trenova_key, '')) DO NOTHING").
-				Exec(ctx)
-			if err != nil {
-				return created, fmt.Errorf("create accounting mappings: %w", err)
-			}
-			affected, err := results.RowsAffected()
-			if err != nil {
-				return created, err
-			}
-			created += affected
+		am := accountingsyncdb.AccountingMappings
+		created, err := am.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			entities,
+			am.OrganizationID,
+			am.BusinessUnitID,
+			am.ConnectionID,
+			am.TargetType,
+			am.TrenovaObjectID.Coalesce(keel.ConstText("")),
+			am.TrenovaKey.Coalesce(keel.ConstText("")),
+		)
+		if err != nil {
+			return created, fmt.Errorf("create accounting mappings: %w", err)
 		}
 
 		return created, nil
@@ -317,45 +225,36 @@ func (r *mappingRepository) ApplyScoring(
 	entities []*accountingsync.AccountingMapping,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := accountingsynccol.AccountingMappingColumns
+		am := accountingsyncdb.AccountingMappings
+		db := r.db.Keel(ctx)
 		var applied int64
 
 		for _, entity := range entities {
-			ov := entity.Version
-			entity.Version++
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Column(
-					cols.TargetLabel.String(),
-					cols.SearchLabel.String(),
-					cols.ExternalID.String(),
-					cols.ExternalName.String(),
-					cols.State.String(),
-					cols.Source.String(),
-					cols.Confidence.String(),
-					cols.Reason.String(),
-					cols.Signals.String(),
-					cols.Version.String(),
-					cols.UpdatedAt.String(),
-				).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Where(cols.State.NotEq(), accountingsync.MappingStateConfirmed).
-				Exec(ctx)
+			entity.SearchLabel = stringutils.NormalizeName(entity.TargetLabel)
+			affected, err := am.Where(
+				am.ID.Eq(entity.ID),
+				am.Version.Eq(entity.Version),
+				am.State.Ne(accountingsync.MappingStateConfirmed),
+			).Update(
+				ctx,
+				db,
+				am.TargetLabel.To(entity.TargetLabel),
+				am.SearchLabel.To(entity.SearchLabel),
+				stringOrNull(am.ExternalID, entity.ExternalID),
+				stringOrNull(am.ExternalName, entity.ExternalName),
+				am.State.To(entity.State),
+				stringOrNull(am.Source.StringCol, string(entity.Source)),
+				float64OrNull(am.Confidence, entity.Confidence),
+				stringOrNull(am.Reason, entity.Reason),
+				am.Signals.To(entity.Signals),
+			)
 			if err != nil {
-				entity.Version = ov
 				return applied, fmt.Errorf("apply accounting mapping scores: %w", err)
 			}
-			affected, err := results.RowsAffected()
-			if err != nil {
-				entity.Version = ov
-				return applied, err
-			}
 			if affected == 0 {
-				entity.Version = ov
 				continue
 			}
+			entity.Version++
 			applied += affected
 		}
 
@@ -368,14 +267,17 @@ func (r *mappingRepository) UpdateLabels(
 	entities []*accountingsync.AccountingMapping,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := accountingsynccol.AccountingMappingColumns
+		am := accountingsyncdb.AccountingMappings
+		db := r.db.Keel(ctx)
 		for _, entity := range entities {
-			if _, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				Column(cols.TargetLabel.String(), cols.SearchLabel.String()).
-				WherePK().
-				Exec(ctx); err != nil {
+			entity.SearchLabel = stringutils.NormalizeName(entity.TargetLabel)
+			if _, err := am.Where(am.ID.Eq(entity.ID)).Update(
+				ctx,
+				db,
+				am.TargetLabel.To(entity.TargetLabel),
+				am.SearchLabel.To(entity.SearchLabel),
+				am.Version.ToExpr(am.Version),
+			); err != nil {
 				return fmt.Errorf("update accounting mapping labels: %w", err)
 			}
 		}
@@ -391,27 +293,11 @@ func (r *mappingRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingMapping, error) {
-			cols := accountingsynccol.AccountingMappingColumns
 			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Exec(ctx)
+			err := accountingsyncdb.AccountingMappings.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				mappingEntity,
-				entity.ID.String(),
-			); err != nil {
-				entity.Version = ov
-				return nil, err
+				return nil, mappingErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -421,32 +307,26 @@ func (r *mappingRepository) Update(
 
 func (r *mappingRepository) CountByState(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	connectionID pulid.ID,
 ) ([]accountingsyncports.AccountingMappingCount, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]accountingsyncports.AccountingMappingCount, error) {
-			cols := accountingsynccol.AccountingMappingColumns
-			counts := make(
-				[]accountingsyncports.AccountingMappingCount,
-				0,
-				len(accountingsync.AllMappingTargetTypes())*3,
+			am := accountingsyncdb.AccountingMappings
+			counts, err := keel.Into[accountingsyncports.AccountingMappingCount](
+				ctx,
+				r.db.Keel(ctx),
+				am.Group(am.TargetType, am.State).
+					Pick(am.TargetType, am.State, keel.Count()).
+					Where(am.ConnectionID.Eq(connectionID)),
 			)
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*accountingsync.AccountingMapping)(nil)).
-				ColumnExpr(cols.TargetType.As("target_type")).
-				ColumnExpr(cols.State.As("state")).
-				ColumnExpr("COUNT(*) AS count").
-				Apply(accountingsynccol.AccountingMappingApplyTenant(tenantInfo)).
-				Where(cols.ConnectionID.Eq(), connectionID).
-				GroupExpr(cols.TargetType.Qualified()).
-				GroupExpr(cols.State.Qualified()).
-				Scan(ctx, &counts); err != nil {
+			if err != nil {
 				return nil, err
+			}
+			if counts == nil {
+				counts = []accountingsyncports.AccountingMappingCount{}
 			}
 
 			return counts, nil
@@ -456,39 +336,31 @@ func (r *mappingRepository) CountByState(
 
 func (r *mappingRepository) ListOwnerOperators(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*worker.Worker, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.Worker, error) {
-		db := r.db.DBForContext(ctx)
-		settled := db.NewSelect().
-			Model((*driversettlement.Settlement)(nil)).
-			ColumnExpr(driversettlementcol.SettlementColumns.WorkerID.Qualified()).
-			Apply(driversettlementcol.SettlementApplyTenant(tenantInfo)).
-			Where(
-				driversettlementcol.SettlementColumns.Classification.Eq(),
-				driverpay.PayeeClassificationOwnerOperator,
-			).
-			Where(
-				driversettlementcol.SettlementColumns.Status.In(),
-				bun.List([]driversettlement.Status{
-					driversettlement.StatusPosted,
-					driversettlement.StatusPaid,
-				}),
-			)
+		ds := driversettlementdb.Settlements
+		settled := ds.Pick(ds.WorkerID).Where(
+			ds.Classification.Eq(driverpay.PayeeClassificationOwnerOperator),
+			ds.Status.In(driversettlement.StatusPosted, driversettlement.StatusPaid),
+		)
 
-		workers := make([]*worker.Worker, 0)
-		if err := db.NewSelect().
-			Model(&workers).
-			Relation(workercol.WorkerRelations.State).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, tenantInfo).
-					Where(buncolgen.Expr("{0} IN (?)", workercol.WorkerColumns.ID), settled)
-			}).
-			Order(workercol.WorkerColumns.ID.OrderAsc()).
-			Scan(ctx); err != nil {
+		wrk := workerdb.Workers
+		workers, err := wrk.Where(wrk.ID.InQuery(settled)).
+			Load(wrk.State()).
+			Order(wrk.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list owner-operators", zap.Error(err))
 			return nil, fmt.Errorf("list owner-operators: %w", err)
 		}
 		return workers, nil
 	})
+}
+
+func float64OrNull(col keel.Float64Col, value *float64) keel.Assignment {
+	if value == nil {
+		return col.ToNull()
+	}
+	return col.To(*value)
 }

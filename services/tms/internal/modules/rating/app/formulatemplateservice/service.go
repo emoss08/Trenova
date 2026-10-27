@@ -8,71 +8,132 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulalibrary"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
+type sourceChecker interface {
+	CheckSource(ctx context.Context, req *tariff.SourceCheckRequest) (*tariff.SourceCheck, error)
+	RunTests(ctx context.Context, req *tariff.TestRequest) (*rules.TariffTestRun, error)
+	TestChecked(
+		ctx context.Context,
+		checked *tariff.SourceCheck,
+		source string,
+	) (*rules.TariffTestRun, error)
+	ScaffoldTest(ctx context.Context, req *tariff.ScaffoldRequest) (*rules.TariffScaffold, error)
+	CheckWithContext(
+		ctx context.Context,
+		req *tariff.ContextCheckRequest,
+	) (*rules.TariffCheck, error)
+	Context(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		libraries tariff.LibrarySet,
+	) (*rules.TariffContext, error)
+	TableStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)
+	TableCells(ctx context.Context, req *tariff.TableCellsRequest) (*tariff.TableCells, error)
+	SetName(ctx context.Context, source, name string) (string, error)
+}
+
+type billingResolver interface {
+	BillingVersion(
+		ctx context.Context,
+		template *formulatemplate.FormulaTemplate,
+		tenantInfo pagination.TenantInfo,
+		asOf int64,
+	) (tariff.BillingResolution, error)
+	PinnedLibraries(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		imports []tarifftypes.Import,
+	) ([]rules.TariffLibrary, error)
+	LatestLibraries(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		sources ...string,
+	) (tariff.LibrarySet, error)
+}
+
+type approvedLibraries interface {
+	ListLatestApproved(
+		ctx context.Context,
+		req *formulalibraryports.ListApprovedLibrariesRequest,
+	) ([]*formulalibrary.FormulaLibraryVersion, error)
+}
+
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	DB             kernelports.DBConnection
-	Repo           formulatemplateports.FormulaTemplateRepository
-	VersionRepo    formulatemplateports.FormulaTemplateVersionRepository
-	TestCaseRepo   formulatemplateports.FormulaTemplateTestCaseRepository
-	ReviewRepo     formulatemplateports.FormulaTemplateReviewRepository
-	ShipmentRepo   shipmentports.ShipmentRepository
-	FormulaService *formula.Service
-	Hydrator       ratequoteports.ShipmentRatingHydrator
-	AuditService   auditports.AuditService
-	Notifications  *notificationservice.Service   `optional:"true"`
-	Roles          permissionports.RoleRepository `optional:"true"`
+	Logger          *zap.Logger
+	DB              kernelports.Transactor
+	Repo            formulatemplateports.FormulaTemplateRepository
+	VersionRepo     formulatemplateports.FormulaTemplateVersionRepository
+	ReviewRepo      formulatemplateports.FormulaTemplateReviewRepository
+	LibraryVersions formulalibraryports.FormulaLibraryVersionRepository
+	Checker         *tariff.Checker
+	Resolver        *tariff.TemplateResolver
+	Rater           tariffports.Rater
+	Dependents      rateagreementports.TemplateInputsLister
+	Records         tariffports.RecordBuilder  `optional:"true"`
+	RatedShipments  tariffports.RatedShipments `optional:"true"`
+	AuditService    auditports.AuditService
+	Notifications   *notificationservice.Service   `optional:"true"`
+	Roles           permissionports.RoleRepository `optional:"true"`
 }
 
 type Service struct {
-	l              *zap.Logger
-	db             kernelports.DBConnection
-	repo           formulatemplateports.FormulaTemplateRepository
-	versionRepo    formulatemplateports.FormulaTemplateVersionRepository
-	testCaseRepo   formulatemplateports.FormulaTemplateTestCaseRepository
-	reviewRepo     formulatemplateports.FormulaTemplateReviewRepository
-	shipmentRepo   shipmentports.ShipmentRepository
-	formulaService *formula.Service
-	hydrator       ratequoteports.ShipmentRatingHydrator
-	auditService   auditports.AuditService
-	notifications  *notificationservice.Service
-	roles          permissionports.RoleRepository
+	l             *zap.Logger
+	db            kernelports.Transactor
+	repo          formulatemplateports.FormulaTemplateRepository
+	versionRepo   formulatemplateports.FormulaTemplateVersionRepository
+	reviewRepo    formulatemplateports.FormulaTemplateReviewRepository
+	libraries     approvedLibraries
+	checker       sourceChecker
+	resolver      billingResolver
+	rater         tariffports.Rater
+	dependents    rateagreementports.TemplateInputsLister
+	records       tariffports.RecordBuilder
+	rated         tariffports.RatedShipments
+	auditService  auditports.AuditService
+	notifications *notificationservice.Service
+	roles         permissionports.RoleRepository
 }
 
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	return &Service{
-		l:              p.Logger.Named("service.formulatemplate"),
-		db:             p.DB,
-		repo:           p.Repo,
-		versionRepo:    p.VersionRepo,
-		testCaseRepo:   p.TestCaseRepo,
-		reviewRepo:     p.ReviewRepo,
-		shipmentRepo:   p.ShipmentRepo,
-		formulaService: p.FormulaService,
-		hydrator:       p.Hydrator,
-		auditService:   p.AuditService,
-		notifications:  p.Notifications,
-		roles:          p.Roles,
+		l:             p.Logger.Named("service.formulatemplate"),
+		db:            p.DB,
+		repo:          p.Repo,
+		versionRepo:   p.VersionRepo,
+		reviewRepo:    p.ReviewRepo,
+		libraries:     p.LibraryVersions,
+		checker:       p.Checker,
+		resolver:      p.Resolver,
+		rater:         p.Rater,
+		dependents:    p.Dependents,
+		records:       p.Records,
+		rated:         p.RatedShipments,
+		auditService:  p.AuditService,
+		notifications: p.Notifications,
+		roles:         p.Roles,
 	}
 }
 
@@ -81,38 +142,22 @@ func (s *Service) Create(
 	entity *formulatemplate.FormulaTemplate,
 	userID pulid.ID,
 ) (*formulatemplate.FormulaTemplate, error) {
-	return s.CreateWithTestCases(ctx, entity, userID, nil)
-}
-
-func (s *Service) CreateWithTestCases(
-	ctx context.Context,
-	entity *formulatemplate.FormulaTemplate,
-	userID pulid.ID,
-	testCases []*TestCaseInput,
-) (*formulatemplate.FormulaTemplate, error) {
 	log := s.l.With(
 		zap.String("operation", "Create"),
 		zap.String("name", entity.Name),
 	)
 
-	// A template is born a draft whatever the payload claims. Active is
-	// reached only through review, and the review stamps are set by the
-	// reviewers, not by whoever typed the record in.
 	entity.Status = formulatemplate.StatusDraft
 	clearApprovalFields(entity)
 
-	if err := s.validateTemplate(ctx, entity); err != nil {
-		return nil, err
-	}
-
-	if err := validateHeldTestCases(testCases); err != nil {
+	if err := s.prepareContent(ctx, entity); err != nil {
 		return nil, err
 	}
 
 	entity.CurrentVersionNumber = 1
 
 	var createdEntity *formulatemplate.FormulaTemplate
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		created, txErr := s.repo.Create(txCtx, entity)
 		if txErr != nil {
 			log.Error("failed to create formula template", zap.Error(txErr))
@@ -123,20 +168,6 @@ func (s *Service) CreateWithTestCases(
 			txCtx, created, 1, userID, "Initial version", nil,
 		); txErr != nil {
 			log.Error("failed to create version snapshot", zap.Error(txErr))
-			return txErr
-		}
-
-		if txErr = s.createRecordedTestCases(
-			txCtx,
-			created,
-			pagination.TenantInfo{
-				OrgID:  created.OrganizationID,
-				BuID:   created.BusinessUnitID,
-				UserID: userID,
-			},
-			testCases,
-		); txErr != nil {
-			log.Error("failed to create held test scenarios", zap.Error(txErr))
 			return txErr
 		}
 
@@ -162,45 +193,35 @@ func (s *Service) CreateWithTestCases(
 
 func (s *Service) Update(
 	ctx context.Context,
-	entity *formulatemplate.FormulaTemplate,
+	payload *formulatemplate.FormulaTemplate,
 	userID pulid.ID,
 ) (*formulatemplate.FormulaTemplate, error) {
 	log := s.l.With(
 		zap.String("operation", "Update"),
-		zap.String("id", entity.ID.String()),
+		zap.String("id", payload.ID.String()),
 	)
-
-	if err := s.validateTemplate(ctx, entity); err != nil {
-		return nil, err
-	}
 
 	original, err := s.getTemplateByID(
 		ctx,
-		entity.ID,
-		entity.GetOrganizationID(),
-		entity.GetBusinessUnitID(),
+		payload.ID,
+		payload.GetOrganizationID(),
+		payload.GetBusinessUnitID(),
 	)
 	if err != nil {
 		log.Error("failed to get original formula template", zap.Error(err))
 		return nil, err
 	}
 
-	if entity.Status != original.Status {
-		return nil, errortypes.NewValidationError(
-			"status",
-			errortypes.ErrInvalid,
-			fmt.Sprintf(
-				"Status cannot be changed from %s to %s here; "+
-					"submit, approve, reject, or archive the template instead",
-				original.Status,
-				entity.Status,
-			),
-		)
+	entity := withContent(original, payload)
+	if err = s.prepareContent(ctx, entity); err != nil {
+		return nil, err
 	}
 
-	carryApprovalFields(entity, original)
-
-	material := entity.HasMaterialChange(original)
+	material, err := s.materialChange(ctx, original, entity)
+	if err != nil {
+		log.Error("failed to compare the source with the stored one", zap.Error(err))
+		return nil, err
+	}
 
 	auditComment := "Formula template updated"
 	revertsApproval := material &&
@@ -225,7 +246,7 @@ func (s *Service) Update(
 	}
 
 	var updatedEntity *formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		updated, txErr := s.repo.Update(txCtx, entity)
 		if txErr != nil {
 			log.Error("failed to update formula template", zap.Error(txErr))
@@ -293,17 +314,24 @@ func (s *Service) Duplicate(
 		return nil, err
 	}
 
+	if len(sources) == 0 {
+		return nil, errortypes.NewNotFoundError("Formula templates not found")
+	}
+
+	copies, err := s.namedCopies(ctx, req.TenantInfo, sources)
+	if err != nil {
+		log.Error("failed to name the copies", zap.Error(err))
+		return nil, err
+	}
+
 	sourceNames := make(map[pulid.ID]string, len(sources))
 	for _, source := range sources {
-		if vErr := s.validateExpression(ctx, source); vErr != nil {
-			return nil, vErr
-		}
 		sourceNames[source.ID] = source.Name
 	}
 
 	var entities []*formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		duplicated, txErr := s.repo.BulkDuplicate(txCtx, req)
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		duplicated, txErr := s.repo.BulkCreate(txCtx, copies)
 		if txErr != nil {
 			log.Error("failed to duplicate formula template", zap.Error(txErr))
 			return txErr
@@ -350,6 +378,73 @@ func (s *Service) Duplicate(
 	}
 
 	return entities, nil
+}
+
+func (s *Service) materialChange(
+	ctx context.Context,
+	original, entity *formulatemplate.FormulaTemplate,
+) (bool, error) {
+	if !entity.HasMaterialChange(original) || entity.Name == original.Name {
+		return entity.HasMaterialChange(original), nil
+	}
+
+	renamedOriginal, err := s.renamed(ctx, original.Source, entity.Name)
+	if err != nil {
+		return false, err
+	}
+	return renamedOriginal != entity.Source, nil
+}
+
+func (s *Service) namedCopies(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	sources []*formulatemplate.FormulaTemplate,
+) ([]*formulatemplate.FormulaTemplate, error) {
+	bases := make([]string, len(sources))
+	for i, source := range sources {
+		bases[i] = source.Name + " (Copy)"
+	}
+
+	taken, err := s.repo.TakenNames(ctx, &formulatemplateports.ListTakenNamesRequest{
+		TenantInfo: tenantInfo,
+		Bases:      bases,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	multiErr := errortypes.NewMultiError()
+	copies := make([]*formulatemplate.FormulaTemplate, len(sources))
+	for i, source := range sources {
+		name := nextAvailableName(taken, bases[i])
+		taken[name] = struct{}{}
+
+		seed := formulatemplate.SeedFromTemplate(source)
+		seed.Name = name
+		if seed.Source, err = s.renamed(ctx, source.Source, name); err != nil {
+			return nil, err
+		}
+		copies[i] = seed.Build()
+		copies[i].Validate(multiErr.WithIndex("templateIds", i))
+	}
+	if multiErr.HasErrors() {
+		return nil, multiErr
+	}
+
+	return copies, nil
+}
+
+func nextAvailableName(taken map[string]struct{}, base string) string {
+	if _, exists := taken[base]; !exists {
+		return base
+	}
+
+	for suffix := 2; ; suffix++ {
+		candidate := fmt.Sprintf("%s %d", base, suffix)
+		if _, exists := taken[candidate]; !exists {
+			return candidate
+		}
+	}
 }
 
 func (s *Service) BulkUpdateStatus(
@@ -403,7 +498,7 @@ func (s *Service) BulkUpdateStatus(
 
 	var updated []*formulatemplate.FormulaTemplate
 	cleared := make(map[pulid.ID]int64, len(templates))
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := s.repo.BulkUpdateStatus(txCtx, req)
 		if txErr != nil {
 			return txErr
@@ -492,11 +587,9 @@ func (s *Service) guardArchivingInUse(
 }
 
 var usageNouns = map[string][2]string{
-	"shipment":                   {"shipment", "shipments"},
-	"rate_matrix":                {"rate matrix", "rate matrices"},
-	"rate_agreement_rule":        {"rate agreement rule", "rate agreement rules"},
-	"rate_agreement_accessorial": {"agreement accessorial", "agreement accessorials"},
-	"billing_control_fallback":   {"billing fallback", "billing fallbacks"},
+	"shipment":                 {"shipment", "shipments"},
+	"rate_agreement_rule":      {"rate agreement rule", "rate agreement rules"},
+	"billing_control_fallback": {"billing fallback", "billing fallbacks"},
 }
 
 func describeUsages(usages []formulatemplateports.TemplateUsageCount) string {
@@ -523,7 +616,7 @@ func (s *Service) GetByID(
 		return nil, err
 	}
 
-	billing, err := s.formulaService.ResolveBillingVersion(
+	billing, err := s.resolver.BillingVersion(
 		ctx,
 		template,
 		req.TenantInfo,
@@ -642,57 +735,4 @@ func criticalWhen(critical bool) []auditports.LogOption {
 	return []auditports.LogOption{auditservice.WithCritical()}
 }
 
-const MaxHeldTestCases = 50
-
-func validateHeldTestCases(testCases []*TestCaseInput) error {
-	multiErr := errortypes.NewMultiError()
-	if len(testCases) > MaxHeldTestCases {
-		multiErr.Add(
-			"testCases",
-			errortypes.ErrInvalid,
-			"A new template can carry at most 50 test scenarios",
-		)
-		return multiErr
-	}
-
-	pendingTemplateID := pulid.MustNew("ft_")
-	seen := make(map[string]int, len(testCases))
-	for index, input := range testCases {
-		caseErrs := multiErr.WithIndex("testCases", index)
-		if input == nil {
-			caseErrs.Add("name", errortypes.ErrRequired, "Name is required")
-			continue
-		}
-
-		entity := buildTestCaseEntity(pendingTemplateID, pagination.TenantInfo{}, input)
-		entity.Validate(caseErrs)
-		ValidateScenarioContent(caseErrs, "candidate", input.Candidate)
-
-		name := input.Name
-		if strings.TrimSpace(name) == "" {
-			continue
-		}
-		if first, dup := seen[name]; dup {
-			caseErrs.Add(
-				"name",
-				errortypes.ErrDuplicate,
-				"Scenario {0} has the same name as scenario {1}",
-				index+1,
-				first+1,
-			)
-			continue
-		}
-		seen[name] = index
-	}
-
-	if multiErr.HasErrors() {
-		return multiErr
-	}
-
-	return nil
-}
-
-// maxBulkTemplateIDs bounds the id lists bulk operations accept. A duplicate
-// of a hundred templates is already a strange request; an unbounded one is a
-// way to hold a transaction open for as long as the caller likes.
 const maxBulkTemplateIDs = 100

@@ -7,6 +7,8 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/agenttest"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
@@ -272,6 +274,7 @@ func readGroundedWith(
 		})
 	}
 	rt := newRuntime(completion, registry, &stubActionRegistry{}, nil)
+	rt.scripts = scriptsOn(aiprovider.ScriptSettings{Scripts: true})
 	fx.localEffects = &localEffects{s: rt, ctx: t.Context(), emit: func(kernelports.StreamEvent) {}}
 
 	result, err := rt.Drive(rt.OpenTurn(t.Context(), &agentports.RunRequest{
@@ -289,7 +292,7 @@ func readGroundedWith(
 func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 	t.Parallel()
 
-	run := readGrounded(t, []string{"report_get_run", "report_analyze_data"},
+	run := readGrounded(t, []string{"report_get_run", codemode.ToolRunScript},
 		"About 52.3% of the $87,310.40 billed is still open.",
 		"Of the $87,310.40 billed, $45,662.16 is still open.",
 	)
@@ -298,7 +301,7 @@ func TestGroundingGuard_RewritesAShareNothingRead(t *testing.T) {
 	correction := lastUserMessage(run.completion.Requests[2])
 	assert.True(t, strings.HasPrefix(correction, amountsCorrectionLead))
 	assert.Contains(t, correction, "52.3")
-	assert.Contains(t, correction, "report_analyze_data")
+	assert.Contains(t, correction, codemode.ToolRunScript)
 	assert.Equal(t, "Of the $87,310.40 billed, $45,662.16 is still open.", run.result.Reply)
 	assert.True(t, strings.HasSuffix(correction, unseenCorrection),
 		"a rewrite answers the person, not the correction")
@@ -319,7 +322,7 @@ func TestGroundingGuard_WithoutAnalysisAShareIsLeftOut(t *testing.T) {
 
 	require.Equal(t, 3, run.completion.CallCount)
 	correction := lastUserMessage(run.completion.Requests[2])
-	assert.NotContains(t, correction, "report_analyze_data")
+	assert.NotContains(t, correction, codemode.ToolRunScript)
 	assert.Contains(t, correction, "leave it out")
 }
 
@@ -582,7 +585,7 @@ func TestGroundingGuard_AnOfferBesideAClaimStillChecksTheClaim(t *testing.T) {
 }
 
 // A share whose two sides the reply gives is shown working: the guard checks
-// the division instead of sending the agent to report_analyze_data for it.
+// the division instead of sending the agent to analysis_run for it.
 func TestGroundingGuard_AcceptsArithmeticOnFiguresTheReplyGives(t *testing.T) {
 	t.Parallel()
 

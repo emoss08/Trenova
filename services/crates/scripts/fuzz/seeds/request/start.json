@@ -1,0 +1,1 @@
+{"op":"start","code":"print(1)","index":"[]","inputs":"{}","clock":{"unixSeconds":0,"offsetSeconds":0},"limits":{"outputChars":100,"memoryBytes":1000000,"cpuMs":10,"recursion":10,"calls":1}}

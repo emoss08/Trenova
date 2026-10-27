@@ -93,12 +93,13 @@ button, which stretched every warn pill to the button's width.
 
 ## The analysis
 
-`analysis` is what `report_analyze_data` ran (see [agent-data-analysis.md](agent-data-analysis.md)):
-the purpose as its title, then the charts, the figures it returned, the error it raised,
-what it printed and the code, folded. `kinds/analysis/` only reads the payload
-(`analysisFrom`); the drawing is `AnalysisResult` in `components/assistant/`, which AI
-control's analysis history draws too, and each chart is read from the run by
-`AnalysisChartImage` under the session's credentials. An analysis is made on purpose, so it
+`analysis` is what an `analysis_run` showed (see "Kept analyses and the Desk card" in
+[agent-code-mode.md](agent-code-mode.md)): its title, then the headline figures, each chart and
+table in the order the script showed them, the error it raised, and what it printed and the
+code, folded. `kinds/analysis/` only reads the payload (`analysisFrom`) and reads the run for a
+table longer than the agent was shown; the drawing is `AnalysisResult` in
+`components/assistant/`, which AI control's analysis history draws too. A chart is a spec drawn
+with Recharts (`AnalysisChartView`, loaded with the chart). An analysis is made on purpose, so it
 is not a lookup: it is kept whether or not the reply names it, and the reply must name it.
 
 ## The portal task
@@ -613,15 +614,18 @@ a `report_preview` is the same sheet for the rows a preview read. Both draw in
 `kinds/report/` from one sheet model (`report-sheet.ts`), fed by the run's stored sample or the
 preview's payload.
 
-- **A finished run keeps a sample.** The executor's digest reader (the one scheduled email
-  digests use) keeps the first 20 rows, the grand totals and the columns with their resolved
-  display; `FinalizeRunActivity` stores them on `report_runs.sample` (`reportrows.Sample`,
-  raw values, at most 48 KB, trailing rows dropped to fit). Lists never select it, and expiry
-  clears it with the file. A run that finished before samples has none; its card shows the
-  run and the download.
+- **A finished run keeps a sample.** Every run captures the digest scheduled email digests
+  use (`digestCapture`: the first 20 detail rows, the grand total and the columns with their
+  resolved display, written as a keel export JSON envelope); `FinalizeRunActivity` stores the
+  envelope on `report_runs.sample` when it is at most 48 KB (`MaxRunSampleBytes`), and skips
+  it otherwise. The column is `BYTEA`, not `JSONB`: `export.ReadJSON` needs the envelope's
+  keys in the order they were written, and JSONB reorders them. Lists never select it
+  (`Omit(Sample)`), and expiry clears it with the file. A run with no sample shows the run and
+  the download.
 - **One read draws the card.** `reportRunDeskCard(id)` (`reporting.GetRunCard`) returns the
   run, the report's name, description and category, its parameters with the window a relative
-  parameter resolved to when the run started (`compiler.ParameterWindow`), the sample, the
+  parameter resolved to when the run started (`analytics.RelativeRange` in the organization's
+  time zone), the sample read back as a `ReportPreview` (the type the Reports grid formats), the
   person's previous finished run of the same report and parameters
   (`ReportRunRepository.LatestComparable`, behind `idx_report_runs_comparable`), the schedule it
   came from and the report's first chart and sort. A finished run's sample is withheld

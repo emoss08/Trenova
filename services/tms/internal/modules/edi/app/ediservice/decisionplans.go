@@ -366,23 +366,6 @@ func (s *Service) deliverableMessage(
 	})
 }
 
-type OutboundDocumentPreview struct {
-	Document *EDIDocumentPreview
-	Blocking bool
-}
-
-func (s *Service) PreviewOutboundDocument(
-	ctx context.Context,
-	req *GenerateEDIDocumentRequest,
-) (*OutboundDocumentPreview, error) {
-	resolved, err := s.resolveGenerateContext(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resolved.outboundPreview()
-}
-
 type TenderResponseChoice string
 
 const (
@@ -422,29 +405,9 @@ func (s *Service) PreviewTenderResponse(
 		return nil, err
 	}
 
-	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
-		ctx,
-		ediports.GetActiveEDIPartnerDocumentProfileRequest{
-			PartnerID:      transfer.TargetPartnerID,
-			TenantInfo:     req.TenantInfo,
-			TransactionSet: edi.TransactionSet990,
-			Direction:      edi.DocumentDirectionOutbound,
-		},
-	)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil, errortypes.NewValidationError(
-				"partnerId",
-				errortypes.ErrInvalidOperation,
-				"This partner has no active outbound 990 profile yet. Trenova creates one from the partner's envelope and the base 990 template when the tender is decided, so its 990 cannot be previewed before then",
-			)
-		}
-		return nil, err
-	}
-
 	preview, err := s.PreviewOutboundDocument(
 		ctx,
-		tenderResponseRequest(req.TenantInfo, answered, profile.ID, req.TenantInfo.UserID),
+		tenderResponseRequest(req.TenantInfo, answered, req.TenantInfo.UserID),
 	)
 	if err != nil {
 		return nil, err
@@ -460,20 +423,18 @@ func (s *Service) PreviewTenderResponse(
 func tenderResponseRequest(
 	tenantInfo pagination.TenantInfo,
 	transfer *edi.EDITransfer,
-	profileID pulid.ID,
 	actorID pulid.ID,
 ) *GenerateEDIDocumentRequest {
 	payload := buildTenderResponsePayload(transfer)
 
 	return &GenerateEDIDocumentRequest{
-		TenantInfo:               tenantInfo,
-		PartnerDocumentProfileID: profileID,
-		EDIPartnerID:             transfer.TargetPartnerID,
-		TransferID:               transfer.ID,
-		TransactionSet:           edi.TransactionSet990,
-		Direction:                edi.DocumentDirectionOutbound,
-		Payload:                  &payload,
-		GeneratedByID:            actorID,
+		TenantInfo:     tenantInfo,
+		EDIPartnerID:   transfer.TargetPartnerID,
+		TransferID:     transfer.ID,
+		TransactionSet: edi.TransactionSet990,
+		Direction:      edi.DocumentDirectionOutbound,
+		Payload:        &payload,
+		GeneratedByID:  actorID,
 	}
 }
 
@@ -542,18 +503,6 @@ func tenderChoiceOf(transfer *edi.EDITransfer) TenderResponseChoice {
 	}
 
 	return TenderResponseAccept
-}
-
-func (s *Service) PlanGenerateDocument(
-	ctx context.Context,
-	req *GenerateEDIDocumentRequest,
-) (*EDIDocumentPreview, error) {
-	resolved, err := s.resolveGenerateContext(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	return resolved.provisionalRender()
 }
 
 type TransferChangeEffect struct {

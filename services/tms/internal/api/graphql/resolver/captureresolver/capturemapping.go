@@ -1,6 +1,9 @@
 package captureresolver
 
 import (
+	"context"
+
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/documents/app/captureservice"
@@ -13,7 +16,16 @@ import (
 	"github.com/emoss08/trenova/shared/stringutils"
 )
 
-const defaultCaptureBatchPage = 25
+const (
+	defaultCaptureBatchPage = 25
+	batchItemsPath          = "edges.node.items"
+)
+
+// batchItemsRequested reports whether a list selects each stack's items, which
+// are then read for the whole page in one query rather than left out.
+func batchItemsRequested(ctx context.Context) bool {
+	return graphql.GetFieldContext(ctx) != nil && graphql.FieldRequested(ctx, batchItemsPath)
+}
 
 func captureBatchConnection(
 	result *pagination.CursorListResult[*capture.CaptureBatch],
@@ -30,9 +42,10 @@ func captureBatchConnection(
 	}
 
 	return &gqlmodel.CaptureBatchConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

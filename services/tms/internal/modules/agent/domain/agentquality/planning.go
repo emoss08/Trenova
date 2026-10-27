@@ -19,13 +19,13 @@ import (
 const secondsPerDay = int64(24 * 60 * 60)
 
 type SamplingCase struct {
-	ID           pulid.ID          `json:"id"           bun:"id"`
-	Source       CaseSource        `json:"source"       bun:"source"`
-	Version      int64             `json:"version"      bun:"version"`
-	Trigger      agent.RunTrigger  `json:"trigger"      bun:"trigger"`
-	SubjectType  agent.SubjectType `json:"subjectType"  bun:"subject_type"`
-	SubjectID    pulid.ID          `json:"subjectId"    bun:"subject_id"`
-	LastFailedAt int64             `json:"lastFailedAt" bun:"last_failed_at"`
+	ID           pulid.ID          `json:"id"`
+	Source       CaseSource        `json:"source"`
+	Version      int64             `json:"version"`
+	Trigger      agent.RunTrigger  `json:"trigger"`
+	SubjectType  agent.SubjectType `json:"subjectType"`
+	SubjectID    pulid.ID          `json:"subjectId"`
+	LastFailedAt int64             `json:"lastFailedAt"`
 }
 
 func (c SamplingCase) Failing() bool { return c.LastFailedAt > 0 }

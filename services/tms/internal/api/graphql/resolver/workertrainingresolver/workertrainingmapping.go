@@ -124,7 +124,6 @@ func trainingCourseCursorConnectionToModel(
 ) (*gqlmodel.TrainingCourseConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *worker.TrainingCourse, cursor string) *gqlmodel.TrainingCourseEdge {
 			return &gqlmodel.TrainingCourseEdge{Node: node, Cursor: cursor}
@@ -143,7 +142,8 @@ func trainingCourseCursorConnectionToModel(
 				func(edge *gqlmodel.TrainingCourseEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

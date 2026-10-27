@@ -91,8 +91,9 @@ func TestListEntriesDelegatesToRepository(t *testing.T) {
 		Filter: &pagination.QueryOptions{Pagination: pagination.Info{Limit: 10}},
 	}
 	expected := &pagination.ListResult[*journalentry.JournalEntry]{
-		Items: []*journalentry.JournalEntry{{ID: pulid.MustNew("je_")}},
-		Total: 1,
+		Items:      []*journalentry.JournalEntry{{ID: pulid.MustNew("je_")}},
+		Total:      1,
+		TotalExact: true,
 	}
 	repo.EXPECT().List(mock.Anything, req).Return(expected, nil).Once()
 	svc := &Service{entryRepo: repo}

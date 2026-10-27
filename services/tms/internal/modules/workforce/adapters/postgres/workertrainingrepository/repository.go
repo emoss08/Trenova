@@ -5,23 +5,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,6 +26,20 @@ const (
 	defaultReminderPageSize = 500
 	secondsPerDay           = int64(86400)
 )
+
+var courseErrors = dberror.Mapping{Entity: "TrainingCourse"}
+
+var recordErrors = dberror.Mapping{Entity: "WorkerTrainingRecord"}
+
+var openTrainingStatuses = []worker.TrainingStatus{
+	worker.TrainingStatusAssigned,
+	worker.TrainingStatusInProgress,
+}
+
+type courseCount struct {
+	CourseID pulid.ID
+	Count    int64
+}
 
 type Params struct {
 	fx.In
@@ -50,102 +60,35 @@ func New(p Params) workerports.WorkerTrainingRepository {
 	}
 }
 
-func duplicateCode() error {
-	return errortypes.NewValidationError(
-		"code",
-		errortypes.ErrDuplicate,
-		"A course with this code already exists",
-	)
-}
-
-func duplicateOpenRecord() error {
-	return errortypes.NewValidationError(
-		"courseId",
-		errortypes.ErrDuplicate,
-		"This worker already has this course assigned",
-	)
-}
-
-func orderCourses(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := workercol.TrainingCourseColumns
-	return sq.Order(cols.SortOrder.OrderAsc()).Order(cols.Name.OrderAsc())
-}
-
-func (r *repository) applyCourseFilters(
-	q *bun.SelectQuery,
-	req *workerports.ListTrainingCoursesRequest,
-) *bun.SelectQuery {
-	cols := workercol.TrainingCourseColumns
-	if req.Status != "" {
-		q = q.Where(cols.Status.Eq(), req.Status)
-	}
-	if req.Category != "" {
-		q = q.Where(cols.Category.Eq(), req.Category)
-	}
-	return q
+func courseOrder() []keel.Order {
+	c := workerdb.TrainingCourses
+	return []keel.Order{c.SortOrder.Asc(), c.Name.Asc()}
 }
 
 func (r *repository) ListCourses(
 	ctx context.Context,
 	req *workerports.ListTrainingCoursesRequest,
 ) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*worker.TrainingCourse], error) {
-			log := r.l.With(zap.String("operation", "ListCourses"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*worker.TrainingCourse)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							workercol.TrainingCourseTable.Alias,
-							req.Filter,
-							(*worker.TrainingCourse)(nil),
-						)
-						return r.applyCourseFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count training courses", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
-				ctx,
-				dbhelper.CursorListParams[*worker.TrainingCourse]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*worker.TrainingCourse) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(items).
-							ColumnExpr(workercol.TrainingCourseTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							workercol.TrainingCourseTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*worker.TrainingCourse)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-						return r.applyCourseFilters(sq, req), nil
-					},
-				},
+			c := workerdb.TrainingCourses
+			q := c.Where(
+				keel.When(req.Status != "", c.Status.Eq(domaintypes.Status(req.Status))),
+				keel.When(
+					req.Category != "",
+					c.Category.Eq(worker.TrainingCategory(req.Category)),
+				),
 			)
+
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), q,
+				&listquery.Request[worker.TrainingCourse]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				})
 			if err != nil {
-				log.Error("failed to list training courses", zap.Error(err))
+				r.l.Error("failed to list training courses", zap.Error(err))
 				return nil, err
 			}
 
@@ -156,20 +99,13 @@ func (r *repository) ListCourses(
 
 func (r *repository) ListActiveCourses(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*worker.TrainingCourse, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.TrainingCourse, error) {
-		cols := workercol.TrainingCourseColumns
-		entities := make([]*worker.TrainingCourse, 0, 16)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.TrainingCourseScopeTenant(sq, tenantInfo).
-					Where(cols.Status.Eq(), domaintypes.StatusActive)
-			}).
-			Apply(orderCourses).
-			Scan(ctx)
+		c := workerdb.TrainingCourses
+		entities, err := c.Where(c.Status.Eq(domaintypes.StatusActive)).
+			Order(courseOrder()...).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list active training courses", zap.Error(err))
 			return nil, err
@@ -183,41 +119,39 @@ func (r *repository) CourseSelectOptions(
 	ctx context.Context,
 	req *workerports.TrainingCourseSelectOptionsRequest,
 ) (*pagination.ListResult[*worker.TrainingCourse], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*worker.TrainingCourse], error) {
-			cols := workercol.TrainingCourseColumns
-			return dbhelper.SelectOptions[*worker.TrainingCourse](
+			c := workerdb.TrainingCourses
+			q := c.Pick(
+				c.ID,
+				c.Code,
+				c.Name,
+				c.Description,
+				c.Category,
+				c.Delivery,
+				c.DurationMinutes,
+				c.PassingScore,
+				c.DueDaysAfterAssignment,
+				c.ValidityMonths,
+				c.SortOrder,
+				c.CreatedAt,
+			).
+				Where(c.Status.Eq(domaintypes.StatusActive)).
+				Order(courseOrder()...)
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Name,
-						cols.Description,
-						cols.Category,
-						cols.Delivery,
-						cols.DurationMinutes,
-						cols.PassingScore,
-						cols.DueDaysAfterAssignment,
-						cols.ValidityMonths,
-						cols.SortOrder,
-						cols.CreatedAt,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return orderCourses(q.Where(cols.Status.Eq(), domaintypes.StatusActive))
-					},
-					EntityName: "TrainingCourse",
-					SearchColumnRefs: []buncolgen.Column{
-						cols.Code,
-						cols.Name,
-						cols.Description,
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						c.Code.ContainsFold(s),
+						c.Name.ContainsFold(s),
+						c.Description.ContainsFold(s),
+					)
 				},
 			)
 		},
@@ -229,17 +163,9 @@ func (r *repository) GetCourseByID(
 	req *workerports.GetTrainingCourseByIDRequest,
 ) (*worker.TrainingCourse, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.TrainingCourse, error) {
-		entity := new(worker.TrainingCourse)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.TrainingCourseScopeTenant(sq, req.TenantInfo).
-					Where(workercol.TrainingCourseColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := workerdb.TrainingCourses.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "TrainingCourse")
+			return nil, courseErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -251,19 +177,11 @@ func (r *repository) CourseCodeExists(
 	req *workerports.TrainingCourseCodeExistsRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := workercol.TrainingCourseColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.TrainingCourse)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.TrainingCourseScopeTenant(sq, req.TenantInfo).
-					Where("LOWER("+cols.Code.String()+") = ?", strings.ToLower(req.Code))
-			})
-		if !req.ExcludeID.IsNil() {
-			q = q.Where(cols.ID.Ne(), req.ExcludeID)
-		}
-
-		exists, err := q.Exists(ctx)
+		c := workerdb.TrainingCourses
+		exists, err := c.Where(
+			c.Code.Lower().Eq(strings.ToLower(req.Code)),
+			keel.When(req.ExcludeID.IsNotNil(), c.ID.Ne(req.ExcludeID)),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to check training course code", zap.Error(err))
 			return false, err
@@ -278,16 +196,9 @@ func (r *repository) CreateCourse(
 	entity *worker.TrainingCourse,
 ) (*worker.TrainingCourse, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.TrainingCourse, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateCode()
-			}
+		if err := workerdb.TrainingCourses.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create training course", zap.Error(err))
-			return nil, err
+			return nil, courseErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -299,29 +210,9 @@ func (r *repository) UpdateCourse(
 	entity *worker.TrainingCourse,
 ) (*worker.TrainingCourse, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.TrainingCourse, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.TrainingCourseColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateCode()
-			}
+		if err := workerdb.TrainingCourses.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update training course", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"TrainingCourse",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, courseErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -333,22 +224,11 @@ func (r *repository) CountRecordsByCourse(
 	req *workerports.CountTrainingRecordsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := workercol.WorkerTrainingRecordColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerTrainingRecord)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
-					Where(cols.CourseID.Eq(), req.CourseID)
-			})
-		if req.OpenOnly {
-			q = q.Where(cols.Status.In(), bun.In([]worker.TrainingStatus{
-				worker.TrainingStatusAssigned,
-				worker.TrainingStatusInProgress,
-			}))
-		}
-
-		count, err := q.Count(ctx)
+		tr := workerdb.WorkerTrainingRecords
+		count, err := tr.Where(
+			tr.CourseID.Eq(req.CourseID),
+			keel.When(req.OpenOnly, tr.Status.In(openTrainingStatuses...)),
+		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count training records", zap.Error(err))
 			return 0, err
@@ -362,30 +242,27 @@ func (r *repository) CountRecordsByCourseIDs(
 	ctx context.Context,
 	req *workerports.CountTrainingRecordsByCourseIDsRequest,
 ) (map[pulid.ID]int, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]int, error) {
 		if len(req.CourseIDs) == 0 {
 			return map[pulid.ID]int{}, nil
 		}
 
-		cols := workercol.WorkerTrainingRecordColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerTrainingRecord)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
-					Where(cols.CourseID.In(), bun.In(req.CourseIDs))
-			})
-		if req.OpenOnly {
-			q = q.Where(cols.Status.In(), bun.In([]worker.TrainingStatus{
-				worker.TrainingStatusAssigned,
-				worker.TrainingStatusInProgress,
-			}))
-		}
-
-		counts, err := dbhelper.CountByID(ctx, q, cols.CourseID, len(req.CourseIDs))
+		tr := workerdb.WorkerTrainingRecords
+		rows, err := keel.Into[courseCount](ctx, r.db.Keel(ctx), tr.
+			Group(tr.CourseID).
+			Pick(tr.CourseID, keel.Count()).
+			Where(
+				tr.CourseID.In(req.CourseIDs...),
+				keel.When(req.OpenOnly, tr.Status.In(openTrainingStatuses...)),
+			))
 		if err != nil {
 			r.l.Error("failed to count training records by course", zap.Error(err))
 			return nil, err
+		}
+
+		counts := make(map[pulid.ID]int, len(rows))
+		for _, row := range rows {
+			counts[row.CourseID] = int(row.Count)
 		}
 
 		return counts, nil
@@ -397,36 +274,22 @@ func (r *repository) ListForWorker(
 	req *workerports.ListWorkerTrainingRequest,
 ) ([]*worker.WorkerTrainingRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		cols := workercol.WorkerTrainingRecordColumns
-		entities := make([]*worker.WorkerTrainingRecord, 0, 16)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID)
-				if !req.IncludeClosed {
-					sq = sq.Where(cols.Status.In(), bun.In([]worker.TrainingStatus{
-						worker.TrainingStatusAssigned,
-						worker.TrainingStatusInProgress,
-					}))
-				}
-				return sq
-			}).
-			Order(cols.AssignedAt.OrderDesc()).
-			Order(cols.CreatedAt.OrderDesc())
-		if req.IncludeCourse {
-			q = q.Relation(workercol.WorkerTrainingRecordRelations.Course)
-		}
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerTrainingRecordRelations.Document)
-		}
-		if req.IncludeActors {
-			q = q.Relation(workercol.WorkerTrainingRecordRelations.AssignedBy).
-				Relation(workercol.WorkerTrainingRecordRelations.RecordedBy)
-		}
+		tr := workerdb.WorkerTrainingRecords
+		loads := make([]keel.Loader, 0, 4)
+		loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
+		loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
+		loads = append(
+			loads,
+			listquery.When(req.IncludeActors, tr.AssignedBy(), tr.RecordedBy())...)
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := tr.Where(
+			tr.WorkerID.Eq(req.WorkerID),
+			keel.When(!req.IncludeClosed, tr.Status.In(openTrainingStatuses...)),
+		).
+			Load(loads...).
+			Order(tr.AssignedAt.Desc(), tr.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list worker training records", zap.Error(err))
 			return nil, err
 		}
@@ -440,31 +303,15 @@ func (r *repository) GetByID(
 	req *workerports.GetWorkerTrainingByIDRequest,
 ) (*worker.WorkerTrainingRecord, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerTrainingRecord, error) {
-		entity := new(worker.WorkerTrainingRecord)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerTrainingRecordScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerTrainingRecordColumns.ID.Eq(), req.ID)
-			})
-		if req.IncludeCourse {
-			q = q.Relation(workercol.WorkerTrainingRecordRelations.Course)
-		}
-		if req.IncludeWorker {
-			q = q.Relation(
-				workercol.WorkerTrainingRecordRelations.Worker,
-				func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Relation(workercol.WorkerRelations.Profile)
-				},
-			)
-		}
-		if req.IncludeDocument {
-			q = q.Relation(workercol.WorkerTrainingRecordRelations.Document)
-		}
+		tr := workerdb.WorkerTrainingRecords
+		loads := make([]keel.Loader, 0, 3)
+		loads = append(loads, listquery.When(req.IncludeCourse, tr.Course())...)
+		loads = append(loads, listquery.When(req.IncludeWorker, tr.Worker().Profile())...)
+		loads = append(loads, listquery.When(req.IncludeDocument, tr.Document())...)
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerTrainingRecord")
+		entity, err := tr.Where(tr.ID.Eq(req.ID)).Load(loads...).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, recordErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -476,16 +323,9 @@ func (r *repository) Create(
 	entity *worker.WorkerTrainingRecord,
 ) (*worker.WorkerTrainingRecord, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerTrainingRecord, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateOpenRecord()
-			}
+		if err := workerdb.WorkerTrainingRecords.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create worker training record", zap.Error(err))
-			return nil, err
+			return nil, recordErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -497,65 +337,41 @@ func (r *repository) Update(
 	entity *worker.WorkerTrainingRecord,
 ) (*worker.WorkerTrainingRecord, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerTrainingRecord, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerTrainingRecordColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateOpenRecord()
-			}
+		if err := workerdb.WorkerTrainingRecords.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update worker training record", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerTrainingRecord",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, recordErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-func (r *repository) reminderQuery(
+func reminderQuery(
 	ctx context.Context,
 	req *workerports.ListTrainingRemindersRequest,
-	entities *[]*worker.WorkerTrainingRecord,
-) *bun.SelectQuery {
-	cols := workercol.WorkerTrainingRecordColumns
+	window keel.Pred,
+) *keel.Query[*worker.WorkerTrainingRecord] {
+	tr := workerdb.WorkerTrainingRecords
 	limit := req.Limit
 	if limit <= 0 {
 		limit = defaultReminderPageSize
 	}
-	q := r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entities).
-		Relation(workercol.WorkerTrainingRecordRelations.Course).
-		Relation(workercol.WorkerTrainingRecordRelations.Worker, func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Relation(workercol.WorkerRelations.Profile)
-		}).
-		Where(workercol.WorkerColumns.Status.WithAlias("worker").Eq(), domaintypes.StatusActive).
-		Where(workercol.TrainingCourseColumns.Status.WithAlias("course").Eq(), domaintypes.StatusActive).
-		Order(cols.ID.OrderAsc()).
-		Limit(int64(limit))
-	if !req.TenantInfo.OrgID.IsNil() {
-		q = q.Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID)
+
+	q := tr.Where(
+		window,
+		tr.Worker().Status.Eq(domaintypes.StatusActive),
+		tr.Course().Status.Eq(domaintypes.StatusActive),
+		keel.When(req.TenantInfo.OrgID.IsNotNil(), tr.OrganizationID.Eq(req.TenantInfo.OrgID)),
+		keel.When(req.TenantInfo.BuID.IsNotNil(), tr.BusinessUnitID.Eq(req.TenantInfo.BuID)),
+		keel.When(req.AfterID.IsNotNil(), tr.ID.Gt(req.AfterID)),
+	).
+		Load(tr.Course(), tr.Worker().Profile()).
+		Order(tr.ID.Asc()).
+		Limit(limit)
+	if dbscope.IsSystem(ctx) {
+		q = q.AllTenants()
 	}
-	if !req.TenantInfo.BuID.IsNil() {
-		q = q.Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID)
-	}
-	if !req.AfterID.IsNil() {
-		q = q.Where(cols.ID.Gt(), req.AfterID)
-	}
+
 	return q
 }
 
@@ -575,17 +391,12 @@ func (r *repository) ListDue(
 		)
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		cols := workercol.WorkerTrainingRecordColumns
+		tr := workerdb.WorkerTrainingRecords
 		grace, horizon := reminderWindow(req)
-		entities := make([]*worker.WorkerTrainingRecord, 0, defaultReminderPageSize)
-		q := r.reminderQuery(ctx, req, &entities).
-			Where(cols.Status.In(), bun.In([]worker.TrainingStatus{
-				worker.TrainingStatusAssigned,
-				worker.TrainingStatusInProgress,
-			})).
-			Where(cols.DueAt.Between(), grace, horizon)
+		window := keel.And(tr.Status.In(openTrainingStatuses...), tr.DueAt.Between(grace, horizon))
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := reminderQuery(ctx, req, window).List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list due training", zap.Error(err))
 			return nil, fmt.Errorf("list due training: %w", err)
 		}
@@ -605,14 +416,15 @@ func (r *repository) ListExpiring(
 		)
 	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerTrainingRecord, error) {
-		cols := workercol.WorkerTrainingRecordColumns
+		tr := workerdb.WorkerTrainingRecords
 		grace, horizon := reminderWindow(req)
-		entities := make([]*worker.WorkerTrainingRecord, 0, defaultReminderPageSize)
-		q := r.reminderQuery(ctx, req, &entities).
-			Where(cols.Status.Eq(), worker.TrainingStatusCompleted).
-			Where(cols.ExpiresAt.Between(), grace, horizon)
+		window := keel.And(
+			tr.Status.Eq(worker.TrainingStatusCompleted),
+			tr.ExpiresAt.Between(grace, horizon),
+		)
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := reminderQuery(ctx, req, window).List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list expiring training", zap.Error(err))
 			return nil, fmt.Errorf("list expiring training: %w", err)
 		}

@@ -730,7 +730,11 @@ func (r *QueryResolver) MySettlements(ctx context.Context, limit *int, offset *i
 	if err != nil {
 		return nil, err
 	}
-	return &gqlmodel.MySettlementList{Items: result.Items, Total: result.Total}, nil
+	return &gqlmodel.MySettlementList{
+		Items:      result.Items,
+		Total:      result.Total,
+		TotalExact: result.TotalExact,
+	}, nil
 }
 
 func (r *QueryResolver) MySettlement(ctx context.Context, id string) (*driversettlement.Settlement, error) {

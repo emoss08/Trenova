@@ -138,10 +138,6 @@ type AgentToolDescriptor struct {
 	SearchTerms   []string `json:"searchTerms,omitempty"`
 	Prerequisites []string `json:"prerequisites,omitempty"`
 	Companions    []string `json:"companions,omitempty"`
-	// Follows names the tools whose results this one works on. A turn that
-	// loads one of them loads this tool too when the agent holds it, and
-	// grants it to nobody.
-	Follows []string `json:"follows,omitempty"`
 	// Recipe is the tools a task with this one is done with, in order, the
 	// tool itself among them.
 	Recipe []string `json:"recipe,omitempty"`
@@ -165,14 +161,6 @@ type PrerequisiteTool interface {
 
 type CompanionTool interface {
 	Companions() []string
-}
-
-// FollowerTool is a tool that works on what other tools return. A turn handed
-// report_run without report_analyze_data read the report's twenty sample rows and
-// answered "analyze it" from them; loading the analysis whenever the report
-// is loaded puts the tool that reads every row beside the one that samples.
-type FollowerTool interface {
-	Follows() []string
 }
 
 // RecipeTool is a tool whose use is a sequence: the lookups that hand out
@@ -219,9 +207,6 @@ func DescribeTool(
 	}
 	if companion, ok := tool.(CompanionTool); ok {
 		descriptor.Companions = companion.Companions()
-	}
-	if follower, ok := tool.(FollowerTool); ok {
-		descriptor.Follows = follower.Follows()
 	}
 	if recipe, ok := tool.(RecipeTool); ok {
 		descriptor.Recipe = recipe.Recipe()

@@ -2,8 +2,8 @@ import { api } from "@trenova/shared/lib/api";
 import { safeParse } from "@trenova/shared/lib/parse";
 import { dataRetentionSchema, type UpdateDataRetentionRequest } from "@/types/data-retention";
 
-export async function getDataRetention() {
-  const response = await api.get(`/data-retention/`);
+export async function getDataRetention(options?: { signal?: AbortSignal }) {
+  const response = await api.get(`/data-retention/`, { signal: options?.signal });
   return safeParse(dataRetentionSchema, response, "DataRetention");
 }
 

@@ -1,4 +1,5 @@
 {
+  "After driver pay": "扣除司机薪酬后",
   "Approve charge": "批准费用",
   "Collectable now": "当前可收款",
   "Connecting": "连接中",
@@ -51,6 +52,7 @@
   "Waiving": "豁免中",
   "Waiving forgives the money but keeps the record, so discretionary revenue loss stays measurable instead of disappearing into free text.": "豁免会免除款项但保留记录，因此酌情性的营收损失仍可度量，不会消失在自由格式的文本中。",
   "What is the customer disputing?": "客户争议的内容为何？",
+  "You pay more than you bill": "您支付的多于您计费的",
   "engine {0}": "引擎 {0}",
   "free time": "免费等候时间",
   "late {0}": "逾期 {0}",

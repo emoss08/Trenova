@@ -175,7 +175,13 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
           },
           {
             path: "/organization/data-retention",
-            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Organization)),
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.Organization),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/organization/data-retention/page")),
+              ),
+            ),
             async lazy() {
               const { DataRetentionPage } =
                 await import("@/routes/organization/data-retention/page");
@@ -361,15 +367,27 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
-            path: "/edi/designer",
+            path: "/edi/lading",
             loader: combineLoaders(
               protectedLoader,
               createPlanCapabilityLoader(PlanCapability.Integrations),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
-              const { EDIDesignerPage } = await import("@/routes/edi/page");
-              return { Component: EDIDesignerPage };
+              const { LadingProjectsPage } = await import("@/routes/edi/lading/page");
+              return { Component: LadingProjectsPage };
+            },
+          },
+          {
+            path: "/edi/lading/:partnerId",
+            loader: combineLoaders(
+              protectedLoader,
+              createPlanCapabilityLoader(PlanCapability.Integrations),
+              createPermissionLoader(Resource.EDI),
+            ),
+            async lazy() {
+              const { LadingStudioPage } = await import("@/routes/edi/lading/[partnerId]/page");
+              return { Component: LadingStudioPage };
             },
           },
           {
@@ -432,15 +450,15 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             },
           },
           {
-            path: "/edi/test-cases",
+            path: "/edi/flows",
             loader: combineLoaders(
               protectedLoader,
               createPlanCapabilityLoader(PlanCapability.Integrations),
               createPermissionLoader(Resource.EDI),
             ),
             async lazy() {
-              const { EDITestCasesPage } = await import("@/routes/edi/page");
-              return { Component: EDITestCasesPage };
+              const { EDIFlowInstancesPage } = await import("@/routes/edi/page");
+              return { Component: EDIFlowInstancesPage };
             },
           },
           {
@@ -1169,6 +1187,46 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
             async lazy() {
               const { FormulaStudioEditPage } = await import("@/routes/formula-template/[id]/page");
               return { Component: FormulaStudioEditPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/formula-libraries",
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaLibrary),
+            ),
+            async lazy() {
+              const { FormulaLibrariesPage } = await import("@/routes/formula-library/page");
+              return { Component: FormulaLibrariesPage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/formula-libraries/new",
+            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaLibrary, Operation.Create),
+              createPrefetchLoader(lazyPrefetch(() => import("@/routes/formula-library/new/page"))),
+            ),
+            async lazy() {
+              const { FormulaLibraryCreatePage } =
+                await import("@/routes/formula-library/new/page");
+              return { Component: FormulaLibraryCreatePage };
+            },
+          },
+          {
+            path: "/billing/configuration-files/formula-libraries/:id/edit",
+            handle: { frame: "room", roomRail: "stands" } satisfies RouteHandle,
+            loader: combineLoaders(
+              protectedLoader,
+              createPermissionLoader(Resource.FormulaLibrary),
+              createPrefetchLoader(
+                lazyPrefetch(() => import("@/routes/formula-library/[id]/page")),
+              ),
+            ),
+            async lazy() {
+              const { FormulaLibraryEditPage } = await import("@/routes/formula-library/[id]/page");
+              return { Component: FormulaLibraryEditPage };
             },
           },
           {
@@ -1957,18 +2015,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 },
               },
               {
-                path: "document-parsing-rules",
-                loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
-                  createPermissionLoader(Resource.DocumentParsingRule, Operation.Read),
-                ),
-                async lazy() {
-                  const { DocumentParsingRulesPage } =
-                    await import("@/routes/admin/document-parsing-rules/page");
-                  return { Component: DocumentParsingRulesPage };
-                },
-              },
-              {
                 path: "sequence-configs",
                 loader: createPermissionLoader(Resource.SequenceConfig, Operation.Read),
                 async lazy() {
@@ -2179,18 +2225,6 @@ export const routes: RouteObject[] = withPathScopedRevalidation([
                 async lazy() {
                   const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
                   return { Component: APIKeysPage };
-                },
-              },
-              {
-                path: "document-operations",
-                loader: combineLoaders(
-                  createPlanCapabilityLoader(PlanCapability.DocumentIntelligence),
-                  createPermissionLoader(Resource.DocumentOperation, Operation.Read),
-                ),
-                async lazy() {
-                  const { DocumentOperationsPage } =
-                    await import("@/routes/admin/document-operations/page");
-                  return { Component: DocumentOperationsPage };
                 },
               },
               {

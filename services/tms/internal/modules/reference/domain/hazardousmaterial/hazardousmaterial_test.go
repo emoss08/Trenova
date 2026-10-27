@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func validEntity() HazardousMaterial {
@@ -118,72 +116,6 @@ func TestHazardousMaterial_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestHazardousMaterial_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		hm := &HazardousMaterial{}
-		require.True(t, hm.ID.IsNil())
-
-		err := hm.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, hm.ID.IsNil())
-		assert.NotZero(t, hm.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("hm_")
-		hm := &HazardousMaterial{ID: existingID}
-
-		err := hm.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, hm.ID)
-		assert.NotZero(t, hm.CreatedAt)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		hm := &HazardousMaterial{}
-
-		err := hm.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, hm.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		hm := &HazardousMaterial{}
-
-		err := hm.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, hm.CreatedAt)
-		assert.NotZero(t, hm.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		hm := &HazardousMaterial{}
-
-		err := hm.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, hm.ID.IsNil())
-		assert.Zero(t, hm.CreatedAt)
-		assert.Zero(t, hm.UpdatedAt)
-	})
 }
 
 func TestHazardousMaterial_GetTableName(t *testing.T) {

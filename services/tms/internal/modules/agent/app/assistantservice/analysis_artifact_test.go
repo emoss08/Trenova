@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,20 +15,26 @@ func analysisResult() map[string]any {
 	return map[string]any{
 		"analysisRunId": "aanr_01",
 		"status":        "Succeeded",
+		"title":         "Margin by lane for Q3",
 		"purpose":       "Margin by lane for Q3",
 		"datasets": []any{map[string]any{
-			"name": "lanes", "path": "/home/user/data/lanes.csv", "source": "ReportRun",
-			"label": "Margin by lane", "rows": 42.0,
+			"name": "lanes", "source": "ReportRun", "label": "Margin by lane", "rows": 42.0,
 		}},
-		"output":  "lane  margin\nDAL-ATL 0.18\n",
-		"results": []any{"0.18"},
-		"charts":  []any{map[string]any{"position": 1.0, "title": "Margin by lane"}},
-		"note":    "The charts are shown to the person beside your reply.",
+		"output": "lane  margin\nDAL-ATL 0.18\n",
+		"charts": []any{map[string]any{
+			"kind": "bar", "title": "Margin by lane",
+			"x":      map[string]any{"kind": "text", "values": []any{"DAL-ATL"}},
+			"series": []any{map[string]any{"name": "Margin", "values": []any{0.18}}},
+		}},
+		"calls":  []any{},
+		"limits": map[string]any{"calls": 0.0},
+		"result": map[string]any{"lanes": 1.0},
+		"note":   "What it showed is beside your reply.",
 	}
 }
 
 func analysisObservation(result map[string]any, code string) agentports.ToolObservation {
-	call := observation("report_analyze_data", result)
+	call := observation(codemode.ToolRunScript, result)
 	call.Call.Arguments = map[string]any{"code": code, "purpose": "Margin by lane for Q3"}
 
 	return call
@@ -45,10 +52,28 @@ func TestArtifactFromObservation_AnAnalysisKeepsItsFiguresChartsAndCode(t *testi
 	assert.Equal(t, "print(1)", artifact.Payload["code"])
 	assert.Equal(t, "aanr_01", artifact.Payload["analysisRunId"])
 	assert.NotContains(t, artifact.Payload, "note", "the note is for the model")
+	assert.NotContains(t, artifact.Payload, "calls", "what the reads cost is for the model")
+	assert.NotContains(t, artifact.Payload, "result", "the one result is for the model")
 	assert.Equal(t, assistantartifact.FamilyReport,
 		assistantartifact.FamilyOf(artifact.Kind, artifact.Payload))
 	assert.False(t, assistantartifact.IsLookup(artifact.Kind),
 		"an analysis is made on purpose, and kept whether or not the reply names it")
+}
+
+// A continuation's call holds only the lines it added; its answer carries the
+// whole code that ran, which is what the card shows.
+func TestArtifactFromObservation_AContinuationKeepsTheWholeCode(t *testing.T) {
+	t.Parallel()
+
+	result := analysisResult()
+	result["code"] = "total = 1\n\nshow_figure('Total', total)"
+
+	artifact := artifactFromObservation(
+		analysisObservation(result, "show_figure('Total', total)"),
+	)
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, "total = 1\n\nshow_figure('Total', total)", artifact.Payload["code"])
 }
 
 func TestArtifactFromObservation_AnAnalysisWithoutARunIsNotKept(t *testing.T) {

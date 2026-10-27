@@ -1,0 +1,55 @@
+# The Desk's formula library list, read by the agent's formula_list_libraries:
+# each library's path, description, status, version and test count, without
+# the source the editor loads. A library is read whole through
+# DeskFormulaLibraryCard.
+query DeskFormulaLibraries($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  formulaLibraries(input: $input) {
+    edges {
+      node {
+        id
+        name
+        path
+        description
+        status
+        currentVersionNumber
+        testCount
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+# One formula library whole, read by the agent's formula_get_library: its
+# Tariff source, the libraries it imports, its review state and version.
+query DeskFormulaLibraryCard($id: ID!) {
+  formulaLibrary(id: $id) {
+    id
+    name
+    path
+    description
+    source
+    imports {
+      path
+      libraryId
+      versionNumber
+    }
+    testCount
+    status
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    reviewComment
+    version
+    sourceLibraryId
+    sourceVersionNumber
+    currentVersionNumber
+    createdAt
+    updatedAt
+  }
+}

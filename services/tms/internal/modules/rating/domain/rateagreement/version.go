@@ -4,89 +4,73 @@ import (
 	"context"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*RateAgreementVersion)(nil)
-
-// RateAgreementVersion records the negotiated header terms as they stood.
-//
-// It deliberately does not copy the rules. Rules carry their own effective
-// windows, so "the contract as it stood on the third of March" is the header
-// version live on that date plus whichever rules were live on that date — one
-// query, and an amendment to forty lanes writes forty rows instead of copying
-// every rule in the book.
+// What a contract said at each revision, and why it changed
 type RateAgreementVersion struct {
-	bun.BaseModel `bun:"table:rate_agreement_versions,alias:ragv" json:"-"`
+	keel.Table `keel:"rate_agreement_versions,report=Billing,label=Agreement Version"`
 
-	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RateAgreementID pulid.ID `json:"rateAgreementId" bun:"rate_agreement_id,type:VARCHAR(100),notnull"`
+	ID              pulid.ID `json:"id"              keel:"id,pk,autoid:ragv_"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	RateAgreementID pulid.ID `json:"rateAgreementId" keel:"rate_agreement_id"`
 
-	VersionNumber int64  `json:"versionNumber" bun:"version_number,type:BIGINT,notnull"`
-	EffectiveFrom int64  `json:"effectiveFrom" bun:"effective_from,type:BIGINT,notnull"`
-	EffectiveTo   *int64 `json:"effectiveTo"   bun:"effective_to,type:BIGINT,nullzero"`
+	VersionNumber int64  `json:"versionNumber" keel:"version_number,label=Version,dimension"`
+	EffectiveFrom int64  `json:"effectiveFrom" keel:"effective_from,type=epoch"`
+	EffectiveTo   *int64 `json:"effectiveTo"   keel:"effective_to,type=epoch"`
 
-	PartyType  PartyType `json:"partyType"  bun:"party_type,type:rate_agreement_party_type_enum,nullzero"`
-	CustomerID *pulid.ID `json:"customerId" bun:"customer_id,type:VARCHAR(100),nullzero"`
-	CarrierID  *pulid.ID `json:"carrierId"  bun:"carrier_id,type:VARCHAR(100),nullzero"`
+	PartyType  PartyType `json:"partyType"  keel:"party_type,nullzero"`
+	CustomerID *pulid.ID `json:"customerId" keel:"customer_id"`
+	CarrierID  *pulid.ID `json:"carrierId"  keel:"carrier_id"`
 
-	Code          string        `json:"code"          bun:"code,type:VARCHAR(50),notnull,default:''"`
-	Name          string        `json:"name"          bun:"name,type:VARCHAR(150),notnull"`
-	Description   string        `json:"description"   bun:"description,type:TEXT,nullzero"`
-	AgreementType AgreementType `json:"agreementType" bun:"agreement_type,type:rate_agreement_type_enum,notnull"`
-	Status        Status        `json:"status"        bun:"status,type:rate_agreement_status_enum,notnull"`
-	ContractRef   string        `json:"contractRef"   bun:"contract_ref,type:VARCHAR(100),nullzero"`
-	DocumentID    *pulid.ID     `json:"documentId"    bun:"document_id,type:VARCHAR(100),nullzero"`
+	Code          string        `json:"code"          keel:"code"`
+	Name          string        `json:"name"          keel:"name"`
+	Description   string        `json:"description"   keel:"description,nullzero"`
+	AgreementType AgreementType `json:"agreementType" keel:"agreement_type"`
+	Status        Status        `json:"status"        keel:"status"`
+	ContractRef   string        `json:"contractRef"   keel:"contract_ref,nullzero"`
+	DocumentID    *pulid.ID     `json:"documentId"    keel:"document_id"`
 
-	Priority int16 `json:"priority" bun:"priority,type:SMALLINT,notnull,default:0"`
-	// The agreement's own window, distinct from EffectiveFrom/EffectiveTo above,
-	// which say when this *version* of the terms governed. Moving the contract's
-	// dates is a renegotiation like any other and diffs under these names.
-	AgreementEffectiveFrom int64     `json:"agreementEffectiveFrom" bun:"agreement_effective_from,type:BIGINT,notnull,default:0"`
-	AgreementEffectiveTo   *int64    `json:"agreementEffectiveTo"   bun:"agreement_effective_to,type:BIGINT,nullzero"`
-	AutoRenew              bool      `json:"autoRenew"              bun:"auto_renew,type:BOOLEAN,notnull,default:false"`
-	RenewalNoticeDays      int16     `json:"renewalNoticeDays"      bun:"renewal_notice_days,type:SMALLINT,notnull,default:30"`
-	BillToCustomerID       *pulid.ID `json:"billToCustomerId"       bun:"bill_to_customer_id,type:VARCHAR(100),nullzero"`
+	Priority               int16     `json:"priority"               keel:"priority,dimension"`
+	AgreementEffectiveFrom int64     `json:"agreementEffectiveFrom" keel:"agreement_effective_from,type=epoch"`
+	AgreementEffectiveTo   *int64    `json:"agreementEffectiveTo"   keel:"agreement_effective_to,type=epoch"`
+	AutoRenew              bool      `json:"autoRenew"              keel:"auto_renew"`
+	RenewalNoticeDays      int16     `json:"renewalNoticeDays"      keel:"renewal_notice_days,dimension"`
+	BillToCustomerID       *pulid.ID `json:"billToCustomerId"       keel:"bill_to_customer_id"`
 
-	Currency          string                 `json:"currency"          bun:"currency,type:VARCHAR(3),notnull"`
-	DefaultMinCharge  decimal.NullDecimal    `json:"defaultMinCharge"  bun:"default_min_charge,type:NUMERIC(19,4),nullzero"`
-	DefaultMaxCharge  decimal.NullDecimal    `json:"defaultMaxCharge"  bun:"default_max_charge,type:NUMERIC(19,4),nullzero"`
-	RoundingMode      ratetypes.RoundingMode `json:"roundingMode"      bun:"rounding_mode,type:rate_rounding_mode_enum,notnull"`
-	RoundingPrecision int16                  `json:"roundingPrecision" bun:"rounding_precision,type:SMALLINT,notnull"`
+	Currency string             `json:"currency" keel:"currency"`
+	Inputs   tarifftypes.Inputs `json:"inputs"   keel:"inputs,jsonb"`
 
-	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  bun:"margin_floor_percent,type:NUMERIC(9,4),nullzero"`
-	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" bun:"max_pay_percent_of_sell,type:NUMERIC(9,4),nullzero"`
+	MarginFloorPercent  decimal.NullDecimal `json:"marginFloorPercent"  keel:"margin_floor_percent,label=Margin Floor (%)"`
+	MaxPayPercentOfSell decimal.NullDecimal `json:"maxPayPercentOfSell" keel:"max_pay_percent_of_sell,label=Max Pay % of Sell"`
 
-	// The negotiated accessorial schedule keyed by accessorial charge id.
-	// Stored as ids only — names are patched on at read time into
-	// AccessorialNames, so a later rename of the charge cannot rewrite what
-	// the contract said.
-	AccessorialTerms map[string]AccessorialTermSnapshot `json:"accessorialTerms" bun:"accessorial_terms,type:JSONB,nullzero"`
-	// The fuel binding's negotiated terms as they stood.
-	FuelTerms *FuelTermSnapshot `json:"fuelTerms" bun:"fuel_terms,type:JSONB,nullzero"`
+	AccessorialTerms map[string]AccessorialTermSnapshot `json:"accessorialTerms" keel:"accessorial_terms,jsonb,nullzero"`
+	FuelTerms        *FuelTermSnapshot                  `json:"fuelTerms"        keel:"fuel_terms,jsonb"`
 
-	// Read-time only: accessorial charge id → code, resolved by the repository
-	// for every id the snapshot and change summary mention. Never persisted.
-	AccessorialNames map[string]string `json:"accessorialNames,omitempty" bun:"-"`
+	AccessorialNames map[string]string `json:"accessorialNames,omitempty"`
 
-	ChangeMessage string                           `json:"changeMessage" bun:"change_message,type:TEXT,nullzero"`
-	ChangeSummary map[string]jsonutils.FieldChange `json:"changeSummary" bun:"change_summary,type:JSONB,nullzero"`
-	CreatedByID   pulid.ID                         `json:"createdById"   bun:"created_by_id,type:VARCHAR(100),notnull"`
-	CreatedAt     int64                            `json:"createdAt"     bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ChangeMessage string                           `json:"changeMessage" keel:"change_message,nullzero"`
+	ChangeSummary map[string]jsonutils.FieldChange `json:"changeSummary" keel:"change_summary,jsonb,nullzero"`
+	CreatedByID   pulid.ID                         `json:"createdById"   keel:"created_by_id"`
+	CreatedAt     int64                            `json:"createdAt"     keel:"created_at,autocreate"`
 
-	Agreement *RateAgreement `json:"-"                   bun:"rel:belongs-to,join:rate_agreement_id=id"`
-	CreatedBy *tenant.User   `json:"createdBy,omitempty" bun:"rel:belongs-to,join:created_by_id=id"`
+	Agreement *RateAgreement `json:"-"                   keel:"belongs:rate_agreement_id"`
+	CreatedBy *tenant.User   `json:"createdBy,omitempty" keel:"belongs:created_by_id,noreport"`
+}
+
+func (ragv *RateAgreementVersion) BeforeUpdate(_ context.Context) error {
+	ragv.Inputs = ragv.Inputs.OrEmpty()
+
+	return nil
 }
 
 // IsEffectiveAt reports whether this version's terms governed at a moment.
@@ -108,19 +92,18 @@ func (ragv *RateAgreementVersion) IsEffectiveAt(timestamp int64) bool {
 // pair because the version row uses those names for its own lifetime, and an
 // accessorial's window is a term that must survive the diff.
 type AccessorialTermSnapshot struct {
-	Method            accessorialcharge.Method   `json:"method"`
-	RateUnit          accessorialcharge.RateUnit `json:"rateUnit,omitempty"`
-	Amount            decimal.Decimal            `json:"amount"`
-	Waived            bool                       `json:"waived"`
-	AutoApply         bool                       `json:"autoApply"`
-	ApplyCondition    string                     `json:"applyCondition,omitempty"`
-	FreeUnits         *int16                     `json:"freeUnits,omitempty"`
-	MaxAmount         decimal.NullDecimal        `json:"maxAmount"`
-	FormulaTemplateID *pulid.ID                  `json:"formulaTemplateId,omitempty"`
-	ServiceTypeIDs    []pulid.ID                 `json:"serviceTypeIds,omitempty"`
-	ShipmentTypeIDs   []pulid.ID                 `json:"shipmentTypeIds,omitempty"`
-	AppliesFrom       *int64                     `json:"appliesFrom,omitempty"`
-	AppliesTo         *int64                     `json:"appliesTo,omitempty"`
+	Method          accessorialcharge.Method   `json:"method"`
+	RateUnit        accessorialcharge.RateUnit `json:"rateUnit,omitempty"`
+	Amount          decimal.Decimal            `json:"amount"`
+	Waived          bool                       `json:"waived"`
+	AutoApply       bool                       `json:"autoApply"`
+	Condition       string                     `json:"condition,omitempty"`
+	FreeUnits       *int16                     `json:"freeUnits,omitempty"`
+	MaxAmount       decimal.NullDecimal        `json:"maxAmount"`
+	ServiceTypeIDs  []pulid.ID                 `json:"serviceTypeIds,omitempty"`
+	ShipmentTypeIDs []pulid.ID                 `json:"shipmentTypeIds,omitempty"`
+	AppliesFrom     *int64                     `json:"appliesFrom,omitempty"`
+	AppliesTo       *int64                     `json:"appliesTo,omitempty"`
 }
 
 // FuelTermSnapshot is the fuel binding's negotiated terms as a version records
@@ -149,19 +132,18 @@ func sortedIDs(ids []pulid.ID) []pulid.ID {
 
 func newAccessorialTermSnapshot(acc *RateAgreementAccessorial) AccessorialTermSnapshot {
 	return AccessorialTermSnapshot{
-		Method:            acc.Method,
-		RateUnit:          acc.RateUnit,
-		Amount:            acc.Amount,
-		Waived:            acc.Waived,
-		AutoApply:         acc.AutoApply,
-		ApplyCondition:    acc.ApplyCondition,
-		FreeUnits:         acc.FreeUnits,
-		MaxAmount:         acc.MaxAmount,
-		FormulaTemplateID: acc.FormulaTemplateID,
-		ServiceTypeIDs:    sortedIDs(acc.ServiceTypeIDs),
-		ShipmentTypeIDs:   sortedIDs(acc.ShipmentTypeIDs),
-		AppliesFrom:       acc.EffectiveFrom,
-		AppliesTo:         acc.EffectiveTo,
+		Method:          acc.Method,
+		RateUnit:        acc.RateUnit,
+		Amount:          acc.Amount,
+		Waived:          acc.Waived,
+		AutoApply:       acc.AutoApply,
+		Condition:       acc.Condition,
+		FreeUnits:       acc.FreeUnits,
+		MaxAmount:       acc.MaxAmount,
+		ServiceTypeIDs:  sortedIDs(acc.ServiceTypeIDs),
+		ShipmentTypeIDs: sortedIDs(acc.ShipmentTypeIDs),
+		AppliesFrom:     acc.EffectiveFrom,
+		AppliesTo:       acc.EffectiveTo,
 	}
 }
 
@@ -226,10 +208,7 @@ func NewVersionFromAgreement(
 		RenewalNoticeDays:      agreement.RenewalNoticeDays,
 		BillToCustomerID:       agreement.BillToCustomerID,
 		Currency:               agreement.Currency,
-		DefaultMinCharge:       agreement.DefaultMinCharge,
-		DefaultMaxCharge:       agreement.DefaultMaxCharge,
-		RoundingMode:           agreement.RoundingMode,
-		RoundingPrecision:      agreement.RoundingPrecision,
+		Inputs:                 agreement.Inputs.Clone(),
 		MarginFloorPercent:     agreement.MarginFloorPercent,
 		MaxPayPercentOfSell:    agreement.MaxPayPercentOfSell,
 		AccessorialTerms:       accessorialTermsFromAgreement(agreement),
@@ -275,13 +254,12 @@ func (ragv *RateAgreementVersion) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (ragv *RateAgreementVersion) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if ragv.ID.IsNil() {
-			ragv.ID = pulid.MustNew("ragv_")
-		}
-		ragv.CreatedAt = timeutils.NowUnix()
+func (ragv *RateAgreementVersion) BeforeCreate(_ context.Context) error {
+	ragv.Inputs = ragv.Inputs.OrEmpty()
+	if ragv.RenewalNoticeDays == 0 {
+		ragv.RenewalNoticeDays = 30
 	}
+	ragv.Inputs = ragv.Inputs.OrEmpty()
 
 	return nil
 }
@@ -304,4 +282,14 @@ func (ragv *RateAgreementVersion) GetBusinessUnitID() pulid.ID {
 
 func (ragv *RateAgreementVersion) GetTableName() string {
 	return "rate_agreement_versions"
+}
+
+func (RateAgreementVersion) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_agreement_versions_number",
+			Field:   "versionNumber",
+			Message: "This version of the rate agreement was already recorded; refresh and try again",
+		},
+	}
 }

@@ -3,41 +3,41 @@ package stopeta
 import (
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type StopETA struct {
-	bun.BaseModel `bun:"table:stop_etas,alias:seta" json:"-"`
+	keel.Table `keel:"stop_etas"`
 
-	ID                 pulid.ID    `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID    `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID    `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	ShipmentID         pulid.ID    `json:"shipmentId"         bun:"shipment_id,type:VARCHAR(100),notnull"`
-	ShipmentMoveID     pulid.ID    `json:"shipmentMoveId"     bun:"shipment_move_id,type:VARCHAR(100),notnull"`
-	StopID             pulid.ID    `json:"stopId"             bun:"stop_id,type:VARCHAR(100),notnull"`
-	MoveSequence       int64       `json:"moveSequence"       bun:"move_sequence,type:INTEGER,notnull"`
-	StopSequence       int64       `json:"stopSequence"       bun:"stop_sequence,type:INTEGER,notnull"`
-	Arrived            bool        `json:"arrived"            bun:"arrived,type:BOOLEAN,notnull,default:false"`
-	EstimatedArrival   *int64      `json:"estimatedArrival"   bun:"estimated_arrival,type:BIGINT,nullzero"`
-	EstimatedDeparture *int64      `json:"estimatedDeparture" bun:"estimated_departure,type:BIGINT,nullzero"`
-	WindowEnd          *int64      `json:"windowEnd"          bun:"window_end,type:BIGINT,nullzero"`
-	SlackMinutes       *int64      `json:"slackMinutes"       bun:"slack_minutes,type:INTEGER"`
-	Verdict            Verdict     `json:"verdict"            bun:"verdict,type:VARCHAR(20),notnull"`
-	Basis              Basis       `json:"basis"              bun:"basis,type:VARCHAR(20),notnull"`
-	DriveMethod        DriveMethod `json:"driveMethod"        bun:"drive_method,type:VARCHAR(20),notnull"`
-	MilesRemaining     float64     `json:"milesRemaining"     bun:"miles_remaining,type:DOUBLE PRECISION,notnull,default:0"`
-	DriveMinutes       int64       `json:"driveMinutes"       bun:"drive_minutes,type:INTEGER,notnull,default:0"`
-	RestMinutes        int64       `json:"restMinutes"        bun:"rest_minutes,type:INTEGER,notnull,default:0"`
-	InputAt            *int64      `json:"inputAt"            bun:"input_at,type:BIGINT,nullzero"`
-	InputStale         bool        `json:"inputStale"         bun:"input_stale,type:BOOLEAN,notnull,default:false"`
-	ThresholdMinutes   int64       `json:"thresholdMinutes"   bun:"threshold_minutes,type:INTEGER,notnull"`
-	Reason             string      `json:"reason"             bun:"reason,type:VARCHAR(500),nullzero"`
-	ComputedAt         int64       `json:"computedAt"         bun:"computed_at,type:BIGINT,notnull"`
+	ID                 pulid.ID    `json:"id"                 keel:"id,pk"`
+	OrganizationID     pulid.ID    `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID    `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	ShipmentID         pulid.ID    `json:"shipmentId"         keel:"shipment_id"`
+	ShipmentMoveID     pulid.ID    `json:"shipmentMoveId"     keel:"shipment_move_id"`
+	StopID             pulid.ID    `json:"stopId"             keel:"stop_id"`
+	MoveSequence       int64       `json:"moveSequence"       keel:"move_sequence"`
+	StopSequence       int64       `json:"stopSequence"       keel:"stop_sequence"`
+	Arrived            bool        `json:"arrived"            keel:"arrived"`
+	EstimatedArrival   *int64      `json:"estimatedArrival"   keel:"estimated_arrival"`
+	EstimatedDeparture *int64      `json:"estimatedDeparture" keel:"estimated_departure"`
+	WindowEnd          *int64      `json:"windowEnd"          keel:"window_end"`
+	SlackMinutes       *int64      `json:"slackMinutes"       keel:"slack_minutes"`
+	Verdict            Verdict     `json:"verdict"            keel:"verdict"`
+	Basis              Basis       `json:"basis"              keel:"basis"`
+	DriveMethod        DriveMethod `json:"driveMethod"        keel:"drive_method"`
+	MilesRemaining     float64     `json:"milesRemaining"     keel:"miles_remaining"`
+	DriveMinutes       int64       `json:"driveMinutes"       keel:"drive_minutes"`
+	RestMinutes        int64       `json:"restMinutes"        keel:"rest_minutes"`
+	InputAt            *int64      `json:"inputAt"            keel:"input_at"`
+	InputStale         bool        `json:"inputStale"         keel:"input_stale"`
+	ThresholdMinutes   int64       `json:"thresholdMinutes"   keel:"threshold_minutes"`
+	Reason             string      `json:"reason"             keel:"reason,nullzero"`
+	ComputedAt         int64       `json:"computedAt"         keel:"computed_at"`
 }
 
 func NewID() pulid.ID {

@@ -18,9 +18,9 @@
 //! are bucketed by key and specificity, so only lanes that share a bucket are compared.
 
 use crate::lane::rule::RuleInput;
-use crate::message;
-use crate::message::Message;
 use std::collections::HashMap;
+use trenova_module_kit::message;
+use trenova_module_kit::message::Message;
 
 /// Why a lane will never apply.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

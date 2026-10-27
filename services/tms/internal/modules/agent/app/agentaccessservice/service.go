@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -40,22 +39,22 @@ func policyLookup(catalog *agenttoolpolicy.Catalog) toolPolicies {
 type Params struct {
 	fx.In
 
-	Logger          *zap.Logger
-	DB              kernelports.DBConnection
-	Definitions     agentdefinitionports.AgentDefinitionRepository
-	Grants          permissionports.RoleAgentGrantRepository
-	Roles           permissionports.RoleRepository
-	Notifier        permissionports.PermissionChangeNotifier `optional:"true"`
-	Permissions     permissionports.PermissionEngine
-	AuditService    auditports.AuditService
-	Runtime         agentports.AgentRuntime
-	Policies        *agenttoolpolicy.Catalog `optional:"true"`
-	Registry        *permission.Registry
+	Logger       *zap.Logger
+	DB           kernelports.Transactor
+	Definitions  agentdefinitionports.AgentDefinitionRepository
+	Grants       permissionports.RoleAgentGrantRepository
+	Roles        permissionports.RoleRepository
+	Notifier     permissionports.PermissionChangeNotifier `optional:"true"`
+	Permissions  permissionports.PermissionEngine
+	AuditService auditports.AuditService
+	Runtime      agentports.AgentRuntime
+	Policies     *agenttoolpolicy.Catalog `optional:"true"`
+	Registry     *permission.Registry
 }
 
 type Service struct {
 	l           *zap.Logger
-	db          kernelports.DBConnection
+	db          kernelports.Transactor
 	definitions agentdefinitionports.AgentDefinitionRepository
 	grants      permissionports.RoleAgentGrantRepository
 	roles       permissionports.RoleRepository
@@ -103,7 +102,7 @@ func (s *Service) SetAgentAccess(
 	}
 
 	var written *accessWrite
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		definition, txErr := s.definitions.GetByID(
 			txCtx,
 			agentdefinitionports.GetAgentDefinitionByIDRequest{
@@ -164,7 +163,7 @@ func (s *Service) SaveWithAccess(
 	}
 
 	var written *accessWrite
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		saved, txErr := req.Save(txCtx)
 		if txErr != nil {
 			return txErr
@@ -345,7 +344,7 @@ func (s *Service) SetRoleAgents(
 		agents []*agentdefinition.Definition
 		change permissionports.GrantChange
 	)
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		roles, txErr := s.grants.ListGrantableRoles(
 			txCtx,
 			permissionports.ListGrantableRolesRequest{

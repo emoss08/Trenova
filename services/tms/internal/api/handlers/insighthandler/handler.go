@@ -125,7 +125,11 @@ func (h *Handler) browse(c *gin.Context) {
 		return
 	}
 
-	helpers.JSON(c, http.StatusOK, gin.H{"results": result.Items, "total": result.Total})
+	helpers.JSON(c, http.StatusOK, gin.H{
+		"results":    result.Items,
+		"total":      result.Total,
+		"totalExact": result.TotalExact,
+	})
 }
 
 // detail reads one finding with its history and the rule behind it.

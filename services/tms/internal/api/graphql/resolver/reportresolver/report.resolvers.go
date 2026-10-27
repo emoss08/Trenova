@@ -25,10 +25,12 @@ func (r *MutationResolver) CreateReportDefinition(ctx context.Context, input gql
 		return nil, err
 	}
 
-	created, err := r.ReportingService.CreateDefinition(
-		ctx,
-		saveReportDefinitionRequest(authCtx, &input),
-	)
+	req, err := saveReportDefinitionRequest(authCtx, &input)
+	if err != nil {
+		return nil, err
+	}
+
+	created, err := r.ReportingService.CreateDefinition(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +49,7 @@ func (r *MutationResolver) UpdateReportDefinition(ctx context.Context, input gql
 		return nil, err
 	}
 
-	req := saveReportDefinitionRequest(authCtx, &gqlmodel.SaveReportDefinitionInput{
+	req, err := saveReportDefinitionRequest(authCtx, &gqlmodel.SaveReportDefinitionInput{
 		Name:          input.Name,
 		Description:   input.Description,
 		Category:      input.Category,
@@ -57,6 +59,9 @@ func (r *MutationResolver) UpdateReportDefinition(ctx context.Context, input gql
 		DefaultFormat: input.DefaultFormat,
 		Definition:    input.Definition,
 	})
+	if err != nil {
+		return nil, err
+	}
 	req.DefinitionID = definitionID
 	req.Version = int64(input.Version)
 
@@ -203,7 +208,7 @@ func (r *MutationResolver) CreateReportSchedule(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	req, err := saveReportScheduleRequest(authCtx, &input, nil)
+	req, err := saveReportScheduleRequest(authCtx, &input)
 	if err != nil {
 		return nil, err
 	}
@@ -222,16 +227,7 @@ func (r *MutationResolver) UpdateReportSchedule(ctx context.Context, input gqlmo
 		return nil, err
 	}
 
-	req, err := saveReportScheduleRequest(authCtx, &gqlmodel.CreateReportScheduleInput{
-		DefinitionID:    input.DefinitionID,
-		CronExpression:  input.CronExpression,
-		Timezone:        input.Timezone,
-		Formats:         input.Formats,
-		EmailRecipients: input.EmailRecipients,
-		EmailAttach:     input.EmailAttach,
-		NotifyUserIds:   input.NotifyUserIds,
-		Enabled:         input.Enabled,
-	}, &input)
+	req, err := updateReportScheduleRequest(authCtx, &input)
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +406,13 @@ func (r *QueryResolver) ReportCatalog(ctx context.Context) (*gqlmodel.ReportCata
 		return nil, err
 	}
 
-	return reportCatalogToModel(ctx, r.PermissionEngine, base.TenantInfo(authCtx))
+	req := reportingRequest(authCtx)
+	catalog, err := r.ReportingService.Catalog(ctx, &req)
+	if err != nil {
+		return nil, err
+	}
+
+	return reportCatalogToModel(ctx, catalog)
 }
 
 func (r *QueryResolver) CannedReports(ctx context.Context) ([]*gqlmodel.CannedReport, error) {
@@ -595,17 +597,24 @@ func (r *QueryResolver) ReportRuns(ctx context.Context, input gqlmodel.DataTable
 	return reportRunConnectionToModel(result)
 }
 
-func (r *QueryResolver) PreviewReport(ctx context.Context, definition gqlmodel.ReportIRInput, params map[string]any, supersede *bool) (*gqlmodel.ReportPreview, error) {
+func (r *QueryResolver) PreviewReport(ctx context.Context, definition map[string]any, params map[string]any, supersede *bool, cursor *string, pageSize *int) (*gqlmodel.ReportPreview, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceReport, permission.OpRead)
+	if err != nil {
+		return nil, err
+	}
+
+	decoded, err := reportingservice.DecodeDefinition(definition)
 	if err != nil {
 		return nil, err
 	}
 
 	result, err := r.ReportingService.Preview(ctx, &reportingservice.PreviewRequest{
 		Request:    reportingRequest(authCtx),
-		Definition: reportIRFromGraphQL(&definition),
+		Definition: decoded,
 		Params:     params,
-		Supersede:  supersede != nil && *supersede,
+		Supersede:  base.BoolValue(supersede),
+		Cursor:     base.DerefString(cursor),
+		PageSize:   base.DerefInt(pageSize),
 	})
 	if err != nil {
 		return nil, err
@@ -620,23 +629,25 @@ func (r *QueryResolver) DrillThroughReport(ctx context.Context, input gqlmodel.R
 		return nil, err
 	}
 
+	decoded, err := reportingservice.DecodeDefinition(input.Definition)
+	if err != nil {
+		return nil, err
+	}
+
 	req := &reportingservice.DrillThroughRequest{
-		Request:    reportingRequest(authCtx),
-		Definition: reportIRFromGraphQL(input.Definition),
-		Params:     input.Params,
-		Dimensions: make([]reportingservice.DrillValue, 0, len(input.Dimensions)),
+		Request:     reportingRequest(authCtx),
+		Definition:  decoded,
+		Params:      input.Params,
+		Dimensions:  make([]reportingservice.DrillValue, 0, len(input.Dimensions)),
+		ColumnID:    base.DerefString(input.ColumnID),
+		PivotValues: input.PivotValues,
+		Limit:       base.DerefInt(input.Limit),
 	}
 	for _, dimension := range input.Dimensions {
 		req.Dimensions = append(req.Dimensions, reportingservice.DrillValue{
 			ColumnID: dimension.ColumnID,
 			Value:    dimension.Value,
 		})
-	}
-	if input.ColumnID != nil {
-		req.ColumnID = *input.ColumnID
-	}
-	if input.Limit != nil {
-		req.Limit = *input.Limit
 	}
 
 	result, err := r.ReportingService.DrillThrough(ctx, req)
@@ -647,13 +658,17 @@ func (r *QueryResolver) DrillThroughReport(ctx context.Context, input gqlmodel.R
 	return reportPreviewToModel(result), nil
 }
 
-func (r *QueryResolver) ReportSchedules(ctx context.Context, definitionID *string) ([]*gqlmodel.ReportSchedule, error) {
+func (r *QueryResolver) ReportSchedules(ctx context.Context, definitionID *string, enabledOnly *bool, limit *int) ([]*gqlmodel.ReportSchedule, error) {
 	authCtx, err := r.RequirePermission(ctx, permission.ResourceReport, permission.OpRead)
 	if err != nil {
 		return nil, err
 	}
 
-	req := &reportingservice.ListSchedulesRequest{Request: reportingRequest(authCtx)}
+	req := &reportingservice.ListSchedulesRequest{
+		Request:     reportingRequest(authCtx),
+		EnabledOnly: base.BoolValue(enabledOnly),
+		Limit:       base.RecordListLimit(limit, definitionID != nil),
+	}
 	if definitionID != nil {
 		parsedID, parseErr := pulid.MustParse(*definitionID)
 		if parseErr != nil {
@@ -825,4 +840,15 @@ func (r *MutationResolver) ScheduleTableView(ctx context.Context, input gqlmodel
 		return nil, err
 	}
 	return tableExportResultToModel(result), nil
+}
+
+func (r *ReportScheduleResolver) Mine(ctx context.Context, obj *gqlmodel.ReportSchedule) (bool, error) {
+	if obj == nil {
+		return false, nil
+	}
+	authCtx, err := r.RequireAuth(ctx)
+	if err != nil {
+		return false, err
+	}
+	return obj.RunAsID == base.TenantInfo(authCtx).UserID.String(), nil
 }

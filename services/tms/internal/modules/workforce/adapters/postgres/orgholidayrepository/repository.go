@@ -3,18 +3,18 @@ package orgholidayrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var holidayErrors = dberror.Mapping{Entity: "OrgHoliday"}
 
 type Params struct {
 	fx.In
@@ -35,39 +35,29 @@ func New(p Params) workerports.OrgHolidayRepository {
 	}
 }
 
+func listQuery(req *workerports.ListOrgHolidaysRequest) *keel.Query[*worker.OrgHoliday] {
+	h := workerdb.OrgHolidays
+	var window keel.Pred
+	if req.From > 0 || req.To > 0 {
+		window = keel.Or(
+			h.RecursAnnually.IsTrue(),
+			keel.And(
+				keel.When(req.From > 0, h.HolidayDate.Gte(req.From)),
+				keel.When(req.To > 0, h.HolidayDate.Lte(req.To)),
+			),
+		)
+	}
+
+	return h.Where(window).Order(h.HolidayDate.Asc(), h.Name.Asc())
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListOrgHolidaysRequest,
 ) ([]*worker.OrgHoliday, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.OrgHoliday, error) {
-		cols := workercol.OrgHolidayColumns
-		entities := make([]*worker.OrgHoliday, 0, 16)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.OrgHolidayScopeTenant(sq, req.TenantInfo)
-				if req.From > 0 || req.To > 0 {
-					sq = sq.WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						inner = inner.Where(cols.RecursAnnually.Eq(), true)
-						window := func(w *bun.SelectQuery) *bun.SelectQuery {
-							if req.From > 0 {
-								w = w.Where(cols.HolidayDate.Gte(), req.From)
-							}
-							if req.To > 0 {
-								w = w.Where(cols.HolidayDate.Lte(), req.To)
-							}
-							return w
-						}
-						return inner.WhereGroup(" OR ", window)
-					})
-				}
-				return sq
-			}).
-			Order(cols.HolidayDate.OrderAsc()).
-			Order(cols.Name.OrderAsc())
-
-		if err := q.Scan(ctx); err != nil {
+		entities, err := listQuery(req).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list org holidays", zap.Error(err))
 			return nil, err
 		}
@@ -81,29 +71,13 @@ func (r *repository) GetByID(
 	req *workerports.GetOrgHolidayByIDRequest,
 ) (*worker.OrgHoliday, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.OrgHoliday, error) {
-		entity := new(worker.OrgHoliday)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.OrgHolidayScopeTenant(sq, req.TenantInfo).
-					Where(workercol.OrgHolidayColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := workerdb.OrgHolidays.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "OrgHoliday")
+			return nil, holidayErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
 	})
-}
-
-func duplicateDate() error {
-	return errortypes.NewValidationError(
-		"holidayDate",
-		errortypes.ErrDuplicate,
-		"There is already an entry of this kind on that date",
-	)
 }
 
 func (r *repository) Create(
@@ -111,16 +85,9 @@ func (r *repository) Create(
 	entity *worker.OrgHoliday,
 ) (*worker.OrgHoliday, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.OrgHoliday, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateDate()
-			}
+		if err := workerdb.OrgHolidays.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create org holiday", zap.Error(err))
-			return nil, err
+			return nil, holidayErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -132,25 +99,9 @@ func (r *repository) Update(
 	entity *worker.OrgHoliday,
 ) (*worker.OrgHoliday, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.OrgHoliday, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.OrgHolidayColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			if dberror.IsUniqueConstraintViolation(err) {
-				return nil, duplicateDate()
-			}
+		if err := workerdb.OrgHolidays.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update org holiday", zap.Error(err))
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(results, "OrgHoliday", entity.ID.String()); err != nil {
-			return nil, err
+			return nil, holidayErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -159,18 +110,12 @@ func (r *repository) Update(
 
 func (r *repository) Delete(ctx context.Context, req *workerports.GetOrgHolidayByIDRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*worker.OrgHoliday)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return workercol.OrgHolidayScopeTenantDelete(dq, req.TenantInfo).
-					Where(workercol.OrgHolidayColumns.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		err := workerdb.OrgHolidays.DeleteRow(ctx, r.db.Keel(ctx), &worker.OrgHoliday{ID: req.ID})
 		if err != nil {
 			r.l.Error("failed to delete org holiday", zap.Error(err))
-			return err
+			return holidayErrors.Map(err, req.ID.String())
 		}
-		return dberror.CheckRowsAffected(results, "OrgHoliday", req.ID.String())
+
+		return nil
 	})
 }

@@ -140,9 +140,10 @@ func fuelIndexConnectionToModel(
 	}
 
 	return &gqlmodel.FuelIndexConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -167,9 +168,10 @@ func fuelSurchargeProgramConnectionToModel(
 	}
 
 	return &gqlmodel.FuelSurchargeProgramConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -427,6 +429,7 @@ func fuelProgramCurrentRatesToModel(
 		}
 
 		result = append(result, &gqlmodel.FuelProgramCurrentRate{
+			ID:           entry.Program.ID.String(),
 			Program:      fuelSurchargeProgramToModel(entry.Program),
 			Price:        fuelIndexPriceToModel(entry.Price),
 			RatePerMile:  base.DecimalPtrToStringPtr(entry.RatePerMile),

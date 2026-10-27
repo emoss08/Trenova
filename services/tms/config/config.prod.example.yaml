@@ -50,11 +50,24 @@ server:
 
 database:
   sslMode: require
-  maxIdleConns: 25
   maxOpenConns: 75
   statementTimeout: 10s
   lockTimeout: 5s
   idleInTransactionSessionTimeout: 30s
+  queryLog: "off"
+  tenantConcurrency: 0 # 0 takes a quarter of maxOpenConns
+  slowWaitWarning: 5s # Warn, with stacks, about work waiting this long for a slot or connection; 0 is off
+  maxWait: 60s # Fail work waiting this long for a slot or connection as busy; keep above server.requestTimeout; 0 is off
+  cache:
+    enabled: true
+    localBytes: 268435456
+    listenHost: "" # PostgreSQL itself when the pool goes through a transaction-mode PgBouncer
+    listenPort: 0
+    shared:
+      enabled: false # copies tenant rows into Redis
+      prefix: "trenova:keel:"
+  budget:
+    maxRepeats: 10
 
 cache:
   poolSize: 50

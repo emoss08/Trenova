@@ -108,7 +108,7 @@ func TestEstimateLegsRoutesOnceAndCachesTheLeg(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, client.calls, 1, "a cached leg is not routed again")
 	assert.Equal(t, first[0], second[0])
-	assert.Equal(t, 1, resolves, "the tenant's runtime is resolved once")
+	assert.Equal(t, 2, resolves, "the runtime is resolved from cached reads on every call")
 }
 
 func TestEstimateLegsFallsBackWhenRoutingFails(t *testing.T) {

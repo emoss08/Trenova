@@ -1,9 +1,10 @@
-import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { AccountingStatusBadge } from "@/components/accounting/accounting-status-badge";
 import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
+import { recordPath } from "@/config/record-links";
 import { journalReversalStatusChoices } from "@/lib/choices";
 import type { JournalReversalRow } from "@/lib/graphql/journal-reversal-table";
+import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { ColumnDef } from "@trenova/shared/types/data-table";
 import { Link } from "react-router";
 
@@ -26,25 +27,25 @@ export function getColumns(t: TranslateFn): ColumnDef<JournalReversalRow>[] {
       },
     },
     {
-      accessorKey: "originalJournalEntryId",
+      accessorKey: "originalJournalEntry",
       header: t("Original journal entry"),
       cell: ({ row }) => (
         <Link
-          to={`/accounting/journal-entries/${row.original.originalJournalEntryId}`}
+          to={recordPath("journal_entry", row.original.originalJournalEntry.id)}
           className="text-muted-foreground hover:text-foreground font-mono text-xs hover:underline"
         >
-          {row.original.originalJournalEntryId}
+          {row.original.originalJournalEntry.entryNumber}
         </Link>
       ),
-      size: 220,
-      minSize: 180,
-      maxSize: 300,
+      size: 180,
+      minSize: 140,
+      maxSize: 240,
       meta: {
-        apiField: "originalJournalEntryId",
+        apiField: "originalJournalEntry.entryNumber",
         filterable: true,
         sortable: true,
         filterType: "text",
-        defaultFilterOperator: "eq",
+        defaultFilterOperator: "contains",
       },
     },
     {

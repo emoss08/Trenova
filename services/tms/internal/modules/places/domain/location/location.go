@@ -3,68 +3,63 @@ package location
 import (
 	"context"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/places/domain/geofence"
 	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Location)(nil)
 	_ validationframework.TenantedEntity = (*Location)(nil)
 	_ domaintypes.PostgresSearchable     = (*Location)(nil)
 	_ pagination.CursorEntity            = (*Location)(nil)
 )
 
+// Physical pickup, delivery, and facility locations
 type Location struct {
-	bun.BaseModel             `bun:"table:locations,alias:loc" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                    json:"-"`
+	keel.Table           `keel:"locations,report=Parties"`
+	ID                   pulid.ID           `keel:"id,pk,autoid:loc_"                        json:"id"`
+	BusinessUnitID       pulid.ID           `keel:"business_unit_id,pk,tenant"               json:"businessUnitId"`
+	OrganizationID       pulid.ID           `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	LocationCategoryID   pulid.ID           `keel:"location_category_id"                     json:"locationCategoryId"`
+	StateID              pulid.ID           `keel:"state_id"                                 json:"stateId"`
+	Status               domaintypes.Status `keel:"status"                                   json:"status"`
+	Code                 string             `keel:"code"                                     json:"code"`
+	Name                 string             `keel:"name,nullzero"                            json:"name"`
+	Description          string             `keel:"description,nullzero"                     json:"description"`
+	AddressLine1         string             `keel:"address_line_1,nullzero"                  json:"addressLine1"`
+	AddressLine2         string             `keel:"address_line_2,nullzero"                  json:"addressLine2"`
+	City                 string             `keel:"city,nullzero"                            json:"city"`
+	PostalCode           string             `keel:"postal_code,nullzero"                     json:"postalCode"`
+	Timezone             string             `keel:"timezone,nullzero"                        json:"timezone"`
+	PlaceID              string             `keel:"place_id,nullzero"                        json:"placeId"`
+	IsGeocoded           bool               `keel:"is_geocoded"                              json:"isGeocoded"`
+	Longitude            *float64           `keel:"longitude,dimension"                      json:"longitude"`
+	Latitude             *float64           `keel:"latitude,dimension"                       json:"latitude"`
+	Geom                 *postgis.Point     `keel:"geom,readonly"                            json:"-"`
+	GeofenceType         geofence.Type      `keel:"geofence_type"                            json:"geofenceType"`
+	GeofenceRadiusMeters *float64           `keel:"geofence_radius_meters"                   json:"geofenceRadiusMeters"`
+	GeofenceVertices     []geofence.Vertex  `                                                json:"geofenceVertices"`
+	GeofenceGeometry     *postgis.Geometry  `keel:"geofence_geometry,readonly"               json:"-"`
+	Version              int64              `keel:"version,version"                          json:"version"`
+	CreatedAt            int64              `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt            int64              `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector         string             `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
+	Rank                 string             `keel:"rank,computed"                            json:"-"`
 
-	ID                   pulid.ID           `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID       pulid.ID           `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID       pulid.ID           `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	LocationCategoryID   pulid.ID           `json:"locationCategoryId"   bun:"location_category_id,type:VARCHAR(100),notnull"`
-	StateID              pulid.ID           `json:"stateId"              bun:"state_id,type:VARCHAR(100),notnull"`
-	Status               domaintypes.Status `json:"status"               bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                 string             `json:"code"                 bun:"code,type:VARCHAR(32),notnull"`
-	Name                 string             `json:"name"                 bun:"name,type:VARCHAR(255),notnull"`
-	Description          string             `json:"description"          bun:"description,type:TEXT,nullzero"`
-	AddressLine1         string             `json:"addressLine1"         bun:"address_line_1,type:VARCHAR(150),notnull"`
-	AddressLine2         string             `json:"addressLine2"         bun:"address_line_2,type:VARCHAR(150),nullzero"`
-	City                 string             `json:"city"                 bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode           string             `json:"postalCode"           bun:"postal_code,type:us_postal_code,notnull"`
-	Timezone             string             `json:"timezone"             bun:"timezone,type:VARCHAR(64),nullzero"`
-	PlaceID              string             `json:"placeId"              bun:"place_id,type:TEXT,nullzero"`
-	IsGeocoded           bool               `json:"isGeocoded"           bun:"is_geocoded,type:BOOLEAN"`
-	Longitude            *float64           `json:"longitude"            bun:"longitude,type:FLOAT,nullzero"`
-	Latitude             *float64           `json:"latitude"             bun:"latitude,type:FLOAT,nullzero"`
-	Geom                 *postgis.Point     `json:"-"                    bun:"geom,type:geography,scanonly"`
-	GeofenceType         geofence.Type      `json:"geofenceType"         bun:"geofence_type,type:location_geofence_type_enum,notnull,default:'auto'"`
-	GeofenceRadiusMeters *float64           `json:"geofenceRadiusMeters" bun:"geofence_radius_meters,type:DOUBLE PRECISION,nullzero"`
-	GeofenceVertices     []geofence.Vertex  `json:"geofenceVertices"     bun:"-"`
-	GeofenceGeometry     *postgis.Geometry  `json:"-"                    bun:"geofence_geometry,type:geometry,scanonly"`
-	Version              int64              `json:"version"              bun:"version,type:BIGINT"`
-	CreatedAt            int64              `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt            int64              `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector         string             `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                 string             `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"`
-
-	// Relationships
-	BusinessUnit     *tenant.BusinessUnit               `json:"-"                          bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization     *tenant.Organization               `json:"-"                          bun:"rel:belongs-to,join:organization_id=id"`
-	State            *usstate.UsState                   `json:"state,omitempty"            bun:"rel:belongs-to,join:state_id=id"`
-	LocationCategory *locationcategory.LocationCategory `json:"locationCategory,omitempty" bun:"rel:belongs-to,join:location_category_id=id"`
+	BusinessUnit     *tenant.BusinessUnit               `json:"-"`
+	Organization     *tenant.Organization               `json:"-"`
+	State            *usstate.UsState                   `json:"state,omitempty"            keel:"belongs:state_id,noreport"`
+	LocationCategory *locationcategory.LocationCategory `json:"locationCategory,omitempty" keel:"belongs:location_category_id,label=Category"`
 }
 
 func (l *Location) Validate(multiErr *errortypes.MultiError) {
@@ -156,42 +151,32 @@ func (l *Location) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "LocationCategory",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*locationcategory.LocationCategory)(nil),
-				TargetTable:  "location_categories",
-				ForeignKey:   "location_category_id",
-				ReferenceKey: "id",
-				Alias:        "lc",
-				Queryable:    true,
-			},
-			{
-				Field:        "State",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*usstate.UsState)(nil),
-				TargetTable:  "us_states",
-				ForeignKey:   "state_id",
-				ReferenceKey: "id",
-				Alias:        "s",
-				Queryable:    true,
-			},
+			{Field: "LocationCategory", Queryable: true},
+			{Field: "State", Queryable: true},
 		},
 	}
 }
 
-func (l *Location) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if l.ID.IsNil() {
-			l.ID = pulid.MustNew("loc_")
-		}
-		l.CreatedAt = now
-	case *bun.UpdateQuery:
-		l.UpdatedAt = now
+func (l *Location) BeforeCreate(ctx context.Context) error {
+	if l.Status == "" {
+		l.Status = domaintypes.StatusActive
+	}
+	if l.GeofenceType == "" {
+		l.GeofenceType = geofence.TypeAuto
 	}
 
 	return nil
+}
+
+func (Location) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_locations_code",
+			Message: "Location with this code already exists in your organization",
+		},
+		{
+			Name:    "fk_locations_location_category",
+			Message: "Location category does not exist in your organization",
+		},
+	}
 }

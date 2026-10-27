@@ -2,25 +2,24 @@ package carrierinvoicematchrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var invoiceMatchErrors = dberror.Mapping{Entity: "CarrierInvoiceMatch"}
 
 type Params struct {
 	fx.In
@@ -49,40 +48,19 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*carriersettlement.InvoiceMatch], error) {
-			cols := carriersettlementcol.InvoiceMatchColumns
-			rel := carriersettlementcol.InvoiceMatchRelations
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*carriersettlement.InvoiceMatch, 0, limit)
+			im := carriersettlementdb.InvoiceMatches
+			q := im.Where(
+				when(req.Filter.Query != "", im.InvoiceNumber.ContainsFold(req.Filter.Query)),
+				when(!req.CarrierID.IsNil(), im.CarrierID.Eq(req.CarrierID)),
+				when(req.Status != "", im.Status.Eq(req.Status)),
+			).Load(im.Carrier(), im.CarrierAssignment()).Order(im.CreatedAt.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Apply(carriersettlementcol.InvoiceMatchApplyTenant(req.Filter.TenantInfo)).
-				Relation(rel.Carrier).
-				Relation(rel.CarrierAssignment).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				query = query.Where(cols.InvoiceNumber.ILike(), "%"+req.Filter.Query+"%")
-			}
-			if !req.CarrierID.IsNil() {
-				query = query.Where(cols.CarrierID.Eq(), req.CarrierID)
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list carrier invoice matches: %w", err)
 			}
 
-			return &pagination.ListResult[*carriersettlement.InvoiceMatch]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -92,52 +70,31 @@ func (r *repository) GetByID(
 	req carriersettlementports.GetCarrierInvoiceMatchByIDRequest,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := carriersettlementcol.InvoiceMatchColumns
-		rel := carriersettlementcol.InvoiceMatchRelations
-		entity := new(carriersettlement.InvoiceMatch)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Relation(rel.Carrier).
-			Relation(rel.CarrierAssignment).
-			Scan(ctx)
+		im := carriersettlementdb.InvoiceMatches
+		entity, err := im.Where(im.ID.Eq(req.ID)).
+			Load(im.Carrier(), im.CarrierAssignment()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "CarrierInvoiceMatch")
+			return nil, invoiceMatchErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
 
 func (r *repository) GetOpenByEDIInvoiceID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	invoiceID pulid.ID,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := carriersettlementcol.InvoiceMatchColumns
-		entity := new(carriersettlement.InvoiceMatch)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.InvoiceMatchScopeTenant(sq, tenantInfo).
-					Where(cols.EDICarrierInvoiceID.Eq(), invoiceID).
-					Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil //nolint:nilnil // nil match represents an optional absence
-			}
-			return nil, fmt.Errorf("get open carrier invoice match: %w", err)
-		}
-		return entity, nil
+		im := carriersettlementdb.InvoiceMatches
+		entity, err := im.Where(
+			im.EDICarrierInvoiceID.Eq(invoiceID),
+			im.Status.Ne(carriersettlement.InvoiceMatchStatusRejected),
+		).Order(im.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
+
+		return optional(entity, err, "get open carrier invoice match")
 	})
 }
 
@@ -145,33 +102,21 @@ func (r *repository) GetLiveByCarrierInvoiceNumber(
 	ctx context.Context,
 	req *carriersettlementports.GetLiveCarrierInvoiceMatchByNumberRequest,
 ) (*carriersettlement.InvoiceMatch, error) {
-	key := edi.InvoiceNumberKey(req.InvoiceNumber)
-	if key == "" {
-		return nil, nil //nolint:nilnil // a match without a number never collides
-	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := carriersettlementcol.InvoiceMatchColumns
-		entity := new(carriersettlement.InvoiceMatch)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
-					Where(cols.CarrierID.Eq(), req.CarrierID).
-					Where(cols.InvoiceNumberKey.Eq(), key).
-					Where(cols.DuplicateOfMatchID.IsNull()).
-					Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Limit(1).
-			Scan(ctx)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil
-			}
-			return nil, fmt.Errorf("get live carrier invoice match by number: %w", err)
+		key := edi.InvoiceNumberKey(req.InvoiceNumber)
+		if key == "" {
+			return nil, nil
 		}
-		return entity, nil
+
+		im := carriersettlementdb.InvoiceMatches
+		entity, err := im.Where(
+			im.CarrierID.Eq(req.CarrierID),
+			im.InvoiceNumberKey.Eq(key),
+			im.DuplicateOfMatchID.IsNull(),
+			im.Status.Ne(carriersettlement.InvoiceMatchStatusRejected),
+		).Order(im.CreatedAt.Asc()).First(ctx, r.db.Keel(ctx))
+
+		return optional(entity, err, "get live carrier invoice match by number")
 	})
 }
 
@@ -183,73 +128,55 @@ func (r *repository) ListLiveByAssignment(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carriersettlement.InvoiceMatch, error) {
-			cols := carriersettlementcol.InvoiceMatchColumns
-			entities := make([]*carriersettlement.InvoiceMatch, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
-						Where(cols.CarrierAssignmentID.Eq(), req.AssignmentID).
-						Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
-				}).
-				Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-				Scan(ctx)
+			im := carriersettlementdb.InvoiceMatches
+			entities, err := im.Where(
+				im.CarrierAssignmentID.Eq(req.AssignmentID),
+				im.Status.Ne(carriersettlement.InvoiceMatchStatusRejected),
+			).Order(im.CreatedAt.Asc(), im.ID.Asc()).All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list live carrier invoice matches by assignment: %w", err)
 			}
+
 			return entities, nil
 		},
 	)
-}
-
-type liveMatchOnMove struct {
-	carriersettlement.InvoiceMatch `bun:",extend"`
-
-	MoveID pulid.ID `bun:"move_id,scanonly"`
 }
 
 func (r *repository) ListLiveByMoveIDs(
 	ctx context.Context,
 	req carriersettlementports.ListLiveCarrierInvoiceMatchesByMoveIDsRequest,
 ) (map[pulid.ID][]*carriersettlement.InvoiceMatch, error) {
-	if len(req.MoveIDs) == 0 {
-		return map[pulid.ID][]*carriersettlement.InvoiceMatch{}, nil
-	}
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[pulid.ID][]*carriersettlement.InvoiceMatch, error) {
-			cols := carriersettlementcol.InvoiceMatchColumns
-			assignments := shipmentcol.CarrierAssignmentColumns
-			rows := make([]*liveMatchOnMove, 0, len(req.MoveIDs))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&rows).
-				ColumnExpr(carriersettlementcol.InvoiceMatchTable.All()).
-				ColumnExpr(assignments.ShipmentMoveID.As("move_id")).
-				Join(
-					"JOIN "+shipmentcol.CarrierAssignmentTable.As(
-						shipmentcol.CarrierAssignmentTable.Alias,
-					)+" ON "+assignments.ID.EqColumn(cols.CarrierAssignmentID)+
-						" AND "+assignments.OrganizationID.EqColumn(cols.OrganizationID)+
-						" AND "+assignments.BusinessUnitID.EqColumn(cols.BusinessUnitID),
-				).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
-						Where(assignments.ShipmentMoveID.In(), bun.List(req.MoveIDs)).
-						Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
-				}).
-				Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
-				Scan(ctx)
+			if len(req.MoveIDs) == 0 {
+				return map[pulid.ID][]*carriersettlement.InvoiceMatch{}, nil
+			}
+
+			im := carriersettlementdb.InvoiceMatches
+			ca := im.CarrierAssignment()
+			matches, err := im.Where(
+				ca.ShipmentMoveID.In(req.MoveIDs...),
+				im.Status.Ne(carriersettlement.InvoiceMatchStatusRejected),
+			).
+				Load(ca.Pick(ca.ShipmentMoveID)).
+				Order(im.CreatedAt.Desc(), im.ID.Desc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list live carrier invoice matches by move: %w", err)
 			}
+
 			grouped := make(map[pulid.ID][]*carriersettlement.InvoiceMatch, len(req.MoveIDs))
-			for _, row := range rows {
-				match := row.InvoiceMatch
-				grouped[row.MoveID] = append(grouped[row.MoveID], &match)
+			for _, match := range matches {
+				if match.CarrierAssignment == nil {
+					continue
+				}
+				moveID := match.CarrierAssignment.ShipmentMoveID
+				match.CarrierAssignment = nil
+				grouped[moveID] = append(grouped[moveID], match)
 			}
+
 			return grouped, nil
 		},
 	)
@@ -259,65 +186,49 @@ func (r *repository) ListResolvedAssignmentIDs(
 	ctx context.Context,
 	req carriersettlementports.ListResolvedMatchAssignmentsRequest,
 ) ([]pulid.ID, error) {
-	if len(req.AssignmentIDs) == 0 {
-		return []pulid.ID{}, nil
-	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		cols := carriersettlementcol.InvoiceMatchColumns
-		ids := make([]pulid.ID, 0, len(req.AssignmentIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carriersettlement.InvoiceMatch)(nil)).
-			Distinct().
-			Column(cols.CarrierAssignmentID.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.InvoiceMatchScopeTenant(sq, req.TenantInfo).
-					Where(cols.CarrierAssignmentID.In(), bun.List(req.AssignmentIDs)).
-					Where(cols.Status.Eq(), carriersettlement.InvoiceMatchStatusResolved)
-			}).
-			Scan(ctx, &ids)
+		if len(req.AssignmentIDs) == 0 {
+			return []pulid.ID{}, nil
+		}
+
+		im := carriersettlementdb.InvoiceMatches
+		ids, err := keel.Into[pulid.ID](
+			ctx,
+			r.db.Keel(ctx),
+			im.Pick(im.CarrierAssignmentID).
+				Where(
+					im.CarrierAssignmentID.In(req.AssignmentIDs...),
+					im.Status.Eq(carriersettlement.InvoiceMatchStatusResolved),
+				).
+				Group(im.CarrierAssignmentID),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list resolved carrier invoice match assignments: %w", err)
 		}
+
 		return ids, nil
 	})
 }
 
 func (r *repository) GetOpenByExtractionID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	extractionID pulid.ID,
 ) (*carriersettlement.InvoiceMatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-		cols := carriersettlementcol.InvoiceMatchColumns
-		entity := new(carriersettlement.InvoiceMatch)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.InvoiceMatchScopeTenant(sq, tenantInfo).
-					Where(cols.DocumentAIExtractionID.Eq(), extractionID).
-					Where(cols.Status.NotEq(), carriersettlement.InvoiceMatchStatusRejected)
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
-		if err != nil {
-			if errors.Is(err, sql.ErrNoRows) {
-				return nil, nil //nolint:nilnil // nil match represents an optional absence
-			}
-			return nil, fmt.Errorf("get open carrier invoice match by extraction: %w", err)
-		}
-		return entity, nil
+		im := carriersettlementdb.InvoiceMatches
+		entity, err := im.Where(
+			im.DocumentAIExtractionID.Eq(extractionID),
+			im.Status.Ne(carriersettlement.InvoiceMatchStatusRejected),
+		).Order(im.CreatedAt.Desc()).First(ctx, r.db.Keel(ctx))
+
+		return optional(entity, err, "get open carrier invoice match by extraction")
 	})
 }
 
-// UpdateSettlementForAdjustmentEvents stamps the settlement onto every match
-// whose accepted variance adjustment landed in that settlement, closing the
-// invoice → adjustment → settlement audit chain.
 func (r *repository) UpdateSettlementForAdjustmentEvents(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	costEventIDs []pulid.ID,
 	settlementID pulid.ID,
 ) error {
@@ -325,21 +236,16 @@ func (r *repository) UpdateSettlementForAdjustmentEvents(
 		if len(costEventIDs) == 0 {
 			return nil
 		}
-		cols := carriersettlementcol.InvoiceMatchColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*carriersettlement.InvoiceMatch)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carriersettlementcol.InvoiceMatchScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.AdjustmentCostEventID.In(), bun.List(costEventIDs)).
-					Where(cols.CarrierSettlementID.IsNull())
-			}).
-			Set(cols.CarrierSettlementID.Set(), settlementID).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+
+		im := carriersettlementdb.InvoiceMatches
+		_, err := im.Where(
+			im.AdjustmentCostEventID.In(costEventIDs...),
+			im.CarrierSettlementID.IsNull(),
+		).Update(ctx, r.db.Keel(ctx), im.CarrierSettlementID.To(settlementID))
 		if err != nil {
 			return fmt.Errorf("update carrier invoice match settlements: %w", err)
 		}
+
 		return nil
 	})
 }
@@ -352,12 +258,14 @@ func (r *repository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-			if entity.ID.IsNil() {
-				entity.ID = pulid.MustNew("cim_")
+			err := carriersettlementdb.InvoiceMatches.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				return nil, fmt.Errorf(
+					"create carrier invoice match: %w",
+					invoiceMatchErrors.Map(err, entity.ID.String()),
+				)
 			}
-			if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-				return nil, fmt.Errorf("create carrier invoice match: %w", err)
-			}
+
 			return r.GetByID(ctx, carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
@@ -377,39 +285,24 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlement.InvoiceMatch, error) {
-			cols := carriersettlementcol.InvoiceMatchColumns
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return carriersettlementcol.InvoiceMatchScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(cols.ID.Eq(), entity.ID).
-						Where(cols.Version.Eq(), entity.Version)
-				}).
-				Set(cols.Status.Set(), entity.Status).
-				Set(cols.CarrierSettlementID.Set(), entity.CarrierSettlementID).
-				Set(cols.AdjustmentCostEventID.Set(), entity.AdjustmentCostEventID).
-				Set(cols.InvoiceTotalMinor.Set(), entity.InvoiceTotalMinor).
-				Set(cols.ExpectedTotalMinor.Set(), entity.ExpectedTotalMinor).
-				Set(cols.VarianceMinor.Set(), entity.VarianceMinor).
-				Set(cols.ResolutionNote.Set(), entity.ResolutionNote).
-				Set(cols.ResolvedByID.Set(), entity.ResolvedByID).
-				Set(cols.ResolvedAt.Set(), entity.ResolvedAt).
-				Set(cols.Version.Inc(1)).
-				Exec(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("update carrier invoice match: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				"CarrierInvoiceMatch",
-				entity.ID.String(),
+			im := carriersettlementdb.InvoiceMatches
+			if err := im.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				im.Status,
+				im.CarrierSettlementID,
+				im.AdjustmentCostEventID,
+				im.InvoiceTotalMinor,
+				im.ExpectedTotalMinor,
+				im.VarianceMinor,
+				im.ResolutionNote,
+				im.ResolvedByID,
+				im.ResolvedAt,
 			); err != nil {
-				return nil, err
+				return nil, invoiceMatchErrors.Map(err, entity.ID.String())
 			}
+
 			return r.GetByID(ctx, carriersettlementports.GetCarrierInvoiceMatchByIDRequest{
 				ID: entity.ID,
 				TenantInfo: pagination.TenantInfo{
@@ -419,4 +312,27 @@ func (r *repository) Update(
 			})
 		},
 	)
+}
+
+func when(include bool, p keel.Pred) keel.Pred {
+	if !include {
+		return nil
+	}
+
+	return p
+}
+
+func optional(
+	entity *carriersettlement.InvoiceMatch,
+	err error,
+	operation string,
+) (*carriersettlement.InvoiceMatch, error) {
+	if dberror.IsNotFoundError(err) {
+		return nil, nil //nolint:nilnil // nil match represents an optional absence
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", operation, err)
+	}
+
+	return entity, nil
 }

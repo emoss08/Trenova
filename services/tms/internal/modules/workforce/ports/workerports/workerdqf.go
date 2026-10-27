@@ -46,12 +46,12 @@ type ListDQFRetentionCandidatesRequest struct {
 
 // DQFRetentionCandidate is one file eligible for purge.
 type DQFRetentionCandidate struct {
-	WorkerID        pulid.ID `bun:"worker_id"`
-	OrganizationID  pulid.ID `bun:"organization_id"`
-	BusinessUnitID  pulid.ID `bun:"business_unit_id"`
-	FirstName       string   `bun:"first_name"`
-	LastName        string   `bun:"last_name"`
-	TerminationDate int64    `bun:"termination_date"`
+	WorkerID        pulid.ID
+	OrganizationID  pulid.ID
+	BusinessUnitID  pulid.ID
+	FirstName       string
+	LastName        string
+	TerminationDate int64
 }
 
 type WorkerDQFRepository interface {

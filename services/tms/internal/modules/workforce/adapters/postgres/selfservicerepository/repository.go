@@ -4,18 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerteam"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -26,6 +25,12 @@ const (
 	defaultChangePageSize     = 200
 	defaultCompliancePageSize = 1000
 )
+
+var policyErrors = dberror.Mapping{Entity: "WorkerPolicy"}
+
+var acknowledgementErrors = dberror.Mapping{Entity: "WorkerPolicyAcknowledgement"}
+
+var changeRequestErrors = dberror.Mapping{Entity: "WorkerProfileChangeRequest"}
 
 type Params struct {
 	fx.In
@@ -58,25 +63,15 @@ func (r *repository) ListPolicies(
 	req *workerports.ListWorkerPoliciesRequest,
 ) ([]*worker.WorkerPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPolicy, error) {
-		cols := workercol.WorkerPolicyColumns
-		entities := make([]*worker.WorkerPolicy, 0, 8)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.WorkerPolicyScopeTenant(sq, req.TenantInfo)
-				if req.ActiveOnly {
-					sq = sq.Where(cols.Status.Eq(), domaintypes.StatusActive)
-				}
-				if req.AsOf > 0 {
-					sq = sq.Where(cols.EffectiveFrom.Lte(), req.AsOf)
-				}
-				return sq
-			}).
-			Order(cols.Title.OrderAsc()).
-			Limit(int64(limitOr(req.Limit, defaultPolicyPageSize))).
-			Scan(ctx); err != nil {
+		p := workerdb.WorkerPolicies
+		entities, err := p.Where(
+			keel.When(req.ActiveOnly, p.Status.Eq(domaintypes.StatusActive)),
+			keel.When(req.AsOf > 0, p.EffectiveFrom.Lte(req.AsOf)),
+		).
+			Order(p.Title.Asc()).
+			Limit(limitOr(req.Limit, defaultPolicyPageSize)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list worker policies", zap.Error(err))
 			return nil, fmt.Errorf("list worker policies: %w", err)
 		}
@@ -90,16 +85,9 @@ func (r *repository) GetPolicyByID(
 	req *workerports.GetWorkerPolicyByIDRequest,
 ) (*worker.WorkerPolicy, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPolicy, error) {
-		entity := new(worker.WorkerPolicy)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPolicyScopeTenant(sq, req.TenantInfo).
-					Where(workercol.WorkerPolicyColumns.ID.Eq(), req.ID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "WorkerPolicy")
+		entity, err := workerdb.WorkerPolicies.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, policyErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -111,13 +99,9 @@ func (r *repository) CreatePolicy(
 	entity *worker.WorkerPolicy,
 ) (*worker.WorkerPolicy, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPolicy, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := workerdb.WorkerPolicies.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create worker policy", zap.Error(err))
-			return nil, fmt.Errorf("create worker policy: %w", err)
+			return nil, policyErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -129,30 +113,31 @@ func (r *repository) UpdatePolicy(
 	entity *worker.WorkerPolicy,
 ) (*worker.WorkerPolicy, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPolicy, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(workercol.WorkerPolicyColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := workerdb.WorkerPolicies.Save(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to update worker policy", zap.Error(err))
-			return nil, fmt.Errorf("update worker policy: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"WorkerPolicy",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+			return nil, policyErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+func acknowledgementsQuery(
+	req *workerports.ListPolicyAcknowledgementsRequest,
+) *keel.Query[*worker.WorkerPolicyAcknowledgement] {
+	a := workerdb.WorkerPolicyAcknowledgements
+	q := a.Where(
+		keel.When(req.PolicyID.IsNotNil(), a.PolicyID.Eq(req.PolicyID)),
+		keel.When(req.WorkerID.IsNotNil(), a.WorkerID.Eq(req.WorkerID)),
+		keel.When(req.VersionLabel != "", a.VersionLabel.Eq(req.VersionLabel)),
+	).
+		Order(a.AcknowledgedAt.Desc()).
+		Limit(limitOr(req.Limit, defaultAckPageSize))
+	if req.IncludeWorker {
+		q = q.Load(a.Worker())
+	}
+
+	return q
 }
 
 func (r *repository) ListAcknowledgements(
@@ -163,33 +148,8 @@ func (r *repository) ListAcknowledgements(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*worker.WorkerPolicyAcknowledgement, error) {
-			cols := workercol.WorkerPolicyAcknowledgementColumns
-			entities := make([]*worker.WorkerPolicyAcknowledgement, 0, 8)
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = workercol.WorkerPolicyAcknowledgementScopeTenant(sq, req.TenantInfo)
-					if !req.PolicyID.IsNil() {
-						sq = sq.Where(cols.PolicyID.Eq(), req.PolicyID)
-					}
-					if !req.WorkerID.IsNil() {
-						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-					}
-					if req.VersionLabel != "" {
-						sq = sq.Where(cols.VersionLabel.Eq(), req.VersionLabel)
-					}
-					return sq
-				}).
-				Order(cols.AcknowledgedAt.OrderDesc()).
-				Limit(int64(limitOr(req.Limit, defaultAckPageSize)))
-
-			if req.IncludeWorker {
-				q = q.Relation(workercol.WorkerPolicyAcknowledgementRelations.Worker)
-			}
-
-			if err := q.Scan(ctx); err != nil {
+			entities, err := acknowledgementsQuery(req).List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list policy acknowledgements", zap.Error(err))
 				return nil, fmt.Errorf("list policy acknowledgements: %w", err)
 			}
@@ -207,13 +167,10 @@ func (r *repository) CreateAcknowledgement(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerPolicyAcknowledgement, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := workerdb.WorkerPolicyAcknowledgements.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				r.l.Error("failed to record policy acknowledgement", zap.Error(err))
-				return nil, fmt.Errorf("record policy acknowledgement: %w", err)
+				return nil, acknowledgementErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -223,21 +180,14 @@ func (r *repository) CreateAcknowledgement(
 
 func (r *repository) CountAcknowledgements(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	policyID pulid.ID,
 	versionLabel string,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := workercol.WorkerPolicyAcknowledgementColumns
-		total, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerPolicyAcknowledgement)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPolicyAcknowledgementScopeTenant(sq, tenantInfo).
-					Where(cols.PolicyID.Eq(), policyID).
-					Where(cols.VersionLabel.Eq(), versionLabel)
-			}).
-			Count(ctx)
+		a := workerdb.WorkerPolicyAcknowledgements
+		total, err := a.Where(a.PolicyID.Eq(policyID), a.VersionLabel.Eq(versionLabel)).
+			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count policy acknowledgements", zap.Error(err))
 			return 0, fmt.Errorf("count policy acknowledgements: %w", err)
@@ -259,39 +209,12 @@ func (r *repository) PolicyCompliance(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]workerports.PolicyComplianceRow, error) {
-			wrk := workercol.WorkerColumns
-			ack := workercol.WorkerPolicyAcknowledgementColumns
-			rows := make([]workerports.PolicyComplianceRow, 0, 64)
-
-			q := workercol.WorkerScopeTenant(
-				r.db.DBForContext(ctx).NewSelect().Model((*worker.Worker)(nil)),
-				req.TenantInfo,
-			).
-				Where(wrk.Status.Eq(), domaintypes.StatusActive).
-				Join("LEFT JOIN worker_policy_acknowledgements AS wpak").
-				JoinOn(ack.WorkerID.EqColumn(wrk.ID)).
-				JoinOn(ack.OrganizationID.EqColumn(wrk.OrganizationID)).
-				JoinOn(ack.BusinessUnitID.EqColumn(wrk.BusinessUnitID)).
-				JoinOn(ack.PolicyID.Eq(), req.PolicyID).
-				JoinOn(ack.VersionLabel.Eq(), req.VersionLabel).
-				ColumnExpr(wrk.ID.As("worker_id")).
-				ColumnExpr(wrk.FirstName.As("first_name")).
-				ColumnExpr(wrk.LastName.As("last_name")).
-				ColumnExpr(wrk.Type.As("worker_type")).
-				ColumnExpr("COALESCE(" + ack.AcknowledgedAt.Qualified() + ", 0) AS acknowledged_at").
-				ColumnExpr("COALESCE(" + ack.SignatureName.Qualified() + ", '') AS signature_name").
-				OrderExpr(wrk.LastName.Qualified() + ", " + wrk.FirstName.Qualified()).
-				Limit(int64(limitOr(req.Limit, defaultCompliancePageSize)))
-
-			switch req.AppliesTo {
-			case worker.PolicyAudienceEmployees:
-				q = q.Where(wrk.Type.Eq(), worker.WorkerTypeEmployee)
-			case worker.PolicyAudienceContractors:
-				q = q.Where(wrk.Type.Eq(), worker.WorkerTypeContractor)
-			case worker.PolicyAudienceAll:
-			}
-
-			if err := q.Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[workerports.PolicyComplianceRow](
+				ctx,
+				r.db.Keel(ctx),
+				policyComplianceQuery(req),
+			)
+			if err != nil {
 				r.l.Error("failed to read policy compliance", zap.Error(err))
 				return nil, fmt.Errorf("read policy compliance: %w", err)
 			}
@@ -299,6 +222,60 @@ func (r *repository) PolicyCompliance(
 			return rows, nil
 		},
 	)
+}
+
+func audienceFilter(audience worker.PolicyAudience) keel.Pred {
+	w := workerdb.Workers
+	switch audience {
+	case worker.PolicyAudienceEmployees:
+		return w.Type.Eq(worker.WorkerTypeEmployee)
+	case worker.PolicyAudienceContractors:
+		return w.Type.Eq(worker.WorkerTypeContractor)
+	case worker.PolicyAudienceAll:
+		return nil
+	}
+
+	return nil
+}
+
+func policyComplianceQuery(req *workerports.PolicyComplianceRequest) *keel.Query[*worker.Worker] {
+	w := workerdb.Workers
+	a := workerdb.WorkerPolicyAcknowledgements
+
+	return w.LeftJoin(a,
+		a.WorkerID.EqCol(w.ID),
+		a.PolicyID.Eq(req.PolicyID),
+		a.VersionLabel.Eq(req.VersionLabel),
+	).
+		Where(w.Status.Eq(domaintypes.StatusActive), audienceFilter(req.AppliesTo)).
+		Pick(
+			w.ID,
+			w.FirstName,
+			w.LastName,
+			w.Type,
+			a.AcknowledgedAt.Coalesce(int64(0)),
+			a.SignatureName.Coalesce(""),
+		).
+		Order(w.LastName.Asc(), w.FirstName.Asc()).
+		Limit(limitOr(req.Limit, defaultCompliancePageSize))
+}
+
+func changeRequestsQuery(
+	req *workerports.ListProfileChangeRequestsRequest,
+) *keel.Query[*worker.WorkerProfileChangeRequest] {
+	c := workerdb.WorkerProfileChangeRequests
+	q := c.Where(
+		keel.When(req.WorkerID.IsNotNil(), c.WorkerID.Eq(req.WorkerID)),
+		keel.When(len(req.Statuses) > 0, c.Status.In(req.Statuses...)),
+		workerteam.Where(c.WorkerID.Col, req.ManagerIDs),
+	).
+		Order(c.SubmittedAt.Desc()).
+		Limit(limitOr(req.Limit, defaultChangePageSize))
+	if req.IncludeWorker {
+		q = q.Load(c.Worker())
+	}
+
+	return q
 }
 
 func (r *repository) ListChangeRequests(
@@ -309,35 +286,8 @@ func (r *repository) ListChangeRequests(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*worker.WorkerProfileChangeRequest, error) {
-			cols := workercol.WorkerProfileChangeRequestColumns
-			entities := make([]*worker.WorkerProfileChangeRequest, 0, 8)
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = workercol.WorkerProfileChangeRequestScopeTenant(sq, req.TenantInfo)
-					if !req.WorkerID.IsNil() {
-						sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-					}
-					if len(req.Statuses) > 0 {
-						sq = sq.Where(cols.Status.In(), bun.List(req.Statuses))
-					}
-					return workerteam.Where(r.db.DBForContext(ctx), &workerteam.Scope{
-						WorkerID:       cols.WorkerID,
-						OrganizationID: cols.OrganizationID,
-						BusinessUnitID: cols.BusinessUnitID,
-						ManagerIDs:     req.ManagerIDs,
-					})(sq)
-				}).
-				Order(cols.SubmittedAt.OrderDesc()).
-				Limit(int64(limitOr(req.Limit, defaultChangePageSize)))
-
-			if req.IncludeWorker {
-				q = q.Relation(workercol.WorkerProfileChangeRequestRelations.Worker)
-			}
-
-			if err := q.Scan(ctx); err != nil {
+			entities, err := changeRequestsQuery(req).List(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to list profile change requests", zap.Error(err))
 				return nil, fmt.Errorf("list profile change requests: %w", err)
 			}
@@ -355,21 +305,15 @@ func (r *repository) GetChangeRequestByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerProfileChangeRequest, error) {
-			entity := new(worker.WorkerProfileChangeRequest)
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return workercol.WorkerProfileChangeRequestScopeTenant(sq, req.TenantInfo).
-						Where(workercol.WorkerProfileChangeRequestColumns.ID.Eq(), req.ID)
-				})
+			c := workerdb.WorkerProfileChangeRequests
+			q := c.Where(c.ID.Eq(req.ID))
 			if req.IncludeWorker {
-				q = q.Relation(workercol.WorkerProfileChangeRequestRelations.Worker)
+				q = q.Load(c.Worker())
 			}
 
-			if err := q.Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "WorkerProfileChangeRequest")
+			entity, err := q.One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, changeRequestErrors.Map(err, req.ID.String())
 			}
 
 			return entity, nil
@@ -385,13 +329,10 @@ func (r *repository) CreateChangeRequest(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerProfileChangeRequest, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := workerdb.WorkerProfileChangeRequests.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				r.l.Error("failed to create profile change request", zap.Error(err))
-				return nil, fmt.Errorf("create profile change request: %w", err)
+				return nil, changeRequestErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -407,26 +348,10 @@ func (r *repository) UpdateChangeRequest(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*worker.WorkerProfileChangeRequest, error) {
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(workercol.WorkerProfileChangeRequestColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(ctx)
+			err := workerdb.WorkerProfileChangeRequests.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update profile change request", zap.Error(err))
-				return nil, fmt.Errorf("update profile change request: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				"WorkerProfileChangeRequest",
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				return nil, changeRequestErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil

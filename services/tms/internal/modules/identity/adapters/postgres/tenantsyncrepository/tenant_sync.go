@@ -2,14 +2,19 @@ package tenantsyncrepository
 
 import (
 	"context"
+	"fmt"
+
+	"github.com/emoss08/keel"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -25,6 +30,36 @@ type repository struct {
 
 func New(p Params) tenantports.TenantSyncRepository {
 	return &repository{db: p.DB}
+}
+
+func NewTenantLister(p Params) kernelports.TenantLister {
+	return &repository{db: p.DB}
+}
+
+func (r *repository) ListTenants(ctx context.Context) ([]pagination.TenantInfo, error) {
+	ctx = dbscope.WithSystem(
+		ctx,
+		"list every organization to rewrap its sealed values to the active key",
+	)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
+		o := tenantdb.Organizations
+		orgs, err := o.AllTenants().
+			Pick(o.ID, o.BusinessUnitID).
+			Order(o.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("list organizations: %w", err)
+		}
+
+		tenants := make([]pagination.TenantInfo, 0, len(orgs))
+		for _, org := range orgs {
+			tenants = append(
+				tenants,
+				pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
+			)
+		}
+		return tenants, nil
+	})
 }
 
 func (r *repository) ListBusinessUnits(
@@ -70,29 +105,25 @@ func (r *repository) listBusinessUnits(
 	ids []pulid.ID,
 ) ([]tenant.SyncBusinessUnit, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]tenant.SyncBusinessUnit, error) {
-		rows := make([]tenant.SyncBusinessUnit, 0)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("business_units AS bu").
-			ColumnExpr("bu.id").
-			ColumnExpr("bu.name").
-			ColumnExpr("bu.code").
-			ColumnExpr("bu.created_at").
-			ColumnExpr("bu.updated_at").
-			OrderExpr("bu.id ASC")
-
-		if len(ids) > 0 {
-			query = query.Where("bu.id IN (?)", bun.List(ids))
-		}
-
-		if err := query.Scan(ctx, &rows); err != nil {
+		bu := tenantdb.BusinessUnits
+		units, err := bu.Pick(bu.ID, bu.Name, bu.Code, bu.CreatedAt, bu.UpdatedAt).
+			Where(keel.When(len(ids) > 0, bu.ID.In(ids...))).
+			Order(bu.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
 		}
 
-		for i := range rows {
-			rows[i].Metadata = map[string]string{
-				"tmsCode": rows[i].Code,
-			}
+		rows := make([]tenant.SyncBusinessUnit, 0, len(units))
+		for _, unit := range units {
+			rows = append(rows, tenant.SyncBusinessUnit{
+				ID:        unit.ID,
+				Name:      unit.Name,
+				Code:      unit.Code,
+				Metadata:  map[string]string{"tmsCode": unit.Code},
+				CreatedAt: unit.CreatedAt,
+				UpdatedAt: unit.UpdatedAt,
+			})
 		}
 
 		return rows, nil
@@ -104,34 +135,42 @@ func (r *repository) listOrganizations(
 	ids []pulid.ID,
 ) ([]tenant.SyncOrganization, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]tenant.SyncOrganization, error) {
-		rows := make([]tenant.SyncOrganization, 0)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("organizations AS org").
-			ColumnExpr("org.id").
-			ColumnExpr("org.business_unit_id").
-			ColumnExpr("org.name").
-			ColumnExpr("org.login_slug").
-			ColumnExpr("org.scac_code").
-			ColumnExpr("org.dot_number").
-			ColumnExpr("org.created_at").
-			ColumnExpr("org.updated_at").
-			OrderExpr("org.id ASC")
-
-		if len(ids) > 0 {
-			query = query.Where("org.id IN (?)", bun.List(ids))
-		}
-
-		if err := query.Scan(ctx, &rows); err != nil {
+		o := tenantdb.Organizations
+		orgs, err := o.AllTenants().
+			Pick(
+				o.ID,
+				o.BusinessUnitID,
+				o.Name,
+				o.LoginSlug,
+				o.ScacCode,
+				o.DOTNumber,
+				o.CreatedAt,
+				o.UpdatedAt,
+			).
+			Where(keel.When(len(ids) > 0, o.ID.In(ids...))).
+			Order(o.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
 		}
 
-		for i := range rows {
-			rows[i].Metadata = map[string]string{
-				"tmsLoginSlug": rows[i].LoginSlug,
-				"tmsScacCode":  rows[i].ScacCode,
-				"tmsDotNumber": rows[i].DOTNumber,
-			}
+		rows := make([]tenant.SyncOrganization, 0, len(orgs))
+		for _, org := range orgs {
+			rows = append(rows, tenant.SyncOrganization{
+				ID:             org.ID,
+				BusinessUnitID: org.BusinessUnitID,
+				Name:           org.Name,
+				LoginSlug:      org.LoginSlug,
+				ScacCode:       org.ScacCode,
+				DOTNumber:      org.DOTNumber,
+				Metadata: map[string]string{
+					"tmsLoginSlug": org.LoginSlug,
+					"tmsScacCode":  org.ScacCode,
+					"tmsDotNumber": org.DOTNumber,
+				},
+				CreatedAt: org.CreatedAt,
+				UpdatedAt: org.UpdatedAt,
+			})
 		}
 
 		return rows, nil

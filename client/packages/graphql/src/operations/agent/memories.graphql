@@ -64,6 +64,7 @@ query AgentMemoryTable($input: DataTableConnectionInput!, $includeTotalCount: Bo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -73,6 +74,7 @@ query AgentMemoryTable($input: DataTableConnectionInput!, $includeTotalCount: Bo
 query AgentMemoryCount($input: DataTableConnectionInput!) {
   agentMemories(input: $input) {
     totalCount
+    totalCountExact
   }
 }
 
@@ -163,6 +165,7 @@ query AgentReflections($input: DataTableConnectionInput!, $includeTotalCount: Bo
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

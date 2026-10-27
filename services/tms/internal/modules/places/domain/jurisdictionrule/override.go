@@ -1,20 +1,16 @@
 package jurisdictionrule
 
 import (
-	"context"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Override)(nil)
 	_ validationframework.TenantedEntity = (*Override)(nil)
 )
 
@@ -22,32 +18,32 @@ var (
 // without editing shared reference data. Every field is optional: an unset
 // field means "defer to the jurisdiction rule".
 type Override struct {
-	bun.BaseModel `bun:"table:jurisdiction_rule_overrides,alias:jro" json:"-"`
+	keel.Table `keel:"jurisdiction_rule_overrides"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	StateID        pulid.ID `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:jro_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	StateID        pulid.ID `json:"stateId"        keel:"state_id"`
 
-	MaxWidthFeet    *float64 `json:"maxWidthFeet"    bun:"max_width_feet,type:NUMERIC(10,2),nullzero"`
-	MaxHeightFeet   *float64 `json:"maxHeightFeet"   bun:"max_height_feet,type:NUMERIC(10,2),nullzero"`
-	MaxLengthFeet   *float64 `json:"maxLengthFeet"   bun:"max_length_feet,type:NUMERIC(10,2),nullzero"`
-	MaxWeightPounds *int64   `json:"maxWeightPounds" bun:"max_weight_pounds,type:BIGINT,nullzero"`
+	MaxWidthFeet    *float64 `json:"maxWidthFeet"    keel:"max_width_feet"`
+	MaxHeightFeet   *float64 `json:"maxHeightFeet"   keel:"max_height_feet"`
+	MaxLengthFeet   *float64 `json:"maxLengthFeet"   keel:"max_length_feet"`
+	MaxWeightPounds *int64   `json:"maxWeightPounds" keel:"max_weight_pounds"`
 
-	PermitLeadTimeDays *int16 `json:"permitLeadTimeDays" bun:"permit_lead_time_days,type:SMALLINT,nullzero"`
+	PermitLeadTimeDays *int16 `json:"permitLeadTimeDays" keel:"permit_lead_time_days"`
 
-	DaylightOnly      *bool `json:"daylightOnly"      bun:"daylight_only,type:BOOLEAN,nullzero"`
-	HolidayRestricted *bool `json:"holidayRestricted" bun:"holiday_restricted,type:BOOLEAN,nullzero"`
+	DaylightOnly      *bool `json:"daylightOnly"      keel:"daylight_only"`
+	HolidayRestricted *bool `json:"holidayRestricted" keel:"holiday_restricted"`
 
-	Reason string `json:"reason" bun:"reason,type:TEXT,notnull"`
+	Reason string `json:"reason" keel:"reason"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-"               bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-"               bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState     `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+	State        *usstate.UsState     `json:"state,omitempty" keel:"belongs:state_id"`
 }
 
 func (o *Override) GetID() pulid.ID { return o.ID }
@@ -111,19 +107,15 @@ func (o *Override) validatePositive(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (o *Override) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if o.ID.IsNil() {
-			o.ID = pulid.MustNew("jro_")
-		}
-		o.CreatedAt = now
-		o.UpdatedAt = now
-	case *bun.UpdateQuery:
-		o.UpdatedAt = now
+func (Override) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_jurisdiction_rule_overrides_state",
+			Message: "Your organization already has an override for this state",
+		},
+		{
+			Name:    "fk_jurisdiction_rule_overrides_state",
+			Message: "State does not exist",
+		},
 	}
-
-	return nil
 }

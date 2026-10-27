@@ -68,10 +68,11 @@ type Request struct {
 }
 
 type Page[T any] struct {
-	Items       []*T
-	Cursors     []string
-	HasNextPage bool
-	TotalCount  *int
+	Items           []*T
+	Cursors         []string
+	HasNextPage     bool
+	TotalCount      *int
+	TotalCountExact bool
 }
 
 type predicate[T any] func(*T) bool
@@ -153,6 +154,7 @@ func (t *Table[T]) List(items []T, req *Request) (*Page[T], error) {
 	if req.IncludeTotalCount {
 		total := len(matched)
 		page.TotalCount = &total
+		page.TotalCountExact = true
 	}
 	if offset >= len(matched) {
 		page.Items = []*T{}

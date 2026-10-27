@@ -5,17 +5,16 @@ package ratequote
 type Purpose string
 
 const (
-	// PurposeRating is a quote that priced a real shipment.
+	// Priced a real shipment.
 	PurposeRating = Purpose("Rating")
-	// PurposeQuote priced a load that has not been booked, which is what goes
-	// to the customer before there is a shipment to attach it to.
+	// Priced a load that has not been booked yet, as sent to the customer.
 	PurposeQuote = Purpose("Quote")
-	// PurposeShopping compares carriers before one is chosen.
+	// Compared carriers before one was chosen.
 	PurposeShopping = Purpose("Shopping")
-	// PurposeSimulation is produced by replaying a proposed change against
-	// history and never touches a live shipment.
+	// Replayed a proposed change against history; never touches a live
+	// shipment.
 	PurposeSimulation = Purpose("Simulation")
-	// PurposeWhatIf answers "what would this have cost" on demand.
+	// Answered "what would this have cost" on demand.
 	PurposeWhatIf = Purpose("WhatIf")
 )
 
@@ -89,13 +88,11 @@ func (o Outcome) NeedsAttention() bool {
 type Status string
 
 const (
-	// StatusApplied is the quote currently governing its shipment.
+	// The quote currently pricing its shipment.
 	StatusApplied = Status("Applied")
-	// StatusSuperseded is a quote a later rating replaced. Re-rating happens on
-	// every stop edit, assignment and fuel price job, so the history matters:
-	// overwriting it would destroy exactly what a dispute needs.
+	// Replaced by a later rating; kept as the history a dispute needs.
 	StatusSuperseded = Status("Superseded")
-	// StatusQuoted has no shipment behind it yet.
+	// No shipment behind it yet.
 	StatusQuoted = Status("Quoted")
 )
 

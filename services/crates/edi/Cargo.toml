@@ -1,0 +1,24 @@
+[package]
+name = "trenova-edi"
+description = "Trenova's EDI core: X12 separators, lexing, envelopes, implementation guides, the loop tree, validation with the standard's error codes, acknowledgments and the writer. Compiled to one WebAssembly module that the TMS and the browser both run."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+trenova-module-kit.workspace = true
+serde.workspace = true
+serde_json = { workspace = true, features = ["raw_value"] }
+regex-lite.workspace = true
+rust_decimal.workspace = true
+
+[dev-dependencies]
+proptest.workspace = true
+
+[lints]
+workspace = true

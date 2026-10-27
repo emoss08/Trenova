@@ -2,79 +2,30 @@ package shipmentboardrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
 	"go.uber.org/zap"
 )
 
 const (
-	deliveryAlias      = "ld"
-	pickupAlias        = "fp"
-	dwellAlias         = "dw"
-	maxDwellingStops   = 1000
-	maxBillingCustomer = 25
+	deliveryAlias         = "ld"
+	deliveryMoveAlias     = "ld_sm"
+	deliveryLocationAlias = "ld_loc"
+	pickupAlias           = "fp"
+	pickupMoveAlias       = "fp_sm"
+	pickupLocationAlias   = "fp_loc"
+	dwellAlias            = "dw"
+	dwellMoveAlias        = "dw_sm"
+	dwellLocationAlias    = "dw_loc"
+	maxDwellingStops      = 1000
+	maxBillingCustomer    = 25
 )
-
-var (
-	ldDeliveryAt    = buncolgen.NewColumn("delivery_at", deliveryAlias)
-	ldActualArrival = buncolgen.NewColumn("actual_arrival", deliveryAlias)
-	ldCutoff        = buncolgen.NewColumn("cutoff", deliveryAlias)
-	ldCity          = buncolgen.NewColumn("city", deliveryAlias)
-	fpPickupAt      = buncolgen.NewColumn("pickup_at", pickupAlias)
-	fpCity          = buncolgen.NewColumn("city", pickupAlias)
-	dwStopID        = buncolgen.NewColumn("stop_id", dwellAlias)
-	dwMoveID        = buncolgen.NewColumn("move_id", dwellAlias)
-	dwFacility      = buncolgen.NewColumn("facility_name", dwellAlias)
-	dwArrival       = buncolgen.NewColumn("actual_arrival", dwellAlias)
-)
-
-func withStopLocation(q *bun.SelectQuery) *bun.SelectQuery {
-	stp := shipmentcol.StopColumns
-	loc := locationcol.LocationColumns
-
-	return q.
-		Join("LEFT JOIN " + locationcol.LocationTable.As(locationcol.LocationTable.Alias)).
-		JoinOn(loc.ID.EqColumn(stp.LocationID)).
-		JoinOn(loc.OrganizationID.EqColumn(stp.OrganizationID)).
-		JoinOn(loc.BusinessUnitID.EqColumn(stp.BusinessUnitID))
-}
-
-func withCustomer(q *bun.SelectQuery) *bun.SelectQuery {
-	sp := shipmentcol.ShipmentColumns
-	cus := customercol.CustomerColumns
-
-	return q.
-		Join("JOIN " + customercol.CustomerTable.As(customercol.CustomerTable.Alias)).
-		JoinOn(cus.ID.EqColumn(sp.CustomerID)).
-		JoinOn(cus.OrganizationID.EqColumn(sp.OrganizationID)).
-		JoinOn(cus.BusinessUnitID.EqColumn(sp.BusinessUnitID))
-}
-
-func lastDeliveryLateral(dba bun.IDB) *bun.SelectQuery {
-	stp := shipmentcol.StopColumns
-	loc := locationcol.LocationColumns
-
-	return withStopLocation(shipmentrepository.LastDeliveryStopQuery(dba)).
-		ColumnExpr(shipmentrepository.DeliveryAtExpr() + " AS " + ldDeliveryAt.Name).
-		ColumnExpr(stp.ActualArrival.As(ldActualArrival.Name)).
-		ColumnExpr(buncolgen.Expr(
-			"COALESCE({0}, {1}) AS "+ldCutoff.Name,
-			stp.ScheduledWindowEnd,
-			stp.ScheduledWindowStart,
-		)).
-		ColumnExpr(loc.City.As(ldCity.Name))
-}
 
 func (r *Repository) ListDeliveriesToday(
 	ctx context.Context,
@@ -84,12 +35,7 @@ func (r *Repository) ListDeliveriesToday(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.ShipmentDeliveryRow, error) {
-			dba := r.db.DBForContext(ctx)
-			sp := shipmentcol.ShipmentColumns
-			cus := customercol.CustomerColumns
-
 			today, err := shipmentrepository.QuickFilterCondition(
-				dba,
 				req.Basis,
 				shipment.Quick(shipment.QuickFilterDeliveringToday),
 			)
@@ -97,29 +43,36 @@ func (r *Repository) ListDeliveriesToday(
 				return nil, err
 			}
 
-			rows := make([]*shipmentports.ShipmentDeliveryRow, 0, 64)
-			q := dba.NewSelect().
-				Model((*shipment.Shipment)(nil)).
-				ColumnExpr(sp.ID.As("shipment_id")).
-				ColumnExpr(sp.ProNumber.As("pro_number")).
-				ColumnExpr(sp.StageRank.As("stage_rank")).
-				ColumnExpr(cus.Name.As("customer_name")).
-				ColumnExpr(ldDeliveryAt.As(ldDeliveryAt.Name)).
-				ColumnExpr(ldActualArrival.As(ldActualArrival.Name)).
-				ColumnExpr(ldCutoff.As(ldCutoff.Name)).
-				ColumnExpr(ldCity.Expr("COALESCE({}, '') AS "+ldCity.Name)).
-				Apply(withCustomer).
-				Join("JOIN LATERAL (?) AS ? ON TRUE", lastDeliveryLateral(dba), bun.Ident(deliveryAlias)).
-				Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
-				Where("?", today).
-				Order(ldDeliveryAt.OrderAsc())
+			sp := shipmentdb.Shipments
+			ld := shipmentdb.Stops.As(deliveryAlias)
+			loc := locationdb.Locations.As(deliveryLocationAlias)
+			delivery := shipmentrepository.LastDeliveryStop(
+				ld,
+				shipmentdb.ShipmentMoves.As(deliveryMoveAlias),
+			).Pick(ld.ID, ld.LocationID, ld.ActualArrival, ld.ScheduledWindowStart, ld.ScheduledWindowEnd)
+			deliveryAt := shipmentrepository.DeliveryAt(ld)
 
-			if err = q.Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[shipmentports.ShipmentDeliveryRow](ctx, r.db.Keel(ctx), sp.
+				JoinLateral(delivery).
+				LeftJoin(loc, loc.ID.EqCol(ld.LocationID)).
+				Pick(
+					sp.ID,
+					sp.ProNumber,
+					sp.StageRank,
+					sp.Customer().Name,
+					loc.City.Coalesce(""),
+					deliveryAt,
+					ld.ActualArrival,
+					ld.ScheduledWindowEnd.Coalesce(ld.ScheduledWindowStart),
+				).
+				Where(today).
+				Order(keel.Asc(deliveryAt)))
+			if err != nil {
 				r.l.Error("failed to list deliveries today", zap.Error(err))
 				return nil, err
 			}
 
-			return rows, nil
+			return pointers(rows), nil
 		},
 	)
 }
@@ -132,39 +85,47 @@ func (r *Repository) NextUncoveredPickup(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.ShipmentPickupRow, error) {
-			dba := r.db.DBForContext(ctx)
-			sp := shipmentcol.ShipmentColumns
-			stp := shipmentcol.StopColumns
-			loc := locationcol.LocationColumns
+			sp := shipmentdb.Shipments
+			fp := shipmentdb.Stops.As(pickupAlias)
+			fpLoc := locationdb.Locations.As(pickupLocationAlias)
+			ld := shipmentdb.Stops.As(deliveryAlias)
+			ldLoc := locationdb.Locations.As(deliveryLocationAlias)
 
-			pickup := withStopLocation(shipmentrepository.FirstPickupStopQuery(dba)).
-				ColumnExpr(stp.ScheduledWindowStart.As(fpPickupAt.Name)).
-				ColumnExpr(loc.City.As(fpCity.Name))
+			pickup := shipmentrepository.FirstPickupStop(
+				fp,
+				shipmentdb.ShipmentMoves.As(pickupMoveAlias),
+			).Pick(fp.ID, fp.LocationID, fp.ScheduledWindowStart)
+			delivery := shipmentrepository.LastDeliveryStop(
+				ld,
+				shipmentdb.ShipmentMoves.As(deliveryMoveAlias),
+			).Pick(ld.ID, ld.LocationID)
 
-			row := new(shipmentports.ShipmentPickupRow)
-			err := dba.NewSelect().
-				Model((*shipment.Shipment)(nil)).
-				ColumnExpr(sp.ID.As("shipment_id")).
-				ColumnExpr(fpPickupAt.As(fpPickupAt.Name)).
-				ColumnExpr(fpCity.Expr("COALESCE({}, '') AS origin_city")).
-				ColumnExpr(ldCity.Expr("COALESCE({}, '') AS destination_city")).
-				Join("JOIN LATERAL (?) AS ? ON TRUE", pickup, bun.Ident(pickupAlias)).
-				Join("LEFT JOIN LATERAL (?) AS ? ON TRUE", lastDeliveryLateral(dba), bun.Ident(deliveryAlias)).
-				Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
-				Where("?", shipmentrepository.StageCondition(shipment.StageNeedsCoverage)).
-				Where(fpPickupAt.Gte(), req.Basis.Now.Unix()).
-				Order(fpPickupAt.OrderAsc(), sp.ID.OrderAsc()).
-				Limit(1).
-				Scan(ctx, row)
+			rows, err := keel.Into[shipmentports.ShipmentPickupRow](ctx, r.db.Keel(ctx), sp.
+				JoinLateral(pickup).
+				LeftJoin(fpLoc, fpLoc.ID.EqCol(fp.LocationID)).
+				LeftJoinLateral(delivery).
+				LeftJoin(ldLoc, ldLoc.ID.EqCol(ld.LocationID)).
+				Pick(
+					sp.ID,
+					fp.ScheduledWindowStart,
+					fpLoc.City.Coalesce(""),
+					ldLoc.City.Coalesce(""),
+				).
+				Where(
+					shipmentrepository.StageCondition(shipment.StageNeedsCoverage),
+					fp.ScheduledWindowStart.Gte(req.Basis.Now.Unix()),
+				).
+				Order(fp.ScheduledWindowStart.Asc(), sp.ID.Asc()).
+				Limit(1))
 			if err != nil {
-				if errors.Is(err, sql.ErrNoRows) {
-					return nil, nil
-				}
 				r.l.Error("failed to read next uncovered pickup", zap.Error(err))
 				return nil, err
 			}
+			if len(rows) == 0 {
+				return nil, nil
+			}
 
-			return row, nil
+			return &rows[0], nil
 		},
 	)
 }
@@ -181,41 +142,34 @@ func (r *Repository) ListDwellingStops(
 				return nil, shipmentrepository.ErrQuickFilterDetentionMissing
 			}
 
-			dba := r.db.DBForContext(ctx)
-			sp := shipmentcol.ShipmentColumns
-			stp := shipmentcol.StopColumns
-			sm := shipmentcol.ShipmentMoveColumns
-			loc := locationcol.LocationColumns
-
-			dwelling := withStopLocation(shipmentrepository.DwellingStopsQuery(
-				dba,
+			sp := shipmentdb.Shipments
+			dw := shipmentdb.Stops.As(dwellAlias)
+			loc := locationdb.Locations.As(dwellLocationAlias)
+			dwelling := shipmentrepository.DwellingStops(
+				dw,
+				shipmentdb.ShipmentMoves.As(dwellMoveAlias),
 				req.Basis.Now.Unix(),
 				req.Basis.Detention.ThresholdMinutes,
-			)).
-				ColumnExpr(stp.ID.As(dwStopID.Name)).
-				ColumnExpr(sm.ID.As(dwMoveID.Name)).
-				ColumnExpr(loc.Name.Expr("COALESCE({}, '') AS " + dwFacility.Name)).
-				ColumnExpr(stp.ActualArrival.As(dwArrival.Name))
+			).Pick(dw.ID, dw.ShipmentMoveID, dw.LocationID, dw.ActualArrival)
 
-			rows := make([]*shipmentports.ShipmentDwellRow, 0, 16)
-			err := dba.NewSelect().
-				Model((*shipment.Shipment)(nil)).
-				ColumnExpr(sp.ID.As("shipment_id")).
-				ColumnExpr(dwMoveID.As(dwMoveID.Name)).
-				ColumnExpr(dwStopID.As(dwStopID.Name)).
-				ColumnExpr(dwFacility.As(dwFacility.Name)).
-				ColumnExpr(dwArrival.As(dwArrival.Name)).
-				Join("JOIN LATERAL (?) AS ? ON TRUE", dwelling, bun.Ident(dwellAlias)).
-				Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
-				Order(dwArrival.OrderAsc(), dwStopID.OrderAsc()).
-				Limit(maxDwellingStops).
-				Scan(ctx, &rows)
+			rows, err := keel.Into[shipmentports.ShipmentDwellRow](ctx, r.db.Keel(ctx), sp.
+				JoinLateral(dwelling).
+				LeftJoin(loc, loc.ID.EqCol(dw.LocationID)).
+				Pick(
+					sp.ID,
+					dw.ShipmentMoveID,
+					dw.ID,
+					loc.Name.Coalesce(""),
+					dw.ActualArrival,
+				).
+				Order(dw.ActualArrival.Asc(), dw.ID.Asc()).
+				Limit(maxDwellingStops))
 			if err != nil {
 				r.l.Error("failed to list dwelling stops", zap.Error(err))
 				return nil, err
 			}
 
-			return rows, nil
+			return pointers(rows), nil
 		},
 	)
 }
@@ -228,37 +182,30 @@ func (r *Repository) ListReadyToBillCustomers(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*shipmentports.ShipmentBillingCustomerRow, error) {
-			sp := shipmentcol.ShipmentColumns
-			cus := customercol.CustomerColumns
-
 			limit := req.Limit
 			if limit <= 0 || limit > maxBillingCustomer {
 				limit = maxBillingCustomer
 			}
 
-			rows := make([]*shipmentports.ShipmentBillingCustomerRow, 0, limit)
-			err := r.db.DBForContext(ctx).NewSelect().
-				Model((*shipment.Shipment)(nil)).
-				ColumnExpr(sp.CustomerID.As("customer_id")).
-				ColumnExpr(cus.Name.As("name")).
-				ColumnExpr(buncolgen.Count("count")).
-				ColumnExpr(sp.TotalChargeAmount.Expr("COALESCE(SUM({}), 0) AS total")).
-				ColumnExpr("COUNT(*) OVER () AS total_customers").
-				Apply(withCustomer).
-				Apply(shipmentcol.ShipmentApplyTenant(req.TenantInfo)).
-				Where("?", shipmentrepository.BillingTransferCandidateCondition()).
-				GroupExpr(sp.CustomerID.Qualified()).
-				GroupExpr(cus.Name.Qualified()).
-				OrderExpr("total DESC").
-				OrderExpr(sp.CustomerID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx, &rows)
+			sp := shipmentdb.Shipments
+			cus := sp.Customer()
+			total := revenueSum()
+
+			rows, err := keel.Into[shipmentports.ShipmentBillingCustomerRow](
+				ctx,
+				r.db.Keel(ctx),
+				sp.Group(sp.CustomerID, cus.Name).
+					Pick(sp.CustomerID, cus.Name, keel.Count(), total, keel.Count().OverWindow(keel.Window{})).
+					Where(shipmentrepository.BillingTransferCandidateCondition()).
+					Order(keel.Desc(total), sp.CustomerID.Asc()).
+					Limit(limit),
+			)
 			if err != nil {
 				r.l.Error("failed to list ready to bill customers", zap.Error(err))
 				return nil, err
 			}
 
-			return rows, nil
+			return pointers(rows), nil
 		},
 	)
 }

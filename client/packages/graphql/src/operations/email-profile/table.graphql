@@ -22,6 +22,7 @@ query EmailProfileTable($input: DataTableConnectionInput!, $includeTotalCount: B
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

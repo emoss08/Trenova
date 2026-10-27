@@ -3,20 +3,21 @@ package glaccountrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glaccountports"
-	"github.com/emoss08/trenova/pkg/buncolgen/glaccountcol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var glAccountErrors = dberror.Mapping{Entity: "GLAccount"}
 
 type Params struct {
 	fx.In
@@ -37,21 +38,6 @@ func New(p Params) glaccountports.GLAccountRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *glaccountports.ListGLAccountsRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"gla",
-		req.Filter,
-		(*glaccount.GLAccount)(nil),
-	)
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *glaccountports.ListGLAccountsRequest,
@@ -60,28 +46,25 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*glaccount.GLAccount], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			gla := glaccountdb.GLAccounts
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				gla.Query(),
+				&listquery.Request[glaccount.GLAccount]{
+					Filter: req.Filter,
+					Shape: func(q *keel.Query[*glaccount.GLAccount]) *keel.Query[*glaccount.GLAccount] {
+						return q.Load(gla.AccountType())
+					},
+					Then: []keel.Order{gla.AccountCode.Asc()},
+				},
 			)
-
-			entities := make([]*glaccount.GLAccount, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation("AccountType").
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count gl accounts", zap.Error(err))
+				r.l.Error("failed to list gl accounts", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*glaccount.GLAccount]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -91,25 +74,12 @@ func (r *repository) GetByID(
 	req glaccountports.GetGLAccountByIDRequest,
 ) (*glaccount.GLAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*glaccount.GLAccount, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(glaccount.GLAccount)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("AccountType").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("gla.id = ?", req.ID).
-					Where("gla.organization_id = ?", req.TenantInfo.OrgID).
-					Where("gla.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Scan(ctx)
+		gla := glaccountdb.GLAccounts
+		entity, err := gla.Where(gla.ID.Eq(req.ID)).
+			Load(gla.AccountType()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get gl account", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "GLAccount")
+			return nil, glAccountErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -121,18 +91,13 @@ func (r *repository) Create(
 	entity *glaccount.GLAccount,
 ) (*glaccount.GLAccount, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*glaccount.GLAccount, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("accountCode", entity.AccountCode),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create gl account", zap.Error(err))
-			return nil, err
+		if err := glaccountdb.GLAccounts.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create gl account",
+				zap.String("accountCode", entity.AccountCode),
+				zap.Error(err),
+			)
+			return nil, glAccountErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -144,32 +109,30 @@ func (r *repository) Update(
 	entity *glaccount.GLAccount,
 ) (*glaccount.GLAccount, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*glaccount.GLAccount, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
+		gla := glaccountdb.GLAccounts
+		err := gla.SaveExcept(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			gla.CurrentBalance,
+			gla.DebitBalance,
+			gla.CreditBalance,
 		)
-
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to update gl account", zap.Error(err))
-			return nil, err
+			r.l.Error(
+				"failed to update gl account",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, glAccountErrors.Map(err, entity.ID.String())
 		}
 
-		if err = dberror.CheckRowsAffected(results, "GLAccount", entity.ID.String()); err != nil {
-			return nil, err
+		stored, err := gla.Get(ctx, r.db.Keel(ctx), entity.ID)
+		if err != nil {
+			return nil, glAccountErrors.Map(err, entity.ID.String())
 		}
 
-		return entity, nil
+		return stored, nil
 	})
 }
 
@@ -178,29 +141,16 @@ func (r *repository) BulkUpdateStatus(
 	req *glaccountports.BulkUpdateGLAccountStatusRequest,
 ) ([]*glaccount.GLAccount, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*glaccount.GLAccount, error) {
-		log := r.l.With(
-			zap.String("operation", "BulkUpdateStatus"),
-			zap.Any("request", req),
-		)
-
-		entities := make([]*glaccount.GLAccount, 0, len(req.GLAccountIDs))
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&entities).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("gla.organization_id = ?", req.TenantInfo.OrgID).
-					Where("gla.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("gla.id IN (?)", bun.List(req.GLAccountIDs))
-			}).
-			Set("status = ?", req.Status).
-			Returning("*").
-			Exec(ctx)
+		gla := glaccountdb.GLAccounts
+		entities, err := gla.Where(gla.ID.In(req.GLAccountIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), gla.Status.To(req.Status))
 		if err != nil {
-			log.Error("failed to bulk update gl account status", zap.Error(err))
+			r.l.Error("failed to bulk update gl account status", zap.Error(err))
 			return nil, err
 		}
 
-		if err = dberror.CheckBulkRowsAffected(results, "GLAccount", req.GLAccountIDs); err != nil {
+		err = dberror.CheckBulkAffected(int64(len(entities)), "GLAccount", req.GLAccountIDs)
+		if err != nil {
 			return nil, err
 		}
 
@@ -213,27 +163,20 @@ func (r *repository) GetByIDs(
 	req glaccountports.GetGLAccountsByIDsRequest,
 ) ([]*glaccount.GLAccount, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*glaccount.GLAccount, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
-
-		entities := make([]*glaccount.GLAccount, 0, len(req.GLAccountIDs))
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("gla.organization_id = ?", req.TenantInfo.OrgID).
-					Where("gla.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("gla.id IN (?)", bun.List(req.GLAccountIDs))
-			})
-		if req.IncludeAccountType {
-			query = query.Relation(glaccountcol.GLAccountRelations.AccountType)
+		if len(req.GLAccountIDs) == 0 {
+			return []*glaccount.GLAccount{}, nil
 		}
-		err := query.Scan(ctx)
+
+		gla := glaccountdb.GLAccounts
+		q := gla.Where(gla.ID.In(req.GLAccountIDs...)).Limit(len(req.GLAccountIDs))
+		if req.IncludeAccountType {
+			q = q.Load(gla.AccountType())
+		}
+
+		entities, err := q.List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get gl accounts", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "GLAccount")
+			r.l.Error("failed to get gl accounts", zap.Error(err))
+			return nil, err
 		}
 
 		return entities, nil
@@ -245,26 +188,21 @@ func (r *repository) Delete(
 	req glaccountports.DeleteGLAccountRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.ID.String()),
+		err := glaccountdb.GLAccounts.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&glaccount.GLAccount{ID: req.ID},
 		)
-
-		result, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*glaccount.GLAccount)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.Where("gla.id = ?", req.ID).
-					Where("gla.organization_id = ?", req.TenantInfo.OrgID).
-					Where("gla.business_unit_id = ?", req.TenantInfo.BuID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to delete gl account", zap.Error(err))
-			return err
+			r.l.Error(
+				"failed to delete gl account",
+				zap.String("id", req.ID.String()),
+				zap.Error(err),
+			)
+			return glAccountErrors.Map(err, req.ID.String())
 		}
 
-		return dberror.CheckRowsAffected(result, "GLAccount", req.ID.String())
+		return nil
 	})
 }
 
@@ -272,30 +210,21 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *glaccountports.GLAccountSelectOptionsRequest,
 ) (*pagination.ListResult[*glaccount.GLAccount], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*glaccount.GLAccount], error) {
-			return dbhelper.SelectOptions[*glaccount.GLAccount](
+			gla := glaccountdb.GLAccounts
+			q := gla.Pick(gla.ID, gla.AccountCode, gla.Name).
+				Where(gla.Status.Eq(domaintypes.StatusActive))
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						"id",
-						"account_code",
-						"name",
-					},
-					OrgColumn: "gla.organization_id",
-					BuColumn:  "gla.business_unit_id",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where("gla.status = ?", domaintypes.StatusActive)
-					},
-					EntityName: "GLAccount",
-					SearchColumns: []string{
-						"gla.account_code",
-						"gla.name",
-					},
+				func(s string) keel.Pred {
+					return keel.Or(gla.AccountCode.ContainsFold(s), gla.Name.ContainsFold(s))
 				},
 			)
 		},

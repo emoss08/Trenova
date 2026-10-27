@@ -3,7 +3,7 @@ package agentquerytoolservice
 import (
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/keel/analytics/ir"
 )
 
 // listWrapperKeys are the shapes a model reaches for when it has to produce a
@@ -30,7 +30,7 @@ var listWrapperKeys = []string{"item", "items", "value", "values", "list"}
 // the compiler, in the compiler's own words, because a tool that quietly
 // reinterpreted those would run a report nobody asked for.
 func normalizeReportParameters(
-	definition *report.Definition,
+	definition *ir.Definition,
 	values map[string]any,
 ) map[string]any {
 	if definition == nil || len(values) == 0 {
@@ -140,7 +140,7 @@ func splitList(value string) []any {
 
 // describeParameterShape says what one parameter will accept, in the words a
 // model needs to produce it: the type, and whether it is one value or a list.
-func describeParameterShape(parameter report.ParameterDef) string {
+func describeParameterShape(parameter *ir.Parameter) string {
 	kind := string(parameter.Type)
 	if kind == "" {
 		kind = "value"

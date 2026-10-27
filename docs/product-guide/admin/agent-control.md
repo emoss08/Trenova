@@ -1,6 +1,6 @@
 ---
 path: /admin/agent-control
-aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, Parallel, web watch, watch the web, keep an eye on, monitors, portal work, browser automation, Browser Use, portal sites, dock appointment portal, shipper portal, data analysis, analyze data, E2B, python, charts, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
+aliases: [AI settings, AI agents, agent setup, LLM providers, model providers, embedding providers, embeddings, semantic search, search by meaning, retrieval, re-index, indexing budget, pgvector, automation agents, agent proposals, agent memory, sub-agents, agent delegation, agent extensions, extension marketplace, web search, internet search, Exa, Parallel, web watch, watch the web, keep an eye on, monitors, portal work, browser automation, Browser Use, portal sites, dock appointment portal, shipper portal, data analysis, analyze data, python, scripts, charts, AI safety, tool rules, agent autonomy, AI analytics, model comparison, model leaderboard, compare models, compare providers, which model is best, cost per run, tool call failures, AI quality, agent evaluation, golden set, eval cases, agent regression, AI audit trail, AI audit log, agent audit, AI compliance, AI decisions log, hash chain, tamper evidence, AI export, traces, tracing, trace id]
 related:
   - /admin/document-intelligence
   - /admin/inbound-mailboxes
@@ -111,16 +111,14 @@ Keywords: advisor, advisor tool, Claude advisor, stronger model, Opus advisor, s
 
 ### Let a chat provider answer with a script
 Keywords: scripts, code mode, python script, read-only script, fan-out questions, reconciliation, many tool calls, scripts propose writes, batch of changes
-1. In [AI control](/admin/agent-control), select **Extensions**, open Data analysis from E2B and
-   turn on its read-only scripts setting. People whose role holds the code_mode permission can
-   then be answered with scripts.
-2. Open a provider that handles assistant chat in **Providers** and select **Edit connection**.
-3. Under **Scripts**, turn on **Scripts**. The provider's model may then answer fan-out,
+1. Open a provider that handles assistant chat in [AI control](/admin/agent-control),
+   **Providers**, and select **Edit connection**.
+2. Under **Scripts**, check that **Scripts** is on. The provider's model may then answer fan-out,
    reconciliation and report questions with one short read-only Python script instead of many
-   tool calls.
-4. To let those scripts prepare changes, also turn on **Scripts may propose writes**. It can be
+   tool calls. Turn it off to keep that provider's model to tool calls.
+3. To let those scripts prepare changes, also turn on **Scripts may propose writes**. It can be
    turned on only while **Scripts** is on, and turning **Scripts** off turns it off too.
-5. Select **Save changes**. Both are off by default.
+4. Select **Save changes**.
 
 ### Set up an embedding provider
 Keywords: embeddings, embedding model, semantic search, search by meaning, vector search, Voyage, Gemini embeddings, OpenAI embeddings, nomic-embed-text, retrieval
@@ -203,19 +201,17 @@ Keywords: portal, website, browser, Browser Use, dock appointment, appointment p
     own address cannot be a portal site: agents work in Trenova with their own tools.
 
 ### Let agents analyze data
-Keywords: data analysis, analyze, analysis, chart, graph, python, pandas, E2B, sandbox, spreadsheet, margin by lane, trend, statistics, analysis history
-1. Open [AI control](/admin/agent-control) and select **Extensions**, then open Data analysis
-   from E2B.
-2. Paste the organization's E2B API key under **Connection**, select **Turn on**, then
-   **Test connection**. The test shows how many sandboxes the account is running.
-3. Under **Available to**, choose **Every agent** or **Agents you choose**.
-4. Optionally change how many seconds an analysis may run, the daily limit and the sandbox
-   template. Each change is saved as you make it.
-5. Ask an agent a question its reports alone do not answer, such as margin by lane for the
-   quarter. It runs the report, analyzes the rows, and shows the figures and charts beside its
-   reply.
-6. **Recent analyses** lists every analysis agents ran: open one to see what it read, its code,
-   what it printed and drew, how long it ran and what it cost.
+Keywords: data analysis, analyze, analysis, chart, graph, python, script, spreadsheet, CSV, Excel, margin by lane, trend, statistics, analysis history
+1. Agents analyze data with scripts, so nothing needs setting up: **Scripts** is on for every
+   provider that handles assistant chat. To check, open a provider in [AI control](/admin/agent-control),
+   **Providers**, select **Edit connection** and look under **Scripts**.
+2. Ask an agent a question its reports alone do not answer, such as margin by lane for the
+   quarter. It runs the report, reads every row with a script, and shows the figures, tables
+   and charts beside its reply. A CSV, Excel or text file attached to the conversation is read
+   the same way.
+3. To see every analysis agents made, select **Activity**, then **Analyses**. Open one to see
+   the data it read, what it showed, what it printed, its code and how long it ran. **Show older
+   analyses** loads the ones before.
 
 ### Set up search by meaning
 Keywords: semantic search, search by meaning, retrieval, vector search, embeddings, index documents, index email, re-index, indexing budget, pgvector, keyword only, words only
@@ -731,11 +727,12 @@ the refusal is recorded on the provider, the editor shows it under **Advisor** w
 message, the advisor, the model and when it happened, and calls go out without the advisor until
 the advisor, the model or the platform changes.
 
-A script runs in the organization's E2B sandbox with no network access, and the rows it reads
-are sent to E2B, as data analysis does. Every read a script makes goes through the same
-permissions as a normal tool call, and its sandbox time counts against the extension's daily
-limit. A provider's **Scripts** setting is only the provider's half: scripts also need the plan to
-include them, the E2B extension's read-only scripts setting and the code_mode permission. With
+A script runs inside Trenova in a sandboxed Python interpreter with no access to files or the
+network, so nothing it reads leaves Trenova and nothing about it is billed. Every read a script
+makes goes through the same permissions as a normal tool call. **Scripts** is on for every
+provider that handles assistant chat unless it is turned off; a person also needs the Scripts
+and analysis permission, which the Desk bundle grants. **Scripts may propose writes** is off by
+default. With
 **Scripts may propose writes**, nothing a script prepares is ever done on its own: the changes are
 proposed as one batch a person approves, each change is checked again against the record when it
 is approved, and a script that read outside text cannot run anything.
@@ -759,9 +756,10 @@ update access to AI control, deciding proposals needs update access to agent pro
 access to agent extensions, and turning one on, changing its settings or testing it needs update
 access. An agent searches the web for someone only when their role has the web research
 permission, and looks something up on a portal only when their role may view portal automation;
-an action on a portal needs a person who may act on portal automation to approve it. An agent
-analyzes data only for someone whose role may use data analysis, and reads only the report
-runs that person ran and the files they attached to the conversation.
+an action on a portal needs a person who may act on portal automation to approve it. An agent's
+script reads only the report runs the person it works for ran and the files they attached to
+the conversation. **Analyses** under **Activity** needs read access to agent runs; the person an
+analysis ran for can always open it from the Desk.
 
 Search queries and the addresses of pages agents read are sent to the extension's vendor. Queries
 that contain Trenova record IDs, email addresses or phone numbers are refused before they leave

@@ -6,299 +6,227 @@ import (
 	"io"
 	"strings"
 	"testing"
-	"time"
 
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportfmt"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// fakeReader streams a fixed set of rows, standing in for the executor.
-type fakeReader struct {
-	schema []reportports.ReportResultColumn
-	rows   []reportports.ReportRow
-	totals reportports.ReportRow
-	cursor int
-	closed bool
-}
-
-func (f *fakeReader) Schema() []reportports.ReportResultColumn { return f.schema }
-
-func (f *fakeReader) Next(_ context.Context) (reportports.ReportRow, error) {
-	if f.cursor >= len(f.rows) {
-		return nil, io.EOF
-	}
-	row := f.rows[f.cursor]
-	f.cursor++
-	return row, nil
-}
-
-func (f *fakeReader) Totals(_ context.Context) (reportports.ReportRow, error) { return f.totals, nil }
-
-func (f *fakeReader) RowCount() int64 { return int64(f.cursor) }
-func (f *fakeReader) Truncated() bool { return false }
-
-func (f *fakeReader) Close() error { f.closed = true; return nil }
-
-func moneyColumn(label string, rules ...reportfmt.Rule) reportports.ReportResultColumn {
-	return reportports.ReportResultColumn{
+func moneyColumn(label string, rules ...format.Rule) table.Column {
+	return table.Column{
 		ID:    strings.ToLower(label),
 		Label: label,
-		Type:  reportcatalog.FieldDecimal,
-		Display: mustResolve(reportfmt.ResolveInput{
-			Type: reportcatalog.FieldDecimal,
-			Hint: reportcatalog.FormatMoney,
-			Spec: &reportfmt.Spec{Rules: rules},
-		}),
+		Type:  value.Decimal,
+		Display: format.Resolve(
+			value.Decimal,
+			format.Hint{Kind: format.Money},
+			&format.Spec{Rules: rules},
+		),
 	}
 }
 
-func textColumn(label string) reportports.ReportResultColumn {
-	return reportports.ReportResultColumn{
+func textColumn(label string) table.Column {
+	return table.Column{
 		ID:      strings.ToLower(label),
 		Label:   label,
-		Type:    reportcatalog.FieldString,
-		Display: mustResolve(reportfmt.ResolveInput{Type: reportcatalog.FieldString}),
+		Type:    value.String,
+		Display: format.Resolve(value.String, format.Hint{}, nil),
 	}
 }
 
-func mustResolve(in reportfmt.ResolveInput) reportfmt.Resolved {
-	displays, err := reportfmt.Resolve(context.Background(), []reportfmt.ResolveInput{in})
-	if err != nil {
-		panic(err)
-	}
-	return displays[0]
+type digestRow struct {
+	level  table.Level
+	values []any
 }
 
-func drainDigest(t *testing.T, reader *digestReader) *reportports.ReportDigest {
+func detail(values ...any) digestRow { return digestRow{level: table.Detail, values: values} }
+
+func total(values ...any) digestRow { return digestRow{level: table.Total, values: values} }
+
+func resultTable(t *testing.T, columns []table.Column, rows ...digestRow) *table.Table {
 	t.Helper()
-	for {
-		if _, err := reader.Next(t.Context()); err != nil {
-			require.True(t, errors.Is(err, io.EOF))
-			break
-		}
+	builder := table.NewBuilder(columns)
+	for _, row := range rows {
+		require.NoError(t, builder.AppendLevel(row.level, row.values...))
 	}
-	return reader.digest(t.Context())
+	return builder.Table()
 }
 
-// The digest rides along with the render pass rather than costing a second
-// query, so every row the renderer sees must still reach it.
-func TestDigestCapturesRowsWhilePassingThemThrough(t *testing.T) {
-	inner := &fakeReader{
-		schema: []reportports.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
-		rows: []reportports.ReportRow{
-			{"ACME", decimal.NewFromInt(1000)},
-			{"Globex", decimal.NewFromInt(2000)},
-		},
-	}
-	reader := newDigestReader(inner, 10)
-
-	var seen int
+func captureDigest(
+	t *testing.T,
+	limit int,
+	columns []table.Column,
+	rows ...digestRow,
+) *reportports.ReportDigest {
+	t.Helper()
+	capture := newDigestCapture(limit)
+	result := resultTable(t, columns, rows...)
+	reader := result.Reader()
 	for {
-		row, err := reader.Next(t.Context())
-		if err != nil {
+		batch, err := reader.Next(t.Context())
+		if errors.Is(err, io.EOF) {
 			break
 		}
-		seen++
-		assert.Len(t, row, 2)
+		require.NoError(t, err)
+		capture.capture(columns, batch)
+	}
+	digest, err := capture.digest(t.Context(), columns)
+	require.NoError(t, err)
+	return digest
+}
+
+func digestDetailRows(t *testing.T, digest *reportports.ReportDigest) int {
+	t.Helper()
+	envelope, err := readDigest(digest)
+	require.NoError(t, err)
+	require.NotNil(t, envelope)
+	return int(envelope.RowCount)
+}
+
+func TestRunReaderHandsEveryBatchToTheRendererAndTheSidecar(t *testing.T) {
+	columns := []table.Column{textColumn("Customer"), moneyColumn("Revenue")}
+	source := resultTable(t, columns, detail("ACME", "1000"), detail("Globex", "2000"))
+	capture := newDigestCapture(10)
+	beats := 0
+	reader := newRunReader(source.Reader(), func() { beats++ }, 1, capture)
+
+	sideRows := make(chan int, 1)
+	go func() {
+		side := reader.Sidecar()
+		seen := 0
+		for {
+			batch, err := side.Next(context.Background())
+			if err != nil {
+				sideRows <- seen
+				return
+			}
+			seen += batch.Len
+		}
+	}()
+
+	seen := 0
+	for {
+		batch, err := reader.Next(t.Context())
+		if err != nil {
+			require.ErrorIs(t, err, io.EOF)
+			break
+		}
+		seen += batch.Len
 	}
 
 	assert.Equal(t, 2, seen, "the renderer still receives every row")
-	digest := reader.digest(t.Context())
-	assert.Len(t, digest.Rows, 2)
+	assert.Equal(t, 2, <-sideRows, "the stored rows receive every row")
+	assert.Positive(t, beats, "a long render keeps heartbeating")
+	digest, err := capture.digest(t.Context(), columns)
+	require.NoError(t, err)
+	assert.Equal(t, 2, digestDetailRows(t, digest))
 	assert.False(t, digest.Truncated)
 }
 
-// An email is a summary: past a couple of dozen rows the table stops being
-// readable, and the attachment is the right answer.
 func TestDigestStopsAtTheLimitAndSaysSo(t *testing.T) {
-	rows := make([]reportports.ReportRow, 0, 50)
-	for i := range 50 {
-		rows = append(rows, reportports.ReportRow{"row", decimal.NewFromInt(int64(i))})
-	}
-	inner := &fakeReader{
-		schema: []reportports.ReportResultColumn{textColumn("Name"), moneyColumn("Revenue")},
-		rows:   rows,
+	columns := []table.Column{textColumn("Name"), moneyColumn("Revenue")}
+	rows := make([]digestRow, 0, 50)
+	for range 50 {
+		rows = append(rows, detail("row", "1"))
 	}
 
-	digest := drainDigest(t, newDigestReader(inner, 5))
+	digest := captureDigest(t, 5, columns, rows...)
 
-	assert.Len(t, digest.Rows, 5)
+	assert.Equal(t, 5, digestDetailRows(t, digest))
 	assert.True(t, digest.Truncated)
-	assert.Equal(t, 50, inner.cursor, "every row still streams to the renderer")
 }
 
 func TestDigestLimitIsCappedGlobally(t *testing.T) {
-	inner := &fakeReader{schema: []reportports.ReportResultColumn{textColumn("Name")}}
-	assert.Equal(t, reportports.MaxDigestRows, newDigestReader(inner, 10_000).limit)
+	assert.Equal(t, reportports.MaxDigestRows, newDigestCapture(10_000).limit)
 }
 
-// The renderer owns the slice it is handed, so a digest that kept the reference
-// would show whatever the last row happened to leave behind.
-func TestDigestCopiesRowsItKeeps(t *testing.T) {
-	shared := reportports.ReportRow{"ACME", decimal.NewFromInt(1)}
-	inner := &fakeReader{
-		schema: []reportports.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
-		rows:   []reportports.ReportRow{shared},
-	}
-	reader := newDigestReader(inner, 5)
+func TestDigestKeepsTheGrandTotal(t *testing.T) {
+	columns := []table.Column{textColumn("Customer"), moneyColumn("Revenue")}
 
-	row, err := reader.Next(t.Context())
-	require.NoError(t, err)
-	row[0] = "MUTATED"
+	digest := captureDigest(t, 5, columns,
+		detail("ACME", "80000"), total(nil, "80000"))
 
-	digest := reader.digest(t.Context())
-	assert.Equal(t, "ACME", digest.Rows[0][0])
+	got := digestTotal(digest, "revenue")
+	require.NotNil(t, got)
+	assert.InDelta(t, 80000.0, *got, 0.001)
+	assert.Nil(t, digestTotal(digest, "missing"), "a measure that vanished is not zero")
 }
 
-// Every cell renders through its column's display contract, so the email agrees
-// with the grid and the exports — including the conditional-format tones.
 func TestDigestContextFormatsThroughTheDisplayContract(t *testing.T) {
-	digest := &reportports.ReportDigest{
-		Columns: []reportports.ReportResultColumn{
-			textColumn("Customer"),
-			moneyColumn("Revenue", reportfmt.Rule{
-				Op: reportfmt.RuleGreaterThan, Value: 1500, Tone: reportfmt.ToneNegative,
-			}),
-		},
-		Rows: []reportports.ReportRow{
-			{"ACME", decimal.NewFromInt(2000)},
-			{"Globex", decimal.NewFromInt(500)},
-		},
-		Totals: reportports.ReportRow{nil, decimal.NewFromInt(2500)},
+	columns := []table.Column{
+		textColumn("Customer"),
+		moneyColumn("Revenue", format.Rule{
+			Op: format.RuleGreater, Value: 1500, Tone: format.ToneNegative,
+		}),
 	}
+	digest := captureDigest(t, 5, columns,
+		detail("ACME", "2000"), detail("Globex", "500"), total(nil, "2500"))
 
-	out, err := digestContext(t.Context(), digest, nil, 2)
+	out, err := digestContext(t.Context(), digest, nil, "en", 2)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{"Customer", "Revenue"}, out.Headers)
 	require.Len(t, out.Rows, 2)
 	assert.Equal(t, "$2,000.00", out.Rows[0].Cells[1].Text)
 	assert.Equal(t, "$500.00", out.Rows[1].Cells[1].Text)
-
-	// The tone travels as a name, not a colour: the template decides how an
-	// exception looks, the report definition decides what counts as one.
-	assert.Equal(t, string(reportfmt.ToneNegative), out.Rows[0].Cells[1].Tone)
+	assert.Equal(t, string(format.ToneNegative), out.Rows[0].Cells[1].Tone)
 	assert.Empty(t, out.Rows[1].Cells[1].Tone, "the value under the threshold is not toned")
-
-	// Totals row, with the leading dimension labelled rather than blank.
-	assert.Equal(t, []string{digestTotalsLabel, "$2,500.00"}, out.Totals)
-}
-
-// A short row must not read as a row with a value in the wrong column, and a
-// missing cell is not a panic.
-func TestDigestContextPadsShortRows(t *testing.T) {
-	digest := &reportports.ReportDigest{
-		Columns: []reportports.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
-		Rows:    []reportports.ReportRow{{"ACME"}},
-	}
-
-	out, err := digestContext(t.Context(), digest, nil, 1)
-	require.NoError(t, err)
-
-	require.Len(t, out.Rows, 1)
-	require.Len(t, out.Rows[0].Cells, 2)
-	assert.Equal(t, "ACME", out.Rows[0].Cells[0].Text)
+	require.Len(t, out.Totals, 2)
+	assert.Equal(t, "Total", out.Totals[0], "the leading dimension is labelled rather than blank")
+	assert.Equal(t, "$2,500.00", out.Totals[1])
 }
 
 func TestDigestContextIsEmptyWhenThereIsNothingToShow(t *testing.T) {
-	none, err := digestContext(t.Context(), nil, nil, 0)
+	none, err := digestContext(t.Context(), nil, nil, "en", 0)
 	require.NoError(t, err)
 	assert.Empty(t, none.Rows)
-	empty, err := digestContext(t.Context(), &reportports.ReportDigest{}, nil, 0)
+	empty, err := digestContext(t.Context(), &reportports.ReportDigest{}, nil, "en", 0)
 	require.NoError(t, err)
 	assert.Empty(t, empty.Rows)
 
-	// Columns but no rows is a real case — an alert that fired on an empty
-	// result should not draw a headers-only table.
-	headersOnly := &reportports.ReportDigest{
-		Columns: []reportports.ReportResultColumn{textColumn("Customer")},
-	}
-	out, err := digestContext(t.Context(), headersOnly, nil, 0)
+	headersOnly := captureDigest(t, 5, []table.Column{textColumn("Customer")})
+	out, err := digestContext(t.Context(), headersOnly, nil, "en", 0)
 	require.NoError(t, err)
 	assert.Empty(t, out.Rows)
 	assert.Empty(t, out.Headers, "no rows means no table, so no headers either")
 }
 
-// Nobody should reconcile against a sample believing it is the whole result.
 func TestDigestNoteOnlyAppearsWhenRowsWereDropped(t *testing.T) {
-	full := &reportports.ReportDigest{
-		Columns: []reportports.ReportResultColumn{textColumn("Customer")},
-		Rows:    []reportports.ReportRow{{"ACME"}},
-	}
-	assert.Empty(t, digestNote(full, 1))
+	columns := []table.Column{textColumn("Customer")}
+	full := captureDigest(t, 5, columns, detail("ACME"))
+	assert.Empty(t, digestNote(t.Context(), full, 1, 1))
 
-	sampled := &reportports.ReportDigest{
-		Columns:   full.Columns,
-		Rows:      full.Rows,
-		Truncated: true,
-	}
-	assert.Contains(t, digestNote(sampled, 4000), "first 1 of 4000 rows")
+	sampled := captureDigest(t, 1, columns, detail("ACME"), detail("Globex"))
+	assert.Contains(t, digestNote(t.Context(), sampled, 1, 4000), "first 1 of 4000 rows")
 }
 
-type countingReader struct {
-	fakeReader
-	totalsCalls int
-}
+func TestRunSampleKeepsTheCapturedEnvelope(t *testing.T) {
+	t.Parallel()
 
-func (c *countingReader) Totals(ctx context.Context) (reportports.ReportRow, error) {
-	c.totalsCalls++
-	return c.fakeReader.Totals(ctx)
-}
+	columns := []table.Column{textColumn("Customer"), moneyColumn("Revenue")}
+	digest := captureDigest(t, 2, columns,
+		detail("ACME", "1180.50"),
+		detail("Globex", "980"),
+		detail("Initech", "640"),
+		total(nil, "2800.50"),
+	)
 
-func TestDigestReadsTheGrandTotalsOnce(t *testing.T) {
-	inner := &countingReader{fakeReader: fakeReader{
-		schema: []reportports.ReportResultColumn{textColumn("Customer"), moneyColumn("Revenue")},
-		rows:   []reportports.ReportRow{{"ACME", decimal.NewFromInt(1000)}},
-		totals: reportports.ReportRow{nil, decimal.NewFromInt(1000)},
-	}}
-	reader := newDigestReader(inner, 10)
-
-	_, err := reader.Totals(t.Context())
-	require.NoError(t, err)
-	digest := drainDigest(t, reader)
-
-	assert.Equal(t, reportports.ReportRow{nil, decimal.NewFromInt(1000)}, digest.Totals)
-	assert.Equal(t, 1, inner.totalsCalls, "the renderer and the digest share one aggregate query")
-}
-
-func TestSampleKeepsRawValuesTheGrandTotalsAndWhetherRowsWereLeftOut(t *testing.T) {
-	delivered := time.Date(2026, time.October, 21, 14, 30, 0, 0, time.UTC)
-	rows := make([]reportports.ReportRow, 0, 3)
-	for i := range 3 {
-		rows = append(rows, reportports.ReportRow{
-			"ACME", decimal.RequireFromString("1180.50"), delivered.AddDate(0, 0, i),
-		})
-	}
-	inner := &fakeReader{
-		schema: []reportports.ReportResultColumn{
-			textColumn("Customer"),
-			moneyColumn("Revenue"),
-			{ID: "delivered", Label: "Delivered", Type: reportcatalog.FieldEpoch},
-		},
-		rows:   rows,
-		totals: reportports.ReportRow{nil, decimal.RequireFromString("3541.50"), nil},
-	}
-
-	sample := sampleOf(drainDigest(t, newDigestReader(inner, 2)))
+	sample := runSampleOf(digest)
 
 	require.NotNil(t, sample)
-	assert.Equal(t, []string{"customer", "revenue", "delivered"}, []string{
-		sample.Schema[0].ID, sample.Schema[1].ID, sample.Schema[2].ID,
-	})
-	assert.Equal(t, "Revenue", sample.Schema[1].Label)
-	assert.Equal(t, [][]any{
-		{"ACME", "1180.5", delivered.Unix()},
-		{"ACME", "1180.5", delivered.AddDate(0, 0, 1).Unix()},
-	}, sample.Rows)
-	assert.Equal(t, []any{nil, "3541.5", nil}, sample.Totals)
-	assert.True(t, sample.More)
+	assert.Equal(t, digest.Envelope, sample)
 }
 
-func TestSampleIsNilWithoutASchema(t *testing.T) {
-	assert.Nil(t, sampleOf(&reportports.ReportDigest{}))
-	assert.Nil(t, sampleOf(nil))
+func TestRunSampleIsNilWithoutACaptureOrPastItsCap(t *testing.T) {
+	t.Parallel()
+
+	assert.Nil(t, runSampleOf(nil))
+	assert.Nil(t, runSampleOf(&reportports.ReportDigest{}))
+	assert.Nil(t, runSampleOf(&reportports.ReportDigest{
+		Envelope: make([]byte, report.MaxRunSampleBytes+1),
+	}))
 }

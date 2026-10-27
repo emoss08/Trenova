@@ -84,6 +84,7 @@ func TestTableArtifact_KeepsWhereTheListGoesOn(t *testing.T) {
 		nextCursor any
 		nextOffset any
 		total      any
+		estimated  any
 	}{
 		"a cursor list with more": {
 			result:     queuePage(0, 2, map[string]any{"hasMore": true, "nextCursor": "c-2"}),
@@ -97,6 +98,16 @@ func TestTableArtifact_KeepsWhereTheListGoesOn(t *testing.T) {
 			hasMore:    true,
 			nextOffset: 2,
 			total:      9,
+		},
+		"a list with an estimated total": {
+			result: queuePage(0, 2, map[string]any{
+				"hasMore": true, "nextCursor": "c-2", "total": float64(1_250_000),
+				"totalEstimated": true,
+			}),
+			hasMore:    true,
+			nextCursor: "c-2",
+			total:      1_250_000,
+			estimated:  true,
 		},
 		"the whole list": {
 			result: queuePage(0, 2, map[string]any{"hasMore": false}),
@@ -115,6 +126,7 @@ func TestTableArtifact_KeepsWhereTheListGoesOn(t *testing.T) {
 			assert.Equal(t, tc.nextCursor, artifact.Payload[payloadNextCursor])
 			assert.Equal(t, tc.nextOffset, artifact.Payload[payloadNextOffset])
 			assert.Equal(t, tc.total, artifact.Payload[payloadTotal])
+			assert.Equal(t, tc.estimated, artifact.Payload[payloadTotalEstimated])
 			assert.Equal(t, 1, artifact.Payload[payloadPages])
 			assert.Equal(t, tc.hasMore, pagedTable(artifact))
 		})

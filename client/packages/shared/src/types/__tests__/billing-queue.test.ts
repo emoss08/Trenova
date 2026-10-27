@@ -235,3 +235,67 @@ describe("reassignChargeResultSchema", () => {
     expect(parsed.canceledItemIds).toEqual(["bqi_1"]);
   });
 });
+
+/**
+ * A credit or debit memo's queue item bills a customer, not a shipment: the API
+ * serializes its empty shipment id as null (pulid.ID.MarshalJSON). Late-charge
+ * and manual memos sit in the queue as Approved items until they post, so the
+ * list must parse them.
+ */
+describe("billingQueueItemSchema.shipmentId", () => {
+  const debitMemoItem = {
+    ...actionFieldsItem,
+    id: "bqi_memo",
+    shipmentId: null,
+    billType: "DebitMemo",
+    allocatedTotalAmount: "0",
+    adjustmentContext: { memo: true, memoKind: "LateCharge" },
+  };
+
+  it("parses a memo item whose shipment id is null", () => {
+    const parsed = billingQueueItemSchema.parse(debitMemoItem);
+
+    expect(parsed.shipmentId).toBeNull();
+    expect(parsed.billType).toBe("DebitMemo");
+  });
+
+  it("reads an empty shipment id as no shipment", () => {
+    const parsed = billingQueueItemSchema.parse({ ...debitMemoItem, shipmentId: "" });
+
+    expect(parsed.shipmentId).toBeNull();
+  });
+
+  it("keeps a shipment item's shipment id", () => {
+    expect(billingQueueItemSchema.parse(actionFieldsItem).shipmentId).toBe("shp_1");
+  });
+});
+
+describe("billingQueueItemSchema.ratingReviewHold", () => {
+  it("reads the reviews holding the item as the REST item carries them", () => {
+    const parsed = billingQueueItemSchema.parse({
+      ...actionFieldsItem,
+      status: "InReview",
+      ratingReviewHold: {
+        shipmentId: "shp_1",
+        reasons: ["Holiday pickup", "Liftgate billed on a dock delivery"],
+        ratedAt: 1_800_000_000,
+        formulaTemplateName: "Dock rates",
+      },
+    });
+
+    expect(parsed.ratingReviewHold).toEqual({
+      shipmentId: "shp_1",
+      reasons: ["Holiday pickup", "Liftgate billed on a dock delivery"],
+      ratedAt: 1_800_000_000,
+      formulaTemplateName: "Dock rates",
+    });
+  });
+
+  it("reads an item the tariff holds nothing on, the field absent or null", () => {
+    expect(billingQueueItemSchema.parse(actionFieldsItem).ratingReviewHold).toBeNull();
+    expect(
+      billingQueueItemSchema.parse({ ...actionFieldsItem, ratingReviewHold: null })
+        .ratingReviewHold,
+    ).toBeNull();
+  });
+});

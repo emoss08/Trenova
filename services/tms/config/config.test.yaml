@@ -13,11 +13,21 @@ database:
   name: trenova_test
   user: postgres
   password: postgres
-  maxIdleConns: 5
   maxOpenConns: 10
   statementTimeout: 10s
   lockTimeout: 5s
   idleInTransactionSessionTimeout: 30s
+  queryLog: "off"
+  tenantConcurrency: 0
+  slowWaitWarning: 5s
+  maxWait: 60s
+  cache:
+    enabled: true
+    localBytes: 16777216
+    shared:
+      enabled: false
+  budget:
+    maxRepeats: 10
 
 cache:
   host: localhost

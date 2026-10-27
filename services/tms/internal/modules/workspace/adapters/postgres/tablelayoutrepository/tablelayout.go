@@ -3,15 +3,14 @@ package tablelayoutrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tablelayoutcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablelayout"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/tablelayout/tablelayoutdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/tablelayoutports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -35,26 +34,21 @@ func New(p Params) tablelayoutports.TableLayoutRepository {
 	}
 }
 
+func layoutOf(req *tablelayoutports.TableLayoutRequest) *keel.Query[*tablelayout.TableLayout] {
+	tl := tablelayoutdb.TableLayouts
+	return tl.Where(tl.UserID.Eq(req.TenantInfo.UserID), tl.Resource.Eq(req.Resource))
+}
+
 func (r *repository) Get(
 	ctx context.Context,
 	req *tablelayoutports.TableLayoutRequest,
 ) (*tablelayout.TableLayout, bool, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) (*tablelayout.TableLayout, bool, error) {
-		cols := tablelayoutcol.TableLayoutColumns
-		entity := new(tablelayout.TableLayout)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tablelayoutcol.TableLayoutScopeTenant(sq, req.TenantInfo).
-					Where(cols.UserID.Eq(), req.TenantInfo.UserID).
-					Where(cols.Resource.Eq(), req.Resource)
-			}).
-			Scan(ctx)
+		entity, err := layoutOf(req).One(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, false, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, false, nil
-			}
 			r.l.Error("failed to get table layout",
 				zap.String("resource", req.Resource),
 				zap.String("userID", req.TenantInfo.UserID.String()),
@@ -72,14 +66,8 @@ func (r *repository) CountForUser(
 	tenantInfo pagination.TenantInfo,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*tablelayout.TableLayout)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tablelayoutcol.TableLayoutScopeTenant(sq, tenantInfo).
-					Where(tablelayoutcol.TableLayoutColumns.UserID.Eq(), tenantInfo.UserID)
-			}).
-			Count(ctx)
+		tl := tablelayoutdb.TableLayouts
+		count, err := tl.Where(tl.UserID.Eq(tenantInfo.UserID)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count table layouts",
 				zap.String("userID", tenantInfo.UserID.String()),
@@ -97,20 +85,23 @@ func (r *repository) Upsert(
 	entity *tablelayout.TableLayout,
 ) (*tablelayout.TableLayout, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tablelayout.TableLayout, error) {
-		cols := tablelayoutcol.TableLayoutColumns
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (" +
-				cols.OrganizationID.Bare() + ", " +
-				cols.BusinessUnitID.Bare() + ", " +
-				cols.UserID.Bare() + ", " +
-				cols.Resource.Bare() + ") DO UPDATE").
-			Set(cols.Layout.SetExcluded()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Set(cols.Version.IncConflict(1)).
-			Returning("*").
-			Exec(ctx)
+		tl := tablelayoutdb.TableLayouts
+		db := r.db.Keel(ctx)
+		inserted, err := tl.Upsert(
+			ctx,
+			db,
+			[]*tablelayout.TableLayout{entity},
+			keel.OnConflict(tl.OrganizationID, tl.BusinessUnitID, tl.UserID, tl.Resource).
+				Update(tl.Layout),
+		)
+		if err == nil && !inserted[0] {
+			var stored *tablelayout.TableLayout
+			stored, err = tl.Where(tl.UserID.Eq(entity.UserID), tl.Resource.Eq(entity.Resource)).
+				One(ctx, db)
+			if err == nil {
+				entity = stored
+			}
+		}
 		if err != nil {
 			r.l.Error("failed to save table layout",
 				zap.String("resource", entity.Resource),
@@ -126,17 +117,7 @@ func (r *repository) Upsert(
 
 func (r *repository) Delete(ctx context.Context, req *tablelayoutports.TableLayoutRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := tablelayoutcol.TableLayoutColumns
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*tablelayout.TableLayout)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return tablelayoutcol.TableLayoutScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.UserID.Eq(), req.TenantInfo.UserID).
-					Where(cols.Resource.Eq(), req.Resource)
-			}).
-			Exec(ctx)
-		if err != nil {
+		if _, err := layoutOf(req).Delete(ctx, r.db.Keel(ctx)); err != nil {
 			r.l.Error("failed to reset table layout",
 				zap.String("resource", req.Resource),
 				zap.String("userID", req.TenantInfo.UserID.String()),

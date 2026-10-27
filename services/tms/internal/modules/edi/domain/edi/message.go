@@ -3,197 +3,117 @@ package edi
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ pagination.CursorEntity   = (*EDIMessage)(nil)
-	_ bun.BeforeAppendModelHook = (*EDIMessage)(nil)
+	_ pagination.CursorEntity = (*EDIMessage)(nil)
 )
 
 type EDIMessage struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_messages,alias:emsg"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	keel.Table `keel:"edi_messages"`
 
-	ID                       pulid.ID                    `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID           pulid.ID                    `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID           pulid.ID                    `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	EDIPartnerID             pulid.ID                    `json:"ediPartnerId"             bun:"edi_partner_id,type:VARCHAR(100),notnull"`
-	DocumentTypeID           pulid.ID                    `json:"documentTypeId"           bun:"document_type_id,type:VARCHAR(100),notnull"`
-	PartnerDocumentProfileID pulid.ID                    `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),nullzero"`
-	TemplateID               pulid.ID                    `json:"templateId"               bun:"template_id,type:VARCHAR(100),nullzero"`
-	TemplateVersionID        pulid.ID                    `json:"templateVersionId"        bun:"template_version_id,type:VARCHAR(100),nullzero"`
-	ShipmentID               pulid.ID                    `json:"shipmentId"               bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	InvoiceID                pulid.ID                    `json:"invoiceId"                bun:"invoice_id,type:VARCHAR(100),nullzero"`
-	TransferID               pulid.ID                    `json:"transferId"               bun:"transfer_id,type:VARCHAR(100),nullzero"`
-	InboundFileID            pulid.ID                    `json:"inboundFileId"            bun:"inbound_file_id,type:VARCHAR(100),nullzero"`
-	Direction                DocumentDirection           `json:"direction"                bun:"direction,type:edi_document_direction_enum,notnull"`
-	Standard                 EDIStandard                 `json:"standard"                 bun:"standard,type:edi_standard_enum,notnull"`
-	TransactionSet           TransactionSet              `json:"transactionSet"           bun:"transaction_set,type:edi_transaction_set_enum,notnull"`
-	X12Version               string                      `json:"x12Version"               bun:"x12_version,type:VARCHAR(20),notnull"`
-	Status                   MessageStatus               `json:"status"                   bun:"status,type:edi_message_status_enum,notnull"`
-	ValidationMode           ValidationMode              `json:"validationMode"           bun:"validation_mode,type:edi_validation_mode_enum,notnull"`
-	InterchangeControlNumber string                      `json:"interchangeControlNumber" bun:"interchange_control_number,type:VARCHAR(20),notnull"`
-	GroupControlNumber       string                      `json:"groupControlNumber"       bun:"group_control_number,type:VARCHAR(20),notnull"`
-	TransactionControlNumber string                      `json:"transactionControlNumber" bun:"transaction_control_number,type:VARCHAR(20),notnull"`
-	SegmentCount             int64                       `json:"segmentCount"             bun:"segment_count,type:BIGINT,notnull"`
-	RawX12                   string                      `json:"rawX12"                   bun:"raw_x12,type:TEXT,notnull"`
-	PayloadSnapshot          DocumentPayload             `json:"payloadSnapshot"          bun:"payload_snapshot,type:JSONB,notnull"`
-	RawPurgedAt              *int64                      `json:"rawPurgedAt"              bun:"raw_purged_at,type:BIGINT,nullzero"`
-	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus"           bun:"delivery_status,type:edi_message_delivery_status_enum,nullzero"`
-	DeliveryRemotePath       string                      `json:"deliveryRemotePath"       bun:"delivery_remote_path,type:TEXT,nullzero"`
-	DeliveryAttempts         int64                       `json:"deliveryAttempts"         bun:"delivery_attempts,type:BIGINT,notnull"`
-	DeliveryLastAttemptAt    *int64                      `json:"deliveryLastAttemptAt"    bun:"delivery_last_attempt_at,type:BIGINT,nullzero"`
-	DeliverySentAt           *int64                      `json:"deliverySentAt"           bun:"delivery_sent_at,type:BIGINT,nullzero"`
-	DeliveryLastError        string                      `json:"deliveryLastError"        bun:"delivery_last_error,type:TEXT,nullzero"`
-	AS2MessageID             string                      `json:"as2MessageId"             bun:"as2_message_id,type:VARCHAR(255),nullzero"`
-	AS2MIC                   string                      `json:"as2Mic"                   bun:"as2_mic,type:VARCHAR(255),nullzero"`
-	AckStatus                MessageAcknowledgmentStatus `json:"ackStatus"                bun:"ack_status,type:edi_message_ack_status_enum,nullzero"`
-	AckMessageID             pulid.ID                    `json:"ackMessageId"             bun:"ack_message_id,type:VARCHAR(100),nullzero"`
-	AckReceivedAt            *int64                      `json:"ackReceivedAt"            bun:"ack_received_at,type:BIGINT,nullzero"`
-	AckLastError             string                      `json:"ackLastError"             bun:"ack_last_error,type:TEXT,nullzero"`
-	GeneratedByID            pulid.ID                    `json:"generatedById"            bun:"generated_by_id,type:VARCHAR(100),nullzero"`
-	IdempotencyKey           string                      `json:"-"                        bun:"idempotency_key,type:VARCHAR(255),nullzero"`
-	GeneratedAt              int64                       `json:"generatedAt"              bun:"generated_at,type:BIGINT,notnull"`
-	Version                  int64                       `json:"version"                  bun:"version,type:BIGINT,notnull"`
-	CreatedAt                int64                       `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                int64                       `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                       pulid.ID                    `json:"id"                       keel:"id,pk,autoid:edimsg_"`
+	BusinessUnitID           pulid.ID                    `json:"businessUnitId"           keel:"business_unit_id,pk,tenant"`
+	OrganizationID           pulid.ID                    `json:"organizationId"           keel:"organization_id,pk,tenant"`
+	EDIPartnerID             pulid.ID                    `json:"ediPartnerId"             keel:"edi_partner_id"`
+	DocumentTypeID           pulid.ID                    `json:"documentTypeId"           keel:"document_type_id"`
+	LadingVersionID          pulid.ID                    `json:"ladingVersionId"          keel:"lading_version_id,nullzero"`
+	FlowInstanceID           pulid.ID                    `json:"flowInstanceId"           keel:"flow_instance_id,nullzero"`
+	FlowSendID               string                      `json:"flowSendId"               keel:"flow_send_id,nullzero"`
+	ShipmentID               pulid.ID                    `json:"shipmentId"               keel:"shipment_id,nullzero"`
+	InvoiceID                pulid.ID                    `json:"invoiceId"                keel:"invoice_id,nullzero"`
+	TransferID               pulid.ID                    `json:"transferId"               keel:"transfer_id,nullzero"`
+	InboundFileID            pulid.ID                    `json:"inboundFileId"            keel:"inbound_file_id,nullzero"`
+	Direction                DocumentDirection           `json:"direction"                keel:"direction"`
+	Standard                 EDIStandard                 `json:"standard"                 keel:"standard"`
+	TransactionSet           TransactionSet              `json:"transactionSet"           keel:"transaction_set"`
+	X12Version               string                      `json:"x12Version"               keel:"x12_version"`
+	Status                   MessageStatus               `json:"status"                   keel:"status"`
+	InterchangeControlNumber string                      `json:"interchangeControlNumber" keel:"interchange_control_number"`
+	GroupControlNumber       string                      `json:"groupControlNumber"       keel:"group_control_number"`
+	TransactionControlNumber string                      `json:"transactionControlNumber" keel:"transaction_control_number"`
+	SegmentCount             int64                       `json:"segmentCount"             keel:"segment_count"`
+	RawX12                   string                      `json:"rawX12"                   keel:"raw_x12"`
+	PayloadSnapshot          DocumentPayload             `json:"payloadSnapshot"          keel:"payload_snapshot,jsonb"`
+	Document                 jsonutils.RawJSON           `json:"document"                 keel:"document,jsonb"`
+	Lineage                  []lading.Lineage            `json:"lineage"                  keel:"lineage,jsonb"`
+	Outcomes                 []lading.Outcome            `json:"outcomes"                 keel:"outcomes,jsonb"`
+	RawPurgedAt              *int64                      `json:"rawPurgedAt"              keel:"raw_purged_at"`
+	DeliveryStatus           MessageDeliveryStatus       `json:"deliveryStatus"           keel:"delivery_status,nullzero"`
+	DeliveryRemotePath       string                      `json:"deliveryRemotePath"       keel:"delivery_remote_path,nullzero"`
+	DeliveryAttempts         int64                       `json:"deliveryAttempts"         keel:"delivery_attempts"`
+	DeliveryLastAttemptAt    *int64                      `json:"deliveryLastAttemptAt"    keel:"delivery_last_attempt_at"`
+	DeliverySentAt           *int64                      `json:"deliverySentAt"           keel:"delivery_sent_at"`
+	DeliveryLastError        string                      `json:"deliveryLastError"        keel:"delivery_last_error,nullzero"`
+	AS2MessageID             string                      `json:"as2MessageId"             keel:"as2_message_id,nullzero"`
+	AS2MIC                   string                      `json:"as2Mic"                   keel:"as2_mic,nullzero"`
+	AckStatus                MessageAcknowledgmentStatus `json:"ackStatus"                keel:"ack_status,nullzero"`
+	AckMessageID             pulid.ID                    `json:"ackMessageId"             keel:"ack_message_id,nullzero"`
+	AckReceivedAt            *int64                      `json:"ackReceivedAt"            keel:"ack_received_at"`
+	AckLastError             string                      `json:"ackLastError"             keel:"ack_last_error,nullzero"`
+	GeneratedByID            pulid.ID                    `json:"generatedById"            keel:"generated_by_id,nullzero"`
+	IdempotencyKey           string                      `json:"-"                        keel:"idempotency_key,nullzero"`
+	GeneratedAt              int64                       `json:"generatedAt"              keel:"generated_at"`
+	Version                  int64                       `json:"version"                  keel:"version,version"`
+	CreatedAt                int64                       `json:"createdAt"                keel:"created_at,autocreate"`
+	UpdatedAt                int64                       `json:"updatedAt"                keel:"updated_at,autoupdate"`
 
-	DiagnosticCount int64 `json:"diagnosticCount" bun:"diagnostic_count,scanonly"`
+	DiagnosticCount int64 `json:"diagnosticCount" keel:"diagnostic_count,computed"`
 
-	Partner                *EDIPartner                  `json:"partner,omitempty"                bun:"rel:belongs-to,join:edi_partner_id=id"`
-	DocumentType           *EDIDocumentType             `json:"documentType,omitempty"           bun:"rel:belongs-to,join:document_type_id=id"`
-	PartnerDocumentProfile *EDIPartnerDocumentProfile   `json:"partnerDocumentProfile,omitempty" bun:"rel:belongs-to,join:partner_document_profile_id=id"`
-	Template               *EDITemplate                 `json:"template,omitempty"               bun:"rel:belongs-to,join:template_id=id"`
-	TemplateVersion        *EDITemplateVersion          `json:"templateVersion,omitempty"        bun:"rel:belongs-to,join:template_version_id=id"`
-	ValidationErrors       []*EDIMessageValidationError `json:"validationErrors,omitempty"       bun:"rel:has-many,join:id=message_id"`
+	Partner          *EDIPartner                  `json:"partner,omitempty"          keel:"belongs:edi_partner_id"`
+	DocumentType     *EDIDocumentType             `json:"documentType,omitempty"     keel:"belongs:document_type_id"`
+	LadingVersion    *LadingVersion               `json:"ladingVersion,omitempty"    keel:"belongs:lading_version_id"`
+	ValidationErrors []*EDIMessageValidationError `json:"validationErrors,omitempty" keel:"many:message_id"`
 }
 
-func (m *EDIMessage) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (m *EDIMessage) BeforeUpdate(ctx context.Context) error {
+	if err := m.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *EDIMessage) BeforeCreate(ctx context.Context) error {
+	if err := m.BeforeSave(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *EDIMessage) BeforeSave(_ context.Context) error {
 	if m.GeneratedAt == 0 {
-		m.GeneratedAt = now
+		m.GeneratedAt = timeutils.NowUnix()
 	}
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if m.ID.IsNil() {
-			m.ID = pulid.MustNew("edimsg_")
-		}
-		m.CreatedAt = now
-	case *bun.UpdateQuery:
-		m.UpdatedAt = now
-	}
-
 	return nil
 }
 
 type EDIMessageValidationError struct {
-	bun.BaseModel `json:"-" bun:"table:edi_message_validation_errors,alias:emve"`
+	keel.Table `keel:"edi_message_validation_errors"`
 
-	ID              pulid.ID           `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID           `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID  pulid.ID           `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	MessageID       pulid.ID           `json:"messageId"       bun:"message_id,type:VARCHAR(100),notnull"`
-	Severity        ValidationSeverity `json:"severity"        bun:"severity,type:edi_validation_severity_enum,notnull"`
-	Code            string             `json:"code"            bun:"code,type:VARCHAR(100),notnull"`
-	SegmentID       string             `json:"segmentId"       bun:"segment_id,type:VARCHAR(10),nullzero"`
-	ElementPosition int                `json:"elementPosition" bun:"element_position,type:INTEGER,notnull"`
-	Path            string             `json:"path"            bun:"path,type:TEXT,nullzero"`
-	Message         string             `json:"message"         bun:"message,type:TEXT,notnull"`
-	SuggestedFix    string             `json:"suggestedFix"    bun:"suggested_fix,type:TEXT,nullzero"`
-	CreatedAt       int64              `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-}
-
-func (e *EDIMessageValidationError) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("edive_")
-		}
-		e.CreatedAt = timeutils.NowUnix()
-	}
-	return nil
-}
-
-type EDITestCase struct {
-	bun.BaseModel             `json:"-" bun:"table:edi_test_cases,alias:etc"`
-	pagination.CursorValueSet `json:"-" bun:",embed"`
-
-	ID                       pulid.ID        `json:"id"                       bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID           pulid.ID        `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID           pulid.ID        `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	PartnerDocumentProfileID pulid.ID        `json:"partnerDocumentProfileId" bun:"partner_document_profile_id,type:VARCHAR(100),notnull"`
-	Name                     string          `json:"name"                     bun:"name,type:VARCHAR(200),notnull"`
-	Description              string          `json:"description"              bun:"description,type:TEXT,nullzero"`
-	Payload                  DocumentPayload `json:"payload"                  bun:"payload,type:JSONB,notnull"`
-	ExpectedWarnings         int             `json:"expectedWarnings"         bun:"expected_warnings,type:INTEGER,notnull"`
-	ExpectedErrors           int             `json:"expectedErrors"           bun:"expected_errors,type:INTEGER,notnull"`
-	ExpectedWarningCodes     []string        `json:"expectedWarningCodes"     bun:"expected_warning_codes,type:JSONB,notnull,default:'[]'"`
-	ExpectedErrorCodes       []string        `json:"expectedErrorCodes"       bun:"expected_error_codes,type:JSONB,notnull,default:'[]'"`
-	LastRunAt                *int64          `json:"lastRunAt"                bun:"last_run_at,type:BIGINT,nullzero"`
-	LastRunPassed            *bool           `json:"lastRunPassed"            bun:"last_run_passed,type:BOOLEAN"`
-	LastRunWarnings          int             `json:"lastRunWarnings"          bun:"last_run_warnings,type:INTEGER,notnull"`
-	LastRunErrors            int             `json:"lastRunErrors"            bun:"last_run_errors,type:INTEGER,notnull"`
-	Version                  int64           `json:"version"                  bun:"version,type:BIGINT,notnull"`
-	CreatedAt                int64           `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                int64           `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	DocumentProfile *EDIPartnerDocumentProfile `json:"documentProfile,omitempty" bun:"rel:belongs-to,join:partner_document_profile_id=id"`
-}
-
-func (t *EDITestCase) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("editc_")
-		}
-		t.CreatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-	return nil
-}
-
-func (t *EDITestCase) GetID() pulid.ID {
-	return t.ID
-}
-
-func (t *EDITestCase) GetTableName() string {
-	return "edi_test_cases"
-}
-
-func (t *EDITestCase) GetOrganizationID() pulid.ID {
-	return t.OrganizationID
-}
-
-func (t *EDITestCase) GetBusinessUnitID() pulid.ID {
-	return t.BusinessUnitID
-}
-
-func (t *EDITestCase) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
-	return domaintypes.PostgresSearchConfig{
-		TableAlias: "etc",
-		SearchableFields: []domaintypes.SearchableField{
-			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
-			{
-				Name:   "description",
-				Type:   domaintypes.FieldTypeText,
-				Weight: domaintypes.SearchWeightB,
-			},
-		},
-	}
-}
-
-func (t *EDITestCase) GetCreatedAt() int64 {
-	return t.CreatedAt
+	ID              pulid.ID           `json:"id"              keel:"id,pk,autoid:edive_"`
+	BusinessUnitID  pulid.ID           `json:"businessUnitId"  keel:"business_unit_id,pk,tenant"`
+	OrganizationID  pulid.ID           `json:"organizationId"  keel:"organization_id,pk,tenant"`
+	MessageID       pulid.ID           `json:"messageId"       keel:"message_id"`
+	Severity        ValidationSeverity `json:"severity"        keel:"severity"`
+	Code            string             `json:"code"            keel:"code"`
+	SegmentID       string             `json:"segmentId"       keel:"segment_id,nullzero"`
+	ElementPosition int                `json:"elementPosition" keel:"element_position"`
+	Path            string             `json:"path"            keel:"path,nullzero"`
+	Message         string             `json:"message"         keel:"message"`
+	SuggestedFix    string             `json:"suggestedFix"    keel:"suggested_fix,nullzero"`
+	CreatedAt       int64              `json:"createdAt"       keel:"created_at,autocreate"`
 }
 
 func (m *EDIMessage) GetID() pulid.ID {
@@ -263,10 +183,6 @@ func (m *EDIMessage) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&m.Status,
 			validation.Required.Error("Status is required"),
 			domainvalidation.ValidEnum[MessageStatus]("Status is invalid"),
-		),
-		validation.Field(&m.ValidationMode,
-			validation.Required.Error("Validation mode is required"),
-			domainvalidation.ValidEnum[ValidationMode]("Validation mode is invalid"),
 		),
 		// The three control numbers are how a partner's acknowledgment is
 		// matched back to what was sent; a message missing one cannot be
@@ -350,39 +266,6 @@ func (e *EDIMessageValidationError) Validate(multiErr *errortypes.MultiError) {
 			validation.Min(0).Error("Element position cannot be negative"),
 		),
 		validation.Field(&e.Message, validation.Required.Error("Message is required")),
-	))
-}
-
-func (c *EDITestCase) Validate(multiErr *errortypes.MultiError) {
-	multiErr.AddOzzoError(validation.ValidateStruct(c,
-		validation.Field(&c.OrganizationID,
-			validation.Required.Error("Organization is required"),
-		),
-		validation.Field(&c.BusinessUnitID,
-			validation.Required.Error("Business unit is required"),
-		),
-		validation.Field(&c.PartnerDocumentProfileID,
-			validation.Required.Error("Document profile is required"),
-		),
-		validation.Field(&c.Name,
-			validation.Required.Error("Name is required"),
-			validation.Length(1, maxEDINameLength).
-				Error("Name cannot be longer than 200 characters"),
-		),
-		// The expectations are what the run is judged against, so a negative one
-		// could never be met and the case would fail forever.
-		validation.Field(&c.ExpectedWarnings,
-			validation.Min(0).Error("Expected warnings cannot be negative"),
-		),
-		validation.Field(&c.ExpectedErrors,
-			validation.Min(0).Error("Expected errors cannot be negative"),
-		),
-		validation.Field(&c.LastRunWarnings,
-			validation.Min(0).Error("Last run warnings cannot be negative"),
-		),
-		validation.Field(&c.LastRunErrors,
-			validation.Min(0).Error("Last run errors cannot be negative"),
-		),
 	))
 }
 

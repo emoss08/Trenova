@@ -8,13 +8,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/responseguard"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
@@ -23,11 +23,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -35,7 +36,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -50,7 +50,7 @@ type dispatchedLoad struct {
 	businessUnitID pulid.ID
 	userID         pulid.ID
 	workerFirst    string
-	admin          *bun.DB
+	admin          *keel.DB
 	dsn            string
 }
 
@@ -59,58 +59,38 @@ type dispatchedLoad struct {
 func seedDispatchedLoad(t *testing.T) (context.Context, *postgres.Connection, dispatchedLoad) {
 	t.Helper()
 
-	ctx, db, dsn, cleanup := seedtest.SetupTestDBWithDSN(t)
+	ctx, db, dsn, cleanup := seededtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "integration-system-password"},
+	sm := shipmentdb.ShipmentMoves
+	move, err := sm.AllTenants().
+		Where(sm.Status.Ne(shipment.MoveStatusCanceled)).
+		Order(sm.OrganizationID.Asc(), sm.BusinessUnitID.Asc(), sm.ShipmentID.Asc()).
+		First(dbscope.WithSystem(ctx, "find a seeded shipment move for the test"), db)
+	require.NoError(t, err)
+
+	tenantCtx := dbscope.WithTenant(ctx, dbscope.Tenant{
+		OrganizationID: move.OrganizationID,
+		BusinessUnitID: move.BusinessUnitID,
 	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment, Force: true})
+	w := workerdb.Workers
+	driver, err := w.Order(w.ID.Asc()).First(tenantCtx, db)
 	require.NoError(t, err)
 
-	var move struct {
-		MoveID         pulid.ID `bun:"move_id"`
-		ShipmentID     pulid.ID `bun:"shipment_id"`
-		OrganizationID pulid.ID `bun:"organization_id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewRaw(`
-		SELECT sm.id AS move_id, sm.shipment_id, sm.organization_id, sm.business_unit_id
-		FROM shipment_moves AS sm
-		WHERE sm.status != 'Canceled'
-		ORDER BY sm.organization_id, sm.business_unit_id, sm.shipment_id
-		LIMIT 1`).Scan(ctx, &move))
-	require.False(t, move.MoveID.IsNil())
-
-	var driver struct {
-		ID        pulid.ID `bun:"id"`
-		FirstName string   `bun:"first_name"`
-	}
-	require.NoError(t, db.NewRaw(
-		"SELECT id, first_name FROM workers WHERE organization_id = ? AND business_unit_id = ? ORDER BY id LIMIT 1",
-		move.OrganizationID, move.BusinessUnitID,
-	).Scan(ctx, &driver))
-	require.False(t, driver.ID.IsNil())
-
-	_, err = db.NewRaw(
-		"UPDATE workers SET address_line1 = ?, emergency_contact_phone = ? WHERE id = ? AND organization_id = ?",
-		driverHomeAddress, driverEmergencyPhone, driver.ID, move.OrganizationID,
-	).Exec(ctx)
+	_, err = w.Where(w.ID.Eq(driver.ID)).Update(tenantCtx, db,
+		w.AddressLine1.To(driverHomeAddress),
+		w.EmergencyContactPhone.To(driverEmergencyPhone),
+	)
 	require.NoError(t, err)
 
-	_, err = db.NewRaw(
-		"DELETE FROM assignments WHERE shipment_move_id = ? AND organization_id = ?",
-		move.MoveID, move.OrganizationID,
-	).Exec(ctx)
+	a := shipmentdb.Assignments
+	_, err = a.Where(a.ShipmentMoveID.Eq(move.ID)).Delete(tenantCtx, db)
 	require.NoError(t, err)
-	_, err = db.NewRaw(`
-		INSERT INTO assignments (id, business_unit_id, organization_id, shipment_move_id, primary_worker_id, status)
-		VALUES (?, ?, ?, ?, ?, 'New')`,
-		pulid.MustNew("a_"), move.BusinessUnitID, move.OrganizationID, move.MoveID, driver.ID,
-	).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, a.Create(tenantCtx, db, &shipment.Assignment{
+		ShipmentMoveID:  move.ID,
+		PrimaryWorkerID: &driver.ID,
+		Status:          shipment.AssignmentStatusNew,
+	}))
 
 	return ctx, postgres.NewTestConnection(db), dispatchedLoad{
 		shipmentID:     move.ShipmentID,
@@ -164,10 +144,7 @@ func serveExpandedShipment(
 		Get(mock.Anything, mock.Anything).
 		RunAndReturn(func(requestCtx context.Context, req *shipmentports.GetShipmentByIDRequest) (*shipment.Shipment, error) {
 			require.True(t, req.ExpandShipmentDetails)
-			if scopes != nil {
-				return repo.GetByID(requestCtx, req)
-			}
-			return repo.GetByID(ctx, req)
+			return repo.GetByID(requestCtx, req)
 		})
 
 	handler := buildShipmentHandler(t, handlerDeps{
@@ -177,13 +154,6 @@ func serveExpandedShipment(
 	router := gin.New()
 	router.Use(func(c *gin.Context) {
 		authctx.SetAuthContext(c, load.userID, load.businessUnitID, load.organizationID)
-		if scopes != nil {
-			c.Request = c.Request.WithContext(dbscope.WithTenant(c.Request.Context(), dbscope.Tenant{
-				OrganizationID: load.organizationID,
-				BusinessUnitID: load.businessUnitID,
-				UserID:         load.userID,
-			}))
-		}
 		c.Next()
 	})
 	if scopes != nil {
@@ -277,12 +247,13 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 	}
 	enforced := &config.Config{}
 	enforced.Database.RLS.Mode = config.RLSModeEnforce
+	rls := dbtest.NewRLSConnection(t, load.admin, load.dsn)
 	scopes := readscopeservice.New(readscopeservice.Params{
 		Config:   enforced,
+		DB:       rls,
 		Engine:   shipmentOnly,
 		Registry: permission.NewRegistry(),
 	})
-	rls := dbtest.NewRLSConnection(t, load.admin, load.dsn)
 
 	body, header := serveExpandedShipment(t, ctx, rls, load, shipmentOnly, true, scopes)
 	driver := primaryWorkerOf(t, body)
@@ -300,6 +271,7 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 	whole, header := serveExpandedShipment(t, ctx, rls, load, &mocks.DenyResourcesPermissionEngine{}, true,
 		readscopeservice.New(readscopeservice.Params{
 			Config:   enforced,
+			DB:       rls,
 			Engine:   &mocks.DenyResourcesPermissionEngine{},
 			Registry: permission.NewRegistry(),
 		}))

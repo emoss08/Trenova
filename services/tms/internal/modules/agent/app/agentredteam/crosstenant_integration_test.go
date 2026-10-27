@@ -78,7 +78,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
 	})
-	secret, err := repo.Create(ctx, &agent.Memory{
+	secret, err := repo.Create(owner.Ctx(ctx), &agent.Memory{
 		OrganizationID: ownerTenant.OrgID,
 		BusinessUnitID: ownerTenant.BuID,
 		Kind:           agent.MemoryKindFact,
@@ -122,7 +122,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 		BusinessUnitID: intruder.BusinessUnit.ID,
 		UserID:         intruder.User.ID,
 	}
-	result, err := rt.Run(ctx, &agentports.RunRequest{
+	result, err := rt.Run(intruder.Ctx(ctx), &agentports.RunRequest{
 		Definition: definitionFor(&c.Agent, MainAgentID, tenant),
 		Actor:      actorFor(false, tenant),
 		Input:      c.Input,
@@ -155,7 +155,7 @@ func TestCrossTenantIDsAreRefusedByTheRepositories(t *testing.T) {
 	assert.True(t, strings.Contains(strings.ToLower(refusal), "not found"),
 		"the other tenant's id reads as a record that does not exist: %s", refusal)
 
-	kept, err := repo.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
+	kept, err := repo.GetByID(owner.Ctx(ctx), agentports.GetAgentMemoryByIDRequest{
 		ID:         secret.ID,
 		TenantInfo: ownerTenant,
 	})

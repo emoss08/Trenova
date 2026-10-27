@@ -1,9 +1,9 @@
 package agent
 
 import (
-	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -11,43 +11,38 @@ import (
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*AgentDecision)(nil)
 	_ validationframework.TenantedEntity = (*AgentDecision)(nil)
 	_ pagination.CursorEntity            = (*AgentDecision)(nil)
 )
 
 type AgentDecision struct {
-	bun.BaseModel `bun:"table:agent_decisions,alias:ad" json:"-"`
+	keel.Table `keel:"agent_decisions"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ad_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-
-	ProposalID      *pulid.ID      `json:"proposalId"      bun:"proposal_id,type:VARCHAR(100),nullzero"`
-	ExceptionID     *pulid.ID      `json:"exceptionId"     bun:"exception_id,type:VARCHAR(100),nullzero"`
-	DecidedByUserID pulid.ID       `json:"decidedByUserId" bun:"decided_by_user_id,type:VARCHAR(100),notnull"`
-	Decision        DecisionType   `json:"decision"        bun:"decision,type:agent_decision_type_enum,notnull"`
-	Modifications   map[string]any `json:"modifications"   bun:"modifications,type:JSONB,nullzero"`
-	ReasonCode      string         `json:"reasonCode"      bun:"reason_code,type:VARCHAR(100),notnull"`
-	Note            string         `json:"note"            bun:"note,type:TEXT,nullzero"`
+	ProposalID      *pulid.ID      `json:"proposalId"      keel:"proposal_id"`
+	ExceptionID     *pulid.ID      `json:"exceptionId"     keel:"exception_id"`
+	DecidedByUserID pulid.ID       `json:"decidedByUserId" keel:"decided_by_user_id"`
+	Decision        DecisionType   `json:"decision"        keel:"decision"`
+	Modifications   map[string]any `json:"modifications"   keel:"modifications,jsonb,nullzero"`
+	ReasonCode      string         `json:"reasonCode"      keel:"reason_code"`
+	Note            string         `json:"note"            keel:"note,nullzero"`
 	// TraceID is the trace the decision was made in.
-	TraceID string `json:"traceId" bun:"trace_id,type:VARCHAR(32),nullzero"`
+	TraceID string `json:"traceId" keel:"trace_id,nullzero"`
 	// Preview is what the decider was shown of the write, filtered for them,
 	// and PreviewDigest its digest. PreviewReviewed says the decision named
 	// that digest, so the person approved what they saw. PreviewTargetVersion
 	// is the target record's version the preview was read at.
-	Preview              *ProposalPreview `json:"preview"              bun:"preview,type:JSONB,nullzero"`
-	PreviewDigest        string           `json:"previewDigest"        bun:"preview_digest,type:VARCHAR(64),nullzero"`
-	PreviewReviewed      bool             `json:"previewReviewed"      bun:"preview_reviewed,type:BOOLEAN,notnull,default:false"`
-	PreviewTargetVersion *int64           `json:"previewTargetVersion" bun:"preview_target_version,type:BIGINT,nullzero"`
+	Preview              *ProposalPreview `json:"preview"              keel:"preview,jsonb"`
+	PreviewDigest        string           `json:"previewDigest"        keel:"preview_digest,nullzero"`
+	PreviewReviewed      bool             `json:"previewReviewed"      keel:"preview_reviewed"`
+	PreviewTargetVersion *int64           `json:"previewTargetVersion" keel:"preview_target_version"`
 
 	// CommitsAt is when an approval made from the person's own conversation
 	// goes through, unless it is undone first. CommittedAt is when it did,
@@ -56,19 +51,19 @@ type AgentDecision struct {
 	// CommitWorkflowID names the workflow that commits it, which every
 	// decision of one batch shares. All are empty for a decision that took
 	// effect when it was made.
-	CommitsAt        *int64    `json:"commitsAt"        bun:"commits_at,type:BIGINT,nullzero"`
-	CommittedAt      *int64    `json:"committedAt"      bun:"committed_at,type:BIGINT,nullzero"`
-	UndoneAt         *int64    `json:"undoneAt"         bun:"undone_at,type:BIGINT,nullzero"`
-	UndoneByUserID   *pulid.ID `json:"undoneByUserId"   bun:"undone_by_user_id,type:VARCHAR(100),nullzero"`
-	CommitWorkflowID string    `json:"commitWorkflowId" bun:"commit_workflow_id,type:VARCHAR(200),nullzero"`
+	CommitsAt        *int64    `json:"commitsAt"        keel:"commits_at"`
+	CommittedAt      *int64    `json:"committedAt"      keel:"committed_at"`
+	UndoneAt         *int64    `json:"undoneAt"         keel:"undone_at"`
+	UndoneByUserID   *pulid.ID `json:"undoneByUserId"   keel:"undone_by_user_id"`
+	CommitWorkflowID string    `json:"commitWorkflowId" keel:"commit_workflow_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	DecidedBy    *tenant.User         `bun:"rel:belongs-to,join:decided_by_user_id=id" json:"-"`
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"   json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"    json:"-"`
+	DecidedBy    *tenant.User         `json:"-" keel:"belongs:decided_by_user_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (d *AgentDecision) Validate(multiErr *errortypes.MultiError) {
@@ -157,20 +152,4 @@ func (d *AgentDecision) GetBusinessUnitID() pulid.ID {
 
 func (d *AgentDecision) GetTableName() string {
 	return "agent_decisions"
-}
-
-func (d *AgentDecision) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if d.ID.IsNil() {
-			d.ID = pulid.MustNew("ad_")
-		}
-		d.CreatedAt = now
-	case *bun.UpdateQuery:
-		d.UpdatedAt = now
-	}
-
-	return nil
 }

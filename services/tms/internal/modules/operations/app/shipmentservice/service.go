@@ -47,7 +47,6 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -68,7 +67,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   kernelports.DBConnection
+	DB                   kernelports.Transactor
 	Repo                 shipmentports.ShipmentRepository
 	OrderRepo            orderports.OrderRepository
 	CacheRepo            customerports.ShipmentCacheRepository
@@ -108,7 +107,7 @@ type Params struct {
 
 type service struct {
 	l                    *zap.Logger
-	db                   kernelports.DBConnection
+	db                   kernelports.Transactor
 	repo                 shipmentports.ShipmentRepository
 	orderRepo            orderports.OrderRepository
 	cacheRepo            customerports.ShipmentCacheRepository
@@ -339,7 +338,7 @@ func (s *service) Create(
 	}
 
 	var createdEntity *shipment.Shipment
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		created, txErr := s.persistCreate(txCtx, entity, prepared, actor)
 		createdEntity = created
 		return txErr
@@ -1093,7 +1092,7 @@ func (s *service) Cancel(
 	)
 
 	var updatedEntity *shipment.Shipment
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		canceled, txErr := s.repo.Cancel(txCtx, req)
 		if txErr != nil {
 			return txErr
@@ -1299,16 +1298,9 @@ func (s *service) CalculateTotals(
 	entity *shipment.Shipment,
 	userID pulid.ID,
 ) (*shipmentports.ShipmentTotalsResponse, error) {
-	// Shipment totals are derived from the formula template plus nested additional charges.
 	if entity == nil {
 		multiErr := errortypes.NewMultiError()
 		multiErr.Add("shipment", errortypes.ErrRequired, "Shipment is required")
-		return nil, multiErr
-	}
-
-	if entity.FormulaTemplateID.IsNil() {
-		multiErr := errortypes.NewMultiError()
-		multiErr.Add("formulaTemplateId", errortypes.ErrRequired, "Formula template is required")
 		return nil, multiErr
 	}
 

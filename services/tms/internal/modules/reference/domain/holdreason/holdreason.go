@@ -3,15 +3,14 @@ package holdreason
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 func HoldSeverityValues() []HoldSeverity {
@@ -23,39 +22,44 @@ func HoldSeverityValues() []HoldSeverity {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*HoldReason)(nil)
 	_ validationframework.TenantedEntity = (*HoldReason)(nil)
 	_ domaintypes.PostgresSearchable     = (*HoldReason)(nil)
 	_ pagination.CursorEntity            = (*HoldReason)(nil)
 )
 
 type HoldReason struct {
-	bun.BaseModel             `bun:"table:hold_reasons,alias:hr" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                      json:"-"`
-
-	ID                       pulid.ID       `json:"id"                       bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID           pulid.ID       `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID           pulid.ID       `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	Type                     HoldType       `json:"type"                     bun:"type,type:hold_type_enum,notnull"`
-	Code                     string         `json:"code"                     bun:"code,type:VARCHAR(64),notnull"`
-	Label                    string         `json:"label"                    bun:"label,type:VARCHAR(100),notnull"`
-	Description              string         `json:"description"              bun:"description,type:TEXT,nullzero"`
-	Active                   bool           `json:"active"                   bun:"active,type:BOOLEAN,notnull"`
-	DefaultSeverity          HoldSeverity   `json:"defaultSeverity"          bun:"default_severity,type:hold_severity_enum,notnull"`
-	DefaultBlocksDispatch    bool           `json:"defaultBlocksDispatch"    bun:"default_blocks_dispatch,type:BOOLEAN,notnull"`
-	DefaultBlocksDelivery    bool           `json:"defaultBlocksDelivery"    bun:"default_blocks_delivery,type:BOOLEAN,notnull"`
-	DefaultBlocksBilling     bool           `json:"defaultBlocksBilling"     bun:"default_blocks_billing,type:BOOLEAN,notnull"`
-	DefaultVisibleToCustomer bool           `json:"defaultVisibleToCustomer" bun:"default_visible_to_customer,type:BOOLEAN,notnull"`
-	SortOrder                int32          `json:"sortOrder"                bun:"sort_order,type:INTEGER,notnull,default:100"`
-	ExternalMap              map[string]any `json:"externalMap"              bun:"external_map,type:JSONB,nullzero"`
-	Version                  int64          `json:"version"                  bun:"version,type:BIGINT"`
-	CreatedAt                int64          `json:"createdAt"                bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                int64          `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector             string         `json:"-"                        bun:"search_vector,type:TSVECTOR,scanonly"`
+	keel.Table               `keel:"hold_reasons"`
+	ID                       pulid.ID       `keel:"id,pk,autoid:hr_"                         json:"id"`
+	BusinessUnitID           pulid.ID       `keel:"business_unit_id,tenant"                  json:"businessUnitId"`
+	OrganizationID           pulid.ID       `keel:"organization_id,pk,tenant"                json:"organizationId"`
+	Type                     HoldType       `keel:"type"                                     json:"type"`
+	Code                     string         `keel:"code"                                     json:"code"`
+	Label                    string         `keel:"label"                                    json:"label"`
+	Description              string         `keel:"description,nullzero"                     json:"description"`
+	Active                   bool           `keel:"active"                                   json:"active"`
+	DefaultSeverity          HoldSeverity   `keel:"default_severity"                         json:"defaultSeverity"`
+	DefaultBlocksDispatch    bool           `keel:"default_blocks_dispatch"                  json:"defaultBlocksDispatch"`
+	DefaultBlocksDelivery    bool           `keel:"default_blocks_delivery"                  json:"defaultBlocksDelivery"`
+	DefaultBlocksBilling     bool           `keel:"default_blocks_billing"                   json:"defaultBlocksBilling"`
+	DefaultVisibleToCustomer bool           `keel:"default_visible_to_customer"              json:"defaultVisibleToCustomer"`
+	SortOrder                int32          `keel:"sort_order"                               json:"sortOrder"`
+	ExternalMap              map[string]any `keel:"external_map,jsonb,nullzero"              json:"externalMap"`
+	Version                  int64          `keel:"version,version"                          json:"version"`
+	CreatedAt                int64          `keel:"created_at,autocreate"                    json:"createdAt"`
+	UpdatedAt                int64          `keel:"updated_at,autoupdate"                    json:"updatedAt"`
+	SearchVector             string         `keel:"search_vector,tsvector,readonly,noselect" json:"-"`
 
 	// Relationships
-	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+}
+
+func (hr *HoldReason) BeforeCreate(_ context.Context) error {
+	if hr.SortOrder == 0 {
+		hr.SortOrder = 100
+	}
+
+	return nil
 }
 
 func (hr *HoldReason) Validate(multiErr *errortypes.MultiError) {
@@ -120,18 +124,12 @@ func (hr *HoldReason) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig
 	}
 }
 
-func (hr *HoldReason) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if hr.ID.IsNil() {
-			hr.ID = pulid.MustNew("hr_")
-		}
-		hr.CreatedAt = now
-	case *bun.UpdateQuery:
-		hr.UpdatedAt = now
+func (HoldReason) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "ux_hr_org_bu_type_code",
+			Field:   "code",
+			Message: "Hold reason with this code already exists in your organization",
+		},
 	}
-
-	return nil
 }

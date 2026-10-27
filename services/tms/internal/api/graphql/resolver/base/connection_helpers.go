@@ -15,9 +15,10 @@ func PageInfo(hasNextPage bool, endCursor *string) *gqlmodel.PageInfo {
 }
 
 type entityCursorConnectionPage[TEdge any] struct {
-	Edges      []TEdge
-	PageInfo   *gqlmodel.PageInfo
-	TotalCount *int
+	Edges           []TEdge
+	PageInfo        *gqlmodel.PageInfo
+	TotalCount      *int
+	TotalCountExact bool
 }
 
 func EntityCursorConnection[TNode pagination.CursorEntity, TEdge any](
@@ -31,7 +32,6 @@ func EntityCursorConnection[TNode pagination.CursorEntity, TEdge any](
 
 	edges, err := EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		build,
 	)
@@ -40,21 +40,21 @@ func EntityCursorConnection[TNode pagination.CursorEntity, TEdge any](
 	}
 
 	return &entityCursorConnectionPage[TEdge]{
-		Edges:      edges,
-		PageInfo:   PageInfo(result.HasNextPage, LastEdgeCursor(edges, edgeCursor)),
-		TotalCount: result.TotalCount,
+		Edges:           edges,
+		PageInfo:        PageInfo(result.HasNextPage, LastEdgeCursor(edges, edgeCursor)),
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
 func EntityCursorEdges[TNode pagination.CursorEntity, TEdge any](
 	items []TNode,
-	sort []pagination.CursorSortField,
-	cursorValues pagination.CursorValueProvider,
+	cursors pagination.EdgeCursorProvider,
 	build func(TNode, string) TEdge,
 ) ([]TEdge, error) {
 	edges := make([]TEdge, len(items))
 	for i, item := range items {
-		cursor, err := EncodeConnectionCursor(item, sort, CursorValuesAt(cursorValues, i))
+		cursor, err := EdgeCursor(cursors, i)
 		if err != nil {
 			return nil, err
 		}
@@ -64,32 +64,17 @@ func EntityCursorEdges[TNode pagination.CursorEntity, TEdge any](
 	return edges, nil
 }
 
-func EncodeConnectionCursor[TNode pagination.CursorEntity](
-	item TNode,
-	sort []pagination.CursorSortField,
-	values []any,
-) (string, error) {
-	if len(sort) == 0 {
-		return pagination.EncodeCursorFromEntity(item)
-	}
-	if len(values) > 0 {
-		return pagination.EncodeCursorFromEntityWithValues(item, sort, values)
+func EdgeCursor(cursors pagination.EdgeCursorProvider, index int) (string, error) {
+	if cursors == nil {
+		return "", pagination.ErrNoEdgeCursor
 	}
 
-	return pagination.EncodeCursorFromEntityWithSort(item, sort)
-}
-
-func CursorValuesAt(provider pagination.CursorValueProvider, index int) []any {
-	if provider == nil {
-		return nil
-	}
-
-	values, ok := provider.CursorValuesAt(index)
+	cursor, ok := cursors.EdgeCursorAt(index)
 	if !ok {
-		return nil
+		return "", pagination.ErrNoEdgeCursor
 	}
 
-	return values
+	return cursor, nil
 }
 
 func LastEdgeCursor[TEdge any](edges []TEdge, cursor func(TEdge) string) *string {

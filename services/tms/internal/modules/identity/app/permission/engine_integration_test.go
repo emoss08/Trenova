@@ -3,321 +3,31 @@
 package permission
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
-	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/userrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/shared/pulid"
 	sharedtestutil "github.com/emoss08/trenova/shared/testutil"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
-
-type integrationTestDB struct {
-	db *bun.DB
-}
-
-func (i *integrationTestDB) roleRepo() *testRoleRepo {
-	return newTestRoleRepo(i.db)
-}
-
-func (i *integrationTestDB) userRepo() *testUserRepo {
-	return newTestUserRepo(i.db)
-}
-
-type testRoleRepo struct {
-	db *bun.DB
-	*permissionportsmock.MockRoleRepository
-}
-
-func newTestRoleRepo(db *bun.DB) *testRoleRepo {
-	mockRoleRepo := &permissionportsmock.MockRoleRepository{}
-	mockRoleRepo.On(
-		mock.Anything,
-		mock.Anything,
-		mock.Anything,
-	).Return(false, nil)
-
-	return &testRoleRepo{
-		db:                 db,
-		MockRoleRepository: mockRoleRepo,
-	}
-}
-
-func (r *testRoleRepo) Create(ctx context.Context, role *permission.Role) error {
-	now := timeutils.NowUnix()
-	if role.CreatedAt == 0 {
-		role.CreatedAt = now
-	}
-	if role.UpdatedAt == 0 {
-		role.UpdatedAt = now
-	}
-	_, err := r.db.NewInsert().Model(role).Exec(ctx)
-	if err != nil {
-		return err
-	}
-	for _, rp := range role.Permissions {
-		rp.RoleID = role.ID
-		if rp.CreatedAt == 0 {
-			rp.CreatedAt = now
-		}
-		if rp.UpdatedAt == 0 {
-			rp.UpdatedAt = now
-		}
-		if _, err := r.db.NewInsert().Model(rp).Exec(ctx); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (r *testRoleRepo) Update(ctx context.Context, role *permission.Role) error {
-	_, err := r.db.NewUpdate().Model(role).WherePK().OmitZero().Exec(ctx)
-	return err
-}
-
-func (r *testRoleRepo) GetByID(
-	ctx context.Context,
-	req permissionports.GetRoleByIDRequest,
-) (*permission.Role, error) {
-	role := new(permission.Role)
-	err := r.db.NewSelect().Model(role).
-		Relation("Permissions").
-		Where("r.id = ?", req.ID).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("r.organization_id = ?", req.TenantInfo.OrgID).
-				WhereOr("r.organization_id IS NULL")
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return role, nil
-}
-
-func (r *testRoleRepo) List(
-	_ context.Context,
-	_ *permissionports.ListRolesRequest,
-) (*pagination.ListResult[*permission.Role], error) {
-	return nil, nil
-}
-
-func (r *testRoleRepo) GetRolesWithInheritance(
-	ctx context.Context,
-	roleIDs []pulid.ID,
-) ([]*permission.Role, error) {
-	roles := make([]*permission.Role, 0)
-	err := r.db.NewSelect().Model(&roles).
-		Relation("Permissions").
-		Where("r.id IN (?)", bun.List(roleIDs)).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return roles, nil
-}
-
-func (r *testRoleRepo) GetUsersWithRole(
-	ctx context.Context,
-	roleID pulid.ID,
-) ([]permissionports.ImpactedUser, error) {
-	var users []permissionports.ImpactedUser
-	err := r.db.NewSelect().
-		TableExpr("user_role_assignments AS ura").
-		Join("JOIN users AS u ON u.id = ura.user_id").
-		ColumnExpr("ura.user_id").
-		ColumnExpr("ura.organization_id").
-		ColumnExpr("u.name AS user_name").
-		Where("ura.role_id = ?", roleID).
-		Scan(ctx, &users)
-	return users, err
-}
-
-func (r *testRoleRepo) GetUserRoleAssignments(
-	ctx context.Context,
-	userID, orgID pulid.ID,
-) ([]*permission.UserRoleAssignment, error) {
-	assignments := make([]*permission.UserRoleAssignment, 0)
-	err := r.db.NewSelect().Model(&assignments).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("user_id = ?", userID).
-				Where("organization_id = ?", orgID)
-		}).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return assignments, nil
-}
-
-func (r *testRoleRepo) CreateAssignment(
-	ctx context.Context,
-	assignment *permission.UserRoleAssignment,
-) error {
-	if assignment.AssignedAt == 0 {
-		assignment.AssignedAt = timeutils.NowUnix()
-	}
-	_, err := r.db.NewInsert().Model(assignment).Exec(ctx)
-	return err
-}
-
-func (r *testRoleRepo) DeleteAssignment(
-	ctx context.Context,
-	req permissionports.DeleteRoleAssignmentRequest,
-) (*permission.UserRoleAssignment, error) {
-	deleted := new(permission.UserRoleAssignment)
-	_, err := r.db.NewDelete().
-		Model(deleted).
-		Where("id = ?", req.AssignmentID).
-		Where("organization_id = ?", req.OrganizationID).
-		Returning("*").
-		Exec(ctx)
-	return deleted, err
-}
-
-func (r *testRoleRepo) CreateResourcePermission(
-	ctx context.Context,
-	rp *permission.ResourcePermission,
-) error {
-	now := timeutils.NowUnix()
-	if rp.CreatedAt == 0 {
-		rp.CreatedAt = now
-	}
-	if rp.UpdatedAt == 0 {
-		rp.UpdatedAt = now
-	}
-	_, err := r.db.NewInsert().Model(rp).Exec(ctx)
-	return err
-}
-
-func (r *testRoleRepo) UpdateResourcePermission(
-	ctx context.Context,
-	rp *permission.ResourcePermission,
-) error {
-	_, err := r.db.NewUpdate().Model(rp).WherePK().Exec(ctx)
-	return err
-}
-
-func (r *testRoleRepo) DeleteResourcePermission(
-	ctx context.Context,
-	req permissionports.DeleteResourcePermissionRequest,
-) error {
-	_, err := r.db.NewDelete().
-		Model((*permission.ResourcePermission)(nil)).
-		Where("id = ?", req.PermissionID).
-		Where("role_id = ?", req.RoleID).
-		Exec(ctx)
-	return err
-}
-
-func (r *testRoleRepo) GetResourcePermissionsByRoleID(
-	ctx context.Context,
-	roleID pulid.ID,
-) ([]*permission.ResourcePermission, error) {
-	perms := make([]*permission.ResourcePermission, 0)
-	err := r.db.NewSelect().Model(&perms).Where("role_id = ?", roleID).Scan(ctx)
-	return perms, err
-}
-
-type testUserRepo struct {
-	db *bun.DB
-	*tenantportsmock.MockUserRepository
-}
-
-func newTestUserRepo(db *bun.DB) *testUserRepo {
-	return &testUserRepo{
-		db:                 db,
-		MockUserRepository: &tenantportsmock.MockUserRepository{},
-	}
-}
-
-func (u *testUserRepo) GetByID(
-	_ context.Context,
-	_ tenantports.GetUserByIDRequest,
-) (*tenant.User, error) {
-	return nil, nil
-}
-
-func (u *testUserRepo) SelectOptions(
-	_ context.Context,
-	_ *pagination.SelectQueryRequest,
-) (*pagination.ListResult[*tenant.User], error) {
-	return nil, nil
-}
-
-func (u *testUserRepo) FindByEmail(_ context.Context, _ string) (*tenant.User, error) {
-	return nil, nil
-}
-
-func (u *testUserRepo) UpdateLastLoginAt(_ context.Context, _ pulid.ID) error {
-	return nil
-}
-
-func (u *testUserRepo) GetOrganizations(
-	_ context.Context,
-	_ pulid.ID,
-) ([]*tenant.OrganizationMembership, error) {
-	return nil, nil
-}
-
-func (u *testUserRepo) List(
-	_ context.Context,
-	_ *tenantports.ListUsersRequest,
-) (*pagination.ListResult[*tenant.User], error) {
-	return nil, nil
-}
-
-func (u *testUserRepo) UpdateCurrentOrganization(_ context.Context, _, _, _ pulid.ID) error {
-	return nil
-}
-
-func (u *testUserRepo) GetUserOrganizationSummaries(
-	ctx context.Context,
-	userID pulid.ID,
-) ([]tenantports.OrgSummary, error) {
-	var summaries []tenantports.OrgSummary
-	err := u.db.NewSelect().
-		TableExpr("organizations AS o").
-		Join("JOIN users AS u ON u.organization_id = o.id").
-		ColumnExpr("o.id").
-		ColumnExpr("o.name").
-		Where("u.id = ?", userID).
-		Scan(ctx, &summaries)
-	return summaries, err
-}
-
-func (u *testUserRepo) Update(_ context.Context, _ *tenant.User) (*tenant.User, error) {
-	return nil, nil
-}
-
-func (u *testUserRepo) BulkUpdateStatus(
-	_ context.Context,
-	_ *tenantports.BulkUpdateUserStatusRequest,
-) ([]*tenant.User, error) {
-	return nil, nil
-}
-
-func (u *testUserRepo) GetByIDs(
-	_ context.Context,
-	_ tenantports.GetUsersByIDsRequest,
-) ([]*tenant.User, error) {
-	return nil, nil
-}
 
 type testPermCacheRepo struct {
 	client *redis.Client
@@ -336,7 +46,7 @@ func (p *testPermCacheRepo) Get(
 		return nil, err
 	}
 	var perms permissionports.CachedPermissions
-	if err := json.Unmarshal(data, &perms); err != nil {
+	if err := sonic.Unmarshal(data, &perms); err != nil {
 		return nil, err
 	}
 	epoch, err := p.client.Get(ctx, p.epochKey(key.OrgID)).Int64()
@@ -378,7 +88,7 @@ func (p *testPermCacheRepo) Set(
 	ttl time.Duration,
 ) error {
 	redisKey := "perms:" + key.UserID.String() + ":" + key.OrgID.String()
-	data, err := json.Marshal(perms)
+	data, err := sonic.Marshal(perms)
 	if err != nil {
 		return err
 	}
@@ -414,169 +124,95 @@ func (p *testPermCacheRepo) InvalidateOrganization(ctx context.Context, orgID pu
 	return p.client.Incr(ctx, p.epochKey(orgID)).Err()
 }
 
-func createIntegrationSchema(t *testing.T, db *bun.DB) {
-	t.Helper()
-	ctx := t.Context()
-
-	queries := []string{
-		`CREATE TABLE IF NOT EXISTS organizations (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS users (
-			id VARCHAR(100) PRIMARY KEY,
-			name VARCHAR(255) NOT NULL,
-			organization_id VARCHAR(100) REFERENCES organizations(id)
-		)`,
-		`CREATE TABLE IF NOT EXISTS roles (
-			id VARCHAR(100) PRIMARY KEY,
-			business_unit_id VARCHAR(100),
-			organization_id VARCHAR(100) REFERENCES organizations(id),
-			name VARCHAR(255) NOT NULL,
-			description TEXT,
-			core_responsibility VARCHAR(50),
-			parent_role_ids TEXT[],
-			max_sensitivity VARCHAR(50) NOT NULL DEFAULT 'internal',
-			is_system BOOLEAN DEFAULT FALSE,
-			created_by VARCHAR(100),
-			created_at BIGINT NOT NULL,
-			updated_at BIGINT NOT NULL
-		)`,
-		`CREATE TABLE IF NOT EXISTS resource_permissions (
-			id VARCHAR(100) PRIMARY KEY,
-			role_id VARCHAR(100) NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-			resource VARCHAR(100) NOT NULL,
-			operations TEXT[] NOT NULL,
-			data_scope VARCHAR(50) NOT NULL DEFAULT 'organization',
-			created_at BIGINT NOT NULL,
-			updated_at BIGINT NOT NULL,
-			UNIQUE(role_id, resource)
-		)`,
-		`CREATE TABLE IF NOT EXISTS user_role_assignments (
-			id VARCHAR(100) PRIMARY KEY,
-			user_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			organization_id VARCHAR(100) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-			role_id VARCHAR(100) NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-			expires_at BIGINT,
-			assigned_by VARCHAR(100),
-			assigned_at BIGINT NOT NULL,
-			UNIQUE(user_id, organization_id, role_id)
-		)`,
-	}
-
-	for _, q := range queries {
-		_, err := db.ExecContext(ctx, q)
-		require.NoError(t, err)
-	}
-}
-
 type integrationTestData struct {
-	orgID    pulid.ID
-	userID   pulid.ID
-	roleID   pulid.ID
-	roleRepo *testRoleRepo
-	userRepo *testUserRepo
+	ctx    context.Context
+	orgID  pulid.ID
+	userID pulid.ID
+	roleID pulid.ID
 }
 
-func seedIntegrationData(t *testing.T, db *bun.DB) *integrationTestData {
+type integrationEnv struct {
+	ctx  context.Context
+	db   *keel.DB
+	data *seedtest.TestData
+}
+
+func (env *integrationEnv) addMembership(t *testing.T, userID pulid.ID) {
 	t.Helper()
-	ctx := t.Context()
 
-	orgID := pulid.MustNew("org_")
-	userID := pulid.MustNew("usr_")
-	roleID := pulid.MustNew("rol_")
-	now := timeutils.NowUnix()
+	require.NoError(t, tenantdb.OrganizationMemberships.Create(env.ctx, env.db, &tenant.OrganizationMembership{
+		UserID:         userID,
+		BusinessUnitID: env.data.BusinessUnit.ID,
+		OrganizationID: env.data.Organization.ID,
+		IsDefault:      true,
+	}))
+}
 
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		orgID.String(),
-		"Test Org",
-	)
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
-		userID.String(),
-		"Test User",
-		orgID.String(),
-	)
+func seedIntegrationData(t *testing.T, env *integrationEnv) *integrationTestData {
+	t.Helper()
 
-	roleRepo := newTestRoleRepo(db)
+	userID := env.data.User.ID
+	env.addMembership(t, userID)
+
 	role := &permission.Role{
-		ID:             roleID,
-		OrganizationID: orgID,
 		Name:           "Test Role",
 		MaxSensitivity: permission.SensitivityInternal,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-		Permissions: []*permission.ResourcePermission{
-			{
-				ID:         pulid.MustNew("rp_"),
-				RoleID:     roleID,
-				Resource:   "shipment",
-				Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
-				DataScope:  permission.DataScopeOrganization,
-				CreatedAt:  now,
-				UpdatedAt:  now,
-			},
-		},
 	}
-	require.NoError(t, roleRepo.Create(ctx, role))
-
-	assignment := &permission.UserRoleAssignment{
-		ID:             pulid.MustNew("ura_"),
+	require.NoError(t, permissiondb.Roles.Create(env.ctx, env.db, role))
+	require.NoError(t, permissiondb.ResourcePermissions.Create(env.ctx, env.db, &permission.ResourcePermission{
+		RoleID:     role.ID,
+		Resource:   "shipment",
+		Operations: []permission.Operation{permission.OpRead, permission.OpCreate},
+		DataScope:  permission.DataScopeOrganization,
+	}))
+	require.NoError(t, permissiondb.UserRoleAssignments.Create(env.ctx, env.db, &permission.UserRoleAssignment{
 		UserID:         userID,
-		OrganizationID: orgID,
-		RoleID:         roleID,
-		AssignedAt:     now,
-	}
-	require.NoError(t, roleRepo.CreateAssignment(ctx, assignment))
+		OrganizationID: env.data.Organization.ID,
+		RoleID:         role.ID,
+		AssignedAt:     timeutils.NowUnix(),
+	}))
 
 	return &integrationTestData{
-		orgID:    orgID,
-		userID:   userID,
-		roleID:   roleID,
-		roleRepo: roleRepo,
-		userRepo: newTestUserRepo(db),
+		ctx:    env.ctx,
+		orgID:  env.data.Organization.ID,
+		userID: userID,
+		roleID: role.ID,
 	}
 }
 
-func setupIntegrationEngine(t *testing.T) (*engine, *bun.DB, *redis.Client) {
+func setupIntegrationEngine(t *testing.T) (*engine, *integrationEnv, *redis.Client) {
 	t.Helper()
 
-	tc, db := sharedtestutil.SetupTestDB(t)
-	_ = tc
-	createIntegrationSchema(t, db)
+	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	t.Cleanup(cleanup)
 
+	data := seedtest.SeedFullTestData(t, ctx, db)
 	redisClient := sharedtestutil.SetupTestRedis(t)
 
-	roleRepo := newTestRoleRepo(db)
-	userRepo := newTestUserRepo(db)
+	conn := postgres.NewTestConnection(db)
 	cacheRepo := &testPermCacheRepo{client: redisClient}
 
 	metricsRegistry, err := metrics.NewRegistry(&config.Config{}, zap.NewNop())
 	require.NoError(t, err)
 
 	eng := &engine{
-		roleRepo:      roleRepo,
+		roleRepo:      rolerepository.New(rolerepository.Params{DB: conn, Logger: zap.NewNop()}),
 		cacheRepo:     cacheRepo,
-		userRepo:      userRepo,
+		userRepo:      userrepository.New(userrepository.Params{DB: conn, Logger: zap.NewNop()}),
 		registry:      permission.NewRegistry(),
 		routeRegistry: permission.NewRouteRegistry(),
 		metrics:       metricsRegistry,
 		l:             zap.NewNop().Named("test.permission-engine"),
 	}
 
-	return eng, db, redisClient
+	return eng, &integrationEnv{ctx: data.Ctx(ctx), db: db, data: data}, redisClient
 }
 
 func TestIntegration_RegularUserPermissionCheck(t *testing.T) {
-	eng, db, _ := setupIntegrationEngine(t)
+	eng, env, _ := setupIntegrationEngine(t)
 
-	data := seedIntegrationData(t, db)
-	ctx := t.Context()
+	data := seedIntegrationData(t, env)
+	ctx := data.ctx
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
@@ -593,10 +229,10 @@ func TestIntegration_RegularUserPermissionCheck(t *testing.T) {
 }
 
 func TestIntegration_CacheHitPath(t *testing.T) {
-	eng, db, _ := setupIntegrationEngine(t)
+	eng, env, _ := setupIntegrationEngine(t)
 
-	data := seedIntegrationData(t, db)
-	ctx := t.Context()
+	data := seedIntegrationData(t, env)
+	ctx := data.ctx
 
 	_, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
@@ -619,10 +255,10 @@ func TestIntegration_CacheHitPath(t *testing.T) {
 }
 
 func TestIntegration_NoPermissionDenied(t *testing.T) {
-	eng, db, _ := setupIntegrationEngine(t)
+	eng, env, _ := setupIntegrationEngine(t)
 
-	data := seedIntegrationData(t, db)
-	ctx := t.Context()
+	data := seedIntegrationData(t, env)
+	ctx := data.ctx
 
 	result, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
@@ -637,10 +273,10 @@ func TestIntegration_NoPermissionDenied(t *testing.T) {
 }
 
 func TestIntegration_BatchPermissionCheck(t *testing.T) {
-	eng, db, _ := setupIntegrationEngine(t)
-	data := seedIntegrationData(t, db)
+	eng, env, _ := setupIntegrationEngine(t)
+	data := seedIntegrationData(t, env)
 
-	ctx := t.Context()
+	ctx := data.ctx
 
 	result, err := eng.CheckBatch(ctx, &permissionports.BatchPermissionCheckRequest{
 		UserID:         data.userID,
@@ -660,10 +296,10 @@ func TestIntegration_BatchPermissionCheck(t *testing.T) {
 }
 
 func TestIntegration_InvalidateUser(t *testing.T) {
-	eng, db, _ := setupIntegrationEngine(t)
+	eng, env, _ := setupIntegrationEngine(t)
 
-	data := seedIntegrationData(t, db)
-	ctx := t.Context()
+	data := seedIntegrationData(t, env)
+	ctx := data.ctx
 
 	_, err := eng.Check(ctx, &permissionports.PermissionCheckRequest{
 		UserID:         data.userID,
@@ -689,27 +325,12 @@ func TestIntegration_InvalidateUser(t *testing.T) {
 }
 
 func TestIntegration_LightManifest(t *testing.T) {
-	eng, db, _ := setupIntegrationEngine(t)
+	eng, env, _ := setupIntegrationEngine(t)
 
-	orgID := pulid.MustNew("org_")
-	userID := pulid.MustNew("usr_")
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO organizations (id, name) VALUES (?, ?)`,
-		orgID.String(),
-		"Test Org",
-	)
-	sharedtestutil.MustExec(
-		t,
-		db,
-		`INSERT INTO users (id, name, organization_id) VALUES (?, ?, ?)`,
-		userID.String(),
-		"Admin",
-		orgID.String(),
-	)
-
-	ctx := t.Context()
+	orgID := env.data.Organization.ID
+	userID := env.data.User.ID
+	env.addMembership(t, userID)
+	ctx := env.ctx
 
 	manifest, err := eng.GetLightManifest(ctx, userID, orgID)
 

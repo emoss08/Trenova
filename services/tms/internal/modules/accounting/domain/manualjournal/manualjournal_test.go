@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestRequestSyncTotalsAndBalance(t *testing.T) {
@@ -80,23 +79,4 @@ func TestLineValidateAcceptsSingleSidedAmount(t *testing.T) {
 	line.Validate(multiErr)
 
 	require.False(t, multiErr.HasErrors())
-}
-
-func TestBeforeAppendModelSetsIDsAndTimestamps(t *testing.T) {
-	t.Parallel()
-
-	request := &Request{}
-	require.NoError(t, request.BeforeAppendModel(t.Context(), &bun.InsertQuery{}))
-	assert.True(t, request.ID.IsNotNil())
-	assert.NotZero(t, request.CreatedAt)
-
-	line := &Line{}
-	require.NoError(t, line.BeforeAppendModel(t.Context(), &bun.InsertQuery{}))
-	assert.True(t, line.ID.IsNotNil())
-	assert.NotZero(t, line.CreatedAt)
-
-	require.NoError(t, request.BeforeAppendModel(t.Context(), &bun.UpdateQuery{}))
-	require.NoError(t, line.BeforeAppendModel(t.Context(), &bun.UpdateQuery{}))
-	assert.NotZero(t, request.UpdatedAt)
-	assert.NotZero(t, line.UpdatedAt)
 }

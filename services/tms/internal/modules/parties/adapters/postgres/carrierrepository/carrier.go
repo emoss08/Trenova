@@ -5,23 +5,21 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var carrierErrors = dberror.Mapping{Entity: "Carrier"}
 
 type Params struct {
 	fx.In
@@ -42,48 +40,25 @@ func New(p Params) carrierports.CarrierRepository {
 	}
 }
 
-func (r *repository) addOptions(
-	q *bun.SelectQuery,
-	opts carrierports.CarrierFilterOptions,
-) *bun.SelectQuery {
+func carrierLoads(opts carrierports.CarrierFilterOptions) []keel.Loader {
+	c := carrierdb.Carriers
+	ch := c.EDIChannels()
+
+	loads := make([]keel.Loader, 0, 5)
 	if opts.IncludeState {
-		q = q.Relation("State")
-		q = q.Relation("RemitState")
+		loads = append(loads, c.State(), c.RemitState())
 	}
-
 	if opts.IncludeContacts {
-		q = q.Relation("Contacts")
+		loads = append(loads, c.Contacts())
 	}
-
 	if opts.IncludeInsurancePolicies {
-		q = q.Relation("InsurancePolicies")
+		loads = append(loads, c.InsurancePolicies())
 	}
-
 	if opts.IncludeEDIChannels {
-		q = q.Relation("EDIChannels")
-		q = q.Relation("EDIChannels.EDIPartner")
+		loads = append(loads, ch.Load(ch.EDIPartner()))
 	}
 
-	return q
-}
-
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *carrierports.ListCarrierRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		carriercol.CarrierTable.Alias,
-		req.Filter,
-		(*carrier.Carrier)(nil),
-	)
-
-	q = q.Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return r.addOptions(sq, req.CarrierFilterOptions)
-	})
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
+	return loads
 }
 
 func (r *repository) List(
@@ -94,53 +69,24 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*carrier.Carrier], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				carrierdb.Carriers.Query(),
+				&listquery.Request[carrier.Carrier]{
+					Filter: req.Filter,
+					Shape: func(q *keel.Query[*carrier.Carrier]) *keel.Query[*carrier.Carrier] {
+						return q.Load(carrierLoads(req.CarrierFilterOptions)...)
+					},
+				},
 			)
-
-			entities := make([]*carrier.Carrier, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count carriers", zap.Error(err))
+				r.l.Error("failed to list carriers", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*carrier.Carrier]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
-	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *carrierports.ListCarrierConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		carriercol.CarrierTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*carrier.Carrier)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *carrierports.ListCarrierConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		carriercol.CarrierTable.Alias,
-		req.Filter,
-		(*carrier.Carrier)(nil),
 	)
 }
 
@@ -148,56 +94,25 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *carrierports.ListCarrierConnectionRequest,
 ) (*pagination.CursorListResult[*carrier.Carrier], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*carrier.Carrier], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*carrier.Carrier)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count carriers", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*carrier.Carrier]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*carrier.Carrier) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyCarrierColumns(sq, req.CarrierColumns)
-							}).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return r.addOptions(sq, req.CarrierFilterOptions)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
+				r.db.Keel(ctx),
+				carrierdb.Carriers.Query(),
+				&listquery.Request[carrier.Carrier]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.CarrierColumns,
+					Shape: func(q *keel.Query[*carrier.Carrier]) *keel.Query[*carrier.Carrier] {
+						return q.Load(carrierLoads(req.CarrierFilterOptions)...)
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan carriers", zap.Error(err))
+				r.l.Error("failed to list carrier connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -211,27 +126,13 @@ func (r *repository) GetByID(
 	req carrierports.GetCarrierByIDRequest,
 ) (*carrier.Carrier, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrier.Carrier, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		cols := carriercol.CarrierColumns
-		entity := new(carrier.Carrier)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriercol.CarrierScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.addOptions(sq, req.CarrierFilterOptions)
-			}).
-			Scan(ctx)
+		c := carrierdb.Carriers
+		entity, err := c.Where(c.ID.Eq(req.ID)).
+			Load(carrierLoads(req.CarrierFilterOptions)...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get carrier", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Carrier")
+			r.l.Error("failed to get carrier", zap.String("id", req.ID.String()), zap.Error(err))
+			return nil, carrierErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -247,33 +148,17 @@ func (r *repository) FindByIdentity(
 			return nil, nil //nolint:nilnil // nothing to look up without an identity
 		}
 
-		cols := carriercol.CarrierColumns
-		entity := new(carrier.Carrier)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriercol.CarrierScopeTenant(sq, req.TenantInfo).
-					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						if req.SCAC != "" {
-							inner = inner.Where(
-								cols.SCAC.Expr("UPPER({}) = ?"),
-								strings.ToUpper(req.SCAC),
-							)
-						}
-						if req.DOTNumber != "" {
-							inner = inner.WhereOr(cols.DOTNumber.Eq(), req.DOTNumber)
-						}
-						return inner
-					})
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Limit(1).
-			Scan(ctx)
+		c := carrierdb.Carriers
+		entity, err := c.Where(keel.Or(
+			keel.When(req.SCAC != "", c.SCAC.Upper().Eq(strings.ToUpper(req.SCAC))),
+			keel.When(req.DOTNumber != "", c.DOTNumber.Eq(req.DOTNumber)),
+		)).
+			Order(c.CreatedAt.Asc()).
+			First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil carrier represents an optional absence
-			}
 			return nil, fmt.Errorf("find carrier by identity: %w", err)
 		}
 
@@ -286,27 +171,18 @@ func (r *repository) GetByIDs(
 	req carrierports.GetCarriersByIDsRequest,
 ) ([]*carrier.Carrier, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrier.Carrier, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
+		if len(req.CarrierIDs) == 0 {
+			return []*carrier.Carrier{}, nil
+		}
 
-		cols := carriercol.CarrierColumns
-		entities := make([]*carrier.Carrier, 0, len(req.CarrierIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriercol.CarrierScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.CarrierIDs))
-			}).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return r.addOptions(sq, req.CarrierFilterOptions)
-			}).
-			Scan(ctx)
+		c := carrierdb.Carriers
+		entities, err := c.Where(c.ID.In(req.CarrierIDs...)).
+			Load(carrierLoads(req.CarrierFilterOptions)...).
+			Limit(len(req.CarrierIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get carriers", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Carrier")
+			r.l.Error("failed to get carriers", zap.Error(err))
+			return nil, err
 		}
 
 		return entities, nil
@@ -317,30 +193,20 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *carrierports.CarrierSelectOptionsRequest,
 ) (*pagination.ListResult[*carrier.Carrier], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*carrier.Carrier], error) {
-			return dbhelper.SelectOptions[*carrier.Carrier](
+			c := carrierdb.Carriers
+			q := c.Pick(c.ID, c.Code, c.Name).Where(c.Status.Eq(carrier.StatusActive))
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						"id",
-						"code",
-						"name",
-					},
-					OrgColumn: "carr.organization_id",
-					BuColumn:  "carr.business_unit_id",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where("carr.status = ?", carrier.StatusActive)
-					},
-					EntityName: "Carrier",
-					SearchColumns: []string{
-						"carr.code",
-						"carr.name",
-					},
+				func(s string) keel.Pred {
+					return keel.Or(c.Code.ContainsFold(s), c.Name.ContainsFold(s))
 				},
 			)
 		},
@@ -349,7 +215,7 @@ func (r *repository) SelectOptions(
 
 // stampChildren pins every child row to its parent and tenant. IDs are left
 // alone: rows the caller kept retain their identity (and created_at history);
-// BeforeAppendModel mints IDs for the new, ID-less rows only.
+// keel mints IDs for the new, ID-less rows only.
 func (r *repository) stampChildren(entity *carrier.Carrier) {
 	for _, contact := range entity.Contacts {
 		contact.CarrierID = entity.ID
@@ -371,100 +237,52 @@ func (r *repository) stampChildren(entity *carrier.Carrier) {
 }
 
 func (r *repository) insertChildren(ctx context.Context, entity *carrier.Carrier) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(entity.Contacts) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Contacts).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return err
-			}
-		}
+	db := r.db.Keel(ctx)
+	if err := carrierdb.CarrierContacts.CreateMany(ctx, db, entity.Contacts); err != nil {
+		return err
+	}
+	if err := carrierdb.CarrierInsurancePolicies.CreateMany(
+		ctx,
+		db,
+		entity.InsurancePolicies,
+	); err != nil {
+		return err
+	}
 
-		if len(entity.InsurancePolicies) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.InsurancePolicies).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return err
-			}
-		}
-
-		if len(entity.EDIChannels) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.EDIChannels).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return err
-			}
-		}
-
-		return nil
-	})
+	return carrierdb.CarrierEDIChannels.CreateMany(ctx, db, entity.EDIChannels)
 }
 
 // deleteMissingChildren removes only the child rows the payload no longer
 // carries; rows whose IDs are still present keep their identity and history.
 func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.Carrier) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		tenantInfo := pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		}
+	db := r.db.Keel(ctx)
 
-		contactQuery := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*carrier.CarrierContact)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = carriercol.CarrierContactScopeTenantDelete(dq, tenantInfo).
-					Where(carriercol.CarrierContactColumns.CarrierID.Eq(), entity.ID)
-				if kept := pulid.Keep(entity.Contacts); len(kept) > 0 {
-					dq = dq.Where(carriercol.CarrierContactColumns.ID.NotIn(), bun.List(kept))
-				}
-				return dq
-			})
-		if _, err := contactQuery.Exec(ctx); err != nil {
-			return err
-		}
+	cc := carrierdb.CarrierContacts
+	kept := pulid.Keep(entity.Contacts)
+	if _, err := cc.Where(
+		cc.CarrierID.Eq(entity.ID),
+		keel.When(len(kept) > 0, cc.ID.NotIn(kept...)),
+	).Delete(ctx, db); err != nil {
+		return err
+	}
 
-		policyQuery := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*carrier.CarrierInsurancePolicy)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = carriercol.CarrierInsurancePolicyScopeTenantDelete(dq, tenantInfo).
-					Where(carriercol.CarrierInsurancePolicyColumns.CarrierID.Eq(), entity.ID)
-				if kept := pulid.Keep(entity.InsurancePolicies); len(kept) > 0 {
-					dq = dq.Where(
-						carriercol.CarrierInsurancePolicyColumns.ID.NotIn(),
-						bun.List(kept),
-					)
-				}
-				return dq
-			})
-		if _, err := policyQuery.Exec(ctx); err != nil {
-			return err
-		}
+	cip := carrierdb.CarrierInsurancePolicies
+	kept = pulid.Keep(entity.InsurancePolicies)
+	if _, err := cip.Where(
+		cip.CarrierID.Eq(entity.ID),
+		keel.When(len(kept) > 0, cip.ID.NotIn(kept...)),
+	).Delete(ctx, db); err != nil {
+		return err
+	}
 
-		channelQuery := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*carrier.CarrierEDIChannel)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = carriercol.CarrierEDIChannelScopeTenantDelete(dq, tenantInfo).
-					Where(carriercol.CarrierEDIChannelColumns.CarrierID.Eq(), entity.ID)
-				if kept := pulid.Keep(entity.EDIChannels); len(kept) > 0 {
-					dq = dq.Where(carriercol.CarrierEDIChannelColumns.ID.NotIn(), bun.List(kept))
-				}
-				return dq
-			})
-		if _, err := channelQuery.Exec(ctx); err != nil {
-			return err
-		}
+	cec := carrierdb.CarrierEDIChannels
+	kept = pulid.Keep(entity.EDIChannels)
+	_, err := cec.Where(
+		cec.CarrierID.Eq(entity.ID),
+		keel.When(len(kept) > 0, cec.ID.NotIn(kept...)),
+	).Delete(ctx, db)
 
-		return nil
-	})
+	return err
 }
 
 // clearEDIChannelDefaults drops every default flag before the channel upsert:
@@ -472,94 +290,136 @@ func (r *repository) deleteMissingChildren(ctx context.Context, entity *carrier.
 // moving is_default between two existing rows in one statement would collide
 // mid-upsert.
 func (r *repository) clearEDIChannelDefaults(ctx context.Context, entity *carrier.Carrier) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := carriercol.CarrierEDIChannelColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*carrier.CarrierEDIChannel)(nil)).
-			Set("is_default = FALSE").
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carriercol.CarrierEDIChannelScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(cols.CarrierID.Eq(), entity.ID).
-					Where(cols.IsDefault.IsTrue())
-			}).
-			Exec(ctx)
-		return err
-	})
+	cec := carrierdb.CarrierEDIChannels
+	_, err := cec.Where(cec.CarrierID.Eq(entity.ID), cec.IsDefault.IsTrue()).Update(
+		ctx,
+		r.db.Keel(ctx),
+		cec.IsDefault.To(false),
+		cec.Version.ToExpr(cec.Version),
+		cec.UpdatedAt.ToExpr(cec.UpdatedAt),
+	)
+
+	return err
 }
 
 // upsertChildren inserts new (ID-less) child rows and updates the kept ones in
 // place, preserving their IDs and created_at for insurance history and audit
 // diffs.
 func (r *repository) upsertChildren(ctx context.Context, entity *carrier.Carrier) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		now := timeutils.NowUnix()
+	db := r.db.Keel(ctx)
 
-		if len(entity.Contacts) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.Contacts).
-				On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
-				Set("name = EXCLUDED.name").
-				Set("title = EXCLUDED.title").
-				Set("email = EXCLUDED.email").
-				Set("phone = EXCLUDED.phone").
-				Set("is_primary = EXCLUDED.is_primary").
-				Set("receives_rate_confirmations = EXCLUDED.receives_rate_confirmations").
-				Set("version = carc.version + 1").
-				Set("updated_at = ?", now).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return err
-			}
+	if len(entity.Contacts) > 0 {
+		cc := carrierdb.CarrierContacts
+		inserted, err := cc.Upsert(ctx, db, entity.Contacts,
+			keel.OnConflict(cc.ID, cc.BusinessUnitID, cc.OrganizationID).Update(
+				cc.Name,
+				cc.Title,
+				cc.Email,
+				cc.Phone,
+				cc.IsPrimary,
+				cc.ReceivesRateConfirmations,
+			))
+		if err != nil {
+			return err
+		}
+		if err = restoreStored(
+			entity.Contacts,
+			inserted,
+			func(ids []pulid.ID) ([]*carrier.CarrierContact, error) {
+				return cc.Where(cc.ID.In(ids...)).All(ctx, db)
+			},
+		); err != nil {
+			return err
+		}
+	}
+
+	if len(entity.InsurancePolicies) > 0 {
+		cip := carrierdb.CarrierInsurancePolicies
+		inserted, err := cip.Upsert(ctx, db, entity.InsurancePolicies,
+			keel.OnConflict(cip.ID, cip.BusinessUnitID, cip.OrganizationID).Update(
+				cip.PolicyType,
+				cip.PolicyNumber,
+				cip.ProviderName,
+				cip.CoverageAmount,
+				cip.EffectiveDate,
+				cip.ExpirationDate,
+				cip.IsVerified,
+			))
+		if err != nil {
+			return err
+		}
+		if err = restoreStored(
+			entity.InsurancePolicies,
+			inserted,
+			func(ids []pulid.ID) ([]*carrier.CarrierInsurancePolicy, error) {
+				return cip.Where(cip.ID.In(ids...)).All(ctx, db)
+			},
+		); err != nil {
+			return err
+		}
+	}
+
+	if len(entity.EDIChannels) > 0 {
+		if err := r.clearEDIChannelDefaults(ctx, entity); err != nil {
+			return err
 		}
 
-		if len(entity.InsurancePolicies) > 0 {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.InsurancePolicies).
-				On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
-				Set("policy_type = EXCLUDED.policy_type").
-				Set("policy_number = EXCLUDED.policy_number").
-				Set("provider_name = EXCLUDED.provider_name").
-				Set("coverage_amount = EXCLUDED.coverage_amount").
-				Set("effective_date = EXCLUDED.effective_date").
-				Set("expiration_date = EXCLUDED.expiration_date").
-				Set("is_verified = EXCLUDED.is_verified").
-				Set("version = carins.version + 1").
-				Set("updated_at = ?", now).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return err
-			}
+		cec := carrierdb.CarrierEDIChannels
+		inserted, err := cec.Upsert(ctx, db, entity.EDIChannels,
+			keel.OnConflict(cec.ID, cec.BusinessUnitID, cec.OrganizationID).Update(
+				cec.EDIPartnerID,
+				cec.CommunicationProfileID,
+				cec.SCACOverride,
+				cec.IsDefault,
+			))
+		if err != nil {
+			return err
 		}
-
-		if len(entity.EDIChannels) > 0 {
-			if err := r.clearEDIChannelDefaults(ctx, entity); err != nil {
-				return err
-			}
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(&entity.EDIChannels).
-				On("CONFLICT (id, business_unit_id, organization_id) DO UPDATE").
-				Set("edi_partner_id = EXCLUDED.edi_partner_id").
-				Set("partner_document_profile_id = EXCLUDED.partner_document_profile_id").
-				Set("communication_profile_id = EXCLUDED.communication_profile_id").
-				Set("scac_override = EXCLUDED.scac_override").
-				Set("is_default = EXCLUDED.is_default").
-				Set("version = cec.version + 1").
-				Set("updated_at = ?", now).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return err
-			}
+		if err = restoreStored(
+			entity.EDIChannels,
+			inserted,
+			func(ids []pulid.ID) ([]*carrier.CarrierEDIChannel, error) {
+				return cec.Where(cec.ID.In(ids...)).All(ctx, db)
+			},
+		); err != nil {
+			return err
 		}
+	}
 
+	return nil
+}
+
+func restoreStored[T interface{ GetID() pulid.ID }](
+	rows []T,
+	inserted []bool,
+	read func(ids []pulid.ID) ([]T, error),
+) error {
+	ids := make([]pulid.ID, 0, len(rows))
+	for i, wasInserted := range inserted {
+		if !wasInserted {
+			ids = append(ids, rows[i].GetID())
+		}
+	}
+	if len(ids) == 0 {
 		return nil
-	})
+	}
+
+	stored, err := read(ids)
+	if err != nil {
+		return err
+	}
+
+	byID := make(map[pulid.ID]T, len(stored))
+	for _, row := range stored {
+		byID[row.GetID()] = row
+	}
+	for i, wasInserted := range inserted {
+		if row, ok := byID[rows[i].GetID()]; ok && !wasInserted {
+			rows[i] = row
+		}
+	}
+
+	return nil
 }
 
 func (r *repository) Create(
@@ -567,27 +427,14 @@ func (r *repository) Create(
 	entity *carrier.Carrier,
 ) (*carrier.Carrier, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carrier.Carrier, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("code", entity.Code),
-		)
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-
+		err := carrierdb.Carriers.Create(ctx, r.db.Keel(ctx), entity)
+		if err == nil {
 			r.stampChildren(entity)
-
-			return r.insertChildren(c, entity)
-		})
+			err = r.insertChildren(ctx, entity)
+		}
 		if err != nil {
-			log.Error("failed to create carrier", zap.Error(err))
-			return nil, err
+			r.l.Error("failed to create carrier", zap.String("code", entity.Code), zap.Error(err))
+			return nil, carrierErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -599,51 +446,30 @@ func (r *repository) Update(
 	entity *carrier.Carrier,
 ) (*carrier.Carrier, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carrier.Carrier, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
+		c := carrierdb.Carriers
+		err := c.SaveExcept(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			c.IntelRiskLevel,
+			c.IntelReviewRequired,
+			c.IntelBlockingCount,
 		)
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			ov := entity.Version
-			entity.Version++
-
-			cols := carriercol.CarrierColumns
-			results, uErr := r.db.DBForContext(c).NewUpdate().
-				Model(entity).
-				ExcludeColumn(
-					cols.IntelRiskLevel.Bare(),
-					cols.IntelReviewRequired.Bare(),
-					cols.IntelBlockingCount.Bare(),
-				).
-				WherePK().
-				Where("version = ?", ov).
-				Returning("*").
-				Exec(c)
-			if uErr != nil {
-				return uErr
-			}
-
-			if uErr = dberror.CheckRowsAffected(
-				results,
-				"Carrier",
-				entity.ID.String(),
-			); uErr != nil {
-				return uErr
-			}
-
-			if dErr := r.deleteMissingChildren(c, entity); dErr != nil {
-				return dErr
-			}
-
+		if err == nil {
+			err = r.deleteMissingChildren(ctx, entity)
+		}
+		if err == nil {
 			r.stampChildren(entity)
-
-			return r.upsertChildren(c, entity)
-		})
+			err = r.upsertChildren(ctx, entity)
+		}
 		if err != nil {
-			log.Error("failed to update carrier", zap.Error(err))
+			r.l.Error(
+				"failed to update carrier",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
 			return nil, dberror.MapRetryableTransactionError(
-				err,
+				carrierErrors.Map(err, entity.ID.String()),
 				"Carrier is busy. Retry the request.",
 			)
 		}
@@ -657,29 +483,19 @@ func (r *repository) BulkUpdateStatus(
 	req *carrierports.BulkUpdateCarrierStatusRequest,
 ) ([]*carrier.Carrier, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*carrier.Carrier, error) {
-		log := r.l.With(
-			zap.String("operation", "BulkUpdateStatus"),
-			zap.Any("request", req),
-		)
-
-		cols := carriercol.CarrierColumns
-		entities := make([]*carrier.Carrier, 0, len(req.CarrierIDs))
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&entities).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carriercol.CarrierScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.CarrierIDs))
-			}).
-			Set("status = ?", req.Status).
-			Returning("*").
-			Exec(ctx)
+		c := carrierdb.Carriers
+		entities, err := c.Where(c.ID.In(req.CarrierIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), c.Status.To(req.Status))
 		if err != nil {
-			log.Error("failed to bulk update carrier status", zap.Error(err))
+			r.l.Error("failed to bulk update carrier status", zap.Error(err))
 			return nil, err
 		}
 
-		if err = dberror.CheckBulkRowsAffected(results, "Carrier", req.CarrierIDs); err != nil {
+		if err = dberror.CheckBulkAffected(
+			int64(len(entities)),
+			"Carrier",
+			req.CarrierIDs,
+		); err != nil {
 			return nil, err
 		}
 
@@ -692,18 +508,11 @@ func (r *repository) ListEDIChannels(
 	req carrierports.GetCarrierEDIChannelRequest,
 ) ([]*carrier.CarrierEDIChannel, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrier.CarrierEDIChannel, error) {
-		cols := carriercol.CarrierEDIChannelColumns
-		entities := make([]*carrier.CarrierEDIChannel, 0, 4)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation("EDIPartner").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriercol.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
-					Where(cols.CarrierID.Eq(), req.CarrierID)
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx)
+		cec := carrierdb.CarrierEDIChannels
+		entities, err := cec.Where(cec.CarrierID.Eq(req.CarrierID)).
+			Load(cec.EDIPartner()).
+			Order(cec.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list carrier EDI channels", zap.Error(err))
 			return nil, err
@@ -718,18 +527,11 @@ func (r *repository) ListEDIChannelsByPartner(
 	req carrierports.ListCarrierEDIChannelsByPartnerRequest,
 ) ([]*carrier.CarrierEDIChannel, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carrier.CarrierEDIChannel, error) {
-		cols := carriercol.CarrierEDIChannelColumns
-		entities := make([]*carrier.CarrierEDIChannel, 0, 4)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation("Carrier").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriercol.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
-					Where(cols.EDIPartnerID.Eq(), req.EDIPartnerID)
-			}).
-			Order(cols.IsDefault.OrderDesc(), cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx)
+		cec := carrierdb.CarrierEDIChannels
+		entities, err := cec.Where(cec.EDIPartnerID.Eq(req.EDIPartnerID)).
+			Load(cec.Carrier()).
+			Order(cec.IsDefault.Desc(), cec.CreatedAt.Asc(), cec.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list carrier EDI channels by partner", zap.Error(err))
 			return nil, err
@@ -744,22 +546,14 @@ func (r *repository) GetDefaultEDIChannel(
 	req carrierports.GetCarrierEDIChannelRequest,
 ) (*carrier.CarrierEDIChannel, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carrier.CarrierEDIChannel, error) {
-		cols := carriercol.CarrierEDIChannelColumns
-		entity := new(carrier.CarrierEDIChannel)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("EDIPartner").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriercol.CarrierEDIChannelScopeTenant(sq, req.TenantInfo).
-					Where(cols.CarrierID.Eq(), req.CarrierID).
-					Where(cols.IsDefault.IsTrue())
-			}).
-			Scan(ctx)
+		cec := carrierdb.CarrierEDIChannels
+		entity, err := cec.Where(cec.CarrierID.Eq(req.CarrierID), cec.IsDefault.IsTrue()).
+			Load(cec.EDIPartner()).
+			One(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil //nolint:nilnil // nil channel represents an optional absence
-			}
 			r.l.Error("failed to get default carrier EDI channel", zap.Error(err))
 			return nil, err
 		}

@@ -3,6 +3,7 @@ package trailer
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
@@ -10,71 +11,78 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Trailer)(nil)
 	_ domaintypes.PostgresSearchable     = (*Trailer)(nil)
 	_ customfield.CustomFieldsSupporter  = (*Trailer)(nil)
 	_ pagination.CursorEntity            = (*Trailer)(nil)
 	_ validationframework.TenantedEntity = (*Trailer)(nil)
 )
 
+// Trailers and towed equipment
 type Trailer struct {
-	bun.BaseModel             `bun:"table:trailers,alias:tr" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                  json:"-"`
+	keel.Table `keel:"trailers,report=Equipment"`
 
-	ID                         pulid.ID                    `json:"id"                         bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID             pulid.ID                    `json:"businessUnitId"             bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID             pulid.ID                    `json:"organizationId"             bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	EquipmentTypeID            pulid.ID                    `json:"equipmentTypeId"            bun:"equipment_type_id,type:VARCHAR(100),notnull"`
-	EquipmentManufacturerID    pulid.ID                    `json:"equipmentManufacturerId"    bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull"`
-	RegistrationStateID        pulid.ID                    `json:"registrationStateId"        bun:"registration_state_id,type:VARCHAR(100),nullzero"`
-	FleetCodeID                pulid.ID                    `json:"fleetCodeId"                bun:"fleet_code_id,type:VARCHAR(100),nullzero"`
-	Status                     domaintypes.EquipmentStatus `json:"status"                     bun:"status,type:equipment_status_enum,notnull,default:'Available'"`
-	Code                       string                      `json:"code"                       bun:"code,type:VARCHAR(50),notnull"`
-	Model                      string                      `json:"model"                      bun:"model,type:VARCHAR(50),nullzero"`
-	Make                       string                      `json:"make"                       bun:"make,type:VARCHAR(50),nullzero"`
-	Year                       *int                        `json:"year"                       bun:"year,type:INT,nullzero"`
-	LicensePlateNumber         string                      `json:"licensePlateNumber"         bun:"license_plate_number,type:VARCHAR(50),nullzero"`
-	Vin                        string                      `json:"vin"                        bun:"vin,type:vin_code_optional,nullzero"`
-	ExternalID                 string                      `json:"externalId"                 bun:"external_id,type:TEXT,nullzero"`
-	RegistrationNumber         string                      `json:"registrationNumber"         bun:"registration_number,type:VARCHAR(50),nullzero"`
-	MaxLoadWeight              *int                        `json:"maxLoadWeight"              bun:"max_load_weight,type:INT,nullzero"`
-	OwnershipType              domaintypes.OwnershipType   `json:"ownershipType"              bun:"ownership_type,type:VARCHAR(50),notnull,default:'CompanyOwned'"`
-	OwnerWorkerID              *pulid.ID                   `json:"ownerWorkerId"              bun:"owner_worker_id,type:VARCHAR(100),nullzero"`
-	LessorName                 string                      `json:"lessorName"                 bun:"lessor_name,type:VARCHAR(150),nullzero"`
-	LeaseReference             string                      `json:"leaseReference"             bun:"lease_reference,type:VARCHAR(100),nullzero"`
-	LeaseEndDate               *int64                      `json:"leaseEndDate"               bun:"lease_end_date,type:BIGINT,nullzero"`
-	LastInspectionDate         *int64                      `json:"lastInspectionDate"         bun:"last_inspection_date,type:BIGINT,nullzero"`
-	RegistrationExpiry         *int64                      `json:"registrationExpiry"         bun:"registration_expiry,type:BIGINT,nullzero"`
-	LastKnownLocationID        pulid.ID                    `json:"lastKnownLocationId"        bun:"last_known_location_id,type:VARCHAR(100),scanonly"`
-	LastKnownLocationName      string                      `json:"lastKnownLocationName"      bun:"last_known_location_name,type:VARCHAR(255),scanonly"`
-	LastKnownLocationLatitude  *float64                    `json:"lastKnownLocationLatitude"  bun:"last_known_location_latitude,type:FLOAT,scanonly"`
-	LastKnownLocationLongitude *float64                    `json:"lastKnownLocationLongitude" bun:"last_known_location_longitude,type:FLOAT,scanonly"`
-	SearchVector               string                      `json:"-"                          bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                       string                      `json:"-"                          bun:"rank,type:VARCHAR(100),scanonly"`
-	Version                    int64                       `json:"version"                    bun:"version,type:BIGINT"`
-	CreatedAt                  int64                       `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                  int64                       `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	CustomFields               map[string]any              `json:"customFields,omitempty"     bun:"-"`
+	ID                         pulid.ID                    `json:"id"                         keel:"id,pk,autoid:tr_"`
+	BusinessUnitID             pulid.ID                    `json:"businessUnitId"             keel:"business_unit_id,pk,tenant"`
+	OrganizationID             pulid.ID                    `json:"organizationId"             keel:"organization_id,pk,tenant"`
+	EquipmentTypeID            pulid.ID                    `json:"equipmentTypeId"            keel:"equipment_type_id"`
+	EquipmentManufacturerID    pulid.ID                    `json:"equipmentManufacturerId"    keel:"equipment_manufacturer_id"`
+	RegistrationStateID        pulid.ID                    `json:"registrationStateId"        keel:"registration_state_id,nullzero"`
+	FleetCodeID                pulid.ID                    `json:"fleetCodeId"                keel:"fleet_code_id,nullzero"`
+	Status                     domaintypes.EquipmentStatus `json:"status"                     keel:"status"`
+	Code                       string                      `json:"code"                       keel:"code,label=Unit Number"`
+	Model                      string                      `json:"model"                      keel:"model,nullzero"`
+	Make                       string                      `json:"make"                       keel:"make,nullzero"`
+	Year                       *int                        `json:"year"                       keel:"year,dimension"`
+	LicensePlateNumber         string                      `json:"licensePlateNumber"         keel:"license_plate_number,nullzero,label=License Plate"`
+	Vin                        string                      `json:"vin"                        keel:"vin,nullzero"`
+	ExternalID                 string                      `json:"externalId"                 keel:"external_id,nullzero"`
+	RegistrationNumber         string                      `json:"registrationNumber"         keel:"registration_number,nullzero"`
+	MaxLoadWeight              *int                        `json:"maxLoadWeight"              keel:"max_load_weight,format=weight"`
+	OwnershipType              domaintypes.OwnershipType   `json:"ownershipType"              keel:"ownership_type"`
+	OwnerWorkerID              *pulid.ID                   `json:"ownerWorkerId"              keel:"owner_worker_id"`
+	LessorName                 string                      `json:"lessorName"                 keel:"lessor_name,nullzero"`
+	LeaseReference             string                      `json:"leaseReference"             keel:"lease_reference,nullzero"`
+	LeaseEndDate               *int64                      `json:"leaseEndDate"               keel:"lease_end_date"`
+	LastInspectionDate         *int64                      `json:"lastInspectionDate"         keel:"last_inspection_date,label=Last Inspection"`
+	RegistrationExpiry         *int64                      `json:"registrationExpiry"         keel:"registration_expiry,type=epoch"`
+	LastKnownLocationID        pulid.ID                    `json:"lastKnownLocationId"        keel:"last_known_location_id,computed,nullzero"`
+	LastKnownLocationName      string                      `json:"lastKnownLocationName"      keel:"last_known_location_name,computed,nullzero"`
+	LastKnownLocationLatitude  *float64                    `json:"lastKnownLocationLatitude"  keel:"last_known_location_latitude,computed"`
+	LastKnownLocationLongitude *float64                    `json:"lastKnownLocationLongitude" keel:"last_known_location_longitude,computed"`
+	SearchVector               string                      `json:"-"                          keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                       string                      `json:"-"                          keel:"rank,computed"`
+	Version                    int64                       `json:"version"                    keel:"version,version"`
+	CreatedAt                  int64                       `json:"createdAt"                  keel:"created_at,autocreate"`
+	UpdatedAt                  int64                       `json:"updatedAt"                  keel:"updated_at,autoupdate"`
+	CustomFields               map[string]any              `json:"customFields,omitempty"`
 
-	BusinessUnit          *tenant.BusinessUnit                         `json:"businessUnit,omitempty"          bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization          *tenant.Organization                         `json:"organization,omitempty"          bun:"rel:belongs-to,join:organization_id=id"`
-	EquipmentType         *equipmenttype.EquipmentType                 `json:"equipmentType,omitempty"         bun:"rel:belongs-to,join:equipment_type_id=id"`
-	EquipmentManufacturer *equipmentmanufacturer.EquipmentManufacturer `json:"equipmentManufacturer,omitempty" bun:"rel:belongs-to,join:equipment_manufacturer_id=id"`
-	FleetCode             *fleetcode.FleetCode                         `json:"fleetCode,omitempty"             bun:"rel:belongs-to,join:fleet_code_id=id"`
-	RegistrationState     *usstate.UsState                             `json:"registrationState,omitempty"     bun:"rel:belongs-to,join:registration_state_id=id"`
-	OwnerWorker           *worker.Worker                               `json:"ownerWorker,omitempty"           bun:"rel:belongs-to,join:owner_worker_id=id"`
+	BusinessUnit          *tenant.BusinessUnit                         `json:"businessUnit,omitempty"          keel:"belongs:business_unit_id,noreport"`
+	Organization          *tenant.Organization                         `json:"organization,omitempty"          keel:"belongs:organization_id,noreport"`
+	EquipmentType         *equipmenttype.EquipmentType                 `json:"equipmentType,omitempty"         keel:"belongs:equipment_type_id"`
+	EquipmentManufacturer *equipmentmanufacturer.EquipmentManufacturer `json:"equipmentManufacturer,omitempty" keel:"belongs:equipment_manufacturer_id,label=Manufacturer"`
+	FleetCode             *fleetcode.FleetCode                         `json:"fleetCode,omitempty"             keel:"belongs:fleet_code_id"`
+	RegistrationState     *usstate.UsState                             `json:"registrationState,omitempty"     keel:"belongs:registration_state_id,noreport"`
+	OwnerWorker           *worker.Worker                               `json:"ownerWorker,omitempty"           keel:"belongs:owner_worker_id"`
+}
+
+func (t *Trailer) BeforeCreate(_ context.Context) error {
+	if t.OwnershipType == "" {
+		t.OwnershipType = domaintypes.OwnershipTypeCompanyOwned
+	}
+	if t.Status == "" {
+		t.Status = domaintypes.EquipmentStatusAvailable
+	}
+
+	return nil
 }
 
 func (t *Trailer) Validate(multiErr *errortypes.MultiError) {
@@ -140,25 +148,6 @@ func (t *Trailer) Validate(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (t *Trailer) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.OwnershipType == "" {
-			t.OwnershipType = domaintypes.OwnershipTypeCompanyOwned
-		}
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("tr_")
-		}
-		t.CreatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
-
-	return nil
-}
-
 func (t *Trailer) GetID() pulid.ID {
 	return t.ID
 }
@@ -190,6 +179,7 @@ func (t *Trailer) GetResourceID() string {
 func (t *Trailer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	return domaintypes.PostgresSearchConfig{
 		TableAlias:      "tr",
+		ComputedFilters: []string{"lastKnownLocationId"},
 		UseSearchVector: true,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
@@ -206,36 +196,22 @@ func (t *Trailer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{
-			{
-				Field:        "EquipmentType",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*equipmenttype.EquipmentType)(nil),
-				TargetTable:  "equipment_types",
-				ForeignKey:   "equipment_type_id",
-				ReferenceKey: "id",
-				Alias:        "et",
-				Queryable:    true,
-			},
-			{
-				Field:        "EquipmentManufacturer",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*equipmentmanufacturer.EquipmentManufacturer)(nil),
-				TargetTable:  "equipment_manufacturers",
-				ForeignKey:   "equipment_manufacturer_id",
-				ReferenceKey: "id",
-				Alias:        "em",
-				Queryable:    true,
-			},
-			{
-				Field:        "FleetCode",
-				Type:         dbtype.RelationshipTypeBelongsTo,
-				TargetEntity: (*fleetcode.FleetCode)(nil),
-				TargetTable:  "fleet_codes",
-				ForeignKey:   "fleet_code_id",
-				ReferenceKey: "id",
-				Alias:        "fc",
-				Queryable:    true,
-			},
+			{Field: "EquipmentType", Queryable: true},
+			{Field: "EquipmentManufacturer", Queryable: true},
+			{Field: "FleetCode", Queryable: true},
+		},
+	}
+}
+
+func (Trailer) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_trailers_code",
+			Message: "Trailer with this code already exists in your organization",
+		},
+		{
+			Name:    "idx_trailers_external_id_tenant",
+			Message: "Trailer with this external ID already exists in your organization",
 		},
 	}
 }

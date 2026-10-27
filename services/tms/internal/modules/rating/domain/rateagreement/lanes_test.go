@@ -109,10 +109,10 @@ func TestValidate_RefusesAnEndTheModuleCannotKey(t *testing.T) {
 	assert.True(t, destination)
 }
 
-func TestBeforeAppendModel_RefusesARuleWhoseLaneWasNeverApplied(t *testing.T) {
+func TestBeforeCreate_RefusesARuleWhoseLaneWasNeverApplied(t *testing.T) {
 	t.Parallel()
 
 	rule := formulaRule(rategeo.ScopeTypeState, rategeo.ScopeTypeState, "ust_il", "ust_ga")
 
-	require.ErrorIs(t, rule.BeforeAppendModel(t.Context(), nil), rateagreement.ErrLaneNotApplied)
+	require.ErrorIs(t, rule.BeforeCreate(t.Context()), rateagreement.ErrLaneNotApplied)
 }

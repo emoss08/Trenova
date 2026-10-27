@@ -1,0 +1,77 @@
+# The interchange and functional group envelope, the same in every version Trenova reads.
+# ISA11 is the repetition separator from 00402 on and the standards identifier `U` before;
+# the envelope reader handles that position itself, so it is defined loosely here.
+
+segment ISA | Interchange Control Header
+  I01 ID 2/2 M | Authorization Information Qualifier
+  I02 AN 10/10 M | Authorization Information
+  I03 ID 2/2 M | Security Information Qualifier
+  I04 AN 10/10 M | Security Information
+  I05 ID 2/2 M | Interchange ID Qualifier
+  I06 AN 15/15 M | Interchange Sender ID
+  I05 ID 2/2 M | Interchange ID Qualifier
+  I07 AN 15/15 M | Interchange Receiver ID
+  I08 DT 6/6 M | Interchange Date
+  I09 TM 4/4 M | Interchange Time
+  I65 AN 1/1 M | Repetition Separator
+  I11 ID 5/5 M | Interchange Control Version Number
+  I12 N0 9/9 M | Interchange Control Number
+  I13 ID 1/1 M | Acknowledgment Requested
+  I14 ID 1/1 M | Interchange Usage Indicator
+  I15 AN 1/1 M | Component Element Separator
+
+segment IEA | Interchange Control Trailer
+  I16 N0 1/5 M | Number of Included Functional Groups
+  I12 N0 9/9 M | Interchange Control Number
+
+segment TA1 | Interchange Acknowledgment
+  I12 N0 9/9 M | Interchange Control Number
+  I08 DT 6/6 M | Interchange Date
+  I09 TM 4/4 M | Interchange Time
+  I17 ID 1/1 M | Interchange Acknowledgment Code
+  I18 ID 3/3 M | Interchange Note Code
+
+segment GS | Functional Group Header
+  479 ID 2/2 M | Functional Identifier Code
+  142 AN 2/15 M | Application Sender's Code
+  124 AN 2/15 M | Application Receiver's Code
+  373 DT 8/8 M | Date
+  337 TM 4/8 M | Time
+  28 N0 1/9 M | Group Control Number
+  455 ID 1/2 M | Responsible Agency Code
+  480 AN 1/12 M | Version / Release / Industry Identifier Code
+
+segment GE | Functional Group Trailer
+  97 N0 1/6 M | Number of Transaction Sets Included
+  28 N0 1/9 M | Group Control Number
+
+codes I01 | Authorization Information Qualifier
+  00 | No Authorization Information Present
+  01 | UCS Communications ID
+  02 | EDX Communications ID
+  03 | Additional Data Identification
+  04 | Rail Communications ID
+  05 | Department of Defense (DoD) Communication Identifier
+  06 | United States Federal Government Communication Identifier
+
+codes I03 | Security Information Qualifier
+  00 | No Security Information Present
+  01 | Password
+
+codes I13 | Acknowledgment Requested
+  0 | No Interchange Acknowledgment Requested
+  1 | Interchange Acknowledgment Requested (TA1)
+
+codes I14 | Interchange Usage Indicator
+  I | Information
+  P | Production Data
+  T | Test Data
+
+codes I17 | Interchange Acknowledgment Code
+  A | The Transmitted Interchange Control Structure Header and Trailer Have Been Received and Have No Errors
+  E | The Transmitted Interchange Control Structure Header and Trailer Have Been Received and Are Accepted But Errors Are Noted
+  R | The Transmitted Interchange Control Structure Header and Trailer are Rejected Because of Errors
+
+codes 455 | Responsible Agency Code
+  T | Transportation Data Coordinating Committee (TDCC)
+  X | Accredited Standards Committee X12

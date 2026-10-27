@@ -16,7 +16,6 @@ func workerCursorConnectionToModel(
 ) (*gqlmodel.WorkerConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *worker.Worker, cursor string) *gqlmodel.WorkerEdge {
 			return &gqlmodel.WorkerEdge{
@@ -37,7 +36,8 @@ func workerCursorConnectionToModel(
 				return edge.Cursor
 			}),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -46,7 +46,6 @@ func workerPTOCursorConnectionToModel(
 ) (*gqlmodel.WorkerPTOConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *worker.WorkerPTO, cursor string) *gqlmodel.WorkerPTOEdge {
 			return &gqlmodel.WorkerPTOEdge{
@@ -67,7 +66,8 @@ func workerPTOCursorConnectionToModel(
 				return edge.Cursor
 			}),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

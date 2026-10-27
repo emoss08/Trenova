@@ -685,17 +685,33 @@ work read.
   exceptions and runs. A row whose run cannot be found is marked, not trusted.
   It never marks anything seen; `unseenOnly` follows a person's own cursor and
   is ignored for an agent principal, which has none.
-- `insight_get_daily_briefing` reads the computed page (`ReadsExternal: never`) and drops
-  every section whose source resource the reader may not read, and every
-  watchtower line of a kind they may not read. When anything is dropped, the
-  headline goes too and the remaining sections read in their computed wording,
-  because the model's prose may cite a figure from what was dropped.
+- `insight_get_daily_briefing` reads the computed page (`ReadsExternal: never`)
+  through `TodaysBriefing`. `BriefingService` drops every section whose source
+  resource the reader may not read, and every watchtower line of a kind they
+  may not read, for the screen and the tool alike, and names them in
+  `withheldSections`. When anything is dropped, the headline goes too and the
+  remaining sections read in their computed wording, because the model's prose
+  may cite a figure from what was dropped.
 - `agent_list_runs` filters on status, trigger, subject, agent and date; `mine`
   keeps to the calling agent and is on by default when an agent principal runs
   unattended. A run on an assistant conversation is listed only to the person
-  who owns that conversation (`ThreadOwnerRepository`, one batched read), and
-  never to an agent principal or an API key, whose query leaves them out.
+  who owns that conversation, and never to an agent principal or an API key.
   Each tainted row is a `run_record` mark.
+- That ownership rule holds for every read made for a request, not only the
+  tools: each agent-run request carries an `agentports.RunReader`, and
+  `agentrunrepository` applies it in SQL (`subject_type <> 'AssistantThread'` or
+  an `EXISTS` on the thread's primary key and `user_id`), so lists, counts,
+  gets, the by-id loaders and transcripts agree and a page stays full. GraphQL
+  (`agentRuns`, `agentRun`, the run and transcript loaders), the REST run and
+  transcript routes and the tools pass `PersonRunRead(user)`; a nil user is a
+  principal that is no person and sees no conversation's runs. The runtime,
+  workers and system reads pass nothing, which is `UnattendedRunRead`, and see
+  every run as before. A run the reader may not see is "not found", the same
+  error as a missing id. `agentruneventrepository` applies the same reader to
+  a run's events (an `EXISTS` on the owning run through the same predicate),
+  so `agentRunEvents` and the tool's step list hold no hidden run's events;
+  the watchtower's shared failed-run snapshot reads as no person, because a
+  run's summary can repeat a private conversation.
 - `agent_get_run` applies the same ownership rule, answering "not found" rather
   than "forbidden", and can add the run's proposals (at most 20, when the reader
   may read proposals) and its last 50 recorded events, each reduced to its kind,
@@ -1935,14 +1951,6 @@ Its answer said to call `shipment_create` next, and the model went looking for i
 with `find_tools` first. A lookup many held recipes start from (`shipment_list`,
 `shipment_get`) brings none of them.
 
-A tool that works on what other tools return names them as the tools it follows
-(`agentports.FollowerTool`, `Catalog.Followers`), and loads whenever one of them loads, but only
-for an agent that already holds it and a person who may use it: following grants nothing, so an
-administrator who gave an extension's tool to chosen agents keeps that choice. `report_analyze_data`
-follows `report_run`, `report_get_run` and `agent_read_attachment`. Before it did, a turn from Ask
-loaded `report_run` without it, read the report's twenty sample rows and compared periods by
-paging `shipment_list`, and never asked `find_tools` for the tool that reads every row.
-
 A prerequisite only ever grants a read. A write a tool cannot finish its job without is
 declared instead as a companion (`agentports.CompanionTool`): `shipment_create` names
 `customer_create`, `location_create` and `masterdata_create_commodity`, because a load from a broker
@@ -2050,13 +2058,13 @@ each of them read, is shown working rather than worked in the agent's head (`num
 for filed changes too): "$6,050,147.60 is open,
 $50,147.60 without the $6,000,000 invoice" and "112 gallons at $3.89 come to $435.68" were each
 rewritten after an analysis nobody needed, while a wrong result is still unsupported, and a share
-whose two sides the reply leaves out still goes to `report_analyze_data`. The person's own figures are
+whose two sides the reply leaves out still goes to a script. The person's own figures are
 paired the same way. The reply is read twice, and the second reading only narrows the first: a
 figure the separated reading (`ReadSeparated`) found read stays read and is an operand of the
 working (`narrowed`). The stricter reading leaves out a bare year, and a 2,000 lb unit weight in a
 tool's JSON looked like one, so "2,000 lb, so 20 of them come to 40,000 lb" was rewritten. A percentage is supported by the fraction it renders (52.3% by 0.523), and
 rounding and thousands are read as for a filed change. A hit is discarded once with a correction
-naming the figures: an agent holding `report_analyze_data` is told to work them out there, any other to
+naming the figures: an agent holding `analysis_run` is told to work them out with a script, any other to
 leave out what the tools do not give. A rewrite that still states one ends with a sentence naming
 the figures to check. The bench fails a step whose reply either guard corrected ("reply grounded
 without a correction").
@@ -2570,14 +2578,16 @@ tainted by the document, so every write it proposes waits for a person.
 `/assistant/threads/:id/turns/` route with `pageContext.draft`, a bounded copy
 of what the page holds (`pagedraft.Draft`): the fields read from the document
 with their confidence and status, the four required records and the stops, or
-the formula's expression and variables. The prompt renders it in a
+the Tariff source in the formula template or library editor (`formula`,
+`formulaLibrary`: id, name, description, source). The prompt renders it in a
 `<page_draft>` fence as data. `prepareTurn` refuses a draft on any thread that
 is not a live page thread of the matching surface, and re-checks that the
 subject is still readable.
 
 **Draft tools present; they do not save.** `intake_accept_field`,
 `intake_accept_confident`, `intake_set_field`, `intake_set_required_field`,
-`intake_set_stop_location`, `intake_set_stop_schedule` and `formula_propose` are query tools
+`intake_set_stop_location`, `intake_set_stop_schedule`, `formula_propose` and
+`formula_library_propose` are query tools
 with self scope and effect `present`. Each returns a `pagedraft.Edit`; the
 turn saves it as a `draft_edit` artifact and the artifact event carries it, and
 the page applies it once, the way a navigation artifact is followed. Nothing
@@ -2585,15 +2595,18 @@ reaches the database until the person creates the shipment or saves the
 formula. `intake_set_required_field` and `intake_set_stop_location` read the record they name
 under the person's own permission and hand the page its label.
 `location_create` is an internal-egress action at `ActWithApproval`, requiring
-location create. The formula tools price with the formula engine:
-`formula_describe_schema` lists the variables, functions and rate tables,
-`formula_test_expression` prices sample loads or a saved shipment the person
-may read, and `formula_propose` hands the editor an expression with its
-variables, an explanation and engine-priced scenarios, and, when it drafts a new
-template or the person asks for itemized lines, a name, a description, a type and
-breakdown lines, each line priced by the engine as part of the proposal's check. It requires formula
-template create or update. The model never states an amount the engine did not
-produce.
+location create. The formula tools run the Tariff module:
+`formula_describe_language` lists the record fields, types, units, methods, std
+modules, the organization's tables, accessorial codes and importable libraries
+(shortened, or in full for a query, with a library's source); `formula_check` and
+`formula_run_tests` answer the checker's findings with lines and columns and each
+test's outcome; `formula_preview` rates a source for the sample record or a saved
+shipment the person may read; and `formula_propose` and `formula_library_propose`
+hand the editor a whole file with an explanation, its inputs, imports, charges and
+test counts. A proposal is shown only when its source checks clean and has at least
+one test, all passing; otherwise the model gets the findings or failures and fixes
+them. Proposing requires create or update on the formula template or the formula
+library. The model never states an amount the engine did not produce.
 
 **In the web app.** Both pages mount `PageAssistant`
 (`components/assistant/page-assistant.tsx`), which opens the page thread and
@@ -2611,26 +2624,24 @@ fresh one.
 **The studio's one-shot calls.** Besides its thread, the Formula Studio asks the
 formula assistant five single questions through `agentports.FormulaStudioAssist`
 (`formulastudioservice`): `POST /formula-templates/ai/explain` (one sentence per
-statement), `ai/describe-inputs` (descriptions for inputs that have none),
-`ai/suggest-scenarios` (three to five edge-case loads),
-`/:templateID/test-cases/:testCaseID/explain` (why a scenario no longer bills what
-it expects, with a verdict) and `/:templateID/review-note` (the note for the
-reviewer). Each requires formula template read and `assistant:create`, ensures the
-organization's `formula_assistant` and checks `MayUseAgent`, then asks on the
-structured path with the agent's preferred provider, attributed to the agent and
-the person (`FormulaExplain`, or `FormulaGenerate` for inputs and scenarios). The
-engine does every sum first: `TestExpression` with `traceStatements` evaluates each
-`let` and the result (split with expr's own parser and lexer, offsets in UTF-16 code
-units for CodeMirror), suggested loads are priced as billed amounts with the charge
-policy applied, the scenario trace evaluates the recorded content and the editor's on
-the scenario's inputs and keeps only the rows that differ, and the review note reads
-`ReviewDiff` and a backtest of the saved content when an approved version exists and
-the person may read shipments. The model only writes words: page content reaches it
-in untrusted sections, it is told to quote amounts only from the engine's, and its
-answer is bounded (lengths, a statement index in range, the verdict enum) with a
-written fallback filling any statement it skipped. Without a provider the calls
-answer a 422 business error, except the scenario explanation, which falls back to a
-cause written from the trace with `generated: false`.
+step of the rate trace), `ai/describe-inputs` (doc comments for inputs that have
+none), `ai/suggest-tests` (up to five `test` blocks, each run by `tariff.test`
+before it is answered), `ai/explain-test` (why a test fails, with a verdict) and
+`/:templateID/review-note` (the note for the reviewer). Each requires formula
+template read and `assistant:create`, ensures the organization's
+`formula_assistant` and checks `MayUseAgent`, then asks on the structured path with
+the agent's preferred provider, attributed to the agent and the person
+(`FormulaExplain`, or `FormulaGenerate` for inputs and tests). The engine does every
+sum first: the preview rates the source with its trace, suggested tests are appended
+to the source and run, a failing test's failures come from `tariff.test`, and the
+review note reads `ReviewDiff` and a backtest of the saved source when an approved
+version exists and the person may read shipments. The model only writes words: page
+content reaches it in untrusted sections, it is told to quote amounts only from the
+engine's, and its answer is bounded (lengths, a step index in range, single-line
+`given` and `expect` statements with balanced braces, the verdict enum) with a
+written fallback filling any step it skipped. Without a provider the calls answer a
+422 business error, except the test explanation, which falls back to the engine's
+failure with `generated: false`.
 
 **What stayed behind.** Conversations that were still active when this shipped
 were carried into page threads by `20261231006560_carry_import_conversations`:
@@ -2647,8 +2658,8 @@ DROP TABLE IF EXISTS "shipment_import_chat_turns";
 DROP TABLE IF EXISTS "shipment_import_chat_conversations";
 ```
 
-That statement is kept here rather than in `postgres/migrations`, because the
-migrator embeds every `*.sql` file in that directory and would run it at once.
+That statement is kept here rather than in `schema/migrations`, because
+trenova-db embeds every `*.sql` file in that directory and would run it at once.
 Ship it as `20261231006570_drop_shipment_import_chat` when the release has
 gone out, and delete `shipmentimportchat`, its
 repository and cache, and the history route in the same change.

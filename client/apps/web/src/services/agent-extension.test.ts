@@ -66,47 +66,6 @@ describe("AgentExtensionService.sendPortalSignInCode", () => {
   });
 });
 
-describe("AgentExtensionService.analysisRun", () => {
-  const stored = {
-    id: "aanr_1",
-    extensionType: "E2B",
-    status: "Succeeded",
-    title: "Lane margin",
-    purpose: "Margin by lane for Q3",
-    code: "print(1)",
-    datasets: null,
-    stdout: "1\n",
-    stderr: "",
-    results: null,
-    tables: null,
-    figures: null,
-    layout: null,
-    errorName: "",
-    errorValue: "",
-    traceback: "",
-    chartCount: 0,
-    failure: "",
-    durationMs: 900,
-    costUsd: "0.0002",
-    agentRunId: null,
-    threadId: null,
-    requestedById: null,
-    startedAt: 1_790_000_000,
-    finishedAt: 1_790_000_001,
-  };
-
-  it("reads a run with no agent run, thread or requester as empty IDs", async () => {
-    vi.mocked(api.get).mockResolvedValue(stored);
-
-    const run = await new AgentExtensionService().analysisRun("aanr_1");
-
-    expect(api.get).toHaveBeenCalledWith("/agent-analysis/runs/aanr_1/", { signal: undefined });
-    expect(run.agentRunId).toBe("");
-    expect(run.threadId).toBe("");
-    expect(run.requestedById).toBe("");
-  });
-});
-
 describe("AgentExtensionService.confirmPortalSignIn", () => {
   it("says the person signed in themselves, with no code, and reads the run it continued", async () => {
     vi.mocked(api.post).mockResolvedValue(continued);

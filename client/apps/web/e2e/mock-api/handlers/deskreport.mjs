@@ -46,6 +46,7 @@ const DISPLAY = {
   nullText: "",
   rules: [],
   band: null,
+  labels: null,
 };
 const money = { ...DISPLAY, style: "currency", currency: "USD", decimals: 2 };
 const count = { ...DISPLAY, style: "number" };
@@ -66,24 +67,44 @@ const CUSTOMERS = [
 ];
 
 const RANKED_COLUMNS = [
-  { id: "customer", label: "Customer", type: "string", format: null, display: DISPLAY },
-  { id: "shipments", label: "Shipments", type: "int", format: "count", display: count },
-  { id: "revenue", label: "Total revenue", type: "decimal", format: "money", display: money },
+  { id: "customer", label: "Customer", type: "string", sensitivity: null, display: DISPLAY },
+  { id: "shipments", label: "Shipments", type: "int", sensitivity: null, display: count },
+  {
+    id: "revenue",
+    label: "Total revenue",
+    type: "decimal",
+    sensitivity: "confidential",
+    display: money,
+  },
   {
     id: "revenuePerMile",
     label: "Revenue per mile",
     type: "decimal",
-    format: "money",
+    sensitivity: "confidential",
     display: rate,
   },
   {
     id: "accessorialShare",
     label: "Accessorial share",
     type: "decimal",
-    format: "percent",
+    sensitivity: null,
     display: percent,
   },
 ];
+
+/** A run's sample as `ReportPreviewFields`: detail rows only, each at level 0. */
+function preview({ columns, rows, totals, truncated }) {
+  return {
+    columns,
+    rows,
+    levels: rows.map(() => 0),
+    totals,
+    truncated,
+    cursor: null,
+    timezone: TIMEZONE,
+    rollup: null,
+  };
+}
 
 function stageOf(state) {
   const stage = state.scenario.deskReport ?? "finished";
@@ -103,7 +124,7 @@ function windowParameter(state, days) {
     type: "int",
     value: days,
     isDefault: false,
-    refEntity: null,
+    entity: null,
     windowStart: end - (days + 1) * DAY,
     windowEnd: end,
   };
@@ -115,7 +136,7 @@ const canceledParameter = {
   type: "bool",
   value: false,
   isDefault: true,
-  refEntity: null,
+  entity: null,
   windowStart: null,
   windowEnd: null,
 };
@@ -151,34 +172,40 @@ function run(state, overrides = {}) {
 }
 
 function rankedSample(rows = CUSTOMERS) {
-  return {
+  return preview({
     columns: RANKED_COLUMNS,
     rows: rows.map((row) => [...row]),
     totals: rows.length > 0 ? [null, 1142, "1284310.42", "3.04", "0.086"] : null,
-    more: rows.length > 0,
-  };
+    truncated: rows.length > 0,
+  });
 }
 
 function trendSample(state) {
   const months = [0.86, 0.94, 0.78, 0.81, 0.92, 0.95, 1.02, 1.08, 1.04, 1.12, 1.19, 1.28];
   const ships = [0.82, 0.9, 0.74, 0.8, 0.88, 0.9, 0.97, 1.01, 0.99, 1.05, 1.1, 1.14];
   const start = new Date(state.anchor * 1000);
-  return {
+  return preview({
     columns: [
       {
         id: "month",
         label: "Month",
         type: "epoch",
-        format: null,
+        sensitivity: null,
         display: { ...DISPLAY, style: "date", dateStyle: "monthYear" },
       },
-      { id: "shipments", label: "Shipments", type: "int", format: "count", display: count },
-      { id: "revenue", label: "Total revenue", type: "decimal", format: "money", display: money },
+      { id: "shipments", label: "Shipments", type: "int", sensitivity: null, display: count },
+      {
+        id: "revenue",
+        label: "Total revenue",
+        type: "decimal",
+        sensitivity: "confidential",
+        display: money,
+      },
       {
         id: "revenuePerMile",
         label: "Revenue per mile",
         type: "decimal",
-        format: "money",
+        sensitivity: "confidential",
         display: rate,
       },
     ],
@@ -193,8 +220,8 @@ function trendSample(state) {
       ];
     }),
     totals: [null, 11160, "11990000.00", "2.95"],
-    more: false,
-  };
+    truncated: false,
+  });
 }
 
 function card(state) {
@@ -222,7 +249,7 @@ function card(state) {
     },
     schedule: null,
     chart: null,
-    sort: [{ columnId: "revenue", direction: "desc" }],
+    sort: [{ column: "revenue", desc: true }],
   };
 
   switch (stage) {
@@ -238,8 +265,8 @@ function card(state) {
         parameters: [windowParameter(state, 365)],
         sample: trendSample(state),
         previous: null,
-        chart: { type: "line", xColumnId: "month", seriesIds: ["revenue", "shipments"] },
-        sort: [{ columnId: "month", direction: "asc" }],
+        chart: { type: "line", x: "month", series: ["revenue", "shipments"] },
+        sort: [{ column: "month", desc: false }],
       };
     case "running":
       return {
@@ -353,11 +380,11 @@ function runArtifact(state) {
 }
 
 function previewArtifact(state) {
-  const columns = RANKED_COLUMNS.map(({ id, label, type, format }) => ({
+  const columns = RANKED_COLUMNS.map(({ id, label, type, display }) => ({
     id,
     label,
     type,
-    format,
+    format: display.style,
   }));
   const byLabel = (row) =>
     Object.fromEntries(columns.map((column, index) => [column.label, row[index]]));

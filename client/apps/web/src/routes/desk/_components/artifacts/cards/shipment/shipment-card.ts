@@ -1,3 +1,4 @@
+import { chargeLineBasis } from "@trenova/shared/lib/tariff-lines";
 import { formatList } from "@trenova/shared/i18n/format";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import { reportNumericValue } from "@trenova/shared/lib/report-format";
@@ -703,12 +704,14 @@ function formulaName(shipment: Shipment): string {
 }
 
 /**
- * Linehaul first (label "Linehaul", detail the rating method: ratingDetail.agreementName ·
- * ruleLabel, else formulaTemplateName / formulaTemplate.name), then each additional charge
- * (label accessorialCharge.description || code, detail "2 × $45.00" when unit > 1 or
- * "12% of linehaul" for Percentage, amount its exact total from the rules module, every charge in
- * one call and a percentage one priced against the linehaul), total from totalChargeAmount. `ratedBy` names the contract or formula alone, and says when it was
- * applied automatically.
+ * One row per freight line of the bill (label as the tariff wrote it, detail its quantity ×
+ * rate, else the rating method on the first: ratingDetail.agreementName · ruleLabel, else the
+ * template's name), or a single "Linehaul" row while the shipment has none; then each
+ * additional charge (a tariff's own by its label and its quantity × rate; otherwise
+ * accessorialCharge.description || code, detail "2 × $45.00" when unit > 1 or "12% of
+ * linehaul" for Percentage, amount its exact total from the rules module, every charge in one
+ * call and a percentage one priced against the linehaul), total from totalChargeAmount.
+ * `ratedBy` names the contract or formula alone, and says when it was applied automatically.
  */
 export function chargesOf(rules: RulesRuntime, shipment: Shipment, t: TranslateFn): Charges {
   const additional = shipment.additionalCharges ?? [];
@@ -720,21 +723,36 @@ export function chargesOf(rules: RulesRuntime, shipment: Shipment, t: TranslateF
       unit: charge.unit,
     })),
   });
-  const lines: ChargeLine[] = [
-    {
-      key: "linehaul",
-      label: t("Linehaul"),
-      detail: ratingMethod(shipment),
-      amount: reportNumericValue(shipment.freightChargeAmount),
-    },
-  ];
+  const freightLines = shipment.freightLines ?? [];
+  const lines: ChargeLine[] =
+    freightLines.length === 0
+      ? [
+          {
+            key: "linehaul",
+            label: t("Linehaul"),
+            detail: ratingMethod(shipment),
+            amount: reportNumericValue(shipment.freightChargeAmount),
+          },
+        ]
+      : freightLines.map((line, index) => ({
+          key: `freight-${index}`,
+          label: line.label.trim() || t("Linehaul"),
+          detail: chargeLineBasis(line, t) ?? (index === 0 ? ratingMethod(shipment) : ""),
+          amount: reportNumericValue(line.amount),
+        }));
 
   additional.forEach((charge, index) => {
     const accessorial = charge.accessorialCharge;
-    const label = (accessorial?.description || accessorial?.code || "").trim() || t("Charge");
+    const label =
+      (charge.isTariff && charge.label ? charge.label : "").trim() ||
+      (accessorial?.description || accessorial?.code || "").trim() ||
+      t("Charge");
     const unit = typeof charge.unit === "number" && Number.isFinite(charge.unit) ? charge.unit : 1;
     let detail = "";
-    if (charge.method === "Percentage") {
+    const tariffBasis = charge.isTariff ? chargeLineBasis(charge, t) : null;
+    if (tariffBasis) {
+      detail = tariffBasis;
+    } else if (charge.method === "Percentage") {
       const percent = reportNumericValue(charge.amount) ?? 0;
       detail = t("{0} of linehaul", formatPercent(percent, Number.isInteger(percent) ? 0 : 2));
     } else if (unit > 1) {

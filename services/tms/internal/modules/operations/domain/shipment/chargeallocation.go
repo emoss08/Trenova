@@ -1,17 +1,14 @@
 package shipment
 
 import (
-	"context"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/decimalutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 type ChargeAllocationKind string
@@ -53,40 +50,38 @@ func (m ChargeAllocationMethod) IsValid() bool {
 	}
 }
 
-var _ bun.BeforeAppendModelHook = (*ChargeAllocation)(nil)
-
 // ChargeAllocation gives one payer a share of one charge. A charge with no
 // allocations belongs entirely to the shipment's payer, so rows exist only
 // where billing departs from that default.
 type ChargeAllocation struct {
-	bun.BaseModel `json:"-" bun:"table:charge_allocations,alias:chal"`
+	keel.Table `keel:"charge_allocations"`
 
-	ID                 pulid.ID               `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID               `json:"businessUnitId"     bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID     pulid.ID               `json:"organizationId"     bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	ShipmentID         *pulid.ID              `json:"shipmentId"         bun:"shipment_id,type:VARCHAR(100),nullzero"`
-	AdditionalChargeID *pulid.ID              `json:"additionalChargeId" bun:"additional_charge_id,type:VARCHAR(100),nullzero"`
-	OrderChargeID      *pulid.ID              `json:"orderChargeId"      bun:"order_charge_id,type:VARCHAR(100),nullzero"`
-	ChargeKind         ChargeAllocationKind   `json:"chargeKind"         bun:"charge_kind,type:charge_allocation_kind_enum,notnull"`
-	BillToCustomerID   pulid.ID               `json:"billToCustomerId"   bun:"bill_to_customer_id,type:VARCHAR(100),notnull"`
-	Method             ChargeAllocationMethod `json:"method"             bun:"method,type:charge_allocation_method_enum,notnull"`
-	Percent            decimal.NullDecimal    `json:"percent"            bun:"percent,type:NUMERIC(9,6),nullzero"`
-	Amount             decimal.NullDecimal    `json:"amount"             bun:"amount,type:NUMERIC(19,4),nullzero"`
-	Sequence           int16                  `json:"sequence"           bun:"sequence,type:SMALLINT,notnull"`
-	InvoiceID          pulid.ID               `json:"invoiceId"          bun:"invoice_id,type:VARCHAR(100),nullzero"`
-	InvoicedAt         *int64                 `json:"invoicedAt"         bun:"invoiced_at,type:BIGINT,nullzero"`
-	Version            int64                  `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64                  `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64                  `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID               `json:"id"                 keel:"id,pk,autoid:chal_"`
+	BusinessUnitID     pulid.ID               `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID               `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	ShipmentID         *pulid.ID              `json:"shipmentId"         keel:"shipment_id"`
+	AdditionalChargeID *pulid.ID              `json:"additionalChargeId" keel:"additional_charge_id"`
+	OrderChargeID      *pulid.ID              `json:"orderChargeId"      keel:"order_charge_id"`
+	ChargeKind         ChargeAllocationKind   `json:"chargeKind"         keel:"charge_kind"`
+	BillToCustomerID   pulid.ID               `json:"billToCustomerId"   keel:"bill_to_customer_id"`
+	Method             ChargeAllocationMethod `json:"method"             keel:"method"`
+	Percent            decimal.NullDecimal    `json:"percent"            keel:"percent"`
+	Amount             decimal.NullDecimal    `json:"amount"             keel:"amount"`
+	Sequence           int16                  `json:"sequence"           keel:"sequence"`
+	InvoiceID          pulid.ID               `json:"invoiceId"          keel:"invoice_id,nullzero"`
+	InvoicedAt         *int64                 `json:"invoicedAt"         keel:"invoiced_at"`
+	Version            int64                  `json:"version"            keel:"version,version"`
+	CreatedAt          int64                  `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64                  `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
 	// AdditionalChargeIndex points at a charge in the same payload that has no
 	// id yet, so a new charge and its split can arrive in one save.
-	AdditionalChargeIndex *int `json:"additionalChargeIndex,omitempty" bun:"-"`
+	AdditionalChargeIndex *int `json:"additionalChargeIndex,omitempty"`
 
-	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization   *tenant.Organization `json:"organization,omitempty"   bun:"rel:belongs-to,join:organization_id=id"`
-	Shipment       *Shipment            `json:"-"                        bun:"rel:belongs-to,join:shipment_id=id"`
-	BillToCustomer *customer.Customer   `json:"billToCustomer,omitempty" bun:"rel:belongs-to,join:bill_to_customer_id=id"`
+	BusinessUnit   *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	Organization   *tenant.Organization `json:"organization,omitempty"`
+	Shipment       *Shipment            `json:"-"                        keel:"belongs:shipment_id"`
+	BillToCustomer *customer.Customer   `json:"billToCustomer,omitempty" keel:"belongs:bill_to_customer_id"`
 }
 
 func (a *ChargeAllocation) Validate(multiErr *errortypes.MultiError) {
@@ -229,22 +224,6 @@ func (a *ChargeAllocation) TargetID() pulid.ID {
 
 func (a *ChargeAllocation) IsInvoiced() bool {
 	return a != nil && a.InvoiceID.IsNotNil()
-}
-
-func (a *ChargeAllocation) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch q.(type) {
-	case *bun.InsertQuery:
-		if a.ID.IsNil() {
-			a.ID = pulid.MustNew("chal_")
-		}
-		a.CreatedAt = now
-	case *bun.UpdateQuery:
-		a.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (a *ChargeAllocation) GetID() pulid.ID {

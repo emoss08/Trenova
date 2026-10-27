@@ -5,19 +5,24 @@ import (
 
 	"github.com/bytedance/sonic"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/reportcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report/reportdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var runErrors = dberror.Mapping{Entity: "ReportRun"}
+
+type activeRunCounts struct {
+	Running int64
+	Queued  int64
+}
 
 type RunParams struct {
 	fx.In
@@ -43,7 +48,7 @@ func (r *runRepository) Create(
 	entity *report.ReportRun,
 ) (*report.ReportRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.ReportRun, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
+		if err := reportdb.ReportRuns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create report run", zap.Error(err))
 			return nil, err
 		}
@@ -57,25 +62,13 @@ func (r *runRepository) Update(
 	entity *report.ReportRun,
 ) (*report.ReportRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*report.ReportRun, error) {
-		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-
-		ov := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(reportcol.ReportRunColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update report run", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(result, "ReportRun", entity.ID.String()); err != nil {
-			return nil, err
+		if err := reportdb.ReportRuns.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update report run",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, runErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -87,21 +80,13 @@ func (r *runRepository) GetByID(
 	req *reportports.GetReportRunRequest,
 ) (*report.ReportRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportRun, error) {
-		entity := new(report.ReportRun)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = reportcol.ReportRunScopeTenant(sq, req.TenantInfo).
-					Where(reportcol.ReportRunColumns.ID.Eq(), req.RunID)
-				if !req.RequestedBy.IsNil() {
-					sq = sq.Where(reportcol.ReportRunColumns.RequestedByID.Eq(), req.RequestedBy)
-				}
-				return sq
-			}).
-			Scan(ctx)
+		run := reportdb.ReportRuns
+		entity, err := run.Where(
+			run.ID.Eq(req.RunID),
+			keel.When(!req.RequestedBy.IsNil(), run.RequestedByID.Eq(req.RequestedBy)),
+		).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "ReportRun")
+			return nil, runErrors.Map(err, req.RunID.String())
 		}
 
 		return entity, nil
@@ -118,29 +103,24 @@ func (r *runRepository) LatestComparable(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*report.ReportRun, error) {
-		cols := reportcol.ReportRunColumns
-
-		entity := new(report.ReportRun)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Column(cols.ID.Bare(), cols.CompletedAt.Bare(), cols.RowCount.Bare(), cols.Sample.Bare()).
-			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo)).
-			Where(cols.RequestedByID.Eq(), req.RequestedBy).
-			Where(cols.Status.Eq(), report.RunStatusSucceeded).
-			Where(cols.Sample.IsNotNull()).
-			Where(cols.Params.Expr("COALESCE({}, jsonb_build_object()) = ?::jsonb"), params).
-			Where(cols.ID.NotEq(), req.ExcludeRunID).
-			Where(cols.CompletedAt.Lt(), req.CompletedBefore)
-
-		if req.DefinitionID.IsNil() {
-			q = q.Where(cols.DefinitionID.IsNull()).Where(cols.CannedKey.Eq(), req.CannedKey)
-		} else {
-			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID).Where(cols.CannedKey.IsNull())
-		}
-
-		if scanErr := q.Order(cols.CompletedAt.OrderDesc()).Limit(1).Scan(ctx); scanErr != nil {
-			return nil, dberror.HandleNotFoundError(scanErr, "ReportRun")
+		run := reportdb.ReportRuns
+		entity, firstErr := run.Pick(run.ID, run.CompletedAt, run.RowCount, run.Sample).
+			Where(
+				run.RequestedByID.Eq(req.RequestedBy),
+				run.Status.Eq(report.RunStatusSucceeded),
+				run.Sample.IsNotNull(),
+				keel.Raw("COALESCE(?, '{}'::jsonb) = ?::jsonb", run.Params, params),
+				run.ID.Ne(req.ExcludeRunID),
+				run.CompletedAt.Lt(req.CompletedBefore),
+				keel.When(req.DefinitionID.IsNil(), run.DefinitionID.IsNull()),
+				keel.When(req.DefinitionID.IsNil(), run.CannedKey.Eq(req.CannedKey)),
+				keel.When(!req.DefinitionID.IsNil(), run.DefinitionID.Eq(req.DefinitionID)),
+				keel.When(!req.DefinitionID.IsNil(), run.CannedKey.IsNull()),
+			).
+			Order(run.CompletedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if firstErr != nil {
+			return nil, runErrors.Map(firstErr, req.ExcludeRunID.String())
 		}
 
 		return entity, nil
@@ -155,75 +135,32 @@ func comparableParams(params map[string]any) (string, error) {
 	return sonic.MarshalString(params)
 }
 
-func (r *runRepository) List(
-	ctx context.Context,
-	req *reportports.ListReportRunsRequest,
-) ([]*report.ReportRun, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
-		cols := reportcol.ReportRunColumns
-
-		entities := make([]*report.ReportRun, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ExcludeColumn(cols.Sample.Bare()).
-			Apply(reportcol.ReportRunApplyTenant(req.TenantInfo))
-
-		if !req.DefinitionID.IsNil() {
-			q = q.Where(cols.DefinitionID.Eq(), req.DefinitionID)
-		}
-		if !req.RequestedBy.IsNil() {
-			q = q.Where(cols.RequestedByID.Eq(), req.RequestedBy)
-		}
-		if len(req.Statuses) > 0 {
-			q = q.Where(cols.Status.In(), bun.List(req.Statuses))
-		}
-		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
-		}
-		if req.Offset > 0 {
-			q = q.Offset(int64(req.Offset))
-		}
-
-		if err := q.Order(cols.CreatedAt.OrderDesc()).Scan(ctx); err != nil {
-			r.l.Error("failed to list report runs", zap.Error(err))
-			return nil, err
-		}
-
-		return entities, nil
-	})
-}
-
 func (r *runRepository) CountActive(
 	ctx context.Context,
-	req *reportports.CountActiveReportRunsRequest,
+	_ *reportports.CountActiveReportRunsRequest,
 ) (*reportports.ActiveReportRunCounts, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*reportports.ActiveReportRunCounts, error) {
-			cols := reportcol.ReportRunColumns
-
-			var counts reportports.ActiveReportRunCounts
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*report.ReportRun)(nil)).
-				ColumnExpr(
-					buncolgen.CountFilter("running", cols.Status.Eq()),
-					report.RunStatusRunning,
-				).
-				ColumnExpr(
-					buncolgen.CountFilter("queued", cols.Status.Eq()),
-					report.RunStatusQueued,
-				).
-				Apply(reportcol.ReportRunApplyTenant(req.TenantInfo)).
-				Scan(ctx, &counts.Running, &counts.Queued)
+			run := reportdb.ReportRuns
+			counts, err := keel.IntoOne[activeRunCounts](
+				ctx,
+				r.db.Keel(ctx),
+				run.Pick(
+					keel.Count().Filter(run.Status.Eq(report.RunStatusRunning)),
+					keel.Count().Filter(run.Status.Eq(report.RunStatusQueued)),
+				),
+			)
 			if err != nil {
 				r.l.Error("failed to count active report runs", zap.Error(err))
 				return nil, err
 			}
 
-			return &counts, nil
+			return &reportports.ActiveReportRunCounts{
+				Running: int(counts.Running),
+				Queued:  int(counts.Queued),
+			}, nil
 		},
 	)
 }
@@ -234,22 +171,17 @@ func (r *runRepository) ListStale(
 ) ([]*report.ReportRun, error) {
 	ctx = dbscope.WithSystem(ctx, "list stalled report runs across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
-		cols := reportcol.ReportRunColumns
-
-		entities := make([]*report.ReportRun, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ExcludeColumn(cols.Sample.Bare()).
-			Where(cols.Status.In(), bun.List(req.Statuses)).
-			Where(cols.UpdatedAt.Lt(), req.UpdatedBeforeUnix).
-			Order(cols.UpdatedAt.OrderAsc())
-
+		run := reportdb.ReportRuns
+		q := run.AllTenants().
+			Omit(run.Sample).
+			Where(run.Status.In(req.Statuses...), run.UpdatedAt.Lt(req.UpdatedBeforeUnix)).
+			Order(run.UpdatedAt.Asc())
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			q = q.Limit(req.Limit)
 		}
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := q.All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list stale report runs", zap.Error(err))
 			return nil, err
 		}
@@ -264,23 +196,21 @@ func (r *runRepository) ListExpired(
 ) ([]*report.ReportRun, error) {
 	ctx = dbscope.WithSystem(ctx, "list expired report artifacts across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*report.ReportRun, error) {
-		cols := reportcol.ReportRunColumns
-
-		entities := make([]*report.ReportRun, 0)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ExcludeColumn(cols.Sample.Bare()).
-			Where(cols.Status.Eq(), report.RunStatusSucceeded).
-			Where(cols.ArtifactExpiresAt.IsNotNull()).
-			Where(cols.ArtifactExpiresAt.Lt(), req.CutoffUnix).
-			Order(cols.ArtifactExpiresAt.OrderAsc())
-
+		run := reportdb.ReportRuns
+		q := run.AllTenants().
+			Omit(run.Sample).
+			Where(
+				run.Status.Eq(report.RunStatusSucceeded),
+				run.ArtifactExpiresAt.IsNotNull(),
+				run.ArtifactExpiresAt.Lt(req.CutoffUnix),
+			).
+			Order(run.ArtifactExpiresAt.Asc())
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			q = q.Limit(req.Limit)
 		}
 
-		if err := q.Scan(ctx); err != nil {
+		entities, err := q.All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list expired report runs", zap.Error(err))
 			return nil, err
 		}

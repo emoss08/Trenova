@@ -47,6 +47,8 @@ type AccessorialChargeConnection {
   edges: [AccessorialChargeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -90,6 +92,8 @@ type AccountTypeConnection {
   edges: [AccountTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -560,7 +564,7 @@ type AccountingWebhookSubscriptionSummary {
 }
 
 "What an organization's link to one accounting system looks like."
-type AccountingSyncStatus {
+type AccountingSyncStatus @kind(resource: "accounting_integration") {
   integrationType: AccountingSystem!
   providerName: String!
   profile: AccountingProviderProfile!
@@ -580,7 +584,7 @@ One Trenova document on its way to the accounting system, at one revision.
 
 The payload that was sent is kept on the server and not returned here.
 """
-type AccountingSyncRecord {
+type AccountingSyncRecord @kind(resource: "accounting_sync") {
   id: ID!
   objectType: AccountingSyncObjectType!
   "The Trenova document's ID."
@@ -629,10 +633,12 @@ type AccountingSyncRecordConnection {
   edges: [AccountingSyncRecordEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One try at sending a sync record."
-type AccountingSyncAttempt {
+type AccountingSyncAttempt @kind(resource: "accounting_sync") {
   id: ID!
   attemptNumber: Int!
   outcome: AccountingSyncAttemptOutcome!
@@ -681,7 +687,7 @@ type AccountingSyncAttentionGroup {
 }
 
 "The state of the accounting sync for one organization and accounting system."
-type AccountingSyncSummary {
+type AccountingSyncSummary @kind(resource: "accounting_sync") {
   integrationType: AccountingSystem!
   providerName: String!
   "Absent until the organization first connects."
@@ -692,7 +698,7 @@ type AccountingSyncSummary {
 }
 
 "Where one Trenova document stands in the accounting system."
-type AccountingSyncObjectState {
+type AccountingSyncObjectState @kind(resource: "accounting_sync") {
   objectType: AccountingSyncObjectType!
   objectId: ID!
   providerName: String!
@@ -852,7 +858,7 @@ Which accounting system record a Trenova record or setting is sent as.
 Only confirmed mappings are used when syncing. A proposal is Trenova's
 suggestion and waits for a person.
 """
-type AccountingMapping {
+type AccountingMapping @kind(resource: "accounting_integration") {
   id: ID!
   targetType: AccountingMappingTargetType!
   "The Trenova record, for accessorial charges, customers and carriers."
@@ -891,6 +897,8 @@ type AccountingMappingConnection {
   edges: [AccountingMappingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How many mappings of one kind are in each state."
@@ -902,7 +910,7 @@ type AccountingMappingGroup {
 }
 
 "Where the organization's mappings stand for one accounting system."
-type AccountingMappingSummary {
+type AccountingMappingSummary @kind(resource: "accounting_integration") {
   integrationType: AccountingSystem!
   providerName: String!
   "Absent until the organization first connects."
@@ -911,6 +919,13 @@ type AccountingMappingSummary {
   requiredTotal: Int!
   requiredConfirmed: Int!
   canCompleteSetup: Boolean!
+}
+
+"One mapping, and the accounting system records it could be set to."
+type AccountingMappingDetail @kind(resource: "accounting_integration") {
+  mapping: AccountingMapping!
+  "Usable records of the kind the mapping maps to whose names match optionsQuery, best first, at most ten. Empty without optionsQuery."
+  options: [AccountingReferenceObject!]!
 }
 
 input AccountingMappingFilterInput {
@@ -1070,7 +1085,7 @@ type AccountingAppliedObject {
 }
 
 "A payment recorded in the accounting system against documents Trenova sent."
-type AccountingInboundChange {
+type AccountingInboundChange @kind(resource: "accounting_sync") {
   id: ID!
   kind: AccountingInboundChangeKind!
   status: AccountingInboundChangeStatus!
@@ -1118,6 +1133,8 @@ type AccountingInboundChangeConnection {
   edges: [AccountingInboundChangeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AccountingInboundSummary {
@@ -1223,7 +1240,7 @@ type AccountingDriftLine {
 }
 
 "A difference between a document Trenova sent and what the accounting system holds now."
-type AccountingDriftFinding {
+type AccountingDriftFinding @kind(resource: "accounting_sync") {
   id: ID!
   connectionId: ID!
   objectType: AccountingSyncObjectType!
@@ -1279,6 +1296,8 @@ type AccountingDriftFindingConnection {
   edges: [AccountingDriftFindingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AccountingDriftSummary {
@@ -1293,7 +1312,7 @@ type AccountingDriftSummary {
   resolvedSince: Int!
 }
 
-type AccountingDriftOverview {
+type AccountingDriftOverview @kind(resource: "accounting_sync") {
   connectionId: ID!
   providerName: String!
   "When the last full check finished."
@@ -1335,19 +1354,45 @@ input DismissAccountingDriftInput {
 
 extend type Query {
   "The organization's link to an accounting system, and whether this instance can connect to it at all."
-  accountingSyncStatus(integrationType: AccountingSystem!): AccountingSyncStatus!
+  accountingSyncStatus(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+  ): AccountingSyncStatus!
   "How many mappings are in each state, and whether setup can finish."
-  accountingMappingSummary(integrationType: AccountingSystem!): AccountingMappingSummary!
+  accountingMappingSummary(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+  ): AccountingMappingSummary!
+  "One mapping, named by its id, or by its target type with the Trenova record or setting it is for."
+  accountingMappingDetail(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+    "The mapping's id."
+    id: ID
+    "The kind of Trenova record or setting, when naming it by recordId or key."
+    targetType: AccountingMappingTargetType
+    "The Trenova customer, carrier or accessorial charge the mapping is for."
+    recordId: ID
+    "The Trenova setting the mapping is for, such as an account role, line type, term or payment method."
+    key: String
+    "Words to find in the accounting system's record names, for the records it could be set to."
+    optionsQuery: String
+  ): AccountingMappingDetail!
   accountingMappings(
+    "The accounting system, such as QuickBooksOnline or Xero."
     integrationType: AccountingSystem!
     first: Int
     after: String
     filter: AccountingMappingFilterInput
   ): AccountingMappingConnection!
   "Record counts by status, the groups needing attention and the running backfill."
-  accountingSyncSummary(integrationType: AccountingSystem!): AccountingSyncSummary!
+  accountingSyncSummary(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+  ): AccountingSyncSummary!
   "The sync ledger, newest first."
   accountingSyncRecords(
+    "The accounting system, such as QuickBooksOnline or Xero."
     integrationType: AccountingSystem!
     first: Int
     after: String
@@ -1362,12 +1407,17 @@ extend type Query {
   "Every try at sending a record, newest first."
   accountingSyncAttempts(recordId: ID!): [AccountingSyncAttempt!]!
   "Where each document stands in the accounting system. Documents never queued are left out. At most 200 at a time."
-  accountingSyncObjectStates(objectIds: [ID!]!): [AccountingSyncObjectState!]!
+  accountingSyncObjectStates(
+    objectIds: [ID!]!
+    "Only that accounting system's records. Every system that syncs answers without it."
+    integrationType: AccountingSystem
+  ): [AccountingSyncObjectState!]!
   accountingBackfills(integrationType: AccountingSystem!): [AccountingBackfill!]!
   "Counts of payments recorded in the accounting system, and when changes were last read."
   accountingInboundOverview(integrationType: AccountingSystem!): AccountingInboundOverview!
   "Payments recorded in the accounting system as a data table, newest first."
   accountingInboundChangeTable(
+    "The accounting system, such as QuickBooksOnline or Xero."
     integrationType: AccountingSystem!
     input: DataTableConnectionInput!
   ): AccountingInboundChangeConnection!
@@ -1375,9 +1425,13 @@ extend type Query {
   "What applying a payment would post, without posting it."
   accountingInboundApplyPreview(id: ID!): AccountingInboundApplyPreview!
   "Open and recent differences with the accounting system, and when it was last checked."
-  accountingDriftOverview(integrationType: AccountingSystem!): AccountingDriftOverview!
+  accountingDriftOverview(
+    "The accounting system, such as QuickBooksOnline or Xero."
+    integrationType: AccountingSystem!
+  ): AccountingDriftOverview!
   "Differences with the accounting system as a data table, newest first."
   accountingDriftFindingTable(
+    "The accounting system, such as QuickBooksOnline or Xero."
     integrationType: AccountingSystem!
     input: DataTableConnectionInput!
   ): AccountingDriftFindingConnection!
@@ -1540,6 +1594,8 @@ type ARCustomerStatement {
 }
 
 type ARBalanceOverview {
+  "Whether the tenant has ever posted an invoice or debit memo."
+  hasInvoiced: Boolean!
   totalOpenMinor: Int!
   overdueMinor: Int!
   unappliedCashMinor: Int!
@@ -1556,12 +1612,9 @@ type ARDashboardKPIs {
   overview: ARBalanceOverview!
   currentDsoDays: Float!
   dsoDeltaDays: Float!
-  cei: Float!
-  avgDaysToPay: Float!
   overduePercent: Float!
-  writeOffRatio: Float!
-  disputeRate: Float!
-  shortPayRate: Float!
+  "Collection performance over the trailing 91 days."
+  collection: ARCollectionPerformance!
 }
 
 type ARDSOTrendPoint {
@@ -1767,7 +1820,6 @@ extend type Query {
   arDsoTrend(weeks: Int): [ARDSOTrendPoint!]!
   arAgingTrend(weeks: Int): [ARAgingTrendPoint!]!
   arCashFlowForecast(pastWeeks: Int, futureWeeks: Int): [ARCashFlowPoint!]!
-  arCollectionPerformance(periodDays: Int): ARCollectionPerformance!
   arTopOverdueCustomers(limit: Int): [ARTopOverdueCustomer!]!
   arCollectionsWorklist(limit: Int): [ARCollectionsWorklistItem!]!
   arCustomerProfile(customerId: ID!): ARCustomerProfile!
@@ -1802,6 +1854,7 @@ enum AgentSubjectType {
   AccountingInboundChange
   AccountingDriftFinding
   FormulaTemplate
+  FormulaLibrary
   Invoice
   InvoiceDispute
   FactoringNoa
@@ -2257,6 +2310,8 @@ type AgentRunConnection {
   edges: [AgentRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentProposalEdge {
@@ -2268,6 +2323,8 @@ type AgentProposalConnection {
   edges: [AgentProposalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentPlanEdge {
@@ -2279,6 +2336,8 @@ type AgentPlanConnection {
   edges: [AgentPlanEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 enum AgentMemoryKind {
@@ -2521,6 +2580,8 @@ type AgentReflectionConnection {
   edges: [AgentReflectionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentMemoryEdge {
@@ -2532,6 +2593,8 @@ type AgentMemoryConnection {
   edges: [AgentMemoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input ApproveAgentMemorySuggestionInput {
@@ -2627,6 +2690,8 @@ type AgentEvaluationConnection {
   edges: [AgentEvaluationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentExceptionEdge {
@@ -2638,6 +2703,8 @@ type AgentExceptionConnection {
   edges: [AgentExceptionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input AgentProposalDecisionInput {
@@ -3152,6 +3219,8 @@ type AgentDefinitionConnection {
   edges: [AgentDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -3191,6 +3260,8 @@ type MyAgentConnection {
   edges: [MyAgentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "Where an agent came from."
@@ -3974,6 +4045,8 @@ type AgentEvalCaseConnection {
   edges: [AgentEvalCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A case as it was created, or the case that already asked the same thing."
@@ -4124,6 +4197,8 @@ type AgentSuiteRunConnection {
   edges: [AgentSuiteRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One case of a suite run: its replay, with the checks, scores and judge's note."
@@ -4136,6 +4211,8 @@ type AgentSuiteRunCaseConnection {
   edges: [AgentSuiteRunCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "When and how far the nightly agent quality sweep runs."
@@ -4251,6 +4328,8 @@ type AgentWorstRatedAnswerConnection {
   pageInfo: PageInfo!
   "Every answer matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One agent's quality over a window."
@@ -4300,6 +4379,8 @@ type AgentQualityAgentConnection {
   edges: [AgentQualityAgentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -4410,6 +4491,8 @@ type AgentRunEventConnection {
   edges: [AgentRunEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -4660,6 +4743,8 @@ type AgentToolPolicyConnection {
   pageInfo: PageInfo!
   "Every tool matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type AgentToolSafetyEdge {
@@ -4672,6 +4757,8 @@ type AgentToolSafetyConnection {
   pageInfo: PageInfo!
   "Every held tool matching the filters. Counted only when selected."
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "The figures that head the safety section, counted over every tool and agent."
@@ -5595,6 +5682,8 @@ type AIAuditEventConnection {
   edges: [AIAuditEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -5660,6 +5749,8 @@ type AIAuditExportConnection {
   edges: [AIAuditExportEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -6020,6 +6111,8 @@ type AIFeedbackConnection {
   edges: [AIFeedbackEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One day of an agent's ratings, in the organization's timezone."
@@ -6278,9 +6371,9 @@ type AIProvider {
   """
   advisorRefusal: AIProviderAdvisorRefusal
   """
-  The provider's model may answer a fan-out question with one read-only
-  script (code mode). The organization must also turn on read-only scripts
-  in its E2B extension and grant code_mode.
+  The provider's model may answer with a read-only script that reads records,
+  report runs and attached files and shows figures, tables and charts, run in
+  Trenova's own interpreter. On by default; the person needs code_mode.
   """
   scripts: Boolean!
   "The provider's scripts may prepare writes, proposed as one batch a person approves. Needs scripts."
@@ -6377,6 +6470,8 @@ type AIProviderConnection {
   edges: [AIProviderEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A provider as its editor holds it, reduced to what decides where tasks go."
@@ -6534,7 +6629,7 @@ enum AIRetrievalIndexStatus {
 enum AIRetrievalUnavailableReason {
   "The database has no pgvector extension."
   ExtensionMissing
-  "pgvector is installed but the retrieval tables are not; run trenova db enable-vector."
+  "pgvector is installed but the retrieval tables are not; run trenova-db enable-vector."
   SchemaMissing
   "pgvector is older than 0.8."
   TooOld
@@ -6681,6 +6776,8 @@ type AIRetrievalFailedEntryConnection {
   edges: [AIRetrievalFailedEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -6859,6 +6956,8 @@ type AIUsageFeatureConnection {
   edges: [AIUsageFeatureEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -6904,6 +7003,8 @@ type ApiKeyConnection {
   edges: [ApiKeyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -6966,6 +7067,8 @@ type AuditEntryConnection {
   edges: [AuditEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -7347,6 +7450,8 @@ type BillingTransferRunItemConnection {
   edges: [BillingTransferRunItemEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input StartBillingTransferRunInput {
@@ -7424,7 +7529,7 @@ type BriefingItem {
 type BriefingSection {
   key: BriefingSectionKey!
   title: String!
-  "The computed wording, which is always true and always present."
+  "The computed wording, which is always true. Empty on a section cut to the lines the reader may read, whose wording counted the others."
   summary: String!
   "The model's sentence, where it was written and survived the number guard."
   body: String
@@ -7434,10 +7539,20 @@ type BriefingSection {
   path: String
 }
 
+"A section the reader was not shown in full, because they may not read the records it counts."
+type BriefingWithheldSection {
+  key: BriefingSectionKey!
+  title: String!
+  "True when the section is shown with only the lines the reader may read; false when it is left out."
+  partial: Boolean!
+}
+
 """
 One role's morning for one organization. The figures are computed first and
 the wording written second; a briefing nobody narrated is a complete
-briefing that simply reads plainer.
+briefing that simply reads plainer. Sections the reader may not read are
+left out and named in withheldSections; while any are, the headline and the
+model's wording are left out too, since they may cite them.
 """
 type Briefing {
   id: ID!
@@ -7447,10 +7562,13 @@ type Briefing {
   "The organization's local day, as YYYY-MM-DD."
   briefingDate: String!
   status: BriefingStatus!
+  "Empty while any section is withheld."
   headline: String!
   sections: [BriefingSection!]!
-  "True when a model's wording was accepted for any part of the page."
+  "True when a model's wording was accepted for any part of the page the reader is shown."
   narrated: Boolean!
+  "The sections left out or cut short for this reader; empty when they see the whole page."
+  withheldSections: [BriefingWithheldSection!]!
   emailedAt: Timestamp
   readAt: Timestamp
   version: Int!
@@ -7955,7 +8073,7 @@ type CaptureBatch {
   isEditable: Boolean!
   "The pages, on a single-batch read. A list leaves them out."
   pages: [CapturePage!]!
-  "The items, on a single-batch read. A list leaves them out."
+  "The items, on a single-batch read, or on a list that selects them, read for the whole page at once."
   items: [CaptureItem!]!
   version: Int!
   createdAt: Timestamp!
@@ -7971,6 +8089,8 @@ type CaptureBatchConnection {
   edges: [CaptureBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How the intake queue is ordered."
@@ -8322,6 +8442,8 @@ type CarrierConnection {
   edges: [CarrierEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -8379,6 +8501,8 @@ type CarrierCapacityPostingConnection {
   edges: [CarrierCapacityPostingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CarrierCapacityPostingInput {
@@ -8956,6 +9080,8 @@ type CarrierIntelEventConnection {
   edges: [CarrierIntelEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type CarrierMonitoringEnrollment {
@@ -8994,6 +9120,8 @@ type CarrierMonitoringEnrollmentConnection {
   edges: [CarrierMonitoringEnrollmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type CarrierIntelOverride {
@@ -9292,9 +9420,13 @@ input CarrierIntelEventFilterInput {
   statuses: [CarrierIntelEventStatus!]
   severities: [CarrierIntelSeverity!]
   categories: [CarrierIntelSection!]
+  "Only this carrier's events."
   carrierId: ID
+  "Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number."
   subjectType: CarrierIntelSubjectType
+  "Only events about this subject, by its id or DOT number as the event names it."
   subjectId: String
+  "Only events nobody has resolved or dismissed yet: Open and Acknowledged."
   openOnly: Boolean
 }
 
@@ -9542,6 +9674,8 @@ type CarrierCostEventConnection {
   edges: [CarrierCostEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -9665,6 +9799,8 @@ type CarrierSettlementConnection {
   edges: [CarrierSettlementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -9707,6 +9843,8 @@ type CarrierSettlementBatchConnection {
   edges: [CarrierSettlementBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -9793,7 +9931,7 @@ type CarrierSettlementWorkspaceSummary {
 }
 
 "An inbound EDI 210 carrier freight invoice awaiting reconciliation."
-type EdiCarrierInvoice {
+type EdiCarrierInvoice @kind(resource: "carrier_invoice_match") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -9817,11 +9955,15 @@ type EdiCarrierInvoice {
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+  "The carrier the invoice's SCAC or DOT number points to, for an invoice no carrier is linked to yet; null once one is linked or when nothing matches."
+  suggestedCarrier: Carrier
 }
 
 type EdiCarrierInvoiceList {
   items: [EdiCarrierInvoice!]!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -9866,6 +10008,8 @@ type CarrierInvoiceMatch {
 type CarrierInvoiceMatchList {
   items: [CarrierInvoiceMatch!]!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input GenerateCarrierSettlementBatchInput {
@@ -9962,10 +10106,11 @@ extend type Query {
   ): CarrierInvoiceMatchList! @authorizes(resource: "carrier_invoice_match")
   "Inbound EDI carrier invoices, filterable by reconciliation status (e.g. Unmatched)."
   ediCarrierInvoices(
+    "Only invoices in this reconciliation status: Unmatched, MappingRequired, Matched or Variance."
     reconciliationStatus: String
     limit: Int
     offset: Int
-  ): EdiCarrierInvoiceList!
+  ): EdiCarrierInvoiceList! @authorizes(resource: "carrier_invoice_match")
   "Suggests a carrier for an EDI invoice by SCAC/DOT lookup against the carrier master."
   suggestCarrierForEdiInvoice(invoiceId: ID!): Carrier
   exportCarrierSettlementBatchCsv(batchId: ID!): String!
@@ -10172,6 +10317,8 @@ type CommodityConnection {
   edges: [CommodityEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -10223,7 +10370,8 @@ type CostingControl {
   glActualsEnabled: Boolean!
   glRollingMonths: Int!
   plannedMonthlyMiles: Int
-  targetMarginPercent: Decimal
+  "The margin the organization aims for. Null to a reader without the margins field group."
+  targetMarginPercent: Decimal @protected(group: Margins)
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -10278,7 +10426,8 @@ type ResolvedCostProfile {
   totalCpm: Decimal!
   variableCpm: Decimal!
   fixedCpm: Decimal!
-  targetMarginPercent: Decimal
+  "Null to a reader without the margins field group."
+  targetMarginPercent: Decimal @protected(group: Margins)
   includeDeadheadMiles: Boolean!
   asOfDate: String!
   fuel: FuelCostResolution
@@ -10325,12 +10474,17 @@ type ShipmentProfitabilityEstimate {
   missingDistance: Boolean!
 }
 
+"""
+What the fleet's loads cost over a window. The margin figures, and the revenue
+that would let a reader work the margin out from the cost, are null to a reader
+without the margins field group.
+"""
 type FleetCostSummary {
   avgCpm: Decimal!
-  avgMarginPercent: Decimal
+  avgMarginPercent: Decimal @protected(group: Margins)
   shipmentCount: Int!
-  unprofitableCount: Int!
-  totalRevenue: Decimal!
+  unprofitableCount: Int @protected(group: Margins)
+  totalRevenue: Decimal @protected(group: Margins)
   totalEstimatedCost: Decimal!
   totalMiles: Float!
   emptyMiles: Float!
@@ -10360,7 +10514,11 @@ input CostCategoryUpdateInput {
 extend type Query {
   costingControl: CostingControl!
   resolvedCostProfile(asOfDate: String): ResolvedCostProfile!
-  shipmentProfitability(shipmentId: ID!): ShipmentProfitability!
+  """
+  A shipment's revenue against its estimated cost. Null to a reader without the
+  margins field group: every figure in it is the margin or works it out.
+  """
+  shipmentProfitability(shipmentId: ID!): ShipmentProfitability @protected(group: Margins)
   fleetCostSummary(startDate: Timestamp, endDate: Timestamp): FleetCostSummary!
 }
 
@@ -10446,6 +10604,8 @@ type CustomFieldDefinitionConnection {
   edges: [CustomFieldDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -10693,6 +10853,8 @@ type CustomerConnection {
   edges: [CustomerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -10800,6 +10962,8 @@ type CustomerPaymentConnection {
   edges: [CustomerPaymentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CustomerPaymentApplicationInput {
@@ -11186,6 +11350,8 @@ type PendingDecisionConnection {
   edges: [PendingDecisionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input PendingDecisionsInput {
@@ -11545,6 +11711,8 @@ enum DetentionDeskUrgency {
   Accruing
   FreeTimeEnding
   Normal
+  "A stopped charge waiting on approval; its shipment cannot be invoiced until it is approved or waived."
+  AwaitingApproval
 }
 
 enum DetentionNoticeKind {
@@ -11667,6 +11835,8 @@ type DetentionPolicyConnection {
   edges: [DetentionPolicyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input DetentionTierInput {
@@ -11728,7 +11898,7 @@ input DetentionPolicyInput {
   version: Int
 }
 
-type DetentionOccurrence {
+type DetentionOccurrence @kind(resource: "detention") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -11764,8 +11934,10 @@ type DetentionOccurrence {
   grossAmount: Decimal!
   billableAmount: Decimal!
   driverPayMinutes: Int!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
   capApplied: DetentionCapKind!
   convertedToLayover: Boolean!
   currency: String!
@@ -11864,7 +12036,7 @@ type DetentionClockPrice {
   asOf: Timestamp!
 }
 
-type DetentionOccurrenceDetail {
+type DetentionOccurrenceDetail @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   evidence: [DetentionEvidence!]
   notices: [DetentionNotice!]
@@ -11874,16 +12046,18 @@ type DetentionOccurrenceDetail {
   currentlyBillable: DetentionClockPrice
 }
 
-type DetentionDeskEntry {
+type DetentionDeskEntry @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   minutesUntilFreeEnds: Int!
   minutesUntilNoticeDue: Int
   noticeWindowOpen: Boolean!
   amountAtRisk: Decimal!
+  "The minutes it bills: a running clock's as of now, a stopped charge's as recorded."
+  billableMinutes: Int!
   urgency: DetentionDeskUrgency!
 }
 
-type DetentionDisputePacket {
+type DetentionDisputePacket @kind(resource: "detention") {
   occurrence: DetentionOccurrence!
   policySnapshot: JSON
   receipt: String!
@@ -11903,8 +12077,10 @@ type FacilityDetentionStat {
   medianDwellMinutes: Float!
   p90DwellMinutes: Float!
   billedAmount: Decimal!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
   waivedAmount: Decimal!
   disputeCount: Int!
   suppressedCount: Int!
@@ -11916,8 +12092,10 @@ type CustomerDetentionStat {
   stopCount: Int!
   breachCount: Int!
   billedAmount: Decimal!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
   waivedAmount: Decimal!
   disputeCount: Int!
   suppressedCount: Int!
@@ -11949,8 +12127,10 @@ type DetentionPreviewResult {
   roundedMinutes: Int!
   billableAmount: Decimal!
   grossAmount: Decimal!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
   arrivedLate: Boolean!
   capApplied: DetentionCapKind!
   status: DetentionOccurrenceStatus!
@@ -11978,8 +12158,10 @@ type DetentionBacktestBucket {
   baselineAmount: Decimal!
   "proposedAmount minus baselineAmount."
   delta: Decimal!
-  driverPayAmount: Decimal!
-  netMargin: Decimal!
+  "What the driver is paid for the wait. Null to a reader without the margins field group, since beside the billed amount it gives the margin."
+  driverPayAmount: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  netMargin: Decimal @protected(group: Margins)
 }
 
 type DetentionBacktestResult {
@@ -11991,9 +12173,12 @@ type DetentionBacktestResult {
   proposedRevenue: Decimal!
   baselineRevenue: Decimal!
   revenueDelta: Decimal!
-  proposedDriverPay: Decimal!
-  proposedNetMargin: Decimal!
-  negativeMarginStops: Int!
+  "Null to a reader without the margins field group."
+  proposedDriverPay: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  proposedNetMargin: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  negativeMarginStops: Int @protected(group: Margins)
   byCustomer: [DetentionBacktestBucket!]!
   byFacility: [DetentionBacktestBucket!]!
   from: Timestamp!
@@ -12023,7 +12208,16 @@ input DetentionStatsInput {
 extend type Query {
   detentionPolicies(input: DataTableConnectionInput!): DetentionPolicyConnection!
   detentionPolicy(id: ID!): DetentionPolicy
-  detentionDesk: [DetentionDeskEntry!]!
+  detentionDesk(
+    "Also list the stopped charges waiting on approval, whose shipments cannot be invoiced until someone approves or waives them."
+    includeAwaitingApproval: Boolean = false
+    "How soon someone has to act, as the board ranks it."
+    urgency: DetentionDeskUrgency
+    "Only this shipment's occurrences."
+    shipmentId: ID
+    "A shipment's PRO number, or part of it, ignoring case."
+    proNumber: String
+  ): [DetentionDeskEntry!]!
   detentionOccurrence(id: ID!): DetentionOccurrenceDetail!
   shipmentDetention(shipmentId: ID!): [DetentionOccurrence!]!
   detentionDisputePacket(occurrenceId: ID!): DetentionDisputePacket!
@@ -12556,6 +12750,8 @@ type DistanceOverrideConnection {
   edges: [DistanceOverrideEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -12601,6 +12797,8 @@ type DistanceProfileConnection {
   edges: [DistanceProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -12633,6 +12831,8 @@ type DocumentPacketRuleConnection {
   edges: [DocumentPacketRuleEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -12824,6 +13024,8 @@ type DocumentTemplateConnection {
   edges: [DocumentTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type DocumentTemplateAssignmentEdge {
@@ -12835,6 +13037,8 @@ type DocumentTemplateAssignmentConnection {
   edges: [DocumentTemplateAssignmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -13029,6 +13233,8 @@ type DocumentTypeConnection {
   edges: [DocumentTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -13147,6 +13353,8 @@ type SettlementDisputeConnection {
   edges: [SettlementDisputeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -13280,6 +13488,8 @@ type PortalEscrowSummary {
 type MySettlementList {
   items: [DriverSettlement!]!
   total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
 }
 
 input InviteWorkerToPortalInput {
@@ -13414,6 +13624,8 @@ type DriverExpenseConnection {
   edges: [DriverExpenseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input SubmitMyExpenseInput {
@@ -14139,7 +14351,7 @@ rate overrides on the assignment when individual drivers earn different rates.
 The classification drives W-2 vs 1099 treatment and which GL expense account
 settlements post to.
 """
-type PayProfile {
+type PayProfile @kind(resource: "driver_pay_profile") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -14167,6 +14379,8 @@ type PayProfileConnection {
   edges: [PayProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14188,7 +14402,7 @@ resolved through their assignment effective on the shipment's delivery date.
 Assigning a new profile automatically ends the previous open assignment, so the
 history is a contiguous, auditable record of how the driver was paid over time.
 """
-type WorkerPayAssignment {
+type WorkerPayAssignment @kind(resource: "driver_pay_profile") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -14263,6 +14477,8 @@ type PayCodeConnection {
   edges: [PayCodeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14304,6 +14520,8 @@ type RecurringDeductionConnection {
   edges: [RecurringDeductionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14346,6 +14564,8 @@ type RecurringEarningConnection {
   edges: [RecurringEarningEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14385,6 +14605,8 @@ type PayAdvanceConnection {
   edges: [PayAdvanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14441,6 +14663,8 @@ type EscrowAccountConnection {
   edges: [EscrowAccountEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14606,6 +14830,8 @@ type DriverSettlementConnection {
   edges: [DriverSettlementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14648,6 +14874,8 @@ type SettlementBatchConnection {
   edges: [SettlementBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A single earning component captured on a pay event, frozen at accrual time."
@@ -14667,7 +14895,7 @@ Events are recomputed while Accrued (e.g. if charges change), locked once
 Settled, and Voided if the shipment cancels. This is what powers real-time
 "earned so far this period" visibility.
 """
-type DriverPayEvent {
+type DriverPayEvent @kind(resource: "driver_settlement") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -14703,6 +14931,8 @@ type DriverPayEventConnection {
   edges: [DriverPayEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -14794,7 +15024,7 @@ type BulkSettlementActionPayload {
 Live pay position for one driver: unsettled earnings accrued to date,
 outstanding advances, and escrow balance.
 """
-type WorkerEarningsSummary {
+type WorkerEarningsSummary @kind(resource: "driver_settlement") {
   workerId: ID!
   accruedEventCount: Int!
   accruedGrossMinor: Int!
@@ -15285,19 +15515,6 @@ enum EdiTransferDirection {
   Outbound
 }
 
-enum EdiTemplateStatus {
-  Draft
-  Certified
-  Active
-  Deprecated
-  Archived
-  Superseded
-}
-
-enum EdiStandard {
-  X12
-}
-
 enum EdiMappingEntityType {
   Customer
   ServiceType
@@ -15307,11 +15524,6 @@ enum EdiMappingEntityType {
   Commodity
   AccessorialCharge
   ServiceFailureReasonCode
-}
-
-enum EdiDocumentStatus {
-  Active
-  Inactive
 }
 
 type EdiConnectionCapabilities {
@@ -15366,7 +15578,7 @@ type EdiCommunicationProfileSecretState {
   key: String!
 }
 
-type EdiCommunicationProfile {
+type EdiCommunicationProfile @kind(resource: "edi") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -15388,7 +15600,7 @@ type EdiCommunicationProfile {
   partner: EdiPartner
 }
 
-type EdiTransfer {
+type EdiTransfer @kind(resource: "edi") {
   id: ID!
   sourceOrganizationId: ID!
   sourceBusinessUnitId: ID!
@@ -15411,17 +15623,93 @@ type EdiTransfer {
   updatedAt: Timestamp!
   sourcePartner: EdiPartner
   targetPartner: EdiPartner
+  "Inbound when this organization received the tender, Outbound when it sent it."
+  direction: EdiTransferDirection!
+  "The other side of the tender: the partner who sent it in, or the one it was sent to."
+  counterparty: EdiPartner
+  "The tender's bill of lading number."
+  bol: String
+  "The customer the tender names, as the sender labels it."
+  customerLabel: String
+  "The service type the tender asks for, as the sender labels it."
+  serviceTypeLabel: String
+  "The shipment type the tender names, as the sender labels it."
+  shipmentTypeLabel: String
+  pieces: Int
+  weight: Int
+  temperatureMin: Int
+  temperatureMax: Int
+  "How many stops the tender's moves carry."
+  stopCount: Int!
+  "Each stop of the tender's moves, in order."
+  stops: [EdiTenderStop!]!
+  commodities: [EdiTenderCommodity!]!
+  "What the tender offers to pay."
+  charges: EdiTenderCharges
+  "Whether the tender can still be accepted or declined."
+  canDecide: Boolean!
 }
 
-type EdiMessage {
+type EdiTenderStop {
+  sequence: Int!
+  type: String!
+  "The stop's location: its name, label or code."
+  location: String
+  address: String
+  city: String
+  state: String
+  postalCode: String
+  windowOpens: Timestamp
+  windowCloses: Timestamp
+  pieces: Int
+  weight: Int
+}
+
+type EdiTenderCommodity {
+  commodity: String!
+  weight: Int!
+  pieces: Int!
+}
+
+type EdiTenderCharge {
+  charge: String!
+  method: String
+  amount: Decimal!
+}
+
+type EdiTenderCharges {
+  freight: Decimal
+  other: Decimal
+  total: Decimal
+  additional: [EdiTenderCharge!]!
+}
+
+"A partner's code a tender carries that this organization has not mapped to its own record."
+type EdiTransferMappingNeed {
+  entityType: EdiMappingEntityType!
+  "The partner's code or label for it."
+  source: String!
+}
+
+"One load tender as its card reads it, with what accepting it still waits on."
+type EdiTransferDetail @kind(resource: "edi") {
+  transfer: EdiTransfer!
+  "The partner's codes not yet mapped, read only for an inbound tender that can still be decided; accepting it waits on them."
+  unresolvedMappings: [EdiTransferMappingNeed!]!
+  "Whether the tender can be accepted now: inbound, still open, and every code mapped."
+  canAccept: Boolean!
+}
+
+type EdiMessage @kind(resource: "edi") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
   ediPartnerId: ID!
   documentTypeId: ID!
-  partnerDocumentProfileId: ID
-  templateId: ID
-  templateVersionId: ID
+  "The version of the partner's Lading project that read or wrote the message."
+  ladingVersionId: ID
+  "The flow conversation the message belongs to."
+  flowInstanceId: ID
   shipmentId: ID
   transferId: ID
   inboundFileId: ID
@@ -15448,9 +15736,44 @@ type EdiMessage {
   createdAt: Timestamp!
   updatedAt: Timestamp!
   partner: EdiPartner
+  "The invoice the message bills, for a 210."
+  invoiceId: ID
+  "When the raw X12 was purged under the retention policy."
+  rawPurgedAt: Timestamp
 }
 
-type EdiInboundFile {
+"The raw X12 of a message or file, cut to its first 16 KB."
+type EdiRawText {
+  text: String!
+  "Whether the X12 is longer than the text shown."
+  truncated: Boolean!
+  sizeBytes: Int!
+}
+
+"One validation finding on an EDI message, naming the segment and element it is about."
+type EdiMessageDiagnostic {
+  severity: String!
+  code: String!
+  segmentId: String
+  elementPosition: Int
+  path: String
+  message: String!
+  suggestedFix: String
+}
+
+"One EDI message as its detail reads it: the document it decoded to and every finding."
+type EdiMessageDetail @kind(resource: "edi") {
+  message: EdiMessage!
+  "What the document says, decoded from its X12."
+  decoded: Any
+  diagnosticCount: Int!
+  "The validation findings, the first 50."
+  diagnostics: [EdiMessageDiagnostic!]!
+  "The raw X12 as it was sent or received, its first 16 KB; null once purged under the retention policy."
+  raw: EdiRawText
+}
+
+type EdiInboundFile @kind(resource: "edi") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -15475,51 +15798,20 @@ type EdiInboundFile {
   createdAt: Timestamp!
   updatedAt: Timestamp!
   partner: EdiPartner
+  "When the raw file was purged under the retention policy."
+  rawPurgedAt: Timestamp
 }
 
-type EdiTemplateVersion {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  templateId: ID!
-  sourceVersionId: ID
-  versionNumber: Int!
-  x12Version: String!
-  functionalGroupId: String!
-  status: EdiTemplateStatus!
-  isActive: Boolean!
-  notes: String
-  certificationNotes: String
-  activationNotes: String
-  archiveNotes: String
-  deprecatedNotes: String
-  supersededNotes: String
-  certifiedAt: Timestamp
-  activatedAt: Timestamp
-  archivedAt: Timestamp
-  deprecatedAt: Timestamp
-  supersededAt: Timestamp
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-}
-
-type EdiTemplate {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  documentTypeId: ID!
-  name: String!
-  description: String
-  direction: EdiDocumentDirection!
-  standard: EdiStandard!
-  transactionSet: String!
-  status: EdiTemplateStatus!
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  activeVersion: EdiTemplateVersion
-  versions: [EdiTemplateVersion!]
+"One inbound EDI file as its detail reads it, with the transaction sets parsed from it."
+type EdiInboundFileDetail @kind(resource: "edi") {
+  file: EdiInboundFile!
+  "The communication profile the file was picked up through."
+  communicationProfileName: String
+  messageCount: Int!
+  "The transaction sets parsed from the file, the first 50."
+  messages: [EdiMessage!]!
+  "The raw file as it was received, its first 16 KB; null once purged under the retention policy."
+  raw: EdiRawText
 }
 
 type EdiMappingProfileItem {
@@ -15561,6 +15853,8 @@ type EdiPartnerConnection {
   edges: [EdiPartnerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiCommunicationProfileEdge {
@@ -15572,6 +15866,8 @@ type EdiCommunicationProfileConnection {
   edges: [EdiCommunicationProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiTransferEdge {
@@ -15583,6 +15879,8 @@ type EdiTransferConnection {
   edges: [EdiTransferEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiMessageEdge {
@@ -15594,6 +15892,8 @@ type EdiMessageConnection {
   edges: [EdiMessageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiInboundFileEdge {
@@ -15605,17 +15905,8 @@ type EdiInboundFileConnection {
   edges: [EdiInboundFileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
-}
-
-type EdiTemplateEdge {
-  node: EdiTemplate!
-  cursor: String!
-}
-
-type EdiTemplateConnection {
-  edges: [EdiTemplateEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiMappingProfileEdge {
@@ -15627,61 +15918,8 @@ type EdiMappingProfileConnection {
   edges: [EdiMappingProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
-}
-
-"""
-The ISA and GS identities and separators every interchange of a document profile is
-written with.
-"""
-type EdiX12Envelope {
-  interchangeSenderQualifier: String!
-  interchangeSenderId: String!
-  interchangeReceiverQualifier: String!
-  interchangeReceiverId: String!
-  applicationSenderCode: String!
-  applicationReceiverCode: String!
-  "T for test, P for production."
-  interchangeUsageIndicator: String!
-  elementSeparator: String!
-  segmentTerminator: String!
-  componentSeparator: String!
-  repetitionSeparator: String!
-}
-
-type EdiAcknowledgmentConfig {
-  expected: Boolean!
-  "None, 997 or 999."
-  type: String!
-  slaInMinutes: Int!
-}
-
-type EdiPartnerDocumentProfile {
-  id: ID!
-  ediPartnerId: ID!
-  name: String!
-  status: EdiDocumentStatus!
-  direction: EdiDocumentDirection!
-  transactionSet: String!
-  functionalGroupId: String!
-  x12VersionOverride: String
-  envelope: EdiX12Envelope!
-  acknowledgment: EdiAcknowledgmentConfig!
-  partner: EdiPartner
-}
-
-type EdiTestCase {
-  id: ID!
-  businessUnitId: ID!
-  organizationId: ID!
-  partnerDocumentProfileId: ID!
-  name: String!
-  description: String
-  expectedWarnings: Int!
-  expectedErrors: Int!
-  version: Int!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  documentProfile: EdiPartnerDocumentProfile
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EdiSummaryStatusCount {
@@ -15703,6 +15941,51 @@ type EdiSummaryAttentionItem {
 enum EdiSummaryAttentionKind {
   Message
   InboundFile
+}
+
+type EdiAckStatusCount {
+  status: EdiMessageAckStatus!
+  count: Int!
+}
+
+type EdiPartnerAckCounts {
+  partnerId: ID!
+  partnerName: String!
+  partnerCode: String!
+  ackStatusCounts: [EdiAckStatusCount!]!
+}
+
+type EdiOverduePartnerAcks {
+  partnerId: ID!
+  partnerName: String!
+  partnerCode: String!
+  overdueCount: Int!
+  oldestGeneratedAt: Timestamp!
+  "The partner's oldest overdue messages, a few at most."
+  messages: [EdiMessage!]!
+}
+
+"How partners are acknowledging what this organization sent them."
+type EdiAckHealth @kind(resource: "edi") {
+  "When the figures were read."
+  asOf: Timestamp!
+  "Start of the window the counts by status cover."
+  since: Timestamp!
+  "How long an acknowledgment may be pending before it is overdue, in seconds."
+  overdueAfterSeconds: Int!
+  "True when the call asked about 997s or 999s, so the counts cover every set they answer."
+  answersEverySet: Boolean!
+  ackStatusCounts: [EdiAckStatusCount!]!
+  "Each partner's counts by acknowledgment status, in the window."
+  partners: [EdiPartnerAckCounts!]!
+  "How many messages are overdue, whenever they were sent."
+  overdueCount: Int!
+  "The overdue messages by partner, oldest first."
+  overdueByPartner: [EdiOverduePartnerAcks!]!
+  "How many overdue messages are counted but not listed."
+  overdueNotListed: Int!
+  "Messages dead-lettered recently, newest first."
+  recentDeadLettered: [EdiMessage!]!
 }
 
 type EdiSummary {
@@ -15791,6 +16074,7 @@ type EdiPartnerTransport {
 
 type EdiPartnerReadinessItem {
   key: String!
+  label: String!
   complete: Boolean!
 }
 
@@ -15860,7 +16144,8 @@ ever returned.
 type EdiPartnerCard {
   partner: EdiPartner!
   customer: EdiPartnerCustomer
-  documentProfiles: [EdiPartnerDocumentProfile!]!
+  "The partner's Lading project and the versions running."
+  lading: EdiPartnerLading!
   transports: [EdiPartnerTransport!]!
   readiness: EdiPartnerCardReadiness!
   mappings: EdiPartnerMappingSummary!
@@ -15870,15 +16155,137 @@ type EdiPartnerCard {
   carriers: [EdiPartnerCarrier!]
 }
 
-type EdiTestCaseEdge {
-  node: EdiTestCase!
+enum EdiLadingVersionStatus {
+  Draft
+  Certified
+  Active
+  Shadow
+  Superseded
+  Archived
+}
+
+enum EdiFlowInstanceStatus {
+  Open
+  Held
+  Escalated
+  Closed
+}
+
+"What a version's tests and checks last found."
+type EdiLadingReadiness {
+  errors: Int!
+  failing: Int!
+  tests: Int!
+  uncoveredFlowClauses: Int!
+  ready: Boolean!
+  checkedAt: Timestamp!
+}
+
+"A version of a partner's Lading project, without its files."
+type EdiLadingVersion @kind(resource: "edi") {
+  id: ID!
+  projectId: ID!
+  number: Int!
+  status: EdiLadingVersionStatus!
+  parentVersionId: ID
+  readiness: EdiLadingReadiness
+  notes: String
+  errorCount: Int!
+  warningCount: Int!
+  "When a shadow run ends."
+  shadowUntil: Timestamp
+  certifiedAt: Timestamp
+  activatedAt: Timestamp
+  supersededAt: Timestamp
+  archivedAt: Timestamp
+  "Who the partner and Trenova are in the X12 envelope, as the version's partner file says."
+  interchange: EdiLadingInterchange
+  "Each set the version reads or writes, and the map that does it."
+  exchanges: [EdiLadingExchange!]!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+"The X12 envelope a Lading version writes and expects."
+type EdiLadingInterchange {
+  theirQualifier: String
+  theirId: String
+  ourQualifier: String
+  ourId: String
+  theirGroupCode: String
+  ourGroupCode: String
+  version: String
+  "test or production."
+  usage: String
+  "Element, segment, component and repetition separators, in that order."
+  separators: [String!]!
+}
+
+"A set a Lading version exchanges with the partner."
+type EdiLadingExchange {
+  transactionSet: String!
+  direction: EdiDocumentDirection!
+  map: String!
+  "The acknowledgment that answers it: the one Trenova sends back for an inbound set, the one the flow expects for an outbound set. Null when none is."
+  acknowledgment: String
+  "Seconds the flow waits for that acknowledgment, for an outbound set."
+  acknowledgmentWithin: Int
+}
+
+"A partner's Lading project: its maps, rules, guides and flows, kept as versions."
+type EdiLadingProject @kind(resource: "edi") {
+  id: ID!
+  ediPartnerId: ID!
+  activeVersionId: ID
+  shadowVersionId: ID
+  version: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type EdiPartnerLading {
+  project: EdiLadingProject
+  "The version Trenova runs for the partner."
+  active: EdiLadingVersion
+  "The version compared with it on live traffic, if one is."
+  shadow: EdiLadingVersion
+}
+
+"One conversation with a partner about one load, stepped by the partner's flow."
+type EdiFlowInstance @kind(resource: "edi") {
+  id: ID!
+  ediPartnerId: ID!
+  projectId: ID
+  versionId: ID
+  flow: String!
+  "What the conversation is about: the partner's load number for a tender."
+  key: String!
+  status: EdiFlowInstanceStatus!
+  "Why it is held or escalated."
+  reason: String
+  "When the flow next wakes on its own."
+  wakeAt: Timestamp
+  shipmentId: ID
+  transferId: ID
+  lastEventAt: Timestamp!
+  heldAt: Timestamp
+  resolvedAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  partner: EdiPartner
+}
+
+type EdiFlowInstanceEdge {
+  node: EdiFlowInstance!
   cursor: String!
 }
 
-type EdiTestCaseConnection {
-  edges: [EdiTestCaseEdge!]!
+type EdiFlowInstanceConnection {
+  edges: [EdiFlowInstanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -15886,8 +16293,25 @@ extend type Query {
   ediCommunicationProfiles(input: DataTableConnectionInput!): EdiCommunicationProfileConnection!
   ediTransfers(
     input: DataTableConnectionInput!
+    "Inbound for the tenders partners sent in, Outbound for the ones this organization sent."
     direction: EdiTransferDirection!
+    "Only the tenders one inbound file carried."
+    inboundFileId: ID
   ): EdiTransferConnection!
+  ediTransfer(id: ID!): EdiTransferDetail! @authorizes(resource: "edi")
+  ediMessage(id: ID!): EdiMessageDetail! @authorizes(resource: "edi")
+  ediInboundFile(id: ID!): EdiInboundFileDetail! @authorizes(resource: "edi")
+  "How partners are acknowledging what was sent: counts by acknowledgment status overall and per partner, the messages whose acknowledgment is overdue, and recent dead letters."
+  ediAckHealth(
+    "Only this partner's messages."
+    partnerId: ID
+    "Only messages of this transaction set that were sent: 204, 210, 214 or 990. 997 or 999 asks about the acknowledgments themselves, so the counts cover every set they answer."
+    transactionSet: String
+    "How long an acknowledgment may be pending before it is overdue, in seconds: 14400 (four hours) unless given, between 60 and 2592000."
+    overdueAfterSeconds: Int
+    "How many hours back the counts by status reach: 24 unless given, at most 720. Overdue messages are counted whenever they were sent."
+    sinceHours: Int
+  ): EdiAckHealth! @authorizes(resource: "edi")
   ediMessages(
     input: DataTableConnectionInput!
     transactionSet: String
@@ -15899,17 +16323,14 @@ extend type Query {
     status: EdiInboundFileStatus
     partnerId: ID
   ): EdiInboundFileConnection!
-  ediTemplates(
-    input: DataTableConnectionInput!
-    status: EdiTemplateStatus
-    transactionSet: String
-    direction: EdiDocumentDirection
-  ): EdiTemplateConnection!
   ediMappingProfiles(input: DataTableConnectionInput!, partnerId: ID): EdiMappingProfileConnection!
-  ediTestCases(
+  "The partners' flow conversations: open ones, and the ones held or escalated for a person."
+  ediFlowInstances(
     input: DataTableConnectionInput!
-    partnerDocumentProfileId: ID
-  ): EdiTestCaseConnection!
+    partnerId: ID
+    shipmentId: ID
+    statuses: [EdiFlowInstanceStatus!]
+  ): EdiFlowInstanceConnection!
   ediSummary(sinceHours: Int): EdiSummary!
   ediPartnerScorecards(sinceHours: Int): [EdiPartnerScorecard!]!
   ediPartnerReadiness(partnerIds: [ID!]!): [EdiPartnerReadinessState!]!
@@ -15954,6 +16375,8 @@ type EmailProfileConnection {
   edges: [EmailProfileEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -15986,6 +16409,8 @@ type EquipmentManufacturerConnection {
   edges: [EquipmentManufacturerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type EquipmentManufacturer {
@@ -16071,6 +16496,8 @@ type EquipmentTypeConnection {
   edges: [EquipmentTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input EquipmentTypeInput {
@@ -16246,6 +16673,8 @@ type AICorrectionConnection {
   edges: [AICorrectionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ExtractionEvalPage {
@@ -16287,6 +16716,8 @@ type ExtractionEvalCaseConnection {
   edges: [ExtractionEvalCaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One model, pinned to one AI provider, run over the active extraction cases."
@@ -16340,6 +16771,8 @@ type ExtractionEvalRunConnection {
   edges: [ExtractionEvalRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One case evaluated within a run."
@@ -16384,6 +16817,8 @@ type ExtractionEvalResultConnection {
   edges: [ExtractionEvalResultEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ExtractionAccuracyGroup {
@@ -16730,6 +17165,8 @@ type ExtractionShadowResultConnection {
   edges: [ExtractionShadowResultEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One side of a shadow comparison, over the documents both sides were scored on."
@@ -17032,6 +17469,8 @@ type FactoringNoaConnection {
   edges: [FactoringNoaEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One readiness check on an invoice."
@@ -17049,7 +17488,7 @@ type FactoringCheck {
 }
 
 "Whether an invoice is ready to factor, and why not."
-type FactoringInvoiceState {
+type FactoringInvoiceState @kind(resource: "invoice") {
   invoiceId: ID!
   factoringCompanyId: ID
   customerId: ID!
@@ -17074,6 +17513,8 @@ type FactoringInvoiceStateConnection {
   edges: [FactoringInvoiceStateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FactoringVerdictTotals {
@@ -17081,7 +17522,7 @@ type FactoringVerdictTotals {
   amountMinor: Int!
 }
 
-type FactoringSummary {
+type FactoringSummary @kind(resource: "invoice") {
   ready: FactoringVerdictTotals!
   notReady: FactoringVerdictTotals!
   "On a schedule with the factor or being sent to it."
@@ -17201,6 +17642,8 @@ type FactoringSubmissionConnection {
   edges: [FactoringSubmissionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FactoringSubmissionPlanItem {
@@ -17287,10 +17730,12 @@ type FactoringReserveEntryConnection {
   edges: [FactoringReserveEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "What a factor holds and has paid, from its reserve entries."
-type FactoringReserveBalance {
+type FactoringReserveBalance @kind(resource: "factoring_reserve") {
   factoringCompanyId: ID!
   "Reserve the factor holds and has not released or charged back."
   reserveMinor: Int!
@@ -17722,6 +18167,8 @@ type FactoringRemittanceConnection {
   edges: [FactoringRemittanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A schedule item a line could pay, ranked."
@@ -17775,6 +18222,8 @@ type FactoringRemittanceLineConnection {
   edges: [FactoringRemittanceLineEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "What applying one matched line would book."
@@ -17893,6 +18342,11 @@ extend type FactoringCompany {
   agreements: [FactoringAgreement!]!
 }
 
+extend type FactoringRemittance {
+  "Its lines in the file's order, or only those in these match statuses."
+  lines(matchStatuses: [FactoringRemittanceMatchStatus!]): [FactoringRemittanceLine!]!
+}
+
 extend type Query {
   factoringAgreements(factoringCompanyId: ID!): [FactoringAgreement!]!
   factoringAgreement(id: ID!): FactoringAgreement!
@@ -18004,6 +18458,8 @@ type FactoringCompanyConnection {
   edges: [FactoringCompanyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -18071,9 +18527,30 @@ type FiscalPeriod {
   adjustmentDeadline: Timestamp
   lockedAt: Timestamp
   closedAt: Timestamp
+  reopenedAt: Timestamp
+  "Why the period was last reopened; empty when it never was."
+  reopenReason: String
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+type FiscalPeriodEdge {
+  node: FiscalPeriod!
+  cursor: String!
+}
+
+type FiscalPeriodConnection {
+  edges: [FiscalPeriodEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+extend type Query {
+  "Every fiscal period of every fiscal year, latest start first."
+  fiscalPeriods(input: DataTableConnectionInput!): FiscalPeriodConnection!
 }
 `, BuiltIn: false},
 	{Name: "../schema/fiscal_year.graphqls", Input: `enum FiscalYearStatus {
@@ -18113,6 +18590,8 @@ type FiscalYearConnection {
   edges: [FiscalYearEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -18149,6 +18628,8 @@ type FleetCodeConnection {
   edges: [FleetCodeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -18352,6 +18833,102 @@ extend type Mutation {
   deleteSafetyViolation(id: ID!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "../schema/formula_library.graphqls", Input: `enum FormulaReviewDecision {
+  Submitted
+  Approved
+  Rejected
+  ChangesRequested
+  Expired
+}
+
+"An organization library of Tariff functions, constants and types that formula templates import as org.<name>."
+type FormulaLibrary {
+  id: ID!
+  businessUnitId: ID!
+  organizationId: ID!
+  "The module name: templates import the library as org.<name>."
+  name: String!
+  "The module path templates import: org.<name>."
+  path: String!
+  description: String!
+  "The library's Tariff source."
+  source: String!
+  "The other organization libraries this one imports."
+  imports: [FormulaLibraryImport!]!
+  "How many test blocks the source holds."
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  submittedById: ID
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedAt: Timestamp
+  reviewComment: String!
+  version: Int!
+  sourceLibraryId: ID
+  sourceVersionNumber: Int
+  currentVersionNumber: Int!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type FormulaLibraryEdge {
+  node: FormulaLibrary!
+  cursor: String!
+}
+
+type FormulaLibraryConnection {
+  edges: [FormulaLibraryEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
+}
+
+"A snapshot of a library. An Active version is approved, and is what templates pin."
+type FormulaLibraryVersion {
+  id: ID!
+  libraryId: ID!
+  versionNumber: Int!
+  name: String!
+  path: String!
+  description: String!
+  source: String!
+  imports: [FormulaLibraryImport!]!
+  testCount: Int!
+  status: FormulaTemplateStatus!
+  changeMessage: String!
+  "The fields that changed from the previous version, by field path."
+  changeSummary: JSON
+  createdById: ID!
+  createdBy: User
+  createdAt: Timestamp!
+}
+
+"One step of a library's review: who did what, in which round, against which approved version."
+type FormulaLibraryReview {
+  id: ID!
+  libraryId: ID!
+  round: Int!
+  decision: FormulaReviewDecision!
+  actorId: ID
+  actor: User
+  comment: String!
+  baseVersionNumber: Int!
+  requestedReviewerId: ID
+  requestedReviewer: User
+  reviewerNote: String!
+  createdAt: Timestamp!
+}
+
+extend type Query {
+  formulaLibraries(input: DataTableConnectionInput!): FormulaLibraryConnection!
+  formulaLibrary(id: ID!): FormulaLibrary
+  "A library's versions, newest first."
+  formulaLibraryVersions(libraryId: ID!, first: Int): [FormulaLibraryVersion!]!
+  "A library's review history, newest first."
+  formulaLibraryReviews(libraryId: ID!): [FormulaLibraryReview!]!
+}
+`, BuiltIn: false},
 	{Name: "../schema/formula_template.graphqls", Input: `enum FormulaTemplateStatus {
   Active
   Inactive
@@ -18359,34 +18936,49 @@ extend type Mutation {
   InReview
 }
 
-enum FormulaTemplateType {
-  FreightCharge
-  AccessorialCharge
-}
-
-"How a formula's computed charge is reduced to its billable precision."
-enum RateRoundingMode {
-  HalfUp
-  HalfEven
-  Up
-  Down
-  None
-}
-
-type FormulaTemplateVariableDefinition {
+"An input a formula declares. Its value comes from the rate agreement rule, then the agreement, then this default."
+type FormulaInputDeclaration {
   name: String!
+  "The input's doc comment, which labels it in the inputs form."
+  doc: String!
+  "The type as written in the source, such as Money/mi or List<Break>."
   type: String!
-  description: String!
+  "The type's structure, which the inputs form is built from. Its shape is the module's type descriptor."
+  descriptor: Any
   required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
+  "The default as a wire value, or null when the input has none."
+  default: Any
+  """
+  The values the input accepts, from its where clause, or null when it has none:
+  {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
+  minimum is inclusive and an open end is null) or {"oneOf": [wire, ...]}. For a
+  list input it bounds each item.
+  """
+  constraint: Any
 }
 
-type FormulaTemplateBreakdownDefinition {
-  name: String!
-  label: String!
-  expression: String!
+"An organization library a formula version imports, pinned to the version it was checked against."
+type FormulaLibraryImport {
+  "The module path the source imports: org.<name>."
+  path: String!
+  libraryId: ID!
+  versionNumber: Int!
+  library: FormulaLibrary
+}
+
+"A rate table a formula version reads, pinned to the published matrix version it was checked against."
+type FormulaTemplateTable {
+  "The table's code, as the source reads it: tables.<code>."
+  code: String!
+  rateMatrixId: ID!
+  versionNumber: Int!
+  """
+  The matrix's newest published version. Greater than versionNumber when a
+  newer version is available; approving a new template version adopts it.
+  """
+  latestVersionNumber: Int!
+  "Whether the matrix is archived, so no new template version can read it."
+  archived: Boolean!
 }
 
 type FormulaTemplate {
@@ -18395,16 +18987,17 @@ type FormulaTemplate {
   organizationId: ID!
   name: String!
   description: String!
-  type: FormulaTemplateType!
-  expression: String!
+  "The formula's Tariff source."
+  source: String!
+  "The inputs the source declares, as the last check derived them."
+  inputs: [FormulaInputDeclaration!]!
+  "The organization libraries the source imports. Approval pins each to the version approved at that moment."
+  imports: [FormulaLibraryImport!]!
+  "The rate tables the source reads, each pinned to the published version the last check read."
+  tables: [FormulaTemplateTable!]!
+  "How many test blocks the source holds."
+  testCount: Int!
   status: FormulaTemplateStatus!
-  schemaId: String!
-  variableDefinitions: [FormulaTemplateVariableDefinition!]!
-  breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
-  minCharge: Decimal
-  maxCharge: Decimal
-  roundingMode: RateRoundingMode!
-  roundingPrecision: Int!
   submittedById: ID
   submittedAt: Timestamp
   approvedById: ID
@@ -18418,10 +19011,8 @@ type FormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-  "How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template."
+  "How many shipments, rate agreement rules and billing fallbacks rate with this template."
   usageCount: Int!
-  "How many saved scenarios gate this template's approval."
-  scenarioCount: Int!
   businessUnit: BusinessUnit
   organization: Organization
 }
@@ -18435,6 +19026,8 @@ type FormulaTemplateConnection {
   edges: [FormulaTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -18583,6 +19176,8 @@ type FuelCardConnection {
   edges: [FuelCardEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -18651,6 +19246,8 @@ type FuelPurchaseConnection {
   edges: [FuelPurchaseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -18687,7 +19284,7 @@ A fuel card statement staged for review. The bytes live on a Document bound to
 the batch; staging reads that document, parses every row, resolves cards,
 tractors and jurisdictions, and reports what would commit.
 """
-type FuelPurchaseImportBatch {
+type FuelPurchaseImportBatch @kind(resource: "fuel_purchase_import") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -18798,6 +19395,8 @@ type FuelPurchaseImportRowConnection {
   edges: [FuelPurchaseImportRowEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -18928,6 +19527,8 @@ type FuelPurchaseImportBatchConnection {
   edges: [FuelPurchaseImportBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input CancelFuelCardInput {
@@ -19230,9 +19831,11 @@ type FuelIndexConnection {
   edges: [FuelIndexEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
-type FuelIndexPrice {
+type FuelIndexPrice @kind(resource: "fuel_surcharge_program") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -19306,9 +19909,11 @@ type FuelSurchargeProgramConnection {
   edges: [FuelSurchargeProgramEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
-type FuelIndexLatestPrice {
+type FuelIndexLatestPrice @kind(resource: "fuel_surcharge_program") {
   index: FuelIndex!
   latest: FuelIndexPrice
   previous: FuelIndexPrice
@@ -19316,7 +19921,12 @@ type FuelIndexLatestPrice {
   delta: Decimal
 }
 
-type FuelProgramCurrentRate {
+"""
+A fuel surcharge program's surcharge this week, from the index price in effect.
+"""
+type FuelProgramCurrentRate @kind(resource: "fuel_surcharge_program") {
+  "The program's id: a program has one current rate."
+  id: ID!
   program: FuelSurchargeProgram!
   price: FuelIndexPrice
   ratePerMile: Decimal
@@ -19413,7 +20023,17 @@ input GenerateFuelTableInput {
 extend type Query {
   fuelIndexes(input: DataTableConnectionInput!): FuelIndexConnection!
   fuelIndex(id: ID!): FuelIndex
-  fuelIndexPriceHistory(indexId: ID!, from: String, to: String, limit: Int): [FuelIndexPrice!]!
+  "The prices on file for one fuel index, newest first."
+  fuelIndexPriceHistory(
+    "The fuel index whose prices are read."
+    indexId: ID!
+    "The earliest price day to include, as YYYY-MM-DD."
+    from: String
+    "The latest price day to include, as YYYY-MM-DD."
+    to: String
+    "How many prices to read, at most 520; 104 when left out."
+    limit: Int
+  ): [FuelIndexPrice!]!
   fuelDashboard: [FuelIndexLatestPrice!]!
   fuelSurchargePrograms(input: DataTableConnectionInput!): FuelSurchargeProgramConnection!
   fuelSurchargeProgram(id: ID!): FuelSurchargeProgram
@@ -19504,6 +20124,8 @@ type HazardousMaterialConnection {
   edges: [HazardousMaterialEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -19552,6 +20174,8 @@ type HazmatSegregationRuleConnection {
   edges: [HazmatSegregationRuleEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -19604,6 +20228,8 @@ type HoldReasonConnection {
   edges: [HoldReasonEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -19896,6 +20522,8 @@ type IFTATaxRateConnection {
   edges: [IFTATaxRateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -19937,6 +20565,8 @@ type IFTAJurisdictionMileageEntryConnection {
   edges: [IFTAJurisdictionMileageEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -20110,6 +20740,8 @@ type IFTAReturnConnection {
   edges: [IFTAReturnEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -20236,7 +20868,14 @@ extend type Query {
   """
   The global jurisdiction list, about sixty rows. Fetched once and cached on the client.
   """
-  iftaJurisdictions(membersOnly: Boolean = false): [IFTAJurisdiction!]!
+  iftaJurisdictions(
+    "Only IFTA member jurisdictions."
+    membersOnly: Boolean = false
+    "Only this country's jurisdictions: US, CA or MX."
+    countryCode: String
+    "Only the jurisdictions fuel tax is reported by now, leaving out the retired ones."
+    activeOnly: Boolean = false
+  ): [IFTAJurisdiction!]!
   iftaTaxRates(input: IFTATaxRatesInput!): IFTATaxRateConnection!
   iftaMileageEntries(input: IFTAMileageEntriesInput!): IFTAJurisdictionMileageEntryConnection!
   iftaMileageEntry(id: ID!): IFTAJurisdictionMileageEntry!
@@ -20580,6 +21219,8 @@ type InboundMessageConnection {
   edges: [InboundMessageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A folder of the queue: a question about state rather than a filter."
@@ -20832,7 +21473,7 @@ input TriageResponseTargetInput {
 }
 
 "The organization's queue settings."
-type TriageSettings {
+type TriageSettings @kind(resource: "inbound_message") {
   "Who the queue is handed to at the end of the day."
   onCallUser: User
   onCallUserId: ID
@@ -20849,7 +21490,7 @@ input TriageSettingsInput {
 }
 
 "Someone a message can be assigned to."
-type TriageAssignee {
+type TriageAssignee @kind(resource: "inbound_message") {
   user: User!
   "Waiting messages already assigned to them."
   waiting: Int!
@@ -21425,6 +22066,8 @@ type Invoice {
   shipperCustomer: Customer
   "Whether this invoice bills only part of what its shipments charged."
   isSplitBill: Boolean!
+  "Notes the tariffs that rated the invoice's shipments put on their bills."
+  ratingNotes: [String!]!
   "Other invoices that bill any shipment on this one, split-bill siblings first."
   relatedInvoices: [Invoice!]!
   subtotalAmount: Decimal!
@@ -21437,6 +22080,16 @@ type Invoice {
   sentAt: Timestamp
   "The invoice's rendered PDF, once one has been generated; an invoice is emailed only with one."
   pdfDocumentId: ID
+  "Why the last email delivery failed; empty when it did not."
+  lastSendError: String!
+  "The note printed on the invoice for the customer."
+  memo: String!
+  "How the customer is told to pay, as printed on the invoice."
+  remittanceInstructions: String!
+  "The invoice this one replaces in a correction chain."
+  supersedesInvoiceId: ID
+  "The invoice that replaced this one in a correction chain."
+  supersededByInvoiceId: ID
   isAdjustmentArtifact: Boolean!
   voidedAt: Timestamp
   voidedById: ID
@@ -21494,12 +22147,11 @@ type InvoiceChargeGroup {
   chargeCode: String
   "How an accessorial was charged; null on freight and memo lines."
   chargeMethod: AccessorialMethod
-  "What a per-unit charge was counted in."
-  rateUnit: RateUnit
+  "The unit the rate is written in, such as $/mi."
+  rateUnit: String
   """
-  The rate every line in the group was billed at: a freight load's base rate,
-  an accessorial's amount per unit or its percentage. Null when the lines
-  differ.
+  The rate every line in the group was billed at: a freight line's rate, an
+  accessorial's amount per unit or its percentage. Null when the lines differ.
   """
   rate: Decimal
   "The amount a percentage was taken of, when the group is one line."
@@ -21541,6 +22193,8 @@ type InvoiceLine {
   chargeCode: String
   chargeMethod: String
   rate: Decimal
+  "The unit the rate is written in, such as $/mi."
+  rateUnit: String
   "The share of the charge this line bills, when it is less than all of it."
   allocationPercent: Decimal
   "The formula template that rated a freight line, when the line kept it."
@@ -21568,7 +22222,8 @@ type InvoiceEDISendPlan {
   autoSend: Boolean!
   partnerId: ID
   partnerName: String!
-  documentProfileId: ID
+  "The version of the partner's Lading project that would write the 210."
+  ladingVersionId: ID
   communicationMethod: String!
   status: InvoiceEDISendStatus!
   lastMessageId: ID
@@ -21637,6 +22292,8 @@ type InvoiceConnection {
   edges: [InvoiceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -21708,8 +22365,12 @@ enum InvoiceAdjustmentRebillStrategy {
   Manual
 }
 
-"A credit, rebill, reversal, or write-off raised against a posted invoice."
-type InvoiceAdjustment {
+"""
+A credit, rebill, reversal, or write-off raised against a posted invoice. Its
+fields follow the invoice's sensitivities: what it credits is the invoice's
+money.
+"""
+type InvoiceAdjustment @kind(resource: "invoice") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -21748,6 +22409,8 @@ type InvoiceAdjustment {
   updatedAt: Timestamp!
   "The corrected invoice lines, in line order."
   lines: [InvoiceAdjustmentLine!]!
+  "The documents the submitter attached as support for the adjustment."
+  supportingDocumentIds: [ID!]!
 }
 
 "How much of one original invoice line an adjustment credits and rebills."
@@ -21824,6 +22487,8 @@ type InvoiceAdjustmentApprovalQueueConnection {
   edges: [InvoiceAdjustmentApprovalQueueEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -21971,7 +22636,16 @@ extend type Invoice {
 }
 
 extend type Query {
-  invoiceDisputes(invoiceId: ID!): [InvoiceDispute!]!
+  """
+  The dispute cases on one invoice, or on several, each invoice's newest first.
+  Name the invoice by invoiceId or the invoices by invoiceIds (at most 100),
+  not both.
+  """
+  invoiceDisputes(
+    invoiceId: ID
+    "The invoices whose dispute cases are read, at most 100."
+    invoiceIds: [ID!]
+  ): [InvoiceDispute!]!
 }
 
 extend type Mutation {
@@ -22009,6 +22683,8 @@ type JournalEntry {
   fiscalYearId: ID!
   fiscalPeriodId: ID!
   entryNumber: String!
+  "The day the entry was written, which can differ from the day it books to."
+  entryDate: Timestamp!
   entryType: String!
   status: String!
   accountingDate: Timestamp!
@@ -22029,6 +22705,11 @@ type JournalEntry {
   isApproved: Boolean!
   approvedById: ID
   approvedAt: Timestamp
+  "What the approver wrote when approving it; empty when nothing was."
+  approvalNotes: String!
+  rejectedAt: Timestamp
+  "Why it was rejected; empty unless it was."
+  rejectionReason: String!
   postedById: ID
   postedAt: Timestamp
   createdById: ID
@@ -22046,6 +22727,8 @@ type JournalEntryConnection {
   edges: [JournalEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How many journal entries wait for a person before they reach the general ledger."
@@ -22103,6 +22786,8 @@ type JournalCardLine {
   "Null when the line names no location or the reader may not read locations."
   locationId: ID
   locationName: String!
+  "Whether the line has been reconciled. A manual journal's lines never are: they reconcile once posted, as journal entry lines."
+  isReconciled: Boolean!
 }
 
 "Where a journal not yet posted would land if it posted now, under the organization's closed-period policy."
@@ -22114,7 +22799,7 @@ type JournalCardPosting {
   refusal: String!
 }
 
-type JournalEntryCard {
+type JournalEntryCard @kind(resource: "journal_entry") {
   entry: JournalEntry!
   lines: [JournalCardLine!]!
   period: FiscalPeriod
@@ -22136,6 +22821,8 @@ type JournalEntryCard {
 
 extend type Query {
   journalEntry(id: ID!): JournalEntry
+  "Every journal entry in the general ledger, whatever its status, newest accounting date first."
+  journalEntries(input: DataTableConnectionInput!): JournalEntryConnection!
   journalEntriesBySource(sourceType: String!, sourceId: String!): [JournalEntry!]!
   journalSourceByObject(sourceType: String!, sourceId: String!): JournalSourceInfo
   "Journal entries waiting to be approved or posted, oldest first."
@@ -22166,7 +22853,11 @@ type JournalReversal {
   businessUnitId: ID!
   organizationId: ID!
   originalJournalEntryId: ID!
+  "The entry this reversal undoes."
+  originalJournalEntry: JournalEntry!
   reversalJournalEntryId: ID
+  "The entry that posted this reversal; null until it posts."
+  reversalJournalEntry: JournalEntry
   postedBatchId: ID
   status: JournalReversalStatus!
   requestedAccountingDate: Timestamp!
@@ -22199,6 +22890,8 @@ type JournalReversalConnection {
   edges: [JournalReversalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22282,6 +22975,8 @@ type JurisdictionRuleConnection {
   edges: [JurisdictionRuleEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22332,6 +23027,8 @@ type JurisdictionRuleOverrideConnection {
   edges: [JurisdictionRuleOverrideEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22490,6 +23187,8 @@ type LocationConnection {
   edges: [LocationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22546,6 +23245,8 @@ type LocationCategoryConnection {
   edges: [LocationCategoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -22576,6 +23277,8 @@ type ManualJournal {
   currencyCode: String!
   totalDebit: Int!
   totalCredit: Int!
+  "Whether it has debits and they equal its credits."
+  isBalanced: Boolean!
   approvedAt: Timestamp
   approvedById: ID
   rejectedAt: Timestamp
@@ -22601,9 +23304,11 @@ type ManualJournalConnection {
   edges: [ManualJournalEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
-type ManualJournalCard {
+type ManualJournalCard @kind(resource: "manual_journal") {
   journal: ManualJournal!
   lines: [JournalCardLine!]!
   requestedPeriod: FiscalPeriod
@@ -22682,6 +23387,8 @@ type NotificationConnection {
   edges: [NotificationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 enum NotificationState {
@@ -22794,6 +23501,8 @@ type OrderConnection {
   edges: [OrderEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -23117,6 +23826,154 @@ extend type Mutation {
   revokeApprovalDelegation(id: ID!): ApprovalDelegation!
 }
 `, BuiltIn: false},
+	{Name: "../schema/page_access.graphqls", Input: `"""
+How a screen depends on one kind of record (docs/engineering/reference-views.md).
+"""
+enum PageAccessUse {
+  "The screen's route, or a REST endpoint it calls, checks the kind."
+  REQUIRED
+  "The screen reads records of the kind as root records, which needs the kind's read."
+  READ
+  "The screen asks for fields beyond the kind's reference view with @requiresRead."
+  DECLARED
+  "The screen shows the kind only through its reference view."
+  REFERENCE
+}
+
+"What the field guard does with one field of a linked record."
+enum PageAccessDecision {
+  VISIBLE
+  "Outside the kind's reference view, and the reader cannot read the kind."
+  WITHHELD_KIND
+  "Above the reader's sensitivity ceiling."
+  WITHHELD_SENSITIVITY
+}
+
+"A permission a screen's route or one of its REST endpoints checks."
+type PageAccessRequirement {
+  resource: String!
+  resourceName: String!
+  operation: String!
+  operationName: String!
+  allowed: Boolean!
+}
+
+"A REST endpoint a screen calls, and what its route checks before its handler."
+type PageAccessEndpoint {
+  method: String!
+  path: String!
+  requires: [PageAccessRequirement!]!
+}
+
+"""
+One field a screen selects on a linked record. A name written Type.field is a
+field of a record that is part of the kind, which has no view of its own.
+"""
+type PageAccessField {
+  name: String!
+  inView: Boolean!
+  decision: PageAccessDecision!
+}
+
+"One kind a screen depends on, and what the reader sees of it there."
+type PageAccessKind {
+  resource: String!
+  resourceName: String!
+  use: PageAccessUse!
+  canRead: Boolean!
+  fields: [PageAccessField!]!
+  withheld: Int!
+}
+
+"""
+What a screen needs and what a person or a role would see on it, from the
+page access manifest. It never carries record data.
+"""
+type PageAccess {
+  "The route the location is, such as /shipments/:id."
+  path: String!
+  "The screen's English name from the navigation, or empty."
+  name: String!
+  operations: [String!]!
+  requires: [PageAccessRequirement!]!
+  endpoints: [PageAccessEndpoint!]!
+  kinds: [PageAccessKind!]!
+  "How many selected fields of linked records come back null."
+  withheld: Int!
+  "The route, or a kind the screen reads as root records, is refused."
+  blocked: Boolean!
+}
+
+"A screen of the page access manifest."
+type PageAccessScreen {
+  path: String!
+  name: String!
+}
+
+input PageAccessDraftPermissionInput {
+  resource: String!
+  operations: [String!]!
+}
+
+"A role as the role editor holds it before it is saved."
+input PageAccessRoleDraftInput {
+  maxSensitivity: String!
+  parentRoleIds: [ID!]
+  permissions: [PageAccessDraftPermissionInput!]!
+}
+
+input PageAccessPreviewInput {
+  "A path in the app, such as /shipments/shp_123."
+  location: String!
+  "A saved role to preview. Exactly one of roleId and draft is set."
+  roleId: ID
+  "The role being edited."
+  draft: PageAccessRoleDraftInput
+}
+
+"A screen a resource's grant changes, and how it depends on the resource."
+type RoleResourceScreen {
+  path: String!
+  name: String!
+  use: PageAccessUse!
+}
+
+"""
+What granting and withholding a resource's read means, in sentences built from
+the permission registry, the resource's reference view and the kinds that link
+to it, translated for the request.
+"""
+type RoleResourceGuide {
+  resource: String!
+  name: String!
+  granted: String!
+  withheld: String!
+  "The view's fields above the role's sensitivity ceiling, or null when none are."
+  ceiling: String
+  screens: [RoleResourceScreen!]!
+}
+
+input RoleResourceGuideInput {
+  "At most 64 resources, such as one category of the role editor."
+  resources: [String!]!
+  maxSensitivity: String!
+}
+
+extend type Query {
+  """
+  The caller's own access to the screen at a location: what it needs, which
+  kinds they read, and which linked fields come back as reference view only.
+  Null when no screen is at the location.
+  """
+  pageAccess(location: String!): PageAccess
+  "What a person holding only a role would need and see on a screen."
+  pageAccessPreview(input: PageAccessPreviewInput!): PageAccess
+  "Every screen of the page access manifest, to choose one to preview."
+  pageAccessScreens: [PageAccessScreen!]!
+  "The role editor's sentences for each resource, with the screens it affects."
+  roleResourceGuides(input: RoleResourceGuideInput!): [RoleResourceGuide!]!
+}
+`, BuiltIn: false},
 	{Name: "../schema/performance_review.graphqls", Input: `enum PerformanceReviewStatus {
   Draft
   Submitted
@@ -23166,6 +24023,8 @@ type PerformanceReviewTemplateConnection {
   edges: [PerformanceReviewTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ReviewRating {
@@ -23417,6 +24276,8 @@ type PTOPolicyConnection {
   edges: [PTOPolicyEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerPTOPolicyAssignment {
@@ -23486,6 +24347,8 @@ type WorkerPTOLedgerConnection {
   edges: [WorkerPTOLedgerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type PTOAvailability {
@@ -23741,8 +24604,8 @@ type RateAgreement {
   autoRenew: Boolean!
   renewalNoticeDays: Int!
   currency: String!
-  defaultMinCharge: Decimal
-  defaultMaxCharge: Decimal
+  "Values every rule's tariff prices with unless the rule sets its own, by input name. Each value is a Tariff wire value."
+  inputs: JSON!
   marginFloorPercent: Decimal @protected(group: Margins)
   maxPayPercentOfSell: Decimal @protected(group: Margins)
   submittedById: ID
@@ -23751,9 +24614,85 @@ type RateAgreement {
   approvedAt: Timestamp
   reviewComment: String!
   currentVersionNumber: Int!
+  "The customer invoices for this agreement's freight go to, when not the party itself."
+  billToCustomerId: ID
+  """
+  The live lanes: active rules in force now or starting later, most specific
+  first. first takes at most 100.
+  """
+  lanes(first: Int = 50): [RateAgreementLane!]!
+  "How many live lanes the agreement holds."
+  laneCount: Int!
+  "Whether laneCount was counted; false when it is the planner's estimate of more lanes than it counts."
+  laneCountExact: Boolean!
+  "The accessorial schedule. Read by rateAgreement only."
+  accessorials: [RateAgreementAccessorial!]
+  "The fuel surcharge program the agreement prices fuel with. Read by rateAgreement only."
+  fuelBinding: RateAgreementFuelBinding
+  "The version of the header terms in force now. Read by rateAgreement only."
+  currentVersion: RateAgreementVersion
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"""
+One priced lane of a rate agreement: where it applies, when, and the tariff
+and inputs it prices with.
+"""
+type RateAgreementLane {
+  id: ID!
+  label: String!
+  originScopeType: String!
+  originScopeValue: String!
+  originCity: String!
+  destinationScopeType: String!
+  destinationScopeValue: String!
+  destinationCity: String!
+  direction: String!
+  priority: Int!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  hazmatOnly: Boolean!
+  tempControlOnly: Boolean!
+  "The tariff that prices the lane."
+  formulaTemplateId: ID!
+  currency: String!
+  "The values the lane's tariff prices with, by input name. Each value is a Tariff wire value."
+  inputs: JSON!
+}
+
+"An accessorial an agreement prices, and on what terms."
+type RateAgreementAccessorial {
+  id: ID!
+  accessorialChargeId: ID!
+  method: String!
+  rateUnit: String!
+  waived: Boolean!
+  autoApply: Boolean!
+  freeUnits: Int
+  effectiveFrom: Timestamp
+  effectiveTo: Timestamp
+  amount: Decimal!
+  maxAmount: Decimal
+  "The Tariff condition a shipment meets for the charge to apply; empty applies always."
+  condition: String!
+}
+
+"How an agreement prices fuel: the program it binds, or a waiver."
+type RateAgreementFuelBinding {
+  id: ID!
+  fuelSurchargeProgramId: ID!
+  waived: Boolean!
+}
+
+"The header terms of an agreement as they stood for a window."
+type RateAgreementVersion {
+  id: ID!
+  versionNumber: Int!
+  effectiveFrom: Timestamp!
+  effectiveTo: Timestamp
+  changeMessage: String!
 }
 
 type RateAgreementEdge {
@@ -23765,6 +24704,8 @@ type RateAgreementConnection {
   edges: [RateAgreementEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -23794,11 +24735,15 @@ type RateZoneConnection {
   edges: [RateZoneEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
-A multi-dimensional rate table — origin zone by destination zone by weight break
-by class, and any subset of that.
+A rate table a tariff looks values up in: one to four axes, such as origin zone
+by destination zone, and a value of one Tariff type in every cell. The matrix
+is a draft that editors change; approving a submitted draft publishes it as the
+next numbered version, which formula template versions pin.
 """
 type RateMatrix {
   id: ID!
@@ -23807,18 +24752,130 @@ type RateMatrix {
   code: String!
   name: String!
   description: String!
-  status: String!
   """
-  The formula template that says what a cell's number means. The same grid is a
-  per-mile tariff or a flat table depending on which template prices it, so the
-  list has to show it — the numbers alone do not say.
+  Draft while it has unpublished changes, InReview once submitted, Active when
+  the draft is the newest published version, Inactive once archived.
   """
-  formulaTemplateId: ID!
-  formulaTemplateName: String!
-  currency: String!
+  status: FormulaTemplateStatus!
+  "What a cell holds, as a Tariff type: Money, Money/<unit>, Percent, Number or Int."
+  valueType: String!
+  "The draft's axes, by position. Read by rateMatrix only."
+  dimensions: [RateMatrixDimension!]
+  "How many cells the draft holds."
+  cellCount: Int!
+  """
+  The draft's cells, a page at a time: offset skips that many, and limit takes
+  at most 100.
+  """
+  cells(
+    "Skip this many cells, in the matrix's order, for the page after them."
+    offset: Int = 0
+    "At most this many cells."
+    limit: Int = 100
+  ): [RateMatrixCell!]!
+  "The newest published version, which tariffs read by default; 0 before the first."
+  publishedVersionNumber: Int!
+  publishedAt: Timestamp
+  "Whether the draft differs from the newest published version."
+  hasDraftChanges: Boolean!
+  submittedById: ID
+  submittedAt: Timestamp
+  approvedById: ID
+  approvedAt: Timestamp
+  reviewComment: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
+}
+
+"A published, immutable version of a rate matrix. Formula template versions pin one per table they read."
+type RateMatrixVersion {
+  id: ID!
+  rateMatrixId: ID!
+  versionNumber: Int!
+  code: String!
+  name: String!
+  description: String!
+  valueType: String!
+  "The version's axes, by position."
+  dimensions: [RateMatrixDimension!]!
+  cellCount: Int!
+  """
+  The version's cells, a page at a time: offset skips that many, and limit
+  takes at most 100.
+  """
+  cells(offset: Int = 0, limit: Int = 100): [RateMatrixCell!]!
+  "The reviewer's comment when it was published."
+  changeMessage: String!
+  submittedById: ID
+  publishedById: ID
+  publishedBy: User
+  createdAt: Timestamp!
+}
+
+"One step of a rate matrix draft's review: who did what, in which round, against which published version."
+type RateMatrixReview {
+  id: ID!
+  rateMatrixId: ID!
+  round: Int!
+  decision: FormulaReviewDecision!
+  actorId: ID
+  actor: User
+  comment: String!
+  baseVersionNumber: Int!
+  requestedReviewerId: ID
+  requestedReviewer: User
+  reviewerNote: String!
+  createdAt: Timestamp!
+}
+
+"A formula template version that pins a version of a rate matrix."
+type RateMatrixUsage {
+  templateId: ID!
+  templateName: String!
+  templateStatus: FormulaTemplateStatus!
+  templateVersion: Int!
+  versionStatus: FormulaTemplateStatus!
+  matrixVersionNumber: Int!
+}
+
+"One axis of a rate matrix: what it keys on and how a value matches it."
+type RateMatrixDimension {
+  id: ID!
+  position: Int!
+  kind: String!
+  matchMode: String!
+  label: String!
+  keyNormalization: String!
+  rangeOverflow: String!
+}
+
+"""
+One cell of a rate matrix: a key or a range on each axis, by position (d0 is
+the first axis), and the value it holds. On a ZipRange axis the key is the
+range's first postal code and keyTo its last, both inclusive.
+"""
+type RateMatrixCell {
+  id: ID!
+  d0Key: String!
+  d1Key: String!
+  d2Key: String!
+  d3Key: String!
+  d0KeyTo: String!
+  d1KeyTo: String!
+  d2KeyTo: String!
+  d3KeyTo: String!
+  d0Min: Decimal
+  d0Max: Decimal
+  d1Min: Decimal
+  d1Max: Decimal
+  d2Min: Decimal
+  d2Max: Decimal
+  d3Min: Decimal
+  d3Max: Decimal
+  deficitEligible: Boolean!
+  value: Decimal!
+  minCharge: Decimal
 }
 
 type RateMatrixEdge {
@@ -23830,6 +24887,8 @@ type RateMatrixConnection {
   edges: [RateMatrixEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -23873,12 +24932,29 @@ type RateQuoteConnection {
   edges: [RateQuoteEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
   rateAgreements(input: DataTableConnectionInput!): RateAgreementConnection!
+  """
+  One rate agreement with its accessorials, fuel binding and current version;
+  its lanes are read a page at a time.
+  """
+  rateAgreement(id: ID!): RateAgreement
   rateZones(input: DataTableConnectionInput!): RateZoneConnection!
   rateMatrices(input: DataTableConnectionInput!): RateMatrixConnection!
+  "One rate matrix with its draft's axes; its cells are read a page at a time."
+  rateMatrix(id: ID!): RateMatrix
+  "A rate matrix's published versions, newest first."
+  rateMatrixVersions(rateMatrixId: ID!, first: Int): [RateMatrixVersion!]!
+  "One published version of a rate matrix with its axes; its cells are read a page at a time."
+  rateMatrixVersion(rateMatrixId: ID!, versionNumber: Int!): RateMatrixVersion
+  "A rate matrix draft's review history, newest first."
+  rateMatrixReviews(rateMatrixId: ID!): [RateMatrixReview!]!
+  "The formula template versions that pin a rate matrix, or one of its versions."
+  rateMatrixUsages(rateMatrixId: ID!, versionNumber: Int): [RateMatrixUsage!]!
   rateQuotes(input: DataTableConnectionInput!): RateQuoteConnection!
 }
 `, BuiltIn: false},
@@ -23941,6 +25017,8 @@ type RecurringShipmentConnection {
   edges: [RecurringShipmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -23956,26 +25034,86 @@ type ReportCatalogEnumValue {
 }
 
 type ReportCatalogField {
+  "The field's key in a definition path, such as customer.name."
   key: String!
   label: String!
   description: String
+  "The value type: string, int, decimal, float, bool, date, timestamp, epoch, enum or json."
   type: String!
+  "The display kind the field carries, such as money, weight or percent."
   format: String
-  nullable: Boolean!
+  "Whether reports aggregate the field by default rather than group by it."
+  measure: Boolean!
   enumValues: [ReportCatalogEnumValue!]!
   aggregations: [String!]!
+  "The filter operators a condition on the field can use, in builder order."
+  operators: [String!]!
   filterable: Boolean!
   groupable: Boolean!
-  accessible: Boolean!
+  "Whether the caller may use the field in a report and, when not, what they lack."
+  access: ReportFieldAccess!
+  """
+  Whether the field is in its kind's reference view, so a report can show it
+  through a join from a record the caller reads without the kind's own read.
+  """
+  inReferenceView: Boolean!
+  "The protected field group the field belongs to, and whether the caller holds it."
+  protection: ReportFieldProtection
   sensitivity: String!
 }
 
+"""
+Whether a caller may use a catalog field or edge in a report, decided by the
+policy the report engine applies, so a field marked Available compiles and
+any other is refused.
+"""
+enum ReportFieldAccess {
+  "The caller may use it."
+  Available
+  """
+  It is outside its kind's reference view, and the caller cannot read the
+  kind. Through a join, only the kind's reference-view fields can be used.
+  """
+  NeedsKindRead
+  "It is ranked above the caller's sensitivity ceiling."
+  WithheldByCeiling
+  "It is in a protected field group the caller's role does not grant."
+  NeedsFieldGroup
+}
+
+type ReportFieldProtection {
+  group: ProtectedFieldGroup!
+  "Whether the caller's role grants the group."
+  held: Boolean!
+}
+
 type ReportCatalogEdge {
+  "The edge's name in a definition path."
   name: String!
   label: String!
+  description: String
+  "The key of the entity the edge leads to."
   target: String!
-  cardinality: String!
-  traversable: Boolean!
+  "Whether the edge leads to many records, so its fields are aggregated."
+  toMany: Boolean!
+  "Whether the edge picks one record of a list, such as a shipment's first stop."
+  pick: Boolean!
+  "Whether the caller may follow the edge in a report and, when not, what they lack."
+  access: ReportFieldAccess!
+  "Whether the edge is in its source kind's reference view."
+  inReferenceView: Boolean!
+  """
+  The kind whose read the caller lacks to follow the edge, when access is
+  NeedsKindRead.
+  """
+  needsReadOf: ReportCatalogKind
+}
+
+"A kind of record, as the report catalog names it."
+type ReportCatalogKind {
+  resource: String!
+  "The kind's plural label, such as Customers."
+  label: String!
 }
 
 type ReportCatalogEntity {
@@ -23986,12 +25124,32 @@ type ReportCatalogEntity {
   description: String
   category: String!
   ownScopeSupported: Boolean!
+  """
+  Whether the caller may read the kind. A report starts only from a kind the
+  caller reads; one they cannot read is reached through a join, and only its
+  reference-view fields are available.
+  """
+  readable: Boolean!
+  "Whether a run may export the kind's own fields."
+  exportable: Boolean!
   fields: [ReportCatalogField!]!
   edges: [ReportCatalogEdge!]!
 }
 
+"""
+The report catalog as the caller may use it: every kind they can read, and
+every kind they cannot read that they can still reach through a join, with
+only its reference-view fields available.
+"""
 type ReportCatalog {
   version: String!
+  """
+  The engine's rules a builder offers: operators per value type with their
+  operands, having operators, aggregations, date buckets, transforms, bands,
+  window functions, chart types, the display vocabulary, formula functions and
+  operators, column naming and definition limits.
+  """
+  rules: JSON!
   entities: [ReportCatalogEntity!]!
 }
 
@@ -24042,6 +25200,8 @@ type ReportDefinitionConnection {
   edges: [ReportDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ReportDefinitionRevision {
@@ -24062,7 +25222,7 @@ type ReportRunError {
   detail: String
 }
 
-type ReportRun {
+type ReportRun @kind(resource: "report") {
   id: ID!
   definitionId: ID
   revisionId: ID
@@ -24077,8 +25237,11 @@ type ReportRun {
   byteSize: Int!
   durationMs: Int!
   truncated: Boolean!
+  "Whether the run's rows were stored, so it can be compared with another run."
+  rowsStored: Boolean!
   error: ReportRunError
   artifactExpiresAt: Timestamp
+  "Whether the run's rows came from the report result cache rather than a statement."
   cacheHit: Boolean!
   queuedAt: Timestamp
   startedAt: Timestamp
@@ -24096,6 +25259,8 @@ type ReportRunConnection {
   edges: [ReportRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 # --- Report schedules --------------------------------------------------------
@@ -24112,7 +25277,7 @@ type ReportScheduleAlert {
   suppressWhileFiring: Boolean!
 }
 
-type ReportSchedule {
+type ReportSchedule @kind(resource: "report") {
   id: ID!
   definitionId: ID!
   cronExpression: String!
@@ -24126,6 +25291,8 @@ type ReportSchedule {
   alertFiring: Boolean!
   enabled: Boolean!
   runAsId: ID!
+  "Whether the person reading set the schedule up, and so may change or remove it."
+  mine: Boolean!
   lastRunId: ID
   nextRunAt: Timestamp
   consecutiveFailures: Int!
@@ -24183,245 +25350,36 @@ type ReportColumnDisplay {
   nullText: String!
   rules: [ReportDisplayRule!]!
   band: ReportBand
+  "Labels for enum values, by value."
+  labels: JSON
 }
 
 type ReportPreviewColumn {
   id: String!
   label: String!
   type: String!
-  format: String
   display: ReportColumnDisplay!
+  "The highest sensitivity of the fields the column reads."
+  sensitivity: String
 }
 
 type ReportPreview {
   columns: [ReportPreviewColumn!]!
+  "Detail and subtotal rows, each an array of values in column order."
   rows: Any!
+  """
+  Each row's grouping level: 0 for a detail row, and n for a subtotal that
+  rolls up the n innermost grouping columns.
+  """
+  levels: [Int!]!
+  "The grand total row, when the report asks for one."
   totals: Any
   truncated: Boolean!
-}
-
-# --- Desk report run card ---------------------------------------------------
-
-"""
-A report run as the Desk draws it: the run, the report it ran with the
-parameters it ran with, a bounded sample of its result and the person's
-previous run of the same report to compare it with.
-"""
-type ReportRunDeskCard {
-  run: ReportRun!
-  report: ReportRunDeskReport!
-  parameters: [ReportRunDeskParameter!]!
-  "The organization's time zone, in which the sample's dates and the parameter windows are written."
+  "The cursor of the next page when the preview was paged and more rows follow."
+  cursor: String
   timezone: String!
-  """
-  The columns, first rows and grand totals of the result. Absent while the run
-  is going, for a run that finished before samples were kept, after the run
-  expired, and when the result is withheld.
-  """
-  sample: ReportRunSample
-  """
-  Why a finished run's result is not shown: access (the person can no longer
-  read everything it shows) or changed (the report no longer runs as it did).
-  """
-  withheld: String
-  "The person's previous finished run of the same report with the same parameters."
-  previous: ReportRunDeskPrevious
-  "The schedule the run came from."
-  schedule: ReportSchedule
-  "The report's first chart, which decides how the result is pictured."
-  chart: ReportRunDeskChart
-  sort: [ReportRunDeskSort!]!
-}
-
-type ReportRunDeskReport {
-  name: String!
-  description: String!
-  category: String!
-  definitionId: ID
-  cannedKey: String
-}
-
-type ReportRunDeskParameter {
-  name: String!
-  label: String!
-  type: String!
-  value: Any
-  "The run did not set it, so it took the report's default."
-  isDefault: Boolean!
-  refEntity: String
-  "The range a relative or date-range parameter filtered on, as of when the run started."
-  windowStart: Timestamp
-  windowEnd: Timestamp
-}
-
-type ReportRunSample {
-  columns: [ReportPreviewColumn!]!
-  "Rows as arrays in column order: decimals as exact strings, dates as epoch seconds."
-  rows: Any!
-  totals: Any
-  "The result holds more rows than the sample."
-  more: Boolean!
-}
-
-type ReportRunDeskPrevious {
-  runId: ID!
-  completedAt: Timestamp!
-  rowCount: Int!
-  "The column each total belongs to, so totals are compared by column and not by position."
-  columnIds: [String!]!
-  totals: Any!
-}
-
-type ReportRunDeskChart {
-  type: String!
-  xColumnId: String
-  seriesIds: [String!]!
-}
-
-type ReportRunDeskSort {
-  columnId: String!
-  direction: String!
-}
-
-# --- IR inputs ---------------------------------------------------------------
-
-input ReportFieldRefInput {
-  path: [String!]
-  field: String!
-}
-
-input ReportComputedInput {
-  op: String!
-  leftId: String
-  rightId: String
-  leftValue: Float
-  rightValue: Float
-  format: String
-}
-
-input ReportTransformInput {
-  op: String!
-  precision: Int
-  factor: Float
-}
-
-input ReportDisplayRuleInput {
-  op: String!
-  value: Float!
-  upper: Float
-  tone: String!
-}
-
-input ReportDisplayInput {
-  style: String
-  decimals: Int
-  grouping: Boolean
-  currency: String
-  negative: String
-  notation: String
-  prefix: String
-  suffix: String
-  dateStyle: String
-  boolStyle: String
-  durationUnit: String
-  durationStyle: String
-  nullText: String
-  rules: [ReportDisplayRuleInput!]
-}
-
-input ReportBandInput {
-  width: Float
-  edges: [Float!]
-}
-
-input ReportColumnInput {
-  id: String!
-  ref: ReportFieldRefInput
-  kind: String!
-  agg: String
-  bucket: String
-  band: ReportBandInput
-  label: String
-  computed: ReportComputedInput
-  transform: ReportTransformInput
-  display: ReportDisplayInput
-  filter: ReportFilterGroupInput
-}
-
-input ReportChartGoalInput {
-  value: Float
-  columnId: String
-  label: String
-}
-
-input ReportChartInput {
-  id: String!
-  type: String!
-  title: String
-  xColumnId: String
-  seriesIds: [String!]
-  stacked: Boolean
-  hideLegend: Boolean
-  showValues: Boolean
-  curved: Boolean
-  limit: Int
-  compareId: String
-  goal: ReportChartGoalInput
-  latColumnId: String
-  lngColumnId: String
-  labelColumnId: String
-}
-
-input ReportFilterInput {
-  ref: ReportFieldRefInput!
-  operator: String!
-  value: Any
-  param: String
-  agg: String
-  transform: ReportTransformInput
-}
-
-input ReportFilterGroupInput {
-  op: String!
-  filters: [ReportFilterInput!]
-  groups: [ReportFilterGroupInput!]
-}
-
-input ReportSortInput {
-  columnId: String!
-  direction: String!
-}
-
-input ReportPivotInput {
-  ref: ReportFieldRefInput!
-  values: [String!]!
-  labels: [String!]
-  measureIds: [String!]!
-  includeOther: Boolean
-}
-
-input ReportParameterDefInput {
-  name: String!
-  label: String
-  type: String!
-  required: Boolean
-  default: Any
-  multi: Boolean
-  allowedValues: [String!]
-  refEntity: String
-}
-
-input ReportIRInput {
-  entity: String!
-  columns: [ReportColumnInput!]!
-  filters: ReportFilterGroupInput
-  having: ReportFilterGroupInput
-  sort: [ReportSortInput!]
-  limit: Int
-  pivot: ReportPivotInput
-  parameters: [ReportParameterDefInput!]
-  totals: Boolean
-  charts: [ReportChartInput!]
+  "The rollup that answered the report instead of the base tables, when one did."
+  rollup: String
 }
 
 input ReportDrillValueInput {
@@ -24430,10 +25388,13 @@ input ReportDrillValueInput {
 }
 
 input ReportDrillInput {
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
   params: JSON
   dimensions: [ReportDrillValueInput!]!
   columnId: String
+  "The pivot values of the cell drilled into, when the report pivots."
+  pivotValues: [String!]
   limit: Int
 }
 
@@ -24445,7 +25406,8 @@ input SaveReportDefinitionInput {
   visibility: String
   status: String
   defaultFormat: String
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
 }
 
 input UpdateReportDefinitionInput {
@@ -24458,7 +25420,8 @@ input UpdateReportDefinitionInput {
   visibility: String
   status: String
   defaultFormat: String
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
 }
 
 input RunReportInput {
@@ -24574,18 +25537,35 @@ input ReportDashboardTileInput {
   paramBindings: JSON
 }
 
+"A dashboard filter applied to every tile whose report starts from its entity."
 input ReportDashboardFilterInput {
   id: String!
   label: String
   entity: String!
-  ref: ReportFieldRefInput!
-  operator: String!
+  "The filtered field's path from the entity."
+  field: String!
+  op: String!
   default: Any
+}
+
+"A parameter a dashboard asks for once and binds to its tiles' report parameters."
+input ReportParameterInput {
+  name: String!
+  label: String
+  "The value type: string, int, decimal, float, bool, date, timestamp, epoch or enum."
+  type: String!
+  required: Boolean
+  multi: Boolean
+  default: Any
+  "The values the parameter may take, when it is limited to a list."
+  allowed: [Any!]
+  "The entity whose records the parameter picks, for a record picker."
+  entity: String
 }
 
 input ReportDashboardLayoutInput {
   tiles: [ReportDashboardTileInput!]!
-  parameters: [ReportParameterDefInput!]
+  parameters: [ReportParameterInput!]
   filters: [ReportDashboardFilterInput!]
 }
 
@@ -24611,6 +25591,81 @@ input UpdateReportDashboardInput {
 
 # --- Operations --------------------------------------------------------------
 
+# --- Desk report run card ---------------------------------------------------
+
+"""
+A report run as the Desk draws it: the run, the report it ran with the
+parameters it ran with, a sample of its result and the person's previous run
+of the same report to compare it with.
+"""
+type ReportRunDeskCard {
+  run: ReportRun!
+  report: ReportRunDeskReport!
+  parameters: [ReportRunDeskParameter!]!
+  "The organization's time zone, in which the parameter windows are written."
+  timezone: String!
+  """
+  The first rows and the grand total of the result, as a preview carries them.
+  Absent while the run is going, for a run that finished before samples were
+  kept, after the run expired, and when the result is withheld.
+  """
+  sample: ReportPreview
+  """
+  Why a finished run's result is not shown: access (the person can no longer
+  read everything it shows) or changed (the report no longer runs as it did).
+  """
+  withheld: String
+  "The person's previous finished run of the same report with the same parameters."
+  previous: ReportRunDeskPrevious
+  "The schedule the run came from."
+  schedule: ReportSchedule
+  "The report's first chart, which decides how the result is pictured."
+  chart: ReportRunDeskChart
+  sort: [ReportRunDeskSort!]!
+}
+
+type ReportRunDeskReport {
+  name: String!
+  description: String!
+  category: String!
+  definitionId: ID
+  cannedKey: String
+}
+
+type ReportRunDeskParameter {
+  name: String!
+  label: String!
+  type: String!
+  value: Any
+  "The run did not set it, so it took the report's default."
+  isDefault: Boolean!
+  "The kind of record the parameter's values are ids of."
+  entity: String
+  "The range a relative date parameter filtered on, as of when the run started."
+  windowStart: Timestamp
+  windowEnd: Timestamp
+}
+
+type ReportRunDeskPrevious {
+  runId: ID!
+  completedAt: Timestamp!
+  rowCount: Int!
+  "The column each total belongs to, so totals are compared by column and not by position."
+  columnIds: [String!]!
+  totals: Any!
+}
+
+type ReportRunDeskChart {
+  type: String!
+  x: String
+  series: [String!]!
+}
+
+type ReportRunDeskSort {
+  column: String!
+  desc: Boolean!
+}
+
 extend type Query {
   reportCatalog: ReportCatalog!
   cannedReports: [CannedReport!]!
@@ -24624,12 +25679,23 @@ extend type Query {
     filter: ReportRunsFilterInput
   ): ReportRunConnection!
   previewReport(
-    definition: ReportIRInput!
+    "A report definition in keel analytics IR version 2."
+    definition: JSON!
     params: JSON
     supersede: Boolean
+    "The cursor of the page to read, from the previous page's cursor."
+    cursor: String
+    "Rows per page; the preview is paged when set."
+    pageSize: Int
   ): ReportPreview!
   drillThroughReport(input: ReportDrillInput!): ReportPreview!
-  reportSchedules(definitionId: ID): [ReportSchedule!]!
+  reportSchedules(
+    definitionId: ID
+    "Only schedules that are switched on."
+    enabledOnly: Boolean
+    "At most this many schedules, from 1 to 100. Every schedule of a named report when left out; 20 across the organization."
+    limit: Int
+  ): [ReportSchedule!]!
   reportViews(definitionId: ID): [ReportView!]!
   reportView(id: ID!): ReportView!
   reportDashboards: [ReportDashboard!]!
@@ -24728,6 +25794,8 @@ type RoleConnection {
   edges: [RoleEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -24785,6 +25853,8 @@ type RoutingGuideConnection {
   edges: [RoutingGuideEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input MatchRoutingGuideInput {
@@ -24883,7 +25953,7 @@ input ShiftTemplateInput {
 }
 
 "Which pattern a worker is on, for which period."
-type WorkerShiftAssignment {
+type WorkerShiftAssignment @kind(resource: "worker_schedule") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -24911,7 +25981,7 @@ input AssignShiftInput {
 }
 
 "What a worker would rather work on one weekday, 0 for Sunday."
-type WorkerAvailabilityPreference {
+type WorkerAvailabilityPreference @kind(resource: "worker_schedule") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -24932,7 +26002,7 @@ input SetAvailabilityPreferenceInput {
 }
 
 "One driver asking another to take a day."
-type ShiftSwapRequest {
+type ShiftSwapRequest @kind(resource: "shift_swap") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -25035,9 +26105,18 @@ input RotaFilterInput {
 }
 
 extend type Query {
-  shiftTemplates(activeOnly: Boolean, limit: Int): [ShiftTemplate!]!
+  shiftTemplates(
+    "Only the patterns in use, leaving out the retired ones."
+    activeOnly: Boolean
+    "At most this many patterns, from 1 to 200; 200 when left out."
+    limit: Int
+  ): [ShiftTemplate!]!
   shiftTemplate(id: ID!): ShiftTemplate!
-  workerShiftAssignments(workerId: ID!, activeOnly: Boolean): [WorkerShiftAssignment!]!
+  workerShiftAssignments(
+    workerId: ID!
+    "Only the pattern the worker is on today, leaving out past and future ones."
+    activeOnly: Boolean
+  ): [WorkerShiftAssignment!]!
   workerAvailabilityPreferences(workerId: ID!): [WorkerAvailabilityPreference!]!
   shiftSwapRequests(
     workerId: ID
@@ -25084,6 +26163,8 @@ type SCIMGroupRoleMappingConnection {
   edges: [SCIMGroupRoleMappingEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -25127,6 +26208,8 @@ type AuthEventConnection {
   edges: [AuthEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "What the risk checks decided about a sign-in."
@@ -25151,6 +26234,8 @@ type RiskDecisionConnection {
   edges: [RiskDecisionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "An account at an identity provider linked to a person here."
@@ -25177,6 +26262,8 @@ type ExternalIdentityConnection {
   edges: [ExternalIdentityEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A second factor a person has enrolled. Its secret never leaves the server."
@@ -25204,6 +26291,8 @@ type MFAAuthenticatorConnection {
   edges: [MFAAuthenticatorEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type SCIMDirectory {
@@ -25225,6 +26314,8 @@ type SCIMDirectoryConnection {
   edges: [SCIMDirectoryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -25261,6 +26352,7 @@ extend type Query {
   GL_ACCOUNT
   IFTA_FUEL_TYPE
   HAZARDOUS_MATERIAL
+  JOURNAL_ENTRY
   LOCATION
   LOCATION_CATEGORY
   ORDER
@@ -25282,8 +26374,6 @@ extend type Query {
   EDI_DOCUMENT_TYPE
   EDI_MAPPING_PROFILE
   EDI_PARTNER
-  EDI_PARTNER_DOCUMENT_PROFILE
-  EDI_TEMPLATE
   EDI_TRANSACTION_SET
   EMAIL_PROFILE
   SHIFT_TEMPLATE
@@ -25325,6 +26415,8 @@ type SelectOptionConnection {
   edges: [SelectOptionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -25582,6 +26674,8 @@ type ServiceFailureConnection {
   edges: [ServiceFailureEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -25647,6 +26741,8 @@ type ServiceFailureReasonCodeConnection {
   edges: [ServiceFailureReasonCodeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -25680,6 +26776,8 @@ type ServiceTypeConnection {
   edges: [ServiceTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -25727,7 +26825,10 @@ without the grant receives null for every field in the set.
 enum ProtectedFieldGroup {
   "A worker's date of birth, licence, TWIC and credential numbers, and drug test dates."
   Personal
-  "The margin floor and pay ceiling a rate agreement sets against the sell price."
+  """
+  Every margin figure: a margin, a margin percent, a margin floor or target, and
+  the cost beside a revenue that would give the margin away.
+  """
   Margins
 }
 
@@ -25929,6 +27030,8 @@ type ShipmentConnection {
   edges: [ShipmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "Who is expected to pay the carrier, as printed on the bill of lading."
@@ -26009,12 +27112,14 @@ type Shipment {
   ownerId: ID
   enteredById: ID
   canceledById: ID
-  formulaTemplateId: ID!
+  "The tariff that rates the shipment. Null when it is rated by hand."
+  formulaTemplateId: ID
   consolidationGroupId: ID
   orderId: ID
   orderNumber: String
   orderStatus: OrderStatus
-  profitabilityEstimate: ShipmentProfitabilityEstimate
+  "The shipment's estimated cost and margin. Null to a reader without the margins field group."
+  profitabilityEstimate: ShipmentProfitabilityEstimate @protected(group: Margins)
   status: ShipmentStatus!
   tenderStatus: ShipmentTenderStatus
   entryMethod: ShipmentEntryMethod
@@ -26024,8 +27129,12 @@ type Shipment {
   externalReference: String
   cancelReason: String!
   otherChargeAmount: Decimal!
+  "The sum of the freight lines."
   freightChargeAmount: Decimal!
-  baseRate: Decimal!
+  "The values the shipment's tariff prices with, by input name. Each value is a Tariff wire value."
+  tariffInputs: JSON!
+  "The freight the shipment bills, line by line, as its last rating produced it."
+  freightLines: [ShipmentFreightLine!]!
   totalChargeAmount: Decimal!
   pieces: Int
   weight: Int
@@ -26038,12 +27147,11 @@ type Shipment {
   transferredToBillingAt: Timestamp
   markedReadyToBillAt: Timestamp
   billedAt: Timestamp
-  ratingUnit: Int!
   fuelSurchargeLocked: Boolean!
   ratingDetail: ShipmentRatingDetail
   """
   Whether this shipment still carries the rate its contract applied. It goes
-  false the moment somebody edits the rating method, the base rate, or one of
+  false the moment somebody edits the tariff, its inputs, or one of
   the contract's own accessorial charges.
   """
   autoRated: Boolean!
@@ -26077,22 +27185,96 @@ type Shipment {
   billingSplitSummary: [ShipmentBillingSplitSummary!]!
 }
 
-"One line of the arithmetic that produced the rate, in the order it was applied."
-type ShipmentRatingBreakdownItem {
-  name: String!
+"One freight line of a shipment's bill."
+type ShipmentFreightLine {
   label: String!
-  amount: Float!
-  "Set when the line could not be evaluated, in which case the amount is zero."
-  error: String!
+  quantity: Decimal
+  "The quantity's unit, such as mi or cwt."
+  quantityUnit: String!
+  rate: Decimal
+  "The rate's unit, such as $/mi."
+  rateUnit: String!
+  amount: Decimal!
 }
 
-"A bound that changed the answer — a minimum or maximum charge that took over from the computed rate."
-type ShipmentRatingGuardrail {
-  applied: Boolean!
-  bound: String!
-  rawResult: Float!
-  minCharge: Float
-  maxCharge: Float
+"One line of a bill a tariff produced. Freight lines have no code; accessorial lines carry their catalog code."
+type TariffBillLine {
+  "Charge, Minimum, Maximum or Rounding."
+  kind: String!
+  label: String!
+  code: String!
+  quantity: Decimal
+  quantityUnit: String!
+  rate: Decimal
+  rateUnit: String!
+  amount: Decimal!
+  "Set when the charge's own minimum or maximum changed its amount."
+  limit: TariffLineLimit
+  "freight on the adjustment of a minimum or maximum that bounds the freight lines; empty otherwise."
+  on: String!
+}
+
+"How a charge's own minimum or maximum changed its amount."
+type TariffLineLimit {
+  "Minimum or Maximum."
+  kind: String!
+  "The amount the charge came to before its limit."
+  computed: Decimal!
+}
+
+"The conversion a bill was priced through when the tariff's currency differs from the billing currency."
+type TariffBillExchange {
+  currency: String!
+  rate: Decimal!
+}
+
+"The bill a tariff produced for a shipment."
+type TariffBill {
+  currency: String!
+  lines: [TariffBillLine!]!
+  notes: [String!]!
+  """
+  What the tariff asks a person to check before the shipment bills. A shipment whose
+  bill has reviews is rated but held out of billing until a person approves the rating.
+  """
+  reviews: [String!]!
+  freightTotal: Decimal!
+  accessorialTotal: Decimal!
+  total: Decimal!
+  exchange: TariffBillExchange
+}
+
+"One method a choice weighed: what it would have billed, or why it did not apply."
+type TariffChoiceOption {
+  label: String!
+  "chosen when the choice kept this option, lost when another won, refused when it did not apply."
+  status: String!
+  "The exact sum of the charge lines the option billed, before rounding. Null when it refused."
+  subtotal: Decimal
+  "Why the option did not apply, in the reader's language when the engine wrote it. Null unless it refused."
+  refusal: String
+}
+
+"""
+A best or worst block the tariff evaluated: the methods it weighed and the one it
+kept. A choice inside a loop appears once for each time it ran.
+"""
+type TariffChoice {
+  label: String!
+  "best keeps the lowest subtotal, worst the highest."
+  kind: String!
+  "The currency the subtotals are in: the tariff's own, before any conversion the bill shows."
+  currency: String!
+  "The label of the option kept. Null when every option refused."
+  chosen: String
+  options: [TariffChoiceOption!]!
+}
+
+"A charge the shipment's other engines left out because the tariff already billed its code."
+type ShipmentRatingSkip {
+  code: String!
+  "RateAgreement, Detention or FuelSurcharge."
+  source: String!
 }
 
 """
@@ -26105,15 +27287,23 @@ and copying it here would let the two drift.
 type ShipmentRatingDetail {
   formulaTemplateId: String!
   formulaTemplateName: String!
-  expression: String!
-  "Formula variables are user-defined by formula templates, so keys and values are intentionally open-ended."
-  resolvedVariables: JSON!
-  result: Float!
   ratedAt: Timestamp!
-  "Zero when the rate did not come from a versioned formula template."
+  "The template version that rated the shipment. Zero when it was rated by hand."
   versionNumber: Int!
-  breakdown: [ShipmentRatingBreakdownItem!]!
-  guardrail: ShipmentRatingGuardrail
+  "The bill the tariff produced. Null when the tariff refused or the shipment is rated by hand."
+  bill: TariffBill
+  "The tariff's reason for refusing to rate the shipment."
+  refusal: String!
+  "Every best and worst the tariff evaluated, in the order they ran."
+  choices: [TariffChoice!]!
+  "The inputs the tariff priced with, by name. Each value is a Tariff wire value."
+  inputs: JSON!
+  skipped: [ShipmentRatingSkip!]!
+  """
+  The values each statement of the tariff took and the table lookups it made, for the
+  people who may read formula templates. Null for everyone else and for a hand rate.
+  """
+  trace: JSON
   rateQuoteId: String!
   agreementId: String!
   agreementName: String!
@@ -26122,6 +27312,21 @@ type ShipmentRatingDetail {
   "The rating outcome — Rated, FormulaFallback, ManualOverride, NoRateFound."
   source: String!
   explanation: String!
+  "True while the bill's reviews wait on a person's approval, which holds the shipment out of billing."
+  awaitingReview: Boolean!
+  "Who approved the reviews this rating carries, and when. Null until a person approves them."
+  reviewApproval: ShipmentRatingReviewApproval
+}
+
+"""
+A person's approval of the reviews a tariff asked for. A re-rate that comes back with the
+same reviews keeps it; different reviews hold the shipment again.
+"""
+type ShipmentRatingReviewApproval {
+  reviews: [String!]!
+  approvedById: ID!
+  approvedAt: Timestamp!
+  approvedBy: User
 }
 
 """
@@ -26137,27 +27342,37 @@ type ShipmentContractRate {
   agreementName: String!
   ruleId: ID
   ruleLabel: String!
-  "The rating method the contract seats on the shipment."
+  "The tariff the contract seats on the shipment."
   formulaTemplateId: ID
   formulaTemplateName: String!
-  "The rate that method prices with. Null when the rule defers to the shipment."
-  baseRate: Decimal
-  linehaulAmount: Decimal!
+  templateVersion: Int!
+  "The inputs the contract prices with, by name. Each value is a Tariff wire value."
+  inputs: JSON!
+  "The tariff's reason for refusing to rate the shipment."
+  refusal: String!
+  freightLines: [ShipmentFreightLine!]!
+  freightAmount: Decimal!
   otherChargeAmount: Decimal!
   totalChargeAmount: Decimal!
-  "What the shipment charged before, so a dialog can state the change."
-  previousLinehaulAmount: Decimal!
-  accessorials: [ShipmentContractRateAccessorial!]!
+  "What the shipment charged for freight before, so a dialog can state the change."
+  previousFreightAmount: Decimal!
+  "The accessorials the contract bills: the tariff's own coded lines and the agreement's schedule."
+  charges: [ShipmentContractRateCharge!]!
   explanation: String!
 }
 
-"One charge a contract applies automatically to every shipment it prices."
-type ShipmentContractRateAccessorial {
+"One accessorial a contract bills on a shipment it prices."
+type ShipmentContractRateCharge {
   accessorialChargeId: ID!
+  code: String!
   description: String!
-  method: AccessorialMethod!
+  "Tariff when the tariff billed it, RateAgreement when the agreement's schedule did."
+  owner: String!
+  label: String!
   amount: Decimal!
-  unit: Int!
+  quantity: Decimal
+  rate: Decimal
+  rateUnit: String!
 }
 
 "The result of re-rating a saved shipment from its contract."
@@ -26202,11 +27417,10 @@ type ShipmentFormulaTemplate {
   businessUnitId: ID!
   name: String!
   description: String!
-  type: String!
-  expression: String!
+  "The formula's Tariff source."
+  source: String!
   status: String!
-  schemaId: String!
-  variableDefinitions: [ShipmentFormulaVariableDefinition!]!
+  testCount: Int!
   "Formula template metadata is admin-defined and intentionally open-ended."
   metadata: JSON
   version: Int!
@@ -26215,16 +27429,6 @@ type ShipmentFormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-}
-
-type ShipmentFormulaVariableDefinition {
-  name: String!
-  type: String!
-  description: String!
-  required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
 }
 
 enum MoveCoverageType {
@@ -26415,6 +27619,14 @@ type ShipmentAdditionalCharge {
   fuelSurchargeProgramId: ID
   fuelSurchargeDetail: JSON
   isDetention: Boolean!
+  "Whether the shipment's tariff billed this charge."
+  isTariff: Boolean!
+  "The tariff's label for the charge."
+  label: String!
+  quantity: Decimal
+  rate: Decimal
+  "The rate's unit, such as $/mi."
+  rateUnit: String!
   version: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
@@ -26625,11 +27837,10 @@ type ShipmentPreviousRateSummary {
   customerId: ID!
   serviceTypeId: ID!
   shipmentTypeId: ID!
-  formulaTemplateId: ID!
+  formulaTemplateId: ID
   freightChargeAmount: Decimal!
   otherChargeAmount: Decimal!
   totalChargeAmount: Decimal!
-  ratingUnit: Int!
   pieces: Int
   weight: Int
   createdAt: Timestamp!
@@ -26638,6 +27849,8 @@ type ShipmentPreviousRateSummary {
 type ShipmentPreviousRatesResponse {
   items: [ShipmentPreviousRateSummary!]!
   total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
 }
 
 "Why a shipment in a bulk transfer did not reach the billing queue."
@@ -26745,6 +27958,8 @@ type ShipmentCommentConnection {
   edges: [ShipmentCommentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ShipmentCommentCountResponse {
@@ -26841,9 +28056,10 @@ type ShipmentAnalytics {
 type ShipmentProfitabilityAnalytics {
   avgCpm: Float!
   "Null when the reader does not hold the margins field group."
-  avgMarginPct: Float
+  avgMarginPct: Float @protected(group: Margins)
   hasMargin: Boolean!
-  unprofitableCount: Int!
+  "How many loads lost money. Null when the reader does not hold the margins field group."
+  unprofitableCount: Int @protected(group: Margins)
   shipmentCount: Int!
   totalMiles: Float!
 }
@@ -27409,7 +28625,8 @@ input ShipmentInput {
   ownerId: ID
   enteredById: ID
   canceledById: ID
-  formulaTemplateId: ID!
+  "Null rates the shipment by hand at its freight charge amount."
+  formulaTemplateId: ID
   consolidationGroupId: ID
   orderId: ID
   status: ShipmentStatus = New
@@ -27422,7 +28639,8 @@ input ShipmentInput {
   cancelReason: String
   otherChargeAmount: Decimal = "0"
   freightChargeAmount: Decimal = "0"
-  baseRate: Decimal = "0"
+  "The values the tariff prices with, by input name, as Tariff wire values. Omitted inputs take the template's defaults."
+  tariffInputs: JSON
   totalChargeAmount: Decimal = "0"
   pieces: Int
   weight: Int
@@ -27435,7 +28653,6 @@ input ShipmentInput {
   transferredToBillingAt: Timestamp
   markedReadyToBillAt: Timestamp
   billedAt: Timestamp
-  ratingUnit: Int = 1
   fuelSurchargeLocked: Boolean = false
   """
   Why this shipment is billed at something other than its contract rate. It is
@@ -27788,6 +29005,11 @@ extend type Mutation {
   updateShipment(id: ID!, input: ShipmentInput!): Shipment!
   cancelShipment(id: ID!, input: ShipmentCancelInput): Shipment!
   uncancelShipment(id: ID!): Shipment!
+  """
+  Approves the reviews the tariff asked for on the shipment's rating, which releases the
+  shipment to be billed. A person's decision: an agent cannot make it.
+  """
+  approveShipmentRatingReview(shipmentId: ID!): Shipment!
   duplicateShipment(input: ShipmentDuplicateInput!): ShipmentDuplicateResponse!
   transferShipmentOwnership(id: ID!, input: ShipmentTransferOwnershipInput!): Shipment!
   "Queues the shipment for billing, one item per payer."
@@ -28092,8 +29314,10 @@ type CapacityMatch {
   pickupAt: Timestamp
   revenue: Decimal!
   deadheadMiles: Float
-  quote: Decimal
-  marginPercent: Float
+  "What the carrier would cost. Null to a reader without the margins field group, since beside the revenue it gives the margin."
+  quote: Decimal @protected(group: Margins)
+  "Null to a reader without the margins field group."
+  marginPercent: Float @protected(group: Margins)
   fitPercent: Float
 }
 
@@ -28375,6 +29599,8 @@ type ShipmentTypeConnection {
   edges: [ShipmentTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -28500,6 +29726,8 @@ type StoredMileageConnection {
   edges: [StoredMileageEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -28507,7 +29735,7 @@ extend type Query {
   storedMileage(id: ID!): StoredMileage
 }
 `, BuiltIn: false},
-	{Name: "../schema/table_change_alert.graphqls", Input: `type TCASubscription {
+	{Name: "../schema/table_change_alert.graphqls", Input: `type TCASubscription @kind(resource: "table_change_alert") {
   id: ID!
   organizationId: ID!
   businessUnitId: ID!
@@ -28538,6 +29766,8 @@ type TCASubscriptionConnection {
   edges: [TCASubscriptionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -28580,6 +29810,8 @@ type TableConfigurationConnection {
   edges: [TableConfigurationEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input TableConfigurationInput {
@@ -28869,7 +30101,13 @@ extend type Query {
   telematicsFormMappings: [TelematicsFormMapping!]!
   telematicsFormMapping(id: ID!): TelematicsFormMapping
   shipmentDriverFeasibility(shipmentId: ID!): [DriverFeasibility!]!
-  vehiclePositions(maxAgeSeconds: Int): [VehiclePosition!]!
+  "Each tractor's latest reported position."
+  vehiclePositions(
+    "Only readings at most this many seconds old. An hour when left out."
+    maxAgeSeconds: Int
+    "Only these tractors. Every tractor that reported when left out."
+    tractorIds: [ID!]
+  ): [VehiclePosition!]!
   "One tractor's latest reported position, however old; null when the tractor has never reported one."
   vehiclePosition(tractorId: ID!): VehiclePosition
   workerHosStates(workerIds: [ID!], limit: Int): [WorkerHosState!]!
@@ -29063,8 +30301,11 @@ type TenderOffer {
   counterRate: Decimal
   counterNote: String!
   counteredAt: Timestamp
-  "The margin the counter leaves, as a percentage of the sell price. Null when the load has no sell price."
-  counterMarginPercent: Decimal
+  """
+  The margin the counter leaves, as a percentage of the sell price. Null when the
+  load has no sell price, or to a reader without the margins field group.
+  """
+  counterMarginPercent: Decimal @protected(group: Margins)
   "True when the counter is below the margin floor, so taking it needs the tender approve permission."
   counterNeedsApproval: Boolean!
   counterDecidedAt: Timestamp
@@ -29115,7 +30356,11 @@ type Tender {
 
 extend type Query {
   tender(id: ID!): Tender
-  tendersByShipment(shipmentId: ID!): [Tender!]!
+  tendersByShipment(
+    shipmentId: ID!
+    "Only the tenders of this move of the shipment."
+    shipmentMoveId: ID
+  ): [Tender!]!
   liveTenderByMove(moveId: ID!): Tender
 }
 `, BuiltIn: false},
@@ -29340,6 +30585,8 @@ type TractorConnection {
   edges: [TractorEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type Tractor {
@@ -29511,6 +30758,8 @@ type TrailerConnection {
   edges: [TrailerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type Trailer {
@@ -30047,6 +31296,8 @@ type UserConnection {
   edges: [UserEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {
@@ -30695,6 +31946,8 @@ type WorkerConnection {
   edges: [WorkerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerPTO {
@@ -30751,6 +32004,8 @@ type WorkerPTOConnection {
   edges: [WorkerPTOEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type PTOChartDataPoint {
@@ -30939,6 +32194,8 @@ type WorkerChecklistTemplateConnection {
   edges: [WorkerChecklistTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerChecklistProgress {
@@ -31145,6 +32402,8 @@ type WorkerCredentialTypeConnection {
   edges: [WorkerCredentialTypeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerCredentialDocument {
@@ -31792,13 +33051,15 @@ type DOTRandomPoolConnection {
   edges: [DOTRandomPoolEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
 One selection round. The seed and method are the evidence of how the draw was
 made: the same seed over the same roster reproduces the same names.
 """
-type DOTRandomDraw {
+type DOTRandomDraw @kind(resource: "dot_random_pool") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -31826,7 +33087,7 @@ type DOTRandomDraw {
   entries: [DOTRandomDrawEntry!]!
 }
 
-type DOTRandomDrawEntry {
+type DOTRandomDrawEntry @kind(resource: "dot_random_pool") {
   id: ID!
   businessUnitId: ID!
   organizationId: ID!
@@ -32011,7 +33272,11 @@ extend type Query {
   workerDrugAlcoholStanding(workerId: ID!): DrugAlcoholStanding!
   dotRandomPools(input: DOTRandomPoolsInput!): DOTRandomPoolConnection!
   dotRandomPool(id: ID!): DOTRandomPool!
-  dotRandomDraws(poolId: ID): [DOTRandomDraw!]!
+  "Random selection rounds, newest first: one pool's, or every pool's."
+  dotRandomDraws(
+    "The pool whose rounds are read. Leave it out for every pool's."
+    poolId: ID
+  ): [DOTRandomDraw!]!
   dotRandomDraw(id: ID!): DOTRandomDraw! @authorizes(resource: "dot_random_pool")
   """
   Selections the worker still owes a collection for.
@@ -33236,6 +34501,8 @@ type TrainingCourseConnection {
   edges: [TrainingCourseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type WorkerTrainingRecord {

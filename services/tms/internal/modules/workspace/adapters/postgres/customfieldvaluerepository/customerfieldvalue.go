@@ -3,17 +3,24 @@ package customfieldvaluerepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield/customfielddb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const busyMessage = "Custom field values are busy. Retry the request."
+
+type optionCount struct {
+	Value string
+	Count int64
+}
 
 type Params struct {
 	fx.In
@@ -34,36 +41,28 @@ func New(p Params) customfieldports.CustomFieldValueRepository {
 	}
 }
 
+func resourceValues(resourceType, resourceID string) *keel.Query[*customfield.CustomFieldValue] {
+	v := customfielddb.CustomFieldValues
+	return v.Where(v.ResourceType.Eq(resourceType), v.ResourceID.Eq(resourceID))
+}
+
 func (r *repository) GetByResource(
 	ctx context.Context,
 	req *customfieldports.GetCustomFieldValuesByResourceRequest,
 ) ([]*customfield.CustomFieldValue, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customfield.CustomFieldValue, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByResource"),
-			zap.String("resourceType", req.ResourceType),
-			zap.String("resourceID", req.ResourceID),
-		)
-
-		values := make([]*customfield.CustomFieldValue, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&values).
-			Relation("Definition").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("cfv.organization_id = ?", req.TenantInfo.OrgID).
-					Where("cfv.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("cfv.resource_type = ?", req.ResourceType).
-					Where("cfv.resource_id = ?", req.ResourceID)
-			}).
-			Scan(ctx)
+		v := customfielddb.CustomFieldValues
+		values, err := resourceValues(req.ResourceType, req.ResourceID).
+			Load(v.Definition()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get custom field values", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Custom field values are busy. Retry the request.",
+			r.l.Error(
+				"failed to get custom field values",
+				zap.String("resourceType", req.ResourceType),
+				zap.String("resourceID", req.ResourceID),
+				zap.Error(err),
 			)
+			return nil, dberror.MapRetryableTransactionError(err, busyMessage)
 		}
 
 		return values, nil
@@ -78,37 +77,30 @@ func (r *repository) GetByResources(
 		ctx,
 		r.db,
 		func(ctx context.Context) (map[string][]*customfield.CustomFieldValue, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByResources"),
-				zap.String("resourceType", req.ResourceType),
-				zap.Int("resourceCount", len(req.ResourceIDs)),
-			)
-
 			if len(req.ResourceIDs) == 0 {
 				return make(map[string][]*customfield.CustomFieldValue), nil
 			}
 
-			values := make([]*customfield.CustomFieldValue, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&values).
-				Relation("Definition").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.
-						Where("cfv.organization_id = ?", req.TenantInfo.OrgID).
-						Where("cfv.business_unit_id = ?", req.TenantInfo.BuID).
-						Where("cfv.resource_type = ?", req.ResourceType).
-						Where("cfv.resource_id IN (?)", bun.List(req.ResourceIDs))
-				}).
-				Scan(ctx)
+			v := customfielddb.CustomFieldValues
+			values, err := v.Where(
+				v.ResourceType.Eq(req.ResourceType),
+				v.ResourceID.In(req.ResourceIDs...),
+			).
+				Load(v.Definition()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get custom field values for resources", zap.Error(err))
+				r.l.Error(
+					"failed to get custom field values for resources",
+					zap.String("resourceType", req.ResourceType),
+					zap.Int("resourceCount", len(req.ResourceIDs)),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
 			result := make(map[string][]*customfield.CustomFieldValue)
-			for _, v := range values {
-				result[v.ResourceID] = append(result[v.ResourceID], v)
+			for _, value := range values {
+				result[value.ResourceID] = append(result[value.ResourceID], value)
 			}
 
 			return result, nil
@@ -122,77 +114,44 @@ func (r *repository) Upsert(
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		log := r.l.With(
-			zap.String("operation", "Upsert"),
 			zap.String("resourceType", req.ResourceType),
 			zap.String("resourceID", req.ResourceID),
 			zap.Int("valueCount", len(req.Values)),
 		)
+		db := r.db.Keel(ctx)
 
-		if len(req.Values) == 0 {
-			if err := r.DeleteByResource(
-				ctx,
-				&customfieldports.GetCustomFieldValuesByResourceRequest{
-					TenantInfo:   req.TenantInfo,
-					ResourceType: req.ResourceType,
-					ResourceID:   req.ResourceID,
-				},
-			); err != nil {
-				return err
-			}
-			return nil
+		if _, err := resourceValues(req.ResourceType, req.ResourceID).Delete(ctx, db); err != nil {
+			log.Error("failed to delete existing custom field values", zap.Error(err))
+			return dberror.MapRetryableTransactionError(err, busyMessage)
 		}
 
-		return dberror.MapRetryableTransactionError(
-			r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, tx bun.Tx) error {
-				_, err := r.db.DBForContext(c).NewDelete().
-					Model((*customfield.CustomFieldValue)(nil)).
-					WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-						return dq.
-							Where("organization_id = ?", req.TenantInfo.OrgID).
-							Where("business_unit_id = ?", req.TenantInfo.BuID).
-							Where("resource_type = ?", req.ResourceType).
-							Where("resource_id = ?", req.ResourceID)
-					}).
-					Exec(c)
-				if err != nil {
-					log.Error("failed to delete existing custom field values", zap.Error(err))
-					return err
-				}
+		values := make([]*customfield.CustomFieldValue, 0, len(req.Values))
+		for definitionID, value := range req.Values {
+			defID, parseErr := pulid.Parse(definitionID)
+			if parseErr != nil {
+				log.Warn(
+					"invalid definition ID, skipping",
+					zap.String("definitionID", definitionID),
+				)
+				continue
+			}
 
-				valuesToInsert := make([]*customfield.CustomFieldValue, 0, len(req.Values))
-				for definitionID, value := range req.Values {
-					defID, parseErr := pulid.Parse(definitionID)
-					if parseErr != nil {
-						log.Warn(
-							"invalid definition ID, skipping",
-							zap.String("definitionID", definitionID),
-						)
-						continue
-					}
+			values = append(values, &customfield.CustomFieldValue{
+				OrganizationID: req.TenantInfo.OrgID,
+				BusinessUnitID: req.TenantInfo.BuID,
+				DefinitionID:   defID,
+				ResourceType:   req.ResourceType,
+				ResourceID:     req.ResourceID,
+				Value:          value,
+			})
+		}
 
-					valuesToInsert = append(valuesToInsert, &customfield.CustomFieldValue{
-						OrganizationID: req.TenantInfo.OrgID,
-						BusinessUnitID: req.TenantInfo.BuID,
-						DefinitionID:   defID,
-						ResourceType:   req.ResourceType,
-						ResourceID:     req.ResourceID,
-						Value:          value,
-					})
-				}
+		if err := customfielddb.CustomFieldValues.CreateMany(ctx, db, values); err != nil {
+			log.Error("failed to insert custom field values", zap.Error(err))
+			return dberror.MapRetryableTransactionError(err, busyMessage)
+		}
 
-				if len(valuesToInsert) > 0 {
-					if _, insertErr := r.db.DBForContext(c).NewInsert().
-						Model(&valuesToInsert).
-						Exec(c); insertErr != nil {
-						log.Error("failed to insert custom field values", zap.Error(insertErr))
-						return insertErr
-					}
-				}
-
-				return nil
-			}),
-			"Custom field values are busy. Retry the request.",
-		)
+		return nil
 	})
 }
 
@@ -201,25 +160,14 @@ func (r *repository) DeleteByResource(
 	req *customfieldports.GetCustomFieldValuesByResourceRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "DeleteByResource"),
-			zap.String("resourceType", req.ResourceType),
-			zap.String("resourceID", req.ResourceID),
-		)
-
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*customfield.CustomFieldValue)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return dq.
-					Where("organization_id = ?", req.TenantInfo.OrgID).
-					Where("business_unit_id = ?", req.TenantInfo.BuID).
-					Where("resource_type = ?", req.ResourceType).
-					Where("resource_id = ?", req.ResourceID)
-			}).
-			Exec(ctx)
+		_, err := resourceValues(req.ResourceType, req.ResourceID).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to delete custom field values", zap.Error(err))
+			r.l.Error(
+				"failed to delete custom field values",
+				zap.String("resourceType", req.ResourceType),
+				zap.String("resourceID", req.ResourceID),
+				zap.Error(err),
+			)
 			return err
 		}
 
@@ -232,23 +180,14 @@ func (r *repository) CountByDefinition(
 	req *customfieldports.GetValuesByDefinitionRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		log := r.l.With(
-			zap.String("operation", "CountByDefinition"),
-			zap.String("definitionID", req.DefinitionID.String()),
-		)
-
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customfield.CustomFieldValue)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("organization_id = ?", req.TenantInfo.OrgID).
-					Where("business_unit_id = ?", req.TenantInfo.BuID).
-					Where("definition_id = ?", req.DefinitionID)
-			}).
-			Count(ctx)
+		v := customfielddb.CustomFieldValues
+		count, err := v.Where(v.DefinitionID.Eq(req.DefinitionID)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to count custom field values by definition", zap.Error(err))
+			r.l.Error(
+				"failed to count custom field values by definition",
+				zap.String("definitionID", req.DefinitionID.String()),
+				zap.Error(err),
+			)
 			return 0, err
 		}
 
@@ -261,29 +200,22 @@ func (r *repository) CountResourcesByDefinition(
 	req *customfieldports.GetValuesByDefinitionRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		log := r.l.With(
-			zap.String("operation", "CountResourcesByDefinition"),
-			zap.String("definitionID", req.DefinitionID.String()),
+		v := customfielddb.CustomFieldValues
+		count, err := keel.IntoOne[int64](
+			ctx,
+			r.db.Keel(ctx),
+			v.Pick(v.ResourceID.CountDistinct()).Where(v.DefinitionID.Eq(req.DefinitionID)),
 		)
-
-		var count int
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customfield.CustomFieldValue)(nil)).
-			ColumnExpr("COUNT(DISTINCT resource_id)").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("organization_id = ?", req.TenantInfo.OrgID).
-					Where("business_unit_id = ?", req.TenantInfo.BuID).
-					Where("definition_id = ?", req.DefinitionID)
-			}).
-			Scan(ctx, &count)
 		if err != nil {
-			log.Error("failed to count resources by definition", zap.Error(err))
+			r.l.Error(
+				"failed to count resources by definition",
+				zap.String("definitionID", req.DefinitionID.String()),
+				zap.Error(err),
+			)
 			return 0, err
 		}
 
-		return count, nil
+		return int(count), nil
 	})
 }
 
@@ -292,37 +224,26 @@ func (r *repository) GetOptionUsageCounts(
 	req *customfieldports.GetOptionUsageRequest,
 ) (map[string]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[string]int, error) {
-		log := r.l.With(
-			zap.String("operation", "GetOptionUsageCounts"),
-			zap.String("definitionID", req.DefinitionID.String()),
+		v := customfielddb.CustomFieldValues
+		counts, err := keel.Into[optionCount](
+			ctx,
+			r.db.Keel(ctx),
+			v.Where(v.DefinitionID.Eq(req.DefinitionID)).
+				Group(v.Value).
+				Pick(keel.CastText(v.Value).TrimChars(`"`), keel.Count()),
 		)
-
-		type optionCount struct {
-			Value string `bun:"value"`
-			Count int    `bun:"count"`
-		}
-
-		var counts []optionCount
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*customfield.CustomFieldValue)(nil)).
-			ColumnExpr("trim(both '\"' from value::text) as value, COUNT(*) as count").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("organization_id = ?", req.TenantInfo.OrgID).
-					Where("business_unit_id = ?", req.TenantInfo.BuID).
-					Where("definition_id = ?", req.DefinitionID)
-			}).
-			Group("value").
-			Scan(ctx, &counts)
 		if err != nil {
-			log.Error("failed to get option usage counts", zap.Error(err))
+			r.l.Error(
+				"failed to get option usage counts",
+				zap.String("definitionID", req.DefinitionID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
-		result := make(map[string]int)
+		result := make(map[string]int, len(counts))
 		for _, c := range counts {
-			result[c.Value] = c.Count
+			result[c.Value] = int(c.Count)
 		}
 
 		return result, nil

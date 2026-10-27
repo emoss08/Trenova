@@ -61,7 +61,7 @@ func TestApprove_RefusesFromTheWrongStatus(t *testing.T) {
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewTestValidator(),
+		Validator:    testValidator(),
 		AuditService: auditportsmock.NewMockAuditService(t),
 	})
 
@@ -86,7 +86,7 @@ func TestReject_RequiresAReason(t *testing.T) {
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewTestValidator(),
+		Validator:    testValidator(),
 		AuditService: auditportsmock.NewMockAuditService(t),
 	})
 
@@ -182,7 +182,7 @@ func TestCreate_AlwaysStartsInDraft(t *testing.T) {
 	svc := New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewTestValidator(),
+		Validator:    testValidator(),
 		AuditService: audit,
 	})
 
@@ -245,7 +245,7 @@ func serviceFor(
 	return New(Params{
 		Logger:       zap.NewNop(),
 		Repo:         repo,
-		Validator:    NewTestValidator(),
+		Validator:    testValidator(),
 		AuditService: audit,
 	}), repo
 }

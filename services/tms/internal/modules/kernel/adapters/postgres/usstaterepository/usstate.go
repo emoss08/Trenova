@@ -5,20 +5,22 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/usstateports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var usStateErrors = dberror.Mapping{Entity: "UsState"}
 
 type Params struct {
 	fx.In
@@ -44,20 +46,17 @@ func (r *repository) GetByID(
 	req usstateports.GetUsStateByIDRequest,
 ) (*usstate.UsState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*usstate.UsState, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.StateID.String()),
-		)
-
-		entity := new(usstate.UsState)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("ust.id = ?", req.StateID).
-			Scan(ctx)
+		us := usstatedb.UsStates
+		entity, err := us.Where(us.ID.Eq(req.StateID)).
+			Cache(resultcache.Catalog()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get us state", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "UsState")
+			r.l.Error(
+				"failed to get us state",
+				zap.String("id", req.StateID.String()),
+				zap.Error(err),
+			)
+			return nil, usStateErrors.Map(err, req.StateID.String())
 		}
 
 		return entity, nil
@@ -72,31 +71,17 @@ func (r *repository) SelectOptions(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*usstate.UsState], error) {
-			entities := make([]*usstate.UsState, 0, req.Pagination.SafeLimit())
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Column("id", "created_at", "name", "abbreviation", "country_iso3").
-				Limit(int64(req.Pagination.Limit)).
-				Offset(int64(req.Pagination.Offset))
-
-			if req.Query != "" {
-				q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.WhereOr("LOWER(name) LIKE LOWER(?)", dbhelper.WrapWildcard(req.Query)).
-						WhereOr("LOWER(abbreviation) LIKE LOWER(?)", dbhelper.WrapWildcard(req.Query))
-				})
-			}
-
-			total, err := q.ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*usstate.UsState]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			us := usstatedb.UsStates
+			return listquery.SelectOptions(
+				ctx,
+				r.db.Keel(ctx),
+				us.Pick(us.ID, us.CreatedAt, us.Name, us.Abbreviation, us.CountryIso3).
+					Cache(resultcache.Catalog()...),
+				req,
+				func(s string) keel.Pred {
+					return keel.Or(us.Name.ContainsFold(s), us.Abbreviation.ContainsFold(s))
+				},
+			)
 		},
 	)
 }
@@ -106,21 +91,17 @@ func (r *repository) GetByAbbreviation(
 	abbreviation string,
 ) (*usstate.UsState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*usstate.UsState, error) {
-		entity := new(usstate.UsState)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(
-				usstatecol.UsStateColumns.Abbreviation.Eq(),
-				strings.ToUpper(strings.TrimSpace(abbreviation)),
-			).
-			Scan(ctx)
+		us := usstatedb.UsStates
+		normalized := strings.ToUpper(strings.TrimSpace(abbreviation))
+		entity, err := us.Where(us.Abbreviation.Eq(normalized)).
+			Cache(resultcache.Catalog()...).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Debug("failed to get us state by abbreviation",
 				zap.String("abbreviation", abbreviation),
 				zap.Error(err),
 			)
-			return nil, dberror.HandleNotFoundError(err, "UsState")
+			return nil, usStateErrors.Map(err, normalized)
 		}
 
 		return entity, nil
@@ -129,16 +110,15 @@ func (r *repository) GetByAbbreviation(
 
 func (r *repository) GetByIDs(ctx context.Context, ids []pulid.ID) ([]*usstate.UsState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*usstate.UsState, error) {
-		entities := make([]*usstate.UsState, 0, len(ids))
 		if len(ids) == 0 {
-			return entities, nil
+			return []*usstate.UsState{}, nil
 		}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(usstatecol.UsStateColumns.ID.In(), bun.List(ids)).
-			Scan(ctx)
+		us := usstatedb.UsStates
+		entities, err := us.Where(us.ID.In(ids...)).
+			Limit(len(ids)).
+			Cache(resultcache.Catalog()...).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to get us states by ids", zap.Error(err))
 			return nil, fmt.Errorf("get us states by ids: %w", err)

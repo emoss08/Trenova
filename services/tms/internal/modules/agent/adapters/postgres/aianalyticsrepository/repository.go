@@ -9,16 +9,21 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentsuggestion/agentsuggestiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics/aianalyticsdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aianalyticsports"
-	"github.com/emoss08/trenova/pkg/buncolgen/aianalyticscol"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -41,44 +46,6 @@ func New(p Params) aianalyticsports.AnalyticsRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.ai-analytics-repository")}
 }
 
-type sqlArgs struct {
-	Org        string                `bun:"org"`
-	Bu         string                `bun:"bu"`
-	From       int64                 `bun:"from"`
-	To         int64                 `bun:"to"`
-	FromHour   int64                 `bun:"from_hour"`
-	ToHour     int64                 `bun:"to_hour"`
-	Stamp      int64                 `bun:"stamp"`
-	Since      int64                 `bun:"since"`
-	SinceHour  int64                 `bun:"since_hour"`
-	Agent      string                `bun:"agent"`
-	Task       string                `bun:"task"`
-	Starts     *pgdialect.ArrayValue `bun:"starts"`
-	SeriesKey  string                `bun:"series_key"`
-	ToolName   string                `bun:"tool_name"`
-	Limit      int                   `bun:"limit"`
-	Candidates int                   `bun:"candidates"`
-	Pending    int64                 `bun:"pending_since"`
-	Model      string                `bun:"model"`
-	ModelKey   string                `bun:"model_key"`
-	Before     int64                 `bun:"before"`
-	BeforeHour int64                 `bun:"before_hour"`
-}
-
-func tenantArgs(tenant pagination.TenantInfo) sqlArgs {
-	return sqlArgs{Org: tenant.OrgID.String(), Bu: tenant.BuID.String()}
-}
-
-func filterArgs(filter aianalyticsports.Filter) sqlArgs {
-	args := tenantArgs(filter.TenantInfo)
-	args.Since = filter.Since
-	args.SinceHour = ceilHour(filter.Since)
-	args.Agent = filter.AgentDefinitionID.String()
-	args.Task = string(filter.Task)
-
-	return args
-}
-
 func floorHour(at int64) int64 {
 	return at - at%3600
 }
@@ -93,15 +60,11 @@ func ceilHour(at int64) int64 {
 
 func (r *repository) RefreshState(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*aianalytics.RefreshState, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aianalytics.RefreshState, error) {
-		state := new(aianalytics.RefreshState)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(state).
-			Apply(aianalyticscol.RefreshStateApplyTenant(tenant)).
-			Scan(ctx)
-		if errors.Is(err, sql.ErrNoRows) {
+		state, err := aianalyticsdb.RefreshStates.Query().One(ctx, r.db.Keel(ctx))
+		if errors.Is(err, keel.ErrNotFound) {
 			return nil, nil
 		}
 		if err != nil {
@@ -115,13 +78,14 @@ func (r *repository) RefreshState(
 
 func (r *repository) SaveRefreshState(ctx context.Context, state *aianalytics.RefreshState) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := aianalyticscol.RefreshStateColumns
-		_, err := r.db.DBForContext(ctx).NewInsert().
-			Model(state).
-			On("CONFLICT (organization_id, business_unit_id) DO UPDATE").
-			Set(cols.RefreshedThrough.SetExcluded()).
-			Set(cols.RefreshedAt.SetExcluded()).
-			Exec(ctx)
+		rs := aianalyticsdb.RefreshStates
+		_, err := rs.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*aianalytics.RefreshState{state},
+			keel.OnConflict(rs.OrganizationID, rs.BusinessUnitID).
+				Update(rs.RefreshedThrough, rs.RefreshedAt),
+		)
 		if err != nil {
 			r.l.Error("failed to save the ai analytics refresh state", zap.Error(err))
 			return fmt.Errorf("save ai analytics refresh state: %w", err)
@@ -131,64 +95,53 @@ func (r *repository) SaveRefreshState(ctx context.Context, state *aianalytics.Re
 	})
 }
 
-func (r *repository) exec(ctx context.Context, query string, args sqlArgs) (int, error) {
-	result, err := r.db.DBForContext(ctx).NewRaw(query, &args).Exec(ctx)
-	if err != nil {
-		return 0, err
+func (r *repository) markChanged(ctx context.Context, tables ...*schema.Table) {
+	names := make([]string, 0, len(tables))
+	for _, table := range tables {
+		names = append(names, table.Name)
 	}
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("count affected rows: %w", err)
-	}
-
-	return int(affected), nil
+	keel.MarkChanged(ctx, r.db.Keel(ctx), names...)
 }
 
 func (r *repository) lockRefresh(ctx context.Context, tenant pagination.TenantInfo) error {
-	_, err := r.db.DBForContext(ctx).
-		NewRaw(
-			"SELECT pg_advisory_xact_lock(hashtextextended(?, 0))",
-			"ai-analytics-refresh:"+tenant.OrgID.String()+":"+tenant.BuID.String(),
-		).
-		Exec(ctx)
-	if err != nil {
+	key := "ai-analytics-refresh:" + tenant.OrgID.String() + ":" + tenant.BuID.String()
+	if err := keel.LockKey(ctx, r.db.Keel(ctx), key); err != nil {
 		return fmt.Errorf("lock ai analytics refresh: %w", err)
 	}
 
 	return nil
 }
 
-const activitySQL = `SELECT EXISTS (
-		SELECT 1 FROM agent_runs AS o
-		WHERE o.organization_id = ?org AND o.business_unit_id = ?bu
-			AND o.updated_at >= ?from AND o.updated_at < ?to
-	) OR EXISTS (
-		SELECT 1 FROM assistant_turns AS o
-		WHERE o.organization_id = ?org AND o.business_unit_id = ?bu
-			AND o.updated_at >= ?from AND o.updated_at < ?to
-	) OR EXISTS (
-		SELECT 1 FROM ai_usage_records AS u
-		WHERE u.organization_id = ?org AND u.business_unit_id = ?bu
-			AND u.created_at >= ?from AND u.created_at < ?to
-	) AS active`
-
 func (r *repository) HasActivity(
 	ctx context.Context,
 	req aianalyticsports.RefreshRequest,
 ) (bool, error) {
-	args := tenantArgs(req.TenantInfo)
-	args.From = req.From
-	args.To = req.To
-	rows, err := scanRaw[activityScan](ctx, r, "activity", activitySQL, args)
-	if err != nil {
-		return false, err
-	}
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		runs := agentdb.AgentRuns
+		turns := conversationdb.AssistantTurns
+		usage := aiusagedb.AIUsageRecords
+		var ran, talked, used bool
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.ExistsInto(runs.Where(
+				runs.UpdatedAt.Gte(req.From),
+				runs.UpdatedAt.Lt(req.To),
+			), &ran),
+			keel.ExistsInto(turns.Where(
+				turns.UpdatedAt.Gte(req.From),
+				turns.UpdatedAt.Lt(req.To),
+			), &talked),
+			keel.ExistsInto(usage.Where(
+				usage.CreatedAt.Gte(req.From),
+				usage.CreatedAt.Lt(req.To),
+			), &used),
+		)
+		if err != nil {
+			r.l.Error("failed to check ai analytics activity", zap.Error(err))
+			return false, fmt.Errorf("read ai analytics activity: %w", err)
+		}
 
-	return len(rows) > 0 && rows[0].Active, nil
-}
-
-type activityScan struct {
-	Active bool `bun:"active"`
+		return ran || talked || used, nil
+	})
 }
 
 func (r *repository) RefreshUnits(
@@ -199,40 +152,52 @@ func (r *repository) RefreshUnits(
 		if err := r.lockRefresh(ctx, req.TenantInfo); err != nil {
 			return 0, err
 		}
-		args := tenantArgs(req.TenantInfo)
-		args.From = req.From
-		args.To = req.To
-		args.Stamp = req.Stamp
+		db := r.db.Keel(ctx)
+		refresh := &unitRefresh{from: req.From, to: req.To, stamp: req.Stamp}
+		w := aianalyticsdb.WorkUnits
 
 		total := 0
 		for _, step := range []struct {
-			name  string
-			query string
+			name            string
+			source          *keel.Query[*keel.Row]
+			withDecisionRun bool
 		}{
-			{"runs", runUnitsSQL},
-			{"turns", turnUnitsSQL},
-			{"calls", callUnitsSQL},
+			{"runs", ownedUnitsSource(&runSource, refresh), true},
+			{"turns", ownedUnitsSource(&turnSource, refresh), true},
+			{"calls", callUnitsSource(refresh), false},
 		} {
-			written, err := r.exec(ctx, step.query, args)
+			written, err := w.UpsertFrom(
+				ctx,
+				db,
+				step.source,
+				unitConflict(),
+				unitInsertColumns(w, step.withDecisionRun)...,
+			)
 			if err != nil {
 				r.l.Error("failed to refresh ai work units",
 					zap.String("source", step.name),
-					zap.String("organization", args.Org),
+					zap.String("organization", req.TenantInfo.OrgID.String()),
 					zap.Error(err),
 				)
 				return 0, fmt.Errorf("refresh ai work units from %s: %w", step.name, err)
 			}
-			total += written
+			total += int(written)
 		}
 
-		if _, err := r.exec(ctx, clearUnitToolsSQL, args); err != nil {
+		if _, err := clearUnitToolsQuery(req.Stamp).Delete(ctx, db); err != nil {
 			r.l.Error("failed to clear ai work unit tools", zap.Error(err))
 			return 0, fmt.Errorf("clear ai work unit tools: %w", err)
 		}
-		if _, err := r.exec(ctx, insertUnitToolsSQL, args); err != nil {
+		t := aianalyticsdb.UnitTools
+		if _, err := t.InsertFrom(
+			ctx,
+			db,
+			unitToolsSource(req.Stamp),
+			unitToolColumns(t)...); err != nil {
 			r.l.Error("failed to write ai work unit tools", zap.Error(err))
 			return 0, fmt.Errorf("write ai work unit tools: %w", err)
 		}
+		r.markChanged(ctx, aianalyticsdb.WorkUnitsSchema(), aianalyticsdb.UnitToolsSchema())
 
 		return total, nil
 	})
@@ -246,71 +211,67 @@ func (r *repository) RefreshProviderHours(
 		if err := r.lockRefresh(ctx, req.TenantInfo); err != nil {
 			return 0, err
 		}
-		args := tenantArgs(req.TenantInfo)
-		args.FromHour = floorHour(req.From)
-		args.ToHour = ceilHour(req.To)
+		db := r.db.Keel(ctx)
+		fromHour := floorHour(req.From)
+		toHour := ceilHour(req.To)
 
-		if _, err := r.exec(ctx, clearProviderHoursSQL, args); err != nil {
+		if _, err := clearProviderHoursQuery(fromHour, toHour).Delete(ctx, db); err != nil {
 			r.l.Error("failed to clear ai provider hours", zap.Error(err))
 			return 0, fmt.Errorf("clear ai provider hours: %w", err)
 		}
-		written, err := r.exec(ctx, insertProviderHoursSQL, args)
+		h := aianalyticsdb.ProviderHours
+		written, err := h.InsertFrom(
+			ctx,
+			db,
+			providerHoursSource(fromHour, toHour),
+			providerHourColumns(h)...,
+		)
 		if err != nil {
 			r.l.Error("failed to write ai provider hours", zap.Error(err))
 			return 0, fmt.Errorf("write ai provider hours: %w", err)
 		}
+		r.markChanged(ctx, aianalyticsdb.ProviderHoursSchema())
 
-		return written, nil
+		return int(written), nil
 	})
 }
-
-const unkeyedModelsSQL = `SELECT DISTINCT model FROM (
-		SELECT w.model FROM ai_work_units AS w
-		WHERE w.organization_id = ?org AND w.business_unit_id = ?bu
-			AND w.refresh_stamp = ?stamp AND w.model_key = ''
-		UNION ALL
-		SELECT h.model FROM ai_provider_hourly_stats AS h
-		WHERE h.organization_id = ?org AND h.business_unit_id = ?bu
-			AND h.hour >= ?from_hour AND h.model_key = ''
-	) AS models`
 
 func (r *repository) UnkeyedModels(
 	ctx context.Context,
 	req aianalyticsports.ModelKeyRequest,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
-		args := tenantArgs(req.TenantInfo)
-		args.Stamp = req.Stamp
-		args.FromHour = req.FromHour
-
-		models := make([]string, 0, 8)
-		if err := r.db.DBForContext(ctx).
-			NewRaw(unkeyedModelsSQL, &args).
-			Scan(ctx, &models); err != nil {
+		w := aianalyticsdb.WorkUnits
+		h := aianalyticsdb.ProviderHours
+		var units, hours []string
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.IntoSlice(w.
+				Where(w.RefreshStamp.Eq(req.Stamp), w.ModelKey.Eq("")).
+				Group(w.Model).
+				Pick(w.Model), &units),
+			keel.IntoSlice(h.
+				Where(h.Hour.Gte(req.FromHour), h.ModelKey.Eq("")).
+				Group(h.Model).
+				Pick(h.Model), &hours),
+		)
+		if err != nil {
 			r.l.Error("failed to list unkeyed ai models", zap.Error(err))
 			return nil, fmt.Errorf("list unkeyed ai models: %w", err)
+		}
+
+		models := make([]string, 0, len(units)+len(hours))
+		seen := make(map[string]struct{}, len(units)+len(hours))
+		for _, model := range slices.Concat(units, hours) {
+			if _, ok := seen[model]; ok {
+				continue
+			}
+			seen[model] = struct{}{}
+			models = append(models, model)
 		}
 
 		return models, nil
 	})
 }
-
-const (
-	keyUnitsSQL = `UPDATE ai_work_units
-	SET model_key = ?model_key
-	WHERE organization_id = ?org AND business_unit_id = ?bu
-		AND refresh_stamp = ?stamp AND model = ?model AND model_key <> ?model_key`
-	keyHoursSQL = `UPDATE ai_provider_hourly_stats
-	SET model_key = ?model_key
-	WHERE organization_id = ?org AND business_unit_id = ?bu
-		AND hour >= ?from_hour AND model = ?model AND model_key <> ?model_key`
-	keyToolsSQL = `UPDATE ai_work_unit_tools AS t
-	SET model_key = w.model_key
-	FROM ai_work_units AS w
-	WHERE t.organization_id = ?org AND t.business_unit_id = ?bu
-		AND w.organization_id = t.organization_id AND w.business_unit_id = t.business_unit_id
-		AND w.id = t.unit_id AND w.refresh_stamp = ?stamp AND t.model_key <> w.model_key`
-)
 
 func (r *repository) SetModelKeys(
 	ctx context.Context,
@@ -325,22 +286,36 @@ func (r *repository) SetModelKeys(
 		if err := r.lockRefresh(ctx, req.TenantInfo); err != nil {
 			return err
 		}
-		args := tenantArgs(req.TenantInfo)
-		args.Stamp = req.Stamp
-		args.FromHour = req.FromHour
+		db := r.db.Keel(ctx)
+		w := aianalyticsdb.WorkUnits
+		h := aianalyticsdb.ProviderHours
 		for _, key := range keys {
-			args.Model = key.Model
-			args.ModelKey = key.Key
-			if _, err := r.exec(ctx, keyUnitsSQL, args); err != nil {
+			if _, err := w.Where(
+				w.RefreshStamp.Eq(req.Stamp),
+				w.Model.Eq(key.Model),
+				w.ModelKey.Ne(key.Key),
+			).Update(ctx, db, w.ModelKey.To(key.Key)); err != nil {
 				r.l.Error("failed to key ai work units", zap.Error(err))
 				return fmt.Errorf("key ai work units: %w", err)
 			}
-			if _, err := r.exec(ctx, keyHoursSQL, args); err != nil {
+			if _, err := h.Where(
+				h.Hour.Gte(req.FromHour),
+				h.Model.Eq(key.Model),
+				h.ModelKey.Ne(key.Key),
+			).Update(ctx, db, h.ModelKey.To(key.Key)); err != nil {
 				r.l.Error("failed to key ai provider hours", zap.Error(err))
 				return fmt.Errorf("key ai provider hours: %w", err)
 			}
 		}
-		if _, err := r.exec(ctx, keyToolsSQL, args); err != nil {
+
+		t := aianalyticsdb.UnitTools
+		unit := aianalyticsdb.WorkUnits.As("keyed_unit")
+		if _, err := t.Join(unit,
+			unit.ID.EqCol(t.UnitID),
+			unit.RefreshStamp.Eq(req.Stamp),
+		).
+			Where(t.ModelKey.NeCol(unit.ModelKey)).
+			Update(ctx, db, t.ModelKey.ToExpr(unit.ModelKey)); err != nil {
 			r.l.Error("failed to key ai work unit tools", zap.Error(err))
 			return fmt.Errorf("key ai work unit tools: %w", err)
 		}
@@ -349,32 +324,25 @@ func (r *repository) SetModelKeys(
 	})
 }
 
-const (
-	pruneUnitsSQL = `DELETE FROM ai_work_units
-	WHERE organization_id = ?org AND business_unit_id = ?bu AND finished_at < ?before`
-	pruneUnitToolsSQL = `DELETE FROM ai_work_unit_tools
-	WHERE organization_id = ?org AND business_unit_id = ?bu AND finished_at < ?before`
-	pruneHoursSQL = `DELETE FROM ai_provider_hourly_stats
-	WHERE organization_id = ?org AND business_unit_id = ?bu AND hour < ?before_hour`
-	pruneSuggestionsSQL = `DELETE FROM agent_suggestions
-	WHERE organization_id = ?org AND business_unit_id = ?bu AND created_at < ?before`
-)
-
 func (r *repository) Prune(ctx context.Context, req aianalyticsports.PruneRequest) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if err := r.lockRefresh(ctx, req.TenantInfo); err != nil {
 			return err
 		}
-		args := tenantArgs(req.TenantInfo)
-		args.Before = req.Before
-		args.BeforeHour = floorHour(req.Before)
-		for _, query := range []string{
-			pruneUnitToolsSQL,
-			pruneUnitsSQL,
-			pruneHoursSQL,
-			pruneSuggestionsSQL,
+		db := r.db.Keel(ctx)
+		t := aianalyticsdb.UnitTools
+		w := aianalyticsdb.WorkUnits
+		h := aianalyticsdb.ProviderHours
+		s := agentsuggestiondb.Suggestions
+		for _, query := range []interface {
+			Delete(context.Context, *keel.DB) (int64, error)
+		}{
+			t.Where(t.FinishedAt.Lt(req.Before)),
+			w.Where(w.FinishedAt.Lt(req.Before)),
+			h.Where(h.Hour.Lt(floorHour(req.Before))),
+			s.Where(s.CreatedAt.Lt(req.Before)),
 		} {
-			if _, err := r.exec(ctx, query, args); err != nil {
+			if _, err := query.Delete(ctx, db); err != nil {
 				r.l.Error("failed to prune ai analytics", zap.Error(err))
 				return fmt.Errorf("prune ai analytics: %w", err)
 			}
@@ -385,36 +353,40 @@ func (r *repository) Prune(ctx context.Context, req aianalyticsports.PruneReques
 }
 
 type deploymentScan struct {
-	ModelKey   string `bun:"model_key"`
-	ProviderID string `bun:"provider_id"`
+	ModelKey   string
+	ProviderID string
 }
 
 func (s deploymentScan) key() aianalyticsports.DeploymentKey {
 	return aianalyticsports.DeploymentKey{ModelKey: s.ModelKey, ProviderID: s.ProviderID}
 }
 
+func deploymentKey(modelKey, providerID string) aianalyticsports.DeploymentKey {
+	return aianalyticsports.DeploymentKey{ModelKey: modelKey, ProviderID: providerID}
+}
+
 type countsScan struct {
-	Runs              int    `bun:"runs"`
-	Completed         int    `bun:"completed"`
-	HandedOff         int    `bun:"handed_off"`
-	Stopped           int    `bun:"stopped"`
-	Failed            int    `bun:"failed"`
-	ModelCalls        int    `bun:"model_calls"`
-	FailedCalls       int    `bun:"failed_calls"`
-	ToolCalls         int    `bun:"tool_calls"`
-	ToolFailuresModel int    `bun:"tool_failures_model"`
-	ToolFailuresTool  int    `bun:"tool_failures_tool"`
-	CostUSD           string `bun:"cost_usd"`
-	PricedRuns        int    `bun:"priced_runs"`
-	LastRanAt         int64  `bun:"last_ran_at"`
-	InputTokens       int64  `bun:"input_tokens"`
-	OutputTokens      int64  `bun:"output_tokens"`
-	CacheReadTokens   int64  `bun:"cache_read_tokens"`
-	CacheWriteTokens  int64  `bun:"cache_write_tokens"`
-	AdvisorCalls      int64  `bun:"advisor_calls"`
-	AdvisorPrompt     int64  `bun:"advisor_prompt_tokens"`
-	AdvisorOutput     int64  `bun:"advisor_output_tokens"`
-	AdvisorCostUSD    string `bun:"advisor_cost_usd"`
+	Runs              int
+	Completed         int
+	HandedOff         int
+	Stopped           int
+	Failed            int
+	ModelCalls        int
+	FailedCalls       int
+	ToolCalls         int
+	ToolFailuresModel int
+	ToolFailuresTool  int
+	CostUSD           string
+	PricedRuns        int
+	InputTokens       int64
+	OutputTokens      int64
+	CacheReadTokens   int64
+	CacheWriteTokens  int64
+	AdvisorCalls      int64
+	AdvisorPrompt     int64
+	AdvisorOutput     int64
+	AdvisorCostUSD    string
+	LastRanAt         int64
 }
 
 func (s *countsScan) counts() aianalyticsports.Counts {
@@ -456,17 +428,17 @@ func (s *countsScan) counts() aianalyticsports.Counts {
 	}
 }
 
-func durationStats(count int, percentiles []sql.NullFloat64) aianalyticsports.DurationStats {
+func durationStats(count int, percentiles []*float64) aianalyticsports.DurationStats {
 	stats := aianalyticsports.DurationStats{Count: count}
 	if count == 0 || len(percentiles) < 4 {
 		return stats
 	}
 	values := make([]int64, 4)
 	for index := range values {
-		if !percentiles[index].Valid {
+		if percentiles[index] == nil {
 			return stats
 		}
-		values[index] = int64(percentiles[index].Float64 + 0.5)
+		values[index] = int64(*percentiles[index] + 0.5)
 	}
 	stats.P25Ms, stats.P50Ms, stats.P75Ms, stats.P95Ms = values[0], values[1], values[2], values[3]
 	stats.HasAny = true
@@ -474,16 +446,15 @@ func durationStats(count int, percentiles []sql.NullFloat64) aianalyticsports.Du
 	return stats
 }
 
-func scanRaw[T any](
+func readRows[T any](
 	ctx context.Context,
 	r *repository,
 	what string,
-	query string,
-	args sqlArgs,
+	query keel.Projection,
 ) ([]T, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]T, error) {
-		rows := make([]T, 0, 16)
-		if err := r.db.DBForContext(ctx).NewRaw(query, &args).Scan(ctx, &rows); err != nil {
+		rows, err := keel.Into[T](ctx, r.db.Keel(ctx), query)
+		if err != nil {
 			r.l.Error("failed to read ai analytics", zap.String("what", what), zap.Error(err))
 			return nil, fmt.Errorf("read ai analytics %s: %w", what, err)
 		}
@@ -492,15 +463,14 @@ func scanRaw[T any](
 	})
 }
 
-func scanMapped[T, R any](
+func readMapped[T, R any](
 	ctx context.Context,
 	r *repository,
 	what string,
-	query string,
-	args sqlArgs,
+	query keel.Projection,
 	mapRow func(*T) R,
 ) ([]R, error) {
-	rows, err := scanRaw[T](ctx, r, what, query, args)
+	rows, err := readRows[T](ctx, r, what, query)
 	if err != nil {
 		return nil, err
 	}
@@ -513,16 +483,39 @@ func scanMapped[T, R any](
 }
 
 type totalsScan struct {
-	countsScan
-	CompletionCount int               `bun:"completion_count"`
-	Completion      []sql.NullFloat64 `bun:"completion,array"`
+	Runs              int
+	Completed         int
+	HandedOff         int
+	Stopped           int
+	Failed            int
+	ModelCalls        int
+	FailedCalls       int
+	ToolCalls         int
+	ToolFailuresModel int
+	ToolFailuresTool  int
+	CostUSD           string
+	PricedRuns        int
+	InputTokens       int64
+	OutputTokens      int64
+	CacheReadTokens   int64
+	CacheWriteTokens  int64
+	AdvisorCalls      int64
+	AdvisorPrompt     int64
+	AdvisorOutput     int64
+	AdvisorCostUSD    string
+	LastRanAt         int64
+	CompletionCount   int
+	CompletionP25     *float64
+	CompletionP50     *float64
+	CompletionP75     *float64
+	CompletionP95     *float64
 }
 
 func (r *repository) Totals(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) (*aianalyticsports.TotalsRow, error) {
-	rows, err := scanRaw[totalsScan](ctx, r, "totals", totalsSQL, filterArgs(filter))
+	rows, err := readRows[totalsScan](ctx, r, "totals", totalsQuery(&filter))
 	if err != nil {
 		return nil, err
 	}
@@ -531,33 +524,115 @@ func (r *repository) Totals(
 			Counts: aianalyticsports.Counts{CostUSD: decimal.Zero},
 		}, nil
 	}
+	row := &rows[0]
+	counts := countsScan{
+		Runs:              row.Runs,
+		Completed:         row.Completed,
+		HandedOff:         row.HandedOff,
+		Stopped:           row.Stopped,
+		Failed:            row.Failed,
+		ModelCalls:        row.ModelCalls,
+		FailedCalls:       row.FailedCalls,
+		ToolCalls:         row.ToolCalls,
+		ToolFailuresModel: row.ToolFailuresModel,
+		ToolFailuresTool:  row.ToolFailuresTool,
+		CostUSD:           row.CostUSD,
+		PricedRuns:        row.PricedRuns,
+		InputTokens:       row.InputTokens,
+		OutputTokens:      row.OutputTokens,
+		CacheReadTokens:   row.CacheReadTokens,
+		CacheWriteTokens:  row.CacheWriteTokens,
+		AdvisorCalls:      row.AdvisorCalls,
+		AdvisorPrompt:     row.AdvisorPrompt,
+		AdvisorOutput:     row.AdvisorOutput,
+		AdvisorCostUSD:    row.AdvisorCostUSD,
+		LastRanAt:         row.LastRanAt,
+	}
 
 	return &aianalyticsports.TotalsRow{
-		Counts:     rows[0].counts(),
-		Completion: durationStats(rows[0].CompletionCount, rows[0].Completion),
+		Counts: counts.counts(),
+		Completion: durationStats(row.CompletionCount, []*float64{
+			row.CompletionP25, row.CompletionP50, row.CompletionP75, row.CompletionP95,
+		}),
 	}, nil
 }
 
 type deploymentCountsScan struct {
-	deploymentScan
-	countsScan
+	ModelKey          string
+	ProviderID        string
+	Runs              int
+	Completed         int
+	HandedOff         int
+	Stopped           int
+	Failed            int
+	ModelCalls        int
+	FailedCalls       int
+	ToolCalls         int
+	ToolFailuresModel int
+	ToolFailuresTool  int
+	CostUSD           string
+	PricedRuns        int
+	InputTokens       int64
+	OutputTokens      int64
+	CacheReadTokens   int64
+	CacheWriteTokens  int64
+	AdvisorCalls      int64
+	AdvisorPrompt     int64
+	AdvisorOutput     int64
+	AdvisorCostUSD    string
+	LastRanAt         int64
+}
+
+func (s *deploymentCountsScan) counts() aianalyticsports.Counts {
+	counts := countsScan{
+		Runs:              s.Runs,
+		Completed:         s.Completed,
+		HandedOff:         s.HandedOff,
+		Stopped:           s.Stopped,
+		Failed:            s.Failed,
+		ModelCalls:        s.ModelCalls,
+		FailedCalls:       s.FailedCalls,
+		ToolCalls:         s.ToolCalls,
+		ToolFailuresModel: s.ToolFailuresModel,
+		ToolFailuresTool:  s.ToolFailuresTool,
+		CostUSD:           s.CostUSD,
+		PricedRuns:        s.PricedRuns,
+		InputTokens:       s.InputTokens,
+		OutputTokens:      s.OutputTokens,
+		CacheReadTokens:   s.CacheReadTokens,
+		CacheWriteTokens:  s.CacheWriteTokens,
+		AdvisorCalls:      s.AdvisorCalls,
+		AdvisorPrompt:     s.AdvisorPrompt,
+		AdvisorOutput:     s.AdvisorOutput,
+		AdvisorCostUSD:    s.AdvisorCostUSD,
+		LastRanAt:         s.LastRanAt,
+	}
+
+	return counts.counts()
 }
 
 func (r *repository) Deployments(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.DeploymentRow, error) {
-	return scanMapped(ctx, r, "deployments", deploymentsSQL, filterArgs(filter),
+	return readMapped(ctx, r, "deployments", deploymentsQuery(&filter),
 		func(row *deploymentCountsScan) aianalyticsports.DeploymentRow {
-			return aianalyticsports.DeploymentRow{DeploymentKey: row.key(), Counts: row.counts()}
+			return aianalyticsports.DeploymentRow{
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
+				Counts:        row.counts(),
+			}
 		})
 }
 
 type outcomeDurationScan struct {
-	deploymentScan
-	Outcome     string            `bun:"outcome"`
-	Count       int               `bun:"count"`
-	Percentiles []sql.NullFloat64 `bun:"percentiles,array"`
+	ModelKey   string
+	ProviderID string
+	Outcome    string
+	Count      int
+	P25        *float64
+	P50        *float64
+	P75        *float64
+	P95        *float64
 }
 
 func (r *repository) OutcomeDurations(
@@ -565,30 +640,33 @@ func (r *repository) OutcomeDurations(
 	filter aianalyticsports.Filter,
 	grouping aianalytics.Grouping,
 ) ([]aianalyticsports.OutcomeDurationRow, error) {
-	return scanMapped(
+	return readMapped(
 		ctx,
 		r,
 		"outcome durations",
-		outcomeDurationsSQL(grouping),
-		filterArgs(filter),
+		outcomeDurationsQuery(&filter, grouping),
 		func(row *outcomeDurationScan) aianalyticsports.OutcomeDurationRow {
 			return aianalyticsports.OutcomeDurationRow{
-				DeploymentKey: row.key(),
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
 				Outcome:       aianalytics.Outcome(row.Outcome),
-				DurationStats: durationStats(row.Count, row.Percentiles),
+				DurationStats: durationStats(
+					row.Count,
+					[]*float64{row.P25, row.P50, row.P75, row.P95},
+				),
 			}
 		},
 	)
 }
 
 type trendScan struct {
-	deploymentScan
-	BucketStart  int64           `bun:"bucket_start"`
-	Runs         int             `bun:"runs"`
-	Completed    int             `bun:"completed"`
-	ToolCalls    int             `bun:"tool_calls"`
-	ToolFailures int             `bun:"tool_failures"`
-	MedianRunMs  sql.NullFloat64 `bun:"median_run_ms"`
+	ModelKey     string
+	ProviderID   string
+	BucketStart  int64
+	Runs         int
+	Completed    int
+	ToolCalls    int
+	ToolFailures int
+	MedianRunMs  sql.NullFloat64
 }
 
 func (r *repository) Trend(
@@ -598,13 +676,11 @@ func (r *repository) Trend(
 	if len(req.BucketStarts) == 0 {
 		return []aianalyticsports.TrendRow{}, nil
 	}
-	args := filterArgs(req.Filter)
-	args.Starts = pgdialect.Array(req.BucketStarts)
 
-	return scanMapped(ctx, r, "trend", trendSQL(req.Grouping), args,
+	return readMapped(ctx, r, "trend", trendQuery(&req),
 		func(row *trendScan) aianalyticsports.TrendRow {
 			return aianalyticsports.TrendRow{
-				DeploymentKey: row.key(),
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
 				BucketStart:   row.BucketStart,
 				Runs:          row.Runs,
 				Completed:     row.Completed,
@@ -617,20 +693,21 @@ func (r *repository) Trend(
 }
 
 type toolCellScan struct {
-	deploymentScan
-	ToolName string `bun:"tool_name"`
-	Cause    string `bun:"cause"`
-	Calls    int    `bun:"calls"`
+	ModelKey   string
+	ProviderID string
+	ToolName   string
+	Cause      string
+	Calls      int
 }
 
 func (r *repository) ToolCells(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.ToolCellRow, error) {
-	return scanMapped(ctx, r, "tool cells", toolCellsSQL, filterArgs(filter),
+	return readMapped(ctx, r, "tool cells", toolCellsQuery(&filter),
 		func(row *toolCellScan) aianalyticsports.ToolCellRow {
 			return aianalyticsports.ToolCellRow{
-				DeploymentKey: row.key(),
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
 				ToolName:      row.ToolName,
 				Cause:         aianalytics.Cause(row.Cause),
 				Calls:         row.Calls,
@@ -639,20 +716,21 @@ func (r *repository) ToolCells(
 }
 
 type taskCellScan struct {
-	deploymentScan
-	Task      string `bun:"task"`
-	Runs      int    `bun:"runs"`
-	Completed int    `bun:"completed"`
+	ModelKey   string
+	ProviderID string
+	Task       string
+	Runs       int
+	Completed  int
 }
 
 func (r *repository) TaskCells(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.TaskCellRow, error) {
-	return scanMapped(ctx, r, "task cells", taskCellsSQL, filterArgs(filter),
+	return readMapped(ctx, r, "task cells", taskCellsQuery(&filter),
 		func(row *taskCellScan) aianalyticsports.TaskCellRow {
 			return aianalyticsports.TaskCellRow{
-				DeploymentKey: row.key(),
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
 				Task:          aiprovider.Task(row.Task),
 				Runs:          row.Runs,
 				Completed:     row.Completed,
@@ -661,20 +739,21 @@ func (r *repository) TaskCells(
 }
 
 type decisionScan struct {
-	deploymentScan
-	Accepted int `bun:"accepted"`
-	Modified int `bun:"modified"`
-	Rejected int `bun:"rejected"`
+	ModelKey   string
+	ProviderID string
+	Accepted   int
+	Modified   int
+	Rejected   int
 }
 
 func (r *repository) Decisions(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.DecisionRow, error) {
-	return scanMapped(ctx, r, "decisions", decisionsSQL, filterArgs(filter),
+	return readMapped(ctx, r, "decisions", decisionsQuery(&filter),
 		func(row *decisionScan) aianalyticsports.DecisionRow {
 			return aianalyticsports.DecisionRow{
-				DeploymentKey: row.key(),
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
 				Accepted:      row.Accepted,
 				Modified:      row.Modified,
 				Rejected:      row.Rejected,
@@ -683,19 +762,20 @@ func (r *repository) Decisions(
 }
 
 type ratingScan struct {
-	deploymentScan
-	Rated   int `bun:"rated"`
-	Helpful int `bun:"helpful"`
+	ModelKey   string
+	ProviderID string
+	Rated      int
+	Helpful    int
 }
 
 func (r *repository) Ratings(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.RatingRow, error) {
-	return scanMapped(ctx, r, "ratings", ratingsSQL, filterArgs(filter),
+	return readMapped(ctx, r, "ratings", ratingsQuery(&filter),
 		func(row *ratingScan) aianalyticsports.RatingRow {
 			return aianalyticsports.RatingRow{
-				DeploymentKey: row.key(),
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
 				Rated:         row.Rated,
 				Helpful:       row.Helpful,
 			}
@@ -703,26 +783,23 @@ func (r *repository) Ratings(
 }
 
 type suggestionScan struct {
-	AgentDefinitionID string `bun:"agent_definition_id"`
-	AgentName         string `bun:"agent_name"`
-	Switched          int    `bun:"switched"`
-	SentThrough       int    `bun:"sent_through"`
-	AutoSwitched      int    `bun:"auto_switched"`
-	Kept              int    `bun:"kept"`
-	PassedOver        int    `bun:"passed_over"`
+	AgentDefinitionID pulid.ID
+	AgentName         string
+	Switched          int
+	SentThrough       int
+	AutoSwitched      int
+	Kept              int
+	PassedOver        int
 }
 
 func (r *repository) Suggestions(
 	ctx context.Context,
 	req *aianalyticsports.SuggestionRequest,
 ) ([]aianalyticsports.SuggestionRow, error) {
-	args := filterArgs(req.Filter)
-	args.Pending = req.PendingSince
-
-	return scanMapped(ctx, r, "suggestions", suggestionsSQL, args,
+	return readMapped(ctx, r, "suggestions", suggestionsQuery(req),
 		func(row *suggestionScan) aianalyticsports.SuggestionRow {
 			return aianalyticsports.SuggestionRow{
-				AgentDefinitionID: pulid.ID(row.AgentDefinitionID),
+				AgentDefinitionID: row.AgentDefinitionID,
 				AgentName:         row.AgentName,
 				SuggestionCounts: aianalyticsports.SuggestionCounts{
 					Switched:     row.Switched,
@@ -736,21 +813,22 @@ func (r *repository) Suggestions(
 }
 
 type providerCallScan struct {
-	deploymentScan
-	ErrorClass string `bun:"error_class"`
-	Calls      int    `bun:"calls"`
-	FellToNext int    `bun:"fell_to_next"`
-	LastHour   int64  `bun:"last_hour"`
+	ModelKey   string
+	ProviderID string
+	ErrorClass string
+	Calls      int
+	FellToNext int
+	LastHour   int64
 }
 
 func (r *repository) ProviderCalls(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.ProviderCallRow, error) {
-	return scanMapped(ctx, r, "provider calls", providerCallsSQL, filterArgs(filter),
+	return readMapped(ctx, r, "provider calls", providerCallsQuery(&filter),
 		func(row *providerCallScan) aianalyticsports.ProviderCallRow {
 			return aianalyticsports.ProviderCallRow{
-				DeploymentKey: row.key(),
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
 				Error:         aianalytics.ProviderError(row.ErrorClass),
 				Calls:         row.Calls,
 				FellToNext:    row.FellToNext,
@@ -760,19 +838,20 @@ func (r *repository) ProviderCalls(
 }
 
 type histogramScan struct {
-	deploymentScan
-	Bucket int   `bun:"bucket"`
-	Count  int64 `bun:"count"`
+	ModelKey   string
+	ProviderID string
+	Bucket     int
+	Count      int64
 }
 
 func (r *repository) FirstTokenHistograms(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.HistogramRow, error) {
-	return scanMapped(ctx, r, "first token histograms", firstTokenSQL, filterArgs(filter),
+	return readMapped(ctx, r, "first token histograms", firstTokenQuery(&filter),
 		func(row *histogramScan) aianalyticsports.HistogramRow {
 			return aianalyticsports.HistogramRow{
-				DeploymentKey: row.key(),
+				DeploymentKey: deploymentKey(row.ModelKey, row.ProviderID),
 				Bucket:        row.Bucket,
 				Count:         row.Count,
 			}
@@ -780,18 +859,18 @@ func (r *repository) FirstTokenHistograms(
 }
 
 type providerHourScan struct {
-	ProviderID string `bun:"provider_id"`
-	Hour       int64  `bun:"hour"`
-	Calls      int    `bun:"calls"`
-	Failed     int    `bun:"failed"`
-	AuthFailed int    `bun:"auth_failed"`
+	ProviderID string
+	Hour       int64
+	Calls      int
+	Failed     int
+	AuthFailed int
 }
 
 func (r *repository) ProviderHours(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.ProviderHourRow, error) {
-	return scanMapped(ctx, r, "provider hours", providerHoursSQL, filterArgs(filter),
+	return readMapped(ctx, r, "provider hours", providerHoursQuery(&filter),
 		func(row *providerHourScan) aianalyticsports.ProviderHourRow {
 			return aianalyticsports.ProviderHourRow{
 				ProviderID: row.ProviderID,
@@ -804,19 +883,19 @@ func (r *repository) ProviderHours(
 }
 
 type providerVersionScan struct {
-	ProviderID string `bun:"provider_id"`
-	Version    int64  `bun:"version"`
-	Name       string `bun:"name"`
-	Model      string `bun:"model"`
-	Enabled    bool   `bun:"enabled"`
-	CreatedAt  int64  `bun:"created_at"`
+	ProviderID string
+	Version    int64
+	Name       string
+	Model      string
+	Enabled    bool
+	CreatedAt  int64
 }
 
 func (r *repository) ProviderVersions(
 	ctx context.Context,
 	filter aianalyticsports.Filter,
 ) ([]aianalyticsports.ProviderVersionRow, error) {
-	return scanMapped(ctx, r, "provider versions", providerVersionsSQL, filterArgs(filter),
+	return readMapped(ctx, r, "provider versions", providerVersionsQuery(&filter),
 		func(row *providerVersionScan) aianalyticsports.ProviderVersionRow {
 			return aianalyticsports.ProviderVersionRow{
 				ProviderID: row.ProviderID,
@@ -830,43 +909,34 @@ func (r *repository) ProviderVersions(
 }
 
 type causeScan struct {
-	Cause      string `bun:"cause"`
-	ProviderID string `bun:"provider_id"`
-	Calls      int    `bun:"calls"`
+	Cause      string
+	ProviderID string
+	Calls      int
 }
 
 type exampleScan struct {
-	UnitID            string `bun:"unit_id"`
-	Source            string `bun:"source"`
-	ToolName          string `bun:"tool_name"`
-	Message           string `bun:"message"`
-	AgentDefinitionID string `bun:"agent_definition_id"`
-	At                int64  `bun:"at"`
+	UnitID            string
+	Source            string
+	ToolName          string
+	Message           string
+	AgentDefinitionID string
+	At                int64
 }
 
 func (r *repository) ToolFailures(
 	ctx context.Context,
 	req aianalyticsports.ToolFailureRequest,
 ) (*aianalyticsports.ToolFailureRows, error) {
-	args := filterArgs(req.Filter)
-	args.SeriesKey = req.SeriesKey
-	args.ToolName = req.ToolName
-	args.Limit = req.Limit
-	args.Candidates = req.Limit * toolExampleCandidatesPerExample
-
-	causes, err := scanRaw[causeScan](ctx, r, "tool causes", toolCausesSQL(req.CompareBy), args)
+	causes, err := readRows[causeScan](ctx, r, "tool causes", toolCausesQuery(&req))
 	if err != nil {
 		return nil, err
 	}
-	examples, err := scanRaw[exampleScan](
-		ctx,
-		r,
-		"tool examples",
-		toolExamplesSQL(req.CompareBy),
-		args,
-	)
-	if err != nil {
-		return nil, err
+	var examples []exampleScan
+	if req.Limit > 0 {
+		examples, err = readRows[exampleScan](ctx, r, "tool examples", toolExamplesQuery(&req))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	out := &aianalyticsports.ToolFailureRows{
@@ -917,12 +987,9 @@ func (r *repository) ToolFailures(
 
 func (r *repository) Palette(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	since int64,
 ) ([]aianalyticsports.DeploymentKey, error) {
-	args := tenantArgs(tenant)
-	args.SinceHour = floorHour(since)
-
-	return scanMapped(ctx, r, "palette", paletteSQL, args,
+	return readMapped(ctx, r, "palette", paletteQuery(since),
 		func(row *deploymentScan) aianalyticsports.DeploymentKey { return row.key() })
 }

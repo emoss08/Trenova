@@ -3,6 +3,7 @@ import { Button } from "@trenova/shared/components/ui/button";
 import { SegmentedControl } from "@trenova/shared/components/ui/segmented-control";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@trenova/shared/components/ui/tooltip";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import { XCloseIcon } from "@trenova/shared/components/icons";
 import {
@@ -32,10 +33,13 @@ import {
 export function InsightFilterBar({
   filters,
   total,
+  totalExact,
   onChange,
 }: {
   filters: InsightFilterState;
   total: number;
+  /** False when total is the server's estimate of a list too large to count. */
+  totalExact: boolean;
   onChange: (next: InsightFilterState) => void;
 }) {
   const t = useT();
@@ -56,7 +60,11 @@ export function InsightFilterBar({
         />
 
         <span className="text-muted-foreground text-xs tabular-nums">
-          {total === 1 ? t("{0} finding", String(total)) : t("{0} findings", String(total))}
+          {!totalExact
+            ? t("About {0} findings", formatRowTotal(total, false))
+            : total === 1
+              ? t("{0} finding", String(total))
+              : t("{0} findings", String(total))}
         </span>
 
         {hasActiveFilters(filters) && (

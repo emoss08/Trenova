@@ -1093,17 +1093,6 @@ func (a *Activities) analyzeExtraction(
 		fingerprint,
 	)
 	intelligence := analyzeDocument(classification, extracted)
-	intelligence = a.applyParsingRules(
-		ctx,
-		pagination.TenantInfo{
-			OrgID: doc.OrganizationID,
-			BuID:  doc.BusinessUnitID,
-		},
-		doc.OriginalName,
-		classification.ProviderFingerprint,
-		extracted,
-		intelligence,
-	)
 	result, err := a.enrichWithAI(ctx, &EnrichmentPayload{
 		Payload:        payload,
 		Document:       doc,

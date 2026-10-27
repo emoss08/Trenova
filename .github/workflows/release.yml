@@ -8,6 +8,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAMESPACE: emoss08/trenova
   TMS_IMAGE_NAME: emoss08/trenova/tms
+  TMS_DB_IMAGE_NAME: emoss08/trenova/tms-db
   CLIENT_IMAGE_NAME: emoss08/trenova/client
   IMAGING_IMAGE_NAME: emoss08/trenova/imaging
 
@@ -93,9 +94,35 @@ jobs:
         with:
           context: .
           file: ./deploy/Dockerfile.tms
+          target: tms
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      # trenova-db applies the migrations before each rollout; the TMS image
+      # carries none of them.
+      - name: Extract metadata (trenova-db)
+        id: meta-db
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.TMS_DB_IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Build and push trenova-db image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./deploy/Dockerfile.tms
+          target: trenova-db
+          push: true
+          tags: ${{ steps.meta-db.outputs.tags }}
+          labels: ${{ steps.meta-db.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           platforms: linux/amd64

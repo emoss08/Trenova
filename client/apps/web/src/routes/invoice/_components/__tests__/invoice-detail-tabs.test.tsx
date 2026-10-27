@@ -130,7 +130,7 @@ beforeEach(() => {
       autoSend: false,
       partnerId: null,
       partnerName: "",
-      documentProfileId: null,
+      ladingVersionId: null,
       communicationMethod: "",
       status: "NotConfigured",
       lastMessageId: null,

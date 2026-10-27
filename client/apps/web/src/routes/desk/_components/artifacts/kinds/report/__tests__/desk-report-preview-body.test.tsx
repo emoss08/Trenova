@@ -30,7 +30,7 @@ function preview(payload: Record<string, unknown> = {}): AssistantArtifact {
       dataset: "invoice",
       columns: [
         { id: "customer", label: "Customer", type: "string" },
-        { id: "revenue", label: "Revenue", type: "decimal", format: "money" },
+        { id: "revenue", label: "Revenue", type: "decimal", format: "currency" },
       ],
       rows: [
         { Customer: "Acme Foods", Revenue: "300.00" },

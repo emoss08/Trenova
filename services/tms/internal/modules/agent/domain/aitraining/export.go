@@ -6,16 +6,13 @@ import (
 	"maps"
 	"slices"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*TrainingExport)(nil)
 
 const (
 	ExampleFormat             = "trenova.extraction-training/v1"
@@ -53,38 +50,55 @@ type OrganizationProgress struct {
 }
 
 type TrainingExport struct {
-	bun.BaseModel `bun:"table:ai_training_exports,alias:aitx" json:"-"`
+	keel.Table `keel:"ai_training_exports"`
 
-	ID                 pulid.ID          `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	Task               aicorrection.Task `json:"task"               bun:"task,type:VARCHAR(50),notnull"`
-	Status             ExportStatus      `json:"status"             bun:"status,type:VARCHAR(20),notnull,default:'Queued'"`
-	Format             string            `json:"format"             bun:"format,type:VARCHAR(64),notnull"`
-	CapturedFrom       int64             `json:"capturedFrom"       bun:"captured_from,type:BIGINT,notnull"`
-	CapturedTo         int64             `json:"capturedTo"         bun:"captured_to,type:BIGINT,notnull"`
-	MaxPerOrganization int               `json:"maxPerOrganization" bun:"max_per_organization,type:INTEGER,notnull"`
-	ValidationPercent  int               `json:"validationPercent"  bun:"validation_percent,type:INTEGER,notnull"`
-	RequestedBy        string            `json:"requestedBy"        bun:"requested_by,type:VARCHAR(255),notnull"`
-	Note               string            `json:"note"               bun:"note,type:TEXT,nullzero"`
-	WorkflowID         string            `json:"workflowId"         bun:"workflow_id,type:VARCHAR(255),nullzero"`
+	ID                 pulid.ID          `json:"id"                 keel:"id,pk,autoid:aitx_"`
+	Task               aicorrection.Task `json:"task"               keel:"task"`
+	Status             ExportStatus      `json:"status"             keel:"status"`
+	Format             string            `json:"format"             keel:"format"`
+	CapturedFrom       int64             `json:"capturedFrom"       keel:"captured_from"`
+	CapturedTo         int64             `json:"capturedTo"         keel:"captured_to"`
+	MaxPerOrganization int               `json:"maxPerOrganization" keel:"max_per_organization"`
+	ValidationPercent  int               `json:"validationPercent"  keel:"validation_percent"`
+	RequestedBy        string            `json:"requestedBy"        keel:"requested_by"`
+	Note               string            `json:"note"               keel:"note,nullzero"`
+	WorkflowID         string            `json:"workflowId"         keel:"workflow_id,nullzero"`
 
-	OrganizationsConsidered int                    `json:"organizationsConsidered" bun:"organizations_considered,type:INTEGER,notnull,default:0"`
-	OrganizationsIncluded   int                    `json:"organizationsIncluded"   bun:"organizations_included,type:INTEGER,notnull,default:0"`
-	ExamplesTotal           int                    `json:"examplesTotal"           bun:"examples_total,type:INTEGER,notnull,default:0"`
-	TrainExamples           int                    `json:"trainExamples"           bun:"train_examples,type:INTEGER,notnull,default:0"`
-	ValidationExamples      int                    `json:"validationExamples"      bun:"validation_examples,type:INTEGER,notnull,default:0"`
-	Dropped                 map[DropReason]int     `json:"dropped"                 bun:"dropped,type:JSONB,notnull,default:'{}'"`
-	Parts                   []Part                 `json:"parts"                   bun:"parts,type:JSONB,notnull,default:'[]'"`
-	Progress                []OrganizationProgress `json:"progress"                bun:"progress,type:JSONB,notnull,default:'[]'"`
+	OrganizationsConsidered int                    `json:"organizationsConsidered" keel:"organizations_considered"`
+	OrganizationsIncluded   int                    `json:"organizationsIncluded"   keel:"organizations_included"`
+	ExamplesTotal           int                    `json:"examplesTotal"           keel:"examples_total"`
+	TrainExamples           int                    `json:"trainExamples"           keel:"train_examples"`
+	ValidationExamples      int                    `json:"validationExamples"      keel:"validation_examples"`
+	Dropped                 map[DropReason]int     `json:"dropped"                 keel:"dropped,jsonb"`
+	Parts                   []Part                 `json:"parts"                   keel:"parts,jsonb"`
+	Progress                []OrganizationProgress `json:"progress"                keel:"progress,jsonb"`
 
-	ManifestKey    string `json:"manifestKey"    bun:"manifest_key,type:VARCHAR(512),nullzero"`
-	ManifestSHA256 string `json:"manifestSha256" bun:"manifest_sha256,type:VARCHAR(64),nullzero"`
-	FailureMessage string `json:"failureMessage" bun:"failure_message,type:TEXT,nullzero"`
+	ManifestKey    string `json:"manifestKey"    keel:"manifest_key,nullzero"`
+	ManifestSHA256 string `json:"manifestSha256" keel:"manifest_sha256,nullzero"`
+	FailureMessage string `json:"failureMessage" keel:"failure_message,nullzero"`
 
-	StartedAt  *int64 `json:"startedAt"  bun:"started_at,type:BIGINT,nullzero"`
-	FinishedAt *int64 `json:"finishedAt" bun:"finished_at,type:BIGINT,nullzero"`
-	Version    int64  `json:"version"    bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt  int64  `json:"createdAt"  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt  int64  `json:"updatedAt"  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	StartedAt  *int64 `json:"startedAt"  keel:"started_at"`
+	FinishedAt *int64 `json:"finishedAt" keel:"finished_at"`
+	Version    int64  `json:"version"    keel:"version,version"`
+	CreatedAt  int64  `json:"createdAt"  keel:"created_at,autocreate"`
+	UpdatedAt  int64  `json:"updatedAt"  keel:"updated_at,autoupdate"`
+}
+
+func (e *TrainingExport) BeforeCreate(_ context.Context) error {
+	if e.Dropped == nil {
+		e.Dropped = map[DropReason]int{}
+	}
+	if e.Parts == nil {
+		e.Parts = []Part{}
+	}
+	if e.Progress == nil {
+		e.Progress = []OrganizationProgress{}
+	}
+	if e.Status == "" {
+		e.Status = ExportStatusQueued
+	}
+
+	return nil
 }
 
 func (e *TrainingExport) Validate(multiErr *errortypes.MultiError) {
@@ -219,30 +233,4 @@ func compareSplit(a, b Split) int {
 	default:
 		return 1
 	}
-}
-
-func (e *TrainingExport) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("aitx_")
-		}
-		if e.Dropped == nil {
-			e.Dropped = map[DropReason]int{}
-		}
-		if e.Parts == nil {
-			e.Parts = []Part{}
-		}
-		if e.Progress == nil {
-			e.Progress = []OrganizationProgress{}
-		}
-		e.CreatedAt = now
-		e.UpdatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
-	}
-
-	return nil
 }

@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/uptrace/bun"
 )
 
 var dbBackfillFiscalPeriodsCmd = &cobra.Command{
@@ -24,16 +27,16 @@ Examples:
 	RunE: runBackfillFiscalPeriods,
 }
 
+const backfillFiscalPeriodsReason = "backfill the fiscal periods of every organization's fiscal years"
+
 func runBackfillFiscalPeriods(_ *cobra.Command, _ []string) error {
-	ctx := context.Background()
+	ctx := dbscope.WithSystem(context.Background(), backfillFiscalPeriodsReason)
 
-	manager, err := createManager()
+	db, err := openDB(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to create database manager: %w", err)
+		return fmt.Errorf("open the database: %w", err)
 	}
-	defer manager.Close()
-
-	db := manager.GetDB()
+	defer db.Close()
 
 	years, err := fiscalYearsMissingPeriods(ctx, db)
 	if err != nil {
@@ -89,41 +92,26 @@ func runBackfillFiscalPeriods(_ *cobra.Command, _ []string) error {
 
 func fiscalYearsMissingPeriods(
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 ) ([]*fiscalyear.FiscalYear, error) {
-	years := make([]*fiscalyear.FiscalYear, 0)
-	err := db.NewSelect().
-		Model(&years).
-		Where(
-			"NOT EXISTS (?)",
-			db.NewSelect().
-				Model((*fiscalperiod.FiscalPeriod)(nil)).
-				Where("fp.fiscal_year_id = fy.id").
-				Where("fp.organization_id = fy.organization_id").
-				Where("fp.business_unit_id = fy.business_unit_id"),
-		).
-		Order("fy.organization_id", "fy.business_unit_id", "fy.year").
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
+	fy := fiscalyeardb.FiscalYears
 
-	return years, nil
+	return fy.AllTenants().
+		Where(fy.Periods().None()).
+		Order(fy.OrganizationID.Asc(), fy.BusinessUnitID.Asc(), fy.Year.Asc()).
+		All(ctx, db)
 }
 
 func insertPeriods(
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	periods []*fiscalperiod.FiscalPeriod,
 ) error {
 	if len(periods) == 0 {
 		return nil
 	}
 
-	return db.RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-		_, err := tx.NewInsert().Model(&periods).Exec(txCtx)
-		return err
-	})
+	return fiscalperioddb.FiscalPeriods.CreateMany(ctx, db, periods)
 }
 
 func init() {

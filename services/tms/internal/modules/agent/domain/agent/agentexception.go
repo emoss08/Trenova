@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -10,45 +11,40 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*AgentException)(nil)
 	_ validationframework.TenantedEntity = (*AgentException)(nil)
 	_ pagination.CursorEntity            = (*AgentException)(nil)
 	_ domaintypes.PostgresSearchable     = (*AgentException)(nil)
 )
 
 type AgentException struct {
-	bun.BaseModel `bun:"table:agent_exceptions,alias:ax" json:"-"`
+	keel.Table `keel:"agent_exceptions"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:ax_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	RunID           pulid.ID          `json:"runId"           keel:"run_id"`
+	Category        ExceptionCategory `json:"category"        keel:"category"`
+	Severity        Severity          `json:"severity"        keel:"severity"`
+	SubjectType     SubjectType       `json:"subjectType"     keel:"subject_type"`
+	SubjectID       pulid.ID          `json:"subjectId"       keel:"subject_id"`
+	AttemptSummary  string            `json:"attemptSummary"  keel:"attempt_summary"`
+	Evidence        []EvidenceRef     `json:"evidence"        keel:"evidence,jsonb"`
+	BlastRadius     int               `json:"blastRadius"     keel:"blast_radius"`
+	ResolutionState ResolutionState   `json:"resolutionState" keel:"resolution_state"`
+	ResolutionNotes string            `json:"resolutionNotes" keel:"resolution_notes,nullzero"`
 
-	RunID           pulid.ID          `json:"runId"           bun:"run_id,type:VARCHAR(100),notnull"`
-	Category        ExceptionCategory `json:"category"        bun:"category,type:agent_exception_category_enum,notnull"`
-	Severity        Severity          `json:"severity"        bun:"severity,type:agent_severity_enum,notnull,default:'Medium'"`
-	SubjectType     SubjectType       `json:"subjectType"     bun:"subject_type,type:agent_subject_type_enum,notnull"`
-	SubjectID       pulid.ID          `json:"subjectId"       bun:"subject_id,type:VARCHAR(100),notnull"`
-	AttemptSummary  string            `json:"attemptSummary"  bun:"attempt_summary,type:TEXT,notnull"`
-	Evidence        []EvidenceRef     `json:"evidence"        bun:"evidence,type:JSONB,notnull,default:'[]'"`
-	BlastRadius     int               `json:"blastRadius"     bun:"blast_radius,type:INTEGER,notnull"`
-	ResolutionState ResolutionState   `json:"resolutionState" bun:"resolution_state,type:agent_resolution_state_enum,notnull,default:'Open'"`
-	ResolutionNotes string            `json:"resolutionNotes" bun:"resolution_notes,type:TEXT,nullzero"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	Run          *AgentRun            `bun:"rel:belongs-to,join:run_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id" json:"-"`
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"                                                                   json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"                                                                    json:"-"`
+	Run          *AgentRun            `json:"-" keel:"belongs:run_id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func (e *AgentException) Validate(multiErr *errortypes.MultiError) {
@@ -113,17 +109,12 @@ func (e *AgentException) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 	}
 }
 
-func (e *AgentException) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if e.ID.IsNil() {
-			e.ID = pulid.MustNew("ax_")
-		}
-		e.CreatedAt = now
-	case *bun.UpdateQuery:
-		e.UpdatedAt = now
+func (e *AgentException) BeforeCreate(ctx context.Context) error {
+	if e.Severity == "" {
+		e.Severity = SeverityMedium
+	}
+	if e.ResolutionState == "" {
+		e.ResolutionState = ResolutionStateOpen
 	}
 
 	return nil

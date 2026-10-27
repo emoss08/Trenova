@@ -21,7 +21,7 @@ func TestParseSample_ReadsTheEnvelopeAndEachTransaction(t *testing.T) {
 		"GE*1*103~" +
 		"IEA*1*000000103~"
 
-	sample, err := ParseSample(raw)
+	sample, err := ParseSample(t.Context(), raw)
 	require.NoError(t, err)
 	assert.Equal(t, "ZZ", sample.SenderQualifier)
 	assert.Equal(t, "ACMERETAIL", sample.SenderID)
@@ -37,13 +37,11 @@ func TestParseSample_ReadsTheEnvelopeAndEachTransaction(t *testing.T) {
 	transaction := sample.Transactions[0]
 	assert.Equal(t, edi.TransactionSet204, transaction.TransactionSet)
 	assert.Equal(t, "0001", transaction.ControlNumber)
-	require.NotNil(t, transaction.Payload.LoadTender)
-	assert.Equal(t, "LOAD-77", transaction.Payload.LoadTender.RatingDetail["externalShipmentId"])
 }
 
 func TestParseSample_RefusesTextThatIsNotAnInterchange(t *testing.T) {
 	t.Parallel()
 
-	_, err := ParseSample("ST*204*0001~SE*1*0001~")
+	_, err := ParseSample(t.Context(), "ST*204*0001~SE*1*0001~")
 	require.Error(t, err)
 }

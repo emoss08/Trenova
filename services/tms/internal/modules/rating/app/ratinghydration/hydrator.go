@@ -17,8 +17,9 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/customerports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/places/domain/locationcategory"
+	"github.com/emoss08/trenova/internal/modules/places/ports/locationcategoryports"
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
 	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
@@ -34,17 +35,34 @@ import (
 	"go.uber.org/fx"
 )
 
-const shipmentSchemaID = "shipment"
+const relationCustomer = "Customer"
+
+var ratingRelations = []string{
+	"Moves",
+	"Moves.Stops",
+	"Commodities",
+	"AdditionalCharges",
+	relationCustomer,
+	"ServiceType",
+	"ShipmentType",
+	"TractorType",
+	"TrailerType",
+	"Moves.Stops.Location",
+	"Moves.Stops.Location.State",
+	"Moves.Stops.Location.LocationCategory",
+	"Commodities.Commodity",
+	"Commodities.Commodity.HazardousMaterial",
+}
 
 type Params struct {
 	fx.In
 
-	Environment       *environment.Builder
 	CustomerRepo      customerports.CustomerRepository
 	ServiceTypeRepo   servicetypeports.ServiceTypeRepository
 	ShipmentTypeRepo  shipmenttypeports.ShipmentTypeRepository
 	EquipmentTypeRepo equipmenttypeports.EquipmentTypeRepository
 	LocationRepo      locationports.LocationRepository
+	CategoryRepo      locationcategoryports.LocationCategoryRepository
 	StateRepo         usstateports.UsStateRepository
 	CommodityRepo     commodityports.CommodityRepository
 	HazmatRepo        hazardousmaterialports.HazardousMaterialRepository
@@ -73,14 +91,9 @@ type hydration struct {
 func New(p Params) (*Hydrator, error) {
 	loaders := relationLoaders(&p)
 
-	relations := p.Environment.RequiredPreloads(shipmentSchemaID)
-	if len(relations) == 0 {
-		return nil, fmt.Errorf("formula schema %q declares no relations", shipmentSchemaID)
-	}
-
 	missing := make([]string, 0)
-	steps := make([]relationStep, 0, len(relations))
-	for _, relation := range relations {
+	steps := make([]relationStep, 0, len(ratingRelations))
+	for _, relation := range ratingRelations {
 		load, ok := loaders[relation]
 		if !ok {
 			missing = append(missing, relation)
@@ -92,8 +105,7 @@ func New(p Params) (*Hydrator, error) {
 	}
 	if len(missing) > 0 {
 		return nil, fmt.Errorf(
-			"formula schema %q reads relations rating cannot load: %s",
-			shipmentSchemaID,
+			"rating reads relations it cannot load: %s",
 			strings.Join(missing, ", "),
 		)
 	}
@@ -191,18 +203,19 @@ func batchTenant(
 
 func relationLoaders(p *Params) map[string]func(context.Context, *hydration) error {
 	return map[string]func(context.Context, *hydration) error{
-		"Moves":                      nil,
-		"Moves.Stops":                nil,
-		"Commodities":                nil,
-		"AdditionalCharges":          nil,
-		"Customer":                   loadCustomers(p.CustomerRepo),
-		"ServiceType":                loadServiceTypes(p.ServiceTypeRepo),
-		"ShipmentType":               loadShipmentTypes(p.ShipmentTypeRepo),
-		"TractorType":                loadTractorTypes(p.EquipmentTypeRepo),
-		"TrailerType":                loadTrailerTypes(p.EquipmentTypeRepo),
-		"Moves.Stops.Location":       loadStopLocations(p.LocationRepo),
-		"Moves.Stops.Location.State": loadLocationStates(p.StateRepo),
-		"Commodities.Commodity":      loadCommodities(p.CommodityRepo),
+		"Moves":                                 nil,
+		"Moves.Stops":                           nil,
+		"Commodities":                           nil,
+		"AdditionalCharges":                     nil,
+		relationCustomer:                        loadCustomers(p.CustomerRepo),
+		"ServiceType":                           loadServiceTypes(p.ServiceTypeRepo),
+		"ShipmentType":                          loadShipmentTypes(p.ShipmentTypeRepo),
+		"TractorType":                           loadTractorTypes(p.EquipmentTypeRepo),
+		"TrailerType":                           loadTrailerTypes(p.EquipmentTypeRepo),
+		"Moves.Stops.Location":                  loadStopLocations(p.LocationRepo),
+		"Moves.Stops.Location.State":            loadLocationStates(p.StateRepo),
+		"Moves.Stops.Location.LocationCategory": loadLocationCategories(p.CategoryRepo),
+		"Commodities.Commodity":                 loadCommodities(p.CommodityRepo),
 		"Commodities.Commodity.HazardousMaterial": loadHazardousMaterials(p.HazmatRepo),
 	}
 }
@@ -481,6 +494,36 @@ func loadLocationStates(
 			ids []pulid.ID,
 		) ([]*usstate.UsState, error) {
 			return repo.GetByIDs(ctx, ids)
+		},
+	}
+	return func(ctx context.Context, h *hydration) error {
+		return hydrateBelongsTo(ctx, h, link, stopLocationsOf(h.entities))
+	}
+}
+
+func loadLocationCategories(
+	repo locationcategoryports.LocationCategoryRepository,
+) func(context.Context, *hydration) error {
+	link := belongsTo[*location.Location, locationcategory.LocationCategory]{
+		field:      "locationCategoryId",
+		label:      "Location category",
+		foreignKey: func(l *location.Location) pulid.ID { return l.LocationCategoryID },
+		get: func(l *location.Location) *locationcategory.LocationCategory {
+			return l.LocationCategory
+		},
+		set: func(l *location.Location, v *locationcategory.LocationCategory) {
+			l.LocationCategory = v
+		},
+		key: func(v *locationcategory.LocationCategory) pulid.ID { return v.ID },
+		fetch: func(
+			ctx context.Context,
+			tenantInfo pagination.TenantInfo,
+			ids []pulid.ID,
+		) ([]*locationcategory.LocationCategory, error) {
+			return repo.GetByIDs(ctx, locationcategoryports.GetLocationCategoriesByIDsRequest{
+				TenantInfo:          tenantInfo,
+				LocationCategoryIDs: ids,
+			})
 		},
 	}
 	return func(ctx context.Context, h *hydration) error {

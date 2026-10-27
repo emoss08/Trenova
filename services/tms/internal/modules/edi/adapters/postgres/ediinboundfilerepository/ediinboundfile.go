@@ -4,21 +4,28 @@ package ediinboundfilerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const defaultRecentQuarantinedLimit = 10
+
+var inboundFileErrors = dberror.Mapping{Entity: "EDIInboundFile"}
+
+var purgeableStatuses = []edi.InboundFileStatus{
+	edi.InboundFileStatusProcessed,
+	edi.InboundFileStatusDuplicate,
+}
 
 type Params struct {
 	fx.In
@@ -47,33 +54,39 @@ func (r *repository) ListInboundFiles(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIInboundFile], error) {
-			entities := make([]*edi.EDIInboundFile, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.EDIInboundFileColumns
+			f := edidb.EDIInboundFiles
+			return listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				listedFiles(req),
+				&listquery.Request[edi.EDIInboundFile]{
+					Filter: req.Filter,
+					Shape:  withPartner,
+					Then:   []keel.Order{f.ReceivedAt.Desc()},
+				},
+			)
+		},
+	)
+}
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation("Partner")
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			query = query.ExcludeColumn("raw_content")
-
-			total, err := querybuilder.ApplyFilters(query, "eif", req.Filter, (*edi.EDIInboundFile)(nil)).
-				Order(cols.ReceivedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return &pagination.ListResult[*edi.EDIInboundFile]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+func (r *repository) ListInboundFilesCursor(
+	ctx context.Context,
+	req *ediports.ListEDIInboundFilesRequest,
+) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				listedFiles(req),
+				&listquery.Request[edi.EDIInboundFile]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withPartner,
+				},
+			)
 		},
 	)
 }
@@ -83,22 +96,17 @@ func (r *repository) GetInboundFileByID(
 	req ediports.GetEDIInboundFileByIDRequest,
 ) (*edi.EDIInboundFile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIInboundFile, error) {
-		entity := new(edi.EDIInboundFile)
-		cols := edicol.EDIInboundFileColumns
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("Partner").
-			Relation("CommunicationProfile").
-			Where(cols.ID.Eq(), req.ID).
-			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo))
+		f := edidb.EDIInboundFiles
+		q := f.Where(f.ID.Eq(req.ID)).Load(f.Partner(), f.CommunicationProfile())
 		if req.IncludeMessages {
-			query = query.Relation("Messages")
+			q.Load(f.Messages())
 		}
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIInboundFile")
+
+		entity, err := q.One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, inboundFileErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -108,13 +116,10 @@ func (r *repository) CreateInboundFile(
 	entity *edi.EDIInboundFile,
 ) (*edi.EDIInboundFile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIInboundFile, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := edidb.EDIInboundFiles.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, inboundFileErrors.Map(err, entity.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -124,26 +129,10 @@ func (r *repository) UpdateInboundFile(
 	entity *edi.EDIInboundFile,
 ) (*edi.EDIInboundFile, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIInboundFile, error) {
-		ov := entity.Version
-		entity.Version++
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-			return nil, err
+		if err := edidb.EDIInboundFiles.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, inboundFileErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"EDIInboundFile",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+
 		return entity, nil
 	})
 }
@@ -153,34 +142,24 @@ func (r *repository) PurgeRawContentBefore(
 	req ediports.PurgeEDIRawPayloadsRequest,
 ) (int64, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := edicol.EDIInboundFileColumns
-		subquery := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIInboundFile)(nil)).
-			Column("id").
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.ReceivedAt.Lt(), req.Before).
-			Where(cols.Status.In(), bun.List([]edi.InboundFileStatus{
-				edi.InboundFileStatusProcessed,
-				edi.InboundFileStatusDuplicate,
-			})).
-			Where("eif.raw_purged_at IS NULL").
-			Limit(int64(req.Limit))
+		f := edidb.EDIInboundFiles
+		due := edidb.EDIInboundFiles.As("due")
+		batch := due.Pick(due.ID).
+			Where(
+				due.ReceivedAt.Lt(req.Before),
+				due.Status.In(purgeableStatuses...),
+				due.RawPurgedAt.IsNull(),
+			).
+			Limit(req.Limit)
 
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*edi.EDIInboundFile)(nil)).
-			Set("raw_content = ''").
-			Set("raw_purged_at = ?", req.PurgedAt).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where("eif.id IN (?)", subquery).
-			Exec(ctx)
-		if err != nil {
-			return 0, err
-		}
-		return result.RowsAffected()
+		return f.Where(f.ID.InQuery(batch)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			f.RawContent.To(""),
+			f.RawPurgedAt.To(req.PurgedAt),
+			f.Version.ToExpr(f.Version),
+			f.UpdatedAt.ToExpr(f.UpdatedAt),
+		)
 	})
 }
 
@@ -190,17 +169,10 @@ func (r *repository) CountQuarantinedSince(ctx context.Context, since int64) (in
 		"count quarantined inbound EDI files instance-wide for the health check",
 	)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		cols := edicol.EDIInboundFileColumns
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIInboundFile)(nil)).
-			Where(cols.Status.Eq(), edi.InboundFileStatusQuarantined).
-			Where(cols.UpdatedAt.Gte(), since).
-			Count(ctx)
-		if err != nil {
-			return 0, err
-		}
-		return int64(count), nil
+		f := edidb.EDIInboundFiles
+		return f.AllTenants().
+			Where(f.Status.Eq(edi.InboundFileStatusQuarantined), f.UpdatedAt.Gte(since)).
+			Count(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -209,15 +181,17 @@ func (r *repository) ExistsByChecksum(
 	req ediports.ExistsEDIInboundFileByChecksumRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := edicol.EDIInboundFileColumns
-		return r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIInboundFile)(nil)).
-			Where(cols.CommunicationProfileID.Eq(), req.CommunicationProfileID).
-			Where(cols.Checksum.Eq(), req.Checksum).
-			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo)).
-			Exists(ctx)
+		f := edidb.EDIInboundFiles
+		return f.Where(
+			f.CommunicationProfileID.Eq(req.CommunicationProfileID),
+			f.Checksum.Eq(req.Checksum),
+		).Exists(ctx, r.db.Keel(ctx))
 	})
+}
+
+type statusCount struct {
+	Status edi.InboundFileStatus
+	Count  int64
 }
 
 func (r *repository) GetInboundFileStatusCounts(
@@ -225,28 +199,23 @@ func (r *repository) GetInboundFileStatusCounts(
 	req ediports.GetEDIInboundFileStatusCountsRequest,
 ) (map[edi.InboundFileStatus]int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[edi.InboundFileStatus]int, error) {
-		cols := edicol.EDIInboundFileColumns
-		var rows []struct {
-			Status edi.InboundFileStatus `bun:"status"`
-			Count  int                   `bun:"count"`
-		}
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*edi.EDIInboundFile)(nil)).
-			ColumnExpr(cols.Status.Qualified()).
-			ColumnExpr("COUNT(*) AS count").
-			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo)).
-			GroupExpr(cols.Status.Qualified())
-		if req.Since > 0 {
-			query = query.Where(cols.ReceivedAt.Gte(), req.Since)
-		}
-		if err := query.Scan(ctx, &rows); err != nil {
+		f := edidb.EDIInboundFiles
+		rows, err := keel.Into[statusCount](
+			ctx,
+			r.db.Keel(ctx),
+			f.Where(keel.When(req.Since > 0, f.ReceivedAt.Gte(req.Since))).
+				Group(f.Status).
+				Pick(f.Status, keel.Count()),
+		)
+		if err != nil {
 			return nil, err
 		}
+
 		counts := make(map[edi.InboundFileStatus]int, len(rows))
 		for _, row := range rows {
-			counts[row.Status] = row.Count
+			counts[row.Status] = int(row.Count)
 		}
+
 		return counts, nil
 	})
 }
@@ -256,101 +225,33 @@ func (r *repository) ListRecentQuarantined(
 	req ediports.ListRecentQuarantinedEDIInboundFilesRequest,
 ) ([]*edi.EDIInboundFile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIInboundFile, error) {
-		cols := edicol.EDIInboundFileColumns
 		limit := req.Limit
 		if limit <= 0 {
-			limit = 10
+			limit = defaultRecentQuarantinedLimit
 		}
-		entities := make([]*edi.EDIInboundFile, 0, limit)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ExcludeColumn("raw_content").
-			Relation("Partner").
-			Where(cols.Status.Eq(), edi.InboundFileStatusQuarantined).
-			Apply(edicol.EDIInboundFileApplyTenant(req.TenantInfo))
-		if req.PartnerID.IsNotNil() {
-			query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-		}
-		if req.Since > 0 {
-			query = query.Where(cols.ReceivedAt.Gte(), req.Since)
-		}
-		if err := query.
-			Order(cols.ReceivedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-		return entities, nil
+
+		f := edidb.EDIInboundFiles
+		return f.Omit(f.RawContent).
+			Where(
+				f.Status.Eq(edi.InboundFileStatusQuarantined),
+				keel.When(req.PartnerID.IsNotNil(), f.EDIPartnerID.Eq(req.PartnerID)),
+				keel.When(req.Since > 0, f.ReceivedAt.Gte(req.Since)),
+			).
+			Load(f.Partner()).
+			Order(f.ReceivedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 	})
 }
 
-func (r *repository) ListInboundFilesCursor(
-	ctx context.Context,
-	req *ediports.ListEDIInboundFilesRequest,
-) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIInboundFile], error) {
-			dba := r.db.DBForContext(ctx)
-			cols := edicol.EDIInboundFileColumns
-			extraFilters := func(sq *bun.SelectQuery) *bun.SelectQuery {
-				if req.Status != "" {
-					sq = sq.Where(cols.Status.Eq(), req.Status)
-				}
-				if req.PartnerID.IsNotNil() {
-					sq = sq.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-				}
-				return sq
-			}
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*edi.EDIInboundFile)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"eif",
-							req.Filter,
-							(*edi.EDIInboundFile)(nil),
-						)
-						return extraFilters(sq)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIInboundFile]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*edi.EDIInboundFile) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ExcludeColumn("raw_content").
-						Relation("Partner")
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						"eif",
-						req.Filter,
-						req.Cursor,
-						(*edi.EDIInboundFile)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return extraFilters(sq), nil
-				},
-			})
-		},
+func listedFiles(req *ediports.ListEDIInboundFilesRequest) *keel.Query[*edi.EDIInboundFile] {
+	f := edidb.EDIInboundFiles
+	return f.Omit(f.RawContent).Where(
+		keel.When(req.Status != "", f.Status.Eq(req.Status)),
+		keel.When(req.PartnerID.IsNotNil(), f.EDIPartnerID.Eq(req.PartnerID)),
 	)
+}
+
+func withPartner(q *keel.Query[*edi.EDIInboundFile]) *keel.Query[*edi.EDIInboundFile] {
+	return q.Load(edidb.EDIInboundFiles.Partner())
 }

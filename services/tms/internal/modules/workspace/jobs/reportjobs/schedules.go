@@ -51,5 +51,16 @@ func (p *ScheduleProvider) GetSchedules() []*schedule.Schedule {
 				memoPurposeKey: "report-zombie-reconciliation",
 			},
 		},
+		{
+			ID:            "report-catalog-check",
+			Description:   "Mark saved reports that no longer validate against the report catalog",
+			Spec:          schedule.Every(15 * time.Minute),
+			Workflow:      CheckReportDefinitionsAgainstCatalogWorkflow,
+			TaskQueue:     temporaltype.ReportTaskQueue,
+			OverlapPolicy: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+			Memo: map[string]any{
+				memoPurposeKey: "report-catalog-check",
+			},
+		},
 	}
 }

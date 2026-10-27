@@ -71,6 +71,12 @@ type GetEDIOutboundMessageForAckRequest struct {
 	TransactionControlNumber string                `json:"transactionControlNumber"`
 }
 
+type LinkEDIMessageFlowRequest struct {
+	ID             pulid.ID              `json:"id"`
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	FlowInstanceID pulid.ID              `json:"flowInstanceId"`
+}
+
 type UpdateEDIMessageAcknowledgmentRequest struct {
 	ID            pulid.ID                        `json:"id"`
 	TenantInfo    pagination.TenantInfo           `json:"tenantInfo"`
@@ -110,20 +116,20 @@ type GetEDIPartnerScorecardsRequest struct {
 }
 
 type EDIPartnerScorecardRow struct {
-	PartnerID           pulid.ID `bun:"partner_id"`
-	PartnerName         string   `bun:"partner_name"`
-	PartnerCode         string   `bun:"partner_code"`
-	OutboundTotal       int64    `bun:"outbound_total"`
-	SentCount           int64    `bun:"sent_count"`
-	FailedCount         int64    `bun:"failed_count"`
-	DeadLetteredCount   int64    `bun:"dead_lettered_count"`
-	ReceivedCount       int64    `bun:"received_count"`
-	AvgAckSeconds       *float64 `bun:"avg_ack_seconds"`
-	P95AckSeconds       *float64 `bun:"p95_ack_seconds"`
-	OverdueAckCount     int64    `bun:"overdue_ack_count"`
-	PendingOver4hCount  int64    `bun:"pending_over_4h_count"`
-	PendingOver24hCount int64    `bun:"pending_over_24h_count"`
-	OldestPendingAt     *int64   `bun:"oldest_pending_at"`
+	PartnerID           pulid.ID
+	PartnerName         string
+	PartnerCode         string
+	OutboundTotal       int64
+	SentCount           int64
+	FailedCount         int64
+	DeadLetteredCount   int64
+	ReceivedCount       int64
+	AvgAckSeconds       *float64
+	P95AckSeconds       *float64
+	OverdueAckCount     int64
+	PendingOver4hCount  int64
+	PendingOver24hCount int64
+	OldestPendingAt     *int64
 }
 
 type GetEDIVolumeSeriesRequest struct {
@@ -140,20 +146,20 @@ type GetEDIPartnerSetActivityRequest struct {
 }
 
 type EDIPartnerSetActivityRow struct {
-	TransactionSet    edi.TransactionSet    `bun:"transaction_set"`
-	Direction         edi.DocumentDirection `bun:"direction"`
-	Count             int64                 `bun:"count"`
-	FailedCount       int64                 `bun:"failed_count"`
-	DeadLetteredCount int64                 `bun:"dead_lettered_count"`
-	LastAt            int64                 `bun:"last_at"`
+	TransactionSet    edi.TransactionSet
+	Direction         edi.DocumentDirection
+	Count             int64
+	FailedCount       int64
+	DeadLetteredCount int64
+	LastAt            int64
 }
 
 type EDIVolumePoint struct {
-	BucketStart   int64 `bun:"bucket_start"`
-	OutboundCount int64 `bun:"outbound_count"`
-	SentCount     int64 `bun:"sent_count"`
-	FailedCount   int64 `bun:"failed_count"`
-	ReceivedCount int64 `bun:"received_count"`
+	BucketStart   int64
+	OutboundCount int64
+	SentCount     int64
+	FailedCount   int64
+	ReceivedCount int64
 }
 
 type GetEDIOverdueAckCountRequest struct {
@@ -172,19 +178,19 @@ type ListOverdueEDIAcksRequest struct {
 }
 
 type OverdueEDIAckPartner struct {
-	PartnerID         pulid.ID `bun:"edi_partner_id"`
-	PartnerName       string   `bun:"partner_name"`
-	PartnerCode       string   `bun:"partner_code"`
-	Count             int      `bun:"count"`
-	OldestGeneratedAt int64    `bun:"oldest_generated_at"`
+	PartnerID         pulid.ID
+	PartnerName       string
+	PartnerCode       string
+	Count             int
+	OldestGeneratedAt int64
 }
 
 type EDIPartnerAckStatusCount struct {
-	PartnerID   pulid.ID                        `bun:"edi_partner_id"`
-	PartnerName string                          `bun:"partner_name"`
-	PartnerCode string                          `bun:"partner_code"`
-	AckStatus   edi.MessageAcknowledgmentStatus `bun:"ack_status"`
-	Count       int                             `bun:"count"`
+	PartnerID   pulid.ID
+	PartnerName string
+	PartnerCode string
+	AckStatus   edi.MessageAcknowledgmentStatus
+	Count       int
 }
 
 type OverdueEDIAcks struct {
@@ -200,7 +206,22 @@ type ListRecentEDIMessageFailuresRequest struct {
 	Limit          int                   `json:"limit"`
 }
 
+type ListEDIReplayMessagesRequest struct {
+	TenantInfo     pagination.TenantInfo `json:"tenantInfo"`
+	PartnerID      pulid.ID              `json:"partnerId"`
+	TransactionSet edi.TransactionSet    `json:"transactionSet"`
+	Direction      edi.DocumentDirection `json:"direction"`
+	From           int64                 `json:"from"`
+	To             int64                 `json:"to"`
+	AfterID        pulid.ID              `json:"afterId"`
+	Limit          int                   `json:"limit"`
+}
+
 type EDIMessageRepository interface {
+	ListReplayMessages(
+		ctx context.Context,
+		req *ListEDIReplayMessagesRequest,
+	) ([]*edi.EDIMessage, error)
 	ListMessages(
 		ctx context.Context,
 		req *ListEDIMessagesRequest,
@@ -226,6 +247,7 @@ type EDIMessageRepository interface {
 		ctx context.Context,
 		req GetServiceFailure214StatusRequest,
 	) (*ServiceFailure214StatusRow, error)
+	LinkMessageFlow(ctx context.Context, req *LinkEDIMessageFlowRequest) (*edi.EDIMessage, error)
 	UpdateMessageDelivery(
 		ctx context.Context,
 		req *UpdateEDIMessageDeliveryRequest,

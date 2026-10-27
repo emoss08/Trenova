@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/triageportsmock"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -50,7 +51,7 @@ func newEvaluatorRig(t *testing.T, message *inboundmessage.InboundMessage) *eval
 	}
 	rig.evaluator = &Evaluator{
 		l:           zap.NewNop(),
-		db:          fakeTx{},
+		db:          dbtest.NopConnection{},
 		rules:       rig.rules,
 		store:       rig.store,
 		messages:    rig.messages,

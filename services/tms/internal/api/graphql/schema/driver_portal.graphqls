@@ -109,6 +109,8 @@ type SettlementDisputeConnection {
   edges: [SettlementDisputeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 """
@@ -242,6 +244,8 @@ type PortalEscrowSummary {
 type MySettlementList {
   items: [DriverSettlement!]!
   total: Int!
+  "Whether total was counted; false when it is the planner's estimate of a list too large to count."
+  totalExact: Boolean!
 }
 
 input InviteWorkerToPortalInput {
@@ -376,6 +380,8 @@ type DriverExpenseConnection {
   edges: [DriverExpenseEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 input SubmitMyExpenseInput {

@@ -79,6 +79,9 @@ func (s *Service) profileHolds(req *agentports.RunRequest, mode ProfileMode, nam
 }
 
 func (s *Service) looksUp(name string) bool {
+	if s.queryTools == nil {
+		return false
+	}
 	tool, ok := s.queryTools.Get(name)
 
 	return ok && agentports.EffectOf(tool) == agent.ToolEffectLookup

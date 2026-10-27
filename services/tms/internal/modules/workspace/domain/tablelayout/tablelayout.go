@@ -1,19 +1,17 @@
 package tablelayout
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/tableconfiguration"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -35,7 +33,6 @@ const (
 var resourcePattern = regexp.MustCompile(`^[A-Za-z0-9](?:[A-Za-z0-9 _.:-]*[A-Za-z0-9_.:-])?$`)
 
 var (
-	_ bun.BeforeAppendModelHook          = (*TableLayout)(nil)
 	_ validationframework.TenantedEntity = (*TableLayout)(nil)
 )
 
@@ -203,21 +200,21 @@ func validateColumnID(multiErr *errortypes.MultiError, field, id string) {
 }
 
 type TableLayout struct {
-	bun.BaseModel `bun:"table:table_layouts,alias:tl" json:"-"`
+	keel.Table `keel:"table_layouts"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
-	Resource       string   `json:"resource"       bun:"resource,type:VARCHAR(100),notnull"`
-	Layout         *Layout  `json:"layout"         bun:"layout,type:JSONB,notnull"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:tl_"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	UserID         pulid.ID `json:"userId"         keel:"user_id"`
+	Resource       string   `json:"resource"       keel:"resource"`
+	Layout         *Layout  `json:"layout"         keel:"layout,jsonb"`
+	Version        int64    `json:"version"        keel:"version,version"`
+	CreatedAt      int64    `json:"createdAt"      keel:"created_at,autocreate"`
+	UpdatedAt      int64    `json:"updatedAt"      keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	User         *tenant.User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	User         *tenant.User         `json:"user,omitempty"         keel:"belongs:user_id"`
 }
 
 func (tl *TableLayout) Validate(multiErr *errortypes.MultiError) {
@@ -248,23 +245,6 @@ func (tl *TableLayout) ValidateKey(multiErr *errortypes.MultiError) {
 			),
 		),
 	))
-}
-
-func (tl *TableLayout) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if tl.ID.IsNil() {
-			tl.ID = pulid.MustNew("tl_")
-		}
-		tl.CreatedAt = now
-		tl.UpdatedAt = now
-	case *bun.UpdateQuery:
-		tl.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (tl *TableLayout) GetID() pulid.ID {

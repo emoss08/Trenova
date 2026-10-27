@@ -2,24 +2,24 @@ package documenttemplaterepository
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttemplatecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documenttemplate/documenttemplatedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documenttemplateports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const generatedVersionConstraint = "fk_generated_documents_template_version"
+
+var templateErrors = dberror.Mapping{Entity: "DocumentTemplate"}
 
 type TemplateParams struct {
 	fx.In
@@ -40,31 +40,6 @@ func NewTemplateRepository(p TemplateParams) documenttemplateports.DocumentTempl
 	}
 }
 
-// orderVersions puts the newest revision first, which is the order the version
-// rail reads in and the order a rollback picker needs.
-func orderVersions(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Order(documenttemplatecol.DocumentTemplateVersionColumns.VersionNumber.OrderDesc())
-}
-
-func (r *templateRepository) filterQuery(
-	q *bun.SelectQuery,
-	req *documenttemplateports.ListDocumentTemplatesRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		documenttemplatecol.DocumentTemplateTable.Alias,
-		req.Filter,
-		(*documenttemplate.DocumentTemplate)(nil),
-	)
-
-	if req.Kind != "" {
-		q = q.Where(documenttemplatecol.DocumentTemplateColumns.Kind.Eq(), req.Kind)
-	}
-
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
-}
-
 func (r *templateRepository) List(
 	ctx context.Context,
 	req *documenttemplateports.ListDocumentTemplatesRequest,
@@ -73,30 +48,27 @@ func (r *templateRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			entities := make(
-				[]*documenttemplate.DocumentTemplate,
-				0,
-				req.Filter.Pagination.SafeLimit(),
+			t := documenttemplatedb.DocumentTemplates
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				t.Where(keel.When(req.Kind != "", t.Kind.Eq(req.Kind))),
+				&listquery.Request[documenttemplate.DocumentTemplate]{
+					Filter: req.Filter,
+					Shape: func(
+						q *keel.Query[*documenttemplate.DocumentTemplate],
+					) *keel.Query[*documenttemplate.DocumentTemplate] {
+						return q.Load(t.ActiveVersion())
+					},
+					Then: []keel.Order{t.CreatedAt.Desc()},
+				},
 			)
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(documenttemplatecol.DocumentTemplateRelations.ActiveVersion).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count document templates", zap.Error(err))
+				r.l.Error("failed to list document templates", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*documenttemplate.DocumentTemplate]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -105,62 +77,22 @@ func (r *templateRepository) ListConnection(
 	ctx context.Context,
 	req *documenttemplateports.ListDocumentTemplateConnectionRequest,
 ) (*pagination.CursorListResult[*documenttemplate.DocumentTemplate], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*documenttemplate.DocumentTemplate], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*documenttemplate.DocumentTemplate)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							documenttemplatecol.DocumentTemplateTable.Alias,
-							req.Filter,
-							(*documenttemplate.DocumentTemplate)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count document templates", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*documenttemplate.DocumentTemplate]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*documenttemplate.DocumentTemplate) *bun.SelectQuery {
-						q := dba.NewSelect().Model(entities)
-						if len(req.DocumentTemplateColumns) == 0 {
-							q = q.ColumnExpr(documenttemplatecol.DocumentTemplateTable.All())
-						} else {
-							q = q.Column(req.DocumentTemplateColumns...)
-						}
-						return q
-					},
-					Apply: func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							q,
-							documenttemplatecol.DocumentTemplateTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*documenttemplate.DocumentTemplate)(nil),
-						)
-					},
+				r.db.Keel(ctx),
+				documenttemplatedb.DocumentTemplates.Query(),
+				&listquery.Request[documenttemplate.DocumentTemplate]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.DocumentTemplateColumns,
 				},
 			)
 			if err != nil {
-				log.Error("failed to cursor list document templates", zap.Error(err))
+				r.l.Error("failed to list document template connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -177,42 +109,27 @@ func (r *templateRepository) GetByID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplate, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByID"),
-				zap.String("id", req.DocumentTemplateID.String()),
-			)
+			t := documenttemplatedb.DocumentTemplates
+			versions := t.Versions()
+			assignments := t.Assignments()
 
-			cols := documenttemplatecol.DocumentTemplateColumns
-			rel := documenttemplatecol.DocumentTemplateRelations
-			entity := new(documenttemplate.DocumentTemplate)
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return documenttemplatecol.DocumentTemplateScopeTenant(sq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.DocumentTemplateID)
-				})
-
+			var loads []keel.Loader
 			if req.IncludeActiveVersion {
-				q = q.Relation(rel.ActiveVersion)
+				loads = append(loads, t.ActiveVersion())
 			}
-
 			if req.IncludeVersions {
-				q = q.Relation(rel.Versions, orderVersions)
+				loads = append(loads, versions.Order(versions.VersionNumber.Desc()))
 			}
-
 			if req.IncludeAssignments {
-				q = q.Relation(rel.Assignments).
-					Relation(buncolgen.Rel(
-						rel.Assignments,
-						documenttemplatecol.DocumentTemplateAssignmentRelations.Customer,
-					))
+				loads = append(loads, assignments.Load(assignments.Customer()))
 			}
 
-			if err := q.Scan(ctx); err != nil {
-				log.Error("failed to get document template", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "DocumentTemplate")
+			entity, err := t.Where(t.ID.Eq(req.DocumentTemplateID)).
+				Load(loads...).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error("failed to get document template", zap.Error(err))
+				return nil, templateErrors.Map(err, req.DocumentTemplateID.String())
 			}
 
 			return entity, nil
@@ -228,18 +145,17 @@ func (r *templateRepository) GetByIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*documenttemplate.DocumentTemplate, error) {
-			entities := make([]*documenttemplate.DocumentTemplate, 0, len(req.DocumentTemplateIDs))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return documenttemplatecol.DocumentTemplateScopeTenant(sq, req.TenantInfo).
-						Where(documenttemplatecol.DocumentTemplateColumns.ID.In(), bun.List(req.DocumentTemplateIDs))
-				}).
-				Scan(ctx)
+			if len(req.DocumentTemplateIDs) == 0 {
+				return []*documenttemplate.DocumentTemplate{}, nil
+			}
+
+			t := documenttemplatedb.DocumentTemplates
+			entities, err := t.Where(t.ID.In(req.DocumentTemplateIDs...)).
+				Limit(len(req.DocumentTemplateIDs)).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to get document templates by ids", zap.Error(err))
-				return nil, fmt.Errorf("get document templates by ids: %w", err)
+				return nil, err
 			}
 
 			return entities, nil
@@ -255,15 +171,10 @@ func (r *templateRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplate, error) {
-			log := r.l.With(zap.String("operation", "Create"))
-
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				log.Error("failed to create document template", zap.Error(err))
-				return nil, err
+			err := documenttemplatedb.DocumentTemplates.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
+				r.l.Error("failed to create document template", zap.Error(err))
+				return nil, templateErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -279,32 +190,14 @@ func (r *templateRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documenttemplate.DocumentTemplate, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("id", entity.ID.String()),
-			)
-
-			cols := documenttemplatecol.DocumentTemplateColumns
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				OmitZero().
-				Returning("*").
-				Exec(ctx)
+			err := documenttemplatedb.DocumentTemplates.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
-				log.Error("failed to update document template", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				results, "DocumentTemplate", entity.ID.String(),
-			); err != nil {
-				return nil, err
+				r.l.Error(
+					"failed to update document template",
+					zap.String("id", entity.ID.String()),
+					zap.Error(err),
+				)
+				return nil, templateErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -321,94 +214,70 @@ func (r *templateRepository) Delete(
 	req *documenttemplateports.GetDocumentTemplateByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.DocumentTemplateID.String()),
-		)
-
-		cols := documenttemplatecol.DocumentTemplateColumns
+		db := r.db.Keel(ctx)
+		t := documenttemplatedb.DocumentTemplates
+		id := req.DocumentTemplateID.String()
 
 		// The template points at its active version and the version points back, so
 		// the pointer has to be dropped before the cascade can remove the versions.
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model((*documenttemplate.DocumentTemplate)(nil)).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return documenttemplatecol.DocumentTemplateScopeTenantUpdate(uq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.DocumentTemplateID)
-				}).
-				Set(cols.ActiveVersionID.SetNull()).
-				Exec(c); uErr != nil {
-				return uErr
-			}
-
-			results, dErr := r.db.DBForContext(c).
-				NewDelete().
-				Model((*documenttemplate.DocumentTemplate)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return documenttemplatecol.DocumentTemplateScopeTenantDelete(dq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.DocumentTemplateID)
-				}).
-				Exec(c)
-			if dErr != nil {
-				return dErr
-			}
-
-			return dberror.CheckRowsAffected(
-				results, "DocumentTemplate", req.DocumentTemplateID.String(),
-			)
-		})
-		if err != nil {
-			log.Error("failed to delete document template", zap.Error(err))
-			return err
+		if _, err := t.Where(t.ID.Eq(req.DocumentTemplateID)).
+			Update(ctx, db, t.ActiveVersionID.ToNull()); err != nil {
+			r.l.Error("failed to delete document template", zap.Error(err))
+			return templateErrors.Map(err, id)
 		}
 
-		return nil
+		n, err := t.Where(t.ID.Eq(req.DocumentTemplateID)).Delete(ctx, db)
+		if err != nil {
+			r.l.Error("failed to delete document template", zap.Error(err))
+			return mapTemplateDeleteError(err, id)
+		}
+
+		return dberror.CheckAffected(n, "DocumentTemplate", id)
 	})
+}
+
+func mapTemplateDeleteError(err error, id string) error {
+	if dberror.IsForeignKeyConstraintViolation(err) &&
+		dberror.ExtractConstraintName(err) == generatedVersionConstraint {
+		return errortypes.NewValidationError(
+			"id",
+			errortypes.ErrInvalidReference,
+			"This template produced documents that were sent, so its versions cannot be deleted",
+		).WithInternal(err)
+	}
+
+	return templateErrors.Map(err, id)
 }
 
 func (r *templateRepository) SelectOptions(
 	ctx context.Context,
 	req *documenttemplateports.DocumentTemplateSelectOptionsRequest,
 ) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*documenttemplate.DocumentTemplate], error) {
-			cols := documenttemplatecol.DocumentTemplateColumns
+			t := documenttemplatedb.DocumentTemplates
+			// Only templates that render anything are offerable: assigning a customer
+			// to a draft-only template would silently fall through to the built-in.
+			q := t.Pick(t.ID, t.Code, t.Name, t.Description, t.Kind, t.IsOrgDefault).
+				Where(
+					keel.When(req.Kind != "", t.Kind.Eq(req.Kind)),
+					t.ActiveVersionID.IsNotNull(),
+				).
+				Order(t.Name.Asc())
 
-			return dbhelper.SelectOptions[*documenttemplate.DocumentTemplate](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Name,
-						cols.Description,
-						cols.Kind,
-						cols.IsOrgDefault,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						if req.Kind != "" {
-							q = q.Where(cols.Kind.Eq(), req.Kind)
-						}
-						// Only templates that render anything are offerable: assigning a
-						// customer to a draft-only template would silently fall through to
-						// the built-in.
-						return q.Where(cols.ActiveVersionID.IsNotNull()).
-							Order(cols.Name.OrderAsc())
-					},
-					EntityName: "DocumentTemplate",
-					SearchColumnRefs: []buncolgen.Column{
-						cols.Code,
-						cols.Name,
-						cols.Description,
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						t.Code.ContainsFold(s),
+						t.Name.ContainsFold(s),
+						t.Description.ContainsFold(s),
+					)
 				},
 			)
 		},

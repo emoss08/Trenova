@@ -4,19 +4,20 @@ package capturerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const maxRequestsForTarget = 50
+
+var requestErrors = dberror.Mapping{Entity: "Capture request"}
 
 type requestRepository struct {
 	db *postgres.Connection
@@ -47,11 +48,7 @@ func (r *requestRepository) Create(
 	entity *capture.CaptureRequest,
 ) (*capture.CaptureRequest, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := capturedb.CaptureRequests.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			return nil, err
 		}
 
@@ -64,29 +61,8 @@ func (r *requestRepository) Update(
 	entity *capture.CaptureRequest,
 ) (*capture.CaptureRequest, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(capturecol.CaptureRequestColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"Capture request",
-			entity.ID.String(),
-		); err != nil {
-			entity.Version = ov
-
-			return nil, err
+		if err := capturedb.CaptureRequests.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, requestErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -98,16 +74,10 @@ func (r *requestRepository) GetByID(
 	req captureports.GetCaptureRequestByIDRequest,
 ) (*capture.CaptureRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CaptureRequest, error) {
-		entity := new(capture.CaptureRequest)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(capturecol.CaptureRequestRelations.CaptureProfile).
-			Where(capturecol.CaptureRequestColumns.ID.Eq(), req.ID).
-			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Capture request")
+		cr := capturedb.CaptureRequests
+		entity, err := cr.Where(cr.ID.Eq(req.ID)).Load(cr.CaptureProfile()).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, requestErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -119,22 +89,14 @@ func (r *requestRepository) ListOpen(
 	req captureports.ListOpenCaptureRequestsRequest,
 ) ([]*capture.CaptureRequest, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
-		entities := make([]*capture.CaptureRequest, 0)
-		cols := capturecol.CaptureRequestColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Relation(capturecol.CaptureRequestRelations.CaptureProfile).
-			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
-			Where(cols.DeviceID.Eq(), req.DeviceID).
-			Where(cols.Status.In(), bun.List(openRequestStatuses)).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		return entities, nil
+		cr := capturedb.CaptureRequests
+		return orEmptyRequests(cr.Where(
+			cr.DeviceID.Eq(req.DeviceID),
+			cr.Status.In(openRequestStatuses...),
+		).
+			Load(cr.CaptureProfile()).
+			Order(cr.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx)))
 	})
 }
 
@@ -148,27 +110,15 @@ func (r *requestRepository) ListForTarget(
 			limit = maxRequestsForTarget
 		}
 
-		entities := make([]*capture.CaptureRequest, 0)
-		cols := capturecol.CaptureRequestColumns
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(capturecol.CaptureRequestApplyTenant(req.TenantInfo)).
-			Where(cols.TargetType.Eq(), req.TargetType).
-			Where(cols.TargetID.Eq(), req.TargetID)
-		if req.UserID.IsNotNil() {
-			query = query.Where(cols.UserID.Eq(), req.UserID)
-		}
-
-		if err := query.
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		return entities, nil
+		cr := capturedb.CaptureRequests
+		return orEmptyRequests(cr.Where(
+			cr.TargetType.Eq(req.TargetType),
+			cr.TargetID.Eq(req.TargetID),
+			keel.When(req.UserID.IsNotNil(), cr.UserID.Eq(req.UserID)),
+		).
+			Order(cr.CreatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx)))
 	})
 }
 
@@ -179,20 +129,25 @@ func (r *requestRepository) ListExpired(
 ) ([]*capture.CaptureRequest, error) {
 	ctx = dbscope.WithSystem(ctx, "list expired capture requests across every organization")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CaptureRequest, error) {
-		entities := make([]*capture.CaptureRequest, 0)
-		cols := capturecol.CaptureRequestColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Where(cols.Status.In(), bun.List(waitingRequestStatuses)).
-			Where(cols.ExpiresAt.Lte(), now).
-			Order(cols.ExpiresAt.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		return entities, nil
+		cr := capturedb.CaptureRequests
+		return orEmptyRequests(cr.AllTenants().
+			Where(cr.Status.In(waitingRequestStatuses...), cr.ExpiresAt.Lte(now)).
+			Order(cr.ExpiresAt.Asc()).
+			Limit(boundedLimit(limit)).
+			List(ctx, r.db.Keel(ctx)))
 	})
+}
+
+func orEmptyRequests(
+	entities []*capture.CaptureRequest,
+	err error,
+) ([]*capture.CaptureRequest, error) {
+	if err != nil {
+		return nil, err
+	}
+	if entities == nil {
+		return []*capture.CaptureRequest{}, nil
+	}
+
+	return entities, nil
 }

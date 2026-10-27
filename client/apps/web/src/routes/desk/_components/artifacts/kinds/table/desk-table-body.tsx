@@ -12,6 +12,7 @@ import {
 import type { AssistantArtifact } from "@/types/assistant";
 import { useT, type TranslateFn } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { BillingQueueSummary } from "@trenova/shared/types/billing-queue";
 import { describeError } from "@trenova/shared/lib/error-presentation";
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
@@ -722,6 +723,9 @@ function loadingRows(pages: TablePages): number {
 
 function searchPlaceholder(pages: TablePages, t: TranslateFn): string {
   if (pages.searchesList) {
+    if (pages.total !== null && pages.totalEstimated) {
+      return t("Search about {0} rows", formatRowTotal(pages.total, false));
+    }
     return pages.total !== null
       ? t("{0, plural, one {Search # row} other {Search all # rows}}", pages.total)
       : t("Search the list");
@@ -740,7 +744,13 @@ function TableHead({ grid, pages }: { grid: Grid; pages: TablePages }) {
   return (
     <header className="dk-tv-head">
       <div className="dk-tv-fig">
-        <b>{unknown && pages.remote ? t("{0}+", figure) : figure}</b>
+        <b>
+          {pages.totalEstimated
+            ? t("about {0}", formatRowTotal(figure, false))
+            : unknown && pages.remote
+              ? t("{0}+", figure)
+              : figure}
+        </b>
         <span>
           {pages.filtering
             ? t("{0, plural, one {of # row read} other {of # rows read}}", pages.readRows)

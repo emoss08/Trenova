@@ -1,0 +1,218 @@
+[
+  {
+    "name": "a time of day interpolates without seconds",
+    "expr": "@17:30",
+    "display": "17:30"
+  },
+  {
+    "name": "a time of day keeps seconds that aren't zero",
+    "expr": "@07:30:15",
+    "display": "07:30:15"
+  },
+  {
+    "name": "a date-time's time is its own clock's",
+    "expr": "@2026-10-22T17:45-05:00.time",
+    "display": "17:45"
+  },
+  {
+    "name": "a date-time in UTC shows its UTC clock",
+    "expr": "@2026-10-22T22:45Z.time",
+    "display": "22:45"
+  },
+  {
+    "name": "times subtract to a duration on one day",
+    "expr": "@17:00 - @08:30",
+    "display": "8.5 h"
+  },
+  {
+    "name": "a later time subtracted is negative",
+    "expr": "@08:00 - @09:00",
+    "display": "-1 h"
+  },
+  {
+    "name": "seconds make a duration in minutes",
+    "expr": "@08:00:30 - @08:00",
+    "display": "0.5 min"
+  },
+  {
+    "name": "times compare in clock order",
+    "expr": "@17:30 > @08:00 and @00:00 < @23:59:59",
+    "display": "true"
+  },
+  {
+    "name": "a time range includes its start",
+    "expr": "@08:00 in @08:00..@17:00",
+    "display": "true"
+  },
+  {
+    "name": "a time range excludes its end",
+    "expr": "@17:00 in @08:00..@17:00",
+    "display": "false"
+  },
+  {
+    "name": "a closed time range includes its end",
+    "expr": "@17:00 in @08:00..=@17:00",
+    "display": "true"
+  },
+  {
+    "name": "a time's hour and minute",
+    "expr": "@17:30.hour * 100 + @17:30.minute",
+    "display": "1730"
+  },
+  {
+    "name": "times sort and take a maximum",
+    "expr": "[@17:00, @08:00, @12:30].sortBy(t => t)",
+    "display": "[08:00, 12:30, 17:00]"
+  },
+  {
+    "name": "the latest time",
+    "expr": "[@17:00, @08:00, @12:30].max() ?? @00:00",
+    "display": "17:00"
+  },
+  {
+    "name": "a date-time moves by minutes in its own offset",
+    "expr": "@2026-10-22T17:45-05:00.addMinutes(30)",
+    "display": "2026-10-22T18:15:00-05:00"
+  },
+  {
+    "name": "minutes past midnight move the date",
+    "expr": "@2026-10-22T23:45-05:00.addMinutes(30).time",
+    "display": "00:15"
+  },
+  {
+    "name": "minutes back",
+    "expr": "@2026-10-22T00:10Z.addMinutes(-20)",
+    "display": "2026-10-21T23:50:00Z"
+  },
+  {
+    "name": "times are equal by value",
+    "expr": "@08:00 == @08:00:00",
+    "display": "true"
+  },
+  {
+    "name": "a match on the time of day picks its band",
+    "source": "tariff \"t\"\nlet band = match rating.date.time {\n  ..@08:00 => \"early\"\n  @08:00..@17:00 => \"day\"\n  @17:00.. => \"evening\"\n}\nnote \"{band}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "evening"
+          }
+        ]
+      }
+    },
+    "facts": {
+      "rating": {
+        "date": {
+          "$date": "2026-10-22T18:30:00-05:00"
+        }
+      }
+    }
+  },
+  {
+    "name": "a time input reads its wire value",
+    "source": "tariff \"t\"\ninput close: Time = @17:00\nnote \"closes {close}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "closes 18:30"
+          }
+        ]
+      }
+    },
+    "inputs": {
+      "close": {
+        "$time": "18:30:00"
+      }
+    }
+  },
+  {
+    "name": "a time input defaults",
+    "source": "tariff \"t\"\ninput close: Time = @17:00\nnote \"closes {close}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "closes 17:00"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "a time input outside its constraint stops the rating",
+    "source": "tariff \"t\"\ninput close: Time = @17:00 where @12:00..=@20:00\nnote \"{close}\"",
+    "inputs": {
+      "close": {
+        "$time": "21:00:00"
+      }
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be from {1} to {2}; {3} is outside it",
+          "args": [
+            "`close`",
+            "12:00",
+            "20:00",
+            "21:00"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "after hours bills by the stop's own clock",
+    "tests": "tariff \"t\"\nuse std.time.{ afterHours }\ninput close: Time = @17:00\nfor stop in shipment.stops {\n  if let at = stop.arrival {\n    if afterHours(at, close: close) {\n      charge \"After hours, stop {stop.sequence}\" = $50\n    }\n  }\n}\ntest \"the late delivery bills\" {\n  given shipment.stops = [pickup(arrival: @2026-10-22T16:30-05:00), delivery(arrival: @2026-10-22T23:30Z)]\n  expect total == $50\n  expect charge(\"After hours, stop 2\") == $50\n}\ntest \"a later close bills nothing\" {\n  given input.close = @23:45\n  given shipment.stops = [pickup(arrival: @2026-10-22T16:30-05:00), delivery(arrival: @2026-10-22T23:30Z)]\n  expect total == $0\n}",
+    "expect": [
+      {
+        "name": "the late delivery bills",
+        "status": "passed"
+      },
+      {
+        "name": "a later close bills nothing",
+        "status": "passed"
+      }
+    ]
+  },
+  {
+    "name": "a property varies a time over its range by the minute",
+    "tests": "tariff \"t\"\ncharge \"x\" = $1\nproperty \"the first minutes after eight are still eight o'clock\" {\n  vary t in @08:00..=@08:05\n  expect t.hour == 8\n}",
+    "expect": [
+      {
+        "name": "the first minutes after eight are still eight o'clock",
+        "kind": "property",
+        "status": "passed",
+        "cases": 6
+      }
+    ]
+  },
+  {
+    "name": "a time property's counterexample is a time",
+    "tests": "tariff \"t\"\ncharge \"x\" = $1\nproperty \"every time is before five\" {\n  vary t in @16:00..=@18:00\n  expect t < @17:00\n}",
+    "expect": [
+      {
+        "name": "every time is before five",
+        "kind": "property",
+        "status": "failed",
+        "counterexample": {
+          "values": [
+            {
+              "display": "17:00",
+              "target": "t",
+              "value": {
+                "$time": "17:00:00"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+]

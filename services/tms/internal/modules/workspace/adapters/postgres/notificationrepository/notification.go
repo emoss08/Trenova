@@ -3,18 +3,17 @@ package notificationrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/notificationcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/notification/notificationdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/notificationports"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -38,50 +37,36 @@ func New(p Params) notificationports.NotificationRepository {
 	}
 }
 
-var cols = notificationcol.NotificationColumns
-
-func (r *repository) scopeFilter(
-	q *bun.SelectQuery,
-	tenantInfo pagination.TenantInfo,
-	personalOnly bool,
-) *bun.SelectQuery {
-	if personalOnly {
-		return q.
-			Where(cols.TargetUserID.Eq(), tenantInfo.UserID).
-			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
+func notifications(ctx context.Context, orgID pulid.ID) *keel.Query[*notification.Notification] {
+	n := notificationdb.Notifications
+	if dbscope.IsSystem(ctx) {
+		return n.AllTenants().Where(n.OrganizationID.Eq(orgID))
 	}
 
-	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.
-			WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-				return inner.
-					Where(cols.TargetUserID.Eq(), tenantInfo.UserID).
-					Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
-			}).
-			WhereOr(cols.Channel.Eq(), notification.ChannelGlobal)
-	})
+	return n.Query()
 }
 
-func (r *repository) scopeActionQuery(
-	q *bun.UpdateQuery,
-	tenantInfo pagination.TenantInfo,
-	personalOnly bool,
-) *bun.UpdateQuery {
+func audience(tenantInfo pagination.TenantInfo, personalOnly bool) keel.Pred {
+	n := notificationdb.Notifications
+	personal := keel.And(
+		n.TargetUserID.Eq(tenantInfo.UserID),
+		n.BusinessUnitID.Eq(tenantInfo.BuID),
+	)
 	if personalOnly {
-		return q.
-			Where(cols.TargetUserID.Eq(), tenantInfo.UserID).
-			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
+		return personal
 	}
 
-	return q.WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-		return uq.
-			WhereGroup(" AND ", func(inner *bun.UpdateQuery) *bun.UpdateQuery {
-				return inner.
-					Where(cols.TargetUserID.Eq(), tenantInfo.UserID).
-					Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID)
-			}).
-			WhereOr(cols.Channel.Eq(), notification.ChannelGlobal)
-	})
+	return keel.Or(personal, n.Channel.Eq(notification.ChannelGlobal))
+}
+
+func stateFilter(req *notificationports.ListNotificationConnectionRequest) []keel.Pred {
+	n := notificationdb.Notifications
+	dismissed := n.DismissedAt.IsNull()
+	if req.State == notification.StateArchived {
+		dismissed = n.DismissedAt.IsNotNull()
+	}
+
+	return []keel.Pred{dismissed, keel.When(req.UnreadOnly, n.ReadAt.IsNull())}
 }
 
 func (r *repository) ExistsRecent(
@@ -89,15 +74,13 @@ func (r *repository) ExistsRecent(
 	req notificationports.ExistsRecentNotificationRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		return r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*notification.Notification)(nil)).
-			Where(cols.OrganizationID.Eq(), req.OrganizationID).
-			Where(cols.BusinessUnitID.Eq(), req.BusinessUnitID).
-			Where(cols.EventType.Eq(), req.EventType).
-			Where(cols.CorrelationID.Eq(), req.CorrelationID).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			Exists(ctx)
+		n := notificationdb.Notifications
+		return notifications(ctx, req.OrganizationID).Where(
+			n.BusinessUnitID.Eq(req.BusinessUnitID),
+			n.EventType.Eq(req.EventType),
+			n.CorrelationID.Eq(req.CorrelationID),
+			n.CreatedAt.Gte(req.Since),
+		).Exists(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -106,11 +89,8 @@ func (r *repository) Create(
 	entity *notification.Notification,
 ) (*notification.Notification, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*notification.Notification, error) {
-		log := r.l.With(zap.String("operation", "Create"))
-
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx)
-		if err != nil {
-			log.Error("failed to create notification", zap.Error(err))
+		if err := notificationdb.Notifications.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to create notification", zap.Error(err))
 			return nil, err
 		}
 
@@ -126,148 +106,19 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*notification.Notification], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			entities := make([]*notification.Notification, 0, req.Filter.Pagination.SafeLimit())
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities)
-
-			q = querybuilder.ApplyFilters(
-				q,
-				notificationcol.NotificationTable.Alias,
-				req.Filter,
-				(*notification.Notification)(nil),
-			)
-
-			q = q.Where(cols.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID)
-			q = r.scopeFilter(q, req.Filter.TenantInfo, false)
-			q = q.Order(cols.CreatedAt.OrderDesc())
-			q = q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			total, err := q.ScanAndCount(ctx)
-			if err != nil {
-				log.Error("failed to list notifications", zap.Error(err))
-				return nil, err
-			}
-
-			return &pagination.ListResult[*notification.Notification]{
-				Items: entities,
-				Total: int(total),
-			}, nil
-		},
-	)
-}
-
-func applyNotificationColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(notificationcol.NotificationTable.All())
-	}
-
-	return q.Column(columns...)
-}
-
-func stateFilter(
-	q *bun.SelectQuery,
-	req *notificationports.ListNotificationConnectionRequest,
-) *bun.SelectQuery {
-	if req.State == notification.StateArchived {
-		q = q.Where(cols.DismissedAt.IsNotNull())
-	} else {
-		q = q.Where(cols.DismissedAt.IsNull())
-	}
-
-	if req.UnreadOnly {
-		q = q.Where(cols.ReadAt.IsNull())
-	}
-
-	return q
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *notificationports.ListNotificationConnectionRequest,
-) (*bun.SelectQuery, error) {
-	q, err := querybuilder.ApplyCursorFilters(
-		q,
-		notificationcol.NotificationTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*notification.Notification)(nil),
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	q = q.Where(cols.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID)
-	q = stateFilter(q, req)
-	return r.scopeFilter(q, req.Filter.TenantInfo, req.PersonalOnly), nil
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *notificationports.ListNotificationConnectionRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFiltersWithoutSort(
-		q,
-		notificationcol.NotificationTable.Alias,
-		req.Filter,
-		(*notification.Notification)(nil),
-	)
-
-	q = q.Where(cols.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID)
-	q = stateFilter(q, req)
-	return r.scopeFilter(q, req.Filter.TenantInfo, req.PersonalOnly)
-}
-
-func (r *repository) ListConnection(
-	ctx context.Context,
-	req *notificationports.ListNotificationConnectionRequest,
-) (*pagination.CursorListResult[*notification.Notification], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*notification.Notification], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*notification.Notification)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count notifications", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			n := notificationdb.Notifications
+			result, err := listquery.List(
 				ctx,
-				dbhelper.CursorListParams[*notification.Notification]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*notification.Notification) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyNotificationColumns(sq, req.NotificationColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				notifications(ctx, req.Filter.TenantInfo.OrgID).
+					Where(audience(req.Filter.TenantInfo, false)),
+				&listquery.Request[notification.Notification]{
+					Filter: req.Filter,
+					Then:   []keel.Order{n.CreatedAt.Desc()},
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan notifications", zap.Error(err))
+				r.l.Error("failed to list notifications", zap.Error(err))
 				return nil, err
 			}
 
@@ -276,16 +127,61 @@ func (r *repository) ListConnection(
 	)
 }
 
-func (r *repository) actionQuery(
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *notificationports.ListNotificationConnectionRequest,
+) (*pagination.CursorListResult[*notification.Notification], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*notification.Notification], error) {
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				notifications(ctx, req.Filter.TenantInfo.OrgID).
+					Where(stateFilter(req)...).
+					Where(audience(req.Filter.TenantInfo, req.PersonalOnly)),
+				&listquery.Request[notification.Notification]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.NotificationColumns,
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to list notification connection", zap.Error(err))
+				return nil, err
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func (r *repository) action(
 	ctx context.Context,
 	req notificationports.NotificationActionRequest,
-) *bun.UpdateQuery {
-	q := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*notification.Notification)(nil)).
-		Where(cols.ID.In(), bun.List(req.IDs)).
-		Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID)
-	return r.scopeActionQuery(q, req.TenantInfo, req.PersonalOnly)
+	preds ...keel.Pred,
+) *keel.Query[*notification.Notification] {
+	n := notificationdb.Notifications
+	return notifications(ctx, req.TenantInfo.OrgID).
+		Where(n.ID.In(req.IDs...), audience(req.TenantInfo, req.PersonalOnly)).
+		Where(preds...)
+}
+
+func (r *repository) update(
+	ctx context.Context,
+	operation string,
+	q *keel.Query[*notification.Notification],
+	sets ...keel.Assignment,
+) error {
+	n := notificationdb.Notifications
+	sets = append(sets, n.UpdatedAt.ToExpr(n.UpdatedAt))
+	if _, err := q.Update(ctx, r.db.Keel(ctx), sets...); err != nil {
+		r.l.Error("failed to "+operation, zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (r *repository) MarkAsRead(
@@ -293,18 +189,13 @@ func (r *repository) MarkAsRead(
 	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(zap.String("operation", "MarkAsRead"))
-
-		_, err := r.actionQuery(ctx, req).
-			Set(cols.ReadAt.Set(), timeutils.NowUnix()).
-			Where(cols.ReadAt.IsNull()).
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to mark notifications as read", zap.Error(err))
-			return err
-		}
-
-		return nil
+		n := notificationdb.Notifications
+		return r.update(
+			ctx,
+			"mark notifications as read",
+			r.action(ctx, req, n.ReadAt.IsNull()),
+			n.ReadAt.To(timeutils.NowUnix()),
+		)
 	})
 }
 
@@ -313,18 +204,13 @@ func (r *repository) MarkAsUnread(
 	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(zap.String("operation", "MarkAsUnread"))
-
-		_, err := r.actionQuery(ctx, req).
-			Set(cols.ReadAt.SetNull()).
-			Where(cols.ReadAt.IsNotNull()).
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to mark notifications as unread", zap.Error(err))
-			return err
-		}
-
-		return nil
+		n := notificationdb.Notifications
+		return r.update(
+			ctx,
+			"mark notifications as unread",
+			r.action(ctx, req, n.ReadAt.IsNotNull()),
+			n.ReadAt.ToNull(),
+		)
 	})
 }
 
@@ -333,20 +219,15 @@ func (r *repository) Dismiss(
 	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(zap.String("operation", "Dismiss"))
-
+		n := notificationdb.Notifications
 		now := timeutils.NowUnix()
-		_, err := r.actionQuery(ctx, req).
-			Set(cols.DismissedAt.Set(), now).
-			Set(cols.ReadAt.SetExpr("COALESCE({}, ?)"), now).
-			Where(cols.DismissedAt.IsNull()).
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to dismiss notifications", zap.Error(err))
-			return err
-		}
-
-		return nil
+		return r.update(
+			ctx,
+			"dismiss notifications",
+			r.action(ctx, req, n.DismissedAt.IsNull()),
+			n.DismissedAt.To(now),
+			n.ReadAt.ToExpr(n.ReadAt.Coalesce(now)),
+		)
 	})
 }
 
@@ -355,18 +236,13 @@ func (r *repository) Restore(
 	req notificationports.NotificationActionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(zap.String("operation", "Restore"))
-
-		_, err := r.actionQuery(ctx, req).
-			Set(cols.DismissedAt.SetNull()).
-			Where(cols.DismissedAt.IsNotNull()).
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to restore notifications", zap.Error(err))
-			return err
-		}
-
-		return nil
+		n := notificationdb.Notifications
+		return r.update(
+			ctx,
+			"restore notifications",
+			r.action(ctx, req, n.DismissedAt.IsNotNull()),
+			n.DismissedAt.ToNull(),
+		)
 	})
 }
 
@@ -377,33 +253,21 @@ func (r *repository) MarkAllAsRead(
 	personalOnly bool,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(zap.String("operation", "MarkAllAsRead"))
-
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*notification.Notification)(nil)).
-			Set(cols.ReadAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return notificationcol.NotificationScopeTenantUpdate(uq, tenantInfo)
-			})
-
+		n := notificationdb.Notifications
 		ti := tenantInfo
 		ti.UserID = userID
-		q = r.scopeActionQuery(q, ti, personalOnly)
 
-		_, err := q.
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.
-					Where(cols.ReadAt.IsNull()).
-					Where(cols.DismissedAt.IsNull())
-			}).
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to mark all notifications as read", zap.Error(err))
-			return err
-		}
-
-		return nil
+		return r.update(
+			ctx,
+			"mark all notifications as read",
+			notifications(ctx, tenantInfo.OrgID).Where(
+				n.BusinessUnitID.Eq(tenantInfo.BuID),
+				audience(ti, personalOnly),
+				n.ReadAt.IsNull(),
+				n.DismissedAt.IsNull(),
+			),
+			n.ReadAt.To(timeutils.NowUnix()),
+		)
 	})
 }
 
@@ -414,28 +278,21 @@ func (r *repository) CountUnread(
 	personalOnly bool,
 ) (int64, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int64, error) {
-		log := r.l.With(zap.String("operation", "CountUnread"))
-
+		n := notificationdb.Notifications
 		ti := tenantInfo
 		ti.UserID = userID
 
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*notification.Notification)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return notificationcol.NotificationScopeTenant(sq, ti).
-					Where(cols.ReadAt.IsNull()).
-					Where(cols.DismissedAt.IsNull())
-			})
-
-		q = r.scopeFilter(q, ti, personalOnly)
-
-		count, err := q.Count(ctx)
+		count, err := notifications(ctx, tenantInfo.OrgID).Where(
+			n.BusinessUnitID.Eq(tenantInfo.BuID),
+			n.ReadAt.IsNull(),
+			n.DismissedAt.IsNull(),
+			audience(ti, personalOnly),
+		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to count unread notifications", zap.Error(err))
+			r.l.Error("failed to count unread notifications", zap.Error(err))
 			return 0, err
 		}
 
-		return int64(count), nil
+		return count, nil
 	})
 }

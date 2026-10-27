@@ -3,7 +3,6 @@ import {
   ArAgingSummaryDocument,
   ArAgingTrendDocument,
   ArCashFlowForecastDocument,
-  ArCollectionPerformanceDocument,
   ArCollectionsWorklistDocument,
   ArCustomerLedgerDocument,
   ArCustomerProfileDocument,
@@ -22,7 +21,6 @@ import {
   type ArAgingSummaryQuery,
   type ArAgingTrendQuery,
   type ArCashFlowForecastQuery,
-  type ArCollectionPerformanceQuery,
   type ArCollectionsWorklistQuery,
   type ArCustomerLedgerQuery,
   type ArCustomerProfileQuery,
@@ -50,7 +48,7 @@ export type AccountingBriefingAction = AccountingBriefing["actions"][number];
 export type ARDsoTrendPoint = ArDsoTrendQuery["arDsoTrend"][number];
 export type ARAgingTrendPoint = ArAgingTrendQuery["arAgingTrend"][number];
 export type ARCashFlowPoint = ArCashFlowForecastQuery["arCashFlowForecast"][number];
-export type ARCollectionPerformance = ArCollectionPerformanceQuery["arCollectionPerformance"];
+export type ARCollectionPerformance = ARDashboardKpis["collection"];
 export type ARTopOverdueCustomer = ArTopOverdueCustomersQuery["arTopOverdueCustomers"][number];
 export type ARWorklistItem = ArCollectionsWorklistQuery["arCollectionsWorklist"][number];
 export type ARCustomerProfile = ArCustomerProfileQuery["arCustomerProfile"];
@@ -171,19 +169,6 @@ export async function fetchArCashFlowForecast(
     signal: requestOptions?.signal,
   });
   return data.arCashFlowForecast;
-}
-
-export async function fetchArCollectionPerformance(
-  periodDays?: number,
-  options?: { signal?: AbortSignal },
-) {
-  const data = await requestGraphQL({
-    document: ArCollectionPerformanceDocument,
-    operationName: "ArCollectionPerformance",
-    variables: { periodDays },
-    signal: options?.signal,
-  });
-  return data.arCollectionPerformance;
 }
 
 export async function fetchArTopOverdueCustomers(

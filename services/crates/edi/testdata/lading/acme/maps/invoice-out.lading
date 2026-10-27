@@ -1,0 +1,36 @@
+map invoiceOut
+  from freightInvoice
+  to   x12.004010.210
+
+B3 {
+  02 <- number
+  03 <- key
+  04 <- "PP"
+  06 <- date
+  07 <- total
+  09 <- deliveryDate
+  10 <- if exists deliveryDate then "035" else none
+  11 <- org.scac
+}
+
+each refs as ref {
+  N9 { 01 <- ref.key, 02 <- ref.value }
+}
+
+0400 <- each lines as line {
+  LX { 01 <- line.sequence }
+  L1 { 01 <- line.sequence, 04 <- line.amount }
+}
+
+L3 { 05 <- total }
+
+test "an invoice writes its total" {
+  given freightInvoice {
+    number: "INV-7"
+    date: @2026-01-12
+    total: $1_850.00
+    lines: [{ sequence: 1, amount: $1_850.00 }]
+  }
+  expect x12 contains "B3**INV-7**PP**20260112*185000****TRNV~"
+  expect x12 contains "L3*****185000~"
+}

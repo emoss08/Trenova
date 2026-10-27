@@ -3,21 +3,16 @@ package agentquerytoolservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/orderservice"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/orderports"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/shopspring/decimal"
-)
-
-const (
-	maxOrderShipments = 50
-	maxOrderCharges   = 100
 )
 
 var orderStatuses = []string{
@@ -28,24 +23,6 @@ var orderStatuses = []string{
 	string(order.StatusBilled),
 	string(order.StatusClosed),
 	string(order.StatusCanceled),
-}
-
-func orderToolProviders() []any {
-	return []any{
-		newListOrdersTool,
-		provideGetOrderTool,
-	}
-}
-
-type orderReader interface {
-	Get(ctx context.Context, req orderports.GetOrderByIDRequest) (*order.Order, error)
-}
-
-func provideGetOrderTool(
-	orders *orderservice.Service,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetOrderTool(orders, permissions)
 }
 
 func nullDecimalMoney(value decimal.NullDecimal) string {
@@ -110,7 +87,7 @@ func newListOrdersTool(
 			"shipments and their charges under a customer's order number, PO or BOL. " +
 			"order_get opens one with its shipments and charges.",
 		resource: permission.ResourceOrder,
-		config:   querybuilder.GetFieldConfiguration((*order.Order)(nil)),
+		config:   listquery.Describe((*order.Order)(nil), orderdb.OrdersSchema()),
 		fields: []listField{
 			{
 				Name:   paramStatus,
@@ -141,143 +118,4 @@ func newListOrdersTool(
 			}), nil
 		},
 	})
-}
-
-type getOrderTool struct {
-	orders orderReader
-	access fieldAccess
-}
-
-func newGetOrderTool(
-	orders orderReader,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return &getOrderTool{orders: orders, access: newFieldAccess(permissions)}
-}
-
-func (t *getOrderTool) Name() string { return "order_get" }
-
-func (t *getOrderTool) SearchTerms() []string {
-	return []string{"charges", "invoiced", "legs"}
-}
-
-func (t *getOrderTool) Description() string {
-	return "Retrieve one customer order by id with the shipments it groups and its " +
-		"order-level charges, including which charges are already invoiced. Use " +
-		"order_list first when you have an order number, PO or BOL rather than an id."
-}
-
-func (t *getOrderTool) ParamSchema() map[string]any {
-	return idSchema(
-		"orderId",
-		agenttoolschema.RecordIDText(
-			permission.ResourceOrder,
-			"The order's id, from order_list, the orderId on "+
-				"shipment_get or invoice_get, or the page you are on.",
-		),
-	)
-}
-
-func (t *getOrderTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{resource: permission.ResourceOrder})
-}
-
-type orderShipmentRow struct {
-	ID        string `json:"id"`
-	ProNumber string `json:"proNumber"`
-	BOL       string `json:"bol,omitempty"`
-	Status    string `json:"status"`
-}
-
-type orderChargeRow struct {
-	ID          string       `json:"id"`
-	Description string       `json:"description"`
-	Amount      string       `json:"amount,omitempty"`
-	Invoiced    bool         `json:"invoiced"`
-	InvoiceID   string       `json:"invoiceId,omitempty"`
-	InvoicedAt  optionalDate `json:"invoicedAt"`
-	SplitBill   bool         `json:"splitBill"`
-}
-
-type orderView struct {
-	orderRow
-
-	ShipmentCount    int                `json:"shipmentCount"`
-	Shipments        []orderShipmentRow `json:"shipments"`
-	ShipmentsOmitted int                `json:"shipmentsOmitted,omitempty"`
-	ChargeCount      int                `json:"chargeCount"`
-	Charges          []orderChargeRow   `json:"charges"`
-	ChargesOmitted   int                `json:"chargesOmitted,omitempty"`
-	Withheld         []string           `json:"withheldByAccess,omitempty"`
-}
-
-func (t *getOrderTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	id, err := requirePulid(params.Params, "orderId")
-	if err != nil {
-		return nil, err
-	}
-
-	entity, err := t.orders.Get(ctx, orderports.GetOrderByIDRequest{
-		ID:              id,
-		TenantInfo:      tenantOf(params),
-		IncludeShipment: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	gate := t.access.gate(ctx, params, permission.ResourceOrder)
-	view := orderView{
-		orderRow:         orderRowFrom(entity, gate),
-		ShipmentCount:    len(entity.Shipments),
-		ShipmentsOmitted: max(len(entity.Shipments)-maxOrderShipments, 0),
-		ChargeCount:      len(entity.Charges),
-		ChargesOmitted:   max(len(entity.Charges)-maxOrderCharges, 0),
-		Shipments: make(
-			[]orderShipmentRow,
-			0,
-			min(len(entity.Shipments), maxOrderShipments),
-		),
-		Charges: make([]orderChargeRow, 0, min(len(entity.Charges), maxOrderCharges)),
-	}
-	for _, item := range entity.Shipments {
-		if item == nil || len(view.Shipments) == maxOrderShipments {
-			continue
-		}
-		view.Shipments = append(view.Shipments, orderShipmentRow{
-			ID:        item.ID.String(),
-			ProNumber: item.ProNumber,
-			BOL:       item.BOL,
-			Status:    string(item.Status),
-		})
-	}
-
-	showAmount := gate.show(fieldAmount, "charges.amount")
-	for _, charge := range entity.Charges {
-		if charge == nil || len(view.Charges) == maxOrderCharges {
-			continue
-		}
-		row := orderChargeRow{
-			ID:          charge.ID.String(),
-			Description: charge.Description,
-			Invoiced:    charge.IsFullyInvoiced(),
-			InvoiceID:   pulidString(charge.InvoiceID),
-			InvoicedAt:  expectedDate(charge.InvoicedAt, "not invoiced"),
-			SplitBill:   charge.HasAllocations(),
-		}
-		if showAmount {
-			row.Amount = charge.Amount.StringFixed(2)
-		}
-		view.Charges = append(view.Charges, row)
-	}
-	view.Withheld = gate.Withheld()
-
-	return view, nil
 }

@@ -72,7 +72,7 @@ pub fn valid_sid(sid: &str) -> bool {
 const PREFIX_MATCH_CHARS: usize = 32;
 /// How long a claimed queue job stays claimed. The spooler reuses job ids
 /// only after a restart, and a job is on the queue for seconds.
-const CLAIM_TTL: Duration = Duration::from_secs(3600);
+const CLAIM_TTL: Duration = Duration::from_hours(1);
 const MAX_CLAIMS: usize = 512;
 
 fn same_document(queued: &str, printed: &str) -> bool {

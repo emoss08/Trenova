@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { defaultedEnumSchema, nullableArraySchema, nullableStringSchema } from "./helpers";
+import { nullableArraySchema, nullableStringSchema } from "./helpers";
 import { createLimitOffsetResponse } from "./server";
-import { translate } from "@trenova/shared/i18n/runtime";
 
 export const ediPartnerKindSchema = z.enum(["Internal", "External"]);
 export const ediConnectionMethodSchema = z.enum(["Internal", "AS2", "SFTP", "VAN"]);
@@ -54,16 +53,6 @@ export const ediDocumentDirectionSchema = z.enum(["Inbound", "Outbound"]);
 export const ediStandardSchema = z.enum(["X12"]);
 export const ediTransactionSetSchema = z.enum(["204", "210", "214", "990", "997", "999"]);
 export const ediDocumentStatusSchema = z.enum(["Active", "Inactive"]);
-export const ediTemplateStatusSchema = z.enum([
-  "Draft",
-  "Certified",
-  "Active",
-  "Deprecated",
-  "Archived",
-  "Superseded",
-]);
-export type EDITemplateStatus = z.infer<typeof ediTemplateStatusSchema>;
-export const ediValidationModeSchema = z.enum(["Strict", "WarnOnly", "Disabled"]);
 export const ediValidationSeveritySchema = z.enum(["Info", "Warning", "Error"]);
 export const ediMessageStatusSchema = z.enum(["Generated", "Failed"]);
 export const ediMessageDeliveryStatusSchema = z.enum([
@@ -93,58 +82,6 @@ export type EDIInboundFileStatus = z.infer<typeof ediInboundFileStatusSchema>;
 export type EDITransferStatus = z.infer<typeof ediTransferStatusSchema>;
 export type EDIMessageDeliveryStatus = z.infer<typeof ediMessageDeliveryStatusSchema>;
 export type EDIMessageAcknowledgmentStatus = z.infer<typeof ediMessageAcknowledgmentStatusSchema>;
-export const ediSourceContextDataTypeSchema = z.enum([
-  "string",
-  "number",
-  "integer",
-  "boolean",
-  "timestamp",
-  "date",
-  "decimal",
-  "object",
-  "array",
-  "unknown",
-]);
-export const ediSourceContextKindSchema = z.enum([
-  "shipment",
-  "repeat",
-  "partner",
-  "runtime",
-  "mapping",
-  "organization",
-  "customer",
-  "location",
-  "commodity",
-  "charge",
-  "envelope",
-]);
-export const ediSourceContextFieldStatusSchema = z.enum(["Active", "Deprecated", "Future"]);
-export const ediPartnerSettingDataTypeSchema = z.enum([
-  "string",
-  "number",
-  "integer",
-  "boolean",
-  "decimal",
-  "enum",
-  "object",
-  "array",
-  "map",
-  "secret",
-  "unknown",
-]);
-export const ediPartnerSettingStatusSchema = z.enum(["Active", "Deprecated", "Future"]);
-export const ediScriptLanguageSchema = z.enum(["Starlark"]);
-export const ediTemplateElementSourceSchema = z.enum([
-  "constant",
-  "fieldPath",
-  "partnerSetting",
-  "mapping",
-  "runtime",
-  "repeat",
-  "transform",
-  "starlark",
-]);
-export type EDITemplateElementSource = z.infer<typeof ediTemplateElementSourceSchema>;
 
 export const ediPartnerSchema = z.object({
   id: z.string(),
@@ -389,9 +326,7 @@ export const loadTenderPayloadSchema = z.object({
   temperatureMax: nullableNumberSchema,
   freightChargeAmount: z.unknown().nullish(),
   otherChargeAmount: z.unknown().nullish(),
-  baseRate: z.unknown().nullish(),
   totalChargeAmount: z.unknown().nullish(),
-  ratingUnit: nullableNumberSchema,
   ratingDetail: z.record(z.string(), z.unknown()).nullish(),
   moves: nullableArraySchema(loadTenderMoveSchema),
   commodities: nullableArraySchema(loadTenderCommoditySchema),
@@ -551,121 +486,6 @@ export const ediTransferChangeSchema = z.object({
 
 export type EDITransferChange = z.infer<typeof ediTransferChangeSchema>;
 
-export const ediTemplateElementBaseSourceSchema = z.object({
-  source: ediTemplateElementSourceSchema,
-  value: z.string().nullish(),
-  fieldPath: z.string().nullish(),
-  partnerSettingPath: z.string().nullish(),
-  mappingEntityType: ediMappingEntityTypeSchema.nullish(),
-  mappingSourcePath: z.string().nullish(),
-  runtimeKey: z.string().nullish(),
-  repeatPath: z.string().nullish(),
-  default: z.string().nullish(),
-});
-export type EDITemplateElementBaseSource = z.infer<typeof ediTemplateElementBaseSourceSchema>;
-
-export const ediTemplateTransformStepSchema = z.object({
-  operation: z.string(),
-  arguments: z.record(z.string(), z.unknown()).default({}),
-});
-export type EDITemplateTransformStep = z.infer<typeof ediTemplateTransformStepSchema>;
-
-export const ediTemplateElementSchema = z.object({
-  position: z.number(),
-  name: z.string(),
-  source: ediTemplateElementSourceSchema,
-  value: z.string().nullish(),
-  fieldPath: z.string().nullish(),
-  partnerSettingPath: z.string().nullish(),
-  mappingEntityType: ediMappingEntityTypeSchema.nullish(),
-  mappingSourcePath: z.string().nullish(),
-  runtimeKey: z.string().nullish(),
-  repeatPath: z.string().nullish(),
-  baseSource: ediTemplateElementBaseSourceSchema.nullish(),
-  transformPipeline: z.array(ediTemplateTransformStepSchema).default([]),
-  starlarkFunction: z.string().nullish(),
-  starlarkScript: z.string().nullish(),
-  default: z.string().nullish(),
-  condition: z.string().nullish(),
-  implementationGuideNote: z.string().nullish(),
-  validation: z
-    .object({
-      required: z.boolean().default(false),
-      maxLength: z.number().default(0),
-      minLength: z.number().default(0),
-      code: z.string().nullish(),
-      message: z.string().nullish(),
-    })
-    .default({ required: false, maxLength: 0, minLength: 0 }),
-});
-
-export type EDITemplateElement = z.infer<typeof ediTemplateElementSchema>;
-
-export const ediTemplateSegmentSchema = z.object({
-  id: z.string(),
-  templateVersionId: z.string(),
-  segmentId: z.string(),
-  name: z.string(),
-  sequence: z.number(),
-  loopId: z.string().nullish(),
-  repeatPath: z.string().nullish(),
-  condition: z.string().nullish(),
-  required: z.boolean(),
-  maxUse: z.number(),
-  elements: z.array(ediTemplateElementSchema).default([]),
-  usageNotes: z.string().nullish(),
-});
-
-export type EDITemplateSegment = z.infer<typeof ediTemplateSegmentSchema>;
-
-export const ediTemplateScriptLibrarySchema = z.object({
-  id: z.string(),
-  businessUnitId: z.string().optional(),
-  organizationId: z.string().optional(),
-  templateVersionId: z.string(),
-  name: z.string(),
-  description: z.string().nullish(),
-  language: ediScriptLanguageSchema,
-  script: z.string(),
-  status: ediTemplateStatusSchema,
-  version: z.number().default(0),
-  createdAt: z.number().nullish(),
-  updatedAt: z.number().nullish(),
-  functionNames: z.array(z.string()).default([]),
-});
-
-export type EDITemplateScriptLibrary = z.infer<typeof ediTemplateScriptLibrarySchema>;
-
-export const ediTemplateVersionSchema = z.object({
-  id: z.string(),
-  businessUnitId: z.string().optional(),
-  organizationId: z.string().optional(),
-  templateId: z.string(),
-  sourceVersionId: z.string().nullish(),
-  versionNumber: z.number(),
-  x12Version: z.string(),
-  functionalGroupId: z.string(),
-  status: ediTemplateStatusSchema,
-  isActive: z.boolean(),
-  notes: z.string().nullish(),
-  certificationNotes: z.string().nullish(),
-  activationNotes: z.string().nullish(),
-  archiveNotes: z.string().nullish(),
-  deprecatedNotes: z.string().nullish(),
-  supersededNotes: z.string().nullish(),
-  certifiedAt: z.number().nullish(),
-  activatedAt: z.number().nullish(),
-  archivedAt: z.number().nullish(),
-  deprecatedAt: z.number().nullish(),
-  supersededAt: z.number().nullish(),
-  version: z.number().default(0),
-  createdAt: z.number().nullish(),
-  updatedAt: z.number().nullish(),
-  segments: z.array(ediTemplateSegmentSchema).default([]),
-  scriptLibraries: z.array(ediTemplateScriptLibrarySchema).default([]),
-});
-
-export type EDITemplateVersion = z.infer<typeof ediTemplateVersionSchema>;
 
 export const ediDocumentTypeSchema = z.object({
   id: z.string(),
@@ -680,187 +500,7 @@ export const ediDocumentTypeSchema = z.object({
 
 export type EDIDocumentType = z.infer<typeof ediDocumentTypeSchema>;
 
-export const ediTemplateSchema = z.object({
-  id: z.string(),
-  businessUnitId: z.string(),
-  organizationId: z.string(),
-  documentTypeId: z.string(),
-  name: z.string(),
-  description: z.string().nullish(),
-  direction: ediDocumentDirectionSchema,
-  standard: ediStandardSchema,
-  transactionSet: ediTransactionSetSchema,
-  status: ediTemplateStatusSchema,
-  version: z.number().default(0),
-  createdAt: z.number().nullish(),
-  updatedAt: z.number().nullish(),
-  activeVersion: ediTemplateVersionSchema.nullish(),
-  versions: z.array(ediTemplateVersionSchema).default([]),
-});
 
-export type EDITemplate = z.infer<typeof ediTemplateSchema>;
-
-export const ediSourceContextFieldSchema = z.object({
-  id: z.string(),
-  schemaId: z.string(),
-  path: z.string(),
-  sourceKind: ediSourceContextKindSchema,
-  dataType: ediSourceContextDataTypeSchema,
-  repeated: z.boolean(),
-  repeatPath: z.string().nullish(),
-  parentPath: z.string().nullish(),
-  displayName: z.string(),
-  description: z.string().nullish(),
-  status: ediSourceContextFieldStatusSchema,
-  createdAt: z.number().nullish(),
-  updatedAt: z.number().nullish(),
-});
-
-export type EDISourceContextField = z.infer<typeof ediSourceContextFieldSchema>;
-
-export const ediSourceContextSchemaSchema = z.object({
-  id: z.string(),
-  businessUnitId: z.string().nullish(),
-  organizationId: z.string().nullish(),
-  standard: ediStandardSchema,
-  transactionSet: ediTransactionSetSchema,
-  direction: ediDocumentDirectionSchema,
-  x12Version: z.string(),
-  contextKey: z.string(),
-  schemaVersion: z.number(),
-  name: z.string(),
-  description: z.string().nullish(),
-  status: ediSourceContextFieldStatusSchema,
-  createdAt: z.number().nullish(),
-  updatedAt: z.number().nullish(),
-  fields: z.array(ediSourceContextFieldSchema).default([]),
-});
-
-export type EDISourceContextSchema = z.infer<typeof ediSourceContextSchemaSchema>;
-
-export const ediPartnerSettingFieldSchema = z.object({
-  id: z.string(),
-  schemaId: z.string(),
-  path: z.string(),
-  label: z.string(),
-  description: z.string().nullish(),
-  dataType: ediPartnerSettingDataTypeSchema,
-  required: z.boolean(),
-  nullable: z.boolean(),
-  defaultValue: z.unknown().nullish(),
-  allowedValues: z.array(z.string()).default([]),
-  secret: z.boolean(),
-  groupKey: z.string().nullish(),
-  displayOrder: z.number().default(0),
-  validationPattern: z.string().nullish(),
-  minLength: z.number().default(0),
-  maxLength: z.number().default(0),
-  usageNotes: z.string().nullish(),
-  status: ediPartnerSettingStatusSchema,
-  createdAt: z.number().nullish(),
-  updatedAt: z.number().nullish(),
-});
-
-export type EDIPartnerSettingField = z.infer<typeof ediPartnerSettingFieldSchema>;
-
-export const ediPartnerSettingSchemaSchema = z.object({
-  id: z.string(),
-  businessUnitId: z.string().nullish(),
-  organizationId: z.string().nullish(),
-  documentTypeId: z.string().nullish(),
-  standard: ediStandardSchema,
-  transactionSet: ediTransactionSetSchema,
-  direction: ediDocumentDirectionSchema,
-  x12Version: z.string(),
-  schemaVersion: z.number(),
-  name: z.string(),
-  description: z.string().nullish(),
-  status: ediPartnerSettingStatusSchema,
-  createdAt: z.number().nullish(),
-  updatedAt: z.number().nullish(),
-  fields: z.array(ediPartnerSettingFieldSchema).default([]),
-});
-
-export type EDIPartnerSettingSchema = z.infer<typeof ediPartnerSettingSchemaSchema>;
-
-export const ediX12EnvelopeSettingsSchema = z.object({
-  interchangeSenderQualifier: z.string().default("ZZ"),
-  interchangeSenderId: z.string().default("TRENOVA"),
-  interchangeReceiverQualifier: z.string().default("ZZ"),
-  interchangeReceiverId: z.string().default("PARTNER"),
-  applicationSenderCode: z.string().default("TRENOVA"),
-  applicationReceiverCode: z.string().default("PARTNER"),
-  interchangeUsageIndicator: z.string().default("T"),
-  elementSeparator: z.string().default("*"),
-  segmentTerminator: z.string().default("~"),
-  componentSeparator: z.string().default(">"),
-  repetitionSeparator: z.string().default("^"),
-});
-
-export type EDIX12EnvelopeSettings = z.infer<typeof ediX12EnvelopeSettingsSchema>;
-
-export const ediAcknowledgmentConfigSchema = z.object({
-  expected: z.boolean().default(false),
-  type: z.string().default("None"),
-  slaInMinutes: z.number().default(0),
-  missingAckSeverity: defaultedEnumSchema(ediValidationSeveritySchema, "Warning"),
-});
-
-export const serviceFailure214PartnerSettingsSchema = z
-  .object({
-    enabled: z.boolean().default(false),
-    sendOnReviewed: z.boolean().default(false),
-    sendOnResolved: z.boolean().default(false),
-    mandatoryOnReviewed: z.boolean().default(false),
-    mandatoryOnResolved: z.boolean().default(false),
-    statusCode: z.string().optional(),
-    requireStatusReasonCode: z.boolean().default(false),
-    requireLocation: z.boolean().default(false),
-    requireLocationName: z.boolean().default(false),
-    requireCityState: z.boolean().default(false),
-    requirePostalCode: z.boolean().default(false),
-    requireTimeCode: z.boolean().default(false),
-    timeCode: z.string().optional(),
-    requireStop: z.boolean().default(false),
-    requireProNumber: z.boolean().default(false),
-    requireBol: z.boolean().default(false),
-    acceptedReasonCodes: z.array(z.string()).optional(),
-  })
-  .strict();
-
-export type ServiceFailure214PartnerSettings = z.infer<
-  typeof serviceFailure214PartnerSettingsSchema
->;
-
-export const ediPartnerDocumentProfileSchema = z.object({
-  id: z.string(),
-  businessUnitId: z.string(),
-  organizationId: z.string(),
-  ediPartnerId: z.string(),
-  documentTypeId: z.string(),
-  templateId: z.string(),
-  templateVersionId: z.string().nullish(),
-  name: z.string(),
-  status: ediDocumentStatusSchema,
-  direction: ediDocumentDirectionSchema,
-  standard: ediStandardSchema,
-  transactionSet: ediTransactionSetSchema,
-  x12VersionOverride: z.string().nullish(),
-  functionalGroupId: z.string(),
-  envelope: ediX12EnvelopeSettingsSchema,
-  acknowledgment: ediAcknowledgmentConfigSchema,
-  validationMode: ediValidationModeSchema,
-  partnerSettings: z.record(z.string(), z.unknown()).default({}),
-  version: z.number().default(0),
-  createdAt: z.number(),
-  updatedAt: z.number(),
-  partner: ediPartnerSchema.nullish(),
-  documentType: ediDocumentTypeSchema.nullish(),
-  template: ediTemplateSchema.nullish(),
-  templateVersion: ediTemplateVersionSchema.nullish(),
-});
-
-export type EDIPartnerDocumentProfile = z.infer<typeof ediPartnerDocumentProfileSchema>;
 
 export const ediDiagnosticSchema = z.object({
   severity: ediValidationSeveritySchema,
@@ -874,11 +514,6 @@ export const ediDiagnosticSchema = z.object({
 
 export type EDIDiagnostic = z.infer<typeof ediDiagnosticSchema>;
 
-export const ediTemplateValidationResponseSchema = z.object({
-  diagnostics: z.array(ediDiagnosticSchema).default([]),
-});
-
-export type EDITemplateValidationResponse = z.infer<typeof ediTemplateValidationResponseSchema>;
 
 export const ediDocumentPreviewSchema = z.object({
   rawX12: z.string(),
@@ -888,8 +523,10 @@ export const ediDocumentPreviewSchema = z.object({
   groupControlNumber: z.string(),
   transactionControlNumber: z.string(),
   diagnostics: z.array(ediDiagnosticSchema).default([]),
-  profile: ediPartnerDocumentProfileSchema.nullish(),
-  templateVersion: ediTemplateVersionSchema.nullish(),
+  partnerName: z.string().nullish(),
+  ladingVersionId: z.string().nullish(),
+  map: z.string().nullish(),
+  document: z.unknown().nullish(),
 });
 
 export type EDIDocumentPreview = z.infer<typeof ediDocumentPreviewSchema>;
@@ -968,9 +605,8 @@ export const ediMessageSchema = z.object({
   organizationId: z.string().nullish(),
   ediPartnerId: z.string(),
   documentTypeId: z.string(),
-  partnerDocumentProfileId: z.string().nullish(),
-  templateId: z.string().nullish(),
-  templateVersionId: z.string().nullish(),
+  ladingVersionId: z.string().nullish(),
+  flowInstanceId: z.string().nullish(),
   shipmentId: z.string().nullish(),
   invoiceId: z.string().nullish(),
   transferId: z.string().nullish(),
@@ -980,7 +616,6 @@ export const ediMessageSchema = z.object({
   transactionSet: ediTransactionSetSchema,
   x12Version: z.string(),
   status: ediMessageStatusSchema,
-  validationMode: ediValidationModeSchema,
   interchangeControlNumber: z.string(),
   groupControlNumber: z.string(),
   transactionControlNumber: z.string(),
@@ -1009,9 +644,6 @@ export const ediMessageSchema = z.object({
   diagnosticCount: z.number().default(0),
   partner: ediPartnerSchema.nullish(),
   documentType: ediDocumentTypeSchema.nullish(),
-  partnerDocumentProfile: ediPartnerDocumentProfileSchema.nullish(),
-  template: ediTemplateSchema.nullish(),
-  templateVersion: ediTemplateVersionSchema.nullish(),
   validationErrors: z.array(ediDiagnosticSchema).default([]),
 });
 
@@ -1055,7 +687,6 @@ export const ediInspectionDiagnosticSourceSchema = z.enum([
   "render",
   "validation",
   "transform",
-  "starlark",
   "condition",
   "source_context",
   "partner_setting",
@@ -1186,9 +817,8 @@ export const ediMessageInspectionSchema = z.object({
   inspection: ediX12InspectionSchema,
   provenance: z.object({
     messageId: z.string(),
-    profileId: z.string().nullish(),
-    templateId: z.string().nullish(),
-    templateVersionId: z.string().nullish(),
+    ladingVersionId: z.string().nullish(),
+    flowInstanceId: z.string().nullish(),
     generatedAt: z.number(),
     generatedById: z.string().nullish(),
   }),
@@ -1196,79 +826,35 @@ export const ediMessageInspectionSchema = z.object({
 
 export type EDIMessageInspection = z.infer<typeof ediMessageInspectionSchema>;
 
+/** The envelope an inspection reads a file against, as edi.X12EnvelopeSettings marshals it. */
+export type EDIX12Envelope = {
+  interchangeSenderQualifier: string;
+  interchangeSenderId: string;
+  interchangeReceiverQualifier: string;
+  interchangeReceiverId: string;
+  applicationSenderCode: string;
+  applicationReceiverCode: string;
+  interchangeUsageIndicator: string;
+  elementSeparator: string;
+  segmentTerminator: string;
+  componentSeparator: string;
+  repetitionSeparator: string;
+};
+
 export type InspectX12Request = {
   rawX12: string;
   transactionSet?: z.infer<typeof ediTransactionSetSchema>;
   x12Version?: string;
-  envelope?: Partial<EDIX12EnvelopeSettings> | null;
+  envelope?: Partial<EDIX12Envelope> | null;
   diagnostics?: EDIDiagnostic[];
 };
 
-export const ediTestCaseSchema = z.object({
-  id: z.string(),
-  partnerDocumentProfileId: z.string(),
-  name: z.string(),
-  description: z.string().nullish(),
-  payload: ediDocumentPayloadSchema,
-  expectedWarnings: z.number(),
-  expectedErrors: z.number(),
-  expectedWarningCodes: z.array(z.string()).default([]),
-  expectedErrorCodes: z.array(z.string()).default([]),
-  lastRunAt: z.number().nullish(),
-  lastRunPassed: z.boolean().nullish(),
-  lastRunWarnings: z.number().default(0),
-  lastRunErrors: z.number().default(0),
-  version: z.number().default(0),
-  createdAt: z.number().nullish(),
-  updatedAt: z.number().nullish(),
-});
-
-export type EDITestCase = z.infer<typeof ediTestCaseSchema>;
-
-export type EDITestCaseRow = Omit<EDITestCase, "payload"> & {
-  documentProfile?: {
-    id: string;
-    name: string;
-    direction: z.infer<typeof ediDocumentDirectionSchema>;
-    transactionSet: string;
-    partner?: { id: string; code: string; name: string } | null;
-  } | null;
-};
-
-export type SaveEDITestCaseRequest = {
-  partnerDocumentProfileId: string;
-  name: string;
-  description?: string;
-  payload: EDIDocumentPayload;
-  expectedWarnings: number;
-  expectedErrors: number;
-  expectedWarningCodes: string[];
-  expectedErrorCodes: string[];
-  version?: number;
-};
 
 export const ediConnectionListSchema = createLimitOffsetResponse(ediConnectionSchema);
 export const ediShipmentLinkListSchema = createLimitOffsetResponse(ediShipmentLinkSchema);
 export const ediTransferChangeListSchema = createLimitOffsetResponse(ediTransferChangeSchema);
-export const ediTemplateListSchema = createLimitOffsetResponse(ediTemplateSchema);
-export const ediSourceContextSchemaListSchema = createLimitOffsetResponse(
-  ediSourceContextSchemaSchema,
-);
-export const ediSourceContextFieldListSchema = createLimitOffsetResponse(
-  ediSourceContextFieldSchema,
-);
-export const ediPartnerSettingSchemaListSchema = createLimitOffsetResponse(
-  ediPartnerSettingSchemaSchema,
-);
-export const ediPartnerSettingFieldListSchema = createLimitOffsetResponse(
-  ediPartnerSettingFieldSchema,
-);
-export const ediPartnerDocumentProfileListSchema = createLimitOffsetResponse(
-  ediPartnerDocumentProfileSchema,
-);
 export const ediMessageListSchema = createLimitOffsetResponse(ediMessageSchema);
 export const ediTransferListSchema = createLimitOffsetResponse(ediTransferSchema);
-export const ediTestCaseListSchema = createLimitOffsetResponse(ediTestCaseSchema);
 
 export const createInternalPartnerPairRequestSchema = z.object({
   targetOrganizationId: z.string().min(1),
@@ -1349,71 +935,10 @@ export type UpsertEDICommunicationProfileRequest = {
   version?: number;
 };
 
-export type UpsertEDIPartnerDocumentProfileRequest = {
-  ediPartnerId: string;
-  templateId?: string;
-  templateVersionId?: string;
-  name: string;
-  status: z.infer<typeof ediDocumentStatusSchema>;
-  x12VersionOverride?: string;
-  functionalGroupId: string;
-  envelope: EDIX12EnvelopeSettings;
-  acknowledgment: z.infer<typeof ediAcknowledgmentConfigSchema>;
-  validationMode: z.infer<typeof ediValidationModeSchema>;
-  partnerSettings: Record<string, unknown>;
-  version?: number;
-};
-
-export type CreateEDITemplateRequest = {
-  documentTypeId: string;
-  name: string;
-  description?: string;
-  direction: z.infer<typeof ediDocumentDirectionSchema>;
-  standard: z.infer<typeof ediStandardSchema>;
-  transactionSet: z.infer<typeof ediTransactionSetSchema>;
-  x12Version: string;
-  functionalGroupId: string;
-  notes?: string;
-  segments?: EDITemplateSegment[];
-  scriptLibraries?: EDITemplateScriptLibrary[];
-};
-
-export type UpdateEDITemplateRequest = {
-  name: string;
-  description?: string;
-  status?: EDITemplateStatus;
-  version?: number;
-};
-
-export type CreateEDITemplateDraftRequest = {
-  sourceVersionId?: string;
-  notes?: string;
-};
-
-export type UpdateEDITemplateVersionRequest = {
-  x12Version: string;
-  functionalGroupId: string;
-  notes?: string;
-  version?: number;
-};
-
-export type ReplaceEDITemplateSegmentsRequest = {
-  segments: EDITemplateSegment[];
-  version?: number;
-};
-
-export type ReplaceEDITemplateScriptLibrariesRequest = {
-  scriptLibraries: EDITemplateScriptLibrary[];
-  version?: number;
-};
-
-export type EDITemplateActionRequest = {
-  notes?: string;
-};
 
 export type PreviewEDIDocumentRequest = {
-  partnerDocumentProfileId?: string;
-  ediPartnerId?: string;
+  ediPartnerId: string;
+  map?: string;
   shipmentId?: string;
   transferId?: string;
   invoiceId?: string;
@@ -1445,37 +970,3 @@ export type ApproveEDITransferRequest = {
 export type RejectEDITransferRequest = {
   reason: string;
 };
-
-export const createTemplateDraftSchema = z.object({
-  documentTypeId: z.string(),
-  name: z.string(),
-  description: z.string(),
-  direction: ediDocumentDirectionSchema.default("Outbound"),
-  transactionSet: ediTransactionSetSchema.default("204"),
-  x12Version: z.string(),
-  functionalGroupId: z.string(),
-  notes: z.string(),
-});
-
-export type CreateTemplateDraft = z.infer<typeof createTemplateDraftSchema>;
-
-export const createTemplateFormSchema = createTemplateDraftSchema.extend({
-  documentTypeId: z.string().min(1, { error: () => translate("Document type is required") }),
-  name: z
-    .string()
-    .trim()
-    .min(1, { error: () => translate("Name is required") }),
-  standard: ediStandardSchema.default("X12"),
-  x12Version: z
-    .string()
-    .trim()
-    .min(1, { error: () => translate("X12 version is required") }),
-  functionalGroupId: z
-    .string()
-    .trim()
-    .min(1, { error: () => translate("Functional group is required") }),
-});
-
-export type CreateTemplateFormValues = z.infer<typeof createTemplateFormSchema>;
-
-export type TemplateFormValues = CreateTemplateFormValues & Partial<Pick<EDITemplate, "status">>;

@@ -6,27 +6,29 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	carrierSettlementErrors = dberror.Mapping{Entity: "Carrier settlement"}
+	driverSettlementErrors  = dberror.Mapping{Entity: "Driver settlement"}
 )
 
 type PayablesParams struct {
@@ -70,15 +72,10 @@ func (r *payablesRepository) carrierSettlement(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsyncports.PayableSettlement, error) {
-			entity := new(carriersettlement.CarrierSettlement)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Relation(carriersettlementcol.CarrierSettlementRelations.Carrier).
-				Apply(carriersettlementcol.CarrierSettlementApplyTenant(req.TenantInfo)).
-				Where(carriersettlementcol.CarrierSettlementColumns.ID.Eq(), req.ID).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Carrier settlement")
+			cs := carriersettlementdb.CarrierSettlements
+			entity, err := cs.Where(cs.ID.Eq(req.ID)).Load(cs.Carrier()).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, carrierSettlementErrors.Map(err, req.ID.String())
 			}
 
 			out := &accountingsyncports.PayableSettlement{
@@ -145,15 +142,10 @@ func (r *payablesRepository) driverSettlement(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsyncports.PayableSettlement, error) {
-			entity := new(driversettlement.Settlement)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				Relation(driversettlementcol.SettlementRelations.Worker).
-				Apply(driversettlementcol.SettlementApplyTenant(req.TenantInfo)).
-				Where(driversettlementcol.SettlementColumns.ID.Eq(), req.ID).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Driver settlement")
+			ds := driversettlementdb.Settlements
+			entity, err := ds.Where(ds.ID.Eq(req.ID)).Load(ds.Worker()).One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, driverSettlementErrors.Map(err, req.ID.String())
 			}
 
 			control, err := r.accountingControl(ctx, req.TenantInfo)
@@ -215,16 +207,11 @@ func (r *payablesRepository) driverSettlement(
 
 func (r *payablesRepository) accountingControl(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*tenant.AccountingControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.AccountingControl, error) {
-		control := new(tenant.AccountingControl)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(control).
-			Where(tenantcol.AccountingControlColumns.OrganizationID.Eq(), tenantInfo.OrgID).
-			Limit(1).
-			Scan(ctx); err != nil {
+		control, err := tenantdb.AccountingControls.Query().First(ctx, r.db.Keel(ctx))
+		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil //nolint:nilnil // a tenant without an accounting control has no default accounts
 			}
@@ -236,7 +223,7 @@ func (r *payablesRepository) accountingControl(
 
 func (r *payablesRepository) journalLines(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	batchID *pulid.ID,
 ) ([]accountingsyncports.PayableJournalLine, error) {
 	return dbtx.Read(
@@ -247,22 +234,15 @@ func (r *payablesRepository) journalLines(
 				return nil, nil
 			}
 
-			entries := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*journalentry.JournalEntry)(nil)).
-				ColumnExpr(journalentrycol.JournalEntryColumns.ID.Qualified()).
-				Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
-				Where(journalentrycol.JournalEntryColumns.BatchID.Eq(), *batchID)
-
-			lines := make([]*journalentry.JournalEntryLine, 0, 8)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&lines).
-				Relation(journalentrycol.JournalEntryLineRelations.GLAccount).
-				Apply(journalentrycol.JournalEntryLineApplyTenant(tenantInfo)).
-				Where(buncolgen.Expr("{0} IN (?)", journalentrycol.JournalEntryLineColumns.JournalEntryID), entries).
-				Order(journalentrycol.JournalEntryLineColumns.LineNumber.OrderAsc()).
-				Scan(ctx); err != nil {
+			je := journalentrydb.JournalEntries
+			jel := journalentrydb.JournalEntryLines
+			lines, err := jel.Where(
+				jel.JournalEntryID.InQuery(je.Pick(je.ID).Where(je.BatchID.Eq(*batchID))),
+			).
+				Load(jel.GLAccount()).
+				Order(jel.LineNumber.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				r.l.Error("failed to load settlement journal lines", zap.Error(err))
 				return nil, fmt.Errorf("load settlement journal lines: %w", err)
 			}
@@ -319,24 +299,20 @@ func defaultAccounts(control *tenant.AccountingControl) accountingsyncports.Paya
 
 func (r *payablesRepository) invoiceNumbers(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	settlementID pulid.ID,
 ) ([]string, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]string, error) {
-		cols := carriersettlementcol.InvoiceMatchColumns
-		numbers := make([]string, 0, 4)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carriersettlement.InvoiceMatch)(nil)).
-			ColumnExpr(cols.InvoiceNumber.Qualified()).
-			Apply(carriersettlementcol.InvoiceMatchApplyTenant(tenantInfo)).
-			Where(cols.CarrierSettlementID.Eq(), settlementID).
-			Where(cols.Status.In(), bun.List([]carriersettlement.InvoiceMatchStatus{
+		im := carriersettlementdb.InvoiceMatches
+		numbers, err := keel.Into[string](ctx, r.db.Keel(ctx), im.Pick(im.InvoiceNumber).Where(
+			im.CarrierSettlementID.Eq(settlementID),
+			im.Status.In(
 				carriersettlement.InvoiceMatchStatusMatched,
 				carriersettlement.InvoiceMatchStatusResolved,
-			})).
-			Where(cols.InvoiceNumber.IsNotNull()).
-			Scan(ctx, &numbers); err != nil {
+			),
+			im.InvoiceNumber.IsNotNull(),
+		))
+		if err != nil {
 			r.l.Error("failed to load carrier invoice numbers", zap.Error(err))
 			return nil, fmt.Errorf("load carrier invoice numbers: %w", err)
 		}
@@ -360,51 +336,48 @@ func (r *payablesRepository) StampExchangeRate(
 	req *accountingsyncports.StampPayableExchangeRateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
+		rate := decimal.NullDecimal{Decimal: req.Rate, Valid: true}
 		var (
-			q     *bun.UpdateQuery
-			label string
+			affected int64
+			err      error
+			label    string
 		)
 		switch req.Kind {
 		case accountingsyncports.PayableCarrier:
-			cols := carriersettlementcol.CarrierSettlementColumns
-			rate, date := cols.ExchangeRate, cols.ExchangeRateDate
+			cs := carriersettlementdb.CarrierSettlements
+			rateCol, dateCol := cs.ExchangeRate, cs.ExchangeRateDate
 			if req.Paid {
-				rate, date = cols.PaidExchangeRate, cols.PaidExchangeRateDate
+				rateCol, dateCol = cs.PaidExchangeRate, cs.PaidExchangeRateDate
 			}
 			label = "Carrier settlement"
-			q = r.db.DBForContext(ctx).NewUpdate().
-				Model((*carriersettlement.CarrierSettlement)(nil)).
-				Set(rate.Set(), req.Rate).
-				Set(date.Set(), req.Date).
-				Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return carriersettlementcol.CarrierSettlementScopeTenantUpdate(uq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.ID)
-				})
+			affected, err = cs.Where(cs.ID.Eq(req.ID)).Update(
+				ctx,
+				r.db.Keel(ctx),
+				rateCol.To(rate),
+				dateCol.To(req.Date),
+				cs.Version.ToExpr(cs.Version),
+			)
 		case accountingsyncports.PayableDriver:
-			cols := driversettlementcol.SettlementColumns
-			rate, date := cols.ExchangeRate, cols.ExchangeRateDate
+			ds := driversettlementdb.Settlements
+			rateCol, dateCol := ds.ExchangeRate, ds.ExchangeRateDate
 			if req.Paid {
-				rate, date = cols.PaidExchangeRate, cols.PaidExchangeRateDate
+				rateCol, dateCol = ds.PaidExchangeRate, ds.PaidExchangeRateDate
 			}
 			label = "Driver settlement"
-			q = r.db.DBForContext(ctx).NewUpdate().
-				Model((*driversettlement.Settlement)(nil)).
-				Set(rate.Set(), req.Rate).
-				Set(date.Set(), req.Date).
-				Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return driversettlementcol.SettlementScopeTenantUpdate(uq, req.TenantInfo).
-						Where(cols.ID.Eq(), req.ID)
-				})
+			affected, err = ds.Where(ds.ID.Eq(req.ID)).Update(
+				ctx,
+				r.db.Keel(ctx),
+				rateCol.To(rate),
+				dateCol.To(req.Date),
+				ds.Version.ToExpr(ds.Version),
+			)
 		default:
 			return fmt.Errorf("stamp payable exchange rate: unknown payable kind %q", req.Kind)
 		}
-		result, err := q.Exec(ctx)
 		if err != nil {
 			return fmt.Errorf("stamp %s exchange rate: %w", strings.ToLower(label), err)
 		}
 
-		return dberror.CheckFound(result, label)
+		return dberror.CheckFoundCount(affected, label)
 	})
 }

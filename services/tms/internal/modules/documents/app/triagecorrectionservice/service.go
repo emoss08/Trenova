@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -25,7 +24,7 @@ type Params struct {
 	fx.In
 
 	Logger     *zap.Logger
-	DB         kernelports.DBConnection
+	DB         kernelports.Transactor
 	Messages   inboundmessageports.InboundMessageRepository
 	Store      triageports.TriageMessageRepository
 	Hints      triageports.SenderHintRepository
@@ -38,7 +37,7 @@ type Params struct {
 
 type Service struct {
 	l          *zap.Logger
-	db         kernelports.DBConnection
+	db         kernelports.Transactor
 	messages   inboundmessageports.InboundMessageRepository
 	store      triageports.TriageMessageRepository
 	hints      triageports.SenderHintRepository
@@ -111,7 +110,7 @@ func (s *Service) Correct(
 	at := s.now()
 
 	changed := false
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(ctx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
 		var txErr error
 		changed, txErr = s.store.CorrectClassification(
 			ctx,

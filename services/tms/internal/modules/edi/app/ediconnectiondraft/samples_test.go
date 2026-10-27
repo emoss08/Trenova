@@ -21,7 +21,7 @@ func TestFindSamples_ReadsASamplePrintedInAPDF(t *testing.T) {
 	samples := findSamples(newPageIndex([]ediports.SpecPage{{Number: 7, Text: pdfSamplePage}}))
 	require.Len(t, samples, 1)
 	sample := samples[0]
-	sample.parse()
+	sample.parse(t.Context())
 	require.NoError(t, sample.err, "a PDF squeezes the ISA's padding and wraps it; the sample still reads")
 
 	assert.Equal(t, 7, sample.page)

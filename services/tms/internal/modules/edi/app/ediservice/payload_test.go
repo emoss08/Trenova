@@ -3,21 +3,20 @@ package ediservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/shipmenttype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
@@ -33,7 +32,6 @@ func TestBuildTenderPayload(t *testing.T) {
 		CustomerID:        pulid.MustNew("cus_"),
 		FormulaTemplateID: pulid.MustNew("ft_"),
 		BOL:               "BOL-123",
-		RatingUnit:        1,
 		Customer: &customer.Customer{
 			Code: "ACME",
 			Name: "Acme Logistics",
@@ -157,7 +155,14 @@ func TestBuildFreightInvoicePayload(t *testing.T) {
 				LineNumber:  2,
 				Type:        invoice.InvoiceLineTypeAccessorial,
 				Description: "Liftgate",
+				ChargeCode:  "LFT",
 				Amount:      decimal.NewFromInt(50),
+			},
+			{
+				LineNumber:  3,
+				Type:        invoice.InvoiceLineTypeFreight,
+				Description: "Minimum charge adjustment",
+				Amount:      decimal.NewFromInt(0),
 			},
 			{
 				LineNumber:  1,
@@ -182,9 +187,11 @@ func TestBuildFreightInvoicePayload(t *testing.T) {
 	require.True(t, payload.FreightInvoice.TotalAmount.Valid)
 	require.True(t, decimal.NewFromInt(1250).Equal(payload.FreightInvoice.TotalAmount.Decimal))
 	require.Equal(t, "PRO-1001", payload.FreightInvoice.ReferenceNumbers["pro"])
-	require.Len(t, payload.FreightInvoice.LineCharges, 2)
+	require.Len(t, payload.FreightInvoice.LineCharges, 3)
 	require.Equal(t, int64(1), payload.FreightInvoice.LineCharges[0].Sequence)
-	require.Equal(t, "Freight", payload.FreightInvoice.LineCharges[0].Code)
+	require.Equal(t, "400", payload.FreightInvoice.LineCharges[0].Code, "freight is X12 special charge 400")
+	require.Equal(t, "LFT", payload.FreightInvoice.LineCharges[1].Code, "an accessorial sends its catalog code")
+	require.Equal(t, "400", payload.FreightInvoice.LineCharges[2].Code, "every freight line is freight")
 }
 
 func TestBuildShipmentEventStatusPayload(t *testing.T) {
@@ -438,79 +445,6 @@ func TestServiceFailurePayloadDiagnostics_RequiresReasonForSD(t *testing.T) {
 	}))
 }
 
-func TestParseServiceFailure214SettingsDefaultsDisabled(t *testing.T) {
-	t.Parallel()
-
-	settings, diagnostics := parseServiceFailure214Settings(nil)
-
-	require.False(t, settings.Enabled)
-	require.Empty(t, diagnostics)
-	require.False(t, settings.SendOnReviewed)
-	require.False(t, settings.SendOnResolved)
-	require.False(t, settings.MandatoryOnReviewed)
-	require.False(t, settings.MandatoryOnResolved)
-	require.Empty(t, settings.StatusCode)
-	require.Empty(t, settings.AcceptedReasonCodes)
-	require.False(t, settings.enabledForTrigger(servicefailureports.ServiceFailureEDITriggerReviewed))
-}
-
-func TestParseServiceFailure214SettingsMalformedDisabled(t *testing.T) {
-	t.Parallel()
-
-	settings, diagnostics := parseServiceFailure214Settings(map[string]any{
-		"serviceFailure214": "enabled",
-	})
-
-	require.False(t, settings.Enabled)
-	require.NotEmpty(t, diagnostics)
-	require.False(t, settings.enabledForTrigger(servicefailureports.ServiceFailureEDITriggerReviewed))
-}
-
-func TestParseServiceFailure214SettingsNormalizesAcceptedReasonCodes(t *testing.T) {
-	t.Parallel()
-
-	settings, diagnostics := parseServiceFailure214Settings(map[string]any{
-		"serviceFailure214": map[string]any{
-			"enabled":                 true,
-			"sendOnReviewed":          true,
-			"mandatoryOnResolved":     true,
-			"statusCode":              " a3 ",
-			"timeCode":                " lt ",
-			"acceptedReasonCodes":     []any{" ns ", "ca"},
-			"requireProNumber":        true,
-			"requireBol":              true,
-			"requireLocation":         true,
-			"requireLocationName":     true,
-			"requireCityState":        true,
-			"requirePostalCode":       true,
-			"requireTimeCode":         true,
-			"requireStop":             true,
-			"requireStatusReasonCode": true,
-		},
-	})
-
-	require.Empty(t, diagnostics)
-	require.True(t, settings.Enabled)
-	require.True(t, settings.SendOnReviewed)
-	require.True(t, settings.MandatoryOnResolved)
-	require.True(t, settings.RequireProNumber)
-	require.True(t, settings.RequireBOL)
-	require.True(t, settings.RequireLocation)
-	require.True(t, settings.RequireLocationName)
-	require.True(t, settings.RequireCityState)
-	require.True(t, settings.RequirePostalCode)
-	require.True(t, settings.RequireTimeCode)
-	require.True(t, settings.RequireStop)
-	require.True(t, settings.RequireStatusReasonCode)
-	require.Equal(t, "A3", settings.StatusCode)
-	require.Equal(t, "LT", settings.TimeCode)
-	require.Contains(t, settings.AcceptedReasonCodes, "NS")
-	require.Contains(t, settings.AcceptedReasonCodes, "CA")
-	require.True(t, settings.enabledForTrigger(servicefailureports.ServiceFailureEDITriggerReviewed))
-	require.True(t, settings.enabledForTrigger(servicefailureports.ServiceFailureEDITriggerResolved))
-	require.True(t, settings.mandatory(servicefailureports.ServiceFailureEDITriggerResolved))
-}
-
 func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 	t.Parallel()
 
@@ -533,17 +467,16 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 	payload := buildServiceFailure214LifecyclePayload(
 		base,
 		nil,
-		serviceFailure214Settings{StatusCode: "AF"},
 		servicefailureports.ServiceFailureEDITriggerReviewed,
 	)
-	require.Equal(t, "AF", payload.ShipmentStatus.StatusCode)
+	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
 	require.Equal(t, "CA", payload.ShipmentStatus.StatusReasonCode)
+	require.Equal(t, "Reviewed", payload.ShipmentStatus.References[serviceFailure214TriggerReference])
 
 	base.X12StatusCodeOverride = " sd "
 	payload = buildServiceFailure214LifecyclePayload(
 		base,
 		nil,
-		serviceFailure214Settings{StatusCode: "AF"},
 		servicefailureports.ServiceFailureEDITriggerReviewed,
 	)
 	require.Equal(t, "SD", payload.ShipmentStatus.StatusCode)
@@ -552,7 +485,6 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 	payload = buildServiceFailure214LifecyclePayload(
 		base,
 		nil,
-		serviceFailure214Settings{},
 		servicefailureports.ServiceFailureEDITriggerReviewed,
 	)
 	require.Equal(t, "A3", payload.ShipmentStatus.StatusCode)
@@ -561,38 +493,9 @@ func TestBuildServiceFailure214LifecyclePayloadStatusPrecedence(t *testing.T) {
 	payload = buildServiceFailure214LifecyclePayload(
 		base,
 		nil,
-		serviceFailure214Settings{},
 		servicefailureports.ServiceFailureEDITriggerReviewed,
 	)
 	require.Equal(t, "SD", payload.ShipmentStatus.StatusCode)
-}
-
-func TestServiceFailurePayloadDiagnosticsHonorsProfileRequirements(t *testing.T) {
-	t.Parallel()
-
-	diagnostics := serviceFailurePayloadDiagnostics(&edi.ShipmentStatusPayload{
-		StatusCode:       "A3",
-		StatusReasonCode: "ZZ",
-		EventDate:        1,
-		EventTime:        1,
-	}, serviceFailure214Settings{
-		RequireStatusReasonCode: true,
-		RequireBOL:              true,
-		RequireProNumber:        true,
-		RequireStop:             true,
-		RequireLocation:         true,
-		RequireTimeCode:         true,
-		AcceptedReasonCodes:     map[string]struct{}{"NS": {}},
-	})
-
-	require.Len(t, diagnostics, 6)
-	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.bol")
-	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.proNumber")
-	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.stopId")
-	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.locationName")
-	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.eventTimeCode")
-	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.statusReasonCode")
-	require.Contains(t, diagnostics[5].Message, "NS")
 }
 
 func TestServiceFailurePayloadDiagnosticsRequiresEventDateAndTime(t *testing.T) {
@@ -607,7 +510,7 @@ func TestServiceFailurePayloadDiagnosticsRequiresEventDateAndTime(t *testing.T) 
 	require.Contains(t, diagnosticPaths(diagnostics), "shipmentStatus.eventTime")
 }
 
-func diagnosticPaths(diagnostics []edix12.Diagnostic) []string {
+func diagnosticPaths(diagnostics []edi.Diagnostic) []string {
 	paths := make([]string, 0, len(diagnostics))
 	for _, diagnostic := range diagnostics {
 		paths = append(paths, diagnostic.Path)
@@ -659,4 +562,18 @@ func TestShipmentStatusPayloads_CarryTheShippersReferenceAndTheWeight(t *testing
 	require.Equal(t, "BOL-1", buildShipmentStatusPayload(untendered).ShipmentStatus.ShipperReference,
 		"without the shipper's own reference the bill of lading stands for it")
 	require.Nil(t, buildShipmentStatusPayload(untendered).ShipmentStatus.Weight)
+}
+
+func TestATenderedRateIsRatedByHand(t *testing.T) {
+	mapped := pulid.MustNew("ft_")
+
+	tendered := &edi.LoadTenderPayload{
+		FreightChargeAmount: decimal.NewNullDecimal(decimal.NewFromInt(1850)),
+	}
+	require.True(t, tenderedTemplate(tendered, mapped).IsNil(),
+		"the receiver bills the tendered rate, so no tariff re-rates it")
+
+	unpriced := &edi.LoadTenderPayload{}
+	require.Equal(t, mapped, tenderedTemplate(unpriced, mapped),
+		"a tender without a rate is priced by the mapped tariff")
 }

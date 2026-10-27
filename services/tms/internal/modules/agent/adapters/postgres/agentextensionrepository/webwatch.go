@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension/agentextensiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentextensioncol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -24,6 +24,8 @@ const (
 	maxWatchFindings     = 100
 	maxUndelivered       = 50
 )
+
+var webWatchErrors = dberror.Mapping{Entity: webWatchEntityName}
 
 type webWatchRepository struct {
 	db *postgres.Connection
@@ -42,11 +44,7 @@ func (r *webWatchRepository) Create(
 	watch *agentextension.WebWatch,
 ) (*agentextension.WebWatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.WebWatch, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(watch).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentextensiondb.WebWatches.Create(ctx, r.db.Keel(ctx), watch); err != nil {
 			r.l.Error("failed to create web watch", zap.Error(err))
 			return nil, fmt.Errorf("create web watch: %w", err)
 		}
@@ -57,21 +55,13 @@ func (r *webWatchRepository) Create(
 
 func (r *webWatchRepository) Get(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*agentextension.WebWatch, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentextension.WebWatch, error) {
-		watch := new(agentextension.WebWatch)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(watch).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentextensioncol.WebWatchScopeTenant(sq, tenantInfo).
-					Where(agentextensioncol.WebWatchColumns.ID.Eq(), id)
-			}).
-			Scan(ctx)
+		watch, err := agentextensiondb.WebWatches.Get(ctx, r.db.Keel(ctx), id)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, webWatchEntityName)
+			return nil, webWatchErrors.Map(err, id.String())
 		}
 
 		return watch, nil
@@ -83,24 +73,12 @@ func (r *webWatchRepository) Update(
 	watch *agentextension.WebWatch,
 ) (*agentextension.WebWatch, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentextension.WebWatch, error) {
-		ov := watch.Version
-		watch.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(watch).
-			WherePK().
-			Where(agentextensioncol.WebWatchColumns.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			watch.Version = ov
+		if err := agentextensiondb.WebWatches.Save(ctx, r.db.Keel(ctx), watch); err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, webWatchErrors.Map(err, watch.ID.String())
+			}
 			r.l.Error("failed to update web watch", zap.Error(err))
 			return nil, fmt.Errorf("update web watch: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(result, webWatchEntityName, watch.ID.String()); err != nil {
-			watch.Version = ov
-			return nil, err
 		}
 
 		return watch, nil
@@ -118,33 +96,17 @@ func (r *webWatchRepository) List(
 	limit = min(limit, maxWebWatches)
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentextension.WebWatch, error) {
-		watches := make([]*agentextension.WebWatch, 0, limit)
-		cols := agentextensioncol.WebWatchColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&watches).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentextensioncol.WebWatchScopeTenant(sq, req.TenantInfo)
-				if req.Status != "" {
-					sq = sq.Where(cols.Status.Eq(), req.Status)
-				}
-				if req.ThreadID.IsNotNil() {
-					sq = sq.Where(cols.ThreadID.Eq(), req.ThreadID)
-				}
-				if req.RequestedBy.IsNotNil() {
-					sq = sq.Where(cols.RequestedByID.Eq(), req.RequestedBy)
-				}
-				if req.DefinitionID.IsNotNil() {
-					sq = sq.Where(cols.AgentDefinitionID.Eq(), req.DefinitionID)
-				}
-				if req.Before > 0 {
-					sq = sq.Where(cols.CreatedAt.Lt(), req.Before)
-				}
-				return sq
-			}).
-			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		w := agentextensiondb.WebWatches
+		watches, err := w.Where(
+			keel.When(req.Status != "", w.Status.Eq(req.Status)),
+			keel.When(req.ThreadID.IsNotNil(), w.ThreadID.Eq(req.ThreadID)),
+			keel.When(req.RequestedBy.IsNotNil(), w.RequestedByID.Eq(req.RequestedBy)),
+			keel.When(req.DefinitionID.IsNotNil(), w.AgentDefinitionID.Eq(req.DefinitionID)),
+			keel.When(req.Before > 0, w.CreatedAt.Lt(req.Before)),
+		).
+			Order(w.CreatedAt.Desc(), w.ID.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list web watches", zap.Error(err))
 			return nil, fmt.Errorf("list web watches: %w", err)
@@ -156,18 +118,12 @@ func (r *webWatchRepository) List(
 
 func (r *webWatchRepository) CountActive(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agentextension.WebWatch)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentextensioncol.WebWatchScopeTenant(sq, tenantInfo).
-					Where(agentextensioncol.WebWatchColumns.Status.Eq(),
-						agentextension.WebWatchStatusActive)
-			}).
-			Count(ctx)
+		w := agentextensiondb.WebWatches
+		count, err := w.Where(w.Status.Eq(agentextension.WebWatchStatusActive)).
+			Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count active web watches", zap.Error(err))
 			return 0, fmt.Errorf("count active web watches: %w", err)
@@ -197,11 +153,8 @@ func (r *webWatchFindingRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentextension.WebWatchFinding, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(finding).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := agentextensiondb.WebWatchFindings.Create(ctx, r.db.Keel(ctx), finding)
+			if err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, agentextensionports.ErrWebWatchFindingExists
 				}
@@ -216,7 +169,7 @@ func (r *webWatchFindingRepository) Create(
 
 func (r *webWatchFindingRepository) ListByWatch(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	watchID pulid.ID,
 	limit int,
 ) ([]*agentextension.WebWatchFinding, error) {
@@ -226,7 +179,6 @@ func (r *webWatchFindingRepository) ListByWatch(
 	limit = min(limit, maxWatchFindings)
 
 	return r.list(ctx, &findingQuery{
-		tenant:  tenantInfo,
 		watchID: watchID,
 		limit:   limit,
 		newest:  true,
@@ -235,11 +187,10 @@ func (r *webWatchFindingRepository) ListByWatch(
 
 func (r *webWatchFindingRepository) ListUndelivered(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	watchID pulid.ID,
 ) ([]*agentextension.WebWatchFinding, error) {
 	return r.list(ctx, &findingQuery{
-		tenant:      tenantInfo,
 		watchID:     watchID,
 		limit:       maxUndelivered,
 		undelivered: true,
@@ -247,7 +198,6 @@ func (r *webWatchFindingRepository) ListUndelivered(
 }
 
 type findingQuery struct {
-	tenant      pagination.TenantInfo
 	watchID     pulid.ID
 	limit       int
 	undelivered bool
@@ -262,26 +212,19 @@ func (r *webWatchFindingRepository) list(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*agentextension.WebWatchFinding, error) {
-			findings := make([]*agentextension.WebWatchFinding, 0, q.limit)
-			cols := agentextensioncol.WebWatchFindingColumns
-			order := cols.FoundAt.OrderAsc()
+			f := agentextensiondb.WebWatchFindings
+			order := f.FoundAt.Asc()
 			if q.newest {
-				order = cols.FoundAt.OrderDesc()
+				order = f.FoundAt.Desc()
 			}
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&findings).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					sq = agentextensioncol.WebWatchFindingScopeTenant(sq, q.tenant).
-						Where(cols.WatchID.Eq(), q.watchID)
-					if q.undelivered {
-						sq = sq.Where(cols.DeliveredAt.IsNull())
-					}
-					return sq
-				}).
-				Order(order, cols.ID.OrderAsc()).
-				Limit(int64(q.limit)).
-				Scan(ctx)
+
+			findings, err := f.Where(
+				f.WatchID.Eq(q.watchID),
+				keel.When(q.undelivered, f.DeliveredAt.IsNull()),
+			).
+				Order(order, f.ID.Asc()).
+				Limit(q.limit).
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list web watch findings", zap.Error(err))
 				return nil, fmt.Errorf("list web watch findings: %w", err)
@@ -294,7 +237,7 @@ func (r *webWatchFindingRepository) list(
 
 func (r *webWatchFindingRepository) MarkDelivered(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	ids []pulid.ID,
 	at int64,
 ) error {
@@ -303,17 +246,9 @@ func (r *webWatchFindingRepository) MarkDelivered(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := agentextensioncol.WebWatchFindingColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agentextension.WebWatchFinding)(nil)).
-			Set(cols.DeliveredAt.Set(), at).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentextensioncol.WebWatchFindingScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.ID.In(), bun.List(ids)).
-					Where(cols.DeliveredAt.IsNull())
-			}).
-			Exec(ctx)
+		f := agentextensiondb.WebWatchFindings
+		_, err := f.Where(f.ID.In(ids...), f.DeliveredAt.IsNull()).
+			Update(ctx, r.db.Keel(ctx), f.DeliveredAt.To(at))
 		if err != nil {
 			r.l.Error("failed to mark web watch findings delivered", zap.Error(err))
 			return fmt.Errorf("mark web watch findings delivered: %w", err)

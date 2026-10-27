@@ -2,12 +2,13 @@ package invoiceservice
 
 import (
 	"context"
+	"testing"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/billingqueueportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceadjustmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/invoiceportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/latechargeportsmock"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
@@ -28,7 +29,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -36,19 +36,13 @@ import (
 // no connection is ever touched.
 type fakeInvoiceDB struct{}
 
-func (fakeInvoiceDB) DB() *bun.DB                          { return nil }
-func (fakeInvoiceDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (fakeInvoiceDB) WithTx(
+func (fakeInvoiceDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
-func (fakeInvoiceDB) HealthCheck(context.Context) error { return nil }
-func (fakeInvoiceDB) IsHealthy(context.Context) bool    { return true }
-func (fakeInvoiceDB) Close() error                      { return nil }
 
 type voidFixture struct {
 	orgID, buID, userID, invoiceID, queueItemID pulid.ID
@@ -134,7 +128,10 @@ func TestVoidInvoiceRejectsInvalidRequests(t *testing.T) {
 	t.Parallel()
 
 	f := newVoidFixture()
-	svc := newVoidService(invoiceportsmock.NewMockInvoiceRepository(t), billingqueueportsmock.NewMockBillingQueueRepository(t))
+	svc := newVoidService(
+		invoiceportsmock.NewMockInvoiceRepository(t),
+		billingqueueportsmock.NewMockBillingQueueRepository(t),
+	)
 
 	_, err := svc.VoidInvoice(t.Context(), nil, f.actor)
 	require.Error(t, err)
@@ -522,12 +519,12 @@ type txMarker struct{}
 // tell which writes shared it.
 type markingInvoiceDB struct{ fakeInvoiceDB }
 
-func (markingInvoiceDB) WithTx(
+func (markingInvoiceDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
-	return fn(context.WithValue(ctx, txMarker{}, true), bun.Tx{})
+	return fn(context.WithValue(ctx, txMarker{}, true))
 }
 
 func inTx(ctx context.Context) bool {

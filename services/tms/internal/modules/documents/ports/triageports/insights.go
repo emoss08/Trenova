@@ -11,30 +11,30 @@ import (
 )
 
 type MessageRow struct {
-	ID                      pulid.ID                      `bun:"id"`
-	OrganizationID          pulid.ID                      `bun:"organization_id"`
-	BusinessUnitID          pulid.ID                      `bun:"business_unit_id"`
-	MailboxID               pulid.ID                      `bun:"mailbox_id"`
-	FromAddress             string                        `bun:"from_address"`
-	FromName                string                        `bun:"from_name"`
-	Subject                 string                        `bun:"subject"`
-	SenderDomain            string                        `bun:"sender_domain"`
-	Classification          inboundmessage.Classification `bun:"classification"`
-	Status                  inboundmessage.Status         `bun:"status"`
-	ReceivedAt              int64                         `bun:"received_at"`
-	DueAt                   int64                         `bun:"due_at"`
-	Parked                  inboundmessage.Parking        `bun:"parked"`
-	OwnerID                 pulid.ID                      `bun:"owner_id"`
-	MatchedShipmentID       pulid.ID                      `bun:"matched_shipment_id"`
-	MatchedCustomerID       pulid.ID                      `bun:"matched_customer_id"`
-	MatchedCarrierID        pulid.ID                      `bun:"matched_carrier_id"`
-	HandledByRuleID         pulid.ID                      `bun:"handled_by_rule_id"`
-	HandledAction           inboundmessage.NovaAction     `bun:"handled_action"`
-	ClassificationCorrected bool                          `bun:"classification_corrected"`
-	ReviewedBy              pulid.ID                      `bun:"reviewed_by"`
-	ReviewedAt              int64                         `bun:"reviewed_at"`
-	Reference               string                        `bun:"reference"`
-	PersonFiled             bool                          `bun:"person_filed"`
+	ID                      pulid.ID
+	OrganizationID          pulid.ID
+	BusinessUnitID          pulid.ID
+	MailboxID               pulid.ID
+	FromAddress             string
+	FromName                string
+	Subject                 string
+	SenderDomain            string
+	Classification          inboundmessage.Classification
+	Status                  inboundmessage.Status
+	ReceivedAt              int64
+	DueAt                   int64
+	Parked                  inboundmessage.Parking
+	OwnerID                 pulid.ID
+	MatchedShipmentID       pulid.ID
+	MatchedCustomerID       pulid.ID
+	MatchedCarrierID        pulid.ID
+	HandledByRuleID         pulid.ID
+	HandledAction           inboundmessage.NovaAction
+	ClassificationCorrected bool
+	ReviewedBy              pulid.ID
+	ReviewedAt              int64
+	Reference               string
+	PersonFiled             bool
 }
 
 func (r *MessageRow) Message() *inboundmessage.InboundMessage {
@@ -117,15 +117,15 @@ type ManualOutcomesRequest struct {
 }
 
 type ManualOutcomeRow struct {
-	SenderDomain   string                        `bun:"sender_domain"`
-	Classification inboundmessage.Classification `bun:"classification"`
-	Outcome        triage.ActivityKind           `bun:"outcome"`
-	Count          int                           `bun:"count"`
-	Arrived        int                           `bun:"arrived"`
-	Mailboxes      int                           `bun:"mailboxes"`
-	MailboxID      pulid.ID                      `bun:"mailbox_id"`
-	AllCustomers   bool                          `bun:"all_customers"`
-	AllCarriers    bool                          `bun:"all_carriers"`
+	SenderDomain   string
+	Classification inboundmessage.Classification
+	Outcome        triage.ActivityKind
+	Count          int
+	Arrived        int
+	Mailboxes      int
+	MailboxID      pulid.ID
+	AllCustomers   bool
+	AllCarriers    bool
 }
 
 type MessageRowsRequest struct {
@@ -148,30 +148,30 @@ type BriefingWindow struct {
 }
 
 type BriefingCounts struct {
-	Waiting             int  `bun:"waiting"`
-	Overdue             int  `bun:"overdue"`
-	ClosedByPeopleToday int  `bun:"closed_by_people_today"`
-	HandledByNovaToday  int  `bun:"handled_by_nova_today"`
-	ComingBack          int  `bun:"coming_back"`
-	AnyMessage          bool `bun:"any_message"`
+	Waiting             int
+	Overdue             int
+	ClosedByPeopleToday int
+	HandledByNovaToday  int
+	ComingBack          int
+	AnyMessage          bool
 }
 
 type HandledRow struct {
-	MessageRow `bun:",extend"`
+	MessageRow
 
-	GroupCount int `bun:"group_count"`
+	GroupCount int
 }
 
 type ArrivalRow struct {
-	Hour          int `bun:"hour"`
-	HandledByNova int `bun:"handled_by_nova"`
-	LeftForPerson int `bun:"left_for_person"`
+	Hour          int
+	HandledByNova int
+	LeftForPerson int
 }
 
 type RiverRow struct {
-	MessageRow `bun:",extend"`
+	MessageRow
 
-	Nova bool `bun:"nova"`
+	Nova bool
 }
 
 type WaitingRequest struct {
@@ -186,11 +186,11 @@ type CorrectionTotalsRequest struct {
 }
 
 type CorrectionTotals struct {
-	CorrectionsThisWeek int `bun:"corrections_this_week"`
-	ReadThisWeek        int `bun:"read_this_week"`
-	CorrectedThisWeek   int `bun:"corrected_this_week"`
-	ReadLastWeek        int `bun:"read_last_week"`
-	CorrectedLastWeek   int `bun:"corrected_last_week"`
+	CorrectionsThisWeek int
+	ReadThisWeek        int
+	CorrectedThisWeek   int
+	ReadLastWeek        int
+	CorrectedLastWeek   int
 }
 
 type SenderStatsRequest struct {
@@ -202,8 +202,8 @@ type SenderStatsRequest struct {
 }
 
 type SenderKindRow struct {
-	Classification inboundmessage.Classification `bun:"classification"`
-	Count          int                           `bun:"count"`
+	Classification inboundmessage.Classification
+	Count          int
 }
 
 type SenderStats struct {

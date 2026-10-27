@@ -6,23 +6,21 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/permissioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -30,12 +28,25 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const maxUsernameLength = 20
+const (
+	maxUsernameLength       = 20
+	defaultWorkerLoadsLimit = 25
+	maxWorkerLoadsLimit     = 100
+	workerPTOLimit          = 50
+
+	resolveInvitationScopeReason = "resolve a driver portal invitation link before its tenant is known"
+	emailAvailableScopeReason    = "check that a portal sign-in email is not already used by any account"
+)
+
+var (
+	invitationErrors = dberror.Mapping{Entity: "PortalInvitation"}
+	workerErrors     = dberror.Mapping{Entity: "Worker"}
+	assignmentErrors = dberror.Mapping{Entity: "Assignment"}
+)
 
 type Params struct {
 	fx.In
@@ -64,8 +75,11 @@ func (r *portalAccessRepository) CreateInvitation(
 	entity *worker.PortalInvitation,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create portal invitation: %w", err)
+		if err := workerdb.PortalInvitations.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, fmt.Errorf(
+				"create portal invitation: %w",
+				invitationErrors.Map(err, entity.ID.String()),
+			)
 		}
 		return entity, nil
 	})
@@ -76,24 +90,8 @@ func (r *portalAccessRepository) UpdateInvitation(
 	entity *worker.PortalInvitation,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		cols := workercol.PortalInvitationColumns
-		ov := entity.Version
-		entity.Version++
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-			return nil, fmt.Errorf("update portal invitation: %w", err)
-		}
-		err = dberror.CheckRowsAffected(results, "PortalInvitation", entity.ID.String())
-		if err != nil {
-			entity.Version = ov
-			return nil, err
+		if err := workerdb.PortalInvitations.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, invitationErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -104,19 +102,10 @@ func (r *portalAccessRepository) GetInvitationByID(
 	req workerports.GetPortalInvitationByIDRequest,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		cols := workercol.PortalInvitationColumns
-		entity := new(worker.PortalInvitation)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PortalInvitationScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Relation(workercol.PortalInvitationRelations.Worker).
-			Scan(ctx)
+		pi := workerdb.PortalInvitations
+		entity, err := pi.Where(pi.ID.Eq(req.ID)).Load(pi.Worker()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "PortalInvitation")
+			return nil, invitationErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
@@ -126,23 +115,15 @@ func (r *portalAccessRepository) GetInvitationByTokenHash(
 	ctx context.Context,
 	tokenHash string,
 ) (*worker.PortalInvitation, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"resolve a driver portal invitation link before its tenant is known",
-	)
+	ctx = dbscope.WithSystem(ctx, resolveInvitationScopeReason)
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		cols := workercol.PortalInvitationColumns
-		rel := workercol.PortalInvitationRelations
-		entity := new(worker.PortalInvitation)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.TokenHash.Eq(), tokenHash).
-			Relation(rel.Worker).
-			Relation(buncolgen.Rel(rel.Worker, workercol.WorkerRelations.Organization)).
-			Scan(ctx)
+		pi := workerdb.PortalInvitations
+		entity, err := pi.AllTenants().
+			Where(pi.TokenHash.Eq(tokenHash)).
+			Load(pi.Worker().Organization()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "PortalInvitation")
+			return nil, invitationErrors.Map(err, "")
 		}
 		return entity, nil
 	})
@@ -153,21 +134,15 @@ func (r *portalAccessRepository) GetPendingInvitationForWorker(
 	req workerports.GetPendingPortalInvitationRequest,
 ) (*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.PortalInvitation, error) {
-		cols := workercol.PortalInvitationColumns
-		entity := new(worker.PortalInvitation)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.PortalInvitationScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID).
-					Where(cols.Status.Eq(), worker.PortalInvitationStatusPending)
-			}).
-			Order(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		pi := workerdb.PortalInvitations
+		entity, err := pi.Where(
+			pi.WorkerID.Eq(req.WorkerID),
+			pi.Status.Eq(worker.PortalInvitationStatusPending),
+		).
+			Order(pi.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "PortalInvitation")
+			return nil, invitationErrors.Map(err, req.WorkerID.String())
 		}
 		return entity, nil
 	})
@@ -178,21 +153,12 @@ func (r *portalAccessRepository) ListInvitations(
 	req *workerports.ListPortalInvitationsRequest,
 ) ([]*worker.PortalInvitation, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.PortalInvitation, error) {
-		cols := workercol.PortalInvitationColumns
-		items := make([]*worker.PortalInvitation, 0, 8)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = workercol.PortalInvitationScopeTenant(sq, req.TenantInfo)
-				if !req.WorkerID.IsNil() {
-					sq = sq.Where(cols.WorkerID.Eq(), req.WorkerID)
-				}
-				return sq
-			}).
-			Relation(workercol.PortalInvitationRelations.InvitedBy).
-			Order(cols.CreatedAt.OrderDesc())
-		if err := query.Scan(ctx); err != nil {
+		pi := workerdb.PortalInvitations
+		items, err := pi.Where(keel.When(!req.WorkerID.IsNil(), pi.WorkerID.Eq(req.WorkerID))).
+			Load(pi.InvitedBy()).
+			Order(pi.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list portal invitations: %w", err)
 		}
 		return items, nil
@@ -204,26 +170,12 @@ func (r *portalAccessRepository) GetWorkerByUserID(
 	tenantInfo pagination.TenantInfo,
 ) (*worker.Worker, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
-		cols := workercol.WorkerColumns
-		rel := workercol.WorkerRelations
-		entity := new(worker.Worker)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, tenantInfo).
-					Where(cols.UserID.Eq(), tenantInfo.UserID)
-			}).
-			Relation(rel.FleetCode).
-			Relation(rel.Organization).
-			Relation(rel.State).
-			Relation(rel.Profile).
-			Relation(
-				buncolgen.Rel(rel.Profile, workercol.WorkerProfileRelations.LicenseState),
-			).
-			Scan(ctx)
+		w := workerdb.Workers
+		entity, err := w.Where(w.UserID.Eq(tenantInfo.UserID)).
+			Load(w.FleetCode(), w.Organization(), w.State(), w.Profile().LicenseState()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Worker")
+			return nil, workerErrors.Map(err, tenantInfo.UserID.String())
 		}
 		return entity, nil
 	})
@@ -234,15 +186,8 @@ func (r *portalAccessRepository) ExistsWorkerForUser(
 	tenantInfo pagination.TenantInfo,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := workercol.WorkerColumns
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.Worker)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, tenantInfo).
-					Where(cols.UserID.Eq(), tenantInfo.UserID)
-			}).
-			Exists(ctx)
+		w := workerdb.Workers
+		exists, err := w.Where(w.UserID.Eq(tenantInfo.UserID)).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, fmt.Errorf("check worker linkage for user: %w", err)
 		}
@@ -252,25 +197,16 @@ func (r *portalAccessRepository) ExistsWorkerForUser(
 
 func (r *portalAccessRepository) GetWorkerForPortalManagement(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 ) (*worker.Worker, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.Worker, error) {
-		cols := workercol.WorkerColumns
-		rel := workercol.WorkerRelations
-		entity := new(worker.Worker)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerScopeTenant(sq, tenantInfo).
-					Where(cols.ID.Eq(), workerID)
-			}).
-			Relation(rel.Organization).
-			Relation(rel.PortalUser).
-			Scan(ctx)
+		w := workerdb.Workers
+		entity, err := w.Where(w.ID.Eq(workerID)).
+			Load(w.Organization(), w.PortalUser()).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Worker")
+			return nil, workerErrors.Map(err, workerID.String())
 		}
 		return entity, nil
 	})
@@ -281,118 +217,104 @@ func (r *portalAccessRepository) ActivatePortalAccess(
 	req *workerports.ActivatePortalAccessRequest,
 ) (*tenant.User, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.User, error) {
-		var created *tenant.User
-		err := r.db.
-			WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-				invitation, err := r.lockInvitation(txCtx, tx, req.Invitation)
-				if err != nil {
-					return err
-				}
-
-				if err = quotaservice.EnforceAll(txCtx, r.quota, platformplanports.QuotaRequest{
-					TenantInfo: pagination.TenantInfo{
-						OrgID: invitation.OrganizationID,
-						BuID:  invitation.BusinessUnitID,
-					},
-					Meter:    platformcatalog.MeterUserSeats,
-					Quantity: 1,
-				}); err != nil {
-					return err
-				}
-
-				wrk, err := r.lockWorker(txCtx, tx, invitation)
-				if err != nil {
-					return err
-				}
-
-				if err = r.ensureEmailAvailable(txCtx, req.User.EmailAddress); err != nil {
-					return err
-				}
-
-				role, err := r.ensureDriverRole(txCtx, tx, invitation, req)
-				if err != nil {
-					return err
-				}
-
-				req.User.Username, err = r.uniqueUsername(txCtx, tx, invitation, req.User.Username)
-				if err != nil {
-					return err
-				}
-
-				if _, err = tx.NewInsert().Model(req.User).Exec(txCtx); err != nil {
-					return fmt.Errorf("create portal user: %w", err)
-				}
-
-				membership := &tenant.OrganizationMembership{
-					IsDefault:      true,
-					BusinessUnitID: invitation.BusinessUnitID,
-					UserID:         req.User.ID,
-					OrganizationID: invitation.OrganizationID,
-					GrantedByID:    invitation.InvitedByID,
-				}
-				if _, err = tx.NewInsert().Model(membership).Exec(txCtx); err != nil {
-					return fmt.Errorf("create portal user membership: %w", err)
-				}
-
-				assignment := &permission.UserRoleAssignment{
-					ID:             pulid.MustNew("ura_"),
-					UserID:         req.User.ID,
-					OrganizationID: invitation.OrganizationID,
-					RoleID:         role.ID,
-					AssignedBy:     invitation.InvitedByID,
-					AssignedAt:     timeutils.NowUnix(),
-				}
-				if _, err = tx.NewInsert().Model(assignment).Exec(txCtx); err != nil {
-					return fmt.Errorf("assign driver role: %w", err)
-				}
-
-				if err = r.linkWorker(txCtx, tx, wrk, req.User.ID); err != nil {
-					return err
-				}
-
-				now := timeutils.NowUnix()
-				invitation.Status = worker.PortalInvitationStatusAccepted
-				invitation.AcceptedAt = &now
-				invitation.AcceptedUserID = &req.User.ID
-				if _, err = tx.NewUpdate().
-					Model(invitation).
-					WherePK().
-					Column(
-						workercol.PortalInvitationColumns.Status.Bare(),
-						workercol.PortalInvitationColumns.AcceptedAt.Bare(),
-						workercol.PortalInvitationColumns.AcceptedUserID.Bare(),
-						workercol.PortalInvitationColumns.UpdatedAt.Bare(),
-					).
-					Exec(txCtx); err != nil {
-					return fmt.Errorf("mark invitation accepted: %w", err)
-				}
-
-				created = req.User
-				return nil
-			})
+		invitation, err := r.lockInvitation(ctx, req.Invitation)
 		if err != nil {
 			return nil, err
 		}
-		return created, nil
+
+		if err = quotaservice.EnforceAll(ctx, r.quota, platformplanports.QuotaRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: invitation.OrganizationID,
+				BuID:  invitation.BusinessUnitID,
+			},
+			Meter:    platformcatalog.MeterUserSeats,
+			Quantity: 1,
+		}); err != nil {
+			return nil, err
+		}
+
+		wrk, err := r.lockWorker(ctx, invitation)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = r.ensureEmailAvailable(ctx, req.User.EmailAddress); err != nil {
+			return nil, err
+		}
+
+		role, err := r.ensureDriverRole(ctx, invitation, req)
+		if err != nil {
+			return nil, err
+		}
+
+		req.User.Username, err = r.uniqueUsername(ctx, invitation, req.User.Username)
+		if err != nil {
+			return nil, err
+		}
+
+		db := r.db.Keel(ctx)
+		if err = tenantdb.Users.Create(ctx, db, req.User); err != nil {
+			return nil, fmt.Errorf("create portal user: %w", err)
+		}
+
+		if err = tenantdb.OrganizationMemberships.Create(ctx, db, &tenant.OrganizationMembership{
+			IsDefault:      true,
+			BusinessUnitID: invitation.BusinessUnitID,
+			UserID:         req.User.ID,
+			OrganizationID: invitation.OrganizationID,
+			GrantedByID:    invitation.InvitedByID,
+		}); err != nil {
+			return nil, fmt.Errorf("create portal user membership: %w", err)
+		}
+
+		if err = permissiondb.UserRoleAssignments.Create(ctx, db, &permission.UserRoleAssignment{
+			ID:             pulid.MustNew("ura_"),
+			UserID:         req.User.ID,
+			OrganizationID: invitation.OrganizationID,
+			RoleID:         role.ID,
+			AssignedBy:     invitation.InvitedByID,
+			AssignedAt:     timeutils.NowUnix(),
+		}); err != nil {
+			return nil, fmt.Errorf("assign driver role: %w", err)
+		}
+
+		if err = r.linkWorker(ctx, wrk, req.User.ID); err != nil {
+			return nil, err
+		}
+
+		pi := workerdb.PortalInvitations
+		now := timeutils.NowUnix()
+		invitation.Status = worker.PortalInvitationStatusAccepted
+		invitation.AcceptedAt = &now
+		invitation.AcceptedUserID = &req.User.ID
+		if err = pi.Save(
+			ctx,
+			db,
+			invitation,
+			pi.Status,
+			pi.AcceptedAt,
+			pi.AcceptedUserID,
+		); err != nil {
+			return nil, fmt.Errorf(
+				"mark invitation accepted: %w",
+				invitationErrors.Map(err, invitation.ID.String()),
+			)
+		}
+
+		return req.User, nil
 	})
 }
 
 func (r *portalAccessRepository) lockInvitation(
 	ctx context.Context,
-	tx bun.Tx,
 	ref *worker.PortalInvitation,
 ) (*worker.PortalInvitation, error) {
-	cols := workercol.PortalInvitationColumns
-	invitation := new(worker.PortalInvitation)
-	err := tx.NewSelect().
-		Model(invitation).
-		Where(cols.ID.Eq(), ref.ID).
-		Where(cols.OrganizationID.Eq(), ref.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), ref.BusinessUnitID).
-		For("UPDATE").
-		Scan(ctx)
+	pi := workerdb.PortalInvitations
+	invitation, err := pi.Where(pi.ID.Eq(ref.ID)).
+		Lock(keel.ForUpdate).
+		One(ctx, r.db.Keel(ctx))
 	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "PortalInvitation")
+		return nil, invitationErrors.Map(err, ref.ID.String())
 	}
 	if !invitation.IsAcceptable(timeutils.NowUnix()) {
 		return nil, errortypes.NewValidationError(
@@ -406,20 +328,14 @@ func (r *portalAccessRepository) lockInvitation(
 
 func (r *portalAccessRepository) lockWorker(
 	ctx context.Context,
-	tx bun.Tx,
 	invitation *worker.PortalInvitation,
 ) (*worker.Worker, error) {
-	cols := workercol.WorkerColumns
-	wrk := new(worker.Worker)
-	err := tx.NewSelect().
-		Model(wrk).
-		Where(cols.ID.Eq(), invitation.WorkerID).
-		Where(cols.OrganizationID.Eq(), invitation.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), invitation.BusinessUnitID).
-		For("UPDATE").
-		Scan(ctx)
+	w := workerdb.Workers
+	wrk, err := w.Where(w.ID.Eq(invitation.WorkerID)).
+		Lock(keel.ForUpdate).
+		One(ctx, r.db.Keel(ctx))
 	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Worker")
+		return nil, workerErrors.Map(err, invitation.WorkerID.String())
 	}
 	if !wrk.UserID.IsNil() {
 		return nil, errortypes.NewValidationError(
@@ -431,19 +347,14 @@ func (r *portalAccessRepository) lockWorker(
 	return wrk, nil
 }
 
-func (r *portalAccessRepository) ensureEmailAvailable(
-	ctx context.Context,
-	email string,
-) error {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"check that a portal sign-in email is not already used by any account",
-	)
-	cols := tenantcol.UserColumns
-	exists, err := r.db.DBForContext(ctx).NewSelect().
-		Model((*tenant.User)(nil)).
-		Where(cols.EmailAddress.Expr("LOWER({}) = LOWER(?)"), email).
-		Exists(ctx)
+func (r *portalAccessRepository) ensureEmailAvailable(ctx context.Context, email string) error {
+	ctx = dbscope.WithSystem(ctx, emailAvailableScopeReason)
+	exists, err := dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
+		u := tenantdb.Users
+		return u.AllTenants().
+			Where(u.EmailAddress.Lower().EqExpr(keel.Text(email).Lower())).
+			Exists(ctx, r.db.Keel(ctx))
+	})
 	if err != nil {
 		return fmt.Errorf("check portal user email: %w", err)
 	}
@@ -459,22 +370,17 @@ func (r *portalAccessRepository) ensureEmailAvailable(
 
 func (r *portalAccessRepository) ensureDriverRole(
 	ctx context.Context,
-	tx bun.Tx,
 	invitation *worker.PortalInvitation,
 	req *workerports.ActivatePortalAccessRequest,
 ) (*permission.Role, error) {
-	cols := permissioncol.RoleColumns
-	role := new(permission.Role)
-	err := tx.NewSelect().
-		Model(role).
-		Where(cols.OrganizationID.Eq(), invitation.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), invitation.BusinessUnitID).
-		Where(cols.Name.Eq(), req.RoleName).
-		Where(cols.IsSystem.IsTrue()).
-		Limit(1).
-		Scan(ctx)
+	ro := permissiondb.Roles
+	db := r.db.Keel(ctx)
+	role, err := ro.Where(ro.Name.Eq(req.RoleName), ro.IsSystem.IsTrue()).First(ctx, db)
 	if err == nil {
 		return role, nil
+	}
+	if !dberror.IsNotFoundError(err) {
+		return nil, fmt.Errorf("find driver role: %w", err)
 	}
 
 	role = &permission.Role{
@@ -487,7 +393,7 @@ func (r *portalAccessRepository) ensureDriverRole(
 		IsSystem:       true,
 		CreatedBy:      invitation.InvitedByID,
 	}
-	if _, err = tx.NewInsert().Model(role).Exec(ctx); err != nil {
+	if err = ro.Create(ctx, db, role); err != nil {
 		return nil, fmt.Errorf("create driver role: %w", err)
 	}
 	return role, nil
@@ -495,19 +401,17 @@ func (r *portalAccessRepository) ensureDriverRole(
 
 func (r *portalAccessRepository) uniqueUsername(
 	ctx context.Context,
-	tx bun.Tx,
 	invitation *worker.PortalInvitation,
 	base string,
 ) (string, error) {
-	cols := tenantcol.UserColumns
+	u := tenantdb.Users
+	db := r.db.Keel(ctx)
 	candidate := base
 	for suffix := 2; ; suffix++ {
-		exists, err := tx.NewSelect().
-			Model((*tenant.User)(nil)).
-			Where(cols.BusinessUnitID.Eq(), invitation.BusinessUnitID).
-			Where(cols.CurrentOrganizationID.Eq(), invitation.OrganizationID).
-			Where(cols.Username.Eq(), candidate).
-			Exists(ctx)
+		exists, err := u.Where(
+			u.CurrentOrganizationID.Eq(invitation.OrganizationID),
+			u.Username.Lower().Eq(strings.ToLower(candidate)),
+		).Exists(ctx, db)
 		if err != nil {
 			return "", fmt.Errorf("check portal username: %w", err)
 		}
@@ -525,113 +429,73 @@ func (r *portalAccessRepository) uniqueUsername(
 
 func (r *portalAccessRepository) linkWorker(
 	ctx context.Context,
-	tx bun.Tx,
 	wrk *worker.Worker,
 	userID pulid.ID,
 ) error {
-	cols := workercol.WorkerColumns
-	results, err := tx.NewUpdate().
-		Model((*worker.Worker)(nil)).
-		Where(cols.ID.Eq(), wrk.ID).
-		Where(cols.OrganizationID.Eq(), wrk.OrganizationID).
-		Where(cols.BusinessUnitID.Eq(), wrk.BusinessUnitID).
-		Where(cols.UserID.IsNull()).
-		Set(cols.UserID.Set(), userID).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Exec(ctx)
+	w := workerdb.Workers
+	affected, err := w.Where(w.ID.Eq(wrk.ID), w.UserID.IsNull()).
+		Update(ctx, r.db.Keel(ctx), w.UserID.To(userID))
 	if err != nil {
 		return fmt.Errorf("link worker to portal user: %w", err)
 	}
-	return dberror.CheckRowsAffected(results, "Worker", wrk.ID.String())
+	return dberror.CheckAffected(affected, "Worker", wrk.ID.String())
 }
 
 func (r *portalAccessRepository) RevokePortalAccess(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		return r.db.DBForContext(ctx).
-			RunInTx(ctx, nil, func(txCtx context.Context, tx bun.Tx) error {
-				wcols := workercol.WorkerColumns
-				wrk := new(worker.Worker)
-				err := tx.NewSelect().
-					Model(wrk).
-					Where(wcols.ID.Eq(), workerID).
-					Where(wcols.OrganizationID.Eq(), tenantInfo.OrgID).
-					Where(wcols.BusinessUnitID.Eq(), tenantInfo.BuID).
-					For("UPDATE").
-					Scan(txCtx)
-				if err != nil {
-					return dberror.HandleNotFoundError(err, "Worker")
-				}
+		db := r.db.Keel(ctx)
+		w := workerdb.Workers
+		wrk, err := w.Where(w.ID.Eq(workerID)).Lock(keel.ForUpdate).One(ctx, db)
+		if err != nil {
+			return workerErrors.Map(err, workerID.String())
+		}
 
-				now := timeutils.NowUnix()
-				icols := workercol.PortalInvitationColumns
-				if _, err = tx.NewUpdate().
-					Model((*worker.PortalInvitation)(nil)).
-					Where(icols.WorkerID.Eq(), workerID).
-					Where(icols.OrganizationID.Eq(), tenantInfo.OrgID).
-					Where(icols.BusinessUnitID.Eq(), tenantInfo.BuID).
-					Where(icols.Status.Eq(), worker.PortalInvitationStatusPending).
-					Set(icols.Status.Set(), worker.PortalInvitationStatusRevoked).
-					Set(icols.UpdatedAt.Set(), now).
-					Exec(txCtx); err != nil {
-					return fmt.Errorf("revoke pending invitations: %w", err)
-				}
+		pi := workerdb.PortalInvitations
+		if _, err = pi.Where(
+			pi.WorkerID.Eq(workerID),
+			pi.Status.Eq(worker.PortalInvitationStatusPending),
+		).Update(ctx, db, pi.Status.To(worker.PortalInvitationStatusRevoked)); err != nil {
+			return fmt.Errorf("revoke pending invitations: %w", err)
+		}
 
-				if wrk.UserID.IsNil() {
-					return nil
-				}
+		if wrk.UserID.IsNil() {
+			return nil
+		}
 
-				ucols := tenantcol.UserColumns
-				if _, err = tx.NewUpdate().
-					Model((*tenant.User)(nil)).
-					Where(ucols.ID.Eq(), wrk.UserID).
-					Set(ucols.Status.Set(), domaintypes.StatusInactive).
-					Set(ucols.UpdatedAt.Set(), now).
-					Exec(txCtx); err != nil {
-					return fmt.Errorf("deactivate portal user: %w", err)
-				}
+		u := tenantdb.Users
+		if _, err = u.Where(u.ID.Eq(wrk.UserID)).
+			Update(ctx, db, u.Status.To(domaintypes.StatusInactive)); err != nil {
+			return fmt.Errorf("deactivate portal user: %w", err)
+		}
 
-				if _, err = tx.NewUpdate().
-					Model((*worker.Worker)(nil)).
-					Where(wcols.ID.Eq(), workerID).
-					Where(wcols.OrganizationID.Eq(), tenantInfo.OrgID).
-					Where(wcols.BusinessUnitID.Eq(), tenantInfo.BuID).
-					Set(wcols.UserID.SetNull()).
-					Set(wcols.UpdatedAt.Set(), now).
-					Exec(txCtx); err != nil {
-					return fmt.Errorf("unlink worker portal user: %w", err)
-				}
-				return nil
-			})
+		if _, err = w.Where(w.ID.Eq(workerID)).Update(ctx, db, w.UserID.ToNull()); err != nil {
+			return fmt.Errorf("unlink worker portal user: %w", err)
+		}
+		return nil
 	})
+}
+
+func assignedTo(workerID pulid.ID) keel.Pred {
+	a := shipmentdb.Assignments
+	return keel.Or(a.PrimaryWorkerID.Eq(workerID), a.SecondaryWorkerID.Eq(workerID))
 }
 
 func (r *portalAccessRepository) WorkerAssignedToShipment(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	shipmentID pulid.ID,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		acols := shipmentcol.AssignmentColumns
-		mcols := shipmentcol.ShipmentMoveColumns
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*shipment.Assignment)(nil)).
-			Join("JOIN shipment_moves AS sm ON "+mcols.ID.Qualified()+" = "+acols.ShipmentMoveID.Qualified()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.AssignmentScopeTenant(sq, tenantInfo).
-					Where(mcols.ShipmentID.Eq(), shipmentID).
-					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						return inner.
-							Where(acols.PrimaryWorkerID.Eq(), workerID).
-							WhereOr(acols.SecondaryWorkerID.Eq(), workerID)
-					})
-			}).
-			Exists(ctx)
+		a := shipmentdb.Assignments
+		exists, err := a.Where(
+			a.ShipmentMove().ShipmentID.Eq(shipmentID),
+			assignedTo(workerID),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, fmt.Errorf("check worker shipment assignment: %w", err)
 		}
@@ -641,22 +505,15 @@ func (r *portalAccessRepository) WorkerAssignedToShipment(
 
 func (r *portalAccessRepository) ListWorkerPTO(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 ) ([]*worker.WorkerPTO, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTO, error) {
-		cols := workercol.WorkerPTOColumns
-		items := make([]*worker.WorkerPTO, 0, 16)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOScopeTenant(sq, tenantInfo).
-					Where(cols.WorkerID.Eq(), workerID)
-			}).
-			Order(cols.StartDate.OrderDesc()).
-			Limit(50).
-			Scan(ctx)
+		pto := workerdb.WorkerPTOs
+		items, err := pto.Where(pto.WorkerID.Eq(workerID)).
+			Order(pto.StartDate.Desc()).
+			Limit(workerPTOLimit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list worker pto: %w", err)
 		}
@@ -666,31 +523,22 @@ func (r *portalAccessRepository) ListWorkerPTO(
 
 func (r *portalAccessRepository) UpdateAssignmentAck(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	assignmentID pulid.ID,
 	ack shipment.AssignmentAck,
 	reason string,
 ) (*shipment.Assignment, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*shipment.Assignment, error) {
-		acols := shipmentcol.AssignmentColumns
-		entity := new(shipment.Assignment)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.AssignmentScopeTenant(sq, tenantInfo).
-					Where(acols.ID.Eq(), assignmentID).
-					Where(acols.ArchivedAt.IsNull()).
-					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						return inner.
-							Where(acols.PrimaryWorkerID.Eq(), workerID).
-							WhereOr(acols.SecondaryWorkerID.Eq(), workerID)
-					})
-			}).
-			Scan(ctx)
+		a := shipmentdb.Assignments
+		db := r.db.Keel(ctx)
+		entity, err := a.Where(
+			a.ID.Eq(assignmentID),
+			a.ArchivedAt.IsNull(),
+			assignedTo(workerID),
+		).One(ctx, db)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Assignment")
+			return nil, assignmentErrors.Map(err, assignmentID.String())
 		}
 
 		now := timeutils.NowUnix()
@@ -698,22 +546,8 @@ func (r *portalAccessRepository) UpdateAssignmentAck(
 		entity.AckAt = &now
 		entity.AckReason = reason
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(
-				acols.AckStatus.Bare(),
-				acols.AckAt.Bare(),
-				acols.AckReason.Bare(),
-				acols.UpdatedAt.Bare(),
-			).
-			WherePK().
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update assignment acknowledgment: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(results, "Assignment", entity.ID.String()); err != nil {
-			return nil, err
+		if err = a.Save(ctx, db, entity, a.AckStatus, a.AckAt, a.AckReason); err != nil {
+			return nil, assignmentErrors.Map(err, entity.ID.String())
 		}
 		return entity, nil
 	})
@@ -721,26 +555,17 @@ func (r *portalAccessRepository) UpdateAssignmentAck(
 
 func (r *portalAccessRepository) WorkerAssignedToMove(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	workerID pulid.ID,
 	moveID pulid.ID,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		acols := shipmentcol.AssignmentColumns
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*shipment.Assignment)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.AssignmentScopeTenant(sq, tenantInfo).
-					Where(acols.ShipmentMoveID.Eq(), moveID).
-					Where(acols.ArchivedAt.IsNull()).
-					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						return inner.
-							Where(acols.PrimaryWorkerID.Eq(), workerID).
-							WhereOr(acols.SecondaryWorkerID.Eq(), workerID)
-					})
-			}).
-			Exists(ctx)
+		a := shipmentdb.Assignments
+		exists, err := a.Where(
+			a.ShipmentMoveID.Eq(moveID),
+			a.ArchivedAt.IsNull(),
+			assignedTo(workerID),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return false, fmt.Errorf("check worker move assignment: %w", err)
 		}
@@ -750,24 +575,19 @@ func (r *portalAccessRepository) WorkerAssignedToMove(
 
 func (r *portalAccessRepository) ListDriverShipmentComments(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*shipment.ShipmentComment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.ShipmentComment, error) {
-		cols := shipmentcol.ShipmentCommentColumns
-		items := make([]*shipment.ShipmentComment, 0, 8)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentCommentScopeTenant(sq, tenantInfo).
-					Where(cols.ShipmentID.Eq(), shipmentID).
-					Where(cols.Visibility.Eq(), shipment.CommentVisibilityDriver).
-					Where(cols.DeletedAt.IsNull())
-			}).
-			Relation(shipmentcol.ShipmentCommentRelations.User).
-			Order(cols.CreatedAt.OrderDesc()).
-			Scan(ctx)
+		sc := shipmentdb.ShipmentComments
+		items, err := sc.Where(
+			sc.ShipmentID.Eq(shipmentID),
+			sc.Visibility.Eq(shipment.CommentVisibilityDriver),
+			sc.DeletedAt.IsNull(),
+		).
+			Load(sc.User()).
+			Order(sc.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list driver shipment comments: %w", err)
 		}
@@ -780,54 +600,29 @@ func (r *portalAccessRepository) ListWorkerLoads(
 	req *workerports.ListWorkerLoadsRequest,
 ) ([]*shipment.Assignment, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*shipment.Assignment, error) {
-		acols := shipmentcol.AssignmentColumns
-		arel := shipmentcol.AssignmentRelations
-		moveAlias := "shipment_move"
-		moveStatus := shipmentcol.ShipmentMoveColumns.Status.WithAlias(moveAlias)
-
 		limit := req.Limit
-		if limit <= 0 || limit > 100 {
-			limit = 25
+		if limit <= 0 || limit > maxWorkerLoadsLimit {
+			limit = defaultWorkerLoadsLimit
 		}
 
-		items := make([]*shipment.Assignment, 0, limit)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.AssignmentScopeTenant(sq, req.TenantInfo).
-					WhereGroup(" AND ", func(inner *bun.SelectQuery) *bun.SelectQuery {
-						return inner.
-							Where(acols.PrimaryWorkerID.Eq(), req.WorkerID).
-							WhereOr(acols.SecondaryWorkerID.Eq(), req.WorkerID)
-					}).
-					Where(acols.ArchivedAt.IsNull())
-			}).
-			Relation(arel.ShipmentMove).
-			Relation(buncolgen.Rel(arel.ShipmentMove, shipmentcol.ShipmentMoveRelations.Shipment)).
-			Relation(
-				buncolgen.Rel(arel.ShipmentMove, shipmentcol.ShipmentMoveRelations.Stops),
-				func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Order(shipmentcol.StopColumns.Sequence.OrderAsc())
-				},
+		a := shipmentdb.Assignments
+		move := a.ShipmentMove()
+		stops := move.Stops()
+		items, err := a.Where(
+			assignedTo(req.WorkerID),
+			a.ArchivedAt.IsNull(),
+			keel.When(len(req.Statuses) > 0, move.Status.In(req.Statuses...)),
+		).
+			Load(
+				move.Shipment(),
+				stops.Order(stops.Sequence.Asc()).Load(stops.Location()),
+				a.Tractor(),
+				a.Trailer(),
 			).
-			Relation(
-				buncolgen.Rel(
-					arel.ShipmentMove,
-					shipmentcol.ShipmentMoveRelations.Stops,
-					shipmentcol.StopRelations.Location,
-				),
-			).
-			Relation(arel.Tractor).
-			Relation(arel.Trailer).
-			Order(acols.CreatedAt.OrderDesc()).
-			Limit(int64(limit))
-
-		if len(req.Statuses) > 0 {
-			query = query.Where(moveStatus.In(), bun.List(req.Statuses))
-		}
-
-		if err := query.Scan(ctx); err != nil {
+			Order(a.CreatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list worker loads: %w", err)
 		}
 		return items, nil

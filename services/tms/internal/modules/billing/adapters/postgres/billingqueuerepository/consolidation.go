@@ -2,25 +2,120 @@ package billingqueuerepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/billingqueueports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/zap"
 )
 
 const defaultCandidateLimit = 5000
 
-// ListConsolidationCandidates flattens every approved queue item a run may bill,
-// together with each key a split rule can group on.
-//
-// One query rather than one per shipment: a month of freight for a large customer
-// is thousands of rows, and resolving the origin and destination per shipment
-// would be thousands of round trips. The stop lookups are lateral joins for the
-// same reason.
+func endpointStop(
+	sp *shipmentdb.ShipmentsTable,
+	alias string,
+	types []shipment.StopType,
+	first bool,
+) (*keel.Query[*shipment.Stop], keel.Expr) {
+	stop := shipmentdb.Stops.As(alias)
+	move := shipmentdb.ShipmentMoves.As(alias + "_move")
+	order := []keel.Order{move.Sequence.Asc(), stop.Sequence.Asc()}
+	if !first {
+		order = []keel.Order{move.Sequence.Desc(), stop.Sequence.Desc()}
+	}
+	q := stop.
+		Join(move, move.ID.EqCol(stop.ShipmentMoveID)).
+		Pick(stop.LocationID).
+		Where(move.ShipmentID.EqCol(sp.ID), stop.Type.In(types...)).
+		Order(order...).
+		Limit(1)
+	return q, keel.CastText(stop.LocationID).Coalesce("")
+}
+
+func consolidationCandidates(
+	req *billingqueueports.ListConsolidationCandidatesRequest,
+	limit int,
+) *keel.Query[*billingqueue.BillingQueueItem] {
+	bqi := billingqueuedb.BillingQueueItems
+	sp := shipmentdb.Shipments
+	cus := customerdb.Customers
+	cbp := customerdb.CustomerBillingProfiles
+	ord := orderdb.Orders
+	st := servicetypedb.ServiceTypes
+	sib := shipmentdb.Shipments.As("sib")
+	origin, originKey := endpointStop(
+		sp,
+		"origin",
+		[]shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup},
+		true,
+	)
+	dest, destKey := endpointStop(
+		sp,
+		"dest",
+		[]shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery},
+		false,
+	)
+	totalLegs := keel.CaseInt64().
+		When(sp.OrderID.IsNull(), keel.Int64(0)).
+		Else(keel.Int64Of(keel.Scalar(sib.
+			Pick(keel.Count()).
+			Where(sib.OrderID.EqCol(sp.OrderID), sib.Status.Ne(shipment.StatusCanceled)))))
+
+	return bqi.
+		Join(sp, sp.ID.EqCol(bqi.ShipmentID)).
+		Join(cus, cus.ID.EqCol(bqi.BillToCustomerID)).
+		LeftJoin(cbp, cbp.CustomerID.EqCol(cus.ID)).
+		LeftJoin(ord, ord.ID.EqCol(sp.OrderID)).
+		LeftJoin(st, st.ID.EqCol(sp.ServiceTypeID)).
+		LeftJoinLateral(origin).
+		LeftJoinLateral(dest).
+		Pick(
+			bqi.ID,
+			bqi.ShipmentID,
+			sp.OrderID.Coalesce(""),
+			bqi.BillToCustomerID,
+			cus.Name.Coalesce(""),
+			sp.ProNumber.Coalesce(""),
+			sp.BOL.Coalesce(""),
+			ord.OrderNumber.Coalesce(""),
+			ord.PONumber.Coalesce(""),
+			st.Code.Coalesce(""),
+			originKey,
+			destKey,
+			sp.ActualDeliveryDate,
+			bqi.AllocatedTotalAmount,
+			cbp.BillingCurrency.Coalesce("USD"),
+			keel.Count().Over([]keel.Expr{sp.OrderID, bqi.BillToCustomerID}),
+			totalLegs,
+			cbp.SplitBy.Coalesce(customer.InvoiceSplitKeyCustomer),
+			cbp.SectionBy.Coalesce(customer.InvoiceSectionKeyShipment),
+			cbp.InvoiceDetail.Coalesce(customer.InvoiceDetailDetailed),
+			cbp.MaxShipmentsPerInvoice.Coalesce(0),
+			cbp.MinConsolidatedAmount,
+			cbp.AutoBill.Coalesce(false),
+		).
+		Where(
+			bqi.Status.Eq(billingqueue.StatusApproved),
+			sp.Status.In(shipment.StatusReadyToInvoice, shipment.StatusCompleted),
+			unbilledInvoiceFreight(bqi, sp, req.CustomerIDs, req.PeriodEnd),
+		).
+		Order(
+			bqi.BillToCustomerID.Asc(),
+			sp.ActualDeliveryDate.Asc().NullsLast(),
+			sp.ProNumber.Asc(),
+		).
+		Limit(limit)
+}
+
 func (r *repository) ListConsolidationCandidates(
 	ctx context.Context,
 	req *billingqueueports.ListConsolidationCandidatesRequest,
@@ -38,122 +133,17 @@ func (r *repository) ListConsolidationCandidates(
 				limit = defaultCandidateLimit
 			}
 
-			candidates := make([]*billingqueueports.ConsolidationCandidate, 0, limit)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*billingqueue.BillingQueueItem)(nil)).
-				ColumnExpr("bqi.id AS billing_queue_item_id").
-				ColumnExpr("bqi.shipment_id AS shipment_id").
-				ColumnExpr("COALESCE(sp.order_id, '') AS order_id").
-				ColumnExpr("bqi.bill_to_customer_id AS customer_id").
-				ColumnExpr("COALESCE(cus.name, '') AS customer_name").
-				ColumnExpr("COALESCE(sp.pro_number, '') AS pro_number").
-				ColumnExpr("COALESCE(sp.bol, '') AS shipment_bol").
-				ColumnExpr("COALESCE(ord.order_number, '') AS order_number").
-				ColumnExpr("COALESCE(ord.po_number, '') AS order_po_number").
-				ColumnExpr("COALESCE(st.code, '') AS service_type_code").
-				ColumnExpr("COALESCE(origin.location_key, '') AS origin_key").
-				ColumnExpr("COALESCE(dest.location_key, '') AS destination_key").
-				ColumnExpr("sp.actual_delivery_date AS service_date").
-				ColumnExpr("bqi.allocated_total_amount AS total_charge_amount").
-				ColumnExpr("COALESCE(cbp.billing_currency, 'USD') AS currency_code").
-				ColumnExpr("COALESCE(cbp.split_by, 'Customer') AS split_by").
-				ColumnExpr("COALESCE(cbp.section_by, 'Shipment') AS section_by").
-				ColumnExpr("COALESCE(cbp.invoice_detail, 'Detailed') AS invoice_detail").
-				ColumnExpr("COALESCE(cbp.max_shipments_per_invoice, 0) AS max_shipments_per_invoice").
-				ColumnExpr("cbp.min_consolidated_amount AS min_consolidated_amount").
-				ColumnExpr("COALESCE(cbp.auto_bill, FALSE) AS auto_bill").
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE TRUE) OVER (PARTITION BY sp.order_id, bqi.bill_to_customer_id) AS order_eligible_legs",
-				).
-				ColumnExpr("COALESCE(legs.total, 0) AS order_total_legs").
-				Join("JOIN shipments AS sp ON sp.id = bqi.shipment_id").
-				Join("AND sp.organization_id = bqi.organization_id").
-				Join("AND sp.business_unit_id = bqi.business_unit_id").
-				Join("JOIN customers AS cus ON cus.id = bqi.bill_to_customer_id").
-				Join("AND cus.organization_id = bqi.organization_id").
-				Join("AND cus.business_unit_id = bqi.business_unit_id").
-				Join("LEFT JOIN customer_billing_profiles AS cbp ON cbp.customer_id = cus.id").
-				Join("AND cbp.organization_id = cus.organization_id").
-				Join("AND cbp.business_unit_id = cus.business_unit_id").
-				Join("LEFT JOIN orders AS ord ON ord.id = sp.order_id").
-				Join("AND ord.organization_id = sp.organization_id").
-				Join("AND ord.business_unit_id = sp.business_unit_id").
-				Join("LEFT JOIN service_types AS st ON st.id = sp.service_type_id").
-				Join("AND st.organization_id = sp.organization_id").
-				// The first pickup and the final delivery are what "group by location"
-				// means; a shipment with no stop at all falls into the unknown bucket
-				// rather than being dropped.
-				Join(`LEFT JOIN LATERAL (
-			SELECT COALESCE(stp.location_id::text, '') AS location_key
-			FROM stops AS stp
-			JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id
-			WHERE smv.shipment_id = sp.id
-			  AND stp.type IN ('Pickup', 'SplitPickup')
-			ORDER BY smv.sequence ASC, stp.sequence ASC
-			LIMIT 1
-		) AS origin ON TRUE`).
-				Join(`LEFT JOIN LATERAL (
-			SELECT COALESCE(stp.location_id::text, '') AS location_key
-			FROM stops AS stp
-			JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id
-			WHERE smv.shipment_id = sp.id
-			  AND stp.type IN ('Delivery', 'SplitDelivery')
-			ORDER BY smv.sequence DESC, stp.sequence DESC
-			LIMIT 1
-		) AS dest ON TRUE`).
-				// How many legs the order has that could ever be billed, so the caller can
-				// tell a complete order from a partial one without a second query.
-				Join(`LEFT JOIN LATERAL (
-			SELECT COUNT(*) AS total
-			FROM shipments AS sib
-			WHERE sib.order_id = sp.order_id
-			  AND sib.organization_id = sp.organization_id
-			  AND sib.business_unit_id = sp.business_unit_id
-			  AND sib.status <> ?
-		) AS legs ON sp.order_id IS NOT NULL`, shipment.StatusCanceled).
-				Where("bqi.organization_id = ?", req.TenantInfo.OrgID).
-				Where("bqi.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("bqi.status = ?", billingqueue.StatusApproved).
-				Where("bqi.bill_type = ?", billingqueue.BillTypeInvoice).
-				// The durable double-bill guard: an item already carried by an invoice is
-				// never a candidate again.
-				Where("bqi.invoice_id IS NULL").
-				Where("bqi.is_adjustment_origin = FALSE").
-				Where("bqi.bill_to_customer_id IN (?)", bun.In(req.CustomerIDs)).
-				Where("sp.status IN (?)", bun.In([]shipment.Status{
-					shipment.StatusReadyToInvoice,
-					shipment.StatusCompleted,
-				})).
-				// Already billed to this payer. The invoice_id back-link is the primary
-				// double-bill guard, but it was backfilled conservatively for legacy
-				// order-grouped invoices, and a leg on a Draft invoice stays Approved until
-				// posting. This reads the truth straight from the invoice lines, scoped to
-				// the payer, so a shipment whose other payer is already invoiced is still a
-				// candidate for this one.
-				Where(`NOT EXISTS (
-			SELECT 1 FROM invoice_lines AS il
-			JOIN invoices AS inv ON inv.id = il.invoice_id
-			  AND inv.organization_id = il.organization_id
-			  AND inv.business_unit_id = il.business_unit_id
-			WHERE il.shipment_id = sp.id
-			  AND il.organization_id = sp.organization_id
-			  AND il.business_unit_id = sp.business_unit_id
-			  AND inv.customer_id = bqi.bill_to_customer_id
-		)`).
-				// No lower bound. Approved, uninvoiced freight is owed however old it is:
-				// freight held under a customer's minimum is promised to the next period, and
-				// a window that let it age out silently dropped it from billing for good.
-				Where("COALESCE(sp.actual_delivery_date, bqi.created_at) < ?", req.PeriodEnd).
-				OrderExpr("bqi.bill_to_customer_id ASC, sp.actual_delivery_date ASC NULLS LAST, sp.pro_number ASC").
-				Limit(int64(limit)).
-				Scan(ctx, &candidates)
+			candidates, err := keel.Into[billingqueueports.ConsolidationCandidate](
+				ctx,
+				r.db.Keel(ctx),
+				consolidationCandidates(req, limit),
+			)
 			if err != nil {
 				r.l.Error("failed to list consolidation candidates", zap.Error(err))
-				return nil, fmt.Errorf("list consolidation candidates: %w", err)
+				return nil, err
 			}
 
-			return candidates, nil
+			return sliceutils.Pointers(candidates), nil
 		},
 	)
 }

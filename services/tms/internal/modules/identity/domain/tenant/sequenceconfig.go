@@ -1,19 +1,17 @@
 package tenant
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var AllowedSeparators = []string{"-", "_", "/", "."}
@@ -33,32 +31,32 @@ type LocationCodeComponent string
 type LocationCodeCasing string
 
 type SequenceConfig struct {
-	bun.BaseModel `bun:"table:sequence_configs,alias:sqcfg" json:"-"`
+	keel.Table `keel:"sequence_configs"`
 
-	ID                      pulid.ID              `json:"id"                             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID          pulid.ID              `json:"organizationId"                 bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID          pulid.ID              `json:"businessUnitId"                 bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	SequenceType            SequenceType          `json:"sequenceType"                   bun:"sequence_type,notnull"`
-	Prefix                  string                `json:"prefix"                         bun:"prefix,type:VARCHAR(20),notnull"`
-	IncludeYear             bool                  `json:"includeYear"                    bun:"include_year,type:BOOLEAN,notnull"`
-	YearDigits              int16                 `json:"yearDigits"                     bun:"year_digits,type:SMALLINT,notnull"`
-	IncludeMonth            bool                  `json:"includeMonth"                   bun:"include_month,type:BOOLEAN,notnull"`
-	IncludeWeekNumber       bool                  `json:"includeWeekNumber"              bun:"include_week_number,type:BOOLEAN,notnull"`
-	IncludeDay              bool                  `json:"includeDay"                     bun:"include_day,type:BOOLEAN,notnull"`
-	SequenceDigits          int16                 `json:"sequenceDigits"                 bun:"sequence_digits,type:SMALLINT,notnull"`
-	IncludeLocationCode     bool                  `json:"includeLocationCode"            bun:"include_location_code,type:BOOLEAN,notnull"`
-	IncludeRandomDigits     bool                  `json:"includeRandomDigits"            bun:"include_random_digits,type:BOOLEAN,notnull"`
-	RandomDigitsCount       int16                 `json:"randomDigitsCount"              bun:"random_digits_count,type:SMALLINT,notnull"`
-	IncludeCheckDigit       bool                  `json:"includeCheckDigit"              bun:"include_check_digit,type:BOOLEAN,notnull"`
-	IncludeBusinessUnitCode bool                  `json:"includeBusinessUnitCode"        bun:"include_business_unit_code,type:BOOLEAN,notnull"`
-	UseSeparators           bool                  `json:"useSeparators"                  bun:"use_separators,type:BOOLEAN,notnull"`
-	SeparatorChar           string                `json:"separatorChar"                  bun:"separator_char,type:VARCHAR(2),notnull"`
-	AllowCustomFormat       bool                  `json:"allowCustomFormat"              bun:"allow_custom_format,type:BOOLEAN,notnull"`
-	CustomFormat            string                `json:"customFormat"                   bun:"custom_format,type:TEXT,notnull"`
-	LocationCodeStrategy    *LocationCodeStrategy `json:"locationCodeStrategy,omitempty" bun:"location_code_strategy,type:JSONB,nullzero"`
-	Version                 int64                 `json:"version"                        bun:"version,type:BIGINT,notnull"`
-	CreatedAt               int64                 `json:"createdAt"                      bun:"created_at,notnull"`
-	UpdatedAt               int64                 `json:"updatedAt"                      bun:"updated_at,notnull"`
+	ID                      pulid.ID              `json:"id"                             keel:"id,pk,autoid:sc_"`
+	OrganizationID          pulid.ID              `json:"organizationId"                 keel:"organization_id,tenant"`
+	BusinessUnitID          pulid.ID              `json:"businessUnitId"                 keel:"business_unit_id,tenant"`
+	SequenceType            SequenceType          `json:"sequenceType"                   keel:"sequence_type"`
+	Prefix                  string                `json:"prefix"                         keel:"prefix"`
+	IncludeYear             bool                  `json:"includeYear"                    keel:"include_year"`
+	YearDigits              int16                 `json:"yearDigits"                     keel:"year_digits"`
+	IncludeMonth            bool                  `json:"includeMonth"                   keel:"include_month"`
+	IncludeWeekNumber       bool                  `json:"includeWeekNumber"              keel:"include_week_number"`
+	IncludeDay              bool                  `json:"includeDay"                     keel:"include_day"`
+	SequenceDigits          int16                 `json:"sequenceDigits"                 keel:"sequence_digits"`
+	IncludeLocationCode     bool                  `json:"includeLocationCode"            keel:"include_location_code"`
+	IncludeRandomDigits     bool                  `json:"includeRandomDigits"            keel:"include_random_digits"`
+	RandomDigitsCount       int16                 `json:"randomDigitsCount"              keel:"random_digits_count"`
+	IncludeCheckDigit       bool                  `json:"includeCheckDigit"              keel:"include_check_digit"`
+	IncludeBusinessUnitCode bool                  `json:"includeBusinessUnitCode"        keel:"include_business_unit_code"`
+	UseSeparators           bool                  `json:"useSeparators"                  keel:"use_separators"`
+	SeparatorChar           string                `json:"separatorChar"                  keel:"separator_char"`
+	AllowCustomFormat       bool                  `json:"allowCustomFormat"              keel:"allow_custom_format"`
+	CustomFormat            string                `json:"customFormat"                   keel:"custom_format"`
+	LocationCodeStrategy    *LocationCodeStrategy `json:"locationCodeStrategy,omitempty" keel:"location_code_strategy,jsonb"`
+	Version                 int64                 `json:"version"                        keel:"version,version"`
+	CreatedAt               int64                 `json:"createdAt"                      keel:"created_at,autocreate"`
+	UpdatedAt               int64                 `json:"updatedAt"                      keel:"updated_at,autoupdate"`
 }
 
 type LocationCodeStrategy struct {
@@ -190,23 +188,6 @@ type SequenceConfigDocument struct {
 	Configs        []*SequenceConfig `json:"configs"`
 }
 
-func (sc *SequenceConfig) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch q.(type) {
-	case *bun.InsertQuery:
-		if sc.ID.IsNil() {
-			sc.ID = pulid.MustNew("sc_")
-		}
-
-		sc.CreatedAt = now
-	case *bun.UpdateQuery:
-		sc.UpdatedAt = now
-	}
-
-	return nil
-}
-
 type SequenceFormat struct {
 	Type                    SequenceType
 	Prefix                  string
@@ -270,19 +251,41 @@ func (f *SequenceFormat) Validate() error {
 }
 
 type Sequence struct {
-	bun.BaseModel `bun:"table:sequences,alias:seq"`
+	keel.Table `keel:"sequences"`
 
-	ID              pulid.ID     `bun:"id,pk,type:VARCHAR(100)"`
-	SequenceType    SequenceType `bun:"sequence_type,notnull"`
-	OrganizationID  pulid.ID     `bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID     `bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	Year            int16        `bun:"year,notnull"`
-	Month           int16        `bun:"month,notnull"`
-	CurrentSequence int64        `bun:"current_sequence,notnull"`
-	LastGenerated   string       `bun:"last_generated,notnull"`
-	Version         int64        `bun:"version,type:BIGINT,notnull"`
-	CreatedAt       int64        `bun:"created_at,notnull"`
-	UpdatedAt       int64        `bun:"updated_at,notnull"`
+	ID              pulid.ID     `keel:"id,pk"`
+	SequenceType    SequenceType `keel:"sequence_type"`
+	OrganizationID  pulid.ID     `keel:"organization_id,tenant"`
+	BusinessUnitID  pulid.ID     `keel:"business_unit_id,tenant"`
+	Year            int16        `keel:"year"`
+	Month           int16        `keel:"month"`
+	CurrentSequence int64        `keel:"current_sequence"`
+	LastGenerated   string       `keel:"last_generated"`
+	Version         int64        `keel:"version,version"`
+	CreatedAt       int64        `keel:"created_at"`
+	UpdatedAt       int64        `keel:"updated_at"`
+}
+
+func (c *SequenceConfig) Format() *SequenceFormat {
+	return &SequenceFormat{
+		Type:                    c.SequenceType,
+		Prefix:                  c.Prefix,
+		IncludeYear:             c.IncludeYear,
+		YearDigits:              int(c.YearDigits),
+		IncludeMonth:            c.IncludeMonth,
+		IncludeWeekNumber:       c.IncludeWeekNumber,
+		IncludeDay:              c.IncludeDay,
+		SequenceDigits:          int(c.SequenceDigits),
+		IncludeLocationCode:     c.IncludeLocationCode,
+		IncludeRandomDigits:     c.IncludeRandomDigits,
+		RandomDigitsCount:       int(c.RandomDigitsCount),
+		IncludeCheckDigit:       c.IncludeCheckDigit,
+		IncludeBusinessUnitCode: c.IncludeBusinessUnitCode,
+		UseSeparators:           c.UseSeparators,
+		SeparatorChar:           c.SeparatorChar,
+		AllowCustomFormat:       c.AllowCustomFormat,
+		CustomFormat:            c.CustomFormat,
+	}
 }
 
 func (c *SequenceConfig) Validate(multiErr *errortypes.MultiError) {

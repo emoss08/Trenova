@@ -2,30 +2,26 @@ package casechecklistrepository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/deskcasecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/deskcase/deskcasedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/deskcaseports"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/documenttype/documenttypedb"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-const (
-	templateEntity  = "Checklist template"
-	maxTemplateRows = 1000
-)
+const maxTemplateRows = 1000
+
+var templateErrors = dberror.Mapping{Entity: "Checklist template"}
 
 type Params struct {
 	fx.In
@@ -43,24 +39,51 @@ func New(p Params) deskcaseports.CaseChecklistRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.case-checklist-repository")}
 }
 
-func tenantOf(entity *deskcase.ChecklistTemplate) pagination.TenantInfo {
-	return pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
+func withCustomerName() *keel.Query[*deskcase.ChecklistTemplate] {
+	t := deskcasedb.ChecklistTemplates
+	cus := customerdb.Customers.As("cus")
+
+	return t.LeftJoin(cus, cus.ID.EqCol(t.CustomerID)).
+		Compute(t.CustomerName, cus.Name.Coalesce(""))
 }
 
-// withCustomerName joins the customer's name onto a template read, for the
-// settings list.
-func withCustomerName(sq *bun.SelectQuery) *bun.SelectQuery {
-	cols := deskcasecol.ChecklistTemplateColumns
-	cus := customercol.CustomerColumns
-	alias := customercol.CustomerTable.Alias
+func listTemplatesQuery(
+	req *deskcaseports.ListCaseChecklistTemplatesRequest,
+) *keel.Query[*deskcase.ChecklistTemplate] {
+	t := deskcasedb.ChecklistTemplates
 
-	return sq.
-		ColumnExpr(deskcasecol.ChecklistTemplateTable.Alias + ".*").
-		ColumnExpr("COALESCE(" + cus.Name.Qualified() + ", '') AS customer_name").
-		Join("LEFT JOIN " + customercol.CustomerTable.Name + " AS " + alias).
-		JoinOn(cus.ID.EqColumn(cols.CustomerID)).
-		JoinOn(cus.OrganizationID.EqColumn(cols.OrganizationID)).
-		JoinOn(cus.BusinessUnitID.EqColumn(cols.BusinessUnitID))
+	return withCustomerName().
+		Where(t.Kind.Eq(req.Kind)).
+		Order(t.CustomerID.Asc().NullsFirst(), t.CustomerName.Asc()).
+		Limit(maxTemplateRows)
+}
+
+func templateForQuery(
+	req *deskcaseports.GetCaseChecklistTemplateForRequest,
+) *keel.Query[*deskcase.ChecklistTemplate] {
+	t := deskcasedb.ChecklistTemplates
+
+	return t.Where(
+		t.Kind.Eq(req.Kind),
+		keel.Or(
+			t.CustomerID.IsNull(),
+			keel.When(req.CustomerID.IsNotNil(), t.CustomerID.Eq(req.CustomerID)),
+		),
+	).
+		Order(t.CustomerID.Asc().NullsLast()).
+		Limit(1)
+}
+
+func listTicksQuery(
+	req *deskcaseports.ListCaseChecklistTicksRequest,
+) *keel.Query[*deskcase.ChecklistTick] {
+	tk := deskcasedb.ChecklistTicks
+	usr := tenantdb.Users.As("usr")
+
+	return tk.LeftJoin(usr, usr.ID.EqCol(tk.TickedByID)).
+		Compute(tk.TickedByName, usr.Name.Coalesce("")).
+		Where(tk.SubjectType.Eq(req.SubjectType), tk.SubjectID.Eq(req.SubjectID)).
+		Limit(maxTemplateRows)
 }
 
 func (r *repository) ListTemplates(
@@ -68,18 +91,7 @@ func (r *repository) ListTemplates(
 	req *deskcaseports.ListCaseChecklistTemplatesRequest,
 ) ([]*deskcase.ChecklistTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*deskcase.ChecklistTemplate, error) {
-		cols := deskcasecol.ChecklistTemplateColumns
-		items := make([]*deskcase.ChecklistTemplate, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Apply(withCustomerName).
-			Apply(deskcasecol.ChecklistTemplateApplyTenant(req.TenantInfo)).
-			Where(cols.Kind.Eq(), req.Kind).
-			OrderExpr(cols.CustomerID.Qualified() + " NULLS FIRST").
-			OrderExpr("customer_name ASC").
-			Limit(maxTemplateRows).
-			Scan(ctx)
+		items, err := listTemplatesQuery(req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list checklist templates: %w", err)
 		}
@@ -93,23 +105,7 @@ func (r *repository) TemplateFor(
 	req *deskcaseports.GetCaseChecklistTemplateForRequest,
 ) (*deskcase.ChecklistTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*deskcase.ChecklistTemplate, error) {
-		cols := deskcasecol.ChecklistTemplateColumns
-		items := make([]*deskcase.ChecklistTemplate, 0, 1)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Apply(deskcasecol.ChecklistTemplateApplyTenant(req.TenantInfo)).
-			Where(cols.Kind.Eq(), req.Kind).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = sq.Where(cols.CustomerID.IsNull())
-				if req.CustomerID.IsNotNil() {
-					sq = sq.WhereOr(cols.CustomerID.Eq(), req.CustomerID)
-				}
-				return sq
-			}).
-			OrderExpr(cols.CustomerID.Qualified() + " NULLS LAST").
-			Limit(1).
-			Scan(ctx)
+		items, err := templateForQuery(req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("read the checklist template: %w", err)
 		}
@@ -126,17 +122,10 @@ func (r *repository) GetTemplate(
 	req *deskcaseports.GetCaseChecklistTemplateRequest,
 ) (*deskcase.ChecklistTemplate, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*deskcase.ChecklistTemplate, error) {
-		cols := deskcasecol.ChecklistTemplateColumns
-		entity := new(deskcase.ChecklistTemplate)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(withCustomerName).
-			Apply(deskcasecol.ChecklistTemplateApplyTenant(req.TenantInfo)).
-			Where(cols.ID.Eq(), req.ID).
-			Scan(ctx)
+		t := deskcasedb.ChecklistTemplates
+		entity, err := withCustomerName().Where(t.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, templateEntity)
+			return nil, templateErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -148,10 +137,11 @@ func (r *repository) SaveTemplate(
 	entity *deskcase.ChecklistTemplate,
 ) (*deskcase.ChecklistTemplate, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*deskcase.ChecklistTemplate, error) {
-		db := r.db.DBForContext(ctx)
+		t := deskcasedb.ChecklistTemplates
+		db := r.db.Keel(ctx)
 		if entity.ID.IsNil() {
 			entity.Version = 0
-			if _, err := db.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			if err := t.Create(ctx, db, entity); err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, deskcaseports.ErrCaseChecklistTemplateStale
 				}
@@ -160,31 +150,11 @@ func (r *repository) SaveTemplate(
 			return entity, nil
 		}
 
-		cols := deskcasecol.ChecklistTemplateColumns
-		read := entity.Version
-		entity.Version++
-		res, err := db.NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return deskcasecol.ChecklistTemplateScopeTenantUpdate(uq, tenantOf(entity)).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), read)
-			}).
-			Set(cols.Items.Set(), entity.Items).
-			Set(cols.UpdatedByID.Set(), entity.UpdatedByID).
-			Set(cols.Version.Set(), entity.Version).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
+		if err := t.Save(ctx, db, entity, t.Items, t.UpdatedByID); err != nil {
+			if errors.Is(err, keel.ErrConflict) || errors.Is(err, keel.ErrNotFound) {
+				return nil, deskcaseports.ErrCaseChecklistTemplateStale
+			}
 			return nil, fmt.Errorf("update checklist template: %w", err)
-		}
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("update checklist template: %w", err)
-		}
-		if affected == 0 {
-			return nil, deskcaseports.ErrCaseChecklistTemplateStale
 		}
 
 		return entity, nil
@@ -196,20 +166,12 @@ func (r *repository) DeleteTemplate(
 	req *deskcaseports.GetCaseChecklistTemplateRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := deskcasecol.ChecklistTemplateColumns
-		res, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*deskcase.ChecklistTemplate)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return deskcasecol.ChecklistTemplateScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		t := deskcasedb.ChecklistTemplates
+		n, err := t.Where(t.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return fmt.Errorf("delete checklist template: %w", err)
 		}
-
-		return dberror.CheckRowsAffected(res, templateEntity, req.ID.String())
+		return dberror.CheckAffected(n, templateErrors.Entity, req.ID.String())
 	})
 }
 
@@ -222,13 +184,8 @@ func (r *repository) CountDocumentTypes(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := documenttypecol.DocumentTypeColumns
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*documenttype.DocumentType)(nil)).
-			Apply(documenttypecol.DocumentTypeApplyTenant(req.TenantInfo)).
-			Where(cols.ID.In(), bun.List(req.IDs)).
-			Count(ctx)
+		dt := documenttypedb.DocumentTypes
+		count, err := dt.Where(dt.ID.In(req.IDs...)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count document types: %w", err)
 		}
@@ -242,21 +199,7 @@ func (r *repository) ListTicks(
 	req *deskcaseports.ListCaseChecklistTicksRequest,
 ) ([]*deskcase.ChecklistTick, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*deskcase.ChecklistTick, error) {
-		cols := deskcasecol.ChecklistTickColumns
-		usr := tenantcol.UserColumns
-		items := make([]*deskcase.ChecklistTick, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			ColumnExpr(deskcasecol.ChecklistTickTable.Alias+".*").
-			ColumnExpr("COALESCE("+usr.Name.Qualified()+", '') AS ticked_by_name").
-			Join("LEFT JOIN "+tenantcol.UserTable.Name+" AS "+tenantcol.UserTable.Alias).
-			JoinOn(usr.ID.EqColumn(cols.TickedByID)).
-			Apply(deskcasecol.ChecklistTickApplyTenant(req.TenantInfo)).
-			Where(cols.SubjectType.Eq(), req.SubjectType).
-			Where(cols.SubjectID.Eq(), req.SubjectID).
-			Limit(maxTemplateRows).
-			Scan(ctx)
+		items, err := listTicksQuery(req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list checklist ticks: %w", err)
 		}
@@ -267,14 +210,17 @@ func (r *repository) ListTicks(
 
 func (r *repository) Tick(ctx context.Context, entity *deskcase.ChecklistTick) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := deskcasecol.ChecklistTickColumns
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (" + cols.OrganizationID.Bare() + ", " + cols.BusinessUnitID.Bare() +
-				", " + cols.SubjectType.Bare() + ", " + cols.SubjectID.Bare() + ", " +
-				cols.ItemKey.Bare() + ") DO NOTHING").
-			Exec(ctx)
+		tk := deskcasedb.ChecklistTicks
+		_, err := tk.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*deskcase.ChecklistTick{entity},
+			tk.OrganizationID,
+			tk.BusinessUnitID,
+			tk.SubjectType,
+			tk.SubjectID,
+			tk.ItemKey,
+		)
 		if err != nil {
 			return fmt.Errorf("tick checklist step: %w", err)
 		}
@@ -288,17 +234,12 @@ func (r *repository) Untick(
 	req *deskcaseports.UntickCaseChecklistItemRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := deskcasecol.ChecklistTickColumns
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*deskcase.ChecklistTick)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return deskcasecol.ChecklistTickScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.SubjectType.Eq(), req.SubjectType).
-					Where(cols.SubjectID.Eq(), req.SubjectID).
-					Where(cols.ItemKey.Eq(), req.ItemKey)
-			}).
-			Exec(ctx)
+		tk := deskcasedb.ChecklistTicks
+		_, err := tk.Where(
+			tk.SubjectType.Eq(req.SubjectType),
+			tk.SubjectID.Eq(req.SubjectID),
+			tk.ItemKey.Eq(req.ItemKey),
+		).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return fmt.Errorf("untick checklist step: %w", err)
 		}

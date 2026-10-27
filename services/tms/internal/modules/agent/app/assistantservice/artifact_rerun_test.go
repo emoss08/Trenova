@@ -137,12 +137,11 @@ func TestRunArtifactReport_APreviewOfAnUnsavedReportCannotBeRunInFull(t *testing
 	preview := f.reportArtifact(assistantartifact.KindReportPreview, map[string]any{
 		payloadReadWith: map[string]any{
 			"definition": map[string]any{
-				"irVersion": report.CurrentIRVersion,
-				"entity":    "shipment",
+				"version": 2,
+				"entity":  "shipment",
 				"columns": []any{map[string]any{
-					"id":   "c_status",
-					"ref":  map[string]any{"field": "status"},
-					"kind": "dimension",
+					"id":        "c_status",
+					"dimension": map[string]any{"field": "status"},
 				}},
 			},
 		},

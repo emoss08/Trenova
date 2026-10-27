@@ -1,7 +1,8 @@
-// extract-rust.mjs collects the message!("...") templates in the rules crate
-// (services/crates/rules, docs/engineering/rules-engine.md).
+// extract-rust.mjs collects the message!("...") templates in the WebAssembly crates: the rules
+// crate (services/crates/rules, docs/engineering/rules-engine.md) and the EDI crate
+// (services/crates/edi, docs/engineering/edi-x12.md).
 //
-// The crate never translates. Every sentence it returns is an English ICU template written as
+// A crate never translates. Every sentence it returns is an English ICU template written as
 // message!("..."), sent over the wire as {"message": template, "args": [...]}, and looked up by
 // the browser (translate) and the server (shared/i18n). So each template has to reach both
 // catalogs: the Go scope, for the validation errors the server reports, and the web app's
@@ -18,15 +19,26 @@
 // catalogs collapse whitespace in their keys. A template with leading, trailing or repeated
 // whitespace, or a newline, would never be found, so it is refused too. A literal wrapped with
 // a trailing backslash is fine: Rust drops the newline and the indentation after it.
+//
+// The crate also ships the Tariff standard library (src/tariff/stdlib/*.tariff), whose doc
+// comments it sends as messages too; extract-tariff.mjs reads them, and they are filed like the
+// crate's other templates.
 import { readdir, readFile } from "node:fs/promises";
 import { basename, dirname, join, relative, sep } from "node:path";
+import { extractTariffDocs } from "./extract-tariff.mjs";
 import { reject } from "./filter.mjs";
 
-export const RUST_ROOTS = ["services/crates/rules/src"];
-
-// The client area a rules template is filed under. Any area under apps/web/ puts a string in
+// The client area a crate's template is filed under. Any area under apps/web/ puts a string in
 // the web app's startup bundle (bundles.mjs), where every screen that renders it has it.
 export const RULES_CLIENT_AREA = "apps/web/rules";
+export const EDI_CLIENT_AREA = "apps/web/edi";
+
+// Each crate with message! templates: where its sources are, the Go area its templates are
+// filed under (by top-level module: rules/tariff, edi/x12), and its client area.
+export const RUST_ROOTS = [
+  { root: "services/crates/rules/src", area: "rules", clientArea: RULES_CLIENT_AREA },
+  { root: "services/crates/edi/src", area: "edi", clientArea: EDI_CLIENT_AREA },
+];
 
 const MACRO = "message";
 
@@ -372,7 +384,7 @@ function templateOf(args, file, line) {
   return template;
 }
 
-async function* rustFiles(dir) {
+async function* sourceFiles(dir, extension) {
   let entries;
   try {
     entries = await readdir(dir, { withFileTypes: true });
@@ -382,8 +394,8 @@ async function* rustFiles(dir) {
   }
   for (const entry of entries.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))) {
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) yield* rustFiles(full);
-    else if (entry.isFile() && entry.name.endsWith(".rs")) yield full;
+    if (entry.isDirectory()) yield* sourceFiles(full, extension);
+    else if (entry.isFile() && entry.name.endsWith(extension)) yield full;
   }
 }
 
@@ -395,27 +407,27 @@ function moduleDir(file) {
   return join(dirname(file), name.slice(0, -".rs".length));
 }
 
-// rulesArea files a template under the crate's top-level module it comes from
+// crateArea files a template under the crate's top-level module it comes from
 // (src/formula/check.rs -> rules/formula), so translation can be batched by area.
-function rulesArea(root, file) {
+function crateArea(area, root, file) {
   const parts = relative(root, file).split(sep);
-  const top = parts[0].replace(/\.rs$/, "");
-  return top === "lib" ? "rules" : `rules/${top}`;
+  const top = parts[0].replace(/\.(rs|tariff)$/, "");
+  return top === "lib" ? area : `${area}/${top}`;
 }
 
 /**
- * extractRust returns one Go-scope and one client entry per message! template under `roots`,
- * and the templates the string filter rejected.
+ * extractRust returns one Go-scope and one client entry per message! template and standard
+ * library doc template under `roots`, and the templates the string filter rejected.
  */
 export async function extractRust(repoRoot, roots = RUST_ROOTS) {
   const entries = [];
   const rejected = [];
 
-  for (const root of roots) {
+  for (const { root, area, clientArea } of roots) {
     const absoluteRoot = join(repoRoot, root);
     const parsed = [];
     const excluded = [];
-    for await (const file of rustFiles(absoluteRoot)) {
+    for await (const file of sourceFiles(absoluteRoot, ".rs")) {
       const result = extractFromSource(await readFile(file, "utf8"), relative(repoRoot, file));
       parsed.push({ file, ...result });
       for (const module of result.testModules) {
@@ -428,19 +440,29 @@ export async function extractRust(repoRoot, roots = RUST_ROOTS) {
       }
     }
 
-    for (const { file, messages } of parsed) {
-      if (excluded.some((path) => file === path || file.startsWith(path))) continue;
-      const relPath = relative(repoRoot, file);
+    const addTemplates = (path, messages, kind) => {
+      const relPath = relative(repoRoot, path);
       for (const { message, line } of messages) {
         const reason = reject(message, { positional: true });
         if (reason !== null) {
-          rejected.push({ value: message, file: relPath, line, kind: "rules-message", reason });
+          rejected.push({ value: message, file: relPath, line, kind, reason });
           continue;
         }
-        const site = { message, file: relPath, line, kind: "rules-message" };
-        entries.push({ ...site, area: rulesArea(absoluteRoot, file), scope: "go" });
-        entries.push({ ...site, area: RULES_CLIENT_AREA, scope: "ts" });
+        const site = { message, file: relPath, line, kind };
+        entries.push({ ...site, area: crateArea(area, absoluteRoot, path), scope: "go" });
+        entries.push({ ...site, area: clientArea, scope: "ts" });
       }
+    };
+
+    for (const { file: path, messages } of parsed) {
+      if (excluded.some((excludedPath) => path === excludedPath || path.startsWith(excludedPath))) {
+        continue;
+      }
+      addTemplates(path, messages, "rules-message");
+    }
+    for await (const path of sourceFiles(absoluteRoot, ".tariff")) {
+      const source = await readFile(path, "utf8");
+      addTemplates(path, extractTariffDocs(source, relative(repoRoot, path)), "rules-doc");
     }
   }
 

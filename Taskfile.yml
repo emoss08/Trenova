@@ -179,6 +179,38 @@ tasks:
     cmds:
       - nice services/crates/rules/scripts/build-wasm.sh check
 
+  rust:wasm-scripts:
+    desc: Build the trenova-scripts WebAssembly module and install it for the TMS (never edit scripts.wasm by hand)
+    dir: '{{.ROOT_DIR}}'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice services/crates/scripts/scripts/build-wasm.sh install
+
+  rust:wasm-scripts-check:
+    desc: Rebuild the trenova-scripts WebAssembly module and fail when the committed copy or its .sha256 differs
+    dir: '{{.ROOT_DIR}}'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice services/crates/scripts/scripts/build-wasm.sh check
+
+  rust:wasm-edi:
+    desc: Build the trenova-edi WebAssembly module and install it for the TMS (never edit edi.wasm by hand)
+    dir: '{{.ROOT_DIR}}'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice services/crates/edi/scripts/build-wasm.sh install
+
+  rust:wasm-edi-check:
+    desc: Rebuild the trenova-edi WebAssembly module and fail when the committed copy or its .sha256 differs
+    dir: '{{.ROOT_DIR}}'
+    env:
+      CARGO_BUILD_JOBS: '{{.RUST_JOBS}}'
+    cmds:
+      - nice services/crates/edi/scripts/build-wasm.sh check
+
   rust:image-imaging:
     desc: Build the imaging worker's container image (deploy/Dockerfile.imaging)
     dir: '{{.ROOT_DIR}}'

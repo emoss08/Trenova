@@ -1,0 +1,451 @@
+{
+ "cases": [
+  {
+   "name": "a let's inferred type",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type",
+      "label": ": Distance",
+      "line": "let miles⟨: Distance⟩ = shipment.distance"
+     }
+    ]
+   }
+  },
+  {
+   "name": "an annotated let has no hint",
+   "source": [
+    "tariff \"t\"",
+    "let miles: Distance = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "expect": {
+    "hints": []
+   }
+  },
+  {
+   "name": "a var, a loop variable and a lambda parameter",
+   "source": [
+    "tariff \"t\"",
+    "var total = $0",
+    "for s in shipment.stops {",
+    "  total += $1",
+    "}",
+    "let n = shipment.stops.count(x => x.appointment)",
+    "charge \"x\" = total * n"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "line": "var total⟨: Money⟩ = $0"
+     },
+     {
+      "line": "for s⟨: Stop⟩ in shipment.stops {"
+     },
+     {
+      "line": "let n⟨: Int⟩ = shipment.stops.count(x => x.appointment)"
+     },
+     {
+      "line": "let n = shipment.stops.count(x⟨: Stop⟩ => x.appointment)"
+     }
+    ]
+   }
+  },
+  {
+   "name": "an if let binding",
+   "source": [
+    "tariff \"t\"",
+    "if let w = shipment.weight {",
+    "  charge \"x\" = $1/lb * w",
+    "}"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "line": "if let w⟨: Weight⟩ = shipment.weight {"
+     }
+    ]
+   }
+  },
+  {
+   "name": "an inferred return type",
+   "source": [
+    "tariff \"t\"",
+    "fn fee(a: Money) = a",
+    "charge \"x\" = fee($1)"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type",
+      "label": "-> Money",
+      "line": "fn fee(a: Money)⟨-> Money⟩ = a"
+     },
+     {
+      "kind": "parameter",
+      "label": "a:",
+      "line": "charge \"x\" = fee(⟨a:⟩$1)"
+     }
+    ]
+   }
+  },
+  {
+   "name": "parameter names before literal arguments",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel.{ stepPercent }",
+    "charge \"x\" = $100 * stepPercent($3/gal, peg: $1/gal, step: $1/gal, perStep: 1%)"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "parameter",
+      "label": "price:",
+      "line": "charge \"x\" = $100 * stepPercent(⟨price:⟩$3/gal, peg: $1/gal, step: $1/gal, perStep: 1%)"
+     }
+    ]
+   }
+  },
+  {
+   "name": "no parameter name when the argument says it",
+   "source": [
+    "tariff \"t\"",
+    "fn wait(dwell: Duration, rate: Money/h) -> Money = rate * dwell",
+    "let dwell = 1 h",
+    "charge \"x\" = wait(dwell, $1/h)"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "line": "let dwell⟨: Duration⟩ = 1 h"
+     },
+     {
+      "label": "rate:",
+      "line": "charge \"x\" = wait(dwell, ⟨rate:⟩$1/h)"
+     }
+    ]
+   }
+  },
+  {
+   "name": "no parameter name for a lambda or a single non-literal argument",
+   "source": [
+    "tariff \"t\"",
+    "let w = 1 lb",
+    "let m = w.max(w)",
+    "let n = shipment.stops.count(s => s.appointment)",
+    "charge \"x\" = $1 * n + $1/lb * m"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "line": "let w⟨: Weight⟩ = 1 lb"
+     },
+     {
+      "line": "let m⟨: Weight⟩ = w.max(w)"
+     },
+     {
+      "line": "let n⟨: Int⟩ = shipment.stops.count(s => s.appointment)"
+     },
+     {
+      "line": "let n = shipment.stops.count(s⟨: Stop⟩ => s.appointment)"
+     }
+    ]
+   }
+  },
+  {
+   "name": "a method's parameters",
+   "source": [
+    "tariff \"t\"",
+    "let a = $5.clamp($1, $10)",
+    "charge \"x\" = a"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "line": "let a⟨: Money⟩ = $5.clamp($1, $10)"
+     },
+     {
+      "line": "let a = $5.clamp(⟨lo:⟩$1, $10)"
+     },
+     {
+      "line": "let a = $5.clamp($1, ⟨hi:⟩$10)"
+     }
+    ]
+   }
+  },
+  {
+   "name": "a constructor's positional arguments are not named",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(), delivery()]",
+    "  expect total == $1",
+    "}"
+   ],
+   "expect": {
+    "hints": []
+   }
+  },
+  {
+   "name": "previewed values at the end of their lines",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type"
+     },
+     {
+      "kind": "value",
+      "label": "412 mi",
+      "line": "let miles = shipment.distance⟨412 mi⟩"
+     }
+    ]
+   },
+   "input": {
+    "values": [
+     {
+      "kind": "bind",
+      "name": "miles",
+      "value": {
+       "$q": "412",
+       "u": "mi"
+      },
+      "display": "412 mi",
+      "range": {
+       "from": 11,
+       "to": 40
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a binding run in a loop shows its last value and count",
+   "source": [
+    "tariff \"t\"",
+    "for s in shipment.stops {",
+    "  let d = s.sequence",
+    "  charge \"x {d}\" = $1",
+    "}"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type"
+     },
+     {
+      "kind": "type"
+     },
+     {
+      "kind": "value",
+      "label": "2 ×2"
+     }
+    ]
+   },
+   "input": {
+    "values": [
+     {
+      "kind": "bind",
+      "name": "d",
+      "value": {
+       "$n": "1"
+      },
+      "display": "1",
+      "range": {
+       "from": 39,
+       "to": 57
+      }
+     },
+     {
+      "kind": "bind",
+      "name": "d",
+      "value": {
+       "$n": "2"
+      },
+      "display": "2",
+      "range": {
+       "from": 39,
+       "to": 57
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "only hints inside the range",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1",
+    "let b = 2",
+    "charge \"x\" = $1 * a * b"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "line": "let b⟨: Int⟩ = 2"
+     }
+    ]
+   },
+   "input": {
+    "range": {
+     "from": 21,
+     "to": 30
+    }
+   }
+  },
+  {
+   "name": "hints in a broken file",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1",
+    "let b = (",
+    "let c = 2",
+    "charge \"x\" = $1 * a * c"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "line": "let a⟨: Int⟩ = 1"
+     },
+     {
+      "line": "let c⟨: Int⟩ = 2"
+     }
+    ]
+   }
+  },
+  {
+   "name": "hints after non-ASCII text are in UTF-16",
+   "source": [
+    "tariff \"t\"",
+    "let label = \"🚚\"",
+    "let n = label",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "offset": 20,
+      "line": "let label⟨: Text⟩ = \"🚚\""
+     },
+     {
+      "offset": 33,
+      "line": "let n⟨: Text⟩ = label"
+     }
+    ]
+   }
+  },
+  {
+   "name": "a match pattern binding",
+   "source": [
+    "tariff \"t\"",
+    "let w = match shipment.weight {",
+    "  none => 0 lb",
+    "  x => x",
+    "}",
+    "charge \"x\" = $1/lb * w"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "line": "let w⟨: Weight⟩ = match shipment.weight {"
+     },
+     {
+      "line": "  x⟨: Weight⟩ => x"
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a vary name's type",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary w in 1 lb..40_000 lb",
+    "  expect total >= $1/lb * w",
+    "}"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type",
+      "label": ": Weight",
+      "line": "  vary w⟨: Weight⟩ in 1 lb..40_000 lb"
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a vary name over a list",
+   "source": [
+    "tariff \"t\"",
+    "enum Service { Standard, Guaranteed }",
+    "property \"p\" {",
+    "  vary service in [Standard, Guaranteed]",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type",
+      "label": ": Service",
+      "line": "  vary service⟨: Service⟩ in [Standard, Guaranteed]"
+     }
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a vary of a record path has no hint",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "hints": []
+   }
+  },
+  {
+   "name": "a time of day and a variant range's binding",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.time",
+    "let open = @17:00 - @08:30",
+    "let cls = shipment.freightClass ?? Class50",
+    "charge \"x\" = $1/h * open * cls.number",
+    "note \"{t}\""
+   ],
+   "expect": {
+    "hints": [
+     {
+      "kind": "type",
+      "label": ": Time",
+      "line": "let t⟨: Time⟩ = rating.date.time"
+     },
+     {
+      "kind": "type",
+      "label": ": Duration",
+      "line": "let open⟨: Duration⟩ = @17:00 - @08:30"
+     },
+     {
+      "kind": "type",
+      "label": ": FreightClass",
+      "line": "let cls⟨: FreightClass⟩ = shipment.freightClass ?? Class50"
+     }
+    ]
+   }
+  }
+ ]
+}

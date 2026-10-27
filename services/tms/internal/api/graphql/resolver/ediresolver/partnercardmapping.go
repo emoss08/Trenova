@@ -4,23 +4,26 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ediservice"
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 )
 
 func ediPartnerCardToModel(card *ediservice.EDIPartnerCard) *gqlmodel.EDIPartnerCard {
 	model := &gqlmodel.EDIPartnerCard{
-		Partner:          card.Partner,
-		DocumentProfiles: card.DocumentProfiles,
-		Transports:       ediPartnerTransportsToModel(card.Transports),
-		Readiness:        ediPartnerReadinessToModel(card.Readiness),
-		Mappings:         ediPartnerMappingsToModel(card.Mappings),
-		Activity:         ediPartnerActivityToModel(card.Activity),
-		Attention:        ediPartnerAttentionToModel(card.Attention),
+		Partner:    card.Partner,
+		Lading:     &gqlmodel.EDIPartnerLading{},
+		Transports: ediPartnerTransportsToModel(card.Transports),
+		Readiness:  ediPartnerReadinessToModel(card.Readiness),
+		Mappings:   ediPartnerMappingsToModel(card.Mappings),
+		Activity:   ediPartnerActivityToModel(card.Activity),
+		Attention:  ediPartnerAttentionToModel(card.Attention),
 	}
-	if model.DocumentProfiles == nil {
-		model.DocumentProfiles = []*edi.EDIPartnerDocumentProfile{}
+	if card.Lading != nil {
+		model.Lading = &gqlmodel.EDIPartnerLading{
+			Project: card.Lading.Project,
+			Active:  card.Lading.Active,
+			Shadow:  card.Lading.Shadow,
+		}
 	}
 	if customer := card.Partner.Customer; customer != nil && card.Partner.CustomerID.IsNotNil() {
 		model.Customer = &gqlmodel.EDIPartnerCustomer{
@@ -112,6 +115,7 @@ func ediPartnerReadinessToModel(
 	for _, item := range readiness.Items {
 		model.Items = append(model.Items, &gqlmodel.EDIPartnerReadinessItem{
 			Key:      item.Key,
+			Label:    item.Label,
 			Complete: item.Complete,
 		})
 	}

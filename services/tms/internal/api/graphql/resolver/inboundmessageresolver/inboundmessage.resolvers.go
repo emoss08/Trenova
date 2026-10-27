@@ -299,7 +299,7 @@ func (r *QueryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 	}
 	// The count is only run when somebody asked for it. A lane header wants
 	// the counts query, which is one aggregate; paging the lane does not.
-	cursor.IncludeTotalCount = base.ConnectionFieldRequested(ctx, base.ConnectionTotalCountField)
+	cursor.IncludeTotalCount = base.ConnectionTotalRequested(ctx)
 
 	req, err := folderRequest(
 		&input, base.TenantInfo(authCtx), actorutil.FromAuthContext(authCtx).UserID,
@@ -308,8 +308,6 @@ func (r *QueryResolver) InboundMessages(ctx context.Context, input gqlmodel.Inbo
 		return nil, err
 	}
 	req.Cursor = cursor
-	req.Filter.Cursor = cursor
-	req.Filter.UseCursor = true
 
 	result, err := r.InboundMessageService.List(ctx, req)
 	if err != nil {

@@ -3,9 +3,18 @@ package glbalancerepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/glbalanceports"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -26,6 +35,44 @@ func New(p Params) glbalanceports.GLBalanceRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.gl-balance-repository")}
 }
 
+type yearBalance struct {
+	OrganizationID    pulid.ID
+	BusinessUnitID    pulid.ID
+	GLAccountID       pulid.ID
+	FiscalYearID      pulid.ID
+	AccountCode       string
+	AccountName       string
+	AccountCategory   accounttype.Category
+	PeriodDebitMinor  int64
+	PeriodCreditMinor int64
+	NetChangeMinor    int64
+}
+
+func (b *yearBalance) balance() *glbalanceports.GLPeriodAccountBalance {
+	return &glbalanceports.GLPeriodAccountBalance{
+		OrganizationID:    b.OrganizationID,
+		BusinessUnitID:    b.BusinessUnitID,
+		GLAccountID:       b.GLAccountID,
+		FiscalYearID:      b.FiscalYearID,
+		AccountCode:       b.AccountCode,
+		AccountName:       b.AccountName,
+		AccountCategory:   b.AccountCategory,
+		PeriodDebitMinor:  b.PeriodDebitMinor,
+		PeriodCreditMinor: b.PeriodCreditMinor,
+		NetChangeMinor:    b.NetChangeMinor,
+	}
+}
+
+func balancesWithAccounts() *keel.Query[*glbalance.GLAccountPeriodBalance] {
+	gb := glbalancedb.GLAccountPeriodBalances
+	gla := glaccountdb.GLAccounts
+	at := accounttypedb.AccountTypes
+
+	return gb.Join(gla, gla.ID.EqCol(gb.GLAccountID)).
+		Join(at, at.ID.EqCol(gla.AccountTypeID)).
+		Order(gla.AccountCode.Asc())
+}
+
 func (r *repository) ListTrialBalanceByPeriod(
 	ctx context.Context,
 	req glbalanceports.ListTrialBalanceByPeriodRequest,
@@ -34,33 +81,34 @@ func (r *repository) ListTrialBalanceByPeriod(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*glbalanceports.GLPeriodAccountBalance, error) {
-			balances := make([]*glbalanceports.GLPeriodAccountBalance, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("gl_account_balances_by_period AS gb").
-				ColumnExpr("gb.organization_id").
-				ColumnExpr("gb.business_unit_id").
-				ColumnExpr("gb.gl_account_id").
-				ColumnExpr("gb.fiscal_year_id").
-				ColumnExpr("gb.fiscal_period_id").
-				ColumnExpr("gla.account_code").
-				ColumnExpr("gla.name AS account_name").
-				ColumnExpr("at.category AS account_category").
-				ColumnExpr("gb.period_debit_minor").
-				ColumnExpr("gb.period_credit_minor").
-				ColumnExpr("gb.net_change_minor").
-				Join("JOIN gl_accounts AS gla ON gla.id = gb.gl_account_id AND gla.organization_id = gb.organization_id AND gla.business_unit_id = gb.business_unit_id").
-				Join("JOIN account_types AS at ON at.id = gla.account_type_id AND at.organization_id = gla.organization_id AND at.business_unit_id = gla.business_unit_id").
-				Where("gb.organization_id = ?", req.TenantInfo.OrgID).
-				Where("gb.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("gb.fiscal_period_id = ?", req.FiscalPeriodID).
-				OrderExpr("gla.account_code ASC").
-				Scan(ctx, &balances)
+			gb := glbalancedb.GLAccountPeriodBalances
+			gla := glaccountdb.GLAccounts
+			at := accounttypedb.AccountTypes
+
+			rows, err := keel.Into[glbalanceports.GLPeriodAccountBalance](
+				ctx,
+				r.db.Keel(ctx),
+				balancesWithAccounts().
+					Pick(
+						gb.OrganizationID,
+						gb.BusinessUnitID,
+						gb.GLAccountID,
+						gb.FiscalYearID,
+						gb.FiscalPeriodID,
+						gla.AccountCode,
+						gla.Name,
+						at.Category,
+						gb.PeriodDebitMinor,
+						gb.PeriodCreditMinor,
+						gb.NetChangeMinor,
+					).
+					Where(gb.FiscalPeriodID.Eq(req.FiscalPeriodID)),
+			)
 			if err != nil {
 				return nil, err
 			}
 
-			return balances, nil
+			return sliceutils.Pointers(rows), nil
 		},
 	)
 }
@@ -73,30 +121,44 @@ func (r *repository) ListYearToDateBalances(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*glbalanceports.GLPeriodAccountBalance, error) {
-			balances := make([]*glbalanceports.GLPeriodAccountBalance, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("gl_account_balances_by_period AS gb").
-				ColumnExpr("gb.organization_id").
-				ColumnExpr("gb.business_unit_id").
-				ColumnExpr("gb.gl_account_id").
-				ColumnExpr("gb.fiscal_year_id").
-				ColumnExpr("gla.account_code").
-				ColumnExpr("gla.name AS account_name").
-				ColumnExpr("at.category AS account_category").
-				ColumnExpr("SUM(gb.period_debit_minor) AS period_debit_minor").
-				ColumnExpr("SUM(gb.period_credit_minor) AS period_credit_minor").
-				ColumnExpr("SUM(gb.net_change_minor) AS net_change_minor").
-				Join("JOIN gl_accounts AS gla ON gla.id = gb.gl_account_id AND gla.organization_id = gb.organization_id AND gla.business_unit_id = gb.business_unit_id").
-				Join("JOIN account_types AS at ON at.id = gla.account_type_id AND at.organization_id = gla.organization_id AND at.business_unit_id = gla.business_unit_id").
-				Where("gb.organization_id = ?", req.TenantInfo.OrgID).
-				Where("gb.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("gb.fiscal_year_id = ?", req.FiscalYearID).
-				GroupExpr("gb.organization_id, gb.business_unit_id, gb.gl_account_id, gb.fiscal_year_id, gla.account_code, gla.name, at.category").
-				OrderExpr("gla.account_code ASC").
-				Scan(ctx, &balances)
+			gb := glbalancedb.GLAccountPeriodBalances
+			gla := glaccountdb.GLAccounts
+			at := accounttypedb.AccountTypes
+
+			rows, err := keel.Into[yearBalance](
+				ctx,
+				r.db.Keel(ctx),
+				balancesWithAccounts().
+					Pick(
+						gb.OrganizationID,
+						gb.BusinessUnitID,
+						gb.GLAccountID,
+						gb.FiscalYearID,
+						gla.AccountCode,
+						gla.Name,
+						at.Category,
+						gb.PeriodDebitMinor.Sum(),
+						gb.PeriodCreditMinor.Sum(),
+						gb.NetChangeMinor.Sum(),
+					).
+					Where(gb.FiscalYearID.Eq(req.FiscalYearID)).
+					Group(
+						gb.OrganizationID,
+						gb.BusinessUnitID,
+						gb.GLAccountID,
+						gb.FiscalYearID,
+						gla.AccountCode,
+						gla.Name,
+						at.Category,
+					),
+			)
 			if err != nil {
 				return nil, err
+			}
+
+			balances := make([]*glbalanceports.GLPeriodAccountBalance, 0, len(rows))
+			for i := range rows {
+				balances = append(balances, rows[i].balance())
 			}
 
 			return balances, nil
@@ -104,11 +166,6 @@ func (r *repository) ListYearToDateBalances(
 	)
 }
 
-// ListCumulativeBalancesThroughPeriod sums each account across every period of
-// the target period's fiscal year up to and including it. Ordering is by period
-// number rather than by date so that the year-end adjusting period — which
-// shares the final operating period's dates — only counts when the caller asks
-// for the adjusting period itself.
 func (r *repository) ListCumulativeBalancesThroughPeriod(
 	ctx context.Context,
 	req glbalanceports.ListCumulativeBalancesThroughPeriodRequest,
@@ -117,37 +174,51 @@ func (r *repository) ListCumulativeBalancesThroughPeriod(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*glbalanceports.GLPeriodAccountBalance, error) {
-			balances := make([]*glbalanceports.GLPeriodAccountBalance, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("gl_account_balances_by_period AS gb").
-				ColumnExpr("gb.organization_id").
-				ColumnExpr("gb.business_unit_id").
-				ColumnExpr("gb.gl_account_id").
-				ColumnExpr("gb.fiscal_year_id").
-				ColumnExpr("? AS fiscal_period_id", req.FiscalPeriodID).
-				ColumnExpr("gla.account_code").
-				ColumnExpr("gla.name AS account_name").
-				ColumnExpr("at.category AS account_category").
-				ColumnExpr("SUM(gb.period_debit_minor) AS period_debit_minor").
-				ColumnExpr("SUM(gb.period_credit_minor) AS period_credit_minor").
-				ColumnExpr("SUM(gb.net_change_minor) AS net_change_minor").
-				Join("JOIN fiscal_periods AS fp ON fp.id = gb.fiscal_period_id AND fp.organization_id = gb.organization_id AND fp.business_unit_id = gb.business_unit_id").
-				Join("JOIN fiscal_periods AS target ON target.fiscal_year_id = fp.fiscal_year_id AND target.organization_id = fp.organization_id AND target.business_unit_id = fp.business_unit_id").
-				Join("JOIN gl_accounts AS gla ON gla.id = gb.gl_account_id AND gla.organization_id = gb.organization_id AND gla.business_unit_id = gb.business_unit_id").
-				Join("JOIN account_types AS at ON at.id = gla.account_type_id AND at.organization_id = gla.organization_id AND at.business_unit_id = gla.business_unit_id").
-				Where("gb.organization_id = ?", req.TenantInfo.OrgID).
-				Where("gb.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("target.id = ?", req.FiscalPeriodID).
-				Where("fp.period_number <= target.period_number").
-				GroupExpr("gb.organization_id, gb.business_unit_id, gb.gl_account_id, gb.fiscal_year_id, gla.account_code, gla.name, at.category").
-				OrderExpr("gla.account_code ASC").
-				Scan(ctx, &balances)
+			gb := glbalancedb.GLAccountPeriodBalances
+			gla := glaccountdb.GLAccounts
+			at := accounttypedb.AccountTypes
+			fp := fiscalperioddb.FiscalPeriods
+			target := fp.As("target")
+
+			rows, err := keel.Into[glbalanceports.GLPeriodAccountBalance](
+				ctx,
+				r.db.Keel(ctx),
+				balancesWithAccounts().
+					Join(fp, fp.ID.EqCol(gb.FiscalPeriodID)).
+					Join(target, target.FiscalYearID.EqCol(fp.FiscalYearID)).
+					Pick(
+						gb.OrganizationID,
+						gb.BusinessUnitID,
+						gb.GLAccountID,
+						gb.FiscalYearID,
+						target.ID,
+						gla.AccountCode,
+						gla.Name,
+						at.Category,
+						gb.PeriodDebitMinor.Sum(),
+						gb.PeriodCreditMinor.Sum(),
+						gb.NetChangeMinor.Sum(),
+					).
+					Where(
+						target.ID.Eq(req.FiscalPeriodID),
+						keel.Int64Of(fp.PeriodNumber).LteExpr(target.PeriodNumber),
+					).
+					Group(
+						gb.OrganizationID,
+						gb.BusinessUnitID,
+						gb.GLAccountID,
+						gb.FiscalYearID,
+						target.ID,
+						gla.AccountCode,
+						gla.Name,
+						at.Category,
+					),
+			)
 			if err != nil {
 				return nil, err
 			}
 
-			return balances, nil
+			return sliceutils.Pointers(rows), nil
 		},
 	)
 }

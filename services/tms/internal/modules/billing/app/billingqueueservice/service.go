@@ -39,7 +39,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -48,7 +47,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   kernelports.DBConnection
+	DB                   kernelports.Transactor
 	Repo                 billingqueueports.BillingQueueRepository
 	ShipmentRepo         shipmentports.ShipmentRepository
 	ControlRepo          tenantports.ShipmentControlRepository
@@ -83,7 +82,7 @@ type Params struct {
 
 type service struct {
 	l                    *zap.Logger
-	db                   kernelports.DBConnection
+	db                   kernelports.Transactor
 	repo                 billingqueueports.BillingQueueRepository
 	shipmentRepo         shipmentports.ShipmentRepository
 	controlRepo          tenantports.ShipmentControlRepository
@@ -191,6 +190,7 @@ func (s *service) GetByID(
 		)
 	}
 	item.DetentionHolds = billingqueue.NewDetentionHolds(holds)
+	item.RatingReviewHold = billingqueue.NewRatingReviewHold(item)
 	s.attachReview(ctx, item, req.TenantInfo)
 
 	return item, nil
@@ -227,6 +227,29 @@ func (s *service) guardDetentionHolds(
 	}
 
 	return detention.BillingHoldError(holds)
+}
+
+func (s *service) guardRatingReview(
+	ctx context.Context,
+	item *billingqueue.BillingQueueItem,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if !billingqueue.HeldForRatingReview(item) {
+		return nil
+	}
+	entity := item.Shipment
+	if entity == nil || entity.ID != item.ShipmentID {
+		loaded, err := s.shipmentRepo.GetByID(ctx, &shipmentports.GetShipmentByIDRequest{
+			ID:         item.ShipmentID,
+			TenantInfo: tenantInfo,
+		})
+		if err != nil {
+			return err
+		}
+		entity = loaded
+	}
+
+	return shipment.RatingReviewHoldError([]*shipment.Shipment{entity})
 }
 
 func (s *service) expandShipmentDetails(
@@ -426,7 +449,7 @@ func (s *service) TransferToBillingItems(
 	}
 
 	created := make([]*billingqueue.BillingQueueItem, 0, len(entities))
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		for _, entity := range entities {
 			item, txErr := s.repo.Create(txCtx, entity)
 			if txErr != nil {
@@ -556,6 +579,14 @@ func (s *service) autoApprove(
 			zap.String("billingQueueItemId", item.ID.String()),
 			zap.String("shipmentId", item.ShipmentID.String()),
 			zap.Int("heldCharges", len(holds)),
+		)
+		return item
+	}
+	if holdErr := s.guardRatingReview(ctx, item, tenantInfo); holdErr != nil {
+		s.l.Info("the tariff held the rating for review; billing queue item left for review",
+			zap.String("billingQueueItemId", item.ID.String()),
+			zap.String("shipmentId", item.ShipmentID.String()),
+			zap.Error(holdErr),
 		)
 		return item
 	}
@@ -727,7 +758,7 @@ func (s *service) UpdateStatus(
 		createResult *invoiceports.CreateInvoiceFromBillingQueueResult
 	)
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		entity, getErr := s.repo.GetByID(txCtx, &billingqueueports.GetBillingQueueItemByIDRequest{
 			ItemID:     req.ItemID,
 			TenantInfo: req.TenantInfo,
@@ -751,6 +782,9 @@ func (s *service) UpdateStatus(
 
 		if req.NewStatus == billingqueue.StatusApproved {
 			if holdErr := s.guardDetentionHolds(txCtx, entity, req.TenantInfo); holdErr != nil {
+				return holdErr
+			}
+			if holdErr := s.guardRatingReview(txCtx, entity, req.TenantInfo); holdErr != nil {
 				return holdErr
 			}
 			if issueErr := s.guardOpenIssues(txCtx, entity, req.TenantInfo); issueErr != nil {

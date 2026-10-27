@@ -6,11 +6,13 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -19,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -52,6 +53,7 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	repo := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
@@ -75,7 +77,7 @@ func TestConnectionRepository_TokensAreReadOnlyUnderLockAndNeverOverwrittenByUpd
 	_, err = repo.Update(ctx, read)
 	require.NoError(t, err)
 
-	err = conn.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = conn.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		locked, lockErr := repo.LockWithTokens(txCtx, accountingsyncports.GetAccountingConnectionByIDRequest{
 			TenantInfo: tenant,
 			ID:         created.ID,
@@ -129,6 +131,7 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	first := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = first.Ctx(ctx)
 	second := seedtest.SeedAdditionalTenant(t, ctx, db, "QB")
 	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	firstTenant := pagination.TenantInfo{OrgID: first.Organization.ID, BuID: first.BusinessUnit.ID}
@@ -147,7 +150,7 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	assert.Equal(t, firstTenant.OrgID, holders[0].OrganizationID)
 	assert.Empty(t, holders[0].AccessTokenCiphertext)
 
-	_, err = repo.Create(ctx, newConnection(secondTenant, second.User.ID, realm, now))
+	_, err = repo.Create(second.Ctx(ctx), newConnection(secondTenant, second.User.ID, realm, now))
 	require.Error(t, err)
 	assert.True(t, dberror.IsUniqueConstraintViolation(err))
 
@@ -155,10 +158,10 @@ func TestConnectionRepository_RealmIsHeldByOneTenantAtATime(t *testing.T) {
 	_, err = repo.Update(ctx, held)
 	require.NoError(t, err)
 
-	_, err = repo.Create(ctx, newConnection(secondTenant, second.User.ID, realm, now+6))
+	_, err = repo.Create(second.Ctx(ctx), newConnection(secondTenant, second.User.ID, realm, now+6))
 	require.NoError(t, err, "a disconnected connection releases its company")
 
-	_, err = repo.GetByID(ctx, accountingsyncports.GetAccountingConnectionByIDRequest{
+	_, err = repo.GetByID(second.Ctx(ctx), accountingsyncports.GetAccountingConnectionByIDRequest{
 		TenantInfo: secondTenant,
 		ID:         held.ID,
 	})
@@ -176,6 +179,7 @@ func TestConnectionRepository_HealthQueueWebhooksAndVersioning(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -233,6 +237,7 @@ func TestConnectionRepository_ReferenceRefreshRunsUntilItFinishesEitherWay(t *te
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -284,6 +289,7 @@ func TestConnectionRepository_DriftCheckKeepsItsLastSuccessThroughAFailure(t *te
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := NewConnectionRepository(ConnectionParams{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	now := timeutils.NowUnix()
@@ -328,7 +334,7 @@ func TestConnectionRepository_DriftCheckKeepsItsLastSuccessThroughAFailure(t *te
 	assert.Empty(t, recovered.DriftErrorMessage)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: tenant.BuID}
-	require.NoError(t, repo.SaveDriftCheck(ctx, &accountingsyncports.SaveAccountingDriftCheckRequest{
+	require.NoError(t, repo.SaveDriftCheck(dbscope.WithTenant(ctx, other.DBTenant()), &accountingsyncports.SaveAccountingDriftCheckRequest{
 		TenantInfo:   other,
 		ID:           created.ID,
 		ErrorMessage: "another tenant",

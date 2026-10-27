@@ -3,6 +3,8 @@ package invoiceservice
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
@@ -45,7 +47,7 @@ func NewValidator(p ValidatorParams) *Validator {
 		l: p.Logger.Named("validator.invoice"),
 		validator: validationframework.NewTenantedValidatorBuilder[*invoice.Invoice]().
 			WithModelName("Invoice").
-			WithUniquenessChecker(validationframework.NewBunUniquenessCheckerScoped(p.DB)).
+			WithUniquenessChecker(validationframework.NewKeelChecker(p.DB, invoicedb.InvoicesSchema())).
 			Build(),
 		accountingRepo:   p.AccountingRepo,
 		fiscalPeriodRepo: p.FiscalPeriodRepo,

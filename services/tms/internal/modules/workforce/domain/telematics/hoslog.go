@@ -1,29 +1,39 @@
 package telematics
 
 import (
+	"context"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type WorkerHOSLog struct {
-	bun.BaseModel `bun:"table:worker_hos_logs,alias:whl" json:"-"`
+	keel.Table `keel:"worker_hos_logs"`
 
-	OrganizationID    pulid.ID   `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID   `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	WorkerID          pulid.ID   `json:"workerId"          bun:"worker_id,pk,type:VARCHAR(100),notnull"`
-	LogStartAt        int64      `json:"logStartAt"        bun:"log_start_at,pk,type:BIGINT,notnull"`
-	DutyStatus        DutyStatus `json:"dutyStatus"        bun:"duty_status,type:VARCHAR(32),notnull"`
-	LogEndAt          *int64     `json:"logEndAt"          bun:"log_end_at,type:BIGINT,nullzero"`
-	Remark            string     `json:"remark"            bun:"remark,type:TEXT,nullzero"`
-	Provider          string     `json:"provider"          bun:"provider,type:VARCHAR(32),notnull,default:'Samsara'"`
-	ProviderVehicleID string     `json:"providerVehicleId" bun:"provider_vehicle_id,type:TEXT,nullzero"`
-	ReceivedAt        int64      `json:"receivedAt"        bun:"received_at,type:BIGINT,notnull"`
+	OrganizationID    pulid.ID   `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID   `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	WorkerID          pulid.ID   `json:"workerId"          keel:"worker_id,pk"`
+	LogStartAt        int64      `json:"logStartAt"        keel:"log_start_at,pk"`
+	DutyStatus        DutyStatus `json:"dutyStatus"        keel:"duty_status"`
+	LogEndAt          *int64     `json:"logEndAt"          keel:"log_end_at"`
+	Remark            string     `json:"remark"            keel:"remark,nullzero"`
+	Provider          string     `json:"provider"          keel:"provider"`
+	ProviderVehicleID string     `json:"providerVehicleId" keel:"provider_vehicle_id,nullzero"`
+	ReceivedAt        int64      `json:"receivedAt"        keel:"received_at"`
 
-	Worker *worker.Worker `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Worker *worker.Worker `json:"worker,omitempty" keel:"belongs:worker_id"`
+}
+
+func (l *WorkerHOSLog) BeforeCreate(_ context.Context) error {
+	if l.Provider == "" {
+		l.Provider = defaultProvider
+	}
+
+	return nil
 }
 
 func (l *WorkerHOSLog) Validate(multiErr *errortypes.MultiError) {

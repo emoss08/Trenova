@@ -211,6 +211,11 @@ fragment ShipmentAdditionalChargeFields on ShipmentAdditionalCharge {
   fuelSurchargeProgramId
   fuelSurchargeDetail
   isDetention
+  isTariff
+  label
+  quantity
+  rate
+  rateUnit
   version
   createdAt
   updatedAt
@@ -269,23 +274,52 @@ fragment ShipmentCommodityFields on ShipmentCommodity {
 fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   formulaTemplateId
   formulaTemplateName
-  expression
-  resolvedVariables
-  result
   ratedAt
   versionNumber
-  breakdown {
-    name
-    label
-    amount
-    error
+  bill {
+    currency
+    lines {
+      kind
+      label
+      code
+      quantity
+      quantityUnit
+      rate
+      rateUnit
+      amount
+      limit {
+        kind
+        computed
+      }
+      on
+    }
+    notes
+    reviews
+    freightTotal
+    accessorialTotal
+    total
+    exchange {
+      currency
+      rate
+    }
   }
-  guardrail {
-    applied
-    bound
-    rawResult
-    minCharge
-    maxCharge
+  refusal
+  choices {
+    label
+    kind
+    currency
+    chosen
+    options {
+      label
+      status
+      subtotal
+      refusal
+    }
+  }
+  inputs
+  skipped {
+    code
+    source
   }
   rateQuoteId
   agreementId
@@ -294,6 +328,16 @@ fragment ShipmentRatingDetailFields on ShipmentRatingDetail {
   ruleLabel
   source
   explanation
+  awaitingReview
+  reviewApproval {
+    reviews
+    approvedById
+    approvedAt
+    approvedBy {
+      id
+      name
+    }
+  }
 }
 
 fragment ShipmentFields on Shipment {
@@ -332,7 +376,15 @@ fragment ShipmentFields on Shipment {
   cancelReason
   otherChargeAmount
   freightChargeAmount
-  baseRate
+  tariffInputs
+  freightLines {
+    label
+    quantity
+    quantityUnit
+    rate
+    rateUnit
+    amount
+  }
   totalChargeAmount
   pieces
   weight
@@ -345,7 +397,6 @@ fragment ShipmentFields on Shipment {
   transferredToBillingAt
   markedReadyToBillAt
   billedAt
-  ratingUnit
   fuelSurchargeLocked
   profitabilityEstimate {
     shipmentId
@@ -459,18 +510,7 @@ fragment ShipmentFields on Shipment {
     businessUnitId
     name
     description
-    type
-    expression
     status
-    schemaId
-    variableDefinitions {
-      name
-      type
-      description
-      required
-      defaultValue
-      source
-    }
     metadata
     version
     sourceTemplateId
@@ -664,6 +704,7 @@ query ShipmentBoardTable($input: ShipmentsInput!, $includeTotalCount: Boolean = 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -815,6 +856,7 @@ query UnassignedShipments($first: Int!, $after: String) {
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -829,6 +871,7 @@ query ExceptionShipments($input: ShipmentsInput!) {
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -843,6 +886,7 @@ query MapShipments($input: ShipmentsInput!) {
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -862,18 +906,14 @@ query ShipmentComments(
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
   }
 }
 
-query ShipmentCommentReplies(
-  $shipmentId: ID!
-  $commentId: ID!
-  $first: Int!
-  $after: String
-) {
+query ShipmentCommentReplies($shipmentId: ID!, $commentId: ID!, $first: Int!, $after: String) {
   shipmentCommentReplies(
     shipmentId: $shipmentId
     commentId: $commentId
@@ -886,6 +926,7 @@ query ShipmentCommentReplies(
       }
     }
     totalCount
+    totalCountExact
     pageInfo {
       ...ShipmentPageInfoFields
     }
@@ -1003,12 +1044,12 @@ query ShipmentPreviousRates($input: ShipmentPreviousRatesInput!) {
       freightChargeAmount
       otherChargeAmount
       totalChargeAmount
-      ratingUnit
       pieces
       weight
       createdAt
     }
     total
+    totalExact
   }
 }
 
@@ -1032,6 +1073,12 @@ mutation CancelShipment($id: ID!, $input: ShipmentCancelInput) {
 
 mutation UncancelShipment($id: ID!) {
   uncancelShipment(id: $id) {
+    ...ShipmentFields
+  }
+}
+
+mutation ApproveShipmentRatingReview($shipmentId: ID!) {
+  approveShipmentRatingReview(shipmentId: $shipmentId) {
     ...ShipmentFields
   }
 }
@@ -1132,19 +1179,33 @@ fragment ShipmentContractRateFields on ShipmentContractRate {
   ruleLabel
   formulaTemplateId
   formulaTemplateName
-  baseRate
-  linehaulAmount
+  templateVersion
+  inputs
+  refusal
+  freightLines {
+    label
+    quantity
+    quantityUnit
+    rate
+    rateUnit
+    amount
+  }
+  freightAmount
   otherChargeAmount
   totalChargeAmount
-  previousLinehaulAmount
-  explanation
-  accessorials {
+  previousFreightAmount
+  charges {
     accessorialChargeId
+    code
     description
-    method
+    owner
+    label
     amount
-    unit
+    quantity
+    rate
+    rateUnit
   }
+  explanation
 }
 
 mutation PreviewShipmentContractRate($input: ShipmentInput!) {

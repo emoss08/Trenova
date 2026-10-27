@@ -1,17 +1,12 @@
 package ratematrix
 
 import (
-	"context"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*RateMatrixCell)(nil)
 
 // RateMatrixCell is one priced intersection of a matrix's axes.
 //
@@ -21,35 +16,41 @@ var _ bun.BeforeAppendModelHook = (*RateMatrixCell)(nil)
 // fixed columns is what makes a single composite index able to answer a lookup,
 // which a row-per-axis design could not do at tariff scale.
 type RateMatrixCell struct {
-	bun.BaseModel `bun:"table:rate_matrix_cells,alias:rmc" json:"-"`
+	keel.Table `keel:"rate_matrix_cells"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RateMatrixID   pulid.ID `json:"rateMatrixId"   bun:"rate_matrix_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rmc_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	RateMatrixID   pulid.ID `json:"rateMatrixId"   keel:"rate_matrix_id"`
+	VersionNumber  int64    `json:"versionNumber"  keel:"version_number"`
 
-	D0Key string `json:"d0Key" bun:"d0_key,type:VARCHAR(120),notnull,default:''"`
-	D1Key string `json:"d1Key" bun:"d1_key,type:VARCHAR(120),notnull,default:''"`
-	D2Key string `json:"d2Key" bun:"d2_key,type:VARCHAR(120),notnull,default:''"`
-	D3Key string `json:"d3Key" bun:"d3_key,type:VARCHAR(120),notnull,default:''"`
+	D0Key string `json:"d0Key" keel:"d0_key"`
+	D1Key string `json:"d1Key" keel:"d1_key"`
+	D2Key string `json:"d2Key" keel:"d2_key"`
+	D3Key string `json:"d3Key" keel:"d3_key"`
 
-	D0Min decimal.NullDecimal `json:"d0Min" bun:"d0_min,type:NUMERIC(19,4),nullzero"`
-	D0Max decimal.NullDecimal `json:"d0Max" bun:"d0_max,type:NUMERIC(19,4),nullzero"`
-	D1Min decimal.NullDecimal `json:"d1Min" bun:"d1_min,type:NUMERIC(19,4),nullzero"`
-	D1Max decimal.NullDecimal `json:"d1Max" bun:"d1_max,type:NUMERIC(19,4),nullzero"`
-	D2Min decimal.NullDecimal `json:"d2Min" bun:"d2_min,type:NUMERIC(19,4),nullzero"`
-	D2Max decimal.NullDecimal `json:"d2Max" bun:"d2_max,type:NUMERIC(19,4),nullzero"`
-	D3Min decimal.NullDecimal `json:"d3Min" bun:"d3_min,type:NUMERIC(19,4),nullzero"`
-	D3Max decimal.NullDecimal `json:"d3Max" bun:"d3_max,type:NUMERIC(19,4),nullzero"`
+	D0KeyTo string `json:"d0KeyTo" keel:"d0_key_to"`
+	D1KeyTo string `json:"d1KeyTo" keel:"d1_key_to"`
+	D2KeyTo string `json:"d2KeyTo" keel:"d2_key_to"`
+	D3KeyTo string `json:"d3KeyTo" keel:"d3_key_to"`
 
-	Value           decimal.Decimal     `json:"value"           bun:"value,type:NUMERIC(19,6),notnull"`
-	MinCharge       decimal.NullDecimal `json:"minCharge"       bun:"min_charge,type:NUMERIC(19,4),nullzero"`
-	DeficitEligible bool                `json:"deficitEligible" bun:"deficit_eligible,type:BOOLEAN,notnull"`
+	D0Min decimal.NullDecimal `json:"d0Min" keel:"d0_min"`
+	D0Max decimal.NullDecimal `json:"d0Max" keel:"d0_max"`
+	D1Min decimal.NullDecimal `json:"d1Min" keel:"d1_min"`
+	D1Max decimal.NullDecimal `json:"d1Max" keel:"d1_max"`
+	D2Min decimal.NullDecimal `json:"d2Min" keel:"d2_min"`
+	D2Max decimal.NullDecimal `json:"d2Max" keel:"d2_max"`
+	D3Min decimal.NullDecimal `json:"d3Min" keel:"d3_min"`
+	D3Max decimal.NullDecimal `json:"d3Max" keel:"d3_max"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Value           decimal.Decimal     `json:"value"           keel:"value"`
+	MinCharge       decimal.NullDecimal `json:"minCharge"       keel:"min_charge"`
+	DeficitEligible bool                `json:"deficitEligible" keel:"deficit_eligible"`
 
-	RateMatrix *RateMatrix `json:"-" bun:"rel:belongs-to,join:rate_matrix_id=id"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
+
+	RateMatrix *RateMatrix `json:"-" keel:"belongs:rate_matrix_id"`
 }
 
 // KeyAt reads the exact key stored for the given axis.
@@ -66,6 +67,38 @@ func (rmc *RateMatrixCell) KeyAt(position int16) string {
 	default:
 		return ""
 	}
+}
+
+func (rmc *RateMatrixCell) KeyToAt(position int16) string {
+	switch position {
+	case 0:
+		return rmc.D0KeyTo
+	case 1:
+		return rmc.D1KeyTo
+	case 2:
+		return rmc.D2KeyTo
+	case 3:
+		return rmc.D3KeyTo
+	default:
+		return ""
+	}
+}
+
+func (rmc *RateMatrixCell) SetKeyToAt(position int16, key string) {
+	switch position {
+	case 0:
+		rmc.D0KeyTo = key
+	case 1:
+		rmc.D1KeyTo = key
+	case 2:
+		rmc.D2KeyTo = key
+	case 3:
+		rmc.D3KeyTo = key
+	}
+}
+
+func (rmc *RateMatrixCell) PostalRangeAt(position int16) PostalRange {
+	return NewPostalRange(rmc.KeyAt(position), rmc.KeyToAt(position))
 }
 
 // BoundsAt reads the range stored for the given axis.
@@ -126,6 +159,18 @@ func (rmc *RateMatrixCell) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&rmc.D3Key,
 			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
 		),
+		validation.Field(&rmc.D0KeyTo,
+			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
+		),
+		validation.Field(&rmc.D1KeyTo,
+			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
+		),
+		validation.Field(&rmc.D2KeyTo,
+			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
+		),
+		validation.Field(&rmc.D3KeyTo,
+			validation.Length(0, 120).Error("Key cannot be longer than 120 characters"),
+		),
 	))
 
 	if rmc.Value.IsNegative() {
@@ -175,6 +220,12 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 		position := dimension.Position
 		minimum, _ := rmc.BoundsAt(position)
 
+		if dimension.IsPostalRange() {
+			rmc.validatePostalRange(dimension, multiErr)
+			continue
+		}
+		rmc.SetKeyToAt(position, "")
+
 		switch dimension.MatchMode {
 		case MatchModeExact:
 			if rmc.KeyAt(position) == "" {
@@ -193,6 +244,51 @@ func (rmc *RateMatrixCell) ValidateAgainst(
 				)
 			}
 		}
+	}
+}
+
+func (rmc *RateMatrixCell) validatePostalRange(
+	dimension *RateMatrixDimension,
+	multiErr *errortypes.MultiError,
+) {
+	position := dimension.Position
+	postal := rmc.PostalRangeAt(position)
+	rmc.SetKeyAt(position, postal.From)
+	rmc.SetKeyToAt(position, postal.To)
+	rmc.SetBoundsAt(position, decimal.NullDecimal{}, decimal.NullDecimal{})
+
+	switch {
+	case postal.From == "" || postal.To == "":
+		multiErr.Add(
+			keyFieldName(position),
+			errortypes.ErrRequired,
+			"{0} requires the first and last postal code of its range", dimension.DisplayLabel(),
+		)
+	case postal.Length() != len([]rune(postal.To)):
+		multiErr.Add(
+			keyToFieldName(position),
+			errortypes.ErrInvalid,
+			"Both ends of a postal range have the same number of characters, as 30000 to 31999 do",
+		)
+	case postal.From > postal.To:
+		multiErr.Add(
+			keyToFieldName(position),
+			errortypes.ErrInvalid,
+			"A postal range cannot end before it starts",
+		)
+	}
+}
+
+func keyToFieldName(position int16) string {
+	switch position {
+	case 0:
+		return "d0KeyTo"
+	case 1:
+		return "d1KeyTo"
+	case 2:
+		return "d2KeyTo"
+	default:
+		return "d3KeyTo"
 	}
 }
 
@@ -220,23 +316,6 @@ func minFieldName(position int16) string {
 	default:
 		return "d3Min"
 	}
-}
-
-func (rmc *RateMatrixCell) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rmc.ID.IsNil() {
-			rmc.ID = pulid.MustNew("rmc_")
-		}
-		rmc.CreatedAt = now
-		rmc.UpdatedAt = now
-	case *bun.UpdateQuery:
-		rmc.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (rmc *RateMatrixCell) GetID() pulid.ID {

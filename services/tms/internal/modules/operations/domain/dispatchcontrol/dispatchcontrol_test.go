@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestDispatchControl_Validate(t *testing.T) {
@@ -336,72 +335,6 @@ func TestDispatchControl_GetBusinessUnitID(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	dc := &DispatchControl{BusinessUnitID: buID}
 	assert.Equal(t, buID, dc.GetBusinessUnitID())
-}
-
-func TestDispatchControl_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		dc := &DispatchControl{}
-		require.True(t, dc.ID.IsNil())
-
-		err := dc.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, dc.ID.IsNil())
-		assert.NotZero(t, dc.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("dc_")
-		dc := &DispatchControl{ID: existingID}
-
-		err := dc.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, dc.ID)
-		assert.NotZero(t, dc.CreatedAt)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		dc := &DispatchControl{}
-
-		err := dc.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, dc.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		dc := &DispatchControl{}
-
-		err := dc.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, dc.CreatedAt)
-		assert.NotZero(t, dc.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		dc := &DispatchControl{}
-
-		err := dc.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, dc.ID.IsNil())
-		assert.Zero(t, dc.CreatedAt)
-		assert.Zero(t, dc.UpdatedAt)
-	})
 }
 
 //go:fix inline

@@ -11,9 +11,10 @@ func agentToolSafetyPageToModel(
 	page *agentports.AgentToolSafetyPage,
 ) *gqlmodel.AgentToolSafetyConnection {
 	out := &gqlmodel.AgentToolSafetyConnection{
-		Edges:      make([]*gqlmodel.AgentToolSafetyEdge, 0, len(page.Edges)),
-		PageInfo:   &gqlmodel.PageInfo{HasNextPage: page.HasNextPage},
-		TotalCount: page.TotalCount,
+		Edges:           make([]*gqlmodel.AgentToolSafetyEdge, 0, len(page.Edges)),
+		PageInfo:        &gqlmodel.PageInfo{HasNextPage: page.HasNextPage},
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	for idx := range page.Edges {
 		edge := &page.Edges[idx]
@@ -34,9 +35,10 @@ func toolPolicyPageToModel(
 	page *agentports.AgentToolPolicyPage,
 ) *gqlmodel.AgentToolPolicyConnection {
 	out := &gqlmodel.AgentToolPolicyConnection{
-		Edges:      make([]*gqlmodel.AgentToolPolicyEdge, 0, len(page.Edges)),
-		PageInfo:   &gqlmodel.PageInfo{HasNextPage: page.HasNextPage},
-		TotalCount: page.TotalCount,
+		Edges:           make([]*gqlmodel.AgentToolPolicyEdge, 0, len(page.Edges)),
+		PageInfo:        &gqlmodel.PageInfo{HasNextPage: page.HasNextPage},
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	for idx := range page.Edges {
 		edge := &page.Edges[idx]

@@ -28,28 +28,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// shipmentFormulaTemplateID parses the rating method, which a shipment being
-// written for the first time is allowed not to have yet.
-//
-// A shipment carries either a rate agreement or a formula template, and which
-// one it gets is settled by the rate engine after this mapping runs: the
-// contract preview asks what an agreement would charge precisely because
-// nothing has been chosen yet, and requiring one here refused that question
-// before it could be asked. Whether the shipment ends up priced at all is the
-// rate coverage rule's to answer, once the engine has spoken.
-//
-// An existing shipment is held to the stricter reading. Its rating method is a
-// field a rater owns and nothing restores on save, so a payload that arrives
-// without one — an older client, an integration echoing back the fields it
-// cares about — would otherwise silently unprice a load somebody had rated.
-func shipmentFormulaTemplateID(shipmentID pulid.ID, value string) (pulid.ID, error) {
-	if shipmentID.IsNil() {
-		return base.OptionalScopedID("formulaTemplateId", &value)
-	}
-
-	return base.RequiredID("formulaTemplateId", value)
-}
-
 func shipmentFromInput(
 	input gqlmodel.ShipmentInput,
 	id pulid.ID,
@@ -67,7 +45,7 @@ func shipmentFromInput(
 	if err != nil {
 		return nil, err
 	}
-	formulaTemplateID, err := shipmentFormulaTemplateID(id, input.FormulaTemplateID)
+	formulaTemplateID, err := base.OptionalScopedID("formulaTemplateId", input.FormulaTemplateID)
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +85,7 @@ func shipmentFromInput(
 	if err != nil {
 		return nil, err
 	}
-	baseRate, err := nullDecimalFromInput(input.BaseRate)
+	tariffInputs, err := base.TariffInputsFromModel("tariffInputs", input.TariffInputs)
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +134,7 @@ func shipmentFromInput(
 		CancelReason:         base.StringValue(input.CancelReason),
 		OtherChargeAmount:    otherChargeAmount,
 		FreightChargeAmount:  freightChargeAmount,
-		BaseRate:             baseRate,
+		TariffInputs:         tariffInputs.OrEmpty(),
 		TotalChargeAmount:    totalChargeAmount,
 		Pieces:               base.Int64Ptr(input.Pieces),
 		Weight:               base.Int64Ptr(input.Weight),
@@ -171,7 +149,6 @@ func shipmentFromInput(
 		TransferredToBillingAt: base.Int64Ptr(input.TransferredToBillingAt),
 		MarkedReadyToBillAt:    base.Int64Ptr(input.MarkedReadyToBillAt),
 		BilledAt:               base.Int64Ptr(input.BilledAt),
-		RatingUnit:             base.Int64Value(input.RatingUnit),
 		FuelSurchargeLocked:    base.BoolValue(input.FuelSurchargeLocked),
 		RateOverrideReason:     base.StringValue(input.RateOverrideReason),
 		SourceDocumentID:       base.StringValue(input.SourceDocumentID),
@@ -186,9 +163,6 @@ func shipmentFromInput(
 	}
 	if billToCustomerID.IsNotNil() {
 		entity.BillToCustomerID = &billToCustomerID
-	}
-	if entity.RatingUnit == 0 {
-		entity.RatingUnit = 1
 	}
 	if input.TenderStatus != nil {
 		tenderStatus := shipmentdomain.TenderStatus(*input.TenderStatus)
@@ -465,43 +439,52 @@ func shipmentCommoditiesFromInput(
 // preview the billing panel shows and the account the re-rate dialog reads out.
 func contractRateToModel(
 	application *shipmentports.ContractRateApplication,
-) *gqlmodel.ShipmentContractRate {
+) (*gqlmodel.ShipmentContractRate, error) {
 	if application == nil {
-		return nil
+		return nil, nil //nolint:nilnil // no application maps to a null field
 	}
 
-	accessorials := make(
-		[]*gqlmodel.ShipmentContractRateAccessorial,
-		0,
-		len(application.Accessorials),
-	)
-	for _, accessorial := range application.Accessorials {
-		accessorials = append(accessorials, &gqlmodel.ShipmentContractRateAccessorial{
-			AccessorialChargeID: accessorial.AccessorialChargeID.String(),
-			Description:         accessorial.Description,
-			Method:              accessorial.Method,
-			Amount:              accessorial.Amount.String(),
-			Unit:                int(accessorial.Unit),
+	inputs, err := base.TariffInputsToModel(application.Inputs)
+	if err != nil {
+		return nil, err
+	}
+
+	charges := make([]*gqlmodel.ShipmentContractRateCharge, 0, len(application.Charges))
+	for i := range application.Charges {
+		charge := &application.Charges[i]
+		charges = append(charges, &gqlmodel.ShipmentContractRateCharge{
+			AccessorialChargeID: charge.AccessorialChargeID.String(),
+			Code:                charge.Code,
+			Description:         charge.Description,
+			Owner:               string(charge.Owner),
+			Label:               charge.Label,
+			Amount:              charge.Amount.String(),
+			Quantity:            base.NullDecimalStringPtr(charge.Quantity),
+			Rate:                base.NullDecimalStringPtr(charge.Rate),
+			RateUnit:            charge.RateUnit,
 		})
 	}
 
 	return &gqlmodel.ShipmentContractRate{
-		Applied:                application.Applied,
-		Outcome:                string(application.Outcome),
-		AgreementID:            base.IDPtrFromPtr(application.AgreementID),
-		AgreementName:          application.AgreementName,
-		RuleID:                 base.IDPtrFromPtr(application.RuleID),
-		RuleLabel:              application.RuleLabel,
-		FormulaTemplateID:      base.IDPtrFromPtr(application.FormulaTemplateID),
-		FormulaTemplateName:    application.FormulaTemplateName,
-		BaseRate:               base.NullDecimalStringPtr(application.BaseRate),
-		LinehaulAmount:         application.LinehaulAmount.String(),
-		OtherChargeAmount:      application.OtherChargeAmount.String(),
-		TotalChargeAmount:      application.TotalChargeAmount.String(),
-		PreviousLinehaulAmount: application.PreviousLinehaulAmount.String(),
-		Accessorials:           accessorials,
-		Explanation:            application.Explanation,
-	}
+		Applied:               application.Applied,
+		Outcome:               string(application.Outcome),
+		AgreementID:           base.IDPtrFromPtr(application.AgreementID),
+		AgreementName:         application.AgreementName,
+		RuleID:                base.IDPtrFromPtr(application.RuleID),
+		RuleLabel:             application.RuleLabel,
+		FormulaTemplateID:     base.IDPtrFromPtr(application.FormulaTemplateID),
+		FormulaTemplateName:   application.FormulaTemplateName,
+		TemplateVersion:       int(application.TemplateVersion),
+		Inputs:                inputs,
+		Refusal:               application.Refusal,
+		FreightLines:          base.FreightLinesToModel(application.FreightLines),
+		FreightAmount:         application.FreightAmount.String(),
+		OtherChargeAmount:     application.OtherChargeAmount.String(),
+		TotalChargeAmount:     application.TotalChargeAmount.String(),
+		PreviousFreightAmount: application.PreviousFreightAmount.String(),
+		Charges:               charges,
+		Explanation:           application.Explanation,
+	}, nil
 }
 
 func shipmentCommentToModel(
@@ -727,19 +710,19 @@ func previousRatesToModel(
 			CustomerID:          item.CustomerID.String(),
 			ServiceTypeID:       item.ServiceTypeID.String(),
 			ShipmentTypeID:      item.ShipmentTypeID.String(),
-			FormulaTemplateID:   item.FormulaTemplateID.String(),
+			FormulaTemplateID:   base.IDPtr(item.FormulaTemplateID),
 			FreightChargeAmount: item.FreightChargeAmount.String(),
 			OtherChargeAmount:   item.OtherChargeAmount.String(),
 			TotalChargeAmount:   item.TotalChargeAmount.String(),
-			RatingUnit:          int(item.RatingUnit),
 			Pieces:              base.IntPtr(item.Pieces),
 			Weight:              base.IntPtr(item.Weight),
 			CreatedAt:           int(item.CreatedAt),
 		})
 	}
 	return &gqlmodel.ShipmentPreviousRatesResponse{
-		Items: items,
-		Total: result.Total,
+		Items:      items,
+		Total:      result.Total,
+		TotalExact: result.TotalExact,
 	}
 }
 

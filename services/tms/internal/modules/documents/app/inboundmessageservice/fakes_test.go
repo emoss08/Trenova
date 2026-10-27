@@ -11,26 +11,23 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const testNow = int64(1_784_131_200)
 
 type fakeDB struct {
-	kernelports.DBConnection
-
 	txs int
 }
 
-func (f *fakeDB) WithTx(
+func (f *fakeDB) Transact(
 	ctx context.Context,
 	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	f.txs++
 
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 type fakeQueueRepo struct {
@@ -289,8 +286,10 @@ type fakeMailboxState struct {
 	inboundmessageports.TriageMailboxStateRepository
 
 	received     []inboundmessageports.MailboxReceivedRequest
+	claims       []inboundmessageports.ClaimMailboxTestRequest
 	testsSent    []inboundmessageports.MailboxTestRequest
 	testReceived []inboundmessageports.MailboxTestRequest
+	lastTestAt   int64
 }
 
 func (f *fakeMailboxState) MarkReceived(
@@ -302,11 +301,29 @@ func (f *fakeMailboxState) MarkReceived(
 	return nil
 }
 
+func (f *fakeMailboxState) ClaimTestSend(
+	_ context.Context,
+	req inboundmessageports.ClaimMailboxTestRequest,
+) (*inboundmessage.Mailbox, error) {
+	if f.lastTestAt != 0 && f.lastTestAt > req.LastSentBefore {
+		return nil, inboundmessageports.ErrMailboxTestTooSoon
+	}
+	f.claims = append(f.claims, req)
+	f.lastTestAt = req.At
+
+	return &inboundmessage.Mailbox{
+		ID:         req.MailboxID,
+		TestToken:  req.Token,
+		TestSentAt: req.At,
+	}, nil
+}
+
 func (f *fakeMailboxState) MarkTestSent(
 	_ context.Context,
 	req inboundmessageports.MailboxTestRequest,
 ) (*inboundmessage.Mailbox, error) {
 	f.testsSent = append(f.testsSent, req)
+	f.lastTestAt = req.At
 
 	return &inboundmessage.Mailbox{
 		ID:         req.MailboxID,

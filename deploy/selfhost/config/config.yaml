@@ -1,6 +1,6 @@
 # Trenova runtime configuration for the self-hosted stack (compose.yml).
 #
-# Mounted into tms-migrate, tms-api and tms-worker at /app/config/config.yaml,
+# Mounted into trenova-db, tms-api and tms-worker at /app/config/config.yaml,
 # which they read with APP_ENV=production. Decoding is strict: a key Trenova
 # does not know fails startup, so keep this file to the keys the release you
 # run understands. services/tms/config/config.example.yaml documents every key.
@@ -68,11 +68,32 @@ database:
   user: trenova # from .env
   password: change-me # from .env
   sslMode: require
-  maxIdleConns: 20
   maxOpenConns: 60
   statementTimeout: 10s
   lockTimeout: 5s
   idleInTransactionSessionTimeout: 30s
+  queryLog: "off"
+  # A quarter of maxOpenConns per organization at once when 0.
+  tenantConcurrency: 0
+  # Warn, with stacks, about work waiting this long for an organization's slot
+  # or a connection; 0 turns the warnings off.
+  slowWaitWarning: 5s
+  # Fail work that waits this long for a slot or a connection as busy, so a
+  # background job cannot wait forever behind a stuck request; keep it above
+  # server.requestTimeout. 0 leaves waits to their own deadlines.
+  maxWait: 60s
+  # The result cache keeps repository reads in memory until a table they read
+  # changes. The shared tier puts it in Redis for every process; it copies
+  # tenant rows into Redis, so it stays off unless you choose it.
+  cache:
+    enabled: true
+    localBytes: 268435456
+    shared:
+      enabled: false
+  # Logs a warning for a request that sends one statement in more than
+  # maxRepeats round trips (an N+1 read).
+  budget:
+    maxRepeats: 10
   # PostgreSQL row-level security is off in this stack: the application
   # connects as the database owner. Moving to enforced tenant isolation takes
   # separate application, system and migrator roles; see "Hardening" in
@@ -256,6 +277,11 @@ portal:
 
 reporting:
   deliveryLinkBaseUrl: https://localhost # from .env (https://DOMAIN)
+  resultCache:
+    enabled: true
+    localBytes: 134217728
+    shared:
+      enabled: false # copies tenant report rows into Redis
 
 system:
   systemUserPassword: change-me # from .env

@@ -4,20 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/driverpaycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driverpay/driverpaydb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/driverpayports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var payAdvanceErrors = dberror.Mapping{Entity: "PayAdvance"}
 
 type payAdvanceRepository struct {
 	db *postgres.Connection
@@ -39,42 +38,19 @@ func (r *payAdvanceRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*driverpay.PayAdvance], error) {
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*driverpay.PayAdvance, 0, limit)
+			pa := driverpaydb.PayAdvances
+			q := pa.Where(
+				searchPred(req.Filter.Query, pa.Reference, pa.Notes),
+				when(!req.WorkerID.IsNil(), pa.WorkerID.Eq(req.WorkerID)),
+				when(req.Status != "", pa.Status.Eq(req.Status)),
+			).Load(pa.Worker()).Order(pa.IssuedDate.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where("padv.organization_id = ?", req.Filter.TenantInfo.OrgID).
-				Where("padv.business_unit_id = ?", req.Filter.TenantInfo.BuID).
-				Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-				Order("padv.issued_date DESC").
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				query = query.Where(
-					"(padv.reference ILIKE ? OR padv.notes ILIKE ?)",
-					"%"+req.Filter.Query+"%",
-					"%"+req.Filter.Query+"%",
-				)
-			}
-			if !req.WorkerID.IsNil() {
-				query = query.Where("padv.worker_id = ?", req.WorkerID)
-			}
-			if req.Status != "" {
-				query = query.Where("padv.status = ?", req.Status)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list pay advances: %w", err)
 			}
 
-			return &pagination.ListResult[*driverpay.PayAdvance]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -83,59 +59,27 @@ func (r *payAdvanceRepository) ListConnection(
 	ctx context.Context,
 	req *driverpayports.ListPayAdvanceConnectionRequest,
 ) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*driverpay.PayAdvance], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*driverpay.PayAdvance)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"padv",
-							req.Filter,
-							(*driverpay.PayAdvance)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count pay advances", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			pa := driverpaydb.PayAdvances
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*driverpay.PayAdvance]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*driverpay.PayAdvance) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(driverpaycol.PayAdvanceTable.All()).
-							Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q })
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							"padv",
-							req.Filter,
-							req.Cursor,
-							(*driverpay.PayAdvance)(nil),
-						)
+				r.db.Keel(ctx),
+				pa.Query(),
+				&listquery.Request[driverpay.PayAdvance]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[*driverpay.PayAdvance],
+					) *keel.Query[*driverpay.PayAdvance] {
+						return q.Load(pa.Worker())
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan pay advances", zap.Error(err))
+				r.l.Error("failed to list pay advances", zap.Error(err))
 				return nil, err
 			}
 
@@ -149,18 +93,12 @@ func (r *payAdvanceRepository) GetByID(
 	req driverpayports.GetPayAdvanceByIDRequest,
 ) (*driverpay.PayAdvance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*driverpay.PayAdvance, error) {
-		entity := new(driverpay.PayAdvance)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("padv.id = ?", req.ID).
-			Where("padv.organization_id = ?", req.TenantInfo.OrgID).
-			Where("padv.business_unit_id = ?", req.TenantInfo.BuID).
-			Relation("Worker", func(q *bun.SelectQuery) *bun.SelectQuery { return q }).
-			Scan(ctx)
+		pa := driverpaydb.PayAdvances
+		entity, err := pa.Where(pa.ID.Eq(req.ID)).Load(pa.Worker()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "PayAdvance")
+			return nil, payAdvanceErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -169,23 +107,19 @@ func (r *payAdvanceRepository) GetByIDs(
 	ctx context.Context,
 	req driverpayports.GetPayAdvancesByIDsRequest,
 ) ([]*driverpay.PayAdvance, error) {
-	if len(req.IDs) == 0 {
-		return []*driverpay.PayAdvance{}, nil
-	}
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayAdvance, error) {
-		cols := driverpaycol.PayAdvanceColumns
-		items := make([]*driverpay.PayAdvance, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return driverpaycol.PayAdvanceScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.IDs))
-			}).
-			Scan(ctx)
+		if len(req.IDs) == 0 {
+			return []*driverpay.PayAdvance{}, nil
+		}
+
+		pa := driverpaydb.PayAdvances
+		items, err := pa.Where(pa.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("get pay advances by ids: %w", err)
 		}
+
 		return items, nil
 	})
 }
@@ -195,22 +129,18 @@ func (r *payAdvanceRepository) ListOutstandingForWorker(
 	req driverpayports.ListOutstandingAdvancesForWorkerRequest,
 ) ([]*driverpay.PayAdvance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*driverpay.PayAdvance, error) {
-		items := make([]*driverpay.PayAdvance, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("padv.organization_id = ?", req.TenantInfo.OrgID).
-			Where("padv.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("padv.worker_id = ?", req.WorkerID).
-			Where("padv.status IN (?)", bun.List([]driverpay.AdvanceStatus{
+		pa := driverpaydb.PayAdvances
+		items, err := pa.Where(
+			pa.WorkerID.Eq(req.WorkerID),
+			pa.Status.In(
 				driverpay.AdvanceStatusOutstanding,
 				driverpay.AdvanceStatusPartiallyRecovered,
-			})).
-			Order("padv.issued_date ASC").
-			Scan(ctx)
+			),
+		).Order(pa.IssuedDate.Asc()).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list outstanding advances for worker: %w", err)
 		}
+
 		return items, nil
 	})
 }
@@ -220,18 +150,13 @@ func (r *payAdvanceRepository) Create(
 	entity *driverpay.PayAdvance,
 ) (*driverpay.PayAdvance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.PayAdvance, error) {
-		if entity.ID.IsNil() {
-			entity.ID = pulid.MustNew("padv_")
+		if err := driverpaydb.PayAdvances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, payAdvanceErrors.Map(err, entity.ID.String())
 		}
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create pay advance: %w", err)
-		}
+
 		return r.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:         entity.ID,
+			TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		})
 	})
 }
@@ -241,38 +166,29 @@ func (r *payAdvanceRepository) Update(
 	entity *driverpay.PayAdvance,
 ) (*driverpay.PayAdvance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*driverpay.PayAdvance, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("status = ?", entity.Status).
-			Set("source = ?", entity.Source).
-			Set("reference = ?", entity.Reference).
-			Set("issued_date = ?", entity.IssuedDate).
-			Set("amount_minor = ?", entity.AmountMinor).
-			Set("recovered_minor = ?", entity.RecoveredMinor).
-			Set("written_off_minor = ?", entity.WrittenOffMinor).
-			Set("write_off_reason = ?", entity.WriteOffReason).
-			Set("notes = ?", entity.Notes).
-			Set("written_off_by_id = ?", entity.WrittenOffByID).
-			Set("written_off_at = ?", entity.WrittenOffAt).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update pay advance: %w", err)
+		pa := driverpaydb.PayAdvances
+		if err := pa.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			pa.Status,
+			pa.Source,
+			pa.Reference,
+			pa.IssuedDate,
+			pa.AmountMinor,
+			pa.RecoveredMinor,
+			pa.WrittenOffMinor,
+			pa.WriteOffReason,
+			pa.Notes,
+			pa.WrittenOffByID,
+			pa.WrittenOffAt,
+		); err != nil {
+			return nil, payAdvanceErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(res, "PayAdvance", entity.ID.String()); err != nil {
-			return nil, err
-		}
+
 		return r.GetByID(ctx, driverpayports.GetPayAdvanceByIDRequest{
-			ID: entity.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
+			ID:         entity.ID,
+			TenantInfo: tenantOf(entity.OrganizationID, entity.BusinessUnitID),
 		})
 	})
 }

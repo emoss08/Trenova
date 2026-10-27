@@ -4,19 +4,19 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var agentControlErrors = dberror.Mapping{Entity: "AgentControl"}
 
 type Params struct {
 	fx.In
@@ -56,45 +56,31 @@ func (r *repository) GetOrCreate(
 	}
 
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.AgentControl]{
-		Find: func(ctx context.Context) (*tenant.AgentControl, error) {
-			return r.selectControl(ctx, tenantInfo)
-		},
+		Find: r.selectControl,
 		Create: func(ctx context.Context) error {
-			if _, insertErr := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(newDefault()).
-				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-				Exec(ctx); insertErr != nil {
-				return fmt.Errorf("create default agent control: %w", insertErr)
+			ac := tenantdb.AgentControls
+			if _, err := ac.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*tenant.AgentControl{newDefault()},
+				ac.OrganizationID,
+				ac.BusinessUnitID,
+			); err != nil {
+				return fmt.Errorf("create default agent control: %w", err)
 			}
 
 			return nil
 		},
 		Default: newDefault,
 		MapError: func(err error) error {
-			return dberror.HandleNotFoundError(err, "AgentControl")
+			return agentControlErrors.Map(err, tenantInfo.OrgID.String())
 		},
 	})
 }
 
-func (r *repository) selectControl(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*tenant.AgentControl, error) {
+func (r *repository) selectControl(ctx context.Context) (*tenant.AgentControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.AgentControl, error) {
-		entity := new(tenant.AgentControl)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tenantcol.AgentControlScopeTenant(sq, tenantInfo)
-			}).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return entity, nil
+		return tenantdb.AgentControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -103,40 +89,26 @@ func (r *repository) Update(
 	entity *tenant.AgentControl,
 ) (*tenant.AgentControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.AgentControl, error) {
-		cols := tenantcol.AgentControlColumns
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return tenantcol.AgentControlScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), entity.Version)
-			}).
-			Set(cols.ShadowMode.Set(), entity.ShadowMode).
-			Set(cols.EarnedAutonomy.Set(), entity.EarnedAutonomy).
-			Set(cols.PromotionThreshold.Set(), entity.PromotionThreshold).
-			Set(cols.PersonMonthlyMessages.Set(), entity.PersonMonthlyMessages).
-			Set(cols.LearningOff.Set(), entity.LearningOff).
-			Set(cols.AgentMoneyCallCeilingMinor.Set(), entity.AgentMoneyCallCeilingMinor).
-			Set(cols.AgentMoneyRunCalls.Set(), entity.AgentMoneyRunCalls).
-			Set(cols.AgentMoneyRunAmountMinor.Set(), entity.AgentMoneyRunAmountMinor).
-			Set(cols.AgentMoneyDayCalls.Set(), entity.AgentMoneyDayCalls).
-			Set(cols.AgentMoneyDayAmountMinor.Set(), entity.AgentMoneyDayAmountMinor).
-			Set(cols.AITrainingConsent.Set(), entity.AITrainingConsent).
-			Set(cols.AITrainingConsentChangedAt.Set(), entity.AITrainingConsentChangedAt).
-			Set(cols.AITrainingConsentChangedByID.Set(), entity.AITrainingConsentChangedByID).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update agent control: %w", err)
-		}
-
-		if err = dberror.CheckRowsAffected(res, "AgentControl", entity.ID.String()); err != nil {
-			return nil, err
+		ac := tenantdb.AgentControls
+		if err := ac.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			ac.ShadowMode,
+			ac.EarnedAutonomy,
+			ac.PromotionThreshold,
+			ac.PersonMonthlyMessages,
+			ac.LearningOff,
+			ac.AgentMoneyCallCeilingMinor,
+			ac.AgentMoneyRunCalls,
+			ac.AgentMoneyRunAmountMinor,
+			ac.AgentMoneyDayCalls,
+			ac.AgentMoneyDayAmountMinor,
+			ac.AITrainingConsent,
+			ac.AITrainingConsentChangedAt,
+			ac.AITrainingConsentChangedByID,
+		); err != nil {
+			return nil, agentControlErrors.Map(err, entity.ID.String())
 		}
 
 		return r.GetOrCreate(ctx, pagination.TenantInfo{

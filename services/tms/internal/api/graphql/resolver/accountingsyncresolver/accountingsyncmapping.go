@@ -51,6 +51,46 @@ func (r *MutationResolver) accountingMappingAction(
 	})
 }
 
+// accountingMappingOptionsMost is how many records a mapping's options
+// offer: enough to choose among, few enough to read.
+const accountingMappingOptionsMost = 10
+
+// accountingMappingDetail is one mapping and, when the person searched, the
+// usable accounting system records of its kind whose names match.
+func (r *QueryResolver) accountingMappingDetail(
+	ctx context.Context,
+	find *accountingsyncports.SetAccountingMappingRequest,
+	optionsQuery string,
+) (*gqlmodel.AccountingMappingDetail, error) {
+	mapping, err := r.AccountingMappingService.FindMapping(ctx, find)
+	if err != nil {
+		return nil, err
+	}
+	detail := &gqlmodel.AccountingMappingDetail{
+		Mapping: mapping,
+		Options: []*accountingsync.AccountingReferenceObject{},
+	}
+	if optionsQuery == "" {
+		return detail, nil
+	}
+	detail.Options, err = r.AccountingMappingService.SearchReference(
+		ctx,
+		&accountingsyncports.SearchAccountingReferenceRequest{
+			TenantInfo:      find.TenantInfo,
+			IntegrationType: find.IntegrationType,
+			Kind:            mapping.ProviderKind,
+			Query:           optionsQuery,
+			UsableOnly:      true,
+			Limit:           accountingMappingOptionsMost,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return detail, nil
+}
+
 func accountingMappingConnectionToModel(
 	result *pagination.CursorListResult[*accountingsync.AccountingMapping],
 ) (*gqlmodel.AccountingMappingConnection, error) {
@@ -66,9 +106,10 @@ func accountingMappingConnectionToModel(
 	}
 
 	return &gqlmodel.AccountingMappingConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

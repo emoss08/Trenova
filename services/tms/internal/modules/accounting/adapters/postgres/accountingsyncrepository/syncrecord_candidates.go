@@ -6,44 +6,56 @@ import (
 	"slices"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 type candidateRow struct {
-	ObjectID     pulid.ID `bun:"object_id"`
-	ObjectNumber string   `bun:"object_number"`
-	DocumentDate int64    `bun:"document_date"`
-	PostedAt     int64    `bun:"posted_at"`
+	ObjectID     pulid.ID
+	ObjectNumber string
+	DocumentDate int64
+	PostedAt     int64
 }
+
+type candidateQueryFunc func(
+	picks []keel.Expr,
+	preds []keel.Pred,
+	orders []keel.Order,
+	limit int,
+) keel.Projection
 
 type candidateSource struct {
-	model  any
-	org    buncolgen.Column
-	bu     buncolgen.Column
-	id     buncolgen.Column
-	number *buncolgen.Column
-	date   buncolgen.Column
-	at     buncolgen.Column
-	filter func(q *bun.SelectQuery, req *accountingsyncports.ListAccountingSyncCandidatesRequest) *bun.SelectQuery
-	queued func(q *bun.SelectQuery, req *accountingsyncports.ListAccountingSyncCandidatesRequest) *bun.SelectQuery
+	query  candidateQueryFunc
+	id     keelkinds.PulidIDCol
+	number *keel.StringCol
+	date   keel.Int64Col
+	at     keel.Int64Col
+	filter func(req *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred
+	queued func(
+		rec *accountingsyncdb.AccountingSyncRecordsTable,
+		req *accountingsyncports.ListAccountingSyncCandidatesRequest,
+	) []keel.Pred
 }
 
-func postgresTxOptions() kernelports.TxOptions {
-	return kernelports.TxOptions{}
+type candidatePicker[T any] interface {
+	Pick(es ...keel.Expr) *keel.Query[*T]
+}
+
+func candidateQuery[T any](h candidatePicker[T]) candidateQueryFunc {
+	return func(picks []keel.Expr, preds []keel.Pred, orders []keel.Order, limit int) keel.Projection {
+		return h.Pick(picks...).Where(preds...).Order(orders...).Limit(limit)
+	}
 }
 
 func sortClaimed(records []*accountingsync.AccountingSyncRecord) {
@@ -86,65 +98,50 @@ func candidateSourceFor(
 }
 
 func salesDocumentSource(billType billingqueue.BillType) *candidateSource {
-	cols := invoicecol.InvoiceColumns
+	inv := invoicedb.Invoices
 	return &candidateSource{
-		model:  (*invoice.Invoice)(nil),
-		org:    cols.OrganizationID,
-		bu:     cols.BusinessUnitID,
-		id:     cols.ID,
-		number: &cols.Number,
-		date:   cols.InvoiceDate,
-		at:     cols.PostedAt,
-		filter: func(
-			q *bun.SelectQuery,
-			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
-			return q.
-				Where(cols.BillType.Eq(), billType).
-				Where(cols.PostedAt.IsNotNull()).
-				Where(cols.Status.In(), bun.List([]invoice.Status{
-					invoice.StatusPosted,
-					invoice.StatusVoided,
-				}))
+		query:  candidateQuery[invoice.Invoice](inv),
+		id:     inv.ID,
+		number: &inv.Number,
+		date:   inv.InvoiceDate,
+		at:     inv.PostedAt,
+		filter: func(_ *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
+			return []keel.Pred{
+				inv.BillType.Eq(billType),
+				inv.PostedAt.IsNotNull(),
+				inv.Status.In(invoice.StatusPosted, invoice.StatusVoided),
+			}
 		},
 	}
 }
 
 func paymentSource(operation accountingsync.SyncOperation) (*candidateSource, error) {
-	cols := customerpaymentcol.PaymentColumns
+	cp := customerpaymentdb.Payments
 	source := &candidateSource{
-		model:  (*customerpayment.Payment)(nil),
-		org:    cols.OrganizationID,
-		bu:     cols.BusinessUnitID,
-		id:     cols.ID,
-		number: &cols.ReferenceNumber,
-		date:   cols.AccountingDate,
+		query:  candidateQuery[customerpayment.Payment](cp),
+		id:     cp.ID,
+		number: &cp.ReferenceNumber,
+		date:   cp.AccountingDate,
 	}
 	switch operation {
 	case accountingsync.SyncOperationCreate:
-		source.at = cols.CreatedAt
-		source.filter = func(
-			q *bun.SelectQuery,
-			req *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
+		source.at = cp.CreatedAt
+		source.filter = func(req *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
 			if req.UndoneBefore == nil {
-				return q
+				return nil
 			}
-			return q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.
-					Where(cols.Status.NotEq(), customerpayment.StatusReversed).
-					WhereOr(cols.ReversedAt.Gte(), *req.UndoneBefore)
-			})
+			return []keel.Pred{keel.Or(
+				cp.Status.Ne(customerpayment.StatusReversed),
+				cp.ReversedAt.Gte(*req.UndoneBefore),
+			)}
 		}
 	case accountingsync.SyncOperationVoid:
-		source.at = cols.ReversedAt
-		source.filter = func(
-			q *bun.SelectQuery,
-			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
-			return q.
-				Where(cols.Status.Eq(), customerpayment.StatusReversed).
-				Where(cols.ReversedAt.IsNotNull())
+		source.at = cp.ReversedAt
+		source.filter = func(_ *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
+			return []keel.Pred{
+				cp.Status.Eq(customerpayment.StatusReversed),
+				cp.ReversedAt.IsNotNull(),
+			}
 		}
 	case accountingsync.SyncOperationUpdate:
 		return nil, fmt.Errorf("no posted payments back %s records", operation)
@@ -155,39 +152,31 @@ func paymentSource(operation accountingsync.SyncOperation) (*candidateSource, er
 }
 
 func creditApplicationSource(operation accountingsync.SyncOperation) (*candidateSource, error) {
-	cols := customerpaymentcol.CreditMemoApplicationColumns
+	cma := customerpaymentdb.CreditMemoApplications
 	source := &candidateSource{
-		model: (*customerpayment.CreditMemoApplication)(nil),
-		org:   cols.OrganizationID,
-		bu:    cols.BusinessUnitID,
-		id:    cols.ID,
-		date:  cols.AccountingDate,
+		query: candidateQuery[customerpayment.CreditMemoApplication](cma),
+		id:    cma.ID,
+		date:  cma.AccountingDate,
 	}
 	switch operation {
 	case accountingsync.SyncOperationCreate:
-		source.at = cols.CreatedAt
-		source.filter = func(
-			q *bun.SelectQuery,
-			req *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
+		source.at = cma.CreatedAt
+		source.filter = func(req *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
 			if req.UndoneBefore == nil {
-				return q
+				return nil
 			}
-			return q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.
-					Where(cols.Status.NotEq(), customerpayment.CreditApplicationStatusUnapplied).
-					WhereOr(cols.UnappliedAt.Gte(), *req.UndoneBefore)
-			})
+			return []keel.Pred{keel.Or(
+				cma.Status.Ne(customerpayment.CreditApplicationStatusUnapplied),
+				cma.UnappliedAt.Gte(*req.UndoneBefore),
+			)}
 		}
 	case accountingsync.SyncOperationVoid:
-		source.at = cols.UnappliedAt
-		source.filter = func(
-			q *bun.SelectQuery,
-			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
-			return q.
-				Where(cols.Status.Eq(), customerpayment.CreditApplicationStatusUnapplied).
-				Where(cols.UnappliedAt.IsNotNull())
+		source.at = cma.UnappliedAt
+		source.filter = func(_ *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
+			return []keel.Pred{
+				cma.Status.Eq(customerpayment.CreditApplicationStatusUnapplied),
+				cma.UnappliedAt.IsNotNull(),
+			}
 		}
 	case accountingsync.SyncOperationUpdate:
 		return nil, fmt.Errorf("no credit applications back %s records", operation)
@@ -197,102 +186,87 @@ func creditApplicationSource(operation accountingsync.SyncOperation) (*candidate
 	return source, nil
 }
 
-func (s *candidateSource) query(
-	dba bun.IDB,
+func (s *candidateSource) build(
 	req *accountingsyncports.ListAccountingSyncCandidatesRequest,
 	limit int,
-) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	queued := dba.NewSelect().
-		Model((*accountingsync.AccountingSyncRecord)(nil)).
-		ColumnExpr("1").
-		Where(records.OrganizationID.EqColumn(s.org)).
-		Where(records.BusinessUnitID.EqColumn(s.bu)).
-		Where(records.ConnectionID.Eq(), req.ConnectionID).
-		Where(records.ObjectType.Eq(), req.ObjectType)
+) keel.Projection {
+	rec := accountingsyncdb.AccountingSyncRecords
+	queued := []keel.Pred{
+		rec.ConnectionID.Eq(req.ConnectionID),
+		rec.ObjectType.Eq(req.ObjectType),
+	}
 	if s.queued != nil {
-		queued = s.queued(queued, req)
+		queued = append(queued, s.queued(rec, req)...)
 	} else {
-		queued = queued.
-			Where(records.ObjectID.EqColumn(s.id)).
-			Where(records.Operation.Eq(), req.Operation)
+		queued = append(queued, rec.ObjectID.EqCol(s.id), rec.Operation.Eq(req.Operation))
 	}
 
-	numberExpr := "''"
+	number := keel.Text("")
 	if s.number != nil {
-		numberExpr = s.number.Expr("COALESCE({}, '')")
+		number = s.number.Coalesce("")
 	}
 
-	q := dba.NewSelect().
-		Model(s.model).
-		ColumnExpr(s.id.As("object_id")).
-		ColumnExpr(numberExpr+" AS object_number").
-		ColumnExpr(s.date.As("document_date")).
-		ColumnExpr(s.at.As("posted_at")).
-		Where(s.org.Eq(), req.TenantInfo.OrgID).
-		Where(s.bu.Eq(), req.TenantInfo.BuID).
-		Where(s.date.Gte(), req.DatedFrom).
-		Where("NOT EXISTS (?)", queued)
-	q = s.filter(q, req)
+	preds := []keel.Pred{
+		s.date.Gte(req.DatedFrom),
+		keel.NotExists(rec.Where(queued...)),
+	}
+	preds = append(preds, s.filter(req)...)
 	if req.PostedFrom != nil {
-		q = q.Where(s.at.Gte(), *req.PostedFrom)
+		preds = append(preds, s.at.Gte(*req.PostedFrom))
 	}
 	if req.PostedBefore != nil {
-		q = q.Where(s.at.Lt(), *req.PostedBefore)
+		preds = append(preds, s.at.Lt(*req.PostedBefore))
 	}
 	if req.AfterAt > 0 || !req.AfterID.IsNil() {
-		q = q.Where(buncolgen.Expr("({0}, {1}) > (?, ?)", s.at, s.id), req.AfterAt, req.AfterID)
+		preds = append(
+			preds,
+			keel.Tuple(s.at, s.id).Gt(keel.Tuple(req.AfterAt, req.AfterID.String())),
+		)
 	}
 
-	return q.
-		Order(s.at.OrderAsc(), s.id.OrderAsc()).
-		Limit(int64(limit))
+	return s.query(
+		[]keel.Expr{s.id, number, s.date, s.at},
+		preds,
+		[]keel.Order{s.at.Asc(), s.id.Asc()},
+		limit,
+	)
 }
 
 func journalSource(
-	queued func(*bun.SelectQuery, *accountingsyncports.ListAccountingSyncCandidatesRequest) *bun.SelectQuery,
+	queued func(
+		*accountingsyncdb.AccountingSyncRecordsTable,
+		*accountingsyncports.ListAccountingSyncCandidatesRequest,
+	) []keel.Pred,
 ) *candidateSource {
-	cols := journalentrycol.JournalEntryColumns
+	je := journalentrydb.JournalEntries
 	return &candidateSource{
-		model:  (*journalentry.JournalEntry)(nil),
-		org:    cols.OrganizationID,
-		bu:     cols.BusinessUnitID,
-		id:     cols.ID,
-		number: &cols.EntryNumber,
-		date:   cols.AccountingDate,
-		at:     cols.PostedAt,
-		filter: func(
-			q *bun.SelectQuery,
-			_ *accountingsyncports.ListAccountingSyncCandidatesRequest,
-		) *bun.SelectQuery {
-			return q.
-				Where(cols.IsPosted.IsTrue()).
-				Apply(withoutEntryTypes(unsentEntryTypes()))
+		query:  candidateQuery[journalentry.JournalEntry](je),
+		id:     je.ID,
+		number: &je.EntryNumber,
+		date:   je.AccountingDate,
+		at:     je.PostedAt,
+		filter: func(_ *accountingsyncports.ListAccountingSyncCandidatesRequest) []keel.Pred {
+			return []keel.Pred{je.IsPosted.IsTrue(), withoutEntryTypes(je, unsentEntryTypes())}
 		},
 		queued: queued,
 	}
 }
 
 func journalDayQueued(
-	q *bun.SelectQuery,
+	rec *accountingsyncdb.AccountingSyncRecordsTable,
 	req *accountingsyncports.ListAccountingSyncCandidatesRequest,
-) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	entries := journalentrycol.JournalEntryColumns
+) []keel.Pred {
+	je := journalentrydb.JournalEntries
 	timezone := req.Timezone
 	if timezone == "" {
 		timezone = time.UTC.String()
 	}
-	return q.
-		Where(
-			buncolgen.Expr(
-				"{0} = ? || to_char(to_timestamp({1}) AT TIME ZONE ?, ?)",
-				records.ObjectID,
-				entries.AccountingDate,
-			),
-			accountingsync.JournalDayPrefix,
-			timezone,
-			accountingsync.JournalDaySQLLayout,
-		).
-		Where(buncolgen.Expr("{0} >= {1}", records.QueuedAt, entries.PostedAt))
+	return []keel.Pred{
+		rec.ObjectID.EqCol(keel.Text(accountingsync.JournalDayPrefix).Cat(
+			keel.ToTimestamp(je.AccountingDate).
+				AtTimeZone(keel.Text(timezone)).
+				ToChar(accountingsync.JournalDaySQLLayout),
+		)),
+		keel.Int64Of(rec.QueuedAt).GteExpr(je.PostedAt),
+	}
 }

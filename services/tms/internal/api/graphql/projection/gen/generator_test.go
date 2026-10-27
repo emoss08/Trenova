@@ -34,23 +34,15 @@ gates:
 		DomainFiles: map[string]string{
 			"parent/parent.go": parentDomainFile,
 		},
-		BuncolgenFiles: map[string]string{
-			"parentcol/parent_gen.go": parentBuncolgenFile,
-		},
 	})
 
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var ParentSpec TypeSpec")
-	require.Contains(t, output, "FieldMap: parentcol.ParentFieldMap")
-	require.Contains(
-		t,
-		output,
-		"import (\n\t\"github.com/emoss08/trenova/pkg/buncolgen/parentcol\"\n)",
-	)
+	require.NotContains(t, output, "import")
 	require.Contains(t, output, "AlwaysColumns: []string{\n\t\t\t\"id\",\n\t\t\t\"created_at\",")
-	require.Contains(t, output, "Name:        \"statusText\"")
-	require.Contains(t, output, "FieldMapKey: \"status\"")
+	require.Contains(t, output, "Name:   \"statusText\"")
+	require.Contains(t, output, "Column: \"status\"")
 	require.Contains(t, output, "Special: \"virtualField\"")
 	require.Contains(t, output, "Target: &ChildSpec")
 	require.Contains(t, output, "Gate:   \"details\"")
@@ -85,15 +77,10 @@ specials:
 package projected
 
 type Projected struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-}
-`,
-		},
-		BuncolgenFiles: map[string]string{
-			"projectedcol/projected_gen.go": `
-package projectedcol
+	keel.Table ` + "`keel:\"projecteds\"`" + `
 
-var ProjectedFieldMap = map[string]string{"id": "id"}
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+}
 `,
 		},
 	})
@@ -130,21 +117,14 @@ models:
 			"widget/widget.go": `
 package widget
 
-import "github.com/uptrace/bun"
+import "github.com/emoss08/keel"
 
 type Connection struct {
-	bun.BaseModel ` + "`bun:\"table:widget_connections,alias:wc\"`" + `
+	keel.Table ` + "`keel:\"widget_connections\"`" + `
 
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-	Name string ` + "`json:\"name\" bun:\"name\"`" + `
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	Name string ` + "`json:\"name\" keel:\"name\"`" + `
 }
-`,
-		},
-		BuncolgenFiles: map[string]string{
-			"widgetcol/widget_gen.go": `
-package widgetcol
-
-var ConnectionFieldMap = map[string]string{"id": "id", "name": "name"}
 `,
 		},
 	})
@@ -152,10 +132,10 @@ var ConnectionFieldMap = map[string]string{"id": "id", "name": "name"}
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var WidgetConnectionSpec TypeSpec")
-	require.Contains(t, output, "FieldMap: widgetcol.ConnectionFieldMap")
+	require.Contains(t, output, "Column: \"name\"")
 }
 
-func TestRun_SynthesizesFieldMapForBoundEntityWithoutBuncolgen(t *testing.T) {
+func TestRun_ReadsColumnsFromTheKeelTags(t *testing.T) {
 	t.Parallel()
 
 	fixture := newGeneratorFixture(t, generatorFixture{
@@ -179,13 +159,13 @@ models:
 			"mailbox/mailbox.go": `
 package mailbox
 
-import "github.com/uptrace/bun"
+import "github.com/emoss08/keel"
 
 type Mailbox struct {
-	bun.BaseModel ` + "`bun:\"table:mailboxes,alias:mb\"`" + `
+	keel.Table ` + "`keel:\"mailboxes\"`" + `
 
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-	SenderName string ` + "`json:\"senderName\" bun:\"from_name\"`" + `
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	SenderName string ` + "`json:\"senderName\" keel:\"from_name\"`" + `
 }
 `,
 		},
@@ -194,17 +174,12 @@ type Mailbox struct {
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var MailboxSpec TypeSpec")
-	require.Contains(
-		t,
-		output,
-		`FieldMap: map[string]string{"id": "id", "senderName": "from_name"}`,
-	)
-	require.Contains(t, output, "FieldMapKey: \"senderName\"")
-	require.NotContains(t, output, "import (")
-	require.NotContains(t, output, "import \"")
+	require.Contains(t, output, "Column: \"from_name\"")
+	require.NotContains(t, output, "FieldMap")
+	require.NotContains(t, output, "import")
 }
 
-func TestRun_SkipsBoundNonEntityWithoutBuncolgen(t *testing.T) {
+func TestRun_SkipsBoundStructThatIsNotAKeelTable(t *testing.T) {
 	t.Parallel()
 
 	fixture := newGeneratorFixture(t, generatorFixture{
@@ -228,7 +203,7 @@ models:
 package payload
 
 type Payload struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
 }
 `,
 		},
@@ -257,22 +232,15 @@ virtuals:
 			"shipment/stop.go":   stopDomainFile,
 			"shipment/second.go": lowCoverageDomainFile,
 		},
-		BuncolgenFiles: map[string]string{
-			"parentcol/parent_gen.go":   parentBuncolgenFile,
-			"shipmentcol/stop_gen.go":   stopBuncolgenFile,
-			"shipmentcol/second_gen.go": lowCoverageBuncolgenFile,
-		},
 	})
 
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var ShipmentStopSpec TypeSpec")
-	require.Contains(t, output, "FieldMap: shipmentcol.StopFieldMap")
-	require.Contains(t, output, "Name:        \"locationId\"")
-	require.Contains(t, output, "FieldMapKey: \"locationId\"")
+	require.Contains(t, output, "Name:   \"locationId\",\n\t\t\t\tColumn: \"location_id\"")
 }
 
-func TestRun_IgnoresFieldMapThatDoesNotDescribeTheStruct(t *testing.T) {
+func TestRun_IgnoresAStructThatIsNotAKeelTable(t *testing.T) {
 	t.Parallel()
 
 	fixture := newGeneratorFixture(t, generatorFixture{
@@ -296,13 +264,13 @@ type Query {
 			"watchtower/item.go": `
 package watchtower
 
-import "github.com/uptrace/bun"
+import "github.com/emoss08/keel"
 
 type Item struct {
-	bun.BaseModel ` + "`bun:\"table:watchtower_items,alias:wi\"`" + `
+	keel.Table ` + "`keel:\"watchtower_items\"`" + `
 
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-	Title string ` + "`json:\"title\" bun:\"title\"`" + `
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	Title string ` + "`json:\"title\" keel:\"title\"`" + `
 }
 `,
 			"checklist/item.go": `
@@ -315,23 +283,16 @@ type Item struct {
 }
 `,
 		},
-		BuncolgenFiles: map[string]string{
-			"watchtowercol/watchtower_gen.go": `
-package watchtowercol
-
-var ItemFieldMap = map[string]string{"id": "id", "title": "title"}
-`,
-		},
 	})
 
 	output := runFixture(t, fixture)
 
 	require.Contains(t, output, "var ItemSpec TypeSpec")
-	require.Contains(t, output, "FieldMap: watchtowercol.ItemFieldMap")
+	require.Contains(t, output, "Column: \"title\"")
 	require.NotContains(t, output, "ChecklistRowSpec")
 }
 
-func TestRun_InfersBunRelationAndRelationColumnKey(t *testing.T) {
+func TestRun_InfersKeelRelationAndItsColumn(t *testing.T) {
 	t.Parallel()
 
 	fixture := newGeneratorFixture(t, generatorFixture{
@@ -347,17 +308,59 @@ virtuals:
 		DomainFiles: map[string]string{
 			"parent/parent.go": parentDomainFile,
 		},
-		BuncolgenFiles: map[string]string{
-			"parentcol/parent_gen.go": parentBuncolgenFile,
+	})
+
+	output := runFixture(t, fixture)
+
+	require.Contains(t, output, "Name:   \"child\",\n\t\t\t\tColumn: \"child_id\"")
+	require.Contains(t, output, "Relation: &RelationSpec")
+	require.Contains(t, output, "Target: &ChildSpec")
+}
+
+func TestRun_InfersAnUntaggedRelationThroughItsIDColumn(t *testing.T) {
+	t.Parallel()
+
+	fixture := newGeneratorFixture(t, generatorFixture{
+		Schema: `
+type Owner {
+  id: ID!
+  name: String!
+}
+
+type Pet {
+  id: ID!
+  ownerId: ID!
+  owner: Owner
+  friends: [Owner!]!
+}
+`,
+		DomainFiles: map[string]string{
+			"pet/pet.go": `
+package pet
+
+type Owner struct {
+	keel.Table ` + "`keel:\"owners\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	Name string ` + "`json:\"name\" keel:\"name\"`" + `
+}
+
+type Pet struct {
+	keel.Table ` + "`keel:\"pets\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	OwnerID string ` + "`json:\"ownerId\" keel:\"owner_id\"`" + `
+	Owner *Owner ` + "`json:\"owner,omitempty\"`" + `
+	Friends []*Owner ` + "`json:\"friends\"`" + `
+}
+`,
 		},
 	})
 
 	output := runFixture(t, fixture)
 
-	require.Contains(t, output, "Name:        \"child\"")
-	require.Contains(t, output, "FieldMapKey: \"childId\"")
-	require.Contains(t, output, "Relation: &RelationSpec")
-	require.Contains(t, output, "Target: &ChildSpec")
+	require.Contains(t, output, "Name:   \"owner\",\n\t\t\t\tColumn: \"owner_id\"")
+	require.Contains(t, output, "Name: \"friends\",\n\t\t\t\tRelation: &RelationSpec")
 }
 
 func TestRun_AutoSkipsWrappersAndDTOs(t *testing.T) {
@@ -375,9 +378,6 @@ virtuals:
 `,
 		DomainFiles: map[string]string{
 			"parent/parent.go": parentDomainFile,
-		},
-		BuncolgenFiles: map[string]string{
-			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -405,29 +405,21 @@ type Ambiguous {
 package alpha
 
 type Alpha struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-	Name string ` + "`json:\"name\" bun:\"name\"`" + `
+	keel.Table ` + "`keel:\"alphas\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	Name string ` + "`json:\"name\" keel:\"name\"`" + `
 }
 `,
 			"bravo/bravo.go": `
 package bravo
 
 type Bravo struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-	Name string ` + "`json:\"name\" bun:\"name\"`" + `
+	keel.Table ` + "`keel:\"bravos\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	Name string ` + "`json:\"name\" keel:\"name\"`" + `
 }
-`,
-		},
-		BuncolgenFiles: map[string]string{
-			"alphacol/alpha_gen.go": `
-package alphacol
-
-var AlphaFieldMap = map[string]string{"id": "id", "name": "name"}
-`,
-			"bravocol/bravo_gen.go": `
-package bravocol
-
-var BravoFieldMap = map[string]string{"id": "id", "name": "name"}
 `,
 		},
 	})
@@ -453,9 +445,6 @@ virtuals:
 `,
 		DomainFiles: map[string]string{
 			"parent/parent.go": parentDomainFile,
-		},
-		BuncolgenFiles: map[string]string{
-			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -484,9 +473,6 @@ specials:
 `,
 		DomainFiles: map[string]string{
 			"parent/parent.go": parentDomainFile,
-		},
-		BuncolgenFiles: map[string]string{
-			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -517,9 +503,6 @@ specials:
 `,
 		DomainFiles: map[string]string{
 			"parent/parent.go": parentDomainFile,
-		},
-		BuncolgenFiles: map[string]string{
-			"parentcol/parent_gen.go": parentBuncolgenFile,
 		},
 	})
 
@@ -571,9 +554,6 @@ specials:
 				DomainFiles: map[string]string{
 					"parent/parent.go": parentDomainFile,
 				},
-				BuncolgenFiles: map[string]string{
-					"parentcol/parent_gen.go": parentBuncolgenFile,
-				},
 			})
 
 			err := run(fixture.options())
@@ -598,15 +578,10 @@ type Projected {
 package projected
 
 type Projected struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-}
-`,
-		},
-		BuncolgenFiles: map[string]string{
-			"projectedcol/projected_gen.go": `
-package projectedcol
+	keel.Table ` + "`keel:\"projecteds\"`" + `
 
-var ProjectedFieldMap = map[string]string{"id": "id"}
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+}
 `,
 		},
 	})
@@ -620,11 +595,10 @@ var ProjectedFieldMap = map[string]string{"id": "id"}
 }
 
 type generatorFixture struct {
-	Schema         string
-	Gqlgen         string
-	Manifest       string
-	DomainFiles    map[string]string
-	BuncolgenFiles map[string]string
+	Schema      string
+	Gqlgen      string
+	Manifest    string
+	DomainFiles map[string]string
 }
 
 type fixturePaths struct {
@@ -633,7 +607,6 @@ type fixturePaths struct {
 	manifestPath string
 	gqlgenPath   string
 	domainDir    string
-	buncolgenDir string
 	goModPath    string
 	outputPath   string
 }
@@ -645,7 +618,6 @@ func (f fixturePaths) options() generatorOptions {
 		OutputPath:   f.outputPath,
 		GqlgenPath:   f.gqlgenPath,
 		DomainDir:    f.domainDir,
-		BuncolgenDir: f.buncolgenDir,
 		GoModPath:    f.goModPath,
 	}
 }
@@ -660,7 +632,6 @@ func newGeneratorFixture(t *testing.T, fixture generatorFixture) fixturePaths {
 		manifestPath: filepath.Join(root, "internal/api/graphql/projection/projection.yml"),
 		gqlgenPath:   filepath.Join(root, "gqlgen.yml"),
 		domainDir:    filepath.Join(root, "internal/core/domain"),
-		buncolgenDir: filepath.Join(root, "pkg/buncolgen"),
 		goModPath:    filepath.Join(root, "go.mod"),
 		outputPath:   filepath.Join(root, "internal/api/graphql/projection/specs_gen.go"),
 	}
@@ -675,9 +646,6 @@ func newGeneratorFixture(t *testing.T, fixture generatorFixture) fixturePaths {
 	writeFile(t, paths.manifestPath, strings.TrimSpace(fixture.Manifest))
 	for name, content := range fixture.DomainFiles {
 		writeFile(t, filepath.Join(paths.domainDir, name), strings.TrimSpace(content))
-	}
-	for name, content := range fixture.BuncolgenFiles {
-		writeFile(t, filepath.Join(paths.buncolgenDir, name), strings.TrimSpace(content))
 	}
 
 	return paths
@@ -756,18 +724,22 @@ const parentDomainFile = `
 package parent
 
 type Parent struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-	CreatedAt int64 ` + "`json:\"createdAt\" bun:\"created_at\"`" + `
-	ChildID string ` + "`json:\"childId\" bun:\"child_id\"`" + `
-	Status string ` + "`json:\"status\" bun:\"status\"`" + `
-	VirtualField string ` + "`json:\"virtualField\" bun:\"-\"`" + `
-	Child *Child ` + "`json:\"child,omitempty\" bun:\"rel:belongs-to,join:child_id=id\"`" + `
+	keel.Table ` + "`keel:\"parents\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	CreatedAt int64 ` + "`json:\"createdAt\" keel:\"created_at\"`" + `
+	ChildID string ` + "`json:\"childId\" keel:\"child_id\"`" + `
+	Status string ` + "`json:\"status\" keel:\"status\"`" + `
+	VirtualField string ` + "`json:\"virtualField\" keel:\"-\"`" + `
+	Child *Child ` + "`json:\"child,omitempty\" keel:\"belongs:child_id\"`" + `
 }
 
 type Child struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-	CreatedAt int64 ` + "`json:\"createdAt\" bun:\"created_at\"`" + `
-	Name string ` + "`json:\"name\" bun:\"name\"`" + `
+	keel.Table ` + "`keel:\"children\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	CreatedAt int64 ` + "`json:\"createdAt\" keel:\"created_at\"`" + `
+	Name string ` + "`json:\"name\" keel:\"name\"`" + `
 }
 `
 
@@ -775,13 +747,15 @@ const stopDomainFile = `
 package shipment
 
 type Stop struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-	BusinessUnitID string ` + "`json:\"businessUnitId\" bun:\"business_unit_id\"`" + `
-	OrganizationID string ` + "`json:\"organizationId\" bun:\"organization_id\"`" + `
-	LocationID string ` + "`json:\"locationId\" bun:\"location_id\"`" + `
-	Status string ` + "`json:\"status\" bun:\"status\"`" + `
-	CreatedAt int64 ` + "`json:\"createdAt\" bun:\"created_at\"`" + `
-	Location any ` + "`json:\"location,omitempty\" bun:\"rel:belongs-to,join:location_id=id\"`" + `
+	keel.Table ` + "`keel:\"stops\"`" + `
+
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
+	BusinessUnitID string ` + "`json:\"businessUnitId\" keel:\"business_unit_id\"`" + `
+	OrganizationID string ` + "`json:\"organizationId\" keel:\"organization_id\"`" + `
+	LocationID string ` + "`json:\"locationId\" keel:\"location_id\"`" + `
+	Status string ` + "`json:\"status\" keel:\"status\"`" + `
+	CreatedAt int64 ` + "`json:\"createdAt\" keel:\"created_at\"`" + `
+	Location any ` + "`json:\"location,omitempty\" keel:\"belongs:location_id\"`" + `
 }
 `
 
@@ -789,56 +763,8 @@ const lowCoverageDomainFile = `
 package shipment
 
 type Second struct {
-	ID string ` + "`json:\"id\" bun:\"id\"`" + `
-}
-`
+	keel.Table ` + "`keel:\"seconds\"`" + `
 
-const parentBuncolgenFile = `
-package parentcol
-
-var ParentFieldMap = map[string]string{
-	"id": "id",
-	"createdAt": "created_at",
-	"childId": "child_id",
-	"status": "status",
-}
-
-var ParentRelations = struct {
-	Child string
-}{
-	Child: "Child",
-}
-
-var ChildFieldMap = map[string]string{
-	"id": "id",
-	"createdAt": "created_at",
-	"name": "name",
-}
-`
-
-const stopBuncolgenFile = `
-package shipmentcol
-
-var StopFieldMap = map[string]string{
-	"id": "id",
-	"businessUnitId": "business_unit_id",
-	"organizationId": "organization_id",
-	"locationId": "location_id",
-	"status": "status",
-	"createdAt": "created_at",
-}
-
-var StopRelations = struct {
-	Location string
-}{
-	Location: "Location",
-}
-`
-
-const lowCoverageBuncolgenFile = `
-package shipmentcol
-
-var SecondFieldMap = map[string]string{
-	"id": "id",
+	ID string ` + "`json:\"id\" keel:\"id\"`" + `
 }
 `

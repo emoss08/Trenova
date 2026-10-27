@@ -46,6 +46,7 @@ import {
   Truck01Icon,
 } from "@trenova/shared/components/icons";
 import { workerRecordHref } from "@/lib/route-utils";
+import { recordPath } from "@/config/record-links";
 
 export function notificationDataString(
   notification: Pick<Notification, "data">,
@@ -116,6 +117,15 @@ export interface NotificationDescriptor {
 }
 
 const reportRunsLink = () => "/reports/runs";
+
+/** One report opens in the builder; several open the library, which badges each. */
+const needsAttentionLink = (notification: Notification) => {
+  const ids = notification.data?.definitionIds;
+  if (Array.isArray(ids) && ids.length === 1 && typeof ids[0] === "string" && ids[0]) {
+    return recordPath("report", ids[0]);
+  }
+  return "/reports";
+};
 
 const invoiceLink = (notification: Notification) => {
   const invoiceId = notificationRelatedId(notification, "invoiceId");
@@ -313,6 +323,14 @@ const EXACT_REGISTRY: Record<string, NotificationDescriptor> = {
     iconClass: "text-warning",
     tileClass: "bg-warning-subtle",
     getLink: () => "/reports",
+  },
+  report_needs_attention: {
+    label: "A report needs attention",
+    category: "Reports",
+    icon: FileAlertIcon,
+    iconClass: "text-warning",
+    tileClass: "bg-warning-subtle",
+    getLink: needsAttentionLink,
   },
   report_delivery_email_failed: {
     label: "A report email bounces",

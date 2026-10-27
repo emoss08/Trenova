@@ -2,25 +2,22 @@ package agentqualityrepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentqualitycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentquality/agentqualitydb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentqualityports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -30,6 +27,8 @@ const (
 	defaultScheduleTargetCap = 200
 	maxScheduleTargetCap     = 1000
 )
+
+var controlErrors = dberror.Mapping{Entity: controlEntity}
 
 type ControlParams struct {
 	fx.In
@@ -52,19 +51,13 @@ func NewControls(p ControlParams) agentqualityports.AgentQualityControlRepositor
 
 func (r *controlRepository) Get(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*agentquality.Control, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentquality.Control, error) {
-		entity := new(agentquality.Control)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentqualitycol.ControlScopeTenant(sq, tenantInfo)
-			}).
-			Limit(1).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, controlEntity)
+		entity, err := agentqualitydb.Controls.Cache(resultcache.Settings()...).
+			First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, controlErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -76,9 +69,6 @@ func (r *controlRepository) Upsert(
 	entity *agentquality.Control,
 ) (*agentquality.Control, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentquality.Control, error) {
-		cols := agentqualitycol.ControlColumns
-		dba := r.db.DBForContext(ctx)
-
 		existing, err := r.Get(ctx, pagination.TenantInfo{
 			OrgID: entity.OrganizationID,
 			BuID:  entity.BusinessUnitID,
@@ -87,10 +77,11 @@ func (r *controlRepository) Upsert(
 			return nil, err
 		}
 
+		c := agentqualitydb.Controls
 		if existing == nil {
 			entity.ID = pulid.Nil
 			entity.Version = 0
-			if _, err = dba.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			if err = c.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 				if dberror.IsUniqueConstraintViolation(err) {
 					return nil, dberror.CreateVersionMismatchError(controlEntity, "")
 				}
@@ -102,95 +93,93 @@ func (r *controlRepository) Upsert(
 			return entity, nil
 		}
 
-		ov := entity.Version
 		entity.ID = existing.ID
 		entity.CreatedAt = existing.CreatedAt
-		entity.Version = ov + 1
-		entity.UpdatedAt = timeutils.NowUnix()
-
-		res, err := dba.NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentqualitycol.ControlScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(cols.ID.Eq(), existing.ID).
-					Where(cols.Version.Eq(), ov)
-			}).
-			Set(cols.Enabled.Set(), entity.Enabled).
-			Set(cols.RunHourLocal.Set(), entity.RunHourLocal).
-			Set(cols.Timezone.Set(), bun.NullZero(entity.Timezone)).
-			Set(cols.MaxCasesPerAgent.Set(), entity.MaxCasesPerAgent).
-			Set(cols.NightlyBudgetUSD.Set(), entity.NightlyBudgetUSD).
-			Set(cols.MonthlyBudgetUSD.Set(), entity.MonthlyBudgetUSD).
-			Set(cols.JudgeEnabled.Set(), entity.JudgeEnabled).
-			Set(cols.JudgeSampleRate.Set(), entity.JudgeSampleRate).
-			Set(cols.RegressionThreshold.Set(), entity.RegressionThreshold).
-			Set(cols.MinCases.Set(), entity.MinCases).
-			Set(cols.ForceRerunDays.Set(), entity.ForceRerunDays).
-			Set(cols.UpdatedAt.Set(), entity.UpdatedAt).
-			Set(cols.Version.Set(), entity.Version).
-			Exec(ctx)
+		err = c.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			c.Enabled,
+			c.RunHourLocal,
+			c.Timezone,
+			c.MaxCasesPerAgent,
+			c.NightlyBudgetUSD,
+			c.MonthlyBudgetUSD,
+			c.JudgeEnabled,
+			c.JudgeSampleRate,
+			c.RegressionThreshold,
+			c.MinCases,
+			c.ForceRerunDays,
+		)
 		if err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, controlErrors.Map(err, existing.ID.String())
+			}
+
 			return nil, fmt.Errorf("update agent quality control: %w", err)
-		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("update agent quality control rows: %w", err)
-		}
-		if rows == 0 {
-			return nil, dberror.CreateVersionMismatchError(controlEntity, existing.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-func (r *controlRepository) scheduleTargetQuery(
-	dba bun.IDB,
-) *bun.SelectQuery {
-	org := tenantcol.OrganizationColumns
-	cases := agentqualitycol.EvalCaseColumns
+type scheduleTargetRow struct {
+	OrganizationID       pulid.ID
+	BusinessUnitID       pulid.ID
+	OrganizationName     string
+	OrganizationTimezone string
+	HasActiveCases       bool
+}
 
-	activeCases := dba.NewSelect().
-		Model((*agentquality.EvalCase)(nil)).
-		ColumnExpr("1").
-		Where(cases.OrganizationID.EqColumn(org.ID)).
-		Where(cases.BusinessUnitID.EqColumn(org.BusinessUnitID)).
-		Where(cases.Status.Eq(), agentquality.CaseStatusActive).
-		Limit(1)
+func (row *scheduleTargetRow) target() *agentqualityports.QualityScheduleTarget {
+	return &agentqualityports.QualityScheduleTarget{
+		OrganizationID:       row.OrganizationID,
+		BusinessUnitID:       row.BusinessUnitID,
+		OrganizationName:     row.OrganizationName,
+		OrganizationTimezone: row.OrganizationTimezone,
+		HasActiveCases:       row.HasActiveCases,
+	}
+}
 
-	return dba.NewSelect().
-		Model((*tenant.Organization)(nil)).
-		ColumnExpr(org.ID.As("organization_id")).
-		ColumnExpr(org.BusinessUnitID.As("business_unit_id")).
-		ColumnExpr(org.Name.As("organization_name")).
-		ColumnExpr(org.Timezone.As("organization_timezone")).
-		ColumnExpr("EXISTS (?) AS has_active_cases", activeCases)
+func scheduleTargetQuery(allTenants bool) *keel.Query[*tenant.Organization] {
+	org := tenantdb.Organizations
+	cases := agentqualitydb.EvalCases.Query()
+	q := org.Query()
+	if allTenants {
+		cases = cases.AllTenants()
+		q = q.AllTenants()
+	}
+	ec := agentqualitydb.EvalCases
+
+	return q.Pick(
+		org.ID,
+		org.BusinessUnitID,
+		org.Name,
+		org.Timezone,
+		keel.Exists(cases.Where(
+			ec.OrganizationID.EqCol(org.ID),
+			ec.BusinessUnitID.EqCol(org.BusinessUnitID),
+			ec.Status.Eq(agentquality.CaseStatusActive),
+		).Limit(1)),
+	)
 }
 
 func (r *controlRepository) ScheduleTarget(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
 ) (*agentqualityports.QualityScheduleTarget, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentqualityports.QualityScheduleTarget, error) {
-			org := tenantcol.OrganizationColumns
-			dba := r.db.DBForContext(ctx)
-
-			target := new(agentqualityports.QualityScheduleTarget)
-			if err := r.scheduleTargetQuery(dba).
-				Where(org.ID.Eq(), tenantInfo.OrgID).
-				Where(org.BusinessUnitID.Eq(), tenantInfo.BuID).
-				Limit(1).
-				Scan(ctx, target); err != nil {
+			org := tenantdb.Organizations
+			row, err := keel.IntoOne[scheduleTargetRow](ctx, r.db.Keel(ctx),
+				scheduleTargetQuery(false).Where(org.ID.Eq(tenantInfo.OrgID)).Limit(1))
+			if err != nil {
 				return nil, dberror.HandleNotFoundError(err, "Organization")
 			}
 
+			target := row.target()
 			control, err := r.Get(ctx, tenantInfo)
 			switch {
 			case err == nil:
@@ -213,35 +202,36 @@ func (r *controlRepository) ListScheduleTargets(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*agentqualityports.QualityScheduleTarget, error) {
-			org := tenantcol.OrganizationColumns
+			org := tenantdb.Organizations
 			limit := clampLimit(req.Limit, defaultScheduleTargetCap, maxScheduleTargetCap)
-			dba := r.db.DBForContext(ctx)
 
-			q := r.scheduleTargetQuery(dba)
-			if req.AfterOrganizationID.IsNotNil() {
-				q = q.Where(org.ID.Gt(), req.AfterOrganizationID)
+			rows, err := keel.Into[scheduleTargetRow](
+				ctx,
+				r.db.Keel(ctx),
+				scheduleTargetQuery(true).
+					Where(keel.When(req.AfterOrganizationID.IsNotNil(), org.ID.Gt(req.AfterOrganizationID))).
+					Order(org.ID.Asc()).
+					Limit(limit),
+			)
+			if err != nil {
+				return nil, fmt.Errorf("list organizations to schedule: %w", err)
 			}
 
-			targets := make([]*agentqualityports.QualityScheduleTarget, 0, limit)
-			if err := q.OrderExpr(org.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx, &targets); err != nil {
-				return nil, fmt.Errorf("list organizations to schedule: %w", err)
+			targets := make([]*agentqualityports.QualityScheduleTarget, 0, len(rows))
+			orgIDs := make([]pulid.ID, 0, len(rows))
+			for i := range rows {
+				targets = append(targets, rows[i].target())
+				orgIDs = append(orgIDs, rows[i].OrganizationID)
 			}
 			if len(targets) == 0 {
 				return targets, nil
 			}
 
-			orgIDs := make([]pulid.ID, 0, len(targets))
-			for _, target := range targets {
-				orgIDs = append(orgIDs, target.OrganizationID)
-			}
-
-			controls := make([]*agentquality.Control, 0, len(targets))
-			if err := dba.NewSelect().
-				Model(&controls).
-				Where(agentqualitycol.ControlColumns.OrganizationID.In(), bun.List(orgIDs)).
-				Scan(ctx); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			c := agentqualitydb.Controls
+			controls, err := c.AllTenants().
+				Where(c.OrganizationID.In(orgIDs...)).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, fmt.Errorf("read quality controls to schedule: %w", err)
 			}
 

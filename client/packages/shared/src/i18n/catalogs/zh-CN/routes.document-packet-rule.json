@@ -1,5 +1,6 @@
 {
   "Allow more than one document of this type": "允许此类型文档有多份",
+  "Allow multiple": "允许多条",
   "Are you sure you want to delete this packet rule? This action cannot be undone.": "确定要删除此封包规则吗？此操作无法撤销。",
   "Configure how this document requirement is enforced": "配置此文档要求的强制执行方式",
   "Configure which document types are required for each resource type": "配置各资源类型所需的文档类型",

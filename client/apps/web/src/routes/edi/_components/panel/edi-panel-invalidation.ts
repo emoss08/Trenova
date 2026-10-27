@@ -49,16 +49,6 @@ export async function invalidateEDIMessages(queryClient: QueryClient, messageId?
   ]);
 }
 
-export async function invalidateEDITestCases(queryClient: QueryClient, testCaseId?: string) {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: ["edi-test-case-list"] }),
-    queryClient.invalidateQueries({ queryKey: edi.testCases._def }),
-    ...(testCaseId
-      ? [queryClient.invalidateQueries({ queryKey: edi.testCase(testCaseId).queryKey })]
-      : []),
-  ]);
-}
-
 export async function invalidateEDIInboundFiles(queryClient: QueryClient, fileId?: string) {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ["edi-inbound-file-list"] }),

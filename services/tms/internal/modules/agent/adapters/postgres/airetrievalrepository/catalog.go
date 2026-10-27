@@ -2,18 +2,15 @@ package airetrievalrepository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/pgvector/pgvector-go"
-	"github.com/uptrace/bun"
 )
 
 const maxCatalogItemsPerCall = 2000
@@ -37,24 +34,26 @@ func validateCatalogRef(itemKey, contentHash string) error {
 	return validateContentHash(contentHash)
 }
 
-func catalogRefTuples(refs []airetrieval.CatalogItemRef) [][]any {
-	tuples := make([][]any, 0, len(refs))
+func catalogRefsMatch(refs []airetrieval.CatalogItemRef) keel.Pred {
+	c := airetrievaldb.CatalogEmbeddings
+	keys := make([]string, 0, len(refs))
+	hashes := make([]string, 0, len(refs))
 	for _, ref := range refs {
-		tuples = append(tuples, []any{ref.ItemKey, ref.ContentHash})
+		keys = append(keys, ref.ItemKey)
+		hashes = append(hashes, ref.ContentHash)
 	}
 
-	return tuples
+	return keel.Tuple(c.ItemKey, c.ContentHash).
+		InUnnest(keel.TextArray(keys), keel.TextArray(hashes))
 }
 
 func catalogScope(
 	modelKey string,
 	corpus airetrieval.CatalogCorpus,
-) func(*bun.SelectQuery) *bun.SelectQuery {
-	cols := airetrievalcol.CatalogEmbeddingColumns
+) *keel.Query[*airetrieval.CatalogEmbedding] {
+	c := airetrievaldb.CatalogEmbeddings
 
-	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.Where(cols.ModelKey.Eq(), modelKey).Where(cols.Corpus.Eq(), corpus)
-	}
+	return c.Where(c.ModelKey.Eq(modelKey), c.Corpus.Eq(corpus))
 }
 
 func (r *repository) GetCatalogEmbeddings(
@@ -83,18 +82,12 @@ func (r *repository) GetCatalogEmbeddings(
 				return []*airetrieval.CatalogEmbedding{}, nil
 			}
 
-			cols := airetrievalcol.CatalogEmbeddingColumns
-			entities := make([]*airetrieval.CatalogEmbedding, 0, len(req.Items))
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(catalogScope(req.ModelKey, req.Corpus)).
-				Where(
-					buncolgen.Expr("({0}, {1}) IN ?", cols.ItemKey, cols.ContentHash),
-					bun.Tuple(catalogRefTuples(req.Items)),
-				).
-				OrderExpr(cols.ItemKey.OrderAsc()).
-				Scan(ctx); err != nil {
+			c := airetrievaldb.CatalogEmbeddings
+			entities, err := catalogScope(req.ModelKey, req.Corpus).
+				Where(catalogRefsMatch(req.Items)).
+				Order(c.ItemKey.Asc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
 				return nil, fmt.Errorf("read catalog embeddings: %w", err)
 			}
 
@@ -153,16 +146,14 @@ func (r *repository) PutCatalogEmbeddings(
 			return 0, nil
 		}
 
-		res, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&rows).
-			On(conflictTarget(airetrievalcol.CatalogEmbeddingTable) + " DO NOTHING").
-			Exec(ctx)
+		c := airetrievaldb.CatalogEmbeddings
+		written, err := c.CreateOrSkip(ctx, r.db.Keel(ctx), rows,
+			c.ModelKey, c.Corpus, c.ItemKey, c.ContentHash)
 		if err != nil {
 			return 0, fmt.Errorf("write catalog embeddings: %w", err)
 		}
 
-		return rowsAffected(res)
+		return int(written), nil
 	})
 }
 
@@ -183,33 +174,16 @@ func (r *repository) PruneCatalogEmbeddings(
 			return 0, err
 		}
 
-		cols := airetrievalcol.CatalogEmbeddingColumns
-		q := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*airetrieval.CatalogEmbedding)(nil)).
-			Where(cols.ModelKey.Eq(), req.ModelKey).
-			Where(cols.Corpus.Eq(), req.Corpus)
+		q := catalogScope(req.ModelKey, req.Corpus)
 		if len(req.Keep) > 0 {
-			q = q.Where(
-				buncolgen.Expr("({0}, {1}) NOT IN ?", cols.ItemKey, cols.ContentHash),
-				bun.Tuple(catalogRefTuples(req.Keep)),
-			)
+			q.Where(keel.Not(catalogRefsMatch(req.Keep)))
 		}
 
-		res, err := q.Exec(ctx)
+		removed, err := q.Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("prune catalog embeddings: %w", err)
 		}
 
-		return rowsAffected(res)
+		return int(removed), nil
 	})
-}
-
-func rowsAffected(res sql.Result) (int, error) {
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return 0, fmt.Errorf("read affected rows: %w", err)
-	}
-
-	return int(affected), nil
 }

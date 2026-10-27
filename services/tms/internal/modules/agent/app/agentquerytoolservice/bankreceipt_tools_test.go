@@ -7,9 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
-	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -70,23 +68,6 @@ func (f *fakeWorkItems) GetActiveByReceiptID(
 	}
 
 	return nil, errortypes.NewNotFoundError("bank receipt work item not found")
-}
-
-type fakePayments struct {
-	captured *customerpaymentports.ListCustomerPaymentsRequest
-	items    []*customerpayment.Payment
-}
-
-func (f *fakePayments) List(
-	_ context.Context,
-	req *customerpaymentports.ListCustomerPaymentsRequest,
-) (*pagination.ListResult[*customerpayment.Payment], error) {
-	f.captured = req
-
-	return &pagination.ListResult[*customerpayment.Payment]{
-		Items: f.items,
-		Total: len(f.items),
-	}, nil
 }
 
 func exceptionReceipt(reference string) *bankreceipt.BankReceipt {
@@ -221,58 +202,4 @@ func TestGetBankReceipt_SkipsCandidatesForAMatchedReceiptAndGuidesWhenThereAreNo
 		Query(t.Context(), testParams(map[string]any{"bankReceiptId": bare.ID.String()}))
 	require.NoError(t, err)
 	assert.Contains(t, result.(*bankReceiptDetailRow).Note, "receivable_list_customer_payments")
-}
-
-func TestListCustomerPayments_DefaultsToPostedAndPassesTheFiltersThrough(t *testing.T) {
-	t.Parallel()
-
-	customerID := pulid.MustNew("cus_")
-	invoiceID := pulid.MustNew("inv_")
-	payments := &fakePayments{items: []*customerpayment.Payment{{
-		ID:                   pulid.MustNew("cpay_"),
-		CustomerID:           customerID,
-		PaymentDate:          1_780_000_000,
-		AmountMinor:          125_000,
-		AppliedAmountMinor:   100_000,
-		UnappliedAmountMinor: 25_000,
-		Status:               customerpayment.StatusPosted,
-		PaymentMethod:        customerpayment.MethodACH,
-		ReferenceNumber:      "ACH4471",
-		Applications: []*customerpayment.Application{
-			{InvoiceID: invoiceID, AppliedAmountMinor: 100_000},
-		},
-	}}}
-	tool := newListCustomerPaymentsTool(payments)
-
-	result, err := tool.Query(t.Context(), testParams(map[string]any{
-		"query":      "4471",
-		"customerId": customerID.String(),
-		"limit":      10,
-	}))
-	require.NoError(t, err)
-
-	require.NotNil(t, payments.captured)
-	assert.Equal(t, customerpayment.StatusPosted, payments.captured.Status)
-	assert.Equal(t, customerID, payments.captured.CustomerID)
-	assert.Equal(t, "4471", payments.captured.Filter.Query)
-	assert.Equal(t, 10, payments.captured.Filter.Pagination.Limit)
-
-	outcome := result.(searchOutcome)
-	assert.Contains(t, outcome.SearchedFor, "status Posted")
-	rows := outcome.Items.([]customerPaymentRow)
-	require.Len(t, rows, 1)
-	assert.Equal(t, "1250.00", rows[0].Amount)
-	assert.Equal(t, "250.00", rows[0].UnappliedAmount)
-	assert.Equal(t, "USD", rows[0].Currency)
-	require.Len(t, rows[0].Applications, 1)
-	assert.Equal(t, invoiceID.String(), rows[0].Applications[0].InvoiceID)
-	assert.Equal(t, "1000.00", rows[0].Applications[0].Amount)
-}
-
-func TestListCustomerPayments_RefusesAnUnknownStatus(t *testing.T) {
-	t.Parallel()
-
-	_, err := newListCustomerPaymentsTool(&fakePayments{}).
-		Query(t.Context(), testParams(map[string]any{"status": "Pending"}))
-	require.Error(t, err)
 }

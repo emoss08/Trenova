@@ -5,73 +5,97 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/addressutils"
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var digitsPattern = regexp.MustCompile(`^[0-9]*$`)
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Customer)(nil)
 	_ validationframework.TenantedEntity = (*Customer)(nil)
 	_ domaintypes.PostgresSearchable     = (*Customer)(nil)
 )
 
+// Customers who tender freight
 type Customer struct {
-	bun.BaseModel `bun:"table:customers,alias:cus" json:"-"`
+	keel.Table `keel:"customers,report=Parties"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID                      pulid.ID               `json:"id"                      keel:"id,pk,autoid:cus_"`
+	BusinessUnitID          pulid.ID               `json:"businessUnitId"          keel:"business_unit_id,pk,tenant"`
+	OrganizationID          pulid.ID               `json:"organizationId"          keel:"organization_id,pk,tenant"`
+	StateID                 pulid.ID               `json:"stateId"                 keel:"state_id"`
+	Status                  domaintypes.Status     `json:"status"                  keel:"status"`
+	Code                    string                 `json:"code"                    keel:"code"`
+	Name                    string                 `json:"name"                    keel:"name,nullzero"`
+	AddressLine1            string                 `json:"addressLine1"            keel:"address_line_1,nullzero"`
+	AddressLine2            string                 `json:"addressLine2"            keel:"address_line_2,nullzero"`
+	City                    string                 `json:"city"                    keel:"city,nullzero"`
+	PostalCode              string                 `json:"postalCode"              keel:"postal_code"`
+	IsGeocoded              bool                   `json:"isGeocoded"              keel:"is_geocoded"`
+	Longitude               *float64               `json:"longitude"               keel:"longitude,dimension"`
+	Latitude                *float64               `json:"latitude"                keel:"latitude,dimension"`
+	PlaceID                 string                 `json:"placeId"                 keel:"place_id,nullzero"`
+	ExternalID              string                 `json:"externalId"              keel:"external_id,nullzero"`
+	DOTNumber               string                 `json:"dotNumber"               keel:"dot_number,nullzero"`
+	MCNumber                string                 `json:"mcNumber"                keel:"mc_number,nullzero"`
+	StatusUpdatePreference  StatusUpdatePreference `json:"statusUpdatePreference"  keel:"status_update_preference"`
+	StatusUpdateRecipients  string                 `json:"statusUpdateRecipients"  keel:"status_update_recipients,nullzero"`
+	BrokerVettingEnabled    bool                   `json:"brokerVettingEnabled"    keel:"broker_vetting_enabled"`
+	CheckCallIntervalHours  *int16                 `json:"checkCallIntervalHours"  keel:"check_call_interval_hours,dimension"`
+	EtaRiskThresholdMinutes *int16                 `json:"etaRiskThresholdMinutes" keel:"eta_risk_threshold_minutes,dimension"`
+	Geom                    *postgis.Point         `json:"-"                       keel:"geom,readonly"`
+	AllowConsolidation      bool                   `json:"allowConsolidation"      keel:"allow_consolidation"`
+	ExclusiveConsolidation  bool                   `json:"exclusiveConsolidation"  keel:"exclusive_consolidation"`
+	ConsolidationPriority   int                    `json:"consolidationPriority"   keel:"consolidation_priority,dimension"`
+	SearchVector            string                 `json:"-"                       keel:"search_vector,tsvector,readonly,noselect"`
+	Rank                    string                 `json:"-"                       keel:"rank,computed"`
+	Version                 int64                  `json:"version"                 keel:"version,version"`
+	CreatedAt               int64                  `json:"createdAt"               keel:"created_at,autocreate"`
+	UpdatedAt               int64                  `json:"updatedAt"               keel:"updated_at,autoupdate"`
 
-	ID                      pulid.ID               `json:"id"                      bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID          pulid.ID               `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID          pulid.ID               `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	StateID                 pulid.ID               `json:"stateId"                 bun:"state_id,type:VARCHAR(100),notnull"`
-	Status                  domaintypes.Status     `json:"status"                  bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code                    string                 `json:"code"                    bun:"code,type:VARCHAR(10),notnull"`
-	Name                    string                 `json:"name"                    bun:"name,type:VARCHAR(255),nullzero"`
-	AddressLine1            string                 `json:"addressLine1"            bun:"address_line_1,type:VARCHAR(150),nullzero"`
-	AddressLine2            string                 `json:"addressLine2"            bun:"address_line_2,type:VARCHAR(150),nullzero"`
-	City                    string                 `json:"city"                    bun:"city,type:VARCHAR(100),nullzero"`
-	PostalCode              string                 `json:"postalCode"              bun:"postal_code,type:us_postal_code,notnull"`
-	IsGeocoded              bool                   `json:"isGeocoded"              bun:"is_geocoded,type:BOOLEAN"`
-	Longitude               *float64               `json:"longitude"               bun:"longitude,type:FLOAT,nullzero"`
-	Latitude                *float64               `json:"latitude"                bun:"latitude,type:FLOAT,nullzero"`
-	PlaceID                 string                 `json:"placeId"                 bun:"place_id,type:TEXT,nullzero"`
-	ExternalID              string                 `json:"externalId"              bun:"external_id,type:TEXT,nullzero"`
-	DOTNumber               string                 `json:"dotNumber"               bun:"dot_number,type:VARCHAR(12),nullzero"`
-	MCNumber                string                 `json:"mcNumber"                bun:"mc_number,type:VARCHAR(12),nullzero"`
-	StatusUpdatePreference  StatusUpdatePreference `json:"statusUpdatePreference"  bun:"status_update_preference,type:VARCHAR(30),notnull,default:'None'"`
-	StatusUpdateRecipients  string                 `json:"statusUpdateRecipients"  bun:"status_update_recipients,type:TEXT,nullzero"`
-	BrokerVettingEnabled    bool                   `json:"brokerVettingEnabled"    bun:"broker_vetting_enabled,type:BOOLEAN,notnull"`
-	CheckCallIntervalHours  *int16                 `json:"checkCallIntervalHours"  bun:"check_call_interval_hours,type:SMALLINT,nullzero"`
-	EtaRiskThresholdMinutes *int16                 `json:"etaRiskThresholdMinutes" bun:"eta_risk_threshold_minutes,type:SMALLINT,nullzero"`
-	Geom                    *postgis.Point         `json:"-"                       bun:"geom,type:geography,scanonly"`
-	AllowConsolidation      bool                   `json:"allowConsolidation"      bun:"allow_consolidation,type:BOOLEAN"`
-	ExclusiveConsolidation  bool                   `json:"exclusiveConsolidation"  bun:"exclusive_consolidation,type:BOOLEAN"`
-	ConsolidationPriority   int                    `json:"consolidationPriority"   bun:"consolidation_priority,type:INTEGER,default:1"`
-	SearchVector            string                 `json:"-"                       bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                    string                 `json:"-"                       bun:"rank,type:VARCHAR(100),scanonly"`
-	Version                 int64                  `json:"version"                 bun:"version,type:BIGINT"`
-	CreatedAt               int64                  `json:"createdAt"               bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64                  `json:"updatedAt"               bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	BusinessUnit   *tenant.BusinessUnit    `json:"businessUnit,omitempty"`
+	Organization   *tenant.Organization    `json:"organization,omitempty"`
+	BillingProfile *CustomerBillingProfile `json:"billingProfile,omitempty" keel:"one:customer_id,noreport"`
+	EmailProfile   *CustomerEmailProfile   `json:"emailProfile,omitempty"   keel:"one:customer_id,noreport"`
+	State          *usstate.UsState        `json:"state,omitempty"          keel:"belongs:state_id,noreport"`
+}
 
-	// Relationships
-	BusinessUnit   *tenant.BusinessUnit    `json:"businessUnit,omitempty"   bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization   *tenant.Organization    `json:"organization,omitempty"   bun:"rel:belongs-to,join:organization_id=id"`
-	BillingProfile *CustomerBillingProfile `json:"billingProfile,omitempty" bun:"rel:has-one,join:id=customer_id"`
-	EmailProfile   *CustomerEmailProfile   `json:"emailProfile,omitempty"   bun:"rel:has-one,join:id=customer_id"`
-	State          *usstate.UsState        `json:"state,omitempty"          bun:"rel:belongs-to,join:state_id=id"`
+func (c *Customer) BeforeUpdate(_ context.Context) error {
+	// An older row, or a request that never knew about the field, is a
+	// customer who has not opted in — which is the safe reading.
+	if !c.StatusUpdatePreference.IsValid() {
+		c.StatusUpdatePreference = StatusUpdateNone
+	}
+
+	return nil
+}
+
+func (c *Customer) BeforeCreate(_ context.Context) error {
+	// An older row, or a request that never knew about the field, is a
+	// customer who has not opted in — which is the safe reading.
+	if !c.StatusUpdatePreference.IsValid() {
+		c.StatusUpdatePreference = StatusUpdateNone
+	}
+	if c.Status == "" {
+		c.Status = domaintypes.StatusActive
+	}
+	if c.StatusUpdatePreference == "" {
+		c.StatusUpdatePreference = StatusUpdateNone
+	}
+	if c.ConsolidationPriority == 0 {
+		c.ConsolidationPriority = 1
+	}
+
+	return nil
 }
 
 // NormalizeStatusUpdates reads an unset preference as the customer not
@@ -285,24 +309,9 @@ func (c *Customer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 	}
 }
 
-func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	// An older row, or a request that never knew about the field, is a
-	// customer who has not opted in — which is the safe reading.
+func (c *Customer) BeforeSave(context.Context) error {
 	if !c.StatusUpdatePreference.IsValid() {
 		c.StatusUpdatePreference = StatusUpdateNone
-	}
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("cus_")
-		}
-
-		c.CreatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
 	}
 
 	return nil
@@ -317,4 +326,13 @@ func (c *Customer) SamePartyDetails(other *Customer) bool {
 		c.City == other.City &&
 		c.StateID == other.StateID &&
 		c.PostalCode == other.PostalCode
+}
+
+func (Customer) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "idx_customers_code",
+			Message: "Customer with this code already exists in your organization",
+		},
+	}
 }

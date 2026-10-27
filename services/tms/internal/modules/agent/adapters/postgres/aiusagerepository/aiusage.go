@@ -4,18 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/aiusagecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiusage/aiusagedb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -38,7 +37,7 @@ func New(p Params) aiusageports.AIUsageRepository {
 
 func (r *repository) Create(ctx context.Context, record *aiusage.AIUsageRecord) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(record).Exec(ctx); err != nil {
+		if err := aiusagedb.AIUsageRecords.Create(ctx, r.db.Keel(ctx), record); err != nil {
 			r.l.Error("failed to record ai usage", zap.Error(err))
 			return fmt.Errorf("record ai usage: %w", err)
 		}
@@ -47,23 +46,23 @@ func (r *repository) Create(ctx context.Context, record *aiusage.AIUsageRecord) 
 	})
 }
 
-// totalsRow is the shape both aggregate queries scan into. Percentiles are
-// taken over successful calls only, in SQL, because a failure refused in a
-// millisecond is not a fast answer and would drag the median down.
+// totalsRow is the shape every aggregate query decodes into: up to three
+// grouping keys, then the totals. Percentiles are taken over successful calls
+// only, in SQL, because a failure refused in a millisecond is not a fast
+// answer and would drag the median down.
 type totalsRow struct {
-	Feature         string  `bun:"feature"`
-	ProviderID      string  `bun:"provider_id"`
-	ProviderName    string  `bun:"provider_name"`
-	Model           string  `bun:"model"`
-	Calls           int     `bun:"calls"`
-	Failed          int     `bun:"failed"`
-	InputTokens     int64   `bun:"input_tokens"`
-	OutputTokens    int64   `bun:"output_tokens"`
-	ReasoningTokens int64   `bun:"reasoning_tokens"`
-	CostUSD         string  `bun:"cost_usd"`
-	PricedCalls     int     `bun:"priced_calls"`
-	LatencyP50      float64 `bun:"latency_p50"`
-	LatencyP95      float64 `bun:"latency_p95"`
+	First           string
+	Second          string
+	Third           string
+	Calls           int
+	Failed          int
+	InputTokens     int64
+	OutputTokens    int64
+	ReasoningTokens int64
+	CostUSD         string
+	PricedCalls     int
+	LatencyP50      float64
+	LatencyP95      float64
 }
 
 func (row *totalsRow) totals() aiusageports.AIUsageTotals {
@@ -85,69 +84,72 @@ func (row *totalsRow) totals() aiusageports.AIUsageTotals {
 	}
 }
 
-const aggregateColumns = `
-	COUNT(*) AS calls,
-	COUNT(*) FILTER (WHERE NOT aiu.succeeded) AS failed,
-	COALESCE(SUM(aiu.input_tokens), 0) AS input_tokens,
-	COALESCE(SUM(aiu.output_tokens), 0) AS output_tokens,
-	COALESCE(SUM(aiu.reasoning_tokens), 0) AS reasoning_tokens,
-	COALESCE(SUM(aiu.cost_usd), 0)::text AS cost_usd,
-	COUNT(aiu.cost_usd) AS priced_calls,
-	COALESCE(percentile_cont(0.5) WITHIN GROUP (ORDER BY aiu.latency_ms) FILTER (WHERE ` + waitedFor + `), 0) AS latency_p50,
-	COALESCE(percentile_cont(0.95) WITHIN GROUP (ORDER BY aiu.latency_ms) FILTER (WHERE ` + waitedFor + `), 0) AS latency_p95`
+func latencyPercentile(fraction float64) keel.Expr {
+	u := aiusagedb.AIUsageRecords
 
-const waitedFor = `aiu.succeeded AND aiu.surface <> '` + string(aiusage.SurfaceBackground) + `'`
+	return keel.CastFloat64(keel.Float64Of(
+		keel.PercentileCont(fraction, u.LatencyMs.Asc()).Filter(keel.And(
+			keel.BoolOf(u.Succeeded),
+			u.Surface.Ne(aiusage.SurfaceBackground),
+		)),
+	).Coalesce(0))
+}
+
+func totalsPicks(keys ...keel.Expr) []keel.Expr {
+	u := aiusagedb.AIUsageRecords
+	picks := make([]keel.Expr, 0, 12)
+	picks = append(picks, keys...)
+	for len(picks) < 3 {
+		picks = append(picks, keel.Text(""))
+	}
+
+	return append(picks,
+		keel.Count(),
+		keel.Count().Filter(u.Succeeded.IsFalse()),
+		keel.NumericOf(u.InputTokens.Sum()).Coalesce(0),
+		keel.NumericOf(u.OutputTokens.Sum()).Coalesce(0),
+		keel.NumericOf(u.ReasoningTokens.Sum()).Coalesce(0),
+		keel.CastText(keel.NumericOf(u.CostUSD.Sum()).Coalesce(0)),
+		u.CostUSD.Count(),
+		latencyPercentile(0.5),
+		latencyPercentile(0.95),
+	)
+}
 
 func (r *repository) Summary(
 	ctx context.Context,
 	req aiusageports.AIUsageSummaryRequest,
 ) (*aiusageports.AIUsageSummaryRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageSummaryRow, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-		db := r.db.DBForContext(ctx)
+		u := aiusagedb.AIUsageRecords
+		provider := aiproviderdb.Providers.As("usage_provider")
+		since := u.CreatedAt.Gte(req.Since)
 
-		var total totalsRow
-		if err := db.NewSelect().
-			Model((*aiusage.AIUsageRecord)(nil)).
-			ColumnExpr(aggregateColumns).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			Scan(ctx, &total); err != nil {
+		var (
+			total      totalsRow
+			byProvider []totalsRow
+			byFeature  []totalsRow
+		)
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.IntoValue(u.Where(since).Pick(totalsPicks()...), &total),
+			keel.IntoSlice(u.
+				LeftJoin(provider, provider.ID.EqCol(u.ProviderID)).
+				Where(since).
+				Group(u.ProviderID, provider.Name, u.Model).
+				Pick(totalsPicks(
+					u.ProviderID.Coalesce(""),
+					provider.Name.Coalesce(""),
+					u.Model,
+				)...).
+				Order(keel.Count().Desc()), &byProvider),
+			keel.IntoSlice(u.
+				Where(since).
+				Group(u.Feature).
+				Pick(totalsPicks(u.Feature.Coalesce(""))...).
+				Order(keel.Count().Desc()), &byFeature),
+		)
+		if err != nil {
 			return nil, fmt.Errorf("summarise ai usage: %w", err)
-		}
-
-		var byProvider []totalsRow
-		if err := db.NewSelect().
-			Model((*aiusage.AIUsageRecord)(nil)).
-			ColumnExpr("COALESCE(aiu.provider_id, '') AS provider_id").
-			ColumnExpr("COALESCE(aiprv.name, '') AS provider_name").
-			ColumnExpr("aiu.model AS model").
-			ColumnExpr(aggregateColumns).
-			Join("LEFT JOIN ai_providers AS aiprv ON aiprv.id = aiu.provider_id "+
-				"AND aiprv.organization_id = aiu.organization_id "+
-				"AND aiprv.business_unit_id = aiu.business_unit_id").
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			GroupExpr("aiu.provider_id, aiprv.name, aiu.model").
-			OrderExpr("calls DESC").
-			Scan(ctx, &byProvider); err != nil {
-			return nil, fmt.Errorf("summarise ai usage by provider: %w", err)
-		}
-
-		var byFeature []totalsRow
-		if err := db.NewSelect().
-			Model((*aiusage.AIUsageRecord)(nil)).
-			ColumnExpr("COALESCE("+cols.Feature.Qualified()+", '') AS feature").
-			ColumnExpr(aggregateColumns).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			GroupExpr(cols.Feature.Qualified()).
-			OrderExpr("calls DESC").
-			Scan(ctx, &byFeature); err != nil {
-			return nil, fmt.Errorf("summarise ai usage by feature: %w", err)
 		}
 
 		summary := &aiusageports.AIUsageSummaryRow{
@@ -158,19 +160,19 @@ func (r *repository) Summary(
 		for i := range byFeature {
 			row := &byFeature[i]
 			summary.ByFeature = append(summary.ByFeature, aiusageports.AIUsageFeatureTotals{
-				Feature:       aiusage.Feature(row.Feature),
+				Feature:       aiusage.Feature(row.First),
 				AIUsageTotals: row.totals(),
 			})
 		}
 		for i := range byProvider {
 			row := &byProvider[i]
 			slice := aiusageports.AIUsageProviderTotals{
-				ProviderName:  row.ProviderName,
-				Model:         row.Model,
+				ProviderName:  row.Second,
+				Model:         row.Third,
 				AIUsageTotals: row.totals(),
 			}
-			if row.ProviderID != "" {
-				slice.ProviderID = pulidFrom(row.ProviderID)
+			if row.First != "" {
+				slice.ProviderID = pulidFrom(row.First)
 			}
 			summary.ByProvider = append(summary.ByProvider, slice)
 		}
@@ -184,29 +186,27 @@ func (r *repository) Daily(
 	req aiusageports.AIUsageDailyQuery,
 ) ([]aiusageports.AIUsageDayTotals, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]aiusageports.AIUsageDayTotals, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-
-		var rows []dayRow
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model((*aiusage.AIUsageRecord)(nil)).
-			ColumnExpr("to_char(to_timestamp("+cols.CreatedAt.Qualified()+") AT TIME ZONE ?, 'YYYY-MM-DD') AS day", req.Timezone).
-			ColumnExpr(aggregateColumns).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.CreatedAt.Gte(), req.Since)
+		u := aiusagedb.AIUsageRecords
+		q := u.Where(u.CreatedAt.Gte(req.Since))
 		if req.ProviderID.IsNotNil() {
-			q = q.Where(cols.ProviderID.Eq(), req.ProviderID)
+			q.Where(u.ProviderID.Eq(req.ProviderID))
 		}
-		if err := q.GroupExpr("day").
-			OrderExpr("day ASC").
-			Scan(ctx, &rows); err != nil {
+
+		day := keel.ToTimestamp(u.CreatedAt).
+			AtTimeZone(keel.Text(req.Timezone)).
+			ToChar("YYYY-MM-DD")
+		rows, err := keel.Into[totalsRow](ctx, r.db.Keel(ctx), q.
+			Group(day).
+			Pick(totalsPicks(day)...).
+			Order(day.Asc()))
+		if err != nil {
 			return nil, fmt.Errorf("summarise ai usage by day: %w", err)
 		}
 
 		days := make([]aiusageports.AIUsageDayTotals, 0, len(rows))
 		for idx := range rows {
 			days = append(days, aiusageports.AIUsageDayTotals{
-				Day:           rows[idx].Day,
+				Day:           rows[idx].First,
 				AIUsageTotals: rows[idx].totals(),
 			})
 		}
@@ -214,9 +214,14 @@ func (r *repository) Daily(
 	})
 }
 
-type dayRow struct {
-	Day string `bun:"day"`
-	totalsRow
+type failureRow struct {
+	ProviderID   string
+	ProviderName string
+	Model        string
+	Task         string
+	ErrorClass   string
+	ErrorMessage string
+	CreatedAt    int64
 }
 
 // RecentFailures lists the newest failed attempts in a window, with the
@@ -230,32 +235,28 @@ func (r *repository) RecentFailures(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]aiusageports.AIUsageFailureRow, error) {
-			cols := aiusagecol.AIUsageRecordColumns
 			limit := req.Limit
 			if limit <= 0 {
 				limit = 5
 			}
 
-			var rows []failureRow
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*aiusage.AIUsageRecord)(nil)).
-				ColumnExpr("COALESCE(aiu.provider_id, '') AS provider_id").
-				ColumnExpr("COALESCE(aiprv.name, '') AS provider_name").
-				ColumnExpr("aiu.model AS model").
-				ColumnExpr("aiu.task AS task").
-				ColumnExpr("COALESCE(aiu.error_class, '') AS error_class").
-				ColumnExpr("COALESCE(aiu.error_message, '') AS error_message").
-				ColumnExpr("aiu.created_at AS created_at").
-				Join("LEFT JOIN ai_providers AS aiprv ON aiprv.id = aiu.provider_id "+
-					"AND aiprv.organization_id = aiu.organization_id "+
-					"AND aiprv.business_unit_id = aiu.business_unit_id").
-				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Where(cols.CreatedAt.Gte(), req.Since).
-				Where(cols.Succeeded.Eq(), false).
-				OrderExpr("aiu.created_at DESC").
-				Limit(int64(limit)).
-				Scan(ctx, &rows); err != nil {
+			u := aiusagedb.AIUsageRecords
+			provider := aiproviderdb.Providers.As("usage_provider")
+			rows, err := keel.Into[failureRow](ctx, r.db.Keel(ctx), u.
+				LeftJoin(provider, provider.ID.EqCol(u.ProviderID)).
+				Where(u.CreatedAt.Gte(req.Since), u.Succeeded.IsFalse()).
+				Pick(
+					u.ProviderID.Coalesce(""),
+					provider.Name.Coalesce(""),
+					u.Model,
+					u.Task,
+					u.ErrorClass.Coalesce(""),
+					u.ErrorMessage.Coalesce(""),
+					u.CreatedAt,
+				).
+				Order(u.CreatedAt.Desc()).
+				Limit(limit))
+			if err != nil {
 				return nil, fmt.Errorf("list ai usage failures: %w", err)
 			}
 
@@ -281,59 +282,29 @@ func (r *repository) RecentFailures(
 	)
 }
 
-type failureRow struct {
-	ProviderID   string `bun:"provider_id"`
-	ProviderName string `bun:"provider_name"`
-	Model        string `bun:"model"`
-	Task         string `bun:"task"`
-	ErrorClass   string `bun:"error_class"`
-	ErrorMessage string `bun:"error_message"`
-	CreatedAt    int64  `bun:"created_at"`
-}
-
-// CostByDefinition sums what one agent's calls cost since an instant. Calls
-// without a price are counted, not summed: a budget check that read them as
-// free would let an agent on an unpriced provider run without end.
-func (r *repository) CostByDefinition(
-	ctx context.Context,
-	req aiusageports.AIUsageCostRequest,
-) (*aiusageports.AIUsageCost, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-
-		q := costSums(r.db.DBForContext(ctx).NewSelect()).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			Where(cols.Surface.NotEq(), aiusage.SurfaceEvaluation)
-
-		return scanCost(ctx, q, "ai usage cost")
-	})
-}
-
 type costRow struct {
-	CostUSD       string `bun:"cost_usd"`
-	Calls         int    `bun:"calls"`
-	UnpricedCalls int    `bun:"unpriced_calls"`
+	CostUSD       string
+	Calls         int
+	UnpricedCalls int
 }
 
-func costSums(q *bun.SelectQuery) *bun.SelectQuery {
-	cost := aiusagecol.AIUsageRecordColumns.CostUSD.Qualified()
+func costSums(q *keel.Query[*aiusage.AIUsageRecord]) *keel.Query[*aiusage.AIUsageRecord] {
+	u := aiusagedb.AIUsageRecords
 
-	return q.Model((*aiusage.AIUsageRecord)(nil)).
-		ColumnExpr("COALESCE(SUM(" + cost + "), 0)::text AS cost_usd").
-		ColumnExpr("COUNT(*) AS calls").
-		ColumnExpr("COUNT(*) FILTER (WHERE " + cost + " IS NULL) AS unpriced_calls")
+	return q.Pick(
+		keel.CastText(keel.NumericOf(u.CostUSD.Sum()).Coalesce(0)),
+		keel.Count(),
+		keel.Count().Filter(u.CostUSD.IsNull()),
+	)
 }
 
-func scanCost(
+func (r *repository) scanCost(
 	ctx context.Context,
-	q *bun.SelectQuery,
+	q *keel.Query[*aiusage.AIUsageRecord],
 	what string,
 ) (*aiusageports.AIUsageCost, error) {
-	var row costRow
-	if err := q.Scan(ctx, &row); err != nil {
+	row, err := keel.IntoOne[costRow](ctx, r.db.Keel(ctx), costSums(q))
+	if err != nil {
 		return nil, fmt.Errorf("sum %s: %w", what, err)
 	}
 
@@ -349,22 +320,36 @@ func scanCost(
 	}, nil
 }
 
+// CostByDefinition sums what one agent's calls cost since an instant. Calls
+// without a price are counted, not summed: a budget check that read them as
+// free would let an agent on an unpriced provider run without end.
+func (r *repository) CostByDefinition(
+	ctx context.Context,
+	req aiusageports.AIUsageCostRequest,
+) (*aiusageports.AIUsageCost, error) {
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
+		u := aiusagedb.AIUsageRecords
+
+		return r.scanCost(ctx, u.Where(
+			u.AgentDefinitionID.Eq(req.DefinitionID),
+			u.CreatedAt.Gte(req.Since),
+			u.Surface.Ne(aiusage.SurfaceEvaluation),
+		), "ai usage cost")
+	})
+}
+
 func (r *repository) SurfaceCost(
 	ctx context.Context,
 	req aiusageports.AIUsageSurfaceCostRequest,
 ) (*aiusageports.AIUsageCost, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-
-		q := costSums(r.db.DBForContext(ctx).NewSelect()).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.Surface.Eq(), req.Surface)
+		u := aiusagedb.AIUsageRecords
+		q := u.Where(u.Surface.Eq(req.Surface))
 		if req.Since > 0 {
-			q = q.Where(cols.CreatedAt.Gte(), req.Since)
+			q.Where(u.CreatedAt.Gte(req.Since))
 		}
 
-		return scanCost(ctx, q, string(req.Surface)+" cost")
+		return r.scanCost(ctx, q, string(req.Surface)+" cost")
 	})
 }
 
@@ -373,37 +358,26 @@ func (r *repository) EvaluationCost(
 	req aiusageports.AIUsageEvaluationCostRequest,
 ) (*aiusageports.AIUsageCost, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*aiusageports.AIUsageCost, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-		evals := agentcol.EvaluationColumns
-		dba := r.db.DBForContext(ctx)
-
-		q := costSums(dba.NewSelect()).
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.Surface.Eq(), aiusage.SurfaceEvaluation)
+		u := aiusagedb.AIUsageRecords
+		q := u.Where(u.Surface.Eq(aiusage.SurfaceEvaluation))
 		if req.Since > 0 {
-			q = q.Where(cols.CreatedAt.Gte(), req.Since)
+			q.Where(u.CreatedAt.Gte(req.Since))
 		}
 		if req.SuiteRunID.IsNotNil() {
-			replays := dba.NewSelect().
-				Model((*agent.Evaluation)(nil)).
-				ColumnExpr(evals.ID.Qualified()).
-				Where(evals.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(evals.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Where(evals.SuiteRunID.Eq(), req.SuiteRunID)
-			q = q.Where(cols.RunID.In(), replays)
+			e := agentdb.Evaluations
+			q.Where(u.RunID.InQuery(e.Where(e.SuiteRunID.Eq(req.SuiteRunID)).Pick(e.ID)))
 		}
 
-		return scanCost(ctx, q, "evaluation cost")
+		return r.scanCost(ctx, q, "evaluation cost")
 	})
 }
 
 type providerTaskRow struct {
-	ProviderID string `bun:"provider_id"`
-	Task       string `bun:"task"`
-	Calls      int    `bun:"calls"`
-	Failed     int    `bun:"failed"`
-	Rescued    int    `bun:"rescued"`
+	ProviderID string
+	Task       string
+	Calls      int
+	Failed     int
+	Rescued    int
 }
 
 func (r *repository) ProviderTaskTotals(
@@ -414,23 +388,18 @@ func (r *repository) ProviderTaskTotals(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]aiusageports.AIUsageProviderTaskTotals, error) {
-			cols := aiusagecol.AIUsageRecordColumns
-			var rows []providerTaskRow
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model((*aiusage.AIUsageRecord)(nil)).
-				ColumnExpr(cols.ProviderID.Qualified()+" AS provider_id").
-				ColumnExpr(cols.Task.Qualified()+" AS task").
-				ColumnExpr("COUNT(*) AS calls").
-				ColumnExpr("COUNT(*) FILTER (WHERE NOT "+cols.Succeeded.Qualified()+") AS failed").
-				ColumnExpr("COUNT(*) FILTER (WHERE "+cols.Succeeded.Qualified()+" AND "+
-					cols.Failover.Qualified()+") AS rescued").
-				Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-				Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-				Where(cols.CreatedAt.Gte(), req.Since).
-				Where(cols.ProviderID.IsNotNull()).
-				GroupExpr(cols.ProviderID.Qualified()).
-				GroupExpr(cols.Task.Qualified()).
-				Scan(ctx, &rows); err != nil {
+			u := aiusagedb.AIUsageRecords
+			rows, err := keel.Into[providerTaskRow](ctx, r.db.Keel(ctx), u.
+				Where(u.CreatedAt.Gte(req.Since), u.ProviderID.IsNotNull()).
+				Group(u.ProviderID, u.Task).
+				Pick(
+					u.ProviderID,
+					u.Task,
+					keel.Count(),
+					keel.Count().Filter(u.Succeeded.IsFalse()),
+					keel.Count().Filter(keel.And(u.Succeeded.IsTrue(), u.Failover.IsTrue())),
+				))
+			if err != nil {
 				return nil, fmt.Errorf("total ai usage by provider and task: %w", err)
 			}
 
@@ -451,8 +420,8 @@ func (r *repository) ProviderTaskTotals(
 }
 
 type providerSpendRow struct {
-	ProviderID string `bun:"provider_id"`
-	CostUSD    string `bun:"cost_usd"`
+	ProviderID string
+	CostUSD    string
 }
 
 func (r *repository) SpendByProvider(
@@ -464,20 +433,16 @@ func (r *repository) SpendByProvider(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]decimal.Decimal, error) {
-		cols := aiusagecol.AIUsageRecordColumns
-
-		rows := make([]providerSpendRow, 0, len(req.ProviderIDs))
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model((*aiusage.AIUsageRecord)(nil)).
-			ColumnExpr(cols.ProviderID.As("provider_id")).
-			ColumnExpr("COALESCE(SUM("+cols.CostUSD.Qualified()+"), 0)::text AS cost_usd").
-			Where(cols.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			Where(cols.ProviderID.In(), bun.In(req.ProviderIDs)).
-			Where(cols.CreatedAt.Gte(), req.Since).
-			Where(cols.CostUSD.IsNotNull()).
-			GroupExpr(cols.ProviderID.Qualified()).
-			Scan(ctx, &rows); err != nil {
+		u := aiusagedb.AIUsageRecords
+		rows, err := keel.Into[providerSpendRow](ctx, r.db.Keel(ctx), u.
+			Where(
+				u.ProviderID.In(req.ProviderIDs...),
+				u.CreatedAt.Gte(req.Since),
+				u.CostUSD.IsNotNull(),
+			).
+			Group(u.ProviderID).
+			Pick(u.ProviderID, keel.CastText(keel.NumericOf(u.CostUSD.Sum()).Coalesce(0))))
+		if err != nil {
 			return nil, fmt.Errorf("sum ai provider spend: %w", err)
 		}
 

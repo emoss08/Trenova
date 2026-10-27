@@ -1,5 +1,5 @@
 {
-  "version": "sha256:c49da9c317862ce9c0ff2eef7a677ca770890f495dd451c8976fd0b6e6d760e1",
+  "version": "sha256:5f5be4c53238171803bc4074b7a6fd29a9cdc18be7bfe009673a97b209966f39",
   "modules": [
     {
       "id": "home",
@@ -1191,7 +1191,7 @@
           "steps": [
             "Open [Journal reversals](/accounting/journal-reversals).",
             "Select **New journal reversal**.",
-            "Enter the **Original journal entry ID** of the posted entry and the **Requested accounting date** the reversal should post on.",
+            "In **Original journal entry**, search by entry number and choose the posted entry, then enter the **Requested accounting date** the reversal should post on. Only posted entries that are not themselves reversals and have not already been reversed are offered.",
             "Enter a **Reason code** (for example ERROR or DUPLICATE) and a detailed **Reason**.",
             "Select **Create reversal**."
           ]
@@ -1239,7 +1239,7 @@
           ],
           "steps": [
             "Open [Journal reversals](/accounting/journal-reversals).",
-            "Select the ID in the **Original journal entry** column. The journal entry page opens with its details and **Line items**.",
+            "Select the entry number in the **Original journal entry** column. The journal entry page opens with its details and **Line items**.",
             "On the journal entry page, select the **Reference** link to open the record that produced the entry, or select **Back** to return."
           ]
         }
@@ -2493,8 +2493,8 @@
         "shipper portal",
         "data analysis",
         "analyze data",
-        "E2B",
         "python",
+        "scripts",
         "charts",
         "AI safety",
         "tool rules",
@@ -2658,11 +2658,10 @@
             "batch of changes"
           ],
           "steps": [
-            "In [AI control](/admin/agent-control), select **Extensions**, open Data analysis from E2B and turn on its read-only scripts setting. People whose role holds the code_mode permission can then be answered with scripts.",
-            "Open a provider that handles assistant chat in **Providers** and select **Edit connection**.",
-            "Under **Scripts**, turn on **Scripts**. The provider's model may then answer fan-out, reconciliation and report questions with one short read-only Python script instead of many tool calls.",
+            "Open a provider that handles assistant chat in [AI control](/admin/agent-control), **Providers**, and select **Edit connection**.",
+            "Under **Scripts**, check that **Scripts** is on. The provider's model may then answer fan-out, reconciliation and report questions with one short read-only Python script instead of many tool calls. Turn it off to keep that provider's model to tool calls.",
             "To let those scripts prepare changes, also turn on **Scripts may propose writes**. It can be turned on only while **Scripts** is on, and turning **Scripts** off turns it off too.",
-            "Select **Save changes**. Both are off by default."
+            "Select **Save changes**."
           ]
         },
         {
@@ -2778,22 +2777,19 @@
             "chart",
             "graph",
             "python",
-            "pandas",
-            "E2B",
-            "sandbox",
+            "script",
             "spreadsheet",
+            "CSV",
+            "Excel",
             "margin by lane",
             "trend",
             "statistics",
             "analysis history"
           ],
           "steps": [
-            "Open [AI control](/admin/agent-control) and select **Extensions**, then open Data analysis from E2B.",
-            "Paste the organization's E2B API key under **Connection**, select **Turn on**, then **Test connection**. The test shows how many sandboxes the account is running.",
-            "Under **Available to**, choose **Every agent** or **Agents you choose**.",
-            "Optionally change how many seconds an analysis may run, the daily limit and the sandbox template. Each change is saved as you make it.",
-            "Ask an agent a question its reports alone do not answer, such as margin by lane for the quarter. It runs the report, analyzes the rows, and shows the figures and charts beside its reply.",
-            "**Recent analyses** lists every analysis agents ran: open one to see what it read, its code, what it printed and drew, how long it ran and what it cost."
+            "Agents analyze data with scripts, so nothing needs setting up: **Scripts** is on for every provider that handles assistant chat. To check, open a provider in [AI control](/admin/agent-control), **Providers**, select **Edit connection** and look under **Scripts**.",
+            "Ask an agent a question its reports alone do not answer, such as margin by lane for the quarter. It runs the report, reads every row with a script, and shows the figures, tables and charts beside its reply. A CSV, Excel or text file attached to the conversation is read the same way.",
+            "To see every analysis agents made, select **Activity**, then **Analyses**. Open one to see the data it read, what it showed, what it printed, its code and how long it ran. **Show older analyses** loads the ones before."
           ]
         },
         {
@@ -3288,7 +3284,7 @@
           ]
         }
       ],
-      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A memory such a run wrote stops counting once a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and **Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, anything learned from a background run nobody was in, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nAgents are told what kind of business the organization is from a note written each night from its own records and from the guidance its people gave; each person who talks to agents has a short note of their own, kept up each week. A note is written again only when the facts behind it move, never edited by a model on its own, and never states a number that is not in the facts or the guidance; an attempt that would is set aside and the version before it stays. Notes are written only while **Learn from their work** is on. Seeing the organization's note needs read access to agent memory, adding guidance needs create access, and retiring a line or writing it again needs update access.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. **Used** above a reply counts only the memories that bear on what was asked: a note about a shipment's customer is still in front of the agent when you ask about that shipment's arrival, but is not counted as used unless it is about that. A procedure the agent learned is brought in only for the kind of task it describes. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nA provider's **Advisor** costs extra: each consultation is billed at the advisor model's price on top of the provider's own, and is already part of a run's cost in **Analytics**, which also shows the advisor's calls, tokens and cost for the scope and for each model or provider. Whether the advisor is strong enough for the provider's model is Anthropic's call: when the API refuses it, the refusal is recorded on the provider, the editor shows it under **Advisor** with the API's message, the advisor, the model and when it happened, and calls go out without the advisor until the advisor, the model or the platform changes.\n\nA script runs in the organization's E2B sandbox with no network access, and the rows it reads are sent to E2B, as data analysis does. Every read a script makes goes through the same permissions as a normal tool call, and its sandbox time counts against the extension's daily limit. A provider's **Scripts** setting is only the provider's half: scripts also need the plan to include them, the E2B extension's read-only scripts setting and the code_mode permission. With **Scripts may propose writes**, nothing a script prepares is ever done on its own: the changes are proposed as one batch a person approves, each change is checked again against the record when it is approved, and a script that read outside text cannot run anything.\n\nA provider on a cloud platform keeps its credential for the region, project, workspace and identity it was entered for. Change any of them, or the platform, and the editor asks for the credential again; the saved one is never sent somewhere it was not entered for. Signing in with the server's own credentials is off unless the server's operator turns it on, because on a server shared by several organizations it would spend the operator's cloud account; choosing it removes any credential the provider had saved.\n\nOpening the page needs read access to AI control. Each tab appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a tab someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst rated** and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set** need create access to the evaluation suite, and changing **Sweep settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission, and looks something up on a portal only when their role may view portal automation; an action on a portal needs a person who may act on portal automation to approve it. An agent analyzes data only for someone whose role may use data analysis, and reads only the report runs that person ran and the files they attached to the conversation.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. An agent stays on a portal site's addresses; a task that reached any other page has what it found withheld and is marked **Left the site**. Every action on a portal is a proposal: the person approving sees exactly what the browser will be told and the details it will type, and the work picks up with what the portal said once the task ends. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\n**Analytics** appears for people who may read agent runs. Routing a task from it, or putting a provider first, needs update access to AI providers. Its figures are worked out from runs every few minutes. A model or provider with too few runs, or a tool cell with too few calls, is shown but never ranked or suggested, and a route is suggested only when another provider is well ahead on that task. Spend is counted from the prices set on each provider, so a model with no price, such as one on your own hardware, counts as costing nothing.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
+      "notes": "An embedding provider turns memories, documents and mail into vectors so agents can find them by what they mean rather than by the exact words; until one is set up, agents search by keywords only. Social security, card and bank account numbers are masked before a document is sent. Changing the embedding model or its size re-indexes everything that was embedded. Providers with the same model and size back each other up; a provider with a different model is never used in their place.\n\nRetrieval is read with read access to AI providers; changing its settings or re-indexing needs update access to AI providers. Only chunks whose text changed are embedded again on a re-index, so the cost shown before one is the most it could cost, and a re-index when nothing changed costs nothing. The monthly indexing budget covers indexing for the calendar month (UTC); when it is spent indexing pauses, and it resumes on its own the next month or as soon as the budget is raised. What agents' searches cost counts against each agent's own monthly budget. When the Embedding task is routed to a different model, every source is indexed under the new model beside the old one, and searches move to it only when all of it is done; **Sources** shows how far that has come.\n\nAn agent that has read content written outside the organization (an inbound email, an extracted document, an EDI file, a bank receipt, a file attached in chat, or a memory such a run wrote) never sends anything to a customer, driver or outside address, or moves money, on its own: that change waits for a person's approval whatever tier the tool has, and the proposal is marked as having read outside content. A memory such a run wrote stops counting once a person reviews it or approves it as a suggestion; the review is recorded in the audit log, and **Where it came from** still shows that it came from outside content. A suggested memory drawn from ratings of one agent is kept for that agent alone once approved.\n\nAn agent looks back over a conversation once it has been quiet for ten minutes (or after an hour of steady back and forth), and over a background run once every proposal it raised is decided. It does so only when something in the work is worth learning from, so most conversations cost nothing. A lesson is a **Procedure** (the steps that worked, naming the tools), a **Fact** no record holds, or, from a person's own words, an **Instruction** that was not already saved. It is kept for the person in the conversation unless they may create agent memories, follows their saving preference, and replaces an older memory rather than contradicting it. A lesson for a team or the whole organization, anything learned from a background run nobody was in, and anything learned from work that read outside content, is only ever offered. Retiring or editing a learned memory works like any other.\n\nAgents are told what kind of business the organization is from a note written each night from its own records and from the guidance its people gave; each person who talks to agents has a short note of their own, kept up each week. A note is written again only when the facts behind it move, never edited by a model on its own, and never states a number that is not in the facts or the guidance; an attempt that would is set aside and the version before it stays. Notes are written only while **Learn from their work** is on. Seeing the organization's note needs read access to agent memory, adding guidance needs create access, and retiring a line or writing it again needs update access.\n\nA memory holds up to 4,000 characters. Each prompt carries only as much memory as the agent's **Memory in the prompt** setting allows (6,000 tokens unless changed), starting with what is recorded about the record the conversation is about. **Used** above a reply counts only the memories that bear on what was asked: a note about a shipment's customer is still in front of the agent when you ask about that shipment's arrival, but is not counted as used unless it is about that. A procedure the agent learned is brought in only for the kind of task it describes. When the organization keeps close to 5,000 active memories, the Memory section warns that fewer of them reach each prompt; retire what no longer holds.\n\nA provider's **Advisor** costs extra: each consultation is billed at the advisor model's price on top of the provider's own, and is already part of a run's cost in **Analytics**, which also shows the advisor's calls, tokens and cost for the scope and for each model or provider. Whether the advisor is strong enough for the provider's model is Anthropic's call: when the API refuses it, the refusal is recorded on the provider, the editor shows it under **Advisor** with the API's message, the advisor, the model and when it happened, and calls go out without the advisor until the advisor, the model or the platform changes.\n\nA script runs inside Trenova in a sandboxed Python interpreter with no access to files or the network, so nothing it reads leaves Trenova and nothing about it is billed. Every read a script makes goes through the same permissions as a normal tool call. **Scripts** is on for every provider that handles assistant chat unless it is turned off; a person also needs the Scripts and analysis permission, which the Desk bundle grants. **Scripts may propose writes** is off by default. With **Scripts may propose writes**, nothing a script prepares is ever done on its own: the changes are proposed as one batch a person approves, each change is checked again against the record when it is approved, and a script that read outside text cannot run anything.\n\nA provider on a cloud platform keeps its credential for the region, project, workspace and identity it was entered for. Change any of them, or the platform, and the editor asks for the credential again; the saved one is never sent somewhere it was not entered for. Signing in with the server's own credentials is off unless the server's operator turns it on, because on a server shared by several organizations it would spend the operator's cloud account; choosing it removes any credential the provider had saved.\n\nOpening the page needs read access to AI control. Each tab appears only for people who may read it (agents, AI providers, agent runs, agent proposals, agent exceptions, agent memory); a tab someone cannot open is left out. **Safety** appears for people who may read agents, and **Quality** for people who may read the evaluation suite. **Worst rated** and satisfaction need read access to agent feedback, **Run suite now** and **Add to golden set** need create access to the evaluation suite, and changing **Sweep settings** needs update access to both the evaluation suite and AI control, because the budgets are spend. The organization-wide switches need update access to AI control, deciding proposals needs update access to agent proposals, and **Test** on a provider needs manage access to AI providers. Viewing **Extensions** needs read access to agent extensions, and turning one on, changing its settings or testing it needs update access. An agent searches the web for someone only when their role has the web research permission, and looks something up on a portal only when their role may view portal automation; an action on a portal needs a person who may act on portal automation to approve it. An agent's script reads only the report runs the person it works for ran and the files they attached to the conversation. **Analyses** under **Activity** needs read access to agent runs; the person an analysis ran for can always open it from the Desk.\n\nSearch queries and the addresses of pages agents read are sent to the extension's vendor. Queries that contain Trenova record IDs, email addresses or phone numbers are refused before they leave Trenova. Once an agent has read web content, every change it asks for in the rest of that reply waits for a person's approval, whatever the agent's autonomy. An agent stays on a portal site's addresses; a task that reached any other page has what it found withheld and is marked **Left the site**. Every action on a portal is a proposal: the person approving sees exactly what the browser will be told and the details it will type, and the work picks up with what the portal said once the task ends. Each extension counts its requests against the daily limit, which resets at midnight UTC, and the card shows today's requests and this month's cost.\n\nAn agent asks only the agents listed under **Can ask**; with none listed it works with its own tools alone. Only agents people talk to can ask or be asked, and an agent that was asked cannot hand the task on. The agent asked works as the person in the conversation, with its own tools and approvals, so it can never do more than that person could.\n\nWho can use an agent is set under **Who can use it**. An agent open to everyone that holds tools reaching restricted or confidential data, or whose work leaves the organization, shows a warning there as soon as the form says so, before it is saved; each person can still only do what their own permissions allow. An agent limited to specific roles with none chosen can be used by nobody. Roles chosen while an agent is open to everyone are kept for when it is limited again. A system agent is always open to everyone and cannot be limited to roles. Someone who loses access to an agent keeps their conversations with it, read-only. Setting who can use an agent needs update access to both agents and roles; someone without update access to roles can still save the rest of an agent as long as they leave who can use it as it was. The same grants can be managed from a role's page on [Roles](/admin/roles), under **Agents**.\n\nEvery night, at the hour chosen in **Sweep settings** (in the organization's timezone unless another is chosen there), each agent with active cases is replayed against a sample of its golden set with every write simulated. The sample always includes the cases the agent failed most recently and is otherwise spread across where the cases came from; it is the same sample for the same run. An agent is skipped when nothing about it (its instructions, tools, model or provider) or its cases changed since its last run, unless that run is older than the rerun limit. A run stops when the nightly or monthly budget is spent, and says so. When an agent's score falls below the median of its recent runs by more than the threshold, the run is marked **Regressed**, a Watchtower item is raised (critical when a case failed a hard check), and the people who can update AI control are told once, with what changed.\n\nThe **Audit trail** section appears for people with read access to the AI audit trail; reading agent runs does not grant it. **Verify now** needs the same read access. **Export trail** and **Download** need export access to the AI audit trail, and only the person who asked for an export can download it; the file can be downloaded until it expires, seven days after it was written unless the organization's configuration says otherwise. Requesting and downloading an export are written to the audit log. The audit log entries shown with an event appear only for people who may read the audit log. Arguments show only what the reader may see on that record; anything above it reads `[withheld]`, and confidential values were never recorded. Events reach the trail within a minute of happening. How long they are kept is set on [Data retention](/organization/data-retention).\n\n**Analytics** appears for people who may read agent runs. Routing a task from it, or putting a provider first, needs update access to AI providers. Its figures are worked out from runs every few minutes. A model or provider with too few runs, or a tool cell with too few calls, is shown but never ranked or suggested, and a route is suggested only when another provider is well ahead on that task. Spend is counted from the prices set on each provider, so a model with no price, such as one on your own hardware, counts as costing nothing.\n\nRemoving a provider stops any task routed only to it until another provider is assigned. Removing an agent keeps its existing conversations but they cannot be continued, and its schedule stops. On **Runs**, right-clicking a finished run offers **Replay against the current agent**; the comparison appears under **Evaluations**, where **Open comparison** shows what the replay would have done beside the original.",
       "related": [
         "/admin/document-intelligence",
         "/admin/inbound-mailboxes",
@@ -3494,7 +3490,7 @@
         "Billing controls"
       ],
       "description": "Configure and manage your billing control settings",
-      "summary": "Billing control holds the organization-wide rules for billing. The page is one settings form in five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and posted automatically), **Exception policy** (how missing billing requirements and rate variances are handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late charges** (whether the nightly late-charge run raises debit memos).\n\nUnless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a copy of another shipment. Choose a rating method on the shipment, or set a fallback formula template here.\n\nBilling managers and finance leads use it. A warning at the top of the page notes that these settings affect revenue processing and invoicing, and should change only after review.",
+      "summary": "Billing control holds the organization-wide rules for billing. The page is one settings form in five cards: **Invoice defaults** (what invoices show and the fallback payment term, terms and footer), **Automation policy** (how shipments move into billing and whether invoices are drafted and posted automatically), **Exception policy** (how missing billing requirements and rate variances are handled), **Rating policy** (what happens to a shipment no rate agreement covers) and **Late charges** (whether the nightly late-charge run raises debit memos).\n\nUnless the unrated shipment disposition is to zero the rate and flag it for review, a shipment that nothing can price is refused wherever it is entered: the shipment form, the API, an agent, or a copy of another shipment. Choose a rating method on the shipment, or set a fallback formula template here. Minimums, maximums and rounding are not set here or on an agreement: each tariff writes them in its own source.\n\nBilling managers and finance leads use it. A warning at the top of the page notes that these settings affect revenue processing and invoicing, and should change only after review.",
       "requires": [
         {
           "resource": "billing_control",
@@ -3569,7 +3565,7 @@
           "steps": [
             "Open [Billing controls](/admin/billing-controls).",
             "In **Rating policy**, choose the **Unrated shipment disposition**: **Fall back to formula template**, **Zero the rate and flag for review** or **Block the save**.",
-            "For the fallback, optionally pick a **Fallback formula template**.",
+            "For the fallback, optionally pick a **Fallback formula template**. It runs with the defaults its tariff declares, since no contract supplies its inputs; a tariff with an input that has no default refuses to rate such a shipment and says which input is missing.",
             "Turn on **Require rate override reason** and **Enforce margin floor** as needed.",
             "Select **Save changes**."
           ]
@@ -4605,170 +4601,10 @@
           ]
         }
       ],
-      "notes": "Opening the page needs read access to document control. Every document Docling reads, and the AI-assisted options, depend on an enabled AI provider assigned to the Document extraction task, which is set up on [AI control](/admin/agent-control); a provider assigned only to chat does not read documents. The server must also have document extraction turned on and its document converter configured. Without all three, documents are stored but not read, and this page, the upload screens and the document's failure message say which is missing. The provider-specific rules on [Parsing rules](/admin/document-parsing-rules) are applied to the text Docling reads from a rate confirmation, after it is classified and before AI extraction.",
+      "notes": "Opening the page needs read access to document control. Every document Docling reads, and the AI-assisted options, depend on an enabled AI provider assigned to the Document extraction task, which is set up on [AI control](/admin/agent-control); a provider assigned only to chat does not read documents. The server must also have document extraction turned on and its document converter configured. Without all three, documents are stored but not read, and this page, the upload screens and the document's failure message say which is missing.",
       "related": [
-        "/admin/document-parsing-rules",
-        "/admin/document-operations",
         "/admin/agent-control",
         "/billing/configuration-files/document-types"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": true
-    },
-    {
-      "path": "/admin/document-operations",
-      "name": "Document operations",
-      "module": "admin",
-      "breadcrumb": [
-        "Organization settings",
-        "Document Management",
-        "Document operations"
-      ],
-      "description": "Inspect document lifecycle state and trigger recovery actions",
-      "summary": "Document operations is a support tool for one uploaded document at a time. Paste a document's ID and the page shows where it is in its lifecycle: a pipeline of **Upload**, **Preview**, **Extraction** and **Draft** with each step's status, the file's details (the record it belongs to under **Resource**, **Version**, **Created**, **Updated**, **Preview status**, **Content status**, **Draft status** and **Detected kind**), whether **Extracted content** and a **Shipment draft** exist, and any errors detected.\n\nBelow that it lists the document's **Version history**, its **Upload sessions** and the **Workflow references** behind its background processing, and offers **Recovery actions** to restart the steps that failed. Administrators and support staff use it when a document has no preview, its text was never extracted, or it does not show up in search.",
-      "requires": [
-        {
-          "resource": "document_operation",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "document diagnostics",
-        "stuck document",
-        "failed upload",
-        "document recovery",
-        "reprocess document",
-        "missing preview",
-        "document not searchable"
-      ],
-      "tasks": [
-        {
-          "title": "Inspect a document",
-          "keywords": [
-            "document status",
-            "why no preview",
-            "document lifecycle",
-            "check extraction"
-          ],
-          "steps": [
-            "Open [Document operations](/admin/document-operations).",
-            "Paste the document's ID into **Paste a document ID to inspect...** and select **Inspect**.",
-            "Read the pipeline and statuses to see which step stopped, and the error count if any errors were detected.",
-            "Check **Version history**, **Upload sessions** and **Workflow references** for more detail."
-          ]
-        },
-        {
-          "title": "Re-run a failed step",
-          "keywords": [
-            "reprocess",
-            "retry extraction",
-            "rebuild thumbnail",
-            "fix search index"
-          ],
-          "steps": [
-            "Inspect the document in [Document operations](/admin/document-operations).",
-            "Under **Recovery actions**, choose the step to restart: - **Reextract content** re-processes the document's text and structured data. - **Regenerate preview** starts a new thumbnail workflow. - **Resync search** updates the document's search index entry with its latest data.",
-            "Select **Confirm**. The action starts in the background; inspect the document again after a short wait to see the result."
-          ]
-        }
-      ],
-      "notes": "Viewing the page needs read access to document operations; the recovery actions need update access to document operations. If the ID is wrong or the document no longer exists, the page shows \"Failed to load diagnostics\" with **Retry**.",
-      "related": [
-        "/admin/document-intelligence",
-        "/admin/document-parsing-rules",
-        "/admin/audit-logs"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": true
-    },
-    {
-      "path": "/admin/document-parsing-rules",
-      "name": "Parsing rules",
-      "module": "admin",
-      "breadcrumb": [
-        "Organization settings",
-        "Document Management",
-        "Parsing rules"
-      ],
-      "description": "Define provider-specific parsing rules, test with fixtures, and simulate extraction results",
-      "summary": "Document parsing rules teach Trenova how to read documents from a particular provider or format, such as one broker's rate confirmation. Each rule set is listed in the sidebar on the left; selecting one opens it with four tabs: **Metadata** (name, document kind, priority and the published version), **Versions** (draft and published versions of the rules), **Fixtures** (saved sample documents with expected results) and **Simulation** (run a version against pasted document text and see what it extracts).\n\nA version says which documents it matches (**Match config**) and what to pull out of them (**Rule builder**: sections, fields and stops). Drafts can be edited; publishing a draft makes it the version used in production.",
-      "requires": [
-        {
-          "resource": "document_parsing_rule",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "parsing rules",
-        "extraction rules",
-        "rate confirmation parser",
-        "document templates for extraction",
-        "rule sets"
-      ],
-      "tasks": [
-        {
-          "title": "Create a rule set",
-          "keywords": [
-            "new parser",
-            "add provider rules"
-          ],
-          "steps": [
-            "Open [Parsing rules](/admin/document-parsing-rules).",
-            "Select **New** at the top of the sidebar (or **Create rule set** when there are none).",
-            "Enter a **Name** that identifies the provider or document format and select **Create**.",
-            "On the **Metadata** tab, set the **Document kind**, **Priority** and **Description**, then select **Save changes**."
-          ]
-        },
-        {
-          "title": "Write and publish a version of the rules",
-          "keywords": [
-            "edit rules",
-            "draft version",
-            "publish parser",
-            "extraction fields"
-          ],
-          "steps": [
-            "Open [Parsing rules](/admin/document-parsing-rules) and select the rule set in the sidebar.",
-            "Open the **Versions** tab and select **New draft**. The new draft opens.",
-            "Under **Version settings**, give it a **Label** and choose the **Parser mode**.",
-            "On **Match config**, fill in **Provider fingerprints**, **File name contains**, **Requires all**, **Requires any** and **Section anchors** so the rules match the right documents.",
-            "On **Rule builder**, use **Add section**, **Add field** and **Add stop** to define what to extract, then select **Save changes**.",
-            "When it is ready, select **Publish** and confirm with **Publish version**. The previously published version is archived and this version becomes read-only."
-          ]
-        },
-        {
-          "title": "Test rules against sample documents",
-          "keywords": [
-            "fixture",
-            "test parser",
-            "simulate extraction",
-            "dry run"
-          ],
-          "steps": [
-            "Open [Parsing rules](/admin/document-parsing-rules) and select the rule set.",
-            "To keep a sample, open **Fixtures** and select **New fixture**. In the fixture that opens, paste the **Full document text**, describe the expected results under **Assertions**, and select **Save fixture**.",
-            "To try a version, open **Simulation**, choose the **Version**, paste the **Document text**, optionally fill in **File name** and **Provider fingerprint**, and select **Run simulation**."
-          ]
-        },
-        {
-          "title": "Delete a rule set",
-          "keywords": [
-            "remove parser"
-          ],
-          "steps": [
-            "Open [Parsing rules](/admin/document-parsing-rules) and select the rule set.",
-            "Select the delete button in its header and confirm with **Delete**."
-          ]
-        }
-      ],
-      "notes": "Viewing the page needs read access to document parsing rules. Creating rule sets, drafts and fixtures needs create access, deleting needs delete access, and **Publish** appears only for people who may activate parsing rules. Only draft and published versions can be simulated, and published or archived versions cannot be edited.",
-      "related": [
-        "/admin/document-intelligence",
-        "/admin/document-operations"
       ],
       "covers": [],
       "createAction": null,
@@ -5043,7 +4879,7 @@
         "Inbound mailboxes"
       ],
       "description": "Addresses the system listens on, where each provider posts, and how much each is trusted to do without a person",
-      "summary": "Inbound mailboxes are the email addresses Trenova listens on, such as one for tenders, one for PODs and one for carrier invoices. Each mailbox has an **Address**, the **Provider** that receives the mail and posts it to Trenova (Resend or Postmark), a webhook URL the provider posts to, a signing secret that proves each delivery really came from the provider, and a trust level saying how much the desk may do with its mail without a person. Resend sends only a message's sender, recipients and subject to the webhook, so a Resend mailbox also needs an API key: the body and attachments are read from Resend with it after the message arrives.\n\nEach mailbox card shows whether it is **Listening** or **Not listening**, what it is **Trusted to** do, its **Purpose** and when it was **Created**. A mailbox without a signing secret refuses every delivery, and a Resend mailbox without an API key accepts mail but cannot read its body or attachments, so each message waits for a person saying why. Resend forwards everything its account receives to every webhook, so a Resend mailbox only keeps mail addressed to its own **Address** (including Cc and Bcc). Administrators set mailboxes up here; the mail itself is read in the [Triage](/triage).",
+      "summary": "Inbound mailboxes are the email addresses Trenova listens on, such as one for tenders, one for PODs and one for carrier invoices. Each mailbox has an **Address**, the **Provider** that receives the mail and posts it to Trenova (Resend or Postmark), a webhook URL the provider posts to, a signing secret that proves each delivery really came from the provider, and a trust level saying how much the desk may do with its mail without a person. Resend sends only a message's sender, recipients and subject to the webhook, so a Resend mailbox also needs an API key: the body and attachments are read from Resend with it after the message arrives.\n\nEach mailbox card shows whether it is **Listening** or **Not listening**, when mail last arrived, and when it was created. A mailbox without a signing secret refuses every delivery, and a Resend mailbox without an API key accepts mail but cannot read its body or attachments, so each message waits for a person saying why. Resend forwards everything its account receives to every webhook, so a Resend mailbox only keeps mail addressed to its own **Address** (including Cc and Bcc). Administrators set mailboxes up here; the mail itself is read in the [Triage](/triage).",
       "requires": [
         {
           "resource": "inbound_mailbox",
@@ -6013,7 +5849,11 @@
         "security roles",
         "user groups",
         "RBAC",
-        "permission sets"
+        "permission sets",
+        "page access",
+        "view as role",
+        "role preview",
+        "what a role can see"
       ],
       "tasks": [
         {
@@ -6043,8 +5883,66 @@
           "steps": [
             "On the create or edit page for a role, go to **Permissions**.",
             "Use **Search resources...** to find a resource, or expand a category.",
-            "Select an operation chip on a resource's row to grant or remove that operation. The box at the start of the row toggles **Grant all** or **Remove all** for that resource, and **All** or **None** on a category header does the same for every resource in the category.",
+            "Select an operation chip on a resource's row to grant or remove that operation. To change many resources at once, select **Set all** and pick **Full access**, **View only** or **No access**; **All** or **None** on a category header does the same for every resource in the category.",
             "For a granted resource, choose how much data it reaches in the scope selector: **Own data only**, **Organization** or **All data**."
+          ]
+        },
+        {
+          "title": "See what a grant means",
+          "keywords": [
+            "what does this permission do",
+            "without read",
+            "reference view",
+            "which screens use this resource"
+          ],
+          "steps": [
+            "On the create or edit page for a role, go to **Permissions** and expand a category.",
+            "Under each resource's name, a sentence says what the role sees: with read on the resource, every field of its records; without it, what other records still show of it through its reference view, or that it sees none of them. When some of those fields rank above the role's **Max sensitivity**, a second line says they stay withheld too. The sentences follow the permissions and the sensitivity level as you change them.",
+            "Select the screens link under the sentence (for example \"3 screens this affects\") to open **Screens this affects**. It lists each screen the grant changes and how the screen uses the resource: **Required** (the screen's route or an endpoint it calls checks it), **Reads** (the screen lists or opens these records itself), **Asks for more** (it asks for fields beyond the reference view) or **Reference view** (it shows them only through their reference view). Select a screen's name to open it."
+          ]
+        },
+        {
+          "title": "Preview a screen as the role you are editing",
+          "keywords": [
+            "test a role",
+            "try a role before saving",
+            "role preview",
+            "what would this role see"
+          ],
+          "steps": [
+            "On the create or edit page for a role, go to **Preview a screen**, below **Permissions**.",
+            "Under **Screen**, choose a screen from **Choose a screen to preview**.",
+            "The card shows what a person holding only this role, and the roles it inherits, would need and see there, worked out from the form before you save: **What this screen needs** lists each permission the screen checks as **Held** or **Missing**, and **Records on this screen** lists each kind of record it shows as **Can read** or **No read**, with the linked fields that come back withheld. A warning says when the screen would not open, or would open empty.",
+            "Change the permissions or **Max sensitivity**; the preview updates a moment later."
+          ]
+        },
+        {
+          "title": "See what a screen needs and what you see on it",
+          "keywords": [
+            "page access",
+            "why can't I see this",
+            "missing permission",
+            "screen permissions",
+            "access panel"
+          ],
+          "steps": [
+            "On any page, press Ctrl+Alt+P. The **Page access** panel opens for the screen you are on.",
+            "**What this screen needs** lists each permission the screen's route and endpoints check, marked **Held** or **Missing** for you.",
+            "**Records on this screen** lists each kind of record the screen shows, whether you **Can read** it, and the linked fields that come back withheld: **Needs read** when they need read on that kind, **Above ceiling** when they rank above your sensitivity ceiling."
+          ]
+        },
+        {
+          "title": "View a screen as another role",
+          "keywords": [
+            "view as role",
+            "impersonate role",
+            "check a role's access",
+            "see what a role sees"
+          ],
+          "steps": [
+            "Open the **Page access** panel on the screen with Ctrl+Alt+P.",
+            "Under **View as**, pick a role. The panel shows what a person holding only that role, and the roles it inherits, would need and see on this screen.",
+            "Clear the role to go back to **You, with your own roles**."
           ]
         },
         {
@@ -6087,7 +5985,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to roles; **New role** needs create access. System roles show the banner \"This is a system role. Some properties may be restricted.\" and their name, sensitivity and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.\n\nA role's agents matter for agents limited to specific roles in [AI control](/admin/agent-control): people holding the role, or a role that inherits it, can use those agents and decide what they propose. Agents open to everyone who can use the assistant are included for every role automatically and need not be added; one that is granted anyway shows **Open to everyone**, and the grant applies once it is limited to specific roles. System agents cannot be granted to a role. Changing a role's agents needs update access to roles.",
+      "notes": "Viewing the page needs read access to roles; **New role** needs create access. System roles show the banner \"This is a system role. Some properties may be restricted.\" and their name, sensitivity and description cannot be changed. Changes to a role apply to everyone who holds it. A role's job function (**Core responsibility**) is also what [Home screens](/admin/home-layouts) can assign by.\n\nA role's agents matter for agents limited to specific roles in [AI control](/admin/agent-control): people holding the role, or a role that inherits it, can use those agents and decide what they propose. Agents open to everyone who can use the assistant are included for every role automatically and need not be added; one that is granted anyway shows **Open to everyone**, and the grant applies once it is limited to specific roles. System agents cannot be granted to a role. Changing a role's agents needs update access to roles.\n\nThe **Page access** panel (Ctrl+Alt+P) is offered to people with read access to roles, and **View as** and **Preview a screen** need it too. Neither reads any record: they work out access from the role's grants alone. Organization access policies, data scopes and row-level security can narrow what a person holding the role reads, never widen it, so the real screen may show less.",
       "related": [
         "/admin/users",
         "/admin/home-layouts",
@@ -7441,6 +7339,180 @@
       "inNavigation": true
     },
     {
+      "path": "/billing/configuration-files/formula-libraries",
+      "name": "Formula libraries",
+      "module": "billing",
+      "breadcrumb": [
+        "Billing management",
+        "Configuration files",
+        "Formula libraries"
+      ],
+      "description": "Functions, constants and types written once in Tariff and imported by your formula templates",
+      "summary": "A formula library holds Tariff functions, constants, types and enums that several formula templates share: how your extra stops are billed, your hazmat fee, your delivery zones, your fuel surcharge table. A template imports a library by its path, `org.` and the library's name (`use org.accessorials.{ extraStops }`), so the rule is written once and every template that imports it bills it the same way. A library carries its own tests, which pin what each function returns.\n\nLibraries are versioned and reviewed like templates. When a template version is approved it pins the approved version of each library it imports, so editing, approving or archiving a library never changes what an already approved template bills; a template picks up a new library version only when a new version of the template is approved.\n\nThe table shows each library's **Module** path and description, **Status**, **Version**, **Approved**, **Tests**, the other libraries it **Imports** and **Updated**.",
+      "requires": [
+        {
+          "resource": "formula_library",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "tariff libraries",
+        "shared functions",
+        "shared rating functions",
+        "org libraries",
+        "formula modules",
+        "library properties",
+        "library coverage",
+        "find references"
+      ],
+      "tasks": [
+        {
+          "title": "Create a formula library",
+          "keywords": [
+            "new library",
+            "shared functions",
+            "write library"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries).",
+            "Select **New formula library**. The library studio opens.",
+            "Type the library's name after `org.`: one word starting with a lowercase letter, such as `accessorials` or `zoneRates`. Templates import it by this name. Add a description under it.",
+            "Write the source, or select **Use the starter** for a small working library to rewrite. The source starts with `library \"org.<name>\"`; the editor warns when the header names something else.",
+            "Add a `test` block for every function; a library needs at least one test before it can be reviewed.",
+            "Select **Create library**. The library is saved as a draft."
+          ]
+        },
+        {
+          "title": "Write and test a library",
+          "keywords": [
+            "library editor",
+            "library tests",
+            "failing test"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library. The editor checks the source as you type, with the same suggestions, hover, go to definition (F12), find references (Shift+F12), rename (F2) and formatting as the Formula Studio.",
+            "The outline on the left lists the library's functions, constants and tests; a test's dot is green when it passes and red when it fails. **Tests** in the side panel shows each test with the values behind a failing expectation; select one to jump to it, or **Add a test** to start one.",
+            "**Reference** lists what the library can use: Tariff's standard library, your other libraries, your rate tables and charge codes.",
+            "Select **Ask Nova** above the source, or the **Nova** tab, to have Nova add functions, write tests or fix what the editor underlines. Each change lands in the editor with the lines it changed and whether it checks and its tests pass; **Undo** puts the editor back. Nova only puts a change in the editor when it checks and every test passes; otherwise it says what stops it. Nothing is saved until you save."
+          ]
+        },
+        {
+          "title": "Check a function over many values with a property",
+          "keywords": [
+            "property",
+            "vary",
+            "library property test",
+            "counterexample"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library.",
+            "Add a `property` block that varies a new name over a range or a list (`vary stops in 0..20`) and states what every value must satisfy, such as `expect extraStops(stops) >= $0`. A library's property varies its own names; it has no shipment to vary.",
+            "In **Tests**, a property is marked **Property** with the number of cases it ran. When one fails, its **Counterexample** shows the simplest failing value; select **Save as test** to add it to the source as a test. A failing property blocks review like a failing test."
+          ]
+        },
+        {
+          "title": "See what no test reaches",
+          "keywords": [
+            "library coverage",
+            "untested function",
+            "unreached"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library.",
+            "A bar in the editor's margin marks every line no test or property case runs, such as a function no test calls; hover it to see what part it is.",
+            "**Tests** says how many of the library's parts its tests reach; expand the list to go to each part none reaches. They are listed as a warning under **Readiness** when you submit, and never block it."
+          ]
+        },
+        {
+          "title": "Find every use of a name",
+          "keywords": [
+            "find references",
+            "where is this used"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library.",
+            "Put the cursor on a name: after a moment its uses in the file are tinted, where it is declared or set differently from where it is read.",
+            "Press Shift+F12, or open **Editor actions** under the editor and choose **Find references**, to list each use with its line; select one to go to it."
+          ]
+        },
+        {
+          "title": "See which templates import a library",
+          "keywords": [
+            "library usage",
+            "who uses this library",
+            "pinned version"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select a library.",
+            "Open **Imported by** in the side panel. Each template version that imports the library is listed with its status and the library version it pinned; select a template to open it."
+          ]
+        },
+        {
+          "title": "Send a library through review",
+          "keywords": [
+            "approve library",
+            "submit library",
+            "activate library"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select the library.",
+            "Save any changes, then select **Submit for review**.",
+            "Check the readiness list and what changed since the approved version, choose a reviewer, add a note and select **Submit**.",
+            "A reviewer selects **Approve** to make it the version new template versions pin, or **Request changes** to send it back with a comment. **Reject and archive** is under **More actions**."
+          ]
+        },
+        {
+          "title": "Edit an approved library",
+          "keywords": [
+            "change library",
+            "update shared function"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select the library.",
+            "Make your changes and select **Save changes**. A change to the source or the name saves a new version and returns the library to **Draft**; confirm with **Save as draft**.",
+            "Templates keep billing with the version they pinned. Once the new version is approved, a template uses it when a new version of the template is approved."
+          ]
+        },
+        {
+          "title": "See versions or roll back",
+          "keywords": [
+            "library history",
+            "compare library versions",
+            "restore library version"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries) and select the library.",
+            "Open **History** in the side panel for every version and the review conversation.",
+            "Select the compare button on a version to see its source against another, or the restore button to bring an earlier version back as a new draft version (save or discard your changes first)."
+          ]
+        },
+        {
+          "title": "Duplicate or archive a library",
+          "keywords": [
+            "copy library",
+            "archive library"
+          ],
+          "steps": [
+            "Open [Formula libraries](/billing/configuration-files/formula-libraries).",
+            "Right-click a library for **Duplicate** or **Archive**, or tick several and use the bar that appears. In a library, both are under **More actions**.",
+            "Archiving a library templates still import asks you to confirm and lists them. They keep the version they pinned, but no new template version can import an archived library."
+          ]
+        }
+      ],
+      "notes": "Viewing the page needs read access to formula libraries, and creating one needs create access. **Duplicate**, **Archive**, **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. Someone who submitted a library, or edited the revision under review, cannot approve it unless their role has the \"Approve own changes\" permission for formula libraries, which administrators have; an approval made that way is recorded in the audit log as approved without a second reviewer.\n\nSubmitting needs a description, a source with no errors and at least one test, all passing. Renaming a library that templates import changes the path they import it by: their approved versions keep working, but a new version of each must import the new name.",
+      "related": [
+        "/billing/configuration-files/formula-templates",
+        "/billing/configuration-files/accessorial-charges"
+      ],
+      "covers": [
+        "/billing/configuration-files/formula-libraries/new",
+        "/billing/configuration-files/formula-libraries/:id/edit"
+      ],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
       "path": "/billing/configuration-files/formula-templates",
       "name": "Formula templates",
       "module": "billing",
@@ -7450,7 +7522,7 @@
         "Formula templates"
       ],
       "description": "Manage and configure formula templates for your organization",
-      "summary": "Formula templates are the rating methods that turn shipment facts (distance, weight, stops, hazmat and so on) into a charge, for example a per-mile rate or a per-hundredweight rate. Each template is a formula (its **Expression**), plus a charge policy (minimum, maximum and rounding) and an optional charge breakdown. Rate agreement lanes and rate matrices name a template as their **Rating method**.\n\nPricing staff build and test templates in the Formula Studio, which opens when you create a template or select one in the list. The bar across the top shows the template's name, where it is in review (**Draft**, **In review**, **Active**) and its version. On the left, the **Rate trace** follows one load through the template: the values it reads, what the **Formula** comes to, what the **Charge policy** does to it, the **Breakdown**, and what is **Billed**, with the scenarios and what review still needs below it. On the right, **Preview**, **Scenarios**, **Reference** and **Nova** sit in tabs. Templates go through review before they can rate shipments.\n\nThe table shows each template's **Name**, **Status**, **Type**, **Version**, **In use**, **Scenarios**, **Approved** and **Updated**.",
+      "summary": "Formula templates are the rating methods that turn a shipment into a bill: a per-mile linehaul with a fuel surcharge, a per-hundredweight LTL rate, a fee for every stop past the second. Each template is one file written in Tariff, Trenova's rating language. The file declares the inputs a contract sets (a rate, a fuel percent, a minimum), the charges it bills (each with its label and, for an accessorial, its charge code), the total rules (a minimum, a maximum, rounding) and its own tests. A template can import functions from your organization's [formula libraries](/billing/configuration-files/formula-libraries) and from Tariff's standard library. Rate agreement lanes and rate matrices name a template as their **Rating method**, and each sets the template's inputs.\n\nPricing staff write and test templates in the Formula Studio, which opens when you create a template or select one in the list. The bar across the top shows the template's name, where it is in review (**Draft**, **In review**, **Active**) and its version. On the left, the outline lists the template's inputs, charges (with each choice between methods and its options), total rules, and tests and properties (each with a green or red dot); select one to jump to it. In the middle are the name and description, the **Source**, the **Inputs** it declares and its **Tests**. On the right, **Preview**, **Tests**, **Reference** and **Nova** sit in tabs. Templates go through review before they can rate shipments.\n\nThe table shows each template's **Name**, **Status**, **Libraries** it imports, **Version**, **In use**, **Tests**, **Approved** and **Updated**.",
       "requires": [
         {
           "resource": "formula_template",
@@ -7464,8 +7536,16 @@
         "pricing formulas",
         "charge formulas",
         "formula studio",
+        "tariff",
+        "tariffs",
         "per mile formula",
-        "rate calculation"
+        "rate calculation",
+        "property test",
+        "test coverage",
+        "find references",
+        "promote to input",
+        "lower of",
+        "best of"
       ],
       "tasks": [
         {
@@ -7473,70 +7553,228 @@
           "keywords": [
             "new formula",
             "new rating method",
-            "write formula"
+            "write tariff"
           ],
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates).",
             "Select **New formula template**, then **New formula template** in the menu. The Formula Studio opens.",
-            "Type the name over **Untitled rating method**, add a description under it, and choose **Freight** or **Accessorial** beside **Charges**.",
-            "Under **Expression**, describe the method and select **Draft it** to have Nova write it, or pick one from **Standard library** or **Your templates**, or write the expression yourself.",
-            "Add any **Inputs** the formula needs, set the **Charge policy** (**Minimum charge**, **Maximum charge**, **Rounding**, **Decimal places**) and check the amount in **Preview**.",
-            "Optionally add **Scenarios**; they are saved with the template.",
+            "Type the name over **Untitled rating method** and add a description under it. The name is the `tariff \"…\"` line at the top of the source: typing either one changes the other.",
+            "Under **Source**, describe the method and select **Draft it** to have Nova write it, or pick one from **Standard library** or **Your templates**, or write the tariff yourself.",
+            "Check what it bills in **Preview** and that its **Tests** pass.",
             "Select **Create template**. The template is saved as a draft."
+          ]
+        },
+        {
+          "title": "Write and read the source",
+          "keywords": [
+            "tariff editor",
+            "formula error",
+            "autocomplete",
+            "hover",
+            "rename",
+            "go to definition",
+            "format"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong (a name it does not know, a weight added to a distance, a field that can be empty used without a fallback, a charge code your organization does not have) and lists each problem under the editor with a fix beside it where there is one. Select a row to jump to it.",
+            "Press Ctrl+Space for suggestions: the shipment's fields, units after a number, your rate tables and charge codes, and the functions of the libraries you import.",
+            "Hover a name to see its type, its documentation and what it came to on the preview load. Type inside a function's parentheses to see its parameters. Inferred types and parameter names are drawn in the text in grey.",
+            "Press F12 (or Ctrl-click) on a name to jump to where it is declared, including into a library it comes from, and F2 to rename a binding everywhere it is used.",
+            "The format button under the editor (or Shift+Alt+F) lays the file out in Tariff's one style. A file with syntax errors is left as it is until it parses."
+          ]
+        },
+        {
+          "title": "Fix a charge code your catalog doesn't have",
+          "keywords": [
+            "unknown charge code",
+            "accessorial code",
+            "FSC",
+            "add accessorial charge",
+            "charge code missing"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "A `charge … as CODE` whose code isn't in your accessorial charges is listed under the editor once, with every line that uses it. When a code in your catalog is spelled nearly the same, or its description matches the charge's label, the fix beside the problem changes every use to it.",
+            "To bill the line without a code, choose the fix that bills it as a freight line.",
+            "To add the code instead, select **Add … to accessorial charges** beside the problem (shown when you may create accessorial charges). The new charge opens with the code and the charge's label filled in; finish it and save, and the problem clears."
+          ]
+        },
+        {
+          "title": "Catch values a contract can never set",
+          "keywords": [
+            "never true",
+            "always true",
+            "where bounds",
+            "typo",
+            "dead code",
+            "unreachable"
+          ],
+          "steps": [
+            "When a template compares an input with a value its `where` bounds rule out, as in `service == \"Guarenteed\"` when `service` may only be `\"Standard\"` or `\"Guaranteed\"`, the editor warns that the comparison is never true and offers the nearest allowed value as the fix.",
+            "It also warns about comparisons the bounds already decide (`rate > $20/mi` when `rate` stops at $15/mi), `match` arms the bounds rule out, and tests that set an input to a value no contract could set."
+          ]
+        },
+        {
+          "title": "Find every use of a name",
+          "keywords": [
+            "find references",
+            "where is this used",
+            "highlight uses",
+            "references"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "Put the cursor on a name in the source. After a moment every use of it in the file is tinted; where its value is set (its declaration, or a `var` assignment) is tinted differently from where it is read.",
+            "Press Shift+F12, or open **Editor actions** under the editor and choose **Find references**, to list every use with its line. Uses in this file come first, then the declaration in an imported library. Select one, or move with the arrow keys and press Enter, to go to it; a use in a library opens that library."
+          ]
+        },
+        {
+          "title": "Turn a number into an input",
+          "keywords": [
+            "promote to input",
+            "make it a contract input",
+            "hard-coded rate",
+            "refactor"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "Put the cursor on a number, an amount or a rate written in the source (for example `$425`), or select it.",
+            "Press Ctrl+. (⌘. on a Mac), or open **Editor actions** and choose **Promote to input**. The menu offers to promote that value, and when the same value is written elsewhere, every use of it at once; pick one with the arrow keys and Enter.",
+            "The editor adds an `input` with that value as its default after the other inputs, puts its name where the value was, and opens rename on the new name: type the name you want and press Enter. One undo takes the whole change back.",
+            "Where nothing can become an input (a keyword, a test, a function body), the editor says so beside the cursor and changes nothing."
+          ]
+        },
+        {
+          "title": "Bound what a contract can set",
+          "keywords": [
+            "input constraint",
+            "where clause",
+            "minimum rate",
+            "maximum rate",
+            "allowed values"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "Add a `where` clause to an input: a range (`input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi`) or a list of the values it may take (`where [\"Standard\", \"Guaranteed\"]`).",
+            "Hover the input to see its bounds. Under **Inputs**, each bounded input shows them under its field, an input bounded by a list is a choice of those values, and a sample value outside them is refused at the field.",
+            "Rate agreement lanes then refuse a value outside the bounds when it is typed and when the agreement is saved."
+          ]
+        },
+        {
+          "title": "Bill the lower of several methods",
+          "keywords": [
+            "best",
+            "worst",
+            "lower of",
+            "greater of",
+            "per mile or flat"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "Write a `best \"Label\"` block with an `option` for each method (`worst` keeps the highest instead). An option that refuses, with `require` or `fail`, is left out for that load.",
+            "**Preview** shows each choice under the bill: which option it chose, every option's subtotal, the options that lost struck through, and why a refused option did not apply. **Trace** lists the choice where it was made, and the shipment's bill shows the same once the template rates it."
+          ]
+        },
+        {
+          "title": "Edit the source with Vim keys",
+          "keywords": [
+            "vim",
+            "vim mode",
+            "neovim",
+            "astronvim",
+            "jj escape",
+            "keybindings",
+            "modal editing"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, then select **Vim** in the bar under the editor (or turn on **Vim keys in the formula editor** in [Settings](/settings) under **Preferences**). The choice stays on this device and applies to formula libraries too.",
+            "The editor has normal, insert and visual modes, with the mode shown under the text. Type jj or jk to leave insert mode.",
+            "Space is the leader, as in AstroNvim: gd goes to a definition, K shows the hover card, gl shows the line's problems and ]d or [d moves between them, Space l f formats, Space l r renames, Space l R or grr finds every use of a name, gcc or Space / comments a line, and Space w or :w saves."
+          ]
+        },
+        {
+          "title": "Preview what a template bills",
+          "keywords": [
+            "preview charge",
+            "test on a shipment",
+            "bill",
+            "trace"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. **Preview** bills the **Sample load** with the inputs' sample values, which you can change under **Inputs**; select **Real shipment** to bill a saved shipment instead.",
+            "The bill lists each charge with its code, quantity, rate and amount, the minimum or rounding adjustments, and the freight, accessorial and grand totals. If the tariff refuses to rate the load, the preview says why in the tariff's own words.",
+            "Open **Trace** to follow how the bill was reached, step by step; select a step to light its line in the source."
+          ]
+        },
+        {
+          "title": "Test a template",
+          "keywords": [
+            "test tariff",
+            "expected charge",
+            "save as test",
+            "suggest tests",
+            "backtest"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. Its tests are the `test` blocks in the source; they run as you edit, and **Tests** shows each one passing or failing, with the values behind a failing expectation. Select a failing test to jump to the expectation that failed, or **Why does this fail?** to have Nova say whether the tariff or the test looks wrong.",
+            "In **Preview**, select **Save as test** to add a test that pins what the load is billed. On a real shipment the test carries that shipment's facts.",
+            "Select **Add a test** under **Tests** to start one by hand, or **Suggest tests** to have Nova write tests from real loads on the template's edges. Each suggestion has already run against the template: select **Add** beside one, or add every one that passes at once.",
+            "To compare the template against real freight, open **More actions** and choose **Backtest**."
+          ]
+        },
+        {
+          "title": "Check a rule over many loads with a property",
+          "keywords": [
+            "property",
+            "vary",
+            "heavier never bills less",
+            "counterexample",
+            "monotone",
+            "weight break inversion"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "Add a `property` block: `vary` a fact over a range (`vary shipment.weight in 1 lb..40_000 lb`), and `expect` what must hold for every load, such as `expect total nondecreasing in shipment.weight` (a heavier load never bills less) or `expect total >= $95`. Use `assume` to skip the loads a rule is not about.",
+            "Properties run with the tests on every change. In **Tests**, a property is marked **Property** and shows how many cases it rated and how many `assume` skipped.",
+            "When one fails, its **Counterexample** shows the simplest failing load: each varied value and, for a rule like \"never bills less\", the two neighbouring loads that broke it with what each billed (999 lb at $309.69, 1,000 lb at $250.00).",
+            "Select **Save as test** to add that load to the source as an ordinary test, so the bug stays fixed. A failing property blocks submitting for review, like a failing test."
+          ]
+        },
+        {
+          "title": "See what no test reaches",
+          "keywords": [
+            "coverage",
+            "untested branch",
+            "unreached",
+            "test gaps"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
+            "A bar in the editor's margin marks every line no test or property case runs; hover it to see what part it is (a branch of an `if`, a match arm, an option, a charge, a refusal).",
+            "**Tests** says how many of the file's parts the tests reach. Expand the list under it to see each part none reaches, and select one to go to it.",
+            "Parts no test reaches are listed as a warning under **Readiness** when you submit for review. They never block it; add a test that reaches each, or check the reviewer can see why it is not needed."
           ]
         },
         {
           "title": "Get help from Nova",
           "keywords": [
-            "AI formula",
-            "generate formula",
-            "explain formula",
-            "ask about a formula",
-            "fix formula"
+            "AI tariff",
+            "generate tariff",
+            "explain tariff",
+            "fix tariff"
           ],
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template, or start a new one.",
-            "Select **Ask Nova** beside **Expression**, or the **Nova** tab, and describe how the template should price a shipment, what to change, or ask about the formula in the editor.",
-            "Select **Explain** to have each line of the formula explained, priced on the preview load. Select **Fix with Nova** beside a problem to have Nova fix it. The Nova button under **Inputs** fills in descriptions the inputs are missing.",
-            "Ask for any change in words — add a fee, set a minimum, change an input's default, itemize the invoice — and Nova makes it in the editor the moment it answers. The card under the reply shows what it added and removed, the inputs it declared, the charge policy it moved, and what the formula engine bills the sample load and recent shipments; select **Undo** to put the editor back. A change the engine cannot run stays in the thread with **Apply to editor** instead. Nothing is saved until you save the template."
-          ]
-        },
-        {
-          "title": "Read what the editor says about a formula",
-          "keywords": [
-            "formula error",
-            "unknown variable",
-            "declare input",
-            "inline values",
-            "hover"
-          ],
-          "steps": [
-            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template. The editor underlines anything wrong — a name it does not know, a function given the wrong number of arguments, a flag multiplied like a number, a field that can be empty — and lists each problem under the editor with its line and a fix beside it: declare the name as an input, change it to the field it meant, or give an empty field a fallback. Select a row to jump to it; a long list folds to its first rows and can be narrowed to errors or warnings.",
-            "Hover a name to see what it is, whether it can be empty, and what it was worth on the preview load; type inside a function's parentheses to see its signature. Each line shows what it came to on the preview load at its end; the eye button under the editor hides these values.",
-            "Press Ctrl+Space for suggestions.",
-            "The format button under the editor (or Shift+Alt+F) lays the formula out one statement per line with a space around every operator, breaking a long sum one term per line; what Nova writes lands already formatted. A formula that does not parse is left as it is until it does."
-          ]
-        },
-        {
-          "title": "Test a template with scenarios",
-          "keywords": [
-            "test formula",
-            "expected charge",
-            "backtest",
-            "pin scenario",
-            "edge cases"
-          ],
-          "steps": [
-            "Open [Formula templates](/billing/configuration-files/formula-templates) and select a template.",
-            "In **Preview**, select **Pin as scenario** to save the load and its amount, or in **Scenarios** select **Add** and name it. **Suggest edge cases** asks Nova for loads to test, priced by the engine.",
-            "Scenarios re-run as you edit. On a failing scenario, select **Why?** to see what changed since it was recorded, then accept the new amount or select **Fix with Nova**.",
-            "To compare the formula against real freight, open **More actions** and choose **Backtest**."
+            "Select **Ask Nova** beside **Source**, or the **Nova** tab, and describe what to change or ask about the tariff in the editor.",
+            "Select **Explain** above the source to have each statement explained on the preview load; hover an explanation to light its line. Select **Ask Nova** beside a problem to have Nova fix it.",
+            "Ask for any change in words (add a weekend fee, set a minimum, add tests) and Nova makes it in the editor the moment it answers. The card under the reply shows the lines it added and removed, whether the result checks and its tests pass, and what it bills the sample load and recent shipments; select **Undo** to put the editor back. Nova only puts a change in the editor when it checks and every test passes; otherwise it says what stops it. Nothing is saved until you save the template.",
+            "Under **Inputs**, the Describe button (it counts the inputs with no label) has Nova write the label, the doc comment, of each of them. One undo takes them all back."
           ]
         },
         {
           "title": "Send a template through review",
           "keywords": [
-            "approve formula",
+            "approve tariff",
             "activate template",
             "submit template",
             "reviewer note"
@@ -7545,19 +7783,33 @@
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.",
             "Save any changes, then select **Submit for review**.",
             "Check the readiness list, choose a reviewer, edit the note Nova drafts (or select **Rewrite**), and select **Submit**.",
-            "A reviewer selects **Approve** to activate it or **Request changes** to send it back to the author with a comment. **Reject and archive** is under **More actions**."
+            "A reviewer sees what changed since the approved version, the libraries it pins and what the change does to recent freight, then selects **Approve** to activate it or **Request changes** to send it back to the author with a comment. **Reject and archive** is under **More actions**."
+          ]
+        },
+        {
+          "title": "Adopt a newer rate matrix version",
+          "keywords": [
+            "new tariff rates",
+            "matrix published",
+            "newer table version",
+            "pinned rate table"
+          ],
+          "steps": [
+            "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.",
+            "Under **Rate tables**, each table the source reads shows the published version tests and the preview read, the version the template pins, and **Newer version** when a later version of the matrix has been published. **Open matrix** opens it on [Rate matrices](/billing/configuration-files/rate-matrices).",
+            "Save the template and send it through review. Approving the new template version pins the newest published version of every table; until then, contracts keep pricing with the version they pinned."
           ]
         },
         {
           "title": "Edit an active template",
           "keywords": [
-            "change formula",
+            "change tariff",
             "update rating method"
           ],
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template. Hover the count of places it is in use to see them.",
             "Make your changes and select **Save changes**.",
-            "If the change alters what the template computes, confirm with **Save and return to Draft**; the approved version keeps rating shipments until the new one is approved. Name and description edits do not need this."
+            "If the change alters the source, confirm with **Save and return to Draft**; the approved version keeps rating shipments until the new one is approved. Description edits do not need this."
           ]
         },
         {
@@ -7571,13 +7823,13 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates) and select the template.",
             "Open **More actions** and choose **Version history**.",
-            "Use **Compare previous** to see what changed, **Schedule activation** to set when a version takes effect, or **Rollback** to restore an earlier version."
+            "Each version lists the rate table versions it pins. Use **Compare previous** to see how the source and the pinned libraries changed, **Schedule activation** to set when a version takes effect, or **Rollback** to restore an earlier version."
           ]
         },
         {
           "title": "Copy, fork, export or import templates",
           "keywords": [
-            "duplicate formula",
+            "duplicate tariff",
             "fork",
             "export JSON",
             "import templates",
@@ -7586,13 +7838,14 @@
           "steps": [
             "Open [Formula templates](/billing/configuration-files/formula-templates).",
             "Right-click a template for **Fork template**, **View lineage**, **Duplicate**, **Export** or **Archive**, or tick several and use **Duplicate**, **Export** or **Archive** in the bar that appears.",
-            "To bring templates in, select **New formula template** and choose **Import templates** (from an exported JSON file) or **Install standard templates** (the standard rating library)."
+            "To bring templates in, select **New formula template** and choose **Import templates** (from a file exported from Trenova) or **Install standard templates** (Trenova's standard rating methods, each with its own tests)."
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it.\n\nNova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the formula engine.\n\nOnly an active template rates shipments. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a valid expression and at least one passing scenario. A scenario keeps gating approval until it is deleted.",
+      "notes": "Viewing the page needs read access to formula templates, and creating one needs create access. **Submit for review**, **Approve**, **Request changes** and **Reject** each need their own permission and only appear for people who have it. Someone who submitted a template, or edited the revision under review, cannot approve it unless their role has the \"Approve own changes\" permission for formula templates, which administrators have; an approval made that way is recorded in the audit log as approved without a second reviewer.\n\nNova needs permission to start assistant conversations and access to the Formula assistant agent, on top of formula template access; without them the Nova tab says which is missing. Every amount Nova shows comes from the same rating engine that bills shipments.\n\nProperties are tests: they run on every change, show as dots in the outline and must pass before review. Coverage counts the template's own file; a library's parts are covered by the library's tests.\n\nOnly an active template rates shipments. A template version pins the version of every library it imports and of every rate matrix it reads, so changing a library or publishing a matrix version never changes what an approved template bills. Rejecting archives the template; use **Request changes** to send it back for more work instead. Submitting needs a name, a description, a source with no errors and every test passing.",
       "related": [
         "/billing/rate-agreements",
+        "/billing/configuration-files/formula-libraries",
         "/billing/configuration-files/rate-matrices",
         "/billing/configuration-files/accessorial-charges",
         "/billing/queue"
@@ -7614,7 +7867,7 @@
         "Rate matrices"
       ],
       "description": "Price a tariff the way it was published — a grid of zones, weight breaks and classes — instead of one lane per cell",
-      "summary": "Rate matrices holds published tariffs entered as the grid they were published as: rates laid out by origin and destination zone, weight break, freight class and similar axes, instead of one lane per cell. A lane on a rate agreement can point at a matrix, and the matrix's own rating method (a formula template) says what each number in the grid means, for example a per-mile rate or a flat charge.\n\nPricing staff maintain matrices here. The table shows each matrix's **Status**, **Code**, **Name**, **Rates are**, **Currency**, **Description** and **Created** date. A matrix opens with the tabs **Overview**, **Axes** and **Rates**.",
+      "summary": "Rate matrices holds published tariffs entered as the grid they were published as: rates laid out by origin and destination zone, postal range, weight break, freight class and similar axes, instead of one lane per cell. A formula template reads a matrix by its code (`tables.ZONES[…]`), and the matrix's **Value type** says what each number in the grid is: money, money per a unit (a mile or kilometre, a pound, hundredweight, kilogram or ton, a foot, inch or metre, a cubic foot, cubic metre, gallon or litre, a minute, hour or day, a pallet, piece or stop), a percent, a plain number, or a whole number. Its money is always in the rating currency of the contract that reads it.\n\nA matrix is versioned. Edits change its draft; a reviewer publishes the draft as the next numbered version, and published versions never change. Each formula template version pins the version of every matrix it reads when it is approved, so publishing a new matrix version does not reprice any contract until a new template version is approved.\n\nPricing staff maintain matrices here. The table shows each matrix's **Status** (**Draft**, **In review**, **Published** or **Archived**), **Published** version, **Code**, **Name**, **Values are**, **Description** and **Created** date. A matrix opens with the tabs **Overview**, **Axes**, **Rates** and **Versions**.",
       "requires": [
         {
           "resource": "rate_matrix",
@@ -7630,7 +7883,11 @@
         "weight breaks",
         "class rates",
         "zone to zone rates",
-        "pricing grid"
+        "pricing grid",
+        "zip ranges",
+        "postal ranges",
+        "publish matrix",
+        "matrix versions"
       ],
       "tasks": [
         {
@@ -7643,9 +7900,9 @@
           "steps": [
             "Open [Rate matrices](/billing/configuration-files/rate-matrices).",
             "Select **New rate matrix**.",
-            "On **Overview**, fill in **Status**, **Code**, **Name** and optionally **Description**. Under **Pricing**, pick the **Rating method** and set **Currency**, **Rounding mode** and **Rounding precision**.",
-            "On **Axes**, select **Add axis** for each dimension of the grid (up to four). For each, choose the **Dimension** (for example **Zone**, **Weight break**, **Freight class** or **Distance**), the **Match mode** (**Exact key** or **Band**), and give it a **Label**. A banded axis also takes an **Outside every band** policy.",
-            "Select **Save**. The **Rates** tab is available once the matrix has been saved."
+            "On **Overview**, fill in **Code**, **Name** and optionally **Description**. Under **Values**, pick the **Value type** the grid's numbers are.",
+            "On **Axes**, select **Add axis** for each dimension of the grid (one to four). For each, choose the **Dimension** (for example **Zone**, **Postal range**, **Weight break**, **Freight class** or **Distance**), the **Match mode** (**Exact key** or **Band**), and give it a **Label**. A banded axis also takes an **Outside every band** policy; a **Postal range** axis is always matched by range and has no such policy.",
+            "Select **Save**. The matrix starts as a draft that no tariff reads; the **Rates** and **Versions** tabs are available once it has been saved."
           ]
         },
         {
@@ -7658,18 +7915,64 @@
           "steps": [
             "Open [Rate matrices](/billing/configuration-files/rate-matrices) and select the matrix's row.",
             "Open the **Rates** tab. The first axis runs down the rows and the second across the columns; with more axes, pick the sheet to edit from the selectors above the grid.",
-            "Type the new values into the cells, then select **Save rates**. Rates save on their own, separately from the rest of the form."
+            "Type the new values into the cells (each cell shows the value type's unit, such as `$/cwt`), then select **Save rates**. Rates save to the draft, separately from the rest of the form. A whole-number matrix refuses a fraction: the cell is marked and **Save rates** stays off until it is fixed.",
+            "Submit the draft for review (below). Tariffs keep reading the published version until a reviewer publishes the draft."
+          ]
+        },
+        {
+          "title": "Enter postal ranges",
+          "keywords": [
+            "zip ranges",
+            "postal code ranges",
+            "zip to zip",
+            "3-digit zip ranges"
+          ],
+          "steps": [
+            "Give the matrix an axis whose **Dimension** is **Postal range**, and save it.",
+            "On **Rates**, the axis's postal ranges are listed above the grid. Type the first and last postal code of a range (for example `100` through `149`) and select **Add range**. The range arrives as a row of blank cells across the other axes; fill each in before **Save rates** turns on.",
+            "To change a range, select **Edit** beside it, change its ends and select **Apply**; **Remove** deletes the range's cells on every sheet.",
+            "Keep both ends of a range the same number of characters, every range on one axis the same length, and ranges apart: both ends are included, and overlapping ranges are refused. A postal code matches the range its first characters fall between, compared character by character after trimming and upper-casing, so `10001` and `10001-1234` both match `100` through `149`; a postal code that no range holds finds no rate."
+          ]
+        },
+        {
+          "title": "Submit, publish or send back a draft",
+          "keywords": [
+            "review matrix",
+            "approve tariff",
+            "publish rates",
+            "request changes"
+          ],
+          "steps": [
+            "Open the matrix and its **Versions** tab. It says which version tariffs read and whether the draft has changes that are not published.",
+            "To send the draft to review, select **Submit for review**, pick a reviewer and add a note.",
+            "A reviewer opens the same tab and selects **Publish** to make the draft the next version, **Request changes** to send it back with a comment, or **Reject**. Rejecting a matrix that was never published archives it."
+          ]
+        },
+        {
+          "title": "See or restore an earlier version",
+          "keywords": [
+            "version history",
+            "previous rates",
+            "roll back matrix"
+          ],
+          "steps": [
+            "Open the matrix and its **Versions** tab. Each published version shows its cell count, who published it, when, and how many template versions pin it.",
+            "Select **View rates** to read a version's grid, which cannot be edited.",
+            "Select **Restore to draft** to replace the draft's axes and rates with that version's, then submit the draft to publish it again.",
+            "Check **Pinned by** to see every formula template version that pins a version of this matrix, with the version it pins."
           ]
         },
         {
           "title": "Retire a rate matrix",
           "keywords": [
             "deactivate tariff",
-            "disable matrix"
+            "disable matrix",
+            "archive matrix"
           ],
           "steps": [
             "Open [Rate matrices](/billing/configuration-files/rate-matrices) and select the matrix's row.",
-            "On **Overview**, set **Status** to **Inactive** and select **Save**."
+            "On **Versions**, select **Archive**. When template versions pin the matrix, confirm that you want to archive it anyway: they keep reading the version they pinned, but no new template version can read the matrix.",
+            "To bring an archived matrix back, select **Submit for review** and have it published."
           ]
         },
         {
@@ -7684,7 +7987,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to rate matrices; **New rate matrix** only appears for people who can create them.\n\nChanging an axis after rates exist changes what every existing cell means, so re-enter the grid after any change on **Axes**. A matrix with no axes or no rates prices nothing, and an inactive matrix stops pricing; in each case every lane pointing at it stops with it. A lane is attached to a matrix on its rate agreement's **Lanes** tab in [Rate agreements](/billing/rate-agreements). A rate increase applied from Rate agreements does not change matrix rates.",
+      "notes": "Viewing the page needs read access to rate matrices; **New rate matrix** only appears for people who can create them, **Submit for review** for people who can submit them, **Publish** for people who can publish them, **Request changes** and **Reject** for people who can reject them, and **Archive** for people who can archive them. Someone who submitted or edited a draft cannot publish it unless their role has the \"Publish own changes\" permission for rate matrices, which administrators have; a version published that way is recorded in the audit log as published without a second reviewer.\n\nA matrix's **Code** is fixed once a version is published, because tariffs read it by that code. Changing an axis after rates exist changes what every existing cell means, so re-enter the grid after any change on **Axes**. A matrix with no published version, or an archived one, is not a table any new template version can read; a tariff that finds no cell refuses to rate with its own reason rather than billing nothing. Rounding is the tariff's, written in its source on [Formula templates](/billing/configuration-files/formula-templates). A rate increase applied from [Rate agreements](/billing/rate-agreements) does not change matrix rates.",
       "related": [
         "/billing/rate-agreements",
         "/billing/configuration-files/rate-zones",
@@ -8281,13 +8584,13 @@
             "edit charge",
             "re-rate",
             "change formula template",
-            "base rate"
+            "tariff inputs",
+            "terms"
           ],
           "steps": [
-            "Open [Billing queue](/billing/queue), select the item and open the **Charges** tab.",
-            "Select **Add charge** to add an accessorial: choose the **Accessorial charge**, **Method**, **Unit** and **Amount**, then **Save**.",
-            "To re-rate the freight, select **Change template**, choose a **Formula template** and select **Re-rate**.",
-            "To change the rate the formula starts from, use **Adjust base rate**."
+            "Open [Billing queue](/billing/queue), select the item and open the **Charges** tab. Each freight line of the shipment's bill is listed with its quantity and rate, and each charge the tariff billed itself under its own label.",
+            "Select **Add charge** to add an accessorial: choose the **Accessorial charge**, **Method**, **Unit** and **Amount**, then **Save**. Charges the tariff billed cannot be edited or deleted here; they come back from the tariff on every re-rate.",
+            "To re-rate the freight, select **Re-rate** beside the rating, or **Adjust terms** beside **Terms**: choose the **Tariff**, change any of its input values, and select **Re-rate**. The freight lines and the tariff's charges are replaced by the new bill."
           ]
         },
         {
@@ -8354,7 +8657,7 @@
         "Rate agreements"
       ],
       "description": "The contracts that decide what a shipment costs, and the lanes each one prices",
-      "summary": "Rate agreements holds the contracts that decide what a shipment costs: what a customer is billed, or what a carrier is paid. Each agreement has a header (who it is with, its term and pricing defaults) and the lanes it prices, plus its own accessorial prices and fuel terms. Pricing and billing staff write agreements here, send them through review, and apply rate increases or rate sheets across many lanes at once.\n\nThe table shows each agreement's **Status**, **Code**, **Name**, **Side** (customer or carrier), **Type**, **In force from**, **Until**, **Priority** and **Currency**. Opening an agreement shows the tabs **Overview**, **Lanes**, **Accessorials**, **Fuel**, **Simulation** and **Versions**.",
+      "summary": "Rate agreements holds the contracts that decide what a shipment costs: what a customer is billed, or what a carrier is paid. A contract is a tariff and its inputs: each lane names the formula template (tariff) that bills it and sets that tariff's inputs (a per-mile rate, a minimum, a table of weight breaks), and the agreement can set inputs every lane's tariff shares. Each agreement has a header (who it is with, its term, its currency and contract-wide terms) and the lanes it prices, plus its own accessorial prices and fuel terms. Pricing and billing staff write agreements here, send them through review, and apply rate increases or rate sheets across many lanes at once.\n\nThe table shows each agreement's **Status**, **Code**, **Name**, **Side** (customer or carrier), **Type**, **In force from**, **Until**, **Priority** and **Currency**. Opening an agreement shows the tabs **Overview**, **Lanes**, **Accessorials**, **Fuel**, **Simulation** and **Versions**.",
       "requires": [
         {
           "resource": "rate_agreement",
@@ -8385,10 +8688,11 @@
           "steps": [
             "Open [Rate agreements](/billing/rate-agreements).",
             "Select **New rate agreement**, then **New rate agreement** again in the menu.",
-            "On **Overview**, choose the **Party type** (**Customer** or **Carrier**) and pick the **Customer** or **Carrier**, then fill in **Code**, **Name**, **Agreement type** and **Effective From**. Optionally set **Effective To**, **Auto renew**, the pricing defaults and, for a customer, **Bill To**; for a carrier, the **Margin floor** and **Maximum pay** guardrails.",
-            "On **Lanes**, select **Add lane** for each lane. Give it a **Label** and **Direction**, set the origin and destination scope (anywhere, country, state, zone, radius, city, postal prefix, postal code or a single location), then either a **Rating method** with a **Rate**, or a **Rate matrix**. Optionally set **Minimum charge**, **Maximum charge**, **Minimum billable miles** and **Priority**.",
-            "On **Accessorials**, select **Add accessorial** for any contract-specific accessorial prices, and on **Fuel**, select **Add fuel terms** to tie the agreement to a **Fuel program**.",
-            "Select **Save**. A new agreement always starts as a draft."
+            "On **Overview**, choose the **Party type** (**Customer** or **Carrier**) and pick the **Customer** or **Carrier**, then fill in **Code**, **Name**, **Agreement type** and **Effective From**. Optionally set **Effective To**, **Auto renew**, the **Currency** and, for a customer, **Bill To**; for a carrier, the **Margin floor** and **Maximum pay** guardrails.",
+            "On **Lanes**, select **Add lane** for each lane. Give it a **Label** and **Direction**, set the origin and destination scope (anywhere, country, state, zone, radius, city, postal prefix, postal code or a single location), then pick its **Tariff** and fill in the inputs the tariff declares: each field is labelled from the tariff, shows its unit, says what it inherits when left empty, and shows the bounds the tariff sets for it (for example \"From $0.50/mi to $15.00/mi\"). A value outside them is flagged at the field as you type, and an input the tariff limits to a list of values is a choice of those values. Weight breaks are a table: select **Add row** for each break. Optionally set **Priority**.",
+            "Back on **Overview**, under **Pricing defaults**, set any terms every lane's tariff reads (such as a minimum) once for the whole agreement; a lane that sets its own value keeps it.",
+            "On **Accessorials**, select **Add accessorial** for any contract-specific accessorial prices. For one added automatically, select **Add condition** to write when it applies, as a Tariff condition; and on **Fuel**, select **Add fuel terms** to tie the agreement to a **Fuel program**.",
+            "Select **Save**. A new agreement always starts as a draft. Saving checks every lane's inputs against its tariff, so a missing or mistyped term, or a value outside the tariff's bounds, is flagged at its field."
           ]
         },
         {
@@ -8432,8 +8736,8 @@
           "steps": [
             "Open [Rate agreements](/billing/rate-agreements).",
             "Select **New rate agreement** and choose **Apply Rate Increase**, or tick agreements in the table and select **Rate Increase** in the bar that appears.",
-            "Choose the scope (**One customer**, **One carrier**, **Across the board**, or the agreements you picked), set **Takes effect** and the change as a percent or a flat amount. A negative change is a decrease.",
-            "Select **Preview changes**, check each lane's **Before** and **After**, then select **Apply Increase**."
+            "Choose the scope (**One customer**, **One carrier**, **Across the board**, or the agreements you picked), set **Takes effect** and the **Change (%)**. A negative change is a decrease, down to just above -100%. Every money input a lane sets moves by that share of itself (rates, minimums and the rates and minimums inside weight breaks); counts, percents and weights stay as they are, and a lane that sets no money input of its own is left alone.",
+            "Select **Preview changes**, check **What moves** on each lane (every input with its value before and after), then select **Apply Increase**."
           ]
         },
         {
@@ -8446,7 +8750,7 @@
           ],
           "steps": [
             "Open [Rate agreements](/billing/rate-agreements), select **New rate agreement** and choose **Import rate sheet**.",
-            "Pick the **Agreement** and when **Rates take effect**, then drop a CSV or XLSX file (use **Download template** for the expected layout).",
+            "Pick the **Agreement** and when **Rates take effect**, then drop a CSV or XLSX file (use **Download template** for the expected layout). Each row's method picks a standard tariff (flat, per mile or per hundredweight), and its rate and minimum columns become that tariff's **Rate** and **Minimum charge** inputs.",
             "Review what happens to each lane, then select **Apply these rates**, or **Discard**."
           ]
         },
@@ -8462,7 +8766,7 @@
           ]
         }
       ],
-      "notes": "Viewing the page needs read access to rate agreements. Submitting, approving, rejecting, archiving and duplicating each need their own rate agreement permission, and the matching buttons only appear for people who have it.\n\nThe **Status** field cannot be edited; an agreement changes status only through the review actions. Approving activates the agreement and its lanes start pricing shipments; suspending stops pricing immediately; archiving is permanent.\n\nA rate increase or rate sheet does not edit lanes in place: each affected lane is closed out and succeeded at the new rate from the effective date, and the old rates stay in history (see a lane's **History**). Lanes priced from a rate matrix are not moved by a rate increase; change the matrix on [Rate matrices](/billing/configuration-files/rate-matrices) instead.",
+      "notes": "Viewing the page needs read access to rate agreements. Submitting, approving, rejecting, archiving and duplicating each need their own rate agreement permission, and the matching buttons only appear for people who have it.\n\nThe **Status** field cannot be edited; an agreement changes status only through the review actions. Approving activates the agreement and its lanes start pricing shipments; suspending stops pricing immediately; archiving is permanent.\n\nA rate increase or rate sheet does not edit lanes in place: each affected lane is closed out and succeeded on its new terms from the effective date, and the old terms stay in history (see a lane's **History**, which marks the inputs each version changed). Rates a tariff reads from a rate matrix are not moved by a rate increase; change the matrix on [Rate matrices](/billing/configuration-files/rate-matrices) instead.\n\nA tariff can bound what a contract sets: a rate between two amounts, a minimum no lower than a floor, a service level from a list. The bounds are written in the tariff's source on [Formula templates](/billing/configuration-files/formula-templates), so every agreement that uses the tariff keeps to them; a value saved before a bound was added stops the shipment's rating with an error naming the input until the lane is corrected.\n\nA lane's minimum, maximum, rounding, discounts and weight breaks are part of its tariff now: they are inputs the tariff declares or lines and clauses in its source on [Formula templates](/billing/configuration-files/formula-templates), not fields of the lane.",
       "related": [
         "/billing/configuration-files/rate-zones",
         "/billing/configuration-files/rate-matrices",
@@ -11871,8 +12175,8 @@
         "Configuration files",
         "Communication profiles"
       ],
-      "description": "Communication profiles hold how Trenova exchanges documents with a trading partner: the transport method (Internal, AS2, SFTP or VAN), the endpoint and its credentials, the X12 envelope identifiers (ISA and GS sender and receiver IDs, X12 version, environment, acknowledgment preference) and delivery retry limits.",
-      "summary": "Communication profiles hold how Trenova exchanges documents with a trading partner: the transport method (Internal, AS2, SFTP or VAN), the endpoint and its credentials, the X12 envelope identifiers (ISA and GS sender and receiver IDs, X12 version, environment, acknowledgment preference) and delivery retry limits. A partner's **Default transport profile** points at one of these.\n\nEDI implementation teams use this page when onboarding a partner or when a partner changes its endpoint, certificates or IDs.",
+      "description": "Communication profiles hold how Trenova exchanges documents with a trading partner: the transport method (Internal, AS2, SFTP or VAN), the endpoint and its credentials, whether it reaches the partner's test or production system, and delivery retry limits.",
+      "summary": "Communication profiles hold how Trenova exchanges documents with a trading partner: the transport method (Internal, AS2, SFTP or VAN), the endpoint and its credentials, whether it reaches the partner's test or production system, and delivery retry limits. The interchange IDs, group codes, X12 version and acknowledgments live in the partner's Lading project. A partner's **Default transport profile** points at one of these.\n\nEDI implementation teams use this page when onboarding a partner or when a partner changes its endpoint, certificates or IDs.",
       "requires": [
         {
           "resource": "edi",
@@ -11903,7 +12207,7 @@
             "Select New EDI communication profile at the top of the table.",
             "On the **Overview** tab, enter a **Name**, choose the **Method** and **Status**, and pick the **Partner** this profile delivers for.",
             "On the **Transport** tab, fill in the connection details for the method: for AS2 the **Local AS2 ID**, **Partner AS2 ID**, **Endpoint URL** and certificates; for SFTP the **Host**, **Port**, **Username**, **Authentication** and directories; for VAN the mailbox and gateway details. Set **Max attempts** and the backoff under **Delivery retry** if the defaults do not suit.",
-            "On the **Envelope** tab, enter the **ISA sender ID**, **ISA receiver ID**, **GS sender ID**, **GS receiver ID**, **X12 version**, **Environment** and **Acknowledgment preference**.",
+            "On the **Envelope** tab, pick the **Environment**.",
             "On the **Secrets** tab, enter the password or private key the method needs.",
             "Select **Save** (or **Save & close**)."
           ]
@@ -11947,15 +12251,15 @@
       "inNavigation": true
     },
     {
-      "path": "/edi/designer",
-      "name": "Template designer",
+      "path": "/edi/flows",
+      "name": "Flow instances",
       "module": "edi",
       "breadcrumb": [
         "EDI",
-        "Template designer"
+        "Flow instances"
       ],
-      "description": "The Template designer is where X12 document templates are written, validated, certified and activated.",
-      "summary": "The Template designer is where X12 document templates are written, validated, certified and activated. A template has versions; each version moves from draft to certified to active, and only a draft can be edited. The **Document preview & archive** tab ties a partner to a template through a document profile, previews the X12 a document would produce, and keeps an archive of generated messages.\n\nEDI implementation specialists use it to build or change the documents sent to and received from trading partners.",
+      "description": "Flow instances lists each load, tender and invoice a partner's Lading flow is following: which flow, the partner's key for it, whether it is open, held, escalated or closed, why it waits and its next deadline.",
+      "summary": "Flow instances lists each load, tender and invoice a partner's Lading flow is following: which flow, the partner's key for it, whether it is open, held, escalated or closed, why it waits and its next deadline. A flow holds an instance for a planner when the partner's rules say so (a changed rate, a missing stop), and escalates it when an answer or acknowledgment does not arrive in time.\n\nEDI coordinators and planners use it to find tenders waiting on a person and release them once the cause is fixed.",
       "requires": [
         {
           "resource": "edi",
@@ -11964,91 +12268,44 @@
       ],
       "capabilities": [],
       "aliases": [
-        "EDI template editor",
-        "X12 template",
-        "204 template",
-        "EDI mapping designer",
-        "document profile",
-        "template certification"
+        "EDI conversations",
+        "held tenders",
+        "escalated EDI",
+        "tender follow-up",
+        "990 overdue",
+        "EDI timers"
       ],
       "tasks": [
         {
-          "title": "Create a template",
+          "title": "Find tenders waiting on a planner",
           "keywords": [
-            "new X12 template",
-            "add EDI document"
+            "held EDI tender",
+            "escalated tender",
+            "stuck EDI"
           ],
           "steps": [
-            "Open [Template designer](/edi/designer) and stay on the **Templates** tab.",
-            "In the **Templates** list, select **New**.",
-            "Choose the **Document type**, enter a **Name** and optional **Description**, and set the **X12 version**, **Group** and **Status** for the first draft.",
-            "Submit the dialog. The new template opens with its first draft version."
+            "Open [Flow instances](/edi/flows).",
+            "Filter **Status** to **Held** or **Escalated**. **Why it waits** says what the flow stopped for."
           ]
         },
         {
-          "title": "Edit a draft version",
+          "title": "Release a held flow",
           "keywords": [
-            "change segments",
-            "edit elements",
-            "template scripts"
+            "resume EDI flow",
+            "unblock tender"
           ],
           "steps": [
-            "Open [Template designer](/edi/designer) and select the template in the **Templates** list (use **Search templates** or **Filter** to find it).",
-            "Pick a draft in **Versions**. If only a certified or active version exists, select **New draft** to copy it into a new draft.",
-            "Work in the **Elements** and **Scripts** tabs, using the **Segment outline** to move between segments.",
-            "Select **Save draft** to store segment, element and script changes, and **Save metadata** to store version details. Nothing is sent until you save."
-          ]
-        },
-        {
-          "title": "Validate, certify and activate a version",
-          "keywords": [
-            "publish template",
-            "go live",
-            "certify EDI template"
-          ],
-          "steps": [
-            "Open [Template designer](/edi/designer) and select the template and draft version.",
-            "Select **Validate** and review the results in **Diagnostics** or on the **Validation** tab.",
-            "When there are no validation errors and no unsaved changes, select **Certify**.",
-            "Select **Activate** to make the certified version the one in use.",
-            "To retire a version that is not active, select **Archive version**."
-          ]
-        },
-        {
-          "title": "Set up a partner document profile and preview output",
-          "keywords": [
-            "partner document settings",
-            "preview X12",
-            "envelope",
-            "acknowledgment settings"
-          ],
-          "steps": [
-            "Open [Template designer](/edi/designer) and switch to the **Document preview & archive** tab.",
-            "Under **Document profile**, choose the partner and either pick an existing document profile or start a new one.",
-            "Set the **Profile name**, template, **Version override**, **Group**, **Status**, **Validation** mode, envelope and acknowledgment settings, and any **Partner settings**, then select **Save profile**.",
-            "On the **Preview** tab, fill in the source document values and select **Preview provisional controls** to see the X12 that would be produced.",
-            "Select **Generate archive message** to generate the message and store it in the archive."
-          ]
-        },
-        {
-          "title": "Find a generated message in the archive",
-          "keywords": [
-            "archived EDI",
-            "download X12",
-            "control numbers"
-          ],
-          "steps": [
-            "Open [Template designer](/edi/designer), switch to **Document preview & archive**, and open the **Archive** tab.",
-            "Filter by partner, **Transaction**, **Direction**, **Status**, **Search** text or the **Generated From** and **Generated To** dates.",
-            "Use the row actions to open the detail, copy the control numbers, copy the raw X12, or download it."
+            "Open [Flow instances](/edi/flows) and select the row.",
+            "Read **Why it waits**, the **Events** and anything **Awaiting acknowledgment**, and fix the cause, such as the load or the partner's mapping.",
+            "Select **Release**. The flow carries on from where it stopped."
           ]
         }
       ],
-      "notes": "Viewing the designer needs read access to EDI. Certified, active, superseded, deprecated and archived versions are read-only; create a new draft to change them. Certification fails while a version has validation errors, only certified versions can be activated, and the active version cannot be archived. Check a template against saved scenarios on [Test cases](/edi/test-cases).",
+      "notes": "Viewing flow instances needs read access to EDI; releasing one needs update access to EDI. Only a held or escalated instance can be released.",
       "related": [
-        "/edi/test-cases",
-        "/edi/partners",
-        "/edi/messages"
+        "/edi/lading",
+        "/edi/messages",
+        "/edi/partners"
       ],
       "covers": [],
       "createAction": null,
@@ -12124,6 +12381,129 @@
         "/edi/communication-profiles"
       ],
       "covers": [],
+      "createAction": null,
+      "inNavigation": true
+    },
+    {
+      "path": "/edi/lading",
+      "name": "Lading studio",
+      "module": "edi",
+      "breadcrumb": [
+        "EDI",
+        "Lading studio"
+      ],
+      "description": "Open a partner to write its maps, guides, rules and flows",
+      "summary": "The Lading studio is where you write how Trenova reads and writes each trading partner's X12. Every partner has one Lading project: a partner file with its interchange identity and settings, a map for each transaction set, the partner's rules, the flow that follows each tender from its 204 to its 210, samples of the partner's real messages, and tests. The studio checks the whole project as you type, runs maps on samples, and releases a version only after its tests and replays pass.\n\nEDI coordinators and implementation teams use it to onboard a partner's EDI, change a map when a partner changes its guide, and release the change safely.",
+      "requires": [
+        {
+          "resource": "edi",
+          "operation": "read"
+        }
+      ],
+      "capabilities": [],
+      "aliases": [
+        "EDI maps",
+        "EDI mapping",
+        "X12 mapping",
+        "partner project",
+        "Lading",
+        "EDI rules",
+        "EDI flows",
+        "EDI implementation"
+      ],
+      "tasks": [
+        {
+          "title": "Start a partner's Lading project",
+          "keywords": [
+            "new EDI map",
+            "set up partner EDI",
+            "starter project"
+          ],
+          "steps": [
+            "Open [Lading studio](/edi/lading) and select the partner's row.",
+            "Under **Trenova is**, pick **The carrier: the partner tenders to us** or **The broker: we tender to the partner**.",
+            "Under **Sets traded**, keep the sets you exchange with the partner.",
+            "Select **Start the project**. The starter opens as a draft that sends nothing until it is certified and activated."
+          ]
+        },
+        {
+          "title": "Change a map, rule or flow",
+          "keywords": [
+            "edit EDI map",
+            "fix mapping",
+            "add a file"
+          ],
+          "steps": [
+            "Open [Lading studio](/edi/lading), select the partner and pick the draft in the version picker. To change a version that is not a draft, open **Version actions** and select **New draft from this version**.",
+            "Pick a file in **Files**, or select **Add a file**, choose **Source file** or **Sample**, enter the **Path** and select **Add**.",
+            "Edit the file. Problems show under the text as you type and in the **Problems** tab; select one to go to it.",
+            "Select **Save**. Select **Discard** to go back to the saved version."
+          ]
+        },
+        {
+          "title": "Try a map on a sample",
+          "keywords": [
+            "run EDI map",
+            "test X12",
+            "preview mapping"
+          ],
+          "steps": [
+            "In the studio, open the **Run** tab.",
+            "Pick a map and a sample.",
+            "Select **Run here** to run the files as they are now, or **Run with live data** to run the saved version with lookups answered from your records.",
+            "Read each transaction's findings and outcomes, the document it produced and the X12 it wrote. Hover a field in the editor to see the value it came to."
+          ]
+        },
+        {
+          "title": "Run the tests",
+          "keywords": [
+            "EDI tests",
+            "certify readiness",
+            "coverage"
+          ],
+          "steps": [
+            "In the studio, open the **Tests** tab and select **Run the tests**.",
+            "Select a failing test to open it. Lines no test reached are marked in the editor, and **Sent by the partner, read by no map** lists elements the samples carry that nothing reads."
+          ]
+        },
+        {
+          "title": "Release a version",
+          "keywords": [
+            "certify EDI",
+            "activate map",
+            "go live",
+            "replay",
+            "shadow"
+          ],
+          "steps": [
+            "Save the draft, then in the **Release** tab pick each inbound map under **Map to replay**, choose a period and select **Start replay**. Each replay reads the partner's past messages through this version and the active one and lists every difference.",
+            "Select **Certify**. A version is certified when it has no errors, its tests pass and each inbound map replays without new rejections.",
+            "To try it on live messages first, open **Version actions** and pick how many days to shadow it. The shadow sends nothing and records where it differs from the active version.",
+            "Select **Activate**. The previous version is superseded and every new message is read and written with this one."
+          ]
+        },
+        {
+          "title": "Change a partner setting",
+          "keywords": [
+            "partner options",
+            "auto accept",
+            "EDI settings"
+          ],
+          "steps": [
+            "Open the partner's active version and the **Settings** tab.",
+            "Change the values (blank keeps the default) and select **Save settings**."
+          ]
+        }
+      ],
+      "notes": "Viewing the studio needs read access to EDI; starting a project or a new draft needs create access, and saving, certifying, activating, shadowing, replaying, archiving and changing settings need update access to EDI. Only a draft can change; every other version opens read-only. An active or shadowing version cannot be archived until it is stopped.",
+      "related": [
+        "/edi/partners",
+        "/edi/flows",
+        "/edi/messages"
+      ],
+      "covers": [
+        "/edi/lading/:partnerId"
+      ],
       "createAction": null,
       "inNavigation": true
     },
@@ -12468,7 +12848,7 @@
           "steps": [
             "Open [Partners](/edi/partners) and select the partner's row.",
             "On the **Details** tab, change the fields you need, then select **Save partner**.",
-            "Open the **Readiness** tab to see which onboarding steps are complete. Missing steps offer shortcuts such as **Create communication profile**, **Open designer** or **Open test cases**."
+            "Open the **Readiness** tab to see which onboarding steps are complete. Missing steps offer shortcuts such as **Create communication profile** or **Open the Lading studio**."
           ]
         },
         {
@@ -12490,82 +12870,8 @@
       "related": [
         "/edi/communication-profiles",
         "/edi/mapping-profiles",
-        "/edi/designer",
-        "/edi/test-cases"
-      ],
-      "covers": [],
-      "createAction": null,
-      "inNavigation": true
-    },
-    {
-      "path": "/edi/test-cases",
-      "name": "Test cases",
-      "module": "edi",
-      "breadcrumb": [
-        "EDI",
-        "Test cases"
-      ],
-      "description": "EDI test cases are saved certification scenarios.",
-      "summary": "EDI test cases are saved certification scenarios. Each one pairs a stored document payload with a partner document profile and records the warnings and errors the rendered X12 is expected to produce. Running a test case renders the payload through the partner's template and reports whether the result matches.\n\nEDI implementation teams use them to certify a partner's documents and to re-check templates after changes.",
-      "requires": [
-        {
-          "resource": "edi",
-          "operation": "read"
-        }
-      ],
-      "capabilities": [],
-      "aliases": [
-        "EDI certification",
-        "EDI testing",
-        "test scenarios",
-        "partner certification",
-        "template test"
-      ],
-      "tasks": [
-        {
-          "title": "Create a test case",
-          "keywords": [
-            "new certification scenario",
-            "add EDI test"
-          ],
-          "steps": [
-            "Open [Test cases](/edi/test-cases).",
-            "Select **New EDI test case**.",
-            "Under **Test case**, enter a **Name**, choose the **Document profile** it certifies, and add a **Description**.",
-            "Under **Expected outcome**, set **Expected warnings** and **Expected errors**, and optionally list **Expected warning codes** and **Expected error codes**.",
-            "Under **Document payload**, paste the source data into **Payload**.",
-            "Select **Create test case**."
-          ]
-        },
-        {
-          "title": "Run a test case and read the result",
-          "keywords": [
-            "run certification",
-            "check template output"
-          ],
-          "steps": [
-            "Open [Test cases](/edi/test-cases) and select the test case's row.",
-            "Save any edits first, then select **Run preview**.",
-            "Read the verdict at the top: actual warning and error counts against the expected ones, and any missing or unexpected codes.",
-            "Select **Open inspector** to see the rendered X12 and its diagnostics. If the result is wrong, fix the payload or template, or update the expected counts and codes."
-          ]
-        },
-        {
-          "title": "Edit or delete a test case",
-          "keywords": [
-            "change expected errors",
-            "remove test"
-          ],
-          "steps": [
-            "Open [Test cases](/edi/test-cases) and select the row.",
-            "Change the fields and select **Save test case**, or select **Delete** to remove it."
-          ]
-        }
-      ],
-      "notes": "Viewing test cases needs read access to EDI; creating needs create access, saving changes needs update access, and deleting needs delete access to EDI. A partner's **Readiness** tab on [Partners](/edi/partners) counts a test case as an onboarding step.",
-      "related": [
-        "/edi/designer",
-        "/edi/partners"
+        "/edi/lading",
+        "/edi/flows"
       ],
       "covers": [],
       "createAction": null,
@@ -15616,8 +15922,8 @@
         "Data & Integrations",
         "Data retention"
       ],
-      "description": "Configure how long audit entries, the AI audit trail and raw EDI payloads are kept before the nightly purge jobs remove them.",
-      "summary": "Data retention sets how long the organization keeps audit entries, the AI audit trail and raw EDI payloads before the nightly purge jobs remove them. The page is one form, **Retention windows**, with values in days: **Audit Retention (days)**, **EDI Inbound File Retention (days)**, **EDI Message Retention (days)**, **AI feedback retention (days)**, **Agent evaluation case retention (days)** and **AI audit trail retention (days)**.\n\nAdministrators use it to balance storage and privacy against how far back people need to look at audit history or replay EDI traffic.",
+      "description": "How long each kind of record is kept before the nightly purge jobs remove it.",
+      "summary": "Data retention sets how long the organization keeps audit entries, raw EDI payloads and the AI records before the nightly purge jobs remove them. The page is one table, grouped under **Audit**, **EDI** and **AI**. Each row names the data, how long it is **Kept for** in days, the date it **Removes before** today, and what happens **Then**: deleted, or for EDI, the raw content blanked while the record stays.\n\nAdministrators use it to balance storage and privacy against how far back people need to look at audit history or replay EDI traffic.",
       "requires": [
         {
           "resource": "organization",
@@ -15644,8 +15950,8 @@
           ],
           "steps": [
             "Open [Data retention](/organization/data-retention).",
-            "Enter the number of days in **Audit Retention (days)**. It must be at least 1.",
-            "Select **Save settings**."
+            "Enter the number of days for **Audit entries**. It must be at least 1.",
+            "Select **Save changes**."
           ]
         },
         {
@@ -15658,8 +15964,8 @@
           ],
           "steps": [
             "Open [Data retention](/organization/data-retention).",
-            "Enter the number of days in **AI audit trail retention (days)**. It must be at least 365; the default of 2555 days is seven years, which is what most audits of AI decisions ask for.",
-            "Select **Save settings**."
+            "Enter the number of days for **AI audit trail**. It must be at least 365; the default of 2555 days is seven years, which is what most audits of AI decisions ask for.",
+            "Select **Save changes**."
           ]
         },
         {
@@ -15672,13 +15978,13 @@
           ],
           "steps": [
             "Open [Data retention](/organization/data-retention).",
-            "Enter the number of days in **EDI Inbound File Retention (days)** for raw inbound EDI file contents, and in **EDI Message Retention (days)** for raw X12 and payload snapshots of delivered and inbound messages.",
-            "Enter 0 in either field to keep those raw payloads forever.",
-            "Select **Save settings**."
+            "For **Inbound file contents** or **Message payloads**, turn off **Forever** and enter the number of days. A limit starts at 90 days.",
+            "Turn **Forever** back on to keep those raw payloads with no limit.",
+            "Select **Save changes**."
           ]
         }
       ],
-      "notes": "Opening the page needs read access to the organization; **Save settings** appears only for people with update access to the organization.\n\nAudit entries older than the audit window are deleted by the nightly purge. Events on the [AI audit trail](/admin/agent-control) older than its window are deleted by their own nightly sweep, which cuts only where the trail's chain was sealed, so what is left still verifies. For EDI, the purge blanks the raw contents but keeps the file and message records and their metadata. A purged EDI message can no longer be replayed from [EDI messages](/edi/messages).",
+      "notes": "Opening the page needs read access to the organization; people without update access see the table read-only, and **Save changes** appears only once something has changed.\n\nAudit entries older than the audit window are deleted by the nightly purge. Events on the [AI audit trail](/admin/agent-control) older than its window are deleted by their own nightly sweep, which cuts only where the trail's chain was sealed, so what is left still verifies. For EDI, the purge blanks the raw contents but keeps the file and message records and their metadata. A purged EDI message can no longer be replayed from [EDI messages](/edi/messages). Agent evaluation cases kept **Forever** last until they expire or their conversation is deleted.",
       "related": [
         "/admin/audit-logs",
         "/admin/agent-control",
@@ -16965,7 +17271,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to reports. **New report**, **New dashboard**, **Duplicate** and customizing a gallery report need create permission; **Schedules** needs export permission on reports. Each card shows whether the report is **Shared** or **Private**, set by its **Visibility** when saved.",
+      "notes": "Needs read access to reports. **New report**, **New dashboard**, **Duplicate** and customizing a gallery report need create permission; **Schedules** needs export permission on reports. Each card shows whether the report is **Shared** or **Private**, set by its **Visibility** when saved.\n\n**Schedules** lists the schedules you set up, and on a report you own every schedule on it, because deleting the report deletes them too. A schedule runs with the permissions of the person who set it up, and only they can change, turn off or delete it; a teammate's schedule shows **Set up by a teammate**.",
       "related": [
         "/reports/runs",
         "/reports/builder",
@@ -17000,7 +17306,10 @@
         "custom report designer",
         "query builder",
         "pivot table",
-        "report editor"
+        "report editor",
+        "locked field",
+        "unavailable field",
+        "report access"
       ],
       "tasks": [
         {
@@ -17058,9 +17367,43 @@
             "Make the changes and select **Save**, then **Save report** to keep them. Saving creates a new revision.",
             "Select **Run** to run the saved report."
           ]
+        },
+        {
+          "title": "Understand locked and reference-only fields",
+          "keywords": [
+            "locked field",
+            "greyed out field",
+            "field unavailable",
+            "why can't I add this field",
+            "reference only",
+            "field group",
+            "sensitivity level"
+          ],
+          "steps": [
+            "Open the report in the [report builder](/reports/builder) and look at the field catalog on the left. A field with a lock that you can still add belongs to a protected field group; its badge names the group, such as **Personal** or **Margins**.",
+            "A field you cannot add is greyed out, with a lock and its reason beside it: \"Needs the Personal field group\" when your role does not hold that group, \"Unavailable at your role's sensitivity level\" when it ranks above your role's sensitivity level, or \"Needs Customers read\" (with that kind of record named) when it needs read on that kind.",
+            "A related record you can join to but cannot read is marked **Reference only**. Expanding it lists only the fields other records show of it, under a note such as \"Reference only — the rest needs Customers read\".",
+            "A related record you cannot join to at all is listed with a lock and \"Needs Customers read\" (naming the kind it needs) and cannot be expanded.",
+            "To use a locked field, ask an administrator to grant the read, field group or sensitivity level on your role in [Roles](/admin/roles)."
+          ]
+        },
+        {
+          "title": "Fix a report that uses fields you can no longer use",
+          "keywords": [
+            "report unavailable fields",
+            "report refused",
+            "cannot run report",
+            "lost access",
+            "remove fields"
+          ],
+          "steps": [
+            "Open the report in the [report builder](/reports/builder). When it uses fields your role cannot reach, a warning at the top lists each one and why, and says the preview and runs are refused until they are removed or your access changes.",
+            "Select **Remove unavailable fields** to take those columns, filters and the pivot out of the report, then select **Save** and **Save report**. Or ask an administrator for the access instead.",
+            "When the report is built on a kind of record your role cannot read at all, the builder shows **You cannot open this report's data** instead of the report. Ask an administrator for read access to that kind, or select **New report** to start a different one."
+          ]
         }
       ],
-      "notes": "Needs create permission for reports. **Save** stays disabled until the report has at least one column, and **Run** works only for a report whose status is **Active**. A report flagged **Needs attention** has a problem (for example a field that no longer exists) described at the top of the builder.",
+      "notes": "Needs create permission for reports. **Save** stays disabled until the report has at least one column, and **Run** works only for a report whose status is **Active**. A report flagged **Needs attention** has a problem (for example a field that no longer exists) described at the top of the builder.\n\nThe entity picker lists only the kinds of record your role can read. The field catalog decides each field by the same rule as the preview and runs, so a field you can add always compiles, and a saved report someone with a wider role built may name fields that are locked for you.",
       "related": [
         "/reports",
         "/reports/explore",
@@ -17286,11 +17629,12 @@
             "24-hour clock",
             "timezone",
             "language",
-            "reduce motion"
+            "reduce motion",
+            "vim keys"
           ],
           "steps": [
             "Open [Settings](/settings) and go to **Preferences**.",
-            "Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement."
+            "Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement. **Vim keys in the formula editor** gives the formula editor Vim's modes and AstroNvim's keys."
           ]
         },
         {
@@ -18035,7 +18379,7 @@
             "Open [Shipments](/shipment-management/shipments) and select **New shipment**.",
             "Under **General information**, enter the **BOL** and other reference details.",
             "Under **Service & classification**, choose the **Service type** and **Shipment type**, and the **Tractor type** and **Trailer type** if needed.",
-            "Under **Billing & rating**, choose the **Customer**, check **Bill To**, and set the **Rating method** and **Base rate**.",
+            "Under **Billing & rating**, choose the **Customer** and check **Bill To**. When a rate agreement covers the lane, its tariff and input values fill in on their own; otherwise set the **Rating method** and fill in the inputs its tariff declares (each labelled, with its unit and its default as the placeholder).",
             "Under **Move details**, select **Add first move** and add at least one pickup and one delivery stop.",
             "Select **Save** (or **Save & close**)."
           ]
@@ -18175,7 +18519,7 @@
           ]
         }
       ],
-      "notes": "Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited. Scanning needs Trenova Capture paired from [My scanners](/capture/devices) and scanning turned on for the organization.\n\nTo create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import).",
+      "notes": "Needs read access to shipments; **New shipment** appears only with create permission. **Send EDI load tender** needs create access to EDI. An invoiced shipment is locked and cannot be edited. Scanning needs Trenova Capture paired from [My scanners](/capture/devices) and scanning turned on for the organization.\n\nA rated shipment shows its **Bill** under **Billing & rating**: every charge its tariff billed, with its quantity and rate, any notes, and any minimum, maximum or rounding adjustment. **Re-apply rate** asks the contract again and replaces the tariff, its input values and the contract's own charges.\n\nTo create a shipment from a rate confirmation document instead of typing it, use [Import from rate confirmation](/shipment-management/shipments/import). A tendered rate is a manual rate: the shipment bills that one freight amount and runs no tariff.",
       "related": [
         "/shipment-management/orders",
         "/shipment-management/service-failures",
@@ -18492,7 +18836,8 @@
       "label": "Analysis",
       "path": "/admin/agent-control",
       "params": {
-        "tab": "extensions",
+        "tab": "activity",
+        "activity": "analyses",
         "analysisRun": "{id}"
       }
     },
@@ -18661,6 +19006,12 @@
       "entity": "factoring_submission",
       "label": "Factoring schedule",
       "path": "/billing/factoring/submissions/{id}",
+      "params": {}
+    },
+    {
+      "entity": "formula_library",
+      "label": "Formula library",
+      "path": "/billing/configuration-files/formula-libraries/{id}/edit",
       "params": {}
     },
     {

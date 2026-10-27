@@ -4,104 +4,131 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/conversationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tractorcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/trailercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
-	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor/tractordb"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer/trailerdb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
+
+type recordLabel struct {
+	ID       pulid.ID
+	Title    string
+	Subtitle string
+}
 
 // recordKind is how one fileable kind is found and named. The title is what
 // a person recognises the record by; the subtitle is the second number they
 // would quote if the first were ambiguous.
 type recordKind struct {
-	model    func() any
-	tenant   func(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery
-	id       buncolgen.Column
-	title    string
-	subtitle string
+	exists func(ctx context.Context, db *keel.DB, ti pagination.TenantInfo, id pulid.ID) (bool, error)
+	labels func(
+		ctx context.Context,
+		db *keel.DB,
+		ti pagination.TenantInfo,
+		ids []pulid.ID,
+	) ([]recordLabel, error)
 }
+
+type recordTable[T any] interface {
+	Where(ps ...keel.Pred) *keel.Query[*T]
+}
+
+type recordShape struct {
+	id       keelkinds.PulidIDCol
+	title    keel.Expr
+	subtitle keel.Expr
+	scope    func(ti pagination.TenantInfo) keel.Pred
+}
+
+func kindOf[T any](table recordTable[T], shape recordShape) recordKind {
+	scope := func(ti pagination.TenantInfo) keel.Pred {
+		if shape.scope == nil {
+			return nil
+		}
+
+		return shape.scope(ti)
+	}
+
+	return recordKind{
+		exists: func(
+			ctx context.Context,
+			db *keel.DB,
+			ti pagination.TenantInfo,
+			id pulid.ID,
+		) (bool, error) {
+			return table.Where(shape.id.Eq(id), scope(ti)).Exists(ctx, db)
+		},
+		labels: func(
+			ctx context.Context,
+			db *keel.DB,
+			ti pagination.TenantInfo,
+			ids []pulid.ID,
+		) ([]recordLabel, error) {
+			return keel.Into[recordLabel](ctx, db, table.
+				Where(shape.id.In(ids...), scope(ti)).
+				Pick(shape.id, shape.title, shape.subtitle).
+				Limit(len(ids)))
+		},
+	}
+}
+
+func orBlank(c keel.StringValue) keel.StringExpr {
+	return keel.StringOf(c).Coalesce("")
+}
+
+var noSubtitle = keel.Text("")
 
 var recordKinds = map[string]recordKind{
-	permission.ResourceShipment.String(): {
-		model:    func() any { return (*shipment.Shipment)(nil) },
-		tenant:   shipmentcol.ShipmentApplyTenant,
-		id:       shipmentcol.ShipmentColumns.ID,
-		title:    shipmentcol.ShipmentColumns.ProNumber.Expr("COALESCE({}, '')"),
-		subtitle: shipmentcol.ShipmentColumns.BOL.Expr("COALESCE({}, '')"),
-	},
-	permission.ResourceWorker.String(): {
-		model:  func() any { return (*worker.Worker)(nil) },
-		tenant: workercol.WorkerApplyTenant,
-		id:     workercol.WorkerColumns.ID,
-		title: buncolgen.Expr(
-			"CONCAT_WS(' ', {0}, {1})",
-			workercol.WorkerColumns.FirstName,
-			workercol.WorkerColumns.LastName,
-		),
-		subtitle: "''",
-	},
-	permission.ResourceTractor.String(): {
-		model:    func() any { return (*tractor.Tractor)(nil) },
-		tenant:   tractorcol.TractorApplyTenant,
-		id:       tractorcol.TractorColumns.ID,
-		title:    tractorcol.TractorColumns.Code.Expr("COALESCE({}, '')"),
-		subtitle: tractorcol.TractorColumns.LicensePlateNumber.Expr("COALESCE({}, '')"),
-	},
-	permission.ResourceTrailer.String(): {
-		model:    func() any { return (*trailer.Trailer)(nil) },
-		tenant:   trailercol.TrailerApplyTenant,
-		id:       trailercol.TrailerColumns.ID,
-		title:    trailercol.TrailerColumns.Code.Expr("COALESCE({}, '')"),
-		subtitle: trailercol.TrailerColumns.LicensePlateNumber.Expr("COALESCE({}, '')"),
-	},
-	permission.ResourceCustomer.String(): {
-		model:    func() any { return (*customer.Customer)(nil) },
-		tenant:   customercol.CustomerApplyTenant,
-		id:       customercol.CustomerColumns.ID,
-		title:    customercol.CustomerColumns.Name.Expr("COALESCE({}, '')"),
-		subtitle: customercol.CustomerColumns.Code.Expr("COALESCE({}, '')"),
-	},
-	capture.ResourceAssistantThread: {
-		model:    func() any { return (*conversation.Thread)(nil) },
-		tenant:   ownThread,
-		id:       conversationcol.ThreadColumns.ID,
-		title:    conversationcol.ThreadColumns.Title.Expr("COALESCE({}, '')"),
-		subtitle: "''",
-	},
-	permission.ResourceCarrier.String(): {
-		model:    func() any { return (*carrier.Carrier)(nil) },
-		tenant:   carriercol.CarrierApplyTenant,
-		id:       carriercol.CarrierColumns.ID,
-		title:    carriercol.CarrierColumns.Name.Expr("COALESCE({}, '')"),
-		subtitle: carriercol.CarrierColumns.Code.Expr("COALESCE({}, '')"),
-	},
-}
-
-func ownThread(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
-	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.Apply(conversationcol.ThreadApplyTenant(ti)).
-			Where(conversationcol.ThreadColumns.UserID.Eq(), ti.UserID)
-	}
+	permission.ResourceShipment.String(): kindOf(shipmentdb.Shipments, recordShape{
+		id:       shipmentdb.Shipments.ID,
+		title:    orBlank(shipmentdb.Shipments.ProNumber),
+		subtitle: orBlank(shipmentdb.Shipments.BOL),
+	}),
+	permission.ResourceWorker.String(): kindOf(workerdb.Workers, recordShape{
+		id:       workerdb.Workers.ID,
+		title:    keel.ConcatWS(" ", workerdb.Workers.FirstName, workerdb.Workers.LastName),
+		subtitle: noSubtitle,
+	}),
+	permission.ResourceTractor.String(): kindOf(tractordb.Tractors, recordShape{
+		id:       tractordb.Tractors.ID,
+		title:    orBlank(tractordb.Tractors.Code),
+		subtitle: orBlank(tractordb.Tractors.LicensePlateNumber),
+	}),
+	permission.ResourceTrailer.String(): kindOf(trailerdb.Trailers, recordShape{
+		id:       trailerdb.Trailers.ID,
+		title:    orBlank(trailerdb.Trailers.Code),
+		subtitle: orBlank(trailerdb.Trailers.LicensePlateNumber),
+	}),
+	permission.ResourceCustomer.String(): kindOf(customerdb.Customers, recordShape{
+		id:       customerdb.Customers.ID,
+		title:    orBlank(customerdb.Customers.Name),
+		subtitle: orBlank(customerdb.Customers.Code),
+	}),
+	capture.ResourceAssistantThread: kindOf(conversationdb.Threads, recordShape{
+		id:       conversationdb.Threads.ID,
+		title:    orBlank(conversationdb.Threads.Title),
+		subtitle: noSubtitle,
+		scope: func(ti pagination.TenantInfo) keel.Pred {
+			return conversationdb.Threads.UserID.Eq(ti.UserID)
+		},
+	}),
+	permission.ResourceCarrier.String(): kindOf(carrierdb.Carriers, recordShape{
+		id:       carrierdb.Carriers.ID,
+		title:    orBlank(carrierdb.Carriers.Name),
+		subtitle: orBlank(carrierdb.Carriers.Code),
+	}),
 }
 
 func lookupKind(resourceType string) (recordKind, error) {
@@ -133,12 +160,7 @@ func (f *recordFinder) Exists(
 			return false, err
 		}
 
-		return f.db.DBForContext(ctx).
-			NewSelect().
-			Model(kind.model()).
-			Apply(kind.tenant(tenantInfo)).
-			Where(kind.id.Eq(), id).
-			Exists(ctx)
+		return kind.exists(ctx, f.db.Keel(ctx), tenantInfo, id)
 	})
 }
 
@@ -158,20 +180,19 @@ func (f *recordFinder) Labels(
 				return []*captureports.CaptureRecordLabel{}, nil
 			}
 
-			labels := make([]*captureports.CaptureRecordLabel, 0, len(req.IDs))
-			if err = f.db.DBForContext(ctx).
-				NewSelect().
-				Model(kind.model()).
-				ColumnExpr(kind.id.As("id")).
-				ColumnExpr(kind.title+" AS title").
-				ColumnExpr(kind.subtitle+" AS subtitle").
-				Apply(kind.tenant(req.TenantInfo)).
-				Where(kind.id.In(), bun.List(req.IDs)).
-				Scan(ctx, &labels); err != nil {
+			rows, err := kind.labels(ctx, f.db.Keel(ctx), req.TenantInfo, req.IDs)
+			if err != nil {
 				return nil, err
 			}
-			for _, label := range labels {
-				label.ResourceType = req.ResourceType
+
+			labels := make([]*captureports.CaptureRecordLabel, 0, len(rows))
+			for _, row := range rows {
+				labels = append(labels, &captureports.CaptureRecordLabel{
+					ResourceType: req.ResourceType,
+					ID:           row.ID,
+					Title:        row.Title,
+					Subtitle:     row.Subtitle,
+				})
 			}
 
 			return labels, nil

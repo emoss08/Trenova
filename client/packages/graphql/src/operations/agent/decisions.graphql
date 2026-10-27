@@ -113,6 +113,7 @@ query PendingDecisions($input: PendingDecisionsInput!, $includeTotalCount: Boole
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       hasNextPage
       endCursor

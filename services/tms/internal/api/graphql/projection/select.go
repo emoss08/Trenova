@@ -4,16 +4,15 @@ type FieldRequested func(path string) bool
 
 type TypeSpec struct {
 	TypeName      string
-	FieldMap      map[string]string
 	AlwaysColumns []string
 	Fields        []FieldSpec
 }
 
 type FieldSpec struct {
-	Name        string
-	FieldMapKey string
-	Special     string
-	Relation    *RelationSpec
+	Name     string
+	Column   string
+	Special  string
+	Relation *RelationSpec
 }
 
 type RelationSpec struct {
@@ -90,9 +89,7 @@ func (s selector) selectSpec(spec *TypeSpec, pathPrefix string, selection *Selec
 			if !s.gateAllowed(field.Relation.Gate) {
 				continue
 			}
-			if field.FieldMapKey != "" {
-				appendColumn(selection, seenColumns, spec.FieldMap[field.FieldMapKey])
-			}
+			appendColumn(selection, seenColumns, field.Column)
 			child := newSelection(
 				len(field.Relation.Target.AlwaysColumns),
 				len(field.Relation.Target.Fields),
@@ -103,9 +100,7 @@ func (s selector) selectSpec(spec *TypeSpec, pathPrefix string, selection *Selec
 			}
 			continue
 		}
-		if field.FieldMapKey != "" {
-			appendColumn(selection, seenColumns, spec.FieldMap[field.FieldMapKey])
-		}
+		appendColumn(selection, seenColumns, field.Column)
 		if field.Special != "" {
 			selection.Specials[field.Special] = true
 		}

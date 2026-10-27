@@ -55,42 +55,55 @@ func NewSelectQueryRequest(c *gin.Context, authCtx *authctx.AuthContext) *Select
 	return req
 }
 
+const listCursorScope = "list"
+
 func List[T any](
 	c *gin.Context,
 	opts *QueryOptions,
 	eh *helpers.ErrorHandler,
 	fn func() (*ListResult[T], error),
 ) {
-	cursorInfo, ok := prepareCursorListRequest(c, opts, eh)
-	if !ok {
+	if !prepareListRequest(c, opts, eh) {
 		return
 	}
-	opts.Cursor = cursorInfo
-	opts.UseCursor = true
-	opts.Pagination.Offset = DefaultOffset
-	requestedLimit := cursorInfo.Limit
-	opts.Pagination.Limit = requestedLimit + 1
+
+	offset, err := DecodeOffsetCursor(listCursorScope, c.Query("after"))
+	if err != nil {
+		eh.HandleError(c, invalidCursor())
+		return
+	}
+
+	limit := opts.Pagination.SafeLimit()
+	opts.Pagination.Offset = offset
+	opts.Pagination.Limit = limit + 1
 
 	result, err := fn()
 	if err != nil {
 		eh.HandleError(c, err)
 		return
 	}
-	if opts.CursorError != nil {
-		eh.HandleError(c, opts.CursorError)
-		return
+
+	items := result.Items
+	hasNextPage := len(items) > limit
+	if hasNextPage {
+		items = items[:limit]
 	}
 
-	cursorSort := result.CursorSort
-	if len(cursorSort) == 0 {
-		cursorSort = opts.CursorSort
+	endCursor := ""
+	if hasNextPage {
+		endCursor = EncodeOffsetCursor(listCursorScope, offset+limit)
 	}
+
 	total := result.Total
-	writeCursorResponse(c, eh, cursorInfo, &CursorListResult[T]{
-		Items:       result.Items,
-		HasNextPage: result.HasNextPage,
-		TotalCount:  &total,
-		CursorSort:  cursorSort,
+	helpers.JSON(c, http.StatusOK, CursorResponse[[]T]{
+		Count:           total,
+		TotalCount:      &total,
+		TotalCountExact: result.TotalExact,
+		Results:         items,
+		Next:            GetNextCursorPageURL(c, endCursor, limit, hasNextPage),
+		Previous:        "",
+		HasNextPage:     hasNextPage,
+		EndCursor:       endCursor,
 	})
 }
 
@@ -100,8 +113,13 @@ func CursorList[T any](
 	eh *helpers.ErrorHandler,
 	fn func(CursorInfo) (*CursorListResult[T], error),
 ) {
-	cursorInfo, ok := prepareCursorListRequest(c, opts, eh)
-	if !ok {
+	if !prepareListRequest(c, opts, eh) {
+		return
+	}
+
+	cursorInfo, err := NewCursorInfo(opts.Pagination.SafeLimit(), c.Query("after"))
+	if err != nil {
+		eh.HandleError(c, invalidCursor())
 		return
 	}
 
@@ -110,18 +128,46 @@ func CursorList[T any](
 		eh.HandleError(c, err)
 		return
 	}
-	writeCursorResponse(c, eh, cursorInfo, result)
+
+	endCursor := ""
+	if last := len(result.Items) - 1; last >= 0 {
+		endCursor, _ = result.EdgeCursorAt(last)
+	}
+
+	count := len(result.Items)
+	if result.TotalCount != nil {
+		count = *result.TotalCount
+	}
+
+	helpers.JSON(c, http.StatusOK, CursorResponse[[]T]{
+		Count:           count,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
+		Results:         result.Items,
+		Next:            GetNextCursorPageURL(c, endCursor, cursorInfo.Limit, result.HasNextPage),
+		Previous:        "",
+		HasNextPage:     result.HasNextPage,
+		EndCursor:       endCursor,
+	})
 }
 
-func prepareCursorListRequest(
+func invalidCursor() error {
+	return errortypes.NewValidationError(
+		"after",
+		errortypes.ErrInvalidFormat,
+		"Cursor is invalid",
+	)
+}
+
+func prepareListRequest(
 	c *gin.Context,
 	opts *QueryOptions,
 	eh *helpers.ErrorHandler,
-) (CursorInfo, bool) {
+) bool {
 	tenant := opts.TenantInfo
 	if err := c.ShouldBindQuery(opts); err != nil {
 		eh.HandleError(c, err)
-		return CursorInfo{}, false
+		return false
 	}
 	opts.TenantInfo = tenant
 	normalizePagination(&opts.Pagination)
@@ -132,17 +178,7 @@ func prepareCursorListRequest(
 			errortypes.ErrInvalid,
 			"Offset is not supported for cursor pagination",
 		))
-		return CursorInfo{}, false
-	}
-
-	cursorInfo, err := NewCursorInfo(opts.Pagination.SafeLimit(), c.Query("after"))
-	if err != nil {
-		eh.HandleError(c, errortypes.NewValidationError(
-			"after",
-			errortypes.ErrInvalidFormat,
-			"Cursor is invalid",
-		))
-		return CursorInfo{}, false
+		return false
 	}
 
 	parseFilters(c, opts)
@@ -151,56 +187,7 @@ func prepareCursorListRequest(
 	parseAggregateFilters(c, opts)
 	parseSort(c, opts)
 
-	return cursorInfo, true
-}
-
-func writeCursorResponse[T any](
-	c *gin.Context,
-	eh *helpers.ErrorHandler,
-	cursorInfo CursorInfo,
-	result *CursorListResult[T],
-) {
-	requestedLimit := cursorInfo.Limit
-	items := result.Items
-	hasNextPage := result.HasNextPage || len(items) > requestedLimit
-	if len(items) > requestedLimit {
-		items = items[:requestedLimit]
-	}
-
-	endCursor := ""
-	shouldEncodeCursor := hasNextPage ||
-		cursorInfo.After != "" ||
-		len(result.CursorSort) > 0 ||
-		len(result.CursorValues) > 0
-	if shouldEncodeCursor && len(items) > 0 {
-		lastIndex := len(items) - 1
-		encoded, encodeErr := encodeItemCursor(
-			items[lastIndex],
-			result.CursorSort,
-			result.CursorValues,
-			lastIndex,
-		)
-		if encodeErr != nil {
-			eh.HandleError(c, encodeErr)
-			return
-		}
-		endCursor = encoded
-	}
-
-	count := len(items)
-	if result.TotalCount != nil {
-		count = *result.TotalCount
-	}
-
-	helpers.JSON(c, http.StatusOK, CursorResponse[[]T]{
-		Count:       count,
-		TotalCount:  result.TotalCount,
-		Results:     items,
-		Next:        GetNextCursorPageURL(c, endCursor, requestedLimit, hasNextPage),
-		Previous:    "",
-		HasNextPage: hasNextPage,
-		EndCursor:   endCursor,
-	})
+	return true
 }
 
 func normalizePagination(info *Info) {
@@ -220,16 +207,14 @@ func SelectOptions[T any](
 		return
 	}
 
+	limit := req.Pagination.SafeLimit()
+	offset := req.Pagination.SafeOffset()
 	helpers.JSON(c, http.StatusOK, Response[[]T]{
-		Count:   result.Total,
-		Results: result.Items,
-		Next: GetNextPageURL(
-			c,
-			req.Pagination.SafeLimit(),
-			req.Pagination.SafeOffset(),
-			result.Total,
-		),
-		Prev: GetPreviousPageURL(c, req.Pagination.SafeLimit(), req.Pagination.SafeOffset()),
+		Count:           result.Total,
+		TotalCountExact: result.TotalExact,
+		Results:         result.Items,
+		Next:            GetNextPageURL(c, limit, offset, HasMore(result, req.Pagination)),
+		Prev:            GetPreviousPageURL(c, limit, offset),
 	})
 }
 

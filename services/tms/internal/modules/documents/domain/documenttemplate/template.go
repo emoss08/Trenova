@@ -5,15 +5,13 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -34,7 +32,6 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DocumentTemplate)(nil)
 	_ validationframework.TenantedEntity = (*DocumentTemplate)(nil)
 	_ domaintypes.PostgresSearchable     = (*DocumentTemplate)(nil)
 )
@@ -44,43 +41,42 @@ var (
 // It carries identity only. Content lives on the versions, which is what lets an
 // administrator edit without changing what customers are currently receiving.
 type DocumentTemplate struct {
-	bun.BaseModel             `bun:"table:document_templates,alias:dtpl" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                              json:"-"`
+	keel.Table `keel:"document_templates"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dtpl_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
 	// Kind names an entry in the Go registry. It is a plain string in the database
 	// so adding a kind never needs a migration.
-	Kind Kind `json:"kind" bun:"kind,type:VARCHAR(100),notnull"`
+	Kind Kind `json:"kind" keel:"kind"`
 
-	Code        string `json:"code"        bun:"code,type:VARCHAR(50),notnull"`
-	Name        string `json:"name"        bun:"name,type:VARCHAR(200),notnull"`
-	Description string `json:"description" bun:"description,type:TEXT,nullzero"`
+	Code        string `json:"code"        keel:"code"`
+	Name        string `json:"name"        keel:"name"`
+	Description string `json:"description" keel:"description,nullzero"`
 
 	// IsOrgDefault marks the template every customer without an assignment gets.
 	// A partial unique index enforces one per kind.
-	IsOrgDefault bool `json:"isOrgDefault" bun:"is_org_default,type:BOOLEAN,notnull"`
+	IsOrgDefault bool `json:"isOrgDefault" keel:"is_org_default"`
 
 	// ActiveVersionID is what renders. Nil means the template has only drafts and
 	// resolution therefore falls through to the built-in.
-	ActiveVersionID *pulid.ID `json:"activeVersionId" bun:"active_version_id,type:VARCHAR(100),nullzero"`
+	ActiveVersionID *pulid.ID `json:"activeVersionId" keel:"active_version_id"`
 
-	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull"`
-	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	CreatedByID *pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero"`
+	Version     int64     `json:"version"     keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   keel:"updated_at,autoupdate"`
+	CreatedByID *pulid.ID `json:"createdById" keel:"created_by_id"`
+	UpdatedByID *pulid.ID `json:"updatedById" keel:"updated_by_id"`
 
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	SearchVector string `json:"-" keel:"search_vector,tsvector,readonly,noselect"`
+	Rank         string `json:"-" keel:"rank,computed"`
 
-	BusinessUnit  *tenant.BusinessUnit          `json:"-"                       bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization  *tenant.Organization          `json:"-"                       bun:"rel:belongs-to,join:organization_id=id"`
-	ActiveVersion *DocumentTemplateVersion      `json:"activeVersion,omitempty" bun:"rel:belongs-to,join:active_version_id=id"`
-	Versions      []*DocumentTemplateVersion    `json:"versions,omitempty"      bun:"rel:has-many,join:id=template_id"`
-	Assignments   []*DocumentTemplateAssignment `json:"assignments,omitempty"   bun:"rel:has-many,join:id=template_id"`
+	BusinessUnit  *tenant.BusinessUnit          `json:"-"`
+	Organization  *tenant.Organization          `json:"-"`
+	ActiveVersion *DocumentTemplateVersion      `json:"activeVersion,omitempty" keel:"belongs:active_version_id"`
+	Versions      []*DocumentTemplateVersion    `json:"versions,omitempty"      keel:"many:template_id"`
+	Assignments   []*DocumentTemplateAssignment `json:"assignments,omitempty"   keel:"many:template_id"`
 }
 
 func (t *DocumentTemplate) GetID() pulid.ID { return t.ID }
@@ -159,23 +155,35 @@ func (t *DocumentTemplate) Normalize() {
 	t.Kind = Kind(strings.TrimSpace(string(t.Kind)))
 }
 
-func (t *DocumentTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
+func (t *DocumentTemplate) BeforeCreate(ctx context.Context) error {
 	t.Normalize()
 
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if t.ID.IsNil() {
-			t.ID = pulid.MustNew("dtpl_")
-		}
-		t.CreatedAt = now
-		t.UpdatedAt = now
-	case *bun.UpdateQuery:
-		t.UpdatedAt = now
-	}
+	return nil
+}
+
+func (t *DocumentTemplate) BeforeUpdate(_ context.Context) error {
+	t.Normalize()
+	t.Normalize()
 
 	return nil
+}
+
+func (DocumentTemplate) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_document_templates_code",
+			Message: "A document template with this code already exists",
+		},
+		{
+			Name:    "uq_document_templates_org_default",
+			Field:   "isOrgDefault",
+			Message: "Another template is already the organization default for this kind",
+		},
+		{
+			Name:    "fk_document_templates_active_version",
+			Message: "Active version does not exist",
+		},
+	}
 }
 
 // ErrTemplateKindUnknown is returned when a template names a kind the registry does

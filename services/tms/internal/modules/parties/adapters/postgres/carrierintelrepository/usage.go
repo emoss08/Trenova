@@ -4,29 +4,24 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 const (
 	defaultUsageDeleteBatchSize = 5000
 	maxUsageDeleteBatchSize     = 50000
-	usageSummaryCapacity        = 16
-	usageDailyCapacity          = 64
-	usageDailyConflictClause    = "ON CONFLICT (organization_id, business_unit_id, provider, endpoint, day) DO UPDATE SET"
 )
 
 type usageRepository struct {
@@ -46,43 +41,33 @@ func (r *usageRepository) Insert(
 	entity *carrierintel.CarrierIntelUsageRecord,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		result, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT DO NOTHING").
-			Exec(ctx)
+		inserted, err := carrierinteldb.CarrierIntelUsageRecords.CreateOrSkip(
+			ctx,
+			r.db.Keel(ctx),
+			[]*carrierintel.CarrierIntelUsageRecord{entity},
+		)
 		if err != nil {
 			r.l.Error("failed to insert carrier intel usage record", zap.Error(err))
 			return false, fmt.Errorf("insert carrier intel usage record: %w", err)
 		}
 
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return false, fmt.Errorf("insert carrier intel usage record rows affected: %w", err)
-		}
-
-		return affected == 1, nil
+		return inserted == 1, nil
 	})
 }
 
 func (r *usageRepository) ExistsDedupeKey(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	provider integration.Type,
 	dedupeKey string,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := carrierintelcol.CarrierIntelUsageRecordColumns
-		exists, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carrierintelcol.CarrierIntelUsageRecordScopeTenant(sq, tenantInfo).
-					Where(cols.Provider.Eq(), provider).
-					Where(cols.Billable.IsTrue()).
-					Where(cols.DedupeKey.Eq(), dedupeKey)
-			}).
-			Exists(ctx)
+		u := carrierinteldb.CarrierIntelUsageRecords
+		exists, err := u.Where(
+			u.Provider.Eq(provider),
+			u.Billable.IsTrue(),
+			u.DedupeKey.Eq(dedupeKey),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to check carrier intel usage dedupe key", zap.Error(err))
 			return false, fmt.Errorf("check carrier intel usage dedupe key: %w", err)
@@ -94,21 +79,17 @@ func (r *usageRepository) ExistsDedupeKey(
 
 func (r *usageRepository) CostSince(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	since int64,
 ) (decimal.Decimal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (decimal.Decimal, error) {
-		cols := carrierintelcol.CarrierIntelUsageRecordColumns
-		var total decimal.Decimal
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
-			ColumnExpr(cols.EstimatedCost.Expr("COALESCE(SUM({}), 0) AS ?"), bun.Ident(cols.EstimatedCost.Bare())).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carrierintelcol.CarrierIntelUsageRecordScopeTenant(sq, tenantInfo).
-					Where(cols.CreatedAt.Gte(), since)
-			}).
-			Scan(ctx, &total)
+		u := carrierinteldb.CarrierIntelUsageRecords
+		total, err := keel.IntoOne[decimal.Decimal](
+			ctx,
+			r.db.Keel(ctx),
+			u.Pick(keel.NumericOf(u.EstimatedCost.Sum()).Coalesce(0)).
+				Where(u.CreatedAt.Gte(since)),
+		)
 		if err != nil {
 			r.l.Error("failed to sum carrier intel usage cost", zap.Error(err))
 			return decimal.Zero, fmt.Errorf("sum carrier intel usage cost: %w", err)
@@ -123,18 +104,13 @@ func (r *usageRepository) CountBillableSince(
 	req *carrierintelports.CountBillableUsageRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := carrierintelcol.CarrierIntelUsageRecordColumns
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carrierintelcol.CarrierIntelUsageRecordScopeTenant(sq, req.TenantInfo).
-					Where(cols.Provider.Eq(), req.Provider).
-					Where(cols.Endpoint.Eq(), req.Endpoint).
-					Where(cols.Billable.IsTrue()).
-					Where(cols.CreatedAt.Gte(), req.Since)
-			}).
-			Count(ctx)
+		u := carrierinteldb.CarrierIntelUsageRecords
+		count, err := u.Where(
+			u.Provider.Eq(req.Provider),
+			u.Endpoint.Eq(req.Endpoint),
+			u.Billable.IsTrue(),
+			u.CreatedAt.Gte(req.Since),
+		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count billable carrier intel usage", zap.Error(err))
 			return 0, fmt.Errorf("count billable carrier intel usage: %w", err)
@@ -152,30 +128,26 @@ func (r *usageRepository) Summary(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]carrierintelports.CarrierIntelUsageSummaryRow, error) {
-			cols := carrierintelcol.CarrierIntelUsageRecordColumns
-			daily := carrierintelcol.CarrierIntelUsageDailyColumns
-			rows := make([]carrierintelports.CarrierIntelUsageSummaryRow, 0, usageSummaryCapacity)
+			u := carrierinteldb.CarrierIntelUsageRecords
+			q := u.Pick(u.Provider, u.Endpoint, keel.Count(), u.BillableUnits.Sum(), u.EstimatedCost.Sum()).
+				Where(
+					u.CreatedAt.Gte(req.Since),
+					keel.When(req.Until > 0, u.CreatedAt.Lt(req.Until)),
+				).
+				Group(u.Provider, u.Endpoint).
+				Order(u.Provider.Asc(), u.Endpoint.Asc())
 
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
-				Column(cols.Provider.Bare(), cols.Endpoint.Bare()).
-				ColumnExpr(buncolgen.Count(daily.Calls.Bare())).
-				ColumnExpr(buncolgen.Sum(cols.BillableUnits, daily.BillableUnits.Bare())).
-				ColumnExpr(buncolgen.Sum(cols.EstimatedCost, daily.EstimatedCost.Bare())).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelUsageRecordScopeTenant(sq, req.TenantInfo).
-						Where(cols.CreatedAt.Gte(), req.Since)
-				}).
-				Group(cols.Provider.Qualified(), cols.Endpoint.Qualified()).
-				Order(cols.Provider.OrderAsc(), cols.Endpoint.OrderAsc())
-			if req.Until > 0 {
-				q = q.Where(cols.CreatedAt.Lt(), req.Until)
-			}
-
-			if err := q.Scan(ctx, &rows); err != nil {
+			rows, err := keel.Into[carrierintelports.CarrierIntelUsageSummaryRow](
+				ctx,
+				r.db.Keel(ctx),
+				q,
+			)
+			if err != nil {
 				r.l.Error("failed to summarize carrier intel usage", zap.Error(err))
 				return nil, fmt.Errorf("summarize carrier intel usage: %w", err)
+			}
+			if rows == nil {
+				rows = []carrierintelports.CarrierIntelUsageSummaryRow{}
 			}
 
 			return rows, nil
@@ -191,17 +163,10 @@ func (r *usageRepository) ListDaily(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintel.CarrierIntelUsageDaily, error) {
-			cols := carrierintelcol.CarrierIntelUsageDailyColumns
-			entities := make([]*carrierintel.CarrierIntelUsageDaily, 0, usageDailyCapacity)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelUsageDailyScopeTenant(sq, req.TenantInfo).
-						Where(cols.Day.Between(), req.FromDay, req.ToDay)
-				}).
-				Order(cols.Day.OrderAsc(), cols.Provider.OrderAsc(), cols.Endpoint.OrderAsc()).
-				Scan(ctx)
+			d := carrierinteldb.CarrierIntelUsageDailies
+			entities, err := d.Where(d.Day.Between(int64(req.FromDay), int64(req.ToDay))).
+				Order(d.Day.Asc(), d.Provider.Asc(), d.Endpoint.Asc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list carrier intel daily usage", zap.Error(err))
 				return nil, fmt.Errorf("list carrier intel daily usage: %w", err)
@@ -212,62 +177,42 @@ func (r *usageRepository) ListDaily(
 	)
 }
 
-func buildUsageRollup(db bun.IDB, dayStart int64) *bun.RawQuery {
-	cols := carrierintelcol.CarrierIntelUsageRecordColumns
-	daily := carrierintelcol.CarrierIntelUsageDailyColumns
-
-	aggregate := db.NewSelect().
-		Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
-		Column(
-			cols.OrganizationID.Bare(),
-			cols.BusinessUnitID.Bare(),
-			cols.Provider.Bare(),
-			cols.Endpoint.Bare(),
-		).
-		ColumnExpr("?", timeutils.DayKeyUTC(dayStart)).
-		ColumnExpr(buncolgen.Count(daily.Calls.Bare())).
-		ColumnExpr(cols.BillableUnits.Expr("COALESCE(SUM({}), 0)")).
-		ColumnExpr(cols.EstimatedCost.Expr("COALESCE(SUM({}), 0)")).
-		Where(cols.CreatedAt.Gte(), dayStart).
-		Where(cols.CreatedAt.Lt(), dayStart+timeutils.SecondsPerDay).
-		Group(
-			cols.OrganizationID.Qualified(),
-			cols.BusinessUnitID.Qualified(),
-			cols.Provider.Qualified(),
-			cols.Endpoint.Qualified(),
-		)
-
-	return db.NewRaw(
-		"INSERT INTO ? (?, ?, ?, ?, ?, ?, ?, ?) ? "+usageDailyConflictClause+" ?, ?, ?",
-		bun.Ident(carrierintelcol.CarrierIntelUsageDailyTable.Name),
-		bun.Ident(daily.OrganizationID.Bare()),
-		bun.Ident(daily.BusinessUnitID.Bare()),
-		bun.Ident(daily.Provider.Bare()),
-		bun.Ident(daily.Endpoint.Bare()),
-		bun.Ident(daily.Day.Bare()),
-		bun.Ident(daily.Calls.Bare()),
-		bun.Ident(daily.BillableUnits.Bare()),
-		bun.Ident(daily.EstimatedCost.Bare()),
-		aggregate,
-		bun.Safe(daily.Calls.SetExcluded()),
-		bun.Safe(daily.BillableUnits.SetExcluded()),
-		bun.Safe(daily.EstimatedCost.SetExcluded()),
-	)
-}
-
 func (r *usageRepository) RollupDay(ctx context.Context, dayStart int64) (int, error) {
 	ctx = dbscope.WithSystem(ctx, "roll up carrier intelligence usage across every organization")
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		result, err := buildUsageRollup(r.db.DBForContext(ctx), timeutils.DayStartUTC(dayStart)).
-			Exec(ctx)
+		start := timeutils.DayStartUTC(dayStart)
+		l := carrierinteldb.CarrierIntelUsageRecords
+		d := carrierinteldb.CarrierIntelUsageDailies
+		day := keel.Int64(int64(timeutils.DayKeyUTC(start)))
+		affected, err := d.UpsertFrom(
+			ctx,
+			r.db.Keel(ctx),
+			l.Pick(
+				l.OrganizationID,
+				l.BusinessUnitID,
+				l.Provider,
+				l.Endpoint,
+				day,
+				keel.Count(),
+				keel.Int64Of(l.BillableUnits.Sum()).Coalesce(0),
+				keel.NumericOf(l.EstimatedCost.Sum()).Coalesce(0),
+			).
+				Where(l.CreatedAt.Gte(start), l.CreatedAt.Lt(start+timeutils.SecondsPerDay)).
+				Group(l.OrganizationID, l.BusinessUnitID, l.Provider, l.Endpoint),
+			keel.OnConflict(d.OrganizationID, d.BusinessUnitID, d.Provider, d.Endpoint, d.Day).
+				Update(d.Calls, d.BillableUnits, d.EstimatedCost),
+			d.OrganizationID,
+			d.BusinessUnitID,
+			d.Provider,
+			d.Endpoint,
+			d.Day,
+			d.Calls,
+			d.BillableUnits,
+			d.EstimatedCost,
+		)
 		if err != nil {
 			r.l.Error("failed to roll up carrier intel usage", zap.Error(err))
 			return 0, fmt.Errorf("roll up carrier intel usage: %w", err)
-		}
-
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("roll up carrier intel usage rows affected: %w", err)
 		}
 
 		return int(affected), nil
@@ -284,34 +229,26 @@ func (r *usageRepository) DeleteOlderThan(
 		"delete carrier intelligence usage past retention across every organization",
 	)
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := carrierintelcol.CarrierIntelUsageRecordColumns
+		u := carrierinteldb.CarrierIntelUsageRecords
 		batch := intutils.Clamp(
 			intutils.WithDefault(max(limit, 0), defaultUsageDeleteBatchSize),
 			1,
 			maxUsageDeleteBatchSize,
 		)
 
-		dba := r.db.DBForContext(ctx)
-		stale := dba.NewSelect().
-			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
-			Column(cols.ID.Bare()).
-			Where(cols.CreatedAt.Lt(), before).
-			Order(cols.CreatedAt.OrderAsc()).
-			Limit(int64(batch))
+		s := u.As("stale")
+		stale := s.AllTenants().
+			Pick(s.ID).
+			Where(s.CreatedAt.Lt(before)).
+			Order(s.CreatedAt.Asc()).
+			Limit(batch)
 
-		result, err := dba.NewDelete().
-			Model((*carrierintel.CarrierIntelUsageRecord)(nil)).
-			Where(cols.ID.In(), stale).
-			Where(cols.CreatedAt.Lt(), before).
-			Exec(ctx)
+		affected, err := u.AllTenants().
+			Where(u.ID.InQuery(stale), u.CreatedAt.Lt(before)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to delete old carrier intel usage records", zap.Error(err))
 			return 0, fmt.Errorf("delete old carrier intel usage records: %w", err)
-		}
-
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("delete old carrier intel usage records rows affected: %w", err)
 		}
 
 		return int(affected), nil

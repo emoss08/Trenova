@@ -2,21 +2,18 @@ package assistantartifactrepository
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/assistantartifactcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact/assistantartifactdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -29,6 +26,8 @@ const (
 // ErrNoIdentity is returned when an artifact carries none of the keys an
 // upsert can replace on: a tool call, a proposal or a plan.
 var ErrNoIdentity = errors.New("artifact needs a source tool call, a proposal or a plan")
+
+var artifactErrors = dberror.Mapping{Entity: "AssistantArtifact"}
 
 type Params struct {
 	fx.In
@@ -49,23 +48,38 @@ func New(p Params) assistantartifactports.AssistantArtifactRepository {
 	}
 }
 
-// conflictTarget picks the partial unique index an upsert replaces on. A
-// proposal or plan artifact is one per thread however many tool calls
-// mention it; anything else is one per tool call and kind.
-func conflictTarget(a *assistantartifact.Artifact) (string, error) {
-	cols := assistantartifactcol.ArtifactColumns
+// identity is the partial unique index an upsert replaces on and the row it
+// names. A proposal or plan artifact is one per thread however many tool
+// calls mention it; anything else is one per tool call and kind.
+type identity struct {
+	conflict keel.Conflict
+	match    []keel.Pred
+}
+
+func identityOf(artifact *assistantartifact.Artifact) (identity, error) {
+	a := assistantartifactdb.Artifacts
 	switch {
-	case !a.ProposalID.IsNil():
-		return "CONFLICT (" + cols.ThreadID.Name + ", " + cols.ProposalID.Name + ") WHERE " +
-			cols.ProposalID.Name + " IS NOT NULL DO UPDATE", nil
-	case !a.PlanID.IsNil():
-		return "CONFLICT (" + cols.ThreadID.Name + ", " + cols.PlanID.Name + ") WHERE " +
-			cols.PlanID.Name + " IS NOT NULL DO UPDATE", nil
-	case a.SourceToolCallID != "":
-		return "CONFLICT (" + cols.ThreadID.Name + ", " + cols.SourceToolCallID.Name + ", " +
-			cols.Kind.Name + ") WHERE " + cols.SourceToolCallID.Name + " <> '' DO UPDATE", nil
+	case !artifact.ProposalID.IsNil():
+		return identity{
+			conflict: keel.OnConflict(a.ThreadID, a.ProposalID).Where(a.ProposalID.IsNotNull()),
+			match:    []keel.Pred{a.ProposalID.Eq(artifact.ProposalID)},
+		}, nil
+	case !artifact.PlanID.IsNil():
+		return identity{
+			conflict: keel.OnConflict(a.ThreadID, a.PlanID).Where(a.PlanID.IsNotNull()),
+			match:    []keel.Pred{a.PlanID.Eq(artifact.PlanID)},
+		}, nil
+	case artifact.SourceToolCallID != "":
+		return identity{
+			conflict: keel.OnConflict(a.ThreadID, a.SourceToolCallID, a.Kind).
+				Where(a.SourceToolCallID.NeCol(keel.ConstText(""))),
+			match: []keel.Pred{
+				a.SourceToolCallID.Eq(artifact.SourceToolCallID),
+				a.Kind.Eq(artifact.Kind),
+			},
+		}, nil
 	default:
-		return "", ErrNoIdentity
+		return identity{}, ErrNoIdentity
 	}
 }
 
@@ -74,12 +88,26 @@ func (r *repository) Upsert(
 	artifact *assistantartifact.Artifact,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		target, err := conflictTarget(artifact)
+		id, err := identityOf(artifact)
 		if err != nil {
 			return nil, err
 		}
 
-		if _, err = buildUpsert(r.db.DBForContext(ctx), artifact, target).Exec(ctx); err != nil {
+		a := assistantartifactdb.Artifacts
+		db := r.db.Keel(ctx)
+		inserted, err := a.Upsert(ctx, db, []*assistantartifact.Artifact{artifact},
+			id.conflict.Update(
+				a.MessageID,
+				a.RunID,
+				a.Status,
+				a.Title,
+				a.Payload,
+				a.SourceToolCallID,
+				a.LineageKey,
+				a.LineageID,
+				a.LineageSeq,
+			))
+		if err != nil {
 			r.l.Error("failed to upsert assistant artifact",
 				zap.String("threadId", artifact.ThreadID.String()),
 				zap.String("kind", string(artifact.Kind)),
@@ -87,29 +115,17 @@ func (r *repository) Upsert(
 
 			return nil, fmt.Errorf("upsert assistant artifact: %w", err)
 		}
+		if inserted[0] {
+			return artifact, nil
+		}
 
-		return artifact, nil
+		stored, err := a.Where(append(id.match, a.ThreadID.Eq(artifact.ThreadID))...).One(ctx, db)
+		if err != nil {
+			return nil, artifactErrors.Map(err, artifact.ID.String())
+		}
+
+		return stored, nil
 	})
-}
-
-func buildUpsert(db bun.IDB, artifact *assistantartifact.Artifact, target string) *bun.InsertQuery {
-	cols := assistantartifactcol.ArtifactColumns
-
-	return db.NewInsert().
-		Model(artifact).
-		On(target).
-		Set(cols.MessageID.SetExcluded()).
-		Set(cols.RunID.SetExcluded()).
-		Set(cols.Status.SetExcluded()).
-		Set(cols.Title.SetExcluded()).
-		Set(cols.Payload.SetExcluded()).
-		Set(cols.SourceToolCallID.SetExcluded()).
-		Set(cols.LineageKey.SetExcluded()).
-		Set(cols.LineageID.SetExcluded()).
-		Set(cols.LineageSeq.SetExcluded()).
-		Set(cols.Version.IncConflict(1)).
-		Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-		Returning("*")
 }
 
 func (r *repository) GetByID(
@@ -117,18 +133,9 @@ func (r *repository) GetByID(
 	req assistantartifactports.GetArtifactRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		entity := new(assistantartifact.Artifact)
-		cols := assistantartifactcol.ArtifactColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := assistantartifactdb.Artifacts.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AssistantArtifact")
+			return nil, artifactErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -144,28 +151,22 @@ func (r *repository) LatestInLineage(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		cols := assistantartifactcol.ArtifactColumns
-		entities := make([]*assistantartifact.Artifact, 0, 1)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(cols.LineageKey.Eq(), req.LineageKey).
-					Where(cols.SourceToolCallID.Ne(), req.ExceptToolCall)
-			}).
-			Order(cols.LineageSeq.OrderDesc(), cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		a := assistantartifactdb.Artifacts
+		entity, err := a.Where(
+			a.ThreadID.Eq(req.ThreadID),
+			a.LineageKey.Eq(req.LineageKey),
+			a.SourceToolCallID.Ne(req.ExceptToolCall),
+		).
+			Order(a.LineageSeq.Desc(), a.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if errors.Is(err, keel.ErrNotFound) {
+			return nil, nil
+		}
 		if err != nil {
 			return nil, fmt.Errorf("read latest artifact in lineage: %w", err)
 		}
-		if len(entities) == 0 {
-			return nil, nil
-		}
 
-		return entities[0], nil
+		return entity, nil
 	})
 }
 
@@ -178,18 +179,13 @@ func (r *repository) ListByToolCalls(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*assistantartifact.Artifact, error) {
-		cols := assistantartifactcol.ArtifactColumns
-		entities := make([]*assistantartifact.Artifact, 0, len(req.CallIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(cols.SourceToolCallID.In(), bun.List(req.CallIDs))
-			}).
-			Order(cols.CreatedAt.OrderAsc(), cols.ID.OrderAsc()).
-			Scan(ctx)
+		a := assistantartifactdb.Artifacts
+		entities, err := a.Where(
+			a.ThreadID.Eq(req.ThreadID),
+			a.SourceToolCallID.In(req.CallIDs...),
+		).
+			Order(a.CreatedAt.Asc(), a.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list assistant artifacts by tool call",
 				zap.String("threadId", req.ThreadID.String()),
@@ -202,6 +198,11 @@ func (r *repository) ListByToolCalls(
 	})
 }
 
+type artifactTitle struct {
+	ID    pulid.ID
+	Title string
+}
+
 func (r *repository) ListTitles(
 	ctx context.Context,
 	req *assistantartifactports.ArtifactTitlesRequest,
@@ -211,18 +212,10 @@ func (r *repository) ListTitles(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]string, error) {
-		cols := assistantartifactcol.ArtifactColumns
-		entities := make([]*assistantartifact.Artifact, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Column(cols.ID.Bare(), cols.Title.Bare()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return assistantartifactcol.ArtifactScopeTenant(sq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(cols.ID.In(), bun.List(req.IDs))
-			}).
-			Scan(ctx)
+		a := assistantartifactdb.Artifacts
+		rows, err := keel.Into[artifactTitle](ctx, r.db.Keel(ctx), a.
+			Where(a.ThreadID.Eq(req.ThreadID), a.ID.In(req.IDs...)).
+			Pick(a.ID, a.Title))
 		if err != nil {
 			r.l.Error("failed to list assistant artifact titles",
 				zap.String("threadId", req.ThreadID.String()),
@@ -231,9 +224,9 @@ func (r *repository) ListTitles(
 			return nil, fmt.Errorf("list assistant artifact titles: %w", err)
 		}
 
-		titles := make(map[pulid.ID]string, len(entities))
-		for _, entity := range entities {
-			titles[entity.ID] = entity.Title
+		titles := make(map[pulid.ID]string, len(rows))
+		for _, row := range rows {
+			titles[row.ID] = row.Title
 		}
 
 		return titles, nil
@@ -249,17 +242,9 @@ func (r *repository) Delete(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := assistantartifactcol.ArtifactColumns
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*assistantartifact.Artifact)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return assistantartifactcol.ArtifactScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(cols.ID.In(), bun.List(req.IDs))
-			}).
-			Exec(ctx)
-		if err != nil {
+		a := assistantartifactdb.Artifacts
+		if _, err := a.Where(a.ThreadID.Eq(req.ThreadID), a.ID.In(req.IDs...)).
+			Delete(ctx, r.db.Keel(ctx)); err != nil {
 			r.l.Error("failed to delete assistant artifacts",
 				zap.String("threadId", req.ThreadID.String()),
 				zap.Error(err))
@@ -276,31 +261,20 @@ func (r *repository) SetPinned(
 	req assistantartifactports.SetArtifactPinnedRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		cols := assistantartifactcol.ArtifactColumns
-		root, err := r.rootOf(ctx, req.TenantInfo, req.ThreadID, req.ID)
+		db := r.db.Keel(ctx)
+		root, err := rootOf(ctx, db, req.ThreadID, req.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		updated := make([]*assistantartifact.Artifact, 0, 1)
-		_, err = r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&updated).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return assistantartifactcol.ArtifactScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ThreadID.Eq(), req.ThreadID).
-					Where(rootExpr+" = ?", root)
-			}).
-			Set(cols.Pinned.Set(), req.Pinned).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.SetExpr("{} + 1")).
-			Returning("*").
-			Exec(ctx)
+		a := assistantartifactdb.Artifacts
+		updated, err := a.Where(a.ThreadID.Eq(req.ThreadID), rootIs(root)).
+			UpdateReturning(ctx, db, a.Pinned.To(req.Pinned))
 		if err != nil {
 			return nil, fmt.Errorf("pin assistant artifact: %w", err)
 		}
 		if len(updated) == 0 {
-			return nil, dberror.HandleNotFoundError(sql.ErrNoRows, "AssistantArtifact")
+			return nil, artifactErrors.Map(keel.ErrNotFound, req.ID.String())
 		}
 
 		latest := updated[0]
@@ -319,55 +293,34 @@ func (r *repository) UpdateStatus(
 	req assistantartifactports.UpdateArtifactStatusRequest,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		cols := assistantartifactcol.ArtifactColumns
-		entity := new(assistantartifact.Artifact)
-
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return assistantartifactcol.ArtifactScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.SetExpr("{} + 1"))
+		a := assistantartifactdb.Artifacts
+		sets := []keel.Assignment{a.Status.To(req.Status)}
 		if req.Payload != nil {
-			q = q.Set(cols.Payload.Set(), req.Payload)
+			sets = append(sets, a.Payload.To(req.Payload))
 		}
 
-		res, err := q.Returning("*").Exec(ctx)
+		updated, err := a.Where(a.ID.Eq(req.ID)).UpdateReturning(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return nil, fmt.Errorf("update assistant artifact status: %w", err)
 		}
-
-		if err = dberror.CheckRowsAffected(res, "AssistantArtifact", req.ID.String()); err != nil {
-			return nil, err
+		if len(updated) == 0 {
+			return nil, dberror.CreateVersionMismatchError("AssistantArtifact", req.ID.String())
 		}
 
-		return entity, nil
+		return updated[0], nil
 	})
 }
 
 func (r *repository) FindByProposal(
 	ctx context.Context,
-	tenant pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	proposalID pulid.ID,
 ) (*assistantartifact.Artifact, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*assistantartifact.Artifact, error) {
-		entity := new(assistantartifact.Artifact)
-		cols := assistantartifactcol.ArtifactColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return assistantartifactcol.ArtifactScopeTenant(sq, tenant).
-					Where(cols.ProposalID.Eq(), proposalID)
-			}).
-			Limit(1).
-			Scan(ctx)
+		a := assistantartifactdb.Artifacts
+		entity, err := a.Where(a.ProposalID.Eq(proposalID)).First(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AssistantArtifact")
+			return nil, artifactErrors.Map(err, proposalID.String())
 		}
 
 		return entity, nil

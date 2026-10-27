@@ -6,27 +6,29 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/ratetablecache"
+	"github.com/emoss08/trenova/pkg/rules"
 	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-type stampedSource struct {
+type source struct {
 	stamp  atomic.Value
 	stamps atomic.Int32
 	builds atomic.Int32
+	loads  atomic.Int32
 	err    error
 }
 
-func newStampedSource(stamp string) *stampedSource {
-	s := &stampedSource{}
+func newSource(stamp string) *source {
+	s := &source{}
 	s.stamp.Store(stamp)
 	return s
 }
 
-func (s *stampedSource) Stamp(context.Context) (string, error) {
+func (s *source) Stamp(context.Context) (string, error) {
 	s.stamps.Add(1)
 	if s.err != nil {
 		return "", s.err
@@ -34,96 +36,232 @@ func (s *stampedSource) Stamp(context.Context) (string, error) {
 	return s.stamp.Load().(string), nil //nolint:errcheck // always a string
 }
 
-func (s *stampedSource) Build(context.Context, string) (*formulatemplatetypes.RateTables, error) {
+func (s *source) Build(_ context.Context, stamp string) (*ratetablecache.Served, error) {
 	s.builds.Add(1)
-	return &formulatemplatetypes.RateTables{Stamp: s.stamp.Load().(string)}, nil //nolint:errcheck // always a string
+	return &ratetablecache.Served{Versions: []*ratetablecache.Version{{
+		Shape: rules.TariffTable{Code: "ZONES_" + stamp},
+		Index: ratetablecache.Table{Code: "ZONES_" + stamp},
+	}}}, nil
 }
 
-func TestGetStamped_ReusesAcrossContextsWhileTheStampHolds(t *testing.T) {
-	t.Parallel()
-
-	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	source := newStampedSource("3:7:1700000000")
-
-	first, err := ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
-	require.NoError(t, err)
-	second, err := ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
-	require.NoError(t, err)
-
-	assert.Same(t, first, second, "a second request in a new context reuses the encoded tables")
-	assert.EqualValues(t, 1, source.builds.Load(), "the expensive read happened once")
-	assert.EqualValues(t, 2, source.stamps.Load(), "each new context asks the cheap stamp")
+func (s *source) Load(
+	_ context.Context,
+	keys []ratetablecache.VersionKey,
+) ([]*ratetablecache.Version, error) {
+	s.loads.Add(1)
+	out := make([]*ratetablecache.Version, 0, len(keys))
+	for _, key := range keys {
+		out = append(out, &ratetablecache.Version{
+			Shape: rules.TariffTable{Code: "ZONES", Version: key.Version},
+			Index: ratetablecache.Table{Key: key, Code: "ZONES"},
+		})
+	}
+	return out, nil
 }
 
-func TestGetStamped_RebuildsWhenTheStampMoves(t *testing.T) {
-	t.Parallel()
-
-	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	source := newStampedSource("3:7:1700000000")
-
-	first, err := ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
-	require.NoError(t, err)
-
-	source.stamp.Store("3:8:1700000500")
-	second, err := ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
-	require.NoError(t, err)
-
-	assert.NotSame(t, first, second, "a changed matrix means freshly encoded tables")
-	assert.EqualValues(t, 2, source.builds.Load())
+func tenant() (pulid.ID, pulid.ID) {
+	return pulid.MustNew("org_"), pulid.MustNew("bu_")
 }
 
-func TestGetStamped_InvalidateForcesARebuild(t *testing.T) {
+func TestServedTablesBuildOncePerStamp(t *testing.T) {
 	t.Parallel()
 
-	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	source := newStampedSource("stable")
+	org, bu := tenant()
+	src := newSource("a")
 
-	_, err := ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
+	stamp, entry, err := ratetablecache.ServedTables(t.Context(), org, bu, src.Stamp, src.Build)
 	require.NoError(t, err)
+	assert.Equal(t, "a", stamp)
+	require.Len(t, entry.Versions, 1)
 
-	ratetablecache.Invalidate(org, bu)
-
-	_, err = ratetablecache.GetStamped(t.Context(), org, bu, source.Stamp, source.Build)
+	_, again, err := ratetablecache.ServedTables(t.Context(), org, bu, src.Stamp, src.Build)
 	require.NoError(t, err)
-	assert.EqualValues(
-		t,
-		2,
-		source.builds.Load(),
-		"the write path can evict without a stamp change",
-	)
+	assert.Same(t, entry, again)
+	assert.EqualValues(t, 1, src.builds.Load())
+
+	src.stamp.Store("b")
+	stamp, rebuilt, err := ratetablecache.ServedTables(t.Context(), org, bu, src.Stamp, src.Build)
+	require.NoError(t, err)
+	assert.Equal(t, "b", stamp)
+	assert.Equal(t, "ZONES_b", rebuilt.Versions[0].Shape.Code)
+	assert.EqualValues(t, 2, src.builds.Load())
 }
 
-func TestGetStamped_PerContextMemoWinsOverTheStamp(t *testing.T) {
+func TestServedTablesReadTheStampOncePerRequest(t *testing.T) {
 	t.Parallel()
 
-	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")
-	source := newStampedSource("stable")
+	org, bu := tenant()
+	src := newSource("a")
 	ctx := ratetablecache.With(t.Context())
 
-	_, err := ratetablecache.GetStamped(ctx, org, bu, source.Stamp, source.Build)
-	require.NoError(t, err)
-	_, err = ratetablecache.GetStamped(ctx, org, bu, source.Stamp, source.Build)
-	require.NoError(t, err)
-
-	assert.EqualValues(t, 1, source.stamps.Load(), "within one batch even the stamp is asked once")
-	assert.EqualValues(t, 1, source.builds.Load())
+	for range 3 {
+		_, _, err := ratetablecache.ServedTables(ctx, org, bu, src.Stamp, src.Build)
+		require.NoError(t, err)
+	}
+	assert.EqualValues(t, 1, src.stamps.Load())
+	assert.Same(t, ctx, ratetablecache.With(ctx))
 }
 
-func TestGetStamped_EmptyOrFailingStampSkipsTheProcessCache(t *testing.T) {
+func TestServedTablesReturnTheStampError(t *testing.T) {
+	t.Parallel()
+
+	org, bu := tenant()
+	src := newSource("a")
+	src.err = errors.New("stamp failed")
+
+	_, _, err := ratetablecache.ServedTables(t.Context(), org, bu, src.Stamp, src.Build)
+	require.ErrorIs(t, err, src.err)
+	assert.Zero(t, src.builds.Load())
+}
+
+func TestServedTablesNeverCacheAnEmptyStamp(t *testing.T) {
+	t.Parallel()
+
+	org, bu := tenant()
+	src := newSource("")
+
+	for range 2 {
+		_, _, err := ratetablecache.ServedTables(t.Context(), org, bu, src.Stamp, src.Build)
+		require.NoError(t, err)
+	}
+	assert.EqualValues(t, 2, src.builds.Load())
+}
+
+func TestInvalidateForcesARebuildOfTheServedTables(t *testing.T) {
+	t.Parallel()
+
+	org, bu := tenant()
+	src := newSource("a")
+
+	_, _, err := ratetablecache.ServedTables(t.Context(), org, bu, src.Stamp, src.Build)
+	require.NoError(t, err)
+	ratetablecache.Invalidate(org, bu)
+	_, _, err = ratetablecache.ServedTables(t.Context(), org, bu, src.Stamp, src.Build)
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, src.builds.Load())
+}
+
+func TestMemoizeLoadsOncePerTenantAndNameInARequest(t *testing.T) {
+	t.Parallel()
+
+	ctx := ratetablecache.With(t.Context())
+	orgA, orgB, bu := pulid.MustNew("org_"), pulid.MustNew("org_"), pulid.MustNew("bu_")
+	var loads atomic.Int32
+	load := func(value int) func(context.Context) ([]int, error) {
+		return func(context.Context) ([]int, error) {
+			loads.Add(1)
+			return []int{value}, nil
+		}
+	}
+
+	first, err := ratetablecache.Memoize(ctx, orgA, bu, "holidays:2026", load(1))
+	require.NoError(t, err)
+	again, err := ratetablecache.Memoize(ctx, orgA, bu, "holidays:2026", load(2))
+	require.NoError(t, err)
+	other, err := ratetablecache.Memoize(ctx, orgB, bu, "holidays:2026", load(3))
+	require.NoError(t, err)
+	year, err := ratetablecache.Memoize(ctx, orgA, bu, "holidays:2027", load(4))
+	require.NoError(t, err)
+
+	assert.Equal(t, []int{1}, first)
+	assert.Equal(t, []int{1}, again)
+	assert.Equal(t, []int{3}, other)
+	assert.Equal(t, []int{4}, year)
+	assert.Equal(t, int32(3), loads.Load())
+}
+
+func TestMemoizeLoadsEveryTimeOutsideARequest(t *testing.T) {
 	t.Parallel()
 
 	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	var loads atomic.Int32
+	load := func(context.Context) (string, error) {
+		loads.Add(1)
+		return "value", nil
+	}
 
-	unstamped := newStampedSource("")
-	_, err := ratetablecache.GetStamped(t.Context(), org, bu, unstamped.Stamp, unstamped.Build)
-	require.NoError(t, err)
-	_, err = ratetablecache.GetStamped(t.Context(), org, bu, unstamped.Stamp, unstamped.Build)
-	require.NoError(t, err)
-	assert.EqualValues(t, 2, unstamped.builds.Load(), "no stamp means no sharing across requests")
+	for range 2 {
+		value, err := ratetablecache.Memoize(t.Context(), org, bu, "name", load)
+		require.NoError(t, err)
+		assert.Equal(t, "value", value)
+	}
+	assert.Equal(t, int32(2), loads.Load())
+}
 
-	failing := newStampedSource("x")
-	failing.err = errors.New("stamp query failed")
-	_, err = ratetablecache.GetStamped(t.Context(), org, bu, failing.Stamp, failing.Build)
-	require.NoError(t, err, "a failing stamp degrades to a plain build")
-	assert.EqualValues(t, 1, failing.builds.Load())
+func TestMemoizeKeepsNoFailedLoad(t *testing.T) {
+	t.Parallel()
+
+	ctx := ratetablecache.With(t.Context())
+	org, bu := pulid.MustNew("org_"), pulid.MustNew("bu_")
+	failure := errors.New("database down")
+
+	_, err := ratetablecache.Memoize(ctx, org, bu, "name", func(context.Context) (int, error) {
+		return 0, failure
+	})
+	require.ErrorIs(t, err, failure)
+
+	value, err := ratetablecache.Memoize(ctx, org, bu, "name", func(context.Context) (int, error) {
+		return 7, nil
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 7, value)
+}
+
+func TestVersionsLoadOnlyWhatTheCacheMisses(t *testing.T) {
+	t.Parallel()
+
+	org, bu := tenant()
+	src := newSource("a")
+	matrix := pulid.MustNew("rmx_")
+	first := ratetablecache.VersionKey{MatrixID: matrix, Version: 1}
+	second := ratetablecache.VersionKey{MatrixID: matrix, Version: 2}
+
+	got, err := ratetablecache.Versions(t.Context(), org, bu,
+		[]ratetablecache.VersionKey{first, first}, src.Load)
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.EqualValues(t, 1, got[first].Shape.Version)
+
+	got, err = ratetablecache.Versions(t.Context(), org, bu,
+		[]ratetablecache.VersionKey{first, second}, src.Load)
+	require.NoError(t, err)
+	assert.Len(t, got, 2)
+	assert.EqualValues(t, 2, src.loads.Load(), "the second call loads only version 2")
+
+	_, err = ratetablecache.Versions(t.Context(), org, bu,
+		[]ratetablecache.VersionKey{first, second}, src.Load)
+	require.NoError(t, err)
+	assert.EqualValues(t, 2, src.loads.Load(), "a published version never changes")
+
+	otherOrg, otherBu := tenant()
+	_, err = ratetablecache.Versions(t.Context(), otherOrg, otherBu,
+		[]ratetablecache.VersionKey{first}, src.Load)
+	require.NoError(t, err)
+	assert.EqualValues(t, 3, src.loads.Load(), "another tenant never reads this tenant's entry")
+}
+
+func TestCellsAreKeptPerVersion(t *testing.T) {
+	t.Parallel()
+
+	org, bu := tenant()
+	matrix := pulid.MustNew("rmx_")
+	v1 := ratetablecache.VersionKey{MatrixID: matrix, Version: 1}
+	v2 := ratetablecache.VersionKey{MatrixID: matrix, Version: 2}
+	keys := []string{"SE", "MW"}
+	cells := []rules.TariffCell{{Value: decimal.RequireFromString("2.35")}}
+
+	_, ok := ratetablecache.Cells(org, bu, v1, keys)
+	assert.False(t, ok)
+
+	ratetablecache.StoreCells(org, bu, v1, keys, cells)
+	got, ok := ratetablecache.Cells(org, bu, v1, keys)
+	require.True(t, ok)
+	assert.Equal(t, cells, got)
+
+	_, ok = ratetablecache.Cells(org, bu, v2, keys)
+	assert.False(t, ok, "another version misses the cells")
+
+	ratetablecache.Invalidate(org, bu)
+	_, ok = ratetablecache.Cells(org, bu, v1, keys)
+	assert.True(t, ok, "a published version's cells survive a new publish")
 }

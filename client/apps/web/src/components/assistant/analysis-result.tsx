@@ -1,14 +1,16 @@
-import { AnalysisChartImage } from "@/components/assistant/analysis-chart-image";
+import { AnalysisChartSkeleton } from "@/components/assistant/analysis-chart-skeleton";
 import { KpiStrip, KpiStripItem } from "@/components/kpi/kpi-strip";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { analysisRunStatusAttrs } from "@/lib/analysis-run";
 import { formatAnalysisValue, isNumericKind } from "@/lib/analysis-values";
+import { lazyComponent } from "@/lib/lazy-component";
 import type {
   AnalysisBlock,
+  AnalysisChart,
   AnalysisFigure,
   AnalysisRunStatus,
   AnalysisTable,
-} from "@/types/agent-extension";
+} from "@/types/analysis";
 import {
   CheckIcon,
   ChevronRightIcon,
@@ -35,6 +37,7 @@ import {
   TableHeader,
   TableRow,
 } from "@trenova/shared/components/ui/table";
+import { LazyComponent } from "@trenova/shared/components/error-boundary";
 import { useT } from "@trenova/shared/i18n/use-t";
 import { phaseTone } from "@trenova/shared/lib/status-phase";
 import { cn } from "@trenova/shared/lib/utils";
@@ -42,13 +45,11 @@ import { useState, type ReactNode } from "react";
 
 export type AnalysisDatasetView = {
   name: string;
-  path: string;
   source: "ReportRun" | "Attachment";
+  sourceId: string;
   label: string;
   rows: number;
 };
-
-export type AnalysisChartView = { position: number; title: string };
 
 /** An analysis as a person reads it, from the Desk's artifact or the stored run. */
 export type AnalysisView = {
@@ -58,8 +59,7 @@ export type AnalysisView = {
   code: string;
   datasets: AnalysisDatasetView[];
   output: string;
-  results: string[];
-  charts: AnalysisChartView[];
+  charts: AnalysisChart[];
   tables: AnalysisTable[];
   figures: AnalysisFigure[];
   layout: AnalysisBlock[];
@@ -70,14 +70,19 @@ export type AnalysisView = {
 
 const CODE_LANGUAGE = "python";
 
+const analysisChart = lazyComponent(
+  () => import("./analysis-chart"),
+  (module) => module.AnalysisChartView,
+);
+
 // Each line of code is numbered by a CSS counter in a gutter that stays put while the code
 // scrolls sideways, so the numbers are never selected or copied with the code.
 const NUMBERED_LINE_CLASS =
   "before:sticky before:left-0 before:inline-block before:w-12 before:bg-sunken before:pr-4 before:text-right before:text-foreground-subtle before:tabular-nums before:select-none before:content-[counter(line)] before:[counter-increment:line]";
 
 /**
- * The charts and tables in the order the analysis showed them. A run kept before the order was
- * recorded shows its charts, then its tables.
+ * The charts and tables in the order the script showed them. Without that order, its charts
+ * come first, then its tables.
  */
 function blocksOf(analysis: AnalysisView): AnalysisBlock[] {
   if (analysis.layout.length > 0) {
@@ -85,7 +90,7 @@ function blocksOf(analysis: AnalysisView): AnalysisBlock[] {
   }
 
   return [
-    ...analysis.charts.map((chart) => ({ kind: "chart" as const, index: chart.position })),
+    ...analysis.charts.map((_, index) => ({ kind: "chart" as const, index })),
     ...analysis.tables.map((_, index) => ({ kind: "table" as const, index })),
   ];
 }
@@ -99,8 +104,7 @@ export function AnalysisResult({ analysis }: { analysis: AnalysisView }) {
   const t = useT();
   const status = analysisRunStatusAttrs(t)[analysis.status];
   const blocks = blocksOf(analysis);
-  const shown = analysis.figures.length + blocks.length + analysis.results.length > 0;
-  const titleOf = new Map(analysis.charts.map((chart) => [chart.position, chart.title]));
+  const shown = analysis.figures.length + blocks.length > 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -126,34 +130,21 @@ export function AnalysisResult({ analysis }: { analysis: AnalysisView }) {
         </KpiStrip>
       )}
 
-      {analysis.runId !== "" &&
-        blocks.map((block) => {
-          if (block.kind === "chart") {
-            return (
-              <AnalysisChartImage
-                key={`chart-${block.index}`}
-                runId={analysis.runId}
-                position={block.index}
-                title={titleOf.get(block.index) ?? ""}
-              />
-            );
-          }
-          const table = analysis.tables[block.index];
-          return table ? <AnalysisTableView key={`table-${block.index}`} table={table} /> : null;
-        })}
-
-      {analysis.results.length > 0 && (
-        <section aria-label={t("Results")} className="flex flex-col gap-1.5">
-          {analysis.results.map((result, index) => (
-            <pre
-              key={`${index}-${result.slice(0, 16)}`}
-              className="bg-sunken text-foreground rounded-surface scrollbar-overlay max-h-72 overflow-auto border px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words"
+      {blocks.map((block) => {
+        if (block.kind === "chart") {
+          const chart = analysis.charts[block.index];
+          return chart ? (
+            <LazyComponent
+              key={`chart-${block.index}`}
+              fallback={<AnalysisChartSkeleton title={chart.title || t("Chart")} />}
             >
-              {result}
-            </pre>
-          ))}
-        </section>
-      )}
+              <analysisChart.Component chart={chart} />
+            </LazyComponent>
+          ) : null;
+        }
+        const table = analysis.tables[block.index];
+        return table ? <AnalysisTableView key={`table-${block.index}`} table={table} /> : null;
+      })}
 
       {analysis.error && (
         <Alert size="sm" variant="destructive">
@@ -255,9 +246,9 @@ function DatasetsRead({ datasets }: { datasets: AnalysisDatasetView[] }) {
           <li
             key={dataset.name}
             className="bg-sunken text-foreground rounded-badge max-w-full truncate border px-1.5 py-0.5"
-            title={dataset.path}
+            title={dataset.name}
           >
-            {dataset.source === "ReportRun" && dataset.rows > 0
+            {dataset.rows > 0
               ? t(
                   "{0} · {1, plural, one {# row} other {# rows}}",
                   dataset.label || dataset.name,

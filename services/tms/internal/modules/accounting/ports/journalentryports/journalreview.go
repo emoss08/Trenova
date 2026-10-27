@@ -56,7 +56,7 @@ type ListJournalReviewQuery struct {
 }
 
 type JournalReviewSummaryRow struct {
-	AwaitingApproval     int    `json:"awaitingApproval"     bun:"awaiting_approval"`
-	ReadyToPost          int    `json:"readyToPost"          bun:"ready_to_post"`
-	OldestAccountingDate *int64 `json:"oldestAccountingDate" bun:"oldest_accounting_date"`
+	AwaitingApproval     int    `json:"awaitingApproval"`
+	ReadyToPost          int    `json:"readyToPost"`
+	OldestAccountingDate *int64 `json:"oldestAccountingDate"`
 }

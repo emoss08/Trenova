@@ -291,14 +291,7 @@ func idListMatches(allowed []pulid.ID, id pulid.ID) bool {
 }
 
 func shipmentMiles(entity *shipment.Shipment) decimal.Decimal {
-	total := decimal.Zero
-	for _, move := range entity.Moves {
-		if move == nil || move.Status == shipment.MoveStatusCanceled || move.Distance == nil {
-			continue
-		}
-		total = total.Add(decimal.NewFromFloat(*move.Distance))
-	}
-	return total
+	return entity.RatingMiles()
 }
 
 type detailParams struct {

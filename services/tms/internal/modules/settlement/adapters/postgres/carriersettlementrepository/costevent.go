@@ -4,21 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/carriersettlementports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var costEventErrors = dberror.Mapping{Entity: "CarrierCostEvent"}
 
 type costEventRepository struct {
 	db *postgres.Connection
@@ -40,41 +40,20 @@ func (r *costEventRepository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*carriersettlement.CostEvent], error) {
-			cols := carriersettlementcol.CostEventColumns
-			limit := req.Filter.Pagination.SafeLimit()
-			items := make([]*carriersettlement.CostEvent, 0, limit)
+			ce := carriersettlementdb.CostEvents
+			q := ce.Where(
+				when(req.Filter.Query != "", ce.ProNumber.ContainsFold(req.Filter.Query)),
+				when(!req.CarrierID.IsNil(), ce.CarrierID.Eq(req.CarrierID)),
+				when(!req.ShipmentID.IsNil(), ce.ShipmentID.Eq(req.ShipmentID)),
+				when(req.Status != "", ce.Status.Eq(req.Status)),
+			).Load(ce.Carrier()).Order(ce.EventDate.Desc())
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Apply(carriersettlementcol.CostEventApplyTenant(req.Filter.TenantInfo)).
-				Relation(carriersettlementcol.CostEventRelations.Carrier).
-				Order(cols.EventDate.OrderDesc()).
-				Limit(int64(limit)).
-				Offset(int64(req.Filter.Pagination.SafeOffset()))
-
-			if req.Filter.Query != "" {
-				query = query.Where(cols.ProNumber.ILike(), "%"+req.Filter.Query+"%")
-			}
-			if !req.CarrierID.IsNil() {
-				query = query.Where(cols.CarrierID.Eq(), req.CarrierID)
-			}
-			if !req.ShipmentID.IsNil() {
-				query = query.Where(cols.ShipmentID.Eq(), req.ShipmentID)
-			}
-			if req.Status != "" {
-				query = query.Where(cols.Status.Eq(), req.Status)
-			}
-
-			total, err := query.ScanAndCount(ctx)
+			result, err := listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 			if err != nil {
 				return nil, fmt.Errorf("list carrier cost events: %w", err)
 			}
 
-			return &pagination.ListResult[*carriersettlement.CostEvent]{
-				Items: items,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -83,59 +62,27 @@ func (r *costEventRepository) ListConnection(
 	ctx context.Context,
 	req *carriersettlementports.ListCarrierCostEventConnectionRequest,
 ) (*pagination.CursorListResult[*carriersettlement.CostEvent], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*carriersettlement.CostEvent], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*carriersettlement.CostEvent)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							carriersettlementcol.CostEventTable.Alias,
-							req.Filter,
-							(*carriersettlement.CostEvent)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count carrier cost events", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			ce := carriersettlementdb.CostEvents
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*carriersettlement.CostEvent]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*carriersettlement.CostEvent) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(entities).
-							ColumnExpr(carriersettlementcol.CostEventTable.All()).
-							Relation(carriersettlementcol.CostEventRelations.Carrier)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							carriersettlementcol.CostEventTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*carriersettlement.CostEvent)(nil),
-						)
+				r.db.Keel(ctx),
+				ce.Query(),
+				&listquery.Request[carriersettlement.CostEvent]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(
+						q *keel.Query[*carriersettlement.CostEvent],
+					) *keel.Query[*carriersettlement.CostEvent] {
+						return q.Load(ce.Carrier())
 					},
 				},
 			)
 			if err != nil {
-				log.Error("failed to scan carrier cost events", zap.Error(err))
+				r.l.Error("failed to list carrier cost events", zap.Error(err))
 				return nil, err
 			}
 
@@ -149,158 +96,101 @@ func (r *costEventRepository) GetByID(
 	req carriersettlementports.GetCarrierCostEventByIDRequest,
 ) (*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CostEvent, error) {
-		cols := carriersettlementcol.CostEventColumns
-		entity := new(carriersettlement.CostEvent)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.CostEventScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Relation(carriersettlementcol.CostEventRelations.Carrier).
-			Scan(ctx)
+		ce := carriersettlementdb.CostEvents
+		entity, err := ce.Where(ce.ID.Eq(req.ID)).Load(ce.Carrier()).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "CarrierCostEvent")
+			return nil, costEventErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
 
 func (r *costEventRepository) GetByIdempotencyKey(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	key string,
 ) (*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*carriersettlement.CostEvent, error) {
-		cols := carriersettlementcol.CostEventColumns
-		entity := new(carriersettlement.CostEvent)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.CostEventScopeTenant(sq, tenantInfo).
-					Where(cols.IdempotencyKey.Eq(), key)
-			}).
-			Scan(ctx)
+		ce := carriersettlementdb.CostEvents
+		entity, err := ce.Where(ce.IdempotencyKey.Eq(key)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "CarrierCostEvent")
+			return nil, costEventErrors.Map(err, key)
 		}
+
 		return entity, nil
 	})
 }
 
-// ListPendingByCarrier deliberately applies no lower period bound: pending
-// events accrued before the current period (late accruals, re-opened moves)
-// are swept into the next settlement instead of being stranded. This mirrors
-// the driver settlement repository.
 func (r *costEventRepository) ListPendingByCarrier(
 	ctx context.Context,
 	req *carriersettlementports.ListPendingCostEventsRequest,
 ) ([]*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.CostEvent, error) {
-		cols := carriersettlementcol.CostEventColumns
-		items := make([]*carriersettlement.CostEvent, 0)
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = carriersettlementcol.CostEventScopeTenant(sq, req.TenantInfo).
-					Where(cols.CarrierID.Eq(), req.CarrierID).
-					WhereGroup(" AND ", func(status *bun.SelectQuery) *bun.SelectQuery {
-						status = status.WhereGroup(
-							" AND ",
-							func(pending *bun.SelectQuery) *bun.SelectQuery {
-								pending = pending.Where(
-									cols.Status.Eq(),
-									carriersettlement.CostEventStatusPending,
-								)
-								if req.HoldUntilInvoiceMatched {
-									pending = r.whereInvoiceMatched(ctx, pending)
-								}
-								return pending
-							},
-						)
-						if req.ReleasedFrom.IsNil() {
-							return status
-						}
-						return status.WhereGroup(
-							" OR ",
-							func(released *bun.SelectQuery) *bun.SelectQuery {
-								return released.
-									Where(
-										cols.Status.In(),
-										bun.List([]carriersettlement.CostEventStatus{
-											carriersettlement.CostEventStatusAttached,
-											carriersettlement.CostEventStatusSettled,
-										}),
-									).
-									Where(cols.SettlementID.Eq(), req.ReleasedFrom)
-							},
-						)
-					})
-				if req.PeriodEnd > 0 {
-					sq = sq.Where(cols.EventDate.Lt(), req.PeriodEnd)
-				}
-				return sq
-			}).
-			Order(cols.EventDate.OrderAsc())
-		if err := query.Scan(ctx); err != nil {
+		ce := carriersettlementdb.CostEvents
+		status := keel.And(
+			ce.Status.Eq(carriersettlement.CostEventStatusPending),
+			when(req.HoldUntilInvoiceMatched, invoiceMatched(ce)),
+		)
+		if !req.ReleasedFrom.IsNil() {
+			status = keel.Or(status, keel.And(
+				ce.Status.In(
+					carriersettlement.CostEventStatusAttached,
+					carriersettlement.CostEventStatusSettled,
+				),
+				ce.SettlementID.Eq(req.ReleasedFrom),
+			))
+		}
+
+		items, err := ce.Where(
+			ce.CarrierID.Eq(req.CarrierID),
+			status,
+			when(req.PeriodEnd > 0, ce.EventDate.Lt(req.PeriodEnd)),
+		).Order(ce.EventDate.Asc()).All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, fmt.Errorf("list pending carrier cost events: %w", err)
 		}
+
 		return items, nil
 	})
 }
 
-func (r *costEventRepository) resolvedInvoiceMatch(ctx context.Context) *bun.SelectQuery {
-	cols := carriersettlementcol.CostEventColumns
-	matchCols := carriersettlementcol.InvoiceMatchColumns
-	return r.db.DBForContext(ctx).
-		NewSelect().
-		Model((*carriersettlement.InvoiceMatch)(nil)).
-		ColumnExpr("1").
-		Where(matchCols.CarrierAssignmentID.EqColumn(cols.CarrierAssignmentID)).
-		Where(matchCols.OrganizationID.EqColumn(cols.OrganizationID)).
-		Where(matchCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-		Where(matchCols.Status.Eq(), carriersettlement.InvoiceMatchStatusResolved)
+func resolvedInvoiceMatch(
+	ce *carriersettlementdb.CostEventsTable,
+) *keel.Query[*carriersettlement.InvoiceMatch] {
+	im := carriersettlementdb.InvoiceMatches
+	return im.Where(
+		im.CarrierAssignmentID.EqCol(ce.CarrierAssignmentID),
+		im.Status.Eq(carriersettlement.InvoiceMatchStatusResolved),
+	)
 }
 
-func (r *costEventRepository) whereInvoiceMatched(
-	ctx context.Context,
-	sq *bun.SelectQuery,
-) *bun.SelectQuery {
-	cols := carriersettlementcol.CostEventColumns
-	return sq.WhereGroup(" AND ", func(held *bun.SelectQuery) *bun.SelectQuery {
-		return held.
-			Where(cols.CarrierAssignmentID.IsNull()).
-			WhereOr("EXISTS (?)", r.resolvedInvoiceMatch(ctx))
-	})
+func invoiceMatched(ce *carriersettlementdb.CostEventsTable) keel.Pred {
+	return keel.Or(ce.CarrierAssignmentID.IsNull(), keel.Exists(resolvedInvoiceMatch(ce)))
 }
 
 func (r *costEventRepository) CountAwaitingInvoiceMatch(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	settlementID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := carriersettlementcol.CostEventColumns
-		var count int
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carriersettlement.CostEvent)(nil)).
-			ColumnExpr("COUNT(DISTINCT "+cols.CarrierAssignmentID.Qualified()+")").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.CostEventScopeTenant(sq, tenantInfo).
-					Where(cols.SettlementID.Eq(), settlementID).
-					Where(cols.Status.NotEq(), carriersettlement.CostEventStatusVoided).
-					Where(cols.CarrierAssignmentID.IsNotNull()).
-					Where("NOT EXISTS (?)", r.resolvedInvoiceMatch(ctx))
-			}).
-			Scan(ctx, &count)
+		ce := carriersettlementdb.CostEvents
+		count, err := keel.IntoOne[int64](
+			ctx,
+			r.db.Keel(ctx),
+			ce.Pick(ce.CarrierAssignmentID.CountDistinct()).Where(
+				ce.SettlementID.Eq(settlementID),
+				ce.Status.Ne(carriersettlement.CostEventStatusVoided),
+				ce.CarrierAssignmentID.IsNotNull(),
+				keel.NotExists(resolvedInvoiceMatch(ce)),
+			),
+		)
 		if err != nil {
 			return 0, fmt.Errorf("count carrier cost events awaiting an invoice match: %w", err)
 		}
-		return count, nil
+
+		return int(count), nil
 	})
 }
 
@@ -309,100 +199,85 @@ func (r *costEventRepository) ListCarrierIDsWithPendingEvents(
 	req carriersettlementports.ListCarriersWithPendingEventsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		cols := carriersettlementcol.CostEventColumns
-		ids := make([]pulid.ID, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*carriersettlement.CostEvent)(nil)).
-			ColumnExpr("DISTINCT "+cols.CarrierID.Qualified()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = carriersettlementcol.CostEventScopeTenant(sq, req.TenantInfo).
-					Where(cols.Status.Eq(), carriersettlement.CostEventStatusPending).
-					Where(cols.EventDate.Lt(), req.PeriodEnd)
-				if req.HoldUntilInvoiceMatched {
-					sq = r.whereInvoiceMatched(ctx, sq)
-				}
-				return sq
-			}).
-			Scan(ctx, &ids)
+		ce := carriersettlementdb.CostEvents
+		ids, err := keel.Into[pulid.ID](
+			ctx,
+			r.db.Keel(ctx),
+			ce.Pick(ce.CarrierID).
+				Where(
+					ce.Status.Eq(carriersettlement.CostEventStatusPending),
+					ce.EventDate.Lt(req.PeriodEnd),
+					when(req.HoldUntilInvoiceMatched, invoiceMatched(ce)),
+				).
+				Group(ce.CarrierID),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list carriers with pending cost events: %w", err)
 		}
+
 		return ids, nil
 	})
 }
 
 func (r *costEventRepository) ListByShipment(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.CostEvent, error) {
-		cols := carriersettlementcol.CostEventColumns
-		items := make([]*carriersettlement.CostEvent, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.CostEventScopeTenant(sq, tenantInfo).
-					Where(cols.ShipmentID.Eq(), shipmentID)
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx)
+		ce := carriersettlementdb.CostEvents
+		items, err := ce.Where(ce.ShipmentID.Eq(shipmentID)).
+			Order(ce.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list carrier cost events by shipment: %w", err)
 		}
+
 		return items, nil
 	})
 }
 
 func (r *costEventRepository) ListByMove(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	moveID pulid.ID,
 ) ([]*carriersettlement.CostEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*carriersettlement.CostEvent, error) {
-		cols := carriersettlementcol.CostEventColumns
-		items := make([]*carriersettlement.CostEvent, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return carriersettlementcol.CostEventScopeTenant(sq, tenantInfo).
-					Where(cols.MoveID.Eq(), moveID)
-			}).
-			Order(cols.CreatedAt.OrderAsc()).
-			Scan(ctx)
+		ce := carriersettlementdb.CostEvents
+		items, err := ce.Where(ce.MoveID.Eq(moveID)).
+			Order(ce.CreatedAt.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list carrier cost events by move: %w", err)
 		}
+
 		return items, nil
 	})
 }
 
 func (r *costEventRepository) GetPendingSummary(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*carriersettlementports.CarrierCostEventSummary, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carriersettlementports.CarrierCostEventSummary, error) {
-			summary := new(carriersettlementports.CarrierCostEventSummary)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*carriersettlement.CostEvent)(nil)).
-				ColumnExpr("COUNT(*) AS pending_count").
-				ColumnExpr("COALESCE(SUM(amount_minor), 0) AS pending_amount_minor").
-				ColumnExpr("COUNT(DISTINCT carrier_id) AS pending_carrier_count").
-				Where("organization_id = ?", tenantInfo.OrgID).
-				Where("business_unit_id = ?", tenantInfo.BuID).
-				Where("status = ?", carriersettlement.CostEventStatusPending).
-				Scan(ctx, summary)
+			ce := carriersettlementdb.CostEvents
+			summary, err := keel.IntoOne[carriersettlementports.CarrierCostEventSummary](
+				ctx,
+				r.db.Keel(ctx),
+				ce.Pick(
+					keel.Count(),
+					coalesceZero(ce.AmountMinor.Sum()),
+					ce.CarrierID.CountDistinct(),
+				).Where(ce.Status.Eq(carriersettlement.CostEventStatusPending)),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get pending carrier cost event summary: %w", err)
 			}
-			return summary, nil
+
+			return &summary, nil
 		},
 	)
 }
@@ -412,12 +287,13 @@ func (r *costEventRepository) Create(
 	entity *carriersettlement.CostEvent,
 ) (*carriersettlement.CostEvent, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carriersettlement.CostEvent, error) {
-		if entity.ID.IsNil() {
-			entity.ID = pulid.MustNew("cacc_")
+		if err := carriersettlementdb.CostEvents.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, fmt.Errorf(
+				"create carrier cost event: %w",
+				costEventErrors.Map(err, entity.ID.String()),
+			)
 		}
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create carrier cost event: %w", err)
-		}
+
 		return entity, nil
 	})
 }
@@ -427,45 +303,30 @@ func (r *costEventRepository) Update(
 	entity *carriersettlement.CostEvent,
 ) (*carriersettlement.CostEvent, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*carriersettlement.CostEvent, error) {
-		cols := carriersettlementcol.CostEventColumns
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carriersettlementcol.CostEventScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), entity.Version)
-			}).
-			Set(cols.Status.Set(), entity.Status).
-			Set(cols.AmountMinor.Set(), entity.AmountMinor).
-			Set(cols.Description.Set(), entity.Description).
-			Set(cols.ProNumber.Set(), entity.ProNumber).
-			Set(cols.AssignmentVersion.Set(), entity.AssignmentVersion).
-			Set(cols.SettlementID.Set(), entity.SettlementID).
-			Set(cols.VoidedAt.Set(), entity.VoidedAt).
-			Set(cols.VoidReason.Set(), entity.VoidReason).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update carrier cost event: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"CarrierCostEvent",
-			entity.ID.String(),
+		ce := carriersettlementdb.CostEvents
+		if err := ce.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			ce.Status,
+			ce.AmountMinor,
+			ce.Description,
+			ce.ProNumber,
+			ce.AssignmentVersion,
+			ce.SettlementID,
+			ce.VoidedAt,
+			ce.VoidReason,
 		); err != nil {
-			return nil, err
+			return nil, costEventErrors.Map(err, entity.ID.String())
 		}
+
 		return entity, nil
 	})
 }
 
 func (r *costEventRepository) MarkAttached(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	eventIDs []pulid.ID,
 	settlementID pulid.ID,
 ) error {
@@ -473,26 +334,17 @@ func (r *costEventRepository) MarkAttached(
 		if len(eventIDs) == 0 {
 			return nil
 		}
-		cols := carriersettlementcol.CostEventColumns
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*carriersettlement.CostEvent)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carriersettlementcol.CostEventScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.ID.In(), bun.List(eventIDs)).
-					Where(cols.Status.Eq(), carriersettlement.CostEventStatusPending)
-			}).
-			Set(cols.Status.Set(), carriersettlement.CostEventStatusAttached).
-			Set(cols.SettlementID.Set(), settlementID).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("mark carrier cost events attached: %w", err)
-		}
-		// Zero rows means every selected event was attached or voided by a
-		// concurrent generator; the caller must not keep a settlement built from
-		// events it does not own.
-		rows, err := res.RowsAffected()
+
+		ce := carriersettlementdb.CostEvents
+		rows, err := ce.Where(
+			ce.ID.In(eventIDs...),
+			ce.Status.Eq(carriersettlement.CostEventStatusPending),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			ce.Status.To(carriersettlement.CostEventStatusAttached),
+			ce.SettlementID.To(settlementID),
+		)
 		if err != nil {
 			return fmt.Errorf("mark carrier cost events attached: %w", err)
 		}
@@ -503,60 +355,53 @@ func (r *costEventRepository) MarkAttached(
 				"The selected carrier cost events are no longer pending; they were attached or voided by a concurrent request",
 			)
 		}
+
 		return nil
 	})
 }
 
 func (r *costEventRepository) MarkSettled(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	settlementID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := carriersettlementcol.CostEventColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*carriersettlement.CostEvent)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carriersettlementcol.CostEventScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.SettlementID.Eq(), settlementID).
-					Where(cols.Status.Eq(), carriersettlement.CostEventStatusAttached)
-			}).
-			Set(cols.Status.Set(), carriersettlement.CostEventStatusSettled).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		ce := carriersettlementdb.CostEvents
+		_, err := ce.Where(
+			ce.SettlementID.Eq(settlementID),
+			ce.Status.Eq(carriersettlement.CostEventStatusAttached),
+		).Update(ctx, r.db.Keel(ctx), ce.Status.To(carriersettlement.CostEventStatusSettled))
 		if err != nil {
 			return fmt.Errorf("mark carrier cost events settled: %w", err)
 		}
+
 		return nil
 	})
 }
 
 func (r *costEventRepository) ReleaseSettled(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	settlementID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := carriersettlementcol.CostEventColumns
-		_, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*carriersettlement.CostEvent)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return carriersettlementcol.CostEventScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.SettlementID.Eq(), settlementID).
-					Where(cols.Status.In(), bun.List([]carriersettlement.CostEventStatus{
-						carriersettlement.CostEventStatusAttached,
-						carriersettlement.CostEventStatusSettled,
-					}))
-			}).
-			Set(cols.Status.Set(), carriersettlement.CostEventStatusPending).
-			Set(cols.SettlementID.SetNull()).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		ce := carriersettlementdb.CostEvents
+		_, err := ce.Where(
+			ce.SettlementID.Eq(settlementID),
+			ce.Status.In(
+				carriersettlement.CostEventStatusAttached,
+				carriersettlement.CostEventStatusSettled,
+			),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			ce.Status.To(carriersettlement.CostEventStatusPending),
+			ce.SettlementID.ToNull(),
+		)
 		if err != nil {
 			return fmt.Errorf("release settled carrier cost events: %w", err)
 		}
+
 		return nil
 	})
 }

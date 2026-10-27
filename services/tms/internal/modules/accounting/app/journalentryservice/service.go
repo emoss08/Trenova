@@ -42,6 +42,13 @@ func (s *Service) ListEntries(
 	return s.entryRepo.List(ctx, req)
 }
 
+func (s *Service) ListConnection(
+	ctx context.Context,
+	req *journalentryports.ListJournalEntryConnectionRequest,
+) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
+	return s.entryRepo.ListConnection(ctx, req)
+}
+
 func (s *Service) GetEntry(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -51,6 +58,20 @@ func (s *Service) GetEntry(
 		ctx,
 		journalentryports.GetJournalEntryByIDRequest{ID: entryID, TenantInfo: tenantInfo},
 	)
+}
+
+func (s *Service) GetEntriesByIDs(
+	ctx context.Context,
+	req journalentryports.GetJournalEntriesByIDsRequest,
+) ([]*journalentry.JournalEntry, error) {
+	return s.entryRepo.GetByIDs(ctx, req)
+}
+
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *journalentryports.JournalEntrySelectOptionsRequest,
+) (*pagination.ListResult[*journalentry.JournalEntry], error) {
+	return s.entryRepo.SelectOptions(ctx, req)
 }
 
 func (s *Service) ListEntriesBySource(

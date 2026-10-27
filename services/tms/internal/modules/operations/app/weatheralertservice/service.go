@@ -9,14 +9,14 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/geojson"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/emoss08/trenova/shared/hashutils"
-	"github.com/paulmach/orb/geojson"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -560,12 +560,7 @@ func parseGeometry(raw map[string]any) (*postgis.Geometry, error) {
 		return nil, fmt.Errorf("marshal geometry: %w", err)
 	}
 
-	geo, err := geojson.UnmarshalGeometry(payload)
-	if err != nil {
-		return nil, fmt.Errorf("unmarshal geometry: %w", err)
-	}
-
-	return &postgis.Geometry{Geometry: geo.Geometry()}, nil
+	return geojson.Parse(payload)
 }
 
 func parseNWSTime(value string) (*int64, error) {
@@ -588,7 +583,7 @@ func toFeature(alert *weatheralert.WeatherAlert) (*weatheralertports.WeatherAler
 		return nil, errortypes.NewBusinessError("failed to convert weather alert category")
 	}
 
-	geometry, err := alert.Geometry.GeoJSON()
+	geometry, err := geojson.Map(alert.Geometry)
 	if err != nil {
 		return nil, errortypes.NewBusinessError("failed to convert weather alert geometry").
 			WithInternal(err)

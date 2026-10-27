@@ -1,0 +1,692 @@
+{
+ "cases": [
+  {
+   "name": "a choice written as a binding's value gives the kept option's subtotal",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi",
+    "let linehaul = best \"Linehaul\" {",
+    "  option \"Per mile\" { charge \"Linehaul\" (quantity: shipment.distance, rate: rate) }",
+    "  option \"Flat\" { charge \"Flat\" = $500 }",
+    "}",
+    "var fees = $0",
+    "fees += worst \"Fees\" {",
+    "  option \"A\" { charge \"Fee A\" = $1 }",
+    "  option \"B\" { charge \"Fee B\" = $2 }",
+    "}",
+    "charge \"Fuel\" as FSC = (linehaul + fees) * 10%",
+    "test \"the flat rate wins a long run\" {",
+    "  given shipment.distance = 500 mi",
+    "  expect chosen(\"Linehaul\") == \"Flat\"",
+    "}"
+   ],
+   "types": {
+    "(linehaul + fees) * 10%": "Money"
+   },
+   "diagnostics": []
+  },
+  {
+   "name": "a choice inside an expression is misplaced",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = best \"Linehaul\" {",
+    "  option \"A\" { charge \"A\" = $1 }",
+    "  option \"B\" { charge \"B\" = $2 }",
+    "} * 2"
+   ],
+   "diagnostics": [
+    {
+     "code": "misplaced",
+     "at": "best \"Linehaul\"",
+     "message": "`best` bills lines, so it gives a value only as the whole value of a `let`, `var` or assignment: bind it first, as in `let subtotal = best \"Linehaul\" …`, and use the name"
+    }
+   ]
+  },
+  {
+   "name": "a choice as a value bills, so it is refused in a function",
+   "source": [
+    "tariff \"t\"",
+    "fn f() -> Money {",
+    "  let x = best \"F\" {",
+    "    option \"A\" { charge \"A\" = $1 }",
+    "    option \"B\" { charge \"B\" = $2 }",
+    "  }",
+    "  return x",
+    "}",
+    "charge \"x\" = f()"
+   ],
+   "diagnostics": [
+    {
+     "code": "misplaced",
+     "at": "best \"F\" {\n    option \"A\" { charge \"A\" = $1 }\n    option \"B\" { charge \"B\" = $2 }\n  }",
+     "message": "A `best` can't be written here: a function computes values; only a tariff bills them"
+    },
+    {
+     "code": "misplaced",
+     "at": "charge \"A\" = $1",
+     "message": "A charge can't be written here: a function computes values; only a tariff bills them"
+    },
+    {
+     "code": "misplaced",
+     "at": "charge \"B\" = $2",
+     "message": "A charge can't be written here: a function computes values; only a tariff bills them"
+    }
+   ]
+  },
+  {
+   "name": "the bill so far",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = bill.freight * 10%",
+    "let sums = bill.accessorials + bill.total",
+    "let fuelSoFar = bill.charge(FSC) ?? $0",
+    "let line = bill.charge(\"Linehaul\") ?? $0",
+    "charge \"Check\" = sums + fuelSoFar + line"
+   ],
+   "types": {
+    "bill.freight": "Money",
+    "bill.charge(FSC)": "Money?",
+    "bill.total": "Money"
+   },
+   "diagnostics": []
+  },
+  {
+   "name": "bill is read only in a tariff's own code",
+   "source": [
+    "tariff \"t\"",
+    "fn f(x: Money) -> Money = x + bill.total",
+    "const FLOOR: Money = bill.freight",
+    "charge \"x\" = f($1) + FLOOR",
+    "test \"t\" {",
+    "  expect bill.total == $1",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "code": "closed-function",
+     "at": "bill",
+     "message": "`bill` is the bill being built, which a function can't read: a function sees only its parameters, constants, types and other functions. Pass it in as a parameter"
+    },
+    {
+     "code": "not-constant",
+     "at": "bill",
+     "nth": 2,
+     "message": "`bill` is the bill being built, which isn't known before rating: a constant or default must be computed from literals and other constants"
+    },
+    {
+     "code": "test-scope",
+     "at": "bill",
+     "nth": 3,
+     "message": "`bill` is the bill being built, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`, `reviews`), the record and the file's functions and constants"
+    }
+   ]
+  },
+  {
+   "name": "a condition has no bill to read",
+   "kind": "condition",
+   "source": [
+    "condition \"c\"",
+    "bill.total > $5"
+   ],
+   "diagnostics": [
+    {
+     "code": "misplaced",
+     "at": "bill",
+     "message": "`bill` reads the bill being built, so it can't be read here: a condition decides true or false and bills nothing"
+    }
+   ]
+  },
+  {
+   "name": "bill alone is no value, and its members are its sums and charge(…)",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "let a = bill",
+    "let b = bill.fright",
+    "let c = bill.freight()",
+    "let d = bill.charge"
+   ],
+   "diagnostics": [
+    {
+     "code": "unused",
+     "at": "a",
+     "nth": 4,
+     "message": "`a` is never used"
+    },
+    {
+     "code": "not-a-value",
+     "at": "bill",
+     "message": "`bill` is the bill so far: read a part of it, as in `bill.freight`, `bill.total` or `bill.charge(\"Linehaul\")`"
+    },
+    {
+     "code": "unused",
+     "at": "b",
+     "nth": 2,
+     "message": "`b` is never used"
+    },
+    {
+     "code": "unknown-member",
+     "at": "fright",
+     "message": "The bill has no `fright`. Did you mean `freight`?",
+     "fixes": [
+      {
+       "label": "Change to `freight`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Linehaul\" = $100",
+        "let a = bill",
+        "let b = bill.freight",
+        "let c = bill.freight()",
+        "let d = bill.charge"
+       ]
+      }
+     ]
+    },
+    {
+     "code": "unused",
+     "at": "c",
+     "nth": 2,
+     "message": "`c` is never used"
+    },
+    {
+     "code": "property-call",
+     "at": "()",
+     "message": "`freight` is a property: write it without parentheses",
+     "fixes": [
+      {
+       "label": "Remove the parentheses",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Linehaul\" = $100",
+        "let a = bill",
+        "let b = bill.fright",
+        "let c = bill.freight",
+        "let d = bill.charge"
+       ]
+      }
+     ]
+    },
+    {
+     "code": "unused",
+     "at": "d",
+     "message": "`d` is never used"
+    },
+    {
+     "code": "method-call",
+     "at": "charge",
+     "nth": 2,
+     "message": "`bill.charge` is a method: call it with a label or code, as in `bill.charge(\"Linehaul\")` or `bill.charge(FSC)`"
+    }
+   ]
+  },
+  {
+   "name": "bill.charge reads only what was billed above it",
+   "source": [
+    "tariff \"t\"",
+    "let early = bill.charge(FSC) ?? $0",
+    "charge \"Linehaul\" = $100 + early",
+    "charge \"Fuel\" as FSC = $10",
+    "let later = bill.charge(\"Linehaul\") ?? $0",
+    "let never = bill.charge(\"Linehual\") ?? $0",
+    "for stop in shipment.stops {",
+    "  let looped = bill.charge(\"Stop fee\") ?? $0",
+    "  charge \"Stop fee\" = $5 + looped",
+    "}",
+    "charge \"Total\" = later + never"
+   ],
+   "diagnostics": [
+    {
+     "code": "bill-order",
+     "at": "FSC",
+     "message": "`FSC` is billed after this line, so this reads `none`",
+     "related": [
+      {
+       "at": "charge \"Fuel\" as FSC = $10",
+       "line": 4,
+       "message": "It is billed here"
+      }
+     ]
+    },
+    {
+     "code": "not-billed",
+     "at": "\"Linehual\"",
+     "message": "This tariff never bills a line labelled `Linehual`, so this is always `none`",
+     "fixes": [
+      {
+       "label": "Change to `\"Linehaul\"`",
+       "result": [
+        "tariff \"t\"",
+        "let early = bill.charge(FSC) ?? $0",
+        "charge \"Linehaul\" = $100 + early",
+        "charge \"Fuel\" as FSC = $10",
+        "let later = bill.charge(\"Linehaul\") ?? $0",
+        "let never = bill.charge(\"Linehaul\") ?? $0",
+        "for stop in shipment.stops {",
+        "  let looped = bill.charge(\"Stop fee\") ?? $0",
+        "  charge \"Stop fee\" = $5 + looped",
+        "}",
+        "charge \"Total\" = later + never"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "an option doesn't read another option's lines",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" { charge \"Flat\" = $500 }",
+    "  option \"B\" {",
+    "    charge \"Per mile\" = $2/mi * shipment.distance + (bill.charge(\"Flat\") ?? $0)",
+    "  }",
+    "}",
+    "charge \"Fuel\" as FSC = (bill.charge(\"Flat\") ?? $0) * 10%"
+   ],
+   "diagnostics": [
+    {
+     "code": "bill-order",
+     "at": "\"Flat\"",
+     "nth": 2,
+     "message": "The line labelled `Flat` is billed only in another option of this choice, so this reads `none`: each option reads the bill outside the choice and its own lines",
+     "related": [
+      {
+       "at": "charge \"Flat\" = $500",
+       "line": 3,
+       "message": "It is billed here"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "bill.charge names a code the catalog has",
+   "context": {
+    "codes": [
+     {
+      "code": "FSC",
+      "active": true
+     }
+    ]
+   },
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Extra\" = bill.charge(FUEL) ?? $0"
+   ],
+   "diagnostics": [
+    {
+     "code": "unknown-code",
+     "at": "FUEL",
+     "message": "`FUEL` isn't in the accessorial charge catalog"
+    }
+   ]
+  },
+  {
+   "name": "nothing in a tariff is named bill",
+   "source": [
+    "tariff \"t\"",
+    "fn f(bill: Money) -> Money = bill",
+    "let bill = $2",
+    "charge \"x\" = f(bill)"
+   ],
+   "diagnostics": [
+    {
+     "code": "shadow",
+     "at": "bill",
+     "message": "`bill` is already the bill so far; pick another name"
+    },
+    {
+     "code": "shadow",
+     "at": "bill",
+     "nth": 3,
+     "message": "`bill` is already the bill so far; pick another name"
+    }
+   ]
+  },
+  {
+   "name": "a charge doesn't read its own line",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as FSC = $1 + (bill.charge(FSC) ?? $0)"
+   ],
+   "diagnostics": [
+    {
+     "code": "bill-order",
+     "at": "FSC",
+     "nth": 2,
+     "message": "`FSC` is billed after this line, so this reads `none`",
+     "related": [
+      {
+       "at": "charge \"Fuel\" as FSC = $1 + (bill.charge(FSC) ?? $0)",
+       "line": 2,
+       "message": "It is billed here"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "an option doesn't read a later option's lines",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" { charge \"Flat\" = $500 + (bill.charge(\"Per mile\") ?? $0) }",
+    "  option \"B\" { charge \"Per mile\" = $2 }",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "code": "bill-order",
+     "at": "\"Per mile\"",
+     "message": "The line labelled `Per mile` is billed only in another option of this choice, so this reads `none`: each option reads the bill outside the choice and its own lines",
+     "related": [
+      {
+       "at": "charge \"Per mile\" = $2",
+       "line": 4,
+       "message": "It is billed here"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a tariff's input can't be named bill",
+   "source": [
+    "tariff \"t\"",
+    "input bill: Money = $1",
+    "charge \"x\" = bill"
+   ],
+   "diagnostics": [
+    {
+     "code": "shadow",
+     "at": "bill",
+     "message": "`bill` is already the bill so far; pick another name"
+    }
+   ]
+  },
+  {
+   "name": "a condition may name something bill",
+   "kind": "condition",
+   "source": [
+    "condition \"c\"",
+    "let bill = 5",
+    "bill > 3"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "review goes wherever note does",
+   "source": [
+    "tariff \"t\"",
+    "let review = $1",
+    "charge \"Linehaul\" = $100 + review",
+    "if shipment.hazmat {",
+    "  review \"Hazmat over {shipment.distance}: check the permit\"",
+    "}",
+    "best \"L\" {",
+    "  option \"A\" {",
+    "    review \"The flat rate applied\"",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" { charge \"B\" = $2 }",
+    "}",
+    "test \"no review by default\" {",
+    "  expect reviews.isEmpty",
+    "  expect reviews == [\"The flat rate applied\"] or reviews.len == 2",
+    "}"
+   ],
+   "types": {
+    "reviews": "List<Text>"
+   },
+   "diagnostics": []
+  },
+  {
+   "name": "review is refused in functions and tests",
+   "source": [
+    "tariff \"t\"",
+    "fn f() -> Money {",
+    "  review \"no\"",
+    "  return $1",
+    "}",
+    "charge \"x\" = f()",
+    "test \"t\" {",
+    "  review \"no\"",
+    "  expect total == $1",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "code": "misplaced",
+     "at": "review \"no\"",
+     "message": "A `review` can't be written here: a function computes values; only a tariff bills them"
+    },
+    {
+     "code": "misplaced",
+     "at": "review \"no\"",
+     "nth": 2,
+     "message": "A `review` can't be written here: a test checks the bill the tariff makes"
+    }
+   ]
+  },
+  {
+   "name": "a condition can't ask for review",
+   "kind": "condition",
+   "source": [
+    "condition \"c\"",
+    "review \"no\"",
+    "shipment.hazmat"
+   ],
+   "diagnostics": [
+    {
+     "code": "misplaced",
+     "at": "review \"no\"",
+     "message": "A `review` can't be written here: a condition decides true or false and bills nothing"
+    }
+   ]
+  },
+  {
+   "name": "a library's tests have no reviews",
+   "source": [
+    "library \"l\"",
+    "test \"t\" {",
+    "  expect reviews.isEmpty",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "code": "test-only",
+     "at": "reviews",
+     "message": "`reviews` reads the bill, and only a tariff makes one: a library's tests check its functions"
+    }
+   ]
+  },
+  {
+   "name": "a charge's minimum and maximum",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate, minimum: $450, maximum: $2_000)",
+    "charge \"Detention\" as DET (minimum: $50) = $65/h * 1 h"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "a charge's limits are money, in order, and named",
+   "source": [
+    "tariff \"t\"",
+    "charge \"A\" (minimum: 450) = $1",
+    "charge \"B\" (minimum: $500, maximum: $400) = $1",
+    "charge \"C\" (minimun: $5) = $1",
+    "charge \"D\" (maximum: $5)"
+   ],
+   "diagnostics": [
+    {
+     "code": "type-mismatch",
+     "at": "450",
+     "message": "A charge's `minimum` must be money, but `450` is a whole number",
+     "fixes": [
+      {
+       "label": "Write it as `$450`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"A\" (minimum: $450) = $1",
+        "charge \"B\" (minimum: $500, maximum: $400) = $1",
+        "charge \"C\" (minimun: $5) = $1",
+        "charge \"D\" (maximum: $5)"
+       ]
+      }
+     ]
+    },
+    {
+     "code": "charge-option",
+     "at": "$500",
+     "message": "The charge's minimum is above its maximum, so no amount satisfies both",
+     "related": [
+      {
+       "at": "$400",
+       "line": 3,
+       "message": "The maximum"
+      }
+     ]
+    },
+    {
+     "code": "charge-option",
+     "at": "minimun",
+     "message": "A charge has no option `minimun`. Did you mean `minimum`?",
+     "fixes": [
+      {
+       "label": "Change to `minimum`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"A\" (minimum: 450) = $1",
+        "charge \"B\" (minimum: $500, maximum: $400) = $1",
+        "charge \"C\" (minimum: $5) = $1",
+        "charge \"D\" (maximum: $5)"
+       ]
+      }
+     ]
+    },
+    {
+     "code": "charge-amount",
+     "at": "charge \"D\" (maximum: $5)",
+     "message": "A charge needs an amount: write `= amount`, or give both `quantity:` and `rate:` to bill their product"
+    }
+   ]
+  },
+  {
+   "name": "freight clauses come before the whole bill's",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = $10",
+    "minimum $400 on freight",
+    "maximum $5_000 on freight",
+    "minimum $450",
+    "maximum $6_000",
+    "round to cents"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "freight clauses out of order or above a maximum",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "minimum $450",
+    "minimum $400 on freight",
+    "maximum $300 on freight",
+    "maximum $350"
+   ],
+   "diagnostics": [
+    {
+     "code": "total-order",
+     "at": "minimum $450",
+     "message": "The minimum is above the maximum, so no total satisfies both",
+     "related": [
+      {
+       "at": "maximum $350",
+       "line": 6,
+       "message": "The maximum"
+      }
+     ]
+    },
+    {
+     "code": "total-order",
+     "at": "minimum $400 on freight",
+     "message": "Total clauses go in the order `minimum … on freight`, `maximum … on freight`, `minimum`, `maximum`, `round`",
+     "related": [
+      {
+       "at": "minimum $450",
+       "line": 3,
+       "message": "This one should come after it"
+      }
+     ]
+    },
+    {
+     "code": "total-order",
+     "at": "minimum $400 on freight",
+     "message": "The freight minimum is above the freight maximum, so no freight total satisfies both",
+     "related": [
+      {
+       "at": "maximum $300 on freight",
+       "line": 5,
+       "message": "The maximum"
+      }
+     ]
+    },
+    {
+     "code": "total-order",
+     "at": "minimum $400 on freight",
+     "message": "The freight minimum is above the bill's maximum, so no bill satisfies both",
+     "related": [
+      {
+       "at": "maximum $350",
+       "line": 6,
+       "message": "The maximum"
+      }
+     ]
+    },
+    {
+     "code": "total-order",
+     "at": "maximum $300 on freight",
+     "message": "Total clauses go in the order `minimum … on freight`, `maximum … on freight`, `minimum`, `maximum`, `round`",
+     "related": [
+      {
+       "at": "minimum $450",
+       "line": 3,
+       "message": "This one should come after it"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a total clause applies on freight or to the whole bill",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "minimum $400 on fright"
+   ],
+   "diagnostics": [
+    {
+     "code": "syntax",
+     "at": "fright",
+     "message": "A minimum or maximum applies `on freight` (the uncoded lines) or, without `on`, to the whole bill; `fright` isn't one of them",
+     "fixes": [
+      {
+       "label": "Change to `freight`",
+       "result": [
+        "tariff \"t\"",
+        "charge \"Linehaul\" = $100",
+        "minimum $400 on freight"
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

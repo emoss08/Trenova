@@ -41,14 +41,14 @@ const revenue = sheetColumn({
   id: "revenue",
   label: "Total revenue",
   type: "decimal",
-  format: "money",
+  hint: "money",
   display: { ...DISPLAY, style: "currency", currency: "USD" },
 });
 const share = sheetColumn({
   id: "share",
   label: "Accessorial share",
   type: "decimal",
-  format: "percent",
+  hint: "percent",
   display: { ...DISPLAY, style: "percent" },
 });
 const month = sheetColumn({
@@ -82,7 +82,7 @@ describe("sheetColumn", () => {
     expect(share).toMatchObject({ numeric: true, percent: true });
     expect(month).toMatchObject({ numeric: false, dated: true });
     expect(customer).toMatchObject({ numeric: false, dated: false });
-    expect(sheetColumn({ id: "n", label: "", type: "decimal", format: "percent" })).toMatchObject({
+    expect(sheetColumn({ id: "n", label: "", type: "decimal", hint: "percent" })).toMatchObject({
       label: "n",
       numeric: true,
       percent: true,
@@ -92,19 +92,26 @@ describe("sheetColumn", () => {
       numeric: false,
       dated: true,
     });
+    expect(sheetColumn({ id: "t", label: "At", type: "time" })).toMatchObject({
+      numeric: false,
+      dated: true,
+    });
+    expect(sheetColumn({ id: "f", label: "Ratio", type: "float" })).toMatchObject({
+      numeric: true,
+    });
   });
 });
 
 describe("pictureOf", () => {
   it("ranks a labelled result by the measure it is sorted on, descending", () => {
-    expect(
-      pictureOf(source(), { chart: null, sort: [{ columnId: "revenue", direction: "desc" }] }),
-    ).toEqual({
-      kind: "ranked",
-      label: 0,
-      measure: 2,
-      ranked: true,
-    });
+    expect(pictureOf(source(), { chart: null, sort: [{ column: "revenue", desc: true }] })).toEqual(
+      {
+        kind: "ranked",
+        label: 0,
+        measure: 2,
+        ranked: true,
+      },
+    );
   });
 
   it("draws bars on the first money measure, without claiming a ranking, when nothing sorts it", () => {
@@ -126,7 +133,7 @@ describe("pictureOf", () => {
     for (const type of ["bar", "pie", "donut"]) {
       expect(
         pictureOf(source(), {
-          chart: { type, xColumnId: "customer", seriesIds: ["revenue"] },
+          chart: { type, x: "customer", series: ["revenue"] },
           sort: [],
         }),
       ).toEqual({ kind: "ranked", label: 0, measure: 2, ranked: false });
@@ -135,16 +142,16 @@ describe("pictureOf", () => {
 
   it("leaves a map, a scatter or a lone figure as a table", () => {
     for (const type of ["map", "scatter", "kpi"]) {
-      expect(
-        pictureOf(source(), { chart: { type, xColumnId: null, seriesIds: [] }, sort: [] }),
-      ).toEqual({ kind: "table" });
+      expect(pictureOf(source(), { chart: { type, x: null, series: [] }, sort: [] })).toEqual({
+        kind: "table",
+      });
     }
   });
 
   it("does not draw bars for a percentage or a measure below zero", () => {
     expect(
       pictureOf(source(), {
-        chart: { type: "bar", xColumnId: "customer", seriesIds: ["share"] },
+        chart: { type: "bar", x: "customer", series: ["share"] },
         sort: [],
       }),
     ).toEqual({ kind: "table" });
@@ -173,7 +180,7 @@ describe("pictureOf", () => {
     expect(pictureOf(trend, NO_HINTS)).toEqual({ kind: "trend", period: 0, line: 1, columns: 2 });
     expect(
       pictureOf(trend, {
-        chart: { type: "line", xColumnId: "month", seriesIds: ["shipments"] },
+        chart: { type: "line", x: "month", series: ["shipments"] },
         sort: [],
       }),
     ).toEqual({ kind: "trend", period: 0, line: 2, columns: null });

@@ -2,4 +2,4 @@
 import type { TypedDocumentString, ScimGroupRoleMappingTableRowFieldsFragment, ScimGroupRoleMappingsTableQuery, ScimGroupRoleMappingsTableQueryVariables } from "../../graphql";
 
 export const ScimGroupRoleMappingTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"SCIMGroupRoleMappingTableRowFields"}} as unknown as TypedDocumentString<ScimGroupRoleMappingTableRowFieldsFragment, unknown>;
-export const ScimGroupRoleMappingsTableDocument = {"__meta__":{"kind":"query","name":"SCIMGroupRoleMappingsTable","hash":"sha256:f81b2b7365860ca8a6c0770e4d92c23f5c2da117745ee4a6a3e5b92bc14cadc8"}} as unknown as TypedDocumentString<ScimGroupRoleMappingsTableQuery, ScimGroupRoleMappingsTableQueryVariables>;
+export const ScimGroupRoleMappingsTableDocument = {"__meta__":{"kind":"query","name":"SCIMGroupRoleMappingsTable","hash":"sha256:c74a1005f676e1acc619e862c0f06df774a7d37ad88301df0e82389e015e073e"}} as unknown as TypedDocumentString<ScimGroupRoleMappingsTableQuery, ScimGroupRoleMappingsTableQueryVariables>;

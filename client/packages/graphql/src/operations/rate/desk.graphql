@@ -9,5 +9,157 @@ query DeskRateAgreementPricing($input: DataTableConnectionInput!) {
       }
     }
     totalCount
+    totalCountExact
+  }
+}
+
+# The rate agreement register, as the Desk reads it.
+query DeskRateAgreements($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  rateAgreements(input: $input) {
+    edges {
+      node {
+        id
+        code
+        name
+        partyType
+        customerId
+        carrierId
+        agreementType
+        status
+        priority
+        contractRef
+        effectiveFrom
+        effectiveTo
+        autoRenew
+        currency
+        inputs
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+# One rate agreement with its first live lanes, accessorials, fuel binding and
+# the version of its terms in force, for the card.
+query DeskRateAgreementCard($id: ID!) {
+  rateAgreement(id: $id) {
+    id
+    code
+    name
+    description
+    partyType
+    customerId
+    carrierId
+    billToCustomerId
+    agreementType
+    status
+    priority
+    contractRef
+    effectiveFrom
+    effectiveTo
+    autoRenew
+    renewalNoticeDays
+    currency
+    inputs
+    submittedAt
+    approvedAt
+    reviewComment
+    currentVersion {
+      id
+      versionNumber
+      effectiveFrom
+      effectiveTo
+      changeMessage
+    }
+    laneCount
+    laneCountExact
+    lanes(first: 50) {
+      id
+      label
+      originScopeType
+      originScopeValue
+      originCity
+      destinationScopeType
+      destinationScopeValue
+      destinationCity
+      direction
+      priority
+      effectiveFrom
+      effectiveTo
+      hazmatOnly
+      tempControlOnly
+      formulaTemplateId
+      currency
+      inputs
+    }
+    accessorials {
+      id
+      accessorialChargeId
+      method
+      rateUnit
+      waived
+      autoApply
+      freeUnits
+      effectiveFrom
+      effectiveTo
+      amount
+      maxAmount
+      condition
+    }
+    fuelBinding {
+      id
+      fuelSurchargeProgramId
+      waived
+    }
+  }
+}
+
+# One rate matrix with its axes and a page of its cells, for the card.
+query DeskRateMatrixCard($id: ID!, $cellOffset: Int = 0) {
+  rateMatrix(id: $id) {
+    id
+    code
+    name
+    description
+    status
+    publishedVersionNumber
+    hasDraftChanges
+    valueType
+    dimensions {
+      id
+      position
+      kind
+      matchMode
+      label
+      keyNormalization
+      rangeOverflow
+    }
+    cellCount
+    cells(offset: $cellOffset, limit: 100) {
+      id
+      d0Key
+      d1Key
+      d2Key
+      d3Key
+      d0KeyTo
+      d1KeyTo
+      d2KeyTo
+      d3KeyTo
+      d0Min
+      d0Max
+      d1Min
+      d1Max
+      d2Min
+      d2Max
+      d3Min
+      d3Max
+      deficitEligible
+      value
+      minCharge
+    }
   }
 }

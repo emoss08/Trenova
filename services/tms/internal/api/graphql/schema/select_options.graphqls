@@ -24,6 +24,7 @@ enum SelectOptionResource {
   GL_ACCOUNT
   IFTA_FUEL_TYPE
   HAZARDOUS_MATERIAL
+  JOURNAL_ENTRY
   LOCATION
   LOCATION_CATEGORY
   ORDER
@@ -45,8 +46,6 @@ enum SelectOptionResource {
   EDI_DOCUMENT_TYPE
   EDI_MAPPING_PROFILE
   EDI_PARTNER
-  EDI_PARTNER_DOCUMENT_PROFILE
-  EDI_TEMPLATE
   EDI_TRANSACTION_SET
   EMAIL_PROFILE
   SHIFT_TEMPLATE
@@ -88,6 +87,8 @@ type SelectOptionConnection {
   edges: [SelectOptionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {

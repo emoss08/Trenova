@@ -16,11 +16,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	obsmetrics "github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -28,32 +26,8 @@ type fakeDBConnection struct {
 	healthErr error
 }
 
-func (f *fakeDBConnection) DB() *bun.DB {
-	return nil
-}
-
-func (f *fakeDBConnection) DBForContext(context.Context) bun.IDB {
-	return nil
-}
-
-func (f *fakeDBConnection) WithTx(
-	context.Context,
-	kernelports.TxOptions,
-	func(context.Context, bun.Tx) error,
-) error {
-	return nil
-}
-
 func (f *fakeDBConnection) HealthCheck(context.Context) error {
 	return f.healthErr
-}
-
-func (f *fakeDBConnection) IsHealthy(context.Context) bool {
-	return f.healthErr == nil
-}
-
-func (f *fakeDBConnection) Close() error {
-	return nil
 }
 
 func TestMonitoringServer_CustomPathsAndMetricsEnabled(t *testing.T) {
@@ -263,4 +237,4 @@ func TestMonitoringServer_EDICheckWithoutRepositories(t *testing.T) {
 	assert.Contains(t, check.Message, "EDI monitoring is not configured")
 }
 
-var _ kernelports.DBConnection = (*fakeDBConnection)(nil)
+var _ databaseHealth = (*fakeDBConnection)(nil)

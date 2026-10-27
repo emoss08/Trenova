@@ -3,14 +3,11 @@ package usstate
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*UsState)(nil)
 
 type Region string
 
@@ -22,15 +19,15 @@ const (
 )
 
 type UsState struct {
-	bun.BaseModel `json:"-" bun:"table:us_states,alias:ust"`
+	keel.Table `keel:"us_states"`
 
-	ID           pulid.ID `json:"id"           bun:"id,pk,type:VARCHAR(100)"`
-	Name         string   `json:"name"         bun:"name,notnull"`
-	Abbreviation string   `json:"abbreviation" bun:"abbreviation,notnull"`
-	CountryName  string   `json:"countryName"  bun:"country_name,notnull"`
-	CountryIso3  string   `json:"countryIso3"  bun:"country_iso3,notnull,default:'USA'"`
-	CreatedAt    int64    `json:"createdAt"    bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64    `json:"updatedAt"    bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID           pulid.ID `json:"id"           keel:"id,pk,autoid:us_"`
+	Name         string   `json:"name"         keel:"name"`
+	Abbreviation string   `json:"abbreviation" keel:"abbreviation"`
+	CountryName  string   `json:"countryName"  keel:"country_name"`
+	CountryIso3  string   `json:"countryIso3"  keel:"country_iso3"`
+	CreatedAt    int64    `json:"createdAt"    keel:"created_at,autocreate"`
+	UpdatedAt    int64    `json:"updatedAt"    keel:"updated_at,autoupdate"`
 }
 
 func RegionForStateAbbreviation(abbreviation string) (Region, bool) {
@@ -38,18 +35,9 @@ func RegionForStateAbbreviation(abbreviation string) (Region, bool) {
 	return region, ok
 }
 
-func (us *UsState) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch q.(type) {
-	case *bun.InsertQuery:
-		if us.ID.IsNil() {
-			us.ID = pulid.MustNew("us_")
-		}
-
-		us.CreatedAt = now
-	case *bun.UpdateQuery:
-		us.UpdatedAt = now
+func (us *UsState) BeforeCreate(ctx context.Context) error {
+	if us.CountryIso3 == "" {
+		us.CountryIso3 = "USA"
 	}
 
 	return nil

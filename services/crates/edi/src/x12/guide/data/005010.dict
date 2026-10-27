@@ -1,0 +1,172 @@
+# Version 005010 segments for the implementation acknowledgment (999, X231A1). Codes for the
+# acknowledgment's own elements are kept, since Trenova writes them and a partner reads them.
+
+segment ST | Transaction Set Header
+  143 ID 3/3 M | Transaction Set Identifier Code
+  329 AN 4/9 M | Transaction Set Control Number
+  1705 AN 1/35 O | Implementation Convention Reference
+
+segment SE | Transaction Set Trailer
+  96 N0 1/10 M | Number of Included Segments
+  329 AN 4/9 M | Transaction Set Control Number
+
+segment AK1 | Functional Group Response Header
+  479 ID 2/2 M | Functional Identifier Code
+  28 N0 1/9 M | Group Control Number
+  480 AN 1/12 O | Version / Release / Industry Identifier Code
+
+segment AK2 | Transaction Set Response Header
+  143 ID 3/3 M | Transaction Set Identifier Code
+  329 AN 4/9 M | Transaction Set Control Number
+  1705 AN 1/35 O | Implementation Convention Reference
+
+segment IK3 | Error Identification
+  721 ID 2/3 M | Segment ID Code
+  719 N0 1/10 M | Segment Position in Transaction Set
+  447 AN 1/4 O | Loop Identifier Code
+  620 ID 1/3 O | Implementation Segment Syntax Error Code
+
+segment CTX | Context
+  C998 composite M | Context Identification
+    - 9999 AN 1/35 M | Context Name
+    - 9998 AN 1/35 O | Context Reference
+  721 ID 2/3 X | Segment ID Code
+  719 N0 1/10 O | Segment Position in Transaction Set
+  447 AN 1/4 O | Loop Identifier Code
+  C030 composite O | Position in Segment
+    - 722 N0 1/2 M | Element Position in Segment
+    - 1528 N0 1/2 O | Component Data Element Position in Composite
+    - 1686 N0 1/4 O | Repeating Data Element Position
+  C999 composite O | Reference in Segment
+    - 725 N0 1/4 M | Data Element Reference Number
+    - 725 N0 1/4 O | Data Element Reference Number
+  rules P0203
+
+segment IK4 | Implementation Data Element Note
+  C030 composite M | Position in Segment
+    - 722 N0 1/2 M | Element Position in Segment
+    - 1528 N0 1/2 O | Component Data Element Position in Composite
+    - 1686 N0 1/4 O | Repeating Data Element Position
+  725 N0 1/4 O | Data Element Reference Number
+  621 ID 1/3 M | Implementation Data Element Syntax Error Code
+  724 AN 1/99 X | Copy of Bad Data Element
+
+segment IK5 | Implementation Transaction Set Response Trailer
+  717 ID 1/1 M | Transaction Set Acknowledgment Code
+  618 ID 1/3 O | Implementation Transaction Set Syntax Error Code
+  618 ID 1/3 O | Implementation Transaction Set Syntax Error Code
+  618 ID 1/3 O | Implementation Transaction Set Syntax Error Code
+  618 ID 1/3 O | Implementation Transaction Set Syntax Error Code
+  618 ID 1/3 O | Implementation Transaction Set Syntax Error Code
+
+segment AK9 | Functional Group Response Trailer
+  715 ID 1/1 M | Functional Group Acknowledge Code
+  97 N0 1/6 M | Number of Transaction Sets Included
+  123 N0 1/6 M | Number of Received Transaction Sets
+  2 N0 1/6 M | Number of Accepted Transaction Sets
+  716 ID 1/3 O | Functional Group Syntax Error Code
+  716 ID 1/3 O | Functional Group Syntax Error Code
+  716 ID 1/3 O | Functional Group Syntax Error Code
+  716 ID 1/3 O | Functional Group Syntax Error Code
+  716 ID 1/3 O | Functional Group Syntax Error Code
+
+codes 717 | Transaction Set Acknowledgment Code
+  A | Accepted
+  E | Accepted But Errors Were Noted
+  M | Rejected, Message Authentication Code (MAC) Failed
+  R | Rejected
+  W | Rejected, Assurance Failed Validity Tests
+  X | Rejected, Content After Decryption Could Not Be Analyzed
+
+codes 715 | Functional Group Acknowledge Code
+  A | Accepted
+  E | Accepted, But Errors Were Noted
+  M | Rejected, Message Authentication Code (MAC) Failed
+  P | Partially Accepted, At Least One Transaction Set Was Rejected
+  R | Rejected
+  W | Rejected, Assurance Failed Validity Tests
+  X | Rejected, Content After Decryption Could Not Be Analyzed
+
+codes 620 | Implementation Segment Syntax Error Code
+  1 | Unrecognized segment ID
+  2 | Unexpected segment
+  3 | Required Segment Missing
+  4 | Loop Occurs Over Maximum Times
+  5 | Segment Exceeds Maximum Use
+  6 | Segment Not in Defined Transaction Set
+  7 | Segment Not in Proper Sequence
+  8 | Segment Has Data Element Errors
+  I4 | Implementation "Not Used" Segment Present
+  I6 | Implementation Dependent Segment Missing
+  I7 | Implementation Loop Occurs Under Minimum Times
+  I8 | Implementation Segment Below Minimum Use
+  I9 | Implementation Dependent "Not Used" Segment Present
+
+codes 621 | Implementation Data Element Syntax Error Code
+  1 | Required Data Element Missing
+  2 | Conditional Required Data Element Missing
+  3 | Too Many Data Elements
+  4 | Data Element Too Short
+  5 | Data Element Too Long
+  6 | Invalid Character In Data Element
+  7 | Invalid Code Value
+  8 | Invalid Date
+  9 | Invalid Time
+  10 | Exclusion Condition Violated
+  12 | Too Many Repetitions
+  13 | Too Many Components
+  I10 | Implementation "Not Used" Data Element Present
+  I11 | Implementation Too Few Repetitions
+  I12 | Implementation Pattern Match Failure
+  I13 | Implementation Dependent "Not Used" Data Element Present
+  I6 | Code Value Not Used in Implementation
+  I9 | Implementation Dependent Data Element Missing
+
+codes 618 | Implementation Transaction Set Syntax Error Code
+  1 | Transaction Set Not Supported
+  2 | Transaction Set Trailer Missing
+  3 | Transaction Set Control Number in Header and Trailer Do Not Match
+  4 | Number of Included Segments Does Not Match Actual Count
+  5 | One or More Segments in Error
+  6 | Missing or Invalid Transaction Set Identifier
+  7 | Missing or Invalid Transaction Set Control Number
+  8 | Authentication Key Name Unknown
+  9 | Encryption Key Name Unknown
+  10 | Requested Service (Authentication or Encrypted) Not Available
+  11 | Unknown Security Recipient
+  12 | Incorrect Message Length (Encryption Only)
+  13 | Message Authentication Code Failed
+  15 | Unknown Security Originator
+  16 | Syntax Error in Decrypted Text
+  17 | Security Not Supported
+  18 | Transaction Set not in Functional Group
+  19 | Invalid Transaction Set Implementation Convention Reference
+  23 | Transaction Set Control Number Not Unique within the Functional Group
+  24 | S3E Security End Segment Missing for S3S Security Start Segment
+  25 | S3S Security Start Segment Missing for S3E Security End Segment
+  26 | S4E Security End Segment Missing for S4S Security Start Segment
+  27 | S4S Security Start Segment Missing for S4E Security End Segment
+  I5 | Implementation One or More Segments in Error
+  I6 | Implementation Convention Not Supported
+
+codes 716 | Functional Group Syntax Error Code
+  1 | Functional Group Not Supported
+  2 | Functional Group Version Not Supported
+  3 | Functional Group Trailer Missing
+  4 | Group Control Number in the Functional Group Header and Trailer Do Not Agree
+  5 | Number of Included Transaction Sets Does Not Match Actual Count
+  6 | Group Control Number Violates Syntax
+  10 | Authentication Key Name Unknown
+  11 | Encryption Key Name Unknown
+  12 | Requested Service (Authentication or Encryption) Not Available
+  13 | Unknown Security Recipient
+  14 | Unknown Security Originator
+  15 | Syntax Error in Decrypted Text
+  16 | Security Not Supported
+  17 | Incorrect Message Length (Encryption Only)
+  18 | Message Authentication Code Failed
+  19 | Functional Group Control Number not Unique within Interchange
+  23 | S3E Security End Segment Missing for S3S Security Start Segment
+  24 | S3S Security Start Segment Missing for S3E End Segment
+  25 | S4E Security End Segment Missing for S4S Security Start Segment
+  26 | S4S Security Start Segment Missing for S4E Security End Segment

@@ -4,13 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/aiprovidercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider/aiproviderdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -33,16 +32,8 @@ func (r *dismissalRepository) List(
 	req *agentports.ListFailureDismissalsRequest,
 ) ([]*aiprovider.FailureDismissal, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*aiprovider.FailureDismissal, error) {
-		cols := aiprovidercol.FailureDismissalColumns
-		dismissals := make([]*aiprovider.FailureDismissal, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&dismissals).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return aiprovidercol.FailureDismissalScopeTenant(sq, req.TenantInfo).
-					Where(cols.UserID.Eq(), req.UserID)
-			}).
-			Scan(ctx)
+		d := aiproviderdb.FailureDismissals
+		dismissals, err := d.Where(d.UserID.Eq(req.UserID)).All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list provider failure dismissals: %w", err)
 		}
@@ -55,14 +46,12 @@ func (r *dismissalRepository) Upsert(
 	dismissal *aiprovider.FailureDismissal,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := aiprovidercol.FailureDismissalColumns
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(dismissal).
-			On("CONFLICT (organization_id, business_unit_id, user_id, provider_id) DO UPDATE").
-			Set(cols.FailureAt.SetExcluded()).
-			Set(cols.CreatedAt.SetExcluded()).
-			Exec(ctx)
+		d := aiproviderdb.FailureDismissals
+		_, err := d.Upsert(ctx, r.db.Keel(ctx), []*aiprovider.FailureDismissal{dismissal},
+			keel.OnConflict(d.OrganizationID, d.BusinessUnitID, d.UserID, d.ProviderID).
+				Update(d.FailureAt).
+				Set(d.CreatedAt.ToExpr(d.CreatedAt.Excluded())),
+		)
 		if err != nil {
 			return fmt.Errorf("dismiss provider failure: %w", err)
 		}
@@ -75,16 +64,9 @@ func (r *dismissalRepository) Delete(
 	req *agentports.DeleteFailureDismissalRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := aiprovidercol.FailureDismissalColumns
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*aiprovider.FailureDismissal)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return aiprovidercol.FailureDismissalScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.UserID.Eq(), req.UserID).
-					Where(cols.ProviderID.Eq(), req.ProviderID)
-			}).
-			Exec(ctx)
+		d := aiproviderdb.FailureDismissals
+		_, err := d.Where(d.UserID.Eq(req.UserID), d.ProviderID.Eq(req.ProviderID)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return fmt.Errorf("restore provider failure: %w", err)
 		}

@@ -33,6 +33,19 @@ import {
   type ShopResult,
   type ShopStrategy,
 } from "@trenova/shared/types/rate";
+import {
+  listFormulaReviewersResponseSchema,
+  type FormulaReviewer,
+} from "@trenova/shared/types/formula-template";
+
+type RequestOptions = { signal?: AbortSignal };
+
+/** What submitting a matrix draft sends: who should review it and a note for them. */
+export type RateMatrixSubmitRequest = {
+  comment?: string;
+  reviewerId?: string;
+  reviewerNote?: string;
+};
 
 /** The scope and size of a general rate increase, as the server takes it. */
 export type RateIncreaseRequestPayload = {
@@ -40,10 +53,7 @@ export type RateIncreaseRequestPayload = {
   customerId?: string | null;
   carrierId?: string | null;
   partyType?: RatePartyType;
-  adjustment: {
-    percentChange?: number | null;
-    flatChange?: number | null;
-  };
+  adjustment: { percentChange: number };
   effectiveFrom: number;
 };
 
@@ -240,20 +250,26 @@ export class RateMatrixService {
   }
 
   /**
-   * The whole grid.
+   * The whole grid of the draft, or of one published version.
    *
    * A sheet has to be read as a sheet — a hole in it is only visible against
    * the rows and columns around it — so the editor holds every cell rather
    * than a page of them. The API caps a page at 100 and a twenty-by-twenty
    * zone tariff is four hundred cells, so this walks the pages.
    */
-  public async listCells(id: string): Promise<RateMatrixCell[]> {
+  public async listCells(
+    id: string,
+    versionNumber: number | null = null,
+    options?: RequestOptions,
+  ): Promise<RateMatrixCell[]> {
     const pageSize = 100;
     const cells: RateMatrixCell[] = [];
+    const version = versionNumber === null ? "" : `&versionNumber=${versionNumber}`;
 
     for (let offset = 0; ; offset += pageSize) {
       const page = await api.get<{ results?: RateMatrixCell[]; count?: number }>(
-        `/rate-matrices/${id}/cells/?limit=${pageSize}&offset=${offset}`,
+        `/rate-matrices/${id}/cells/?limit=${pageSize}&offset=${offset}${version}`,
+        { signal: options?.signal },
       );
 
       const results = page?.results ?? [];
@@ -276,6 +292,52 @@ export class RateMatrixService {
    */
   public async replaceCells(id: string, cells: RateMatrixCell[]): Promise<void> {
     await api.put(`/rate-matrices/${id}/cells/`, { cells });
+  }
+
+  /** Sends the draft to review; a reviewer publishing it makes it the next version. */
+  public async submit(id: string, request: RateMatrixSubmitRequest): Promise<RateMatrix> {
+    const response = await api.post<unknown>(`/rate-matrices/${id}/submit/`, request);
+    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  }
+
+  /** Publishes the submitted draft as the next version. */
+  public async approve(id: string, comment: string): Promise<RateMatrix> {
+    const response = await api.post<unknown>(`/rate-matrices/${id}/approve/`, { comment });
+    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  }
+
+  public async reject(id: string, comment: string): Promise<RateMatrix> {
+    const response = await api.post<unknown>(`/rate-matrices/${id}/reject/`, { comment });
+    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  }
+
+  public async requestChanges(id: string, comment: string): Promise<RateMatrix> {
+    const response = await api.post<unknown>(`/rate-matrices/${id}/request-changes/`, {
+      comment,
+    });
+    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  }
+
+  /**
+   * Takes the matrix out of new template versions. One that template versions pin needs
+   * `confirmInUse`; they keep reading the version they pinned.
+   */
+  public async archive(id: string, confirmInUse: boolean): Promise<RateMatrix> {
+    const response = await api.post<unknown>(`/rate-matrices/${id}/archive/`, { confirmInUse });
+    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  }
+
+  /** Replaces the draft's axes and cells with a published version's. */
+  public async restore(id: string, versionNumber: number): Promise<RateMatrix> {
+    const response = await api.post<unknown>(`/rate-matrices/${id}/restore/`, { versionNumber });
+    return safeParse(rateMatrixSchema, response, "Rate Matrix");
+  }
+
+  public async listReviewers(id: string, options?: RequestOptions): Promise<FormulaReviewer[]> {
+    const response = await api.get<unknown>(`/rate-matrices/${id}/reviewers/`, {
+      signal: options?.signal,
+    });
+    return safeParse(listFormulaReviewersResponseSchema, response, "Rate Matrix Reviewers");
   }
 }
 

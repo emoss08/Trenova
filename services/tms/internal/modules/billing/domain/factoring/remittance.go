@@ -4,17 +4,17 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/trenova/shared/money"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -28,50 +28,44 @@ const (
 	remittanceStatusField          = "status"
 )
 
-var (
-	_ bun.BeforeAppendModelHook = (*Remittance)(nil)
-	_ bun.BeforeAppendModelHook = (*RemittanceLine)(nil)
-	_ bun.BeforeAppendModelHook = (*RemittanceProfile)(nil)
-)
-
+// The funding and reserve reports factors sent, how far each was read, matched and booked
 type Remittance struct {
-	bun.BaseModel             `bun:"table:factoring_remittances,alias:facrem" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                   json:"-"`
+	keel.Table `keel:"factoring_remittances,report=Billing,label=Factoring Remittance"`
 
-	ID                 pulid.ID           `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID           `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID           `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	FactoringCompanyID pulid.ID           `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull"`
-	DocumentID         pulid.ID           `json:"documentId"         bun:"document_id,type:VARCHAR(100),nullzero"`
-	FileName           string             `json:"fileName"           bun:"file_name,type:VARCHAR(255),nullzero"`
-	Source             RemittanceSource   `json:"source"             bun:"source,type:VARCHAR(20),notnull,default:'Upload'"`
-	InboundMessageID   pulid.ID           `json:"inboundMessageId"   bun:"inbound_message_id,type:VARCHAR(100),nullzero"`
-	SourceFormat       RemittanceFormat   `json:"sourceFormat"       bun:"source_format,type:VARCHAR(10),nullzero"`
-	Status             RemittanceStatus   `json:"status"             bun:"status,type:VARCHAR(30),notnull,default:'Pending'"`
-	DefaultKind        RemittanceLineKind `json:"defaultKind"        bun:"default_kind,type:VARCHAR(30),notnull,default:'Funding'"`
-	RemittedOn         *int64             `json:"remittedOn"         bun:"remitted_on,type:BIGINT,nullzero"`
-	CurrencyCode       string             `json:"currencyCode"       bun:"currency_code,type:VARCHAR(3),notnull,default:'USD'"`
-	Mapping            map[string]int     `json:"mapping"            bun:"mapping,type:JSONB,notnull,default:'{}'"`
-	Headers            []string           `json:"headers"            bun:"headers,type:JSONB,notnull,default:'[]'"`
-	UnmappedHeaders    []string           `json:"unmappedHeaders"    bun:"unmapped_headers,type:JSONB,notnull,default:'[]'"`
-	LineCount          int                `json:"lineCount"          bun:"line_count,type:INTEGER,notnull,default:0"`
-	MatchedCount       int                `json:"matchedCount"       bun:"matched_count,type:INTEGER,notnull,default:0"`
-	ExceptionCount     int                `json:"exceptionCount"     bun:"exception_count,type:INTEGER,notnull,default:0"`
-	AppliedCount       int                `json:"appliedCount"       bun:"applied_count,type:INTEGER,notnull,default:0"`
-	TotalCashMinor     int64              `json:"totalCashMinor"     bun:"total_cash_minor,type:BIGINT,notnull,default:0"`
-	Error              string             `json:"error"              bun:"error,type:VARCHAR(1000),nullzero"`
-	StagedAt           *int64             `json:"stagedAt"           bun:"staged_at,type:BIGINT,nullzero"`
-	AppliedAt          *int64             `json:"appliedAt"          bun:"applied_at,type:BIGINT,nullzero"`
-	AppliedByID        pulid.ID           `json:"appliedById"        bun:"applied_by_id,type:VARCHAR(100),nullzero"`
-	DiscardedAt        *int64             `json:"discardedAt"        bun:"discarded_at,type:BIGINT,nullzero"`
-	DiscardReason      string             `json:"discardReason"      bun:"discard_reason,type:VARCHAR(500),nullzero"`
-	CreatedByID        pulid.ID           `json:"createdById"        bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	Version            int64              `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt          int64              `json:"createdAt"          bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt          int64              `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull"`
+	ID                 pulid.ID           `json:"id"                 keel:"id,pk,autoid:facrem_"`
+	OrganizationID     pulid.ID           `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID           `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	FactoringCompanyID pulid.ID           `json:"factoringCompanyId" keel:"factoring_company_id"`
+	DocumentID         pulid.ID           `json:"documentId"         keel:"document_id,nullzero"`
+	FileName           string             `json:"fileName"           keel:"file_name,nullzero"`
+	Source             RemittanceSource   `json:"source"             keel:"source"`
+	InboundMessageID   pulid.ID           `json:"inboundMessageId"   keel:"inbound_message_id,nullzero"`
+	SourceFormat       RemittanceFormat   `json:"sourceFormat"       keel:"source_format,nullzero,label=Format"`
+	Status             RemittanceStatus   `json:"status"             keel:"status"`
+	DefaultKind        RemittanceLineKind `json:"defaultKind"        keel:"default_kind,label=Report Of"`
+	RemittedOn         *int64             `json:"remittedOn"         keel:"remitted_on,type=epoch"`
+	CurrencyCode       string             `json:"currencyCode"       keel:"currency_code,label=Currency"`
+	Mapping            map[string]int     `json:"mapping"            keel:"mapping,jsonb"`
+	Headers            []string           `json:"headers"            keel:"headers,jsonb"`
+	UnmappedHeaders    []string           `json:"unmappedHeaders"    keel:"unmapped_headers,jsonb"`
+	LineCount          int                `json:"lineCount"          keel:"line_count,label=Lines,format=count"`
+	MatchedCount       int                `json:"matchedCount"       keel:"matched_count,label=Matched Lines,format=count"`
+	ExceptionCount     int                `json:"exceptionCount"     keel:"exception_count,label=Lines to Resolve,format=count"`
+	AppliedCount       int                `json:"appliedCount"       keel:"applied_count,label=Booked Lines,format=count"`
+	TotalCashMinor     int64              `json:"totalCashMinor"     keel:"total_cash_minor,label=Total Cash (Minor)"`
+	Error              string             `json:"error"              keel:"error,nullzero"`
+	StagedAt           *int64             `json:"stagedAt"           keel:"staged_at,label=Read At"`
+	AppliedAt          *int64             `json:"appliedAt"          keel:"applied_at"`
+	AppliedByID        pulid.ID           `json:"appliedById"        keel:"applied_by_id,nullzero"`
+	DiscardedAt        *int64             `json:"discardedAt"        keel:"discarded_at"`
+	DiscardReason      string             `json:"discardReason"      keel:"discard_reason,nullzero"`
+	CreatedByID        pulid.ID           `json:"createdById"        keel:"created_by_id,nullzero"`
+	Version            int64              `json:"version"            keel:"version,version"`
+	CreatedAt          int64              `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64              `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	Lines            []*RemittanceLine                  `json:"lines,omitempty"            bun:"rel:has-many,join:id=remittance_id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
+	Lines            []*RemittanceLine                  `json:"lines,omitempty"            keel:"many:remittance_id"`
 }
 
 type RemittanceSuggestion struct {
@@ -82,56 +76,64 @@ type RemittanceSuggestion struct {
 	Reason        RemittanceMatchReason `json:"reason"`
 }
 
+// Each row of a factor's remittance, its amounts as printed and the schedule item it was matched to
 type RemittanceLine struct {
-	bun.BaseModel             `bun:"table:factoring_remittance_lines,alias:facrml" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                        json:"-"`
+	keel.Table `keel:"factoring_remittance_lines,report=Billing,label=Factoring Remittance Line"`
 
-	ID                pulid.ID                `json:"id"               bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID                `json:"organizationId"   bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID                `json:"businessUnitId"   bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	RemittanceID      pulid.ID                `json:"remittanceId"     bun:"remittance_id,type:VARCHAR(100),notnull"`
-	RowNumber         int                     `json:"rowNumber"        bun:"row_number,type:INTEGER,notnull"`
-	Cells             []string                `json:"cells"            bun:"cells,type:JSONB,notnull,default:'[]'"`
-	Kind              RemittanceLineKind      `json:"kind"             bun:"kind,type:VARCHAR(30),notnull,default:'Funding'"`
-	InvoiceNumber     string                  `json:"invoiceNumber"    bun:"invoice_number,type:VARCHAR(100),nullzero"`
-	NormalizedInvoice string                  `json:"-"                bun:"normalized_invoice,type:VARCHAR(100),nullzero"`
-	FactorReference   string                  `json:"factorReference"  bun:"factor_reference,type:VARCHAR(100),nullzero"`
-	DebtorName        string                  `json:"debtorName"       bun:"debtor_name,type:VARCHAR(255),nullzero"`
-	FaceMinor         *int64                  `json:"faceMinor"        bun:"face_minor,type:BIGINT,nullzero"`
-	AdvanceMinor      *int64                  `json:"advanceMinor"     bun:"advance_minor,type:BIGINT,nullzero"`
-	FeeMinor          *int64                  `json:"feeMinor"         bun:"fee_minor,type:BIGINT,nullzero"`
-	ReserveMinor      *int64                  `json:"reserveMinor"     bun:"reserve_minor,type:BIGINT,nullzero"`
-	CashMinor         *int64                  `json:"cashMinor"        bun:"cash_minor,type:BIGINT,nullzero"`
-	OccurredOn        *int64                  `json:"occurredOn"       bun:"occurred_on,type:BIGINT,nullzero"`
-	MatchStatus       RemittanceMatchStatus   `json:"matchStatus"      bun:"match_status,type:VARCHAR(20),notnull,default:'Unmatched'"`
-	MatchedBy         RemittanceMatchedBy     `json:"matchedBy"        bun:"matched_by,type:VARCHAR(10),nullzero"`
-	SubmissionItemID  pulid.ID                `json:"submissionItemId" bun:"submission_item_id,type:VARCHAR(100),nullzero"`
-	Score             int                     `json:"score"            bun:"score,type:INTEGER,notnull,default:0"`
-	Reason            RemittanceMatchReason   `json:"reason"           bun:"reason,type:VARCHAR(255),nullzero"`
-	Suggestions       []*RemittanceSuggestion `json:"suggestions"      bun:"suggestions,type:JSONB,notnull,default:'[]'"`
-	Error             string                  `json:"error"            bun:"error,type:VARCHAR(500),nullzero"`
-	IgnoredReason     string                  `json:"ignoredReason"    bun:"ignored_reason,type:VARCHAR(500),nullzero"`
-	ReserveEntryID    pulid.ID                `json:"reserveEntryId"   bun:"reserve_entry_id,type:VARCHAR(100),nullzero"`
-	MatchedInvoice    string                  `json:"matchedInvoice"   bun:"matched_invoice_number,scanonly"`
-	MatchedSubmission pulid.ID                `json:"-"                bun:"matched_submission_id,scanonly"`
-	CreatedAt         int64                   `json:"createdAt"        bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt         int64                   `json:"updatedAt"        bun:"updated_at,type:BIGINT,notnull"`
+	ID                pulid.ID                `json:"id"               keel:"id,pk,autoid:facrml_"`
+	OrganizationID    pulid.ID                `json:"organizationId"   keel:"organization_id,pk,tenant"`
+	BusinessUnitID    pulid.ID                `json:"businessUnitId"   keel:"business_unit_id,pk,tenant"`
+	RemittanceID      pulid.ID                `json:"remittanceId"     keel:"remittance_id"`
+	RowNumber         int                     `json:"rowNumber"        keel:"row_number,label=Row,dimension"`
+	Cells             []string                `json:"cells"            keel:"cells,jsonb"`
+	Kind              RemittanceLineKind      `json:"kind"             keel:"kind"`
+	InvoiceNumber     string                  `json:"invoiceNumber"    keel:"invoice_number,nullzero"`
+	NormalizedInvoice string                  `json:"-"                keel:"normalized_invoice,nullzero"`
+	FactorReference   string                  `json:"factorReference"  keel:"factor_reference,nullzero"`
+	DebtorName        string                  `json:"debtorName"       keel:"debtor_name,nullzero,label=Debtor"`
+	FaceMinor         *int64                  `json:"faceMinor"        keel:"face_minor,label=Invoice Amount (Minor)"`
+	AdvanceMinor      *int64                  `json:"advanceMinor"     keel:"advance_minor,label=Advance (Minor)"`
+	FeeMinor          *int64                  `json:"feeMinor"         keel:"fee_minor,label=Fee (Minor)"`
+	ReserveMinor      *int64                  `json:"reserveMinor"     keel:"reserve_minor,label=Reserve (Minor)"`
+	CashMinor         *int64                  `json:"cashMinor"        keel:"cash_minor,label=Cash (Minor)"`
+	OccurredOn        *int64                  `json:"occurredOn"       keel:"occurred_on,type=epoch"`
+	MatchStatus       RemittanceMatchStatus   `json:"matchStatus"      keel:"match_status"`
+	MatchedBy         RemittanceMatchedBy     `json:"matchedBy"        keel:"matched_by,nullzero"`
+	SubmissionItemID  pulid.ID                `json:"submissionItemId" keel:"submission_item_id,nullzero,label=Schedule Invoice ID"`
+	Score             int                     `json:"score"            keel:"score,label=Match Score,dimension"`
+	Reason            RemittanceMatchReason   `json:"reason"           keel:"reason,nullzero,label=Match Reason"`
+	Suggestions       []*RemittanceSuggestion `json:"suggestions"      keel:"suggestions,jsonb"`
+	Error             string                  `json:"error"            keel:"error,nullzero"`
+	IgnoredReason     string                  `json:"ignoredReason"    keel:"ignored_reason,nullzero"`
+	ReserveEntryID    pulid.ID                `json:"reserveEntryId"   keel:"reserve_entry_id,nullzero"`
+	MatchedInvoice    string                  `json:"matchedInvoice"   keel:"matched_invoice_number,computed"`
+	MatchedSubmission pulid.ID                `json:"-"                keel:"matched_submission_id,computed"`
+	CreatedAt         int64                   `json:"createdAt"        keel:"created_at,autocreate"`
+	UpdatedAt         int64                   `json:"updatedAt"        keel:"updated_at,autoupdate"`
 
-	SubmissionItem *SubmissionItem `json:"submissionItem,omitempty" bun:"rel:belongs-to,join:submission_item_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	SubmissionItem *SubmissionItem `json:"submissionItem,omitempty" keel:"belongs:submission_item_id"`
+}
+
+func (l *RemittanceLine) BeforeUpdate(_ context.Context) error {
+	if l.Suggestions == nil {
+		l.Suggestions = []*RemittanceSuggestion{}
+	}
+
+	return nil
 }
 
 type RemittanceProfile struct {
-	bun.BaseModel `bun:"table:factoring_remittance_profiles,alias:facrmp" json:"-"`
+	keel.Table `keel:"factoring_remittance_profiles"`
 
-	ID                 pulid.ID       `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID       `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID       `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	FactoringCompanyID pulid.ID       `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull"`
-	Mapping            map[string]int `json:"mapping"            bun:"mapping,type:JSONB,notnull,default:'{}'"`
-	HeaderSignature    string         `json:"headerSignature"    bun:"header_signature,type:VARCHAR(64),notnull"`
-	Version            int64          `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt          int64          `json:"createdAt"          bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt          int64          `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull"`
+	ID                 pulid.ID       `json:"id"                 keel:"id,pk,autoid:facrmp_"`
+	OrganizationID     pulid.ID       `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID       `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	FactoringCompanyID pulid.ID       `json:"factoringCompanyId" keel:"factoring_company_id"`
+	Mapping            map[string]int `json:"mapping"            keel:"mapping,jsonb"`
+	HeaderSignature    string         `json:"headerSignature"    keel:"header_signature"`
+	Version            int64          `json:"version"            keel:"version,version"`
+	CreatedAt          int64          `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64          `json:"updatedAt"          keel:"updated_at,autoupdate"`
 }
 
 func (r *Remittance) Validate(multiErr *errortypes.MultiError) {
@@ -429,33 +431,23 @@ func (r *Remittance) Discard(at int64, reason string) error {
 	return nil
 }
 
-func (r *Remittance) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if r.ID.IsNil() {
-			r.ID = pulid.MustNew("facrem_")
-		}
-		if r.Status == "" {
-			r.Status = RemittanceStatusPending
-		}
-		if r.Source == "" {
-			r.Source = RemittanceSourceUpload
-		}
-		if r.DefaultKind == "" {
-			r.DefaultKind = RemittanceLineFunding
-		}
-		if r.CurrencyCode == "" {
-			r.CurrencyCode = "USD"
-		}
-		r.Mapping = nonNilMapping(r.Mapping)
-		r.Headers = nonNilStrings(r.Headers)
-		r.UnmappedHeaders = nonNilStrings(r.UnmappedHeaders)
-		r.CreatedAt = now
-		r.UpdatedAt = now
-	case *bun.UpdateQuery:
-		r.UpdatedAt = now
+func (r *Remittance) BeforeCreate(ctx context.Context) error {
+	if r.Source == "" {
+		r.Source = RemittanceSourceUpload
 	}
+	if r.Status == "" {
+		r.Status = RemittanceStatusPending
+	}
+	if r.DefaultKind == "" {
+		r.DefaultKind = RemittanceLineFunding
+	}
+	if r.CurrencyCode == "" {
+		r.CurrencyCode = money.DefaultCurrencyCode
+	}
+	r.Mapping = nonNilMapping(r.Mapping)
+	r.Headers = nonNilStrings(r.Headers)
+	r.UnmappedHeaders = nonNilStrings(r.UnmappedHeaders)
+
 	return nil
 }
 
@@ -608,47 +600,24 @@ func (l *RemittanceLine) Matchable() bool {
 		(l.MatchStatus != RemittanceLineMatched || l.MatchedBy != RemittanceMatchedByPerson)
 }
 
-func (l *RemittanceLine) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if l.ID.IsNil() {
-			l.ID = pulid.MustNew("facrml_")
-		}
-		if l.MatchStatus == "" {
-			l.MatchStatus = RemittanceLineUnmatched
-		}
-		if l.Kind == "" {
-			l.Kind = RemittanceLineFunding
-		}
-		l.Cells = nonNilStrings(l.Cells)
-		if l.Suggestions == nil {
-			l.Suggestions = []*RemittanceSuggestion{}
-		}
-		l.CreatedAt = now
-		l.UpdatedAt = now
-	case *bun.UpdateQuery:
-		if l.Suggestions == nil {
-			l.Suggestions = []*RemittanceSuggestion{}
-		}
-		l.UpdatedAt = now
+func (l *RemittanceLine) BeforeCreate(ctx context.Context) error {
+	if l.Kind == "" {
+		l.Kind = RemittanceLineFunding
 	}
+	if l.MatchStatus == "" {
+		l.MatchStatus = RemittanceLineUnmatched
+	}
+	l.Cells = nonNilStrings(l.Cells)
+	if l.Suggestions == nil {
+		l.Suggestions = []*RemittanceSuggestion{}
+	}
+
 	return nil
 }
 
-func (p *RemittanceProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("facrmp_")
-		}
-		p.Mapping = nonNilMapping(p.Mapping)
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
-	}
+func (p *RemittanceProfile) BeforeCreate(ctx context.Context) error {
+	p.Mapping = nonNilMapping(p.Mapping)
+
 	return nil
 }
 

@@ -338,7 +338,6 @@ func randomPoolCursorConnectionToModel(
 ) (*gqlmodel.DOTRandomPoolConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *worker.DOTRandomPool, cursor string) *gqlmodel.DOTRandomPoolEdge {
 			return &gqlmodel.DOTRandomPoolEdge{Node: node, Cursor: cursor}
@@ -357,6 +356,7 @@ func randomPoolCursorConnectionToModel(
 				func(edge *gqlmodel.DOTRandomPoolEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }

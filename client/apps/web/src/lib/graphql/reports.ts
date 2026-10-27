@@ -33,7 +33,6 @@ import {
   type UpdateReportDashboardInput,
   type ReportDefinitionFieldsFragment,
   type ReportDefinitionRevisionsQuery,
-  type ReportIrInput,
   type ReportRunFieldsFragment,
   type ReportRunsFilterInput,
   type ReportScheduleFieldsFragment,
@@ -45,6 +44,7 @@ import {
   type UpdateReportViewInput,
 } from "@trenova/graphql/generated/graphql";
 import { getFragmentData } from "@trenova/graphql/fragment-data";
+import type { DashboardFilter } from "@trenova/shared/generated/keel-analytics";
 import { withCsrfHeader } from "@trenova/shared/lib/api";
 import { API_BASE_URL } from "@trenova/shared/lib/constants";
 import { requestGraphQL } from "@trenova/shared/lib/graphql";
@@ -89,7 +89,7 @@ export type DashboardExportRequest = {
   filterValues?: Record<string, unknown>;
   paramValues?: Record<string, unknown>;
   /** Per-tile ad-hoc filters, keyed by tile id. */
-  tileFilters?: Record<string, { filters: unknown[]; values: Record<string, unknown> }>;
+  tileFilters?: Record<string, { filters: DashboardFilter[]; values: Record<string, unknown> }>;
 };
 
 /**
@@ -296,4 +296,5 @@ export async function deleteReportSchedule(id: string): Promise<boolean> {
   return data.deleteReportSchedule;
 }
 
-export type { ReportIrInput, ReportRunsFilterInput };
+export type { KeelDefinition as ReportDefinitionInput } from "@/lib/report-definition";
+export type { ReportRunsFilterInput };

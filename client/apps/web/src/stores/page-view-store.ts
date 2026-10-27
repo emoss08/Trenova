@@ -20,6 +20,7 @@ export type RegisteredTableView = {
   selectionCount: number;
   visibleColumns: string[];
   rowCount: number | null;
+  rowCountExact: boolean;
 };
 
 /** One figure a strip has registered, as the person reads it. */
@@ -99,6 +100,9 @@ export function composePageView(
   }
   if (table.rowCount !== null && table.rowCount >= 0) {
     view.rowCount = table.rowCount;
+    if (!table.rowCountExact) {
+      view.rowCountEstimated = true;
+    }
   }
 
   return view;

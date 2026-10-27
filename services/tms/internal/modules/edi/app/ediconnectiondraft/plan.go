@@ -12,28 +12,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/lading"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
 	defaultNote          = "Trenova's default; the document does not say"
-	configurationNote    = "Used on %d of your partners' outbound profiles; the document does not say"
+	configurationNote    = "Used on %d of your partners' Lading projects; the document does not say"
 	gsFromISANote        = "The GS ID defaults to the ISA ID; the document does not give a separate one"
-	groupDefaultNote     = "The standard functional group for this transaction set"
 	versionFromISA       = "The interchange's X12 version; the document gives none for this set"
 	agentCustomerNote    = "Chosen by the agent from your customers; the document does not name it"
 	draftPartnerLabel    = "Partner"
 	fieldPartnerCustomer = "partner.customer"
 	transportLabel       = "Communication profile"
 )
-
-type profileWrite struct {
-	set       edi.TransactionSet
-	direction edi.DocumentDirection
-	request   *ediservice.UpsertEDIPartnerDocumentProfileRequest
-	starter   bool
-	change    ediports.ChangeKind
-}
 
 type controlWrite struct {
 	set       edi.TransactionSet
@@ -46,7 +38,7 @@ type writePlan struct {
 	partner         *edi.EDIPartner
 	transport       *ediservice.UpsertEDICommunicationProfileRequest
 	transportChange ediports.ChangeKind
-	profiles        []*profileWrite
+	project         *projectWrite
 	mappings        []*edi.EDIMappingProfileItem
 	controls        []controlWrite
 }
@@ -64,6 +56,8 @@ type planner struct {
 	method     edi.ConnectionMethod
 	draft      *ediports.ConnectionDraft
 	writes     *writePlan
+	encoded    *lading.Encoded
+	manifest   *lading.Check
 	validateID pulid.ID
 	docTypes   map[string]pulid.ID
 }
@@ -103,7 +97,7 @@ func (s *Service) plan(
 			DocumentDigest: DocumentDigest(req.Document.Pages),
 		},
 	}
-	p.gatherEvidence()
+	p.gatherEvidence(ctx)
 
 	var err error
 	if p.match, err = s.matchPartner(ctx, req, p.evidence.hints()); err != nil {
@@ -130,21 +124,25 @@ func (s *Service) plan(
 	}
 	p.buildInterchange()
 	p.buildTransport()
-	if err = p.buildProfiles(ctx); err != nil {
+	exchanges, err := p.buildSets(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = p.buildProject(ctx, exchanges); err != nil {
 		return nil, err
 	}
 	if err = p.buildMappings(ctx); err != nil {
 		return nil, err
 	}
 	p.buildGaps()
-	p.buildSamples()
+	p.buildSamples(ctx)
 	p.buildConnection()
 	p.settle()
 
 	return p, nil
 }
 
-func (p *planner) gatherEvidence() {
+func (p *planner) gatherEvidence(ctx context.Context) {
 	for inputIndex := range p.req.Values {
 		input := &p.req.Values[inputIndex]
 		spec := fieldCatalog[input.Field]
@@ -162,7 +160,7 @@ func (p *planner) gatherEvidence() {
 	}
 	p.samples = findSamples(p.pages)
 	for _, sample := range p.samples {
-		sample.parse()
+		sample.parse(ctx)
 		sample.orient(partnerIDs)
 		sample.contribute(p.evidence)
 	}
@@ -196,7 +194,7 @@ func (p *planner) resolveValues() {
 		p.method = edi.ConnectionMethod(method.Value)
 	}
 
-	for _, key := range sortedKeys(scopePartner, scopeInterchange, scopeCarrier) {
+	for _, key := range sortedKeys(scopePartner, scopeInterchange) {
 		spec := fieldCatalog[key]
 		p.resolve(key, p.interchangeFallback(key), spec.required)
 	}
@@ -261,10 +259,10 @@ func (p *planner) interchangeFallback(key string) *fallback {
 }
 
 func identityFallback(identity *ediports.InterchangeIdentity, value string) *fallback {
-	if identity == nil || identity.Profiles == 0 || value == "" {
+	if identity == nil || identity.Partners == 0 || value == "" {
 		return nil
 	}
-	return configurationFallback(value, identity.Profiles)
+	return configurationFallback(value, identity.Partners)
 }
 
 func (p *planner) gsFallback(isaKey string) *fallback {
@@ -279,13 +277,13 @@ func (p *planner) gsFallback(isaKey string) *fallback {
 	}
 }
 
-func configurationFallback(value string, profiles int) *fallback {
+func configurationFallback(value string, partners int) *fallback {
 	return &fallback{
 		value:  value,
 		status: ediports.ValueStatusDefaulted,
 		source: ediports.DraftSource{
 			Kind: ediports.SourceKindConfiguration,
-			Note: fmt.Sprintf(configurationNote, profiles),
+			Note: fmt.Sprintf(configurationNote, partners),
 		},
 	}
 }
@@ -316,7 +314,7 @@ var catalogPositions = func() map[string]int {
 		"van.mailboxId",
 		fieldPartnerQualifier, fieldPartnerID, fieldPartnerGSID, fieldOurQualifier, fieldOurID,
 		fieldOurGSID, fieldX12Version, fieldUsageIndicator, fieldElementSep, fieldSegmentSep,
-		fieldComponentSep, fieldRepetitionSep, fieldCarrierSCAC,
+		fieldComponentSep, fieldRepetitionSep,
 	}
 	positions := make(map[string]int, len(order))
 	for index, key := range order {
@@ -453,62 +451,8 @@ func applyPartnerField(partner *edi.EDIPartner, value *ediports.DraftValue, cust
 }
 
 func (p *planner) buildInterchange() {
-	keys := sortedKeys(scopeInterchange, scopeCarrier)
+	keys := sortedKeys(scopeInterchange)
 	p.draft.Interchange = p.fields(keys...)
-}
-
-func (p *planner) envelope(
-	direction edi.DocumentDirection,
-	existing *edi.EDIPartnerDocumentProfile,
-) edi.X12EnvelopeSettings {
-	envelope := edi.DefaultX12EnvelopeSettings()
-	set := func(target *string, key string) {
-		if value, ok := p.usable(key); ok {
-			*target = value
-		} else {
-			*target = ""
-		}
-	}
-	if existing != nil {
-		envelope = existing.Envelope
-		set = func(target *string, key string) {
-			if value, ok := p.values[key]; ok &&
-				value.Status == ediports.ValueStatusAccepted && value.Value != "" {
-				*target = value.Value
-			}
-		}
-	}
-	partnerQualifier, partnerID := &envelope.InterchangeReceiverQualifier,
-		&envelope.InterchangeReceiverID
-	ourQualifier, ourID := &envelope.InterchangeSenderQualifier, &envelope.InterchangeSenderID
-	partnerGS, ourGS := &envelope.ApplicationReceiverCode, &envelope.ApplicationSenderCode
-	if direction == edi.DocumentDirectionInbound {
-		partnerQualifier, ourQualifier = ourQualifier, partnerQualifier
-		partnerID, ourID = ourID, partnerID
-		partnerGS, ourGS = ourGS, partnerGS
-	}
-	set(partnerQualifier, fieldPartnerQualifier)
-	set(partnerID, fieldPartnerID)
-	set(ourQualifier, fieldOurQualifier)
-	set(ourID, fieldOurID)
-	set(partnerGS, fieldPartnerGSID)
-	set(ourGS, fieldOurGSID)
-	set(&envelope.InterchangeUsageIndicator, fieldUsageIndicator)
-	set(&envelope.ElementSeparator, fieldElementSep)
-	set(&envelope.SegmentTerminator, fieldSegmentSep)
-	set(&envelope.ComponentSeparator, fieldComponentSep)
-	set(&envelope.RepetitionSeparator, fieldRepetitionSep)
-	return envelope
-}
-
-var interchangeConfigKeys = map[string]string{
-	"isaSenderQualifier":   fieldOurQualifier,
-	"isaSenderId":          fieldOurID,
-	"isaReceiverQualifier": fieldPartnerQualifier,
-	"isaReceiverId":        fieldPartnerID,
-	"gsSenderId":           fieldOurGSID,
-	"gsReceiverId":         fieldPartnerGSID,
-	"x12Version":           fieldX12Version,
 }
 
 func (p *planner) buildTransport() {
@@ -624,11 +568,6 @@ func (p *planner) fillTransportConfig(config map[string]any, fields []ediports.D
 			set(spec.configKey, field.Value)
 		}
 	}
-	for _, configKey := range slices.Sorted(maps.Keys(interchangeConfigKeys)) {
-		if value, ok := p.usable(interchangeConfigKeys[configKey]); ok {
-			set(configKey, value)
-		}
-	}
 	return changed
 }
 
@@ -649,13 +588,13 @@ func (p *planner) partnerName() string {
 
 func (p *planner) buildConnection() {
 	connection := ediports.DraftConnection{Method: p.method}
-	for profileIndex := range p.draft.DocumentProfiles {
-		profile := &p.draft.DocumentProfiles[profileIndex]
+	for setIndex := range p.draft.Sets {
+		set := &p.draft.Sets[setIndex]
 		connection.Sets = append(connection.Sets, ediports.DraftSetDirection{
-			TransactionSet: profile.TransactionSet,
-			Direction:      profile.Direction,
+			TransactionSet: set.TransactionSet,
+			Direction:      set.Direction,
 		})
-		switch profile.Direction {
+		switch set.Direction {
 		case edi.DocumentDirectionInbound:
 			connection.Inbound = true
 		case edi.DocumentDirectionOutbound:

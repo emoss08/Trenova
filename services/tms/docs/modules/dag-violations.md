@@ -9,8 +9,8 @@ until Phase 3 splits the hubs.
 
 | Violation | Imports |
 |---|---|
-| imports service of another module (rule 6) | 268 |
-| upward (rule 3) | 221 |
+| imports service of another module (rule 6) | 267 |
+| upward (rule 3) | 220 |
 | upward via port (rule 3) | 208 |
 | pkg imports a module (rule 7) | 44 |
 | same level (rule 2) | 18 |
@@ -81,11 +81,10 @@ until Phase 3 splits the hubs.
 - `core/services/bankreceiptservice` -> `core/services/notificationservice`
 - `core/services/bankreceiptworkitemservice` -> `core/services/auditservice`
 
-## documents -> workspace: imports service of another module (rule 6), 15
+## documents -> workspace: imports service of another module (rule 6), 14
 - `core/services/captureservice` -> `core/services/auditservice`
 - `core/services/captureservice` -> `core/services/notificationservice`
 - `core/services/documentpacketruleservice` -> `core/services/auditservice`
-- `core/services/documentparsingruleservice` -> `core/services/auditservice`
 - `core/services/documentservice` -> `core/services/auditservice`
 
 ## identity -> billing: upward via port (rule 3), 14
@@ -235,9 +234,8 @@ until Phase 3 splits the hubs.
 - `core/services/bulkeditservice` -> `ports/repositories.CustomerRepository (customer)`
 - `core/services/bulkeditservice` -> `ports/repositories.GetCustomersByIDsRequest (customer)`
 
-## documents -> operations: upward (rule 3), 7
+## documents -> operations: upward (rule 3), 6
 - `core/services/documentintelligenceservice` -> `core/domain/documentshipmentdraft`
-- `core/services/documentoperationsservice` -> `core/domain/documentshipmentdraft`
 - `core/services/documentservice` -> `core/domain/documentshipmentdraft`
 - `core/temporaljobs/documentintelligencejobs` -> `core/domain/documentshipmentdraft`
 - `core/temporaljobs/documentuploadjobs` -> `core/domain/documentshipmentdraft`
@@ -686,9 +684,8 @@ until Phase 3 splits the hubs.
 - `pkg/domainregistry` -> `core/domain/audit`
 - `pkg/domainregistry` -> `core/domain/report`
 
-## pkg/* -> kernel: pkg imports a module (rule 7), 2
+## pkg/* -> kernel: pkg imports a module (rule 7), 1
 - `pkg/domainregistry` -> `core/domain/usstate`
-- `pkg/seedhelpers` -> `core/domain/usstate`
 
 ## parties -> edi: upward (rule 3), 1
 - `core/domain/carrier` -> `core/domain/edi`

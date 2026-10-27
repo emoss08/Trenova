@@ -9,16 +9,13 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentevent"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/shopspring/decimal"
@@ -45,18 +42,12 @@ func buildTenderPayload(source *shipment.Shipment) edi.LoadTenderPayload {
 		TemperatureMax:           source.TemperatureMax,
 		FreightChargeAmount:      source.FreightChargeAmount,
 		OtherChargeAmount:        source.OtherChargeAmount,
-		BaseRate:                 source.BaseRate,
 		TotalChargeAmount:        source.TotalChargeAmount,
-		RatingUnit:               source.RatingUnit,
 		Moves:                    make([]edi.LoadTenderMove, 0, len(source.Moves)),
 		Commodities:              make([]edi.LoadTenderCommodity, 0, len(source.Commodities)),
 		AdditionalCharges:        make([]edi.LoadTenderCharge, 0, len(source.AdditionalCharges)),
 		RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{},
 	}
-	if source.RatingDetail != nil {
-		payload.RatingDetail = jsonutils.MustToJSON(source.RatingDetail)
-	}
-
 	addRequiredID(
 		payload.RequiredMappingEntityIDs,
 		edi.MappingEntityTypeCustomer,
@@ -233,7 +224,7 @@ func buildFreightInvoicePayload(source *invoice.Invoice) edi.DocumentPayload {
 	for _, line := range lines {
 		charge := edi.FreightInvoiceCharge{
 			Sequence:    int64(line.LineNumber),
-			Code:        string(line.Type),
+			Code:        specialChargeCode(line),
 			Description: line.Description,
 			Amount:      line.Amount,
 		}
@@ -572,15 +563,8 @@ func applyServiceFailureEquipment(
 	}
 }
 
-func serviceFailurePayloadDiagnostics(
-	payload *edi.ShipmentStatusPayload,
-	settings ...serviceFailure214Settings,
-) []edix12.Diagnostic {
-	var profileSettings serviceFailure214Settings
-	if len(settings) > 0 {
-		profileSettings = settings[0]
-	}
-	return serviceFailure214Diagnostics(payload, profileSettings)
+func serviceFailurePayloadDiagnostics(payload *edi.ShipmentStatusPayload) []edi.Diagnostic {
+	return serviceFailure214Diagnostics(payload)
 }
 
 func buildTenderResponsePayload(transfer *edi.EDITransfer) edi.DocumentPayload {
@@ -760,46 +744,6 @@ func shipmentProNumber(source *shipment.Shipment) string {
 		return ""
 	}
 	return source.ProNumber
-}
-
-func (s *Service) buildAcknowledgmentPayload(
-	ctx context.Context,
-	req *PreviewEDIDocumentRequest,
-	transactionSet edi.TransactionSet,
-) (edi.DocumentPayload, error) {
-	message, err := s.messageRepo.GetMessageByID(ctx, ediports.GetEDIMessageByIDRequest{
-		ID:         req.SourceMessageID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return edi.DocumentPayload{}, err
-	}
-	ack := edi.FunctionalAcknowledgmentPayload{
-		SourceMessageID:                  message.ID,
-		OriginalFunctionalGroupID:        edi.FunctionalGroupDefault(message.TransactionSet),
-		OriginalGroupControlNumber:       message.GroupControlNumber,
-		OriginalTransactionSet:           message.TransactionSet,
-		OriginalTransactionControlNumber: message.TransactionControlNumber,
-		GroupAcknowledgmentCode:          "A",
-		TransactionAcknowledgmentCode:    "A",
-		AcceptedTransactionSetCount:      1,
-		ReceivedTransactionSetCount:      1,
-		IncludedTransactionSetCount:      1,
-	}
-	if message.PartnerDocumentProfile != nil {
-		ack.OriginalFunctionalGroupID = message.PartnerDocumentProfile.FunctionalGroupID
-	}
-	if transactionSet == edi.TransactionSet999 {
-		implementation := edi.ImplementationAckPayload(ack)
-		return edi.DocumentPayload{
-			TransactionSet:               edi.TransactionSet999,
-			ImplementationAcknowledgment: &implementation,
-		}, nil
-	}
-	return edi.DocumentPayload{
-		TransactionSet:           edi.TransactionSet997,
-		FunctionalAcknowledgment: &ack,
-	}, nil
 }
 
 func sourceLabelIndex(
@@ -1006,4 +950,13 @@ func joinCodeName(code, name string) string {
 		return code + " - " + name
 	}
 	return stringutils.FirstNonEmpty(code, name)
+}
+
+const x12FreightChargeCode = "400"
+
+func specialChargeCode(line *invoice.InvoiceLine) string {
+	if line.Type == invoice.InvoiceLineTypeFreight {
+		return x12FreightChargeCode
+	}
+	return strings.TrimSpace(line.ChargeCode)
 }

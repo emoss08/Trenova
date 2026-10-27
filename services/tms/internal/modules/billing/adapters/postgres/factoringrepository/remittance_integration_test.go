@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/factoringcompanyports"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -53,10 +54,10 @@ func TestRemittanceStagesMatchesAndKeepsItsLines(t *testing.T) {
 		OccurredOn:        new(now),
 	}
 	byAmount := &factoring.RemittanceLine{
-		RowNumber:    3,
-		Kind:         factoring.RemittanceLineFunding,
+		RowNumber:     3,
+		Kind:          factoring.RemittanceLineFunding,
 		InvoiceNumber: "UNREADABLE",
-		AdvanceMinor: new(secondItem.ExpectedAdvanceMinor),
+		AdvanceMinor:  new(secondItem.ExpectedAdvanceMinor),
 	}
 	require.NoError(t, created.MarkParsed(&factoring.RemittanceStaging{
 		DocumentID:  pulid.MustNew("doc_"),
@@ -135,7 +136,7 @@ func TestRemittanceStagesMatchesAndKeepsItsLines(t *testing.T) {
 	assert.Equal(t, 1, open[0].ExceptionCount)
 
 	other := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
-	_, err = remittances.Get(e.ctx, factoringports.GetRemittanceRequest{TenantInfo: other, ID: created.ID})
+	_, err = remittances.Get(dbscope.WithTenant(e.ctx, other.DBTenant()), factoringports.GetRemittanceRequest{TenantInfo: other, ID: created.ID})
 	require.Error(t, err)
 }
 
@@ -195,8 +196,10 @@ func TestFactorIsFoundBySenderAddress(t *testing.T) {
 	require.Len(t, byDomain.ByDomain, 1, "a factor's other addresses share its domain")
 	assert.Equal(t, exact.ID, byDomain.ByDomain[0].ID)
 
-	none, err := e.factors.FindByEmail(e.ctx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+	stranger := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	strangerCtx := dbscope.WithTenant(e.ctx, stranger.DBTenant())
+	none, err := e.factors.FindByEmail(strangerCtx, factoringcompanyports.FindFactoringCompaniesByEmailRequest{
+		TenantInfo: stranger,
 		Address:    "remit@fmail.example.com",
 	})
 	require.NoError(t, err)

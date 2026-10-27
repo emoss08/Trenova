@@ -2,18 +2,14 @@ package factoringrepository
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
-
-const moveRelationAlias = "shipment_move"
 
 func (r *invoiceStateRepository) ListShipmentContacts(
 	ctx context.Context,
@@ -27,56 +23,54 @@ func (r *invoiceStateRepository) ListShipmentContacts(
 			if len(req.ShipmentIDs) == 0 {
 				return result, nil
 			}
-			dba := r.db.DBForContext(ctx)
-			inShipments := func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("?.shipment_id IN (?)",
-					bun.Ident(moveRelationAlias), bun.List(req.ShipmentIDs))
-			}
+			db := r.db.Keel(ctx)
 
-			assignments := make([]*shipment.Assignment, 0, len(req.ShipmentIDs))
-			if err := dba.NewSelect().
-				Model(&assignments).
-				Relation(shipmentcol.AssignmentRelations.ShipmentMove).
-				Relation(shipmentcol.AssignmentRelations.PrimaryWorker).
-				Apply(shipmentcol.AssignmentApplyTenant(req.TenantInfo)).
-				Apply(inShipments).
-				Where(shipmentcol.AssignmentColumns.ArchivedAt.IsNull()).
-				Where(shipmentcol.AssignmentColumns.PrimaryWorkerID.IsNotNull()).
-				Order(shipmentcol.AssignmentColumns.CreatedAt.OrderDesc()).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list shipment drivers: %w", err)
+			a := shipmentdb.Assignments
+			am := a.ShipmentMove()
+			assignments, err := a.Where(
+				am.ShipmentID.In(req.ShipmentIDs...),
+				a.ArchivedAt.IsNull(),
+				a.PrimaryWorkerID.IsNotNull(),
+			).
+				Load(am, a.PrimaryWorker()).
+				Order(a.CreatedAt.Desc()).
+				All(ctx, db)
+			if err != nil {
+				return nil, err
 			}
-			for _, a := range assignments {
-				if a.ShipmentMove == nil || a.PrimaryWorker == nil {
+			for _, assignment := range assignments {
+				if assignment.ShipmentMove == nil || assignment.PrimaryWorker == nil {
 					continue
 				}
-				contact := contactFor(result, a.ShipmentMove.ShipmentID)
-				if contact.DriverEmail == "" && strings.TrimSpace(a.PrimaryWorker.Email) != "" {
-					contact.DriverName = a.PrimaryWorker.FullName()
-					contact.DriverEmail = strings.TrimSpace(a.PrimaryWorker.Email)
+				contact := contactFor(result, assignment.ShipmentMove.ShipmentID)
+				email := strings.TrimSpace(assignment.PrimaryWorker.Email)
+				if contact.DriverEmail == "" && email != "" {
+					contact.DriverName = assignment.PrimaryWorker.FullName()
+					contact.DriverEmail = email
 				}
 			}
 
-			carriers := make([]*shipment.CarrierAssignment, 0, len(req.ShipmentIDs))
-			if err := dba.NewSelect().
-				Model(&carriers).
-				Relation(shipmentcol.CarrierAssignmentRelations.ShipmentMove).
-				Relation(shipmentcol.CarrierAssignmentRelations.Carrier).
-				Apply(shipmentcol.CarrierAssignmentApplyTenant(req.TenantInfo)).
-				Apply(inShipments).
-				Where(shipmentcol.CarrierAssignmentColumns.Status.Ne(), shipment.CarrierAssignmentStatusCanceled).
-				Order(shipmentcol.CarrierAssignmentColumns.CreatedAt.OrderDesc()).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list shipment carriers: %w", err)
+			ca := shipmentdb.CarrierAssignments
+			cm := ca.ShipmentMove()
+			carriers, err := ca.Where(
+				cm.ShipmentID.In(req.ShipmentIDs...),
+				ca.Status.Ne(shipment.CarrierAssignmentStatusCanceled),
+			).
+				Load(cm, ca.Carrier()).
+				Order(ca.CreatedAt.Desc()).
+				All(ctx, db)
+			if err != nil {
+				return nil, err
 			}
-			for _, ca := range carriers {
-				if ca.ShipmentMove == nil || ca.Carrier == nil {
+			for _, carrierAssignment := range carriers {
+				if carrierAssignment.ShipmentMove == nil || carrierAssignment.Carrier == nil {
 					continue
 				}
-				contact := contactFor(result, ca.ShipmentMove.ShipmentID)
-				if contact.CarrierEmail == "" && strings.TrimSpace(ca.Carrier.Email) != "" {
-					contact.CarrierName = ca.Carrier.Name
-					contact.CarrierEmail = strings.TrimSpace(ca.Carrier.Email)
+				contact := contactFor(result, carrierAssignment.ShipmentMove.ShipmentID)
+				email := strings.TrimSpace(carrierAssignment.Carrier.Email)
+				if contact.CarrierEmail == "" && email != "" {
+					contact.CarrierName = carrierAssignment.Carrier.Name
+					contact.CarrierEmail = email
 				}
 			}
 

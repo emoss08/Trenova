@@ -17,16 +17,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -35,7 +36,7 @@ type Params struct {
 	fx.In
 
 	Logger            *zap.Logger
-	DB                kernelports.DBConnection
+	DB                kernelports.Transactor
 	Repo              shipmentports.CarrierAssignmentRepository
 	AssignmentRepo    shipmentports.AssignmentRepository
 	CarrierRepo       carrierports.CarrierRepository
@@ -53,11 +54,13 @@ type Params struct {
 	RateEngine        ratequoteports.RateEngine       `optional:"true"`
 	AgreementRepo     rateagreementports.RateAgreementRepository
 	BillingCtrlRepo   tenantports.BillingControlRepository
+	AccessorialRepo   accessorialchargeports.AccessorialChargeRepository
+	FuelResolver      fuelsurchargeports.FuelSurchargeResolver
 }
 
 type Service struct {
 	l                 *zap.Logger
-	db                kernelports.DBConnection
+	db                kernelports.Transactor
 	repo              shipmentports.CarrierAssignmentRepository
 	assignmentRepo    shipmentports.AssignmentRepository
 	carrierRepo       carrierports.CarrierRepository
@@ -77,6 +80,8 @@ type Service struct {
 	billingCtrlRepo   tenantports.BillingControlRepository
 	intelGate         carrierintelports.CarrierIntelGate
 	lifecycle         carrierintelports.CarrierLifecycleObserver
+	accessorialRepo   accessorialchargeports.AccessorialChargeRepository
+	fuelResolver      fuelsurchargeports.FuelSurchargeResolver
 }
 
 func New(p Params) *Service {
@@ -100,6 +105,8 @@ func New(p Params) *Service {
 		rateEngine:        p.RateEngine,
 		agreementRepo:     p.AgreementRepo,
 		billingCtrlRepo:   p.BillingCtrlRepo,
+		accessorialRepo:   p.AccessorialRepo,
+		fuelResolver:      p.FuelResolver,
 	}
 }
 
@@ -193,7 +200,7 @@ func (s *Service) AssignToMove(
 
 	intelGate := s.refreshIntel(ctx, req.TenantInfo, req.CarrierID)
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, txErr := s.planAssignToMove(txCtx, req, intelGate)
 		if txErr != nil {
 			return txErr
@@ -366,7 +373,7 @@ func (s *Service) Cancel(
 	var shipmentID pulid.ID
 	var canceled *shipment.CarrierAssignment
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		plan, txErr := s.planCancel(txCtx, req)
 		if txErr != nil {
 			return txErr

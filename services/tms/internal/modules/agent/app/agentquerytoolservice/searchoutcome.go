@@ -18,10 +18,11 @@ import (
 // Naming the terms back turns the same answer into something the model can act
 // on — it can widen the search, or say plainly that nothing matched these terms.
 type searchOutcome struct {
-	Count       int      `json:"count"`
-	Total       *int     `json:"total,omitempty"`
-	SearchedFor []string `json:"searchedFor"`
-	Items       any      `json:"items"`
+	Count          int      `json:"count"`
+	Total          *int     `json:"total,omitempty"`
+	TotalEstimated bool     `json:"totalEstimated,omitempty"`
+	SearchedFor    []string `json:"searchedFor"`
+	Items          any      `json:"items"`
 	// Columns is the row projection's fields in the order it declares them.
 	//
 	// The Desk draws a list result as a table beside the conversation, and a

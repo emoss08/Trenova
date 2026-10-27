@@ -2,11 +2,10 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { DataTableSkeleton } from "@trenova/shared/components/data-table/data-table-skeleton";
 import { usePermissionStore } from "@trenova/shared/stores/permission-store";
 import { Operation, Resource } from "@trenova/shared/types/permission";
-import { DesignerWorkspaceSkeleton } from "./designer/components/designer-workspace-skeleton";
 import type { EDIPageKind } from "./edi-types";
 import { EDIOverviewSkeleton } from "./overview/edi-overview-skeleton";
 
-type EDITableKind = Exclude<EDIPageKind, "overview" | "designer">;
+type EDITableKind = Exclude<EDIPageKind, "overview">;
 
 /**
  * The width of each column the kind's table draws, in the order it draws
@@ -21,7 +20,7 @@ const COLUMN_WIDTHS: Record<EDITableKind, readonly number[]> = {
   outbound: [160, 240, 280, 180, 180, 220],
   messages: [170, 220, 120, 170, 150, 140, 180],
   "inbound-files": [150, 280, 220, 110, 120, 140, 180],
-  "test-cases": [260, 220, 170, 220, 180, 180],
+  flows: [130, 220, 200, 220, 280, 170, 170],
 };
 
 /** The kinds whose table takes a selection column when the reader may act on rows in bulk. */
@@ -53,7 +52,7 @@ function EDITableSkeleton({ kind, title }: { kind: EDITableKind; title: string }
   return (
     <div className="flex flex-col gap-1" aria-busy aria-label={t("Loading {0}", title)}>
       <div className={kind === "partners" ? "flex flex-col gap-4" : "flex flex-col"} aria-hidden>
-        {kind === "test-cases" ? <div className="flex flex-col p-1">{table}</div> : table}
+        {table}
       </div>
     </div>
   );
@@ -67,15 +66,12 @@ type EDIPageSkeletonProps = {
 
 /**
  * The first paint of every EDI page, drawn as that page's own layout: the
- * operations overview, the template designer workspace, or the kind's table
+ * operations overview or the kind's table
  * framed the way the page frames it.
  */
 export function EDIPageSkeleton({ kind, title }: EDIPageSkeletonProps) {
   if (kind === "overview") {
     return <EDIOverviewSkeleton />;
-  }
-  if (kind === "designer") {
-    return <DesignerWorkspaceSkeleton />;
   }
   return <EDITableSkeleton kind={kind} title={title} />;
 }

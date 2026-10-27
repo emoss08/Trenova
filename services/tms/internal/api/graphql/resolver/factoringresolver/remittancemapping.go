@@ -89,9 +89,10 @@ func remittanceConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.FactoringRemittanceConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -109,9 +110,10 @@ func remittanceLineConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.FactoringRemittanceLineConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -142,4 +144,20 @@ func remittanceVersionFromModel(
 		ID:         id,
 		Version:    int64(in.Version),
 	}, nil
+}
+
+// linesIn are a remittance's lines in the file's order, or those in the
+// match statuses named.
+func linesIn(
+	lines []*factoring.RemittanceLine,
+	statuses []factoring.RemittanceMatchStatus,
+) []*factoring.RemittanceLine {
+	out := make([]*factoring.RemittanceLine, 0, len(lines))
+	for _, line := range lines {
+		if line != nil && (len(statuses) == 0 || slices.Contains(statuses, line.MatchStatus)) {
+			out = append(out, line)
+		}
+	}
+
+	return out
 }

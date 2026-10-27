@@ -1,22 +1,19 @@
 package airetrieval
 
 import (
-	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook          = (*Settings)(nil)
 	_ validationframework.TenantedEntity = (*Settings)(nil)
 )
 
@@ -28,33 +25,33 @@ var (
 var indexingBudgetRule = domainvalidation.BudgetUSD(MaxMonthlyIndexingBudgetUSD, "100,000")
 
 type Settings struct {
-	bun.BaseModel `bun:"table:ai_retrieval_settings,alias:airs" json:"-"`
+	keel.Table `keel:"ai_retrieval_settings"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:airs_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	MemoryEnabled          bool `json:"memoryEnabled"          bun:"memory_enabled,type:BOOLEAN,notnull"`
-	DocumentsEnabled       bool `json:"documentsEnabled"       bun:"documents_enabled,type:BOOLEAN,notnull"`
-	InboundMessagesEnabled bool `json:"inboundMessagesEnabled" bun:"inbound_messages_enabled,type:BOOLEAN,notnull"`
+	MemoryEnabled          bool `json:"memoryEnabled"          keel:"memory_enabled"`
+	DocumentsEnabled       bool `json:"documentsEnabled"       keel:"documents_enabled"`
+	InboundMessagesEnabled bool `json:"inboundMessagesEnabled" keel:"inbound_messages_enabled"`
 
-	MonthlyIndexingBudgetUSD decimal.Decimal `json:"monthlyIndexingBudgetUsd" bun:"monthly_indexing_budget_usd,type:NUMERIC(14,2),notnull"`
+	MonthlyIndexingBudgetUSD decimal.Decimal `json:"monthlyIndexingBudgetUsd" keel:"monthly_indexing_budget_usd"`
 
-	Paused       bool        `json:"paused"       bun:"paused,type:BOOLEAN,notnull,default:false"`
-	PausedReason PauseReason `json:"pausedReason" bun:"paused_reason,type:VARCHAR(20),nullzero"`
-	PausedAt     *int64      `json:"pausedAt"     bun:"paused_at,type:BIGINT,nullzero"`
+	Paused       bool        `json:"paused"       keel:"paused"`
+	PausedReason PauseReason `json:"pausedReason" keel:"paused_reason,nullzero"`
+	PausedAt     *int64      `json:"pausedAt"     keel:"paused_at"`
 
-	ActiveModelKey    string `json:"activeModelKey"    bun:"active_model_key,type:VARCHAR(300),nullzero"`
-	Dimensions        int    `json:"dimensions"        bun:"dimensions,type:INTEGER,nullzero"`
-	PendingModelKey   string `json:"pendingModelKey"   bun:"pending_model_key,type:VARCHAR(300),nullzero"`
-	PendingDimensions int    `json:"pendingDimensions" bun:"pending_dimensions,type:INTEGER,nullzero"`
+	ActiveModelKey    string `json:"activeModelKey"    keel:"active_model_key,nullzero"`
+	Dimensions        int    `json:"dimensions"        keel:"dimensions,nullzero"`
+	PendingModelKey   string `json:"pendingModelKey"   keel:"pending_model_key,nullzero"`
+	PendingDimensions int    `json:"pendingDimensions" keel:"pending_dimensions,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func DefaultSettings(orgID, buID pulid.ID) *Settings {
@@ -183,20 +180,3 @@ func (s *Settings) GetOrganizationID() pulid.ID { return s.OrganizationID }
 func (s *Settings) GetBusinessUnitID() pulid.ID { return s.BusinessUnitID }
 
 func (s *Settings) GetTableName() string { return "ai_retrieval_settings" }
-
-func (s *Settings) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if s.ID.IsNil() {
-			s.ID = pulid.MustNew("airs_")
-		}
-		s.CreatedAt = now
-		s.UpdatedAt = now
-	case *bun.UpdateQuery:
-		s.UpdatedAt = now
-	}
-
-	return nil
-}

@@ -11,32 +11,57 @@ covers how to build a resource; this covers what breaks afterwards.
 
 ## Run the whole gate locally
 
-`Codegen Checks` in `.github/workflows/test-tms.yml` is six independent regeneration steps, plus the GraphQL schema-diff step. All paths
-are relative to `services/tms`:
+`Codegen Checks` in `.github/workflows/test-tms.yml` is seven independent regeneration steps, plus the GraphQL schema-diff
+and migration base-branch steps. All paths are relative to `services/tms`:
 
 ```bash
 go run ./internal/api/graphql/gqlexec/gen                           # same as `task gqlgen`; see "GraphQL server code" below
 (cd internal/api/graphql/gqlexec/internal/e2e && go run github.com/emoss08/trenova/internal/api/graphql/gqlexec/gen)
 git status --porcelain -- internal/api/graphql/generated internal/api/graphql/gqlmodel internal/api/graphql/resolver internal/api/graphql/gqlexec/internal/e2e
 
-go generate ./internal/infrastructure/database/seeder/...          # pkg/seedhelpers/seed_ids_gen.go
+
 go generate ./internal/api/graphql/projection/...                  # internal/api/graphql/projection/specs_gen.go
-go generate ./internal/infrastructure/database/reportcatalog/...   # pkg/reportcatalog/catalog_gen.go
+go generate ./internal/infrastructure/reportengine/...             # analytics.messages.json, client/packages/shared/src/generated/keel-analytics.ts
 go generate ./internal/modules/agent/app/agenttoolpolicy/safetydoc/...  # ../../docs/engineering/ai-tool-safety.md
 go generate ./internal/api/writecoverage/...                       # ../../docs/engineering/agent-write-coverage.md
+go run ./cmd/db migrate stamp -check                               # schema/version_gen.go (task db-stamp)
 ```
 
 The REST API reference (OpenAPI) is no longer generated in this repository; it is produced
 outside it, so there is no spec to regenerate here.
 
-A clean `git status` after all six means the job will pass.
+A clean `git status` after all six, and a passing stamp check, mean the job will pass.
+
+## Schema version stamp
+
+`schema/version_gen.go` holds `schema.Version`, the newest migration, and `schema.Fingerprint`.
+It is the only part of the schema the API and worker link: at startup they wait until the
+database has applied `schema.Version` (`internal/infrastructure/postgres/schemaversion`). So
+**adding a migration means regenerating the stamp in the same commit**:
+
+```bash
+cd services/tms
+task db-stamp            # go run ./cmd/devdb migrate stamp
+```
+
+The `Schema version stamp` step runs `trenova-db migrate stamp -check`, and
+`TestTheSchemaStampIsCurrent` in `internal/infrastructure/database/dbcli` says the same under
+`task test`. Never edit the file by hand. On a pull request, `Migrations against the base branch`
+runs `migrate check -base-dir` against the base branch's `schema/migrations`: it fails on a new
+migration older than the newest one there (renumber it) and on an edited or deleted migration the
+base branch already has (fix forward with a new migration instead).
 
 ## GraphQL projections: the one that fails on correct code
 
 `internal/api/graphql/projection/projection.yml` maps every GraphQL field to the database
-column it reads. The generator walks **every field of every type** and aborts if a field
-resolves to none of: a `buncolgen` column, an inferred relation, or a declared override. A
-field that a resolver computes is not special-cased — it has to be declared.
+column it reads. The generator reads the domain models' `keel` tags (a struct embedding
+`keel.Table` is a table; a tagged field is a column; `belongs:`/`one:`/`many:`/`m2m:`/`pick:`
+are relations, and an untagged struct field is a relation whose column is the field's `…Id`
+column when the model has one). It walks **every field of every type** and aborts if a field
+resolves to none of: a keel column, an inferred relation, or a declared override. A field that a
+resolver computes is not special-cased — it has to be declared. A resolver that needs extra
+columns for a computed field names them with `projection.ColumnNames(xdb.Xs.Col.Col, …)`, never
+as strings.
 
 This bites hardest when a column is **removed** but its GraphQL field is kept (deprecated,
 resolver returning a constant). Removing both together is usually the better change (see
@@ -45,7 +70,7 @@ behind it:
 
 ```
 Error generating GraphQL projections: type "CustomerBillingProfile" field
-"consolidationLookbackDays" is neither a buncolgen column, inferred relation, nor
+"consolidationLookbackDays" is neither a keel column, inferred relation, nor
 configured projection override
 ```
 
@@ -224,10 +249,14 @@ tool, when:
 - no persisted query, or more than one in a tier, reads that root field alone;
 - an override in `reads.yml` has no `reason`, or names the operation the rule picks anyway;
 - a shard the operations reach asks for a resolver the full root does not build;
-- an operation a list reads `alongside` its own is not persisted, reads a field whose resolver
-  checks no read permission, or is neither a connection read that selects `pageInfo` and needs no
-  variable but its table input nor an unpaged list whose every variable the list's own operation
-  declares with the same type; or a paged list names one.
+- an operation a tool reads `alongside` its own, or a list `instead` of its own, is not
+  persisted, reads a field whose resolver checks no read permission, or has a shape the tool
+  cannot key: alongside, an unpaged list or one record whose every variable the tool's own
+  operation declares with the same type, or, beside an unpaged list only, a connection read
+  that selects `pageInfo` and needs no variable but its table input; instead, an unpaged list or
+  one record with a variable of its own and no input object;
+- a get's operation requires an input object, or a paged list's a filter input with a required
+  input-object field.
 
 Editing a bound operation on the client re-hashes it, and
 `TestEveryBoundOperationIsPersistedAsItIsRun` fails until the generator runs again. Adding a
@@ -245,8 +274,29 @@ type, then `pnpm --filter @trenova/graphql codegen`; `TestReferenceFragmentsAreG
 until both are current. Editing a client operation can fail `TestEveryLinkedFieldIsDeclared` (it
 selects a linked record's field outside its view without `@requiresRead`) or
 `TestEveryDeclaredLinkedFieldIsNullable` (the field it declares is non-null). These are Go tests
-over the client's `.graphql` files, so they surface under `task test`. See
-[reference-views.md](reference-views.md).
+over the client's `.graphql` files, so they surface under `task test`. refgen also writes the page
+access manifest and the role editor's words (below). See [reference-views.md](reference-views.md).
+
+## Page access manifest
+
+`services/tms/pkg/pageaccess/manifest_gen.json` is what every screen needs and shows, and
+`services/tms/internal/modules/identity/app/pageaccessservice/viewwords_gen.go` is the role
+editor's words for each reference view. Both come from two generators, in this order:
+
+```bash
+pnpm --filter @trenova/web access:generate   # client/apps/web: writes pkg/pageaccess/screens_gen.json
+cd services/tms && go run ./internal/api/graphql/gqlext/refgen   # writes manifest_gen.json and viewwords_gen.go
+```
+
+`access:check` (the GraphQL Codegen job in `test-client.yml`) fails when a route, a page's
+imports or a REST call it makes changed what a screen runs; `TestPageAccessManifestIsGenerated`
+and `TestViewWordsAreGenerated` (`internal/api/pagemanifest`, under `task test`) fail when the
+manifest or the words are stale. So **adding a page, importing a GraphQL wrapper or a query
+factory into one, editing a client operation, changing a reference view or registering a REST
+route a screen calls means regenerating both**, the screens first. The Go tests run when a client
+operation changes alone (`test-tms.yml` watches `client/packages/graphql/src/operations/**`).
+A word new to `viewwords_gen.go` is a new catalog entry: run `task i18n` and translate it. See
+"The page access manifest" in [reference-views.md](reference-views.md).
 
 ## Schema changes
 
@@ -273,10 +323,11 @@ one fails until it is listed.
 
 ## Columns
 
-`task generate-columns` regenerates `pkg/buncolgen` from the domain entities. Adding or
-removing a field on a Bun model without rerunning it leaves repositories referencing a
-column helper that no longer matches the table — and, as above, can break the projection
-generator too. Never hand-write column references; see [docs/engineering/bun/buncolgen.md](bun/buncolgen.md).
+`task keel-gen` regenerates every `<entity>db` package (tables, columns, relations and
+schema) from the keel tags on the domain models. Adding or removing a field or relation
+without rerunning it leaves repositories referencing a column that no longer matches the
+model — and, as above, can break the projection generator too. Never hand-write column
+names; `keel_verify_integration_test.go` fails when a model and the migrated schema disagree.
 
 ## Client checks are narrower than they look
 

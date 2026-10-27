@@ -8,8 +8,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestAccessorialCharge_Validate(t *testing.T) {
@@ -271,72 +269,6 @@ func TestAccessorialCharge_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestAccessorialCharge_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		ac := &AccessorialCharge{}
-		require.True(t, ac.ID.IsNil())
-
-		err := ac.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, ac.ID.IsNil())
-		assert.NotZero(t, ac.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("acc_")
-		ac := &AccessorialCharge{ID: existingID}
-
-		err := ac.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, ac.ID)
-		assert.NotZero(t, ac.CreatedAt)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		ac := &AccessorialCharge{}
-
-		err := ac.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, ac.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		ac := &AccessorialCharge{}
-
-		err := ac.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, ac.CreatedAt)
-		assert.NotZero(t, ac.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		ac := &AccessorialCharge{}
-
-		err := ac.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, ac.ID.IsNil())
-		assert.Zero(t, ac.CreatedAt)
-		assert.Zero(t, ac.UpdatedAt)
-	})
 }
 
 func TestAccessorialCharge_GetTableName(t *testing.T) {

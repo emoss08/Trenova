@@ -120,12 +120,12 @@ func (p *CapabilityProbe) Refresh(ctx context.Context) (pgvector.VectorSupport, 
 const capabilityProbeReason = "probe the database server's installed extensions"
 
 func (p *CapabilityProbe) probeLocked(ctx context.Context) (pgvector.VectorSupport, error) {
-	if p.db.DB() == nil {
+	if p.db.Keel(ctx) == nil {
 		return pgvector.VectorSupport{}, ErrDatabaseConnectionNotInitialized
 	}
 
 	ctx = dbscope.WithSystem(ctx, capabilityProbeReason)
-	vector, err := pgvector.ProbeVector(ctx, p.db.DBForContext(ctx))
+	vector, err := pgvector.ProbeVector(ctx, p.db.Keel(ctx))
 	if err != nil {
 		return pgvector.VectorSupport{}, err
 	}

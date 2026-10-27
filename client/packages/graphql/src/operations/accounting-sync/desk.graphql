@@ -1,0 +1,321 @@
+query DeskAccountingConnection($integrationType: AccountingSystem!) {
+  accountingSyncStatus(integrationType: $integrationType) {
+    integrationType
+    providerName
+    available
+    connection {
+      id
+      status
+      externalCompanyName
+      externalHomeCurrency
+      externalMultiCurrencyEnabled
+      externalBooksClosedThrough
+      lastCheckedAt
+      lastSuccessAt
+      consecutiveFailures
+      lastErrorCategory
+      lastErrorMessage
+      refreshTokenAbsoluteExpiresAt
+      authMethod
+      certificateExpiresAt
+      lastWebhookAt
+      setupStep
+      syncMode
+      ledgerGranularity
+      ledgerOpeningBalancesSentAt
+      syncStartDate
+      syncEnabledAt
+      autoSync
+      pausedAt
+      pausedReason
+    }
+  }
+}
+
+query DeskAccountingSyncSummary($integrationType: AccountingSystem!) {
+  accountingSyncSummary(integrationType: $integrationType) {
+    counts {
+      status
+      count
+    }
+    attention {
+      status
+      errorCategory
+      resolution
+      count
+      oldestQueuedAt
+      sampleRecordId
+    }
+    activeBackfill {
+      id
+      status
+      rangeStart
+      rangeEnd
+      objectTypes
+      enqueuedCount
+      alreadyQueuedCount
+    }
+  }
+}
+
+fragment DeskAccountingSyncRecordFields on AccountingSyncRecord {
+  id
+  objectType
+  objectId
+  objectNumber
+  operation
+  sourceEvent
+  status
+  errorCategory
+  resolution
+  attemptCount
+  documentDate
+  queuedAt
+  nextAttemptAt
+  syncedAt
+  externalDocNumber
+  externalUrl
+  skippedReason
+}
+
+query DeskAccountingSyncRecords(
+  $integrationType: AccountingSystem!
+  $first: Int
+  $after: String
+  $filter: AccountingSyncRecordFilterInput
+) {
+  accountingSyncRecords(
+    integrationType: $integrationType
+    first: $first
+    after: $after
+    filter: $filter
+  ) {
+    edges {
+      node {
+        ...DeskAccountingSyncRecordFields
+      }
+    }
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskAccountingSyncObjectStates($objectIds: [ID!]!, $integrationType: AccountingSystem) {
+  accountingSyncObjectStates(objectIds: $objectIds, integrationType: $integrationType) {
+    objectType
+    objectId
+    providerName
+    record {
+      ...DeskAccountingSyncRecordFields
+    }
+  }
+}
+
+query DeskAccountingSyncRecord($id: ID!) {
+  accountingSyncRecord(id: $id) {
+    ...DeskAccountingSyncRecordFields
+    dependsOnRecordId
+  }
+}
+
+query DeskAccountingSyncAttempts($id: ID!) {
+  accountingSyncAttempts(recordId: $id) {
+    attemptNumber
+    outcome
+    errorCategory
+    startedAt
+    durationMs
+  }
+}
+
+fragment DeskAccountingMappingFields on AccountingMapping {
+  id
+  targetType
+  targetLabel
+  trenovaObjectId
+  trenovaKey
+  providerKind
+  state
+  required
+  externalId
+  externalName
+  source
+  confidence
+  reason
+  candidates {
+    externalId
+    name
+    score
+    reason
+  }
+  confirmedAt
+}
+
+query DeskAccountingMappings(
+  $integrationType: AccountingSystem!
+  $first: Int
+  $after: String
+  $filter: AccountingMappingFilterInput
+) {
+  accountingMappings(
+    integrationType: $integrationType
+    first: $first
+    after: $after
+    filter: $filter
+  ) {
+    edges {
+      node {
+        ...DeskAccountingMappingFields
+      }
+    }
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskAccountingMappingSummary($integrationType: AccountingSystem!) {
+  accountingMappingSummary(integrationType: $integrationType) {
+    integrationType
+    providerName
+    requiredTotal
+    requiredConfirmed
+    canCompleteSetup
+    groups {
+      targetType
+      unmatched
+      proposed
+      confirmed
+    }
+    connection {
+      status
+      setupStep
+    }
+  }
+}
+
+query DeskAccountingMappingDetail(
+  $integrationType: AccountingSystem!
+  $id: ID
+  $targetType: AccountingMappingTargetType
+  $recordId: ID
+  $key: String
+  $optionsQuery: String
+) {
+  accountingMappingDetail(
+    integrationType: $integrationType
+    id: $id
+    targetType: $targetType
+    recordId: $recordId
+    key: $key
+    optionsQuery: $optionsQuery
+  ) {
+    mapping {
+      ...DeskAccountingMappingFields
+    }
+    options {
+      externalId
+      label
+      accountType
+      itemType
+      number
+    }
+  }
+}
+
+query DeskAccountingDriftFindings(
+  $integrationType: AccountingSystem!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = false
+) {
+  accountingDriftFindingTable(integrationType: $integrationType, input: $input) {
+    edges {
+      node {
+        id
+        kind
+        status
+        resolution
+        resolutionNote
+        objectType
+        objectId
+        objectNumber
+        partyName
+        externalUrl
+        currencyCode
+        trenovaMinor
+        providerMinor
+        differenceMinor
+        trenovaState
+        providerState
+        providerModifiedBy
+        providerModifiedAt
+        detectedAt
+        detail {
+          objectType
+          objectId
+          objectNumber
+          trenovaMinor
+          providerMinor
+        }
+        directions
+        pushed
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}
+
+query DeskAccountingDriftOverview($integrationType: AccountingSystem!) {
+  accountingDriftOverview(integrationType: $integrationType) {
+    checkedAt
+    checkError
+    toleranceMinor
+    currencyCode
+  }
+}
+
+query DeskAccountingInboundChanges(
+  $integrationType: AccountingSystem!
+  $input: DataTableConnectionInput!
+  $includeTotalCount: Boolean = false
+) {
+  accountingInboundChangeTable(integrationType: $integrationType, input: $input) {
+    edges {
+      node {
+        id
+        kind
+        status
+        reason
+        resolution
+        externalNumber
+        externalUrl
+        partyName
+        partyObjectId
+        txnDate
+        amountMinor
+        currencyCode
+        referenceNumber
+        methodName
+        providerModifiedBy
+        lines {
+          documentKind
+          objectId
+          objectNumber
+          amountMinor
+          openMinor
+        }
+        detectedAt
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

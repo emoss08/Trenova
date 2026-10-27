@@ -4,12 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
 	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -88,16 +91,8 @@ func fullTrace() *ratetypes.Trace {
 				RunningTotal: usd("2839.60"),
 			},
 		},
-		Guardrails: []ratetypes.Guardrail{
-			{Kind: ratetypes.ComponentKind("minimum"), Applied: false, Bound: usd("500.00")},
-			{
-				Kind:    ratetypes.ComponentKind("maximum"),
-				Applied: true,
-				Bound:   usd("2800.00"),
-				Raw:     usd("2839.60"),
-				Result:  usd("2800.00"),
-			},
-		},
+		TariffInputs: tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString("2.15"), "$/mi")},
+		Skipped:      []ratetypes.Skip{{Code: "FSC", Source: "FuelSurcharge"}},
 		Totals: ratetypes.Totals{
 			Linehaul: usd("2666.00"),
 			Fuel:     usd("173.60"),
@@ -159,23 +154,18 @@ func TestExplainRate_KeepsEachChargesArithmetic(t *testing.T) {
 	assert.True(t, explanation.Components[1].RunningTotal.Equal(usd("2839.60")))
 }
 
-/*
-Only a limit that actually bit is reported.
-
-A floor that the price cleared by a mile explains nothing, and listing it
-invites the reader to think it was involved. The ceiling here is the whole
-reason the total is 2,800 and not 2,839.60 — that one has to be there.
-*/
-func TestExplainRate_ReportsOnlyTheLimitsThatChangedTheNumber(t *testing.T) {
+// The inputs the tariff priced with and the charges other engines left to it
+// are what a dispute asks about once the winning rule is known.
+func TestExplainRate_ReportsTheInputsAndTheSkippedCharges(t *testing.T) {
 	t.Parallel()
 
 	tool, _ := explainTool(ratedQuote(fullTrace()))
 	explanation := explain(t, tool, map[string]any{"shipmentId": pulid.MustNew("shp_").String()})
 
-	require.Len(t, explanation.Guardrails, 1)
-	assert.Equal(t, "maximum", explanation.Guardrails[0].Kind)
-	assert.True(t, explanation.Guardrails[0].Raw.Equal(usd("2839.60")))
-	assert.True(t, explanation.Guardrails[0].Result.Equal(usd("2800.00")))
+	assert.Equal(t, map[string]string{"rate": "$2.15/mi"}, explanation.Inputs)
+	require.Len(t, explanation.Skipped, 1)
+	assert.Equal(t, "FSC", explanation.Skipped[0].Code)
+	assert.Equal(t, "FuelSurcharge", explanation.Skipped[0].Source)
 }
 
 func TestExplainRate_CarriesTheWarningsAndTheTotals(t *testing.T) {
@@ -253,25 +243,29 @@ func (s *stubShipmentRating) GetByID(
 /*
 A shipment no agreement priced is explained from the rating it carries.
 
-SEED-PAY-007 was a spot load priced by the Flat Rate template: $3,050 from
-the expression baseRate. With no quote trace the tool said there was no
-rating on record, and the person had to ask three times before a delegate
-read it off the shipment.
+SEED-PAY-007 was a spot load priced by the Flat Rate tariff at $3,050. With no
+quote trace the tool said there was no rating on record, and the person had to
+ask three times before a delegate read it off the shipment.
 */
 func TestExplainRate_ExplainsAShipmentPricedFromItsFormulaTemplate(t *testing.T) {
 	t.Parallel()
 
 	record := &shipment.Shipment{
-		BaseRate:            decimal.NewNullDecimal(usd("3050")),
 		FreightChargeAmount: decimal.NewNullDecimal(usd("3050")),
 		TotalChargeAmount:   decimal.NewNullDecimal(usd("3050")),
 		RatingDetail: &shipment.RatingDetail{
 			FormulaTemplateName: "Flat Rate",
-			Expression:          "baseRate",
 			Source:              "FormulaFallback",
 			Explanation:         "No agreement covered this lane; priced from a formula template",
-			Result:              3050,
-			Breakdown:           []shipment.RatingBreakdownItem{{Name: "Linehaul", Label: "Linehaul", Amount: 3050}},
+			Inputs:              tarifftypes.Inputs{"rate": rules.MoneyValue(usd("3050"))},
+			Bill: &tarifftypes.Bill{
+				Currency: "USD",
+				Lines: []tarifftypes.Line{{
+					Kind: tarifftypes.LineCharge, Label: "Linehaul", Freight: true, Amount: usd("3050"),
+				}},
+				FreightTotal: usd("3050"),
+				Total:        usd("3050"),
+			},
 		},
 	}
 	tool := &explainRateTool{quotes: &stubQuoteReader{}, shipments: &stubShipmentRating{record: record}}
@@ -279,7 +273,7 @@ func TestExplainRate_ExplainsAShipmentPricedFromItsFormulaTemplate(t *testing.T)
 
 	require.NotNil(t, explanation.PricedBy)
 	assert.Equal(t, "Flat Rate", explanation.PricedBy.Method)
-	assert.Equal(t, "baseRate", explanation.PricedBy.Expression)
+	assert.Equal(t, map[string]string{"rate": "$3050"}, explanation.PricedBy.Inputs)
 	require.Len(t, explanation.Components, 1)
 	assert.Equal(t, "Linehaul", explanation.Components[0].Label)
 	assert.True(t, explanation.Components[0].Amount.Equal(usd("3050")))
@@ -328,4 +322,44 @@ func TestExplainRate_ListsTheChargesTheAgreementDidNotPrice(t *testing.T) {
 	require.NotNil(t, explanation.ShipmentTotal)
 	assert.True(t, explanation.ShipmentTotal.Equal(usd("1121.36")))
 	assert.NotEmpty(t, explanation.ChargesNote)
+}
+
+func tracedWithMargin() *ratequote.RateQuote {
+	trace := fullTrace()
+	trace.Totals.Cost = decimal.NewNullDecimal(usd("2100.00"))
+	trace.Totals.Margin = decimal.NewNullDecimal(usd("700.00"))
+	trace.Totals.MarginPct = decimal.NewNullDecimal(usd("25"))
+
+	return ratedQuote(trace)
+}
+
+func TestExplainRate_ShowsTheMarginOnlyToAPersonWithTheMarginsGroup(t *testing.T) {
+	t.Parallel()
+
+	params := map[string]any{"shipmentId": pulid.MustNew("shp_").String()}
+
+	granted := &explainRateTool{
+		quotes: &stubQuoteReader{quote: tracedWithMargin()},
+		access: newFieldAccess(marginsReader()),
+	}
+	result, err := granted.Query(t.Context(), chatParams(params, ""))
+	require.NoError(t, err)
+	totals := result.(rateExplanation).Totals
+	require.NotNil(t, totals.Margin)
+	assert.Equal(t, "700", totals.Margin.String())
+	require.NotNil(t, totals.MarginPct)
+	assert.Equal(t, "25", totals.MarginPct.String())
+
+	denied := &explainRateTool{
+		quotes: &stubQuoteReader{quote: tracedWithMargin()},
+		access: newFieldAccess(&fakePermissions{
+			readable: map[string]*permissionports.ResourcePermissionDetail{},
+		}),
+	}
+	result, err = denied.Query(t.Context(), chatParams(params, ""))
+	require.NoError(t, err)
+	totals = result.(rateExplanation).Totals
+	assert.Nil(t, totals.Margin, "a person without the margins group is told no margin")
+	assert.Nil(t, totals.MarginPct)
+	assert.Equal(t, "2800", totals.Total.String(), "the price itself still explains")
 }

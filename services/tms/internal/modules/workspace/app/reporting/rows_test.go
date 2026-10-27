@@ -8,15 +8,15 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/reportvalue"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 // The stubs embed their interfaces rather than implementing every method: what
@@ -45,7 +45,10 @@ type stubRowsStorage struct {
 	downloaded  string
 }
 
-func (s *stubRowsStorage) GetFileInfo(_ context.Context, key string) (*kernelports.FileInfo, error) {
+func (s *stubRowsStorage) GetFileInfo(
+	_ context.Context,
+	key string,
+) (*kernelports.FileInfo, error) {
 	if s.statErr != nil {
 		return nil, s.statErr
 	}
@@ -71,15 +74,13 @@ func (s *stubRowsStorage) Download(
 	}, nil
 }
 
-func rowsService(run *report.ReportRun, store *stubRowsStorage) *Service {
-	return &Service{
-		l:        zap.NewNop(),
-		runRepo:  &stubRunRepo{run: run},
-		defRepo:  &stubRevisions{definition: storedRunDefinition()},
-		orgRepo:  previewOrganizations{},
-		compiler: &recordingCompiler{},
-		storage:  store,
-	}
+func rowsService(t *testing.T, run *report.ReportRun, store *stubRowsStorage) *Service {
+	t.Helper()
+	svc, _ := engineService(t, engineOptions{})
+	svc.runRepo = &stubRunRepo{run: run}
+	svc.defRepo = &stubRevisions{definition: storedRunDefinition()}
+	svc.storage = store
+	return svc
 }
 
 func storedRun() *report.ReportRun {
@@ -100,7 +101,7 @@ func rowsRequest() *GetRunRequest {
 	}
 }
 
-const storedEnvelope = `{"meta":{"title":"Revenue","generatedAt":1784131200},` +
+const storedEnvelope = `{"meta":{"title":"Revenue","generatedAt":"2026-07-15T12:00:00Z"},` +
 	`"schema":[{"id":"customer","label":"Customer","type":"string","display":{}},` +
 	`{"id":"revenue","label":"Revenue","type":"decimal","display":{}}],` +
 	`"rows":[["ACME","1000.00"]],"summary":{"rowCount":1,"truncated":false}}`
@@ -111,13 +112,14 @@ func TestReadRunRows_ReturnsTheStoredRows(t *testing.T) {
 	store := &stubRowsStorage{body: []byte(storedEnvelope)}
 	run := storedRun()
 
-	envelope, err := rowsService(run, store).ReadRunRows(t.Context(), rowsRequest())
+	envelope, err := rowsService(t, run, store).ReadRunRows(t.Context(), rowsRequest())
 	require.NoError(t, err)
 
 	assert.Equal(t, run.RowsKey, store.downloaded)
 	assert.Equal(t, "Revenue", envelope.Meta.Title)
-	require.Len(t, envelope.Rows, 1)
-	assert.Equal(t, "1000.00", envelope.Rows[0][1])
+	rows := reportvalue.TableRows(envelope.Table)
+	require.Len(t, rows.Detail, 1)
+	assert.Equal(t, "1000.00", rows.Detail[0][1])
 }
 
 // Each refusal has its own reason because a caller deciding whether two runs
@@ -159,7 +161,7 @@ func TestReadRunRows_RefusesWithItsOwnReason(t *testing.T) {
 			tt.run(run)
 			store := &stubRowsStorage{body: []byte(storedEnvelope)}
 
-			_, err := rowsService(run, store).ReadRunRows(t.Context(), rowsRequest())
+			_, err := rowsService(t, run, store).ReadRunRows(t.Context(), rowsRequest())
 			require.Error(t, err)
 			assert.Contains(t, err.Error(), tt.says)
 			assert.Empty(t, store.downloaded, "a refused run is never fetched")
@@ -174,7 +176,7 @@ func TestReadRunRows_RefusesAnObjectOverTheCap(t *testing.T) {
 
 	store := &stubRowsStorage{body: []byte(storedEnvelope), size: maxRunRowsBytes + 1}
 
-	_, err := rowsService(storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
+	_, err := rowsService(t, storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "too large to read back")
 	assert.Empty(t, store.downloaded, "the size is checked before the read, not after")
@@ -186,11 +188,14 @@ func TestReadRunRows_RefusesAnObjectOverTheCap(t *testing.T) {
 func TestReadRunRows_RefusesAnOversizedBodyDespiteTheStat(t *testing.T) {
 	t.Parallel()
 
-	oversized := `{"meta":{},"schema":[{"id":"a","type":"string"}],"rows":[["` +
-		strings.Repeat("x", maxRunRowsBytes) + `"]],"summary":{}}`
+	oversized := `{"meta":{},"schema":[{"id":"a","label":"A","type":"string","display":{}}],"rows":[["` +
+		strings.Repeat(
+			"x",
+			maxRunRowsBytes,
+		) + `"]],"summary":{}}`
 	store := &stubRowsStorage{body: []byte(oversized), size: 12}
 
-	_, err := rowsService(storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
+	_, err := rowsService(t, storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "too large to read back")
 }
@@ -200,7 +205,7 @@ func TestReadRunRows_ReportsAMissingObject(t *testing.T) {
 
 	store := &stubRowsStorage{statErr: errors.New("NoSuchKey")}
 
-	_, err := rowsService(storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
+	_, err := rowsService(t, storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "no longer available")
 }
@@ -211,11 +216,12 @@ func TestReadRunRows_ReportsAMissingObject(t *testing.T) {
 func TestReadRunRows_RefusesAMalformedEnvelope(t *testing.T) {
 	t.Parallel()
 
-	short := `{"meta":{},"schema":[{"id":"a","type":"string"},{"id":"b","type":"int"}],` +
+	short := `{"meta":{},"schema":[{"id":"a","label":"A","type":"string","display":{}},` +
+		`{"id":"b","label":"B","type":"int","display":{}}],` +
 		`"rows":[["only-one"]],"summary":{}}`
 	store := &stubRowsStorage{body: []byte(short)}
 
-	_, err := rowsService(storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
+	_, err := rowsService(t, storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "could not be read")
 }
@@ -225,7 +231,7 @@ func TestReadRunRows_RefusesBytesThatAreNotAnEnvelope(t *testing.T) {
 
 	store := &stubRowsStorage{body: []byte("not json at all")}
 
-	_, err := rowsService(storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
+	_, err := rowsService(t, storedRun(), store).ReadRunRows(t.Context(), rowsRequest())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "could not be read")
 }

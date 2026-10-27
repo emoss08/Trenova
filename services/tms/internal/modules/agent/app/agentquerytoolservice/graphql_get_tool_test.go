@@ -4,6 +4,7 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
@@ -97,6 +98,10 @@ func TestGraphQLGet_SpecsMatchWhatTheGeneratorProved(t *testing.T) {
 		read, ok := graphQLReads[spec.name]
 		require.True(t, ok, spec.name)
 		assert.Equal(t, graphQLVerbGet, read.Verb, spec.name)
+		if read.SelfScoped {
+			assert.Equal(t, agent.ToolScopeSelf, spec.scope, spec.name)
+			continue
+		}
 		assert.Equal(t, string(spec.resource), read.Resource, spec.name)
 	}
 
@@ -120,11 +125,20 @@ func TestGraphQLGet_TheCardSelectsWhatTheSummaryPromises(t *testing.T) {
 		return names
 	}
 	for tool, want := range map[string][]string{
-		"carrier_get":  {"insurancePolicies", "contacts", "complianceStatus", "dotNumber", "mcNumber"},
-		"customer_get": {"billingProfile", "addressLine1", "dotNumber"},
-		"location_get": {"latitude", "longitude", "geofenceType", "timezone", "locationCategory"},
+		"carrier_get":           {"insurancePolicies", "contacts", "complianceStatus", "dotNumber", "mcNumber"},
+		"customer_get":          {"billingProfile", "addressLine1", "dotNumber"},
+		"location_get":          {"latitude", "longitude", "geofenceType", "timezone", "locationCategory"},
+		"equipment_get_tractor": {"primaryWorker", "fleetCode", "equipmentType", "leaseEndDate"},
+		"equipment_get_trailer": {"fleetCode", "equipmentType", "maxLoadWeight", "leaseEndDate"},
 		"carrier_get_intelligence_event": {
 			"severity", "priorValue", "currentValue", "acknowledgedAt", "resolvedAt",
+		},
+		"edi_get_partner":      {"partner", "customer", "readiness", "transports"},
+		"edi_get_inbound_file": {"file", "messages", "raw"},
+		"edi_get_message":      {"message", "decoded", "diagnostics", "raw"},
+		"edi_get_transfer":     {"transfer", "unresolvedMappings", "canAccept"},
+		"edi_get_ack_health": {
+			"ackStatusCounts", "partners", "overdueByPartner", "recentDeadLettered",
 		},
 	} {
 		names := selected(tool)

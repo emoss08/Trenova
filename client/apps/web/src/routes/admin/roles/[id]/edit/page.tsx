@@ -32,6 +32,8 @@ import { RolePageLayout } from "../../_components/role-builder-layout";
 import { RoleAgentsSection } from "../../_components/role-agents-section";
 import { RolePermissionMatrix } from "../../_components/role-permission-matrix";
 import { DeleteRoleDialog } from "../../_components/delete-role-dialog";
+import { RoleScreenPreviewCard } from "../../_components/role-screen-preview-card";
+import { toRoleDraft } from "@/lib/role-draft";
 
 export function RoleEditPage() {
   const t = useT();
@@ -68,6 +70,7 @@ export function RoleEditPage() {
     handleSubmit,
   } = form;
   const watchedPermissions = useWatch({ control, name: "permissions" });
+  const maxSensitivity = useWatch({ control, name: "maxSensitivity" });
   const permissions = useMemo(() => watchedPermissions ?? [], [watchedPermissions]);
 
   useEffect(() => {
@@ -227,9 +230,14 @@ export function RoleEditPage() {
                     shouldDirty: true,
                   })
                 }
+                maxSensitivity={maxSensitivity}
               />
             </CardContent>
           </Card>
+
+          <RoleScreenPreviewCard
+            draft={toRoleDraft(maxSensitivity, permissions, role.parentRoleIds ?? [])}
+          />
 
           {role.id && <RoleAgentsSection roleId={role.id} />}
         </RolePageLayout>

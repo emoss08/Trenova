@@ -3,19 +3,21 @@ package editransferchangerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var transferChangeErrors = dberror.Mapping{Entity: "EDITransferChange"}
 
 type Params struct {
 	fx.In
@@ -44,31 +46,16 @@ func (r *repository) ListTransferChanges(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.TransferChange], error) {
-			entities := make([]*edi.TransferChange, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.TransferChangeColumns
+			tc := edidb.TransferChanges
+			q := tc.Where(
+				linkedToOrganization(req.Filter.TenantInfo.OrgID),
+				keel.When(req.ShipmentLinkID.IsNotNil(), tc.ShipmentLinkID.Eq(req.ShipmentLinkID)),
+			)
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return ScopeTenant(sq, req.Filter.TenantInfo)
-				})
-			if req.ShipmentLinkID.IsNotNil() {
-				query = query.Where(cols.ShipmentLinkID.Eq(), req.ShipmentLinkID)
-			}
-			total, err := querybuilder.ApplyFiltersWithoutTenantScope(query, "etc", req.Filter, (*edi.TransferChange)(nil)).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.TransferChange]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.List(ctx, r.db.Keel(ctx), q, &listquery.Request[edi.TransferChange]{
+				Filter: req.Filter,
+				Then:   []keel.Order{tc.CreatedAt.Desc()},
+			})
 		},
 	)
 }
@@ -78,19 +65,11 @@ func (r *repository) GetTransferChangeByID(
 	req ediports.GetEDITransferChangeByIDRequest,
 ) (*edi.TransferChange, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
-		entity := new(edi.TransferChange)
-		cols := edicol.TransferChangeColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ScopeTenant(sq, req.TenantInfo)
-			}).
-			Scan(ctx)
+		tc := edidb.TransferChanges
+		entity, err := tc.Where(tc.ID.Eq(req.ID), linkedToOrganization(req.TenantInfo.OrgID)).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDITransferChange")
+			return nil, transferChangeErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -102,12 +81,8 @@ func (r *repository) CreateTransferChange(
 	entity *edi.TransferChange,
 ) (*edi.TransferChange, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := edidb.TransferChanges.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, transferChangeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -122,40 +97,36 @@ func (r *repository) CreateTransferChangeIdempotent(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*ediports.CreateEDITransferChangeIdempotentResult, error) {
-			cols := edicol.TransferChangeColumns
-
-			results, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				On("CONFLICT (shipment_link_id, business_unit_id, direction, change_type, idempotency_key) DO NOTHING").
-				Returning("*").
-				Exec(ctx)
+			db := r.db.Keel(ctx)
+			tc := edidb.TransferChanges
+			created, err := tc.CreateOrSkip(
+				ctx,
+				db,
+				[]*edi.TransferChange{entity},
+				tc.ShipmentLinkID,
+				tc.BusinessUnitID,
+				tc.Direction,
+				tc.ChangeType,
+				tc.IdempotencyKey,
+			)
 			if err != nil {
-				return nil, err
+				return nil, transferChangeErrors.Map(err, entity.ID.String())
 			}
-
-			rowsAffected, err := results.RowsAffected()
-			if err != nil {
-				return nil, err
-			}
-			if rowsAffected > 0 {
+			if created > 0 {
 				return &ediports.CreateEDITransferChangeIdempotentResult{
 					TransferChange: entity,
 					Created:        true,
 				}, nil
 			}
 
-			existing := new(edi.TransferChange)
-			if err = r.db.DBForContext(ctx).
-				NewSelect().
-				Model(existing).
-				Where(cols.ShipmentLinkID.Eq(), entity.ShipmentLinkID).
-				Where(cols.BusinessUnitID.Eq(), entity.BusinessUnitID).
-				Where(cols.Direction.Eq(), entity.Direction).
-				Where(cols.ChangeType.Eq(), entity.ChangeType).
-				Where(cols.IdempotencyKey.Eq(), entity.IdempotencyKey).
-				Scan(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "EDITransferChange")
+			existing, err := tc.Where(
+				tc.ShipmentLinkID.Eq(entity.ShipmentLinkID),
+				tc.Direction.Eq(entity.Direction),
+				tc.ChangeType.Eq(entity.ChangeType),
+				tc.IdempotencyKey.Eq(entity.IdempotencyKey),
+			).One(ctx, db)
+			if err != nil {
+				return nil, transferChangeErrors.Map(err, entity.ID.String())
 			}
 
 			return &ediports.CreateEDITransferChangeIdempotentResult{
@@ -171,45 +142,19 @@ func (r *repository) UpdateTransferChange(
 	entity *edi.TransferChange,
 ) (*edi.TransferChange, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.TransferChange, error) {
-		ov := entity.Version
-		entity.Version++
-		cols := edicol.TransferChangeColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"EDITransferChange",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := edidb.TransferChanges.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, transferChangeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-func ScopeTenant(query *bun.SelectQuery, tenantInfo pagination.TenantInfo) *bun.SelectQuery {
-	linkCols := edicol.ShipmentLinkColumns
-
-	return query.
-		Join(transferChangeShipmentLinkJoin()).
-		Where(edicol.TransferChangeColumns.BusinessUnitID.Eq(), tenantInfo.BuID).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.WhereOr(linkCols.SourceOrganizationID.Eq(), tenantInfo.OrgID).
-				WhereOr(linkCols.TargetOrganizationID.Eq(), tenantInfo.OrgID)
-		})
-}
-
-func transferChangeShipmentLinkJoin() string {
-	return "JOIN " + edicol.ShipmentLinkTable.As(edicol.ShipmentLinkTable.Alias) +
-		" ON " + edicol.TransferChangeColumns.ShipmentLinkID.EqColumn(edicol.ShipmentLinkColumns.ID)
+func linkedToOrganization(orgID pulid.ID) keel.Pred {
+	tc := edidb.TransferChanges
+	sl := edidb.ShipmentLinks
+	return keel.Exists(sl.Where(
+		sl.ID.EqCol(tc.ShipmentLinkID),
+		keel.Or(sl.SourceOrganizationID.Eq(orgID), sl.TargetOrganizationID.Eq(orgID)),
+	))
 }

@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const reassignCancelReason = "Charges reassigned to other payers"
@@ -444,8 +443,8 @@ func (s *service) applyReassignment(
 
 	now := timeutils.NowUnix()
 	userID := actor.UserID
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
-		if txErr := s.chargeAllocationRepo.SyncForShipment(txCtx, tx, plan.shipment); txErr != nil {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
+		if txErr := s.chargeAllocationRepo.SyncForShipment(txCtx, plan.shipment); txErr != nil {
 			return txErr
 		}
 		for _, entity := range newItems {

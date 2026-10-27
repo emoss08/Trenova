@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aianalytics"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -264,6 +265,11 @@ func (s *Service) openToolSet(ctx context.Context, req *toolSetRequest) *toolSet
 		set.preselected = append(set.preselected, descriptor.Name)
 		s.load(set, descriptor.Name)
 	}
+	// Whether a question needs many reads is the model's to judge once it
+	// sees the first result, which is after the turn's tools are fixed, so
+	// the script tool rides on every turn that may run one rather than
+	// waiting on a search the model would not think to make.
+	s.load(set, codemode.ToolRunScript)
 	s.carryOver(set, req.history)
 	set.add(findToolsSpec())
 	set.addConversational(*req)
@@ -354,9 +360,6 @@ func (s *Service) load(set *toolSet, name string) bool {
 		}
 		for _, companion := range s.catalog.Companions(name) {
 			s.load(set, companion)
-		}
-		for _, follower := range s.catalog.Followers(name) {
-			s.load(set, follower)
 		}
 		if fed := soleFed(set.allowed, s.catalog.Feeds(name)); fed != "" {
 			s.load(set, fed)
@@ -781,11 +784,13 @@ func (s *Service) unheldOutcome(set *toolSet, name string) toolOutcome {
 // be finished without it: shipment_create brings the customer, location and
 // commodity it may find missing. Each still answers to its own policy, so it
 // is proposed and approved like any write, and one an administrator switched
-// off for the agent stays off.
+// off for the agent stays off. An agent that holds a tool for its work also
+// holds the tool that runs a script over its tools, unless an administrator switched it off
+// for the agent; whether a turn is shown it is the code-mode gate's to decide.
 func (s *Service) heldTools(definition *agentdefinition.Definition) []string {
 	names := definition.EffectiveToolNames()
 	if s.catalog == nil {
-		return names
+		return s.withScripts(definition, names)
 	}
 
 	selected := len(names)
@@ -806,7 +811,25 @@ func (s *Service) heldTools(definition *agentdefinition.Definition) []string {
 		}
 	}
 
-	return names
+	return s.withScripts(definition, names)
+}
+
+func (s *Service) withScripts(definition *agentdefinition.Definition, names []string) []string {
+	if !s.looksUp(codemode.ToolRunScript) ||
+		slices.Contains(names, codemode.ToolRunScript) ||
+		slices.Contains(definition.DisabledToolNames, codemode.ToolRunScript) ||
+		!slices.ContainsFunc(names, scriptable) {
+		return names
+	}
+
+	return append(names, codemode.ToolRunScript)
+}
+
+// scriptable reports whether a held tool is one a script could call: a tool
+// the agent was given for its work, not one of the core tools every agent
+// holds.
+func scriptable(name string) bool {
+	return !agentdefinition.IsCoreTool(name)
 }
 
 func (s *Service) holds(definition *agentdefinition.Definition, name string) bool {

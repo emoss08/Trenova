@@ -37,6 +37,8 @@ export type ResultGridProps = {
   emptyMessage?: string;
   density?: "compact" | "default";
   className?: string;
+  /** The zone the result's dates (date buckets above all) are written in: the result's own. */
+  timeZone?: string;
 };
 
 const ROW_HEIGHT = { compact: 26, default: 30 } as const;
@@ -145,11 +147,15 @@ function FormattedResultGrid({
   emptyMessage,
   density = "default",
   className,
+  timeZone,
 }: ResultGridProps) {
   const t = useT();
   const rules = useRules();
 
-  const pages = useMemo(() => createReportPages(rules, columns, rows), [rules, columns, rows]);
+  const pages = useMemo(
+    () => createReportPages(rules, columns, rows, timeZone),
+    [rules, columns, rows, timeZone],
+  );
   const totalCells = useMemo(
     () => (totals ? formatReportRow(rules, columns, totals) : null),
     [rules, columns, totals],
@@ -228,7 +234,7 @@ function FormattedResultGrid({
                 >
                   {visibleColumns.map(({ column, index: columnIndex }) => {
                     const cell = pages.cell(entry.index, columnIndex);
-                    const text = reportCellText(cell, column.display);
+                    const text = reportCellText(cell, column.display, timeZone);
                     const numeric = isNumericDisplay(column.display);
                     const clickable = Boolean(onCellClick);
                     const tone = cell.tone;
@@ -277,7 +283,7 @@ function FormattedResultGrid({
                 ? columnIndex === 0
                   ? t("Total")
                   : ""
-                : reportCellText(totalCells[columnIndex], column.display);
+                : reportCellText(totalCells[columnIndex], column.display, timeZone);
             return (
               <div
                 key={column.id}

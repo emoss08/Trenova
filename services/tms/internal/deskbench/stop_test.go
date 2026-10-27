@@ -4,16 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 	"go.temporal.io/sdk/client"
 )
 
@@ -28,15 +24,6 @@ func (stoppedWorkflowRun) Get(context.Context, any) error {
 func TestStopWaitingRun_StopsTheRunAndGradesHowItClosed(t *testing.T) {
 	t.Parallel()
 
-	sqlDB, sqlMock, err := sqlmock.New()
-	require.NoError(t, err)
-	sqlMock.MatchExpectationsInOrder(false)
-	bunDB := bun.NewDB(sqlDB, pgdialect.New())
-	t.Cleanup(func() { _ = bunDB.Close() })
-	sqlMock.ExpectExec("SET LOCAL statement_timeout").WillReturnResult(sqlmock.NewResult(0, 0))
-	sqlMock.ExpectQuery("SELECT id FROM agent_proposals").
-		WillReturnRows(sqlmock.NewRows([]string{"id"}))
-
 	runID := pulid.MustNew("arun_")
 	records := &runRecordsFake{run: &agent.AgentRun{
 		ID:           runID,
@@ -45,7 +32,8 @@ func TestStopWaitingRun_StopsTheRunAndGradesHowItClosed(t *testing.T) {
 	}}
 	starter := &leftoverStarter{}
 	bench := &Bench{
-		deps:    deps{DB: postgres.NewTestConnection(bunDB), RunRecords: records},
+		deps:    deps{RunRecords: records},
+		facts:   factRows(t, "SELECT id FROM agent_proposals", nil),
 		watcher: NewTurnWatcher(starter),
 	}
 	session := &Session{
@@ -67,7 +55,6 @@ func TestStopWaitingRun_StopsTheRunAndGradesHowItClosed(t *testing.T) {
 	assert.Equal(t, records.run.ErrorMessage, record.Failure)
 	assert.Empty(t, record.Proposals, "the proposals are read again, so none is left to reject")
 	assert.Empty(t, record.CaptureError)
-	assert.NoError(t, sqlMock.ExpectationsWereMet())
 
 	checks := runChecks(&Expect{Run: "Failed"}, outcome)
 	require.Len(t, checks, 2)

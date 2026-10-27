@@ -5,14 +5,13 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var ErrInvalidJobDepartment = errors.New("invalid job department")
@@ -62,42 +61,31 @@ func AllJobDepartments() []JobDepartment {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*JobPosition)(nil)
 	_ validationframework.TenantedEntity = (*JobPosition)(nil)
 )
 
-// JobPosition is what somebody does, as distinct from where they do it. A
-// fleet code is a terminal; this is the title the headcount is counted by and
-// the org chart is drawn from.
+// Job titles the roster is counted by, and the reporting lines between them
 type JobPosition struct {
-	bun.BaseModel `bun:"table:job_positions,alias:jpos" json:"-"`
+	keel.Table `keel:"job_positions,report=Parties"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:jpos_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	Status      domaintypes.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code        string             `json:"code"        bun:"code,type:VARCHAR(20),notnull"`
-	Title       string             `json:"title"       bun:"title,type:VARCHAR(100),notnull"`
-	Description string             `json:"description" bun:"description,type:TEXT,nullzero"`
-	Department  JobDepartment      `json:"department"  bun:"department,type:job_department_enum,notnull,default:'Operations'"`
-	// FLSAExempt says the position is exempt from overtime. It lives on the
-	// position because that is where the duties test is applied — two people
-	// doing the same job are exempt or not together.
-	FLSAExempt bool `json:"flsaExempt" bun:"flsa_exempt,type:BOOLEAN,notnull"`
-	// IsDrivingPosition separates the roster that needs a CDL from the one that
-	// does not, which is the line most compliance rules are drawn along.
-	IsDrivingPosition bool `json:"isDrivingPosition" bun:"is_driving_position,type:BOOLEAN,notnull"`
-	// ReportsToPositionID is the shape of the org chart. A person's own manager
-	// is on the worker, because two people in the same position can report to
-	// different managers.
-	ReportsToPositionID pulid.ID `json:"reportsToPositionId" bun:"reports_to_position_id,type:VARCHAR(100),nullzero"`
+	Status              domaintypes.Status `json:"status"              keel:"status"`
+	Code                string             `json:"code"                keel:"code"`
+	Title               string             `json:"title"               keel:"title"`
+	Description         string             `json:"description"         keel:"description,nullzero"`
+	Department          JobDepartment      `json:"department"          keel:"department"`
+	FLSAExempt          bool               `json:"flsaExempt"          keel:"flsa_exempt,label=Exempt from Overtime"`
+	IsDrivingPosition   bool               `json:"isDrivingPosition"   keel:"is_driving_position,label=Driving Position"`
+	ReportsToPositionID pulid.ID           `json:"reportsToPositionId" keel:"reports_to_position_id,nullzero"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	ReportsTo *JobPosition `json:"reportsTo,omitempty" bun:"rel:belongs-to,join:reports_to_position_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	ReportsTo *JobPosition `json:"reportsTo,omitempty" keel:"belongs:reports_to_position_id"`
 }
 
 func (p *JobPosition) Validate(multiErr *errortypes.MultiError) {
@@ -154,24 +142,12 @@ func (p *JobPosition) GetResourceType() string { return "job_position" }
 
 func (p *JobPosition) GetResourceID() string { return p.ID.String() }
 
-func (p *JobPosition) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if p.ID.IsNil() {
-			p.ID = pulid.MustNew("jpos_")
-		}
-		if p.Status == "" {
-			p.Status = domaintypes.StatusActive
-		}
-		if p.Department == "" {
-			p.Department = DepartmentOperations
-		}
-		p.CreatedAt = now
-		p.UpdatedAt = now
-	case *bun.UpdateQuery:
-		p.UpdatedAt = now
+func (p *JobPosition) BeforeCreate(_ context.Context) error {
+	if p.Status == "" {
+		p.Status = domaintypes.StatusActive
+	}
+	if p.Department == "" {
+		p.Department = DepartmentOperations
 	}
 
 	return nil

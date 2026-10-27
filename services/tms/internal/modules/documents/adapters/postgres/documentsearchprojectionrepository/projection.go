@@ -3,19 +3,20 @@ package documentsearchprojectionrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/documentsearchprojectioncol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentsearchprojection/documentsearchprojectiondb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentsearchprojectionports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var projectionErrors = dberror.Mapping{Entity: "Document search projection"}
 
 type Params struct {
 	fx.In
@@ -44,27 +45,29 @@ func (r *repository) Upsert(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*documentsearchprojection.Projection, error) {
-			cols := documentsearchprojectioncol.ProjectionColumns
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				On(`CONFLICT ("id", "organization_id", "business_unit_id") DO UPDATE`).
-				Set(cols.ResourceID.SetExcluded()).
-				Set(cols.ResourceType.SetExcluded()).
-				Set(cols.FileName.SetExcluded()).
-				Set(cols.OriginalName.SetExcluded()).
-				Set(cols.Description.SetExcluded()).
-				Set(cols.Tags.SetExcluded()).
-				Set(cols.Status.SetExcluded()).
-				Set(cols.ContentStatus.SetExcluded()).
-				Set(cols.DetectedKind.SetExcluded()).
-				Set(cols.ShipmentDraftStatus.SetExcluded()).
-				Set(cols.ContentText.SetExcluded()).
-				Set(cols.CreatedAt.SetExcluded()).
-				Set(cols.UpdatedAt.SetExcluded()).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return nil, dberror.HandleNotFoundError(err, "Document search projection")
+			p := documentsearchprojectiondb.Projections
+			_, err := p.Upsert(
+				ctx,
+				r.db.Keel(ctx),
+				[]*documentsearchprojection.Projection{entity},
+				keel.OnConflict(p.ID, p.OrganizationID, p.BusinessUnitID).Update(
+					p.ResourceID,
+					p.ResourceType,
+					p.FileName,
+					p.OriginalName,
+					p.Description,
+					p.Tags,
+					p.Status,
+					p.ContentStatus,
+					p.DetectedKind,
+					p.ShipmentDraftStatus,
+					p.ContentText,
+					p.CreatedAt,
+					p.UpdatedAt,
+				),
+			)
+			if err != nil {
+				return nil, projectionErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -75,20 +78,12 @@ func (r *repository) Upsert(
 func (r *repository) Delete(
 	ctx context.Context,
 	documentID pulid.ID,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := documentsearchprojectioncol.ProjectionColumns
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*documentsearchprojection.Projection)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return documentsearchprojectioncol.ProjectionScopeTenantDelete(dq, tenantInfo).
-					Where(cols.ID.Eq(), documentID)
-			}).
-			Exec(ctx)
-		if err != nil {
-			return dberror.HandleNotFoundError(err, "Document search projection")
+		p := documentsearchprojectiondb.Projections
+		if _, err := p.Where(p.ID.Eq(documentID)).Delete(ctx, r.db.Keel(ctx)); err != nil {
+			return projectionErrors.Map(err, documentID.String())
 		}
 
 		return nil

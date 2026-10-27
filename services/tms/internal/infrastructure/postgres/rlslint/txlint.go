@@ -130,7 +130,7 @@ func (p *repositoryPackage) callsUnscopedHelper(
 			return true
 		}
 		helper := p.methods[typeName][sel.Sel.Name]
-		if helper == nil || takesTransaction(helper.Type) || len(helper.Recv.List[0].Names) == 0 {
+		if helper == nil || len(helper.Recv.List[0].Names) == 0 {
 			return true
 		}
 		visited[sel.Sel.Name] = true
@@ -257,14 +257,6 @@ func scanRepositoryFile(
 		key := rel + ":" + funcName(fn)
 		position := fmt.Sprintf("%s:%d", rel, fset.Position(fn.Pos()).Line)
 
-		if usesRawPool(fn.Body) {
-			violations = append(violations, TxViolation{
-				Key:      key,
-				Position: position,
-				Problem:  "calls .DB(), which runs outside the scoped transaction; use DBForContext(ctx)",
-			})
-		}
-
 		if fn.Recv == nil || !fn.Name.IsExported() || len(fn.Recv.List) != 1 ||
 			len(fn.Recv.List[0].Names) == 0 {
 			continue
@@ -273,7 +265,7 @@ func scanRepositoryFile(
 		recvName := fn.Recv.List[0].Names[0].Name
 		typeName := receiverTypeName(fn.Recv.List[0].Type)
 		fields := pkg.conns[typeName]
-		if len(fields) == 0 || takesTransaction(fn.Type) {
+		if len(fields) == 0 {
 			continue
 		}
 		touches := referencesConnection(fn.Body, recvName, fields) || executesQuery(fn.Body) ||
@@ -286,7 +278,7 @@ func scanRepositoryFile(
 			violations = append(violations, TxViolation{
 				Key:      key,
 				Position: position,
-				Problem:  "touches the connection outside dbtx.Read/Write or WithTx",
+				Problem:  "touches the connection outside dbtx.Read/Write or Transact",
 			})
 		}
 	}
@@ -305,41 +297,6 @@ func receiverTypeName(expr ast.Expr) string {
 	default:
 		return ""
 	}
-}
-
-func usesRawPool(body *ast.BlockStmt) bool {
-	found := false
-	ast.Inspect(body, func(n ast.Node) bool {
-		call, ok := n.(*ast.CallExpr)
-		if !ok || len(call.Args) != 0 {
-			return !found
-		}
-		sel, ok := call.Fun.(*ast.SelectorExpr)
-		if !ok || sel.Sel.Name != "DB" {
-			return !found
-		}
-		if _, isSel := sel.X.(*ast.SelectorExpr); isSel {
-			found = true
-		}
-		return !found
-	})
-
-	return found
-}
-
-func takesTransaction(ft *ast.FuncType) bool {
-	for _, field := range ft.Params.List {
-		sel, ok := field.Type.(*ast.SelectorExpr)
-		if !ok {
-			continue
-		}
-		pkg, isIdent := sel.X.(*ast.Ident)
-		if isIdent && pkg.Name == "bun" && (sel.Sel.Name == "IDB" || sel.Sel.Name == "Tx") {
-			return true
-		}
-	}
-
-	return false
 }
 
 var queryTerminals = map[string]bool{
@@ -422,7 +379,7 @@ func runsInScopedTransaction(body *ast.BlockStmt, recv string, fields map[string
 		return !connectionUsedBefore(body.List[:len(body.List)-1], recv, fields)
 	}
 
-	if sel.Sel.Name == "WithTx" || sel.Sel.Name == "RunScoped" || sel.Sel.Name == "RunDetached" {
+	if sel.Sel.Name == "Transact" || sel.Sel.Name == "RunScoped" || sel.Sel.Name == "RunDetached" {
 		if inner, isSel := sel.X.(*ast.SelectorExpr); isSel && fields[inner.Sel.Name] {
 			return !connectionUsedBefore(body.List[:len(body.List)-1], recv, fields)
 		}
@@ -430,6 +387,8 @@ func runsInScopedTransaction(body *ast.BlockStmt, recv string, fields map[string
 
 	return false
 }
+
+var connectionAccessors = map[string]bool{"Keel": true}
 
 func connectionUsedBefore(stmts []ast.Stmt, recv string, fields map[string]bool) bool {
 	for _, stmt := range stmts {
@@ -440,7 +399,7 @@ func connectionUsedBefore(stmts []ast.Stmt, recv string, fields map[string]bool)
 				return !used
 			}
 			sel, ok := call.Fun.(*ast.SelectorExpr)
-			if !ok || (sel.Sel.Name != "DBForContext" && sel.Sel.Name != "DB") {
+			if !ok || !connectionAccessors[sel.Sel.Name] {
 				return !used
 			}
 			if inner, isSel := sel.X.(*ast.SelectorExpr); isSel {

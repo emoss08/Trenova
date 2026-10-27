@@ -4,51 +4,56 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
 	_ pagination.CursorEntity        = (*CustomFieldDefinition)(nil)
-	_ bun.BeforeAppendModelHook      = (*CustomFieldDefinition)(nil)
 	_ domaintypes.PostgresSearchable = (*CustomFieldDefinition)(nil)
 )
 
 var namePattern = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 
 type CustomFieldDefinition struct {
-	bun.BaseModel             `bun:"table:custom_field_definitions,alias:cfd" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                   json:"-"`
+	keel.Table `keel:"custom_field_definitions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:cfd_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ResourceType    string           `json:"resourceType"    bun:"resource_type,type:VARCHAR(100),notnull"`
-	Name            string           `json:"name"            bun:"name,type:VARCHAR(100),notnull"`
-	Label           string           `json:"label"           bun:"label,type:VARCHAR(150),notnull"`
-	Description     string           `json:"description"     bun:"description,type:TEXT,nullzero"`
-	FieldType       FieldType        `json:"fieldType"       bun:"field_type,type:custom_field_type_enum,notnull"`
-	IsRequired      bool             `json:"isRequired"      bun:"is_required"`
-	IsActive        bool             `json:"isActive"        bun:"is_active"`
-	DisplayOrder    int              `json:"displayOrder"    bun:"display_order"`
-	Color           string           `json:"color"           bun:"color,type:VARCHAR(20),nullzero"`
-	Options         []SelectOption   `json:"options"         bun:"options,type:JSONB"`
-	ValidationRules *ValidationRules `json:"validationRules" bun:"validation_rules,type:JSONB"`
-	DefaultValue    any              `json:"defaultValue"    bun:"default_value,type:JSONB"`
-	UIAttributes    *UIAttributes    `json:"uiAttributes"    bun:"ui_attributes,type:JSONB"`
+	ResourceType    string           `json:"resourceType"    keel:"resource_type"`
+	Name            string           `json:"name"            keel:"name"`
+	Label           string           `json:"label"           keel:"label"`
+	Description     string           `json:"description"     keel:"description,nullzero"`
+	FieldType       FieldType        `json:"fieldType"       keel:"field_type"`
+	IsRequired      bool             `json:"isRequired"      keel:"is_required"`
+	IsActive        bool             `json:"isActive"        keel:"is_active"`
+	DisplayOrder    int              `json:"displayOrder"    keel:"display_order"`
+	Color           string           `json:"color"           keel:"color,nullzero"`
+	Options         []SelectOption   `json:"options"         keel:"options,jsonb"`
+	ValidationRules *ValidationRules `json:"validationRules" keel:"validation_rules,jsonb"`
+	DefaultValue    any              `json:"defaultValue"    keel:"default_value,jsonb"`
+	UIAttributes    *UIAttributes    `json:"uiAttributes"    keel:"ui_attributes,jsonb"`
 
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-"`
+	Rank         string `json:"-"         keel:"rank,computed"`
+	Version      int64  `json:"version"   keel:"version,version"`
+	CreatedAt    int64  `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt    int64  `json:"updatedAt" keel:"updated_at,autoupdate"`
+}
+
+func (c *CustomFieldDefinition) BeforeCreate(_ context.Context) error {
+	if c.Options == nil {
+		c.Options = []SelectOption{}
+	}
+
+	return nil
 }
 
 func (c *CustomFieldDefinition) Validate(multiErr *errortypes.MultiError) {
@@ -89,28 +94,6 @@ func (c *CustomFieldDefinition) Validate(multiErr *errortypes.MultiError) {
 	if !IsResourceTypeSupported(c.ResourceType) {
 		multiErr.Add("resourceType", errortypes.ErrInvalid, "Unsupported resource type")
 	}
-}
-
-func (c *CustomFieldDefinition) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("cfd_")
-		}
-		c.CreatedAt = now
-		c.UpdatedAt = now
-
-		if c.Options == nil {
-			c.Options = []SelectOption{}
-		}
-
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
-	}
-
-	return nil
 }
 
 func (c *CustomFieldDefinition) GetID() pulid.ID {

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -86,13 +88,10 @@ func (s *sequenceStore) getNextSequenceBatchAttempt(
 	nowUnix := timeutils.NowUnix()
 	seqID := pulid.MustNew("seq_")
 
-	type sequenceResult struct {
-		CurrentSequence int64 `bun:"current_sequence"`
-	}
-
-	result := new(sequenceResult)
+	var current int64
 	err := s.db.RunDetached(ctx, false, func(ctx context.Context) error {
-		return s.db.DBForContext(ctx).NewRaw(`
+		var err error
+		current, err = keel.QueryValue[int64](ctx, s.db.Keel(ctx), `
 		INSERT INTO sequences (
 			id,
 			sequence_type,
@@ -105,7 +104,7 @@ func (s *sequenceStore) getNextSequenceBatchAttempt(
 			version,
 			created_at,
 			updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, '', 0, ?, ?)
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, '', 0, $8, $8)
 		ON CONFLICT (sequence_type, organization_id, business_unit_id, year, month)
 		DO UPDATE SET
 			current_sequence = sequences.current_sequence + EXCLUDED.current_sequence,
@@ -113,22 +112,22 @@ func (s *sequenceStore) getNextSequenceBatchAttempt(
 			updated_at = EXCLUDED.updated_at
 		RETURNING current_sequence
 	`,
-			seqID,
-			req.Type,
-			req.OrgID,
-			req.BuID,
+			seqID.String(),
+			string(req.Type),
+			req.OrgID.String(),
+			req.BuID.String(),
 			req.Year,
 			req.Month,
 			req.Count,
 			nowUnix,
-			nowUnix,
-		).Scan(ctx, result)
+		)
+		return err
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	start := result.CurrentSequence - int64(req.Count) + 1
+	start := current - int64(req.Count) + 1
 	sequences := make([]int64, req.Count)
 	for i := range req.Count {
 		sequences[i] = start + int64(i)
@@ -139,16 +138,22 @@ func (s *sequenceStore) getNextSequenceBatchAttempt(
 
 func (s *sequenceStore) UpdateLastGenerated(ctx context.Context, req *LastGeneratedRequest) error {
 	return s.db.RunDetached(ctx, false, func(ctx context.Context) error {
-		_, err := s.db.DBForContext(ctx).NewUpdate().
-			Table("sequences").
-			Set("last_generated = ?", req.Value).
-			Set("updated_at = ?", timeutils.NowUnix()).
-			Where("sequence_type = ?", req.Type).
-			Where("organization_id = ?", req.OrgID).
-			Where("business_unit_id = ?", req.BuID).
-			Where("year = ?", req.Year).
-			Where("month = ?", req.Month).
-			Exec(ctx)
+		_, err := keel.Exec(ctx, s.db.Keel(ctx), `
+		UPDATE sequences
+		SET last_generated = $1, updated_at = $2
+		WHERE sequence_type = $3
+			AND organization_id = $4
+			AND business_unit_id = $5
+			AND year = $6
+			AND month = $7`,
+			req.Value,
+			timeutils.NowUnix(),
+			string(req.Type),
+			req.OrgID.String(),
+			req.BuID.String(),
+			req.Year,
+			req.Month,
+		)
 		return err
 	})
 }

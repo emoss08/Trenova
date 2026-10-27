@@ -74,7 +74,7 @@ type MockEDIControlNumberRepository_AllocateControlNumbers_Call struct {
 
 // AllocateControlNumbers is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req repositories.AllocateEDIControlNumbersRequest
+//   - req ediports.AllocateEDIControlNumbersRequest
 func (_e *MockEDIControlNumberRepository_Expecter) AllocateControlNumbers(ctx any, req any) *MockEDIControlNumberRepository_AllocateControlNumbers_Call {
 	return &MockEDIControlNumberRepository_AllocateControlNumbers_Call{Call: _e.mock.On("AllocateControlNumbers", ctx, req)}
 }
@@ -142,7 +142,7 @@ type MockEDIControlNumberRepository_ResetControlNumber_Call struct {
 
 // ResetControlNumber is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ResetEDIControlNumberRequest
+//   - req *ediports.ResetEDIControlNumberRequest
 func (_e *MockEDIControlNumberRepository_Expecter) ResetControlNumber(ctx any, req any) *MockEDIControlNumberRepository_ResetControlNumber_Call {
 	return &MockEDIControlNumberRepository_ResetControlNumber_Call{Call: _e.mock.On("ResetControlNumber", ctx, req)}
 }
@@ -209,6 +209,8 @@ type MockEDIControlNumberRepository_StartControlNumber_Call struct {
 }
 
 // StartControlNumber is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *ediports.ResetEDIControlNumberRequest
 func (_e *MockEDIControlNumberRepository_Expecter) StartControlNumber(ctx any, req any) *MockEDIControlNumberRepository_StartControlNumber_Call {
 	return &MockEDIControlNumberRepository_StartControlNumber_Call{Call: _e.mock.On("StartControlNumber", ctx, req)}
 }
@@ -231,8 +233,8 @@ func (_c *MockEDIControlNumberRepository_StartControlNumber_Call) Run(run func(c
 	return _c
 }
 
-func (_c *MockEDIControlNumberRepository_StartControlNumber_Call) Return(ret0 *edi.EDIControlNumberSequence, ret1 error) *MockEDIControlNumberRepository_StartControlNumber_Call {
-	_c.Call.Return(ret0, ret1)
+func (_c *MockEDIControlNumberRepository_StartControlNumber_Call) Return(eDIControlNumberSequence *edi.EDIControlNumberSequence, err error) *MockEDIControlNumberRepository_StartControlNumber_Call {
+	_c.Call.Return(eDIControlNumberSequence, err)
 	return _c
 }
 

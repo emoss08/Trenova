@@ -1,0 +1,318 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "name": "freight classes and weekdays order by their variants",
+   "source": [
+    "tariff \"t\"",
+    "let cls = shipment.freightClass ?? Class50",
+    "let highest = shipment.commodities.max(c => c.freightClass ?? Class50)",
+    "let sorted = shipment.commodities.sortBy(c => c.freightClass ?? Class50)",
+    "if cls >= Class85 and rating.date.weekday in Mon..=Fri and cls in Class70..Class100 and sorted.len > 0 {",
+    "  charge \"Dense\" = $1 * cls.number",
+    "}",
+    "note \"{highest ?? Class50}\""
+   ],
+   "types": {
+    "cls.number": "Number",
+    "shipment.commodities.max(c => c.freightClass ?? Class50)": "FreightClass?"
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.status < InTransit",
+     "code": "unit-mismatch",
+     "message": "`shipment.status` is a value of type `ShipmentStatus`, which has no order, so it can't be compared with `<`: only `FreightClass` and `Weekday` order their variants. Compare with `shipment.status == InTransit`, or list the variants with `shipment.status in [a, b]`"
+    }
+   ],
+   "name": "an enum that isn't ordered can't be compared, and the message names the ordered ones",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.status < InTransit {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment.status",
+     "code": "type-mismatch",
+     "message": "`shipment.status` is a value of type `ShipmentStatus`, which has no order, so it can't be in a range: only `FreightClass` and `Weekday` order their variants. List the variants instead, as in `shipment.status in [New, PartiallyAssigned]`"
+    }
+   ],
+   "name": "an enum that isn't ordered has no range",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.status in New..Assigned {",
+    "  charge \"x\" = $1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "service > Standard",
+     "code": "unit-mismatch",
+     "message": "`service` is a value of type `Service`, which has no order, so it can't be compared with `>`: only `FreightClass` and `Weekday` order their variants. Compare with `service == Standard`, or list the variants with `service in [a, b]`"
+    }
+   ],
+   "name": "a user enum has no order",
+   "source": [
+    "library \"t\"",
+    "enum Service { Standard, Guaranteed, Expedited }",
+    "fn fast(service: Service) -> Bool = service > Standard"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "a variant range in a match covers the variants between its ends",
+   "source": [
+    "library \"t\"",
+    "fn surcharge(day: Weekday) -> Int = match day {",
+    "  Mon..=Fri => 0",
+    "  Sat | Sun => 1",
+    "}",
+    "fn band(cls: FreightClass) -> Int = match cls {",
+    "  FreightClass.Class100..FreightClass.Class110 if false => 9",
+    "  ..Class70 => 1",
+    "  Class70..=Class100 => 2",
+    "  Class110.. => 3",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "match",
+     "code": "match-exhaustive",
+     "message": "This match on `day` doesn't cover `Fri`. Add an arm for each, or a `_` arm for everything else"
+    }
+   ],
+   "name": "a variant range match names the variants it leaves out",
+   "source": [
+    "library \"t\"",
+    "fn surcharge(day: Weekday) -> Int = match day {",
+    "  Mon..=Thu => 0",
+    "  Sat | Sun => 1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Fri..=Sun",
+     "code": "match-overlap",
+     "message": "This arm overlaps an arm above it: `Fri` matches both",
+     "related": [
+      {
+       "at": "Mon..=Fri",
+       "line": 3,
+       "message": "The arm it overlaps"
+      }
+     ]
+    }
+   ],
+   "name": "overlapping variant ranges name the variant both match",
+   "source": [
+    "library \"t\"",
+    "fn surcharge(day: Weekday) -> Int = match day {",
+    "  Mon..=Fri => 0",
+    "  Fri..=Sun => 1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Fri..Mon",
+     "code": "empty-range",
+     "message": "This range is empty: its start isn't below its end"
+    }
+   ],
+   "name": "an empty variant range is refused",
+   "source": [
+    "library \"t\"",
+    "fn surcharge(day: Weekday) -> Int = match day {",
+    "  Fri..Mon => 0",
+    "  _ => 1",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Pickup..Delivery",
+     "code": "type-mismatch",
+     "message": "The value matched is a value of type `StopKind`, which has no order, so it can't be matched by a range: only `FreightClass` and `Weekday` order their variants. List the variants instead, as in `Pickup | Delivery`"
+    }
+   ],
+   "name": "a range pattern on an enum that isn't ordered is refused",
+   "source": [
+    "library \"t\"",
+    "fn early(kind: StopKind) -> Bool = match kind {",
+    "  Pickup..Delivery => true",
+    "  _ => false",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": {
+      "range": {
+       "max": "Class100",
+       "maxInclusive": true,
+       "min": "Class50"
+      }
+     },
+     "default": "Class70",
+     "descriptor": {
+      "kind": "enum",
+      "name": "FreightClass",
+      "ordered": true,
+      "variants": [
+       "Class50",
+       "Class55",
+       "Class60",
+       "Class65",
+       "Class70",
+       "Class77_5",
+       "Class85",
+       "Class92_5",
+       "Class100",
+       "Class110",
+       "Class125",
+       "Class150",
+       "Class175",
+       "Class200",
+       "Class250",
+       "Class300",
+       "Class400",
+       "Class500"
+      ]
+     },
+     "doc": null,
+     "name": "cls",
+     "range": {
+      "from": 17,
+      "to": 20
+     },
+     "required": false,
+     "type": "FreightClass"
+    }
+   ],
+   "name": "an ordered enum input takes a range constraint",
+   "source": [
+    "tariff \"t\"",
+    "input cls: FreightClass = Class70 where Class50..=Class100",
+    "charge \"x\" = $1 * cls.number"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Sat",
+     "code": "constraint",
+     "message": "`day` must be from Mon to Fri; Sat is outside it"
+    },
+    {
+     "code": "input-value",
+     "message": "`day` must be from Mon to Fri; Sun is outside it",
+     "path": "rule.day"
+    }
+   ],
+   "name": "an ordered enum default outside its range is refused",
+   "source": [
+    "tariff \"t\"",
+    "input day: Weekday = Sat where Mon..=Fri",
+    "charge \"x\" = $1",
+    "note \"{day}\""
+   ],
+   "values": {
+    "rule": {
+     "day": "Sun"
+    }
+   }
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Class200",
+     "code": "bounds",
+     "message": "This arm is never matched: `cls` is always within `Class50..=Class100`",
+     "severity": "warning"
+    },
+    {
+     "at": "cls > Class100",
+     "code": "bounds",
+     "message": "This is never true: `cls` is always within `Class50..=Class100`",
+     "severity": "warning"
+    },
+    {
+     "at": "cls in Class110..",
+     "code": "bounds",
+     "message": "This is never true: `cls` is always within `Class50..=Class100`",
+     "severity": "warning"
+    }
+   ],
+   "name": "an ordered enum input's bounds decide comparisons and arms",
+   "source": [
+    "tariff \"t\"",
+    "input cls: FreightClass = Class70 where Class50..=Class100",
+    "let band = match cls {",
+    "  Class200 => 2",
+    "  Class50..=Class100 => 1",
+    "  _ => 3",
+    "}",
+    "if cls > Class100 or cls in Class110.. {",
+    "  charge \"x\" = $1 * band",
+    "}"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "Class100..Class50",
+     "code": "constraint",
+     "message": "This range is empty: nothing is at least Class100 and below Class50"
+    }
+   ],
+   "name": "an empty variant range constraint is refused",
+   "source": [
+    "tariff \"t\"",
+    "input cls: FreightClass = Class70 where Class100..Class50",
+    "charge \"x\" = $1 * cls.number"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "number",
+     "code": "unknown-field",
+     "message": "`kind` is a value of type `StopKind`, which has no property or method `number`"
+    }
+   ],
+   "name": "a number of a class that isn't a freight class is unknown",
+   "source": [
+    "library \"t\"",
+    "fn n(kind: StopKind) -> Number = kind.number"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "name": "an ordered enum varies over a range of its variants",
+   "source": [
+    "tariff \"t\"",
+    "let cls = shipment.freightClass ?? Class50",
+    "charge \"x\" = $1 * cls.number",
+    "property \"denser classes never bill less\" {",
+    "  vary shipment.freightClass in Class50..=Class100",
+    "  expect total nondecreasing in shipment.freightClass",
+    "}"
+   ]
+  }
+ ]
+}

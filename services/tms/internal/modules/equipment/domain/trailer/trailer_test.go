@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func validTrailer() *Trailer {
@@ -185,71 +183,6 @@ func TestTrailer_GetBusinessUnitID(t *testing.T) {
 	buID := pulid.MustNew("bu_")
 	tr := &Trailer{BusinessUnitID: buID}
 	assert.Equal(t, buID, tr.GetBusinessUnitID())
-}
-
-func TestTrailer_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		tr := &Trailer{}
-		require.True(t, tr.ID.IsNil())
-
-		err := tr.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, tr.ID.IsNil())
-		assert.NotZero(t, tr.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("tr_")
-		tr := &Trailer{ID: existingID}
-
-		err := tr.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, tr.ID)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		tr := &Trailer{}
-
-		err := tr.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, tr.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		tr := &Trailer{}
-
-		err := tr.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, tr.CreatedAt)
-		assert.NotZero(t, tr.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		tr := &Trailer{}
-
-		err := tr.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, tr.ID.IsNil())
-		assert.Zero(t, tr.CreatedAt)
-		assert.Zero(t, tr.UpdatedAt)
-	})
 }
 
 func TestTrailer_GetResourceType(t *testing.T) {

@@ -8,15 +8,9 @@ const (
 	ToolListPortalSites = "web_list_portal_sites"
 	ToolReadPortal      = "web_read_portal"
 	ToolActOnPortal     = "web_use_portal"
-	ToolAnalyzeData     = "report_analyze_data"
 	ToolWatchWeb        = "web_watch"
 	ToolListWebWatches  = "web_list_watches"
 	ToolStopWebWatch    = "web_stop_watch"
-	ToolRunScript       = "agent_run_script"
-	// The run-script tool's parameters a batch reads its origin back from.
-	ParamScriptTitle   = "title"
-	ParamScriptPurpose = "purpose"
-	ParamScriptCode    = "code"
 )
 
 // WebWatchTools are the web research tools that watch the web over time,
@@ -28,16 +22,12 @@ type Capability string
 const (
 	CapabilityWebResearch      = Capability("WebResearch")
 	CapabilityPortalAutomation = Capability("PortalAutomation")
-	CapabilityDataAnalysis     = Capability("DataAnalysis")
-	CapabilityCodeMode         = Capability("CodeMode")
 )
 
 func AllCapabilities() []Capability {
 	return []Capability{
 		CapabilityWebResearch,
 		CapabilityPortalAutomation,
-		CapabilityDataAnalysis,
-		CapabilityCodeMode,
 	}
 }
 
@@ -77,16 +67,6 @@ var capabilities = map[Capability]CapabilitySpec{
 		OutsideContentTools: []string{ToolReadPortal},
 		Unchecked:           "the portal could not be checked",
 		RequestNoun:         "portal tasks",
-	},
-	CapabilityDataAnalysis: {
-		Tools:       []string{ToolAnalyzeData},
-		Unchecked:   "the analysis could not run",
-		RequestNoun: "analyses",
-	},
-	CapabilityCodeMode: {
-		Tools:       []string{ToolRunScript},
-		Unchecked:   "the script could not run",
-		RequestNoun: "scripts",
 	},
 }
 
@@ -138,12 +118,10 @@ func ActiveFrom(records []*Extension) Active {
 		if !record.Ready(spec) {
 			continue
 		}
-		for _, c := range spec.ServedBy(record.Configuration) {
-			if _, taken := active[c]; taken {
-				continue
-			}
-			active[c] = ActiveExtension{Type: typ, Availability: record.Availability}
+		if _, taken := active[spec.Capability]; taken {
+			continue
 		}
+		active[spec.Capability] = ActiveExtension{Type: typ, Availability: record.Availability}
 	}
 
 	return active

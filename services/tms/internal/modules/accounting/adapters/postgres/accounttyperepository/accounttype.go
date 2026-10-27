@@ -3,22 +3,21 @@ package accounttyperepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accounttypecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accounttype/accounttypedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accounttypeports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var accountTypeErrors = dberror.Mapping{Entity: "AccountType"}
 
 type Params struct {
 	fx.In
@@ -39,24 +38,6 @@ func New(p Params) accounttypeports.AccountTypeRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *accounttypeports.ListAccountTypesRequest,
-) *bun.SelectQuery {
-	cols := accounttypecol.AccountTypeColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		accounttypecol.AccountTypeTable.Alias,
-		req.Filter,
-		(*accounttype.AccountType)(nil),
-	)
-
-	return q.Apply(accounttypecol.AccountTypeApplyTenant(req.Filter.TenantInfo)).
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
-}
-
 func (r *repository) List(
 	ctx context.Context,
 	req *accounttypeports.ListAccountTypesRequest,
@@ -65,27 +46,22 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*accounttype.AccountType], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			at := accounttypedb.AccountTypes
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				at.Query(),
+				&listquery.Request[accounttype.AccountType]{
+					Filter: req.Filter,
+					Then:   []keel.Order{at.CreatedAt.Desc()},
+				},
 			)
-
-			entities := make([]*accounttype.AccountType, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count account types", zap.Error(err))
+				r.l.Error("failed to list account types", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*accounttype.AccountType]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -95,113 +71,35 @@ func (r *repository) GetByID(
 	req accounttypeports.GetAccountTypeByIDRequest,
 ) (*accounttype.AccountType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*accounttype.AccountType, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(accounttype.AccountType)
-		cols := accounttypecol.AccountTypeColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return accounttypecol.AccountTypeScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := accounttypedb.AccountTypes.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			log.Error("failed to get account type", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "AccountType")
+			return nil, accountTypeErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *accounttypeports.ListAccountTypesConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		accounttypecol.AccountTypeTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*accounttype.AccountType)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *accounttypeports.ListAccountTypesConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		accounttypecol.AccountTypeTable.Alias,
-		req.Filter,
-		(*accounttype.AccountType)(nil),
-	)
-}
-
-func applyAccountTypeColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(accounttypecol.AccountTypeTable.All())
-	}
-
-	return q.Column(columns...)
-}
-
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *accounttypeports.ListAccountTypesConnectionRequest,
 ) (*pagination.CursorListResult[*accounttype.AccountType], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*accounttype.AccountType], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*accounttype.AccountType)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count account types", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*accounttype.AccountType]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*accounttype.AccountType) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyAccountTypeColumns(sq, req.AccountTypeColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				accounttypedb.AccountTypes.Query(),
+				&listquery.Request[accounttype.AccountType]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.AccountTypeColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan account types", zap.Error(err))
+				r.l.Error("failed to list account types", zap.Error(err))
 				return nil, err
 			}
 
@@ -215,18 +113,13 @@ func (r *repository) Create(
 	entity *accounttype.AccountType,
 ) (*accounttype.AccountType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accounttype.AccountType, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("code", entity.Code),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create account type", zap.Error(err))
-			return nil, err
+		if err := accounttypedb.AccountTypes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create account type",
+				zap.String("code", entity.Code),
+				zap.Error(err),
+			)
+			return nil, accountTypeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -238,30 +131,13 @@ func (r *repository) Update(
 	entity *accounttype.AccountType,
 ) (*accounttype.AccountType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*accounttype.AccountType, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-		cols := accounttypecol.AccountTypeColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update account type", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "AccountType", entity.ID.String()); err != nil {
-			return nil, err
+		if err := accounttypedb.AccountTypes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update account type",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, accountTypeErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -273,33 +149,16 @@ func (r *repository) BulkUpdateStatus(
 	req *accounttypeports.BulkUpdateAccountTypeStatusRequest,
 ) ([]*accounttype.AccountType, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*accounttype.AccountType, error) {
-		log := r.l.With(
-			zap.String("operation", "BulkUpdateStatus"),
-			zap.Any("request", req),
-		)
-
-		entities := make([]*accounttype.AccountType, 0, len(req.AccountTypeIDs))
-		cols := accounttypecol.AccountTypeColumns
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&entities).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return accounttypecol.AccountTypeScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.AccountTypeIDs))
-			}).
-			Set(cols.Status.Set(), req.Status).
-			Returning("*").
-			Exec(ctx)
+		at := accounttypedb.AccountTypes
+		entities, err := at.Where(at.ID.In(req.AccountTypeIDs...)).
+			UpdateReturning(ctx, r.db.Keel(ctx), at.Status.To(req.Status))
 		if err != nil {
-			log.Error("failed to bulk update account type status", zap.Error(err))
+			r.l.Error("failed to bulk update account type status", zap.Error(err))
 			return nil, err
 		}
 
-		if err = dberror.CheckBulkRowsAffected(
-			results,
-			"AccountType",
-			req.AccountTypeIDs,
-		); err != nil {
+		err = dberror.CheckBulkAffected(int64(len(entities)), "AccountType", req.AccountTypeIDs)
+		if err != nil {
 			return nil, err
 		}
 
@@ -312,24 +171,17 @@ func (r *repository) GetByIDs(
 	req accounttypeports.GetAccountTypesByIDsRequest,
 ) ([]*accounttype.AccountType, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*accounttype.AccountType, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
+		if len(req.AccountTypeIDs) == 0 {
+			return []*accounttype.AccountType{}, nil
+		}
 
-		entities := make([]*accounttype.AccountType, 0, len(req.AccountTypeIDs))
-		cols := accounttypecol.AccountTypeColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return accounttypecol.AccountTypeScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.AccountTypeIDs))
-			}).
-			Scan(ctx)
+		at := accounttypedb.AccountTypes
+		entities, err := at.Where(at.ID.In(req.AccountTypeIDs...)).
+			Limit(len(req.AccountTypeIDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get account types", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "AccountType")
+			r.l.Error("failed to get account types", zap.Error(err))
+			return nil, err
 		}
 
 		return entities, nil
@@ -340,30 +192,21 @@ func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *accounttypeports.AccountTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*accounttype.AccountType], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*accounttype.AccountType], error) {
-			cols := accounttypecol.AccountTypeColumns
+			at := accounttypedb.AccountTypes
+			q := at.Pick(at.ID, at.Code, at.Name, at.Category).
+				Where(at.Status.Eq(domaintypes.StatusActive))
 
-			return dbhelper.SelectOptions[*accounttype.AccountType](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				q,
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Name,
-						cols.Category,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					},
-					EntityName:       "AccountType",
-					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
+				func(s string) keel.Pred {
+					return keel.Or(at.Code.ContainsFold(s), at.Name.ContainsFold(s))
 				},
 			)
 		},

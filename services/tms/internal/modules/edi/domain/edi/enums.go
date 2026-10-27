@@ -118,23 +118,6 @@ const (
 	DocumentStatusInactive = DocumentStatus("Inactive")
 )
 
-type TemplateStatus string
-
-const (
-	TemplateStatusDraft      = TemplateStatus("Draft")
-	TemplateStatusCertified  = TemplateStatus("Certified")
-	TemplateStatusActive     = TemplateStatus("Active")
-	TemplateStatusDeprecated = TemplateStatus("Deprecated")
-	TemplateStatusArchived   = TemplateStatus("Archived")
-	TemplateStatusSuperseded = TemplateStatus("Superseded")
-)
-
-type ScriptLanguage string
-
-const (
-	ScriptLanguageStarlark = ScriptLanguage("Starlark")
-)
-
 type MessageStatus string
 
 const (
@@ -190,14 +173,6 @@ const (
 	MessageAcknowledgmentStatusFailed   = MessageAcknowledgmentStatus("Failed")
 )
 
-type ValidationMode string
-
-const (
-	ValidationModeStrict   = ValidationMode("Strict")
-	ValidationModeWarnOnly = ValidationMode("WarnOnly")
-	ValidationModeDisabled = ValidationMode("Disabled")
-)
-
 type ValidationSeverity string
 
 const (
@@ -226,6 +201,7 @@ type LoadTenderPurposeCode string
 
 const (
 	LoadTenderPurposeOriginal = LoadTenderPurposeCode("00")
+	LoadTenderPurposeCancel   = LoadTenderPurposeCode("01")
 	LoadTenderPurposeChange   = LoadTenderPurposeCode("04")
 )
 
@@ -264,69 +240,6 @@ const (
 )
 
 const TenderChangeTypeLoadTender = "LoadTenderChange"
-
-type SourceContextDataType string
-
-const (
-	SourceContextDataTypeString    = SourceContextDataType("string")
-	SourceContextDataTypeNumber    = SourceContextDataType("number")
-	SourceContextDataTypeInteger   = SourceContextDataType("integer")
-	SourceContextDataTypeBoolean   = SourceContextDataType("boolean")
-	SourceContextDataTypeTimestamp = SourceContextDataType("timestamp")
-	SourceContextDataTypeDate      = SourceContextDataType("date")
-	SourceContextDataTypeDecimal   = SourceContextDataType("decimal")
-	SourceContextDataTypeObject    = SourceContextDataType("object")
-	SourceContextDataTypeArray     = SourceContextDataType("array")
-	SourceContextDataTypeUnknown   = SourceContextDataType("unknown")
-)
-
-type SourceContextKind string
-
-const (
-	SourceContextKindShipment     = SourceContextKind("shipment")
-	SourceContextKindRepeat       = SourceContextKind("repeat")
-	SourceContextKindPartner      = SourceContextKind("partner")
-	SourceContextKindRuntime      = SourceContextKind("runtime")
-	SourceContextKindMapping      = SourceContextKind("mapping")
-	SourceContextKindOrganization = SourceContextKind("organization")
-	SourceContextKindCustomer     = SourceContextKind("customer")
-	SourceContextKindLocation     = SourceContextKind("location")
-	SourceContextKindCommodity    = SourceContextKind("commodity")
-	SourceContextKindCharge       = SourceContextKind("charge")
-	SourceContextKindEnvelope     = SourceContextKind("envelope")
-)
-
-type SourceContextFieldStatus string
-
-const (
-	SourceContextFieldStatusActive     = SourceContextFieldStatus("Active")
-	SourceContextFieldStatusDeprecated = SourceContextFieldStatus("Deprecated")
-	SourceContextFieldStatusFuture     = SourceContextFieldStatus("Future")
-)
-
-type PartnerSettingDataType string
-
-const (
-	PartnerSettingDataTypeString  = PartnerSettingDataType("string")
-	PartnerSettingDataTypeNumber  = PartnerSettingDataType("number")
-	PartnerSettingDataTypeInteger = PartnerSettingDataType("integer")
-	PartnerSettingDataTypeBoolean = PartnerSettingDataType("boolean")
-	PartnerSettingDataTypeDecimal = PartnerSettingDataType("decimal")
-	PartnerSettingDataTypeEnum    = PartnerSettingDataType("enum")
-	PartnerSettingDataTypeObject  = PartnerSettingDataType("object")
-	PartnerSettingDataTypeArray   = PartnerSettingDataType("array")
-	PartnerSettingDataTypeMap     = PartnerSettingDataType("map")
-	PartnerSettingDataTypeSecret  = PartnerSettingDataType("secret")
-	PartnerSettingDataTypeUnknown = PartnerSettingDataType("unknown")
-)
-
-type PartnerSettingStatus string
-
-const (
-	PartnerSettingStatusActive     = PartnerSettingStatus("Active")
-	PartnerSettingStatusDeprecated = PartnerSettingStatus("Deprecated")
-	PartnerSettingStatusFuture     = PartnerSettingStatus("Future")
-)
 
 func (k PartnerKind) IsValid() bool {
 	switch k {
@@ -465,29 +378,6 @@ func (s DocumentStatus) IsValid() bool {
 	}
 }
 
-func (s TemplateStatus) IsValid() bool {
-	switch s {
-	case TemplateStatusDraft,
-		TemplateStatusCertified,
-		TemplateStatusActive,
-		TemplateStatusDeprecated,
-		TemplateStatusArchived,
-		TemplateStatusSuperseded:
-		return true
-	default:
-		return false
-	}
-}
-
-func (l ScriptLanguage) IsValid() bool {
-	switch l {
-	case ScriptLanguageStarlark:
-		return true
-	default:
-		return false
-	}
-}
-
 func (s MessageStatus) IsValid() bool {
 	switch s {
 	case MessageStatusGenerated,
@@ -554,17 +444,6 @@ func (s MessageAcknowledgmentStatus) IsValid() bool {
 	}
 }
 
-func (m ValidationMode) IsValid() bool {
-	switch m {
-	case ValidationModeStrict,
-		ValidationModeWarnOnly,
-		ValidationModeDisabled:
-		return true
-	default:
-		return false
-	}
-}
-
 func (s ValidationSeverity) IsValid() bool {
 	switch s {
 	case ValidationSeverityInfo,
@@ -601,6 +480,7 @@ func (t AcknowledgmentType) IsValid() bool {
 func (c LoadTenderPurposeCode) IsValid() bool {
 	switch c {
 	case LoadTenderPurposeOriginal,
+		LoadTenderPurposeCancel,
 		LoadTenderPurposeChange:
 		return true
 	default:
@@ -648,84 +528,6 @@ func (s TenderChangeStatus) IsValid() bool {
 		TenderChangeStatusFailed,
 		TenderChangeStatusIgnored,
 		TenderChangeStatusSuperseded:
-		return true
-	default:
-		return false
-	}
-}
-
-func (t SourceContextDataType) IsValid() bool {
-	switch t {
-	case SourceContextDataTypeString,
-		SourceContextDataTypeNumber,
-		SourceContextDataTypeInteger,
-		SourceContextDataTypeBoolean,
-		SourceContextDataTypeTimestamp,
-		SourceContextDataTypeDate,
-		SourceContextDataTypeDecimal,
-		SourceContextDataTypeObject,
-		SourceContextDataTypeArray,
-		SourceContextDataTypeUnknown:
-		return true
-	default:
-		return false
-	}
-}
-
-func (k SourceContextKind) IsValid() bool {
-	switch k {
-	case SourceContextKindShipment,
-		SourceContextKindRepeat,
-		SourceContextKindPartner,
-		SourceContextKindRuntime,
-		SourceContextKindMapping,
-		SourceContextKindOrganization,
-		SourceContextKindCustomer,
-		SourceContextKindLocation,
-		SourceContextKindCommodity,
-		SourceContextKindCharge,
-		SourceContextKindEnvelope:
-		return true
-	default:
-		return false
-	}
-}
-
-func (s SourceContextFieldStatus) IsValid() bool {
-	switch s {
-	case SourceContextFieldStatusActive,
-		SourceContextFieldStatusDeprecated,
-		SourceContextFieldStatusFuture:
-		return true
-	default:
-		return false
-	}
-}
-
-func (t PartnerSettingDataType) IsValid() bool {
-	switch t {
-	case PartnerSettingDataTypeString,
-		PartnerSettingDataTypeNumber,
-		PartnerSettingDataTypeInteger,
-		PartnerSettingDataTypeBoolean,
-		PartnerSettingDataTypeDecimal,
-		PartnerSettingDataTypeEnum,
-		PartnerSettingDataTypeObject,
-		PartnerSettingDataTypeArray,
-		PartnerSettingDataTypeMap,
-		PartnerSettingDataTypeSecret,
-		PartnerSettingDataTypeUnknown:
-		return true
-	default:
-		return false
-	}
-}
-
-func (s PartnerSettingStatus) IsValid() bool {
-	switch s {
-	case PartnerSettingStatusActive,
-		PartnerSettingStatusDeprecated,
-		PartnerSettingStatusFuture:
 		return true
 	default:
 		return false

@@ -28,8 +28,9 @@ func agentQualityAgentsToModel(
 	page *agentqualityports.AgentQualityAgentPage,
 ) *gqlmodel.AgentQualityAgentConnection {
 	out := &gqlmodel.AgentQualityAgentConnection{
-		Edges:      make([]*gqlmodel.AgentQualityAgentEdge, 0, len(page.Edges)),
-		TotalCount: page.TotalCount,
+		Edges:           make([]*gqlmodel.AgentQualityAgentEdge, 0, len(page.Edges)),
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	last := ""
 	for _, edge := range page.Edges {
@@ -48,8 +49,9 @@ func agentWorstRatedToModel(
 	page *agentqualityports.AgentWorstRatedPage,
 ) *gqlmodel.AgentWorstRatedAnswerConnection {
 	out := &gqlmodel.AgentWorstRatedAnswerConnection{
-		Edges:      make([]*gqlmodel.AgentWorstRatedAnswerEdge, 0, len(page.Edges)),
-		TotalCount: page.TotalCount,
+		Edges:           make([]*gqlmodel.AgentWorstRatedAnswerEdge, 0, len(page.Edges)),
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}
 	last := ""
 	for _, edge := range page.Edges {
@@ -79,9 +81,10 @@ func agentSuiteRunConnectionToModel(
 	}
 
 	return &gqlmodel.AgentSuiteRunConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -100,9 +103,10 @@ func agentSuiteRunCaseConnectionToModel(
 	}
 
 	return &gqlmodel.AgentSuiteRunCaseConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

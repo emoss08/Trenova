@@ -35,30 +35,19 @@ import {
   TableRow,
 } from "@trenova/shared/components/ui/table";
 import { getTodayDate } from "@trenova/shared/lib/date";
-import { cn, formatCurrency } from "@trenova/shared/lib/utils";
+import { cn } from "@trenova/shared/lib/utils";
 import type { RateAgreementRow } from "@/lib/graphql/rate-tables";
 import type { RateIncreasePlan, RatePartyType } from "@trenova/shared/types/rate";
+import type { TariffWireValue } from "@trenova/shared/types/tariff";
+import { humanizeTariffName } from "@trenova/shared/lib/tariff-inputs";
+import { formatTariffValue } from "@trenova/shared/lib/tariff-value";
+import { isTariffDate, isTariffNumber, isTariffQuantity } from "@trenova/shared/rules/tariff-wire";
 import { AlertCircleIcon, TrendUp01Icon } from "@trenova/shared/components/icons";
 import { useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "@trenova/shared/components/ui/toast";
 
 type IncreaseScope = "selected" | "customer" | "carrier" | "party";
-type AdjustmentKind = "percent" | "flat";
-
-const ADJUSTMENT_OPTIONS: { value: AdjustmentKind; label: string; description: string }[] = [
-  {
-    value: "percent",
-    label: "Percent",
-    description: "Every rate moves by this share of itself — the classic GRI",
-  },
-  {
-    value: "flat",
-    label: "Flat amount",
-    description: "Every rate moves by this amount per rating unit",
-  },
-];
-
 type ScopeForm = {
   customerId: string;
   carrierId: string;
@@ -92,7 +81,6 @@ export function RateIncreaseDialog({
   const hasSelection = selectedAgreements.length > 0;
 
   const [scope, setScope] = useState<IncreaseScope>(hasSelection ? "selected" : "customer");
-  const [kind, setKind] = useState<AdjustmentKind>("percent");
   const [amount, setAmount] = useState<number | undefined>();
   const [plan, setPlan] = useState<RateIncreasePlan | undefined>();
   const [problem, setProblem] = useState("");
@@ -109,7 +97,6 @@ export function RateIncreaseDialog({
   useEffect(() => {
     if (open) {
       setScope(hasSelection ? "selected" : "customer");
-      setKind("percent");
       setAmount(undefined);
       setPlan(undefined);
       setProblem("");
@@ -127,12 +114,18 @@ export function RateIncreaseDialog({
     const values = form.getValues();
 
     if (amount === undefined || Number.isNaN(amount) || amount === 0) {
-      setProblem("Say how far the rates move — a percent or a flat amount, and not zero.");
+      setProblem(t("Say how far the rates move, as a percent that is not zero."));
+      return undefined;
+    }
+    if (amount <= -100) {
+      setProblem(
+        t("A decrease of 100% or more would take every rate it touches to nothing or below."),
+      );
       return undefined;
     }
 
     const payload: RateIncreaseRequestPayload = {
-      adjustment: kind === "percent" ? { percentChange: amount } : { flatChange: amount },
+      adjustment: { percentChange: amount },
       effectiveFrom: values.effectiveFrom,
     };
 
@@ -144,7 +137,7 @@ export function RateIncreaseDialog({
         break;
       case "customer":
         if (!values.customerId) {
-          setProblem("Choose the customer whose agreements this touches.");
+          setProblem(t("Choose the customer whose agreements this touches."));
           return undefined;
         }
         payload.customerId = values.customerId;
@@ -152,7 +145,7 @@ export function RateIncreaseDialog({
         break;
       case "carrier":
         if (!values.carrierId) {
-          setProblem("Choose the carrier whose agreements this touches.");
+          setProblem(t("Choose the carrier whose agreements this touches."));
           return undefined;
         }
         payload.carrierId = values.carrierId;
@@ -207,7 +200,7 @@ export function RateIncreaseDialog({
   const invalidatePlan = () => setPlan(undefined);
 
   const lines = plan?.lines ?? [];
-  const canApply = Boolean(plan) && lines.length > 0 && (plan?.negativeCount ?? 0) === 0;
+  const canApply = Boolean(plan) && lines.length > 0;
 
   const scopeOptions: { value: IncreaseScope; label: string; description: string }[] = [
     ...(hasSelection
@@ -331,32 +324,10 @@ export function RateIncreaseDialog({
         </FormProvider>
 
         <div className="bg-muted/30 rounded-lg border p-3">
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            {ADJUSTMENT_OPTIONS.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  setKind(option.value);
-                  invalidatePlan();
-                }}
-                className={cn(
-                  "rounded-lg border p-2 text-left transition-colors",
-                  kind === option.value
-                    ? "border-primary bg-primary/5"
-                    : "border-border bg-background hover:bg-muted/50",
-                )}
-              >
-                <p className="text-xs font-medium">{t(option.label)}</p>
-                <p className="text-2xs text-muted-foreground mt-0.5">{t(option.description)}</p>
-              </button>
-            ))}
-          </div>
-
           <div className="flex flex-wrap items-end gap-3">
             <div className="w-36">
               <label className="text-muted-foreground mb-1.5 block text-xs font-medium">
-                {kind === "percent" ? t("Change (%)") : t("Change ($)")}
+                {t("Change (%)")}
               </label>
               <NumberFieldRoot
                 value={amount}
@@ -364,7 +335,7 @@ export function RateIncreaseDialog({
                   setAmount(value ?? undefined);
                   invalidatePlan();
                 }}
-                step={kind === "percent" ? 0.5 : 0.05}
+                step={0.5}
                 size="sm"
               >
                 <NumberFieldGroup>
@@ -383,7 +354,9 @@ export function RateIncreaseDialog({
               {t("Preview changes")}
             </Button>
             <p className="text-2xs text-muted-foreground">
-              {t("A negative change is a decrease. Weight breaks move with their lane.")}
+              {t(
+                "Every money term a lane sets moves by this share of itself, weight break rates and minimums included; counts, percents and weights stay as they are. A negative change is a decrease.",
+              )}
             </p>
           </div>
         </div>
@@ -400,22 +373,10 @@ export function RateIncreaseDialog({
             <p className="text-sm">
               {lines.length > 0
                 ? t("{0} lanes across {1} agreements move.", lines.length, plan.agreementCount)
-                : t("No lane in scope carries a rate this change could move.")}
-              {plan.skippedNoRate > 0 &&
-                ` ${t("{0} matrix-priced lanes are untouched — their rates live in the matrix cells.", plan.skippedNoRate)}`}
+                : t("No lane in scope sets a money term this change could move.")}
+              {plan.skippedNoMoney > 0 &&
+                ` ${t("{0, plural, one {# lane sets no money term of its own and is untouched.} other {# lanes set no money term of their own and are untouched.}}", plan.skippedNoMoney)}`}
             </p>
-
-            {plan.negativeCount > 0 && (
-              <Alert variant="destructive">
-                <AlertCircleIcon className="size-4" />
-                <AlertDescription>
-                  {t(
-                    "This decrease would push {0} lanes below zero, and a negative rate is not a discount. Narrow the scope or soften the change.",
-                    plan.negativeCount,
-                  )}
-                </AlertDescription>
-              </Alert>
-            )}
 
             {lines.length > 0 && (
               <div className="overflow-hidden rounded-lg border">
@@ -424,31 +385,30 @@ export function RateIncreaseDialog({
                     <TableRow>
                       <TableHead className="text-xs">{t("Agreement")}</TableHead>
                       <TableHead className="text-xs">{t("Lane")}</TableHead>
-                      <TableHead className="text-right text-xs">{t("Before")}</TableHead>
-                      <TableHead className="text-right text-xs">{t("After")}</TableHead>
-                      <TableHead className="text-right text-xs">{t("Change")}</TableHead>
+                      <TableHead className="text-xs">{t("What moves")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {lines.map((line) => (
                       <TableRow key={line.ruleId}>
-                        <TableCell className="text-xs">{line.agreementCode}</TableCell>
-                        <TableCell>
+                        <TableCell className="align-top text-xs">{line.agreementCode}</TableCell>
+                        <TableCell className="align-top">
                           <span className="text-xs font-medium">{line.label || line.laneKey}</span>
-                          {line.breakCount > 0 && (
-                            <p className="text-2xs text-muted-foreground">
-                              {t("{0} weight breaks move with it", line.breakCount)}
-                            </p>
+                          {line.agreementName && (
+                            <p className="text-2xs text-muted-foreground">{line.agreementName}</p>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-mono text-xs tabular-nums">
-                          {formatCurrency(line.before)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-xs tabular-nums">
-                          {formatCurrency(line.after)}
-                        </TableCell>
-                        <TableCell className="text-right text-xs">
-                          <DeltaValue delta={line.after - line.before} />
+                        <TableCell className="align-top">
+                          <ul className="flex flex-col gap-1">
+                            {line.changed.map((name) => (
+                              <InputChangeRow
+                                key={name}
+                                name={name}
+                                before={line.before[name]}
+                                after={line.after[name]}
+                              />
+                            ))}
+                          </ul>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -475,5 +435,63 @@ export function RateIncreaseDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** The first money amount inside a wire value, as a number, for the size of a change. */
+function firstAmount(value: TariffWireValue): number | null {
+  if (isTariffQuantity(value)) return Number(value.$q);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = firstAmount(item);
+      if (found !== null) return found;
+    }
+    return null;
+  }
+  if (value && typeof value === "object" && !isTariffNumber(value) && !isTariffDate(value)) {
+    for (const field of Object.values(value)) {
+      const found = firstAmount(field);
+      if (found !== null) return found;
+    }
+  }
+  return null;
+}
+
+/**
+ * One input a GRI moves: its name, the value before and after, and by how much. The increase
+ * scales only values the lane sets itself, so a moved input is set on both sides.
+ */
+function InputChangeRow({
+  name,
+  before: beforeValue,
+  after: afterValue,
+}: {
+  name: string;
+  before: TariffWireValue | undefined;
+  after: TariffWireValue | undefined;
+}) {
+  const t = useT();
+  if (beforeValue === undefined || afterValue === undefined) return null;
+  const before = firstAmount(beforeValue);
+  const after = firstAmount(afterValue);
+  const isList = Array.isArray(afterValue);
+
+  return (
+    <li className="flex flex-wrap items-baseline gap-x-2 text-xs">
+      <span className="text-muted-foreground">{humanizeTariffName(name)}</span>
+      {isList ? (
+        <span>
+          {t(
+            "{0, plural, one {# row moves} other {# rows move}}",
+            (afterValue as TariffWireValue[]).length,
+          )}
+        </span>
+      ) : (
+        <span className="font-mono tabular-nums">
+          {t("{0} → {1}", formatTariffValue(beforeValue, t), formatTariffValue(afterValue, t))}
+        </span>
+      )}
+      {before !== null && after !== null && <DeltaValue delta={after - before} />}
+    </li>
   );
 }

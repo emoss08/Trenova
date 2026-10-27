@@ -43,7 +43,8 @@ template that is not interface text takes `// i18n-ignore: <reason>`); see the i
 [generated-artifacts.md](../docs/engineering/generated-artifacts.md) for the rules.
 
 Nobody edits a catalog by hand. `task i18n` finds every user-facing string in the Go
-services, the React apps and the rules crate (`services/crates/rules`) and writes them to
+services, the React apps and the Rust WebAssembly crates (`services/crates/rules`,
+`services/crates/edi`) and writes them to
 `messages.en.json`; the per-locale files hold the translations.
 
 ## The English string is the key
@@ -161,14 +162,26 @@ internal log lines into the catalog. They are told apart structurally: a log cal
 its value (it is an `ExprStmt`), while an ozzo rule is always built to be passed into
 `validation.Field`. See `discardedCalls`.
 
+**Generated files are skipped, except `labelledGeneratedFiles`.** A `*_gen.go` file holds no
+interface text as a rule; `viewwords_gen.go` (the role editor's words for each reference view)
+does, so its `Label:` values are read. The report catalog's labels, descriptions, categories and
+enum labels are read from `analytics.messages.json`, which
+`go generate ./internal/infrastructure/reportengine/...` writes from the keel catalog.
+
+**Inside package `i18n` a bare `T(...)` is a translator call**, since the package cannot name
+itself: `i18n.List`'s list patterns ("{0} and {1}", "{0}, {1} and {2}") are catalog entries
+that way, and a translation of the three-item pattern sets the separators of every longer list.
+
 **`stringLiteral` follows concatenation** so a message split across lines for width is
 captured whole, and refuses anything involving a variable or call — those are dynamic and
 need an explicit parameterised message instead.
 
 ## Maintaining the Rust extractor
 
-`tools/extract-rust.mjs` reads the `message!("...")` templates in `services/crates/rules/src`
-([rules-engine.md](../docs/engineering/rules-engine.md)). The crate returns English ICU
+`tools/extract-rust.mjs` reads the `message!("...")` templates in each crate listed in its
+`RUST_ROOTS` (`services/crates/rules/src`, [rules-engine.md](../docs/engineering/rules-engine.md);
+`services/crates/edi/src`, [edi-x12.md](../docs/engineering/edi-x12.md)), each with the Go
+scope and web bundle its text reaches. The crate returns English ICU
 templates and never translates, and the same template reaches the browser (the formula
 editor, the rule screens) and the server (the validation errors it reports), so every
 template is filed twice: once in the Go scope, area `rules/<module>`, and once in the client
@@ -194,6 +207,19 @@ with leading, trailing or repeated whitespace or a newline: the catalogs collaps
 in their keys, while the crate sends the template exactly as written, so such a key could
 never be looked up.
 
+**The standard library's doc comments are templates too.** The crate ships the Tariff
+standard library (`src/tariff/stdlib/*.tariff`) and sends its doc comments to the hosts as
+messages, so `tools/extract-tariff.mjs` reads every `///` block of a `library "std.…"` file
+and files it like a `message!` template (kind `rules-doc`). A block's template is its lines
+with the slashes removed, joined with single spaces and trimmed; a function's doc also gives
+each parameter the sentences (each ending at `. `) that name it in backticks, joined with a
+space. The crate computes the same templates (`tariff::stdlib::docs`), and its test
+`every_template_is_in_the_catalog_for_both_hosts` fails when the two disagree or the catalog
+is stale, so a changed std doc comment needs `task i18n`. A std doc never holds `{` or `}`:
+the extractor refuses it, and the crate's ICU test also rejects `''`, `#` and anything shaped
+like a rich-text tag. The doc comments of tariffs and organisation libraries are their
+authors' words and are never extracted.
+
 A template the string filter rejects (`{0}` alone has no letters) is listed by
-`task i18n-report -- --rejected`, like a Go message, and renders in English. The extractor's
-tests are `tools/extract-rust.test.mjs` (`task i18n-test`).
+`task i18n-report -- --rejected`, like a Go message, and renders in English. The extractors'
+tests are `tools/extract-rust.test.mjs` and `tools/extract-tariff.test.mjs` (`task i18n-test`).

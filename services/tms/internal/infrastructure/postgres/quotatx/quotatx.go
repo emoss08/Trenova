@@ -6,12 +6,11 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/uptrace/bun"
 )
 
 func Run(
 	ctx context.Context,
-	db kernelports.DBConnection,
+	db kernelports.Transactor,
 	guard platformplanports.QuotaGuard,
 	fn func(context.Context) error,
 	reqs ...platformplanports.QuotaRequest,
@@ -20,7 +19,7 @@ func Run(
 		return fn(ctx)
 	}
 
-	return db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	return db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if err := quotaservice.EnforceAll(txCtx, guard, reqs...); err != nil {
 			return err
 		}

@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -21,41 +21,41 @@ const (
 	maxDeskIDs      = 200
 )
 
-// deskRow is a memory with what the Desk shows beside it, read in the same
-// query: the conversation it was saved from and the role it is kept for.
-type deskRow struct {
-	agent.Memory `bun:",extend"`
-
-	SourceTitle string `bun:"source_title,scanonly"`
-	RoleName    string `bun:"role_name,scanonly"`
+type deskCount struct {
+	Scope  agent.MemoryScope
+	RoleID pulid.ID
+	Count  int
 }
 
-func (r deskRow) row() *agentports.DeskMemoryRow {
-	memory := r.Memory
-
+func deskRow(memory *agent.Memory) *agentports.DeskMemoryRow {
 	return &agentports.DeskMemoryRow{
-		Memory:      &memory,
-		SourceTitle: r.SourceTitle,
-		RoleName:    r.RoleName,
+		Memory:      memory,
+		SourceTitle: memory.SourceTitle,
+		RoleName:    memory.RoleName,
 	}
 }
 
-// deskSelect reads memories with their conversation's title and their role's
-// name. The conversation is joined within the tenant, so a title is only ever
-// read from the memory's own organization.
-func (r *repository) deskSelect(ctx context.Context, rows *[]deskRow) *bun.SelectQuery {
-	cols := agentcol.MemoryColumns
+func deskRows(memories []*agent.Memory) []*agentports.DeskMemoryRow {
+	out := make([]*agentports.DeskMemoryRow, 0, len(memories))
+	for _, memory := range memories {
+		out = append(out, deskRow(memory))
+	}
 
-	return r.db.DBForContext(ctx).
-		NewSelect().
-		Model(rows).
-		ColumnExpr(agentcol.MemoryTable.Alias + ".*").
-		ColumnExpr("athr.title AS source_title").
-		ColumnExpr("dmr.name AS role_name").
-		Join("LEFT JOIN assistant_threads AS athr ON athr.id = " + cols.SourceThreadID.Qualified() +
-			" AND athr.organization_id = " + cols.OrganizationID.Qualified() +
-			" AND athr.business_unit_id = " + cols.BusinessUnitID.Qualified()).
-		Join("LEFT JOIN roles AS dmr ON dmr.id = " + cols.RoleID.Qualified())
+	return out
+}
+
+// deskSelect reads memories with their conversation's title and their role's
+// name. Both are joined within the tenant, so a title is only ever read from
+// the memory's own organization.
+func deskSelect() *keel.Query[*agent.Memory] {
+	m := agentdb.Memories
+	thread := conversationdb.Threads.As("desk_thread")
+	role := permissiondb.Roles.As("desk_role")
+
+	return m.LeftJoin(thread, thread.ID.EqCol(m.SourceThreadID)).
+		LeftJoin(role, role.ID.EqCol(m.RoleID)).
+		Compute(m.SourceTitle, thread.Title).
+		Compute(m.RoleName, role.Name)
 }
 
 // deskVisible keeps what a person keeps: memories of the organization, their
@@ -63,46 +63,60 @@ func (r *repository) deskSelect(ctx context.Context, rows *[]deskRow) *bun.Selec
 // their team or the organization while an administrator has yet to decide.
 // What is kept for one agent is administered in AI Control, and an agent's
 // suggestion waits in its conversation.
-func deskVisible(sq *bun.SelectQuery, filter *agentports.DeskMemoryFilter) *bun.SelectQuery {
-	cols := agentcol.MemoryColumns
-	sq = agentcol.MemoryScopeTenant(sq, filter.TenantInfo).
-		WhereGroup(" AND ", func(kept *bun.SelectQuery) *bun.SelectQuery {
-			kept = kept.WhereGroup(" OR ", func(read *bun.SelectQuery) *bun.SelectQuery {
-				return read.Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
-					agent.MemoryStatusActive,
-					agent.MemoryStatusPaused,
-				})).
-					WhereGroup(" AND ", func(who *bun.SelectQuery) *bun.SelectQuery {
-						return forPerson(
-							who.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization),
-							filter.Reader,
-						)
-					})
-			})
-			if filter.Reader.UserID.IsNotNil() {
-				kept = kept.WhereGroup(" OR ", func(offered *bun.SelectQuery) *bun.SelectQuery {
-					return offered.Where(cols.Status.Eq(), agent.MemoryStatusSuggested).
-						Where(cols.Source.Eq(), agent.MemorySourceUser).
-						Where(cols.CreatedByUserID.Eq(), filter.Reader.UserID).
-						Where(cols.Scope.In(), bun.List([]agent.MemoryScope{
-							agent.MemoryScopeRole,
-							agent.MemoryScopeOrganization,
-						}))
-				})
-			}
+func deskVisible(filter *agentports.DeskMemoryFilter) keel.Pred {
+	m := agentdb.Memories
+	kept := keel.And(
+		m.Status.In(agent.MemoryStatusActive, agent.MemoryStatusPaused),
+		keel.Or(m.Scope.Eq(agent.MemoryScopeOrganization), forPerson(filter.Reader)),
+	)
+	var offered keel.Pred
+	if filter.Reader.UserID.IsNotNil() {
+		offered = keel.And(
+			m.Status.Eq(agent.MemoryStatusSuggested),
+			m.Source.Eq(agent.MemorySourceUser),
+			m.CreatedByUserID.Eq(filter.Reader.UserID),
+			m.Scope.In(agent.MemoryScopeRole, agent.MemoryScopeOrganization),
+		)
+	}
+	visible := keel.Or(kept, offered)
 
-			return kept
-		})
+	text := newTextQuery(filter.Query, nil)
+	switch {
+	case text.empty():
+		return visible
+	case text.unmatchable():
+		return keel.Not(keel.True())
+	default:
+		return keel.And(visible, text.primary().matches(m.SearchVector))
+	}
+}
 
-	if text := newTextQuery(filter.Query, nil); !text.empty() {
-		if text.unmatchable() {
-			return sq.Where("FALSE")
-		}
-		match := text.primary()
-		sq = sq.Where(cols.SearchVector.Expr("{} @@ "+match.tsquery), match.args...)
+func listDeskQuery(req *agentports.ListDeskMemoriesQuery) *keel.Query[*agent.Memory] {
+	m := agentdb.Memories
+	limit := req.Limit
+	if limit <= 0 {
+		limit = defaultDeskPage
+	}
+	limit = min(limit, maxDeskPage)
+
+	var after keel.Pred
+	if req.After != nil {
+		after = keel.Tuple(m.CreatedAt, m.ID).
+			Lt(keel.Tuple(req.After.CreatedAt, req.After.ID.String()))
 	}
 
-	return sq
+	return deskSelect().
+		Where(
+			deskVisible(&req.Filter),
+			keel.When(req.Filter.Scope != "", m.Scope.Eq(req.Filter.Scope)),
+			keel.When(
+				req.Filter.Scope == agent.MemoryScopeRole && req.Filter.RoleID.IsNotNil(),
+				m.RoleID.Eq(req.Filter.RoleID),
+			),
+			after,
+		).
+		Order(m.CreatedAt.Desc(), m.ID.Desc()).
+		Limit(limit)
 }
 
 func (r *repository) ListDesk(
@@ -110,46 +124,12 @@ func (r *repository) ListDesk(
 	req agentports.ListDeskMemoriesQuery,
 ) ([]*agentports.DeskMemoryRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentports.DeskMemoryRow, error) {
-		cols := agentcol.MemoryColumns
-		limit := req.Limit
-		if limit <= 0 {
-			limit = defaultDeskPage
-		}
-		limit = min(limit, maxDeskPage)
-
-		rows := make([]deskRow, 0, limit)
-		err := r.deskSelect(ctx, &rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = deskVisible(sq, &req.Filter)
-				if req.Filter.Scope != "" {
-					sq = sq.Where(cols.Scope.Eq(), req.Filter.Scope)
-				}
-				if req.Filter.Scope == agent.MemoryScopeRole && req.Filter.RoleID.IsNotNil() {
-					sq = sq.Where(cols.RoleID.Eq(), req.Filter.RoleID)
-				}
-				if after := req.After; after != nil {
-					sq = sq.Where(
-						"("+cols.CreatedAt.Qualified()+", "+cols.ID.Qualified()+") < (?, ?)",
-						after.CreatedAt, after.ID,
-					)
-				}
-
-				return sq
-			}).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			OrderExpr(cols.ID.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		memories, err := listDeskQuery(&req).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list desk memories: %w", err)
 		}
 
-		out := make([]*agentports.DeskMemoryRow, 0, len(rows))
-		for _, row := range rows {
-			out = append(out, row.row())
-		}
-
-		return out, nil
+		return deskRows(memories), nil
 	})
 }
 
@@ -158,36 +138,22 @@ func (r *repository) CountDesk(
 	filter agentports.DeskMemoryFilter,
 ) ([]agentports.DeskMemoryCountRow, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]agentports.DeskMemoryCountRow, error) {
-		cols := agentcol.MemoryColumns
-		var rows []struct {
-			Scope  agent.MemoryScope `bun:"scope"`
-			RoleID *pulid.ID         `bun:"role_id"`
-			Count  int               `bun:"count"`
-		}
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agent.Memory)(nil)).
-			ColumnExpr(cols.Scope.Qualified()+" AS scope").
-			ColumnExpr(cols.RoleID.Qualified()+" AS role_id").
-			ColumnExpr("COUNT(*) AS count").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return deskVisible(sq, &filter)
-			}).
-			GroupExpr(cols.Scope.Qualified()).
-			GroupExpr(cols.RoleID.Qualified()).
-			Scan(ctx, &rows)
+		m := agentdb.Memories
+		rows, err := keel.Into[deskCount](ctx, r.db.Keel(ctx), m.
+			Group(m.Scope, m.RoleID).
+			Pick(m.Scope, m.RoleID, keel.Count()).
+			Where(deskVisible(&filter)))
 		if err != nil {
 			return nil, fmt.Errorf("count desk memories: %w", err)
 		}
 
 		counts := make([]agentports.DeskMemoryCountRow, 0, len(rows))
 		for _, row := range rows {
-			count := agentports.DeskMemoryCountRow{Scope: row.Scope, Count: row.Count}
-			if row.RoleID != nil {
-				count.RoleID = *row.RoleID
-			}
-			counts = append(counts, count)
+			counts = append(counts, agentports.DeskMemoryCountRow{
+				Scope:  row.Scope,
+				RoleID: row.RoleID,
+				Count:  row.Count,
+			})
 		}
 
 		return counts, nil
@@ -207,24 +173,16 @@ func (r *repository) GetDesk(
 			ids = ids[:maxDeskIDs]
 		}
 
-		cols := agentcol.MemoryColumns
-		rows := make([]deskRow, 0, len(ids))
-		err := r.deskSelect(ctx, &rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.MemoryScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(ids))
-			}).
-			Scan(ctx)
+		m := agentdb.Memories
+		memories, err := deskSelect().
+			Where(m.ID.In(ids...)).
+			Limit(len(ids)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("get desk memories: %w", err)
 		}
 
-		out := make([]*agentports.DeskMemoryRow, 0, len(rows))
-		for _, row := range rows {
-			out = append(out, row.row())
-		}
-
-		return out, nil
+		return deskRows(memories), nil
 	})
 }
 
@@ -235,7 +193,6 @@ func (r *repository) Revise(
 	req agentports.ReviseAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		cols := agentcol.MemoryColumns
 		owner, role := pulid.Nil, pulid.Nil
 		switch req.Scope {
 		case agent.MemoryScopeUser:
@@ -244,31 +201,20 @@ func (r *repository) Revise(
 			role = req.RoleID
 		}
 
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.Memory)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.MemoryScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Version.Eq(), req.Version)
-			}).
-			Set(cols.Content.Set(), req.Content).
-			Set(cols.Scope.Set(), req.Scope).
-			Set(cols.OwnerUserID.Set(), nullableID(owner)).
-			Set(cols.RoleID.Set(), nullableID(role)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		m := agentdb.Memories
+		n, err := m.Where(m.ID.Eq(req.ID), m.Version.Eq(req.Version)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			m.Content.To(req.Content),
+			m.Scope.To(req.Scope),
+			setID(m.OwnerUserID, owner),
+			setID(m.RoleID, role),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("revise agent memory: %w", err)
 		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("revise agent memory rows: %w", err)
-		}
-		if rows == 0 {
-			return nil, dberror.CreateVersionMismatchError("AgentMemory", req.ID.String())
+		if n == 0 {
+			return nil, dberror.CreateVersionMismatchError(memoryEntity, req.ID.String())
 		}
 
 		return r.GetByID(ctx, agentports.GetAgentMemoryByIDRequest{
@@ -283,20 +229,12 @@ func (r *repository) GetPreference(
 	req agentports.GetAgentMemoryPreferenceRequest,
 ) (*agent.MemoryPreference, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.MemoryPreference, error) {
-		entity := new(agent.MemoryPreference)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.MemoryPreferenceScopeTenant(sq, req.TenantInfo).
-					Where(agentcol.MemoryPreferenceColumns.UserID.Eq(), req.UserID)
-			}).
-			Scan(ctx)
+		p := agentdb.MemoryPreferences
+		entity, err := p.Where(p.UserID.Eq(req.UserID)).One(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil
-			}
-
 			return nil, fmt.Errorf("get agent memory preference: %w", err)
 		}
 
@@ -312,20 +250,25 @@ func (r *repository) SavePreference(
 	entity *agent.MemoryPreference,
 ) (*agent.MemoryPreference, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.MemoryPreference, error) {
-		cols := agentcol.MemoryPreferenceColumns
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (organization_id, business_unit_id, user_id) DO UPDATE").
-			Set(cols.SavingMode.SetExcluded()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Set(cols.Version.IncConflict(1)).
-			Returning("*").
-			Exec(ctx)
+		p := agentdb.MemoryPreferences
+		inserted, err := p.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*agent.MemoryPreference{entity},
+			keel.OnConflict(p.OrganizationID, p.BusinessUnitID, p.UserID).Update(p.SavingMode),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("save agent memory preference: %w", err)
 		}
+		if len(inserted) > 0 && inserted[0] {
+			return entity, nil
+		}
 
-		return entity, nil
+		saved, err := p.Where(p.UserID.Eq(entity.UserID)).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, fmt.Errorf("read the saved agent memory preference: %w", err)
+		}
+
+		return saved, nil
 	})
 }

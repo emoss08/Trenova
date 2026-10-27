@@ -285,10 +285,8 @@ type fixture struct {
 	web       *fakeWeb
 	parallel  *fakeWeb
 	browser   *fakeBrowser
-	sandbox   *fakeSandbox
 	sites     *memorySites
 	runs      *memoryRuns
-	analyses  *memoryAnalyses
 	audit     *recordingAudit
 	workflows *recordingWorkflows
 	tenant    pagination.TenantInfo
@@ -310,12 +308,10 @@ func newFixture(t *testing.T) *fixture {
 			searchCost: decimal.RequireFromString("0.001"),
 			readCost:   decimal.RequireFromString("0.001"),
 		},
-		browser:  &fakeBrowser{},
-		sandbox:  newFakeSandbox(),
-		sites:    newMemorySites(),
-		runs:     newMemoryRuns(),
-		analyses: newMemoryAnalyses(),
-		audit:    &recordingAudit{},
+		browser: &fakeBrowser{},
+		sites:   newMemorySites(),
+		runs:    newMemoryRuns(),
+		audit:   &recordingAudit{},
 		tenant: pagination.TenantInfo{
 			OrgID:  pulid.MustNew("org_"),
 			BuID:   pulid.MustNew("bu_"),
@@ -332,11 +328,9 @@ func newFixture(t *testing.T) *fixture {
 			f.web,
 			f.parallel,
 			f.browser,
-			f.sandbox,
 		},
-		Sites:    f.sites,
-		Runs:     f.runs,
-		Analyses: f.analyses,
+		Sites: f.sites,
+		Runs:  f.runs,
 	})
 	f.svc.now = func() int64 { return testNow }
 
@@ -399,7 +393,6 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	require.Len(t, catalog.Categories, len(agentextension.AllCategories()))
 	assert.Equal(t, "Web research", catalog.Categories[0].Label)
 	assert.Equal(t, "Browser automation", catalog.Categories[1].Label)
-	assert.Equal(t, "Data analysis", catalog.Categories[2].Label)
 
 	byType := make(map[agentextension.Type]agentextensionports.AgentExtensionCatalogItem, len(catalog.Items))
 	for idx := range catalog.Items {
@@ -417,17 +410,6 @@ func TestCatalogListsExaTurnedOffUntilSetUp(t *testing.T) {
 	assert.Equal(t, agentextension.CapabilityPortalAutomation, portal.Capability)
 	assert.Equal(t, agentextension.DefaultPortalDailyTasks, portal.DailyRequestLimit)
 	assert.Len(t, portal.Tools, 3)
-
-	analysis := byType[agentextension.TypeE2B]
-	assert.Equal(t, agentextension.CapabilityDataAnalysis, analysis.Capability)
-	assert.Equal(t, "Data analysis", analysis.CapabilityLabel)
-	assert.Equal(t, agentextension.DefaultDailyAnalyses, analysis.DailyRequestLimit)
-	analysisTools := make([]string, 0, len(analysis.Tools))
-	for _, tool := range analysis.Tools {
-		analysisTools = append(analysisTools, tool.Name)
-	}
-	assert.Equal(t, []string{agentextension.ToolAnalyzeData, agentextension.ToolRunScript},
-		analysisTools, "the E2B account also serves read-only scripts, once they are switched on")
 }
 
 func TestEnablingEncryptsTheKeyAndNeverReturnsIt(t *testing.T) {

@@ -4,20 +4,21 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var carrierSettlementControlErrors = dberror.Mapping{Entity: "CarrierSettlementControl"}
 
 type Params struct {
 	fx.In
@@ -55,47 +56,35 @@ func (r *repository) GetOrCreate(
 	}
 
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.CarrierSettlementControl]{
-		Find: func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-			return r.selectControl(ctx, tenantInfo)
-		},
+		Find: r.selectControl,
 		Create: func(ctx context.Context) error {
-			if _, insertErr := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(newDefault()).
-				On("CONFLICT (organization_id, business_unit_id) DO NOTHING").
-				Exec(ctx); insertErr != nil {
-				return fmt.Errorf("create default carrier settlement control: %w", insertErr)
+			cc := tenantdb.CarrierSettlementControls
+			if _, err := cc.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*tenant.CarrierSettlementControl{newDefault()},
+				cc.OrganizationID,
+				cc.BusinessUnitID,
+			); err != nil {
+				return fmt.Errorf("create default carrier settlement control: %w", err)
 			}
 
 			return nil
 		},
 		Default: newDefault,
 		MapError: func(err error) error {
-			return dberror.HandleNotFoundError(err, "CarrierSettlementControl")
+			return carrierSettlementControlErrors.Map(err, tenantInfo.OrgID.String())
 		},
 	})
 }
 
-func (r *repository) selectControl(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) (*tenant.CarrierSettlementControl, error) {
+func (r *repository) selectControl(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-			entity := new(tenant.CarrierSettlementControl)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return tenantcol.CarrierSettlementControlScopeTenant(sq, tenantInfo)
-				}).
-				Scan(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return entity, nil
+			return tenantdb.CarrierSettlementControls.Cache(resultcache.Settings()...).
+				One(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -108,13 +97,10 @@ func (r *repository) ListAutoGenerate(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*tenant.CarrierSettlementControl, error) {
-			cols := tenantcol.CarrierSettlementControlColumns
-			items := make([]*tenant.CarrierSettlementControl, 0)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&items).
-				Where(cols.AutoGenerateBatches.IsTrue()).
-				Scan(ctx)
+			cc := tenantdb.CarrierSettlementControls
+			items, err := cc.AllTenants().
+				Where(cc.AutoGenerateBatches.IsTrue()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				return nil, fmt.Errorf("list auto-generate carrier settlement controls: %w", err)
 			}
@@ -131,45 +117,27 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tenant.CarrierSettlementControl, error) {
-			cols := tenantcol.CarrierSettlementControlColumns
-			res, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return tenantcol.CarrierSettlementControlScopeTenantUpdate(uq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).
-						Where(cols.ID.Eq(), entity.ID).
-						Where(cols.Version.Eq(), entity.Version)
-				}).
-				Set(cols.PayTrigger.Set(), entity.PayTrigger).
-				Set(cols.PayPeriodFrequency.Set(), entity.PayPeriodFrequency).
-				Set(cols.PeriodEndDayOfWeek.Set(), entity.PeriodEndDayOfWeek).
-				Set(cols.PayDelayDays.Set(), entity.PayDelayDays).
-				Set(cols.AutoGenerateBatches.Set(), entity.AutoGenerateBatches).
-				Set(cols.AutoPostOnApprove.Set(), entity.AutoPostOnApprove).
-				Set(cols.VarianceToleranceMinor.Set(), entity.VarianceToleranceMinor).
-				Set(cols.AutoMatchInboundInvoices.Set(), entity.AutoMatchInboundInvoices).
-				Set(cols.AutoAcceptWithinTolerance.Set(), entity.AutoAcceptWithinTolerance).
-				Set(cols.HoldUntilInvoiceMatched.Set(), entity.HoldUntilInvoiceMatched).
-				Set(cols.DefaultAPAccountID.Set(), entity.DefaultAPAccountID).
-				Set(
-					cols.DefaultPurchasedTransportationAccountID.Set(),
-					entity.DefaultPurchasedTransportationAccountID,
-				).
-				Set(cols.Version.Inc(1)).
-				Exec(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("update carrier settlement control: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				res,
-				"CarrierSettlementControl",
-				entity.ID.String(),
+			cc := tenantdb.CarrierSettlementControls
+			if err := cc.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+				cc.PayTrigger,
+				cc.PayPeriodFrequency,
+				cc.PeriodEndDayOfWeek,
+				cc.PayDelayDays,
+				cc.AutoGenerateBatches,
+				cc.AutoPostOnApprove,
+				cc.VarianceToleranceMinor,
+				cc.AutoMatchInboundInvoices,
+				cc.AutoAcceptWithinTolerance,
+				cc.HoldUntilInvoiceMatched,
+				cc.DefaultAPAccountID,
+				cc.DefaultPurchasedTransportationAccountID,
 			); err != nil {
-				return nil, err
+				return nil, carrierSettlementControlErrors.Map(err, entity.ID.String())
 			}
+
 			return r.GetOrCreate(ctx, pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,

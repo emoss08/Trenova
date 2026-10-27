@@ -2,4 +2,4 @@
 import type { TypedDocumentString, FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables, FormulaTemplateTableRowFieldsFragment } from "../../graphql";
 
 export const FormulaTemplateTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"FormulaTemplateTableRowFields"}} as unknown as TypedDocumentString<FormulaTemplateTableRowFieldsFragment, unknown>;
-export const FormulaTemplateTableDocument = {"__meta__":{"kind":"query","name":"FormulaTemplateTable","hash":"sha256:9fe86d3e1a8ccdb28fd5932ef322980f9ce4605286640620ee0f98833cbda924"}} as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;
+export const FormulaTemplateTableDocument = {"__meta__":{"kind":"query","name":"FormulaTemplateTable","hash":"sha256:6d3c5e751ab7f3c7c4f8c6a2959ad6553d2835d17f9b43d91c3c882b15d10857"}} as unknown as TypedDocumentString<FormulaTemplateTableQuery, FormulaTemplateTableQueryVariables>;

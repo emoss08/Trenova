@@ -11,8 +11,8 @@ import { ar } from "@/lib/queries/ar";
 import { formatCurrency } from "@trenova/shared/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 
-const AR_KPI_COUNT = 5;
-const AR_KPI_MIN_WIDTH = "11rem";
+export const AR_KPI_COUNT = 5;
+export const AR_KPI_MIN_WIDTH = "11rem";
 
 function ceiTone(cei: number): Tone {
   if (cei >= AR_CEI_HEALTHY_THRESHOLD) return "success";
@@ -57,8 +57,8 @@ export function ARKpiRow() {
       <KpiStripItem
         size="lg"
         label={t("Collection effectiveness")}
-        tone={ceiTone(kpis.cei)}
-        value={`${kpis.cei.toFixed(0)}%`}
+        tone={ceiTone(kpis.collection.cei)}
+        value={`${kpis.collection.cei.toFixed(0)}%`}
       />
       <KpiStripItem
         size="lg"

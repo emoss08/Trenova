@@ -25,8 +25,9 @@ type ListAgentRunEventsRequest struct {
 	OwnerID    pulid.ID
 	// After reads only what follows a sequence already seen, so a caller
 	// following a run in progress does not re-read what it has.
-	After int
-	Limit int
+	After  int
+	Limit  int
+	Reader RunReader
 }
 
 // ListAgentRunEventConnectionRequest is the paged read behind GraphQL.
@@ -37,7 +38,8 @@ type ListAgentRunEventConnectionRequest struct {
 	// OwnerKind keeps the list to one kind of owner. An assistant turn is one
 	// person's conversation, and its events are theirs; a list read by
 	// anyone who may read agent runs must not include them.
-	OwnerKind string `json:"-"`
+	OwnerKind string    `json:"-"`
+	Reader    RunReader `json:"-"`
 }
 
 // PruneAgentRunEventsRequest drops events older than a cutoff.

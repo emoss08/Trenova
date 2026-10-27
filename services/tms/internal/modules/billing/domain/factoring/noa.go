@@ -4,17 +4,16 @@ import (
 	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -26,33 +25,31 @@ const (
 	NoaFutureSlackSeconds     = 300
 )
 
-var _ bun.BeforeAppendModelHook = (*Noa)(nil)
-
+// Notices telling each customer to pay a factor, from draft to signed acknowledgement, expiry and release
 type Noa struct {
-	bun.BaseModel             `bun:"table:factoring_noas,alias:facnoa" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                            json:"-"`
+	keel.Table `keel:"factoring_noas,report=Billing,label=Notice of Assignment,plural=Notices of Assignment"`
 
-	ID                 pulid.ID  `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID  `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID     pulid.ID  `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerID         pulid.ID  `json:"customerId"         bun:"customer_id,type:VARCHAR(100),notnull"`
-	FactoringCompanyID pulid.ID  `json:"factoringCompanyId" bun:"factoring_company_id,type:VARCHAR(100),notnull"`
-	Status             NoaStatus `json:"status"             bun:"status,type:VARCHAR(20),notnull,default:'Draft'"`
-	SentAt             *int64    `json:"sentAt"             bun:"sent_at,type:BIGINT,nullzero"`
-	SentTo             string    `json:"sentTo"             bun:"sent_to,type:VARCHAR(320),nullzero"`
-	AcknowledgedAt     *int64    `json:"acknowledgedAt"     bun:"acknowledged_at,type:BIGINT,nullzero"`
-	SignedDocumentID   pulid.ID  `json:"signedDocumentId"   bun:"signed_document_id,type:VARCHAR(100),nullzero"`
-	ExpiresAt          *int64    `json:"expiresAt"          bun:"expires_at,type:BIGINT,nullzero"`
-	ExpiryWarnedAt     *int64    `json:"expiryWarnedAt"     bun:"expiry_warned_at,type:BIGINT,nullzero"`
-	ReleasedAt         *int64    `json:"releasedAt"         bun:"released_at,type:BIGINT,nullzero"`
-	ReleaseReason      string    `json:"releaseReason"      bun:"release_reason,type:VARCHAR(500),nullzero"`
-	Notes              string    `json:"notes"              bun:"notes,type:TEXT,nullzero"`
-	Version            int64     `json:"version"            bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt          int64     `json:"createdAt"          bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt          int64     `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull"`
+	ID                 pulid.ID  `json:"id"                 keel:"id,pk,autoid:facnoa_"`
+	OrganizationID     pulid.ID  `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	BusinessUnitID     pulid.ID  `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	CustomerID         pulid.ID  `json:"customerId"         keel:"customer_id"`
+	FactoringCompanyID pulid.ID  `json:"factoringCompanyId" keel:"factoring_company_id"`
+	Status             NoaStatus `json:"status"             keel:"status"`
+	SentAt             *int64    `json:"sentAt"             keel:"sent_at"`
+	SentTo             string    `json:"sentTo"             keel:"sent_to,nullzero"`
+	AcknowledgedAt     *int64    `json:"acknowledgedAt"     keel:"acknowledged_at"`
+	SignedDocumentID   pulid.ID  `json:"signedDocumentId"   keel:"signed_document_id,nullzero,label=Signed Copy Document ID"`
+	ExpiresAt          *int64    `json:"expiresAt"          keel:"expires_at"`
+	ExpiryWarnedAt     *int64    `json:"expiryWarnedAt"     keel:"expiry_warned_at"`
+	ReleasedAt         *int64    `json:"releasedAt"         keel:"released_at"`
+	ReleaseReason      string    `json:"releaseReason"      keel:"release_reason,nullzero"`
+	Notes              string    `json:"notes"              keel:"notes,nullzero"`
+	Version            int64     `json:"version"            keel:"version,version"`
+	CreatedAt          int64     `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64     `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	Customer         *customer.Customer                 `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
-	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" bun:"rel:belongs-to,join:factoring_company_id=id,join:organization_id=organization_id,join:business_unit_id=business_unit_id"`
+	Customer         *customer.Customer                 `json:"customer,omitempty"         keel:"belongs:customer_id"`
+	FactoringCompany *factoringcompany.FactoringCompany `json:"factoringCompany,omitempty" keel:"belongs:factoring_company_id"`
 }
 
 func (n *Noa) Validate(multiErr *errortypes.MultiError) {
@@ -226,21 +223,11 @@ func (n *Noa) Release(at int64, reason string) error {
 	return nil
 }
 
-func (n *Noa) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if n.ID.IsNil() {
-			n.ID = pulid.MustNew("facnoa_")
-		}
-		if n.Status == "" {
-			n.Status = NoaStatusDraft
-		}
-		n.CreatedAt = now
-		n.UpdatedAt = now
-	case *bun.UpdateQuery:
-		n.UpdatedAt = now
+func (n *Noa) BeforeCreate(ctx context.Context) error {
+	if n.Status == "" {
+		n.Status = NoaStatusDraft
 	}
+
 	return nil
 }
 
@@ -250,7 +237,7 @@ func (n *Noa) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightA},
-			{Name: "sentTo", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
+			{Name: "sent_to", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightB},
 		},
 	}
 }
@@ -260,3 +247,12 @@ func (n *Noa) GetCreatedAt() int64         { return n.CreatedAt }
 func (n *Noa) GetOrganizationID() pulid.ID { return n.OrganizationID }
 func (n *Noa) GetBusinessUnitID() pulid.ID { return n.BusinessUnitID }
 func (n *Noa) GetTableName() string        { return "factoring_noas" }
+
+func (Noa) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_factoring_noas_open",
+			Message: "This customer already has an open notice of assignment for this factor",
+		},
+	}
+}

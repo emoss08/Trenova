@@ -1,33 +1,45 @@
-//nolint:cyclop // existing legacy workflow/API shape is intentionally kept stable
 package userrepository
 
 import (
 	"context"
+	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	membershipScopeReason     = "read the memberships row-level security shows a person: their own in every organization and everyone's in the organization they are working in"
+	emailScopeReason          = "resolve a sign-in email before any tenant is known"
+	loginScopeReason          = "load the user an identity provider subject is linked to before a session exists"
+	systemUserScopeReason     = "resolve the instance system user, which belongs to the default organization, as the actor for any tenant"
+	listMembershipsReason     = "list a user's memberships across the organizations of one business unit"
+	replaceMembershipsReason  = "replace a user's memberships across the organizations of one business unit in one transaction"
+	membershipLockTimeout     = 250 * time.Millisecond
+	membershipsBusyMessage    = "The user's organization memberships are busy. Retry the request."
+	organizationsOutsideScope = "organizations must belong to the current business unit"
+)
+
+var userErrors = dberror.Mapping{Entity: "User"}
 
 type Params struct {
 	fx.In
@@ -51,184 +63,154 @@ func New(p Params) tenantports.UserRepository {
 	}
 }
 
-func (ur *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *tenantports.ListUsersRequest,
-) *bun.SelectQuery {
-	fieldConfig := querybuilder.NewFieldConfigBuilder((*tenant.User)(nil)).
-		WithAutoMapping().
-		WithAllFieldsFilterable().
-		WithAllFieldsSortable().
-		WithAutoEnumDetection().
-		WithRelationshipFields().
-		Build()
+func tenantUsers(orgID pulid.ID) *keel.Query[*tenant.User] {
+	u := tenantdb.Users
+	return u.Where(
+		u.CurrentOrganizationID.Eq(orgID),
+		u.Username.Ne(tenant.SystemUsername),
+	)
+}
 
-	qb := querybuilder.NewWithPostgresSearch(q, "usr", fieldConfig, (*tenant.User)(nil))
-	qb.WithTraversalSupport(true)
+func keepVersion() keel.Assignment {
+	u := tenantdb.Users
+	return u.Version.ToExpr(u.Version)
+}
 
-	if len(req.Filter.FieldFilters) > 0 {
-		qb.ApplyFilters(req.Filter.FieldFilters)
+func allTenantsWhenSystem[T any](ctx context.Context, q *keel.Query[*T]) *keel.Query[*T] {
+	if dbscope.IsSystem(ctx) {
+		return q.AllTenants()
 	}
 
-	if req.Filter.Query != "" {
-		searchFields := querybuilder.ExtractSearchFields(fieldConfig)
-		qb.ApplyTextSearch(req.Filter.Query, searchFields)
+	return q
+}
+
+func membershipReadScope(ctx context.Context) (context.Context, keel.Pred) {
+	current, ok := dbscope.TenantFrom(ctx)
+	if !ok {
+		return ctx, nil
 	}
 
-	if len(req.Filter.Sort) > 0 {
-		qb.ApplySort(req.Filter.Sort)
+	m := tenantdb.OrganizationMemberships
+	visible := keel.Or(
+		keel.And(
+			m.OrganizationID.Eq(current.OrganizationID),
+			m.BusinessUnitID.Eq(current.BusinessUnitID),
+		),
+		keel.When(current.UserID.IsNotNil(), m.UserID.Eq(current.UserID)),
+	)
+
+	return dbscope.WithSystem(ctx, membershipScopeReason), visible
+}
+
+func activeMembership(now int64) keel.Pred {
+	m := tenantdb.OrganizationMemberships
+	return keel.Or(m.ExpiresAt.IsNull(), m.ExpiresAt.Gt(now))
+}
+
+func (ur *repository) attachMemberships(
+	ctx context.Context,
+	users []*tenant.User,
+	withState bool,
+) error {
+	if len(users) == 0 {
+		return nil
 	}
 
-	q = qb.GetQuery()
-
-	q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("usr.current_organization_id = ?", req.Filter.TenantInfo.OrgID).
-			Where("usr.username != ?", "system").
-			Where("usr.business_unit_id = ?", req.Filter.TenantInfo.BuID)
-	})
-
-	q.Relation("Assignments").Relation("Assignments.Role")
-
-	if req.IncludeMemberships {
-		q = q.Relation("Memberships").Relation("Memberships.Organization")
+	userIDs := make([]pulid.ID, 0, len(users))
+	for _, user := range users {
+		userIDs = append(userIDs, user.ID)
 	}
 
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
+	readCtx, visible := membershipReadScope(ctx)
+	memberships, err := dbtx.Read(
+		readCtx,
+		ur.db,
+		func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
+			m := tenantdb.OrganizationMemberships
+			org := m.Organization()
+			load := keel.Loader(org)
+			if withState {
+				load = org.State()
+			}
+
+			return allTenantsWhenSystem(ctx, m.Where(m.UserID.In(userIDs...), visible)).
+				Load(load).
+				All(ctx, ur.db.Keel(ctx))
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	byUser := make(map[pulid.ID][]*tenant.OrganizationMembership, len(users))
+	for _, membership := range memberships {
+		byUser[membership.UserID] = append(byUser[membership.UserID], membership)
+	}
+	for _, user := range users {
+		user.Memberships = byUser[user.ID]
+	}
+
+	return nil
 }
 
 func (ur *repository) List(
 	ctx context.Context,
 	req *tenantports.ListUsersRequest,
 ) (*pagination.ListResult[*tenant.User], error) {
-	return dbtx.Read(
+	log := ur.l.With(zap.String("operation", "List"), zap.Any("request", req))
+
+	result, err := dbtx.Read(
 		ctx,
 		ur.db,
 		func(ctx context.Context) (*pagination.ListResult[*tenant.User], error) {
-			log := ur.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
+			u := tenantdb.Users
+			return listquery.List(
+				ctx,
+				ur.db.Keel(ctx),
+				tenantUsers(req.Filter.TenantInfo.OrgID),
+				&listquery.Request[tenant.User]{
+					Filter: req.Filter,
+					Shape: func(q *keel.Query[*tenant.User]) *keel.Query[*tenant.User] {
+						return q.Load(u.Assignments().Role())
+					},
+				},
 			)
-
-			entities := make([]*tenant.User, 0, req.Filter.Pagination.SafeLimit())
-
-			q := ur.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return ur.filterQuery(sq, req)
-				})
-
-			total, err := q.ScanAndCount(ctx)
-			if err != nil {
-				log.Error("failed to scan and count users", zap.Error(err))
-				return nil, err
-			}
-
-			return &pagination.ListResult[*tenant.User]{
-				Items: entities,
-				Total: int(total),
-			}, nil
 		},
 	)
-}
-
-func (ur *repository) scopeUserTenant(
-	q *bun.SelectQuery,
-	tenantInfo pagination.TenantInfo,
-) *bun.SelectQuery {
-	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("usr.current_organization_id = ?", tenantInfo.OrgID).
-			Where("usr.business_unit_id = ?", tenantInfo.BuID).
-			Where("usr.username != ?", "system")
-	})
-}
-
-func (ur *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *tenantports.ListUserConnectionRequest,
-) (*bun.SelectQuery, error) {
-	q, err := querybuilder.ApplyCursorFiltersWithoutTenantScope(
-		q,
-		"usr",
-		req.Filter,
-		req.Cursor,
-		(*tenant.User)(nil),
-	)
 	if err != nil {
+		log.Error("failed to list users", zap.Error(err))
 		return nil, err
 	}
 
-	return ur.scopeUserTenant(q, req.Filter.TenantInfo), nil
-}
-
-func (ur *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *tenantports.ListUserConnectionRequest,
-) (*bun.SelectQuery, error) {
-	q, err := querybuilder.ApplyCursorFiltersWithoutTenantScope(
-		q,
-		"usr",
-		req.Filter,
-		pagination.CursorInfo{},
-		(*tenant.User)(nil),
-	)
-	if err != nil {
-		return nil, err
+	if req.IncludeMemberships {
+		if err = ur.attachMemberships(ctx, result.Items, false); err != nil {
+			log.Error("failed to load user memberships", zap.Error(err))
+			return nil, err
+		}
 	}
 
-	return ur.scopeUserTenant(q, req.Filter.TenantInfo), nil
+	return result, nil
 }
 
 func (ur *repository) ListConnection(
 	ctx context.Context,
 	req *tenantports.ListUserConnectionRequest,
 ) (*pagination.CursorListResult[*tenant.User], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		ur.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*tenant.User], error) {
-			log := ur.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := ur.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				countQuery := dba.NewSelect().Model((*tenant.User)(nil))
-				countQuery, err := ur.applyTotalCountFilters(countQuery, req)
-				if err != nil {
-					log.Error("failed to build user count query", zap.Error(err))
-					return nil, err
-				}
-				total, err := countQuery.Count(ctx)
-				if err != nil {
-					log.Error("failed to count users", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*tenant.User]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*tenant.User) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							ColumnExpr("usr.*")
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return ur.applyCursorPageFilters(sq, req)
-					},
-				})
+				ur.db.Keel(ctx),
+				tenantUsers(req.Filter.TenantInfo.OrgID),
+				&listquery.Request[tenant.User]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan users", zap.Error(err))
+				ur.l.Error("failed to list users", zap.Error(err))
 				return nil, err
 			}
 
@@ -241,70 +223,69 @@ func (ur *repository) GetByID(
 	ctx context.Context,
 	req tenantports.GetUserByIDRequest,
 ) (*tenant.User, error) {
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
-		entity := new(tenant.User)
-		targetUserID := req.LookupUserID
-		if targetUserID == "" {
-			targetUserID = req.TenantInfo.UserID
-		}
-		q := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("usr.current_organization_id = ?", req.TenantInfo.OrgID).
-					Where("usr.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("usr.id = ?", targetUserID)
-			})
+	targetUserID := req.LookupUserID
+	if targetUserID.IsNil() {
+		targetUserID = req.TenantInfo.UserID
+	}
 
-		if req.IncludeMemberships {
-			q = q.Relation("Memberships").
-				Relation("Memberships.Organization").
-				Relation("Memberships.Organization.State")
+	entity, err := dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
+		u := tenantdb.Users
+		user, err := u.Where(
+			u.CurrentOrganizationID.Eq(req.TenantInfo.OrgID),
+			u.ID.Eq(targetUserID),
+		).One(ctx, ur.db.Keel(ctx))
+		if err != nil {
+			return nil, userErrors.Map(err, targetUserID.String())
 		}
 
-		if err := q.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "User")
-		}
-
-		return entity, nil
+		return user, nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	if req.IncludeMemberships {
+		if err = ur.attachMemberships(ctx, []*tenant.User{entity}, true); err != nil {
+			return nil, err
+		}
+	}
+
+	return entity, nil
 }
 
 func (ur *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*tenant.User], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		ur.db,
 		func(ctx context.Context) (*pagination.ListResult[*tenant.User], error) {
-			return dbhelper.SelectOptions[*tenant.User](
+			u := tenantdb.Users
+			q := tenantUsers(req.TenantInfo.OrgID).
+				Pick(
+					u.ID,
+					u.Name,
+					u.Username,
+					u.EmailAddress,
+					u.Status,
+					u.IsLocked,
+					u.ProfilePicURL,
+					u.ThumbnailURL,
+				).
+				Where(u.Status.Eq(domaintypes.StatusActive))
+
+			return listquery.SelectOptions(
 				ctx,
-				ur.db.DBForContext(ctx),
+				ur.db.Keel(ctx),
+				q,
 				req,
-				&dbhelper.SelectOptionsConfig{
-					Columns: []string{
-						"id",
-						"name",
-						"username",
-						"email_address",
-						"status",
-						"is_locked",
-						"profile_pic_url",
-						"thumbnail_url",
-					},
-					OrgColumn: "usr.current_organization_id",
-					BuColumn:  "usr.business_unit_id",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where("usr.status = ?", domaintypes.StatusActive).
-							Where("usr.username != ?", "system")
-					},
-					EntityName: "User",
-					SearchColumns: []string{
-						"usr.username",
-						"usr.name",
-						"usr.email_address",
-					},
+				func(search string) keel.Pred {
+					return keel.Or(
+						u.Username.ContainsFold(search),
+						u.Name.ContainsFold(search),
+						u.EmailAddress.ContainsFold(search),
+					)
 				},
 			)
 		},
@@ -312,15 +293,13 @@ func (ur *repository) SelectOptions(
 }
 
 func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*tenant.User, error) {
-	ctx = dbscope.WithSystem(ctx, "resolve a sign-in email before any tenant is known")
+	ctx = dbscope.WithSystem(ctx, emailScopeReason)
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
-		user := new(tenant.User)
-
-		if err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(user).
-			Where("usr.email_address = ?", emailAddress).
-			Scan(ctx); err != nil {
+		u := tenantdb.Users
+		user, err := u.AllTenants().
+			Where(u.EmailAddress.Lower().Eq(strings.ToLower(emailAddress))).
+			One(ctx, ur.db.Keel(ctx))
+		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, errortypes.NewValidationError(
 					"emailAddress",
@@ -337,19 +316,12 @@ func (ur *repository) FindByEmail(ctx context.Context, emailAddress string) (*te
 }
 
 func (ur *repository) FindByIDForLogin(ctx context.Context, userID pulid.ID) (*tenant.User, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"load the user an identity provider subject is linked to before a session exists",
-	)
+	ctx = dbscope.WithSystem(ctx, loginScopeReason)
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
-		user := new(tenant.User)
-
-		if err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(user).
-			Where(tenantcol.UserColumns.ID.Eq(), userID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "User")
+		u := tenantdb.Users
+		user, err := u.AllTenants().Where(u.ID.Eq(userID)).One(ctx, ur.db.Keel(ctx))
+		if err != nil {
+			return nil, userErrors.Map(err, userID.String())
 		}
 
 		return user, nil
@@ -358,18 +330,19 @@ func (ur *repository) FindByIDForLogin(ctx context.Context, userID pulid.ID) (*t
 
 func (ur *repository) UpdateLastLoginAt(ctx context.Context, userID pulid.ID) error {
 	return dbtx.WriteErr(ctx, ur.db, func(ctx context.Context) error {
-		log := ur.l.With(
-			zap.String("operation", "UpdateLastLoginAt"),
-			zap.String("userID", userID.String()),
-		)
-
-		if _, err := ur.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tenant.User)(nil)).
-			Set("last_login_at = ?", timeutils.NowUnix()).
-			Where("usr.id = ?", userID).
-			Exec(ctx); err != nil {
-			log.Error("failed to update last login at in database", zap.Error(err))
+		u := tenantdb.Users
+		if _, err := u.Where(u.ID.Eq(userID)).Update(
+			ctx,
+			ur.db.Keel(ctx),
+			u.LastLoginAt.To(timeutils.NowUnix()),
+			u.UpdatedAt.ToExpr(u.UpdatedAt),
+			keepVersion(),
+		); err != nil {
+			ur.l.Error(
+				"failed to update last login at in database",
+				zap.String("userID", userID.String()),
+				zap.Error(err),
+			)
 			return err
 		}
 
@@ -381,31 +354,26 @@ func (ur *repository) GetOrganizations(
 	ctx context.Context,
 	userID pulid.ID,
 ) ([]*tenant.OrganizationMembership, error) {
+	readCtx, visible := membershipReadScope(ctx)
 	return dbtx.Read(
-		ctx,
+		readCtx,
 		ur.db,
 		func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
-			log := ur.l.With(
-				zap.String("operation", "GetOrganizations"),
-				zap.String("userID", userID.String()),
-			)
-
-			entities := make([]*tenant.OrganizationMembership, 0)
-			err := ur.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation("Organization").
-				Relation("Organization.State").
-				Relation("User").
-				Where("uom.user_id = ?", userID).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("uom.expires_at IS NULL").
-						WhereOr("uom.expires_at > ?", timeutils.NowUnix())
-				}).
-				Order("uom.is_default DESC").
-				Scan(ctx)
+			m := tenantdb.OrganizationMemberships
+			entities, err := allTenantsWhenSystem(ctx, m.Where(
+				m.UserID.Eq(userID),
+				activeMembership(timeutils.NowUnix()),
+				visible,
+			)).
+				Load(m.Organization().State(), m.User()).
+				Order(m.IsDefault.Desc()).
+				All(ctx, ur.db.Keel(ctx))
 			if err != nil {
-				log.Error("failed to get user organizations", zap.Error(err))
+				ur.l.Error(
+					"failed to get user organizations",
+					zap.String("userID", userID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
@@ -414,79 +382,26 @@ func (ur *repository) GetOrganizations(
 	)
 }
 
-func (ur *repository) GetOrganizationsByBusinessUnit(
-	ctx context.Context,
-	businessUnitID pulid.ID,
-) ([]*tenant.Organization, error) {
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]*tenant.Organization, error) {
-		orgs := make([]*tenant.Organization, 0)
-		err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(&orgs).
-			Relation("State").
-			Where("org.business_unit_id = ?", businessUnitID).
-			Order("org.name ASC").
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return orgs, nil
-	})
-}
-
-func (ur *repository) GetOrganizationByID(
-	ctx context.Context,
-	organizationID pulid.ID,
-) (*tenant.Organization, error) {
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.Organization, error) {
-		org := new(tenant.Organization)
-		if err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(org).
-			Where("org.id = ?", organizationID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Organization")
-		}
-
-		return org, nil
-	})
-}
-
 func (ur *repository) ListOrganizationMemberships(
 	ctx context.Context,
 	userID, businessUnitID pulid.ID,
 ) ([]*tenant.OrganizationMembership, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"list a user's memberships across the organizations of one business unit",
-	)
+	ctx = dbscope.WithSystem(ctx, listMembershipsReason)
 	return dbtx.Read(
 		ctx,
 		ur.db,
 		func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
-			memberships := make([]*tenant.OrganizationMembership, 0)
-			err := ur.db.DBForContext(ctx).
-				NewSelect().
-				Model(&memberships).
-				Relation("Organization").
-				Relation("Organization.State").
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where("uom.user_id = ?", userID).
-						Where("uom.business_unit_id = ?", businessUnitID)
-				}).
-				Order("uom.is_default DESC, uom.joined_at ASC").
-				Scan(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return memberships, nil
+			m := tenantdb.OrganizationMemberships
+			return m.AllTenants().
+				Where(m.UserID.Eq(userID), m.BusinessUnitID.Eq(businessUnitID)).
+				Load(m.Organization().State()).
+				Order(m.IsDefault.Desc(), m.JoinedAt.Asc()).
+				All(ctx, ur.db.Keel(ctx))
 		},
 	)
 }
 
-func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit // legacy workflow
+func (ur *repository) ReplaceOrganizationMemberships(
 	ctx context.Context,
 	req tenantports.ReplaceOrganizationMembershipsRequest,
 ) ([]*tenant.OrganizationMembership, error) {
@@ -494,172 +409,24 @@ func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit /
 		return nil, tenant.NewNoOrganizationMembershipsError()
 	}
 
-	ctx = dbscope.WithSystem(
-		ctx,
-		"replace a user's memberships across the organizations of one business unit in one transaction",
-	)
+	ctx = dbscope.WithSystem(ctx, replaceMembershipsReason)
 	return dbtx.Write(
 		ctx,
 		ur.db,
 		func(ctx context.Context) ([]*tenant.OrganizationMembership, error) {
-			ucols := tenantcol.UserColumns
-			inBusinessUnit, err := ur.db.DBForContext(ctx).
-				NewSelect().
-				Model((*tenant.User)(nil)).
-				Where(ucols.ID.Eq(), req.UserID).
-				Where(ucols.BusinessUnitID.Eq(), req.BusinessUnitID).
-				Exists(ctx)
-			if err != nil {
+			if err := ur.checkMembershipTargets(ctx, req); err != nil {
 				return nil, err
 			}
-			if !inBusinessUnit {
-				return nil, errortypes.NewNotFoundError("User not found")
-			}
 
-			desiredOrgSet := make(map[pulid.ID]struct{}, len(req.OrganizationIDs))
-			for _, orgID := range req.OrganizationIDs {
-				desiredOrgSet[orgID] = struct{}{}
-			}
-
-			orgCount, err := ur.db.DBForContext(ctx).
-				NewSelect().
-				Model((*tenant.Organization)(nil)).
-				Where("org.id IN (?)", bun.List(req.OrganizationIDs)).
-				Where("org.business_unit_id = ?", req.BusinessUnitID).
-				Count(ctx)
-			if err != nil {
-				return nil, err
-			}
-			if int(orgCount) != len(req.OrganizationIDs) {
-				return nil, errortypes.NewAuthorizationError(
-					"organizations must belong to the current business unit",
-				)
-			}
-
-			currentMemberships, err := ur.ListOrganizationMemberships(
+			err := ur.db.Transact(
 				ctx,
-				req.UserID,
-				req.BusinessUnitID,
+				kernelports.TxOptions{LockTimeout: membershipLockTimeout},
+				func(ctx context.Context) error {
+					return ur.replaceMemberships(ctx, req)
+				},
 			)
 			if err != nil {
-				return nil, err
-			}
-
-			currentByOrg := make(
-				map[pulid.ID]*tenant.OrganizationMembership,
-				len(currentMemberships),
-			)
-			var currentDefaultOrgID pulid.ID
-			for _, membership := range currentMemberships {
-				currentByOrg[membership.OrganizationID] = membership
-				if membership.IsDefault {
-					currentDefaultOrgID = membership.OrganizationID
-				}
-			}
-
-			err = ur.db.WithTx(ctx, kernelports.TxOptions{
-				LockTimeout: 250 * time.Millisecond,
-			}, func(txCtx context.Context, tx bun.Tx) error {
-				lockedMemberships := make([]*tenant.OrganizationMembership, 0)
-				if lmErr := tx.NewSelect().
-					Model(&lockedMemberships).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.Where("uom.user_id = ?", req.UserID).
-							Where("uom.business_unit_id = ?", req.BusinessUnitID)
-					}).
-					Order("uom.organization_id ASC").
-					For("UPDATE NOWAIT").
-					Scan(txCtx); lmErr != nil {
-					return lmErr
-				}
-
-				currentByOrg = make(
-					map[pulid.ID]*tenant.OrganizationMembership,
-					len(lockedMemberships),
-				)
-				currentDefaultOrgID = ""
-				for _, membership := range lockedMemberships {
-					currentByOrg[membership.OrganizationID] = membership
-					if membership.IsDefault {
-						currentDefaultOrgID = membership.OrganizationID
-					}
-				}
-
-				for orgID, membership := range currentByOrg {
-					if _, ok := desiredOrgSet[orgID]; ok {
-						continue
-					}
-					if _, deleteErr := tx.NewDelete().Model((*tenant.OrganizationMembership)(nil)).
-						Where("id = ?", membership.ID).
-						Exec(txCtx); deleteErr != nil {
-						return deleteErr
-					}
-				}
-
-				for _, orgID := range req.OrganizationIDs {
-					if _, ok := currentByOrg[orgID]; ok {
-						continue
-					}
-					if quotaErr := quotaservice.EnforceAll(
-						txCtx,
-						ur.quota,
-						platformplanports.QuotaRequest{
-							TenantInfo: pagination.TenantInfo{
-								OrgID: orgID,
-								BuID:  req.BusinessUnitID,
-							},
-							Meter:    platformcatalog.MeterUserSeats,
-							Quantity: 1,
-						},
-					); quotaErr != nil {
-						return quotaErr
-					}
-					newMembership := &tenant.OrganizationMembership{
-						UserID:         req.UserID,
-						BusinessUnitID: req.BusinessUnitID,
-						OrganizationID: orgID,
-						GrantedByID:    req.ActorID,
-						IsDefault:      false,
-					}
-					if _, insertErr := tx.NewInsert().
-						Model(newMembership).
-						Exec(txCtx); insertErr != nil {
-						return insertErr
-					}
-				}
-
-				newDefaultOrgID := currentDefaultOrgID
-				if _, ok := desiredOrgSet[newDefaultOrgID]; !ok {
-					newDefaultOrgID = req.OrganizationIDs[0]
-				}
-
-				if _, updateDefaultErr := tx.NewUpdate().
-					Model((*tenant.OrganizationMembership)(nil)).
-					Set("is_default = (organization_id = ?)", newDefaultOrgID).
-					Where("user_id = ?", req.UserID).
-					Where("business_unit_id = ?", req.BusinessUnitID).
-					Exec(txCtx); updateDefaultErr != nil {
-					return updateDefaultErr
-				}
-
-				if _, currentErr := tx.NewUpdate().
-					Model((*tenant.User)(nil)).
-					Set(ucols.CurrentOrganizationID.Set(), newDefaultOrgID).
-					Set(ucols.UpdatedAt.Set(), timeutils.NowUnix()).
-					Where(ucols.ID.Eq(), req.UserID).
-					Where(ucols.BusinessUnitID.Eq(), req.BusinessUnitID).
-					Where(ucols.CurrentOrganizationID.NotIn(), bun.List(req.OrganizationIDs)).
-					Exec(txCtx); currentErr != nil {
-					return currentErr
-				}
-
-				return nil
-			})
-			if err != nil {
-				return nil, dberror.MapRetryableTransactionError(
-					err,
-					"The user's organization memberships are busy. Retry the request.",
-				)
+				return nil, dberror.MapRetryableTransactionError(err, membershipsBusyMessage)
 			}
 
 			return ur.ListOrganizationMemberships(ctx, req.UserID, req.BusinessUnitID)
@@ -667,26 +434,163 @@ func (ur *repository) ReplaceOrganizationMemberships( //nolint:funlen,gocognit /
 	)
 }
 
+func (ur *repository) checkMembershipTargets(
+	ctx context.Context,
+	req tenantports.ReplaceOrganizationMembershipsRequest,
+) error {
+	db := ur.db.Keel(ctx)
+	u := tenantdb.Users
+	o := tenantdb.Organizations
+
+	var inBusinessUnit bool
+	var orgCount int64
+	err := keel.Batch(
+		ctx,
+		db,
+		keel.ExistsInto(
+			u.AllTenants().Where(u.ID.Eq(req.UserID), u.BusinessUnitID.Eq(req.BusinessUnitID)),
+			&inBusinessUnit,
+		),
+		keel.CountInto(
+			o.AllTenants().Where(
+				o.ID.In(req.OrganizationIDs...),
+				o.BusinessUnitID.Eq(req.BusinessUnitID),
+			),
+			&orgCount,
+		),
+	)
+	if err != nil {
+		return err
+	}
+	if !inBusinessUnit {
+		return errortypes.NewNotFoundError("User not found")
+	}
+	if int(orgCount) != len(req.OrganizationIDs) {
+		return errortypes.NewAuthorizationError(organizationsOutsideScope)
+	}
+
+	return nil
+}
+
+func (ur *repository) replaceMemberships(
+	ctx context.Context,
+	req tenantports.ReplaceOrganizationMembershipsRequest,
+) error {
+	db := ur.db.Keel(ctx)
+	m := tenantdb.OrganizationMemberships
+
+	locked, err := m.AllTenants().
+		Where(m.UserID.Eq(req.UserID), m.BusinessUnitID.Eq(req.BusinessUnitID)).
+		Order(m.OrganizationID.Asc()).
+		Lock(keel.ForUpdate, keel.NoWait).
+		All(ctx, db)
+	if err != nil {
+		return err
+	}
+
+	desired := make(map[pulid.ID]struct{}, len(req.OrganizationIDs))
+	for _, orgID := range req.OrganizationIDs {
+		desired[orgID] = struct{}{}
+	}
+
+	current := make(map[pulid.ID]struct{}, len(locked))
+	var currentDefaultOrgID pulid.ID
+	removed := make([]pulid.ID, 0, len(locked))
+	for _, membership := range locked {
+		current[membership.OrganizationID] = struct{}{}
+		if membership.IsDefault {
+			currentDefaultOrgID = membership.OrganizationID
+		}
+		if _, keep := desired[membership.OrganizationID]; !keep {
+			removed = append(removed, membership.ID)
+		}
+	}
+
+	if len(removed) > 0 {
+		if _, err = m.AllTenants().Where(m.ID.In(removed...)).Delete(ctx, db); err != nil {
+			return err
+		}
+	}
+
+	added, err := ur.newMemberships(ctx, req, current)
+	if err != nil {
+		return err
+	}
+	if err = m.CreateMany(ctx, db, added); err != nil {
+		return err
+	}
+
+	newDefaultOrgID := currentDefaultOrgID
+	if _, ok := desired[newDefaultOrgID]; !ok {
+		newDefaultOrgID = req.OrganizationIDs[0]
+	}
+
+	isDefault := m.OrganizationID.Eq(newDefaultOrgID)
+	if _, err = m.AllTenants().
+		Where(m.UserID.Eq(req.UserID), m.BusinessUnitID.Eq(req.BusinessUnitID)).
+		Update(ctx, db, m.IsDefault.ToExpr(isDefault)); err != nil {
+		return err
+	}
+
+	u := tenantdb.Users
+	_, err = u.AllTenants().
+		Where(
+			u.ID.Eq(req.UserID),
+			u.BusinessUnitID.Eq(req.BusinessUnitID),
+			u.CurrentOrganizationID.NotIn(req.OrganizationIDs...),
+		).
+		Update(ctx, db, u.CurrentOrganizationID.To(newDefaultOrgID), keepVersion())
+
+	return err
+}
+
+func (ur *repository) newMemberships(
+	ctx context.Context,
+	req tenantports.ReplaceOrganizationMembershipsRequest,
+	current map[pulid.ID]struct{},
+) ([]*tenant.OrganizationMembership, error) {
+	added := make([]*tenant.OrganizationMembership, 0, len(req.OrganizationIDs))
+	for _, orgID := range req.OrganizationIDs {
+		if _, ok := current[orgID]; ok {
+			continue
+		}
+		if err := quotaservice.EnforceAll(ctx, ur.quota, platformplanports.QuotaRequest{
+			TenantInfo: pagination.TenantInfo{OrgID: orgID, BuID: req.BusinessUnitID},
+			Meter:      platformcatalog.MeterUserSeats,
+			Quantity:   1,
+		}); err != nil {
+			return nil, err
+		}
+		added = append(added, &tenant.OrganizationMembership{
+			UserID:         req.UserID,
+			BusinessUnitID: req.BusinessUnitID,
+			OrganizationID: orgID,
+			GrantedByID:    req.ActorID,
+		})
+	}
+
+	return added, nil
+}
+
 func (ur *repository) UpdateCurrentOrganization(
 	ctx context.Context,
 	userID, orgID, buID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, ur.db, func(ctx context.Context) error {
-		log := ur.l.With(
-			zap.String("operation", "UpdateCurrentOrganization"),
-			zap.String("userID", userID.String()),
-			zap.String("orgID", orgID.String()),
-		)
-
-		if _, err := ur.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tenant.User)(nil)).
-			Set("current_organization_id = ?", orgID).
-			Set("business_unit_id = ?", buID).
-			Set("updated_at = ?", timeutils.NowUnix()).
-			Where("usr.id = ?", userID).
-			Exec(ctx); err != nil {
-			log.Error("failed to update current organization", zap.Error(err))
+		u := tenantdb.Users
+		if _, err := u.Where(u.ID.Eq(userID)).Update(
+			ctx,
+			ur.db.Keel(ctx),
+			u.CurrentOrganizationID.To(orgID),
+			u.BusinessUnitID.To(buID),
+			keepVersion(),
+		); err != nil {
+			ur.l.Error(
+				"failed to update current organization",
+				zap.String("userID", userID.String()),
+				zap.String("orgID", orgID.String()),
+				zap.Error(err),
+			)
 			return err
 		}
 
@@ -698,27 +602,28 @@ func (ur *repository) GetUserOrganizationSummaries(
 	ctx context.Context,
 	userID pulid.ID,
 ) ([]tenantports.OrgSummary, error) {
-	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]tenantports.OrgSummary, error) {
-		log := ur.l.With(
-			zap.String("operation", "GetUserOrganizationSummaries"),
-			zap.String("userID", userID.String()),
+	readCtx, visible := membershipReadScope(ctx)
+	return dbtx.Read(readCtx, ur.db, func(ctx context.Context) ([]tenantports.OrgSummary, error) {
+		m := tenantdb.OrganizationMemberships
+		org := m.Organization()
+		summaries, err := keel.Into[tenantports.OrgSummary](
+			ctx,
+			ur.db.Keel(ctx),
+			allTenantsWhenSystem(ctx, m.Where(
+				m.UserID.Eq(userID),
+				org.ID.IsNotNull(),
+				activeMembership(timeutils.NowUnix()),
+				visible,
+			)).
+				Pick(org.ID, org.Name).
+				Order(org.Name.Asc()),
 		)
-
-		var summaries []tenantports.OrgSummary
-		err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model((*tenant.OrganizationMembership)(nil)).
-			ColumnExpr("org.id, org.name").
-			Join("JOIN organizations AS org ON org.id = uom.organization_id").
-			Where("uom.user_id = ?", userID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("uom.expires_at IS NULL").
-					WhereOr("uom.expires_at > ?", timeutils.NowUnix())
-			}).
-			Order("org.name ASC").
-			Scan(ctx, &summaries)
 		if err != nil {
-			log.Error("failed to get user organization summaries", zap.Error(err))
+			ur.l.Error(
+				"failed to get user organization summaries",
+				zap.String("userID", userID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -731,26 +636,23 @@ func (ur *repository) UpdatePassword(
 	req tenantports.UpdateUserPasswordRequest,
 ) error {
 	return dbtx.WriteErr(ctx, ur.db, func(ctx context.Context) error {
-		log := ur.l.With(
-			zap.String("operation", "UpdatePassword"),
-			zap.String("userID", req.UserID.String()),
+		u := tenantdb.Users
+		_, err := u.Where(
+			u.ID.Eq(req.UserID),
+			u.CurrentOrganizationID.Eq(req.OrganizationID),
+		).Update(
+			ctx,
+			ur.db.Keel(ctx),
+			u.Password.To(req.Password),
+			u.MustChangePassword.To(req.MustChangePassword),
+			u.PasswordChangedAt.To(timeutils.NowUnix()),
 		)
-
-		_, err := ur.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*tenant.User)(nil)).
-			Set("password = ?", req.Password).
-			Set("must_change_password = ?", req.MustChangePassword).
-			Set(tenantcol.UserColumns.PasswordChangedAt.Set(), timeutils.NowUnix()).
-			Set("updated_at = ?", timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("usr.id = ?", req.UserID).
-					Where("usr.current_organization_id = ?", req.OrganizationID).
-					Where("usr.business_unit_id = ?", req.BusinessUnitID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to update user password", zap.Error(err))
+			ur.l.Error(
+				"failed to update user password",
+				zap.String("userID", req.UserID.String()),
+				zap.Error(err),
+			)
 			return err
 		}
 
@@ -763,24 +665,18 @@ func (ur *repository) GetByIDs(
 	req tenantports.GetUsersByIDsRequest,
 ) ([]*tenant.User, error) {
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) ([]*tenant.User, error) {
-		log := ur.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Any("request", req),
-		)
+		if len(req.UserIDs) == 0 {
+			return []*tenant.User{}, nil
+		}
 
-		entities := make([]*tenant.User, 0, len(req.UserIDs))
-		err := ur.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("usr.current_organization_id = ?", req.TenantInfo.OrgID).
-					Where("usr.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("usr.id IN (?)", bun.List(req.UserIDs))
-			}).
-			Scan(ctx)
+		u := tenantdb.Users
+		entities, err := u.Where(
+			u.CurrentOrganizationID.Eq(req.TenantInfo.OrgID),
+			u.ID.In(req.UserIDs...),
+		).Limit(len(req.UserIDs)).List(ctx, ur.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get users", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "User")
+			ur.l.Error("failed to get users", zap.Error(err))
+			return nil, err
 		}
 
 		return entities, nil
@@ -792,29 +688,17 @@ func (ur *repository) BulkUpdateStatus(
 	req *tenantports.BulkUpdateUserStatusRequest,
 ) ([]*tenant.User, error) {
 	return dbtx.Write(ctx, ur.db, func(ctx context.Context) ([]*tenant.User, error) {
-		log := ur.l.With(
-			zap.String("operation", "BulkUpdateStatus"),
-			zap.Any("request", req),
-		)
-
-		entities := make([]*tenant.User, 0, len(req.UserIDs))
-		results, err := ur.db.DBForContext(ctx).
-			NewUpdate().
-			Model(&entities).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("usr.current_organization_id = ?", req.TenantInfo.OrgID).
-					Where("usr.business_unit_id = ?", req.TenantInfo.BuID).
-					Where("usr.id IN (?)", bun.List(req.UserIDs))
-			}).
-			Set("status = ?", req.Status).
-			Returning("*").
-			Exec(ctx)
+		u := tenantdb.Users
+		entities, err := u.Where(
+			u.CurrentOrganizationID.Eq(req.TenantInfo.OrgID),
+			u.ID.In(req.UserIDs...),
+		).UpdateReturning(ctx, ur.db.Keel(ctx), u.Status.To(req.Status))
 		if err != nil {
-			log.Error("failed to bulk update user status", zap.Error(err))
+			ur.l.Error("failed to bulk update user status", zap.Error(err))
 			return nil, err
 		}
 
-		if err = dberror.CheckBulkRowsAffected(results, "User", req.UserIDs); err != nil {
+		if err = dberror.CheckBulkAffected(int64(len(entities)), "User", req.UserIDs); err != nil {
 			return nil, err
 		}
 
@@ -823,19 +707,18 @@ func (ur *repository) BulkUpdateStatus(
 }
 
 func (ur *repository) GetSystemUser(ctx context.Context, columns ...string) (*tenant.User, error) {
-	ctx = dbscope.WithSystem(
-		ctx,
-		"resolve the instance system user, which belongs to the default organization, as the actor for any tenant",
-	)
+	ctx = dbscope.WithSystem(ctx, systemUserScopeReason)
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
-		user := new(tenant.User)
+		u := tenantdb.Users
+		q, err := listquery.Pick(u.AllTenants(), columns)
+		if err != nil {
+			return nil, err
+		}
 
-		if err := ur.db.DBForContext(ctx).NewSelect().
-			Column(columns...).
-			Model(user).
-			Where("usr.username = ?", "system").
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "User")
+		user, err := q.Where(u.Username.Lower().Eq(strings.ToLower(tenant.SystemUsername))).
+			One(ctx, ur.db.Keel(ctx))
+		if err != nil {
+			return nil, userErrors.Map(err, tenant.SystemUsername)
 		}
 
 		return user, nil
@@ -847,32 +730,19 @@ func (ur *repository) GetTenantMember(
 	req tenantports.GetTenantMemberRequest,
 ) (*tenant.User, error) {
 	return dbtx.Read(ctx, ur.db, func(ctx context.Context) (*tenant.User, error) {
-		user := tenantcol.UserColumns
-		membership := tenantcol.OrganizationMembershipColumns
-		db := ur.db.DBForContext(ctx)
+		u := tenantdb.Users
+		m := tenantdb.OrganizationMemberships
 
-		member := db.NewSelect().
-			Model((*tenant.OrganizationMembership)(nil)).
-			ColumnExpr("1").
-			Where(membership.UserID.EqColumn(user.ID)).
-			Where(membership.OrganizationID.Eq(), req.TenantInfo.OrgID).
-			Where(membership.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where(membership.ExpiresAt.IsNull()).
-					WhereOr(membership.ExpiresAt.Gt(), req.Now)
-			})
-
-		entity := new(tenant.User)
-		if err := db.NewSelect().
-			Model(entity).
-			Where(user.ID.Eq(), req.UserID).
-			Where(user.BusinessUnitID.Eq(), req.TenantInfo.BuID).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("EXISTS (?)", member).
-					WhereOr(user.CurrentOrganizationID.Eq(), req.TenantInfo.OrgID)
-			}).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "User")
+		member := m.Where(m.UserID.EqCol(u.ID), activeMembership(req.Now))
+		entity, err := u.Where(
+			u.ID.Eq(req.UserID),
+			keel.Or(
+				keel.Exists(member),
+				u.CurrentOrganizationID.Eq(req.TenantInfo.OrgID),
+			),
+		).One(ctx, ur.db.Keel(ctx))
+		if err != nil {
+			return nil, userErrors.Map(err, req.UserID.String())
 		}
 
 		return entity, nil

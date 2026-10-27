@@ -42,7 +42,7 @@ type CaptureAnalysis struct {
 }
 
 // CaptureAnalyzer reads a proposed document with the same classifier and
-// parsing rules a stored document goes through, without storing it.
+// built-in parsers a stored document goes through, without storing it.
 type CaptureAnalyzer interface {
 	Analyze(ctx context.Context, req *CaptureAnalysisRequest) (*CaptureAnalysis, error)
 }

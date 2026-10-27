@@ -24,10 +24,10 @@ vi.mock("@/hooks/use-reports", () => ({
 
 function irWithFilter(entity: string, field: string) {
   return {
-    irVersion: 1,
+    version: 2,
     entity,
-    columns: [{ id: "c1", kind: "dimension", ref: { field: "serviceType" } }],
-    filters: { op: "and", filters: [{ ref: { field } }] },
+    columns: [{ id: "c1", dimension: { field: "serviceType" } }],
+    filters: { and: [{ field, op: "eq", value: "x" }] },
   };
 }
 

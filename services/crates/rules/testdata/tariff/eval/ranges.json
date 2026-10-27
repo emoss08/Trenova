@@ -1,0 +1,303 @@
+[
+  {
+    "name": "a zip inside a text range",
+    "expr": "\"30301\" in \"30000\"..=\"31999\"",
+    "display": "true"
+  },
+  {
+    "name": "a zip past a text range",
+    "expr": "\"40000\" in \"30000\"..=\"39999\"",
+    "display": "false"
+  },
+  {
+    "name": "a text range's end is excluded",
+    "expr": "\"320\" in \"300\"..\"320\"",
+    "display": "false"
+  },
+  {
+    "name": "text compares character by character",
+    "expr": "\"2\" in \"10\"..\"300\"",
+    "display": "true"
+  },
+  {
+    "name": "text compares by Unicode scalar",
+    "expr": "\"é\" in \"a\"..\"z\"",
+    "display": "false"
+  },
+  {
+    "name": "an open text range starts at the empty text",
+    "expr": "\"\" in ..\"a\"",
+    "display": "true"
+  },
+  {
+    "name": "not in a text range",
+    "expr": "\"30301\" not in \"40000\"..",
+    "display": "true"
+  },
+  {
+    "name": "text range arms match a zip3",
+    "source": "tariff \"t\"\nlet region = match lane.destination.zip3 {\n  ..\"300\" => \"north\"\n  \"300\"..\"320\" => \"southeast\"\n  \"320\".. => \"south\"\n}\nnote \"{region}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "southeast"
+          }
+        ]
+      }
+    },
+    "facts": {
+      "lane": {
+        "destination": {
+          "zip3": "303"
+        }
+      }
+    }
+  },
+  {
+    "name": "literal and text range arms share a match",
+    "source": "tariff \"t\"\nlet region = match lane.destination.zip3 {\n  \"300\"..\"303\" => \"north georgia\"\n  \"303\" => \"atlanta\"\n  \"304\"..\"320\" => \"southeast\"\n  _ => \"elsewhere\"\n}\nnote \"{region}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "atlanta"
+          }
+        ]
+      }
+    },
+    "facts": {
+      "lane": {
+        "destination": {
+          "zip3": "303"
+        }
+      }
+    }
+  },
+  {
+    "name": "a text input outside its range constraint stops the rating",
+    "source": "tariff \"t\"\ninput zip: Text = \"30301\" where \"30000\"..=\"39999\"\nnote \"{zip}\"",
+    "inputs": {
+      "zip": "40000"
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be from {1} to {2}; {3} is outside it",
+          "args": [
+            "`zip`",
+            "30000",
+            "39999",
+            "40000"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "freight classes order by class",
+    "expr": "Class77_5 < Class85 and Class500 > Class400",
+    "display": "true"
+  },
+  {
+    "name": "a freight class's number",
+    "expr": "Class77_5.number",
+    "display": "77.5"
+  },
+  {
+    "name": "the top freight class's number",
+    "expr": "Class500.number + Class50.number",
+    "display": "550"
+  },
+  {
+    "name": "freight classes sort by class",
+    "expr": "[Class85, Class50, Class77_5].sortBy(c => c)",
+    "display": "[Class50, Class77_5, Class85]"
+  },
+  {
+    "name": "the highest freight class",
+    "expr": "[Class85, Class50, Class100].max() ?? Class50",
+    "display": "Class100"
+  },
+  {
+    "name": "a freight class range",
+    "expr": "Class70 in Class50..=Class100 and Class110 not in Class50..=Class100",
+    "display": "true"
+  },
+  {
+    "name": "weekdays order Monday first",
+    "expr": "Sat in Mon..=Fri or Sun < Mon",
+    "display": "false"
+  },
+  {
+    "name": "a date's weekday in a range",
+    "expr": "@2026-10-22.weekday in Mon..=Fri",
+    "display": "true"
+  },
+  {
+    "name": "weekday range arms",
+    "source": "tariff \"t\"\nlet kind = match rating.date.weekday {\n  Mon..=Fri => \"weekday\"\n  Sat | Sun => \"weekend\"\n}\nnote \"{kind}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "weekend"
+          }
+        ]
+      }
+    },
+    "facts": {
+      "rating": {
+        "date": {
+          "$date": "2026-10-24T10:00:00-05:00"
+        }
+      }
+    }
+  },
+  {
+    "name": "freight class range arms with open ends",
+    "source": "tariff \"t\"\nlet band = match shipment.freightClass ?? Class50 {\n  ..Class70 => \"dense\"\n  Class70..=Class100 => \"middle\"\n  Class110.. => \"light\"\n}\nnote \"{band}\"",
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "notes": [
+          {
+            "text": "middle"
+          }
+        ]
+      }
+    },
+    "facts": {
+      "shipment": {
+        "freightClass": "Class92_5"
+      }
+    }
+  },
+  {
+    "name": "a freight class input outside its range stops the rating",
+    "source": "tariff \"t\"\ninput cls: FreightClass = Class70 where Class50..=Class100\nnote \"{cls}\"",
+    "inputs": {
+      "cls": "Class150"
+    },
+    "expect": {
+      "status": "error",
+      "error": {
+        "code": "input",
+        "message": {
+          "message": "{0} must be from {1} to {2}; {3} is outside it",
+          "args": [
+            "`cls`",
+            "Class50",
+            "Class100",
+            "Class150"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "a property varies a freight class over its range, one class a step",
+    "tests": "tariff \"t\"\nlet cls = shipment.freightClass ?? Class50\ncharge \"x\" = $1 * cls.number\nproperty \"lighter classes never bill less\" {\n  vary shipment.freightClass in Class50..=Class100\n  expect total nondecreasing in shipment.freightClass\n}",
+    "expect": [
+      {
+        "name": "lighter classes never bill less",
+        "kind": "property",
+        "status": "passed",
+        "cases": 9
+      }
+    ]
+  },
+  {
+    "name": "graduated distance tiers bill each part at its tier's rate",
+    "source": "tariff \"t\"\nuse std.tiers.{ DistanceTier, byDistance, distanceSteps }\ninput mileTiers: List<DistanceTier> = [\n  { from: 0 mi, rate: $3/mi },\n  { from: 100 mi, rate: $2.50/mi },\n  { from: 500 mi, rate: $2/mi },\n]\nfor step in distanceSteps(mileTiers, shipment.distance) {\n  charge \"Linehaul, {step.from} to {step.to}\" (quantity: step.distance, rate: step.rate)\n}\nnote \"{byDistance(mileTiers, shipment.distance)}\"",
+    "facts": {
+      "shipment": {
+        "distance": {
+          "$q": "812",
+          "u": "mi"
+        }
+      }
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "lines": [
+          {
+            "label": "Linehaul, 0 mi to 100 mi",
+            "amount": {
+              "$q": "300",
+              "u": "$"
+            }
+          },
+          {
+            "label": "Linehaul, 100 mi to 500 mi",
+            "amount": {
+              "$q": "1000",
+              "u": "$"
+            }
+          },
+          {
+            "label": "Linehaul, 500 mi to 812 mi",
+            "amount": {
+              "$q": "624",
+              "u": "$"
+            }
+          }
+        ],
+        "notes": [
+          {
+            "text": "$1924.00"
+          }
+        ],
+        "total": {
+          "$q": "1924",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "graduated weight tiers price per hundredweight",
+    "source": "tariff \"t\"\nuse std.tiers.{ WeightTier, byWeight }\ninput tiers: List<WeightTier> = [\n  { from: 0 lb, rate: $40/cwt },\n  { from: 500 lb, rate: $30/cwt },\n]\ncharge \"Linehaul\" = byWeight(tiers, shipment.weight ?? 0 lb)",
+    "facts": {
+      "shipment": {
+        "weight": {
+          "$q": "1200",
+          "u": "lb"
+        }
+      }
+    },
+    "expect": {
+      "status": "rated",
+      "bill": {
+        "total": {
+          "$q": "410",
+          "u": "$"
+        }
+      }
+    }
+  },
+  {
+    "name": "graduated tiers with none to price by refuse to rate",
+    "source": "tariff \"t\"\nuse std.tiers.{ DistanceTier, byDistance }\ninput mileTiers: List<DistanceTier> = []\ncharge \"Linehaul\" = byDistance(mileTiers, shipment.distance)",
+    "facts": {
+      "shipment": {
+        "distance": {
+          "$q": "250",
+          "u": "mi"
+        }
+      }
+    },
+    "expect": {
+      "status": "refused",
+      "refusal": {
+        "message": "There are no distance tiers to price 250 mi with"
+      }
+    }
+  }
+]

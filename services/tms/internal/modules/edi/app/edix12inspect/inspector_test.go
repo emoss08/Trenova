@@ -6,157 +6,137 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestDetectSeparators(t *testing.T) {
-	t.Parallel()
+const isaLength = 106
 
-	tests := []struct {
-		name        string
-		rawX12      string
-		envelope    *edi.X12EnvelopeSettings
-		wantSource  SeparatorSource
-		wantElement string
-		wantSegment string
-		wantCode    string
-	}{
-		{
-			name:        "detects fixed width ISA separators",
-			rawX12:      valid204("*", "~", ">", "^"),
-			wantSource:  SeparatorSourceISA,
-			wantElement: "*",
-			wantSegment: "~",
-		},
-		{
-			name:   "uses envelope when ISA is malformed",
-			rawX12: "ST|204|0001!",
-			envelope: &edi.X12EnvelopeSettings{
-				ElementSeparator:    "|",
-				SegmentTerminator:   "!",
-				ComponentSeparator:  ":",
-				RepetitionSeparator: "^",
-			},
-			wantSource:  SeparatorSourceEnvelope,
-			wantElement: "|",
-			wantSegment: "!",
-			wantCode:    "x12.separator.isa_missing",
-		},
-		{
-			name:        "falls back without ISA or envelope",
-			rawX12:      "ST*204*0001~",
-			wantSource:  SeparatorSourceFallback,
-			wantElement: "*",
-			wantSegment: "~",
-			wantCode:    "x12.separator.fallback",
-		},
-		{
-			name:   "warns when envelope conflicts with ISA",
-			rawX12: valid204("*", "~", ">", "^"),
-			envelope: &edi.X12EnvelopeSettings{
-				ElementSeparator:    "|",
-				SegmentTerminator:   "!",
-				ComponentSeparator:  ":",
-				RepetitionSeparator: "^",
-			},
-			wantSource:  SeparatorSourceISA,
-			wantElement: "*",
-			wantSegment: "~",
-			wantCode:    "x12.separator.conflict",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			separators, diagnostics := DetectSeparators(tt.rawX12, tt.envelope)
-
-			assert.Equal(t, tt.wantSource, separators.Source)
-			assert.Equal(t, tt.wantElement, separators.Element)
-			assert.Equal(t, tt.wantSegment, separators.Segment)
-			if tt.wantCode == "" {
-				assert.Empty(t, diagnostics)
-				return
-			}
-			require.NotEmpty(t, diagnostics)
-			assert.Equal(t, tt.wantCode, diagnostics[0].Code)
-		})
-	}
+func inspect(t *testing.T, req *InspectX12Request) *InspectX12Result {
+	t.Helper()
+	result, err := InspectX12(t.Context(), req)
+	require.NoError(t, err)
+	return result
 }
 
-func TestInspectX12_ParsesSegmentsAndPreservesValues(t *testing.T) {
+func TestInspectX12_ReadsSeparatorsFromTheISAAndWarnsWhenTheProfileDisagrees(t *testing.T) {
 	t.Parallel()
 
-	rawX12 := valid204("*", "~", ">", "^")
-	result := InspectX12(&InspectX12Request{
-		RawX12:         rawX12,
-		TransactionSet: edi.TransactionSet204,
-		X12Version:     edi.DefaultX12204Version,
-	})
+	result := inspect(t, &InspectX12Request{RawX12: valid204("*", "~", ">", "^")})
+	assert.Equal(t, SeparatorSourceISA, result.Separators.Source)
+	assert.Equal(t, "*", result.Separators.Element)
+	assert.Equal(t, "~", result.Separators.Segment)
+	assert.False(t, result.Separators.HasConflict)
 
-	require.Len(t, result.Segments, 7)
-	assert.Equal(t, rawX12, result.RawX12)
-	assert.Equal(t, "000000905", result.Envelope.ISAControlNumber)
-	assert.Equal(t, "0001", result.Transactions[0].STControlNumber)
-	assert.Equal(t, "0001", result.Transactions[0].SEControlNumber)
-	assert.Equal(t, 4, result.Segments[3].Index)
-	assert.Equal(t, "B2", result.Segments[3].SegmentID)
-	assert.Equal(t, "", result.Segments[3].Elements[0].Value)
-	assert.True(t, result.Segments[3].Elements[0].Empty)
-	assert.Equal(t, "Standard Point Location Code", result.Segments[3].Elements[2].Label)
-	assert.Contains(t, result.Formatted, "B2 - Beginning Segment for Shipment Information")
+	conflicting := inspect(t, &InspectX12Request{
+		RawX12: valid204("*", "~", ">", "^"),
+		Envelope: &edi.X12EnvelopeSettings{
+			ElementSeparator:   "|",
+			SegmentTerminator:  "!",
+			ComponentSeparator: ":",
+		},
+	})
+	assert.True(t, conflicting.Separators.HasConflict)
+	assertDiagnostic(t, conflicting.Diagnostics, "x12.separator.conflict")
+}
+
+func TestInspectX12_ReadsAFragmentWithTheProfilesSeparators(t *testing.T) {
+	t.Parallel()
+
+	result := inspect(t, &InspectX12Request{
+		RawX12: "ST|990|0001!B1|SIML|SHIP-1|20260107|A!SE|3|0001!",
+		Envelope: &edi.X12EnvelopeSettings{
+			ElementSeparator:  "|",
+			SegmentTerminator: "!",
+		},
+	})
+	assert.Equal(t, SeparatorSourceEnvelope, result.Separators.Source)
+	require.Len(t, result.Segments, 3)
+	assert.Equal(t, "Beginning Segment for Booking or Pick-up/Delivery", result.Segments[1].Name)
+	assert.Equal(t, edi.TransactionSet("990"), result.TransactionSet)
 	assert.Empty(t, result.Diagnostics)
 }
 
-func TestInspectX12_ParsesCompositesAndMissingTerminator(t *testing.T) {
+func TestInspectX12_NamesSegmentsAndElementsFromTheGuideAndPlacesLoops(t *testing.T) {
 	t.Parallel()
 
-	rawX12 := valid204("*", "~", ">", "^") + "L11*AA>BB*BM"
-	result := InspectX12(&InspectX12Request{RawX12: rawX12})
+	raw := valid204("*", "~", ">", "^")
+	result := inspect(t, &InspectX12Request{RawX12: raw})
 
-	last := result.Segments[len(result.Segments)-1]
-	require.Len(t, last.Elements[0].Components, 2)
-	assert.Equal(t, "AA", last.Elements[0].Components[0].Value)
-	assert.Equal(t, "BB", last.Elements[0].Components[1].Value)
-	assertDiagnostic(t, result.Diagnostics, "x12.segment.missing_terminator")
+	assert.Empty(t, result.Diagnostics)
+	assert.Equal(t, raw, result.RawX12)
+	assert.Equal(t, "000000905", result.Envelope.ISAControlNumber)
+	assert.Equal(t, "0001", result.Transactions[0].STControlNumber)
+	assert.Equal(t, "0001", result.Transactions[0].SEControlNumber)
+
+	b2 := result.Segments[3]
+	assert.Equal(t, 4, b2.Index)
+	assert.Equal(t, "B2", b2.SegmentID)
+	assert.Equal(t, "Beginning Segment for Shipment Information Transaction", b2.Name)
+	assert.True(t, b2.Elements[0].Empty)
+	assert.Equal(t, "Standard Point Location Code", b2.Elements[2].Label)
+	assert.Equal(t, raw[b2.Elements[1].StartOffset:b2.Elements[1].EndOffset], "SIML")
+	assert.Equal(t, "B2**SIML**SHIP123**PP~", b2.RawWithTerminator)
+
+	n1 := result.Segments[7]
+	assert.Equal(t, "N1", n1.SegmentID)
+	assert.Equal(t, "0300/0310", n1.Loop)
+	assert.True(t, n1.Elements[0].Required)
+	assert.Contains(t, result.Formatted, "        N1 - Name")
 }
 
-func TestInspectX12_ValidatesControls(t *testing.T) {
+func TestInspectX12_ReportsGuideFindingsWithTheirPlace(t *testing.T) {
 	t.Parallel()
 
-	rawX12 := isa("*", "~", ">", "^", "000000905") +
-		"GS*SM*SENDER*RECEIVER*20260518*1200*77*X*004010~" +
-		"ST*204*0001~" +
-		"B2**SHIP123**PP~" +
-		"SE*99*9999~" +
-		"GE*2*88~" +
-		"IEA*2*000000999~"
+	raw := strings.Replace(valid204("*", "~", ">", "^"), "N1*SH*", "N1**", 1)
+	result := inspect(t, &InspectX12Request{RawX12: raw})
 
-	result := InspectX12(&InspectX12Request{
-		RawX12:         rawX12,
-		TransactionSet: edi.TransactionSet210,
-	})
+	var missing NormalizedDiagnostic
+	for _, diagnostic := range result.Diagnostics {
+		if diagnostic.Code == "x12.mandatoryElementMissing" {
+			missing = diagnostic
+		}
+	}
+	require.NotZero(t, missing)
+	assert.Equal(t, edi.ValidationSeverityError, missing.Severity)
+	assert.Equal(t, DiagnosticSourceValidation, missing.Source)
+	assert.Equal(t, "N1", missing.SegmentID)
+	assert.Equal(t, 8, missing.SegmentIndex)
+	assert.Equal(t, 1, missing.ElementPosition)
+	assert.Equal(t, "loop 0310 · segment 6 · N101", missing.Path)
+	assert.Equal(t, "N101 (Entity Identifier Code) is mandatory but is empty", missing.Message)
+	assert.Equal(t, 1, result.Summary.ErrorCount)
+}
 
-	assertDiagnostic(t, result.Diagnostics, "x12.transaction_set.unsupported")
-	assertDiagnostic(t, result.Diagnostics, "x12.control.st_se_mismatch")
-	assertDiagnostic(t, result.Diagnostics, "x12.count.se01_mismatch")
-	assertDiagnostic(t, result.Diagnostics, "x12.control.gs_ge_mismatch")
-	assertDiagnostic(t, result.Diagnostics, "x12.count.ge01_mismatch")
-	assertDiagnostic(t, result.Diagnostics, "x12.control.isa_iea_mismatch")
-	assertDiagnostic(t, result.Diagnostics, "x12.count.iea01_mismatch")
+func TestInspectX12_ChecksControlNumbersAndCounts(t *testing.T) {
+	t.Parallel()
+
+	raw := strings.NewReplacer(
+		"SE*7*0001", "SE*99*9999",
+		"GE*1*77", "GE*2*88",
+		"IEA*1*000000905", "IEA*2*000000999",
+	).Replace(valid204("*", "~", ">", "^"))
+	result := inspect(t, &InspectX12Request{RawX12: raw})
+
+	for _, code := range []string{
+		"x12.segmentCountMismatch",
+		"x12.transactionControlNumberMismatch",
+		"x12.transactionCountMismatch",
+		"x12.groupControlNumberMismatch",
+		"x12.groupCountMismatch",
+		"x12.interchangeControlNumberMismatch",
+	} {
+		assertDiagnostic(t, result.Diagnostics, code)
+	}
 	assert.Equal(t, 6, result.Summary.ErrorCount)
-	assert.Equal(t, 1, result.Summary.WarningCount)
 }
 
 func TestInspectX12_MergesRenderDiagnostics(t *testing.T) {
 	t.Parallel()
 
-	result := InspectX12(&InspectX12Request{
+	result := inspect(t, &InspectX12Request{
 		RawX12: valid204("*", "~", ">", "^"),
-		Diagnostics: []edix12.Diagnostic{
+		Diagnostics: []edi.Diagnostic{
 			{
 				Severity:        edi.ValidationSeverityError,
 				Code:            "required",
@@ -182,69 +162,44 @@ func TestInspectX12_MergesRenderDiagnostics(t *testing.T) {
 	assert.Equal(t, 4, found.ElementPosition)
 }
 
+func TestInspectX12_AnEmptyPayloadIsAnError(t *testing.T) {
+	t.Parallel()
+
+	result := inspect(t, &InspectX12Request{RawX12: "  \n"})
+	assertDiagnostic(t, result.Diagnostics, "x12.document.empty")
+	assert.Equal(t, 1, result.Summary.ErrorCount)
+}
+
 func valid204(
 	elementSeparator string,
 	segmentTerminator string,
 	componentSeparator string,
 	repetitionSeparator string,
 ) string {
-	return isa(
+	segments := [][]string{
+		{"GS", "SM", "SENDER", "RECEIVER", "20260518", "1200", "77", "X", "004010"},
+		{"ST", "204", "0001"},
+		{"B2", "", "SIML", "", "SHIP123", "", "PP"},
+		{"B2A", "00"},
+		{"S5", "1", "LD"},
+		{"G62", "10", "20260518"},
+		{"N1", "SH", "Shipper"},
+		{"SE", "7", "0001"},
+		{"GE", "1", "77"},
+		{"IEA", "1", "000000905"},
+	}
+	var builder strings.Builder
+	builder.WriteString(isa(
 		elementSeparator,
 		segmentTerminator,
 		componentSeparator,
 		repetitionSeparator,
 		"000000905",
-	) +
-		joinSegments(
-			elementSeparator,
-			segmentTerminator,
-			"GS",
-			"SM",
-			"SENDER",
-			"RECEIVER",
-			"20260518",
-			"1200",
-			"77",
-			"X",
-			"004010",
-		) +
-		joinSegments(
-			elementSeparator,
-			segmentTerminator,
-			"ST",
-			"204",
-			"0001",
-		) +
-		joinSegments(
-			elementSeparator,
-			segmentTerminator,
-			"B2",
-			"",
-			"SHIP123",
-			"",
-			"PP",
-		) +
-		joinSegments(
-			elementSeparator,
-			segmentTerminator,
-			"SE",
-			"3",
-			"0001",
-		) +
-		joinSegments(
-			elementSeparator,
-			segmentTerminator,
-			"GE",
-			"1",
-			"77",
-		) +
-		joinSegments(
-			elementSeparator,
-			segmentTerminator,
-			"IEA",
-			"1",
-			"000000905",
-		)
+	))
+	for _, segment := range segments {
+		builder.WriteString(strings.Join(segment, elementSeparator) + segmentTerminator)
+	}
+	return builder.String()
 }
 
 func isa(
@@ -272,15 +227,11 @@ func isa(
 		"0",
 		"T",
 		componentSeparator,
-	}, elementSeparator)
-	if len(segment) != isaSegmentLength {
+	}, elementSeparator) + segmentTerminator
+	if len(segment) != isaLength {
 		panic(fmt.Sprintf("invalid test ISA length %d", len(segment)))
 	}
-	return segment + segmentTerminator
-}
-
-func joinSegments(elementSeparator string, segmentTerminator string, values ...string) string {
-	return strings.Join(values, elementSeparator) + segmentTerminator
+	return segment
 }
 
 func assertDiagnostic(t *testing.T, diagnostics []NormalizedDiagnostic, code string) {

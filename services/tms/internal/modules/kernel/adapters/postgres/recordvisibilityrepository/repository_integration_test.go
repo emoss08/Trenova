@@ -7,13 +7,15 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -44,14 +46,15 @@ func TestVisibleIDs_AppliesTheRequestsReadScope(t *testing.T) {
 		ProNumber:  "PRO-OTHER",
 		ShipmentID: pulid.MustNew("shp_"),
 	}).Shipment
-	_, err := admin.NewUpdate().
-		Table(shipmentcol.ShipmentTable.Name).
-		Set(shipmentcol.ShipmentColumns.OwnerID.Set(), data.User.ID).
-		Where("id = ?", owned.ID).
-		Exec(ctx)
+	sh := shipmentdb.Shipments
+	_, err := sh.Where(sh.ID.Eq(owned.ID)).
+		Update(data.Ctx(ctx), admin, sh.OwnerID.To(data.User.ID))
 	require.NoError(t, err)
 
-	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn)})
+	repo := New(Params{
+		DB:      dbtest.NewRLSConnection(t, admin, dsn),
+		Sources: crossref.VisibleRecordSources(),
+	})
 	ids := []pulid.ID{owned.ID, others.ID, pulid.MustNew("shp_")}
 	request := &kernelports.ListVisibleRecordsRequest{TenantInfo: tenant, Kind: "shipment", IDs: ids}
 
@@ -113,8 +116,7 @@ func TestVisibleIDs_AKindThePersonCannotReadIsLeftToTheCaller(t *testing.T) {
 			Gender:         worker.GenderMale,
 			CanBeAssigned:  true,
 		}
-		_, err := admin.NewInsert().Model(entity).Exec(ctx)
-		require.NoError(t, err)
+		require.NoError(t, workerdb.Workers.Create(data.Ctx(ctx), admin, entity))
 		return entity
 	}
 	me := newWorker("Mine", data.User.ID)
@@ -131,17 +133,20 @@ func TestVisibleIDs_AKindThePersonCannotReadIsLeftToTheCaller(t *testing.T) {
 	}
 	driven := newShipment("DRIVEN")
 	unassigned := newShipment("OTHER")
-	_, err := admin.NewInsert().Model(&shipment.Assignment{
+	err := shipmentdb.Assignments.Create(data.Ctx(ctx), admin, &shipment.Assignment{
 		ID:              pulid.MustNew("a_"),
 		BusinessUnitID:  tenant.BuID,
 		OrganizationID:  tenant.OrgID,
 		ShipmentMoveID:  driven.Moves[0].ID,
 		PrimaryWorkerID: &me.ID,
 		Status:          shipment.AssignmentStatusNew,
-	}).Exec(ctx)
+	})
 	require.NoError(t, err)
 
-	repo := New(Params{DB: dbtest.NewRLSConnection(t, admin, dsn)})
+	repo := New(Params{
+		DB:      dbtest.NewRLSConnection(t, admin, dsn),
+		Sources: crossref.VisibleRecordSources(),
+	})
 	cannotRead := readscope.With(
 		dbscope.WithTenant(t.Context(), tenant.DBTenant()),
 		func(context.Context) (readscope.Grants, error) {

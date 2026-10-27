@@ -6,10 +6,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,42 +32,35 @@ type versionFixture struct {
 func setupVersions(t *testing.T) *versionFixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
-	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	conn := postgres.NewTestConnection(db)
+	db := ratingdb.NewDatabase(t)
+	ctx := db.A.Ctx
+	tenantInfo := db.A.Info
 
 	templates := formulatemplaterepository.New(formulatemplaterepository.Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
+		DB:        db.Conn,
+		Logger:    zap.NewNop(),
+		Consumers: crossref.TemplateConsumers(),
 	})
 	template, err := templates.Create(ctx, formulatemplate.Seed{
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Name:           "Windows",
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "totalDistance * 2",
-		SchemaID:       "shipment",
+		Source:         "tariff \"Windows\"\n\ncharge \"Flat\" = $10\n",
 		Status:         formulatemplate.StatusActive,
 	}.Build())
 	require.NoError(t, err)
 
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	other := seedtest.NewUser(tenantInfo.OrgID, tenantInfo.BuID).
 		WithUsername("other_author").
 		WithEmail("other_author@example.com").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, db.Admin)
 
 	return &versionFixture{
 		ctx:        ctx,
-		repo:       New(Params{DB: conn, Logger: zap.NewNop()}),
+		repo:       New(Params{DB: db.Conn, Logger: zap.NewNop()}),
 		template:   template,
 		tenantInfo: tenantInfo,
-		author:     data.User.ID,
+		author:     db.A.Data.User.ID,
 		other:      other.ID,
 	}
 }
@@ -136,11 +130,14 @@ func TestListAuthorIDsSinceNamesEveryoneWhoWroteAfterTheBase(t *testing.T) {
 	f.snapshot(t, 2, formulatemplate.StatusDraft, nil, f.other)
 	f.snapshot(t, 3, formulatemplate.StatusDraft, nil, f.other)
 
-	authors, err := f.repo.ListAuthorIDsSince(f.ctx, &formulatemplateports.ListVersionAuthorsRequest{
-		TenantInfo:   f.tenantInfo,
-		TemplateID:   f.template.ID,
-		AfterVersion: 1,
-	})
+	authors, err := f.repo.ListAuthorIDsSince(
+		f.ctx,
+		&formulatemplateports.ListVersionAuthorsRequest{
+			TenantInfo:   f.tenantInfo,
+			TemplateID:   f.template.ID,
+			AfterVersion: 1,
+		},
+	)
 	require.NoError(t, err)
 	assert.Equal(t, []pulid.ID{f.other}, authors)
 }

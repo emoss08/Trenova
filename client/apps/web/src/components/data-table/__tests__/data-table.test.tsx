@@ -3,6 +3,7 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vite
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import React from "react";
+import { createPortal } from "react-dom";
 import { DataTable } from "../data-table";
 import { ControlsProvider, useControls } from "@/contexts/control-context";
 import { DataTableProvider, useDataTable } from "@/contexts/data-table-context";
@@ -169,6 +170,42 @@ describe("DataTable", () => {
     expect(presence.resources).not.toContain("AI Audit Event");
   });
 
+  it("opens a row when its cell is clicked", () => {
+    const onRowClick = vi.fn();
+    renderDataTable({ onRowClick });
+
+    fireEvent.click(screen.getAllByText("Alice")[0]);
+
+    expect(onRowClick).toHaveBeenCalledTimes(1);
+    expect(onRowClick.mock.calls[0][0].original).toEqual({ id: "1", name: "Alice" });
+  });
+
+  /*
+   * A cell's popover is portaled out of the row, but React still bubbles its
+   * clicks to the row: changing a location's status opened its edit panel.
+   */
+  it("does not open a row for a click inside a portal a cell rendered", () => {
+    const onRowClick = vi.fn();
+    const columns: ColumnDef<TestRow>[] = [
+      {
+        accessorKey: "name",
+        header: "Name",
+        cell: ({ row }) =>
+          createPortal(
+            <div role="option" aria-selected={false}>
+              {`Choose ${row.original.name}`}
+            </div>,
+            document.body,
+          ),
+      },
+    ];
+    renderDataTable({ columns, onRowClick });
+
+    fireEvent.click(screen.getByRole("option", { name: "Choose Alice" }));
+
+    expect(onRowClick).not.toHaveBeenCalled();
+  });
+
   it("renders row data from the query", () => {
     renderDataTable();
     expect(screen.getAllByText("Alice").length).toBeGreaterThanOrEqual(1);
@@ -260,6 +297,7 @@ describe("DataTable", () => {
 type CursorPage = {
   results: TestRow[];
   totalCount: number | null;
+  totalCountExact?: boolean;
   endCursor: string | null;
 };
 
@@ -275,6 +313,7 @@ function cursorQueryResult(page: CursorPage) {
         hasNextPage: page.endCursor != null,
         endCursor: page.endCursor,
         totalCount: page.totalCount,
+        totalCountExact: page.totalCountExact ?? true,
       },
     },
     isLoading: false,
@@ -310,6 +349,12 @@ const secondPageWithoutTotal: CursorPage = {
   ],
   totalCount: null,
   endCursor: "cursor-page-3",
+};
+
+const estimatedFirstPage: CursorPage = {
+  ...firstPage,
+  totalCount: 1_250_000,
+  totalCountExact: false,
 };
 
 describe("DataTable cursor total count", () => {
@@ -354,6 +399,40 @@ describe("DataTable cursor total count", () => {
     });
 
     expect(screen.getByText("Select all 150 matching")).toBeInTheDocument();
+  });
+
+  it("shows an estimated total as approximate", () => {
+    mockCursorPages({ "": estimatedFirstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    const { container } = renderDataTable();
+
+    expect(container).toHaveTextContent("Showing 1 to 2 of about 1.3M results");
+    expect(container).toHaveTextContent(/Page\s*1\s*of about\s*25K/);
+  });
+
+  it("keeps an estimated total approximate on a later page that omits it", async () => {
+    mockCursorPages({ "": estimatedFirstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    const { container } = renderDataTable();
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Go to next page"));
+    });
+
+    expect(await screen.findAllByText("Carol")).not.toHaveLength(0);
+    expect(container).toHaveTextContent("Showing 51 to 52 of about 1.3M results");
+  });
+
+  it("offers selecting up to the bulk limit when the total is an estimate", () => {
+    mockCursorPages({ "": estimatedFirstPage, "cursor-page-2": secondPageWithoutTotal });
+
+    renderDataTable({ enableRowSelection: true });
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText("Select all"));
+    });
+
+    expect(screen.getByText("Select all 1,000 matching")).toBeInTheDocument();
   });
 
   it("keeps the remembered total when returning to a first page that omits it", async () => {
@@ -874,6 +953,7 @@ describe("DataTablePagination", () => {
     const view = within(container);
 
     expect(container).toHaveTextContent("Showing 11 to 12 results");
+    expect(container).toHaveTextContent(/Page\s*2/);
     expect(view.queryByLabelText("Go to first page")).not.toBeInTheDocument();
     expect(view.queryByLabelText("Go to last page")).not.toBeInTheDocument();
     expect(view.getByLabelText("Go to next page")).not.toBeDisabled();

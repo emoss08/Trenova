@@ -5,6 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/rateimport"
+	"github.com/emoss08/trenova/pkg/rules"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -16,15 +18,18 @@ import (
 var perMileTemplateID = pulid.MustNew("ft_")
 
 func rule(laneKey, rate string) *rateagreement.RateAgreementRule {
-	templateID := perMileTemplateID
-
 	return &rateagreement.RateAgreementRule{
 		ID:                pulid.MustNew("ragr_"),
 		LaneKey:           laneKey,
 		Label:             laneKey,
-		FormulaTemplateID: &templateID,
-		Rate:              decimal.NewNullDecimal(decimal.RequireFromString(rate)),
+		FormulaTemplateID: perMileTemplateID,
+		Inputs:            tarifftypes.Inputs{"rate": rules.QuantityValue(decimal.RequireFromString(rate), "$/mi")},
 	}
+}
+
+func withMinimum(r *rateagreement.RateAgreementRule, amount string) *rateagreement.RateAgreementRule {
+	r.Inputs["minimumCharge"] = rules.MoneyValue(decimal.RequireFromString(amount))
+	return r
 }
 
 func kindsByLane(changes []rateimport.Change) map[string]rateimport.ChangeKind {
@@ -95,9 +100,9 @@ func TestDiff_AChangedLaneSaysWhatMovedAndFromWhatToWhat(t *testing.T) {
 	)
 
 	require.Len(t, changes[0].Fields, 1)
-	assert.Equal(t, "rate", changes[0].Fields[0].Field)
-	assert.Equal(t, "2.1", changes[0].Fields[0].Before)
-	assert.Equal(t, "2.35", changes[0].Fields[0].After)
+	assert.Equal(t, "inputs.rate", changes[0].Fields[0].Field)
+	assert.Equal(t, "$2.1/mi", changes[0].Fields[0].Before)
+	assert.Equal(t, "$2.35/mi", changes[0].Fields[0].After)
 }
 
 // Several terms can move on one lane, and somebody approving a sheet needs all
@@ -105,16 +110,10 @@ func TestDiff_AChangedLaneSaysWhatMovedAndFromWhatToWhat(t *testing.T) {
 func TestDiff_AChangedLaneReportsEveryTermThatMoved(t *testing.T) {
 	t.Parallel()
 
-	existing := rule("ST:il>ST:ga", "2.10")
-	existing.MinCharge = decimal.NewNullDecimal(decimal.RequireFromString("450"))
+	existing := withMinimum(rule("ST:il>ST:ga", "2.10"), "450")
 
-	// The sheet moves the lane off its formula template and onto a matrix,
-	// which has to surface as both halves of that move.
-	matrixID := pulid.MustNew("rmx_")
-	incoming := rule("ST:il>ST:ga", "2.35")
-	incoming.MinCharge = decimal.NewNullDecimal(decimal.RequireFromString("500"))
-	incoming.FormulaTemplateID = nil
-	incoming.RateMatrixID = &matrixID
+	incoming := withMinimum(rule("ST:il>ST:ga", "2.35"), "500")
+	incoming.FormulaTemplateID = pulid.MustNew("ft_")
 
 	changes := rateimport.Diff(
 		[]*rateagreement.RateAgreementRule{existing},
@@ -128,7 +127,7 @@ func TestDiff_AChangedLaneReportsEveryTermThatMoved(t *testing.T) {
 
 	assert.ElementsMatch(
 		t,
-		[]string{"rate", "minCharge", "formulaTemplateId", "rateMatrixId"},
+		[]string{"inputs.rate", "inputs.minimumCharge", "formulaTemplateId"},
 		fields,
 	)
 }
@@ -139,8 +138,7 @@ func TestDiff_AChangedLaneReportsEveryTermThatMoved(t *testing.T) {
 func TestDiff_ATermTheSheetDropsIsReportedAsAChange(t *testing.T) {
 	t.Parallel()
 
-	existing := rule("ST:il>ST:ga", "2.10")
-	existing.MinCharge = decimal.NewNullDecimal(decimal.RequireFromString("450"))
+	existing := withMinimum(rule("ST:il>ST:ga", "2.10"), "450")
 
 	changes := rateimport.Diff(
 		[]*rateagreement.RateAgreementRule{existing},
@@ -148,8 +146,8 @@ func TestDiff_ATermTheSheetDropsIsReportedAsAChange(t *testing.T) {
 	)
 
 	require.Len(t, changes[0].Fields, 1)
-	assert.Equal(t, "minCharge", changes[0].Fields[0].Field)
-	assert.Equal(t, "450", changes[0].Fields[0].Before)
+	assert.Equal(t, "inputs.minimumCharge", changes[0].Fields[0].Field)
+	assert.Equal(t, "$450", changes[0].Fields[0].Before)
 	assert.Empty(t, changes[0].Fields[0].After)
 }
 
@@ -159,8 +157,7 @@ func TestDiff_ATermTheSheetDropsIsReportedAsAChange(t *testing.T) {
 func TestDiff_ATermTheSheetAddsAtZeroIsStillAChange(t *testing.T) {
 	t.Parallel()
 
-	incoming := rule("ST:il>ST:ga", "2.10")
-	incoming.MinCharge = decimal.NewNullDecimal(decimal.Zero)
+	incoming := withMinimum(rule("ST:il>ST:ga", "2.10"), "0")
 
 	changes := rateimport.Diff(
 		[]*rateagreement.RateAgreementRule{rule("ST:il>ST:ga", "2.10")},
@@ -168,9 +165,9 @@ func TestDiff_ATermTheSheetAddsAtZeroIsStillAChange(t *testing.T) {
 	)
 
 	require.Len(t, changes[0].Fields, 1)
-	assert.Equal(t, "minCharge", changes[0].Fields[0].Field)
+	assert.Equal(t, "inputs.minimumCharge", changes[0].Fields[0].Field)
 	assert.Empty(t, changes[0].Fields[0].Before)
-	assert.Equal(t, "0", changes[0].Fields[0].After)
+	assert.Equal(t, "$0", changes[0].Fields[0].After)
 }
 
 // Two rows in one sheet for the same lane is a mistake in the sheet, and

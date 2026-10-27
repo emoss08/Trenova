@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -21,6 +19,8 @@ const (
 	carrierOverrideHistoryLimit = 100
 	overrideEntityName          = "CarrierIntelOverride"
 )
+
+var overrideErrors = dberror.Mapping{Entity: overrideEntityName}
 
 type overrideRepository struct {
 	db *postgres.Connection
@@ -36,7 +36,7 @@ func NewOverrideRepository(p Params) carrierintelports.CarrierIntelOverrideRepos
 
 func (r *overrideRepository) ListActiveByCarrierIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	carrierIDs []pulid.ID,
 	now int64,
 ) ([]*carrierintel.CarrierIntelOverride, error) {
@@ -48,19 +48,14 @@ func (r *overrideRepository) ListActiveByCarrierIDs(
 				return []*carrierintel.CarrierIntelOverride{}, nil
 			}
 
-			cols := carrierintelcol.CarrierIntelOverrideColumns
-			entities := make([]*carrierintel.CarrierIntelOverride, 0, len(carrierIDs))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
-						Where(cols.CarrierID.In(), bun.List(carrierIDs)).
-						Where(cols.RevokedAt.IsNull()).
-						Where(cols.ExpiresAt.Gt(), now)
-				}).
-				Order(cols.GrantedAt.OrderDesc()).
-				Scan(ctx)
+			o := carrierinteldb.CarrierIntelOverrides
+			entities, err := o.Where(
+				o.CarrierID.In(carrierIDs...),
+				o.RevokedAt.IsNull(),
+				o.ExpiresAt.Gt(now),
+			).
+				Order(o.GrantedAt.Desc()).
+				All(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list active carrier intel overrides", zap.Error(err))
 				return nil, fmt.Errorf("list active carrier intel overrides: %w", err)
@@ -73,25 +68,18 @@ func (r *overrideRepository) ListActiveByCarrierIDs(
 
 func (r *overrideRepository) ListByCarrier(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	carrierID pulid.ID,
 ) ([]*carrierintel.CarrierIntelOverride, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*carrierintel.CarrierIntelOverride, error) {
-			cols := carrierintelcol.CarrierIntelOverrideColumns
-			entities := make([]*carrierintel.CarrierIntelOverride, 0, carrierOverrideHistoryLimit)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
-						Where(cols.CarrierID.Eq(), carrierID)
-				}).
-				Order(cols.GrantedAt.OrderDesc(), cols.ID.OrderDesc()).
+			o := carrierinteldb.CarrierIntelOverrides
+			entities, err := o.Where(o.CarrierID.Eq(carrierID)).
+				Order(o.GrantedAt.Desc(), o.ID.Desc()).
 				Limit(carrierOverrideHistoryLimit).
-				Scan(ctx)
+				List(ctx, r.db.Keel(ctx))
 			if err != nil {
 				r.l.Error("failed to list carrier intel overrides", zap.Error(err))
 				return nil, fmt.Errorf("list carrier intel overrides: %w", err)
@@ -104,24 +92,16 @@ func (r *overrideRepository) ListByCarrier(
 
 func (r *overrideRepository) GetByID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*carrierintel.CarrierIntelOverride, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelOverride, error) {
-			entity := new(carrierintel.CarrierIntelOverride)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelOverrideScopeTenant(sq, tenantInfo).
-						Where(carrierintelcol.CarrierIntelOverrideColumns.ID.Eq(), id)
-				}).
-				Scan(ctx)
+			entity, err := carrierinteldb.CarrierIntelOverrides.Get(ctx, r.db.Keel(ctx), id)
 			if err != nil {
-				return nil, dberror.HandleNotFoundError(err, overrideEntityName)
+				return nil, overrideErrors.Map(err, id.String())
 			}
 
 			return entity, nil
@@ -137,11 +117,8 @@ func (r *overrideRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelOverride, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
+			err := carrierinteldb.CarrierIntelOverrides.Create(ctx, r.db.Keel(ctx), entity)
+			if err != nil {
 				r.l.Error("failed to create carrier intel override", zap.Error(err))
 				return nil, fmt.Errorf("create carrier intel override: %w", err)
 			}
@@ -159,26 +136,15 @@ func (r *overrideRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelOverride, error) {
-			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(carrierintelcol.CarrierIntelOverrideColumns.Version.Eq(), ov).
-				Returning("*").
-				Exec(ctx)
+			err := carrierinteldb.CarrierIntelOverrides.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				r.l.Error("failed to update carrier intel override", zap.Error(err))
-				return nil, fmt.Errorf("update carrier intel override: %w", err)
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				overrideEntityName,
-				entity.ID.String(),
-			); err != nil {
-				return nil, err
+				return nil, saveError(
+					overrideErrors,
+					err,
+					entity.ID.String(),
+					"update carrier intel override",
+				)
 			}
 
 			return entity, nil

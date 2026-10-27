@@ -1,37 +1,46 @@
 package customertracking
 
 import (
+	"context"
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/uptrace/bun"
 )
 
 type Profile struct {
-	bun.BaseModel `bun:"table:customer_tracking_profiles,alias:ctp" json:"-"`
+	keel.Table `keel:"customer_tracking_profiles"`
 
-	ID                     pulid.ID `json:"id"                     bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID         pulid.ID `json:"organizationId"         bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID         pulid.ID `json:"businessUnitId"         bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	CustomerID             pulid.ID `json:"customerId"             bun:"customer_id,type:VARCHAR(100),notnull"`
-	LinkEnabled            bool     `json:"linkEnabled"            bun:"link_enabled,type:BOOLEAN,notnull"`
-	VisibleFields          []Field  `json:"visibleFields"          bun:"visible_fields,array,notnull"`
-	LinkTTLDays            int16    `json:"linkTtlDays"            bun:"link_ttl_days,type:SMALLINT,notnull,default:30"`
-	NotifyPickedUp         bool     `json:"notifyPickedUp"         bun:"notify_picked_up,type:BOOLEAN,notnull,default:false"`
-	NotifyDelayed          bool     `json:"notifyDelayed"          bun:"notify_delayed,type:BOOLEAN,notnull,default:false"`
-	NotifyDelivered        bool     `json:"notifyDelivered"        bun:"notify_delivered,type:BOOLEAN,notnull,default:false"`
-	NotifyPodReady         bool     `json:"notifyPodReady"         bun:"notify_pod_ready,type:BOOLEAN,notnull,default:false"`
-	IncludeLink            bool     `json:"includeLink"            bun:"include_link,type:BOOLEAN,notnull"`
-	Recipients             string   `json:"recipients"             bun:"recipients,type:TEXT,nullzero"`
-	NotificationsEnabledAt *int64   `json:"notificationsEnabledAt" bun:"notifications_enabled_at,type:BIGINT,nullzero"`
-	Version                int64    `json:"version"                bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt              int64    `json:"createdAt"              bun:"created_at,type:BIGINT,notnull"`
-	UpdatedAt              int64    `json:"updatedAt"              bun:"updated_at,type:BIGINT,notnull"`
+	ID                     pulid.ID `json:"id"                     keel:"id,pk"`
+	OrganizationID         pulid.ID `json:"organizationId"         keel:"organization_id,pk,tenant"`
+	BusinessUnitID         pulid.ID `json:"businessUnitId"         keel:"business_unit_id,pk,tenant"`
+	CustomerID             pulid.ID `json:"customerId"             keel:"customer_id"`
+	LinkEnabled            bool     `json:"linkEnabled"            keel:"link_enabled"`
+	VisibleFields          []Field  `json:"visibleFields"          keel:"visible_fields"`
+	LinkTTLDays            int16    `json:"linkTtlDays"            keel:"link_ttl_days"`
+	NotifyPickedUp         bool     `json:"notifyPickedUp"         keel:"notify_picked_up"`
+	NotifyDelayed          bool     `json:"notifyDelayed"          keel:"notify_delayed"`
+	NotifyDelivered        bool     `json:"notifyDelivered"        keel:"notify_delivered"`
+	NotifyPodReady         bool     `json:"notifyPodReady"         keel:"notify_pod_ready"`
+	IncludeLink            bool     `json:"includeLink"            keel:"include_link"`
+	Recipients             string   `json:"recipients"             keel:"recipients,nullzero"`
+	NotificationsEnabledAt *int64   `json:"notificationsEnabledAt" keel:"notifications_enabled_at"`
+	Version                int64    `json:"version"                keel:"version,version"`
+	CreatedAt              int64    `json:"createdAt"              keel:"created_at"`
+	UpdatedAt              int64    `json:"updatedAt"              keel:"updated_at"`
+}
+
+func (p *Profile) BeforeCreate(_ context.Context) error {
+	if p.LinkTTLDays == 0 {
+		p.LinkTTLDays = 30
+	}
+
+	return nil
 }
 
 func NewProfileID() pulid.ID {
@@ -163,5 +172,18 @@ func (p *Profile) Validate(multiErr *errortypes.MultiError) {
 				"Each recipient must be a valid email address")
 			break
 		}
+	}
+}
+
+func (Profile) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_customer_tracking_profiles_customer",
+			Message: "Customer already has tracking settings",
+		},
+		{
+			Name:    "fk_customer_tracking_profiles_customer",
+			Message: "Customer does not exist in your organization",
+		},
 	}
 }

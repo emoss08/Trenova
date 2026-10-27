@@ -1,10 +1,12 @@
 package telematics
 
 import (
+	"context"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 type VehicleInspectionDefect struct {
@@ -16,26 +18,34 @@ type VehicleInspectionDefect struct {
 }
 
 type VehicleInspection struct {
-	bun.BaseModel `bun:"table:vehicle_inspections,alias:vinsp" json:"-"`
+	keel.Table `keel:"vehicle_inspections"`
 
-	ID                    pulid.ID                  `json:"id"                    bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID        pulid.ID                  `json:"organizationId"        bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID        pulid.ID                  `json:"businessUnitId"        bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Provider              string                    `json:"provider"              bun:"provider,type:VARCHAR(32),notnull,default:'Samsara'"`
-	ProviderDvirID        string                    `json:"providerDvirId"        bun:"provider_dvir_id,type:TEXT,notnull"`
-	TractorID             pulid.ID                  `json:"tractorId"             bun:"tractor_id,type:VARCHAR(100),nullzero"`
-	WorkerID              pulid.ID                  `json:"workerId"              bun:"worker_id,type:VARCHAR(100),nullzero"`
-	InspectionType        string                    `json:"inspectionType"        bun:"inspection_type,type:VARCHAR(32),notnull"`
-	SafetyStatus          string                    `json:"safetyStatus"          bun:"safety_status,type:VARCHAR(16),notnull"`
-	StartedAt             int64                     `json:"startedAt"             bun:"started_at,type:BIGINT,notnull"`
-	EndedAt               int64                     `json:"endedAt"               bun:"ended_at,type:BIGINT,notnull"`
-	OdometerMeters        *int64                    `json:"odometerMeters"        bun:"odometer_meters,type:BIGINT,nullzero"`
-	Location              string                    `json:"location"              bun:"location,type:TEXT,nullzero"`
-	Signed                bool                      `json:"signed"                bun:"signed,type:BOOLEAN,notnull"`
-	DefectCount           int                       `json:"defectCount"           bun:"defect_count,type:INT,notnull"`
-	UnresolvedDefectCount int                       `json:"unresolvedDefectCount" bun:"unresolved_defect_count,type:INT,notnull"`
-	Defects               []VehicleInspectionDefect `json:"defects"               bun:"defects,type:JSONB,nullzero"`
-	CreatedAt             int64                     `json:"createdAt"             bun:"created_at,type:BIGINT,notnull"`
+	ID                    pulid.ID                  `json:"id"                    keel:"id,pk"`
+	OrganizationID        pulid.ID                  `json:"organizationId"        keel:"organization_id,pk,tenant"`
+	BusinessUnitID        pulid.ID                  `json:"businessUnitId"        keel:"business_unit_id,pk,tenant"`
+	Provider              string                    `json:"provider"              keel:"provider"`
+	ProviderDvirID        string                    `json:"providerDvirId"        keel:"provider_dvir_id"`
+	TractorID             pulid.ID                  `json:"tractorId"             keel:"tractor_id,nullzero"`
+	WorkerID              pulid.ID                  `json:"workerId"              keel:"worker_id,nullzero"`
+	InspectionType        string                    `json:"inspectionType"        keel:"inspection_type"`
+	SafetyStatus          string                    `json:"safetyStatus"          keel:"safety_status"`
+	StartedAt             int64                     `json:"startedAt"             keel:"started_at"`
+	EndedAt               int64                     `json:"endedAt"               keel:"ended_at"`
+	OdometerMeters        *int64                    `json:"odometerMeters"        keel:"odometer_meters"`
+	Location              string                    `json:"location"              keel:"location,nullzero"`
+	Signed                bool                      `json:"signed"                keel:"signed"`
+	DefectCount           int                       `json:"defectCount"           keel:"defect_count"`
+	UnresolvedDefectCount int                       `json:"unresolvedDefectCount" keel:"unresolved_defect_count"`
+	Defects               []VehicleInspectionDefect `json:"defects"               keel:"defects,jsonb,nullzero"`
+	CreatedAt             int64                     `json:"createdAt"             keel:"created_at"`
+}
+
+func (i *VehicleInspection) BeforeCreate(_ context.Context) error {
+	if i.Provider == "" {
+		i.Provider = defaultProvider
+	}
+
+	return nil
 }
 
 func NewVehicleInspectionID() pulid.ID {

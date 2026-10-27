@@ -3,45 +3,57 @@
 package edicontrolnumberrepository_test
 
 import (
+	"context"
 	"sync"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/edicontrolnumberrepository"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
+	"github.com/emoss08/trenova/internal/modules/edi/editest"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 )
 
-type seededControlNumberOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+func seededDocumentType(
+	t *testing.T,
+	ctx context.Context,
+	db *keel.DB,
+	set edi.TransactionSet,
+) *edi.EDIDocumentType {
+	t.Helper()
+
+	dt := edidb.EDIDocumentTypes
+	documentType, err := dt.Where(
+		dt.TransactionSet.Eq(set),
+		dt.Direction.Eq(edi.DocumentDirectionOutbound),
+	).First(ctx, db)
+	require.NoError(t, err)
+
+	return documentType
 }
 
-type seededDocumentType struct {
-	ID pulid.ID `bun:"id"`
+func createPartner(t *testing.T, ctx context.Context, db *keel.DB, code string) *edi.EDIPartner {
+	t.Helper()
+
+	partner := &edi.EDIPartner{
+		Kind: edi.PartnerKindExternal,
+		Code: code,
+		Name: "Control Number Partner " + code,
+	}
+	require.NoError(t, edidb.EDIPartners.Create(ctx, db, partner))
+
+	return partner
 }
 
 func TestAllocateControlNumbersConcurrentAllocationsAreUnique(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	repo := edicontrolnumberrepository.New(edicontrolnumberrepository.Params{
@@ -49,42 +61,13 @@ func TestAllocateControlNumbersConcurrentAllocationsAreUnique(t *testing.T) {
 		Logger: zap.NewNop(),
 	})
 
-	var org seededControlNumberOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var documentType seededDocumentType
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("edi_document_types").
-			Column("id").
-			Where("transaction_set = ?", edi.TransactionSet204).
-			Where("direction = ?", edi.DocumentDirectionOutbound).
-			Limit(1).
-			Scan(ctx, &documentType),
-	)
-
-	partner := &edi.EDIPartner{
-		BusinessUnitID: org.BusinessUnitID,
-		OrganizationID: org.ID,
-		Kind:           edi.PartnerKindExternal,
-		Code:           "CTRLNUM-TEST",
-		Name:           "Control Number Concurrency Partner",
-	}
-	_, err = db.NewInsert().Model(partner).Exec(ctx)
-	require.NoError(t, err)
+	scope := editest.FirstTenant(t, ctx, db)
+	ctx, tenant := scope.Ctx, scope.Info
+	documentType := seededDocumentType(t, ctx, db, edi.TransactionSet204)
+	partner := createPartner(t, ctx, db, "CTRLNUM-TEST")
 
 	req := ediports.AllocateEDIControlNumbersRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: org.ID,
-			BuID:  org.BusinessUnitID,
-		},
+		TenantInfo:     tenant,
 		PartnerID:      partner.ID,
 		DocumentTypeID: documentType.ID,
 		Kinds: []edi.ControlNumberKind{

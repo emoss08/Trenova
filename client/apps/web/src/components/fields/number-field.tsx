@@ -8,14 +8,20 @@ import {
 } from "@trenova/shared/types/decimal";
 import type { FormControlProps } from "@trenova/shared/types/fields";
 import { ChevronDownIcon, ChevronUpIcon } from "@trenova/shared/components/icons";
+import { useState } from "react";
 import { Controller, type FieldPathValue, type FieldValues, type Path } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
-import { FieldWrapper } from "./field-components";
+import { FieldWrapper, type FieldLayout } from "./field-components";
 import { fieldInvalidClass } from "@trenova/shared/lib/variants/field";
 
 type BaseNumberFieldProps = {
+  /** Maps a value that is not a plain number or decimal text in and out of the field. */
+  codec?: NumberFieldCodec;
   label?: React.ReactNode;
-  description?: string;
+  description?: React.ReactNode;
+  layout?: FieldLayout;
+  /** Drawn beside the input at its height, such as a unit select. */
+  endAddon?: React.ReactNode;
   className?: string;
   /** Classes for the input alone; `className` also reaches the label's wrapper. */
   inputClassName?: string;
@@ -46,6 +52,17 @@ type BaseNumberFieldProps = {
  * float that has already lost them.
  */
 export type NumberFieldValueType = "number" | "string";
+
+/**
+ * How a field bound to a value that is neither a number nor decimal text (a
+ * Tariff wire quantity, `{"$q": "2.35", "u": "$/mi"}`) reads its digits out of
+ * the value and writes typed digits back into one. `encode` is given the value
+ * it replaces, so whatever else the value carries (its unit) survives an edit.
+ */
+export type NumberFieldCodec = {
+  decode: (value: unknown) => string;
+  encode: (text: string, previous: unknown) => unknown;
+};
 
 /**
  * Fields whose value can only be a string must say so; the choice is optional
@@ -98,6 +115,8 @@ function NumberFieldImpl<T extends FieldValues>({
   inputClassName,
   placeholder = "Enter Valid Number",
   sideText,
+  layout,
+  endAddon,
   rules,
   tabIndex,
   decimalScale = 0,
@@ -110,9 +129,14 @@ function NumberFieldImpl<T extends FieldValues>({
   max,
   step = 1,
   valueType,
+  codec,
   ...props
 }: NumberFieldImplProps<T>) {
   const t = useT();
+  // What was typed into a codec field and the value it wrote. The value holds the
+  // number so far (`2.` is still 2), so the text is shown back for as long as the
+  // value is the one it wrote; a value set from outside replaces it.
+  const [draft, setDraft] = useState<{ text: string; written: string } | null>(null);
 
   const inputId = `input-${name}`;
   const descriptionId = `${inputId}-description`;
@@ -126,13 +150,29 @@ function NumberFieldImpl<T extends FieldValues>({
       render={({ field, fieldState }) => {
         // An untyped control (custom fields, dynamic rows) declares nothing, so
         // fall back to the kind the value already has and keep it that kind.
-        const asString = valueType ? valueType === "string" : typeof field.value === "string";
+        const asString =
+          codec !== undefined ||
+          (valueType ? valueType === "string" : typeof field.value === "string");
+        const decoded = codec ? codec.decode(field.value) : textOf(field.value);
+        const text =
+          codec && draft && draft.written === JSON.stringify(field.value ?? null)
+            ? draft.text
+            : decoded;
+        const write = (next: string) => {
+          if (!codec) {
+            field.onChange(next);
+            return;
+          }
+          const encoded = codec.encode(next, field.value);
+          setDraft({ text: next, written: JSON.stringify(encoded ?? null) });
+          field.onChange(encoded);
+        };
         const currentValue = typeof field.value === "number" ? field.value : 0;
 
         const stepBy = (delta: number, bound: number | undefined, direction: "min" | "max") => {
           if (asString) {
-            const next = stepDecimalString(textOf(field.value), delta, decimalScale);
-            field.onChange(
+            const next = stepDecimalString(text, delta, decimalScale);
+            write(
               bound === undefined ? next : clampDecimalString(next, bound, direction, decimalScale),
             );
             return;
@@ -154,75 +194,86 @@ function NumberFieldImpl<T extends FieldValues>({
             required={!!rules?.required}
             error={fieldState.error?.message}
             className={className}
+            layout={layout}
+            htmlFor={inputId}
           >
-            <div className="relative overflow-hidden">
-              <NumericFormat
-                value={field.value ?? ""}
-                onValueChange={(values) => {
-                  field.onChange(asString ? values.value : (values.floatValue ?? null));
-                }}
-                onBlur={field.onBlur}
-                getInputRef={field.ref}
-                decimalScale={decimalScale}
-                fixedDecimalScale={fixedDecimalScale}
-                allowNegative={allowNegative}
-                thousandSeparator={thousandSeparator}
-                prefix={prefix}
-                suffix={suffix}
-                name={field.name}
-                tabIndex={tabIndex}
-                placeholder={placeholder}
-                id={inputId}
-                disabled={props.disabled}
-                readOnly={props.readOnly}
-                aria-label={props["aria-label"]}
-                aria-describedby={cn(
-                  description && descriptionId,
-                  fieldState.error && errorId,
-                  props["aria-describedby"],
-                )}
-                className={cn(
-                  "ui-field flex h-7 w-full min-w-0 px-2 py-0.5 outline-none md:text-xs",
-                  "file:border-0 file:bg-transparent file:text-sm file:font-medium",
-                  "placeholder:text-muted-foreground",
-                  "disabled:cursor-not-allowed disabled:opacity-50",
-                  "read-only:text-muted-foreground read-only:cursor-default",
-                  "ui-focus-ring",
-                  props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
-                  fieldState.invalid && fieldInvalidClass,
-                  sideText ? "pr-16" : "pr-12",
-                  className,
-                  inputClassName,
-                )}
-              />
+            <div className={cn(endAddon !== undefined && "flex items-start gap-1.5")}>
+              <div className="relative min-w-0 flex-1 overflow-hidden">
+                <NumericFormat
+                  value={codec ? text : (field.value ?? "")}
+                  onValueChange={(values, source) => {
+                    if (codec) {
+                      // A value set from outside (a reset) re-renders the digits it
+                      // already holds; writing them back would only churn the form.
+                      if (source.source === "event") write(values.value);
+                      return;
+                    }
+                    field.onChange(asString ? values.value : (values.floatValue ?? null));
+                  }}
+                  onBlur={field.onBlur}
+                  getInputRef={field.ref}
+                  decimalScale={decimalScale}
+                  fixedDecimalScale={fixedDecimalScale}
+                  allowNegative={allowNegative}
+                  thousandSeparator={thousandSeparator}
+                  prefix={prefix}
+                  suffix={suffix}
+                  name={field.name}
+                  tabIndex={tabIndex}
+                  placeholder={placeholder}
+                  id={inputId}
+                  disabled={props.disabled}
+                  readOnly={props.readOnly}
+                  aria-label={props["aria-label"]}
+                  aria-describedby={cn(
+                    description && descriptionId,
+                    fieldState.error && errorId,
+                    props["aria-describedby"],
+                  )}
+                  className={cn(
+                    "ui-field flex h-7 w-full min-w-0 px-2 py-0.5 outline-none md:text-xs",
+                    "file:border-0 file:bg-transparent file:text-sm file:font-medium",
+                    "placeholder:text-muted-foreground",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    "read-only:text-muted-foreground read-only:cursor-default",
+                    "ui-focus-ring",
+                    props.readOnly && "pointer-events-none cursor-not-allowed opacity-60",
+                    fieldState.invalid && fieldInvalidClass,
+                    sideText ? "pr-16" : "pr-12",
+                    className,
+                    inputClassName,
+                  )}
+                />
 
-              <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0">
-                {sideText && (
-                  <div className="text-muted-foreground pointer-events-none mr-2 text-xs select-none">
-                    {sideText}
+                <div className="absolute top-px right-px bottom-px flex items-center gap-1 pr-0">
+                  {sideText && (
+                    <div className="text-muted-foreground pointer-events-none mr-2 text-xs select-none">
+                      {sideText}
+                    </div>
+                  )}
+                  <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
+                    <button
+                      type="button"
+                      aria-label={t("Increment")}
+                      className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
+                      disabled={props.disabled || props.readOnly}
+                      onClick={() => stepBy(step, max, "max")}
+                    >
+                      <ChevronUpIcon className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label={t("Decrement")}
+                      className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
+                      disabled={props.disabled || props.readOnly}
+                      onClick={() => stepBy(-step, min, "min")}
+                    >
+                      <ChevronDownIcon className="h-3 w-3" />
+                    </button>
                   </div>
-                )}
-                <div className="border-muted-foreground/20 flex h-full flex-col items-stretch rounded-r-md border-l bg-transparent">
-                  <button
-                    type="button"
-                    aria-label={t("Increment")}
-                    className="border-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center border-b disabled:opacity-50"
-                    disabled={props.disabled || props.readOnly}
-                    onClick={() => stepBy(step, max, "max")}
-                  >
-                    <ChevronUpIcon className="h-3 w-3" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label={t("Decrement")}
-                    className="text-muted-foreground hover:bg-muted-foreground/10 hover:text-foreground inline-flex h-7 w-6 flex-1 items-center justify-center disabled:opacity-50"
-                    disabled={props.disabled || props.readOnly}
-                    onClick={() => stepBy(-step, min, "min")}
-                  >
-                    <ChevronDownIcon className="h-3 w-3" />
-                  </button>
                 </div>
               </div>
+              {endAddon}
             </div>
           </FieldWrapper>
         );

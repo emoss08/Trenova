@@ -20,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent"
 	"github.com/emoss08/trenova/internal/modules/documents/jobs/documentextractionjobs/documentextractioncontract"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentaiextractionports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
@@ -341,109 +340,6 @@ func TestAnalyzeConvertedDocumentActivity_SuppressesShipmentDraftOutsideShipment
 	assert.Equal(t, documentshipmentdraft.StatusUnavailable, draftWrites[0].Status)
 	assert.Equal(t, document.ShipmentDraftStatusUnavailable, docUpdates[0].ShipmentDraftStatus)
 	assert.Nil(t, docUpdates[0].DocumentTypeID)
-}
-
-func TestAnalyzeConvertedDocumentActivity_AppliesPublishedParsingRulesToDoclingText(t *testing.T) {
-	t.Parallel()
-
-	docRepo := documentportsmock.NewMockDocumentRepository(t)
-	controlRepo := tenantportsmock.NewMockDocumentControlRepository(t)
-	contentRepo := documentcontentportsmock.NewMockDocumentContentRepository(t)
-	draftRepo := documentshipmentdraftportsmock.NewMockDocumentShipmentDraftRepository(t)
-	searchProjection := documentsearchprojectionportsmock.NewMockDocumentSearchProjectionService(t)
-
-	orgID := pulid.MustNew("org_")
-	buID := pulid.MustNew("bu_")
-
-	doc := &document.Document{
-		ID:                pulid.MustNew("doc_"),
-		ProcessingProfile: document.ProcessingProfileRateConfirmationImport,
-		OrganizationID:    orgID,
-		BusinessUnitID:    buID,
-		OriginalName:      "rate-confirmation.txt",
-		FileType:          "text/plain",
-		StoragePath:       "documents/rate-confirmation.txt",
-		ResourceType:      "trailer",
-		ResourceID:        "trl_123",
-		ContentStatus:     document.ContentStatusExtracting,
-		UploadedByID:      pulid.MustNew("usr_"),
-	}
-
-	control := tenant.NewDefaultDocumentControl(orgID, buID)
-	rules := &recordingParsingRules{}
-	docUpdates := make([]documentports.UpdateDocumentIntelligenceRequest, 0, 1)
-	draftWrites := make([]documentshipmentdraft.DocumentShipmentDraft, 0, 1)
-
-	docRepo.EXPECT().GetByID(mock.Anything, mock.Anything).Return(doc, nil)
-	controlRepo.EXPECT().GetOrCreate(mock.Anything, orgID, buID).Return(control, nil)
-	expectStoredText(contentRepo, doc, rateConfirmationText)
-	contentRepo.EXPECT().
-		Upsert(mock.Anything, mock.AnythingOfType("*documentcontent.Content")).
-		RunAndReturn(func(_ context.Context, entity *documentcontent.Content) (*documentcontent.Content, error) {
-			return entity, nil
-		}).
-		Once()
-	docRepo.EXPECT().
-		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*documentports.UpdateDocumentIntelligenceRequest")).
-		RunAndReturn(func(_ context.Context, req *documentports.UpdateDocumentIntelligenceRequest) error {
-			docUpdates = append(docUpdates, *req)
-			return nil
-		}).
-		Once()
-	searchProjection.EXPECT().
-		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
-		Return(nil).Once()
-	draftRepo.EXPECT().
-		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.DocumentShipmentDraft")).
-		RunAndReturn(func(_ context.Context, entity *documentshipmentdraft.DocumentShipmentDraft) (*documentshipmentdraft.DocumentShipmentDraft, error) {
-			draftWrites = append(draftWrites, *entity)
-			return entity, nil
-		})
-
-	activities := &Activities{
-		logger: zap.NewNop(),
-		cfg:    &config.AIConfig{},
-		metrics: &metrics.Registry{
-			Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false),
-		},
-		documentRepo:        docRepo,
-		documentControlRepo: controlRepo,
-		contentRepo:         contentRepo,
-		draftRepo:           draftRepo,
-		aiDocumentService:   noopAIDocumentService{},
-		searchProjection:    searchProjection,
-		workflowStarter:     noopWorkflowStarter{},
-		parsingRuleRuntime:  rules,
-	}
-
-	result, err := activities.AnalyzeConvertedDocumentActivity(t.Context(), analyzeInput(doc))
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	require.Len(t, rules.inputs, 1)
-	assert.Equal(t, kindRateConfirmation, rules.inputs[0].DocumentKind)
-	assert.Equal(t, orgID, rules.inputs[0].TenantInfo.OrgID)
-	assert.Contains(t, rules.inputs[0].Text, "Rate")
-}
-
-type recordingParsingRules struct {
-	inputs []*documentparsingruleports.DocumentParsingRuntimeInput
-}
-
-func (r *recordingParsingRules) ApplyPublished(
-	_ context.Context,
-	input *documentparsingruleports.DocumentParsingRuntimeInput,
-	_ *documentparsingruleports.DocumentParsingAnalysis,
-) (*documentparsingruleports.DocumentParsingAnalysis, error) {
-	r.inputs = append(r.inputs, input)
-	return nil, nil //nolint:nilnil // no rule matched
-}
-
-func (r *recordingParsingRules) SimulateVersion(
-	context.Context,
-	*documentparsingruleports.DocumentParsingSimulationRequest,
-) (*documentparsingruleports.DocumentParsingSimulationResult, error) {
-	return nil, nil //nolint:nilnil // unused
 }
 
 func TestAnalyzeConvertedDocumentActivity_AutoCreatesAndAssociatesDocumentTypeForShipment(

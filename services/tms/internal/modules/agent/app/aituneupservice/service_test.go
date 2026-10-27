@@ -145,8 +145,9 @@ func (d *definitionRepo) List(
 	}
 	end := min(len(d.agents), offset+req.Filter.Pagination.SafeLimit())
 	return &pagination.ListResult[*agentdefinition.Definition]{
-		Items: d.agents[offset:end],
-		Total: len(d.agents),
+		Items:      d.agents[offset:end],
+		Total:      len(d.agents),
+		TotalExact: true,
 	}, nil
 }
 

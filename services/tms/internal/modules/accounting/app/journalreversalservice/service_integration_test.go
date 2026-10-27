@@ -6,26 +6,28 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalentryrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalreversalrepository"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glaccount/glaccountdb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/accountingcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -34,29 +36,9 @@ import (
 	"go.uber.org/zap"
 )
 
-type seededRevOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-type seededRevUser struct {
-	ID pulid.ID `bun:"id"`
-}
-type seededRevAccount struct {
-	ID pulid.ID `bun:"id"`
-}
-
 func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -82,42 +64,19 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 		seqgen.GeneratorParams{Store: store, Provider: provider, Logger: logger},
 	)
 
-	var org seededRevOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededRevUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	accounts := make([]seededRevAccount, 0, 2)
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Where("status = 'Active'").
-			Order("account_code ASC").
-			Limit(2).
-			Scan(ctx, &accounts),
-	)
+	seeded := accountingtest.DevelopmentTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	orgID, buID, userID := seeded.Info.OrgID, seeded.Info.BuID, seeded.Info.UserID
+
+	gla := glaccountdb.GLAccounts
+	accounts, err := gla.Where(gla.Status.Eq(domaintypes.StatusActive)).
+		Order(gla.AccountCode.Asc()).
+		Limit(2).
+		List(ctx, db)
+	require.NoError(t, err)
 	require.Len(t, accounts, 2)
 
-	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
+	control, err := accountingRepo.GetByOrgID(ctx, orgID)
 	require.NoError(t, err)
 	control.JournalReversalPolicy = tenant.JournalReversalPolicyNextOpenPeriod
 	control.RequireManualJEApproval = false
@@ -127,8 +86,8 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 	fy, err := fiscalYearRepo.Create(
 		ctx,
 		&fiscalyear.FiscalYear{
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
 			Status:         fiscalyear.StatusOpen,
 			Year:           2027,
 			Name:           "FY 2027",
@@ -143,8 +102,8 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 	period, err := fiscalPeriodRepo.Create(
 		ctx,
 		&fiscalperiod.FiscalPeriod{
-			OrganizationID: org.ID,
-			BusinessUnitID: org.BusinessUnitID,
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
 			FiscalYearID:   fy.ID,
 			PeriodNumber:   1,
 			PeriodType:     fiscalperiod.PeriodTypeMonth,
@@ -165,8 +124,8 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 			ctx,
 			journalentryports.CreateJournalPostingParams{
 				BatchID:          pulid.MustNew("jb_"),
-				OrganizationID:   org.ID,
-				BusinessUnitID:   org.BusinessUnitID,
+				OrganizationID:   orgID,
+				BusinessUnitID:   buID,
 				BatchNumber:      "JB-ORIG",
 				BatchType:        "Manual",
 				BatchStatus:      "Posted",
@@ -175,9 +134,9 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 				FiscalPeriodID:   period.ID,
 				AccountingDate:   now,
 				PostedAt:         &now,
-				PostedByID:       user.ID,
-				CreatedByID:      user.ID,
-				UpdatedByID:      user.ID,
+				PostedByID:       userID,
+				CreatedByID:      userID,
+				UpdatedByID:      userID,
 				EntryID:          originalEntryID,
 				EntryNumber:      "JE-ORIG",
 				EntryType:        "Standard",
@@ -192,7 +151,7 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 				IsAutoGenerated:  false,
 				RequiresApproval: false,
 				IsApproved:       true,
-				ApprovedByID:     user.ID,
+				ApprovedByID:     userID,
 				ApprovedAt:       &now,
 				Lines: []journalentryports.JournalPostingLine{
 					{
@@ -229,8 +188,8 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 			AuditService:        &mocks.NoopAuditService{},
 		},
 	)
-	tenantInfo := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID, UserID: user.ID}
-	actor := testutil.NewSessionActor(user.ID, org.ID, org.BusinessUnitID)
+	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID, UserID: userID}
+	actor := testutil.NewSessionActor(userID, orgID, buID)
 
 	created, err := svc.Create(
 		ctx,
@@ -255,55 +214,24 @@ func TestJournalReversalPostingCreatesReversalEntryAndMarksOriginal(t *testing.T
 	require.Equal(t, journalreversal.StatusPosted, posted.Status)
 	require.True(t, posted.ReversalJournalEntryID.IsNotNil())
 
-	var reversalEntry struct {
-		IsReversal   bool     `bun:"is_reversal"`
-		ReversalOfID pulid.ID `bun:"reversal_of_id"`
-		EntryType    string   `bun:"entry_type"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_entries").
-			Column("is_reversal", "reversal_of_id", "entry_type").
-			Where("id = ?", posted.ReversalJournalEntryID).
-			Limit(1).
-			Scan(ctx, &reversalEntry),
-	)
+	je := journalentrydb.JournalEntries
+	reversalEntry, err := je.Get(ctx, db, posted.ReversalJournalEntryID)
+	require.NoError(t, err)
 	assert.True(t, reversalEntry.IsReversal)
 	assert.Equal(t, originalEntryID, reversalEntry.ReversalOfID)
-	assert.Equal(t, "Reversal", reversalEntry.EntryType)
+	assert.Equal(t, journalentry.EntryTypeReversal, reversalEntry.EntryType)
 
-	var original struct {
-		Status       string   `bun:"status"`
-		ReversedByID pulid.ID `bun:"reversed_by_id"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("journal_entries").
-			Column("status", "reversed_by_id").
-			Where("id = ?", originalEntryID).
-			Limit(1).
-			Scan(ctx, &original),
-	)
-	assert.Equal(t, "Reversed", original.Status)
+	original, err := je.Get(ctx, db, originalEntryID)
+	require.NoError(t, err)
+	assert.Equal(t, journalentry.StatusReversed, original.Status)
 	assert.Equal(t, posted.ReversalJournalEntryID, original.ReversedByID)
 
-	var debitBalance struct {
-		NetChangeMinor    int64 `bun:"net_change_minor"`
-		PeriodDebitMinor  int64 `bun:"period_debit_minor"`
-		PeriodCreditMinor int64 `bun:"period_credit_minor"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_account_balances_by_period").
-			Column("net_change_minor", "period_debit_minor", "period_credit_minor").
-			Where("gl_account_id = ?", accounts[0].ID).
-			Where("fiscal_period_id = ?", period.ID).
-			Limit(1).
-			Scan(ctx, &debitBalance),
-	)
+	pb := glbalancedb.GLAccountPeriodBalances
+	debitBalance, err := pb.Where(
+		pb.GLAccountID.Eq(accounts[0].ID),
+		pb.FiscalPeriodID.Eq(period.ID),
+	).First(ctx, db)
+	require.NoError(t, err)
 	assert.Equal(t, int64(0), debitBalance.NetChangeMinor)
 	assert.Equal(t, int64(1000), debitBalance.PeriodDebitMinor)
 	assert.Equal(t, int64(1000), debitBalance.PeriodCreditMinor)

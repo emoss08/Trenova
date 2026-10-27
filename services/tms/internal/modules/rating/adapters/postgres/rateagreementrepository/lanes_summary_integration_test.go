@@ -5,14 +5,12 @@ package rateagreementrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest/ratingdb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -21,45 +19,37 @@ import (
 func TestSummarizeLanes_GroupsLiveLanesByWhatPricesThem(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
 	fixture := seedLaneFixture(t, ctx, db, data, "LN-SUM")
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
 	flat := &formulatemplate.FormulaTemplate{
 		ID:             pulid.MustNew("ft_"),
 		OrganizationID: fixture.tenantInfo.OrgID,
 		BusinessUnitID: fixture.tenantInfo.BuID,
 		Name:           "Flat LN-SUM",
-		Type:           formulatemplate.TemplateTypeFreightCharge,
-		Expression:     "baseRate",
+		Source:         flatTariff,
 		Status:         formulatemplate.StatusActive,
-		SchemaID:       "shipment",
 	}
-	_, err := db.NewInsert().Model(flat).Exec(ctx)
-	require.NoError(t, err)
+	insertRow(t, ctx, db, flat)
 
-	rate := func(value string) decimal.NullDecimal {
-		return decimal.NewNullDecimal(decimal.RequireFromString(value))
-	}
 	closedOutAt := int64(200)
 	insertRules(t, ctx, db,
-		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Rate = rate("1.50") }),
-		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Rate = rate("2.75") }),
-		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Rate = rate("2.10") }),
+		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Inputs = perMileRate("1.50") }),
+		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Inputs = perMileRate("2.75") }),
+		fixture.rule(func(r *rateagreement.RateAgreementRule) { r.Inputs = perMileRate("2.10") }),
 		fixture.rule(func(r *rateagreement.RateAgreementRule) {
-			r.FormulaTemplateID = &flat.ID
-			r.Rate = rate("950")
+			r.FormulaTemplateID = flat.ID
+			r.Inputs = flatRate("950")
 		}),
 		fixture.rule(func(r *rateagreement.RateAgreementRule) {
 			r.Status = rateagreement.RuleStatusInactive
-			r.Rate = rate("9.99")
+			r.Inputs = perMileRate("9.99")
 		}),
 		fixture.rule(func(r *rateagreement.RateAgreementRule) {
 			r.EffectiveTo = &closedOutAt
-			r.Rate = rate("0.10")
+			r.Inputs = perMileRate("0.10")
 		}),
 	)
 
@@ -79,7 +69,6 @@ func TestSummarizeLanes_GroupsLiveLanesByWhatPricesThem(t *testing.T) {
 	assert.Equal(t, 3, perMile.Lanes)
 	assert.Equal(t, "1.5", perMile.MinRate.Decimal.String())
 	assert.Equal(t, "2.75", perMile.MaxRate.Decimal.String())
-	assert.Nil(t, perMile.RateMatrixID)
 
 	flatGroup := summary.Groups[1]
 	assert.Equal(t, "Flat LN-SUM", flatGroup.FormulaTemplateName)
@@ -90,12 +79,10 @@ func TestSummarizeLanes_GroupsLiveLanesByWhatPricesThem(t *testing.T) {
 func TestSummarizeLanes_AgreementWithoutLanesCountsZero(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
 	fixture := seedLaneFixture(t, ctx, db, data, "LN-SUM0")
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
 	summary, err := repo.SummarizeLanes(ctx, &rateagreementports.ListRateAgreementLanesRequest{
 		TenantInfo:      fixture.tenantInfo,
@@ -110,19 +97,22 @@ func TestSummarizeLanes_AgreementWithoutLanesCountsZero(t *testing.T) {
 func TestSummarizeLanes_AgreementOutsideTheTenantIsNotFound(t *testing.T) {
 	t.Parallel()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	t.Cleanup(cleanup)
-
-	data := seedtest.SeedFullTestData(t, ctx, db)
+	rdb := ratingdb.NewDatabase(t)
+	ctx, db, data := rdb.A.Ctx, rdb.Admin, rdb.A.Data
 	fixture := seedLaneFixture(t, ctx, db, data, "LN-SUMX")
-	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
+	repo := New(Params{DB: rdb.Conn, Logger: zap.NewNop()})
 
 	outside := fixture.tenantInfo
 	outside.OrgID = pulid.MustNew("org_")
-	_, err := repo.SummarizeLanes(ctx, &rateagreementports.ListRateAgreementLanesRequest{
-		TenantInfo:      outside,
-		RateAgreementID: fixture.agreement.ID,
-	})
+	_, err := repo.SummarizeLanes(
+		scopedTo(ctx, outside),
+		&rateagreementports.ListRateAgreementLanesRequest{
+			TenantInfo:      outside,
+			RateAgreementID: fixture.agreement.ID,
+		},
+	)
 	require.Error(t, err)
 	assert.True(t, errortypes.IsNotFoundError(err))
 }
+
+const flatTariff = "tariff \"Flat\"\n\ninput rate: Money\n\ncharge \"Flat\" = rate\n"

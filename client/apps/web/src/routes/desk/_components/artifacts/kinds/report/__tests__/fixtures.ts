@@ -17,6 +17,7 @@ const DISPLAY = {
   nullText: "",
   rules: [],
   band: null,
+  labels: null,
 };
 
 const CUSTOMERS: [string, number, string][] = [
@@ -74,7 +75,7 @@ export function finishedCard(): ReportRunDeskCard {
         type: "int",
         value: 30,
         isDefault: false,
-        refEntity: null,
+        entity: null,
         windowStart: 1_790_398_800,
         windowEnd: 1_792_990_800,
       },
@@ -82,25 +83,25 @@ export function finishedCard(): ReportRunDeskCard {
     timezone: "America/Chicago",
     sample: {
       columns: [
-        { id: "customer", label: "Customer", type: "string", format: null, display: DISPLAY },
+        { id: "customer", label: "Customer", type: "string", sensitivity: null, display: DISPLAY },
         {
           id: "shipments",
           label: "Shipments",
           type: "int",
-          format: "count",
+          sensitivity: null,
           display: { ...DISPLAY, style: "number" },
         },
         {
           id: "revenue",
           label: "Total revenue",
           type: "decimal",
-          format: "money",
+          sensitivity: "confidential",
           display: { ...DISPLAY, style: "currency", currency: "USD", decimals: 2 },
         },
       ],
       rows: CUSTOMERS.map((row) => [...row]),
       totals: [null, 1142, "1284310.42"],
-      more: true,
+      truncated: true,
     },
     withheld: null,
     previous: {
@@ -114,7 +115,7 @@ export function finishedCard(): ReportRunDeskCard {
     },
     schedule: null,
     chart: null,
-    sort: [{ columnId: "revenue", direction: "desc" }],
+    sort: [{ column: "revenue", desc: true }],
   };
 }
 

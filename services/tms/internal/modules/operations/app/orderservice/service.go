@@ -22,7 +22,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,7 +30,7 @@ type Params struct {
 	fx.In
 
 	Logger               *zap.Logger
-	DB                   kernelports.DBConnection
+	DB                   kernelports.Transactor
 	Repo                 orderports.OrderRepository
 	Validator            *Validator
 	AuditService         auditports.AuditService
@@ -44,7 +43,7 @@ type Params struct {
 
 type Service struct {
 	l                    *zap.Logger
-	db                   kernelports.DBConnection
+	db                   kernelports.Transactor
 	repo                 orderports.OrderRepository
 	validator            *Validator
 	auditService         auditports.AuditService
@@ -182,7 +181,7 @@ func (s *Service) AttachShipments(
 	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	var updated *order.Order
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: tenantInfo,
@@ -395,7 +394,7 @@ func (s *Service) DetachShipment(
 	}
 
 	var updated *order.Order
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:              orderID,
 			TenantInfo:      tenantInfo,
@@ -575,7 +574,7 @@ func (s *Service) AddChargeWithAllocations(
 	orderID := req.OrderID
 
 	var updated *order.Order
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: tenantInfo,
@@ -615,7 +614,6 @@ func (s *Service) AddChargeWithAllocations(
 
 		if txErr = s.syncChargeAllocations(
 			txCtx,
-			tx,
 			tenantInfo,
 			charge,
 			req.Allocations,
@@ -650,7 +648,7 @@ func (s *Service) RemoveCharge(
 	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	var updated *order.Order
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         orderID,
 			TenantInfo: tenantInfo,
@@ -702,7 +700,7 @@ func (s *Service) UpdateCharge(
 	actor *permissionports.RequestActor,
 ) (*order.Order, error) {
 	var updated *order.Order
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         req.OrderID,
 			TenantInfo: req.TenantInfo,
@@ -752,7 +750,6 @@ func (s *Service) UpdateCharge(
 
 		if txErr = s.syncChargeAllocations(
 			txCtx,
-			tx,
 			req.TenantInfo,
 			charge,
 			req.Allocations,
@@ -814,7 +811,7 @@ func (s *Service) SetChargeAllocations(
 	}
 
 	var updated *order.Order
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, tx bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		ord, txErr := s.repo.GetByID(txCtx, orderports.GetOrderByIDRequest{
 			ID:         req.OrderID,
 			TenantInfo: req.TenantInfo,
@@ -858,7 +855,6 @@ func (s *Service) SetChargeAllocations(
 		}
 		if txErr = s.syncChargeAllocations(
 			txCtx,
-			tx,
 			req.TenantInfo,
 			charge,
 			allocations,
@@ -1012,7 +1008,6 @@ func (s *Service) validateChargeAllocations(
 
 func (s *Service) syncChargeAllocations(
 	ctx context.Context,
-	tx bun.Tx,
 	tenantInfo pagination.TenantInfo,
 	charge *order.OrderCharge,
 	allocations []*shipment.ChargeAllocation,
@@ -1023,7 +1018,6 @@ func (s *Service) syncChargeAllocations(
 
 	return s.chargeAllocationRepo.SyncForOrderCharge(
 		ctx,
-		tx,
 		&shipmentports.SyncOrderChargeAllocationsRequest{
 			TenantInfo:    tenantInfo,
 			OrderID:       charge.OrderID,

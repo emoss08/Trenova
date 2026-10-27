@@ -32,7 +32,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -42,7 +41,7 @@ const maxNoteLength = 2000
 type Params struct {
 	fx.In
 
-	DB              kernelports.DBConnection
+	DB              kernelports.Transactor
 	Repo            paymentreminderports.Repository
 	Customers       customerports.CustomerRepository
 	Collections     collectionports.Repository
@@ -55,7 +54,7 @@ type Params struct {
 }
 
 type Service struct {
-	db              kernelports.DBConnection
+	db              kernelports.Transactor
 	repo            paymentreminderports.Repository
 	customers       customerports.CustomerRepository
 	collections     collectionports.Repository
@@ -399,7 +398,7 @@ func (s *Service) send(ctx context.Context, from *sender, rem *reminder) ([]stri
 	}
 
 	sentTo := strings.Join(recipients.To, ", ")
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if txErr := s.repo.InsertReminders(txCtx, records(from, rem, sentTo)); txErr != nil {
 			return txErr
 		}

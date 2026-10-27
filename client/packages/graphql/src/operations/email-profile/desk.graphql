@@ -1,0 +1,21 @@
+# The sending profiles an agent picks one from: what each is called and who
+# the mail comes from and goes back to.
+query DeskEmailProfiles($input: DataTableConnectionInput!) {
+  emailProfiles(input: $input) {
+    edges {
+      node {
+        id
+        name
+        description
+        senderName
+        senderEmail
+        replyToEmail
+        status
+      }
+    }
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

@@ -1,0 +1,34 @@
+# The Desk's customer payments: each payment's amount and how much of it is
+# applied, by invoice, for finding the payment a bank receipt represents.
+# Amounts are in minor units and follow the reader's data access.
+query DeskCustomerPayments($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  customerPayments(input: $input) {
+    edges {
+      node {
+        id
+        customerId
+        paymentDate
+        amountMinor
+        appliedAmountMinor
+        unappliedAmountMinor
+        currencyCode
+        status
+        paymentMethod
+        referenceNumber
+        memo
+        reversedAt
+        applications {
+          id
+          invoiceId
+          appliedAmountMinor
+          shortPayAmountMinor
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      ...DataTablePageInfoFields
+    }
+  }
+}

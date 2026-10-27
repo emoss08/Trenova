@@ -1,5 +1,6 @@
 import {
   AcknowledgeShipmentCommentDocument,
+  ApproveShipmentRatingReviewDocument,
   AutoRateShipmentDocument,
   CalculateShipmentDistanceDocument,
   CalculateShipmentLoadingOptimizationDocument,
@@ -79,6 +80,7 @@ type ShipmentConnection = {
     endCursor?: string | null;
   };
   totalCount?: number | null;
+  totalCountExact?: boolean | null;
 };
 
 type ShipmentPageRequest = {
@@ -345,6 +347,18 @@ export async function uncancelShipmentGraphQL(id: Shipment["id"]): Promise<Shipm
     variables: { id },
   });
   return nestChargeAllocations(data.uncancelShipment as Shipment);
+}
+
+/** Approves the reviews the tariff asked for, which releases the shipment to be billed. */
+export async function approveShipmentRatingReviewGraphQL(
+  shipmentId: Shipment["id"],
+): Promise<Shipment> {
+  const data = await requestShipmentGraphQL({
+    document: ApproveShipmentRatingReviewDocument,
+    operationName: "ApproveShipmentRatingReview",
+    variables: { shipmentId },
+  });
+  return nestChargeAllocations(data.approveShipmentRatingReview as Shipment);
 }
 
 export async function duplicateShipmentGraphQL(request: DuplicateShipmentRequest) {
@@ -647,12 +661,14 @@ export async function acknowledgeShipmentCommentGraphQL(
 function connectionToLimitOffset<T>(connection: ShipmentConnection): GenericLimitOffsetResponse<T> {
   const results = (connection.edges ?? []).map((edge) => edge.node as T);
   const totalCount = connection.totalCount ?? results.length;
+  const totalCountExact = connection.totalCount == null || connection.totalCountExact !== false;
   const hasNextPage = connection.pageInfo?.hasNextPage ?? false;
   const endCursor = connection.pageInfo?.endCursor ?? null;
 
   return {
     results,
     count: totalCount,
+    totalCountExact,
     next: hasNextPage ? endCursor : null,
     prev: null,
     pageInfo: {
@@ -660,6 +676,7 @@ function connectionToLimitOffset<T>(connection: ShipmentConnection): GenericLimi
       hasNextPage,
       endCursor,
       totalCount,
+      totalCountExact,
     },
   };
 }
@@ -689,7 +706,7 @@ function toShipmentInput(
     cancelReason: payload.cancelReason,
     otherChargeAmount: String(payload.otherChargeAmount ?? "0"),
     freightChargeAmount: String(payload.freightChargeAmount ?? "0"),
-    baseRate: String(payload.baseRate ?? "0"),
+    tariffInputs: payload.tariffInputs ?? {},
     totalChargeAmount: String(payload.totalChargeAmount ?? "0"),
     pieces: payload.pieces,
     weight: payload.weight,
@@ -702,7 +719,6 @@ function toShipmentInput(
     transferredToBillingAt: payload.transferredToBillingAt,
     markedReadyToBillAt: payload.markedReadyToBillAt,
     billedAt: payload.billedAt,
-    ratingUnit: payload.ratingUnit,
     fuelSurchargeLocked: payload.fuelSurchargeLocked ?? false,
     // The one rating field a caller may write. Everything else the system owns
     // is restored from the stored shipment on save.

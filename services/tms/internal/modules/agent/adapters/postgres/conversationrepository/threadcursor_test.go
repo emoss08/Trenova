@@ -5,21 +5,23 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 func threadPageRequest() *agentports.ListThreadsRequest {
 	return &agentports.ListThreadsRequest{
-		UserID:     pulid.MustNew("usr_"),
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
+		UserID: pulid.MustNew("usr_"),
 	}
 }
+
+const (
+	threadPosition = `ROW(at_."pinned", greatest(at_."last_message_at", at_."created_at"), at_."id")`
+	threadTouched  = `greatest(at_."last_message_at", at_."created_at")`
+)
 
 func TestThreadCursorRoundTripsThroughItsEncoding(t *testing.T) {
 	t.Parallel()
@@ -83,50 +85,48 @@ func TestThreadCursorOfAConversationWithNoMessageIsWhenItWasCreated(t *testing.T
 func TestThreadPageQueryContinuesBelowTheCursorInRailOrder(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
 	req := threadPageRequest()
 	after := &threadCursor{
 		pinned:    false,
 		touchedAt: 42,
 		id:        "athr_01J00000000000000000000000",
 	}
-	var dest []*conversation.Thread
 
-	sql := threadPageQuery(db, &dest, req, threadWindow{after: after, limit: 50}).String()
+	sql, args := keeltest.Render(t, threadPageQuery(req, threadWindow{after: after, limit: 50}))
 
+	assert.Contains(t, sql, threadPosition+" < ROW($4, $5, $6)", sql)
+	assert.Equal(t, []any{false, int64(42), "athr_01J00000000000000000000000"}, args[3:6])
 	assert.Contains(
 		t,
 		sql,
-		"(athr.pinned, greatest(athr.last_message_at, athr.created_at), athr.id) < (FALSE, 42, 'athr_01J00000000000000000000000')",
-	)
-	assert.Contains(
-		t,
+		`ORDER BY at_."pinned" DESC, `+threadTouched+` DESC, at_."id" DESC`,
 		sql,
-		`ORDER BY "athr"."pinned" DESC, greatest(athr.last_message_at, athr.created_at) DESC, "athr"."id" DESC`,
 	)
 	assert.Contains(t, sql, "LIMIT 51", "one more than the page says whether another follows")
-	assert.Contains(t, sql, "athr.origin NOT IN", "unlisted conversations stay off the rail")
+	assert.Contains(
+		t,
+		sql,
+		`at_."origin" NOT IN ('Ask', 'Import', 'Formula')`,
+		"unlisted conversations stay off the rail",
+	)
 }
 
 func TestThreadPageQueryReadsTheFirstPageWithoutACursor(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
 	req := threadPageRequest()
 	req.IncludeUnlisted = true
-	var dest []*conversation.Thread
 
-	sql := threadPageQuery(db, &dest, req, threadWindow{limit: 100}).String()
+	sql, _ := keeltest.Render(t, threadPageQuery(req, threadWindow{limit: 100}))
 
-	assert.NotContains(t, sql, ") < (")
-	assert.NotContains(t, sql, "athr.origin NOT IN")
-	assert.Contains(t, sql, "LIMIT 101")
+	assert.NotContains(t, sql, ") < ROW(", sql)
+	assert.NotContains(t, sql, `"origin" NOT IN`, sql)
+	assert.Contains(t, sql, "LIMIT 101", sql)
 }
 
 func TestThreadPageQueryReadsOneRangeBetweenTwoBoundaries(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
 	req := threadPageRequest()
 	window := threadWindow{
 		after: &threadCursor{
@@ -141,22 +141,21 @@ func TestThreadPageQueryReadsOneRangeBetweenTwoBoundaries(t *testing.T) {
 		},
 		limit: maxThreadRangeLimit,
 	}
-	var dest []*conversation.Thread
 
-	sql := threadPageQuery(db, &dest, req, window).String()
+	sql, args := keeltest.Render(t, threadPageQuery(req, window))
 
+	assert.Contains(t, sql, threadPosition+" < ROW($4, $5, $6)", sql)
 	assert.Contains(
 		t,
 		sql,
-		"(athr.pinned, greatest(athr.last_message_at, athr.created_at), athr.id) < (TRUE, 900, 'athr_01J00000000000000000000009')",
-	)
-	assert.Contains(
-		t,
-		sql,
-		"(athr.pinned, greatest(athr.last_message_at, athr.created_at), athr.id) >= (FALSE, 42, 'athr_01J00000000000000000000001')",
+		threadPosition+" >= ROW($7, $8, $9)",
 		"the boundary row's place is in the range, whichever row now sits there",
 	)
-	assert.Contains(t, sql, "LIMIT 1001")
+	assert.Equal(t, []any{
+		true, int64(900), "athr_01J00000000000000000000009",
+		false, int64(42), "athr_01J00000000000000000000001",
+	}, args[3:9])
+	assert.Contains(t, sql, "LIMIT 1001", sql)
 }
 
 func TestThreadWindowOfReadsARangeWithoutAPageLimit(t *testing.T) {
@@ -203,74 +202,73 @@ func TestThreadWindowOfCapsAPage(t *testing.T) {
 func TestThreadPageQueryReadsOneShelf(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
 	req := threadPageRequest()
 	pinned := false
 	req.Pinned = &pinned
 	req.TouchedFrom = 1_000
 	req.TouchedBefore = 2_000
-	var dest []*conversation.Thread
 
-	sql := threadPageQuery(db, &dest, req, threadWindow{limit: 50}).String()
+	sql, args := keeltest.Render(t, threadPageQuery(req, threadWindow{limit: 50}))
 
-	assert.Contains(t, sql, "athr.pinned = FALSE")
-	assert.Contains(t, sql, "greatest(athr.last_message_at, athr.created_at) >= 1000")
-	assert.Contains(t, sql, "greatest(athr.last_message_at, athr.created_at) < 2000")
+	assert.Contains(t, sql, `at_."pinned" = $4`, sql)
+	assert.Contains(t, sql, threadTouched+" >= $5", sql)
+	assert.Contains(t, sql, threadTouched+" < $6", sql)
+	assert.Equal(t, []any{false, int64(1_000), int64(2_000)}, args[3:6])
 }
 
 func TestThreadPageQueryReadsOnlyPinnedConversations(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
 	req := threadPageRequest()
 	pinned := true
 	req.Pinned = &pinned
-	var dest []*conversation.Thread
 
-	sql := threadPageQuery(db, &dest, req, threadWindow{limit: 50}).String()
+	sql, args := keeltest.Render(t, threadPageQuery(req, threadWindow{limit: 50}))
 
-	assert.Contains(t, sql, "athr.pinned = TRUE")
-	assert.NotContains(t, sql, "greatest(athr.last_message_at, athr.created_at) >=")
-	assert.NotContains(t, sql, "greatest(athr.last_message_at, athr.created_at) <")
+	assert.Contains(t, sql, `at_."pinned" = $4`, sql)
+	assert.Equal(t, true, args[3])
+	assert.NotContains(t, sql, threadTouched+" >=", sql)
+	assert.NotContains(t, sql, threadTouched+" <", sql)
 }
 
 func TestThreadPageQueryLeavesAnOpenEndedShelfUnbounded(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
 	req := threadPageRequest()
 	req.TouchedBefore = 2_000
-	var dest []*conversation.Thread
 
-	sql := threadPageQuery(db, &dest, req, threadWindow{limit: 50}).String()
+	sql, args := keeltest.Render(t, threadPageQuery(req, threadWindow{limit: 50}))
 
-	assert.NotContains(t, sql, "athr.pinned =")
-	assert.NotContains(t, sql, "greatest(athr.last_message_at, athr.created_at) >=")
-	assert.Contains(t, sql, "greatest(athr.last_message_at, athr.created_at) < 2000")
+	assert.NotContains(t, sql, `at_."pinned" =`, sql)
+	assert.NotContains(t, sql, threadTouched+" >=", sql)
+	assert.Contains(t, sql, threadTouched+" < $4", sql)
+	assert.Equal(t, int64(2_000), args[3])
 }
 
 func TestThreadShelfCountQueryBandsEveryConversationOnce(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(nil, pgdialect.New())
 	req := &agentports.CountThreadShelvesRequest{
-		UserID:     pulid.MustNew("usr_"),
-		TenantInfo: pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")},
-		Edges:      []int64{3_000, 2_000, 1_000},
+		UserID: pulid.MustNew("usr_"),
+		Edges:  []int64{3_000, 2_000, 1_000},
 	}
 
-	sql := threadShelfCountQuery(db, req).String()
+	sql, args := keeltest.Render(t, threadShelfCountQuery(req))
 
+	band := `CASE WHEN at_."pinned" THEN $4::bigint` +
+		" WHEN " + threadTouched + " >= $5 THEN $6::bigint" +
+		" WHEN " + threadTouched + " >= $7 THEN $8::bigint" +
+		" WHEN " + threadTouched + " >= $9 THEN $10::bigint" +
+		" ELSE $11::bigint END"
+	assert.Contains(t, sql, "SELECT "+band+", count(*)", sql)
+	assert.Contains(t, sql, ") GROUP BY 1", sql)
+	assert.Equal(t, []any{
+		int64(-1), int64(3_000), int64(0), int64(2_000), int64(1), int64(1_000), int64(2), int64(3),
+	}, args[3:11])
 	assert.Contains(
 		t,
 		sql,
-		"CASE WHEN athr.pinned THEN -1"+
-			" WHEN greatest(athr.last_message_at, athr.created_at) >= 3000 THEN 0"+
-			" WHEN greatest(athr.last_message_at, athr.created_at) >= 2000 THEN 1"+
-			" WHEN greatest(athr.last_message_at, athr.created_at) >= 1000 THEN 2"+
-			" ELSE 3 END AS band",
+		`at_."origin" NOT IN ('Ask', 'Import', 'Formula')`,
+		"unlisted conversations are not counted",
 	)
-	assert.Contains(t, sql, "COUNT(*) AS total")
-	assert.Contains(t, sql, "GROUP BY band")
-	assert.Contains(t, sql, "athr.origin NOT IN", "unlisted conversations are not counted")
 }

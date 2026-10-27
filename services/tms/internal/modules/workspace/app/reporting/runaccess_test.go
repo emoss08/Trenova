@@ -4,8 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -17,7 +20,7 @@ import (
 type stubRevisions struct {
 	reportports.ReportDefinitionRepository
 
-	definition *report.Definition
+	definition *ir.Definition
 	asked      pulid.ID
 }
 
@@ -27,43 +30,6 @@ func (s *stubRevisions) GetRevision(
 ) (*report.ReportDefinitionRevision, error) {
 	s.asked = req.RevisionID
 	return &report.ReportDefinitionRevision{ID: req.RevisionID, Definition: s.definition}, nil
-}
-
-type recordingCompiler struct {
-	err        error
-	exports    []*reportports.ReportCompileRequest
-	previews   int
-	validation int
-}
-
-func (c *recordingCompiler) ValidateAndAuthorize(
-	context.Context,
-	*reportports.ReportCompileRequest,
-) (*reportports.ReportValidationResult, error) {
-	c.validation++
-	return &reportports.ReportValidationResult{}, c.err
-}
-
-func (c *recordingCompiler) Compile(
-	_ context.Context,
-	req *reportports.ReportCompileRequest,
-) (*reportports.CompiledReportQuery, error) {
-	c.exports = append(c.exports, req)
-	if c.err != nil {
-		return nil, c.err
-	}
-	return &reportports.CompiledReportQuery{}, nil
-}
-
-func (c *recordingCompiler) CompileForPreview(
-	context.Context,
-	*reportports.ReportCompileRequest,
-) (*reportports.CompiledReportQuery, error) {
-	c.previews++
-	if c.err != nil {
-		return nil, c.err
-	}
-	return &reportports.CompiledReportQuery{}, nil
 }
 
 type presigningStorage struct {
@@ -80,22 +46,14 @@ func (s *presigningStorage) GetPresignedURL(
 	return "https://storage.example/" + params.Key, nil
 }
 
-func storedRunDefinition() *report.Definition {
-	return &report.Definition{
-		IRVersion: report.CurrentIRVersion,
-		Entity:    "shipment",
-		Columns: []report.ColumnSpec{{
-			ID:   "c_customer",
-			Ref:  report.FieldRef{Path: []string{"customer"}, Field: "name"},
-			Kind: report.ColumnKindDimension,
-		}},
-	}
+func withdrawShipments(t *testing.T, svc *Service) {
+	t.Helper()
+	withdrawn, _ := engineService(t, engineOptions{denied: []permission.Resource{
+		permission.ResourceShipment,
+	}})
+	svc.access = withdrawn.access
+	svc.perms = withdrawn.perms
 }
-
-var errAccessWithdrawn = errortypes.NewAuthorizationError(
-	"This report references data you do not have access to: {0}",
-	"you do not have read access to Customers",
-)
 
 func TestReadRunRows_RechecksTheReportAgainstTheRequestersCurrentGrants(t *testing.T) {
 	t.Parallel()
@@ -103,30 +61,34 @@ func TestReadRunRows_RechecksTheReportAgainstTheRequestersCurrentGrants(t *testi
 	store := &stubRowsStorage{body: []byte(storedEnvelope)}
 	run := storedRun()
 	run.Params = map[string]any{"windowDays": 30}
-	svc := rowsService(run, store)
-	compiler := &recordingCompiler{}
-	revisions := &stubRevisions{definition: storedRunDefinition()}
-	svc.compiler = compiler
+	svc := rowsService(t, run, store)
+	definition := storedRunDefinition()
+	definition.Parameters = []ir.Parameter{{Name: "windowDays", Type: "int"}}
+	revisions := &stubRevisions{definition: definition}
 	svc.defRepo = revisions
+	engine, ok := svc.engine.(*fakeEngine)
+	require.True(t, ok)
 	req := rowsRequest()
 
 	_, err := svc.ReadRunRows(t.Context(), req)
 	require.NoError(t, err)
 
 	assert.Equal(t, run.RevisionID, revisions.asked, "the run's own revision is checked")
-	require.Len(t, compiler.exports, 1, "a stored run is checked as the export it was")
-	assert.Zero(t, compiler.previews)
-	assert.Equal(t, req.TenantInfo.UserID, compiler.exports[0].Tenant.UserID)
-	assert.Equal(t, run.Params, compiler.exports[0].Params)
-	assert.Equal(t, "shipment", compiler.exports[0].Definition.Entity)
+	compiles := engine.recorded("compile")
+	require.Len(t, compiles, 1, "a stored run is checked as the export it was")
+	access, ok := compiles[0].Request.Policy.(*reportaccess.Access)
+	require.True(t, ok)
+	assert.Equal(t, reportaccess.ModeExport, access.Mode())
+	assert.Equal(t, run.Params, compiles[0].Request.Params)
+	assert.Equal(t, "shipment", compiles[0].Request.Definition.Entity)
 }
 
 func TestReadRunRows_RefusesWhenAccessWasWithdrawnSinceTheRun(t *testing.T) {
 	t.Parallel()
 
 	store := &stubRowsStorage{body: []byte(storedEnvelope)}
-	svc := rowsService(storedRun(), store)
-	svc.compiler = &recordingCompiler{err: errAccessWithdrawn}
+	svc := rowsService(t, storedRun(), store)
+	withdrawShipments(t, svc)
 
 	_, err := svc.ReadRunRows(t.Context(), rowsRequest())
 
@@ -141,7 +103,7 @@ func TestDownloadRun_RefusesWhenAccessWasWithdrawnSinceTheRun(t *testing.T) {
 	run := storedRun()
 	run.ArtifactKey = "reports/org/run/1/report.xlsx"
 	store := &presigningStorage{}
-	svc := rowsService(run, &store.stubRowsStorage)
+	svc := rowsService(t, run, &store.stubRowsStorage)
 	svc.storage = store
 
 	download, err := svc.DownloadRun(t.Context(), rowsRequest())
@@ -150,7 +112,7 @@ func TestDownloadRun_RefusesWhenAccessWasWithdrawnSinceTheRun(t *testing.T) {
 	assert.NotEmpty(t, download.URL)
 
 	store.presigned = ""
-	svc.compiler = &recordingCompiler{err: errAccessWithdrawn}
+	withdrawShipments(t, svc)
 
 	_, err = svc.DownloadRun(t.Context(), rowsRequest())
 	var authzErr *errortypes.AuthorizationError
@@ -161,7 +123,8 @@ func TestDownloadRun_RefusesWhenAccessWasWithdrawnSinceTheRun(t *testing.T) {
 func TestDownloadRun_RechecksACannedRunAgainstItsReport(t *testing.T) {
 	t.Parallel()
 
-	registry := canned.Default()
+	registry, err := canned.Default()
+	require.NoError(t, err)
 	entries := registry.All()
 	require.NotEmpty(t, entries)
 
@@ -170,16 +133,17 @@ func TestDownloadRun_RechecksACannedRunAgainstItsReport(t *testing.T) {
 	run.CannedKey = entries[0].Key
 	run.ArtifactKey = "reports/org/run/1/report.xlsx"
 	store := &presigningStorage{}
-	svc := rowsService(run, &store.stubRowsStorage)
+	svc := rowsService(t, run, &store.stubRowsStorage)
 	svc.storage = store
 	svc.canned = registry
-	compiler := &recordingCompiler{}
-	svc.compiler = compiler
+	engine, ok := svc.engine.(*fakeEngine)
+	require.True(t, ok)
 
-	_, err := svc.DownloadRun(t.Context(), rowsRequest())
+	_, err = svc.DownloadRun(t.Context(), rowsRequest())
 	require.NoError(t, err)
-	require.Len(t, compiler.exports, 1)
-	assert.Equal(t, entries[0].Definition, compiler.exports[0].Definition)
+	compiles := engine.recorded("compile")
+	require.Len(t, compiles, 1)
+	assert.Equal(t, entries[0].Definition, compiles[0].Request.Definition)
 }
 
 func TestDownloadRun_RefusesARunWhoseReportNoLongerCompiles(t *testing.T) {
@@ -188,11 +152,13 @@ func TestDownloadRun_RefusesARunWhoseReportNoLongerCompiles(t *testing.T) {
 	run := storedRun()
 	run.ArtifactKey = "reports/org/run/1/report.xlsx"
 	store := &presigningStorage{}
-	svc := rowsService(run, &store.stubRowsStorage)
+	svc := rowsService(t, run, &store.stubRowsStorage)
 	svc.storage = store
-	multiErr := errortypes.NewMultiError()
-	multiErr.Add("definition.columns[0].ref", errortypes.ErrInvalid, "unknown field")
-	svc.compiler = &recordingCompiler{err: multiErr}
+	svc.defRepo = &stubRevisions{definition: &ir.Definition{
+		Version: ir.Version,
+		Entity:  "shipment",
+		Columns: []ir.Column{{ID: "gone", Dimension: &ir.Dimension{Field: "noSuchField"}}},
+	}}
 
 	_, err := svc.DownloadRun(t.Context(), rowsRequest())
 	var businessErr *errortypes.BusinessError
@@ -208,23 +174,21 @@ func TestExportDashboard_NeedsTheExportOperationOnEveryTile(t *testing.T) {
 		Kind:         report.TileKindTable,
 		DefinitionID: tileDefID,
 	}}, nil)
-	svc := tileTestService(dashboard, map[pulid.ID]*report.ReportDefinition{
+	svc := tileTestService(t, dashboard, map[pulid.ID]*report.ReportDefinition{
 		tileDefID: sharedDefinition("shipment", nil),
 	})
-	compiler := &recordingCompiler{err: errortypes.NewAuthorizationError(
-		"This report references data you do not have access to: {0}",
-		"you do not have export access to Shipments",
-	)}
-	svc.compiler = compiler
-	svc.orgRepo = previewOrganizations{}
+	engine, ok := svc.engine.(*fakeEngine)
+	require.True(t, ok)
 
 	_, err := svc.ExportDashboard(t.Context(), &ExportDashboardRequest{
 		Request:     tileRequest(),
 		DashboardID: pulid.MustNew("rdash_"),
 	})
+	require.Error(t, err)
 
-	var authzErr *errortypes.AuthorizationError
-	require.ErrorAs(t, err, &authzErr)
-	require.Len(t, compiler.exports, 1, "each tile compiles as an export")
-	assert.Zero(t, compiler.previews, "an export never compiles as a preview")
+	previews := engine.recorded("preview")
+	require.Len(t, previews, 1, "each tile runs once")
+	access, ok := previews[0].Request.Policy.(*reportaccess.Access)
+	require.True(t, ok)
+	assert.Equal(t, reportaccess.ModeExport, access.Mode(), "an export decides access as an export")
 }

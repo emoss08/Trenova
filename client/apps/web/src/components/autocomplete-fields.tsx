@@ -15,7 +15,7 @@ import {
   selectOptionMetaNumber,
   selectOptionMetaString,
 } from "@/lib/select-option-meta";
-import { formatRange } from "@trenova/shared/lib/date";
+import { formatRange, formatUnixDateMedium } from "@trenova/shared/lib/date";
 import type { BatchSourceOption } from "@/types/bank-receipt-batch";
 import type { Document } from "@trenova/shared/types/document";
 import type { SelectOption as StaticSelectOption } from "@trenova/shared/types/fields";
@@ -205,6 +205,11 @@ const glAccountSelectOptionsGraphQL = {
   resource: "GL_ACCOUNT",
 } satisfies GraphQLSelectOptionsConfig;
 
+const reversibleJournalEntrySelectOptionsGraphQL = {
+  resource: "JOURNAL_ENTRY",
+  filters: { reversible: true },
+} satisfies GraphQLSelectOptionsConfig;
+
 const fuelSurchargeProgramSelectOptionsGraphQL = {
   resource: "FUEL_SURCHARGE_PROGRAM",
 } satisfies GraphQLSelectOptionsConfig;
@@ -335,14 +340,6 @@ const ediMappingProfileSelectOptionsGraphQL = {
 
 const ediPartnerSelectOptionsGraphQL = {
   resource: "EDI_PARTNER",
-} satisfies GraphQLSelectOptionsConfig;
-
-const ediPartnerDocumentProfileSelectOptionsGraphQL = {
-  resource: "EDI_PARTNER_DOCUMENT_PROFILE",
-} satisfies GraphQLSelectOptionsConfig;
-
-const ediTemplateSelectOptionsGraphQL = {
-  resource: "EDI_TEMPLATE",
 } satisfies GraphQLSelectOptionsConfig;
 
 const emailProfileSelectOptionsGraphQL = {
@@ -1051,6 +1048,30 @@ export function GLAccountAutocompleteField<T extends FieldValues>({
   );
 }
 
+/** Posted journal entries that are neither reversals nor already reversed, newest first. */
+export function ReversibleJournalEntryAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GraphQLSelectOption, T>) {
+  return (
+    <AutocompleteField<GraphQLSelectOption, T>
+      graphql={reversibleJournalEntrySelectOptionsGraphQL}
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="font-mono">{option.label}</span>
+          <span className="text-2xs text-muted-foreground w-full truncate">
+            {formatUnixDateMedium(selectOptionMetaNumber(option, "accountingDate"), {
+              fallback: "",
+            })}
+          </span>
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
 export function GLAccountMultiSelectAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseMultiSelectAutocompleteFieldProps<GraphQLSelectOption, T>) {
@@ -1217,87 +1238,6 @@ export function EDITransactionSetAutocompleteField<T extends FieldValues>({
     <AutocompleteField<GraphQLSelectOption, T>
       link="/edi/catalog/transaction-sets/select-options/"
       graphql={ediTransactionSetSelectOptionsGraphQL}
-      getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.label || ""}
-      renderOption={(option) => (
-        <OptionStack primary={option.label || ""} secondary={option.description || undefined} />
-      )}
-      {...props}
-    />
-  );
-}
-
-export function EDITemplateAutocompleteField<T extends FieldValues>({
-  transactionSet,
-  direction,
-  extraSearchParams,
-  ...props
-}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
-  transactionSet?: string;
-  direction?: string;
-}) {
-  const graphqlFilters = {
-    ...(transactionSet ? { transactionSet } : {}),
-    ...(direction ? { direction } : {}),
-  };
-  return (
-    <AutocompleteField<GraphQLSelectOption, T>
-      link="/edi/templates/select-options/"
-      graphql={
-        Object.keys(graphqlFilters).length > 0
-          ? { ...ediTemplateSelectOptionsGraphQL, filters: graphqlFilters }
-          : ediTemplateSelectOptionsGraphQL
-      }
-      selectedValueLink="/edi/templates/"
-      extraSearchParams={{
-        ...(transactionSet ? { transactionSet } : {}),
-        ...(direction ? { direction } : {}),
-        ...extraSearchParams,
-      }}
-      getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.label || ""}
-      renderOption={(option) => (
-        <OptionStack
-          primary={option.label || ""}
-          secondary={option.description || selectOptionMetaString(option, "status") || undefined}
-        />
-      )}
-      {...props}
-    />
-  );
-}
-
-export function EDIDocumentProfileAutocompleteField<T extends FieldValues>({
-  partnerId,
-  transactionSet,
-  direction,
-  extraSearchParams,
-  ...props
-}: BaseAutocompleteFieldProps<GraphQLSelectOption, T> & {
-  partnerId?: string;
-  transactionSet?: string;
-  direction?: string;
-}) {
-  const graphqlFilters: Record<string, unknown> = {
-    ...(partnerId ? { partnerId } : {}),
-    ...(transactionSet ? { transactionSet } : {}),
-    ...(direction ? { direction } : {}),
-  };
-  return (
-    <AutocompleteField<GraphQLSelectOption, T>
-      link="/edi/document-profiles/select-options/"
-      graphql={
-        Object.keys(graphqlFilters).length > 0
-          ? { ...ediPartnerDocumentProfileSelectOptionsGraphQL, filters: graphqlFilters }
-          : ediPartnerDocumentProfileSelectOptionsGraphQL
-      }
-      selectedValueLink="/edi/document-profiles/"
-      extraSearchParams={{
-        ...(partnerId ? { partnerId } : {}),
-        ...(transactionSet ? { transactionSet } : {}),
-        ...(direction ? { direction } : {}),
-        ...extraSearchParams,
-      }}
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label || ""}
       renderOption={(option) => (
@@ -1586,115 +1526,6 @@ export function ControlledEDITransferAutocompleteField({
           }
         />
       )}
-      {...props}
-    />
-  );
-}
-
-export function ControlledEDITemplateAutocompleteField({
-  transactionSet,
-  direction,
-  extraSearchParams,
-  ...props
-}: Omit<
-  ControlledAutocompleteFieldProps<GraphQLSelectOption>,
-  | "label"
-  | "link"
-  | "graphql"
-  | "renderOption"
-  | "getOptionValue"
-  | "getDisplayValue"
-  | "selectedValueLink"
-  | "extraSearchParams"
-> & {
-  transactionSet?: string;
-  direction?: string;
-  extraSearchParams?: Record<string, string | string[]>;
-}) {
-  const t = useT();
-
-  const graphqlFilters: Record<string, unknown> = {
-    ...(transactionSet ? { transactionSet } : {}),
-    ...(direction ? { direction } : {}),
-  };
-  return (
-    <ControlledAutocompleteField<GraphQLSelectOption>
-      label={t("Template")}
-      link="/edi/templates/select-options/"
-      graphql={
-        Object.keys(graphqlFilters).length > 0
-          ? { ...ediTemplateSelectOptionsGraphQL, filters: graphqlFilters }
-          : ediTemplateSelectOptionsGraphQL
-      }
-      selectedValueLink="/edi/templates/"
-      extraSearchParams={{
-        ...(transactionSet ? { transactionSet } : {}),
-        ...(direction ? { direction } : {}),
-        ...extraSearchParams,
-      }}
-      renderOption={(option) => (
-        <OptionStack
-          primary={option.label || ""}
-          secondary={option.description || selectOptionMetaString(option, "status") || undefined}
-        />
-      )}
-      getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => option.label || ""}
-      {...props}
-    />
-  );
-}
-
-export function ControlledEDIDocumentProfileAutocompleteField({
-  partnerId,
-  transactionSet,
-  direction,
-  extraSearchParams,
-  ...props
-}: Omit<
-  ControlledAutocompleteFieldProps<GraphQLSelectOption>,
-  | "label"
-  | "link"
-  | "graphql"
-  | "renderOption"
-  | "getOptionValue"
-  | "getDisplayValue"
-  | "selectedValueLink"
-  | "extraSearchParams"
-> & {
-  partnerId?: string;
-  transactionSet?: string;
-  direction?: string;
-  extraSearchParams?: Record<string, string | string[]>;
-}) {
-  const t = useT();
-
-  const graphqlFilters: Record<string, unknown> = {
-    ...(partnerId ? { partnerId } : {}),
-    ...(transactionSet ? { transactionSet } : {}),
-    ...(direction ? { direction } : {}),
-  };
-  return (
-    <ControlledAutocompleteField<GraphQLSelectOption>
-      label={t("Document profile")}
-      link="/edi/document-profiles/select-options/"
-      graphql={
-        Object.keys(graphqlFilters).length > 0
-          ? { ...ediPartnerDocumentProfileSelectOptionsGraphQL, filters: graphqlFilters }
-          : ediPartnerDocumentProfileSelectOptionsGraphQL
-      }
-      selectedValueLink="/edi/document-profiles/"
-      extraSearchParams={{
-        ...(transactionSet ? { transactionSet } : {}),
-        ...(direction ? { direction } : {}),
-        ...(partnerId ? { partnerId } : {}),
-        ...extraSearchParams,
-      }}
-      renderOption={(option) => (
-        <OptionStack primary={option.label || ""} secondary={option.description || undefined} />
-      )}
-      getOptionValue={(option) => option.id}
-      getDisplayValue={(option) => option.label || ""}
       {...props}
     />
   );

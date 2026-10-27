@@ -4,94 +4,26 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"reflect"
-	"strconv"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/pulid"
 )
+
+var ErrNoEdgeCursor = errors.New("cursor list result has no cursor for its last item")
 
 type CursorSortField struct {
 	Field     string `json:"field"`
 	Direction string `json:"direction"`
 }
 
-type CursorValueColumn struct {
-	SQLExpression string
-	Alias         string
-}
-
 type Cursor struct {
-	CreatedAt int64             `json:"createdAt,omitempty"`
-	Sort      []CursorSortField `json:"sort,omitempty"`
-	Values    []any             `json:"values,omitempty"`
-	ID        pulid.ID          `json:"id"`
+	Sort   []CursorSortField `json:"sort,omitempty"`
+	Keyset string            `json:"keyset"`
 }
 
 type CursorEntity interface {
 	GetID() pulid.ID
 	GetCreatedAt() int64
-}
-
-type CursorValueCarrier interface {
-	CursorValues(count int) []any
-}
-
-type CursorValueProvider interface {
-	CursorValuesAt(index int) ([]any, bool)
-}
-
-type CursorValueSet struct {
-	CursorValue0 any `json:"-" bun:"__cursor_value_0,scanonly"`
-	CursorValue1 any `json:"-" bun:"__cursor_value_1,scanonly"`
-	CursorValue2 any `json:"-" bun:"__cursor_value_2,scanonly"`
-	CursorValue3 any `json:"-" bun:"__cursor_value_3,scanonly"`
-	CursorValue4 any `json:"-" bun:"__cursor_value_4,scanonly"`
-	CursorValue5 any `json:"-" bun:"__cursor_value_5,scanonly"`
-	CursorValue6 any `json:"-" bun:"__cursor_value_6,scanonly"`
-	CursorValue7 any `json:"-" bun:"__cursor_value_7,scanonly"`
-	CursorValue8 any `json:"-" bun:"__cursor_value_8,scanonly"`
-	CursorValue9 any `json:"-" bun:"__cursor_value_9,scanonly"`
-}
-
-func (s CursorValueSet) CursorValues(count int) []any {
-	values := []any{
-		s.CursorValue0,
-		s.CursorValue1,
-		s.CursorValue2,
-		s.CursorValue3,
-		s.CursorValue4,
-		s.CursorValue5,
-		s.CursorValue6,
-		s.CursorValue7,
-		s.CursorValue8,
-		s.CursorValue9,
-	}
-
-	if count > len(values) {
-		count = len(values)
-	}
-	if count < 0 {
-		count = 0
-	}
-
-	return append([]any(nil), values[:count]...)
-}
-
-func EncodeCursor(cursor Cursor) (string, error) {
-	if cursor.ID.IsNil() {
-		return "", errors.New("cursor id is required")
-	}
-	if len(cursor.Sort) > 0 && len(cursor.Sort) != len(cursor.Values) {
-		return "", errors.New("cursor sort values do not match cursor sort shape")
-	}
-
-	bytes, err := sonic.Marshal(cursor)
-	if err != nil {
-		return "", fmt.Errorf("marshal cursor: %w", err)
-	}
-
-	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }
 
 func DecodeCursor(encoded string) (Cursor, error) {
@@ -104,28 +36,11 @@ func DecodeCursor(encoded string) (Cursor, error) {
 	if err = sonic.Unmarshal(bytes, &cursor); err != nil {
 		return Cursor{}, fmt.Errorf("unmarshal cursor: %w", err)
 	}
-	if cursor.ID.IsNil() {
-		return Cursor{}, errors.New("cursor id is required")
-	}
-	if len(cursor.Sort) > 0 && len(cursor.Sort) != len(cursor.Values) {
-		return Cursor{}, errors.New("cursor sort values do not match cursor sort shape")
+	if cursor.Keyset == "" {
+		return Cursor{}, ErrKeysetRequired
 	}
 
 	return cursor, nil
-}
-
-func ValidateCursorSort(cursor Cursor, sort []CursorSortField) error {
-	if len(cursor.Sort) != len(sort) {
-		return errors.New("cursor sort does not match request sort")
-	}
-
-	for i := range sort {
-		if cursor.Sort[i] != sort[i] {
-			return errors.New("cursor sort does not match request sort")
-		}
-	}
-
-	return nil
 }
 
 type CursorInfo struct {
@@ -155,51 +70,19 @@ func NewCursorInfo(first int, after string) (CursorInfo, error) {
 }
 
 type CursorListResult[T any] struct {
-	Items        []T
-	HasNextPage  bool
-	TotalCount   *int
-	CursorSort   []CursorSortField
-	CursorValues [][]any
+	Items           []T
+	HasNextPage     bool
+	TotalCount      *int
+	TotalCountExact bool
+	EdgeCursors     []string
 }
 
-func NewCursorListResult[T any](items []T, limit int) *CursorListResult[T] {
-	return NewCursorListResultWithTotalCount(items, limit, nil)
-}
-
-func NewCursorListResultWithTotalCount[T any](
-	items []T,
-	limit int,
-	totalCount *int,
-) *CursorListResult[T] {
-	hasNextPage := len(items) > limit
-	if hasNextPage {
-		items = items[:limit]
+func (r *CursorListResult[T]) EdgeCursorAt(index int) (string, bool) {
+	if index < 0 || index >= len(r.EdgeCursors) {
+		return "", false
 	}
 
-	return &CursorListResult[T]{
-		Items:       items,
-		HasNextPage: hasNextPage,
-		TotalCount:  totalCount,
-	}
-}
-
-func (r *CursorListResult[T]) WithCursorSort(sort []CursorSortField) *CursorListResult[T] {
-	r.CursorSort = append([]CursorSortField(nil), sort...)
-	return r
-}
-
-func (r *CursorListResult[T]) WithCursorValues(values [][]any) error {
-	copied, err := copyCursorValues(values, len(r.Items))
-	if err != nil {
-		return err
-	}
-
-	r.CursorValues = copied
-	return nil
-}
-
-func (r *CursorListResult[T]) CursorValuesAt(index int) ([]any, bool) {
-	return cursorValuesAt(r.CursorValues, index)
+	return r.EdgeCursors[index], true
 }
 
 func (r *CursorListResult[T]) NextCursor() (string, error) {
@@ -207,342 +90,10 @@ func (r *CursorListResult[T]) NextCursor() (string, error) {
 		return "", nil
 	}
 
-	last := len(r.Items) - 1
-	return encodeItemCursor(r.Items[last], r.CursorSort, r.CursorValues, last)
-}
-
-func copyCursorValues(values [][]any, count int) ([][]any, error) {
-	if len(values) < count {
-		return nil, errors.New("cursor values do not match result items")
+	cursor, ok := r.EdgeCursorAt(len(r.Items) - 1)
+	if !ok {
+		return "", ErrNoEdgeCursor
 	}
 
-	copied := make([][]any, count)
-	for i := range count {
-		copied[i] = append([]any(nil), values[i]...)
-	}
-
-	return copied, nil
-}
-
-func cursorValuesAt(values [][]any, index int) ([]any, bool) {
-	if index < 0 || index >= len(values) {
-		return nil, false
-	}
-
-	return values[index], true
-}
-
-func encodeItemCursor(
-	item any,
-	sort []CursorSortField,
-	values [][]any,
-	index int,
-) (string, error) {
-	if len(sort) == 0 {
-		return EncodeCursorFromEntity(item)
-	}
-	if itemValues, ok := cursorValuesAt(values, index); ok {
-		return EncodeCursorFromEntityWithValues(item, sort, itemValues)
-	}
-
-	return EncodeCursorFromEntityWithSort(item, sort)
-}
-
-func EncodeCursorFromEntity(item any) (string, error) {
-	id, err := cursorEntityID(item)
-	if err != nil {
-		return "", err
-	}
-	createdAt, err := cursorEntityCreatedAt(item)
-	if err != nil {
-		return "", err
-	}
-
-	return EncodeCursor(Cursor{
-		CreatedAt: createdAt,
-		ID:        id,
-	})
-}
-
-func EncodeCursorFromEntityWithSort(
-	item any,
-	sort []CursorSortField,
-) (string, error) {
-	values, err := ExtractCursorValues(item, sort)
-	if err != nil {
-		return "", err
-	}
-	id, err := cursorEntityID(item)
-	if err != nil {
-		return "", err
-	}
-	createdAt, err := cursorEntityCreatedAt(item)
-	if err != nil {
-		return "", err
-	}
-
-	return EncodeCursor(Cursor{
-		CreatedAt: createdAt,
-		Sort:      sort,
-		Values:    values,
-		ID:        id,
-	})
-}
-
-func EncodeCursorFromEntityWithValues(
-	item any,
-	sort []CursorSortField,
-	values []any,
-) (string, error) {
-	if len(sort) == 0 {
-		return EncodeCursorFromEntity(item)
-	}
-	if len(values) != len(sort) {
-		return "", errors.New("cursor sort values do not match cursor sort shape")
-	}
-
-	normalizedValues := make([]any, 0, len(values))
-	for _, value := range values {
-		normalizedValues = append(normalizedValues, normalizeCursorValue(value))
-	}
-
-	id, err := cursorIDFromSortValues(sort, normalizedValues)
-	if err != nil {
-		return "", err
-	}
-	createdAt := cursorCreatedAtFromSortValues(sort, normalizedValues)
-	if createdAt == 0 {
-		createdAt, _ = cursorEntityCreatedAt(item)
-	}
-
-	return EncodeCursor(Cursor{
-		CreatedAt: createdAt,
-		Sort:      sort,
-		Values:    normalizedValues,
-		ID:        id,
-	})
-}
-
-func ExtractCursorValues(item any, sort []CursorSortField) ([]any, error) {
-	values := make([]any, 0, len(sort))
-	for _, field := range sort {
-		if field.Field == "id" {
-			id, err := cursorEntityID(item)
-			if err != nil {
-				return nil, err
-			}
-			values = append(values, id.String())
-			continue
-		}
-
-		value, err := fieldPathValue(reflect.ValueOf(item), field.Field)
-		if err != nil {
-			return nil, err
-		}
-		values = append(values, normalizeCursorValue(value))
-	}
-
-	return values, nil
-}
-
-func cursorIDFromSortValues(sort []CursorSortField, values []any) (pulid.ID, error) {
-	for i, field := range sort {
-		if field.Field != "id" {
-			continue
-		}
-
-		switch typed := values[i].(type) {
-		case pulid.ID:
-			if typed.IsNil() {
-				return pulid.Nil, errors.New("cursor id is required")
-			}
-			return typed, nil
-		case string:
-			id := pulid.ID(typed)
-			if id.IsNil() {
-				return pulid.Nil, errors.New("cursor id is required")
-			}
-			return id, nil
-		default:
-			return pulid.Nil, fmt.Errorf("cursor field %q is not a pulid id", "id")
-		}
-	}
-
-	return pulid.Nil, errors.New("cursor id is required")
-}
-
-func cursorCreatedAtFromSortValues(sort []CursorSortField, values []any) int64 {
-	for i, field := range sort {
-		if field.Field != "createdAt" {
-			continue
-		}
-
-		if createdAt, ok := CursorInt64Value(values[i]); ok {
-			return createdAt
-		}
-	}
-
-	return 0
-}
-
-func CursorInt64Value(value any) (int64, bool) {
-	switch typed := value.(type) {
-	case int64:
-		return typed, true
-	case int:
-		return int64(typed), true
-	case int32:
-		return int64(typed), true
-	case float64:
-		return int64(typed), true
-	case string:
-		parsed, err := strconv.ParseInt(typed, 10, 64)
-		if err != nil {
-			return 0, false
-		}
-		return parsed, true
-	default:
-		return 0, false
-	}
-}
-
-func cursorEntityID(item any) (pulid.ID, error) {
-	if entity, ok := item.(CursorEntity); ok {
-		return entity.GetID(), nil
-	}
-
-	value, err := fieldPathValue(reflect.ValueOf(item), "id")
-	if err != nil {
-		return pulid.Nil, err
-	}
-
-	switch typed := value.(type) {
-	case pulid.ID:
-		return typed, nil
-	case string:
-		id := pulid.ID(typed)
-		if id.IsNil() {
-			return pulid.Nil, errors.New("cursor id is required")
-		}
-		return id, nil
-	default:
-		return pulid.Nil, fmt.Errorf("cursor field %q is not a pulid id", "id")
-	}
-}
-
-func cursorEntityCreatedAt(item any) (int64, error) {
-	if entity, ok := item.(CursorEntity); ok {
-		return entity.GetCreatedAt(), nil
-	}
-
-	value, err := fieldPathValue(reflect.ValueOf(item), "createdAt")
-	if err != nil {
-		return 0, err
-	}
-
-	switch typed := value.(type) {
-	case int64:
-		return typed, nil
-	case int:
-		return int64(typed), nil
-	case int32:
-		return int64(typed), nil
-	case float64:
-		return int64(typed), nil
-	case string:
-		createdAt, parseErr := strconv.ParseInt(typed, 10, 64)
-		if parseErr != nil {
-			return 0, fmt.Errorf("cursor field %q is invalid: %w", "createdAt", parseErr)
-		}
-		return createdAt, nil
-	default:
-		return 0, fmt.Errorf("cursor field %q is not an int64 timestamp", "createdAt")
-	}
-}
-
-func fieldPathValue(value reflect.Value, path string) (any, error) {
-	for value.Kind() == reflect.Pointer {
-		if value.IsNil() {
-			return nil, nil
-		}
-		value = value.Elem()
-	}
-
-	parts := splitFieldPath(path)
-	for _, part := range parts {
-		if value.Kind() != reflect.Struct {
-			return nil, fmt.Errorf("cursor field %q is not available", path)
-		}
-
-		next, ok := structJSONField(value, part)
-		if !ok {
-			return nil, fmt.Errorf("cursor field %q is not available", path)
-		}
-		value = next
-		for value.Kind() == reflect.Pointer {
-			if value.IsNil() {
-				return nil, nil
-			}
-			value = value.Elem()
-		}
-	}
-
-	if !value.IsValid() {
-		return nil, nil
-	}
-
-	return value.Interface(), nil
-}
-
-func splitFieldPath(path string) []string {
-	parts := make([]string, 0, 2)
-	start := 0
-	for i := range path {
-		if path[i] == '.' {
-			parts = append(parts, path[start:i])
-			start = i + 1
-		}
-	}
-	return append(parts, path[start:])
-}
-
-func structJSONField(value reflect.Value, jsonName string) (reflect.Value, bool) {
-	valueType := value.Type()
-	for i := range value.NumField() {
-		field := valueType.Field(i)
-		if !field.IsExported() {
-			continue
-		}
-
-		tagName := field.Tag.Get("json")
-		if comma := indexByte(tagName, ','); comma >= 0 {
-			tagName = tagName[:comma]
-		}
-		if tagName == jsonName {
-			return value.Field(i), true
-		}
-	}
-
-	return reflect.Value{}, false
-}
-
-func indexByte(value string, target byte) int {
-	for i := range value {
-		if value[i] == target {
-			return i
-		}
-	}
-	return -1
-}
-
-func normalizeCursorValue(value any) any {
-	switch typed := value.(type) {
-	case pulid.ID:
-		if typed.IsNil() {
-			return nil
-		}
-		return typed.String()
-	default:
-		return value
-	}
+	return cursor, nil
 }

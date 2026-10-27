@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptworkitem/bankreceiptworkitemdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,11 +17,21 @@ import (
 	"go.uber.org/zap"
 )
 
+var workItemErrors = dberror.Mapping{Entity: "BankReceiptWorkItem"}
+
+var activeStatuses = []bankreceiptworkitem.Status{
+	bankreceiptworkitem.StatusOpen,
+	bankreceiptworkitem.StatusAssigned,
+	bankreceiptworkitem.StatusInReview,
+}
+
 type Params struct {
 	fx.In
+
 	DB     *postgres.Connection
 	Logger *zap.Logger
 }
+
 type repository struct {
 	db *postgres.Connection
 	l  *zap.Logger
@@ -35,16 +46,9 @@ func (r *repository) GetByID(
 	req bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bankreceiptworkitem.WorkItem, error) {
-		entity := new(bankreceiptworkitem.WorkItem)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("brwi.id = ?", req.ID).
-			Where("brwi.organization_id = ?", req.TenantInfo.OrgID).
-			Where("brwi.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx)
+		entity, err := bankreceiptworkitemdb.WorkItems.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "BankReceiptWorkItem")
+			return nil, workItemErrors.Map(err, req.ID.String())
 		}
 		return entity, nil
 	})
@@ -52,20 +56,17 @@ func (r *repository) GetByID(
 
 func (r *repository) GetActiveByReceiptID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	bankReceiptID pulid.ID,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*bankreceiptworkitem.WorkItem, error) {
-		entity := new(bankreceiptworkitem.WorkItem)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("brwi.organization_id = ?", tenantInfo.OrgID).
-			Where("brwi.business_unit_id = ?", tenantInfo.BuID).
-			Where("brwi.bank_receipt_id = ?", bankReceiptID).
-			Where("brwi.status IN ('Open','Assigned','InReview')").
+		wi := bankreceiptworkitemdb.WorkItems
+		entity, err := wi.Where(
+			wi.BankReceiptID.Eq(bankReceiptID),
+			wi.Status.In(activeStatuses...),
+		).
 			Limit(1).
-			Scan(ctx)
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, errortypes.NewNotFoundError("bank receipt work item not found")
@@ -78,18 +79,13 @@ func (r *repository) GetActiveByReceiptID(
 
 func (r *repository) ListActive(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*bankreceiptworkitem.WorkItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*bankreceiptworkitem.WorkItem, error) {
-		items := make([]*bankreceiptworkitem.WorkItem, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Where("brwi.organization_id = ?", tenantInfo.OrgID).
-			Where("brwi.business_unit_id = ?", tenantInfo.BuID).
-			Where("brwi.status IN ('Open','Assigned','InReview')").
-			Order("brwi.created_at DESC").
-			Scan(ctx)
+		wi := bankreceiptworkitemdb.WorkItems
+		items, err := wi.Where(wi.Status.In(activeStatuses...)).
+			Order(wi.CreatedAt.Desc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list active bank receipt work items: %w", err)
 		}
@@ -102,19 +98,10 @@ func (r *repository) Create(
 	entity *bankreceiptworkitem.WorkItem,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceiptworkitem.WorkItem, error) {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return nil, fmt.Errorf("create bank receipt work item: %w", err)
+		if err := bankreceiptworkitemdb.WorkItems.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, workItemErrors.Map(err, entity.ID.String())
 		}
-		return r.GetByID(
-			ctx,
-			bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
-				ID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-			},
-		)
+		return entity, nil
 	})
 }
 
@@ -123,42 +110,28 @@ func (r *repository) Update(
 	entity *bankreceiptworkitem.WorkItem,
 ) (*bankreceiptworkitem.WorkItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*bankreceiptworkitem.WorkItem, error) {
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Where("id = ?", entity.ID).
-			Where("organization_id = ?", entity.OrganizationID).
-			Where("business_unit_id = ?", entity.BusinessUnitID).
-			Where("version = ?", entity.Version).
-			Set("status = ?", entity.Status).
-			Set("assigned_to_user_id = ?", entity.AssignedToUserID).
-			Set("assigned_at = ?", entity.AssignedAt).
-			Set("resolution_type = ?", entity.ResolutionType).
-			Set("resolution_note = ?", entity.ResolutionNote).
-			Set("resolved_by_user_id = ?", entity.ResolvedByUserID).
-			Set("resolved_at = ?", entity.ResolvedAt).
-			Set("updated_by_id = ?", entity.UpdatedByID).
-			Set("version = version + 1").
-			Exec(ctx)
-		if err != nil {
-			return nil, fmt.Errorf("update bank receipt work item: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(
-			res,
-			"BankReceiptWorkItem",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
-		return r.GetByID(
+		wi := bankreceiptworkitemdb.WorkItems
+		db := r.db.Keel(ctx)
+		if err := wi.Save(
 			ctx,
-			bankreceiptworkitemports.GetBankReceiptWorkItemByIDRequest{
-				ID: entity.ID,
-				TenantInfo: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
-			},
-		)
+			db,
+			entity,
+			wi.Status,
+			wi.AssignedToUserID,
+			wi.AssignedAt,
+			wi.ResolutionType,
+			wi.ResolutionNote,
+			wi.ResolvedByUserID,
+			wi.ResolvedAt,
+			wi.UpdatedByID,
+		); err != nil {
+			return nil, workItemErrors.Map(err, entity.ID.String())
+		}
+
+		updated, err := wi.Get(ctx, db, entity.ID)
+		if err != nil {
+			return nil, workItemErrors.Map(err, entity.ID.String())
+		}
+		return updated, nil
 	})
 }

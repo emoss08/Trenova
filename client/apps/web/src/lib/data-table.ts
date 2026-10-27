@@ -432,11 +432,16 @@ export function columnPinOffsetVar(columnId: string, side: "start" | "end"): str
 export type ColumnLayout = {
   vars: Record<string, string>;
   totalSize: number;
+  /** How wide the columns pinned to each side are together: the part that never scrolls sideways. */
+  pinnedStartSize: number;
+  pinnedEndSize: number;
 };
 
 export function columnLayout<TData extends RowData>(headers: Header<TData>[]): ColumnLayout {
   const vars: Record<string, string> = {};
   let totalSize = 0;
+  let pinnedStartSize = 0;
+  let pinnedEndSize = 0;
   for (const header of headers) {
     const { column } = header;
     const size = header.getSize();
@@ -446,11 +451,13 @@ export function columnLayout<TData extends RowData>(headers: Header<TData>[]): C
     const pinned = column.getIsPinned();
     if (pinned === "start") {
       vars[columnPinOffsetVar(column.id, "start")] = `${column.getStart("start")}px`;
+      pinnedStartSize += size;
     } else if (pinned === "end") {
       vars[columnPinOffsetVar(column.id, "end")] = `${column.getAfter("end")}px`;
+      pinnedEndSize += size;
     }
   }
-  return { vars, totalSize };
+  return { vars, totalSize, pinnedStartSize, pinnedEndSize };
 }
 
 export function toColumnPinningState(
@@ -612,13 +619,21 @@ export function isTableConfigEqual(a: TableConfig, b: TableConfig): boolean {
   );
 }
 
+/**
+ * Opaque, as pinned cells take the row's colour and must still hide the cells
+ * that scroll beneath them. A row under the pointer or the keyboard cursor, or
+ * opened, deepens its own colour rather than dropping it for the plain hover.
+ */
 export const FORMAT_RULE_COLOR_CLASSES: Record<FormatRuleColor, string> = {
-  red: "bg-danger-subtle hover:bg-danger-subtle dark:hover:bg-danger-subtle",
-  amber: "bg-warning-subtle hover:bg-warning-subtle dark:hover:bg-warning-subtle",
-  green: "bg-success-subtle hover:bg-success-subtle dark:hover:bg-success-subtle",
-  blue: "bg-accent-sky/10 hover:bg-accent-sky/15 dark:hover:bg-accent-sky/20",
-  purple: "bg-accent-violet/10 hover:bg-accent-violet/15 dark:hover:bg-accent-violet/20",
-  gray: "bg-muted-foreground/10 hover:bg-muted-foreground/15",
+  red: "bg-danger-subtle hover:bg-danger-subtle-hover data-cursor:bg-danger-subtle-hover data-expanded:bg-danger-subtle-hover",
+  amber:
+    "bg-warning-subtle hover:bg-warning-subtle-hover data-cursor:bg-warning-subtle-hover data-expanded:bg-warning-subtle-hover",
+  green:
+    "bg-success-subtle hover:bg-success-subtle-hover data-cursor:bg-success-subtle-hover data-expanded:bg-success-subtle-hover",
+  blue: "bg-accent-sky-subtle hover:bg-accent-sky-subtle-hover data-cursor:bg-accent-sky-subtle-hover data-expanded:bg-accent-sky-subtle-hover",
+  purple:
+    "bg-accent-violet-subtle hover:bg-accent-violet-subtle-hover data-cursor:bg-accent-violet-subtle-hover data-expanded:bg-accent-violet-subtle-hover",
+  gray: "bg-neutral-subtle hover:bg-neutral-subtle-hover data-cursor:bg-neutral-subtle-hover data-expanded:bg-neutral-subtle-hover",
 };
 
 export const FORMAT_RULE_COLOR_SWATCHES: Record<FormatRuleColor, string> = {

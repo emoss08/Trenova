@@ -34,9 +34,9 @@ type GetWorkerByIDRequest struct {
 }
 
 type WorkerSyncReadinessCounts struct {
-	TotalWorkers        int `json:"totalWorkers"        bun:"total_workers"`
-	ActiveWorkers       int `json:"activeWorkers"       bun:"active_workers"`
-	SyncedActiveWorkers int `json:"syncedActiveWorkers" bun:"synced_active_workers"`
+	TotalWorkers        int `json:"totalWorkers"`
+	ActiveWorkers       int `json:"activeWorkers"`
+	SyncedActiveWorkers int `json:"syncedActiveWorkers"`
 }
 
 const WorkerSyncDriftTypeMissingMapping = "missing_mapping"
@@ -129,9 +129,9 @@ type CountRosterAttentionRequest struct {
 // read from the roll-up columns on worker_profiles in one pass, which is the
 // reason those columns exist.
 type RosterAttention struct {
-	ActiveWorkers   int `bun:"active_workers"`
-	NonCompliant    int `bun:"non_compliant"`
-	TrainingOverdue int `bun:"training_overdue"`
-	AtRisk          int `bun:"at_risk"`
-	ExpiringSoon    int `bun:"expiring_soon"`
+	ActiveWorkers   int
+	NonCompliant    int
+	TrainingOverdue int
+	AtRisk          int
+	ExpiringSoon    int
 }

@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -126,7 +126,7 @@ func TestLogAction_AnUnattendedWriteNamesTheSystemUserAndCreditsTheAgent(t *test
 	assert.Equal(t, params.BusinessUnitID, definitions.tenants[0].BusinessUnitID)
 }
 
-func TestLogAction_AnAgentsNameIsReadOncePerDefinition(t *testing.T) {
+func TestLogAction_EachEntryReadsTheAgentsNameFromTheRepository(t *testing.T) {
 	t.Parallel()
 
 	definitionID := pulid.MustNew("agdef_")
@@ -138,7 +138,7 @@ func TestLogAction_AnAgentsNameIsReadOncePerDefinition(t *testing.T) {
 	require.NoError(t, srv.LogAction(params))
 	require.NoError(t, srv.LogAction(params))
 
-	assert.Equal(t, 1, definitions.reads)
+	assert.Equal(t, 2, definitions.reads, "the repository's result cache serves repeats")
 	assert.Equal(t, "Ran by Billing Agent", pushedEntry(t, bufferRepo).Comment)
 }
 

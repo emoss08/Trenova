@@ -6,6 +6,22 @@ import (
 	"github.com/bytedance/sonic"
 )
 
+const (
+	ToolRunScript = "analysis_run"
+	// The run-script tool's parameters a batch reads its origin back from.
+	ParamScriptTitle   = "title"
+	ParamScriptPurpose = "purpose"
+	ParamScriptCode    = "code"
+	// ParamScriptContinues names the script of the turn a call continues.
+	ParamScriptContinues = "continues"
+)
+
+type ScriptError struct {
+	Name      string `json:"name"`
+	Value     string `json:"value"`
+	Traceback string `json:"traceback,omitempty"`
+}
+
 type CallStatus string
 
 const (
@@ -92,4 +108,23 @@ type PreparedChange struct {
 // script ran to its end, the only way its prepared changes are proposed.
 type Completion interface {
 	ScriptCompleted() bool
+}
+
+// Continuation is how a later call of the turn may continue a script.
+type Continuation int
+
+const (
+	ContinueNone Continuation = iota
+	// ContinueCounted is a script that ran to the end: continuing it, to add
+	// to what it showed, is one more of the turn's scripts.
+	ContinueCounted
+	// ContinueFree is a script that read a dataset and showed nothing:
+	// continuing it finishes the same analysis, so it is not counted.
+	ContinueFree
+)
+
+// Continuable is what the tool that ran a script answers with, saying how a
+// later call of the turn may continue it.
+type Continuable interface {
+	ScriptContinuation() Continuation
 }

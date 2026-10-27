@@ -12,6 +12,10 @@ type Deps struct {
 	FormulaTemplateService *formulatemplateservice.Service
 }
 
+type FormulaLibraryImportResolver struct{ *Deps }
+
 type FormulaTemplateResolver struct{ *Deps }
+
+type FormulaTemplateTableResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

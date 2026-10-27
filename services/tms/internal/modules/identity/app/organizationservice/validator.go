@@ -5,10 +5,10 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -62,9 +62,9 @@ func NewValidator(p ValidatorParams) *Validator {
 		)
 
 	if p.DB != nil {
-		builder.WithUniquenessChecker(
-			validationframework.NewBunUniquenessCheckerScoped(businessUnitWide{conn: p.DB}),
-		)
+		builder.WithUniquenessChecker(businessUnitWideChecker{
+			checker: validationframework.NewKeelChecker(p.DB, tenantdb.OrganizationsSchema()),
+		})
 	}
 
 	return &Validator{
@@ -72,20 +72,20 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-type businessUnitWide struct {
-	conn *postgres.Connection
+type businessUnitWideChecker struct {
+	checker validationframework.UniquenessChecker
 }
 
-func (b businessUnitWide) DBForContext(ctx context.Context) bun.IDB {
-	return b.conn.DBForContext(businessUnitWideScope(ctx))
-}
-
-func (b businessUnitWide) RunScoped(
+func (c businessUnitWideChecker) CheckUniqueness(
 	ctx context.Context,
-	readOnly bool,
-	fn func(context.Context) error,
-) error {
-	return b.conn.RunScoped(businessUnitWideScope(ctx), readOnly, fn)
+	req *validationframework.UniquenessRequest,
+) (bool, error) {
+	scoped := *req
+	if current, ok := dbscope.TenantFrom(ctx); ok {
+		scoped.BusinessUnitID = current.BusinessUnitID
+	}
+
+	return c.checker.CheckUniqueness(businessUnitWideScope(ctx), &scoped)
 }
 
 func businessUnitWideScope(ctx context.Context) context.Context {

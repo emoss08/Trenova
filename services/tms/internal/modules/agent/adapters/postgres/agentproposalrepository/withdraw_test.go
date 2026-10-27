@@ -3,42 +3,25 @@ package agentproposalrepository
 import (
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/internal/testutil/dbtest"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestExpirePendingByDefinitionExpiresOnlyThePendingProposalsOfTheAgentsRuns(t *testing.T) {
 	t.Parallel()
 
-	conn, sqlMock := dbtest.NewSQLMock(t)
-	repo := &repository{db: conn, l: zap.NewNop()}
-	tenantInfo := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
 	agentID := pulid.MustNew("agdef_")
+	run := agentdb.AgentRuns
 
-	sqlMock.ExpectExec(
-		`UPDATE "agent_proposals" AS "ap" SET status = 'Expired', pending_modifications = NULL, ` +
-			`updated_at = \d+ WHERE \(\(ap.organization_id = '` + tenantInfo.OrgID.String() +
-			`'\) AND \(ap.business_unit_id = '` + tenantInfo.BuID.String() +
-			`'\) AND \(ap.status = 'Pending'\) AND \(ap.run_id IN \(SELECT "ar"."id" FROM "agent_runs" AS "ar" ` +
-			`WHERE \(ar.organization_id = '` + tenantInfo.OrgID.String() +
-			`'\) AND \(ar.business_unit_id = '` + tenantInfo.BuID.String() +
-			`'\) AND \(ar.agent_definition_id = '` + agentID.String() + `'\)\)\)\)`,
-	).WillReturnResult(sqlmock.NewResult(0, 3))
+	sql, args := keeltest.Render(t, pendingOfRuns(run.Pick(run.ID).Where(
+		run.AgentDefinitionID.Eq(agentID),
+	)))
 
-	expired, err := repo.ExpirePendingByDefinition(
-		t.Context(),
-		agentports.ExpireAgentProposalsByDefinitionRequest{
-			AgentDefinitionID: agentID,
-			TenantInfo:        tenantInfo,
-		},
-	)
-
-	require.NoError(t, err)
-	require.Equal(t, 3, expired)
-	require.NoError(t, sqlMock.ExpectationsWereMet())
+	assert.Contains(t, sql, `FROM "agent_proposals" ap WHERE`)
+	assert.Contains(t, sql, `ap."status" = 'Pending'`)
+	assert.Contains(t, sql, `ap."run_id" IN (SELECT ar."id" FROM "agent_runs" ar WHERE`)
+	assert.Contains(t, sql, `ar."agent_definition_id" = `)
+	assert.Contains(t, args, agentID.String())
 }

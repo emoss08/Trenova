@@ -16,6 +16,10 @@ var authOnlyAllowlist = map[string]string{
 		"authenticated user in the tenant: forms on pages a user cannot open still need " +
 		"their dropdowns, and the payload is id, label and display metadata only",
 
+	"QueryResolver.PageAccess": "describes the caller's own access to a screen: the " +
+		"screen's needs from the build's static page access manifest and the caller's own " +
+		"grants, never record data or another person's access",
+
 	"QueryResolver.Notifications":               "returns only the calling user's own notifications",
 	"QueryResolver.NotificationUnreadCount":     "returns only the calling user's own notifications",
 	"MutationResolver.MarkNotificationsRead":    "acts only on the calling user's own notifications",
@@ -33,10 +37,7 @@ var authOnlyAllowlist = map[string]string{
 	"QueryResolver.MyBulkEdit":                  "returns only a bulk edit the calling user started",
 	"QueryResolver.MyBulkEdits":                 "returns only bulk edits the calling user started",
 
-	"QueryResolver.HomeLayout":          "returns only the calling user's own home layout",
-	"QueryResolver.HomeWidgetCatalog":   "static catalog of widgets; carries no resource data",
-	"MutationResolver.UpdateHomeLayout": "acts only on the calling user's own home layout",
-	"MutationResolver.ResetHomeLayout":  "acts only on the calling user's own home layout",
+	"QueryResolver.HomeWidgetCatalog": "static catalog of widgets; carries no resource data",
 
 	"MutationResolver.CreateTableConfiguration": "anyone may keep a private view; the service " +
 		"refuses to publish one to the organization without table_configuration:create",

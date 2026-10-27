@@ -4,9 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/receivablesql"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/customerledgerports"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/factoringcompany/factoringcompanydb"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
@@ -26,36 +35,36 @@ type repository struct {
 }
 
 type agingRowRecord struct {
-	CustomerID      string `bun:"customer_id"`
-	CustomerName    string `bun:"customer_name"`
-	CurrentMinor    int64  `bun:"current_minor"`
-	Days1To30Minor  int64  `bun:"days1_to30_minor"`
-	Days31To60Minor int64  `bun:"days31_to60_minor"`
-	Days61To90Minor int64  `bun:"days61_to90_minor"`
-	DaysOver90Minor int64  `bun:"days_over90_minor"`
-	TotalOpenMinor  int64  `bun:"total_open_minor"`
+	CustomerID      string
+	CustomerName    string
+	CurrentMinor    int64
+	Days1To30Minor  int64
+	Days31To60Minor int64
+	Days61To90Minor int64
+	DaysOver90Minor int64
+	TotalOpenMinor  int64
 }
 
 type openItemRecord struct {
-	InvoiceID          string `bun:"invoice_id"`
-	CustomerID         string `bun:"customer_id"`
-	CustomerName       string `bun:"customer_name"`
-	InvoiceNumber      string `bun:"invoice_number"`
-	BillType           string `bun:"bill_type"`
-	InvoiceDate        int64  `bun:"invoice_date"`
-	DueDate            int64  `bun:"due_date"`
-	CurrencyCode       string `bun:"currency_code"`
-	ShipmentProNumber  string `bun:"shipment_pro_number"`
-	ShipmentBOL        string `bun:"shipment_bol"`
-	TotalAmountMinor   int64  `bun:"total_amount_minor"`
-	AppliedAmountMinor int64  `bun:"applied_amount_minor"`
-	OpenAmountMinor    int64  `bun:"open_amount_minor"`
-	DaysPastDue        int    `bun:"days_past_due"`
-	SettlementStatus   string `bun:"settlement_status"`
-	DisputeStatus      string `bun:"dispute_status"`
-	HasShortPay        bool   `bun:"has_short_pay"`
-	FactoringCompanyID string `bun:"factoring_company_id"`
-	FactoringCompany   string `bun:"factoring_company_name"`
+	InvoiceID            string
+	CustomerID           string
+	CustomerName         string
+	InvoiceNumber        string
+	BillType             string
+	InvoiceDate          int64
+	DueDate              int64
+	CurrencyCode         string
+	ShipmentProNumber    string
+	ShipmentBOL          string
+	TotalAmountMinor     int64
+	AppliedAmountMinor   int64
+	OpenAmountMinor      int64
+	DaysPastDue          int
+	SettlementStatus     string
+	DisputeStatus        string
+	HasShortPay          bool
+	FactoringCompanyID   string
+	FactoringCompanyName string
 }
 
 func New(p Params) customerledgerports.AccountsReceivableRepository {
@@ -70,72 +79,139 @@ func (r *repository) ListCustomerLedger(
 	ctx context.Context,
 	req customerledgerports.ListCustomerLedgerRequest,
 ) ([]*customerledgerports.ARLedgerEntry, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARLedgerEntry, error) {
-			entries := make([]*customerledgerports.ARLedgerEntry, 0)
-			err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT customer_id, transaction_date, source_event_type AS event_type, document_number, source_object_type, source_object_id, amount_minor, COALESCE(related_invoice_id, '') AS related_invoice_id
-		FROM customer_ledger_entries
-		WHERE organization_id = ?
-		  AND business_unit_id = ?
-		  AND customer_id = ?
-		ORDER BY transaction_date ASC, line_number ASC
-	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID).Scan(ctx, &entries)
+			cle := customerledgerdb.CustomerLedgerEntries
+			rows, err := keel.Into[customerledgerports.ARLedgerEntry](ctx, r.db.Keel(ctx), cle.
+				Pick(
+					cle.CustomerID,
+					cle.TransactionDate,
+					cle.SourceEventType,
+					cle.DocumentNumber.Coalesce(""),
+					cle.SourceObjectType,
+					cle.SourceObjectID,
+					cle.AmountMinor,
+					cle.RelatedInvoiceID.Coalesce(""),
+				).
+				Where(cle.CustomerID.Eq(req.CustomerID)).
+				Order(cle.TransactionDate.Asc(), cle.LineNumber.Asc()))
 			if err != nil {
 				return nil, err
+			}
+
+			entries := make([]*customerledgerports.ARLedgerEntry, 0, len(rows))
+			for i := range rows {
+				entries = append(entries, &rows[i])
 			}
 			return entries, nil
 		},
 	)
 }
 
+func pastDueDays(inv *invoicedb.InvoicesTable, asOf int64) keel.Int64Expr {
+	return keel.Int64(asOf).Sub(inv.DueDate).Div(keel.Int64(secondsPerDay))
+}
+
+func daysPastDue(inv *invoicedb.InvoicesTable, asOf int64) keel.Int64Expr {
+	return keel.CaseInt64().
+		When(keel.Or(inv.DueDate.IsNull(), inv.DueDate.Gte(asOf)), keel.Int64(0)).
+		Else(pastDueDays(inv, asOf).Greatest(keel.Int64(0)))
+}
+
+func amountWhen(p keel.Pred, amount keel.Int64Value) keel.Int64Expr {
+	return keel.CaseInt64().When(p, amount).Else(keel.Int64(0))
+}
+
+func agingBuckets(dueDate, asOf, open keel.Int64Value) []keel.Agg {
+	due := keel.Int64Of(dueDate)
+	days := keel.Int64Of(asOf).Sub(due).Div(keel.Int64(secondsPerDay))
+	overdue := due.LtExpr(asOf)
+	return []keel.Agg{
+		amountWhen(keel.Or(due.IsNull(), due.GteExpr(asOf)), open).Sum(),
+		amountWhen(keel.And(overdue, days.Between(1, 30)), open).Sum(),
+		amountWhen(keel.And(overdue, days.Between(31, 60)), open).Sum(),
+		amountWhen(keel.And(overdue, days.Between(61, 90)), open).Sum(),
+		amountWhen(keel.And(overdue, days.Gt(90)), open).Sum(),
+	}
+}
+
+func invoiceAgingBuckets(inv *invoicedb.InvoicesTable, asOf int64) []keel.Agg {
+	return agingBuckets(inv.DueDate, keel.Int64(asOf), receivablesql.OpenMinor(inv))
+}
+
+func agingQuery(inv *invoicedb.InvoicesTable, asOf int64) *keel.Query[*invoice.Invoice] {
+	buckets := invoiceAgingBuckets(inv, asOf)
+	return inv.
+		Pick(
+			inv.CustomerID,
+			inv.BillToName,
+			buckets[0],
+			buckets[1],
+			buckets[2],
+			buckets[3],
+			buckets[4],
+			receivablesql.OpenMinor(inv).Sum(),
+		).
+		Where(receivablesql.Open(inv)).
+		Group(inv.CustomerID, inv.BillToName)
+}
+
+func postedApplications(
+	cpa *customerpaymentdb.ApplicationsTable,
+	cp *customerpaymentdb.PaymentsTable,
+) *keel.Query[*customerpayment.Application] {
+	return cpa.Join(
+		cp,
+		cp.ID.EqCol(cpa.CustomerPaymentID),
+		cp.Status.Eq(customerpayment.StatusPosted),
+	)
+}
+
+func hasShortPay(inv *invoicedb.InvoicesTable) keel.Pred {
+	cpa := customerpaymentdb.Applications.As("cpa")
+	cp := customerpaymentdb.Payments.As("cp")
+	return keel.Exists(postedApplications(cpa, cp).
+		Where(cpa.InvoiceID.EqCol(inv.ID), cpa.ShortPayAmountMinor.Gt(0)))
+}
+
+func (rec *agingRowRecord) row() *customerledgerports.ARCustomerAgingRow {
+	return &customerledgerports.ARCustomerAgingRow{
+		CustomerID:   pulid.ID(rec.CustomerID),
+		CustomerName: rec.CustomerName,
+		Buckets: customerledgerports.ARAgingBucketTotals{
+			CurrentMinor:    rec.CurrentMinor,
+			Days1To30Minor:  rec.Days1To30Minor,
+			Days31To60Minor: rec.Days31To60Minor,
+			Days61To90Minor: rec.Days61To90Minor,
+			DaysOver90Minor: rec.DaysOver90Minor,
+			TotalOpenMinor:  rec.TotalOpenMinor,
+		},
+	}
+}
+
 func (r *repository) ListARAging(
 	ctx context.Context,
 	req customerledgerports.ListARAgingRequest,
 ) ([]*customerledgerports.ARCustomerAgingRow, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.ARCustomerAgingRow, error) {
-			records := make([]*agingRowRecord, 0)
-			err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT
-			inv.customer_id,
-			inv.bill_to_name AS customer_name,
-			SUM(CASE WHEN inv.due_date IS NULL OR inv.due_date >= ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS current_minor,
-			SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 1 AND 30 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days1_to30_minor,
-			SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 31 AND 60 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days31_to60_minor,
-			SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 61 AND 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days61_to90_minor,
-			SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 > 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days_over90_minor,
-			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS total_open_minor
-		FROM invoices inv
-		WHERE inv.organization_id = ?
-		  AND inv.business_unit_id = ?
-		  AND inv.status = 'Posted'
-		  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-		  AND inv.total_amount_minor > inv.applied_amount_minor
-		GROUP BY inv.customer_id, inv.bill_to_name
-		ORDER BY inv.bill_to_name ASC
-	`, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID).Scan(ctx, &records)
+			inv := invoicedb.Invoices
+			records, err := keel.Into[agingRowRecord](
+				ctx,
+				r.db.Keel(ctx),
+				agingQuery(inv, req.AsOfDate).
+					Order(inv.BillToName.Asc()),
+			)
 			if err != nil {
 				return nil, err
 			}
 			rows := make([]*customerledgerports.ARCustomerAgingRow, 0, len(records))
-			for _, rec := range records {
-				rows = append(rows, &customerledgerports.ARCustomerAgingRow{
-					CustomerID:   pulid.ID(rec.CustomerID),
-					CustomerName: rec.CustomerName,
-					Buckets: customerledgerports.ARAgingBucketTotals{
-						CurrentMinor:    rec.CurrentMinor,
-						Days1To30Minor:  rec.Days1To30Minor,
-						Days31To60Minor: rec.Days31To60Minor,
-						Days61To90Minor: rec.Days61To90Minor,
-						DaysOver90Minor: rec.DaysOver90Minor,
-						TotalOpenMinor:  rec.TotalOpenMinor,
-					},
-				})
+			for i := range records {
+				rows = append(rows, records[i].row())
 			}
 			return rows, nil
 		},
@@ -146,67 +222,40 @@ func (r *repository) ListOpenItems(
 	ctx context.Context,
 	req customerledgerports.ListAROpenItemsRequest,
 ) ([]*customerledgerports.AROpenItem, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*customerledgerports.AROpenItem, error) {
-			records := make([]*openItemRecord, 0)
-			query := `
-		SELECT
-			inv.id AS invoice_id,
-			inv.customer_id,
-			inv.bill_to_name AS customer_name,
-			inv.number AS invoice_number,
-			inv.bill_type,
-			inv.invoice_date,
-			COALESCE(inv.due_date, 0) AS due_date,
-			inv.currency_code,
-			COALESCE(inv.shipment_pro_number, '') AS shipment_pro_number,
-			COALESCE(inv.shipment_bol, '') AS shipment_bol,
-			inv.total_amount_minor,
-			inv.applied_amount_minor,
-			(inv.total_amount_minor - inv.applied_amount_minor) AS open_amount_minor,
-			CASE
-				WHEN inv.due_date IS NULL OR inv.due_date >= ? THEN 0
-				ELSE GREATEST(((? - inv.due_date) / 86400)::INT, 0)
-			END AS days_past_due,
-			inv.settlement_status,
-			inv.dispute_status,
-			EXISTS (
-				SELECT 1
-				FROM customer_payment_applications cpa
-				JOIN customer_payments cp
-				  ON cp.id = cpa.customer_payment_id
-				 AND cp.organization_id = cpa.organization_id
-				 AND cp.business_unit_id = cpa.business_unit_id
-				 AND cp.status = 'Posted'
-				WHERE cpa.invoice_id = inv.id
-				  AND cpa.organization_id = inv.organization_id
-				  AND cpa.business_unit_id = inv.business_unit_id
-				  AND cpa.short_pay_amount_minor > 0
-			) AS has_short_pay,
-			COALESCE(inv.factoring_company_id, '') AS factoring_company_id,
-			COALESCE(fac.name, '') AS factoring_company_name
-		FROM invoices inv
-		LEFT JOIN factoring_companies fac
-		  ON fac.id = inv.factoring_company_id
-		 AND fac.organization_id = inv.organization_id
-		 AND fac.business_unit_id = inv.business_unit_id
-		WHERE inv.organization_id = ?
-		  AND inv.business_unit_id = ?
-		  AND inv.status = 'Posted'
-		  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-		  AND inv.total_amount_minor > inv.applied_amount_minor`
-			args := []any{req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID}
-			if !req.CustomerID.IsNil() {
-				query += `
-		  AND inv.customer_id = ?`
-				args = append(args, req.CustomerID)
-			}
-			query += `
-		ORDER BY inv.due_date ASC NULLS FIRST, inv.invoice_date ASC, inv.number ASC`
-
-			err := r.db.DBForContext(ctx).NewRaw(query, args...).Scan(ctx, &records)
+			inv := invoicedb.Invoices
+			fac := factoringcompanydb.FactoringCompanies
+			records, err := keel.Into[openItemRecord](ctx, r.db.Keel(ctx), inv.
+				Pick(
+					inv.ID,
+					inv.CustomerID,
+					inv.BillToName,
+					inv.Number,
+					inv.BillType,
+					inv.InvoiceDate,
+					inv.DueDate.Coalesce(0),
+					inv.CurrencyCode,
+					inv.ShipmentProNumber.Coalesce(""),
+					inv.ShipmentBOL.Coalesce(""),
+					inv.TotalAmountMinor,
+					inv.AppliedAmountMinor,
+					receivablesql.OpenMinor(inv),
+					daysPastDue(inv, req.AsOfDate),
+					inv.SettlementStatus,
+					inv.DisputeStatus,
+					hasShortPay(inv),
+					inv.FactoringCompanyID.Coalesce(""),
+					fac.Name.Coalesce(""),
+				).
+				LeftJoin(fac, fac.ID.EqCol(inv.FactoringCompanyID)).
+				Where(
+					receivablesql.Open(inv),
+					keel.When(!req.CustomerID.IsNil(), inv.CustomerID.Eq(req.CustomerID)),
+				).
+				Order(inv.DueDate.Asc().NullsFirst(), inv.InvoiceDate.Asc(), inv.Number.Asc()))
 			if err != nil {
 				return nil, fmt.Errorf("list ar open items: %w", err)
 			}
@@ -232,7 +281,7 @@ func (r *repository) ListOpenItems(
 					DisputeStatus:      rec.DisputeStatus,
 					HasShortPay:        rec.HasShortPay,
 					FactoringCompanyID: pulid.ID(rec.FactoringCompanyID),
-					FactoringCompany:   rec.FactoringCompany,
+					FactoringCompany:   rec.FactoringCompanyName,
 				})
 			}
 
@@ -245,23 +294,16 @@ func (r *repository) GetCustomerName(
 	ctx context.Context,
 	req customerledgerports.GetARCustomerNameRequest,
 ) (string, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (string, error) {
-		var row struct {
-			Name string `bun:"name"`
-		}
-		err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT cus.name
-		FROM customers cus
-		WHERE cus.organization_id = ?
-		  AND cus.business_unit_id = ?
-		  AND cus.id = ?
-		LIMIT 1
-	`, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID).Scan(ctx, &row)
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (string, error) {
+		cus := customerdb.Customers
+		name, err := keel.IntoOne[string](ctx, r.db.Keel(ctx), cus.
+			Pick(cus.Name).
+			Where(cus.ID.Eq(req.CustomerID)))
 		if err != nil {
 			return "", dberror.HandleNotFoundError(err, "Customer")
 		}
 
-		return row.Name, nil
+		return name, nil
 	})
 }
 
@@ -269,30 +311,17 @@ func (r *repository) GetCustomerAging(
 	ctx context.Context,
 	req customerledgerports.GetARCustomerAgingRequest,
 ) (*customerledgerports.ARCustomerAgingRow, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*customerledgerports.ARCustomerAgingRow, error) {
-			records := make([]*agingRowRecord, 0, 1)
-			err := r.db.DBForContext(ctx).NewRaw(`
-		SELECT
-			inv.customer_id,
-			inv.bill_to_name AS customer_name,
-			SUM(CASE WHEN inv.due_date IS NULL OR inv.due_date >= ? THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS current_minor,
-			SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 1 AND 30 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days1_to30_minor,
-			SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 31 AND 60 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days31_to60_minor,
-			SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 BETWEEN 61 AND 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days61_to90_minor,
-			SUM(CASE WHEN inv.due_date < ? AND (? - inv.due_date) / 86400 > 90 THEN inv.total_amount_minor - inv.applied_amount_minor ELSE 0 END) AS days_over90_minor,
-			SUM(inv.total_amount_minor - inv.applied_amount_minor) AS total_open_minor
-		FROM invoices inv
-		WHERE inv.organization_id = ?
-		  AND inv.business_unit_id = ?
-		  AND inv.customer_id = ?
-		  AND inv.status = 'Posted'
-		  AND inv.bill_type IN ('Invoice', 'DebitMemo')
-		  AND inv.total_amount_minor > inv.applied_amount_minor
-		GROUP BY inv.customer_id, inv.bill_to_name
-	`, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.AsOfDate, req.TenantInfo.OrgID, req.TenantInfo.BuID, req.CustomerID).Scan(ctx, &records)
+			inv := invoicedb.Invoices
+			records, err := keel.Into[agingRowRecord](
+				ctx,
+				r.db.Keel(ctx),
+				agingQuery(inv, req.AsOfDate).
+					Where(inv.CustomerID.Eq(req.CustomerID)),
+			)
 			if err != nil {
 				return nil, fmt.Errorf("get customer ar aging: %w", err)
 			}
@@ -300,19 +329,7 @@ func (r *repository) GetCustomerAging(
 				return &customerledgerports.ARCustomerAgingRow{CustomerID: req.CustomerID}, nil
 			}
 
-			rec := records[0]
-			return &customerledgerports.ARCustomerAgingRow{
-				CustomerID:   pulid.ID(rec.CustomerID),
-				CustomerName: rec.CustomerName,
-				Buckets: customerledgerports.ARAgingBucketTotals{
-					CurrentMinor:    rec.CurrentMinor,
-					Days1To30Minor:  rec.Days1To30Minor,
-					Days31To60Minor: rec.Days31To60Minor,
-					Days61To90Minor: rec.Days61To90Minor,
-					DaysOver90Minor: rec.DaysOver90Minor,
-					TotalOpenMinor:  rec.TotalOpenMinor,
-				},
-			}, nil
+			return records[0].row(), nil
 		},
 	)
 }

@@ -42,6 +42,7 @@ func TestCreateInsertsTheUserAndADefaultMembership(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 
 	created, err := repo.Create(ctx, tenantports.CreateUserRequest{
 		User: newUserForCreate(data, "dwhitfield", "dana.whitfield@example.com"),
@@ -83,6 +84,7 @@ func TestCreateReportsADuplicateEmailAsAFieldError(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 
 	_, err := repo.Create(ctx, tenantports.CreateUserRequest{
 		User: newUserForCreate(data, "someoneelse", strings.ToUpper(data.User.EmailAddress)),
@@ -107,6 +109,7 @@ func TestFindIdentityConflictsMatchesTheUniqueIndexes(t *testing.T) {
 
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 
 	conflicts, err := repo.FindIdentityConflicts(ctx, tenantports.UserIdentityConflictsRequest{
 		EmailAddress: strings.ToUpper(data.User.EmailAddress),

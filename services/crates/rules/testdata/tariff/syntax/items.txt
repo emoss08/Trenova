@@ -1,0 +1,420 @@
+=== tariff header
+tariff "Dry van TL"
+---
+tariff "Dry van TL"
+
+=== library header
+library "accessorials"
+---
+library "accessorials"
+
+=== condition header
+condition "Residential delivery"
+---
+condition "Residential delivery"
+
+=== header after comments
+// leading comment
+tariff "t"
+---
+tariff "t"
+
+=== file doc after the header
+tariff "t"
+
+/// About this file.
+/// Second line.
+
+let x = 1
+---
+tariff "t"
+file doc "About this file.\nSecond line."
+let x = 1
+
+=== doc directly above the first item is the item's
+tariff "t"
+/// The rate.
+input rate: Money/mi = $2.35/mi
+---
+tariff "t"
+doc "The rate."
+input rate: Money/mi = $2.35/[mi]
+
+=== use a whole module
+tariff "t"
+use std.fuel
+---
+tariff "t"
+use std.fuel
+
+=== use names
+tariff "t"
+use std.ltl.{ deficit, Break }
+---
+tariff "t"
+use std.ltl.{deficit, Break}
+
+=== use with a trailing comma over lines
+tariff "t"
+use std.ltl.{
+  deficit,
+  Break,
+}
+---
+tariff "t"
+use std.ltl.{deficit, Break}
+
+=== use with an alias
+tariff "t"
+use std.fuel as f
+use std.fuel.{ stepPercent } as g
+---
+tariff "t"
+use std.fuel as f
+use std.fuel.{stepPercent} as g
+
+=== use from the organisation
+tariff "t"
+use org.accessorials.{ residential }
+---
+tariff "t"
+use org.accessorials.{residential}
+
+=== input without a default
+tariff "t"
+input breaks: List<Break>
+---
+tariff "t"
+input breaks: List<Break>
+
+=== input with a default
+tariff "t"
+input minimumCharge: Money = $450
+---
+tariff "t"
+input minimumCharge: Money = $450
+
+=== const with and without a type
+library "l"
+const DIESEL_BASE: Money = $3.50
+const STEP = 5
+---
+library "l"
+const DIESEL_BASE: Money = $3.50
+const STEP = 5
+
+=== private const
+library "l"
+private const LIMIT: Int = 3
+---
+library "l"
+private const LIMIT: Int = 3
+
+=== type declaration
+library "l"
+type Break = { from: Weight, rate: Money/cwt, minimum: Money? }
+---
+library "l"
+type Break =
+  from: Weight
+  rate: Money/cwt
+  minimum: Money?
+
+=== type declaration over lines with field docs
+library "l"
+type Rated = {
+  /// The billed weight.
+  weight: Weight,
+  rate: Money/cwt,
+  deficit: Bool,
+}
+---
+library "l"
+type Rated =
+  doc "The billed weight."
+  weight: Weight
+  rate: Money/cwt
+  deficit: Bool
+
+=== enum declaration
+library "l"
+enum Zone { A, B, C }
+---
+library "l"
+enum Zone
+  A
+  B
+  C
+
+=== enum with docs and a trailing comma
+library "l"
+enum Service {
+  /// The usual.
+  Standard,
+  Guaranteed,
+  Expedited,
+}
+---
+library "l"
+enum Service
+  doc "The usual."
+  Standard
+  Guaranteed
+  Expedited
+
+=== enum with capitals variants
+library "l"
+enum Region { NE, SW }
+---
+library "l"
+enum Region
+  NE
+  SW
+
+=== function with a block body
+library "l"
+fn deadhead(empty: Distance, rate: Money/mi) -> Money {
+  let paid = (empty - 50 mi).max(0 mi)
+  return rate * paid
+}
+---
+library "l"
+fn deadhead(empty: Distance, rate: Money/mi) -> Money
+  let paid = (call (. (paren (- empty 50[mi])) max) 0[mi])
+  return (* rate paid)
+
+=== function with an expression body
+library "l"
+fn residential(fee: Money = $95) = fee
+---
+library "l"
+fn residential(fee: Money = $95) = fee
+
+=== function with a return type and an expression body
+library "l"
+fn billed(weight: Weight, to: Weight = 100 lb) -> Weight = weight.roundUp(to: to)
+---
+library "l"
+fn billed(weight: Weight, to: Weight = 100[lb]) -> Weight = (call (. weight roundUp) to:to)
+
+=== function parameters over lines
+library "l"
+fn detention(
+  dwell: Duration,
+  free: Duration = 2 h,
+  rate: Money/h,
+) -> Money = rate * (dwell - free).max(0 h)
+---
+library "l"
+fn detention(dwell: Duration, free: Duration = 2[h], rate: Money/h) -> Money = (* rate (call (. (paren (- dwell free)) max) 0[h]))
+
+=== private function
+library "l"
+private fn helper() -> Int = 1
+---
+library "l"
+private fn helper() -> Int = 1
+
+=== test block
+tariff "t"
+test "a heavy load" {
+  given shipment.weight = 1_240 lb
+  expect total == $511.20
+}
+---
+tariff "t"
+test "a heavy load"
+  given shipment.weight = 1240[lb]
+  expect (== total $511.20)
+
+=== statements at file level are items
+tariff "t"
+let miles = shipment.distance
+charge "Linehaul" = $1
+minimum $450
+---
+tariff "t"
+let miles = (. shipment distance)
+charge (text "Linehaul") = $1
+minimum $450
+
+=== doc on a let at file level
+tariff "t"
+/// Miles.
+let miles = shipment.distance
+---
+tariff "t"
+doc "Miles."
+let miles = (. shipment distance)
+
+=== condition final expression
+condition "c"
+input zips: List<Text> = []
+lane.destination.zip3 in zips
+---
+condition "c"
+input zips: List<Text> = (list)
+expr (in (. (. lane destination) zip3) zips)
+
+=== stray doc separated by a blank line
+tariff "t"
+let a = 1
+/// Nothing below.
+
+let b = 2
+---
+tariff "t"
+let a = 1
+let b = 2
+! doc 21..39 This doc comment is not attached to anything; write it on the line right above what it describes, or make it a plain `//` comment
+
+=== stray doc at the end of the file
+tariff "t"
+let a = 1
+/// Dangling.
+---
+tariff "t"
+let a = 1
+! doc 21..34 This doc comment is not attached to anything; write it on the line right above what it describes, or make it a plain `//` comment
+
+=== stray doc inside a block
+tariff "t"
+if true {
+  /// Not attached.
+  let a = 1
+}
+---
+tariff "t"
+if true
+  let a = 1
+! doc 23..40 This doc comment is not attached to anything; write it on the line right above what it describes, or make it a plain `//` comment
+
+=== private on something that cannot be private
+tariff "t"
+private input x: Int
+---
+tariff "t"
+private input x: Int
+! syntax 11..18 Only a `fn`, `const`, `type` or `enum` can be `private`
+
+=== missing header
+let x = 1
+---
+let x = 1
+! header 0..3 A file starts with its header: `tariff "Name"`, `library "name"` or `condition "Name"`
+
+=== empty file
+---
+! header 0..0 A file starts with its header: `tariff "Name"`, `library "name"` or `condition "Name"`
+
+=== misplaced header
+let x = 1
+tariff "t"
+---
+tariff "t"
+let x = 1
+! header 10..20 The header must be the file's first line
+
+=== two headers
+tariff "a"
+tariff "b"
+---
+tariff "a"
+! header 11..21 A file has only one header
+
+=== header with interpolation
+tariff "a {x}"
+---
+tariff "a "
+! syntax 7..14 A name in quotes can't interpolate values
+
+=== header without a name
+tariff
+let x = 1
+---
+tariff ""
+let x = 1
+! syntax 6..6 Expected the tariff's name in quotes after `tariff`
+
+=== type name written in lower case
+library "l"
+type myBreak = { from: Weight }
+---
+library "l"
+type myBreak =
+  from: Weight
+! syntax 17..24 A type's name starts with a capital letter: `MyBreak`
+
+=== type declared as something other than a record
+library "l"
+type Rate = Money
+---
+library "l"
+type Rate =
+! syntax 24..29 A type declaration lists its fields in braces, like `type Break = '{' from: Weight '}'`
+
+=== value name written in capitals
+tariff "t"
+let Miles = 1
+---
+tariff "t"
+let Miles = 1
+! syntax 15..20 A value's name starts with a lower-case letter: `miles`
+
+=== an input with a range constraint
+tariff "t"
+input rate: Money/mi = $2.35/mi where $0.50/mi..=$15/mi
+input stops: Int where 0..
+---
+tariff "t"
+input rate: Money/mi = $2.35/[mi] where (..= $0.50/[mi] $15/[mi])
+input stops: Int where (.. 0 _)
+
+=== an input with a list constraint
+tariff "t"
+input service: Text = "Standard" where ["Standard", "Guaranteed"]
+---
+tariff "t"
+input service: Text = (text "Standard") where (list (text "Standard") (text "Guaranteed"))
+
+=== a property
+tariff "t"
+property "heavier never bills less" {
+  vary shipment.weight in 1 lb..40_000 lb
+  vary input.rate
+  vary w in [1 lb, 2 lb]
+  assume w > 0 lb
+  given fuel.price = $3.20/gal
+  expect total >= $0
+  expect total nondecreasing in shipment.weight
+  expect charge(FSC) ?? $0 nonincreasing in w
+}
+---
+tariff "t"
+property "heavier never bills less"
+  vary shipment.weight in (.. 1[lb] 40000[lb])
+  vary input.rate
+  vary w in (list 1[lb] 2[lb])
+  assume (> w 0[lb])
+  given fuel.price = $3.20/[gal]
+  expect (>= total $0)
+  expect total nondecreasing in shipment.weight
+  expect (?? (call charge FSC) $0) nonincreasing in w
+
+=== a property's name must be quoted
+tariff "t"
+property heavier {
+}
+---
+tariff "t"
+expr property
+! syntax 20..27 Each statement goes on its own line; start a new line before `heavier`
+
+=== property is a name elsewhere
+tariff "t"
+let property = 1
+let vary = property + 1
+---
+tariff "t"
+let property = 1
+let vary = (+ property 1)

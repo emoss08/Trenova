@@ -246,7 +246,7 @@ describe("DeskJournalEntry", () => {
     const dialog = await screen.findByRole("dialog", {
       name: "Request a reversal of JE-2610-00418",
     });
-    expect(within(dialog).queryByLabelText(/Original journal entry ID/u)).toBeNull();
+    expect(within(dialog).queryByLabelText(/Original journal entry/u)).toBeNull();
     fireEvent.change(within(dialog).getByLabelText(/Requested accounting date/u), {
       target: { value: "2026-10-16" },
     });

@@ -5,6 +5,9 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+	"github.com/emoss08/trenova/pkg/listquery"
+
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -18,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/sliceutils"
@@ -100,7 +102,10 @@ func buildBillingQueueList(
 		summary: "List billing queue items, the shipments waiting on a biller. Open one with " +
 			"billing_get_queue_item before deciding it; Posted items need status Posted.",
 		resource: permission.ResourceBillingQueue,
-		config:   querybuilder.GetFieldConfiguration((*billingqueue.BillingQueueItem)(nil)),
+		config: listquery.Describe(
+			(*billingqueue.BillingQueueItem)(nil),
+			billingqueuedb.BillingQueueItemsSchema(),
+		),
 		fields: []listField{
 			{
 				Name:   paramStatus,
@@ -345,6 +350,7 @@ type billingQueueDetail struct {
 	ChargesTruncated          bool                     `json:"chargesTruncated,omitempty"`
 	ChargeProblem             string                   `json:"chargeProblem,omitempty"`
 	DetentionHolds            []billingQueueHold       `json:"detentionHolds"`
+	RatingReview              []string                 `json:"ratingReview,omitempty"`
 	Issues                    []billingQueueIssue      `json:"issues"`
 	Readiness                 *billingQueueReadiness   `json:"readiness,omitempty"`
 	CanApprove                bool                     `json:"canApprove"`
@@ -422,6 +428,9 @@ func (r queueDetailReader) detail(
 		DetentionHolds:            holdsOf(item.DetentionHolds, showAmount),
 		Issues:                    issuesOf(item, showAmount),
 	}
+	if hold := item.RatingReviewHold; hold != nil {
+		detail.RatingReview = hold.Reasons
+	}
 	if item.Shipment != nil {
 		detail.ShipmentStatus = string(item.Shipment.Status)
 		detail.BOL = item.Shipment.BOL
@@ -466,6 +475,9 @@ func approvable(item *billingqueue.BillingQueueItem) (canApprove bool, blockedBy
 		return false, "an item in " + string(item.Status) + " cannot be approved"
 	case len(item.DetentionHolds) > 0:
 		return false, "a detention charge on its shipment is still waiting on approval"
+	case item.RatingReviewHold != nil:
+		return false, "the tariff held its shipment's rating for review; a person approves " +
+			"the rating before it can be approved"
 	case len(item.OpenIssues()) > 0:
 		return false, "a flagged check on it has not been settled; a biller settles it in " +
 			"the item's review before it can be approved"

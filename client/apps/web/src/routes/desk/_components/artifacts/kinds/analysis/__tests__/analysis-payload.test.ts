@@ -1,5 +1,5 @@
 import { analysisViewOf } from "@/lib/analysis-run";
-import type { AnalysisRun } from "@/types/agent-extension";
+import type { AnalysisRun } from "@/types/analysis";
 import type { AssistantArtifact } from "@/types/assistant";
 import { describe, expect, it } from "vitest";
 import { analysisFrom } from "../../../artifact-payloads";
@@ -15,56 +15,87 @@ function artifactOf(payload: Record<string, unknown>): AssistantArtifact {
   } as unknown as AssistantArtifact;
 }
 
+// What analysis_run answers when its script showed something, less what only the model
+// reads (scriptAnswer in script_tool.go, analysisArtifact in analysis_artifact.go).
+const shownChart = {
+  kind: "bar",
+  title: "Open by customer",
+  x: { label: "Customer", kind: "text", values: ["Acme", "Peak", "FreshHaul"] },
+  series: [
+    { name: "Open", values: [36912.16, null, 6000000] },
+    { name: "Billed", values: [40000, 1200, "not a number"] },
+  ],
+  valueKind: "money",
+  currency: "USD",
+};
+
 describe("analysisFrom", () => {
-  it("reads what the report_analyze_data tool published", () => {
+  it("reads what analysis_run showed and the datasets it read", () => {
     expect(
       analysisFrom(
         artifactOf({
           analysisRunId: "aanr_1",
           status: "Succeeded",
-          purpose: "Margin by lane for Q3",
-          code: "print(1)",
+          title: "Open AR by customer",
+          purpose: "Who owes us the most",
+          code: "show_chart('bar', x, y)",
           datasets: [
             {
-              name: "lanes",
-              path: "/home/user/data/lanes.csv",
+              name: "aging",
               source: "ReportRun",
-              label: "Margin by lane",
+              label: "AR Aging by Customer",
               rows: 42,
+              columns: [{ name: "Customer", kind: "text" }],
             },
+            { name: "notes", source: "Attachment", label: "notes.txt", rows: 0, text: true },
           ],
-          output: "margin 0.18",
-          results: ["0.18", ""],
-          charts: [{ position: 1, title: "Margin by lane" }, { position: 0 }],
+          output: "3 customers\n",
+          durationMs: 120,
+          charts: [shownChart],
+          layout: [{ kind: "chart", index: 0 }],
         }),
       ),
     ).toEqual({
       runId: "aanr_1",
       status: "Succeeded",
-      title: "Margin by lane for Q3",
-      code: "print(1)",
+      title: "Open AR by customer",
+      code: "show_chart('bar', x, y)",
       datasets: [
         {
-          name: "lanes",
-          path: "/home/user/data/lanes.csv",
+          name: "aging",
           source: "ReportRun",
-          label: "Margin by lane",
+          sourceId: "",
+          label: "AR Aging by Customer",
           rows: 42,
         },
+        { name: "notes", source: "Attachment", sourceId: "", label: "notes.txt", rows: 0 },
       ],
-      output: "margin 0.18",
-      results: ["0.18"],
-      charts: [{ position: 1, title: "Margin by lane" }],
+      output: "3 customers\n",
+      charts: [
+        {
+          kind: "bar",
+          title: "Open by customer",
+          x: { label: "Customer", kind: "text", values: ["Acme", "Peak", "FreshHaul"] },
+          series: [
+            { name: "Open", values: [36912.16, null, 6000000] },
+            { name: "Billed", values: [40000, 1200, null] },
+          ],
+          valueKind: "money",
+          currency: "USD",
+          stacked: false,
+          horizontal: false,
+        },
+      ],
       tables: [],
       figures: [],
-      layout: [],
+      layout: [{ kind: "chart", index: 0 }],
       error: null,
       failure: "",
       truncated: false,
     });
   });
 
-  it("reads the tables, figures and order the analysis showed, and its own title", () => {
+  it("reads the tables, figures and order the script showed, and its own title", () => {
     const analysis = analysisFrom(
       artifactOf({
         analysisRunId: "aanr_2",
@@ -112,22 +143,30 @@ describe("analysisFrom", () => {
     ]);
   });
 
-  it("drops tables it cannot read rather than the whole analysis", () => {
-    expect(analysisFrom(artifactOf({ tables: "not a list" })).tables).toEqual([]);
+  it("drops what it cannot read rather than the whole analysis", () => {
+    const analysis = analysisFrom(
+      artifactOf({ tables: "not a list", charts: [{ kind: "radar" }], datasets: 3 }),
+    );
+
+    expect(analysis.tables).toEqual([]);
+    expect(analysis.charts).toEqual([]);
+    expect(analysis.datasets).toEqual([]);
   });
 
   it("reads a status it does not know as a failure, never a success", () => {
-    expect(analysisFrom(artifactOf({ status: "Exploded" })).status).toBe("Failed");
+    expect(analysisFrom(artifactOf({ status: "Running" })).status).toBe("Failed");
+    expect(analysisFrom(artifactOf({})).status).toBe("Failed");
   });
 
   it("keeps the exception and why it stopped", () => {
     const analysis = analysisFrom(
       artifactOf({
-        status: "Errored",
+        status: "Stopped",
         error: { name: "KeyError", value: "'margin'", traceback: "tb" },
         failure: "",
       }),
     );
+    expect(analysis.status).toBe("Stopped");
     expect(analysis.error).toEqual({ name: "KeyError", value: "'margin'", traceback: "tb" });
   });
 });
@@ -135,7 +174,6 @@ describe("analysisFrom", () => {
 describe("analysisViewOf", () => {
   const run: AnalysisRun = {
     id: "aanr_1",
-    extensionType: "E2B",
     status: "Errored",
     title: "Lane margin",
     purpose: "Margin by lane for Q3",
@@ -146,24 +184,20 @@ describe("analysisViewOf", () => {
         source: "Attachment",
         sourceId: "doc_1",
         label: "invoices.xlsx",
-        path: "/home/user/data/invoices.xlsx",
-        rows: 0,
-        bytes: 2048,
+        rows: 12,
       },
     ],
-    stdout: "loading\n",
-    stderr: "warning: dtype",
-    results: [],
+    output: "loading\n",
     tables: [],
     figures: [],
+    charts: [],
     layout: [],
     errorName: "ZeroDivisionError",
     errorValue: "division by zero",
     traceback: "tb",
-    chartCount: 2,
     failure: "",
     durationMs: 1400,
-    costUsd: 0.0003,
+    agentDefinitionId: "",
     agentRunId: "",
     threadId: "athr_1",
     requestedById: "usr_1",
@@ -180,28 +214,24 @@ describe("analysisViewOf", () => {
       datasets: [
         {
           name: "invoices",
-          path: "/home/user/data/invoices.xlsx",
           source: "Attachment",
+          sourceId: "doc_1",
           label: "invoices.xlsx",
-          rows: 0,
+          rows: 12,
         },
       ],
-      output: "loading\n[stderr]\nwarning: dtype",
-      results: [],
+      output: "loading",
+      charts: [],
       tables: [],
       figures: [],
       layout: [],
-      charts: [
-        { position: 1, title: "" },
-        { position: 2, title: "" },
-      ],
       error: { name: "ZeroDivisionError", value: "division by zero", traceback: "tb" },
       failure: "",
       truncated: false,
     });
   });
 
-  it("shows only stdout when nothing went to stderr", () => {
-    expect(analysisViewOf({ ...run, stderr: "" }).output).toBe("loading");
+  it("titles a run that has none by its purpose", () => {
+    expect(analysisViewOf({ ...run, title: "" }).title).toBe("Margin by lane for Q3");
   });
 });

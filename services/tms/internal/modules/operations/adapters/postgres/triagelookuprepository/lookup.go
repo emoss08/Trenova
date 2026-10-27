@@ -2,34 +2,26 @@ package triagelookuprepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype/equipmenttypedb"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/commoditycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/equipmenttypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/holdreasoncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/servicetypecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity/commoditydb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/holdreason/holdreasondb"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype/servicetypedb"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -47,17 +39,17 @@ func New(p Params) shipmentports.TriageLookupRepository {
 	return &repository{db: p.DB}
 }
 
-func prefixPattern(text string) string {
-	return stringutils.EscapeLikePattern(text) + "%"
+func text(e keel.Expr) keel.StringExpr {
+	return keel.StringOf(e).Coalesce("")
 }
 
-func containsPattern(text string) string {
-	return "%" + stringutils.EscapeLikePattern(text) + "%"
+func lowerEq(col keel.StringCol, value string) keel.Pred {
+	return col.Lower().EqExpr(keel.Text(value).Lower())
 }
 
 func (r *repository) PeekDetails(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
 ) (map[pulid.ID]*shipmentports.TriagePeekDetail, error) {
 	return dbtx.Read(
@@ -69,38 +61,26 @@ func (r *repository) PeekDetails(
 				return details, nil
 			}
 
-			sp := shipmentcol.ShipmentColumns
-			cus := customercol.CustomerColumns
-			et := equipmenttypecol.EquipmentTypeColumns
-			rows := make([]*shipmentports.TriagePeekDetail, 0, len(shipmentIDs))
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*shipment.Shipment)(nil)).
-				ColumnExpr(sp.ID.As("shipment_id")).
-				ColumnExpr(sp.Status.As("status")).
-				ColumnExpr(sp.ActualDeliveryDate.As("actual_delivery_date")).
-				ColumnExpr(buncolgen.Expr("COALESCE({0}, '')", cus.Name)+" AS customer_name").
-				ColumnExpr(buncolgen.Expr("COALESCE(NULLIF({0}, ''), {1}, '')", et.Description, et.Code)+
-					" AS trailer_type").
-				Join("LEFT JOIN "+customercol.CustomerTable.Name+" AS "+customercol.CustomerTable.Alias+
-					" ON "+cus.ID.EqColumn(sp.CustomerID)+
-					" AND "+cus.OrganizationID.EqColumn(sp.OrganizationID)+
-					" AND "+cus.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-				Join("LEFT JOIN "+equipmenttypecol.EquipmentTypeTable.Name+" AS "+
-					equipmenttypecol.EquipmentTypeTable.Alias+
-					" ON "+et.ID.EqColumn(sp.TrailerTypeID)+
-					" AND "+et.OrganizationID.EqColumn(sp.OrganizationID)+
-					" AND "+et.BusinessUnitID.EqColumn(sp.BusinessUnitID)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return shipmentcol.ShipmentScopeTenant(sq, tenantInfo).
-						Where(sp.ID.In(), bun.List(shipmentIDs))
-				}).
-				Scan(ctx, &rows); err != nil {
+			sp := shipmentdb.Shipments
+			cus := customerdb.Customers
+			et := equipmenttypedb.EquipmentTypes
+			rows, err := keel.Into[shipmentports.TriagePeekDetail](ctx, r.db.Keel(ctx), sp.
+				LeftJoin(cus, cus.ID.EqCol(sp.CustomerID)).
+				LeftJoin(et, et.ID.EqCol(sp.TrailerTypeID)).
+				Pick(
+					sp.ID,
+					sp.Status,
+					text(cus.Name),
+					et.Description.NullIf("").Coalesce(et.Code, ""),
+					sp.ActualDeliveryDate,
+				).
+				Where(sp.ID.In(shipmentIDs...)))
+			if err != nil {
 				return nil, err
 			}
 
-			for _, row := range rows {
-				details[row.ShipmentID] = row
+			for i := range rows {
+				details[rows[i].ShipmentID] = &rows[i]
 			}
 
 			return details, nil
@@ -113,30 +93,18 @@ func (r *repository) CustomerShipments(
 	req *shipmentports.TriageCustomerShipmentsQuery,
 ) ([]pulid.ID, int, error) {
 	return dbtx.Read2(ctx, r.db, func(ctx context.Context) ([]pulid.ID, int, error) {
-		sp := shipmentcol.ShipmentColumns
-		db := r.db.DBForContext(ctx)
-		scope := func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-				Where(sp.CustomerID.Eq(), req.CustomerID).
-				Where(sp.Status.Ne(), shipment.StatusCanceled)
-		}
+		sp := shipmentdb.Shipments
+		scope := sp.Where(sp.CustomerID.Eq(req.CustomerID), sp.Status.Ne(shipment.StatusCanceled))
 
-		ids := make([]pulid.ID, 0, req.Limit)
-		if err := db.NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			Column(sp.ID.Bare()).
-			WhereGroup(" AND ", scope).
-			Order(sp.CreatedAt.OrderDesc(), sp.ID.OrderDesc()).
-			Limit(int64(req.Limit)).
-			Scan(ctx, &ids); err != nil {
-			return nil, 0, err
-		}
-
-		thisWeek, err := db.NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			WhereGroup(" AND ", scope).
-			Where(sp.CreatedAt.Gte(), req.WeekStart).
-			Count(ctx)
+		var ids []pulid.ID
+		var thisWeek int64
+		err := keel.Batch(ctx, r.db.Keel(ctx),
+			keel.IntoSlice(scope.Clone().
+				Pick(sp.ID).
+				Order(sp.CreatedAt.Desc(), sp.ID.Desc()).
+				Limit(req.Limit), &ids),
+			keel.CountInto(scope.Where(sp.CreatedAt.Gte(req.WeekStart)), &thisWeek),
+		)
 		if err != nil {
 			return nil, 0, err
 		}
@@ -147,66 +115,52 @@ func (r *repository) CustomerShipments(
 
 func (r *repository) CustomerDefaults(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	customerID pulid.ID,
 ) (*shipmentports.TriageShipmentDefaults, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*shipmentports.TriageShipmentDefaults, error) {
-			sp := shipmentcol.ShipmentColumns
-			defaults := new(shipmentports.TriageShipmentDefaults)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*shipment.Shipment)(nil)).
-				Column(
-					sp.ServiceTypeID.Bare(),
-					sp.ShipmentTypeID.Bare(),
-					sp.FormulaTemplateID.Bare(),
-					sp.TractorTypeID.Bare(),
-					sp.TrailerTypeID.Bare(),
+			sp := shipmentdb.Shipments
+			defaults, err := keel.IntoOne[shipmentports.TriageShipmentDefaults](
+				ctx,
+				r.db.Keel(ctx),
+				sp.Pick(
+					text(sp.ServiceTypeID),
+					text(sp.ShipmentTypeID),
+					text(sp.FormulaTemplateID),
+					text(sp.TractorTypeID),
+					text(sp.TrailerTypeID),
 				).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return shipmentcol.ShipmentScopeTenant(sq, tenantInfo).
-						Where(sp.CustomerID.Eq(), customerID).
-						Where(sp.Status.Ne(), shipment.StatusCanceled)
-				}).
-				Order(sp.CreatedAt.OrderDesc()).
-				Limit(1).
-				Scan(ctx, defaults)
-			if errors.Is(err, sql.ErrNoRows) {
+					Where(sp.CustomerID.Eq(customerID), sp.Status.Ne(shipment.StatusCanceled)).
+					Order(sp.CreatedAt.Desc()).
+					Limit(1),
+			)
+			if dberror.IsNotFoundError(err) {
 				return nil, nil
 			}
 			if err != nil {
 				return nil, err
 			}
 
-			return defaults, nil
+			return &defaults, nil
 		},
 	)
 }
 
 func (r *repository) ActiveServiceTypes(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	limit int,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		cols := servicetypecol.ServiceTypeColumns
-		ids := make([]pulid.ID, 0, limit)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*servicetype.ServiceType)(nil)).
-			Column(cols.ID.Bare()).
-			Where(cols.Status.Eq(), domaintypes.StatusActive).
-			Apply(servicetypecol.ServiceTypeApplyTenant(tenantInfo)).
-			Order(cols.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx, &ids); err != nil {
-			return nil, err
-		}
-
-		return ids, nil
+		st := servicetypedb.ServiceTypes
+		return keel.Into[pulid.ID](ctx, r.db.Keel(ctx), st.
+			Pick(st.ID).
+			Where(st.Status.Eq(domaintypes.StatusActive)).
+			Order(st.ID.Asc()).
+			Limit(limit))
 	})
 }
 
@@ -214,36 +168,22 @@ func (r *repository) FindCustomers(
 	ctx context.Context,
 	req *shipmentports.TriageLookupQuery,
 ) ([]shipmentports.TriageRecordMatch, error) {
-	text := strings.TrimSpace(req.Text)
+	query := strings.TrimSpace(req.Text)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]shipmentports.TriageRecordMatch, error) {
-			cols := customercol.CustomerColumns
-			matches := make([]shipmentports.TriageRecordMatch, 0, req.Limit)
-			exact := "(" + cols.Code.Expr("lower({})") + " = lower(?) OR " +
-				cols.Name.Expr("lower({})") + " = lower(?))"
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*customer.Customer)(nil)).
-				ColumnExpr(cols.ID.As("id")).
-				ColumnExpr(cols.Name.As("label")).
-				ColumnExpr(exact+" AS exact", text, text).
-				Where(cols.Status.Eq(), domaintypes.StatusActive).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where(exact, text, text).
-						WhereOr(cols.Name.ILike(), prefixPattern(text))
-				}).
-				Apply(customercol.CustomerApplyTenant(req.TenantInfo)).
-				OrderExpr("exact DESC").
-				Order(cols.Name.OrderAsc()).
-				Limit(int64(req.Limit)).
-				Scan(ctx, &matches); err != nil {
-				return nil, err
-			}
-
-			return matches, nil
+			c := customerdb.Customers
+			exact := keel.Or(lowerEq(c.Code, query), lowerEq(c.Name, query))
+			return keel.Into[shipmentports.TriageRecordMatch](ctx, r.db.Keel(ctx), c.
+				Pick(c.ID, c.Name, exact).
+				Where(
+					c.Status.Eq(domaintypes.StatusActive),
+					keel.Or(exact, c.Name.HasPrefixFold(query)),
+				).
+				Order(keel.Desc(exact), c.Name.Asc()).
+				Limit(req.Limit))
 		},
 	)
 }
@@ -260,56 +200,45 @@ func (r *repository) FindLocations(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]shipmentports.TriageLocationMatch, error) {
-			loc := locationcol.LocationColumns
-			st := usstatecol.UsStateColumns
-			matches := make([]shipmentports.TriageLocationMatch, 0, req.Limit)
+			loc := locationdb.Locations
+			us := usstatedb.UsStates
 
-			nameExact := "(" + loc.Code.Expr("lower({})") + " = lower(?) OR " +
-				loc.Name.Expr("lower({})") + " = lower(?))"
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*location.Location)(nil)).
-				ColumnExpr(loc.ID.As("id")).
-				ColumnExpr(buncolgen.Expr("concat_ws(' · ', {0}, concat_ws(', ', {1}, {2}))",
-					loc.Name, loc.City, st.Abbreviation)+" AS label").
-				ColumnExpr(buncolgen.Expr("COALESCE({0}, '')", loc.Timezone)+" AS timezone").
-				Join("LEFT JOIN "+usstatecol.UsStateTable.Name+" AS "+usstatecol.UsStateTable.Alias+
-					" ON "+st.ID.EqColumn(loc.StateID)).
-				Where(loc.Status.Eq(), domaintypes.StatusActive).
-				Apply(locationcol.LocationApplyTenant(req.TenantInfo))
-
+			var exact keel.Pred
+			var match keel.Pred
 			switch {
 			case name != "":
-				query = query.ColumnExpr(nameExact+" AS exact", name, name).
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.Where(nameExact, name, name).
-							WhereOr(loc.Name.ILike(), prefixPattern(name))
-					})
+				exact = keel.Or(lowerEq(loc.Code, name), lowerEq(loc.Name, name))
+				match = keel.Or(exact, loc.Name.HasPrefixFold(name))
 			case city != "":
-				query = query.ColumnExpr("TRUE AS exact").
-					Where(loc.City.Expr("lower({})")+" = lower(?)", city)
+				exact = keel.True()
 			default:
-				return matches, nil
+				return []shipmentports.TriageLocationMatch{}, nil
 			}
-			if city != "" && name != "" {
-				query = query.Where(loc.City.Expr("lower({})")+" = lower(?)", city)
-			}
+
+			var stateMatch keel.Pred
 			if state != "" {
-				query = query.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where(st.Abbreviation.Expr("upper({})")+" = upper(?)", state).
-						WhereOr(st.Name.Expr("lower({})")+" = lower(?)", state)
-				})
+				stateMatch = keel.Or(
+					us.Abbreviation.Upper().EqExpr(keel.Text(state).Upper()),
+					lowerEq(us.Name, state),
+				)
 			}
 
-			if err := query.
-				OrderExpr("exact DESC").
-				Order(loc.Name.OrderAsc()).
-				Limit(int64(req.Limit)).
-				Scan(ctx, &matches); err != nil {
-				return nil, err
-			}
-
-			return matches, nil
+			return keel.Into[shipmentports.TriageLocationMatch](ctx, r.db.Keel(ctx), loc.
+				LeftJoin(us, us.ID.EqCol(loc.StateID)).
+				Pick(
+					loc.ID,
+					keel.ConcatWS(" · ", loc.Name, keel.ConcatWS(", ", loc.City, us.Abbreviation)),
+					text(loc.Timezone),
+					exact,
+				).
+				Where(
+					loc.Status.Eq(domaintypes.StatusActive),
+					match,
+					keel.When(city != "", lowerEq(loc.City, city)),
+					stateMatch,
+				).
+				Order(keel.Desc(exact), loc.Name.Asc()).
+				Limit(req.Limit))
 		},
 	)
 }
@@ -318,41 +247,23 @@ func (r *repository) FindTrailerTypes(
 	ctx context.Context,
 	req *shipmentports.TriageLookupQuery,
 ) ([]shipmentports.TriageRecordMatch, error) {
-	text := strings.TrimSpace(req.Text)
+	query := strings.TrimSpace(req.Text)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]shipmentports.TriageRecordMatch, error) {
-			cols := equipmenttypecol.EquipmentTypeColumns
-			matches := make([]shipmentports.TriageRecordMatch, 0, req.Limit)
-			exact := "(" + cols.Code.Expr("lower({})") + " = lower(?) OR " +
-				cols.Description.Expr("lower({})") + " = lower(?))"
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*equipmenttype.EquipmentType)(nil)).
-				ColumnExpr(cols.ID.As("id")).
-				ColumnExpr(buncolgen.Expr("COALESCE(NULLIF({0}, ''), {1})", cols.Description, cols.Code)+
-					" AS label").
-				ColumnExpr(exact+" AS exact", text, text).
-				Where(cols.Status.Eq(), domaintypes.StatusActive).
-				Where(cols.Class.In(), bun.List([]equipmenttype.Class{
-					equipmenttype.ClassTrailer,
-					equipmenttype.ClassContainer,
-				})).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where(exact, text, text).
-						WhereOr(cols.Description.ILike(), containsPattern(text))
-				}).
-				Apply(equipmenttypecol.EquipmentTypeApplyTenant(req.TenantInfo)).
-				OrderExpr("exact DESC").
-				Order(cols.Code.OrderAsc()).
-				Limit(int64(req.Limit)).
-				Scan(ctx, &matches); err != nil {
-				return nil, err
-			}
-
-			return matches, nil
+			et := equipmenttypedb.EquipmentTypes
+			exact := keel.Or(lowerEq(et.Code, query), lowerEq(et.Description, query))
+			return keel.Into[shipmentports.TriageRecordMatch](ctx, r.db.Keel(ctx), et.
+				Pick(et.ID, et.Description.NullIf("").Coalesce(et.Code), exact).
+				Where(
+					et.Status.Eq(domaintypes.StatusActive),
+					et.Class.In(equipmenttype.ClassTrailer, equipmenttype.ClassContainer),
+					keel.Or(exact, et.Description.ContainsFold(query)),
+				).
+				Order(keel.Desc(exact), et.Code.Asc()).
+				Limit(req.Limit))
 		},
 	)
 }
@@ -361,57 +272,38 @@ func (r *repository) FindCommodities(
 	ctx context.Context,
 	req *shipmentports.TriageLookupQuery,
 ) ([]shipmentports.TriageRecordMatch, error) {
-	text := strings.TrimSpace(req.Text)
+	query := strings.TrimSpace(req.Text)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]shipmentports.TriageRecordMatch, error) {
-			cols := commoditycol.CommodityColumns
-			matches := make([]shipmentports.TriageRecordMatch, 0, req.Limit)
-			exact := cols.Name.Expr("lower({})") + " = lower(?)"
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*commodity.Commodity)(nil)).
-				ColumnExpr(cols.ID.As("id")).
-				ColumnExpr(cols.Name.As("label")).
-				ColumnExpr("("+exact+") AS exact", text).
-				Where(cols.Status.Eq(), domaintypes.StatusActive).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return sq.Where(exact, text).
-						WhereOr(cols.Name.ILike(), prefixPattern(text))
-				}).
-				Apply(commoditycol.CommodityApplyTenant(req.TenantInfo)).
-				OrderExpr("exact DESC").
-				Order(cols.Name.OrderAsc()).
-				Limit(int64(req.Limit)).
-				Scan(ctx, &matches); err != nil {
-				return nil, err
-			}
-
-			return matches, nil
+			c := commoditydb.Commodities
+			exact := lowerEq(c.Name, query)
+			return keel.Into[shipmentports.TriageRecordMatch](ctx, r.db.Keel(ctx), c.
+				Pick(c.ID, c.Name, exact).
+				Where(
+					c.Status.Eq(domaintypes.StatusActive),
+					keel.Or(exact, c.Name.HasPrefixFold(query)),
+				).
+				Order(keel.Desc(exact), c.Name.Asc()).
+				Limit(req.Limit))
 		},
 	)
 }
 
 func (r *repository) HoldReasonByCode(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	code string,
 ) (pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (pulid.ID, error) {
-		cols := holdreasoncol.HoldReasonColumns
-		var id pulid.ID
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*holdreason.HoldReason)(nil)).
-			Column(cols.ID.Bare()).
-			Where(cols.Code.Expr("upper({})")+" = upper(?)", code).
-			Where(cols.Active.IsTrue()).
-			Apply(holdreasoncol.HoldReasonApplyTenant(tenantInfo)).
-			Limit(1).
-			Scan(ctx, &id)
-		if errors.Is(err, sql.ErrNoRows) {
+		hr := holdreasondb.HoldReasons
+		id, err := keel.IntoOne[pulid.ID](ctx, r.db.Keel(ctx), hr.
+			Pick(hr.ID).
+			Where(hr.Code.Upper().EqExpr(keel.Text(code).Upper()), hr.Active.IsTrue()).
+			Limit(1))
+		if dberror.IsNotFoundError(err) {
 			return pulid.Nil, nil
 		}
 

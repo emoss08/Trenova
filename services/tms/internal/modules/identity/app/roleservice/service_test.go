@@ -1,8 +1,8 @@
 package roleservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"errors"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -230,8 +230,9 @@ func TestListRoles(t *testing.T) {
 	}
 
 	deps.roleRepo.On("List", ctx, req).Return(&pagination.ListResult[*permission.Role]{
-		Items: expectedRoles,
-		Total: 2,
+		Items:      expectedRoles,
+		Total:      2,
+		TotalExact: true,
 	}, nil)
 
 	result, err := deps.svc.ListRoles(ctx, req)

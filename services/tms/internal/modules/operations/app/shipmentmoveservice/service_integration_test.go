@@ -8,7 +8,9 @@ import (
 
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/shopspring/decimal"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
@@ -20,14 +22,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
 	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
 	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/testutil"
@@ -39,7 +33,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -49,7 +42,7 @@ func TestUpdateStatusIntegrationRecomputesShipmentStatus(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	ctx, svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	// Only the flows that recompute shipment state read the control record, so
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
@@ -100,7 +93,7 @@ func TestBulkUpdateStatusIntegrationRollsBackOnInvalidMove(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, _, moveRepo, tenantInfo, fixture, _ := newIntegrationService(t, ctx, db)
+	ctx, svc, _, moveRepo, tenantInfo, fixture, _ := newIntegrationService(t, ctx, db)
 	graph := testutil.CreateShipmentGraph(
 		t,
 		ctx,
@@ -147,7 +140,7 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	ctx, svc, shipmentRepo, _, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	// Only the flows that recompute shipment state read the control record, so
 	// the expectation belongs to those tests rather than the shared harness.
 	controlRepo.EXPECT().
@@ -237,7 +230,7 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 	ctx, db, cleanup := seedtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
+	ctx, svc, _, moveRepo, tenantInfo, fixture, controlRepo := newIntegrationService(t, ctx, db)
 	controlRepo.EXPECT().
 		Get(mock.Anything, mock.AnythingOfType("tenantports.GetShipmentControlRequest")).
 		Return(&tenant.ShipmentControl{}, nil)
@@ -308,8 +301,9 @@ func TestRecordStopActualIntegrationPersistsBackdatedActuals(t *testing.T) {
 func newIntegrationService(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 ) (
+	context.Context,
 	shipmentports.ShipmentMoveService,
 	shipmentports.ShipmentRepository,
 	shipmentports.ShipmentMoveRepository,
@@ -338,10 +332,6 @@ func newIntegrationService(
 		DB:     conn,
 		Logger: zap.NewNop(),
 	})
-	formulaRepo := formulatemplaterepository.New(formulatemplaterepository.Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
-	})
 	shipmentRepo := shipmentrepository.New(shipmentrepository.Params{
 		DB:                         conn,
 		Logger:                     zap.NewNop(),
@@ -365,21 +355,9 @@ func newIntegrationService(
 		Return(false, nil).
 		Maybe()
 
-	registry := schema.NewRegistry()
-	testutil.RegisterShipmentFormulaSchema(t, registry)
-	res := resolver.NewResolver()
-	formulaSvc := formula.NewService(formula.ServiceParams{
-		Logger:         zap.NewNop(),
-		Registry:       registry,
-		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
-		Resolver:       res,
-		Repo:           formulaRepo,
-		VersionRepo:    moveIntgStubVersionRepo{},
-		RateMatrixRepo: moveIntgStubMatrixRepo{},
-	})
 	commercial := shipmentcommercial.New(shipmentcommercial.Params{
 		Logger:          zap.NewNop(),
-		RateEngine:      ratingtest.NewFallbackEngine(t, formulaSvc),
+		RateEngine:      ratingtest.NewFlatEngine(t, decimal.Zero),
 		AccessorialRepo: accessorialRepo,
 	})
 
@@ -404,7 +382,7 @@ func newIntegrationService(
 
 	fixture := testutil.SeedShipmentIntegrationFixture(t, ctx, db, data, tenantInfo)
 
-	return svc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo
+	return data.Ctx(ctx), svc, shipmentRepo, moveRepo, tenantInfo, fixture, controlRepo
 }
 
 func int16Ptr(value int16) *int16 {
@@ -413,40 +391,4 @@ func int16Ptr(value int16) *int16 {
 
 func integrationInt64Ptr(value int64) *int64 {
 	return &value
-}
-
-type moveIntgStubVersionRepo struct {
-	formulatemplateports.FormulaTemplateVersionRepository
-}
-
-func (moveIntgStubVersionRepo) GetEffectiveVersion(
-	_ context.Context,
-	_ *formulatemplateports.GetEffectiveVersionRequest,
-) (*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-func (moveIntgStubVersionRepo) ListApproved(
-	_ context.Context,
-	_ *formulatemplateports.ListScheduledVersionsRequest,
-) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-type moveIntgStubMatrixRepo struct {
-	ratematrixports.RateMatrixRepository
-}
-
-func (moveIntgStubMatrixRepo) GetLookupData(
-	_ context.Context,
-	_ *ratematrixports.GetRateMatrixLookupDataRequest,
-) ([]*ratematrixports.RateMatrixLookupData, error) {
-	return nil, nil
-}
-
-func (moveIntgStubMatrixRepo) GetLookupStamp(
-	context.Context,
-	pagination.TenantInfo,
-) (string, error) {
-	return "", nil
 }

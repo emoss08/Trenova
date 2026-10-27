@@ -3,23 +3,23 @@ package auditrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/auditcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit/auditdb"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var entryErrors = dberror.Mapping{Entity: "Audit Entry"}
 
 type Params struct {
 	fx.In
@@ -40,21 +40,9 @@ func New(p Params) auditports.AuditRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *pagination.QueryOptions,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"ae",
-		req,
-		(*audit.Entry)(nil),
-	)
-
-	q = q.Relation("User")
-	q = q.Relation("APIKey")
-
-	return q.Limit(int64(req.Pagination.SafeLimit())).Offset(int64(req.Pagination.SafeOffset()))
+func withPrincipals(q *keel.Query[*audit.Entry]) *keel.Query[*audit.Entry] {
+	e := auditdb.Entries
+	return q.Load(e.User(), e.APIKey())
 }
 
 func (r *repository) List(
@@ -65,59 +53,19 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*audit.Entry], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			entities := make([]*audit.Entry, 0, req.Filter.Pagination.SafeLimit())
-
-			total, err := r.db.DBForContext(ctx).NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req.Filter)
-				}).
-				ScanAndCount(ctx)
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				auditdb.Entries.Query(),
+				&listquery.Request[audit.Entry]{Filter: req.Filter, Shape: withPrincipals},
+			)
 			if err != nil {
-				log.Error("failed to scan audit entries", zap.Error(err))
+				r.l.Error("failed to list audit entries", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*audit.Entry]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
-	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *auditports.ListAuditEntriesConnectionRequest,
-) (*bun.SelectQuery, error) {
-	if !req.ResourceID.IsNil() {
-		q = q.Where("ae.resource_id = ?", req.ResourceID)
-	}
-
-	return querybuilder.ApplyCursorFilters(
-		q,
-		auditcol.EntryTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*audit.Entry)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *auditports.ListAuditEntriesConnectionRequest,
-) *bun.SelectQuery {
-	if !req.ResourceID.IsNil() {
-		q = q.Where("ae.resource_id = ?", req.ResourceID)
-	}
-
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		auditcol.EntryTable.Alias,
-		req.Filter,
-		(*audit.Entry)(nil),
 	)
 }
 
@@ -125,56 +73,31 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *auditports.ListAuditEntriesConnectionRequest,
 ) (*pagination.CursorListResult[*audit.Entry], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*audit.Entry], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
 			if req.Filter != nil && len(req.Filter.Sort) == 0 {
 				req.Filter.Sort = []domaintypes.SortField{
 					{Field: "timestamp", Direction: dbtype.SortDirectionDesc},
 				}
 			}
 
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*audit.Entry)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count audit entries", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*audit.Entry]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*audit.Entry) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(auditcol.EntryTable.All()).
-						Relation("User").
-						Relation("APIKey")
+			e := auditdb.Entries
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				e.Where(
+					keel.When(!req.ResourceID.IsNil(), e.ResourceID.Eq(req.ResourceID.String())),
+				),
+				&listquery.Request[audit.Entry]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withPrincipals,
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
+			)
 			if err != nil {
-				log.Error("failed to scan audit entries", zap.Error(err))
+				r.l.Error("failed to list audit entry connection", zap.Error(err))
 				return nil, err
 			}
 
@@ -188,26 +111,15 @@ func (r *repository) GetByID(
 	req auditports.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*audit.Entry, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.Any("request", req),
-		)
-
-		entity := new(audit.Entry)
-
-		q := r.db.DBForContext(ctx).NewSelect().Model(entity).
-			WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("ae.id = ?", req.EntryID).
-					Where("ae.organization_id = ?", req.TenantInfo.OrgID).
-					Where("ae.business_unit_id = ?", req.TenantInfo.BuID)
-			})
-
-		q = q.Relation("User")
-		q = q.Relation("APIKey")
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get audit entry", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "Audit Entry")
+		e := auditdb.Entries
+		entity, err := withPrincipals(e.Where(e.ID.Eq(req.EntryID))).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error(
+				"failed to get audit entry",
+				zap.String("entryID", req.EntryID.String()),
+				zap.Error(err),
+			)
+			return nil, entryErrors.Map(err, req.EntryID.String())
 		}
 
 		return entity, nil
@@ -222,31 +134,23 @@ func (r *repository) ListByResourceID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*audit.Entry], error) {
-			log := r.l.With(
-				zap.String("operation", "ListByResourceID"),
-				zap.String("resourceID", req.ResourceID.String()),
+			e := auditdb.Entries
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				e.Where(e.ResourceID.Eq(req.ResourceID.String())),
+				&listquery.Request[audit.Entry]{Filter: req.Filter, Shape: withPrincipals},
 			)
-
-			entities := make([]*audit.Entry, 0, req.Filter.Pagination.SafeLimit())
-
-			q := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where("ae.resource_id = ?", req.ResourceID).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req.Filter)
-				})
-
-			total, err := q.ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan audit entries", zap.Error(err))
+				r.l.Error(
+					"failed to list audit entries by resource",
+					zap.String("resourceID", req.ResourceID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
-			return &pagination.ListResult[*audit.Entry]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
 }
@@ -257,81 +161,12 @@ func (r *repository) InsertAuditEntries(ctx context.Context, entries []*audit.En
 		"flush buffered audit entries, which mix organizations, in one batch",
 	)
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(zap.String("operation", "InsertAuditEntries"))
-
-		_, err := r.db.DBForContext(ctx).NewInsert().Model(&entries).Exec(ctx)
-		if err != nil {
-			log.Error("failed to insert audit entries", zap.Error(err))
+		if err := auditdb.Entries.CreateMany(ctx, r.db.Keel(ctx), entries); err != nil {
+			r.l.Error("failed to insert audit entries", zap.Error(err))
 			return err
 		}
 
 		return nil
-	})
-}
-
-func (r *repository) GetByResourceAndOperation(
-	ctx context.Context,
-	req *auditports.GetAuditByResourceRequest,
-) ([]*audit.Entry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.Entry, error) {
-		log := r.l.With(zap.String("operation", "GetByResourceAndOperation"))
-
-		entries := make([]*audit.Entry, 0)
-
-		q := r.db.DBForContext(ctx).NewSelect().Model(&entries).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("ae.resource = ?", req.Resource).
-					Where("ae.resource_id = ?", req.ResourceID).
-					Where("ae.operation = ?", req.Operation).
-					Where("ae.organization_id = ?", req.OrganizationID)
-			}).
-			Order("ae.timestamp ASC").
-			Relation("User").
-			Relation("APIKey")
-
-		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get audit entries by resource and operation", zap.Error(err))
-			return nil, err
-		}
-
-		return entries, nil
-	})
-}
-
-func (r *repository) GetRecentEntries(
-	ctx context.Context,
-	req *auditports.GetRecentEntriesRequest,
-) ([]*audit.Entry, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*audit.Entry, error) {
-		log := r.l.With(zap.String("operation", "GetRecentEntries"))
-
-		entries := make([]*audit.Entry, 0, req.Limit)
-
-		q := r.db.DBForContext(ctx).NewSelect().Model(&entries).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("ae.timestamp > ?", req.SinceTimestamp).
-					Where("ae.operation = ?", req.Operation)
-			}).
-			Order("ae.timestamp ASC").
-			Relation("User").
-			Relation("APIKey")
-
-		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get recent audit entries", zap.Error(err))
-			return nil, err
-		}
-
-		return entries, nil
 	})
 }
 
@@ -343,15 +178,17 @@ func (r *repository) DeleteAuditEntries(
 		ctx,
 		"delete audit entries past an organization's retention during the retention sweep",
 	)
-	cols := auditcol.EntryColumns
-	return postgres.DeleteUnderAuditRetention(ctx, r.db, func(tx bun.Tx) *bun.DeleteQuery {
-		return tx.NewDelete().Model((*audit.Entry)(nil)).
-			Where(cols.OrganizationID.Eq(), req.OrgID).
-			Where(cols.BusinessUnitID.Eq(), req.BuID).
-			Where(cols.Timestamp.Lt(), req.Before).
-			WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
-				return q.Where(cols.Critical.IsFalse()).
-					WhereOr(cols.Timestamp.Lt(), req.CriticalBefore)
-			})
-	})
+	return postgres.DeleteUnderAuditRetention(
+		ctx,
+		r.db,
+		func(ctx context.Context, db *keel.DB) (int64, error) {
+			e := auditdb.Entries
+			return e.AllTenants().Where(
+				e.OrganizationID.Eq(req.OrgID),
+				e.BusinessUnitID.Eq(req.BuID),
+				e.Timestamp.Lt(req.Before),
+				keel.Or(e.Critical.IsFalse(), e.Timestamp.Lt(req.CriticalBefore)),
+			).Delete(ctx, db)
+		},
+	)
 }

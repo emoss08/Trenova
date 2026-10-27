@@ -5,54 +5,52 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/airetrievalcol"
-
+	"github.com/emoss08/keel"
+	keelvector "github.com/emoss08/keel/vector"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval/airetrievaldb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/pgvector/pgvector-go"
-	"github.com/uptrace/bun"
 )
 
 const (
 	maxChunksPerSource = 500
 
-	defaultSearchLimit    = 10
-	maxSearchLimit        = 200
-	candidatesPerResult   = 4
-	maxSearchCandidates   = 1000
-	minHNSWEfSearch       = 40
-	maxHNSWEfSearch       = 1000
-	candidateAlias        = "candidate"
-	bestAlias             = "best"
-	distanceColumn        = "distance"
-	setIterativeScan      = "SET LOCAL hnsw.iterative_scan = relaxed_order"
-	setEfSearchStatement  = "SET LOCAL hnsw.ef_search = "
-	halfvecCastPrefix     = "::halfvec("
-	cosineDistanceOperand = " <=> ?"
+	defaultSearchLimit  = 10
+	maxSearchLimit      = 200
+	candidatesPerResult = 4
+	maxSearchCandidates = 1000
+	minHNSWEfSearch     = 40
+	maxHNSWEfSearch     = 1000
 )
 
+const (
+	colSourceType = "source_type"
+	colSourceID   = "source_id"
+)
+
+var rankedColumns = []string{colSourceType, colSourceID, "chunk_index", "distance"}
+
 type storedChunk struct {
-	ChunkIndex  int    `bun:"chunk_index"`
-	ContentHash string `bun:"content_hash"`
-	Dimensions  int    `bun:"dimensions"`
+	ChunkIndex  int
+	ContentHash string
+	Dimensions  int
 }
 
-func embeddingSourceScope(
+func embeddingsOf(
 	source *agentports.AIRetrievalSourceRef,
 	modelKey string,
-) func(*bun.SelectQuery) *bun.SelectQuery {
-	cols := airetrievalcol.EmbeddingColumns
+) *keel.Query[*airetrieval.Embedding] {
+	e := airetrievaldb.Embeddings
 
-	return func(q *bun.SelectQuery) *bun.SelectQuery {
-		return airetrievalcol.EmbeddingScopeTenant(q, source.TenantInfo).
-			Where(cols.SourceType.Eq(), source.SourceType).
-			Where(cols.SourceID.Eq(), source.SourceID).
-			Where(cols.ModelKey.Eq(), modelKey)
-	}
+	return e.Where(
+		e.SourceType.Eq(source.SourceType),
+		e.SourceID.Eq(source.SourceID),
+		e.ModelKey.Eq(modelKey),
+	)
 }
 
 func (r *repository) ListChunkHashes(
@@ -76,16 +74,16 @@ func (r *repository) ListChunkHashes(
 				return nil, err
 			}
 
-			cols := airetrievalcol.EmbeddingColumns
-			hashes := make([]agentports.EmbeddingChunkHash, 0)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*airetrieval.Embedding)(nil)).
-				Column(cols.ChunkIndex.String(), cols.ContentHash.String()).
-				Apply(embeddingSourceScope(&req.Source, req.ModelKey)).
-				OrderExpr(cols.ChunkIndex.OrderAsc()).
-				Scan(ctx, &hashes); err != nil {
+			e := airetrievaldb.Embeddings
+			hashes, err := keel.Into[agentports.EmbeddingChunkHash](ctx, r.db.Keel(ctx),
+				embeddingsOf(&req.Source, req.ModelKey).
+					Pick(e.ChunkIndex, e.ContentHash).
+					Order(e.ChunkIndex.Asc()))
+			if err != nil {
 				return nil, fmt.Errorf("list embedding chunk hashes: %w", err)
+			}
+			if hashes == nil {
+				hashes = []agentports.EmbeddingChunkHash{}
 			}
 
 			return hashes, nil
@@ -150,33 +148,30 @@ func (r *repository) ReplaceChunks(
 				return result, err
 			}
 
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(ctx context.Context, tx bun.Tx) error {
-					stored, err := r.storedChunks(ctx, tx, req)
-					if err != nil {
-						return err
-					}
-
-					rows, unchanged, err := planChunkWrites(req, stored, timeutils.NowUnix())
-					if err != nil {
-						return err
-					}
-					result.Unchanged = unchanged
-
-					if result.Removed, err = r.removeChunksNotIn(ctx, tx, req); err != nil {
-						return err
-					}
-
-					if len(rows) == 0 {
-						return nil
-					}
-
-					result.Written, err = r.upsertChunks(ctx, tx, rows)
+			err := r.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+				db := r.db.Keel(ctx)
+				stored, err := storedChunks(ctx, db, req)
+				if err != nil {
 					return err
-				},
-			)
+				}
+
+				rows, unchanged, err := planChunkWrites(req, stored, timeutils.NowUnix())
+				if err != nil {
+					return err
+				}
+				result.Unchanged = unchanged
+
+				if result.Removed, err = removeChunksNotIn(ctx, db, req); err != nil {
+					return err
+				}
+
+				if len(rows) == 0 {
+					return nil
+				}
+
+				result.Written, err = upsertChunks(ctx, db, rows)
+				return err
+			})
 			if err != nil {
 				return agentports.ReplaceEmbeddingChunksResult{}, err
 			}
@@ -186,19 +181,16 @@ func (r *repository) ReplaceChunks(
 	)
 }
 
-func (r *repository) storedChunks(
+func storedChunks(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	req *agentports.ReplaceEmbeddingChunksRequest,
 ) (map[int]storedChunk, error) {
-	cols := airetrievalcol.EmbeddingColumns
-	rows := make([]storedChunk, 0, len(req.Chunks))
-	if err := tx.NewSelect().
-		Model((*airetrieval.Embedding)(nil)).
-		Column(cols.ChunkIndex.String(), cols.ContentHash.String(), cols.Dimensions.String()).
-		Apply(embeddingSourceScope(&req.Source, req.ModelKey)).
-		For("UPDATE").
-		Scan(ctx, &rows); err != nil {
+	e := airetrievaldb.Embeddings
+	rows, err := keel.Into[storedChunk](ctx, db, embeddingsOf(&req.Source, req.ModelKey).
+		Pick(e.ChunkIndex, e.ContentHash, e.Dimensions).
+		Lock(keel.ForUpdate))
+	if err != nil {
 		return nil, fmt.Errorf("read stored embedding chunks: %w", err)
 	}
 
@@ -255,70 +247,50 @@ func planChunkWrites(
 	return rows, unchanged, nil
 }
 
-func (r *repository) removeChunksNotIn(
+func removeChunksNotIn(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	req *agentports.ReplaceEmbeddingChunksRequest,
 ) (int, error) {
-	cols := airetrievalcol.EmbeddingColumns
-	indexes := make([]int, 0, len(req.Chunks))
+	e := airetrievaldb.Embeddings
+	indexes := make([]int64, 0, len(req.Chunks))
 	for _, chunk := range req.Chunks {
-		indexes = append(indexes, chunk.ChunkIndex)
+		indexes = append(indexes, int64(chunk.ChunkIndex))
 	}
 
-	q := tx.NewDelete().
-		Model((*airetrieval.Embedding)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return airetrievalcol.EmbeddingScopeTenantDelete(dq, req.Source.TenantInfo).
-				Where(cols.SourceType.Eq(), req.Source.SourceType).
-				Where(cols.SourceID.Eq(), req.Source.SourceID).
-				Where(cols.ModelKey.Eq(), req.ModelKey)
-		})
+	q := embeddingsOf(&req.Source, req.ModelKey)
 	if len(indexes) > 0 {
-		q = q.Where(cols.ChunkIndex.NotIn(), bun.List(indexes))
+		q.Where(e.ChunkIndex.NotIn(indexes...))
 	}
 
-	res, err := q.Exec(ctx)
+	removed, err := q.Delete(ctx, db)
 	if err != nil {
 		return 0, fmt.Errorf("remove stale embedding chunks: %w", err)
 	}
 
-	return rowsAffected(res)
+	return int(removed), nil
 }
 
-func (r *repository) upsertChunks(
+func upsertChunks(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	rows []*airetrieval.Embedding,
 ) (int, error) {
-	cols := airetrievalcol.EmbeddingColumns
-	excluded := excludedEmbeddingColumns
-
-	res, err := tx.NewInsert().
-		Model(&rows).
-		On(conflictTarget(airetrievalcol.EmbeddingTable) + " DO UPDATE").
-		Set(cols.ContentHash.SetExcluded()).
-		Set(cols.Dimensions.SetExcluded()).
-		Set(cols.Embedding.SetExcluded()).
-		Set(cols.UpdatedAt.SetExcluded()).
-		Where(buncolgen.Expr("{0} <> {1} OR {2} <> {3}",
-			cols.ContentHash, excluded.ContentHash,
-			cols.Dimensions, excluded.Dimensions,
-		)).
-		Exec(ctx)
-	if err != nil {
+	e := airetrievaldb.Embeddings
+	if _, err := e.Upsert(ctx, db, rows,
+		keel.OnConflict(
+			e.OrganizationID,
+			e.BusinessUnitID,
+			e.SourceType,
+			e.SourceID,
+			e.ChunkIndex,
+			e.ModelKey,
+		).Update(e.ContentHash, e.Dimensions, e.Embedding),
+	); err != nil {
 		return 0, fmt.Errorf("write embedding chunks: %w", err)
 	}
 
-	return rowsAffected(res)
-}
-
-var excludedEmbeddingColumns = struct {
-	ContentHash buncolgen.Column
-	Dimensions  buncolgen.Column
-}{
-	ContentHash: airetrievalcol.EmbeddingColumns.ContentHash.WithAlias("excluded"),
-	Dimensions:  airetrievalcol.EmbeddingColumns.Dimensions.WithAlias("excluded"),
+	return len(rows), nil
 }
 
 func (r *repository) DeleteSource(
@@ -340,47 +312,34 @@ func (r *repository) DeleteSource(
 				return result, err
 			}
 
-			err = r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(ctx context.Context, tx bun.Tx) error {
-					entries := airetrievalcol.IndexEntryColumns
-					res, txErr := tx.NewDelete().
-						Model((*airetrieval.IndexEntry)(nil)).
-						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-							return airetrievalcol.IndexEntryScopeTenantDelete(dq, source.TenantInfo).
-								Where(entries.SourceType.Eq(), source.SourceType).
-								Where(entries.SourceID.Eq(), source.SourceID)
-						}).
-						Exec(ctx)
-					if txErr != nil {
-						return fmt.Errorf("delete index entries: %w", txErr)
-					}
-					if result.IndexEntries, txErr = rowsAffected(res); txErr != nil {
-						return txErr
-					}
+			err = r.db.Transact(ctx, kernelports.TxOptions{}, func(ctx context.Context) error {
+				db := r.db.Keel(ctx)
+				entries := airetrievaldb.IndexEntries
+				removed, txErr := entries.Where(
+					entries.SourceType.Eq(source.SourceType),
+					entries.SourceID.Eq(source.SourceID),
+				).Delete(ctx, db)
+				if txErr != nil {
+					return fmt.Errorf("delete index entries: %w", txErr)
+				}
+				result.IndexEntries = int(removed)
 
-					if !vectorReady {
-						return nil
-					}
+				if !vectorReady {
+					return nil
+				}
 
-					embeddings := airetrievalcol.EmbeddingColumns
-					res, txErr = tx.NewDelete().
-						Model((*airetrieval.Embedding)(nil)).
-						WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-							return airetrievalcol.EmbeddingScopeTenantDelete(dq, source.TenantInfo).
-								Where(embeddings.SourceType.Eq(), source.SourceType).
-								Where(embeddings.SourceID.Eq(), source.SourceID)
-						}).
-						Exec(ctx)
-					if txErr != nil {
-						return fmt.Errorf("delete embeddings: %w", txErr)
-					}
-					result.Embeddings, txErr = rowsAffected(res)
+				embeddings := airetrievaldb.Embeddings
+				removed, txErr = embeddings.Where(
+					embeddings.SourceType.Eq(source.SourceType),
+					embeddings.SourceID.Eq(source.SourceID),
+				).Delete(ctx, db)
+				if txErr != nil {
+					return fmt.Errorf("delete embeddings: %w", txErr)
+				}
+				result.Embeddings = int(removed)
 
-					return txErr
-				},
-			)
+				return nil
+			})
 			if err != nil {
 				return agentports.DeleteAIRetrievalSourceResult{}, err
 			}
@@ -395,7 +354,7 @@ type searchPlan struct {
 	limit       int
 	candidates  int
 	efSearch    int
-	dimensions  string
+	dimensions  int
 }
 
 func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
@@ -424,7 +383,7 @@ func planSearch(req *agentports.VectorSearchRequest) (searchPlan, error) {
 	plan := searchPlan{
 		sourceTypes: req.SourceTypes,
 		limit:       req.Limit,
-		dimensions:  strconv.Itoa(req.Dimensions),
+		dimensions:  req.Dimensions,
 	}
 	if len(plan.sourceTypes) == 0 {
 		plan.sourceTypes = airetrieval.AllSourceTypes()
@@ -457,22 +416,24 @@ func (r *repository) Search(
 			return nil, err
 		}
 
-		hits := make([]agentports.VectorSearchHit, 0, plan.limit)
-		err = r.db.WithTx(
+		var hits []agentports.VectorSearchHit
+		err = r.db.Transact(
 			ctx,
-			kernelports.TxOptions{ReadOnly: true},
-			func(ctx context.Context, tx bun.Tx) error {
-				if _, txErr := tx.ExecContext(ctx, setIterativeScan); txErr != nil {
-					return fmt.Errorf("enable iterative index scan: %w", txErr)
-				}
-				if _, txErr := tx.ExecContext(
+			kernelports.TxOptions{
+				ReadOnly: true,
+				Settings: []kernelports.TxSetting{
+					{Name: "hnsw.iterative_scan", Value: "relaxed_order"},
+					{Name: "hnsw.ef_search", Value: strconv.Itoa(plan.efSearch)},
+				},
+			},
+			func(ctx context.Context) error {
+				db := r.db.Keel(ctx)
+				var txErr error
+				if hits, txErr = keel.Into[agentports.VectorSearchHit](
 					ctx,
-					setEfSearchStatement+strconv.Itoa(plan.efSearch),
+					db,
+					searchQuery(req, plan),
 				); txErr != nil {
-					return fmt.Errorf("set index search breadth: %w", txErr)
-				}
-
-				if txErr := searchQuery(tx, req, plan).Scan(ctx, &hits); txErr != nil {
 					return fmt.Errorf("search embeddings: %w", txErr)
 				}
 
@@ -482,82 +443,57 @@ func (r *repository) Search(
 		if err != nil {
 			return nil, err
 		}
+		if hits == nil {
+			hits = []agentports.VectorSearchHit{}
+		}
 
 		return hits, nil
 	})
 }
 
-func searchQuery(
-	tx bun.Tx,
-	req *agentports.VectorSearchRequest,
-	plan searchPlan,
-) *bun.SelectQuery {
-	cols := airetrievalcol.EmbeddingColumns
+func searchQuery(req *agentports.VectorSearchRequest, plan searchPlan) *keel.Query[*keel.Row] {
+	e := airetrievaldb.Embeddings
 	query := pgvector.NewHalfVector(req.Query)
-	cast := halfvecCastPrefix + plan.dimensions + ")"
-	distance := cols.Embedding.Expr("{}"+cast) + cosineDistanceOperand + cast
+	distance := func() keel.Expr {
+		return keelvector.CosineDistance(
+			keelvector.HalfVec(e.Embedding, plan.dimensions),
+			keelvector.HalfVec(query, plan.dimensions),
+		)
+	}
 
-	candidates := tx.NewSelect().
-		Model((*airetrieval.Embedding)(nil)).
-		Column(cols.SourceType.String(), cols.SourceID.String(), cols.ChunkIndex.String()).
-		ColumnExpr(distance+" AS "+distanceColumn, query).
-		Apply(airetrievalcol.EmbeddingApplyTenant(req.TenantInfo)).
-		Where(cols.SourceType.In(), bun.List(plan.sourceTypes)).
-		Where(cols.ModelKey.Eq(), req.ModelKey).
-		Where(cols.Dimensions.Expr("{} = "+plan.dimensions)).
-		OrderExpr(distance, query).
-		Limit(int64(plan.candidates))
+	candidate := keel.CTE("candidate", rankedColumns, e.
+		Where(
+			e.SourceType.In(plan.sourceTypes...),
+			e.ModelKey.Eq(req.ModelKey),
+			e.Dimensions.EqCol(keel.ConstInt64(int64(plan.dimensions))),
+		).
+		Pick(e.SourceType, e.SourceID, e.ChunkIndex, distance()).
+		Order(keel.Asc(distance())).
+		Limit(plan.candidates))
 
-	candidate := candidateColumns
-	best := tx.NewSelect().
-		TableExpr("(?) AS "+candidateAlias, candidates).
-		DistinctOn(buncolgen.Expr("{0}, {1}", candidate.SourceType, candidate.SourceID)).
-		ColumnExpr(candidate.SourceType.Qualified()).
-		ColumnExpr(candidate.SourceID.Qualified()).
-		ColumnExpr(candidate.ChunkIndex.Qualified()).
-		ColumnExpr(candidate.Distance).
-		OrderExpr(candidate.SourceType.OrderAsc()).
-		OrderExpr(candidate.SourceID.OrderAsc()).
-		OrderExpr(candidate.Distance + " ASC")
+	best := keel.CTE("best", rankedColumns, candidate.Query().
+		DistinctOn(candidate.Col(colSourceType), candidate.Col(colSourceID)).
+		Pick(
+			candidate.Col(colSourceType),
+			candidate.Col(colSourceID),
+			candidate.Col("chunk_index"),
+			candidate.Col("distance"),
+		).
+		Order(
+			candidate.Col(colSourceType).Asc(),
+			candidate.Col(colSourceID).Asc(),
+			candidate.Col("distance").Asc(),
+		))
 
-	top := bestColumns
-	similarity := "1 - " + top.Distance
-	outer := tx.NewSelect().
-		TableExpr("(?) AS "+bestAlias, best).
-		ColumnExpr(top.SourceType.Qualified()).
-		ColumnExpr(top.SourceID.Qualified()).
-		ColumnExpr(top.ChunkIndex.Qualified()).
-		ColumnExpr(similarity + " AS similarity").
-		OrderExpr(top.Distance + " ASC").
-		OrderExpr(top.SourceID.OrderAsc()).
-		Limit(int64(plan.limit))
-
+	similarity := keel.Float64(1).Sub(keel.Float64Of(best.Col("distance")))
+	outer := best.Query().
+		With(candidate, best).
+		Pick(best.Col(colSourceType), best.Col(colSourceID), best.Col("chunk_index"), similarity).
+		Order(best.Col("distance").Asc(), best.Col(colSourceID).Asc()).
+		Limit(plan.limit)
 	if req.MinSimilarity != 0 {
-		outer = outer.Where(similarity+" >= ?", req.MinSimilarity)
+		outer.Where(similarity.Gte(req.MinSimilarity))
 	}
 
 	return outer
 }
-
-type rankedColumns struct {
-	SourceType buncolgen.Column
-	SourceID   buncolgen.Column
-	ChunkIndex buncolgen.Column
-	Distance   string
-}
-
-func newRankedColumns(alias string) rankedColumns {
-	cols := airetrievalcol.EmbeddingColumns
-
-	return rankedColumns{
-		SourceType: cols.SourceType.WithAlias(alias),
-		SourceID:   cols.SourceID.WithAlias(alias),
-		ChunkIndex: cols.ChunkIndex.WithAlias(alias),
-		Distance:   alias + "." + distanceColumn,
-	}
-}
-
-var (
-	candidateColumns = newRankedColumns(candidateAlias)
-	bestColumns      = newRankedColumns(bestAlias)
-)

@@ -62,11 +62,13 @@ func TestListLanes_BoundsThePageBeforeReading(t *testing.T) {
 					assert.Equal(t, tt.wantOffset, req.Offset)
 
 					return &rateagreementports.RateAgreementLanePage{
-						Lanes:   []*rateagreement.RateAgreementRule{lane},
-						Count:   12,
-						Retired: 3,
-						Limit:   req.Limit,
-						Offset:  req.Offset,
+						Lanes:        []*rateagreement.RateAgreementRule{lane},
+						Count:        12,
+						CountExact:   true,
+						Retired:      3,
+						RetiredExact: true,
+						Limit:        req.Limit,
+						Offset:       req.Offset,
 					}, nil
 				}).
 				Once()
@@ -74,7 +76,7 @@ func TestListLanes_BoundsThePageBeforeReading(t *testing.T) {
 			svc := New(Params{
 				Logger:    zap.NewNop(),
 				Repo:      repo,
-				Validator: NewTestValidator(),
+				Validator: testValidator(),
 			})
 
 			page, err := svc.ListLanes(
@@ -91,7 +93,9 @@ func TestListLanes_BoundsThePageBeforeReading(t *testing.T) {
 			require.Len(t, page.Lanes, 1)
 			assert.Equal(t, lane.ID, page.Lanes[0].ID)
 			assert.Equal(t, 12, page.Count)
+			assert.True(t, page.CountExact)
 			assert.Equal(t, 3, page.Retired)
+			assert.True(t, page.RetiredExact)
 			assert.Equal(t, tt.wantLimit, page.Limit)
 			assert.Equal(t, tt.wantOffset, page.Offset)
 		})
@@ -117,7 +121,7 @@ func TestListLanes_PassesNotFoundThrough(t *testing.T) {
 	svc := New(Params{
 		Logger:    zap.NewNop(),
 		Repo:      repo,
-		Validator: NewTestValidator(),
+		Validator: testValidator(),
 	})
 
 	page, err := svc.ListLanes(t.Context(), &rateagreementports.ListRateAgreementLanesRequest{

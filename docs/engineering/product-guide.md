@@ -37,6 +37,10 @@ Because the structure is read from the router and navigation, moving a page,
 renaming it or changing what guards it updates the catalog on the next
 generate. The words are the only hand-written part.
 
+The page access manifest (`scripts/page-access/`, see "The page access manifest"
+in [reference-views.md](reference-views.md)) reads the same route tree through
+`sources.mjs`, so a route the guide sees is a screen the manifest describes.
+
 Routes and admin links an edition overlay registers (`edition.routes.*`, see
 [editions.md](editions.md)) are spread into the router at runtime, which the static
 read skips, so the public catalog never lists them and a public guide must not link
@@ -61,8 +65,8 @@ catalog changes, since each of those can make the other stale.
 - A guide for a path the router does not serve, or two guides for one path.
 - A navigation entry pointing at a path no route serves.
 - A **bold** label that is not text the app shows: an i18n string used by the
-  client, a navigation label, a quick action, a page title, or a table's
-  generated "New {thing}" button.
+  client (a placeholder such as `{0}` written as "…"), a navigation label, a
+  quick action, a page title, or a table's generated "New {thing}" button.
 - A markdown link or a `related` entry that is not a page in the app.
 - A record link whose page no route serves.
 - A catalog that differs from what the generator would write.

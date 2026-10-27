@@ -229,6 +229,8 @@ type FactoringNoaConnection {
   edges: [FactoringNoaEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One readiness check on an invoice."
@@ -246,7 +248,7 @@ type FactoringCheck {
 }
 
 "Whether an invoice is ready to factor, and why not."
-type FactoringInvoiceState {
+type FactoringInvoiceState @kind(resource: "invoice") {
   invoiceId: ID!
   factoringCompanyId: ID
   customerId: ID!
@@ -271,6 +273,8 @@ type FactoringInvoiceStateConnection {
   edges: [FactoringInvoiceStateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FactoringVerdictTotals {
@@ -278,7 +282,7 @@ type FactoringVerdictTotals {
   amountMinor: Int!
 }
 
-type FactoringSummary {
+type FactoringSummary @kind(resource: "invoice") {
   ready: FactoringVerdictTotals!
   notReady: FactoringVerdictTotals!
   "On a schedule with the factor or being sent to it."
@@ -398,6 +402,8 @@ type FactoringSubmissionConnection {
   edges: [FactoringSubmissionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type FactoringSubmissionPlanItem {
@@ -484,10 +490,12 @@ type FactoringReserveEntryConnection {
   edges: [FactoringReserveEntryEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "What a factor holds and has paid, from its reserve entries."
-type FactoringReserveBalance {
+type FactoringReserveBalance @kind(resource: "factoring_reserve") {
   factoringCompanyId: ID!
   "Reserve the factor holds and has not released or charged back."
   reserveMinor: Int!
@@ -919,6 +927,8 @@ type FactoringRemittanceConnection {
   edges: [FactoringRemittanceEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "A schedule item a line could pay, ranked."
@@ -972,6 +982,8 @@ type FactoringRemittanceLineConnection {
   edges: [FactoringRemittanceLineEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "What applying one matched line would book."
@@ -1088,6 +1100,11 @@ extend type CustomerBillingProfile {
 
 extend type FactoringCompany {
   agreements: [FactoringAgreement!]!
+}
+
+extend type FactoringRemittance {
+  "Its lines in the file's order, or only those in these match statuses."
+  lines(matchStatuses: [FactoringRemittanceMatchStatus!]): [FactoringRemittanceLine!]!
 }
 
 extend type Query {

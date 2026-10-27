@@ -52,13 +52,13 @@ type GetBenefitEnrollmentByIDRequest struct {
 // BenefitCostRow is one plan's cost across the organisation, for the enrolment
 // summary the benefits administrator reads.
 type BenefitCostRow struct {
-	PlanID            pulid.ID `bun:"plan_id"`
-	PlanName          string   `bun:"plan_name"`
-	PlanType          string   `bun:"plan_type"`
-	Enrolled          int      `bun:"enrolled"`
-	Waived            int      `bun:"waived"`
-	EmployeeCostMinor int64    `bun:"employee_cost_minor"`
-	EmployerCostMinor int64    `bun:"employer_cost_minor"`
+	PlanID            pulid.ID
+	PlanName          string
+	PlanType          string
+	Enrolled          int
+	Waived            int
+	EmployeeCostMinor int64
+	EmployerCostMinor int64
 }
 
 type BenefitRepository interface {

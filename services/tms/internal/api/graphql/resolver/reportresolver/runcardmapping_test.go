@@ -3,7 +3,12 @@ package reportresolver
 import (
 	"testing"
 
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/keel/analytics/value"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
+	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -11,11 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportfmt"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,36 +66,37 @@ func TestReportRunDeskCardCarriesTheSampleAndComparesTotalsByColumn(t *testing.T
 		Parameters: []reportingservice.RunCardParameter{{
 			Name:        "windowDays",
 			Label:       "Window (days)",
-			Type:        reportcatalog.FieldInt,
+			Type:        "int",
 			Value:       30.0,
 			WindowStart: 1_788_000_000,
 			WindowEnd:   1_790_678_400,
 		}},
 		Timezone: "America/Chicago",
-		Sample: &reportrows.Sample{
-			Schema: []reportrows.Column{
-				{ID: "customer", Label: "Customer", Type: reportcatalog.FieldString},
+		Sample: &reportingservice.PreviewResult{
+			Columns: []table.Column{
+				{ID: "customer", Label: "Customer", Type: value.String},
 				{
 					ID:      "revenue",
 					Label:   "Revenue",
-					Type:    reportcatalog.FieldDecimal,
-					Format:  reportcatalog.FormatMoney,
-					Display: reportfmt.Resolved{Style: reportfmt.StyleCurrency, Currency: "USD"},
+					Type:    value.Decimal,
+					Display: format.Resolve(value.Decimal, format.Hint{Kind: format.Money}, nil),
 				},
 			},
-			Rows:   [][]any{{"ACME", "1180.5"}},
-			Totals: []any{nil, "1180.5"},
-			More:   true,
+			Rows:      [][]any{{"ACME", "1180.5"}, {nil, "1180.5"}},
+			Levels:    []table.Level{table.Detail, table.Subtotal(1)},
+			Totals:    []any{nil, "1180.5"},
+			Truncated: true,
+			Timezone:  "America/Chicago",
 		},
 		Previous: &reportingservice.RunCardPrevious{
 			RunID:       previousID,
 			CompletedAt: 1_790_000_000,
 			RowCount:    208,
-			Schema:      []reportrows.Column{{ID: "revenue"}, {ID: "customer"}},
+			ColumnIDs:   []string{"revenue", "customer"},
 			Totals:      []any{"990", nil},
 		},
-		Chart: &report.ChartSpec{Type: report.ChartBar, XColumnID: "customer"},
-		Sort:  []report.SortSpec{{ColumnID: "revenue", Direction: dbtype.SortDirectionDesc}},
+		Chart: &ir.Chart{ID: "revenue", Type: ir.ChartBar, X: "customer"},
+		Sort:  []ir.Sort{{Column: "revenue", Desc: true}},
 	}
 
 	model := reportRunDeskCardToModel(card)
@@ -111,12 +113,13 @@ func TestReportRunDeskCardCarriesTheSampleAndComparesTotalsByColumn(t *testing.T
 
 	require.NotNil(t, model.Sample)
 	require.Len(t, model.Sample.Columns, 2)
+	assert.Equal(t, "decimal", model.Sample.Columns[1].Type)
 	assert.Equal(t, "currency", model.Sample.Columns[1].Display.Style)
-	require.NotNil(t, model.Sample.Columns[1].Format)
-	assert.Equal(t, "money", *model.Sample.Columns[1].Format)
-	assert.Equal(t, [][]any{{"ACME", "1180.5"}}, model.Sample.Rows)
+	assert.Equal(t, []any{[]any{"ACME", "1180.5"}, []any{nil, "1180.5"}}, model.Sample.Rows)
+	assert.Equal(t, []int{0, 1}, model.Sample.Levels)
 	assert.Equal(t, []any{nil, "1180.5"}, model.Sample.Totals)
-	assert.True(t, model.Sample.More)
+	assert.True(t, model.Sample.Truncated)
+	assert.Equal(t, "America/Chicago", model.Sample.Timezone)
 
 	require.NotNil(t, model.Previous)
 	assert.Equal(t, previousID.String(), model.Previous.RunID)
@@ -126,8 +129,10 @@ func TestReportRunDeskCardCarriesTheSampleAndComparesTotalsByColumn(t *testing.T
 
 	require.NotNil(t, model.Chart)
 	assert.Equal(t, "bar", model.Chart.Type)
-	assert.Equal(t, []string{}, model.Chart.SeriesIds)
-	assert.Equal(t, "desc", model.Sort[0].Direction)
+	require.NotNil(t, model.Chart.X)
+	assert.Equal(t, "customer", *model.Chart.X)
+	assert.Equal(t, []string{}, model.Chart.Series)
+	assert.Equal(t, []*gqlmodel.ReportRunDeskSort{{Column: "revenue", Desc: true}}, model.Sort)
 }
 
 func TestReportRunDeskCardWithoutASampleSaysWhyItIsWithheld(t *testing.T) {

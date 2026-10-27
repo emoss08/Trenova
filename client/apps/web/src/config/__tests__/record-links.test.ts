@@ -106,6 +106,18 @@ describe("record links", () => {
     });
   });
 
+  it("opens an analysis in Activity's analyses, told apart from an agent run by its id", () => {
+    expect(recordPath("analysis_run", "aanr_1")).toBe(
+      "/admin/agent-control?tab=activity&activity=analyses&analysisRun=aanr_1",
+    );
+    expect(
+      recordAtLocation(
+        "/admin/agent-control",
+        "?tab=activity&activity=analyses&analysisRun=aanr_1",
+      ),
+    ).toEqual({ entityType: "analysis_run", entityId: "aanr_1" });
+  });
+
   it("reads a shared page naming no view as its first record", () => {
     expect(recordAtLocation("/admin/agent-control", "")).toEqual({
       entityType: "agent_run",

@@ -3,19 +3,18 @@ package agentdecisionqueuerepository
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentdefinitioncol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition/agentdefinitiondb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -24,6 +23,16 @@ const (
 	defaultLimit = 25
 	maxLimit     = 100
 )
+
+var pendingColumns = []string{
+	"kind",
+	"id",
+	"created_at",
+	"agent_definition_id",
+	"agent_name",
+	"shadow",
+	"tool_name",
+}
 
 type Params struct {
 	fx.In
@@ -44,167 +53,136 @@ func New(p Params) agentports.AgentDecisionQueueRepository {
 	}
 }
 
-// unionQuery is the queue as one relation: every pending proposal that
+type pendingTotals struct {
+	Total    int64
+	OldestAt *int64
+}
+
+// pendingQueue is the queue as one relation: every pending proposal that
 // stands on its own, and every pending plan as one row, each with the run's
-// agent beside it. Both halves scope by tenant and skip what has expired.
-type unionQuery struct {
-	sql  strings.Builder
-	args []any
-}
-
-func (u *unionQuery) write(fragment string, args ...any) {
-	u.sql.WriteString(fragment)
-	u.args = append(u.args, args...)
-}
-
-// pendingUnion writes the subquery; the caller selects from it as "q" with
-// the columns kind, id, created_at, agent_definition_id, agent_name, shadow
-// and tool_name.
-func pendingUnion(req agentports.ListPendingDecisionsQuery) *unionQuery {
-	proposals := agentcol.AgentProposalColumns
-	plans := agentcol.AgentPlanColumns
-	runs := agentcol.AgentRunColumns
-	definitions := agentdefinitioncol.DefinitionColumns
-
-	u := &unionQuery{}
-	joinRunAndDefinition := func(ownerOrg, ownerBU, ownerRun string) {
-		u.write(" JOIN " + agentcol.AgentRunTable.Name + " AS " + agentcol.AgentRunTable.Alias +
-			" ON " + runs.ID.Qualified() + " = " + ownerRun +
-			" AND " + runs.OrganizationID.Qualified() + " = " + ownerOrg +
-			" AND " + runs.BusinessUnitID.Qualified() + " = " + ownerBU)
-		u.write(
-			" LEFT JOIN " + agentdefinitioncol.DefinitionTable.Name + " AS " + agentdefinitioncol.DefinitionTable.Alias +
-				" ON " + definitions.ID.Qualified() + " = " + runs.AgentDefinitionID.Qualified() +
-				" AND " + definitions.OrganizationID.Qualified() + " = " + runs.OrganizationID.Qualified() +
-				" AND " + definitions.BusinessUnitID.Qualified() + " = " + runs.BusinessUnitID.Qualified(),
+// agent beside it. Both halves are scoped to the tenant and skip what has
+// expired.
+func pendingQueue(req *agentports.ListPendingDecisionsQuery) *keel.CTETable {
+	p := agentdb.AgentProposals
+	pRun := agentdb.AgentRuns.As("prun")
+	pDef := agentdefinitiondb.Definitions.As("pdef")
+	proposals := p.
+		Pick(
+			keel.Text(string(agentports.PendingDecisionProposal)),
+			p.ID,
+			p.CreatedAt,
+			pRun.AgentDefinitionID,
+			pDef.Name.Coalesce(""),
+			pDef.ShadowMode.Coalesce(false),
+			keel.CastText(p.ToolName),
+		).
+		Join(pRun, pRun.ID.EqCol(p.RunID)).
+		LeftJoin(pDef, pDef.ID.EqCol(pRun.AgentDefinitionID)).
+		Where(
+			p.Status.Eq(agent.ProposalStatusPending),
+			keel.Or(p.ExpiresAt.IsNull(), p.ExpiresAt.Eq(0), p.ExpiresAt.Gt(req.Now)),
+			keel.When(!req.AgentDefinitionID.IsNil(), pRun.AgentDefinitionID.Eq(req.AgentDefinitionID)),
+			audience(pDef, req.Audience),
+			p.PlanID.IsNull(),
+			keel.When(req.ToolName != "", p.ToolName.Eq(req.ToolName)),
 		)
-	}
-	commonWhere := func(org, bu, status, expiresAt string) {
-		u.write(
-			" WHERE "+org+" = ? AND "+bu+" = ? AND "+status+" = ?",
-			req.TenantInfo.OrgID,
-			req.TenantInfo.BuID,
-			agent.ProposalStatusPending,
+
+	pl := agentdb.AgentPlans
+	plRun := agentdb.AgentRuns.As("plrun")
+	plDef := agentdefinitiondb.Definitions.As("pldef")
+	step := agentdb.AgentProposals.As("step")
+	plans := pl.
+		Pick(
+			keel.Text(string(agentports.PendingDecisionPlan)),
+			pl.ID,
+			pl.CreatedAt,
+			plRun.AgentDefinitionID,
+			plDef.Name.Coalesce(""),
+			plDef.ShadowMode.Coalesce(false),
+			keel.Text(agent.PlanToolName),
+		).
+		Join(plRun, plRun.ID.EqCol(pl.RunID)).
+		LeftJoin(plDef, plDef.ID.EqCol(plRun.AgentDefinitionID)).
+		Where(
+			pl.Status.Eq(agent.PlanStatusPending),
+			keel.Or(pl.ExpiresAt.IsNull(), pl.ExpiresAt.Eq(0), pl.ExpiresAt.Gt(req.Now)),
+			keel.When(!req.AgentDefinitionID.IsNil(), plRun.AgentDefinitionID.Eq(req.AgentDefinitionID)),
+			audience(plDef, req.Audience),
+			keel.When(req.ToolName != "", keel.Exists(step.Where(
+				step.PlanID.EqCol(pl.ID),
+				step.ToolName.Eq(req.ToolName),
+			))),
 		)
-		u.write(" AND ("+expiresAt+" IS NULL OR "+expiresAt+" = 0 OR "+expiresAt+" > ?)", req.Now)
-		if !req.AgentDefinitionID.IsNil() {
-			u.write(" AND "+runs.AgentDefinitionID.Qualified()+" = ?", req.AgentDefinitionID)
-		}
-		writeAudience(u, req.Audience)
-	}
 
-	u.write("SELECT ? AS kind, "+proposals.ID.Qualified()+" AS id, "+
-		proposals.CreatedAt.Qualified()+" AS created_at, "+
-		runs.AgentDefinitionID.Qualified()+" AS agent_definition_id, "+
-		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
-		"COALESCE("+definitions.ShadowMode.Qualified()+", FALSE) AS shadow, "+
-		proposals.ToolName.Qualified()+" AS tool_name"+
-		" FROM "+agentcol.AgentProposalTable.Name+" AS "+agentcol.AgentProposalTable.Alias,
-		string(agentports.PendingDecisionProposal))
-	joinRunAndDefinition(
-		proposals.OrganizationID.Qualified(),
-		proposals.BusinessUnitID.Qualified(),
-		proposals.RunID.Qualified(),
-	)
-	commonWhere(
-		proposals.OrganizationID.Qualified(),
-		proposals.BusinessUnitID.Qualified(),
-		proposals.Status.Qualified(),
-		proposals.ExpiresAt.Qualified(),
-	)
-	u.write(" AND " + proposals.PlanID.Qualified() + " IS NULL")
-	if req.ToolName != "" {
-		u.write(" AND "+proposals.ToolName.Qualified()+" = ?", req.ToolName)
-	}
-
-	u.write(" UNION ALL ")
-
-	u.write("SELECT ? AS kind, "+plans.ID.Qualified()+" AS id, "+
-		plans.CreatedAt.Qualified()+" AS created_at, "+
-		runs.AgentDefinitionID.Qualified()+" AS agent_definition_id, "+
-		"COALESCE("+definitions.Name.Qualified()+", '') AS agent_name, "+
-		"COALESCE("+definitions.ShadowMode.Qualified()+", FALSE) AS shadow, "+
-		"? AS tool_name"+
-		" FROM "+agentcol.AgentPlanTable.Name+" AS "+agentcol.AgentPlanTable.Alias,
-		string(agentports.PendingDecisionPlan), agent.PlanToolName)
-	joinRunAndDefinition(
-		plans.OrganizationID.Qualified(),
-		plans.BusinessUnitID.Qualified(),
-		plans.RunID.Qualified(),
-	)
-	commonWhere(
-		plans.OrganizationID.Qualified(),
-		plans.BusinessUnitID.Qualified(),
-		plans.Status.Qualified(),
-		plans.ExpiresAt.Qualified(),
-	)
-	if req.ToolName != "" {
-		u.write(" AND EXISTS (SELECT 1 FROM "+agentcol.AgentProposalTable.Name+" AS step"+
-			" WHERE step."+proposals.PlanID.Name+" = "+plans.ID.Qualified()+
-			" AND step."+proposals.OrganizationID.Name+" = "+plans.OrganizationID.Qualified()+
-			" AND step."+proposals.BusinessUnitID.Name+" = "+plans.BusinessUnitID.Qualified()+
-			" AND step."+proposals.ToolName.Name+" = ?)", req.ToolName)
-	}
-
-	return u
+	return keel.CTE("q", pendingColumns, keel.UnionAll(proposals, plans))
 }
 
-// writeAudience keeps what agents the reader may use raised: an agent open to
+// audience keeps what agents the reader may use raised: an agent open to
 // everyone, a system agent, one granted to the reader's roles, and a run of a
 // retired built-in agent, which has no definition to restrict it.
-func writeAudience(u *unionQuery, audience *kernelports.AgentAudience) {
+func audience(
+	def *agentdefinitiondb.DefinitionsTable,
+	audience *kernelports.AgentAudience,
+) keel.Pred {
 	if audience == nil {
-		return
+		return nil
 	}
 
-	definitions := agentdefinitioncol.DefinitionColumns
-	u.write(" AND ("+definitions.ID.Qualified()+" IS NULL OR "+
-		definitions.AccessMode.Qualified()+" = ? OR "+
-		definitions.SystemKey.Qualified()+" IS NOT NULL",
-		agentdefinition.AccessEveryone)
-	if len(audience.GrantedAgentIDs) > 0 {
-		u.write(" OR "+definitions.ID.Qualified()+" IN (?)", bun.List(audience.GrantedAgentIDs))
+	return keel.Or(
+		def.ID.IsNull(),
+		def.AccessMode.Eq(agentdefinition.AccessEveryone),
+		def.SystemKey.IsNotNull(),
+		keel.When(len(audience.GrantedAgentIDs) > 0, def.ID.In(audience.GrantedAgentIDs...)),
+	)
+}
+
+func clampLimit(limit int) int {
+	if limit <= 0 {
+		return defaultLimit
 	}
-	u.write(")")
+
+	return min(limit, maxLimit)
 }
 
 func (r *repository) ListPending(
 	ctx context.Context,
 	req agentports.ListPendingDecisionsQuery,
 ) (*agentports.PendingDecisionsPageRow, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentports.PendingDecisionsPageRow, error) {
-			limit := req.Limit
-			if limit <= 0 {
-				limit = defaultLimit
-			}
-			if limit > maxLimit {
-				limit = maxLimit
-			}
+			limit := clampLimit(req.Limit)
+			q := pendingQueue(&req)
+			createdAt, id := q.Col("created_at"), q.Col("id")
 
-			inner := pendingUnion(req)
-			q := &unionQuery{}
-			q.write("SELECT kind, id, created_at FROM (")
-			q.write(inner.sql.String(), inner.args...)
-			q.write(") AS q")
+			var after keel.Pred
 			if req.After != nil {
-				q.write(" WHERE (created_at < ? OR (created_at = ? AND id < ?))",
-					req.After.CreatedAt, req.After.CreatedAt, req.After.ID)
+				after = keel.Or(
+					createdAt.Lt(req.After.CreatedAt),
+					keel.And(createdAt.Eq(req.After.CreatedAt), id.Lt(req.After.ID.String())),
+				)
 			}
-			q.write(" ORDER BY created_at DESC, id DESC LIMIT ?", limit+1)
 
-			entries := make([]agentports.PendingDecisionEntry, 0, limit+1)
-			if err := r.db.DBForContext(ctx).
-				NewRaw(q.sql.String(), q.args...).
-				Scan(ctx, &entries); err != nil {
+			entries, err := keel.Into[agentports.PendingDecisionEntry](
+				ctx,
+				r.db.Keel(ctx),
+				q.Query().With(q).
+					Pick(q.Col("kind"), id, createdAt, q.Col("shadow")).
+					Where(after).
+					Order(createdAt.Desc(), id.Desc()).
+					Limit(limit+1),
+			)
+			if err != nil {
 				r.l.Error("failed to list pending decisions", zap.Error(err))
 
 				return nil, fmt.Errorf("list pending decisions: %w", err)
 			}
 
 			page := &agentports.PendingDecisionsPageRow{Entries: entries}
+			if page.Entries == nil {
+				page.Entries = []agentports.PendingDecisionEntry{}
+			}
 			if len(entries) > limit {
 				page.Entries = entries[:limit]
 				page.HasNextPage = true
@@ -218,24 +196,16 @@ func (r *repository) ListPending(
 func (r *repository) CountPending(
 	ctx context.Context,
 	req agentports.ListPendingDecisionsQuery,
-) (int, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		inner := pendingUnion(req)
-		q := &unionQuery{}
-		q.write("SELECT COUNT(*) FROM (")
-		q.write(inner.sql.String(), inner.args...)
-		q.write(") AS q")
-		if req.ActionableOnly {
-			q.write(" WHERE NOT shadow")
-		}
-
-		var count int
-		if err := r.db.DBForContext(ctx).
-			NewRaw(q.sql.String(), q.args...).
-			Scan(ctx, &count); err != nil {
+) (keel.RowCount, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (keel.RowCount, error) {
+		q := pendingQueue(&req)
+		count, err := q.Query().With(q).
+			Where(keel.When(req.ActionableOnly, keel.Not(keel.BoolOf(q.Col("shadow"))))).
+			CountEstimate(ctx, r.db.Keel(ctx), pagination.ExactTotalUpTo)
+		if err != nil {
 			r.l.Error("failed to count pending decisions", zap.Error(err))
 
-			return 0, fmt.Errorf("count pending decisions: %w", err)
+			return keel.RowCount{}, fmt.Errorf("count pending decisions: %w", err)
 		}
 
 		return count, nil
@@ -246,34 +216,52 @@ func (r *repository) Summary(
 	ctx context.Context,
 	req agentports.PendingDecisionSummaryRequest,
 ) (*agentports.PendingDecisionSummary, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*agentports.PendingDecisionSummary, error) {
-			listReq := agentports.ListPendingDecisionsQuery{
+			q := pendingQueue(&agentports.ListPendingDecisionsQuery{
 				TenantInfo: req.TenantInfo,
 				Audience:   req.Audience,
 				Now:        req.Now,
-			}
-			db := r.db.DBForContext(ctx)
+			})
+			definitionID, agentName, toolName := q.Col("agent_definition_id"),
+				q.Col("agent_name"),
+				q.Col("tool_name")
 
-			var totals struct {
-				Total    int    `bun:"total"`
-				OldestAt *int64 `bun:"oldest_at"`
-			}
-			inner := pendingUnion(listReq)
-			q := &unionQuery{}
-			q.write("SELECT COUNT(*) AS total, MIN(created_at) AS oldest_at FROM (")
-			q.write(inner.sql.String(), inner.args...)
-			q.write(") AS q")
-			if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &totals); err != nil {
+			var (
+				totals  pendingTotals
+				byAgent []agentports.PendingDecisionAgentCount
+				byTool  []agentports.PendingDecisionToolCount
+			)
+			err := keel.Batch(ctx, r.db.Keel(ctx),
+				keel.IntoValue(
+					q.Query().With(q).Pick(keel.Count(), q.Col("created_at").Min()),
+					&totals,
+				),
+				keel.IntoSlice(
+					q.Query().With(q).
+						Group(definitionID, agentName).
+						Pick(definitionID, agentName, keel.Count()).
+						Order(keel.Count().Desc(), agentName.Asc()),
+					&byAgent,
+				),
+				keel.IntoSlice(
+					q.Query().With(q).
+						Group(toolName).
+						Pick(toolName, keel.Count()).
+						Order(keel.Count().Desc(), toolName.Asc()),
+					&byTool,
+				),
+			)
+			if err != nil {
 				r.l.Error("failed to summarize pending decisions", zap.Error(err))
 
 				return nil, fmt.Errorf("summarize pending decisions: %w", err)
 			}
 
 			summary := &agentports.PendingDecisionSummary{
-				Total:   totals.Total,
+				Total:   int(totals.Total),
 				ByAgent: []agentports.PendingDecisionAgentCount{},
 				ByTool:  []agentports.PendingDecisionToolCount{},
 			}
@@ -281,34 +269,12 @@ func (r *repository) Summary(
 				return summary, nil
 			}
 			summary.OldestAt = totals.OldestAt
-
-			byAgent := make([]agentports.PendingDecisionAgentCount, 0, 8)
-			inner = pendingUnion(listReq)
-			q = &unionQuery{}
-			q.write("SELECT agent_definition_id, agent_name, COUNT(*) AS count FROM (")
-			q.write(inner.sql.String(), inner.args...)
-			q.write(
-				") AS q GROUP BY agent_definition_id, agent_name ORDER BY count DESC, agent_name ASC",
-			)
-			if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &byAgent); err != nil {
-				r.l.Error("failed to count pending decisions by agent", zap.Error(err))
-
-				return nil, fmt.Errorf("count pending decisions by agent: %w", err)
+			if byAgent != nil {
+				summary.ByAgent = byAgent
 			}
-			summary.ByAgent = byAgent
-
-			byTool := make([]agentports.PendingDecisionToolCount, 0, 8)
-			inner = pendingUnion(listReq)
-			q = &unionQuery{}
-			q.write("SELECT tool_name, COUNT(*) AS count FROM (")
-			q.write(inner.sql.String(), inner.args...)
-			q.write(") AS q GROUP BY tool_name ORDER BY count DESC, tool_name ASC")
-			if err := db.NewRaw(q.sql.String(), q.args...).Scan(ctx, &byTool); err != nil {
-				r.l.Error("failed to count pending decisions by tool", zap.Error(err))
-
-				return nil, fmt.Errorf("count pending decisions by tool: %w", err)
+			if byTool != nil {
+				summary.ByTool = byTool
 			}
-			summary.ByTool = byTool
 
 			return summary, nil
 		},
@@ -319,64 +285,47 @@ func (r *repository) ListRecent(
 	ctx context.Context,
 	req agentports.ListRecentDecisionsQuery,
 ) ([]agentports.RecentDecisionEntry, error) {
-	limit := req.Limit
-	if limit <= 0 {
-		limit = defaultLimit
-	}
-	if limit > maxLimit {
-		limit = maxLimit
-	}
+	limit := clampLimit(req.Limit)
 
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]agentports.RecentDecisionEntry, error) {
-			decisions := agentcol.AgentDecisionColumns
-			proposals := agentcol.AgentProposalColumns
-			runs := agentcol.AgentRunColumns
-			definitions := agentdefinitioncol.DefinitionColumns
-			users := tenantcol.UserColumns
+			d := agentdb.AgentDecisions
+			p := agentdb.AgentProposals
+			run := agentdb.AgentRuns
+			def := agentdefinitiondb.Definitions
+			u := tenantdb.Users
 
-			q := &unionQuery{}
-			q.write("SELECT " + decisions.ID.Qualified() + " AS decision_id, " +
-				proposals.ID.Qualified() + " AS proposal_id, " +
-				decisions.Decision.Qualified() + " AS decision, " +
-				decisions.ReasonCode.Qualified() + " AS reason_code, " +
-				"COALESCE(" + decisions.Note.Qualified() + ", '') AS note, " +
-				decisions.DecidedByUserID.Qualified() + " AS decided_by_user_id, " +
-				"COALESCE(" + users.Name.Qualified() + ", '') AS decided_by_name, " +
-				decisions.CreatedAt.Qualified() + " AS decided_at" +
-				" FROM " + agentcol.AgentDecisionTable.Name + " AS " + agentcol.AgentDecisionTable.Alias +
-				" JOIN " + agentcol.AgentProposalTable.Name + " AS " + agentcol.AgentProposalTable.Alias +
-				" ON " + proposals.ID.Qualified() + " = " + decisions.ProposalID.Qualified() +
-				" AND " + proposals.OrganizationID.Qualified() + " = " + decisions.OrganizationID.Qualified() +
-				" AND " + proposals.BusinessUnitID.Qualified() + " = " + decisions.BusinessUnitID.Qualified() +
-				" JOIN " + agentcol.AgentRunTable.Name + " AS " + agentcol.AgentRunTable.Alias +
-				" ON " + runs.ID.Qualified() + " = " + proposals.RunID.Qualified() +
-				" AND " + runs.OrganizationID.Qualified() + " = " + proposals.OrganizationID.Qualified() +
-				" AND " + runs.BusinessUnitID.Qualified() + " = " + proposals.BusinessUnitID.Qualified() +
-				" LEFT JOIN " + agentdefinitioncol.DefinitionTable.Name + " AS " + agentdefinitioncol.DefinitionTable.Alias +
-				" ON " + definitions.ID.Qualified() + " = " + runs.AgentDefinitionID.Qualified() +
-				" AND " + definitions.OrganizationID.Qualified() + " = " + runs.OrganizationID.Qualified() +
-				" AND " + definitions.BusinessUnitID.Qualified() + " = " + runs.BusinessUnitID.Qualified() +
-				" LEFT JOIN " + tenantcol.UserTable.Name + " AS " + tenantcol.UserTable.Alias +
-				" ON " + users.ID.Qualified() + " = " + decisions.DecidedByUserID.Qualified())
-			q.write(" WHERE "+decisions.OrganizationID.Qualified()+" = ? AND "+
-				decisions.BusinessUnitID.Qualified()+" = ? AND "+
-				decisions.CreatedAt.Qualified()+" >= ? AND "+
-				proposals.PlanID.Qualified()+" IS NULL",
-				req.TenantInfo.OrgID, req.TenantInfo.BuID, req.Since)
-			writeAudience(q, req.Audience)
-			q.write(" ORDER BY "+decisions.CreatedAt.Qualified()+" DESC, "+
-				decisions.ID.Qualified()+" DESC LIMIT ?", limit)
-
-			entries := make([]agentports.RecentDecisionEntry, 0, limit)
-			if err := r.db.DBForContext(ctx).
-				NewRaw(q.sql.String(), q.args...).
-				Scan(ctx, &entries); err != nil {
+			entries, err := keel.Into[agentports.RecentDecisionEntry](ctx, r.db.Keel(ctx), d.
+				Pick(
+					d.ID,
+					p.ID,
+					keel.CastText(d.Decision),
+					d.ReasonCode,
+					d.Note.Coalesce(""),
+					d.DecidedByUserID,
+					u.Name.Coalesce(""),
+					d.CreatedAt,
+				).
+				Join(p, p.ID.EqCol(d.ProposalID)).
+				Join(run, run.ID.EqCol(p.RunID)).
+				LeftJoin(def, def.ID.EqCol(run.AgentDefinitionID)).
+				LeftJoin(u, u.ID.EqCol(d.DecidedByUserID)).
+				Where(
+					d.CreatedAt.Gte(req.Since),
+					p.PlanID.IsNull(),
+					audience(def, req.Audience),
+				).
+				Order(d.CreatedAt.Desc(), d.ID.Desc()).
+				Limit(limit))
+			if err != nil {
 				r.l.Error("failed to list recent decisions", zap.Error(err))
 
 				return nil, fmt.Errorf("list recent decisions: %w", err)
+			}
+			if entries == nil {
+				entries = []agentports.RecentDecisionEntry{}
 			}
 
 			return entries, nil

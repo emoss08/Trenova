@@ -108,6 +108,8 @@ type AIFeedbackConnection {
   edges: [AIFeedbackEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "One day of an agent's ratings, in the organization's timezone."

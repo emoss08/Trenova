@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aicorrection"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -14,13 +15,10 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/hashutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook      = (*ExtractionCase)(nil)
 	_ pagination.CursorEntity        = (*ExtractionCase)(nil)
 	_ domaintypes.PostgresSearchable = (*ExtractionCase)(nil)
 )
@@ -41,36 +39,34 @@ type Page struct {
 }
 
 type ExtractionCase struct {
-	bun.BaseModel `bun:"table:extraction_eval_cases,alias:eec" json:"-"`
+	keel.Table `keel:"extraction_eval_cases"`
 
-	pagination.CursorValueSet `json:"-" bun:",embed"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:eec_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	Task                aicorrection.Task      `json:"task"                keel:"task"`
+	Status              CaseStatus             `json:"status"              keel:"status"`
+	Title               string                 `json:"title"               keel:"title"`
+	DocumentKind        string                 `json:"documentKind"        keel:"document_kind,nullzero"`
+	DocumentFingerprint string                 `json:"documentFingerprint" keel:"document_fingerprint,nullzero"`
+	FileName            string                 `json:"fileName"            keel:"file_name,nullzero"`
+	Pages               []Page                 `json:"pages"               keel:"pages,jsonb"`
+	PageCount           int                    `json:"pageCount"           keel:"page_count"`
+	InputHash           string                 `json:"inputHash"           keel:"input_hash"`
+	Expected            *aicorrection.Snapshot `json:"expected"            keel:"expected,jsonb"`
+	ExpectedFieldCount  int                    `json:"expectedFieldCount"  keel:"expected_field_count"`
+	SourceCorrectionID  *pulid.ID              `json:"sourceCorrectionId"  keel:"source_correction_id"`
+	SourceDocumentID    *pulid.ID              `json:"sourceDocumentId"    keel:"source_document_id"`
+	Notes               string                 `json:"notes"               keel:"notes,nullzero"`
+	CreatedByID         pulid.ID               `json:"createdById"         keel:"created_by_id"`
 
-	Task                aicorrection.Task      `json:"task"                bun:"task,type:VARCHAR(50),notnull"`
-	Status              CaseStatus             `json:"status"              bun:"status,type:VARCHAR(20),notnull,default:'Candidate'"`
-	Title               string                 `json:"title"               bun:"title,type:VARCHAR(200),notnull"`
-	DocumentKind        string                 `json:"documentKind"        bun:"document_kind,type:VARCHAR(100),nullzero"`
-	DocumentFingerprint string                 `json:"documentFingerprint" bun:"document_fingerprint,type:VARCHAR(255),nullzero"`
-	FileName            string                 `json:"fileName"            bun:"file_name,type:VARCHAR(255),nullzero"`
-	Pages               []Page                 `json:"pages"               bun:"pages,type:JSONB,notnull"`
-	PageCount           int                    `json:"pageCount"           bun:"page_count,type:INTEGER,notnull,default:0"`
-	InputHash           string                 `json:"inputHash"           bun:"input_hash,type:VARCHAR(64),notnull"`
-	Expected            *aicorrection.Snapshot `json:"expected"            bun:"expected,type:JSONB,notnull"`
-	ExpectedFieldCount  int                    `json:"expectedFieldCount"  bun:"expected_field_count,type:INTEGER,notnull,default:0"`
-	SourceCorrectionID  *pulid.ID              `json:"sourceCorrectionId"  bun:"source_correction_id,type:VARCHAR(100),nullzero"`
-	SourceDocumentID    *pulid.ID              `json:"sourceDocumentId"    bun:"source_document_id,type:VARCHAR(100),nullzero"`
-	Notes               string                 `json:"notes"               bun:"notes,type:TEXT,nullzero"`
-	CreatedByID         pulid.ID               `json:"createdById"         bun:"created_by_id,type:VARCHAR(100),notnull"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
 }
 
 func ComputeInputHash(task aicorrection.Task, fileName string, pages []Page) string {
@@ -181,20 +177,9 @@ func (c *ExtractionCase) GetPostgresSearchConfig() domaintypes.PostgresSearchCon
 	}
 }
 
-func (c *ExtractionCase) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if c.ID.IsNil() {
-			c.ID = pulid.MustNew("eec_")
-		}
-		if c.CreatedAt == 0 {
-			c.CreatedAt = now
-		}
-		c.UpdatedAt = now
-	case *bun.UpdateQuery:
-		c.UpdatedAt = now
+func (c *ExtractionCase) BeforeCreate(_ context.Context) error {
+	if c.Status == "" {
+		c.Status = CaseStatusCandidate
 	}
 
 	return nil

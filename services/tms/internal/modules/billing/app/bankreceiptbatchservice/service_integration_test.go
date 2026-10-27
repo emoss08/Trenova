@@ -7,10 +7,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/billingtest"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceipt/bankreceiptdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/bankreceiptbatch/bankreceiptbatchdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue/billingqueuedb"
+
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/journalpostingrepository"
@@ -32,36 +36,23 @@ import (
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/fiscaltest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/seqgen"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-type batchSeededOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
+type batchSeededOrg = billingtest.Org
 
-type batchSeededUser struct {
-	ID pulid.ID `bun:"id"`
-}
+type batchSeededUser = billingtest.User
 
-type batchSeededShipment struct {
-	ID         pulid.ID `bun:"id"`
-	CustomerID pulid.ID `bun:"customer_id"`
-	ProNumber  string   `bun:"pro_number"`
-	BOL        string   `bun:"bol"`
-}
+type batchSeededShipment = billingtest.Shipment
 
 type batchIntegrationEnv struct {
 	ctx          context.Context
-	db           *bun.DB
+	db           *keel.DB
 	batchService *Service
 	org          batchSeededOrg
 	user         batchSeededUser
@@ -145,12 +136,8 @@ func TestImportBatchPersistsMixedOutcomesAndSupportsReads(t *testing.T) {
 	require.NotEmpty(t, batches)
 	assert.Equal(t, result.Batch.ID, batches[0].ID)
 
-	count, err := env.db.NewSelect().
-		Table("bank_receipts").
-		Where("import_batch_id = ?", result.Batch.ID).
-		Where("organization_id = ?", env.org.ID).
-		Where("business_unit_id = ?", env.org.BusinessUnitID).
-		Count(env.ctx)
+	br := bankreceiptdb.BankReceipts
+	count, err := br.Where(br.ImportBatchID.Eq(result.Batch.ID)).Count(env.ctx, env.db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), count)
 }
@@ -184,21 +171,14 @@ func TestImportBatchRollsBackOnNilReceiptLine(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, result)
 
-	batchCount, err := env.db.NewSelect().
-		Table("bank_receipt_import_batches").
-		Where("reference = ?", "BATCH-ROLLBACK-1").
-		Where("organization_id = ?", env.org.ID).
-		Where("business_unit_id = ?", env.org.BusinessUnitID).
-		Count(env.ctx)
+	batches := bankreceiptbatchdb.BankReceiptBatches
+	batchCount, err := batches.Where(batches.Reference.Eq("BATCH-ROLLBACK-1")).Count(env.ctx, env.db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), batchCount)
 
-	receiptCount, err := env.db.NewSelect().
-		Table("bank_receipts").
-		Where("reference_number = ?", "ROLLBACK-MATCH-1").
-		Where("organization_id = ?", env.org.ID).
-		Where("business_unit_id = ?", env.org.BusinessUnitID).
-		Count(env.ctx)
+	receipts := bankreceiptdb.BankReceipts
+	receiptCount, err := receipts.Where(receipts.ReferenceNumber.Eq("ROLLBACK-MATCH-1")).
+		Count(env.ctx, env.db)
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), receiptCount)
 }
@@ -206,16 +186,7 @@ func TestImportBatchRollsBackOnNilReceiptLine(t *testing.T) {
 func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
@@ -233,64 +204,15 @@ func setupBatchIntegrationEnv(t *testing.T) *batchIntegrationEnv {
 		accountingcontrolrepository.Params{DB: conn, Logger: logger},
 	)
 
-	var org batchSeededOrg
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user batchSeededUser
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	var shipment batchSeededShipment
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("shipments").
-			Column("id", "customer_id", "pro_number", "bol").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &shipment),
-	)
+	seeded := billingtest.SeededTenant(t, ctx, db)
+	ctx = seeded.Ctx
+	org, user, shipment := seeded.Org, seeded.User, seeded.Shipment
 
 	control, err := accountingRepo.GetByOrgID(ctx, org.ID)
 	require.NoError(t, err)
-	control.DefaultCashAccountID = lookupBatchGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1010",
-	)
-	control.DefaultUnappliedCashAccountID = lookupBatchGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"2200",
-	)
-	control.DefaultARAccountID = lookupBatchGLAccount(
-		t,
-		ctx,
-		db,
-		org.ID,
-		org.BusinessUnitID,
-		"1110",
-	)
+	control.DefaultCashAccountID = billingtest.GLAccountID(t, ctx, db, "1010")
+	control.DefaultUnappliedCashAccountID = billingtest.GLAccountID(t, ctx, db, "2200")
+	control.DefaultARAccountID = billingtest.GLAccountID(t, ctx, db, "1110")
 	control.ReconciliationMode = tenant.ReconciliationModeWarnOnly
 	_, err = accountingRepo.Update(ctx, control)
 	require.NoError(t, err)
@@ -375,7 +297,7 @@ func createPostedCustomerPayment(
 		Status:           billingqueue.StatusPosted,
 		BillType:         billingqueue.BillTypeInvoice,
 	}
-	_, err := env.db.NewInsert().Model(queue).Exec(env.ctx)
+	err := billingqueuedb.BillingQueueItems.Create(env.ctx, env.db, queue)
 	require.NoError(t, err)
 	postedAt := now.Unix()
 	inv, err := invoiceRepo.Create(
@@ -457,32 +379,6 @@ func createPostedCustomerPayment(
 		testutil.NewSessionActor(env.user.ID, env.org.ID, env.org.BusinessUnitID),
 	)
 	require.NoError(t, err)
-}
-
-func lookupBatchGLAccount(
-	t *testing.T,
-	ctx context.Context,
-	db *bun.DB,
-	orgID, buID pulid.ID,
-	accountCode string,
-) pulid.ID {
-	t.Helper()
-
-	var row struct {
-		ID pulid.ID `bun:"id"`
-	}
-	require.NoError(
-		t,
-		db.NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", orgID).
-			Where("business_unit_id = ?", buID).
-			Where("account_code = ?", accountCode).
-			Limit(1).
-			Scan(ctx, &row),
-	)
-	return row.ID
 }
 
 func int64Ptr(v int64) *int64 { return &v }

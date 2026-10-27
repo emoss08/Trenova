@@ -2,20 +2,24 @@ package rating
 
 import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryreviewrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulalibraryversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplatereviewrepository"
-	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplatetestcaserepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplateversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/fuelsurchargerepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/rateagreementrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/rateconfirmationrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/rateimportrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixreviewrepository"
+	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratematrixversionrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratequoterepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratesimulationrepository"
 	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/ratezonerepository"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
+	"github.com/emoss08/trenova/internal/modules/rating/app/formulalibraryservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/rateagreementservice"
@@ -27,10 +31,12 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratesimulationservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratezoneservice"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratinghydration"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateconfirmationports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratesimulationports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
 	"go.uber.org/fx"
 )
 
@@ -38,16 +44,20 @@ func SharedOptions() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			formulatemplaterepository.New,
-			formulatemplatetestcaserepository.New,
 			formulatemplatereviewrepository.New,
 			formulatemplateversionrepository.New,
+			formulalibraryrepository.New,
+			formulalibraryversionrepository.New,
+			formulalibraryreviewrepository.New,
+			rateagreementrepository.NewTemplateInputsLister,
 			rateconfirmationrepository.New,
 			rateagreementrepository.New,
 			ratezonerepository.New,
 			ratematrixrepository.New,
+			ratematrixversionrepository.New,
+			ratematrixreviewrepository.New,
 			ratesimulationrepository.New,
 			rateimportrepository.New,
-			ratematrixrepository.NewDensityScaleRepository,
 			ratequoterepository.New,
 			fuelsurchargerepository.NewIndexRepository,
 			fuelsurchargerepository.NewPriceRepository,
@@ -70,9 +80,19 @@ func SharedOptions() fx.Option {
 			func(s *fuelsurchargeservice.Service) fuelsurchargeports.FuelSurchargeResolver { return s },
 			ratinghydration.New,
 			func(h *ratinghydration.Hydrator) ratequoteports.ShipmentRatingHydrator { return h },
+			tariff.NewTables,
+			tariff.NewCodes,
+			tariff.NewSettings,
+			tariff.NewContexts,
+			func(c *tariff.Contexts) tariffports.ContextSource { return c },
+			tariff.NewRater,
+			func(r *tariff.Rater) tariffports.Rater { return r },
+			tariff.NewRecordSource,
+			func(r *tariff.RecordSource) tariffports.RecordBuilder { return r },
 		),
-		formula.Module,
+		tariff.AuthoringModule,
 		formulatemplateservice.Module,
+		formulalibraryservice.Module,
 		rateengine.Module,
 	)
 }

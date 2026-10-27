@@ -5,14 +5,12 @@ package emailrepository_test
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/workspace/adapters/postgres/emailrepository"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/email"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -21,27 +19,21 @@ import (
 )
 
 func TestCreateMessageOnce_Integration(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	defer cleanup()
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
 
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	var orgID, buID string
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
+	).Scan(&orgID, &buID))
+	org := struct{ ID, BusinessUnitID pulid.ID }{
+		ID:             pulid.ID(orgID),
+		BusinessUnitID: pulid.ID(buID),
 	}
-	require.NoError(t, db.NewSelect().
-		Table("organizations").
-		Column("id", "business_unit_id").
-		Limit(1).
-		Scan(ctx, &org))
+	ctx = dbscope.WithTenant(
+		ctx,
+		dbscope.Tenant{OrganizationID: org.ID, BusinessUnitID: org.BusinessUnitID},
+	)
 
 	repo := emailrepository.New(emailrepository.Params{
 		DB:     postgres.NewTestConnection(db),

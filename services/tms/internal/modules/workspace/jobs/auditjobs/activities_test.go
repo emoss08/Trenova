@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
+	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/workspace/domain/audit"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -78,28 +78,6 @@ func (m *mockAuditRepository) GetByID(
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*audit.Entry), args.Error(1)
-}
-
-func (m *mockAuditRepository) GetByResourceAndOperation(
-	ctx context.Context,
-	req *auditports.GetAuditByResourceRequest,
-) ([]*audit.Entry, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*audit.Entry), args.Error(1)
-}
-
-func (m *mockAuditRepository) GetRecentEntries(
-	ctx context.Context,
-	req *auditports.GetRecentEntriesRequest,
-) ([]*audit.Entry, error) {
-	args := m.Called(ctx, req)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]*audit.Entry), args.Error(1)
 }
 
 func (m *mockAuditRepository) DeleteAuditEntries(
@@ -476,8 +454,9 @@ func TestDeleteAuditEntriesActivity_NoRetentionConfig(t *testing.T) {
 
 	mockDataRetentionRepo.On("List", mock.Anything).Return(
 		&pagination.ListResult[*tenant.DataRetention]{
-			Items: []*tenant.DataRetention{},
-			Total: 0,
+			Items:      []*tenant.DataRetention{},
+			Total:      0,
+			TotalExact: true,
 		}, nil)
 
 	env.RegisterActivity(activities.DeleteAuditEntriesActivity)
@@ -530,7 +509,8 @@ func TestDeleteAuditEntriesActivity_WithRetention(t *testing.T) {
 					AuditRetentionPeriod: 30,
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	expectedTimestamp := time.Now().AddDate(0, 0, -30).Unix()

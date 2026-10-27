@@ -8,13 +8,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/modules/places/domain/location"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/trailer"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -36,9 +36,9 @@ func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
 					ID:    id.String(),
 					Label: "John Smith",
 				},
-				cursor: pagination.Cursor{
-					CreatedAt: createdAt,
-					ID:        id,
+				cursor: pagination.PositionCursor{
+					At: createdAt,
+					ID: id,
 				},
 			},
 		},
@@ -52,9 +52,9 @@ func TestSelectOptionConnection_UsesOpaqueEntityCursors(t *testing.T) {
 	require.NotNil(t, result.PageInfo.EndCursor)
 	assert.Equal(t, result.Edges[0].Cursor, *result.PageInfo.EndCursor)
 
-	decoded, err := pagination.DecodeCursor(result.Edges[0].Cursor)
+	decoded, err := pagination.DecodePositionCursor(result.Edges[0].Cursor)
 	require.NoError(t, err)
-	assert.Equal(t, createdAt, decoded.CreatedAt)
+	assert.Equal(t, createdAt, decoded.At)
 	assert.Equal(t, id, decoded.ID)
 }
 
@@ -88,7 +88,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		manufacturer.CreatedAt,
-		equipmentManufacturerSelectOptionItem(manufacturer).cursor.CreatedAt,
+		equipmentManufacturerSelectOptionItem(manufacturer).cursor.At,
 	)
 
 	assert.Equal(t, "TRL-1", trailerSelectOption(&trailer.Trailer{
@@ -161,7 +161,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		shipmentEntity.CreatedAt,
-		shipmentSelectOptionItem(shipmentEntity).cursor.CreatedAt,
+		shipmentSelectOptionItem(shipmentEntity).cursor.At,
 	)
 
 	tenderSender := pulid.MustNew("org_")
@@ -190,7 +190,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		transferEntity.CreatedAt,
-		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).cursor.CreatedAt,
+		ediTransferSelectOptionItemFor(tenderReceiver)(transferEntity).cursor.At,
 	)
 
 	fallbackTransfer := &edi.EDITransfer{
@@ -223,7 +223,7 @@ func TestSelectOptionMappers(t *testing.T) {
 	assert.Equal(
 		t,
 		connectionEntity.CreatedAt,
-		ediConnectionSelectOptionItem(connectionEntity).cursor.CreatedAt,
+		ediConnectionSelectOptionItem(connectionEntity).cursor.At,
 	)
 
 	fallbackConnection := &edi.EDIConnection{
@@ -240,4 +240,62 @@ func TestSelectOptionMappers(t *testing.T) {
 		fallbackConnection.SourceOrganizationID.String()+" → "+fallbackConnection.TargetOrganizationID.String(),
 		fallbackOption.Label,
 	)
+}
+
+func TestSelectOptionListConnection_CarriesAnEstimatedTotal(t *testing.T) {
+	t.Parallel()
+
+	option := func(label string) selectOptionConnectionItem {
+		return selectOptionConnectionItem{
+			option: &gqlmodel.SelectOption{ID: label, Label: label},
+			cursor: pagination.PositionCursor{At: 1780415883, ID: pulid.MustNew("wrk_")},
+		}
+	}
+
+	cases := []struct {
+		name     string
+		result   *pagination.ListResult[string]
+		wantNext bool
+	}{
+		{
+			name:     "a full page past the estimate",
+			result:   &pagination.ListResult[string]{Items: []string{"a", "b"}, Total: 10_001},
+			wantNext: true,
+		},
+		{
+			name:     "a short page under the estimate",
+			result:   &pagination.ListResult[string]{Items: []string{"a"}, Total: 1_250_000},
+			wantNext: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			connection, err := selectOptionListConnection(
+				tc.result,
+				pagination.Info{Limit: 2, Offset: 20_000},
+				option,
+			)
+			require.NoError(t, err)
+
+			require.NotNil(t, connection.TotalCount)
+			assert.Equal(t, tc.result.Total, *connection.TotalCount)
+			assert.False(t, connection.TotalCountExact)
+			assert.Equal(t, tc.wantNext, connection.PageInfo.HasNextPage)
+		})
+	}
+}
+
+func TestSelectOptionConnection_ACountedTotalIsExact(t *testing.T) {
+	t.Parallel()
+
+	connection, err := selectOptionConnection(nil, 0, 0)
+	require.NoError(t, err)
+
+	require.NotNil(t, connection.TotalCount)
+	assert.Equal(t, 0, *connection.TotalCount)
+	assert.True(t, connection.TotalCountExact)
+	assert.False(t, connection.PageInfo.HasNextPage)
 }

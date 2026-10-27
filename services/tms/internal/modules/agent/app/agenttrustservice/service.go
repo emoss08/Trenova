@@ -34,7 +34,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -65,7 +64,7 @@ type Params struct {
 	Logger *zap.Logger
 	// DB holds a tier change and the ledger's record of it in one
 	// transaction, so neither lands without the other.
-	DB           kernelports.DBConnection
+	DB           kernelports.Transactor
 	Trust        agentports.AgentToolTrustRepository
 	Definitions  agentdefinitionports.AgentDefinitionRepository
 	Controls     tenantports.AgentControlRepository
@@ -79,7 +78,7 @@ type Params struct {
 
 type Service struct {
 	l             *zap.Logger
-	db            kernelports.DBConnection
+	db            kernelports.Transactor
 	trust         agentports.AgentToolTrustRepository
 	definitions   agentdefinitionports.AgentDefinitionRepository
 	controls      tenantports.AgentControlRepository
@@ -348,7 +347,7 @@ func (s *Service) moveTier(
 	}
 
 	moved := true
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, err := s.trust.MarkTierChange(txCtx, mark); err != nil {
 			if errortypes.IsVersionMismatchError(err) {
 				moved = false

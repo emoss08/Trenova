@@ -3,13 +3,16 @@ package costingrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/glbalance/glbalancedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/costingcontrolports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -33,6 +36,15 @@ func NewActuals(p ActualsParams) costingcontrolports.CostingActualsRepository {
 	}
 }
 
+type expenseRow struct {
+	GLAccountID pulid.ID
+	NetExpense  decimal.Decimal
+}
+
+func floatSum(e keel.Expr) keel.Float64Expr {
+	return keel.CastFloat64(keel.NumericOf(e).Coalesce(0))
+}
+
 func (r *actualsRepository) SumExpenseByAccounts(
 	ctx context.Context,
 	req *costingcontrolports.SumExpenseByAccountsRequest,
@@ -42,33 +54,27 @@ func (r *actualsRepository) SumExpenseByAccounts(
 			return map[pulid.ID]decimal.Decimal{}, nil
 		}
 
-		log := r.l.With(
-			zap.String("operation", "SumExpenseByAccounts"),
-			zap.String("orgID", req.TenantInfo.OrgID.String()),
-		)
-
-		var rows []struct {
-			GLAccountID pulid.ID        `bun:"gl_account_id"`
-			NetExpense  decimal.Decimal `bun:"net_expense"`
-		}
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			TableExpr("gl_account_balances_by_period AS gb").
-			ColumnExpr("gb.gl_account_id").
-			ColumnExpr(
-				"(COALESCE(SUM(gb.period_debit_minor - gb.period_credit_minor), 0) / 100.0)::numeric AS net_expense",
+		gb := glbalancedb.GLAccountPeriodBalances
+		fp := fiscalperioddb.FiscalPeriods
+		net := keel.NumericOf(gb.PeriodDebitMinor.Sub(gb.PeriodCreditMinor).Sum()).Coalesce(0)
+		rows, err := keel.Into[expenseRow](ctx, r.db.Keel(ctx), gb.
+			Join(fp, fp.ID.EqCol(gb.FiscalPeriodID)).
+			Pick(
+				gb.GLAccountID,
+				keel.CastNumeric(net.Div(keel.Numeric(int64(100)))),
 			).
-			Join("JOIN fiscal_periods AS fp ON fp.id = gb.fiscal_period_id AND fp.organization_id = gb.organization_id AND fp.business_unit_id = gb.business_unit_id").
-			Where("gb.organization_id = ?", req.TenantInfo.OrgID).
-			Where("gb.business_unit_id = ?", req.TenantInfo.BuID).
-			Where("gb.gl_account_id IN (?)", bun.List(req.GLAccountIDs)).
-			Where("fp.start_date >= ?", req.FromDate).
-			Where("fp.end_date <= ?", req.ToDate).
-			GroupExpr("gb.gl_account_id").
-			Scan(ctx, &rows)
+			Where(
+				gb.GLAccountID.In(req.GLAccountIDs...),
+				fp.StartDate.Gte(req.FromDate),
+				fp.EndDate.Lte(req.ToDate),
+			).
+			Group(gb.GLAccountID))
 		if err != nil {
-			log.Error("failed to sum expenses by GL account", zap.Error(err))
+			r.l.Error(
+				"failed to sum expenses by GL account",
+				zap.String("orgID", req.TenantInfo.OrgID.String()),
+				zap.Error(err),
+			)
 			return nil, err
 		}
 
@@ -93,38 +99,43 @@ func (r *actualsRepository) ShipmentMilesByIDs(
 				return []*costingcontrolports.ShipmentMilesRow{}, nil
 			}
 
-			log := r.l.With(
-				zap.String("operation", "ShipmentMilesByIDs"),
-				zap.String("orgID", req.TenantInfo.OrgID.String()),
-			)
-
-			rows := make([]*costingcontrolports.ShipmentMilesRow, 0, len(req.ShipmentIDs))
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("shipments AS sp").
-				ColumnExpr("sp.id AS shipment_id").
-				ColumnExpr("sp.total_charge_amount AS revenue").
-				ColumnExpr(
-					"COALESCE(SUM(sm.distance) FILTER (WHERE sm.loaded AND sm.distance IS NOT NULL), 0)::float8 AS loaded_miles",
+			sp := shipmentdb.Shipments
+			sm := shipmentdb.ShipmentMoves.As("sm")
+			rows, err := keel.Into[costingcontrolports.ShipmentMilesRow](ctx, r.db.Keel(ctx), sp.
+				LeftJoin(
+					sm,
+					sm.ShipmentID.EqCol(sp.ID),
+					sm.Status.Ne(shipment.MoveStatusCanceled),
 				).
-				ColumnExpr(
-					"COALESCE(SUM(sm.distance) FILTER (WHERE NOT sm.loaded AND sm.distance IS NOT NULL), 0)::float8 AS deadhead_miles",
+				Pick(
+					sp.ID,
+					floatSum(
+						sm.Distance.Sum().
+							Filter(keel.And(sm.Loaded.IsTrue(), sm.Distance.IsNotNull())),
+					),
+					floatSum(
+						sm.Distance.Sum().
+							Filter(keel.And(sm.Loaded.IsFalse(), sm.Distance.IsNotNull())),
+					),
+					keel.NumericOf(sp.TotalChargeAmount).Coalesce(0),
+					keel.Count().Filter(keel.And(sm.ID.IsNotNull(), sm.Distance.IsNull())).Gt(0),
 				).
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE sm.id IS NOT NULL AND sm.distance IS NULL) > 0 AS missing_distance",
-				).
-				Join("LEFT JOIN shipment_moves AS sm ON sm.shipment_id = sp.id AND sm.organization_id = sp.organization_id AND sm.business_unit_id = sp.business_unit_id AND sm.status != ?", shipment.MoveStatusCanceled).
-				Where("sp.organization_id = ?", req.TenantInfo.OrgID).
-				Where("sp.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("sp.id IN (?)", bun.List(req.ShipmentIDs)).
-				GroupExpr("sp.id, sp.total_charge_amount").
-				Scan(ctx, &rows)
+				Where(sp.ID.In(req.ShipmentIDs...)).
+				Group(sp.ID, sp.TotalChargeAmount))
 			if err != nil {
-				log.Error("failed to load shipment miles", zap.Error(err))
+				r.l.Error(
+					"failed to load shipment miles",
+					zap.String("orgID", req.TenantInfo.OrgID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
-			return rows, nil
+			out := make([]*costingcontrolports.ShipmentMilesRow, 0, len(rows))
+			for i := range rows {
+				out = append(out, &rows[i])
+			}
+			return out, nil
 		},
 	)
 }
@@ -137,38 +148,37 @@ func (r *actualsRepository) FleetMiles(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*costingcontrolports.FleetMilesResult, error) {
-			log := r.l.With(
-				zap.String("operation", "FleetMiles"),
-				zap.String("orgID", req.TenantInfo.OrgID.String()),
+			sm := shipmentdb.ShipmentMoves
+			sp := shipmentdb.Shipments.As("sp")
+			result, err := keel.IntoOne[costingcontrolports.FleetMilesResult](
+				ctx,
+				r.db.Keel(ctx),
+				sm.
+					Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+					Pick(
+						floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsTrue())),
+						floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsFalse())),
+						floatSum(sm.Distance.Sum()),
+					).
+					Where(
+						sm.Distance.IsNotNull(),
+						sm.Distance.Gt(0),
+						sm.Status.Ne(shipment.MoveStatusCanceled),
+						sp.Status.Ne(shipment.StatusCanceled),
+						sm.CreatedAt.Gte(req.FromDate),
+						sm.CreatedAt.Lte(req.ToDate),
+					),
 			)
-
-			result := new(costingcontrolports.FleetMilesResult)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("shipment_moves AS sm").
-				ColumnExpr(
-					"COALESCE(SUM(sm.distance) FILTER (WHERE sm.loaded), 0)::float8 AS loaded_miles",
-				).
-				ColumnExpr(
-					"COALESCE(SUM(sm.distance) FILTER (WHERE NOT sm.loaded), 0)::float8 AS deadhead_miles",
-				).
-				ColumnExpr("COALESCE(SUM(sm.distance), 0)::float8 AS total_miles").
-				Join("JOIN shipments AS sp ON sp.id = sm.shipment_id AND sp.organization_id = sm.organization_id AND sp.business_unit_id = sm.business_unit_id").
-				Where("sm.organization_id = ?", req.TenantInfo.OrgID).
-				Where("sm.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("sm.distance IS NOT NULL").
-				Where("sm.distance > 0").
-				Where("sm.status != ?", shipment.MoveStatusCanceled).
-				Where("sp.status != ?", shipment.StatusCanceled).
-				Where("sm.created_at >= ?", req.FromDate).
-				Where("sm.created_at <= ?", req.ToDate).
-				Scan(ctx, result)
 			if err != nil {
-				log.Error("failed to aggregate fleet miles", zap.Error(err))
+				r.l.Error(
+					"failed to aggregate fleet miles",
+					zap.String("orgID", req.TenantInfo.OrgID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
-			return result, nil
+			return &result, nil
 		},
 	)
 }
@@ -181,58 +191,67 @@ func (r *actualsRepository) FleetCostAggregates(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*costingcontrolports.FleetCostAggregatesResult, error) {
-			log := r.l.With(
-				zap.String("operation", "FleetCostAggregates"),
-				zap.String("orgID", req.TenantInfo.OrgID.String()),
+			sp := shipmentdb.Shipments
+			sm := shipmentdb.ShipmentMoves.As("sm")
+			totals := keel.CTE(
+				"shipment_totals",
+				[]string{"id", "revenue", "total_miles", "loaded_miles", "deadhead_miles"},
+				sp.
+					LeftJoin(
+						sm,
+						sm.ShipmentID.EqCol(sp.ID),
+						sm.Distance.IsNotNull(),
+						sm.Distance.Gt(0),
+						sm.Status.Ne(shipment.MoveStatusCanceled),
+					).
+					Pick(
+						sp.ID,
+						sp.TotalChargeAmount,
+						floatSum(sm.Distance.Sum()),
+						floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsTrue())),
+						floatSum(sm.Distance.Sum().Filter(sm.Loaded.IsFalse())),
+					).
+					Where(
+						sp.Status.Ne(shipment.StatusCanceled),
+						sp.CreatedAt.Gte(req.FromDate),
+						sp.CreatedAt.Lte(req.ToDate),
+					).
+					Group(sp.ID, sp.TotalChargeAmount),
 			)
 
-			costMilesExpr := "s.total_miles"
+			costMiles := totals.Col("total_miles")
 			if !req.IncludeDeadheadMiles {
-				costMilesExpr = "s.loaded_miles"
+				costMiles = totals.Col("loaded_miles")
 			}
+			moving := totals.Col("total_miles").Gt(0)
 
-			shipmentAggregates := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("shipments AS sp").
-				ColumnExpr("sp.id").
-				ColumnExpr("sp.total_charge_amount AS revenue").
-				ColumnExpr("COALESCE(SUM(sm.distance), 0)::float8 AS total_miles").
-				ColumnExpr(
-					"COALESCE(SUM(sm.distance) FILTER (WHERE sm.loaded), 0)::float8 AS loaded_miles",
-				).
-				ColumnExpr(
-					"COALESCE(SUM(sm.distance) FILTER (WHERE NOT sm.loaded), 0)::float8 AS deadhead_miles",
-				).
-				Join("LEFT JOIN shipment_moves AS sm ON sm.shipment_id = sp.id AND sm.organization_id = sp.organization_id AND sm.business_unit_id = sp.business_unit_id AND sm.distance IS NOT NULL AND sm.distance > 0 AND sm.status != ?", shipment.MoveStatusCanceled).
-				Where("sp.organization_id = ?", req.TenantInfo.OrgID).
-				Where("sp.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("sp.status != ?", shipment.StatusCanceled).
-				Where("sp.created_at >= ?", req.FromDate).
-				Where("sp.created_at <= ?", req.ToDate).
-				GroupExpr("sp.id, sp.total_charge_amount")
-
-			result := new(costingcontrolports.FleetCostAggregatesResult)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				TableExpr("(?) AS s", shipmentAggregates).
-				ColumnExpr("COUNT(*) FILTER (WHERE s.total_miles > 0)::int AS shipment_count").
-				ColumnExpr(
-					"COUNT(*) FILTER (WHERE s.total_miles > 0 AND s.revenue < ? * "+costMilesExpr+")::int AS unprofitable_count",
-					req.CostPerMile,
-				).
-				ColumnExpr(
-					"COALESCE(SUM(s.revenue) FILTER (WHERE s.total_miles > 0), 0)::numeric AS total_revenue",
-				).
-				ColumnExpr("COALESCE(SUM(s.total_miles), 0)::float8 AS total_miles").
-				ColumnExpr("COALESCE(SUM(s.loaded_miles), 0)::float8 AS loaded_miles").
-				ColumnExpr("COALESCE(SUM(s.deadhead_miles), 0)::float8 AS deadhead_miles").
-				Scan(ctx, result)
+			result, err := keel.IntoOne[costingcontrolports.FleetCostAggregatesResult](
+				ctx,
+				r.db.Keel(ctx),
+				totals.Query().With(totals).Pick(
+					keel.Count().Filter(moving),
+					keel.Count().Filter(keel.And(
+						moving,
+						keel.NumericOf(totals.Col("revenue")).LtExpr(
+							keel.Numeric(req.CostPerMile).Mul(costMiles),
+						),
+					)),
+					keel.CastNumeric(keel.NumericOf(keel.Sum(totals.Col("revenue")).Filter(moving)).Coalesce(0)),
+					floatSum(keel.Sum(totals.Col("total_miles"))),
+					floatSum(keel.Sum(totals.Col("loaded_miles"))),
+					floatSum(keel.Sum(totals.Col("deadhead_miles"))),
+				),
+			)
 			if err != nil {
-				log.Error("failed to aggregate fleet cost metrics", zap.Error(err))
+				r.l.Error(
+					"failed to aggregate fleet cost metrics",
+					zap.String("orgID", req.TenantInfo.OrgID.String()),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
-			return result, nil
+			return &result, nil
 		},
 	)
 }

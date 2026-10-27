@@ -1,0 +1,3491 @@
+{
+ "cases": [
+  {
+   "name": "after a root's dot, its fields",
+   "source": [
+    "tariff \"t\"",
+    "let w = shipment.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "weight",
+     "distance",
+     "stops",
+     "hazmat"
+    ],
+    "excludes": [
+     "round",
+     "miles"
+    ],
+    "items": {
+     "weight": {
+      "kind": "field",
+      "detail": "Weight?"
+     }
+    }
+   }
+  },
+  {
+   "name": "a partial field name replaces the word",
+   "source": [
+    "tariff \"t\"",
+    "let w = shipment.wei|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "weight"
+    ],
+    "range": "wei"
+   }
+  },
+  {
+   "name": "names in scope with their types",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi",
+    "let miles = shipment.distance",
+    "charge \"x\" = |"
+   ],
+   "expect": {
+    "includes": [
+     "miles",
+     "rate",
+     "shipment",
+     "tables"
+    ],
+    "items": {
+     "miles": {
+      "kind": "name",
+      "detail": "Distance"
+     },
+     "rate": {
+      "kind": "input",
+      "detail": "Money/mi"
+     }
+    }
+   }
+  },
+  {
+   "name": "money methods",
+   "source": [
+    "tariff \"t\"",
+    "let a = $5",
+    "charge \"x\" = a.|"
+   ],
+   "expect": {
+    "includes": [
+     "roundUp",
+     "round",
+     "max"
+    ],
+    "excludes": [
+     "value",
+     "upper"
+    ],
+    "items": {
+     "roundUp": {
+      "kind": "method",
+      "detail": "roundUp(to: Money) -> Money",
+      "snippet": true,
+      "insert": "roundUp(${1:Money})"
+     }
+    }
+   }
+  },
+  {
+   "name": "a quantity method's placeholder is the quantity's own type",
+   "source": [
+    "tariff \"t\"",
+    "let w = 5 lb",
+    "charge \"x\" = $1 * w.|"
+   ],
+   "expect": {
+    "items": {
+     "roundUp": {
+      "kind": "method",
+      "snippet": true,
+      "insert": "roundUp(${1:Weight})"
+     }
+    }
+   }
+  },
+  {
+   "name": "quantity properties and methods",
+   "source": [
+    "tariff \"t\"",
+    "let w = shipment.distance",
+    "charge \"x\" = $1/mi * w.|"
+   ],
+   "expect": {
+    "includes": [
+     "value",
+     "in",
+     "roundUp",
+     "clamp"
+    ],
+    "items": {
+     "value": {
+      "kind": "property",
+      "detail": "value: Number"
+     }
+    }
+   }
+  },
+  {
+   "name": "optional chaining reads the inner record's fields",
+   "source": [
+    "tariff \"t\"",
+    "let c = shipment.trailerType?.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "code",
+     "description"
+    ],
+    "items": {
+     "code": {
+      "kind": "field",
+      "insert": "code"
+     }
+    }
+   }
+  },
+  {
+   "name": "a dot on an optional rewrites itself to ?.",
+   "source": [
+    "tariff \"t\"",
+    "let a = shipment.pickup.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "arrival",
+     "dwell"
+    ],
+    "items": {
+     "arrival": {
+      "insert": "?.arrival",
+      "range": {
+       "text": "."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "a dot on an optional with a partial name rewrites the dot and the word",
+   "source": [
+    "tariff \"t\"",
+    "let a = shipment.pickup.arr|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "arrival": {
+      "insert": "?.arrival",
+      "range": {
+       "text": ".arr"
+      }
+     }
+    },
+    "range": "arr"
+   }
+  },
+  {
+   "name": "tables lists the table codes",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Zones",
+     "Breaks",
+     "ClassRates"
+    ],
+    "items": {
+     "Zones": {
+      "kind": "table",
+      "detail": "[origin zip3, destination zip3] -> Money/cwt?",
+      "doc": "Zone rates"
+     }
+    }
+   }
+  },
+  {
+   "name": "a table's methods",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.Breaks.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "cell",
+     "band",
+     "interpolate"
+    ],
+    "excludes": [
+     "weight"
+    ],
+    "items": {
+     "band": {
+      "kind": "table",
+      "insert": "band($0)"
+     }
+    }
+   }
+  },
+  {
+   "name": "a table's first axis keys",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.Zones[|]",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "\"752\"",
+     "\"100\""
+    ],
+    "excludes": [
+     "\"606\""
+    ],
+    "items": {
+     "\"752\"": {
+      "kind": "value",
+      "detail": "Zones: origin zip3"
+     }
+    },
+    "order": [
+     "\"100\"",
+     "\"752\""
+    ]
+   }
+  },
+  {
+   "name": "a table's second axis keys",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.Zones[lane.origin.zip3, |]",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "\"606\"",
+     "\"303\"",
+     "lane"
+    ],
+    "excludes": [
+     "\"752\""
+    ],
+    "items": {
+     "\"303\"": {
+      "detail": "Zones: destination zip3"
+     }
+    }
+   }
+  },
+  {
+   "name": "a freight class axis offers its classes as variants",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.ClassRates[|]",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Class50",
+     "Class70"
+    ],
+    "order": [
+     "Class50",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "a range axis offers values",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.Breaks[|]",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "shipment"
+    ],
+    "excludes": [
+     "\"752\""
+    ]
+   }
+  },
+  {
+   "name": "an unknown table offers values",
+   "source": [
+    "tariff \"t\"",
+    "let r = tables.Nope[|]",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "units of the expected dimension after a number",
+   "source": [
+    "tariff \"t\"",
+    "let w: Weight = 5 |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "lb",
+     "cwt",
+     "kg",
+     "t",
+     "ton"
+    ],
+    "excludes": [
+     "mi",
+     "h",
+     "%"
+    ],
+    "items": {
+     "cwt": {
+      "kind": "unit",
+      "detail": "Weight"
+     }
+    }
+   }
+  },
+  {
+   "name": "a partial unit after a number",
+   "source": [
+    "tariff \"t\"",
+    "let w: Distance = 5 k|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "km",
+     "mi"
+    ],
+    "excludes": [
+     "lb"
+    ],
+    "range": "k"
+   }
+  },
+  {
+   "name": "every unit after a number with nothing expected",
+   "source": [
+    "tariff \"t\"",
+    "let w = 5 |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "lb",
+     "mi",
+     "h",
+     "ft3",
+     "°F",
+     "pallet"
+    ],
+    "excludes": [
+     "$"
+    ]
+   }
+  },
+  {
+   "name": "units after a money rate's slash",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "mi",
+     "cwt",
+     "h",
+     "pallet"
+    ],
+    "excludes": [
+     "%",
+     "$"
+    ]
+   }
+  },
+  {
+   "name": "count labels after a number where a count is expected",
+   "source": [
+    "tariff \"t\"",
+    "fn f(n: Int) -> Int = n",
+    "let n = f(3 |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "pallet",
+     "piece",
+     "stop"
+    ],
+    "excludes": [
+     "lb",
+     "%"
+    ]
+   }
+  },
+  {
+   "name": "the active accessorial codes after as",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as |"
+   ],
+   "expect": {
+    "includes": [
+     "FSC",
+     "DET",
+     "HAZ",
+     "XDROP"
+    ],
+    "excludes": [
+     "LIFT",
+     "miles"
+    ],
+    "items": {
+     "FSC": {
+      "kind": "code",
+      "detail": "Fuel surcharge"
+     }
+    }
+   }
+  },
+  {
+   "name": "a partial code after as",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as FS| = $5"
+   ],
+   "expect": {
+    "includes": [
+     "FSC"
+    ],
+    "range": "FS"
+   }
+  },
+  {
+   "name": "no codes when the host has not loaded them",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Fuel\" as |"
+   ],
+   "expect": {
+    "empty": true
+   },
+   "context": {
+    "codes": null
+   }
+  },
+  {
+   "name": "the module roots after use",
+   "source": [
+    "tariff \"t\"",
+    "use |"
+   ],
+   "expect": {
+    "includes": [
+     "std",
+     "org"
+    ],
+    "items": {
+     "std": {
+      "kind": "module"
+     }
+    }
+   }
+  },
+  {
+   "name": "the standard library modules",
+   "source": [
+    "tariff \"t\"",
+    "use std.|"
+   ],
+   "expect": {
+    "includes": [
+     "ltl",
+     "fuel",
+     "time",
+     "accessorials"
+    ],
+    "excludes": [
+     "lanes"
+    ],
+    "items": {
+     "ltl": {
+      "kind": "module",
+      "detail": "std.ltl"
+     }
+    }
+   }
+  },
+  {
+   "name": "the organisation's libraries",
+   "source": [
+    "tariff \"t\"",
+    "use org.|"
+   ],
+   "expect": {
+    "includes": [
+     "accessorials",
+     "lanes"
+    ],
+    "excludes": [
+     "ltl"
+    ]
+   }
+  },
+  {
+   "name": "a module's exported names",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ | }"
+   ],
+   "expect": {
+    "includes": [
+     "deficit",
+     "Break",
+     "Rated",
+     "billed",
+     "densityClass"
+    ],
+    "items": {
+     "deficit": {
+      "kind": "function"
+     },
+     "Break": {
+      "kind": "type"
+     }
+    }
+   }
+  },
+  {
+   "name": "an imported name is not offered twice",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit, | }"
+   ],
+   "expect": {
+    "includes": [
+     "Break"
+    ],
+    "excludes": [
+     "deficit"
+    ]
+   }
+  },
+  {
+   "name": "a library's private names are not exported",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ | }"
+   ],
+   "expect": {
+    "includes": [
+     "hazmat",
+     "liftgate",
+     "Zone",
+     "Fee",
+     "BASE"
+    ],
+    "excludes": [
+     "secret"
+    ],
+    "items": {
+     "Zone": {
+      "kind": "enum"
+     },
+     "hazmat": {
+      "doc": "Hazmat handling per loaded mile."
+     }
+    }
+   }
+  },
+  {
+   "name": "tariff statements at file level",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "charge",
+     "note",
+     "let",
+     "var",
+     "input",
+     "fn",
+     "test",
+     "minimum",
+     "maximum",
+     "round",
+     "use",
+     "if",
+     "for",
+     "match",
+     "require",
+     "fail",
+     "charge (quantity, rate)",
+     "test",
+     "for … in …"
+    ],
+    "excludes": [
+     "return",
+     "given",
+     "expect",
+     "break"
+    ]
+   }
+  },
+  {
+   "name": "a snippet inserts tab stops",
+   "source": [
+    "tariff \"t\"",
+    "|"
+   ],
+   "expect": {
+    "items": {
+     "charge (quantity, rate)": {
+      "kind": "snippet",
+      "snippet": true,
+      "insert": "charge \"${1:Label}\" (quantity: ${2:quantity}, rate: ${3:rate})"
+     },
+     "require let … else": {
+      "kind": "snippet"
+     },
+     "if let": {
+      "kind": "snippet"
+     },
+     "match": {
+      "kind": "keyword"
+     }
+    }
+   }
+  },
+  {
+   "name": "a function body's statements",
+   "source": [
+    "tariff \"t\"",
+    "fn f(a: Money) -> Money {",
+    "  |",
+    "}",
+    "charge \"x\" = f($1)"
+   ],
+   "expect": {
+    "includes": [
+     "return",
+     "let",
+     "if",
+     "for",
+     "require",
+     "a"
+    ],
+    "excludes": [
+     "charge",
+     "note",
+     "minimum",
+     "input",
+     "test",
+     "given",
+     "shipment",
+     "tables"
+    ]
+   }
+  },
+  {
+   "name": "a test's statements",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "given",
+     "expect",
+     "let"
+    ],
+    "excludes": [
+     "note",
+     "minimum",
+     "input",
+     "return",
+     "charge (quantity, rate)",
+     "charge as CODE"
+    ]
+   }
+  },
+  {
+   "name": "a library's file-level statements",
+   "source": [
+    "library \"l\"",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "fn",
+     "const",
+     "type",
+     "enum",
+     "private",
+     "test",
+     "use"
+    ],
+    "excludes": [
+     "charge",
+     "input",
+     "let",
+     "minimum",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "a condition's file-level statements",
+   "source": [
+    "condition \"c\"",
+    "input z: List<Text> = []",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "let",
+     "input",
+     "if",
+     "z",
+     "shipment"
+    ],
+    "excludes": [
+     "charge",
+     "note",
+     "minimum",
+     "test"
+    ]
+   }
+  },
+  {
+   "name": "statements inside a tariff block",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "charge",
+     "note",
+     "let"
+    ],
+    "excludes": [
+     "minimum",
+     "input",
+     "fn",
+     "test",
+     "return",
+     "break"
+    ]
+   }
+  },
+  {
+   "name": "break and continue inside a loop",
+   "source": [
+    "tariff \"t\"",
+    "for s in shipment.stops {",
+    "  |",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "break",
+     "continue",
+     "s",
+     "charge"
+    ]
+   }
+  },
+  {
+   "name": "a function sees its parameters but not the record",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "let miles = shipment.distance",
+    "fn f(a: Money, b: Int) -> Money = |",
+    "charge \"x\" = f($1, 2)"
+   ],
+   "expect": {
+    "includes": [
+     "a",
+     "b",
+     "f"
+    ],
+    "excludes": [
+     "shipment",
+     "tables",
+     "rate",
+     "miles"
+    ],
+    "items": {
+     "a": {
+      "detail": "Money"
+     }
+    }
+   }
+  },
+  {
+   "name": "a test sees the record and the bill but not inputs or bindings",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money = $1",
+    "let miles = shipment.distance",
+    "charge \"Linehaul\" = rate",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment",
+     "total",
+     "lines",
+     "charge",
+     "pickup",
+     "delivery",
+     "commodity"
+    ],
+    "excludes": [
+     "rate",
+     "miles"
+    ],
+    "items": {
+     "total": {
+      "detail": "Money"
+     },
+     "charge": {
+      "kind": "function"
+     }
+    }
+   }
+  },
+  {
+   "name": "a library's test has no bill",
+   "source": [
+    "library \"l\"",
+    "fn f() -> Int = 1",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "f",
+     "pickup"
+    ],
+    "excludes": [
+     "total",
+     "lines",
+     "charge"
+    ]
+   }
+  },
+  {
+   "name": "the expected enum's variants come first",
+   "source": [
+    "tariff \"t\"",
+    "for s in shipment.stops {",
+    "  if s.kind == | {",
+    "  }",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Pickup",
+     "Delivery",
+     "SplitPickup"
+    ],
+    "order": [
+     "Delivery",
+     "s",
+     "shipment"
+    ],
+    "items": {
+     "Delivery": {
+      "kind": "variant",
+      "detail": "StopKind"
+     }
+    }
+   }
+  },
+  {
+   "name": "an annotation sets the expected enum",
+   "source": [
+    "tariff \"t\"",
+    "let k: StopStatus = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "New",
+     "InTransit",
+     "Completed"
+    ],
+    "order": [
+     "New",
+     "shipment"
+    ],
+    "excludes": [
+     "StopStatus.New"
+    ]
+   }
+  },
+  {
+   "name": "a variant two enums share is offered qualified without an expected type",
+   "source": [
+    "tariff \"t\"",
+    "let x = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "StopStatus.New",
+     "ShipmentStatus.New",
+     "Pickup",
+     "Class50",
+     "Mon",
+     "Sell"
+    ],
+    "excludes": [
+     "New"
+    ]
+   }
+  },
+  {
+   "name": "an enum's variants after its name",
+   "source": [
+    "tariff \"t\"",
+    "let k = StopKind.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Pickup",
+     "Delivery",
+     "SplitPickup",
+     "SplitDelivery"
+    ],
+    "excludes": [
+     "weight"
+    ]
+   }
+  },
+  {
+   "name": "a partial qualified variant",
+   "source": [
+    "tariff \"t\"",
+    "let k = StopKind.Del|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Delivery"
+    ],
+    "range": "Del"
+   }
+  },
+  {
+   "name": "a declared enum's variants",
+   "source": [
+    "tariff \"t\"",
+    "enum Zone { North, South }",
+    "let z: Zone = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "order": [
+     "North",
+     "shipment"
+    ],
+    "items": {
+     "North": {
+      "detail": "Zone"
+     }
+    }
+   }
+  },
+  {
+   "name": "the parameters of a call",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit }",
+    "let r = deficit(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "breaks:",
+     "actual:",
+     "allow:",
+     "shipment"
+    ],
+    "order": [
+     "breaks:",
+     "shipment"
+    ],
+    "items": {
+     "actual:": {
+      "kind": "field",
+      "insert": "actual: ",
+      "detail": "Weight"
+     }
+    }
+   }
+  },
+  {
+   "name": "a positional argument fills its parameter",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit }",
+    "let r = deficit([], |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "actual:",
+     "allow:"
+    ],
+    "excludes": [
+     "breaks:"
+    ]
+   }
+  },
+  {
+   "name": "a named argument fills its parameter",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit }",
+    "let r = deficit(actual: 1 lb, |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "breaks:",
+     "allow:"
+    ],
+    "excludes": [
+     "actual:"
+    ]
+   }
+  },
+  {
+   "name": "the value of a named argument is typed by its parameter",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ deficit }",
+    "let w = 5 lb",
+    "let r = deficit(actual: |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "w"
+    ],
+    "excludes": [
+     "breaks:",
+     "allow:"
+    ],
+    "order": [
+     "w",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "a module function's parameters",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "let p = fuel.perMile(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "price:",
+     "peg:",
+     "mpg:"
+    ]
+   }
+  },
+  {
+   "name": "a method's parameters",
+   "source": [
+    "tariff \"t\"",
+    "let a = $5",
+    "charge \"x\" = a.roundUp(|)"
+   ],
+   "expect": {
+    "includes": [
+     "to:",
+     "a"
+    ],
+    "order": [
+     "a",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "a constructor's fields",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [pickup(|)]",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "arrival:",
+     "departure:",
+     "sequence:",
+     "kind:"
+    ],
+    "items": {
+     "arrival:": {
+      "detail": "DateTime?"
+     }
+    }
+   }
+  },
+  {
+   "name": "a charge's options",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" (|)"
+   ],
+   "expect": {
+    "includes": [
+     "quantity:",
+     "rate:"
+    ],
+    "excludes": [
+     "miles"
+    ],
+    "items": {
+     "quantity:": {
+      "insert": "quantity: "
+     }
+    }
+   }
+  },
+  {
+   "name": "a charge option already given",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" (quantity: miles, |)"
+   ],
+   "expect": {
+    "includes": [
+     "rate:"
+    ],
+    "excludes": [
+     "quantity:"
+    ]
+   }
+  },
+  {
+   "name": "a charge option's value",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "charge \"x\" (quantity: |)"
+   ],
+   "expect": {
+    "includes": [
+     "miles",
+     "shipment"
+    ],
+    "excludes": [
+     "quantity:",
+     "rate:"
+    ]
+   }
+  },
+  {
+   "name": "units inside .in(",
+   "source": [
+    "tariff \"t\"",
+    "let w = (shipment.weight ?? 0 lb).in(|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "lb",
+     "cwt",
+     "kg"
+    ],
+    "excludes": [
+     "mi",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "the record's roots after given",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment",
+     "lane",
+     "customer",
+     "fuel",
+     "rating",
+     "input",
+     "tables"
+    ],
+    "excludes": [
+     "total"
+    ]
+   }
+  },
+  {
+   "name": "a root's fields after given",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "weight",
+     "stops",
+     "distance"
+    ],
+    "items": {
+     "weight": {
+      "detail": "Weight?"
+     }
+    }
+   }
+  },
+  {
+   "name": "a nested record's fields after given",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.temperature.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "min",
+     "max"
+    ],
+    "excludes": [
+     "weight"
+    ]
+   }
+  },
+  {
+   "name": "the inputs after given input.",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $1/mi",
+    "input fee: Money = $5",
+    "charge \"x\" = fee + rate * shipment.distance",
+    "test \"t\" {",
+    "  given input.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "rate",
+     "fee"
+    ],
+    "excludes": [
+     "shipment"
+    ],
+    "items": {
+     "rate": {
+      "kind": "input",
+      "detail": "Money/mi"
+     }
+    }
+   }
+  },
+  {
+   "name": "the value of a given is typed by its path",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.status = |",
+    "}"
+   ],
+   "expect": {
+    "order": [
+     "New",
+     "shipment"
+    ],
+    "excludes": [
+     "StopStatus.New"
+    ]
+   }
+  },
+  {
+   "name": "types in an input's annotation",
+   "source": [
+    "tariff \"t\"",
+    "input r: |"
+   ],
+   "expect": {
+    "includes": [
+     "Money",
+     "Weight",
+     "Percent",
+     "List",
+     "Stop",
+     "Commodity",
+     "StopKind",
+     "FreightClass",
+     "Int"
+    ],
+    "excludes": [
+     "shipment",
+     "let"
+    ],
+    "items": {
+     "List": {
+      "insert": "List<$0>",
+      "snippet": true
+     },
+     "Money": {
+      "kind": "type"
+     }
+    }
+   }
+  },
+  {
+   "name": "types in a parameter and a return",
+   "source": [
+    "tariff \"t\"",
+    "fn f(a: |) -> Money = $1",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Money",
+     "Distance"
+    ],
+    "excludes": [
+     "a",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "types after an arrow",
+   "source": [
+    "tariff \"t\"",
+    "fn f(a: Money) -> | = a",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Money",
+     "Bool"
+    ]
+   }
+  },
+  {
+   "name": "types in a record type's field",
+   "source": [
+    "tariff \"t\"",
+    "type B = { from: |, rate: Money }"
+   ],
+   "expect": {
+    "includes": [
+     "Weight",
+     "Money"
+    ]
+   }
+  },
+  {
+   "name": "a declared and an imported type",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ Break }",
+    "type Mine = { a: Int }",
+    "let x: | = []"
+   ],
+   "expect": {
+    "includes": [
+     "Break",
+     "Mine",
+     "Money"
+    ],
+    "items": {
+     "Break": {
+      "kind": "type"
+     }
+    }
+   }
+  },
+  {
+   "name": "a type inside List<",
+   "source": [
+    "tariff \"t\"",
+    "input xs: List<|> = []"
+   ],
+   "expect": {
+    "includes": [
+     "Stop",
+     "Text",
+     "Money"
+    ]
+   }
+  },
+  {
+   "name": "units after Money/ in a type",
+   "source": [
+    "tariff \"t\"",
+    "input r: Money/|"
+   ],
+   "expect": {
+    "includes": [
+     "mi",
+     "cwt",
+     "h"
+    ],
+    "excludes": [
+     "Money",
+     "%"
+    ]
+   }
+  },
+  {
+   "name": "nothing in a comment",
+   "source": [
+    "tariff \"t\"",
+    "// shipment.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "empty": true
+   }
+  },
+  {
+   "name": "nothing in a text's literal part",
+   "source": [
+    "tariff \"t\"",
+    "charge \"ship|ment\" = $1"
+   ],
+   "expect": {
+    "empty": true
+   }
+  },
+  {
+   "name": "nothing in a doc comment",
+   "source": [
+    "tariff \"t\"",
+    "/// The |",
+    "input r: Money = $1"
+   ],
+   "expect": {
+    "empty": true
+   }
+  },
+  {
+   "name": "names inside an interpolation",
+   "source": [
+    "tariff \"t\"",
+    "let miles = shipment.distance",
+    "note \"Miles: {|}\""
+   ],
+   "expect": {
+    "includes": [
+     "miles",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "fields inside an interpolation",
+   "source": [
+    "tariff \"t\"",
+    "note \"Pro {shipment.|}\""
+   ],
+   "expect": {
+    "includes": [
+     "proNumber",
+     "weight"
+    ]
+   }
+  },
+  {
+   "name": "a module alias's functions",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "let p = fuel.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "stepPercent",
+     "perMile"
+    ],
+    "excludes": [
+     "price"
+    ],
+    "items": {
+     "stepPercent": {
+      "kind": "function",
+      "detail": "stepPercent(price: Money/gal, peg: Money/gal, step: Money/gal, perStep: Percent) -> Percent",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "an aliased module's functions",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel as f",
+    "let p = f.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "stepPercent",
+     "perMile"
+    ]
+   }
+  },
+  {
+   "name": "an organisation module's constants and functions",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials",
+    "let p = accessorials.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "hazmat",
+     "liftgate",
+     "BASE"
+    ],
+    "excludes": [
+     "secret",
+     "Zone",
+     "Fee"
+    ]
+   }
+  },
+  {
+   "name": "a record literal's fields",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ Break }",
+    "let b: Break = { | }",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "from:",
+     "rate:",
+     "minimum:"
+    ],
+    "items": {
+     "rate:": {
+      "detail": "Money/cwt"
+     }
+    }
+   }
+  },
+  {
+   "name": "a record literal's remaining fields",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ Break }",
+    "let b: Break = { from: 0 lb, | }",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "rate:",
+     "minimum:"
+    ],
+    "excludes": [
+     "from:"
+    ]
+   }
+  },
+  {
+   "name": "fail after ??",
+   "source": [
+    "tariff \"t\"",
+    "let w = shipment.weight ?? |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "fail",
+     "shipment"
+    ],
+    "items": {
+     "fail": {
+      "kind": "keyword",
+      "insert": "fail \"$0\"",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "fail is not a value elsewhere",
+   "source": [
+    "tariff \"t\"",
+    "let w = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "excludes": [
+     "fail"
+    ],
+    "includes": [
+     "if",
+     "match",
+     "not",
+     "true",
+     "none"
+    ]
+   }
+  },
+  {
+   "name": "a constant sees constants only",
+   "source": [
+    "tariff \"t\"",
+    "const BASE: Money = $5",
+    "input rate: Money = $1",
+    "const OTHER: Money = |",
+    "charge \"x\" = rate"
+   ],
+   "expect": {
+    "includes": [
+     "BASE"
+    ],
+    "excludes": [
+     "shipment",
+     "rate",
+     "tables"
+    ]
+   }
+  },
+  {
+   "name": "an input's default sees constants only",
+   "source": [
+    "tariff \"t\"",
+    "const BASE: Money = $5",
+    "input rate: Money = |",
+    "charge \"x\" = rate"
+   ],
+   "expect": {
+    "includes": [
+     "BASE"
+    ],
+    "excludes": [
+     "shipment",
+     "rate"
+    ]
+   }
+  },
+  {
+   "name": "a lambda's parameter is typed by the list",
+   "source": [
+    "tariff \"t\"",
+    "let d = shipment.stops.where(s => s.|)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "kind",
+     "dwell",
+     "sequence"
+    ],
+    "items": {
+     "dwell": {
+      "detail": "Duration?"
+     }
+    }
+   }
+  },
+  {
+   "name": "a lambda's parameter is in scope in its body",
+   "source": [
+    "tariff \"t\"",
+    "let d = shipment.stops.count(s => |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "s",
+     "shipment"
+    ],
+    "items": {
+     "s": {
+      "detail": "Stop"
+     }
+    }
+   }
+  },
+  {
+   "name": "list methods",
+   "source": [
+    "tariff \"t\"",
+    "let d = shipment.stops.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "where",
+     "map",
+     "count",
+     "sum",
+     "first",
+     "len",
+     "isEmpty",
+     "sortBy",
+     "groupBy"
+    ],
+    "items": {
+     "where": {
+      "insert": "where(${1:s} => $0)",
+      "detail": "where(f: Stop => Bool) -> List<Stop>"
+     },
+     "len": {
+      "kind": "property"
+     }
+    }
+   }
+  },
+  {
+   "name": "text methods",
+   "source": [
+    "tariff \"t\"",
+    "let n = customer.name.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "upper",
+     "trim",
+     "len",
+     "startsWith",
+     "matches"
+    ],
+    "excludes": [
+     "round"
+    ]
+   }
+  },
+  {
+   "name": "date-time properties and methods",
+   "source": [
+    "tariff \"t\"",
+    "let d = rating.date.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "weekday",
+     "hour",
+     "date",
+     "addDays",
+     "addHours"
+    ]
+   }
+  },
+  {
+   "name": "a test's charge lookup offers codes and labels",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $5",
+    "charge \"Fuel\" as FSC = $1",
+    "test \"t\" {",
+    "  expect charge(|) == $5",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "FSC",
+     "\"Linehaul\"",
+     "\"Fuel\""
+    ],
+    "excludes": [
+     "shipment"
+    ],
+    "items": {
+     "FSC": {
+      "kind": "code",
+      "detail": "Fuel surcharge"
+     }
+    }
+   }
+  },
+  {
+   "name": "non-ASCII text before the cursor keeps the range in UTF-16",
+   "source": [
+    "tariff \"t\"",
+    "let café = \"crème 🚚\"",
+    "let w = shipment.wei|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "weight"
+    ],
+    "range": "wei",
+    "items": {
+     "weight": {
+      "detail": "Weight?"
+     }
+    }
+   }
+  },
+  {
+   "name": "a non-ASCII name is completed",
+   "source": [
+    "tariff \"t\"",
+    "note \"🚚 {shipment.pro|}\""
+   ],
+   "expect": {
+    "includes": [
+     "proNumber"
+    ],
+    "range": "pro"
+   }
+  },
+  {
+   "name": "an unclosed call still completes its target's fields",
+   "source": [
+    "tariff \"t\"",
+    "let w = max(shipment.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "weight"
+    ]
+   }
+  },
+  {
+   "name": "an error on an earlier line does not stop completion",
+   "source": [
+    "tariff \"t\"",
+    "let a = 1 +",
+    "let b = )",
+    "let c = customer.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "name",
+     "code"
+    ]
+   }
+  },
+  {
+   "name": "an unclosed block still sees its names",
+   "source": [
+    "tariff \"t\"",
+    "for s in shipment.stops {",
+    "  let d = s.dwell",
+    "  charge \"x\" = |"
+   ],
+   "expect": {
+    "includes": [
+     "d",
+     "s"
+    ]
+   }
+  },
+  {
+   "name": "a binding is not offered on its own line",
+   "source": [
+    "tariff \"t\"",
+    "let miles = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "excludes": [
+     "miles"
+    ]
+   }
+  },
+  {
+   "name": "a later binding is not offered",
+   "source": [
+    "tariff \"t\"",
+    "let a = |",
+    "let later = 2",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "excludes": [
+     "later"
+    ]
+   }
+  },
+  {
+   "name": "a block's names end with the block",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  let inner = 1",
+    "}",
+    "let x = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "excludes": [
+     "inner"
+    ]
+   }
+  },
+  {
+   "name": "if let binds inside its block only",
+   "source": [
+    "tariff \"t\"",
+    "if let w = shipment.weight {",
+    "  let x = |",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "w"
+    ],
+    "items": {
+     "w": {
+      "detail": "Weight"
+     }
+    }
+   }
+  },
+  {
+   "name": "require let binds after it",
+   "source": [
+    "tariff \"t\"",
+    "require let w = shipment.weight else \"no\"",
+    "let x = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "w"
+    ],
+    "items": {
+     "w": {
+      "detail": "Weight"
+     }
+    }
+   }
+  },
+  {
+   "name": "a match arm's binding",
+   "source": [
+    "tariff \"t\"",
+    "let x = match shipment.weight {",
+    "  none => 0 lb",
+    "  w => |",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "w"
+    ]
+   }
+  },
+  {
+   "name": "else after an if block",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "} |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "else"
+    ],
+    "excludes": [
+     "let"
+    ]
+   }
+  },
+  {
+   "name": "the header of an empty file",
+   "source": [
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "tariff",
+     "library",
+     "condition"
+    ],
+    "items": {
+     "tariff": {
+      "insert": "tariff \"${1:Name}\"\n\n$0",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "a match's patterns are the scrutinee's variants",
+   "source": [
+    "tariff \"t\"",
+    "for s in shipment.stops {",
+    "  match s.kind {",
+    "    |",
+    "  }",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Pickup",
+     "Delivery",
+     "_"
+    ],
+    "excludes": [
+     "let",
+     "shipment",
+     "none"
+    ]
+   }
+  },
+  {
+   "name": "an optional's patterns include none",
+   "source": [
+    "tariff \"t\"",
+    "let x = match shipment.freightClass {",
+    "  |",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Class50",
+     "none",
+     "_"
+    ]
+   }
+  },
+  {
+   "name": "a match arm's value after =>",
+   "source": [
+    "tariff \"t\"",
+    "let x = match shipment.hazmat {",
+    "  true => |",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "shipment",
+     "if"
+    ],
+    "excludes": [
+     "_"
+    ]
+   }
+  },
+  {
+   "name": "functions insert a call",
+   "source": [
+    "tariff \"t\"",
+    "fn fee(a: Money) -> Money = a",
+    "fn zero() -> Money = $0",
+    "fn trip(empty: Distance, rate: Money/mi, extra: Money = $5) -> Money = rate * empty + extra",
+    "fn stop(fee: Money = $95) -> Money = fee",
+    "let x = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "fee": {
+      "kind": "function",
+      "insert": "fee(${1:Money})",
+      "snippet": true,
+      "detail": "fee(a: Money) -> Money"
+     },
+     "zero": {
+      "insert": "zero()",
+      "snippet": false
+     },
+     "trip": {
+      "insert": "trip(empty: ${1:Distance}, rate: ${2:Money/mi})",
+      "snippet": true
+     },
+     "stop": {
+      "insert": "stop($0)",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "an imported function",
+   "source": [
+    "tariff \"t\"",
+    "use org.accessorials.{ hazmat }",
+    "let x = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "hazmat": {
+      "kind": "function",
+      "detail": "hazmat(miles: Distance) -> Money",
+      "doc": "Hazmat handling per loaded mile."
+     }
+    }
+   }
+  },
+  {
+   "name": "a constant's detail is its declaration",
+   "source": [
+    "tariff \"t\"",
+    "const BASE: Money = $5",
+    "let x = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "BASE": {
+      "kind": "name",
+      "detail": "const BASE: Money = $5"
+     }
+    }
+   }
+  },
+  {
+   "name": "a module alias is offered",
+   "source": [
+    "tariff \"t\"",
+    "use std.fuel",
+    "let x = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "fuel": {
+      "kind": "module",
+      "detail": "std.fuel"
+     }
+    }
+   }
+  },
+  {
+   "name": "names whose type fits come first",
+   "source": [
+    "tariff \"t\"",
+    "let w = 5 lb",
+    "let m = 3 mi",
+    "let x: Weight = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "order": [
+     "w",
+     "m"
+    ]
+   }
+  },
+  {
+   "name": "an input's doc is its completion doc",
+   "source": [
+    "tariff \"t\"",
+    "/// Paid per loaded mile.",
+    "input rate: Money/mi = $1/mi",
+    "let x = |",
+    "charge \"x\" = rate * shipment.distance"
+   ],
+   "expect": {
+    "items": {
+     "rate": {
+      "doc": "Paid per loaded mile."
+     }
+    }
+   }
+  },
+  {
+   "name": "built-in docs are messages",
+   "source": [
+    "tariff \"t\"",
+    "let a = $5",
+    "charge \"x\" = a.|"
+   ],
+   "expect": {
+    "items": {
+     "abs": {
+      "doc": {
+       "message": "The amount without its sign."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "conversions are offered",
+   "source": [
+    "tariff \"t\"",
+    "let x = |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Number",
+     "Int.parse"
+    ]
+   }
+  },
+  {
+   "name": "a for loop's list",
+   "source": [
+    "tariff \"t\"",
+    "for s in | {",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "shipment"
+    ],
+    "excludes": [
+     "s"
+    ]
+   }
+  },
+  {
+   "name": "a for loop's filter sees the loop variable",
+   "source": [
+    "tariff \"t\"",
+    "for s in shipment.stops where s.| {",
+    "}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "dwell",
+     "kind"
+    ]
+   }
+  },
+  {
+   "name": "a var is offered in its loop",
+   "source": [
+    "tariff \"t\"",
+    "var total = $0",
+    "for s in shipment.stops {",
+    "  total += |",
+    "}",
+    "charge \"x\" = total"
+   ],
+   "expect": {
+    "includes": [
+     "total",
+     "s"
+    ]
+   }
+  },
+  {
+   "name": "a test's local binding",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  let expected = $1",
+    "  expect total == |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "expected",
+     "total"
+    ],
+    "order": [
+     "expected",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "a condition's final expression",
+   "source": [
+    "condition \"c\"",
+    "input zips: List<Text> = []",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "zips",
+     "lane",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "a fuel record's fields",
+   "source": [
+    "tariff \"t\"",
+    "let p = fuel.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "price",
+     "priceDate",
+     "index"
+    ]
+   }
+  },
+  {
+   "name": "a local named like a module shadows nothing",
+   "source": [
+    "tariff \"t\"",
+    "let x = lane.origin.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "zip3",
+     "zones",
+     "city"
+    ]
+   }
+  },
+  {
+   "name": "a percent's value",
+   "source": [
+    "tariff \"t\"",
+    "let p = 18%",
+    "let v = p.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "value"
+    ],
+    "items": {
+     "value": {
+      "kind": "property"
+     }
+    }
+   }
+  },
+  {
+   "name": "a whole number's methods",
+   "source": [
+    "tariff \"t\"",
+    "let n = shipment.stops.len",
+    "let v = n.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "round",
+     "floor",
+     "pow",
+     "clamp"
+    ],
+    "excludes": [
+     "upper",
+     "value"
+    ]
+   }
+  },
+  {
+   "name": "schema field docs are messages",
+   "source": [
+    "tariff \"t\"",
+    "let p = shipment.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "proNumber": {
+      "doc": {
+       "message": "The shipment's PRO number."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "standard library docs are messages",
+   "source": [
+    "tariff \"t\"",
+    "use std.ltl.{ |}",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "deficit": {
+      "doc": {
+       "message": "Deficit weight rating. Prices `actual` at the rate of the heaviest break at or below it (a weight below every break prices at the lightest), and also the next break's minimum weight at the next break's rate; bills whichever costs less, each priced at no less than its break's minimum. With `allow: false` the actual weight is always billed. Refuses to rate when there are no breaks."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "a standard library module's doc is a message",
+   "source": [
+    "tariff \"t\"",
+    "use std.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "items": {
+     "time": {
+      "doc": {
+       "message": "Calendar rules for accessorials: weekends, business hours and time spent within them. Every function reads a date-time on its own clock, in the offset it carries."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "a contextual word is an ordinary name: a parameter called `to` completes as one",
+   "source": [
+    "tariff \"t\"",
+    "fn reach(weight: Weight, to: Weight) -> Weight = weight.roundUp(to: |)",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "to",
+     "weight"
+    ],
+    "items": {
+     "to": {
+      "detail": "Weight"
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a tariff's file level offers property, best and worst",
+   "source": [
+    "tariff \"t\"",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "property",
+     "best",
+     "worst",
+     "test",
+     "property \"…\" { … }",
+     "best with two options"
+    ],
+    "items": {
+     "property \"…\" { … }": {
+      "kind": "snippet",
+      "snippet": true,
+      "insert": "property \"${1:name}\" {\n\tvary ${2:shipment.weight} in ${3:1 lb..40_000 lb}\n\texpect $0\n}"
+     },
+     "best with two options": {
+      "kind": "snippet",
+      "snippet": true,
+      "insert": "best \"${1:Label}\" {\n\toption \"${2:Per mile}\" {\n\t\t$0\n\t}\n\toption \"${3:Flat}\" {\n\t\t\n\t}\n}"
+     },
+     "property": {
+      "kind": "keyword",
+      "doc": {
+       "message": "Declares a property: a rule checked over many shipments, the cases chosen from the `vary` ranges, run on every change like a test."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a library's file level offers property but no choice",
+   "source": [
+    "library \"l\"",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "property",
+     "test",
+     "fn"
+    ],
+    "excludes": [
+     "best",
+     "worst",
+     "charge"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a condition offers neither",
+   "source": [
+    "condition \"c\"",
+    "|"
+   ],
+   "expect": {
+    "excludes": [
+     "property",
+     "best",
+     "worst"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a block where a charge may go offers best and worst",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.hazmat {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "charge",
+     "best",
+     "worst"
+    ],
+    "excludes": [
+     "property",
+     "test"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a function offers no choice",
+   "source": [
+    "tariff \"t\"",
+    "fn f() -> Money {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "excludes": [
+     "best",
+     "worst",
+     "charge"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: inside a choice's braces only option",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "option",
+     "option \"…\" { … }"
+    ],
+    "excludes": [
+     "charge",
+     "let",
+     "best",
+     "input"
+    ],
+    "items": {
+     "option \"…\" { … }": {
+      "kind": "snippet",
+      "snippet": true,
+      "insert": "option \"${1:Label}\" {\n\t$0\n}"
+     },
+     "option": {
+      "kind": "keyword",
+      "doc": {
+       "message": "One method of a `best` or `worst`: its charges are its subtotal, and an option that refuses is out of the running."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: inside an option what a block offers",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Flat\" {",
+    "    |",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "charge",
+     "best",
+     "let"
+    ],
+    "excludes": [
+     "option",
+     "input"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a property's statements",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "vary",
+     "assume",
+     "given",
+     "expect",
+     "vary … in …"
+    ],
+    "excludes": [
+     "fail",
+     "best",
+     "note"
+    ],
+    "items": {
+     "vary … in …": {
+      "kind": "snippet",
+      "insert": "vary ${1:shipment.weight} in ${2:1 lb..40_000 lb}",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a test offers no vary",
+   "source": [
+    "tariff \"t\"",
+    "test \"t\" {",
+    "  |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "given",
+     "expect"
+    ],
+    "excludes": [
+     "vary",
+     "assume"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after vary, the record's roots and input",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment",
+     "input"
+    ],
+    "excludes": [
+     "charge",
+     "vary"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after vary input., the inputs",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary input.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "rate"
+    ],
+    "items": {
+     "rate": {
+      "kind": "input",
+      "detail": "Money/mi"
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: after vary shipment., its fields",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "weight",
+     "distance"
+    ],
+    "excludes": [
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after a vary target, in",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "in"
+    ],
+    "excludes": [
+     "weight",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after vary … in, values",
+   "source": [
+    "tariff \"t\"",
+    "const LOW = 1 lb",
+    "property \"p\" {",
+    "  vary shipment.weight in |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "LOW"
+    ],
+    "excludes": [
+     "in"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a vary name is in scope after its line",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary w in 1 lb..2 lb",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "w",
+     "total"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after an expect's value in a property, the directions",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect total |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "nondecreasing",
+     "nonincreasing"
+    ],
+    "excludes": [
+     "shipment"
+    ],
+    "items": {
+     "nondecreasing": {
+      "kind": "keyword",
+      "doc": {
+       "message": "In a property, `expect value nondecreasing in target`: the value never falls as the varied target grows."
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a test's expect offers no direction",
+   "source": [
+    "tariff \"t\"",
+    "test \"t\" {",
+    "  expect total |",
+    "}"
+   ],
+   "expect": {
+    "excludes": [
+     "nondecreasing",
+     "nonincreasing"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after a direction, in",
+   "source": [
+    "tariff \"t\"",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect total nondecreasing |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "in"
+    ],
+    "excludes": [
+     "nondecreasing"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: after a direction's in, the varied targets",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..=$5/mi",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: rate)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  vary input.rate",
+    "  vary w in [1 lb, 2 lb]",
+    "  expect total nondecreasing in |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment.weight",
+     "input.rate",
+     "w"
+    ],
+    "items": {
+     "input.rate": {
+      "kind": "value"
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: after an input's type, where",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "where",
+     "where …..…"
+    ],
+    "excludes": [
+     "shipment",
+     "rate"
+    ],
+    "items": {
+     "where …..…": {
+      "kind": "snippet",
+      "insert": "where ${1:low}..=${2:high}",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: after an input's default, where",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2.35/mi |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "where",
+     "where …..…"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: in an input's constraint, constants",
+   "source": [
+    "tariff \"t\"",
+    "const LOW = $1/mi",
+    "input rate: Money/mi = $2.35/mi where |",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "LOW"
+    ],
+    "excludes": [
+     "where",
+     "shipment"
+    ]
+   }
+  },
+  {
+   "name": "new syntax: a test offers chosen",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "chosen"
+    ],
+    "items": {
+     "chosen": {
+      "kind": "function",
+      "detail": "chosen(choice: Text) -> Text?",
+      "insert": "chosen(\"${1:label}\")",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: chosen offers the file's first choice label",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $900",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "items": {
+     "chosen": {
+      "insert": "chosen(\"${1:Linehaul}\")",
+      "snippet": true
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: chosen's argument, the file's choice labels",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"A\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    worst \"Floor\" {",
+    "      option \"C\" {",
+    "        charge \"C\" = $2",
+    "      }",
+    "      option \"D\" {",
+    "        charge \"D\" = $3",
+    "      }",
+    "    }",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect chosen(|) == \"A\"",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "\"Linehaul\"",
+     "\"Floor\""
+    ],
+    "excludes": [
+     "\"A\"",
+     "shipment"
+    ],
+    "items": {
+     "\"Floor\"": {
+      "kind": "value",
+      "detail": "worst \"Floor\""
+     }
+    }
+   }
+  },
+  {
+   "name": "new syntax: a test's charge( finds labels inside options",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"A\" {",
+    "    charge \"Flat\" = $1",
+    "  }",
+    "  option \"B\" {",
+    "    charge \"Per mile\" as FSC = $2",
+    "  }",
+    "}",
+    "test \"t\" {",
+    "  expect charge(|) == $1",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "\"Flat\"",
+     "\"Per mile\"",
+     "FSC"
+    ]
+   }
+  },
+  {
+   "name": "the shipment offers requested",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.req| {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "requested"
+    ],
+    "items": {
+     "requested": {
+      "kind": "method",
+      "detail": "requested(code: CODE) -> Bool"
+     }
+    }
+   }
+  },
+  {
+   "name": "shipment.requested offers the active codes",
+   "source": [
+    "tariff \"t\"",
+    "if shipment.requested(|) {",
+    "  charge \"x\" = $1",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "FSC",
+     "DET"
+    ],
+    "excludes": [
+     "LIFT",
+     "shipment"
+    ],
+    "items": {
+     "FSC": {
+      "kind": "code",
+      "detail": "Fuel surcharge"
+     }
+    }
+   }
+  },
+  {
+   "name": "a condition's test offers applies",
+   "source": [
+    "condition \"c\"",
+    "shipment.hazmat",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "applies"
+    ],
+    "excludes": [
+     "total",
+     "lines"
+    ],
+    "items": {
+     "applies": {
+      "detail": "Bool"
+     }
+    }
+   }
+  },
+  {
+   "name": "a stop constructor offers its location's fields",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given shipment.stops = [delivery(|)]",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "legDistance:",
+     "category:",
+     "facilityType:",
+     "requiresAppointment:",
+     "zip3:"
+    ],
+    "items": {
+     "category:": {
+      "detail": "LocationCategory?"
+     }
+    }
+   }
+  },
+  {
+   "name": "a date offers holiday",
+   "source": [
+    "tariff \"t\"",
+    "let h = rating.date.hol|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "holiday"
+    ],
+    "items": {
+     "holiday": {
+      "kind": "property"
+     }
+    }
+   }
+  },
+  {
+   "name": "a given cell offers the table codes",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "test \"t\" {",
+    "  given tables.|",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "Zones",
+     "Breaks",
+     "ClassRates"
+    ],
+    "excludes": [
+     "shipment"
+    ],
+    "items": {
+     "Zones": {
+      "kind": "table"
+     }
+    }
+   }
+  },
+  {
+   "name": "a vary offers no rate tables",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" = $1",
+    "property \"p\" {",
+    "  vary |",
+    "  expect total > $0",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "shipment"
+    ],
+    "excludes": [
+     "tables"
+    ]
+   }
+  },
+  {
+   "name": "after bill's dot, its sums and charge(…)",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = bill.|"
+   ],
+   "expect": {
+    "includes": [
+     "freight",
+     "accessorials",
+     "total",
+     "charge"
+    ],
+    "excludes": [
+     "round",
+     "weight"
+    ],
+    "items": {
+     "freight": {
+      "kind": "field",
+      "detail": "Money"
+     },
+     "charge": {
+      "kind": "method",
+      "detail": "charge(line: CODE | Text) -> Money?"
+     }
+    }
+   }
+  },
+  {
+   "name": "bill is a name in a tariff's own code",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "charge \"Fuel\" as FSC = |"
+   ],
+   "expect": {
+    "includes": [
+     "bill",
+     "shipment"
+    ],
+    "items": {
+     "bill": {
+      "kind": "name",
+      "detail": "Bill"
+     }
+    }
+   }
+  },
+  {
+   "name": "bill is no name in a function or a test, which reads reviews instead",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $100",
+    "test \"t\" {",
+    "  expect |",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "reviews",
+     "total",
+     "lines"
+    ],
+    "excludes": [
+     "bill"
+    ]
+   }
+  },
+  {
+   "name": "bill is no name in a condition",
+   "source": [
+    "condition \"c\"",
+    "|"
+   ],
+   "expect": {
+    "excludes": [
+     "bill",
+     "review"
+    ]
+   }
+  },
+  {
+   "name": "a charge's options include its limits",
+   "source": [
+    "tariff \"t\"",
+    "charge \"x\" (quantity: 1 mi, |) = $1"
+   ],
+   "expect": {
+    "includes": [
+     "rate:",
+     "minimum:",
+     "maximum:"
+    ],
+    "excludes": [
+     "quantity:"
+    ]
+   }
+  },
+  {
+   "name": "bill.charge offers the codes and labels the tariff bills",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "charge \"Fuel\" as FSC = $1",
+    "let x = bill.charge(|)"
+   ],
+   "expect": {
+    "includes": [
+     "FSC",
+     "\"Linehaul\""
+    ]
+   }
+  },
+  {
+   "name": "review starts a statement in a tariff",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Linehaul\" = $1",
+    "|"
+   ],
+   "expect": {
+    "includes": [
+     "review",
+     "best",
+     "note"
+    ]
+   }
+  },
+  {
+   "name": "a date-time offers its time of day and minutes",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "time",
+     "addMinutes",
+     "addHours",
+     "hour"
+    ],
+    "items": {
+     "time": {
+      "kind": "property",
+      "detail": "time: Time"
+     },
+     "addMinutes": {
+      "kind": "method",
+      "detail": "addMinutes(n: Int) -> DateTime"
+     }
+    }
+   }
+  },
+  {
+   "name": "a time of day offers its hour and minute",
+   "source": [
+    "tariff \"t\"",
+    "let t = rating.date.time",
+    "let h = t.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "hour",
+     "minute"
+    ],
+    "excludes": [
+     "addMinutes",
+     "date"
+    ],
+    "items": {
+     "hour": {
+      "kind": "property",
+      "detail": "hour: Int"
+     }
+    }
+   }
+  },
+  {
+   "name": "a freight class offers its number",
+   "source": [
+    "tariff \"t\"",
+    "let c = shipment.freightClass ?? Class50",
+    "let n = c.|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "number"
+    ],
+    "items": {
+     "number": {
+      "kind": "property",
+      "detail": "number: Number"
+     }
+    }
+   }
+  },
+  {
+   "name": "Time is a type",
+   "source": [
+    "tariff \"t\"",
+    "input open: Ti|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Time"
+    ]
+   }
+  },
+  {
+   "name": "a variant range's end offers the enum's variants",
+   "source": [
+    "library \"t\"",
+    "fn weekday(day: Weekday) -> Bool = match day {",
+    "  Mon..=| => true",
+    "  _ => false",
+    "}"
+   ],
+   "expect": {
+    "includes": [
+     "Fri",
+     "Sun"
+    ],
+    "excludes": [
+     "Delivery"
+    ]
+   }
+  },
+  {
+   "name": "a range of freight classes offers the classes",
+   "source": [
+    "tariff \"t\"",
+    "let dense = (shipment.freightClass ?? Class50) in Class50..Cl|",
+    "charge \"x\" = $1"
+   ],
+   "expect": {
+    "includes": [
+     "Class85"
+    ],
+    "range": "Cl"
+   }
+  }
+ ]
+}

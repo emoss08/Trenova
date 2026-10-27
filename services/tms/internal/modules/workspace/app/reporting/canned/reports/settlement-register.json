@@ -1,0 +1,183 @@
+{
+  "key": "settlement-register",
+  "version": "1.0.0",
+  "name": "Driver Settlement Register",
+  "description": "Gross earnings, deductions and net pay per settlement, with the miles and shipment count behind each one",
+  "category": "Payroll",
+  "tags": [
+    "settlements",
+    "payroll",
+    "drivers"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "settlement",
+    "columns": [
+      {
+        "id": "driver_first_name",
+        "label": "First Name",
+        "dimension": {
+          "field": "worker.firstName"
+        }
+      },
+      {
+        "id": "driver_last_name",
+        "label": "Last Name",
+        "dimension": {
+          "field": "worker.lastName"
+        }
+      },
+      {
+        "id": "settlement_number",
+        "label": "Settlement",
+        "dimension": {
+          "field": "settlementNumber"
+        }
+      },
+      {
+        "id": "classification",
+        "label": "Classification",
+        "dimension": {
+          "field": "classification"
+        }
+      },
+      {
+        "id": "status",
+        "label": "Status",
+        "dimension": {
+          "field": "status"
+        }
+      },
+      {
+        "id": "pay_date",
+        "label": "Pay Date",
+        "dimension": {
+          "field": "payDate"
+        },
+        "display": {
+          "style": "date",
+          "dateStyle": "date"
+        }
+      },
+      {
+        "id": "gross_earnings",
+        "label": "Gross Earnings",
+        "measure": {
+          "field": "grossEarningsMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "reimbursements",
+        "label": "Reimbursements",
+        "measure": {
+          "field": "reimbursementsMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "deductions",
+        "label": "Deductions",
+        "measure": {
+          "field": "deductionsMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "net_pay",
+        "label": "Net Pay",
+        "measure": {
+          "field": "netPayMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      },
+      {
+        "id": "total_miles",
+        "label": "Total Miles",
+        "measure": {
+          "field": "totalMiles",
+          "agg": "sum"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "settlement_count",
+        "label": "Settlements",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "payDate",
+          "op": "last_n_days",
+          "param": "windowDays"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "net_pay",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "windowDays",
+        "label": "Window (days)",
+        "type": "int",
+        "required": true,
+        "default": 90
+      }
+    ]
+  }
+}

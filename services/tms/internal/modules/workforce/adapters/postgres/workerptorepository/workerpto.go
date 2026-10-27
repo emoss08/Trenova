@@ -4,27 +4,37 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
-	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const (
+	chartDateLayout   = "2006-01-02"
+	chartDayFormat    = "YYYY-MM-DD"
+	chartDaySeries    = "day_series"
+	chartDaySeriesDay = "day"
+	chartTruncUnit    = "day"
+	chartDayStep      = "1 day"
+)
+
+var ptoErrors = dberror.Mapping{Entity: "WorkerPTO"}
 
 type Params struct {
 	fx.In
@@ -45,145 +55,62 @@ func New(p Params) workerports.WorkerPTORepository {
 	}
 }
 
-func (r *repository) applyListFiltersWithoutSort(
-	q *bun.SelectQuery,
-	req *workerports.ListPTORequest,
-) *bun.SelectQuery {
-	log := r.l.With(
-		zap.String("operation", "applyListFiltersWithoutSort"),
-		zap.Any("request", req),
-	)
-
-	q = querybuilder.ApplyFiltersWithoutSort(
-		q,
-		workercol.WorkerPTOTable.Alias,
-		req.Filter,
-		(*worker.WorkerPTO)(nil),
-	)
-
-	return r.applyListPTOFilters(q, req, log, true)
-}
-
-func (r *repository) applyListPTOFilters(
-	q *bun.SelectQuery,
-	req *workerports.ListPTORequest,
-	log *zap.Logger,
-	includeWorkerRelation bool,
-) *bun.SelectQuery {
-	cols := workercol.WorkerPTOColumns
+func (r *repository) listFilter(req *workerports.ListPTORequest) []keel.Pred {
+	p := workerdb.WorkerPTOs
+	preds := make([]keel.Pred, 0, 5)
 
 	if req.Status != "" {
-		ptoStatus, err := worker.PTOStatusFromString(req.Status)
+		status, err := worker.PTOStatusFromString(req.Status)
 		if err != nil {
-			log.Warn("failed to convert status to PTO status", zap.Error(err))
-			return q
+			r.l.Warn("failed to convert status to PTO status", zap.Error(err))
+		} else {
+			preds = append(preds, p.Status.Eq(status))
 		}
-
-		q = q.Where(cols.Status.Eq(), ptoStatus)
 	}
-
 	if req.Type != "" {
 		ptoType, err := worker.PTOTypeFromString(req.Type)
 		if err != nil {
-			log.Warn("failed to convert type to PTO type", zap.Error(err))
-			return q
+			r.l.Warn("failed to convert type to PTO type", zap.Error(err))
+		} else {
+			preds = append(preds, p.Type.Eq(ptoType))
 		}
-
-		q = q.Where(cols.Type.Eq(), ptoType)
 	}
-
-	if !req.WorkerID.IsNil() {
-		q = q.Where(cols.WorkerID.Eq(), req.WorkerID)
+	if req.WorkerID.IsNotNil() {
+		preds = append(preds, p.WorkerID.Eq(req.WorkerID))
 	}
-
 	if req.StartDateFrom > 0 {
 		if req.Overlapping {
-			q = q.Where(cols.EndDate.Gte(), req.StartDateFrom)
+			preds = append(preds, p.EndDate.Gte(req.StartDateFrom))
 		} else {
-			q = q.Where(cols.StartDate.Gte(), req.StartDateFrom)
+			preds = append(preds, p.StartDate.Gte(req.StartDateFrom))
 		}
 	}
-
 	if req.StartDateTo > 0 {
-		q = q.Where(cols.StartDate.Lte(), req.StartDateTo)
+		preds = append(preds, p.StartDate.Lte(req.StartDateTo))
 	}
 
-	if includeWorkerRelation && req.IncludeWorker {
-		q = q.Relation(workercol.WorkerPTORelations.Worker)
-	}
-
-	return q
-}
-
-func (r *repository) cursorFilterQuery(
-	q *bun.SelectQuery,
-	req *workerports.ListPTORequest,
-) (*bun.SelectQuery, error) {
-	log := r.l.With(
-		zap.String("operation", "cursorFilterQuery"),
-		zap.Any("request", req),
-	)
-
-	q, err := querybuilder.ApplyCursorFilters(
-		q,
-		workercol.WorkerPTOTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*worker.WorkerPTO)(nil),
-	)
-	if err != nil {
-		return q, err
-	}
-	q = r.applyListPTOFilters(q, req, log, true)
-
-	return q, nil
+	return preds
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *workerports.ListPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-			log := r.l.With(
-				zap.String("operation", "List"),
-				zap.Any("request", req),
-			)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := r.db.DBForContext(ctx).
-					NewSelect().
-					Model((*worker.WorkerPTO)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyListFiltersWithoutSort(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count PTO records", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
-					return r.db.DBForContext(ctx).
-						NewSelect().
-						Model(items).
-						ColumnExpr(workercol.WorkerPTOTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.cursorFilterQuery(sq, req)
-				},
-			})
+			p := workerdb.WorkerPTOs
+			result, err := listquery.Connection(ctx, r.db.Keel(ctx), p.Where(r.listFilter(req)...),
+				&listquery.Request[worker.WorkerPTO]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[*worker.WorkerPTO]) *keel.Query[*worker.WorkerPTO] {
+						return q.Load(listquery.When(req.IncludeWorker, p.Worker())...)
+					},
+				})
 			if err != nil {
-				log.Error("failed to scan PTO records", zap.Error(err))
+				r.l.Error("failed to list PTO records", zap.Error(err))
 				return nil, err
 			}
 
@@ -197,29 +124,12 @@ func (r *repository) GetByID(
 	req *workerports.GetPTOByIDRequest,
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.ID.String()),
-		)
-
-		entity := new(worker.WorkerPTO)
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where(workercol.WorkerPTOColumns.ID.Eq(), req.ID).
-					Where(workercol.WorkerPTOColumns.OrganizationID.Eq(), req.TenantInfo.OrgID).
-					Where(workercol.WorkerPTOColumns.BusinessUnitID.Eq(), req.TenantInfo.BuID)
-			})
-
-		if req.IncludeWorker {
-			q = q.Relation(workercol.WorkerPTORelations.Worker)
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get PTO record", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "WorkerPTO")
+		p := workerdb.WorkerPTOs
+		entity, err := p.Where(p.ID.Eq(req.ID)).
+			Load(listquery.When(req.IncludeWorker, p.Worker())...).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, ptoErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -231,18 +141,13 @@ func (r *repository) Create(
 	entity *worker.WorkerPTO,
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
-		log := r.l.With(
-			zap.String("operation", "Create"),
-			zap.String("workerId", entity.WorkerID.String()),
-		)
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create PTO record", zap.Error(err))
-			return nil, err
+		if err := workerdb.WorkerPTOs.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to create PTO record",
+				zap.String("workerId", entity.WorkerID.String()),
+				zap.Error(err),
+			)
+			return nil, ptoErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -254,42 +159,25 @@ func (r *repository) Update(
 	entity *worker.WorkerPTO,
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		cols := workercol.WorkerPTOColumns
-		expectedVersion := entity.Version
-		entity.Version++
-		entity.UpdatedAt = timeutils.NowUnix()
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(
-				cols.Type.Name,
-				cols.StartDate.Name,
-				cols.EndDate.Name,
-				cols.Reason.Name,
-				cols.UpdatedAt.Name,
-				cols.Version.Name,
-			).
-			WherePK().
-			Where(cols.Version.Eq(), expectedVersion).
-			Where(cols.Status.Eq(), worker.PTOStatusRequested).
-			Returning("*").
-			Exec(ctx)
+		p := workerdb.WorkerPTOs
+		rows, err := p.Where(
+			p.ID.Eq(entity.ID),
+			p.Version.Eq(entity.Version),
+			p.Status.Eq(worker.PTOStatusRequested),
+		).UpdateReturning(ctx, r.db.Keel(ctx), p.Type.To(entity.Type), p.StartDate.To(entity.StartDate), p.EndDate.To(entity.EndDate), p.Reason.To(entity.Reason))
 		if err != nil {
-			log.Error("failed to update PTO record", zap.Error(err))
-			return nil, err
+			r.l.Error(
+				"failed to update PTO record",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, ptoErrors.Map(err, entity.ID.String())
+		}
+		if len(rows) == 0 {
+			return nil, dberror.CreateVersionMismatchError("WorkerPTO", entity.ID.String())
 		}
 
-		if err = dberror.CheckRowsAffected(res, "WorkerPTO", entity.ID.String()); err != nil {
-			return nil, err
-		}
-
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
@@ -298,28 +186,16 @@ func (r *repository) GetByIDs(
 	req *workerports.GetPTOsByIDsRequest,
 ) ([]*worker.WorkerPTO, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*worker.WorkerPTO, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByIDs"),
-			zap.Int("count", len(req.IDs)),
-		)
-
-		entities := make([]*worker.WorkerPTO, 0, len(req.IDs))
 		if len(req.IDs) == 0 {
-			return entities, nil
+			return []*worker.WorkerPTO{}, nil
 		}
 
-		cols := workercol.WorkerPTOColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			ColumnExpr(workercol.WorkerPTOTable.All()).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.In(req.IDs))
-			}).
-			Scan(ctx)
+		p := workerdb.WorkerPTOs
+		entities, err := p.Where(p.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get PTO records", zap.Error(err))
+			r.l.Error("failed to get PTO records", zap.Error(err))
 			return nil, err
 		}
 
@@ -332,33 +208,20 @@ func (r *repository) HasOverlap(
 	req *workerports.PTOOverlapRequest,
 ) (bool, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (bool, error) {
-		log := r.l.With(
-			zap.String("operation", "HasOverlap"),
-			zap.String("workerId", req.WorkerID.String()),
-		)
-
-		cols := workercol.WorkerPTOColumns
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*worker.WorkerPTO)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return workercol.WorkerPTOScopeTenant(sq, req.TenantInfo).
-					Where(cols.WorkerID.Eq(), req.WorkerID).
-					Where(cols.Status.In(), bun.In([]worker.PTOStatus{
-						worker.PTOStatusRequested,
-						worker.PTOStatusApproved,
-					})).
-					Where(cols.StartDate.Lte(), req.EndDate).
-					Where(cols.EndDate.Gte(), req.StartDate)
-			})
-
-		if !req.ExcludeID.IsNil() {
-			q = q.Where(cols.ID.Ne(), req.ExcludeID)
-		}
-
-		exists, err := q.Exists(ctx)
+		p := workerdb.WorkerPTOs
+		exists, err := p.Where(
+			p.WorkerID.Eq(req.WorkerID),
+			p.Status.In(worker.PTOStatusRequested, worker.PTOStatusApproved),
+			p.StartDate.Lte(req.EndDate),
+			p.EndDate.Gte(req.StartDate),
+			keel.When(req.ExcludeID.IsNotNil(), p.ID.Ne(req.ExcludeID)),
+		).Exists(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to check PTO overlap", zap.Error(err))
+			r.l.Error(
+				"failed to check PTO overlap",
+				zap.String("workerId", req.WorkerID.String()),
+				zap.Error(err),
+			)
 			return false, err
 		}
 
@@ -371,16 +234,14 @@ func (r *repository) SetBalanceAfter(
 	req *workerports.SetPTOBalanceAfterRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := workercol.WorkerPTOColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*worker.WorkerPTO)(nil)).
-			Set(cols.BalanceAfterDays.Set(), req.BalanceAfterDays).
-			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-				return workercol.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Exec(ctx); err != nil {
+		p := workerdb.WorkerPTOs
+		_, err := p.Where(p.ID.Eq(req.ID)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			p.BalanceAfterDays.To(decimal.NewNullDecimal(req.BalanceAfterDays)),
+			p.Version.Increment(0),
+		)
+		if err != nil {
 			r.l.Error("failed to set PTO balance after", zap.Error(err))
 			return err
 		}
@@ -389,17 +250,27 @@ func (r *repository) SetBalanceAfter(
 	})
 }
 
+func statusAssignments(req *workerports.UpdatePTOStatusRequest) []keel.Assignment {
+	p := workerdb.WorkerPTOs
+	sets := []keel.Assignment{p.Status.To(req.Status)}
+
+	switch req.Status { //nolint:exhaustive // Requested is never a transition target
+	case worker.PTOStatusApproved:
+		sets = append(sets, p.ApproverID.To(req.UserID))
+	case worker.PTOStatusRejected:
+		sets = append(sets, p.RejectorID.To(req.UserID), p.RejectionReason.To(req.Reason))
+	case worker.PTOStatusCancelled:
+		sets = append(sets, p.CancelledByID.To(req.UserID), p.CancellationReason.To(req.Reason))
+	}
+
+	return sets
+}
+
 func (r *repository) UpdateStatus(
 	ctx context.Context,
 	req *workerports.UpdatePTOStatusRequest,
 ) (*worker.WorkerPTO, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*worker.WorkerPTO, error) {
-		log := r.l.With(
-			zap.String("operation", "UpdatePTOStatus"),
-			zap.String("id", req.ID.String()),
-			zap.String("status", string(req.Status)),
-		)
-
 		sources := worker.PTOStatusSourcesFor(req.Status)
 		if len(sources) == 0 {
 			return nil, errortypes.NewValidationError(
@@ -409,52 +280,26 @@ func (r *repository) UpdateStatus(
 			)
 		}
 
-		cols := workercol.WorkerPTOColumns
-		now := timeutils.NowUnix()
-
-		entity := new(worker.WorkerPTO)
-		q := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.UpdatedAt.Set(), now).
-			Set("version = version + 1").
-			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-				sq = workercol.WorkerPTOScopeTenantUpdate(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.In(), bun.In(sources))
-				if req.ExpectedVersion > 0 {
-					sq = sq.Where(cols.Version.Eq(), req.ExpectedVersion)
-				}
-				return sq
-			})
-
-		switch req.Status { //nolint:exhaustive // Requested is never a transition target
-		case worker.PTOStatusApproved:
-			q = q.Set(cols.ApproverID.Set(), req.UserID)
-		case worker.PTOStatusRejected:
-			q = q.Set(cols.RejectorID.Set(), req.UserID).
-				Set(cols.RejectionReason.Set(), req.Reason)
-		case worker.PTOStatusCancelled:
-			q = q.Set(cols.CancelledByID.Set(), req.UserID).
-				Set(cols.CancellationReason.Set(), req.Reason)
-		}
-
-		res, err := q.Returning("*").Exec(ctx)
+		p := workerdb.WorkerPTOs
+		rows, err := p.Where(
+			p.ID.Eq(req.ID),
+			p.Status.In(sources...),
+			keel.When(req.ExpectedVersion > 0, p.Version.Eq(req.ExpectedVersion)),
+		).UpdateReturning(ctx, r.db.Keel(ctx), statusAssignments(req)...)
 		if err != nil {
-			log.Error("failed to update PTO status", zap.Error(err))
+			r.l.Error(
+				"failed to update PTO status",
+				zap.String("id", req.ID.String()),
+				zap.String("status", string(req.Status)),
+				zap.Error(err),
+			)
 			return nil, err
 		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("get rows affected: %w", err)
-		}
-		if rows == 0 {
+		if len(rows) == 0 {
 			return nil, r.explainStatusConflict(ctx, req, sources)
 		}
 
-		return entity, nil
+		return rows[0], nil
 	})
 }
 
@@ -536,38 +381,33 @@ type upcomingPTOFilterParsed struct {
 
 func (r *repository) parseUpcomingPTOFilterParams(
 	req *workerports.ListUpcomingPTORequest,
-	log *zap.Logger,
 ) (*upcomingPTOFilterParsed, error) {
 	out := &upcomingPTOFilterParsed{}
 	if req.Type != "" {
 		ptoType, err := worker.PTOTypeFromString(req.Type)
 		if err != nil {
-			log.Error(
-				"failed to convert type to PTO type, returning original query",
-				zap.Error(err),
-			)
+			r.l.Error("failed to convert type to PTO type", zap.Error(err))
 			return nil, err
 		}
 		out.Type = ptoType
 		out.HasType = true
 	}
+
 	if req.Status != "" {
 		ptoStatus, err := worker.PTOStatusFromString(req.Status)
 		if err != nil {
-			log.Error(
-				"failed to convert status to PTO status, returning original query",
-				zap.Error(err),
-			)
+			r.l.Error("failed to convert status to PTO status", zap.Error(err))
 			return nil, err
 		}
 		out.Status = ptoStatus
 		out.HasStatus = true
 	}
+
 	if req.WorkerID != "" {
 		wrkID, err := pulid.MustParse(req.WorkerID)
 		if err != nil {
-			log.Error(
-				"failed to parse worker ID, returning original query",
+			r.l.Error(
+				"failed to parse worker ID",
 				zap.Error(err),
 				zap.String("workerId", req.WorkerID),
 			)
@@ -576,81 +416,50 @@ func (r *repository) parseUpcomingPTOFilterParams(
 		out.WorkerID = wrkID
 		out.HasWorkerID = true
 	}
+
 	return out, nil
 }
 
-func (r *repository) applyUpcomingPTOWhereGroup(
-	q *bun.SelectQuery,
-	req *workerports.ListUpcomingPTORequest,
-	startFloor, endCeiling int64,
-	parsed *upcomingPTOFilterParsed,
-) *bun.SelectQuery {
-	return q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		sq = sq.Apply(workercol.WorkerPTOApplyTenant(req.Filter.TenantInfo))
-
-		if req.StartDate > 0 {
-			sq = sq.Where(workercol.WorkerPTOColumns.StartDate.Gte(), startFloor)
-		}
-		if req.EndDate > 0 {
-			sq = sq.Where(workercol.WorkerPTOColumns.EndDate.Lte(), endCeiling)
-		}
-		if parsed.HasType {
-			sq = sq.Where(workercol.WorkerPTOColumns.Type.Eq(), parsed.Type)
-		}
-		if parsed.HasStatus {
-			sq = sq.Where(workercol.WorkerPTOColumns.Status.Eq(), parsed.Status)
-		}
-		if parsed.HasWorkerID {
-			sq = sq.Where(workercol.WorkerPTOColumns.WorkerID.Eq(), parsed.WorkerID)
-		}
-		return sq
-	})
-}
-
-func (r *repository) workerRelationApplyForUpcoming(
-	req *workerports.ListUpcomingPTORequest,
-	log *zap.Logger,
-) func(*bun.SelectQuery) *bun.SelectQuery {
-	return func(sq *bun.SelectQuery) *bun.SelectQuery {
-		if req.FleetCodeID == "" {
-			return sq
-		}
-		fleetCodeID, err := pulid.MustParse(req.FleetCodeID)
-		if err != nil {
-			log.Error(
-				"failed to parse fleet code ID, returning original query",
-				zap.Error(err),
-				zap.String("fleetCodeId", req.FleetCodeID),
-			)
-			return sq
-		}
-		return sq.Where(workercol.WorkerColumns.FleetCodeID.Eq(), fleetCodeID)
-	}
-}
-
-func (r *repository) filterUpcomingPTOQuery(
-	q *bun.SelectQuery,
-	req *workerports.ListUpcomingPTORequest,
-) *bun.SelectQuery {
-	log := r.l.With(
-		zap.String("operation", "filterUpcomingPTOQuery"),
-		zap.Any("request", req),
-	)
+func (r *repository) upcomingFilter(req *workerports.ListUpcomingPTORequest) []keel.Pred {
+	log := r.l.With(zap.String("operation", "ListUpcoming"))
 	timezone := timeutils.NormalizeTimezone(req.Timezone)
 	startFloor, endCeiling := r.upcomingPTODateBoundaries(req, timezone, log)
-	parsed, err := r.parseUpcomingPTOFilterParams(req, log)
+
+	parsed, err := r.parseUpcomingPTOFilterParams(req)
 	if err != nil {
-		return q
+		return nil
 	}
 
-	q = r.applyUpcomingPTOWhereGroup(q, req, startFloor, endCeiling, parsed)
-	return q.RelationWithOpts(workercol.WorkerPTORelations.Worker, bun.RelationOpts{
-		Apply: r.workerRelationApplyForUpcoming(req, log),
-	})
+	p := workerdb.WorkerPTOs
+	preds := []keel.Pred{
+		keel.When(req.StartDate > 0, p.StartDate.Gte(startFloor)),
+		keel.When(req.EndDate > 0, p.EndDate.Lte(endCeiling)),
+		keel.When(parsed.HasType, p.Type.Eq(parsed.Type)),
+		keel.When(parsed.HasStatus, p.Status.Eq(parsed.Status)),
+		keel.When(parsed.HasWorkerID, p.WorkerID.Eq(parsed.WorkerID)),
+	}
+
+	if req.FleetCodeID != "" {
+		fleetCodeID, parseErr := pulid.MustParse(req.FleetCodeID)
+		if parseErr != nil {
+			log.Error(
+				"failed to parse fleet code ID",
+				zap.Error(parseErr),
+				zap.String("fleetCodeId", req.FleetCodeID),
+			)
+		} else {
+			preds = append(preds, p.Worker().FleetCodeID.Eq(fleetCodeID))
+		}
+	}
+
+	return preds
 }
 
 func upcomingPTOCursorFilter(req *workerports.ListUpcomingPTORequest) *pagination.QueryOptions {
-	filter := *req.Filter
+	filter := pagination.QueryOptions{}
+	if req.Filter != nil {
+		filter = *req.Filter
+	}
 	filter.Sort = []domaintypes.SortField{
 		{
 			Field:     "startDate",
@@ -661,84 +470,33 @@ func upcomingPTOCursorFilter(req *workerports.ListUpcomingPTORequest) *paginatio
 			Direction: dbtype.SortDirectionAsc,
 		},
 	}
+
 	return &filter
-}
-
-func (r *repository) cursorUpcomingPTOQuery(
-	q *bun.SelectQuery,
-	req *workerports.ListUpcomingPTORequest,
-) (*bun.SelectQuery, error) {
-	q = r.filterUpcomingPTOQuery(q, req)
-	filter := upcomingPTOCursorFilter(req)
-	err := querybuilder.ApplyCursorSort(
-		q,
-		workercol.WorkerPTOTable.Alias,
-		filter,
-		req.Cursor,
-		(*worker.WorkerPTO)(nil),
-	)
-	if err != nil {
-		return q, err
-	}
-	req.Filter.CursorSort = filter.CursorSort
-	req.Filter.CursorColumns = filter.CursorColumns
-
-	return q, nil
 }
 
 func (r *repository) ListUpcoming(
 	ctx context.Context,
 	req *workerports.ListUpcomingPTORequest,
 ) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*worker.WorkerPTO], error) {
-			log := r.l.With(
-				zap.String("operation", "ListUpcoming"),
-				zap.Any("request", req),
+			p := workerdb.WorkerPTOs
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				p.Where(r.upcomingFilter(req)...),
+				&listquery.Request[worker.WorkerPTO]{
+					Filter: upcomingPTOCursorFilter(req),
+					Cursor: req.Cursor,
+					Shape: func(q *keel.Query[*worker.WorkerPTO]) *keel.Query[*worker.WorkerPTO] {
+						return q.Load(p.Worker())
+					},
+				},
 			)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := r.db.DBForContext(ctx).
-					NewSelect().
-					Model((*worker.WorkerPTO)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.filterUpcomingPTOQuery(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error(
-						"failed to count upcoming PTOs",
-						zap.Error(err),
-						zap.Any("request", req),
-					)
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*worker.WorkerPTO]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(items *[]*worker.WorkerPTO) *bun.SelectQuery {
-					return r.db.DBForContext(ctx).
-						NewSelect().
-						Model(items).
-						ColumnExpr(workercol.WorkerPTOTable.All())
-				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.cursorUpcomingPTOQuery(sq, req)
-				},
-			})
 			if err != nil {
-				log.Error(
-					"failed to scan and count upcoming PTOs",
-					zap.Error(err),
-					zap.Any("request", req),
-				)
+				r.l.Error("failed to list upcoming PTOs", zap.Error(err))
 				return nil, err
 			}
 
@@ -747,11 +505,17 @@ func (r *repository) ListUpcoming(
 	)
 }
 
-type ptoAggregateRow struct {
-	Date    string `bun:"date"`
-	Type    string `bun:"type"`
-	Count   int    `bun:"count"`
-	Workers string `bun:"workers"`
+type ptoDayRow struct {
+	Date      string
+	Type      worker.PTOType
+	WorkerID  pulid.ID
+	FirstName string
+	LastName  string
+}
+
+type ptoAggregate struct {
+	Count   int
+	Workers []workerports.PTOChartWorker
 }
 
 type chartFieldSetter struct {
@@ -794,17 +558,11 @@ func (r *repository) GetChartData(
 	ctx context.Context,
 	req *workerports.PTOChartRequest,
 ) ([]*workerports.PTOChartDataPoint, error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*workerports.PTOChartDataPoint, error) {
-			log := r.l.With(
-				zap.String("operation", "GetPTOChart"),
-				zap.Any("req", req),
-			)
-
-			db := r.db.DBForContext(ctx)
-
+			log := r.l.With(zap.String("operation", "GetPTOChart"))
 			timezone := timeutils.NormalizeTimezone(req.Timezone)
 			fromDayStartUnix, toDayEndUnix, err := r.calculateChartDateBoundaries(req, timezone)
 			if err != nil {
@@ -812,126 +570,131 @@ func (r *repository) GetChartData(
 				return nil, err
 			}
 
-			dateSeries, err := r.generateDateSeries(ctx, db, req, timezone, log)
+			ptoType, workerID, err := chartFilters(req)
 			if err != nil {
+				log.Error("invalid PTO chart filter", zap.Error(err))
 				return nil, err
 			}
 
-			ptoData, err := r.fetchPTOData(ctx, db, req, fromDayStartUnix, toDayEndUnix, log)
+			loc, err := time.LoadLocation(timezone)
 			if err != nil {
+				log.Error("failed to load chart timezone", zap.Error(err))
+				return nil, fmt.Errorf("load timezone %q: %w", timezone, err)
+			}
+
+			ptoData, err := keel.Into[ptoDayRow](
+				ctx,
+				r.db.Keel(ctx),
+				chartDaysQuery(&chartDaysParams{
+					timezone:     timezone,
+					from:         req.StartDateFrom,
+					to:           req.StartDateTo,
+					overlapStart: fromDayStartUnix,
+					overlapEnd:   toDayEndUnix,
+					ptoType:      ptoType,
+					workerID:     workerID,
+				}),
+			)
+			if err != nil {
+				log.Error("failed to get PTO chart data", zap.Error(err))
 				return nil, err
 			}
 
-			ptoMap := r.aggregatePTOData(ptoData)
-
-			return r.buildPTOChartDataQuery(dateSeries, ptoMap, log), nil
+			return r.buildPTOChartDataQuery(
+				chartDates(req.StartDateFrom, req.StartDateTo, loc),
+				r.aggregatePTOData(ptoData),
+			), nil
 		},
 	)
 }
 
-func (r *repository) generateDateSeries(
-	ctx context.Context,
-	db bun.IDB,
-	req *workerports.PTOChartRequest,
-	timezone string,
-	log *zap.Logger,
-) ([]string, error) {
-	var dateSeries []string
-	err := db.NewSelect().
-		ColumnExpr("to_char(gs.day, 'YYYY-MM-DD')").
-		TableExpr(
-			`generate_series(
-				date_trunc('day', to_timestamp(?::bigint) AT TIME ZONE ?),
-				date_trunc('day', to_timestamp(?::bigint) AT TIME ZONE ?),
-				interval '1 day'
-			) AS gs(day)`,
-			req.StartDateFrom,
-			timezone,
-			req.StartDateTo,
-			timezone,
-		).
-		OrderExpr("gs.day ASC").
-		Scan(ctx, &dateSeries)
-	if err != nil {
-		log.Error("failed to generate date series", zap.Error(err))
-		return nil, err
-	}
-
-	return dateSeries, nil
+type chartDaysParams struct {
+	timezone     string
+	from         int64
+	to           int64
+	overlapStart int64
+	overlapEnd   int64
+	ptoType      worker.PTOType
+	workerID     pulid.ID
 }
 
-func (r *repository) fetchPTOData(
-	ctx context.Context,
-	db bun.IDB,
-	req *workerports.PTOChartRequest,
-	fromDayStartUnix int64,
-	toDayEndUnix int64,
-	log *zap.Logger,
-) ([]ptoAggregateRow, error) {
-	q := r.buildPTOQuery(db, req, fromDayStartUnix, toDayEndUnix)
-
-	if err := r.applyPTOFilters(q, req, log); err != nil {
-		return nil, err
+func chartDaysQuery(p *chartDaysParams) *keel.Query[*worker.WorkerPTO] {
+	pto := workerdb.WorkerPTOs
+	wrk := workerdb.Workers
+	zone := keel.Text(p.timezone)
+	localDay := func(ts keel.NumberValue) keel.TimeExpr {
+		return keel.DateTrunc(chartTruncUnit, keel.ToTimestamp(ts).AtTimeZone(zone))
 	}
+	series := keel.Rows(
+		chartDaySeries,
+		[]string{chartDaySeriesDay},
+		keel.GenerateTimeSeries(
+			localDay(pto.StartDate).Greatest(localDay(keel.Int64(p.from))),
+			localDay(pto.EndDate).Least(localDay(keel.Int64(p.to))),
+			chartDayStep,
+		),
+	)
+	day := keel.TimeOf(series.Col(chartDaySeriesDay)).ToChar(chartDayFormat)
 
-	q = q.Group("date", "wpto.type")
-	q = q.Order("date", "wpto.type")
-
-	var ptoData []ptoAggregateRow
-	err := q.Scan(ctx, &ptoData)
-	if err != nil {
-		log.Error("failed to get PTO chart data", zap.Error(err))
-		return nil, err
-	}
-
-	return ptoData, nil
+	return pto.
+		Join(wrk, wrk.ID.EqCol(pto.WorkerID)).
+		JoinLateral(series).
+		DistinctOn(day, pto.Type, pto.WorkerID).
+		Pick(day, pto.Type, pto.WorkerID, wrk.FirstName, wrk.LastName).
+		Where(
+			pto.Status.Eq(worker.PTOStatusApproved),
+			pto.EndDate.Gte(p.overlapStart),
+			pto.StartDate.Lte(p.overlapEnd),
+			keel.When(p.ptoType != "", pto.Type.Eq(p.ptoType)),
+			keel.When(!p.workerID.IsNil(), pto.WorkerID.Eq(p.workerID)),
+		).
+		Order(day.Asc(), pto.Type.Asc(), pto.WorkerID.Asc())
 }
 
-func (r *repository) buildPTOQuery(
-	db bun.IDB,
-	req *workerports.PTOChartRequest,
-	fromDayStartUnix int64,
-	toDayEndUnix int64,
-) *bun.SelectQuery {
-	timezone := timeutils.NormalizeTimezone(req.Timezone)
+func chartDates(from, to int64, loc *time.Location) []string {
+	start := calendarDay(from, loc)
+	end := calendarDay(to, loc)
+	dates := make([]string, 0)
+	for day := start; !day.After(end); day = day.AddDate(0, 0, 1) {
+		dates = append(dates, day.Format(chartDateLayout))
+	}
 
-	return db.NewSelect().
-		ColumnExpr("to_char(day_series.day, 'YYYY-MM-DD') as date").
-		ColumnExpr("wpto.type::text as type").
-		ColumnExpr("COUNT(DISTINCT wpto.worker_id)::int as count").
-		ColumnExpr("json_agg(DISTINCT jsonb_build_object('id', wrk.id, 'firstName', wrk.first_name, 'lastName', wrk.last_name, 'ptoType', wpto.type::text))::text as workers").
-		TableExpr("worker_pto wpto").
-		Join("INNER JOIN workers wrk ON wpto.worker_id = wrk.id AND wpto.organization_id = wrk.organization_id AND wpto.business_unit_id = wrk.business_unit_id").
-		Join(
-			`CROSS JOIN LATERAL generate_series(
-				GREATEST(
-					date_trunc('day', to_timestamp(wpto.start_date) AT TIME ZONE ?),
-					date_trunc('day', to_timestamp(?::bigint) AT TIME ZONE ?)
-				),
-				LEAST(
-					date_trunc('day', to_timestamp(wpto.end_date) AT TIME ZONE ?),
-					date_trunc('day', to_timestamp(?::bigint) AT TIME ZONE ?)
-				),
-				interval '1 day'
-			) AS day_series(day)`,
-			timezone,
-			req.StartDateFrom,
-			timezone,
-			timezone,
-			req.StartDateTo,
-			timezone,
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(workercol.WorkerPTOColumns.OrganizationID.Eq(), req.Filter.TenantInfo.OrgID).
-				Where(workercol.WorkerPTOColumns.BusinessUnitID.Eq(), req.Filter.TenantInfo.BuID).
-				Where(workercol.WorkerPTOColumns.Status.Eq(), worker.PTOStatusApproved).
-				WhereGroup(" AND ", func(innerSq *bun.SelectQuery) *bun.SelectQuery {
-					return innerSq.
-						Where(workercol.WorkerPTOColumns.EndDate.Gte(), fromDayStartUnix).
-						Where(workercol.WorkerPTOColumns.StartDate.Lte(), toDayEndUnix)
-				})
-		})
+	return dates
+}
+
+func calendarDay(ts int64, loc *time.Location) time.Time {
+	local := time.Unix(ts, 0).In(loc)
+	return time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, time.UTC)
+}
+
+func chartFilters(
+	req *workerports.PTOChartRequest,
+) (ptoType worker.PTOType, workerID pulid.ID, err error) {
+	if req.Type != "" && !strings.EqualFold(req.Type, "all") {
+		parsed, parseErr := worker.PTOTypeFromString(req.Type)
+		if parseErr != nil {
+			return "", pulid.Nil, errortypes.NewValidationError(
+				"type",
+				errortypes.ErrInvalid,
+				"type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity",
+			)
+		}
+		ptoType = parsed
+	}
+
+	if req.WorkerID != "" {
+		parsed, parseErr := pulid.MustParse(req.WorkerID)
+		if parseErr != nil {
+			return "", pulid.Nil, errortypes.NewValidationError(
+				"workerId",
+				errortypes.ErrInvalidFormat,
+				"workerId must be a valid ID",
+			)
+		}
+		workerID = parsed
+	}
+
+	return ptoType, workerID, nil
 }
 
 func (r *repository) calculateChartDateBoundaries(
@@ -949,56 +712,28 @@ func (r *repository) calculateChartDateBoundaries(
 	return fromDayStartUnix, toDayEndUnix, nil
 }
 
-func (r *repository) applyPTOFilters(
-	q *bun.SelectQuery,
-	req *workerports.PTOChartRequest,
-	log *zap.Logger,
-) error {
-	if req.Type != "" && !strings.EqualFold(req.Type, "all") {
-		ptoType, err := worker.PTOTypeFromString(req.Type)
-		if err != nil {
-			log.Error("invalid PTO type", zap.Error(err), zap.String("type", req.Type))
-			return errortypes.NewValidationError(
-				"type",
-				errortypes.ErrInvalid,
-				"type must be one of: all, Personal, Vacation, Sick, Holiday, Bereavement, Maternity, Paternity",
-			)
-		}
-
-		q.Where("wpto.type = ?", ptoType)
-	}
-
-	if req.WorkerID != "" {
-		wrkID, err := pulid.MustParse(req.WorkerID)
-		if err != nil {
-			log.Error(
-				"failed to parse worker ID",
-				zap.Error(err),
-				zap.String("workerId", req.WorkerID),
-			)
-
-			return errortypes.NewValidationError(
-				"workerId",
-				errortypes.ErrInvalidFormat,
-				"workerId must be a valid ID",
-			)
-		}
-
-		q.Where("wpto.worker_id = ?", wrkID)
-	}
-
-	return nil
-}
-
 func (r *repository) aggregatePTOData(
-	ptoData []ptoAggregateRow,
-) map[string]map[string]ptoAggregateRow {
-	ptoMap := make(map[string]map[string]ptoAggregateRow)
-	for _, row := range ptoData {
-		if ptoMap[row.Date] == nil {
-			ptoMap[row.Date] = make(map[string]ptoAggregateRow)
+	rows []ptoDayRow,
+) map[string]map[worker.PTOType]*ptoAggregate {
+	ptoMap := make(map[string]map[worker.PTOType]*ptoAggregate)
+	for _, row := range rows {
+		byType := ptoMap[row.Date]
+		if byType == nil {
+			byType = make(map[worker.PTOType]*ptoAggregate)
+			ptoMap[row.Date] = byType
 		}
-		ptoMap[row.Date][row.Type] = row
+		agg := byType[row.Type]
+		if agg == nil {
+			agg = &ptoAggregate{}
+			byType[row.Type] = agg
+		}
+		agg.Count++
+		agg.Workers = append(agg.Workers, workerports.PTOChartWorker{
+			ID:        row.WorkerID.String(),
+			FirstName: row.FirstName,
+			LastName:  row.LastName,
+			PTOType:   row.Type.String(),
+		})
 	}
 
 	return ptoMap
@@ -1006,8 +741,7 @@ func (r *repository) aggregatePTOData(
 
 func (r *repository) buildPTOChartDataQuery(
 	dateSeries []string,
-	ptoMap map[string]map[string]ptoAggregateRow,
-	log *zap.Logger,
+	ptoMap map[string]map[worker.PTOType]*ptoAggregate,
 ) []*workerports.PTOChartDataPoint {
 	result := make([]*workerports.PTOChartDataPoint, 0, len(dateSeries))
 	for _, date := range dateSeries {
@@ -1015,47 +749,19 @@ func (r *repository) buildPTOChartDataQuery(
 			Date:    date,
 			Workers: make(map[string][]workerports.PTOChartWorker),
 		}
-		for _, ptoType := range []worker.PTOType{
-			worker.PTOTypeVacation,
-			worker.PTOTypeSick,
-			worker.PTOTypeHoliday,
-			worker.PTOTypeBereavement,
-			worker.PTOTypeMaternity,
-			worker.PTOTypePaternity,
-			worker.PTOTypePersonal,
-		} {
+		for ptoType := range chartTypeSetters {
 			dataPoint.Workers[ptoType.String()] = []workerports.PTOChartWorker{}
 		}
 
-		if dayData, exists := ptoMap[date]; exists {
-			for rawType, row := range dayData {
-				var workers []workerports.PTOChartWorker
-				if err := sonic.UnmarshalString(row.Workers, &workers); err != nil {
-					log.Error(
-						"failed to parse worker details",
-						zap.Error(err),
-						zap.String("date", date),
-						zap.String("type", rawType),
-					)
-
-					workers = []workerports.PTOChartWorker{}
-				}
-
-				ptoType, err := worker.PTOTypeFromString(rawType)
-				if err != nil {
-					log.Warn("unsupported PTO type in chart data", zap.String("type", rawType))
-					continue
-				}
-
-				setter, ok := chartTypeSetters[ptoType]
-				if !ok {
-					log.Warn("missing chart type setter", zap.String("type", rawType))
-					continue
-				}
-
-				setter.countSetter(dataPoint, row.Count)
-				dataPoint.Workers[setter.workerKey] = workers
+		for ptoType, agg := range ptoMap[date] {
+			setter, ok := chartTypeSetters[ptoType]
+			if !ok {
+				r.l.Warn("missing chart type setter", zap.String("type", ptoType.String()))
+				continue
 			}
+
+			setter.countSetter(dataPoint, agg.Count)
+			dataPoint.Workers[setter.workerKey] = agg.Workers
 		}
 
 		result = append(result, dataPoint)

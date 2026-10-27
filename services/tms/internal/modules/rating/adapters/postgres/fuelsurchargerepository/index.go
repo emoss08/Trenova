@@ -3,21 +3,20 @@ package fuelsurchargerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/fuelsurchargecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/fuelsurcharge/fuelsurchargedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/fuelsurchargeports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var fuelIndexErrors = dberror.Mapping{Entity: "FuelIndex"}
 
 type IndexParams struct {
 	fx.In
@@ -38,75 +37,26 @@ func NewIndexRepository(p IndexParams) fuelsurchargeports.FuelIndexRepository {
 	}
 }
 
-func applyFuelIndexColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(fuelsurchargecol.FuelIndexTable.All())
-	}
-
-	return q.Column(columns...)
-}
-
 func (r *indexRepository) ListConnection(
 	ctx context.Context,
 	req *fuelsurchargeports.ListFuelIndexConnectionRequest,
 ) (*pagination.CursorListResult[*fuelsurcharge.FuelIndex], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*fuelsurcharge.FuelIndex], error) {
-			log := r.l.With(
-				zap.String("operation", "ListConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*fuelsurcharge.FuelIndex)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							fuelsurchargecol.FuelIndexTable.Alias,
-							req.Filter,
-							(*fuelsurcharge.FuelIndex)(nil),
-						)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count fuel indices", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*fuelsurcharge.FuelIndex]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*fuelsurcharge.FuelIndex) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyFuelIndexColumns(sq, req.FuelIndexColumns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							fuelsurchargecol.FuelIndexTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*fuelsurcharge.FuelIndex)(nil),
-						)
-					},
-				})
+				r.db.Keel(ctx),
+				fuelsurchargedb.FuelIndexes.Query(),
+				&listquery.Request[fuelsurcharge.FuelIndex]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.FuelIndexColumns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan fuel indices", zap.Error(err))
+				r.l.Error("failed to list fuel indices", zap.Error(err))
 				return nil, err
 			}
 
@@ -115,41 +65,31 @@ func (r *indexRepository) ListConnection(
 	)
 }
 
+func activeIndexesQuery(source *fuelsurcharge.IndexSource) *keel.Query[*fuelsurcharge.FuelIndex] {
+	fi := fuelsurchargedb.FuelIndexes
+	q := fi.Where(fi.IsActive.IsTrue())
+	if source != nil {
+		q = q.Where(fi.Source.Eq(*source))
+	}
+
+	return q.Order(fi.Code.Asc())
+}
+
 func (r *indexRepository) listBySource(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
 	source *fuelsurcharge.IndexSource,
 ) ([]*fuelsurcharge.FuelIndex, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*fuelsurcharge.FuelIndex, error) {
-		cols := fuelsurchargecol.FuelIndexColumns
-		entities := make([]*fuelsurcharge.FuelIndex, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = fuelsurchargecol.FuelIndexScopeTenant(sq, tenantInfo).
-					Where(cols.IsActive.Eq(), true)
-				if source != nil {
-					sq = sq.Where(cols.Source.Eq(), *source)
-				}
-				return sq
-			}).
-			Order(cols.Code.OrderAsc()).
-			Scan(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return entities, nil
+		return activeIndexesQuery(source).All(ctx, r.db.Keel(ctx))
 	})
 }
 
 func (r *indexRepository) ListActiveEIA(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*fuelsurcharge.FuelIndex, error) {
 	source := fuelsurcharge.IndexSourceEIA
-	entities, err := r.listBySource(ctx, tenantInfo, &source)
+	entities, err := r.listBySource(ctx, &source)
 	if err != nil {
 		r.l.Error("failed to list active EIA fuel indices", zap.Error(err))
 		return nil, err
@@ -160,9 +100,9 @@ func (r *indexRepository) ListActiveEIA(
 
 func (r *indexRepository) ListActive(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*fuelsurcharge.FuelIndex, error) {
-	entities, err := r.listBySource(ctx, tenantInfo, nil)
+	entities, err := r.listBySource(ctx, nil)
 	if err != nil {
 		r.l.Error("failed to list active fuel indices", zap.Error(err))
 		return nil, err
@@ -176,24 +116,13 @@ func (r *indexRepository) GetByID(
 	req *fuelsurchargeports.GetFuelIndexByIDRequest,
 ) (*fuelsurcharge.FuelIndex, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndex, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.FuelIndexID.String()),
-		)
-
-		cols := fuelsurchargecol.FuelIndexColumns
-		entity := new(fuelsurcharge.FuelIndex)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return fuelsurchargecol.FuelIndexScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.FuelIndexID)
-			}).
-			Scan(ctx)
+		entity, err := fuelsurchargedb.FuelIndexes.Get(ctx, r.db.Keel(ctx), req.FuelIndexID)
 		if err != nil {
-			log.Error("failed to get fuel index", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "FuelIndex")
+			r.l.Error("failed to get fuel index",
+				zap.String("id", req.FuelIndexID.String()),
+				zap.Error(err),
+			)
+			return nil, fuelIndexErrors.Map(err, req.FuelIndexID.String())
 		}
 
 		return entity, nil
@@ -205,15 +134,9 @@ func (r *indexRepository) Create(
 	entity *fuelsurcharge.FuelIndex,
 ) (*fuelsurcharge.FuelIndex, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndex, error) {
-		log := r.l.With(zap.String("operation", "Create"))
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create fuel index", zap.Error(err))
-			return nil, err
+		if err := fuelsurchargedb.FuelIndexes.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to create fuel index", zap.Error(err))
+			return nil, fuelIndexErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -225,29 +148,12 @@ func (r *indexRepository) Update(
 	entity *fuelsurcharge.FuelIndex,
 ) (*fuelsurcharge.FuelIndex, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*fuelsurcharge.FuelIndex, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update fuel index", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(results, "FuelIndex", entity.ID.String()); err != nil {
-			return nil, err
+		if err := fuelsurchargedb.FuelIndexes.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to update fuel index",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, fuelIndexErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -259,64 +165,52 @@ func (r *indexRepository) Delete(
 	req *fuelsurchargeports.GetFuelIndexByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.FuelIndexID.String()),
+		err := fuelsurchargedb.FuelIndexes.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&fuelsurcharge.FuelIndex{ID: req.FuelIndexID},
 		)
-
-		cols := fuelsurchargecol.FuelIndexColumns
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*fuelsurcharge.FuelIndex)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return fuelsurchargecol.FuelIndexScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.FuelIndexID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to delete fuel index", zap.Error(err))
-			return err
+			r.l.Error("failed to delete fuel index",
+				zap.String("id", req.FuelIndexID.String()),
+				zap.Error(err),
+			)
+			return fuelIndexErrors.Map(err, req.FuelIndexID.String())
 		}
 
-		return dberror.CheckRowsAffected(results, "FuelIndex", req.FuelIndexID.String())
+		return nil
 	})
+}
+
+func indexOptionsQuery() *keel.Query[*fuelsurcharge.FuelIndex] {
+	fi := fuelsurchargedb.FuelIndexes
+
+	return fi.Pick(fi.ID, fi.Name, fi.Code, fi.Description, fi.Source, fi.EIASeriesID, fi.IsActive).
+		Where(fi.IsActive.IsTrue()).
+		Order(fi.Code.Asc())
 }
 
 func (r *indexRepository) SelectOptions(
 	ctx context.Context,
 	req *fuelsurchargeports.FuelIndexSelectOptionsRequest,
 ) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*fuelsurcharge.FuelIndex], error) {
-			cols := fuelsurchargecol.FuelIndexColumns
-			return dbhelper.SelectOptions[*fuelsurcharge.FuelIndex](
+			fi := fuelsurchargedb.FuelIndexes
+
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				indexOptionsQuery(),
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Name,
-						cols.Code,
-						cols.Description,
-						cols.Source,
-						cols.EIASeriesID,
-						cols.IsActive,
-					},
-					OrgColumnRef: &cols.OrganizationID,
-					BuColumnRef:  &cols.BusinessUnitID,
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.IsActive.Eq(), true).
-							Order(cols.Code.OrderAsc())
-					},
-					EntityName: "FuelIndex",
-					SearchColumnRefs: []buncolgen.Column{
-						cols.Name,
-						cols.Code,
-						cols.Description,
-					},
+				func(s string) keel.Pred {
+					return keel.Or(
+						fi.Name.ContainsFold(s),
+						fi.Code.ContainsFold(s),
+						fi.Description.ContainsFold(s),
+					)
 				},
 			)
 		},

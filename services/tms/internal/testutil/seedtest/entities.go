@@ -6,13 +6,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerledger/customerledgerdb"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 type BusinessUnitBuilder struct {
@@ -41,11 +48,11 @@ func (b *BusinessUnitBuilder) WithCode(code string) *BusinessUnitBuilder {
 func (b *BusinessUnitBuilder) Build(
 	t *testing.T,
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 ) *tenant.BusinessUnit {
 	t.Helper()
 
-	_, err := tx.NewInsert().Model(b.bu).Exec(ctx)
+	err := tenantdb.BusinessUnits.Create(systemContext(ctx), db, b.bu)
 	require.NoError(t, err, "failed to insert test business unit")
 
 	return b.bu
@@ -100,11 +107,11 @@ func (b *OrganizationBuilder) WithBucketName(bucket string) *OrganizationBuilder
 func (b *OrganizationBuilder) Build(
 	t *testing.T,
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 ) *tenant.Organization {
 	t.Helper()
 
-	_, err := tx.NewInsert().Model(b.org).Exec(ctx)
+	err := tenantdb.Organizations.Create(systemContext(ctx), db, b.org)
 	require.NoError(t, err, "failed to insert test organization")
 
 	return b.org
@@ -155,10 +162,10 @@ func (b *UserBuilder) WithPassword(password string) *UserBuilder {
 	return b
 }
 
-func (b *UserBuilder) Build(t *testing.T, ctx context.Context, tx bun.Tx) *tenant.User {
+func (b *UserBuilder) Build(t *testing.T, ctx context.Context, db *keel.DB) *tenant.User {
 	t.Helper()
 
-	_, err := tx.NewInsert().Model(b.user).Exec(ctx)
+	err := tenantdb.Users.Create(systemContext(ctx), db, b.user)
 	require.NoError(t, err, "failed to insert test user")
 
 	return b.user
@@ -189,13 +196,17 @@ func (b *StateBuilder) WithAbbreviation(abbr string) *StateBuilder {
 	return b
 }
 
-func (b *StateBuilder) Build(t *testing.T, ctx context.Context, tx bun.Tx) *usstate.UsState {
+func (b *StateBuilder) Build(t *testing.T, ctx context.Context, db *keel.DB) *usstate.UsState {
 	t.Helper()
 
-	_, err := tx.NewInsert().Model(b.state).Exec(ctx)
+	s := usstatedb.UsStates
+	_, err := s.Upsert(ctx, db, []*usstate.UsState{b.state}, keel.OnConflict(s.Abbreviation).Update(s.Name))
 	require.NoError(t, err, "failed to insert test state")
 
-	return b.state
+	state, err := s.Where(s.Abbreviation.Eq(b.state.Abbreviation)).One(ctx, db)
+	require.NoError(t, err, "failed to read test state")
+
+	return state
 }
 
 type TestData struct {
@@ -205,13 +216,25 @@ type TestData struct {
 	State        *usstate.UsState
 }
 
-func CreateFullTestData(t *testing.T, ctx context.Context, tx bun.Tx) *TestData {
+func (d *TestData) Info() pagination.TenantInfo {
+	return pagination.TenantInfo{
+		OrgID:  d.Organization.ID,
+		BuID:   d.BusinessUnit.ID,
+		UserID: d.User.ID,
+	}
+}
+
+func (d *TestData) Ctx(ctx context.Context) context.Context {
+	return dbscope.WithTenant(ctx, d.Info().DBTenant())
+}
+
+func SeedFullTestData(t *testing.T, ctx context.Context, db *keel.DB) *TestData {
 	t.Helper()
 
-	state := NewState().Build(t, ctx, tx)
-	bu := NewBusinessUnit().Build(t, ctx, tx)
-	org := NewOrganization(bu.ID, state.ID).Build(t, ctx, tx)
-	user := NewUser(org.ID, bu.ID).WithPassword("password123").Build(t, ctx, tx)
+	state := NewState().Build(t, ctx, db)
+	bu := NewBusinessUnit().Build(t, ctx, db)
+	org := NewOrganization(bu.ID, state.ID).Build(t, ctx, db)
+	user := NewUser(org.ID, bu.ID).WithPassword("password123").Build(t, ctx, db)
 
 	return &TestData{
 		BusinessUnit: bu,
@@ -221,54 +244,33 @@ func CreateFullTestData(t *testing.T, ctx context.Context, tx bun.Tx) *TestData 
 	}
 }
 
-func SeedFullTestData(t *testing.T, ctx context.Context, db *bun.DB) *TestData {
-	t.Helper()
-
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err, "failed to begin transaction for test data")
-
-	data := CreateFullTestData(t, ctx, tx)
-
-	require.NoError(t, tx.Commit(), "failed to commit test data")
-	return data
-}
-
-// SeedAdditionalTenant creates a second, fully isolated tenant inside a database
-// that already has one. Tenant-scoping tests need two tenants side by side, and
-// the uniquely named business unit, organization and state keep them from
-// colliding on the schema's unique indexes.
 func SeedAdditionalTenant(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	suffix string,
 ) *TestData {
 	t.Helper()
 
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err, "failed to begin transaction for additional tenant")
-
 	state := NewState().
 		WithName("Test State "+suffix).
 		WithAbbreviation(suffix).
-		Build(t, ctx, tx)
+		Build(t, ctx, db)
 	bu := NewBusinessUnit().
 		WithName("Test Business Unit "+suffix).
 		WithCode(suffix).
-		Build(t, ctx, tx)
+		Build(t, ctx, db)
 	org := NewOrganization(bu.ID, state.ID).
 		WithName("Test Organization "+suffix).
 		WithScacCode(suffix).
 		WithDOTNumber("999"+suffix).
 		WithBucketName("test-bucket-"+strings.ToLower(suffix)).
-		Build(t, ctx, tx)
+		Build(t, ctx, db)
 	user := NewUser(org.ID, bu.ID).
 		WithUsername("testuser"+strings.ToLower(suffix)).
 		WithEmail("test-"+strings.ToLower(suffix)+"@example.com").
 		WithPassword("password123").
-		Build(t, ctx, tx)
-
-	require.NoError(t, tx.Commit(), "failed to commit additional tenant")
+		Build(t, ctx, db)
 
 	return &TestData{
 		BusinessUnit: bu,
@@ -278,18 +280,17 @@ func SeedAdditionalTenant(
 	}
 }
 
-func ShipmentsWithoutReceivables(q *bun.SelectQuery) *bun.SelectQuery {
-	return q.
-		Where(`NOT EXISTS (
-			SELECT 1 FROM invoices AS inv
-			WHERE inv.organization_id = shipments.organization_id
-				AND inv.business_unit_id = shipments.business_unit_id
-				AND inv.customer_id = shipments.customer_id
-		)`).
-		Where(`NOT EXISTS (
-			SELECT 1 FROM customer_ledger_entries AS cle
-			WHERE cle.organization_id = shipments.organization_id
-				AND cle.business_unit_id = shipments.business_unit_id
-				AND cle.customer_id = shipments.customer_id
-		)`)
+func systemContext(ctx context.Context) context.Context {
+	return dbscope.WithSystem(ctx, "seedtest")
+}
+
+func ShipmentsWithoutReceivables() keel.Pred {
+	s := shipmentdb.Shipments
+	inv := invoicedb.Invoices
+	cle := customerledgerdb.CustomerLedgerEntries
+
+	return keel.And(
+		keel.Not(keel.Exists(inv.Where(inv.CustomerID.EqCol(s.CustomerID)))),
+		keel.Not(keel.Exists(cle.Where(cle.CustomerID.EqCol(s.CustomerID)))),
+	)
 }

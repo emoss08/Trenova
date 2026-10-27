@@ -19,12 +19,6 @@ type ListActiveDocumentUploadSessionsRequest struct {
 	ResourceType string                `json:"resourceType"`
 }
 
-type ListRelatedDocumentUploadSessionsRequest struct {
-	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
-	DocumentID pulid.ID              `json:"documentId"`
-	LineageID  pulid.ID              `json:"lineageId"`
-}
-
 type ListDocumentUploadReconciliationRequest struct {
 	TenantInfo    pagination.TenantInfo `json:"tenantInfo"`
 	StaleBefore   int64                 `json:"staleBefore"`
@@ -66,9 +60,5 @@ type DocumentUploadSessionRepository interface {
 	ListActive(
 		ctx context.Context,
 		req *ListActiveDocumentUploadSessionsRequest,
-	) ([]*documentupload.DocumentUploadSession, error)
-	ListRelated(
-		ctx context.Context,
-		req *ListRelatedDocumentUploadSessionsRequest,
 	) ([]*documentupload.DocumentUploadSession, error)
 }

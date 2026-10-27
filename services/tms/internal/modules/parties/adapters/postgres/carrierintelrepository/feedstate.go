@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/carrierintelcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel/carrierinteldb"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -35,21 +34,13 @@ func (r *feedStateRepository) Get(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*carrierintel.CarrierIntelFeedState, error) {
-			cols := carrierintelcol.CarrierIntelFeedStateColumns
-			entity := new(carrierintel.CarrierIntelFeedState)
-			err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(entity).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return carrierintelcol.CarrierIntelFeedStateScopeTenant(sq, key.TenantInfo).
-						Where(cols.Provider.Eq(), key.Provider).
-						Where(cols.FeedType.Eq(), key.FeedType)
-				}).
-				Scan(ctx)
+			fs := carrierinteldb.CarrierIntelFeedStates
+			entity, err := fs.Where(fs.Provider.Eq(key.Provider), fs.FeedType.Eq(key.FeedType)).
+				One(ctx, r.db.Keel(ctx))
+			if dberror.IsNotFoundError(err) {
+				return nil, nil
+			}
 			if err != nil {
-				if dberror.IsNotFoundError(err) {
-					return nil, nil //nolint:nilnil // nil feed state means the feed has never been polled
-				}
 				r.l.Error("failed to get carrier intel feed state", zap.Error(err))
 				return nil, fmt.Errorf("get carrier intel feed state: %w", err)
 			}
@@ -64,20 +55,22 @@ func (r *feedStateRepository) Upsert(
 	entity *carrierintel.CarrierIntelFeedState,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := carrierintelcol.CarrierIntelFeedStateColumns
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (organization_id, business_unit_id, provider, feed_type) DO UPDATE").
-			Set(cols.Cursor.SetExcluded()).
-			Set(cols.LastPolledAt.SetExcluded()).
-			Set(cols.LastSuccessAt.SetExcluded()).
-			Set(cols.NextPollAfter.SetExcluded()).
-			Set(cols.PausedReason.SetExcluded()).
-			Set(cols.PausedAt.SetExcluded()).
-			Set(cols.FailureCount.SetExcluded()).
-			Set(cols.LastError.SetExcluded()).
-			Exec(ctx)
+		fs := carrierinteldb.CarrierIntelFeedStates
+		_, err := fs.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*carrierintel.CarrierIntelFeedState{entity},
+			keel.OnConflict(fs.OrganizationID, fs.BusinessUnitID, fs.Provider, fs.FeedType).Update(
+				fs.Cursor,
+				fs.LastPolledAt,
+				fs.LastSuccessAt,
+				fs.NextPollAfter,
+				fs.PausedReason,
+				fs.PausedAt,
+				fs.FailureCount,
+				fs.LastError,
+			),
+		)
 		if err != nil {
 			r.l.Error("failed to upsert carrier intel feed state", zap.Error(err))
 			return fmt.Errorf("upsert carrier intel feed state: %w", err)

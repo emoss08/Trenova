@@ -10,35 +10,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-/*
-The inbox pages by arrival. An edge cursor that carried only the creation time
-and no sort would be refused on the next page — "cursor sort does not match
-request sort" — so "load more" would fail on every inbox longer than a page.
-*/
 func TestInboundMessageConnectionCursorsCarryTheArrivalSort(t *testing.T) {
 	t.Parallel()
 
-	first := &inboundmessage.InboundMessage{
-		ID:         pulid.MustNew("imsg_"),
-		ReceivedAt: 200,
-		CreatedAt:  10,
-	}
-	second := &inboundmessage.InboundMessage{
-		ID:         pulid.MustNew("imsg_"),
-		ReceivedAt: 100,
-		CreatedAt:  20,
-	}
+	first := &inboundmessage.InboundMessage{ID: pulid.MustNew("imsg_"), ReceivedAt: 200}
+	second := &inboundmessage.InboundMessage{ID: pulid.MustNew("imsg_"), ReceivedAt: 100}
 	sort := []pagination.CursorSortField{
 		{Field: "receivedAt", Direction: "desc"},
 		{Field: "id", Direction: "desc"},
 	}
-	result := pagination.NewCursorListResultWithTotalCount(
-		[]*inboundmessage.InboundMessage{first, second, {ID: pulid.MustNew("imsg_")}}, 2, nil,
-	).WithCursorSort(sort)
-	require.NoError(t, result.WithCursorValues([][]any{
-		{int64(200), first.ID.String()},
-		{int64(100), second.ID.String()},
-	}))
+	edge := func(keyset string) string {
+		cursor, err := pagination.EncodeKeysetCursor(sort, keyset)
+		require.NoError(t, err)
+		return cursor
+	}
+	result := &pagination.CursorListResult[*inboundmessage.InboundMessage]{
+		Items:       []*inboundmessage.InboundMessage{first, second},
+		HasNextPage: true,
+		EdgeCursors: []string{edge("k1"), edge("k2")},
+	}
 
 	conn, err := inboundMessageConnection(result)
 	require.NoError(t, err)
@@ -46,9 +36,10 @@ func TestInboundMessageConnectionCursorsCarryTheArrivalSort(t *testing.T) {
 	require.Len(t, conn.Edges, 2)
 	assert.True(t, conn.PageInfo.HasNextPage)
 	require.NotNil(t, conn.PageInfo.EndCursor)
+	assert.Equal(t, result.EdgeCursors[1], *conn.PageInfo.EndCursor)
 
 	cursor, err := pagination.DecodeCursor(*conn.PageInfo.EndCursor)
 	require.NoError(t, err)
-	require.NoError(t, pagination.ValidateCursorSort(cursor, sort))
-	assert.Equal(t, second.ID, cursor.ID)
+	assert.True(t, cursor.MatchesSort(sort))
+	assert.Equal(t, "k2", cursor.Keyset)
 }

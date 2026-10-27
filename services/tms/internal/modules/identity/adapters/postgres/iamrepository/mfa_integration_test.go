@@ -5,8 +5,11 @@ package iamrepository
 import (
 	"testing"
 
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/stretchr/testify/assert"
@@ -24,8 +27,9 @@ func TestConsumeRecoveryCodeMatchesEachHashVersionOnlyByItsOwnDigest(t *testing.
 		Logger: zap.NewNop(),
 	})
 	userID := data.User.ID
+	ctx = data.Ctx(ctx)
 
-	_, err := db.NewInsert().Model(&[]*iam.MFARecoveryCode{
+	err := iamdb.MFARecoveryCodes.CreateMany(ctx, db, []*iam.MFARecoveryCode{
 		{
 			UserID:         userID,
 			OrganizationID: data.Organization.ID,
@@ -38,7 +42,7 @@ func TestConsumeRecoveryCodeMatchesEachHashVersionOnlyByItsOwnDigest(t *testing.
 			CodeHash:       "keyed-digest",
 			HashVersion:    iam.RecoveryCodeHashHMAC,
 		},
-	}).Exec(ctx)
+	})
 	require.NoError(t, err)
 
 	legacy, err := repo.CountLegacyRecoveryCodes(ctx, userID)
@@ -91,17 +95,15 @@ func TestRecoveryCodeHashVersionDefaultsToKeyedForNewRows(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
-	_, err := db.ExecContext(ctx,
-		`INSERT INTO mfa_recovery_codes (id, user_id, organization_id, code_hash) VALUES ('mrc_default', ?, ?, 'digest')`,
-		data.User.ID, data.Organization.ID,
+	_, err := keel.Exec(ctx, db,
+		`INSERT INTO mfa_recovery_codes (id, user_id, organization_id, code_hash) VALUES ('mrc_default', $1, $2, 'digest')`,
+		data.User.ID.String(), data.Organization.ID.String(),
 	)
 	require.NoError(t, err)
 
-	var version int16
-	require.NoError(t, db.NewSelect().
-		TableExpr("mfa_recovery_codes").
-		Column("hash_version").
-		Where("id = 'mrc_default'").
-		Scan(ctx, &version))
+	version, err := keel.QueryValue[int16](ctx, db,
+		`SELECT hash_version FROM mfa_recovery_codes WHERE id = 'mrc_default'`,
+	)
+	require.NoError(t, err)
 	assert.Equal(t, iam.RecoveryCodeHashHMAC, version)
 }

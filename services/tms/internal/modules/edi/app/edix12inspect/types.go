@@ -1,9 +1,11 @@
 package edix12inspect
 
 import (
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/pkg/x12"
 )
+
+const isaSegmentID = "ISA"
 
 type SeparatorSource string
 
@@ -20,7 +22,6 @@ const (
 	DiagnosticSourceRender         = DiagnosticSource("render")
 	DiagnosticSourceValidation     = DiagnosticSource("validation")
 	DiagnosticSourceTransform      = DiagnosticSource("transform")
-	DiagnosticSourceStarlark       = DiagnosticSource("starlark")
 	DiagnosticSourceCondition      = DiagnosticSource("condition")
 	DiagnosticSourceSourceContext  = DiagnosticSource("source_context")
 	DiagnosticSourcePartnerSetting = DiagnosticSource("partner_setting")
@@ -31,7 +32,7 @@ type InspectX12Request struct {
 	TransactionSet edi.TransactionSet       `json:"transactionSet"`
 	X12Version     string                   `json:"x12Version"`
 	Envelope       *edi.X12EnvelopeSettings `json:"envelope,omitempty"`
-	Diagnostics    []edix12.Diagnostic      `json:"diagnostics,omitempty"`
+	Diagnostics    []edi.Diagnostic         `json:"diagnostics,omitempty"`
 }
 
 type InspectOverview struct {
@@ -51,6 +52,8 @@ type InspectX12Result struct {
 	RawX12    string       `json:"rawX12"`
 	Segments  []X12Segment `json:"segments"`
 	Formatted string       `json:"formatted"`
+
+	Reading *x12.Reading `json:"-"`
 }
 
 type FileInspection struct {
@@ -59,12 +62,17 @@ type FileInspection struct {
 	Interchange bool `json:"interchange"`
 }
 
-const interchangeHeader = "ISA"
-
 func (r *InspectX12Result) FileInspection() FileInspection {
+	interchange := false
+	for index := range r.Segments {
+		if r.Segments[index].SegmentID == isaSegmentID {
+			interchange = true
+			break
+		}
+	}
 	return FileInspection{
 		InspectOverview: r.InspectOverview,
-		Interchange:     firstSegment(r.Segments, interchangeHeader) != nil,
+		Interchange:     interchange,
 	}
 }
 
@@ -133,6 +141,7 @@ type X12Segment struct {
 type X12Element struct {
 	Position    int            `json:"position"`
 	Label       string         `json:"label"`
+	DataType    string         `json:"dataType,omitempty"`
 	Value       string         `json:"value"`
 	Empty       bool           `json:"empty"`
 	Required    bool           `json:"required"`

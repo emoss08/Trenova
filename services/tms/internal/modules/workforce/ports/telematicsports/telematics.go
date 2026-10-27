@@ -56,9 +56,9 @@ type ListWorkerHOSViolationStatsRequest struct {
 }
 
 type WorkerHOSViolationStats struct {
-	WorkerID        pulid.ID `bun:"worker_id"         json:"workerId"`
-	ViolationCount  int      `bun:"violation_count"   json:"violationCount"`
-	LastViolationAt int64    `bun:"last_violation_at" json:"lastViolationAt"`
+	WorkerID        pulid.ID `json:"workerId"`
+	ViolationCount  int      `json:"violationCount"`
+	LastViolationAt int64    `json:"lastViolationAt"`
 }
 
 type WorkerTelematicsMapping struct {

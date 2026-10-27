@@ -101,26 +101,9 @@ func tractorRelationIncludesForFields(
 func tractorConnectionToModel(
 	result *pagination.CursorListResult[*tractor.Tractor],
 ) (*gqlmodel.TractorConnection, error) {
-	return tractorConnectionFromItems(
-		result.Items,
-		result.HasNextPage,
-		result.TotalCount,
-		result.CursorSort,
-		result,
-	)
-}
-
-func tractorConnectionFromItems(
-	items []*tractor.Tractor,
-	hasNextPage bool,
-	totalCount *int,
-	sort []pagination.CursorSortField,
-	cursorValues pagination.CursorValueProvider,
-) (*gqlmodel.TractorConnection, error) {
 	edges, err := base.EntityCursorEdges(
-		items,
-		sort,
-		cursorValues,
+		result.Items,
+		result,
 		func(node *tractor.Tractor, cursor string) *gqlmodel.TractorEdge {
 			return &gqlmodel.TractorEdge{
 				Node:   node,
@@ -139,10 +122,11 @@ func tractorConnectionFromItems(
 	return &gqlmodel.TractorConnection{
 		Edges: edges,
 		PageInfo: base.PageInfo(
-			hasNextPage,
+			result.HasNextPage,
 			endCursor,
 		),
-		TotalCount: totalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

@@ -1,5 +1,10 @@
 package csvutils
 
+import (
+	"strings"
+	"unicode"
+)
+
 func isFormulaPrefix(c byte) bool {
 	switch c {
 	case '=', '+', '-', '@', '\t', '\r':
@@ -27,4 +32,33 @@ func SafeRow(row []string) []string {
 	}
 
 	return row
+}
+
+func SafeNumberCell(value string) string {
+	if value == "" || !isFormulaPrefix(value[0]) {
+		return value
+	}
+	if (value[0] == '-' || value[0] == '+') && isPlainNumber(value[1:]) {
+		return value
+	}
+
+	return "'" + value
+}
+
+func isPlainNumber(value string) bool {
+	runes := []rune(value)
+	digits := 0
+	for i, r := range runes {
+		switch {
+		case unicode.IsDigit(r):
+			digits++
+		case r == ',' || r == '.' || r == '%' || r == '\'' || unicode.IsSpace(r) ||
+			unicode.Is(unicode.Sc, r):
+		case strings.ContainsRune("KMBT", r) && i == len(runes)-1:
+		default:
+			return false
+		}
+	}
+
+	return digits > 0
 }

@@ -1,0 +1,1020 @@
+{
+ "cases": [
+  {
+   "name": "the reference's properties check",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"heavier never bills less\" {",
+    "  vary shipment.weight in 1 lb..40_000 lb",
+    "  expect total nondecreasing in shipment.weight",
+    "}",
+    "property \"never below the minimum\" {",
+    "  vary shipment.distance in 1 mi..3_000 mi",
+    "  vary input.rate",
+    "  given fuel.price = $3.20/gal",
+    "  expect total >= $450",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "a library property varies a new name",
+   "source": [
+    "library \"l\"",
+    "fn double(x: Int) -> Int = x * 2",
+    "property \"doubling grows\" {",
+    "  vary n in 1..10",
+    "  expect double(n) > n",
+    "  expect double(n) nondecreasing in n",
+    "}"
+   ],
+   "diagnostics": [],
+   "types": {
+    "n": "Int"
+   }
+  },
+  {
+   "name": "a library varies only names",
+   "source": [
+    "library \"l\"",
+    "fn double(x: Int) -> Int = x * 2",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  vary n in 1..3",
+    "  expect double(n) > 0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "shipment.weight",
+     "code": "vary-target",
+     "message": "A library has no record or inputs to vary: vary a new name, as in `vary x in 1..10`, and pass it to the functions under test"
+    }
+   ]
+  },
+  {
+   "name": "a varied name can't shadow an input or the bill",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary rate in 1..3",
+    "  vary total in [1, 2]",
+    "  expect rate > 0 and total > 0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "rate",
+     "code": "shadow",
+     "message": "`rate` is already an input; pick another name",
+     "nth": 3
+    },
+    {
+     "at": "total",
+     "code": "shadow",
+     "message": "`total` is already what a property reads from the bill; pick another name"
+    }
+   ]
+  },
+  {
+   "name": "a varied name can't shadow a function",
+   "source": [
+    "library \"l\"",
+    "fn double(x: Int) -> Int = x * 2",
+    "property \"p\" {",
+    "  vary double in 1..3",
+    "  expect true",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "double",
+     "code": "shadow",
+     "message": "`double` is already a function; pick another name",
+     "nth": 2,
+     "related": [
+      {
+       "at": "double",
+       "line": 2,
+       "message": "It is declared here"
+      }
+     ]
+    },
+    {
+     "at": "double",
+     "code": "unused",
+     "message": "`double` is never used",
+     "nth": 2
+    }
+   ]
+  },
+  {
+   "name": "a varied path resolves like a given",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.wieght in 1 lb..2 lb",
+    "  vary input.rat in $1/mi..$2/mi",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "wieght",
+     "code": "unknown-field",
+     "fixes": [
+      {
+       "label": "Change to `weight`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+        "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+        "property \"p\" {",
+        "  vary shipment.weight in 1 lb..2 lb",
+        "  vary input.rat in $1/mi..$2/mi",
+        "  expect total > $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "There is no field `wieght` to set. Did you mean `weight`?"
+    },
+    {
+     "at": "rat",
+     "code": "given-target",
+     "fixes": [
+      {
+       "label": "Change to `rate`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+        "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+        "property \"p\" {",
+        "  vary shipment.wieght in 1 lb..2 lb",
+        "  vary input.rate in $1/mi..$2/mi",
+        "  expect total > $0",
+        "}"
+       ]
+      }
+     ],
+     "message": "This file has no input `rat`. Did you mean `rate`?",
+     "nth": 3
+    }
+   ]
+  },
+  {
+   "name": "a range needs an ordered type",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.proNumber in \"A\"..\"B\"",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"A\"..\"B\"",
+     "code": "unordered",
+     "message": "`shipment.proNumber` is text, which has no next value to step to, so it can't be varied over a range: list its values instead, as in `vary shipment.proNumber in [a, b]`"
+    }
+   ]
+  },
+  {
+   "name": "a range needs both ends",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "1 lb..",
+     "code": "range",
+     "message": "A `vary` range needs both ends, as in `1 lb..40_000 lb`"
+    }
+   ]
+  },
+  {
+   "name": "a range's ends have the target's type",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 mi..5 mi",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "1 mi",
+     "code": "type-mismatch",
+     "message": "`1 mi` is a distance, but `shipment.weight` is a weight"
+    },
+    {
+     "at": "5 mi",
+     "code": "type-mismatch",
+     "message": "`5 mi` is a distance, but `shipment.weight` is a weight"
+    }
+   ]
+  },
+  {
+   "name": "a range's ends are compile-time values",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.distance in 1 mi..shipment.distance",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "not-constant",
+     "message": "A `vary` range's ends are worked out before any case: write each as a literal or a constant",
+     "nth": 3
+    }
+   ]
+  },
+  {
+   "name": "an empty range",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 5 lb..5 lb",
+    "  vary shipment.distance in 10 mi..=5 mi",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "5 lb..5 lb",
+     "code": "empty-range",
+     "message": "This range is empty: its start isn't below its end"
+    },
+    {
+     "at": "10 mi..=5 mi",
+     "code": "empty-range",
+     "message": "This range is empty: its start isn't below its end"
+    }
+   ]
+  },
+  {
+   "name": "a range may end at a constant and include it",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "const MOST = 5_000 lb",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..=MOST",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "a list of stops uses the test constructors",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.stops in [[pickup(), delivery()], [pickup(), delivery(), delivery()]]",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "a list's items have the target's type",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.hazmat in [true, 1]",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "1",
+     "code": "type-mismatch",
+     "message": "`1` is a whole number, but `shipment.hazmat` is true or false",
+     "nth": 3
+    }
+   ]
+  },
+  {
+   "name": "an empty list",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.hazmat in []",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "[]",
+     "code": "vary-values",
+     "message": "A `vary` list needs at least one value"
+    }
+   ]
+  },
+  {
+   "name": "values are a range or a list",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 5 lb",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "5 lb",
+     "code": "vary-values",
+     "message": "A `vary` takes a range, as in `1 lb..40_000 lb`, or a list of values, as in `[Standard, Expedited]`"
+    }
+   ]
+  },
+  {
+   "name": "Bools and enums take every value without in",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.hazmat",
+    "  vary shipment.freightClass",
+    "  vary rating.mode",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "other types need their values",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight",
+    "  vary n",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "shipment.weight",
+     "code": "vary-values",
+     "message": "Say which values `shipment.weight` takes, as in `vary shipment.weight in lo..hi`: only a `Bool`, an enum or an input with a constraint can leave out `in`",
+     "nth": 2
+    },
+    {
+     "at": "n",
+     "code": "vary-values",
+     "message": "Say which values `n` takes, as in `vary n in 1..10`: a new name has no type of its own",
+     "nth": 8
+    },
+    {
+     "at": "n",
+     "code": "unused",
+     "message": "`n` is never used",
+     "nth": 8
+    }
+   ]
+  },
+  {
+   "name": "an input's constraint must close for its range",
+   "source": [
+    "tariff \"t\"",
+    "input freeStops: Int = 2 where 0..",
+    "input service: Text = \"A\" where [\"A\", \"B\"]",
+    "charge \"x\" = $1 * freeStops + (if service == \"A\" { $1 } else { $2 })",
+    "property \"p\" {",
+    "  vary input.freeStops",
+    "  vary input.service",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "input.freeStops",
+     "code": "vary-values",
+     "message": "The constraint on `freeStops`, `0..`, is open at one end, so give it a range: `vary input.freeStops in lo..hi`",
+     "related": [
+      {
+       "at": "0..",
+       "line": 2,
+       "message": "The constraint is written here"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "a list input's constraint bounds its items",
+   "source": [
+    "tariff \"t\"",
+    "input stops: List<Int> = [1] where 0..=5",
+    "charge \"x\" = $1 * stops.len",
+    "property \"p\" {",
+    "  vary input.stops",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "input.stops",
+     "code": "vary-values",
+     "message": "The constraint on `stops` bounds each item of the list, not the list: say which lists it takes, as in `vary input.stops in [[…], […]]`"
+    }
+   ]
+  },
+  {
+   "name": "an input's range lies inside its constraint",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"low\" {",
+    "  vary input.rate in $0.50/mi..$5/mi",
+    "  expect total > $0",
+    "}",
+    "property \"high\" {",
+    "  vary input.rate in $1/mi..=$5/mi",
+    "  expect total > $0",
+    "}",
+    "property \"inside\" {",
+    "  vary input.rate in $1/mi..$5/mi",
+    "  vary shipment.distance in [1 mi, 2 mi]",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "$0.50/mi",
+     "code": "vary-range",
+     "message": "The range starts at `$0.50/mi`, below `$1/mi`, where the constraint on `rate` starts"
+    },
+    {
+     "at": "$5/mi",
+     "code": "vary-range",
+     "message": "The range reaches `$5/mi`, but the constraint on `rate` takes only values below `$5/mi`",
+     "nth": 3
+    }
+   ]
+  },
+  {
+   "name": "an input's list lies inside its constraint",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary input.rate in [$2/mi, $9/mi, $1/mi]",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "$9/mi",
+     "code": "vary-range",
+     "message": "`$9/mi` is outside the constraint on `rate`, `$1/mi..$5/mi`"
+    }
+   ]
+  },
+  {
+   "name": "a listed constraint takes a list",
+   "source": [
+    "tariff \"t\"",
+    "input factor: Int = 1 where [1, 2, 3]",
+    "charge \"x\" = $1 * factor",
+    "property \"p\" {",
+    "  vary input.factor in 1..3",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "1..3",
+     "code": "vary-range",
+     "message": "The constraint on `factor` lists the values it takes, `[1, 2, 3]`, so vary it over a list of them, or leave out `in` to take them all"
+    }
+   ]
+  },
+  {
+   "name": "each target is varied once and not given",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  vary shipment.weight in [1 lb]",
+    "  given shipment.hazmat = true",
+    "  vary shipment.hazmat",
+    "  given shipment.weight = 3 lb",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "shipment.weight",
+     "code": "duplicate",
+     "message": "`shipment.weight` is varied twice: each value is varied once per property",
+     "nth": 3,
+     "related": [
+      {
+       "at": "shipment.weight",
+       "line": 5,
+       "message": "It is varied here"
+      }
+     ]
+    },
+    {
+     "at": "shipment.hazmat",
+     "code": "vary-target",
+     "message": "`shipment.hazmat` is set by a `given` in this property, so it can't also vary: remove one of them",
+     "nth": 2,
+     "related": [
+      {
+       "at": "shipment.hazmat",
+       "line": 7,
+       "message": "It is given here"
+      }
+     ]
+    },
+    {
+     "at": "shipment.weight",
+     "code": "vary-target",
+     "message": "`shipment.weight` varies in this property, so a `given` can't also set it: remove one of them",
+     "nth": 4,
+     "related": [
+      {
+       "at": "shipment.weight",
+       "line": 5,
+       "message": "It is varied here"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "overlapping paths conflict",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  given lane.origin.zip3 = \"752\"",
+    "  vary lane.origin in [{ city: \"Dallas\", state: \"TX\", zip: \"75201\", zip3: \"752\", country: \"US\", zones: [] }]",
+    "  vary lane.destination.zones in [[\"A\"], [\"B\"]]",
+    "  vary lane.destination in [{ city: \"Waco\", state: \"TX\", zip: \"76701\", zip3: \"767\", country: \"US\", zones: [] }]",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "lane.origin",
+     "code": "vary-target",
+     "message": "`lane.origin.zip3` is set by a `given` in this property, so it can't also vary: remove one of them",
+     "nth": 2,
+     "related": [
+      {
+       "at": "lane.origin.zip3",
+       "line": 5,
+       "message": "It is given here"
+      }
+     ]
+    },
+    {
+     "at": "lane.destination",
+     "code": "duplicate",
+     "message": "`lane.destination` and `lane.destination.zones` overlap: vary one of them",
+     "nth": 2,
+     "related": [
+      {
+       "at": "lane.destination.zones",
+       "line": 7,
+       "message": "It is varied here"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "values worked out before the cases can't read a varied name",
+   "source": [
+    "library \"l\"",
+    "property \"p\" {",
+    "  vary a in 1..3",
+    "  vary b in [a, 1]",
+    "  expect a + b > 0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "vary-read",
+     "message": "The values a `vary` takes are worked out once, before any case, so they can't read `a`, which varies",
+     "nth": 5
+    }
+   ]
+  },
+  {
+   "name": "a given can't read a varied name",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary w in 1 lb..10 lb",
+    "  given shipment.weight = w",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "w",
+     "code": "vary-read",
+     "message": "A `given` sets one value for every case, so it can't read `w`, which varies: vary the field itself instead",
+     "nth": 5
+    }
+   ]
+  },
+  {
+   "name": "a property needs a vary",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"nothing varies\" {",
+    "  given shipment.weight = 5 lb",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"nothing varies\"",
+     "code": "vary-missing",
+     "message": "A property needs at least one `vary`: say what changes from case to case, as in `vary shipment.weight in 1 lb..40_000 lb`"
+    }
+   ]
+  },
+  {
+   "name": "vary, given and assume come first",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  let floor = $0",
+    "  assume shipment.hazmat",
+    "  expect total > floor",
+    "  vary shipment.distance in 1 mi..2 mi",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "assume shipment.hazmat",
+     "code": "given-order",
+     "message": "`assume` comes before the property's other statements: `vary`, `given` and `assume` set up each case before the tariff rates",
+     "related": [
+      {
+       "at": "let floor = $0",
+       "line": 6,
+       "message": "The first other statement"
+      }
+     ]
+    },
+    {
+     "at": "vary shipment.distance in 1 mi..2 mi",
+     "code": "given-order",
+     "message": "`vary` comes before the property's other statements: `vary`, `given` and `assume` set up each case before the tariff rates",
+     "related": [
+      {
+       "at": "let floor = $0",
+       "line": 6,
+       "message": "The first other statement"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "assume can't read the bill",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  assume total > $0",
+    "  assume charge(\"Linehaul\") != none",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "total",
+     "code": "assume-bill",
+     "message": "`assume` runs before the tariff rates, so it can't read the bill (`total`): narrow the cases by the record, the inputs and the varied values"
+    },
+    {
+     "at": "charge(\"Linehaul\")",
+     "code": "assume-bill",
+     "message": "`assume` runs before the tariff rates, so it can't read the bill (`charge(\"Linehaul\")`): narrow the cases by the record, the inputs and the varied values"
+    }
+   ]
+  },
+  {
+   "name": "assume reads the record, inputs and varied names",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "fn heavy(w: Weight) -> Bool = w > 10 lb",
+    "property \"p\" {",
+    "  vary w in 1 lb..20 lb",
+    "  vary shipment.hazmat",
+    "  assume rate > $1/mi and not shipment.hazmat and heavy(w)",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "assume takes a Bool",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  assume shipment.weight",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "shipment.weight",
+     "code": "type-mismatch",
+     "message": "`shipment.weight` is a weight that may be empty, but a condition must be true or false",
+     "nth": 3
+    }
+   ]
+  },
+  {
+   "name": "a property's expect can't read an input",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.distance in 1 mi..2 mi",
+    "  expect total >= rate * shipment.distance",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "rate",
+     "code": "test-scope",
+     "message": "`rate` is an input, which a test can't read: a test reads the bill (`total`, `lines`, `charge(…)`, `reviews`), the record and the file's functions and constants",
+     "nth": 3
+    }
+   ]
+  },
+  {
+   "name": "a monotone value can't be empty",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect charge(\"Linehaul\") nondecreasing in shipment.weight",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "charge(\"Linehaul\")",
+     "code": "unordered",
+     "fixes": [
+      {
+       "label": "Fall back to `charge(\"Linehaul\") ?? $0`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+        "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+        "property \"p\" {",
+        "  vary shipment.weight in 1 lb..2 lb",
+        "  expect charge(\"Linehaul\") ?? $0 nondecreasing in shipment.weight",
+        "}"
+       ]
+      }
+     ],
+     "message": "`charge(\"Linehaul\")` may be empty, and an empty value has no place in an order: give it a fallback"
+    }
+   ]
+  },
+  {
+   "name": "a monotone value is ordered",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect shipment.proNumber nonincreasing in shipment.weight",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "shipment.proNumber",
+     "code": "unordered",
+     "message": "`shipment.proNumber` is text, which has no order, so it can't rise or fall: compare a number, money, a quantity, a percent or a date"
+    }
+   ]
+  },
+  {
+   "name": "a monotone target is varied over a range",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  vary shipment.hazmat",
+    "  expect total nondecreasing in shipment.distance",
+    "  expect total nondecreasing in shipment.hazmat",
+    "  expect lines.len nondecreasing in shipment.weight",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "shipment.distance",
+     "code": "monotone-target",
+     "message": "`shipment.distance` isn't varied in this property: vary it over a range first, as in `vary shipment.distance in lo..hi`",
+     "nth": 2
+    },
+    {
+     "at": "shipment.hazmat",
+     "code": "monotone-target",
+     "message": "`shipment.hazmat` is varied over a list, which has no order: vary it over a range to compare along it",
+     "nth": 2
+    }
+   ]
+  },
+  {
+   "name": "a property in a condition",
+   "source": [
+    "condition \"c\"",
+    "shipment.hazmat",
+    "property \"p\" {",
+    "  vary shipment.weight in 1 lb..2 lb",
+    "  expect true",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "\"p\"",
+     "code": "misplaced",
+     "message": "A property checks a rule over many ratings, so it goes in a tariff or a library; check a condition with `test` blocks"
+    }
+   ]
+  },
+  {
+   "name": "a varied name nobody reads",
+   "source": [
+    "library \"l\"",
+    "property \"p\" {",
+    "  vary n in 1..3",
+    "  expect true",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "n",
+     "code": "unused",
+     "message": "`n` is never used"
+    }
+   ]
+  },
+  {
+   "name": "a new name's list starts with a typed value",
+   "source": [
+    "library \"l\"",
+    "property \"p\" {",
+    "  vary n in [none, 1]",
+    "  expect n != none",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "at": "none",
+     "code": "annotation-needed",
+     "message": "`none` doesn't say what `n` holds: start the list with a value of the type it takes"
+    }
+   ]
+  },
+  {
+   "name": "dates and date-times vary over ranges",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/mi where $1/mi..$5/mi",
+    "charge \"Linehaul\" = rate * shipment.distance + $1/lb * (shipment.weight ?? 0 lb)",
+    "property \"p\" {",
+    "  vary rating.date in @2026-01-01T00:00Z..@2026-02-01T00:00Z",
+    "  vary d in @2026-01-01..@2026-03-01",
+    "  expect total > $0 and d.year == 2026",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "a property's input range marks the input used",
+   "source": [
+    "tariff \"t\"",
+    "input extra: Money = $5 where $0..=$10",
+    "charge \"x\" = $1",
+    "property \"p\" {",
+    "  vary input.extra",
+    "  expect total > $0",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "a property's expects read the bill and the choices",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" = $2/mi * shipment.distance",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $500",
+    "  }",
+    "}",
+    "property \"flat for long hauls\" {",
+    "  vary shipment.distance in 1 mi..3_000 mi",
+    "  expect total <= $500 and (charge(\"Flat\") ?? $0) <= $500",
+    "  expect chosen(\"Linehaul\") != none",
+    "}"
+   ],
+   "diagnostics": []
+  },
+  {
+   "name": "assume can't read a choice",
+   "source": [
+    "tariff \"t\"",
+    "best \"Linehaul\" {",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" = $2/mi * shipment.distance",
+    "  }",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = $500",
+    "  }",
+    "}",
+    "property \"p\" {",
+    "  vary shipment.distance in 1 mi..3_000 mi",
+    "  assume chosen(\"Linehaul\") == \"Flat\"",
+    "  expect total <= $500",
+    "}"
+   ],
+   "diagnostics": [
+    {
+     "code": "assume-bill",
+     "at": "chosen(\"Linehaul\")",
+     "message": "`assume` runs before the tariff rates, so it can't read the bill (`chosen(\"Linehaul\")`): narrow the cases by the record, the inputs and the varied values"
+    }
+   ]
+  }
+ ]
+}

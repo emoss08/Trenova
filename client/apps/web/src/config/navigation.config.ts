@@ -578,8 +578,15 @@ const billingModule: NavModule = {
           id: "formula-templates",
           label: "Formula templates",
           path: "/billing/configuration-files/formula-templates",
-          keywords: ["rating", "rates", "pricing", "formula studio"],
+          keywords: ["rating", "rates", "pricing", "formula studio", "tariff"],
           resource: Resource.FormulaTemplate,
+        },
+        {
+          id: "formula-libraries",
+          label: "Formula libraries",
+          path: "/billing/configuration-files/formula-libraries",
+          keywords: ["tariff", "library", "functions", "shared rating code"],
+          resource: Resource.FormulaLibrary,
         },
         {
           id: "rate-zones",
@@ -811,9 +818,9 @@ const ediModule: NavModule = {
       badge: "edi-attention",
     },
     {
-      id: "edi-designer",
-      label: "Template designer",
-      path: "/edi/designer",
+      id: "edi-lading",
+      label: "Lading studio",
+      path: "/edi/lading",
       resource: Resource.EDI,
     },
     {
@@ -841,9 +848,9 @@ const ediModule: NavModule = {
       resource: Resource.EDI,
     },
     {
-      id: "edi-test-cases",
-      label: "Test cases",
-      path: "/edi/test-cases",
+      id: "edi-flows",
+      label: "Flow instances",
+      path: "/edi/flows",
       resource: Resource.EDI,
     },
     {
@@ -1208,7 +1215,16 @@ export const navigationConfig: NavigationConfig = {
       path: "/billing/configuration-files/formula-templates/new",
       resource: Resource.FormulaTemplate,
       requiredOperation: Operation.Create,
-      keywords: ["formula", "template", "studio"],
+      keywords: ["formula", "template", "studio", "tariff"],
+    },
+    {
+      id: "create-formula-library",
+      label: "New formula library",
+      description: "Write functions and types that formula templates import",
+      path: "/billing/configuration-files/formula-libraries/new",
+      resource: Resource.FormulaLibrary,
+      requiredOperation: Operation.Create,
+      keywords: ["formula", "library", "tariff", "functions"],
     },
     {
       id: "create-rate-agreement",
@@ -1662,14 +1678,6 @@ export const adminLinks: SidebarLink[] = [
     planCapability: PlanCapability.DocumentIntelligence,
   },
   {
-    href: "/admin/document-parsing-rules",
-    title: "Parsing rules",
-    group: "Document Management",
-    resource: Resource.DocumentParsingRule,
-    requiredOperation: Operation.Read,
-    planCapability: PlanCapability.DocumentIntelligence,
-  },
-  {
     href: "/admin/sequence-configs",
     title: "Sequence configuration",
     group: "Organization",
@@ -1879,14 +1887,6 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
     resource: Resource.TableChangeAlert,
     requiredOperation: Operation.Read,
-  },
-  {
-    href: "/admin/document-operations",
-    title: "Document operations",
-    group: "Document Management",
-    resource: Resource.DocumentOperation,
-    requiredOperation: Operation.Read,
-    planCapability: PlanCapability.DocumentIntelligence,
   },
   {
     href: "/organization/document-templates/",

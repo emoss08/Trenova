@@ -3,33 +3,24 @@ package iamrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/iamcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/iam/iamdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-func (r *repository) filterSCIMGroupRoleMappings(
-	q *bun.SelectQuery,
-	req *iamports.ListSCIMGroupRoleMappingsRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"sgrm",
-		req.Filter,
-		(*iam.SCIMGroupRoleMapping)(nil),
-	)
+var scimGroupRoleMappingErrors = dberror.Mapping{Entity: "SCIM group role mapping"}
 
-	return q.Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset()))
+func withMappingRole(
+	q *keel.Query[*iam.SCIMGroupRoleMapping],
+) *keel.Query[*iam.SCIMGroupRoleMapping] {
+	return q.Load(iamdb.SCIMGroupRoleMappings.Role())
 }
 
 func (r *repository) ListSCIMGroupRoleMappings(
@@ -40,117 +31,48 @@ func (r *repository) ListSCIMGroupRoleMappings(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*iam.SCIMGroupRoleMapping], error) {
-			log := r.l.With(
-				zap.String("operation", "ListSCIMGroupRoleMappings"),
-				zap.Any("request", req),
+			m := iamdb.SCIMGroupRoleMappings
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				m.Where(m.DirectoryID.Eq(req.DirectoryID)),
+				&listquery.Request[iam.SCIMGroupRoleMapping]{
+					Filter: req.Filter,
+					Shape:  withMappingRole,
+					Then:   []keel.Order{m.DisplayName.Asc()},
+				},
 			)
-
-			entities := make([]*iam.SCIMGroupRoleMapping, 0, req.Filter.Pagination.SafeLimit())
-			cols := iamcol.SCIMGroupRoleMappingColumns
-			rel := iamcol.SCIMGroupRoleMappingRelations
-
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(rel.Role).
-				Where(cols.DirectoryID.Eq(), req.DirectoryID).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterSCIMGroupRoleMappings(sq, req)
-				}).
-				Order(cols.DisplayName.OrderAsc()).
-				ScanAndCount(ctx)
 			if err != nil {
-				log.Error("failed to scan and count scim group role mappings", zap.Error(err))
+				r.l.Error("failed to list scim group role mappings", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*iam.SCIMGroupRoleMapping]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyGroupRoleMappingCursorFilters(
-	q *bun.SelectQuery,
-	req *iamports.ListSCIMGroupRoleMappingConnectionRequest,
-) (*bun.SelectQuery, error) {
-	q, err := querybuilder.ApplyCursorFilters(
-		q,
-		iamcol.SCIMGroupRoleMappingTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*iam.SCIMGroupRoleMapping)(nil),
-	)
-	if err != nil {
-		return nil, err
-	}
-	return q.Where(iamcol.SCIMGroupRoleMappingColumns.DirectoryID.Eq(), req.DirectoryID), nil
-}
-
-func (r *repository) applyGroupRoleMappingCountFilters(
-	q *bun.SelectQuery,
-	req *iamports.ListSCIMGroupRoleMappingConnectionRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFiltersWithoutSort(
-		q,
-		iamcol.SCIMGroupRoleMappingTable.Alias,
-		req.Filter,
-		(*iam.SCIMGroupRoleMapping)(nil),
-	)
-	return q.Where(iamcol.SCIMGroupRoleMappingColumns.DirectoryID.Eq(), req.DirectoryID)
 }
 
 func (r *repository) ListSCIMGroupRoleMappingsConnection(
 	ctx context.Context,
 	req *iamports.ListSCIMGroupRoleMappingConnectionRequest,
 ) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*iam.SCIMGroupRoleMapping], error) {
-			log := r.l.With(
-				zap.String("operation", "ListSCIMGroupRoleMappingsConnection"),
-				zap.Any("request", req),
-			)
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*iam.SCIMGroupRoleMapping)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyGroupRoleMappingCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count scim group role mappings", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			m := iamdb.SCIMGroupRoleMappings
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*iam.SCIMGroupRoleMapping]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*iam.SCIMGroupRoleMapping) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							ColumnExpr(iamcol.SCIMGroupRoleMappingTable.All()).
-							Relation(iamcol.SCIMGroupRoleMappingRelations.Role)
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyGroupRoleMappingCursorFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				m.Where(m.DirectoryID.Eq(req.DirectoryID)),
+				&listquery.Request[iam.SCIMGroupRoleMapping]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withMappingRole,
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan scim group role mappings", zap.Error(err))
+				r.l.Error("failed to list scim group role mappings", zap.Error(err))
 				return nil, err
 			}
 
@@ -164,14 +86,9 @@ func (r *repository) CreateSCIMGroupRoleMapping(
 	entity *iam.SCIMGroupRoleMapping,
 ) (*iam.SCIMGroupRoleMapping, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.SCIMGroupRoleMapping, error) {
-		log := r.l.With(
-			zap.String("operation", "CreateSCIMGroupRoleMapping"),
-			zap.Any("entity", entity),
-		)
-
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			log.Error("failed to insert scim group role mapping", zap.Error(err))
-			return nil, err
+		if err := iamdb.SCIMGroupRoleMappings.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to insert scim group role mapping", zap.Error(err))
+			return nil, scimGroupRoleMappingErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -183,33 +100,13 @@ func (r *repository) UpdateSCIMGroupRoleMapping(
 	entity *iam.SCIMGroupRoleMapping,
 ) (*iam.SCIMGroupRoleMapping, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*iam.SCIMGroupRoleMapping, error) {
-		log := r.l.With(
-			zap.String("operation", "UpdateSCIMGroupRoleMapping"),
-			zap.Any("sgrmID", entity.ID),
-		)
-
-		ov := entity.Version
-		entity.Version++
-		cols := iamcol.SCIMGroupRoleMappingColumns
-
-		results, err := r.db.DBForContext(ctx).NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update scim group role mapping", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			results,
-			"SCIMGroupRoleMapping",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := iamdb.SCIMGroupRoleMappings.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update scim group role mapping",
+				zap.String("sgrmID", entity.ID.String()),
+				zap.Error(err),
+			)
+			return nil, scimGroupRoleMappingErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -218,21 +115,15 @@ func (r *repository) UpdateSCIMGroupRoleMapping(
 
 func (r *repository) DeleteSCIMGroupRoleMapping(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	sgrmID pulid.ID,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := iamcol.SCIMGroupRoleMappingColumns
-		res, err := r.db.DBForContext(ctx).NewDelete().
-			Model((*iam.SCIMGroupRoleMapping)(nil)).
-			Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return iamcol.SCIMGroupRoleMappingScopeTenantDelete(dq, tenantInfo).
-					Where(cols.ID.Eq(), sgrmID)
-			}).
-			Exec(ctx)
+		m := iamdb.SCIMGroupRoleMappings
+		deleted, err := m.Where(m.ID.Eq(sgrmID)).Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return err
+			return scimGroupRoleMappingErrors.Map(err, sgrmID.String())
 		}
-		return dberror.CheckRowsAffected(res, "SCIM group role mapping", sgrmID.String())
+		return dberror.CheckAffected(deleted, scimGroupRoleMappingErrors.Entity, sgrmID.String())
 	})
 }

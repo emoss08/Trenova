@@ -14,11 +14,11 @@ type ListInvoiceLabelsRequest struct {
 }
 
 type InvoiceLabel struct {
-	InvoiceID    pulid.ID `json:"invoiceId"    bun:"invoice_id"`
-	Number       string   `json:"number"       bun:"number"`
-	CurrencyCode string   `json:"currencyCode" bun:"currency_code"`
-	CustomerName string   `json:"customerName" bun:"customer_name"`
-	FactorName   string   `json:"factorName"   bun:"factor_name"`
+	InvoiceID    pulid.ID `json:"invoiceId"`
+	Number       string   `json:"number"`
+	CurrencyCode string   `json:"currencyCode"`
+	CustomerName string   `json:"customerName"`
+	FactorName   string   `json:"factorName"`
 }
 
 type ListCustomersMissingNoaRequest struct {
@@ -28,17 +28,17 @@ type ListCustomersMissingNoaRequest struct {
 }
 
 type CustomerMissingNoa struct {
-	CustomerID         pulid.ID            `json:"customerId"         bun:"customer_id"`
-	CustomerCode       string              `json:"customerCode"       bun:"customer_code"`
-	CustomerName       string              `json:"customerName"       bun:"customer_name"`
-	FactoringCompanyID pulid.ID            `json:"factoringCompanyId" bun:"factoring_company_id"`
-	FactorName         string              `json:"factorName"         bun:"factor_name"`
-	ProfileUpdatedAt   int64               `json:"profileUpdatedAt"   bun:"profile_updated_at"`
-	NoaID              pulid.ID            `json:"noaId"              bun:"noa_id"`
-	NoaStatus          factoring.NoaStatus `json:"noaStatus"          bun:"noa_status"`
-	NoaSentAt          *int64              `json:"noaSentAt"          bun:"noa_sent_at"`
-	NoaExpiresAt       *int64              `json:"noaExpiresAt"       bun:"noa_expires_at"`
-	NoaCreatedAt       *int64              `json:"noaCreatedAt"       bun:"noa_created_at"`
+	CustomerID         pulid.ID            `json:"customerId"`
+	CustomerCode       string              `json:"customerCode"`
+	CustomerName       string              `json:"customerName"`
+	FactoringCompanyID pulid.ID            `json:"factoringCompanyId"`
+	FactorName         string              `json:"factorName"`
+	ProfileUpdatedAt   int64               `json:"profileUpdatedAt"`
+	NoaID              pulid.ID            `json:"noaId"`
+	NoaStatus          factoring.NoaStatus `json:"noaStatus"`
+	NoaSentAt          *int64              `json:"noaSentAt"`
+	NoaExpiresAt       *int64              `json:"noaExpiresAt"`
+	NoaCreatedAt       *int64              `json:"noaCreatedAt"`
 }
 
 type ListNoasExpiringSoonRequest struct {
@@ -49,13 +49,13 @@ type ListNoasExpiringSoonRequest struct {
 }
 
 type ExpiringNoa struct {
-	NoaID              pulid.ID `json:"noaId"              bun:"noa_id"`
-	CustomerID         pulid.ID `json:"customerId"         bun:"customer_id"`
-	CustomerName       string   `json:"customerName"       bun:"customer_name"`
-	FactoringCompanyID pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id"`
-	FactorName         string   `json:"factorName"         bun:"factor_name"`
-	AcknowledgedAt     *int64   `json:"acknowledgedAt"     bun:"acknowledged_at"`
-	ExpiresAt          int64    `json:"expiresAt"          bun:"expires_at"`
+	NoaID              pulid.ID `json:"noaId"`
+	CustomerID         pulid.ID `json:"customerId"`
+	CustomerName       string   `json:"customerName"`
+	FactoringCompanyID pulid.ID `json:"factoringCompanyId"`
+	FactorName         string   `json:"factorName"`
+	AcknowledgedAt     *int64   `json:"acknowledgedAt"`
+	ExpiresAt          int64    `json:"expiresAt"`
 }
 
 type ListFailedSubmissionsRequest struct {
@@ -64,16 +64,16 @@ type ListFailedSubmissionsRequest struct {
 }
 
 type FailedSubmission struct {
-	SubmissionID       pulid.ID `json:"submissionId"       bun:"submission_id"`
-	Number             string   `json:"number"             bun:"number"`
-	FactoringCompanyID pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id"`
-	FactorName         string   `json:"factorName"         bun:"factor_name"`
-	CurrencyCode       string   `json:"currencyCode"       bun:"currency_code"`
-	InvoiceCount       int      `json:"invoiceCount"       bun:"invoice_count"`
-	FaceMinor          int64    `json:"faceMinor"          bun:"face_minor"`
-	TransportTarget    string   `json:"transportTarget"    bun:"transport_target"`
-	LastError          string   `json:"lastError"          bun:"last_error"`
-	FailedAt           int64    `json:"failedAt"           bun:"failed_at"`
+	SubmissionID       pulid.ID `json:"submissionId"`
+	Number             string   `json:"number"`
+	FactoringCompanyID pulid.ID `json:"factoringCompanyId"`
+	FactorName         string   `json:"factorName"`
+	CurrencyCode       string   `json:"currencyCode"`
+	InvoiceCount       int      `json:"invoiceCount"`
+	FaceMinor          int64    `json:"faceMinor"`
+	TransportTarget    string   `json:"transportTarget"`
+	LastError          string   `json:"lastError"`
+	FailedAt           int64    `json:"failedAt"`
 }
 
 type ListUnfundedSubmissionsRequest struct {
@@ -83,16 +83,16 @@ type ListUnfundedSubmissionsRequest struct {
 }
 
 type UnfundedSubmission struct {
-	SubmissionID         pulid.ID                   `json:"submissionId"         bun:"submission_id"`
-	Number               string                     `json:"number"               bun:"number"`
-	Status               factoring.SubmissionStatus `json:"status"               bun:"status"`
-	FactoringCompanyID   pulid.ID                   `json:"factoringCompanyId"   bun:"factoring_company_id"`
-	FactorName           string                     `json:"factorName"           bun:"factor_name"`
-	CurrencyCode         string                     `json:"currencyCode"         bun:"currency_code"`
-	PendingCount         int                        `json:"pendingCount"         bun:"pending_count"`
-	ExpectedAdvanceMinor int64                      `json:"expectedAdvanceMinor" bun:"expected_advance_minor"`
-	SentAt               int64                      `json:"sentAt"               bun:"sent_at"`
-	DueAt                int64                      `json:"dueAt"                bun:"due_at"`
+	SubmissionID         pulid.ID                   `json:"submissionId"`
+	Number               string                     `json:"number"`
+	Status               factoring.SubmissionStatus `json:"status"`
+	FactoringCompanyID   pulid.ID                   `json:"factoringCompanyId"`
+	FactorName           string                     `json:"factorName"`
+	CurrencyCode         string                     `json:"currencyCode"`
+	PendingCount         int                        `json:"pendingCount"`
+	ExpectedAdvanceMinor int64                      `json:"expectedAdvanceMinor"`
+	SentAt               int64                      `json:"sentAt"`
+	DueAt                int64                      `json:"dueAt"`
 }
 
 type ListChargebacksDueRequest struct {
@@ -103,20 +103,20 @@ type ListChargebacksDueRequest struct {
 }
 
 type ChargebackDue struct {
-	ItemID             pulid.ID `json:"itemId"             bun:"item_id"`
-	SubmissionID       pulid.ID `json:"submissionId"       bun:"submission_id"`
-	SubmissionNumber   string   `json:"submissionNumber"   bun:"submission_number"`
-	InvoiceID          pulid.ID `json:"invoiceId"          bun:"invoice_id"`
-	InvoiceNumber      string   `json:"invoiceNumber"      bun:"invoice_number"`
-	CustomerID         pulid.ID `json:"customerId"         bun:"customer_id"`
-	CustomerName       string   `json:"customerName"       bun:"customer_name"`
-	FactoringCompanyID pulid.ID `json:"factoringCompanyId" bun:"factoring_company_id"`
-	FactorName         string   `json:"factorName"         bun:"factor_name"`
-	CurrencyCode       string   `json:"currencyCode"       bun:"currency_code"`
-	FaceMinor          int64    `json:"faceMinor"          bun:"face_minor"`
-	RepurchaseMinor    int64    `json:"repurchaseMinor"    bun:"repurchase_minor"`
-	FundedOn           int64    `json:"fundedOn"           bun:"funded_on"`
-	DeadlineAt         int64    `json:"deadlineAt"         bun:"deadline_at"`
+	ItemID             pulid.ID `json:"itemId"`
+	SubmissionID       pulid.ID `json:"submissionId"`
+	SubmissionNumber   string   `json:"submissionNumber"`
+	InvoiceID          pulid.ID `json:"invoiceId"`
+	InvoiceNumber      string   `json:"invoiceNumber"`
+	CustomerID         pulid.ID `json:"customerId"`
+	CustomerName       string   `json:"customerName"`
+	FactoringCompanyID pulid.ID `json:"factoringCompanyId"`
+	FactorName         string   `json:"factorName"`
+	CurrencyCode       string   `json:"currencyCode"`
+	FaceMinor          int64    `json:"faceMinor"`
+	RepurchaseMinor    int64    `json:"repurchaseMinor"`
+	FundedOn           int64    `json:"fundedOn"`
+	DeadlineAt         int64    `json:"deadlineAt"`
 }
 
 type WatchtowerReader interface {

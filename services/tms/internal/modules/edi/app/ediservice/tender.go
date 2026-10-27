@@ -3,7 +3,6 @@ package ediservice
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -11,13 +10,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 //nolint:funlen // Tender planning checks each partner, connection, and profile explicitly.
@@ -206,10 +202,10 @@ func (s *Service) SubmitLoadTender(
 			return nil, err
 		}
 	} else {
-		err = s.db.WithTx(
+		err = s.db.Transact(
 			ctx,
 			kernelports.TxOptions{},
-			func(txCtx context.Context, _ bun.Tx) error {
+			func(txCtx context.Context) error {
 				lockedShipment, lockErr := s.lockShipment(
 					txCtx,
 					req.SourceShipmentID,
@@ -332,21 +328,9 @@ func (s *Service) lockShipment(
 	shipmentID pulid.ID,
 	tenantInfo pagination.TenantInfo,
 ) (*shipment.Shipment, error) {
-	return dbtx.Write(ctx, s.db, func(ctx context.Context) (*shipment.Shipment, error) {
-		entity := new(shipment.Shipment)
-		err := s.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where("sp.id = ?", shipmentID).
-			Where("sp.organization_id = ?", tenantInfo.OrgID).
-			Where("sp.business_unit_id = ?", tenantInfo.BuID).
-			For("UPDATE").
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Shipment")
-		}
-
-		return entity, nil
+	return s.shipmentTenderRepo.LockShipment(ctx, ediports.LockEDITenderShipmentRequest{
+		ShipmentID: shipmentID,
+		TenantInfo: tenantInfo,
 	})
 }
 
@@ -356,25 +340,14 @@ func (s *Service) setShipmentTenderStatus(
 	tenantInfo pagination.TenantInfo,
 	status shipment.TenderStatus,
 ) error {
-	return dbtx.WriteErr(ctx, s.db, func(ctx context.Context) error {
-		db := s.db.DBForContext(ctx)
-
-		results, err := db.
-			NewUpdate().
-			Model((*shipment.Shipment)(nil)).
-			Set("tender_status = ?", status).
-			Set("version = version + 1").
-			Set("updated_at = "+dbhelper.NowEpoch).
-			Where("id = ?", shipmentID).
-			Where("organization_id = ?", tenantInfo.OrgID).
-			Where("business_unit_id = ?", tenantInfo.BuID).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		return dberror.CheckRowsAffected(results, "Shipment", shipmentID.String())
-	})
+	return s.shipmentTenderRepo.SetShipmentTenderStatus(
+		ctx,
+		ediports.SetEDIShipmentTenderStatusRequest{
+			ShipmentID: shipmentID,
+			TenantInfo: tenantInfo,
+			Status:     status,
+		},
+	)
 }
 
 func (s *Service) createSystemShipmentComment(

@@ -1,78 +1,37 @@
+import { tariffSetName } from "@trenova/shared/rules/tariff";
+import type { RulesRuntime } from "@trenova/shared/rules/runtime";
 import type {
   FormulaTemplate,
   FormulaTemplateFormValues,
 } from "@trenova/shared/types/formula-template";
 
-type ContentSnapshot = {
-  expression: string;
-  schemaId: string;
-  type: string;
-  minCharge: number | null;
-  maxCharge: number | null;
-  roundingMode: string;
-  roundingPrecision: number;
-  variableDefinitions: string;
-  breakdownDefinitions: string;
-};
-
-function numberOrNull(value: unknown): number | null {
-  if (value === null || value === undefined || value === "") return null;
-  const parsed = typeof value === "number" ? value : Number(value);
-  return Number.isNaN(parsed) ? null : parsed;
-}
-
-function stableJson(value: unknown): string {
-  return JSON.stringify(value ?? [], (_key, item: unknown) => {
-    if (item && typeof item === "object" && !Array.isArray(item)) {
-      const record = item as Record<string, unknown>;
-      return Object.keys(record)
-        .sort()
-        .reduce<Record<string, unknown>>((sorted, key) => {
-          if (record[key] !== undefined) sorted[key] = record[key];
-          return sorted;
-        }, {});
-    }
-    return item;
-  });
-}
-
-function snapshot(source: FormulaTemplate | FormulaTemplateFormValues): ContentSnapshot {
-  return {
-    expression: source.expression ?? "",
-    schemaId: source.schemaId || "shipment",
-    type: source.type,
-    minCharge: numberOrNull(source.minCharge),
-    maxCharge: numberOrNull(source.maxCharge),
-    roundingMode: source.roundingMode ?? "HalfUp",
-    roundingPrecision: source.roundingPrecision ?? 2,
-    variableDefinitions: stableJson(source.variableDefinitions),
-    breakdownDefinitions: stableJson(source.breakdownDefinitions),
-  };
-}
+type Content = Pick<FormulaTemplate, "name" | "source">;
 
 /**
- * Mirrors the server's HasMaterialChange: a change to what the template
- * computes (expression, schema, type, guardrails, rounding, variables,
- * breakdowns) is material and returns an approved template to Draft. Name,
- * description, and metadata edits are not.
+ * Mirrors the server's material-change rule: a change to what the template bills is a change
+ * to its source (the imports are derived from it), and returns an approved template to Draft.
+ * The name is the header's, so a change to the header alone is a rename, not a material change;
+ * nor is a description edit.
  */
 export function hasMaterialChange(
-  template: FormulaTemplate,
-  values: FormulaTemplateFormValues,
+  rules: RulesRuntime,
+  template: Content,
+  values: Pick<FormulaTemplateFormValues, "name" | "source">,
 ): boolean {
-  const before = snapshot(template);
-  const after = snapshot(values);
-  return (Object.keys(before) as Array<keyof ContentSnapshot>).some(
-    (key) => before[key] !== after[key],
-  );
+  const source = values.source ?? "";
+  if (template.source === source) return false;
+  const name = values.name ?? "";
+  if (template.name === name) return true;
+  return tariffSetName(rules, template.source, name).source !== source;
 }
 
-/** Whether saving a material change would take this template out of production. */
+/** Whether saving would take this template out of production (or out of its review). */
 export function saveDemotesToDraft(
-  template: FormulaTemplate | null,
-  values: FormulaTemplateFormValues,
+  rules: RulesRuntime,
+  template: (Content & Pick<FormulaTemplate, "status">) | null,
+  values: Pick<FormulaTemplateFormValues, "name" | "source">,
 ): boolean {
   if (!template) return false;
   if (template.status !== "Active" && template.status !== "InReview") return false;
-  return hasMaterialChange(template, values);
+  return hasMaterialChange(rules, template, values);
 }

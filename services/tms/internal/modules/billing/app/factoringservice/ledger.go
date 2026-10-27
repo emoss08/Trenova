@@ -32,7 +32,7 @@ const maxFutureMovementSeconds = timeutils.SecondsPerDay
 type LedgerParams struct {
 	fx.In
 
-	DB          kernelports.DBConnection
+	DB          kernelports.Transactor
 	Submissions factoringports.SubmissionRepository
 	Entries     factoringports.ReserveEntryRepository
 	Agreements  factoringports.AgreementRepository
@@ -50,7 +50,7 @@ type LedgerParams struct {
 }
 
 type LedgerService struct {
-	db          kernelports.DBConnection
+	db          kernelports.Transactor
 	submissions factoringports.SubmissionRepository
 	entries     factoringports.ReserveEntryRepository
 	agreements  factoringports.AgreementRepository

@@ -28,9 +28,10 @@ func jurisdictionRuleConnectionToModel(
 	}
 
 	return &gqlmodel.JurisdictionRuleConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -52,8 +53,9 @@ func jurisdictionOverrideConnectionToModel(
 	}
 
 	return &gqlmodel.JurisdictionRuleOverrideConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }

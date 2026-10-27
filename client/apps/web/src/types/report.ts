@@ -10,8 +10,15 @@ import type {
   ReportNotation,
 } from "@trenova/shared/lib/report-format";
 import { defineLabels } from "@trenova/shared/i18n/labels";
-
-export const REPORT_IR_VERSION = 1;
+import type {
+  DashboardFilter as KeelDashboardFilter,
+  Parameter as KeelParameter,
+} from "@trenova/shared/generated/keel-analytics";
+import {
+  dashboardFilterFromKeel,
+  fromKeelDefinition,
+  parameterFromKeel,
+} from "@/lib/report-definition";
 
 export type ReportColumnKind = "dimension" | "measure" | "computed";
 
@@ -158,6 +165,16 @@ export type ReportColumnSpec = {
   display?: ReportDisplaySpec;
   /** Narrows what this measure aggregates without narrowing the report. */
   filter?: ReportFilterGroup;
+  /** Computed for having, sort or charts without being returned. */
+  hidden?: boolean;
+  /** A date bucket chosen by a parameter when the report runs. */
+  bucketParam?: string;
+  /** A formula the two-operand editor cannot show, kept as written. */
+  calc?: unknown;
+  /** A window column, kept as written. */
+  window?: unknown;
+  /** The display kind of a formula column the editor cannot show. */
+  format?: string;
 };
 
 export type ReportFieldFilter = {
@@ -167,6 +184,8 @@ export type ReportFieldFilter = {
   param?: string;
   agg?: ReportAggregation;
   transform?: ReportTransformSpec;
+  /** A condition the filter editor cannot show (on a formula or a column), kept as written. */
+  raw?: unknown;
 };
 
 export type ReportFilterGroup = {
@@ -235,8 +254,16 @@ export type ReportChartSpec = {
   labelColumnId?: string;
 };
 
+/** The parts of a definition the builder carries without editing them. */
+export type ReportDefinitionExtensions = {
+  subtotals?: string[];
+  top?: unknown;
+  limitParam?: string;
+  pivotValuesParam?: string;
+  pivotTop?: unknown;
+};
+
 export type ReportIR = {
-  irVersion?: number;
   entity: string;
   columns: ReportColumnSpec[];
   filters?: ReportFilterGroup | null;
@@ -247,6 +274,7 @@ export type ReportIR = {
   parameters?: ReportParameterDef[];
   totals?: boolean;
   charts?: ReportChartSpec[];
+  extensions?: ReportDefinitionExtensions;
 };
 
 export type ReportOperatorChoice = {
@@ -710,11 +738,19 @@ export function tileNeedsReport(kind: ReportDashboardTileKind): boolean {
 
 export function parseDashboardLayout(layout: unknown): ReportDashboardLayout {
   if (!layout || typeof layout !== "object") return { tiles: [] };
-  const parsed = layout as ReportDashboardLayout;
+  const parsed = layout as {
+    tiles?: ReportDashboardTile[];
+    parameters?: KeelParameter[];
+    filters?: KeelDashboardFilter[];
+  };
   return {
     tiles: Array.isArray(parsed.tiles) ? parsed.tiles : [],
-    parameters: Array.isArray(parsed.parameters) ? parsed.parameters : undefined,
-    filters: Array.isArray(parsed.filters) ? parsed.filters : undefined,
+    parameters: Array.isArray(parsed.parameters)
+      ? parsed.parameters.map(parameterFromKeel)
+      : undefined,
+    filters: Array.isArray(parsed.filters)
+      ? parsed.filters.map(dashboardFilterFromKeel)
+      : undefined,
   };
 }
 
@@ -755,10 +791,7 @@ export const REPORT_VISIBILITY_LABELS: Record<string, string> = defineLabels({
 });
 
 export function parseReportIR(definition: unknown): ReportIR | null {
-  if (!definition || typeof definition !== "object") return null;
-  const ir = definition as ReportIR;
-  if (typeof ir.entity !== "string" || !Array.isArray(ir.columns)) return null;
-  return ir;
+  return fromKeelDefinition(definition);
 }
 
 export function aggregationsForField(field: ReportCatalogField): ReportAggregation[] {

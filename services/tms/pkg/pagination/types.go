@@ -16,10 +16,9 @@ func (t TenantInfo) DBTenant() dbscope.Tenant {
 }
 
 type ListResult[T any] struct {
-	Items       []T               `json:"items"`
-	Total       int               `json:"total"`
-	HasNextPage bool              `json:"hasNextPage,omitempty"`
-	CursorSort  []CursorSortField `json:"-"`
+	Items      []T  `json:"items"`
+	Total      int  `json:"total"`
+	TotalExact bool `json:"totalExact"`
 }
 
 type SelectQueryRequest struct {
@@ -65,18 +64,20 @@ func (i Info) SafeOffset() int {
 }
 
 type Response[T any] struct {
-	Results T      `json:"results"`
-	Count   int    `json:"count"`
-	Next    string `json:"next"`
-	Prev    string `json:"previous"`
+	Results         T      `json:"results"`
+	Count           int    `json:"count"`
+	TotalCountExact bool   `json:"totalCountExact"`
+	Next            string `json:"next"`
+	Prev            string `json:"previous"`
 }
 
 type CursorResponse[T any] struct {
-	Results     T      `json:"results"`
-	Count       int    `json:"count"`
-	TotalCount  *int   `json:"totalCount"`
-	Next        string `json:"next"`
-	Previous    string `json:"previous"`
-	HasNextPage bool   `json:"hasNextPage"`
-	EndCursor   string `json:"endCursor"`
+	Results         T      `json:"results"`
+	Count           int    `json:"count"`
+	TotalCount      *int   `json:"totalCount"`
+	TotalCountExact bool   `json:"totalCountExact"`
+	Next            string `json:"next"`
+	Previous        string `json:"previous"`
+	HasNextPage     bool   `json:"hasNextPage"`
+	EndCursor       string `json:"endCursor"`
 }

@@ -41,7 +41,7 @@ func (r *Deps) resolveCustomerSelectOptions(
 
 	return selectOptionListConnection(
 		result,
-		req.SelectQuery.Pagination.SafeOffset(),
+		req.SelectQuery.Pagination,
 		customerSelectOptionItem,
 	)
 }

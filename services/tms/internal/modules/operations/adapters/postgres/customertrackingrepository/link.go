@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/customertracking/customertrackingdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/customertrackingports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/buncolgen/customertrackingcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
+
+var linkErrors = dberror.Mapping{Entity: "Customer tracking link"}
 
 type linkRepository struct {
 	db *postgres.Connection
@@ -32,8 +33,11 @@ func NewLinks(p Params) customertrackingports.LinkRepository {
 
 func (r *linkRepository) Create(ctx context.Context, entity *customertracking.Link) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Exec(ctx); err != nil {
-			return fmt.Errorf("insert customer tracking link: %w", err)
+		if err := customertrackingdb.Links.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return fmt.Errorf(
+				"insert customer tracking link: %w",
+				linkErrors.Map(err, entity.ID.String()),
+			)
 		}
 		return nil
 	})
@@ -45,12 +49,8 @@ func (r *linkRepository) GetByHash(
 ) (*customertracking.Link, error) {
 	ctx = dbscope.WithSystem(ctx, "resolve a customer tracking link before its tenant is known")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customertracking.Link, error) {
-		cols := customertrackingcol.LinkColumns
-		entity := new(customertracking.Link)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Where(cols.TokenHash.Eq(), tokenHash).
-			Scan(ctx)
+		l := customertrackingdb.Links
+		entity, err := l.AllTenants().Where(l.TokenHash.Eq(tokenHash)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return nil, nil
@@ -63,21 +63,13 @@ func (r *linkRepository) GetByHash(
 
 func (r *linkRepository) GetByID(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 ) (*customertracking.Link, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*customertracking.Link, error) {
-		cols := customertrackingcol.LinkColumns
-		entity := new(customertracking.Link)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customertrackingcol.LinkScopeTenant(sq, tenantInfo).
-					Where(cols.ID.Eq(), id)
-			}).
-			Scan(ctx)
+		entity, err := customertrackingdb.Links.Get(ctx, r.db.Keel(ctx), id)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Customer tracking link")
+			return nil, linkErrors.Map(err, id.String())
 		}
 		return entity, nil
 	})
@@ -85,21 +77,15 @@ func (r *linkRepository) GetByID(
 
 func (r *linkRepository) ListForShipment(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) ([]*customertracking.Link, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*customertracking.Link, error) {
-		cols := customertrackingcol.LinkColumns
-		entities := make([]*customertracking.Link, 0, 4)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return customertrackingcol.LinkScopeTenant(sq, tenantInfo).
-					Where(cols.ShipmentID.Eq(), shipmentID)
-			}).
-			Order(cols.CreatedAt.OrderDesc(), cols.ID.OrderDesc()).
+		l := customertrackingdb.Links
+		entities, err := l.Where(l.ShipmentID.Eq(shipmentID)).
+			Order(l.CreatedAt.Desc(), l.ID.Desc()).
 			Limit(maxShipmentLinks).
-			Scan(ctx)
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list customer tracking links: %w", err)
 		}
@@ -112,27 +98,14 @@ func (r *linkRepository) Revoke(
 	req *customertrackingports.RevokeLinksRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := customertrackingcol.LinkColumns
-		result, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*customertracking.Link)(nil)).
-			Set(cols.RevokedAt.Set(), req.At).
-			Set(cols.UpdatedAt.Set(), req.At).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				uq = customertrackingcol.LinkScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ShipmentID.Eq(), req.ShipmentID).
-					Where(cols.RevokedAt.IsNull())
-				if !req.LinkID.IsNil() {
-					uq = uq.Where(cols.ID.Eq(), req.LinkID)
-				}
-				return uq
-			}).
-			Exec(ctx)
+		l := customertrackingdb.Links
+		rows, err := l.Where(
+			l.ShipmentID.Eq(req.ShipmentID),
+			l.RevokedAt.IsNull(),
+			keel.When(!req.LinkID.IsNil(), l.ID.Eq(req.LinkID)),
+		).Update(ctx, r.db.Keel(ctx), l.RevokedAt.To(req.At), l.UpdatedAt.To(req.At))
 		if err != nil {
 			return 0, fmt.Errorf("revoke customer tracking links: %w", err)
-		}
-		rows, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("revoke customer tracking links rows affected: %w", err)
 		}
 		return int(rows), nil
 	})
@@ -140,22 +113,19 @@ func (r *linkRepository) Revoke(
 
 func (r *linkRepository) RecordView(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	id pulid.ID,
 	at int64,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := customertrackingcol.LinkColumns
-		_, err := r.db.DBForContext(ctx).NewUpdate().
-			Model((*customertracking.Link)(nil)).
-			Set(cols.LastViewedAt.Set(), at).
-			Set(cols.ViewCount.Inc(1)).
-			Set(cols.UpdatedAt.Set(), at).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return customertrackingcol.LinkScopeTenantUpdate(uq, tenantInfo).
-					Where(cols.ID.Eq(), id)
-			}).
-			Exec(ctx)
+		l := customertrackingdb.Links
+		_, err := l.Where(l.ID.Eq(id)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			l.LastViewedAt.To(at),
+			l.ViewCount.Increment(1),
+			l.UpdatedAt.To(at),
+		)
 		if err != nil {
 			return fmt.Errorf("record customer tracking link view: %w", err)
 		}
@@ -169,24 +139,19 @@ func (r *linkRepository) PurgeDead(ctx context.Context, before int64, limit int)
 		if limit <= 0 {
 			limit = defaultLinkPurgeLimit
 		}
-		cols := customertrackingcol.LinkColumns
-		deadAt := buncolgen.Expr("COALESCE({0}, {1})", cols.RevokedAt, cols.ExpiresAt)
-		dba := r.db.DBForContext(ctx)
-		dead := dba.NewSelect().
-			Model((*customertracking.Link)(nil)).
-			Column(cols.ID.Bare()).
-			Where(deadAt+" < ?", before).
-			Limit(int64(limit))
-		result, err := dba.NewDelete().
-			Model((*customertracking.Link)(nil)).
-			Where(cols.ID.Expr("{} IN (?)"), dead).
-			Exec(ctx)
+
+		l := customertrackingdb.Links
+		dead := l.As("dead")
+		rows, err := l.AllTenants().
+			Where(l.ID.InQuery(
+				dead.AllTenants().
+					Pick(dead.ID).
+					Where(dead.RevokedAt.Coalesce(dead.ExpiresAt).Lt(before)).
+					Limit(limit),
+			)).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("purge dead customer tracking links: %w", err)
-		}
-		rows, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("purge dead customer tracking links rows affected: %w", err)
 		}
 		return int(rows), nil
 	})

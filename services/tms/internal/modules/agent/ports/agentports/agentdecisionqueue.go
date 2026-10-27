@@ -3,6 +3,7 @@ package agentports
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,10 +20,10 @@ const PendingDecisionPlan PendingDecisionKind = "plan"
 
 // PendingDecisionEntry is one thing waiting on a person, newest first.
 type PendingDecisionEntry struct {
-	Kind      PendingDecisionKind `bun:"kind"`
-	ID        pulid.ID            `bun:"id"`
-	CreatedAt int64               `bun:"created_at"`
-	Shadow    bool                `bun:"shadow"`
+	Kind      PendingDecisionKind
+	ID        pulid.ID
+	CreatedAt int64
+	Shadow    bool
 }
 
 // PendingDecisionCursor is where a page ended: the entry's time and id,
@@ -56,14 +57,14 @@ type PendingDecisionsPageRow struct {
 }
 
 type PendingDecisionAgentCount struct {
-	AgentDefinitionID pulid.ID `bun:"agent_definition_id"`
-	AgentName         string   `bun:"agent_name"`
-	Count             int      `bun:"count"`
+	AgentDefinitionID pulid.ID
+	AgentName         string
+	Count             int
 }
 
 type PendingDecisionToolCount struct {
-	ToolName string `bun:"tool_name"`
-	Count    int    `bun:"count"`
+	ToolName string
+	Count    int
 }
 
 // PendingDecisionSummary is the queue in numbers: how much is waiting, from
@@ -92,7 +93,7 @@ type AgentDecisionQueueRepository interface {
 	) (*PendingDecisionsPageRow, error)
 	// CountPending is the size of the queue under the same filters as
 	// ListPending, for a connection that asks for its total.
-	CountPending(ctx context.Context, req ListPendingDecisionsQuery) (int, error)
+	CountPending(ctx context.Context, req ListPendingDecisionsQuery) (keel.RowCount, error)
 	Summary(ctx context.Context, req PendingDecisionSummaryRequest) (*PendingDecisionSummary, error)
 	// ListRecent is what was decided lately, newest first: proposals that
 	// stood on their own, each with who decided it.
@@ -112,12 +113,12 @@ type ListRecentDecisionsQuery struct {
 // RecentDecisionEntry is one decision on a proposal and the person who made
 // it, by name as the app shows them.
 type RecentDecisionEntry struct {
-	DecisionID      pulid.ID `bun:"decision_id"`
-	ProposalID      pulid.ID `bun:"proposal_id"`
-	Decision        string   `bun:"decision"`
-	ReasonCode      string   `bun:"reason_code"`
-	Note            string   `bun:"note"`
-	DecidedByUserID pulid.ID `bun:"decided_by_user_id"`
-	DecidedByName   string   `bun:"decided_by_name"`
-	DecidedAt       int64    `bun:"decided_at"`
+	DecisionID      pulid.ID
+	ProposalID      pulid.ID
+	Decision        string
+	ReasonCode      string
+	Note            string
+	DecidedByUserID pulid.ID
+	DecidedByName   string
+	DecidedAt       int64
 }

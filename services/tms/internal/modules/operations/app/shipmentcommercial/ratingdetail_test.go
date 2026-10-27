@@ -3,177 +3,147 @@ package shipmentcommercial
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/mocks/ratequoteportsmock"
-
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial/shipmentcommercialtest"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratequote"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
-	"github.com/emoss08/trenova/pkg/ratetypes"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
-// A contract prices from its own tables, so there are no formula variables to
-// record — but every reader of the detail, the GraphQL schema included, treats
-// the map as always present. A nil one fails the response, not just the field.
-func TestRecalculate_ContractRatingLeavesResolvedVariablesEmptyNotNil(t *testing.T) {
+func TestRatingDetailFromQuote_KeepsTheTariffsChoices(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipment()
-
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: shipmentcommercialtest.StubRateEngine(t, 1000)})
-	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
-
-	require.NoError(
-		t,
-		calculator.Recalculate(
-			t.Context(),
-			entity,
-			&tenant.ShipmentControl{},
-			pulid.MustNew("usr_"),
-		),
-	)
-
-	require.NotNil(t, entity.RatingDetail)
-	assert.NotNil(t, entity.RatingDetail.ResolvedVariables)
-	assert.Empty(t, entity.RatingDetail.ResolvedVariables)
-}
-
-// When a formula did produce the linehaul, the detail has to name it: the
-// billing panel shows the template and its expression, and the trace is the
-// only place they exist by the time the quote comes back.
-func TestRecalculate_FormulaPricedShipmentNamesItsTemplate(t *testing.T) {
-	t.Parallel()
-
-	entity := validShipment()
-	linehaul := decimal.NewFromInt(1500)
-
-	trace := &ratetypes.Trace{
-		Totals: ratetypes.Totals{Linehaul: linehaul, Total: linehaul},
-	}
-	trace.AddComponent(&ratetypes.Component{
-		Kind:       ratetypes.ComponentKindLinehaul,
-		Label:      "Linehaul",
-		Amount:     linehaul,
-		Source:     ratetypes.ComponentSourceFormulaTemplate,
-		SourceID:   "ft_01JT",
-		SourceName: "Mileage Base",
-		Detail: map[string]any{
-			"expression":    "distance * ratePerMile",
-			"versionNumber": int64(4),
+	chosen := "Flat"
+	flat := decimal.NewFromInt(900)
+	choices := []tarifftypes.Choice{{
+		Label:    "Linehaul",
+		Kind:     tarifftypes.ChoiceBest,
+		Currency: "USD",
+		Chosen:   &chosen,
+		Options: []tarifftypes.ChoiceOption{
+			{Label: "Flat", Status: tarifftypes.OptionChosen, Subtotal: &flat},
+			{Label: "Volume", Status: tarifftypes.OptionRefused, Refusal: "Too light"},
 		},
+	}}
+
+	detail := ratingDetailFromQuote(&ratequoteports.RatedShipment{
+		Outcome: ratequote.OutcomeRated,
+		Choices: choices,
+		Quote:   &ratequote.RateQuote{RatedAt: 1_700_000_000},
 	})
 
-	engine := ratequoteportsmock.NewMockRateEngine(t)
-	engine.EXPECT().
-		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
-		Return(&ratequoteports.RatedShipment{
-			Amount:   linehaul,
-			Currency: "USD",
-			Outcome:  ratequote.OutcomeFormulaFallback,
-			Quote: &ratequote.RateQuote{
-				Outcome:        ratequote.OutcomeFormulaFallback,
-				LinehaulAmount: linehaul,
-				TotalAmount:    linehaul,
-				RatedAt:        shipmentcommercialtest.RatedAt,
-				Trace:          trace,
-			},
-		}, nil).
-		Once()
-
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
-	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
-
-	require.NoError(
-		t,
-		calculator.Recalculate(
-			t.Context(),
-			entity,
-			&tenant.ShipmentControl{},
-			pulid.MustNew("usr_"),
-		),
-	)
-
-	detail := entity.RatingDetail
 	require.NotNil(t, detail)
-	assert.Equal(t, "ft_01JT", detail.FormulaTemplateID)
-	assert.Equal(t, "Mileage Base", detail.FormulaTemplateName)
-	assert.Equal(t, "distance * ratePerMile", detail.Expression)
-	assert.Equal(t, int64(4), detail.VersionNumber)
-	assert.NotNil(t, detail.ResolvedVariables)
+	assert.Equal(t, choices, detail.Choices)
+	assert.EqualValues(t, 1_700_000_000, detail.RatedAt)
 }
 
-// A rate that a minimum charge took over is the first thing a customer
-// questions, so the shipment has to say so — and say which of the bounds it
-// was, since the last one applied is what produced the number they were quoted.
-func TestRecalculate_ClampedRateRecordsTheGuardrailThatDecidedIt(t *testing.T) {
+func reviewedRating(reviews ...string) *ratequoteports.RatedShipment {
+	bill := &tarifftypes.Bill{Currency: "USD", Total: decimal.NewFromInt(100)}
+	for _, text := range reviews {
+		bill.Reviews = append(bill.Reviews, tarifftypes.Note{Text: text})
+	}
+	return &ratequoteports.RatedShipment{
+		Outcome: ratequote.OutcomeRated,
+		Bill:    bill,
+		Quote:   &ratequote.RateQuote{RatedAt: 1_800_000_000},
+	}
+}
+
+func approvedDetail(reviews ...string) *shipment.RatingDetail {
+	detail := ratingDetailFromQuote(reviewedRating(reviews...))
+	changed, err := detail.ApproveReview(pulid.MustNew("usr_"), 1_790_000_000)
+	if err != nil || !changed {
+		panic("the fixture rating must be approvable")
+	}
+	return detail
+}
+
+func TestRatingDetail_HoldsANewlyReviewedRating(t *testing.T) {
 	t.Parallel()
 
-	entity := validShipment()
-	clamped := decimal.NewFromInt(500)
+	calc := &Calculator{now: func() int64 { return 1 }}
+	entity := &shipment.Shipment{}
 
-	trace := &ratetypes.Trace{
-		Totals: ratetypes.Totals{Linehaul: clamped, Total: clamped},
-		Guardrails: []ratetypes.Guardrail{
-			{
-				Kind:    ratetypes.ComponentKindMinimumCharge,
-				Applied: true,
-				Bound:   decimal.NewFromInt(400),
-				Raw:     decimal.NewFromInt(320),
-				Result:  decimal.NewFromInt(400),
-			},
-			{
-				Kind:    ratetypes.ComponentKindAbsoluteMinCharge,
-				Applied: true,
-				Bound:   clamped,
-				Raw:     decimal.NewFromInt(400),
-				Result:  clamped,
-			},
-		},
-	}
+	detail := calc.ratingDetail(entity, reviewedRating("Liftgate on a dock"), &ratingPass{})
 
-	engine := ratequoteportsmock.NewMockRateEngine(t)
-	engine.EXPECT().
-		RateShipment(mock.Anything, mock.AnythingOfType("*ratequoteports.RateShipmentRequest")).
-		Return(&ratequoteports.RatedShipment{
-			Amount:   clamped,
-			Currency: "USD",
-			Outcome:  ratequote.OutcomeRated,
-			Quote: &ratequote.RateQuote{
-				Outcome:        ratequote.OutcomeRated,
-				LinehaulAmount: clamped,
-				TotalAmount:    clamped,
-				RatedAt:        shipmentcommercialtest.RatedAt,
-				Trace:          trace,
-			},
-		}, nil).
-		Once()
+	assert.Equal(t, []string{"Liftgate on a dock"}, detail.ReviewReasons())
+	assert.True(t, detail.AwaitsReview())
+	assert.Nil(t, detail.ReviewApproval)
+}
 
-	calculator := New(Params{Logger: zap.NewNop(), RateEngine: engine})
-	calculator.now = func() int64 { return shipmentcommercialtest.RatedAt }
+func TestRatingDetail_KeepsTheApprovalWhileTheReviewsAreTheSame(t *testing.T) {
+	t.Parallel()
 
-	require.NoError(
-		t,
-		calculator.Recalculate(
-			t.Context(),
-			entity,
-			&tenant.ShipmentControl{},
-			pulid.MustNew("usr_"),
-		),
+	calc := &Calculator{now: func() int64 { return 1 }}
+	previous := approvedDetail("Holiday pickup", "Liftgate on a dock")
+	entity := &shipment.Shipment{RatingDetail: previous}
+
+	detail := calc.ratingDetail(
+		entity,
+		reviewedRating("Liftgate on a dock", "Holiday pickup"),
+		&ratingPass{},
 	)
 
-	require.NotNil(t, entity.RatingDetail)
-	guardrail := entity.RatingDetail.Guardrail
-	require.NotNil(t, guardrail)
-	assert.True(t, guardrail.Applied)
-	assert.Equal(t, "min", guardrail.Bound)
-	assert.InDelta(t, 400.0, guardrail.RawResult, 0.001)
-	require.NotNil(t, guardrail.MinCharge)
-	assert.InDelta(t, 500.0, *guardrail.MinCharge, 0.001)
-	assert.Nil(t, guardrail.MaxCharge)
+	require.NotNil(t, detail.ReviewApproval)
+	assert.Equal(t, previous.ReviewApproval.ApprovedByID, detail.ReviewApproval.ApprovedByID)
+	assert.False(t, detail.AwaitsReview())
+}
+
+func TestRatingDetail_HoldsAgainWhenTheReviewsChange(t *testing.T) {
+	t.Parallel()
+
+	calc := &Calculator{now: func() int64 { return 1 }}
+	entity := &shipment.Shipment{RatingDetail: approvedDetail("Holiday pickup")}
+
+	detail := calc.ratingDetail(
+		entity,
+		reviewedRating("Holiday pickup", "Weight over 40,000 lb"),
+		&ratingPass{},
+	)
+
+	assert.Nil(t, detail.ReviewApproval)
+	assert.True(t, detail.AwaitsReview())
+}
+
+func TestRatingDetail_ClearsTheHoldWhenARerateHasNoReviews(t *testing.T) {
+	t.Parallel()
+
+	calc := &Calculator{now: func() int64 { return 1 }}
+	held := ratingDetailFromQuote(reviewedRating("Holiday pickup"))
+	entity := &shipment.Shipment{RatingDetail: held}
+
+	detail := calc.ratingDetail(entity, reviewedRating(), &ratingPass{})
+
+	assert.Empty(t, detail.ReviewReasons())
+	assert.Nil(t, detail.ReviewApproval)
+	assert.False(t, detail.AwaitsReview())
+}
+
+func TestApplyQuote_CarriesTheApprovalOfTheSameReviews(t *testing.T) {
+	t.Parallel()
+
+	calc := &Calculator{now: func() int64 { return 1 }}
+	entity := &shipment.Shipment{RatingDetail: approvedDetail("Holiday pickup")}
+
+	calc.applyQuote(entity, reviewedRating("Holiday pickup"))
+	assert.False(t, entity.AwaitsRatingReview())
+
+	calc.applyQuote(entity, reviewedRating("Detention over 4 hours"))
+	assert.True(t, entity.AwaitsRatingReview())
+}
+
+func TestRatingDetail_KeepsALockedRatesApproval(t *testing.T) {
+	t.Parallel()
+
+	calc := &Calculator{now: func() int64 { return 1 }}
+	previous := approvedDetail("Holiday pickup")
+	entity := &shipment.Shipment{RateLocked: true, RatingDetail: previous}
+
+	detail := calc.ratingDetail(entity, reviewedRating("Other"), &ratingPass{})
+
+	assert.Same(t, previous, detail)
+	assert.False(t, detail.AwaitsReview())
 }

@@ -5,10 +5,11 @@ package servicetyperepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/servicetype"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/servicetypeports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,6 +24,7 @@ func TestUpdateReturnsVersionMismatchForStaleEntity(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
@@ -77,6 +79,7 @@ func TestBulkUpdateStatusReturnsVersionMismatchWhenTenantDoesNotMatch(t *testing
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{
 		DB:     postgres.NewTestConnection(db),
 		Logger: zap.NewNop(),
@@ -96,11 +99,14 @@ func TestBulkUpdateStatusReturnsVersionMismatchWhenTenantDoesNotMatch(t *testing
 		OrgID: pulid.MustNew("org_"),
 		BuID:  pulid.MustNew("bu_"),
 	}
-	entities, err := repo.BulkUpdateStatus(ctx, &servicetypeports.BulkUpdateServiceTypeStatusRequest{
-		TenantInfo:     otherTenant,
-		ServiceTypeIDs: []pulid.ID{created.ID},
-		Status:         domaintypes.StatusInactive,
-	})
+	entities, err := repo.BulkUpdateStatus(
+		dbscope.WithTenant(ctx, otherTenant.DBTenant()),
+		&servicetypeports.BulkUpdateServiceTypeStatusRequest{
+			TenantInfo:     otherTenant,
+			ServiceTypeIDs: []pulid.ID{created.ID},
+			Status:         domaintypes.StatusInactive,
+		},
+	)
 
 	require.Nil(t, entities)
 	require.Error(t, err)

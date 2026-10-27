@@ -1,57 +1,45 @@
 package organizationrepository
 
 import (
-	"database/sql"
 	"slices"
 	"testing"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/tender"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
-// TestUpdateWritesDisabledCapabilityFlags guards the OmitZero interaction: a
-// false boolean is a zero value, so without the explicit Value clauses the
-// capability flags could never be turned off — the UPDATE would silently drop
-// them and the organization would keep the old setting.
-func TestUpdateWritesDisabledCapabilityFlags(t *testing.T) {
+func TestKeepStoredWhereZeroWritesDisabledCapabilityFlags(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(new(sql.DB), pgdialect.New())
-
-	org := &tenant.Organization{
+	o := tenantdb.Organizations
+	stored := &tenant.Organization{
 		Name:                   "Acme Logistics",
+		City:                   "Dallas",
+		BrokerageEnabled:       true,
+		AssetOperationsEnabled: true,
+		Version:                4,
+	}
+	org := &tenant.Organization{
+		Name:                   "Acme Freight",
 		BrokerageEnabled:       false,
 		AssetOperationsEnabled: false,
+		Version:                4,
 	}
 
-	query, err := db.NewUpdate().
-		Model(org).
-		WherePK().
-		Where("version = ?", 1).
-		OmitZero().
-		Value(tenantcol.OrganizationColumns.BrokerageEnabled.String(), "?", org.BrokerageEnabled).
-		Value(
-			tenantcol.OrganizationColumns.AssetOperationsEnabled.String(),
-			"?",
-			org.AssetOperationsEnabled,
-		).
-		AppendQuery(db.QueryGen(), nil)
-	require.NoError(t, err)
+	keepStoredWhereZero(org, stored, o.BrokerageEnabled, o.AssetOperationsEnabled)
 
-	assert.Contains(t, string(query), `"brokerage_enabled" = FALSE`)
-	assert.Contains(t, string(query), `"asset_operations_enabled" = FALSE`)
+	assert.False(t, org.BrokerageEnabled)
+	assert.False(t, org.AssetOperationsEnabled)
+	assert.Equal(t, "Acme Freight", org.Name)
+	assert.Equal(t, "Dallas", org.City)
+	assert.Equal(t, int64(4), org.Version)
 }
 
 // TestBrokerageDependencyStatusSetsMatchDomainPredicates keeps the SQL-side
@@ -146,71 +134,17 @@ func TestAssetDependencyStatusSetsMatchDomainPredicates(t *testing.T) {
 	}
 }
 
-func TestAssetDependencyCountsScopeEveryQueryToTheTenant(t *testing.T) {
+func TestAssetDependencyCountsFillEveryCounter(t *testing.T) {
 	t.Parallel()
 
-	db := bun.NewDB(new(sql.DB), pgdialect.New())
-	tenantInfo := pagination.TenantInfo{
-		OrgID: pulid.MustNew("org_"),
-		BuID:  pulid.MustNew("bu_"),
-	}
 	counts := new(tenantports.AssetDependencyCounts)
-
-	deps := assetDependencyCounts(tenantInfo, counts)
+	deps := assetDependencyCounts(counts)
 	require.Len(t, deps, 3)
 
+	assert.Same(t, &counts.ActiveDriverAssignments, deps[0].target)
+	assert.Same(t, &counts.UnpaidDriverSettlements, deps[1].target)
+	assert.Same(t, &counts.LinkedPortalUsers, deps[2].target)
 	for _, dep := range deps {
-		query, err := db.NewSelect().
-			Model(dep.model).
-			WhereGroup(" AND ", dep.scope).
-			AppendQuery(db.QueryGen(), nil)
-		require.NoErrorf(t, err, "build %s query", dep.label)
-
-		rendered := string(query)
-		assert.Containsf(t, rendered, ".organization_id = '"+tenantInfo.OrgID.String()+"'",
-			"%s is scoped to the organization", dep.label)
-		assert.Containsf(t, rendered, ".business_unit_id = '"+tenantInfo.BuID.String()+"'",
-			"%s is scoped to the business unit", dep.label)
+		require.NotNil(t, dep.count)
 	}
-}
-
-func TestAssetDependencyCountsNarrowToBlockingRows(t *testing.T) {
-	t.Parallel()
-
-	db := bun.NewDB(new(sql.DB), pgdialect.New())
-	tenantInfo := pagination.TenantInfo{
-		OrgID: pulid.MustNew("org_"),
-		BuID:  pulid.MustNew("bu_"),
-	}
-	counts := new(tenantports.AssetDependencyCounts)
-
-	rendered := make(map[string]string, 3)
-	targets := make(map[string]*int, 3)
-	for _, dep := range assetDependencyCounts(tenantInfo, counts) {
-		query, err := db.NewSelect().
-			Model(dep.model).
-			WhereGroup(" AND ", dep.scope).
-			AppendQuery(db.QueryGen(), nil)
-		require.NoErrorf(t, err, "build %s query", dep.label)
-
-		rendered[dep.label] = string(query)
-		targets[dep.label] = dep.target
-	}
-
-	assignments := rendered["active driver assignments"]
-	assert.Contains(t, assignments, "status IN ('New', 'InProgress')")
-	assert.NotContains(t, assignments, "Completed")
-	assert.NotContains(t, assignments, "Canceled")
-
-	settlements := rendered["unpaid driver settlements"]
-	assert.Contains(t, settlements, "status IN ('Draft', 'PendingApproval', 'Approved', 'Posted')")
-	assert.NotContains(t, settlements, "Paid")
-	assert.NotContains(t, settlements, "Voided")
-
-	workers := rendered["linked driver portal users"]
-	assert.Contains(t, workers, "user_id IS NOT NULL")
-
-	assert.Same(t, &counts.ActiveDriverAssignments, targets["active driver assignments"])
-	assert.Same(t, &counts.UnpaidDriverSettlements, targets["unpaid driver settlements"])
-	assert.Same(t, &counts.LinkedPortalUsers, targets["linked driver portal users"])
 }

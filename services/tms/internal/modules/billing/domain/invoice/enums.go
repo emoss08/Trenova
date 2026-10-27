@@ -57,8 +57,8 @@ const (
 	ScopeOrder        = Scope("Order")
 	ScopeConsolidated = Scope("Consolidated")
 	ScopeAdjustment   = Scope("Adjustment")
-	// ScopeMemo is a credit or debit memo raised against a customer on its own,
-	// with no shipment behind it.
+	// A credit or debit memo raised against a customer on its own, with no
+	// shipment behind it.
 	ScopeMemo = Scope("Memo")
 )
 
@@ -67,8 +67,8 @@ type InvoiceLineType string
 const (
 	InvoiceLineTypeFreight     = InvoiceLineType("Freight")
 	InvoiceLineTypeAccessorial = InvoiceLineType("Accessorial")
-	// InvoiceLineTypeMemo is a free-form memo line; it counts toward the total
-	// but neither the freight subtotal nor the accessorial figure.
+	// A free-form memo line, counted in the total but in neither the freight
+	// subtotal nor the accessorial figure.
 	InvoiceLineTypeMemo = InvoiceLineType("Memo")
 )
 

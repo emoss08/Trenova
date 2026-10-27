@@ -2,8 +2,8 @@
 package metrics
 
 import (
-	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	rlsLabelPool    = "pool"
-	rlsLabelEvent   = "event"
-	rlsLabelOutcome = "outcome"
+	dbCacheSubsystem = "db_cache"
+	rlsLabelPool     = "pool"
+	rlsLabelEvent    = "event"
+	rlsLabelOutcome  = "outcome"
 )
 
 type Database struct {
@@ -21,7 +22,8 @@ type Database struct {
 	concurrencyTotal *prometheus.CounterVec
 	operatorActions  *prometheus.CounterVec
 	rlsScopeEvents   *prometheus.CounterVec
-	stats            func() sql.DBStats
+	slowWaits        *prometheus.CounterVec
+	stats            func() PoolStats
 }
 
 func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool) *Database {
@@ -63,12 +65,31 @@ func NewDatabase(registry *prometheus.Registry, logger *zap.Logger, enabled bool
 		[]string{rlsLabelPool, rlsLabelEvent, rlsLabelOutcome},
 	)
 
-	m.mustRegister(m.concurrencyTotal, m.operatorActions, m.rlsScopeEvents)
+	m.slowWaits = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: "db",
+			Name:      "slow_waits_total",
+			Help:      "Total number of waits for a tenant slot, a connection or a cache fill past database.slowWaitWarning, by component, pool and kind",
+		},
+		[]string{"component", "pool", "kind"},
+	)
+
+	m.mustRegister(m.concurrencyTotal, m.operatorActions, m.rlsScopeEvents, m.slowWaits)
 
 	return m
 }
 
-func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
+type PoolStats struct {
+	Open         int
+	InUse        int
+	Idle         int
+	MaxOpen      int
+	WaitCount    int64
+	WaitDuration time.Duration
+}
+
+func (m *Database) RegisterPoolStats(stats func() PoolStats) {
 	m.stats = stats
 	m.ifEnabled(func() {
 		m.mustRegister(
@@ -78,7 +99,7 @@ func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
 				Name:      "open_connections",
 				Help:      "Number of established database connections.",
 			}, func() float64 {
-				return float64(stats().OpenConnections)
+				return float64(stats().Open)
 			}),
 			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 				Namespace: Namespace,
@@ -116,11 +137,120 @@ func (m *Database) RegisterSQLStats(stats func() sql.DBStats) {
 	})
 }
 
-func (m *Database) SQLStats() (sql.DBStats, bool) {
+type ResultCacheStats struct {
+	Hits      int64
+	Misses    int64
+	Bypasses  int64
+	Errors    int64
+	Bytes     int64
+	Versions  int
+	Listening bool
+}
+
+type RuntimeStats struct {
+	Cache              ResultCacheStats
+	TenantWaits        int64
+	ReadCommitFailures int64
+}
+
+func (m *Database) RegisterRuntimeStats(stats func() RuntimeStats) {
+	m.ifEnabled(func() {
+		m.mustRegister(
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "hits_total",
+				Help:      "Total number of database reads served from the result cache.",
+			}, func() float64 {
+				return float64(stats().Cache.Hits)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "misses_total",
+				Help:      "Total number of cacheable database reads that read the database.",
+			}, func() float64 {
+				return float64(stats().Cache.Misses)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "bypasses_total",
+				Help:      "Total number of cacheable database reads where the result cache did not apply.",
+			}, func() float64 {
+				return float64(stats().Cache.Bypasses)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "errors_total",
+				Help:      "Total number of result cache store, listener and decoder failures.",
+			}, func() float64 {
+				return float64(stats().Cache.Errors)
+			}),
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "bytes",
+				Help:      "Bytes held by the in-process result cache.",
+			}, func() float64 {
+				return float64(stats().Cache.Bytes)
+			}),
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "versions",
+				Help:      "Number of (tenant, table) data versions the result cache holds.",
+			}, func() float64 {
+				return float64(stats().Cache.Versions)
+			}),
+			prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: dbCacheSubsystem,
+				Name:      "listening",
+				Help:      "1 while the result cache's data version listener is connected; the cache is bypassed at 0.",
+			}, func() float64 {
+				if stats().Cache.Listening {
+					return 1
+				}
+				return 0
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "tenant_waits_total",
+				Help:      "Total number of times work waited for one of its tenant's concurrency slots.",
+			}, func() float64 {
+				return float64(stats().TenantWaits)
+			}),
+			prometheus.NewCounterFunc(prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: "db_pool",
+				Name:      "read_commit_failures_total",
+				Help:      "Total number of connections closed because the reply to a read transaction's end failed.",
+			}, func() float64 {
+				return float64(stats().ReadCommitFailures)
+			}),
+		)
+	})
+}
+
+func (m *Database) PoolStats() (PoolStats, bool) {
 	if m == nil || m.stats == nil {
-		return sql.DBStats{}, false
+		return PoolStats{}, false
 	}
 	return m.stats(), true
+}
+
+func PoolStatsFields(stats PoolStats) []zap.Field {
+	return []zap.Field{
+		zap.Int("db_pool_open", stats.Open),
+		zap.Int("db_pool_in_use", stats.InUse),
+		zap.Int("db_pool_idle", stats.Idle),
+		zap.Int64("db_pool_wait_count", stats.WaitCount),
+		zap.Duration("db_pool_wait_duration", stats.WaitDuration),
+		zap.Int("db_pool_max_open", stats.MaxOpen),
+	}
 }
 
 func (m *Database) RecordConcurrencyEvent(event dberror.ConcurrencyEvent) {
@@ -148,6 +278,16 @@ func (m *Database) RecordRLSScopeEvent(pool, event, outcome string) {
 			normalizeMetricLabel(pool),
 			normalizeMetricLabel(event),
 			normalizeMetricLabel(outcome),
+		).Inc()
+	})
+}
+
+func (m *Database) RecordSlowWait(component, pool, kind string) {
+	m.ifEnabled(func() {
+		m.slowWaits.WithLabelValues(
+			normalizeMetricLabel(component),
+			normalizeMetricLabel(pool),
+			normalizeMetricLabel(kind),
 		).Inc()
 	})
 }

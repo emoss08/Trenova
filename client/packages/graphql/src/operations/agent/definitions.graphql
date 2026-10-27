@@ -71,6 +71,7 @@ query AgentDefinitionCards($input: DataTableConnectionInput!, $includeTotalCount
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -100,6 +101,7 @@ query AgentChoices($input: DataTableConnectionInput!, $includeTotalCount: Boolea
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }
@@ -109,17 +111,20 @@ query AgentChoices($input: DataTableConnectionInput!, $includeTotalCount: Boolea
 query AgentDefinitionCount($input: DataTableConnectionInput!) {
   agentDefinitions(input: $input) {
     totalCount
+    totalCountExact
   }
 }
 
 query AgentRunCount($input: DataTableConnectionInput!) {
   agentRuns(input: $input) {
     totalCount
+    totalCountExact
   }
 }
 
 query AgentProposalCount($input: DataTableConnectionInput!) {
   agentProposals(input: $input) {
     totalCount
+    totalCountExact
   }
 }

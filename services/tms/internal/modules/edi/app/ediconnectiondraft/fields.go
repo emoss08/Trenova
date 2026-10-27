@@ -22,7 +22,6 @@ const (
 	scopeInterchange
 	scopeSet
 	scopeControlNumber
-	scopeCarrier
 )
 
 type normalizer func(string) (string, error)
@@ -67,13 +66,10 @@ const (
 	fieldComponentSep     = "separators.component"
 	fieldRepetitionSep    = "separators.repetition"
 
-	fieldCarrierSCAC = "carrier.scac"
-
-	setAttrSupported         = "supported"
-	setAttrVersion           = "version"
-	setAttrAck               = "ack"
-	setAttrAckWindowMinutes  = "ackWindowMinutes"
-	setAttrFunctionalGroupID = "functionalGroupId"
+	setAttrSupported        = "supported"
+	setAttrVersion          = "version"
+	setAttrAck              = "ack"
+	setAttrAckWindowMinutes = "ackWindowMinutes"
 
 	controlNumberAttrStart = "start"
 
@@ -97,7 +93,6 @@ var (
 	errBlank        = errors.New("the value is blank")
 	isaQualifierRe  = regexp.MustCompile(`^[A-Z0-9]{2}$`)
 	versionDigitsRe = regexp.MustCompile(`^\d{4,6}$`)
-	scacRe          = regexp.MustCompile(`^[A-Z0-9]{2,4}$`)
 	functionalIDRe  = regexp.MustCompile(`^[A-Z]{2}$`)
 	numberRe        = regexp.MustCompile(`\d+`)
 	durationRe      = regexp.MustCompile(
@@ -400,22 +395,6 @@ func normalizePath(value string) (string, error) {
 		return "", errors.New(
 			"must be a directory path of at most 255 characters, without a parent reference",
 		)
-	}
-	return value, nil
-}
-
-func normalizeSCAC(value string) (string, error) {
-	value = strings.ToUpper(strings.TrimSpace(value))
-	if !scacRe.MatchString(value) {
-		return "", errors.New("must be a SCAC of 2 to 4 letters or digits")
-	}
-	return value, nil
-}
-
-func normalizeFunctionalGroup(value string) (string, error) {
-	value = strings.ToUpper(strings.TrimSpace(value))
-	if !functionalIDRe.MatchString(value) {
-		return "", errors.New("must be a two-letter functional identifier code")
 	}
 	return value, nil
 }

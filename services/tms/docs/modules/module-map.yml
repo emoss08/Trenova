@@ -59,11 +59,13 @@ modules:
       - organizationservice
       - orgstructureservice
       - orgzone
+      - pageaccessservice
       - passwordresetservice
       - permission
       - planservice
       - ptoledgerservice
       - quotaservice
+      - refview
       - roleassignmentservice
       - roleservice
       - sequenceconfigservice
@@ -352,7 +354,6 @@ modules:
       - documentaiextraction
       - documentcontent
       - documentpacketrule
-      - documentparsingrule
       - documentsearchprojection
       - documenttemplate
       - documentupload
@@ -366,9 +367,7 @@ modules:
       - captureservice
       - documentextractionservice
       - documentmailservice
-      - documentoperationsservice
       - documentpacketruleservice
-      - documentparsingruleservice
       - documentsearchprojectionservice
       - documentservice
       - documenttemplateservice
@@ -397,7 +396,6 @@ modules:
       - documentaiextractionrepository
       - documentcontentrepository
       - documentpacketrulerepository
-      - documentparsingrulerepository
       - documentrepository
       - documentsearchprojectionrepository
       - documenttemplaterepository
@@ -413,6 +411,7 @@ modules:
   rating:
     level: 6
     domain:
+      - formulalibrary
       - formulatemplate
       - fuelsurcharge
       - rateagreement
@@ -424,7 +423,7 @@ modules:
       - ratezone
     service:
       - carrierassignmentservice
-      - formula
+      - formulalibraryservice
       - formulatemplateservice
       - fuelsurchargeservice
       - rateagreementservice
@@ -436,20 +435,25 @@ modules:
       - ratesimulationservice
       - ratezoneservice
       - ratinghydration
+      - tariff
     job:
       - formulatemplatejobs
       - fuelpricejobs
       - ratesimjobs
     repository:
+      - formulalibraryrepository
+      - formulalibraryreviewrepository
+      - formulalibraryversionrepository
       - formulatemplaterepository
       - formulatemplatereviewrepository
-      - formulatemplatetestcaserepository
       - formulatemplateversionrepository
       - fuelsurchargerepository
       - rateagreementrepository
       - rateconfirmationrepository
       - rateimportrepository
       - ratematrixrepository
+      - ratematrixreviewrepository
+      - ratematrixversionrepository
       - ratequoterepository
       - ratesimulationrepository
       - ratezonerepository
@@ -511,6 +515,7 @@ modules:
       - shipmentinvalidation
       - shipmentmoveservice
       - shipmentquickfilterservice
+      - shipmentratingreviewservice
       - shipmentservice
       - shipmentsuggestionservice
       - shipmenttracking

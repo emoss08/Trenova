@@ -5,332 +5,27 @@ import (
 	"fmt"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel/analytics"
+	"github.com/emoss08/keel/analytics/format"
+	"github.com/emoss08/keel/analytics/formula"
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/api/graphql/gqlmodel"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	reportingservice "github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportfmt"
-	"github.com/emoss08/trenova/shared/i18n"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/shopspring/decimal"
 )
 
-var reportSensitivityRegistry = permission.NewRegistry()
-
-func reportIRFromGraphQL(input *gqlmodel.ReportIRInput) *report.Definition {
-	def := &report.Definition{
-		IRVersion: report.CurrentIRVersion,
-		Entity:    input.Entity,
-		Filters:   reportFilterGroupFromGraphQL(input.Filters),
-		Having:    reportFilterGroupFromGraphQL(input.Having),
-	}
-
-	for _, col := range input.Columns {
-		spec := report.ColumnSpec{
-			ID:   col.ID,
-			Ref:  reportFieldRefFromGraphQL(col.Ref),
-			Kind: report.ColumnKind(col.Kind),
-		}
-		if col.Agg != nil {
-			spec.Agg = reportcatalog.Aggregation(*col.Agg)
-		}
-		if col.Bucket != nil {
-			spec.Bucket = report.DateBucket(*col.Bucket)
-		}
-		spec.Band = reportBandFromGraphQL(col.Band)
-		if col.Label != nil {
-			spec.Label = *col.Label
-		}
-		if col.Computed != nil {
-			computed := &report.ComputedSpec{
-				Op:         report.ComputedOp(col.Computed.Op),
-				LeftID:     base.DerefString(col.Computed.LeftID),
-				RightID:    base.DerefString(col.Computed.RightID),
-				LeftValue:  col.Computed.LeftValue,
-				RightValue: col.Computed.RightValue,
-			}
-			if col.Computed.Format != nil {
-				computed.Format = reportcatalog.FormatHint(*col.Computed.Format)
-			}
-			spec.Computed = computed
-		}
-		spec.Transform = reportTransformFromGraphQL(col.Transform)
-		spec.Display = reportDisplayFromGraphQL(col.Display)
-		spec.Filter = reportFilterGroupFromGraphQL(col.Filter)
-		def.Columns = append(def.Columns, spec)
-	}
-
-	for _, sortSpec := range input.Sort {
-		def.Sort = append(def.Sort, report.SortSpec{
-			ColumnID:  sortSpec.ColumnID,
-			Direction: dbtype.SortDirection(sortSpec.Direction),
-		})
-	}
-
-	if input.Limit != nil {
-		def.Limit = *input.Limit
-	}
-
-	if input.Pivot != nil {
-		pivot := &report.PivotSpec{
-			Ref:        reportFieldRefFromGraphQL(input.Pivot.Ref),
-			Values:     input.Pivot.Values,
-			Labels:     input.Pivot.Labels,
-			MeasureIDs: input.Pivot.MeasureIds,
-		}
-		if input.Pivot.IncludeOther != nil {
-			pivot.IncludeOther = *input.Pivot.IncludeOther
-		}
-		def.Pivot = pivot
-	}
-
-	for _, param := range input.Parameters {
-		def.Parameters = append(def.Parameters, reportParameterFromGraphQL(param))
-	}
-
-	if input.Totals != nil {
-		def.Totals = *input.Totals
-	}
-	for _, chart := range input.Charts {
-		def.Charts = append(def.Charts, reportChartFromGraphQL(chart))
-	}
-
-	return def
-}
-
-func reportParameterFromGraphQL(
-	param *gqlmodel.ReportParameterDefInput,
-) report.ParameterDef {
-	paramDef := report.ParameterDef{
-		Name:          param.Name,
-		Type:          reportcatalog.FieldType(param.Type),
-		Label:         base.DerefString(param.Label),
-		AllowedValues: param.AllowedValues,
-		RefEntity:     base.DerefString(param.RefEntity),
-	}
-	if param.Required != nil {
-		paramDef.Required = *param.Required
-	}
-	if param.Default != nil {
-		paramDef.Default = param.Default
-	}
-	if param.Multi != nil {
-		paramDef.Multi = *param.Multi
-	}
-	return paramDef
-}
-
-func reportChartFromGraphQL(input *gqlmodel.ReportChartInput) report.ChartSpec {
-	spec := report.ChartSpec{
-		ID:        input.ID,
-		Type:      report.ChartType(input.Type),
-		SeriesIDs: input.SeriesIds,
-	}
-	if input.Title != nil {
-		spec.Title = *input.Title
-	}
-	if input.XColumnID != nil {
-		spec.XColumnID = *input.XColumnID
-	}
-	if input.Stacked != nil {
-		spec.Stacked = *input.Stacked
-	}
-	if input.HideLegend != nil {
-		spec.HideLegend = *input.HideLegend
-	}
-	if input.ShowValues != nil {
-		spec.ShowValues = *input.ShowValues
-	}
-	if input.Curved != nil {
-		spec.Curved = *input.Curved
-	}
-	if input.Limit != nil {
-		spec.Limit = *input.Limit
-	}
-	if input.CompareID != nil {
-		spec.CompareID = *input.CompareID
-	}
-	spec.LatColumnID = base.DerefString(input.LatColumnID)
-	spec.LngColumnID = base.DerefString(input.LngColumnID)
-	spec.LabelColumnID = base.DerefString(input.LabelColumnID)
-	if input.Goal != nil {
-		goal := &report.ChartGoal{Label: base.DerefString(input.Goal.Label)}
-		if input.Goal.Value != nil {
-			value := *input.Goal.Value
-			goal.Value = &value
-		}
-		goal.ColumnID = base.DerefString(input.Goal.ColumnID)
-		if !goal.IsEmpty() {
-			spec.Goal = goal
-		}
-	}
-	return spec
-}
-
-func reportTransformFromGraphQL(input *gqlmodel.ReportTransformInput) *report.TransformSpec {
-	if input == nil {
-		return nil
-	}
-	spec := &report.TransformSpec{Op: report.TransformOp(input.Op)}
-	if input.Precision != nil {
-		precision := *input.Precision
-		spec.Precision = &precision
-	}
-	if input.Factor != nil {
-		factor := *input.Factor
-		spec.Factor = &factor
-	}
-	return spec
-}
-
-func reportDisplayFromGraphQL(input *gqlmodel.ReportDisplayInput) *reportfmt.Spec {
-	if input == nil {
-		return nil
-	}
-
-	spec := &reportfmt.Spec{
-		Style:         reportfmt.Style(base.DerefString(input.Style)),
-		Currency:      base.DerefString(input.Currency),
-		Negative:      reportfmt.Negative(base.DerefString(input.Negative)),
-		Notation:      reportfmt.Notation(base.DerefString(input.Notation)),
-		Prefix:        base.DerefString(input.Prefix),
-		Suffix:        base.DerefString(input.Suffix),
-		DateStyle:     reportfmt.DateStyle(base.DerefString(input.DateStyle)),
-		BoolStyle:     reportfmt.BoolStyle(base.DerefString(input.BoolStyle)),
-		DurationUnit:  reportfmt.DurationUnit(base.DerefString(input.DurationUnit)),
-		DurationStyle: reportfmt.DurationStyle(base.DerefString(input.DurationStyle)),
-		NullText:      base.DerefString(input.NullText),
-	}
-	if input.Decimals != nil {
-		decimals := *input.Decimals
-		spec.Decimals = &decimals
-	}
-	if input.Grouping != nil {
-		grouping := *input.Grouping
-		spec.Grouping = &grouping
-	}
-	for _, rule := range input.Rules {
-		converted := reportfmt.Rule{
-			Op:    reportfmt.RuleOp(rule.Op),
-			Value: rule.Value,
-			Tone:  reportfmt.Tone(rule.Tone),
-		}
-		if rule.Upper != nil {
-			converted.Upper = *rule.Upper
-		}
-		spec.Rules = append(spec.Rules, converted)
-	}
-
-	if spec.IsEmpty() {
-		return nil
-	}
-	return spec
-}
-
-func reportBandFromGraphQL(input *gqlmodel.ReportBandInput) *reportfmt.Band {
-	if input == nil {
-		return nil
-	}
-
-	band := &reportfmt.Band{Edges: input.Edges}
-	if input.Width != nil {
-		band.Width = *input.Width
-	}
-	if band.IsEmpty() {
-		return nil
-	}
-	return band
-}
-
-func reportBandToModel(band *reportfmt.Band) *gqlmodel.ReportBand {
-	if band.IsEmpty() {
-		return nil
-	}
-	return &gqlmodel.ReportBand{Width: band.Width, Edges: band.Edges}
-}
-
-func reportDisplayRulesToModel(rules []reportfmt.Rule) []*gqlmodel.ReportDisplayRule {
-	models := make([]*gqlmodel.ReportDisplayRule, 0, len(rules))
-	for i := range rules {
-		models = append(models, &gqlmodel.ReportDisplayRule{
-			Op:    string(rules[i].Op),
-			Value: rules[i].Value,
-			Upper: rules[i].Upper,
-			Tone:  string(rules[i].Tone),
-		})
-	}
-	return models
-}
-
-func reportDisplayToModel(display *reportfmt.Resolved) *gqlmodel.ReportColumnDisplay {
-	return &gqlmodel.ReportColumnDisplay{
-		Style:         string(display.Style),
-		Decimals:      display.Decimals,
-		Grouping:      display.Grouping,
-		Currency:      display.Currency,
-		Negative:      string(display.Negative),
-		Notation:      string(display.Notation),
-		Prefix:        display.Prefix,
-		Suffix:        display.Suffix,
-		DateStyle:     string(display.DateStyle),
-		BoolStyle:     string(display.BoolStyle),
-		DurationUnit:  string(display.DurationUnit),
-		DurationStyle: string(display.DurationStyle),
-		NullText:      display.NullText,
-		Rules:         reportDisplayRulesToModel(display.Rules),
-		Band:          reportBandToModel(display.Band),
-	}
-}
-
-func reportFieldRefFromGraphQL(input *gqlmodel.ReportFieldRefInput) report.FieldRef {
-	if input == nil {
-		return report.FieldRef{}
-	}
-	return report.FieldRef{Path: input.Path, Field: input.Field}
-}
-
-func reportFilterGroupFromGraphQL(input *gqlmodel.ReportFilterGroupInput) *report.FilterGroup {
-	if input == nil {
-		return nil
-	}
-
-	group := &report.FilterGroup{Op: report.BoolOp(input.Op)}
-	for _, filter := range input.Filters {
-		fieldFilter := report.FieldFilter{
-			Ref:      reportFieldRefFromGraphQL(filter.Ref),
-			Operator: dbtype.Operator(filter.Operator),
-			Value:    filter.Value,
-		}
-		if filter.Param != nil {
-			fieldFilter.Param = *filter.Param
-		}
-		if filter.Agg != nil {
-			fieldFilter.Agg = reportcatalog.Aggregation(*filter.Agg)
-		}
-		fieldFilter.Transform = reportTransformFromGraphQL(filter.Transform)
-		group.Filters = append(group.Filters, fieldFilter)
-	}
-	for _, nested := range input.Groups {
-		if child := reportFilterGroupFromGraphQL(nested); child != nil {
-			group.Groups = append(group.Groups, *child)
-		}
-	}
-
-	return group
-}
-
-func reportDefinitionAsJSON(def *report.Definition) (map[string]any, error) {
-	raw, err := sonic.Marshal(def)
+func reportDefinitionAsJSON(def *ir.Definition) (map[string]any, error) {
+	raw, err := ir.Encode(def)
 	if err != nil {
 		return nil, fmt.Errorf("serialize report definition: %w", err)
 	}
@@ -406,6 +101,7 @@ func reportRunToModel(entity *report.ReportRun) *gqlmodel.ReportRun {
 		ByteSize:          int(entity.ByteSize),
 		DurationMs:        int(entity.DurationMs),
 		Truncated:         entity.Truncated,
+		RowsStored:        entity.RowsKey != "",
 		ArtifactExpiresAt: nilIfZero(entity.ArtifactExpiresAt),
 		CacheHit:          entity.CacheHit,
 		QueuedAt:          nilIfZero(entity.QueuedAt),
@@ -502,7 +198,6 @@ func reportScheduleAlertFromGraphQL(
 func saveReportScheduleRequest(
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.CreateReportScheduleInput,
-	update *gqlmodel.UpdateReportScheduleInput,
 ) (*reportingservice.SaveScheduleRequest, error) {
 	definitionID, err := pulid.MustParse(input.DefinitionID)
 	if err != nil {
@@ -534,14 +229,41 @@ func saveReportScheduleRequest(
 		req.Timezone = *input.Timezone
 	}
 
-	if update != nil {
-		scheduleID, parseErr := pulid.MustParse(update.ID)
-		if parseErr != nil {
-			return nil, parseErr
-		}
-		req.ScheduleID = scheduleID
-		req.Version = int64(update.Version)
+	return req, nil
+}
+
+func createReportScheduleInputOf(
+	input *gqlmodel.UpdateReportScheduleInput,
+) *gqlmodel.CreateReportScheduleInput {
+	return &gqlmodel.CreateReportScheduleInput{
+		DefinitionID:    input.DefinitionID,
+		CronExpression:  input.CronExpression,
+		Timezone:        input.Timezone,
+		Formats:         input.Formats,
+		EmailRecipients: input.EmailRecipients,
+		EmailAttach:     input.EmailAttach,
+		EmailInline:     input.EmailInline,
+		NotifyUserIds:   input.NotifyUserIds,
+		Alert:           input.Alert,
+		Enabled:         input.Enabled,
 	}
+}
+
+func updateReportScheduleRequest(
+	authCtx *authctx.AuthContext,
+	input *gqlmodel.UpdateReportScheduleInput,
+) (*reportingservice.SaveScheduleRequest, error) {
+	req, err := saveReportScheduleRequest(authCtx, createReportScheduleInputOf(input))
+	if err != nil {
+		return nil, err
+	}
+
+	scheduleID, err := pulid.MustParse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+	req.ScheduleID = scheduleID
+	req.Version = int64(input.Version)
 
 	return req, nil
 }
@@ -591,17 +313,30 @@ func reportDashboardLayoutFromGraphQL(
 	}
 
 	for _, filter := range input.Filters {
-		layout.Filters = append(layout.Filters, report.DashboardFilter{
-			ID:       filter.ID,
-			Label:    base.DerefString(filter.Label),
-			Entity:   filter.Entity,
-			Ref:      reportFieldRefFromGraphQL(filter.Ref),
-			Operator: dbtype.Operator(filter.Operator),
-			Default:  filter.Default,
+		layout.Filters = append(layout.Filters, ir.DashboardFilter{
+			ID:      filter.ID,
+			Label:   base.DerefString(filter.Label),
+			Entity:  filter.Entity,
+			Field:   filter.Field,
+			Op:      ir.Op(filter.Op),
+			Default: filter.Default,
 		})
 	}
 
 	return layout, nil
+}
+
+func reportParameterFromGraphQL(input *gqlmodel.ReportParameterInput) ir.Parameter {
+	return ir.Parameter{
+		Name:     input.Name,
+		Label:    base.DerefString(input.Label),
+		Type:     formula.Type(input.Type),
+		Required: base.BoolValue(input.Required),
+		Multi:    base.BoolValue(input.Multi),
+		Default:  input.Default,
+		Allowed:  input.Allowed,
+		Entity:   base.DerefString(input.Entity),
+	}
 }
 
 func reportDashboardTileFromGraphQL(
@@ -705,9 +440,10 @@ func reportDefinitionConnectionToModel(
 	}
 
 	return &gqlmodel.ReportDefinitionConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: base.DerefInt(page.TotalCount),
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -726,119 +462,166 @@ func reportRunConnectionToModel(
 	}
 
 	return &gqlmodel.ReportRunConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: base.DerefInt(page.TotalCount),
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      base.DerefInt(page.TotalCount),
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
 func reportCatalogToModel(
 	ctx context.Context,
-	engine permissionports.PermissionEngine,
-	tenant pagination.TenantInfo,
+	catalog *reportingservice.Catalog,
 ) (*gqlmodel.ReportCatalog, error) {
-	catalog := &reportcatalog.Default
-
+	rules, err := reportRulesAsJSON(&catalog.Rules)
+	if err != nil {
+		return nil, err
+	}
 	entities := make([]*gqlmodel.ReportCatalogEntity, 0, len(catalog.Entities))
 	for i := range catalog.Entities {
 		entity := &catalog.Entities[i]
-
-		detail, err := engine.GetResourcePermissions(
-			ctx, tenant.UserID, tenant.OrgID, entity.Resource.String(),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("resolve permissions for %q: %w", entity.Resource, err)
-		}
-		if !hasReportReadOperation(detail) {
+		if !entity.Usable() {
 			continue
 		}
-
-		entities = append(entities, catalogEntityToModel(i18n.FromContext(ctx), entity, detail))
+		entities = append(entities, catalogEntityToModel(ctx, catalog.Kinds, entity))
 	}
 
 	return &gqlmodel.ReportCatalog{
 		Version:  catalog.Version,
+		Rules:    rules,
 		Entities: entities,
 	}, nil
 }
 
-func hasReportReadOperation(detail *permissionports.ResourcePermissionDetail) bool {
-	for _, op := range detail.Operations {
-		if op == permission.OpRead {
-			return true
-		}
+func reportRulesAsJSON(rules *analytics.RuleSet) (map[string]any, error) {
+	raw, err := sonic.Marshal(rules)
+	if err != nil {
+		return nil, fmt.Errorf("serialize report rules: %w", err)
 	}
-	return false
+	var out map[string]any
+	if err = sonic.Unmarshal(raw, &out); err != nil {
+		return nil, fmt.Errorf("deserialize report rules: %w", err)
+	}
+	return out, nil
+}
+
+func reportFieldAccessToModel(decision reportaccess.Decision) gqlmodel.ReportFieldAccess {
+	switch decision {
+	case reportaccess.Available:
+		return gqlmodel.ReportFieldAccessAvailable
+	case reportaccess.WithheldByCeiling:
+		return gqlmodel.ReportFieldAccessWithheldByCeiling
+	case reportaccess.NeedsFieldGroup:
+		return gqlmodel.ReportFieldAccessNeedsFieldGroup
+	case reportaccess.NeedsKindRead,
+		reportaccess.NeedsExport,
+		reportaccess.OwnScopeUnsupported:
+		return gqlmodel.ReportFieldAccessNeedsKindRead
+	default:
+		return gqlmodel.ReportFieldAccessNeedsKindRead
+	}
+}
+
+func catalogKindToModel(
+	ctx context.Context,
+	kinds *reportaccess.Resolver,
+	resource permission.Resource,
+) *gqlmodel.ReportCatalogKind {
+	if resource == "" || kinds == nil {
+		return nil
+	}
+	return &gqlmodel.ReportCatalogKind{
+		Resource: resource.String(),
+		Label:    kinds.KindLabel(ctx, resource),
+	}
 }
 
 func catalogEntityToModel(
-	locale i18n.Locale,
-	entity *reportcatalog.Entity,
-	detail *permissionports.ResourcePermissionDetail,
+	ctx context.Context,
+	kinds *reportaccess.Resolver,
+	decided *reportingservice.CatalogEntity,
 ) *gqlmodel.ReportCatalogEntity {
-	fields := make([]*gqlmodel.ReportCatalogField, 0, len(entity.Fields))
-	for i := range entity.Fields {
-		field := &entity.Fields[i]
-		sensitivity := reportSensitivityRegistry.GetFieldSensitivity(
-			entity.Resource.String(), field.Key,
-		)
-
-		accessible := detail.MaxSensitivity.CanAccess(sensitivity)
-		if accessible && len(detail.AccessibleFields) > 0 {
-			accessible = containsString(detail.AccessibleFields, field.Key)
-		}
-
-		enumValues := make([]*gqlmodel.ReportCatalogEnumValue, 0, len(field.EnumValues))
-		for _, ev := range field.EnumValues {
-			enumValues = append(enumValues, &gqlmodel.ReportCatalogEnumValue{
-				Value: ev.Value,
-				Label: i18n.Translate(locale, ev.Label),
-			})
-		}
-
-		aggregations := make([]string, 0, len(field.Aggregations))
-		for _, agg := range field.Aggregations {
-			aggregations = append(aggregations, string(agg))
-		}
-
-		fields = append(fields, &gqlmodel.ReportCatalogField{
-			Key:          field.Key,
-			Label:        i18n.Translate(locale, field.Label),
-			Description:  nilIfEmpty(i18n.Translate(locale, field.Description)),
-			Type:         string(field.Type),
-			Format:       nilIfEmpty(string(field.Format)),
-			Nullable:     field.Nullable,
-			EnumValues:   enumValues,
-			Aggregations: aggregations,
-			Filterable:   field.Filterable,
-			Groupable:    field.Groupable,
-			Accessible:   accessible,
-			Sensitivity:  sensitivity.String(),
-		})
+	view := &decided.View
+	fields := make([]*gqlmodel.ReportCatalogField, 0, len(view.Fields))
+	for i := range view.Fields {
+		fields = append(fields, catalogFieldToModel(&view.Fields[i], decided.Fields[i]))
 	}
 
-	edges := make([]*gqlmodel.ReportCatalogEdge, 0, len(entity.Edges))
-	for i := range entity.Edges {
-		edge := &entity.Edges[i]
+	edges := make([]*gqlmodel.ReportCatalogEdge, 0, len(view.Edges))
+	for i := range view.Edges {
+		edge := &view.Edges[i]
+		use := decided.Edges[i]
 		edges = append(edges, &gqlmodel.ReportCatalogEdge{
-			Name:        edge.Name,
-			Label:       i18n.Translate(locale, edge.Label),
-			Target:      edge.Target,
-			Cardinality: string(edge.Cardinality),
-			Traversable: edge.Traversable,
+			Name:            edge.Name,
+			Label:           edge.Label,
+			Description:     nilIfEmpty(edge.Doc),
+			Target:          edge.Target,
+			ToMany:          edge.ToMany,
+			Pick:            edge.Pick,
+			Access:          reportFieldAccessToModel(use.Decision),
+			InReferenceView: use.Reference,
+			NeedsReadOf:     catalogKindToModel(ctx, kinds, use.Kind),
 		})
 	}
 
 	return &gqlmodel.ReportCatalogEntity{
-		Key:               entity.Key,
-		Resource:          entity.Resource.String(),
-		Label:             i18n.Translate(locale, entity.Label),
-		PluralLabel:       i18n.Translate(locale, entity.PluralLabel),
-		Description:       nilIfEmpty(i18n.Translate(locale, entity.Description)),
-		Category:          entity.Category,
-		OwnScopeSupported: entity.OwnershipColumn != "",
+		Key:               view.Key,
+		Resource:          decided.Resource.String(),
+		Label:             view.Label,
+		PluralLabel:       view.Plural,
+		Description:       nilIfEmpty(view.Doc),
+		Category:          view.Category,
+		OwnScopeSupported: decided.OwnScopeSupported,
+		Readable:          decided.Readable,
+		Exportable:        decided.Exportable,
 		Fields:            fields,
 		Edges:             edges,
+	}
+}
+
+func catalogFieldToModel(
+	field *analytics.FieldView,
+	use reportaccess.Use,
+) *gqlmodel.ReportCatalogField {
+	enumValues := make([]*gqlmodel.ReportCatalogEnumValue, 0, len(field.Enum))
+	for _, ev := range field.Enum {
+		enumValues = append(enumValues, &gqlmodel.ReportCatalogEnumValue{
+			Value: ev.Value,
+			Label: ev.Label,
+		})
+	}
+
+	aggregations := make([]string, 0, len(field.Aggs))
+	for _, agg := range field.Aggs {
+		aggregations = append(aggregations, string(agg))
+	}
+
+	operators := make([]string, 0, len(field.Operators))
+	for _, op := range field.Operators {
+		operators = append(operators, string(op))
+	}
+
+	var protection *gqlmodel.ReportFieldProtection
+	if use.Group != "" {
+		protection = &gqlmodel.ReportFieldProtection{Group: use.Group, Held: use.HoldsGroup}
+	}
+
+	return &gqlmodel.ReportCatalogField{
+		Key:             field.Key,
+		Label:           field.Label,
+		Description:     nilIfEmpty(field.Doc),
+		Type:            string(field.Type),
+		Format:          nilIfEmpty(field.Format),
+		Measure:         field.Measure,
+		EnumValues:      enumValues,
+		Aggregations:    aggregations,
+		Operators:       operators,
+		Filterable:      field.Filterable,
+		Groupable:       field.Groupable,
+		Access:          reportFieldAccessToModel(use.Decision),
+		InReferenceView: use.Reference,
+		Protection:      protection,
+		Sensitivity:     use.Sensitivity.String(),
 	}
 }
 
@@ -847,52 +630,82 @@ func reportPreviewToModel(result *reportingservice.PreviewResult) *gqlmodel.Repo
 	for i := range result.Columns {
 		col := &result.Columns[i]
 		columns = append(columns, &gqlmodel.ReportPreviewColumn{
-			ID:      col.ID,
-			Label:   col.Label,
-			Type:    string(col.Type),
-			Format:  nilIfEmpty(string(col.Format)),
-			Display: reportDisplayToModel(&col.Display),
+			ID:          col.ID,
+			Label:       col.Label,
+			Type:        col.Type.String(),
+			Display:     reportDisplayToModel(&col.Display),
+			Sensitivity: nilIfEmpty(string(col.Sensitivity)),
 		})
 	}
 
 	rows := make([]any, 0, len(result.Rows))
 	for _, row := range result.Rows {
-		rows = append(rows, encodeReportRow(row))
+		rows = append(rows, row)
+	}
+
+	levels := make([]int, 0, len(result.Levels))
+	for _, level := range result.Levels {
+		levels = append(levels, int(level))
 	}
 
 	preview := &gqlmodel.ReportPreview{
 		Columns:   columns,
 		Rows:      rows,
+		Levels:    levels,
 		Truncated: result.Truncated,
+		Cursor:    nilIfEmpty(result.Cursor),
+		Timezone:  result.Timezone,
+		Rollup:    nilIfEmpty(result.Rollup),
 	}
 	if result.Totals != nil {
-		preview.Totals = encodeReportRow(result.Totals)
+		preview.Totals = result.Totals
 	}
 
 	return preview
 }
 
-// encodeReportRow keeps decimals lossless across the JSON boundary: a float64
-// would quietly round money the formatter is about to render.
-func encodeReportRow(row reportports.ReportRow) []any {
-	encoded := make([]any, len(row))
-	for i, value := range row {
-		if dec, ok := value.(decimal.Decimal); ok {
-			encoded[i] = dec.String()
-			continue
-		}
-		encoded[i] = value
+func reportDisplayToModel(display *format.Resolved) *gqlmodel.ReportColumnDisplay {
+	rules := make([]*gqlmodel.ReportDisplayRule, 0, len(display.Rules))
+	for _, rule := range display.Rules {
+		rules = append(rules, &gqlmodel.ReportDisplayRule{
+			Op:    string(rule.Op),
+			Value: rule.Value,
+			Upper: rule.Upper,
+			Tone:  string(rule.Tone),
+		})
 	}
-	return encoded
-}
 
-func containsString(values []string, value string) bool {
-	for _, v := range values {
-		if v == value {
-			return true
-		}
+	model := &gqlmodel.ReportColumnDisplay{
+		Style:         string(display.Style),
+		Decimals:      display.Decimals,
+		Grouping:      display.Grouping,
+		Currency:      display.Currency,
+		Negative:      string(display.Negative),
+		Notation:      string(display.Notation),
+		Prefix:        display.Prefix,
+		Suffix:        display.Suffix,
+		DateStyle:     string(display.DateStyle),
+		BoolStyle:     string(display.BoolStyle),
+		DurationUnit:  string(display.DurationUnit),
+		DurationStyle: string(display.DurationStyle),
+		NullText:      display.NullText,
+		Rules:         rules,
 	}
-	return false
+	if display.Band != nil {
+		edges := display.Band.Edges
+		if edges == nil {
+			edges = []float64{}
+		}
+		model.Band = &gqlmodel.ReportBand{Width: display.Band.Width, Edges: edges}
+	}
+	if len(display.Labels) > 0 {
+		labels := make(map[string]any, len(display.Labels))
+		for value, label := range display.Labels {
+			labels[value] = label
+		}
+		model.Labels = labels
+	}
+	return model
 }
 
 func nilIfEmpty(s string) *string {
@@ -932,11 +745,15 @@ func reportingRequest(authCtx *authctx.AuthContext) reportingservice.Request {
 func saveReportDefinitionRequest(
 	authCtx *authctx.AuthContext,
 	input *gqlmodel.SaveReportDefinitionInput,
-) *reportingservice.SaveDefinitionRequest {
+) (*reportingservice.SaveDefinitionRequest, error) {
+	definition, err := reportingservice.DecodeDefinition(input.Definition)
+	if err != nil {
+		return nil, err
+	}
 	req := &reportingservice.SaveDefinitionRequest{
 		Request:    reportingRequest(authCtx),
 		Name:       input.Name,
-		Definition: reportIRFromGraphQL(input.Definition),
+		Definition: definition,
 	}
 	if input.Description != nil {
 		req.Description = *input.Description
@@ -954,7 +771,7 @@ func saveReportDefinitionRequest(
 	if input.DefaultFormat != nil {
 		req.DefaultFormat = report.Format(*input.DefaultFormat)
 	}
-	return req
+	return req, nil
 }
 
 func saveReportViewRequest(

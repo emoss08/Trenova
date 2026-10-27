@@ -1,6 +1,6 @@
 import { linkedRecordSchema } from "@trenova/shared/lib/linked-record";
 import { z } from "zod";
-import { accessorialChargeMethodSchema, rateUnitSchema } from "./accessorial-charge";
+import { accessorialChargeMethodSchema } from "./accessorial-charge";
 import { billTypeSchema, billingQueueItemSchema } from "./billing-queue";
 import { customerPaymentTermSchema, customerSchema } from "./customer";
 import { documentSchema } from "./document";
@@ -162,7 +162,7 @@ export const invoiceEdiSendPlanSchema = z.object({
   autoSend: z.boolean(),
   partnerId: nullableStringSchema,
   partnerName: z.string().default(""),
-  documentProfileId: nullableStringSchema,
+  ladingVersionId: nullableStringSchema,
   communicationMethod: z.string().default(""),
   status: invoiceEdiSendStatusSchema,
   lastMessageId: nullableStringSchema,
@@ -181,8 +181,12 @@ export const invoiceLineChargeMethodSchema = z
   .transform((value) => (value ? value : null));
 export type InvoiceLineChargeMethod = NonNullable<z.infer<typeof invoiceLineChargeMethodSchema>>;
 
+/**
+ * What a line's rate is per: an accessorial's unit (`Mile`, `Hour`, `Day`, `Stop`) or, for a
+ * line a tariff billed, its rate unit as the tariff wrote it (`$/mi`, `$/cwt`, `$/stop`).
+ */
 export const invoiceLineRateUnitSchema = z
-  .union([rateUnitSchema, z.literal("")])
+  .string()
   .nullish()
   .transform((value) => (value ? value : null));
 
@@ -486,6 +490,11 @@ export const invoiceSchema = z.object({
   lastSendError: nullableStringSchema,
   lastSendWarning: nullableStringSchema,
   memo: nullableStringSchema,
+  /** The notes the shipments' tariffs wrote on their bills, as written. */
+  ratingNotes: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
   remittanceInstructions: nullableStringSchema,
   emailSubjectSnapshot: nullableStringSchema,
   emailBodySnapshot: nullableStringSchema,

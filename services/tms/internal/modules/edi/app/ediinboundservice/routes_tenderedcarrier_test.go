@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
+	"github.com/emoss08/trenova/pkg/lading"
+
 	"github.com/emoss08/trenova/internal/testutil/mocks/carrierportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/ediportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmenteventportsmock"
@@ -154,26 +157,63 @@ func (f *tenderedCarrierFixture) expectSystemUser() {
 }
 
 func rawShipmentStatus214(offerRef, statusCode string) string {
-	raw := "ISA*00*          *00*          *ZZ*CARRIER        *ZZ*TRENOVA        " +
+	segments := []string{"ST*214*0001", "B10*PRO-77*SHIP-1001*SCAC"}
+	if offerRef != "" {
+		segments = append(segments, "L11*"+offerRef+"*CR")
+	}
+	segments = append(segments, "LX*1", "AT7*"+statusCode+"*NS***20260107*1200")
+	segments = append(segments, "SE*"+strconv.Itoa(len(segments)+1)+"*0001")
+	return "ISA*00*          *00*          *ZZ*CARRIER        *ZZ*TRENOVA        " +
 		"*260107*1200*^*00401*000000301*0*P*>~" +
 		"GS*QM*CARRIER*TRENOVA*20260107*1200*301*X*004010~" +
-		"ST*214*0001~" +
-		"B10*PRO-77*SHIP-1001*SCAC~"
-	if offerRef != "" {
-		raw += "L11*" + offerRef + "*CR~"
-	}
-	raw += "AT7*" + statusCode + "*NS***20260107*1200~" +
-		"SE*6*0001~GE*1*301~IEA*1*000000301~"
-	return raw
+		strings.Join(segments, "~") + "~" +
+		"GE*1*301~IEA*1*000000301~"
 }
 
-func parse214Transaction(t *testing.T, raw string) *parsedTransaction {
+// parse214Transaction reads a test 214 through the broker starter's status map, as a carrier
+// partner's 214 is read, every lookup answered as unmapped.
+func parse214Transaction(t *testing.T, raw string) (*parsedTransaction, *shipmentStatusDetails) {
 	t.Helper()
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
-	require.Equal(t, edi.TransactionSet214, interchange.transactions[0].set)
-	return &interchange.transactions[0]
+	transaction := &interchange.transactions[0]
+	require.Equal(t, edi.TransactionSet214, transaction.set)
+
+	client := lading.Default()
+	starter, err := client.Starter(t.Context(), &lading.StarterRequest{
+		Name:  "carrier",
+		Label: "Carrier",
+		Role:  lading.RoleBroker,
+		Them:  &[2]string{"ZZ", "CARRIER"},
+		Us:    &[2]string{"ZZ", "TRENOVA"},
+		Usage: "production",
+	})
+	require.NoError(t, err)
+	encoded, err := lading.Encode(&lading.Project{Files: starter.Files}, &lading.Context{
+		Org: lading.Org{Name: "Trenova", SCAC: "TRNV", Zone: "America/New_York"},
+	})
+	require.NoError(t, err)
+	check, err := client.Check(t.Context(), encoded)
+	require.NoError(t, err)
+	_, clause := check.Receiving("214")
+	require.NotNil(t, clause)
+
+	request := &lading.RunRequest{Map: clause.Map, Input: lading.X12Input(raw), Rules: true}
+	result, err := client.Run(t.Context(), encoded, request)
+	require.NoError(t, err)
+	for _, need := range result.Needs {
+		request.Lookups = append(request.Lookups, lading.LookupAnswer{Kind: need.Kind, Code: need.Code})
+	}
+	if len(request.Lookups) > 0 {
+		result, err = client.Run(t.Context(), encoded, request)
+		require.NoError(t, err)
+	}
+	require.Nil(t, result.Error)
+	require.Len(t, result.Transactions, 1)
+	status, err := ladingdoc.ToShipmentStatus(result.Transactions[0].Document)
+	require.NoError(t, err)
+	return transaction, statusDetails(transaction, status)
 }
 
 func (f *tenderedCarrierFixture) expectRecipientMiss() {
@@ -190,7 +230,7 @@ func TestRouteShipmentStatus_RecipientHitDoesNotUseOfferFallback(t *testing.T) {
 	recipient := &edi.TenderRecipient{
 		ID:                   pulid.MustNew("editr_"),
 		SourceOrganizationID: fixture.file.OrganizationID,
-		SourceBusinessUnitID: fixture.file.BusinessUnitID,
+		BusinessUnitID:       fixture.file.BusinessUnitID,
 		SourceShipmentID:     shipmentID,
 	}
 	fixture.recipientRepo.EXPECT().
@@ -216,12 +256,13 @@ func TestRouteShipmentStatus_RecipientHitDoesNotUseOfferFallback(t *testing.T) {
 		).
 		Once()
 
-	transaction := parse214Transaction(t, rawShipmentStatus214("", "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("", "AF"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -257,12 +298,13 @@ func TestRouteShipmentStatus_RecipientMissMatchesAcceptedOffer(t *testing.T) {
 		}).
 		Once()
 
-	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "AF"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -298,12 +340,13 @@ func TestRouteShipmentStatus_RecipientMissAndOfferMissWarns(t *testing.T) {
 	fixture := newTenderedCarrierFixture(t)
 	fixture.expectRecipientMiss()
 
-	transaction := parse214Transaction(t, rawShipmentStatus214("", "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("", "AF"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -328,12 +371,13 @@ func TestRouteShipmentStatus_OfferBusinessErrorBecomesWarning(t *testing.T) {
 		Return(nil, errortypes.NewBusinessError("system user is unavailable")).
 		Once()
 
-	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "AF"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -420,12 +464,13 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 		Once()
 	recordedEvents := fixture.expectTrackingEvents(move, 1)
 
-	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X3"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X3"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -436,7 +481,9 @@ func TestRouteShipmentStatus_X3RecordsOriginArrivalWithEventTime(t *testing.T) {
 	require.Equal(t, origin.ID, recorded.StopID)
 	require.Equal(t, moveID, recorded.MoveID)
 	require.Equal(t, trackingevent.SourceEDI, recorded.Source)
-	require.EqualValues(t, 1767787200, recorded.EventAt)
+	chicago, err := time.LoadLocation("America/Chicago")
+	require.NoError(t, err)
+	require.Equal(t, time.Date(2026, 1, 7, 12, 0, 0, 0, chicago).Unix(), recorded.EventAt)
 	require.Equal(t, "edi_inbound_file:"+fixture.file.ID.String()+":0001:0", recorded.RawReference)
 }
 
@@ -470,12 +517,13 @@ func TestRouteShipmentStatus_D1RecordsArriveAndDepartAtDestination(t *testing.T)
 		Once()
 	recordedEvents := fixture.expectTrackingEvents(move, 2)
 
-	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "D1"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "D1"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -526,12 +574,13 @@ func TestRouteShipmentStatus_StopActualBusinessErrorBecomesWarningKeepsComment(t
 		}, nil).
 		Once()
 
-	transaction := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X1"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214(offer.ID.String(), "X1"))
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.NoError(t, err)
@@ -548,12 +597,13 @@ func TestRouteShipmentStatus_OfferInfrastructureErrorPropagates(t *testing.T) {
 	fixture.tenderRepo.acceptedErr = errors.New("database unavailable")
 	fixture.expectRecipientMiss()
 
-	transaction := parse214Transaction(t, rawShipmentStatus214("", "AF"))
+	transaction, details := parse214Transaction(t, rawShipmentStatus214("", "AF"))
 	_, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
 		transaction,
+		details,
 	)
 
 	require.Error(t, err)
@@ -580,9 +630,9 @@ func freightInvoiceTransaction(t *testing.T) *parsedTransaction {
 		"*260107*1200*^*00401*000000401*0*P*>~" +
 		"GS*IM*CARRIER*TRENOVA*20260107*1200*401*X*004010~" +
 		"ST*210*0001~" +
-		"B3**INV-1*BOL-42*PP**150000*20260107***SCAC~" +
+		"B3**INV-1*BOL-42*PP**20260107*150000****SCAC~" +
 		"SE*3*0001~GE*1*401~IEA*1*000000401~"
-	interchange, err := parseInterchange(raw)
+	interchange, err := parseTestInterchange(t, raw)
 	require.NoError(t, err)
 	require.Len(t, interchange.transactions, 1)
 	return &interchange.transactions[0]
@@ -1039,13 +1089,15 @@ func TestRouteShipmentStatus_EveryAT7BecomesATimedTrackingEvent(t *testing.T) {
 		"LX*3~" +
 		"AT7*X1*NS***20260108*0700*LT~" +
 		"MS1*DENVER*CO*USA~" +
-		"SE*14*0007~GE*1*302~IEA*1*000000302~"
+		"SE*13*0007~GE*1*302~IEA*1*000000302~"
 
+	transaction, details := parse214Transaction(t, raw)
 	warnings, err := fixture.service.routeShipmentStatus(
 		t.Context(),
 		fixture.file,
 		fixture.partner,
-		parse214Transaction(t, raw),
+		transaction,
+		details,
 	)
 
 	require.NoError(t, err)

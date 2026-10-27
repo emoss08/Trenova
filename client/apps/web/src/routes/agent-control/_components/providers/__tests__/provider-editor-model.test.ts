@@ -66,6 +66,12 @@ describe("editorValuesFromPreset", () => {
     expect(local.allowPrivateNetwork).toBe(true);
     expect(local.baseUrl).toBe("http://localhost:8000/v1");
   });
+
+  it("starts a new provider with scripts on and script writes off", () => {
+    const fresh = editorValuesFromPreset(ANTHROPIC, []);
+    expect(fresh.scripts).toBe(true);
+    expect(fresh.scriptWrites).toBe(false);
+  });
 });
 
 describe("editorBlocker", () => {

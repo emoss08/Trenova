@@ -6,8 +6,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -16,13 +18,12 @@ import (
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type mappingFixture struct {
 	ctx        context.Context
-	db         *bun.DB
+	db         *keel.DB
 	conn       *postgres.Connection
 	tenant     pagination.TenantInfo
 	connection *accountingsync.AccountingConnection
@@ -37,6 +38,7 @@ func setupMappingFixture(t *testing.T) *mappingFixture {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	conn := postgres.NewTestConnection(db)
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	connections := NewConnectionRepository(ConnectionParams{DB: conn, Logger: zap.NewNop()})
@@ -384,10 +386,10 @@ func TestMappingRepository_OneTenantCannotReadOrWriteAnothersMappings(t *testing
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
 
-	_, err = f.mappings.GetByID(f.ctx, accountingsyncports.GetAccountingMappingRequest{TenantInfo: secondTenant, ID: rows[0].ID})
+	_, err = f.mappings.GetByID(second.Ctx(f.ctx), accountingsyncports.GetAccountingMappingRequest{TenantInfo: secondTenant, ID: rows[0].ID})
 	assert.True(t, errortypes.IsNotFoundError(err))
 
-	foreign, err := f.mappings.ListByConnection(f.ctx, &accountingsyncports.ListAccountingMappingsQuery{
+	foreign, err := f.mappings.ListByConnection(second.Ctx(f.ctx), &accountingsyncports.ListAccountingMappingsQuery{
 		TenantInfo:   secondTenant,
 		ConnectionID: f.connection.ID,
 	})
@@ -401,7 +403,7 @@ func TestMappingRepository_OneTenantCannotReadOrWriteAnothersMappings(t *testing
 	_, err = f.mappings.Update(f.ctx, &hijack)
 	require.Error(t, err, "an update scoped to another tenant touches nothing")
 
-	refs, err := f.references.ListByKind(f.ctx, &accountingsyncports.ListAccountingReferenceObjectsRequest{
+	refs, err := f.references.ListByKind(second.Ctx(f.ctx), &accountingsyncports.ListAccountingReferenceObjectsRequest{
 		TenantInfo:   secondTenant,
 		ConnectionID: f.connection.ID,
 		Kind:         accountingsync.ReferenceKindAccount,

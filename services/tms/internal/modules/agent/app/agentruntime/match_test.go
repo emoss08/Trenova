@@ -861,8 +861,9 @@ func (p *pagedDefinitions) List(
 	}
 
 	return &pagination.ListResult[*agentdefinition.Definition]{
-		Items: p.all[offset:end],
-		Total: len(p.all),
+		Items:      p.all[offset:end],
+		Total:      len(p.all),
+		TotalExact: true,
 	}, nil
 }
 

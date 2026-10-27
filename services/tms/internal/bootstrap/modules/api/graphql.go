@@ -58,6 +58,10 @@ var graphQLLoaderModule = fx.Module("api-graphql-loaders", fx.Provide(
 	loaders.NewIFTAReturnByIDLoaderFactory,
 	loaders.NewFuelCardByIDLoaderFactory,
 	loaders.NewTractorByIDLoaderFactory,
+	loaders.NewFormulaLibraryByIDLoaderFactory,
+	loaders.NewRateMatrixByIDLoaderFactory,
+	loaders.NewRateAgreementLaneCountLoaderFactory,
+	loaders.NewRateAgreementLanesLoaderFactory,
 	loaders.NewShipmentMoveJurisdictionMilesByMoveIDLoaderFactory,
 	loaders.NewUserByIDLoaderFactory,
 	loaders.NewDocumentByIDLoaderFactory,
@@ -110,6 +114,7 @@ var graphQLExtensionModule = fx.Module("api-graphql-extensions", fx.Provide(
 	gqlext.NewCostBudgetExtension,
 	gqlext.NewReadOnlyExtension,
 	gqlext.NewFieldGuardExtension,
+	gqlext.NewQueryBudgetExtension,
 ))
 
 var graphQLServerModule = fx.Module("api-graphql-server", fx.Provide(

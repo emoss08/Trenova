@@ -32,8 +32,8 @@ The simulator behaves like an external trading partner:
 
 Requires the Trenova API + Temporal worker running (`task run-watch` and
 `task worker` in `services/tms`), the local infra up (`task docker-up`), migrations
-applied (`task db-migrate`), and the database seeded (`task db-seed`) so a shipment
-exists.
+applied with the development fixtures (`task db-migrate`, which runs `trenova-devdb up`) so a
+shipment exists.
 
 ```bash
 # terminal 1 — start the simulator

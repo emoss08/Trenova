@@ -3,12 +3,11 @@ package tenant
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -46,53 +45,52 @@ func (c DriverDigestCadence) Bundles() bool {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DashControl)(nil)
 	_ validationframework.TenantedEntity = (*DashControl)(nil)
 )
 
 type DashControl struct {
-	bun.BaseModel `bun:"table:dash_controls,alias:dashc" json:"-"`
+	keel.Table `keel:"dash_controls"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dashc_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
 
-	RequireLoadAcknowledgment  bool `json:"requireLoadAcknowledgment"  bun:"require_load_acknowledgment,type:BOOLEAN,notnull"`
-	AllowLoadRefusals          bool `json:"allowLoadRefusals"          bun:"allow_load_refusals,type:BOOLEAN,notnull"`
-	AllowStopActions           bool `json:"allowStopActions"           bun:"allow_stop_actions,type:BOOLEAN,notnull"`
-	AllowLoadDocumentUpload    bool `json:"allowLoadDocumentUpload"    bun:"allow_load_document_upload,type:BOOLEAN,notnull"`
-	AllowLoadComments          bool `json:"allowLoadComments"          bun:"allow_load_comments,type:BOOLEAN,notnull"`
-	ShowLoadPay                bool `json:"showLoadPay"                bun:"show_load_pay,type:BOOLEAN,notnull"`
-	ShowPayEstimates           bool `json:"showPayEstimates"           bun:"show_pay_estimates,type:BOOLEAN,notnull"`
-	AllowExpenseSubmission     bool `json:"allowExpenseSubmission"     bun:"allow_expense_submission,type:BOOLEAN,notnull"`
-	RequireExpenseReceipt      bool `json:"requireExpenseReceipt"      bun:"require_expense_receipt,type:BOOLEAN,notnull"`
-	AllowSettlementDisputes    bool `json:"allowSettlementDisputes"    bun:"allow_settlement_disputes,type:BOOLEAN,notnull"`
-	AllowProfileDocumentUpload bool `json:"allowProfileDocumentUpload" bun:"allow_profile_document_upload,type:BOOLEAN,notnull"`
-	AllowContactInfoEdit       bool `json:"allowContactInfoEdit"       bun:"allow_contact_info_edit,type:BOOLEAN,notnull"`
-	AllowPtoRequests           bool `json:"allowPtoRequests"           bun:"allow_pto_requests,type:BOOLEAN,notnull"`
-	SendCredentialReminders    bool `json:"sendCredentialReminders"    bun:"send_credential_reminders,type:BOOLEAN,notnull"`
+	RequireLoadAcknowledgment  bool `json:"requireLoadAcknowledgment"  keel:"require_load_acknowledgment"`
+	AllowLoadRefusals          bool `json:"allowLoadRefusals"          keel:"allow_load_refusals"`
+	AllowStopActions           bool `json:"allowStopActions"           keel:"allow_stop_actions"`
+	AllowLoadDocumentUpload    bool `json:"allowLoadDocumentUpload"    keel:"allow_load_document_upload"`
+	AllowLoadComments          bool `json:"allowLoadComments"          keel:"allow_load_comments"`
+	ShowLoadPay                bool `json:"showLoadPay"                keel:"show_load_pay"`
+	ShowPayEstimates           bool `json:"showPayEstimates"           keel:"show_pay_estimates"`
+	AllowExpenseSubmission     bool `json:"allowExpenseSubmission"     keel:"allow_expense_submission"`
+	RequireExpenseReceipt      bool `json:"requireExpenseReceipt"      keel:"require_expense_receipt"`
+	AllowSettlementDisputes    bool `json:"allowSettlementDisputes"    keel:"allow_settlement_disputes"`
+	AllowProfileDocumentUpload bool `json:"allowProfileDocumentUpload" keel:"allow_profile_document_upload"`
+	AllowContactInfoEdit       bool `json:"allowContactInfoEdit"       keel:"allow_contact_info_edit"`
+	AllowPtoRequests           bool `json:"allowPtoRequests"           keel:"allow_pto_requests"`
+	SendCredentialReminders    bool `json:"sendCredentialReminders"    keel:"send_credential_reminders"`
 	// RequireContactChangeApproval makes a driver's own contact edits wait on
 	// the office instead of landing straight on the record. Off keeps the
 	// behaviour every existing carrier relies on.
-	RequireContactChangeApproval bool `json:"requireContactChangeApproval" bun:"require_contact_change_approval,type:BOOLEAN,notnull"`
+	RequireContactChangeApproval bool `json:"requireContactChangeApproval" keel:"require_contact_change_approval"`
 
 	// DriverDigestCadence bundles a driver's obligations into one notice
 	// instead of one each. Immediate is the default so no carrier silently
 	// loses notices they already rely on.
-	DriverDigestCadence DriverDigestCadence `json:"driverDigestCadence" bun:"driver_digest_cadence,type:driver_digest_cadence_enum,notnull,default:'Immediate'"`
+	DriverDigestCadence DriverDigestCadence `json:"driverDigestCadence" keel:"driver_digest_cadence"`
 	// DriverDigestWeekday is the day the weekly digest goes out, 0 = Sunday.
 	// Ignored unless the cadence is Weekly.
-	DriverDigestWeekday int16 `json:"driverDigestWeekday" bun:"driver_digest_weekday,type:SMALLINT,notnull,default:1"`
+	DriverDigestWeekday int16 `json:"driverDigestWeekday" keel:"driver_digest_weekday"`
 
-	EnableDetentionAlerts          bool  `json:"enableDetentionAlerts"          bun:"enable_detention_alerts,type:BOOLEAN,notnull"`
-	DetentionAlertThresholdMinutes int16 `json:"detentionAlertThresholdMinutes" bun:"detention_alert_threshold_minutes,type:INTEGER,notnull,default:120"`
+	EnableDetentionAlerts          bool  `json:"enableDetentionAlerts"          keel:"enable_detention_alerts"`
+	DetentionAlertThresholdMinutes int16 `json:"detentionAlertThresholdMinutes" keel:"detention_alert_threshold_minutes"`
 
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `json:"version"   keel:"version,version"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty"`
+	Organization *Organization `json:"organization,omitempty"`
 }
 
 func (dc *DashControl) Validate(multiErr *errortypes.MultiError) {
@@ -164,19 +162,16 @@ func (dc *DashControl) GetOrganizationID() pulid.ID { return dc.OrganizationID }
 
 func (dc *DashControl) GetBusinessUnitID() pulid.ID { return dc.BusinessUnitID }
 
-func (dc *DashControl) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if dc.ID.IsNil() {
-			dc.ID = pulid.MustNew("dashc_")
-		}
-		if dc.DriverDigestCadence == "" {
-			dc.DriverDigestCadence = DigestImmediate
-		}
-		dc.CreatedAt = now
-	case *bun.UpdateQuery:
-		dc.UpdatedAt = now
+func (dc *DashControl) BeforeCreate(_ context.Context) error {
+	if dc.DriverDigestCadence == "" {
+		dc.DriverDigestCadence = DigestImmediate
 	}
+	if dc.DriverDigestWeekday == 0 {
+		dc.DriverDigestWeekday = 1
+	}
+	if dc.DetentionAlertThresholdMinutes == 0 {
+		dc.DetentionAlertThresholdMinutes = 120
+	}
+
 	return nil
 }

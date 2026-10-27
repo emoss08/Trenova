@@ -3,7 +3,7 @@ import { useAppDialogsStore } from "../app-dialogs-store";
 
 describe("app dialogs store", () => {
   beforeEach(() => {
-    useAppDialogsStore.setState({ active: null });
+    useAppDialogsStore.setState({ active: null, prepared: [] });
   });
 
   it("opens one dialog at a time", () => {
@@ -36,5 +36,26 @@ describe("app dialogs store", () => {
 
     toggleDialog("notifications");
     expect(useAppDialogsStore.getState().active).toBeNull();
+  });
+
+  it("keeps every dialog that was opened or asked for prepared, once each", () => {
+    const { prepareDialog, openDialog, setDialogOpen, toggleDialog } =
+      useAppDialogsStore.getState();
+    prepareDialog("page-access");
+    prepareDialog("page-access");
+    expect(useAppDialogsStore.getState()).toMatchObject({
+      active: null,
+      prepared: ["page-access"],
+    });
+
+    openDialog("shortcuts");
+    setDialogOpen("notifications", true);
+    toggleDialog("notifications");
+    toggleDialog("page-access");
+
+    expect(useAppDialogsStore.getState()).toMatchObject({
+      active: "page-access",
+      prepared: ["page-access", "shortcuts", "notifications"],
+    });
   });
 });

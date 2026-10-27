@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/money"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const retainedEarningsSubType = "RetainedEarnings"
@@ -167,7 +166,7 @@ func (s *Service) reconcileTrialBalance(
 	}
 
 	tally := &compareTally{compared: len(grouped)}
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		return s.applyObservations(txCtx, sess, compared, observed, now, tally)
 	})
 	if err != nil {

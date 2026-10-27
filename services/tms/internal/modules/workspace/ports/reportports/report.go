@@ -15,6 +15,7 @@ type GetReportDefinitionRequest struct {
 
 type ListReportDefinitionsRequest struct {
 	TenantInfo pagination.TenantInfo
+	ViewerID   pulid.ID
 	Statuses   []report.DefinitionStatus
 	OwnerID    pulid.ID
 	Limit      int
@@ -35,6 +36,31 @@ type ListReportRevisionsRequest struct {
 	TenantInfo   pagination.TenantInfo
 	DefinitionID pulid.ID
 	Limit        int
+}
+
+type ListCatalogStaleReportDefinitionsRequest struct {
+	CatalogVersion string
+	Limit          int
+}
+
+type RecordReportCatalogCheckRequest struct {
+	TenantInfo     pagination.TenantInfo
+	DefinitionID   pulid.ID
+	Version        int64
+	CatalogVersion string
+	Status         report.DefinitionStatus
+	Diagnostics    []string
+}
+
+type ReportCatalogHeartbeatRequest struct {
+	Version      string
+	Now          int64
+	ForgetBefore int64
+}
+
+type ReportCatalogVersionRepository interface {
+	Heartbeat(ctx context.Context, req *ReportCatalogHeartbeatRequest) error
+	Newest(ctx context.Context, aliveSince int64) (string, error)
 }
 
 type ListReportDefinitionConnectionRequest struct {
@@ -68,12 +94,11 @@ type ReportDefinitionRepository interface {
 		entity *report.ReportDefinition,
 		updatedBy pulid.ID,
 	) (*report.ReportDefinition, error)
-	UpdateStatus(
+	ListCatalogStale(
 		ctx context.Context,
-		req *GetReportDefinitionRequest,
-		status report.DefinitionStatus,
-		diagnostics []string,
-	) error
+		req *ListCatalogStaleReportDefinitionsRequest,
+	) ([]*report.ReportDefinition, error)
+	RecordCatalogCheck(ctx context.Context, req *RecordReportCatalogCheckRequest) (bool, error)
 	GetByID(
 		ctx context.Context,
 		req *GetReportDefinitionRequest,
@@ -127,15 +152,6 @@ type GetReportRunRequest struct {
 	RequestedBy pulid.ID
 }
 
-type ListReportRunsRequest struct {
-	TenantInfo   pagination.TenantInfo
-	DefinitionID pulid.ID
-	RequestedBy  pulid.ID
-	Statuses     []report.RunStatus
-	Limit        int
-	Offset       int
-}
-
 type CountActiveReportRunsRequest struct {
 	TenantInfo pagination.TenantInfo
 }
@@ -178,7 +194,6 @@ type ReportRunRepository interface {
 		ctx context.Context,
 		req *GetComparableReportRunRequest,
 	) (*report.ReportRun, error)
-	List(ctx context.Context, req *ListReportRunsRequest) ([]*report.ReportRun, error)
 	CountActive(
 		ctx context.Context,
 		req *CountActiveReportRunsRequest,
@@ -200,6 +215,7 @@ type GetReportScheduleRequest struct {
 
 type ListReportSchedulesRequest struct {
 	TenantInfo   pagination.TenantInfo
+	VisibleTo    pulid.ID
 	DefinitionID pulid.ID
 	EnabledOnly  bool
 	Limit        int

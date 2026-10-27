@@ -389,7 +389,7 @@ type CaptureBatch {
   isEditable: Boolean!
   "The pages, on a single-batch read. A list leaves them out."
   pages: [CapturePage!]!
-  "The items, on a single-batch read. A list leaves them out."
+  "The items, on a single-batch read, or on a list that selects them, read for the whole page at once."
   items: [CaptureItem!]!
   version: Int!
   createdAt: Timestamp!
@@ -405,6 +405,8 @@ type CaptureBatchConnection {
   edges: [CaptureBatchEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 "How the intake queue is ordered."

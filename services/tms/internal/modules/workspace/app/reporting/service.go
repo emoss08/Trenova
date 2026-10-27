@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel/analytics/ir"
+
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
@@ -11,13 +13,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -33,10 +35,10 @@ type Params struct {
 	ViewRepo         reportports.ReportViewRepository
 	OrganizationRepo tenantports.OrganizationRepository
 	UserRepo         tenantports.UserRepository
-	Compiler         reportports.ReportCompiler
-	Executor         reportports.ReportDatasetExecutor
+	Engine           reportports.ReportEngine
 	PermissionEngine permissionports.PermissionEngine
 	FieldAccess      permissionports.FieldAccess
+	ReferenceViews   permissionports.ReferenceViews
 	WorkflowStarter  kernelports.WorkflowStarter
 	Storage          kernelports.Client
 	AuditService     auditports.AuditService `optional:"true"`
@@ -53,25 +55,38 @@ type Service struct {
 	viewRepo      reportports.ReportViewRepository
 	orgRepo       tenantports.OrganizationRepository
 	userRepo      tenantports.UserRepository
-	compiler      reportports.ReportCompiler
-	executor      reportports.ReportDatasetExecutor
+	engine        reportports.ReportEngine
 	perms         permissionports.PermissionEngine
-	fieldAccess   permissionports.FieldAccess
-	permRegistry  *permission.Registry
+	access        *reportaccess.Resolver
 	workflows     kernelports.WorkflowStarter
 	storage       kernelports.Client
 	audit         auditports.AuditService
 	metrics       *metrics.Report
 	cfg           *config.ReportingConfig
-	previews      *previewLimiter
 	canned        *canned.Registry
 }
 
 //nolint:gocritic // fx.In parameter structs must be passed by value
-func New(p Params) *Service {
+func New(p Params) (*Service, error) {
 	var reportMetrics *metrics.Report
 	if p.Metrics != nil {
 		reportMetrics = p.Metrics.Report
+	}
+
+	access, err := reportaccess.New(reportaccess.Params{
+		Catalog:  p.Engine.Catalog(),
+		Engine:   p.PermissionEngine,
+		Registry: permission.NewRegistry(),
+		Views:    p.ReferenceViews,
+		Fields:   p.FieldAccess,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	library, err := canned.Default()
+	if err != nil {
+		return nil, err
 	}
 
 	return &Service{
@@ -83,19 +98,16 @@ func New(p Params) *Service {
 		viewRepo:      p.ViewRepo,
 		orgRepo:       p.OrganizationRepo,
 		userRepo:      p.UserRepo,
-		compiler:      p.Compiler,
-		executor:      p.Executor,
+		engine:        p.Engine,
 		perms:         p.PermissionEngine,
-		fieldAccess:   p.FieldAccess,
-		permRegistry:  permission.NewRegistry(),
+		access:        access,
 		workflows:     p.WorkflowStarter,
 		storage:       p.Storage,
 		audit:         p.AuditService,
 		metrics:       reportMetrics,
 		cfg:           p.Config.GetReportingConfig(),
-		previews:      newPreviewLimiter(),
-		canned:        canned.Default(),
-	}
+		canned:        library,
+	}, nil
 }
 
 type Request struct {
@@ -114,7 +126,7 @@ type SaveDefinitionRequest struct {
 	Visibility    report.Visibility
 	Status        report.DefinitionStatus
 	DefaultFormat report.Format
-	Definition    *report.Definition
+	Definition    *ir.Definition
 	Version       int64
 }
 
@@ -142,11 +154,10 @@ func (s *Service) validateDefinition(
 	ctx context.Context,
 	req *SaveDefinitionRequest,
 ) error {
-	_, err := s.compiler.ValidateAndAuthorize(ctx, &reportports.ReportCompileRequest{
-		Definition:  req.Definition,
-		Tenant:      req.TenantInfo,
-		OrgTimezone: s.orgTimezone(ctx, req.TenantInfo),
-		NowUnix:     timeutils.NowUnix(),
+	err := s.Check(ctx, &PrepareParams{
+		Tenant:     req.TenantInfo,
+		Definition: req.Definition,
+		Mode:       reportaccess.ModeRead,
 	})
 	if err != nil {
 		if s.metrics != nil {
@@ -167,7 +178,7 @@ func (s *Service) CreateDefinition(
 		return nil, err
 	}
 
-	entity := NewDefinition(req)
+	entity := s.NewDefinition(req)
 
 	multiErr := errortypes.NewMultiError()
 	entity.Validate(multiErr)
@@ -210,7 +221,7 @@ func (s *Service) UpdateDefinition(
 		return nil, err
 	}
 
-	ApplyDefinitionSave(existing, req)
+	s.ApplyDefinitionSave(existing, req)
 
 	multiErr := errortypes.NewMultiError()
 	existing.Validate(multiErr)
@@ -274,24 +285,13 @@ func (s *Service) ListDefinitions(
 	ctx context.Context,
 	req *ListDefinitionsRequest,
 ) ([]*report.ReportDefinition, error) {
-	entities, err := s.defRepo.List(ctx, &reportports.ListReportDefinitionsRequest{
+	return s.defRepo.List(ctx, &reportports.ListReportDefinitionsRequest{
 		TenantInfo: req.TenantInfo,
+		ViewerID:   req.TenantInfo.UserID,
 		Statuses:   req.Statuses,
 		Limit:      req.Limit,
 		Offset:     req.Offset,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	visible := make([]*report.ReportDefinition, 0, len(entities))
-	for _, entity := range entities {
-		if s.checkDefinitionVisibility(entity, req.TenantInfo) == nil {
-			visible = append(visible, entity)
-		}
-	}
-
-	return visible, nil
 }
 
 func (s *Service) DeleteDefinition(ctx context.Context, req *GetDefinitionRequest) error {
@@ -357,7 +357,7 @@ func defaultVisibility(v report.Visibility) report.Visibility {
 }
 
 func defaultStatus(s report.DefinitionStatus) report.DefinitionStatus {
-	if !s.IsValid() {
+	if !s.IsValid() || s == report.DefinitionStatusNeedsAttention {
 		return report.DefinitionStatusActive
 	}
 	return s

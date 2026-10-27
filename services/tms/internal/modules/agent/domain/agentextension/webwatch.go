@@ -1,18 +1,16 @@
 package agentextension
 
 import (
-	"context"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/configspec"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
-	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/emoss08/trenova/shared/urlutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -43,8 +41,6 @@ const (
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*WebWatch)(nil)
-	_ bun.BeforeAppendModelHook = (*WebWatchFinding)(nil)
 
 	// ExaMonitorRunCostUSD is Exa's published price for one monitor run of up
 	// to ten results ($15 per 1,000); Exa does not report what a run cost.
@@ -138,52 +134,35 @@ func (s WebWatchStatus) IsValid() bool {
 // hands back only what earlier runs did not find. It belongs to the work
 // that set it: the conversation it answers, or a background run's agent.
 type WebWatch struct {
-	bun.BaseModel `bun:"table:agent_web_watches,alias:awwt" json:"-"`
+	keel.Table `keel:"agent_web_watches"`
 
-	ID                pulid.ID        `json:"id"                bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID        `json:"businessUnitId"    bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID    pulid.ID        `json:"organizationId"    bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ExtensionType     Type            `json:"extensionType"     bun:"extension_type,type:VARCHAR(50),notnull"`
-	VendorMonitorID   string          `json:"-"                 bun:"vendor_monitor_id,type:VARCHAR(100),notnull,default:''"`
-	Query             string          `json:"query"             bun:"query,type:TEXT,notnull"`
-	Purpose           string          `json:"purpose"           bun:"purpose,type:TEXT,notnull,default:''"`
-	IncludeDomains    []string        `json:"includeDomains"    bun:"include_domains,type:JSONB,notnull,default:'[]'::jsonb"`
-	Cadence           WebWatchCadence `json:"cadence"           bun:"cadence,type:VARCHAR(20),notnull"`
-	Status            WebWatchStatus  `json:"status"            bun:"status,type:VARCHAR(20),notnull"`
-	Secrets           map[string]any  `json:"-"                 bun:"secrets,type:JSONB,notnull,default:'{}'::jsonb"`
-	EndsAt            int64           `json:"endsAt"            bun:"ends_at,type:BIGINT,notnull"`
-	LastCheckedAt     *int64          `json:"lastCheckedAt"     bun:"last_checked_at,type:BIGINT,nullzero"`
-	LastRunAt         *int64          `json:"lastRunAt"         bun:"last_run_at,type:BIGINT,nullzero"`
-	RunCount          int             `json:"runCount"          bun:"run_count,type:INTEGER,notnull,default:0"`
-	FindingCount      int             `json:"findingCount"      bun:"finding_count,type:INTEGER,notnull,default:0"`
-	CostUSD           decimal.Decimal `json:"costUsd"           bun:"cost_usd,type:NUMERIC(19,6),notnull,default:0"`
-	Failure           string          `json:"failure"           bun:"failure,type:TEXT,notnull,default:''"`
-	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" bun:"agent_definition_id,type:VARCHAR(100),nullzero"`
-	AgentRunID        pulid.ID        `json:"agentRunId"        bun:"agent_run_id,type:VARCHAR(100),nullzero"`
-	ThreadID          pulid.ID        `json:"threadId"          bun:"thread_id,type:VARCHAR(100),nullzero"`
-	RequestedByID     pulid.ID        `json:"requestedById"     bun:"requested_by_id,type:VARCHAR(100),nullzero"`
-	StoppedByID       pulid.ID        `json:"stoppedById"       bun:"stopped_by_id,type:VARCHAR(100),nullzero"`
-	FinishedAt        *int64          `json:"finishedAt"        bun:"finished_at,type:BIGINT,nullzero"`
-	Version           int64           `json:"version"           bun:"version,type:BIGINT,notnull"`
-	CreatedAt         int64           `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt         int64           `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-}
-
-func (w *WebWatch) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if w.ID.IsNil() {
-			w.ID = pulid.MustNew(WebWatchIDPrefix)
-		}
-		w.CreatedAt = now
-		w.UpdatedAt = now
-	case *bun.UpdateQuery:
-		w.UpdatedAt = now
-	}
-
-	return nil
+	ID                pulid.ID        `json:"id"                keel:"id,pk,autoid:awwt_"`
+	BusinessUnitID    pulid.ID        `json:"businessUnitId"    keel:"business_unit_id,pk,tenant"`
+	OrganizationID    pulid.ID        `json:"organizationId"    keel:"organization_id,pk,tenant"`
+	ExtensionType     Type            `json:"extensionType"     keel:"extension_type"`
+	VendorMonitorID   string          `json:"-"                 keel:"vendor_monitor_id"`
+	Query             string          `json:"query"             keel:"query"`
+	Purpose           string          `json:"purpose"           keel:"purpose"`
+	IncludeDomains    []string        `json:"includeDomains"    keel:"include_domains,jsonb"`
+	Cadence           WebWatchCadence `json:"cadence"           keel:"cadence"`
+	Status            WebWatchStatus  `json:"status"            keel:"status"`
+	Secrets           map[string]any  `json:"-"                 keel:"secrets,jsonb"`
+	EndsAt            int64           `json:"endsAt"            keel:"ends_at"`
+	LastCheckedAt     *int64          `json:"lastCheckedAt"     keel:"last_checked_at"`
+	LastRunAt         *int64          `json:"lastRunAt"         keel:"last_run_at"`
+	RunCount          int             `json:"runCount"          keel:"run_count"`
+	FindingCount      int             `json:"findingCount"      keel:"finding_count"`
+	CostUSD           decimal.Decimal `json:"costUsd"           keel:"cost_usd"`
+	Failure           string          `json:"failure"           keel:"failure"`
+	AgentDefinitionID pulid.ID        `json:"agentDefinitionId" keel:"agent_definition_id,nullzero"`
+	AgentRunID        pulid.ID        `json:"agentRunId"        keel:"agent_run_id,nullzero"`
+	ThreadID          pulid.ID        `json:"threadId"          keel:"thread_id,nullzero"`
+	RequestedByID     pulid.ID        `json:"requestedById"     keel:"requested_by_id,nullzero"`
+	StoppedByID       pulid.ID        `json:"stoppedById"       keel:"stopped_by_id,nullzero"`
+	FinishedAt        *int64          `json:"finishedAt"        keel:"finished_at"`
+	Version           int64           `json:"version"           keel:"version,version"`
+	CreatedAt         int64           `json:"createdAt"         keel:"created_at,autocreate"`
+	UpdatedAt         int64           `json:"updatedAt"         keel:"updated_at,autoupdate"`
 }
 
 func (w *WebWatch) Normalize() {
@@ -300,29 +279,18 @@ type WebWatchResult struct {
 // WebWatchFinding is one run that found something new: its summary and the
 // pages it found, kept with the watch and handed to the work waiting on it.
 type WebWatchFinding struct {
-	bun.BaseModel `bun:"table:agent_web_watch_findings,alias:awwf" json:"-"`
+	keel.Table `keel:"agent_web_watch_findings"`
 
-	ID             pulid.ID         `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	WatchID        pulid.ID         `json:"watchId"        bun:"watch_id,type:VARCHAR(100),notnull"`
-	VendorRunID    string           `json:"-"              bun:"vendor_run_id,type:VARCHAR(100),notnull"`
-	Summary        string           `json:"summary"        bun:"summary,type:TEXT,notnull,default:''"`
-	Results        []WebWatchResult `json:"results"        bun:"results,type:JSONB,notnull,default:'[]'::jsonb"`
-	FoundAt        int64            `json:"foundAt"        bun:"found_at,type:BIGINT,notnull"`
-	DeliveredAt    *int64           `json:"deliveredAt"    bun:"delivered_at,type:BIGINT,nullzero"`
-	CreatedAt      int64            `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-}
-
-func (f *WebWatchFinding) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	if _, ok := query.(*bun.InsertQuery); ok {
-		if f.ID.IsNil() {
-			f.ID = pulid.MustNew(WebWatchFindingIDPrefix)
-		}
-		f.CreatedAt = timeutils.NowUnix()
-	}
-
-	return nil
+	ID             pulid.ID         `json:"id"             keel:"id,pk,autoid:awwf_"`
+	BusinessUnitID pulid.ID         `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID         `json:"organizationId" keel:"organization_id,pk,tenant"`
+	WatchID        pulid.ID         `json:"watchId"        keel:"watch_id"`
+	VendorRunID    string           `json:"-"              keel:"vendor_run_id"`
+	Summary        string           `json:"summary"        keel:"summary"`
+	Results        []WebWatchResult `json:"results"        keel:"results,jsonb"`
+	FoundAt        int64            `json:"foundAt"        keel:"found_at"`
+	DeliveredAt    *int64           `json:"deliveredAt"    keel:"delivered_at"`
+	CreatedAt      int64            `json:"createdAt"      keel:"created_at,autocreate"`
 }
 
 // BoundedResults keeps a run's results to what is stored and handed on: at

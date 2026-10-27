@@ -148,5 +148,6 @@ query DeskCarrierSettlements($input: DataTableConnectionInput!, $includeTotalCou
       endCursor
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }

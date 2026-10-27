@@ -5,8 +5,11 @@ package shipmentservice
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/keel"
+
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
@@ -15,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
@@ -29,6 +31,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckHazmatSegregation = false
 		sc.AutoDelayShipments = false
@@ -48,13 +51,9 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 
 	arrived := origin.ScheduledWindowStart
 	departed := arrived + 1800
-	_, err = db.NewUpdate().
-		Model((*shipment.Stop)(nil)).
-		Set("status = ?", shipment.StopStatusCompleted).
-		Set("actual_arrival = ?", arrived).
-		Set("actual_departure = ?", departed).
-		Where("id = ?", origin.ID).
-		Exec(ctx)
+	_, err = keel.Exec(ctx, db,
+		"UPDATE stops SET status = $1, actual_arrival = $2, actual_departure = $3 WHERE id = $4",
+		string(shipment.StopStatusCompleted), arrived, departed, origin.ID.String())
 	require.NoError(t, err)
 
 	assignment := &shipment.Assignment{
@@ -64,8 +63,7 @@ func TestCancelIntegration_CancelsLiveWorkAndKeepsCompletedStops(t *testing.T) {
 		ShipmentMoveID: move.ID,
 		Status:         shipment.AssignmentStatusNew,
 	}
-	_, err = db.NewInsert().Model(assignment).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.Assignments.Create(ctx, db, assignment))
 
 	_, err = svc.Cancel(ctx, &shipmentports.CancelShipmentRequest{
 		TenantInfo:   tenantInfo,
@@ -112,6 +110,7 @@ func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckHazmatSegregation = false
 	})
@@ -122,11 +121,9 @@ func TestCancelIntegration_RefusesInvoicedShipment(t *testing.T) {
 	created, err := svc.Create(ctx, entity, actor)
 	require.NoError(t, err)
 
-	_, err = db.NewUpdate().
-		Model((*shipment.Shipment)(nil)).
-		Set("status = ?", shipment.StatusInvoiced).
-		Where("id = ?", created.ID).
-		Exec(ctx)
+	_, err = keel.Exec(ctx, db,
+		"UPDATE shipments SET status = $1 WHERE id = $2",
+		string(shipment.StatusInvoiced), created.ID.String())
 	require.NoError(t, err)
 
 	_, err = svc.Cancel(ctx, &shipmentports.CancelShipmentRequest{
@@ -151,6 +148,7 @@ func TestCancelIntegration_RepositoryRefusesStaleVersion(t *testing.T) {
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckHazmatSegregation = false
 	})
@@ -182,7 +180,7 @@ func mustGetExpandedShipment(
 ) *shipment.Shipment {
 	t.Helper()
 
-	entity, err := repo.GetByID(t.Context(), &shipmentports.GetShipmentByIDRequest{
+	entity, err := repo.GetByID(integrationTenantContext(t.Context(), tenantInfo), &shipmentports.GetShipmentByIDRequest{
 		ID:              id,
 		TenantInfo:      tenantInfo,
 		ShipmentOptions: shipmentports.ShipmentOptions{ExpandShipmentDetails: true},
@@ -192,16 +190,12 @@ func mustGetExpandedShipment(
 	return entity
 }
 
-func mustAssignmentStatus(t *testing.T, db *bun.DB, id pulid.ID) shipment.AssignmentStatus {
+func mustAssignmentStatus(t *testing.T, db *keel.DB, id pulid.ID) shipment.AssignmentStatus {
 	t.Helper()
 
-	var status shipment.AssignmentStatus
-	err := db.NewSelect().
-		Model((*shipment.Assignment)(nil)).
-		Column("status").
-		Where("id = ?", id).
-		Scan(t.Context(), &status)
+	status, err := keel.QueryValue[string](t.Context(), db,
+		"SELECT status FROM assignments WHERE id = $1", id.String())
 	require.NoError(t, err)
 
-	return status
+	return shipment.AssignmentStatus(status)
 }

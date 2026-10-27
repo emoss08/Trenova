@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalyear/fiscalyeardb"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/validationframework"
-	"github.com/uptrace/bun"
 )
 
 func createDateValidationRule(
@@ -21,10 +21,10 @@ func createDateValidationRule(
 		WithValidation(func(
 			ctx context.Context,
 			entity *fiscalperiod.FiscalPeriod,
-			valCtx *validationframework.TenantedValidationContext,
+			_ *validationframework.TenantedValidationContext,
 			multiErr *errortypes.MultiError,
 		) error {
-			return db.RunScoped(ctx, true, func(ctx context.Context) error {
+			return dbtx.ReadErr(ctx, db, func(ctx context.Context) error {
 				if entity.EndDate <= entity.StartDate {
 					multiErr.Add(
 						"endDate",
@@ -38,16 +38,10 @@ func createDateValidationRule(
 					return nil
 				}
 
-				fy := new(fiscalyear.FiscalYear)
-				err := db.DBForContext(ctx).NewSelect().
-					Model(fy).
-					Column("start_date", "end_date").
-					WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return sq.Where("fy.id = ?", entity.FiscalYearID).
-							Where("fy.organization_id = ?", valCtx.OrganizationID).
-							Where("fy.business_unit_id = ?", valCtx.BusinessUnitID)
-					}).
-					Scan(ctx)
+				fyt := fiscalyeardb.FiscalYears
+				fy, err := fyt.Pick(fyt.StartDate, fyt.EndDate).
+					Where(fyt.ID.Eq(entity.FiscalYearID)).
+					One(ctx, db.Keel(ctx))
 				if err != nil {
 					return nil //nolint:nilerr // validation callbacks collect field errors and intentionally continue
 				}

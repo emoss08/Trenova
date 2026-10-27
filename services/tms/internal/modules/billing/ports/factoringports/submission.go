@@ -38,12 +38,12 @@ type ListLiveItemsRequest struct {
 }
 
 type LiveItem struct {
-	InvoiceID        pulid.ID                       `json:"invoiceId"        bun:"invoice_id"`
-	SubmissionID     pulid.ID                       `json:"submissionId"     bun:"submission_id"`
-	SubmissionNumber string                         `json:"submissionNumber" bun:"submission_number"`
-	SubmissionStatus factoring.SubmissionStatus     `json:"submissionStatus" bun:"submission_status"`
-	ItemID           pulid.ID                       `json:"itemId"           bun:"item_id"`
-	ItemStatus       factoring.SubmissionItemStatus `json:"itemStatus"       bun:"item_status"`
+	InvoiceID        pulid.ID                       `json:"invoiceId"`
+	SubmissionID     pulid.ID                       `json:"submissionId"`
+	SubmissionNumber string                         `json:"submissionNumber"`
+	SubmissionStatus factoring.SubmissionStatus     `json:"submissionStatus"`
+	ItemID           pulid.ID                       `json:"itemId"`
+	ItemStatus       factoring.SubmissionItemStatus `json:"itemStatus"`
 }
 
 func (l *LiveItem) IsLive() bool {

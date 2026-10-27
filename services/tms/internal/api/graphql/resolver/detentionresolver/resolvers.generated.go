@@ -16,6 +16,8 @@ type Deps struct {
 
 type DetentionOccurrenceResolver struct{ *Deps }
 
+type DetentionPreviewResultResolver struct{ *Deps }
+
 type MutationResolver struct{ *Deps }
 
 type QueryResolver struct{ *Deps }

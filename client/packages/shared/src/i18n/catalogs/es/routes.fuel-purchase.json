@@ -51,6 +51,7 @@
   "Select a card": "Seleccione una tarjeta",
   "Select a unit": "Seleccione una unidad",
   "Showing {0, plural, one {# row} other {# rows}}": "Mostrando {0, plural, one {# fila} other {# filas}}",
+  "Showing {0} of about {1} rows": "Mostrando {0} de unas {1} filas",
   "Statements identify a card by its last four digits, and that is all a purchase needs to be matched back to it. The full card number is never stored.": "Los extractos identifican una tarjeta por sus cuatro últimos dígitos, y eso es todo lo que una compra necesita para vincularse a ella. El número completo de la tarjeta nunca se almacena.",
   "The card and transaction reference came from the statement and are read-only here, so the same statement cannot be counted twice if it is imported again. {0}": "La tarjeta y la referencia de la transacción proceden del extracto y aquí son de solo lectura, de modo que el mismo extracto no se puede contar dos veces si se vuelve a importar. {0}",
   "The card the purchase was charged to, when one was used.": "La tarjeta a la que se cargó la compra, cuando se usó alguna.",

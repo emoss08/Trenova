@@ -23,6 +23,39 @@ Examples:
 - A `FOR UPDATE NOWAIT` conflict increments:
   - `trenova_db_concurrency_total{kind="retryable_transaction",entity="unknown",code="55p03"}`
 
+## Database Runtime Metrics
+
+Registered by the tenant pool (`postgres.Connection.runtimeStats`) beside the
+`trenova_db_pool_*` connection gauges:
+
+- `trenova_db_cache_hits_total`, `trenova_db_cache_misses_total`,
+  `trenova_db_cache_bypasses_total`, `trenova_db_cache_errors_total`: reads
+  that asked for keel's result cache, by outcome; errors are shared-store,
+  listener and decoder failures (each a miss or a bypass).
+- `trenova_db_cache_bytes`: what the in-process LRU holds
+  (`database.cache.localBytes` bounds it).
+- `trenova_db_cache_versions`: (tenant, table) data versions held.
+- `trenova_db_cache_listening`: 1 while the data version listener is
+  connected; at 0 every cached read goes to the database.
+- `trenova_db_pool_tenant_waits_total`: transactions and terminals that waited
+  for one of their organization's `database.tenantConcurrency` slots.
+- `trenova_db_pool_read_commit_failures_total`: connections closed because the
+  reply to a read transaction's unawaited `COMMIT` failed (tenant and system
+  pools).
+- `trenova_db_slow_waits_total{component,pool,kind}`: waits past
+  `database.slowWaitWarning` for an organization's slot (`tenant_slot`), a pool
+  connection (`connection`) or another request's read of the same cache entry
+  (`cache_fill`). Each also logs a warning on the `slow-wait` logger with the
+  waiter's stack and, for a slot, every holder's.
+
+A hit ratio (`hits / (hits + misses)`) that falls after a deploy names a read
+that stopped matching its entries; `listening` at 0 for more than a few
+seconds names a listener that cannot reach PostgreSQL (behind a
+transaction-mode pooler, set `database.cache.listenHost`); a rising
+`tenant_waits_total` names a tenant at its bound; any `slow_waits_total` names
+work stuck behind a holder that is slow or never lets go, and its warning names
+the holder.
+
 ## GraphQL Metrics
 
 Every GraphQL request arrives on a single `POST /graphql` route, so the HTTP
@@ -159,13 +192,16 @@ counted only under `rejections_total` when the persisted-operation layer refuses
 them. In production and staging that layer rejects anything not in the manifest,
 so unparseable documents cannot reach the executor at all.
 
-## Rules Engine Metrics
+## WebAssembly Module Metrics
 
-The rules engine (`pkg/rules`, docs/engineering/rules-engine.md) runs one WebAssembly
-module in wazero on a pool of instances, one call per instance at a time. `pkg/rules` cannot
-import this package, so it reports through its `rules.Observer` interface, which `Rules`
-implements; `internal/bootstrap/infrastructure/rules.go` hands it to the default runtime at
-start.
+Each WebAssembly module the TMS runs in wazero (`pkg/rules`, docs/engineering/rules-engine.md;
+`pkg/x12`, docs/engineering/edi-x12.md) runs on a pool of instances, one call per instance at a
+time, through `pkg/wasmmodule`. That package cannot import this one, so it reports through its
+`wasmmodule.Observer` interface, which `WasmModule` implements; `NewWasmModule` builds one per
+module under its own subsystem (`Rules` as `trenova_rules_*`, `EDIModule` as
+`trenova_edi_module_*`), and `internal/bootstrap/infrastructure/wasmmodules.go` hands each to its
+default runtime at start. The rules module's series are below; the EDI module's have the same
+names under `trenova_edi_module_` (operations `x12.read`, `x12.acknowledge`, ...).
 
 - `trenova_rules_calls_total{op,outcome}`: every call, by operation and how it ended
 - `trenova_rules_call_duration_seconds{op}`: how long a call took, including the wait for a

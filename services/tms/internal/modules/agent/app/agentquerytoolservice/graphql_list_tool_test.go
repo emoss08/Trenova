@@ -8,6 +8,8 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/emoss08/trenova/internal/testutil/pagetest"
+
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread"
 	"github.com/emoss08/trenova/internal/api/graphql/agentread/agentreadtest"
@@ -19,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/permtest"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -99,7 +102,7 @@ func (m *manufacturerRows) List(
 	end := min(start+req.Filter.Pagination.Limit, len(rows))
 
 	return &pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer]{
-		Items: rows[start:end], Total: len(rows),
+		Items: rows[start:end], Total: len(rows), TotalExact: true,
 	}, nil
 }
 
@@ -113,9 +116,9 @@ func (m *manufacturerRows) ListConnection(
 
 	rows := m.matching(req.Filter)
 	start := 0
-	if after := req.Cursor.Cursor.ID; after.IsNotNil() {
+	if after := req.Cursor.Cursor.Keyset; after != "" {
 		for idx, row := range rows {
-			if row.ID == after {
+			if row.ID.String() == after {
 				start = idx + 1
 			}
 		}
@@ -123,10 +126,10 @@ func (m *manufacturerRows) ListConnection(
 	end := min(start+req.Cursor.Limit+1, len(rows))
 	if req.Cursor.IncludeTotalCount {
 		total := len(rows)
-		return pagination.NewCursorListResultWithTotalCount(rows[start:end], req.Cursor.Limit, &total), nil
+		return pagetest.OfTotal(rows[start:end], req.Cursor.Limit, &total), nil
 	}
 
-	return pagination.NewCursorListResult(rows[start:end], req.Cursor.Limit), nil
+	return pagetest.Of(rows[start:end], req.Cursor.Limit), nil
 }
 
 func (m *manufacturerRows) lastConnection() *equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest {
@@ -296,6 +299,7 @@ func TestGraphQLListTool_CountsTheListOnlyWhenAPersonsTableAsks(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, h.repo.lastConnection().Cursor.IncludeTotalCount)
 	assert.Equal(t, float64(5), counted["total"])
+	assert.NotContains(t, counted, "totalEstimated", "a counted total is not marked as an estimate")
 	assert.Len(t, itemIDs(counted), 2)
 
 	uncounted, err := h.query(t, person, active)
@@ -495,6 +499,14 @@ func (publicRole) GetResourcePermissions(
 	string,
 ) (*permissionports.ResourcePermissionDetail, error) {
 	return &permissionports.ResourcePermissionDetail{MaxSensitivity: permission.SensitivityPublic}, nil
+}
+
+func (r publicRole) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, r, userID, orgID, resources)
 }
 
 func TestGraphQLListTool_AWithheldFieldStaysWithheld(t *testing.T) {

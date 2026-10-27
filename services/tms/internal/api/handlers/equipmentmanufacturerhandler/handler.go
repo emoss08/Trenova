@@ -104,8 +104,8 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 // @Produce json
 // @Param query query string false "Search query"
 // @Param limit query int false "Page size" minimum(1) maximum(100)
-// @Param offset query int false "Page offset" minimum(0)
-// @Success 200 {object} pagination.Response[[]equipmentmanufacturer.EquipmentManufacturer]
+// @Param after query string false "Cursor for the next page"
+// @Success 200 {object} pagination.CursorResponse[[]equipmentmanufacturer.EquipmentManufacturer]
 // @Failure 400 {object} helpers.ProblemDetail
 // @Failure 401 {object} helpers.ProblemDetail
 // @Failure 403 {object} helpers.ProblemDetail
@@ -116,15 +116,18 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	req := pagination.NewQueryOptions(c, authCtx)
 
-	pagination.List(
+	pagination.CursorList(
 		c,
 		req,
 		h.eh,
-		func() (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-			return h.service.List(
+		func(
+			cursor pagination.CursorInfo,
+		) (*pagination.CursorListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
+			return h.service.ListConnection(
 				c.Request.Context(),
-				&equipmentmanufacturerports.ListEquipmentManufacturersRequest{
+				&equipmentmanufacturerports.ListEquipmentManufacturerConnectionRequest{
 					Filter: req,
+					Cursor: cursor,
 				},
 			)
 		},

@@ -6,12 +6,16 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var invoiceAdjustmentControlErrors = dberror.Mapping{Entity: "InvoiceAdjustmentControl"}
 
 type Params struct {
 	fx.In
@@ -40,18 +44,17 @@ func (r *repository) GetByOrgID(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tenant.InvoiceAdjustmentControl, error) {
-			log := r.l.With(
-				zap.String("operation", "GetByOrgID"),
-				zap.String("orgID", orgID.String()),
-			)
-
-			entity := new(tenant.InvoiceAdjustmentControl)
-			if err := r.db.DBForContext(ctx).NewSelect().
-				Model(entity).
-				Where("iac.organization_id = ?", orgID).
-				Scan(ctx); err != nil {
-				log.Error("failed to get invoice adjustment control", zap.Error(err))
-				return nil, dberror.HandleNotFoundError(err, "InvoiceAdjustmentControl")
+			iac := tenantdb.InvoiceAdjustmentControls
+			entity, err := iac.Where(iac.OrganizationID.Eq(orgID)).
+				Cache(resultcache.Settings()...).
+				One(ctx, r.db.Keel(ctx))
+			if err != nil {
+				r.l.Error(
+					"failed to get invoice adjustment control",
+					zap.String("orgID", orgID.String()),
+					zap.Error(err),
+				)
+				return nil, invoiceAdjustmentControlErrors.Map(err, orgID.String())
 			}
 
 			return entity, nil
@@ -67,32 +70,17 @@ func (r *repository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*tenant.InvoiceAdjustmentControl, error) {
-			log := r.l.With(
-				zap.String("operation", "Update"),
-				zap.String("orgID", entity.OrganizationID.String()),
-			)
-
-			ov := entity.Version
-			entity.Version++
-
-			result, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where("version = ?", ov).
-				Returning("*").
-				Exec(ctx)
-			if err != nil {
-				log.Error("failed to update invoice adjustment control", zap.Error(err))
-				return nil, err
-			}
-
-			if err = dberror.CheckRowsAffected(
-				result,
-				"InvoiceAdjustmentControl",
-				entity.ID.String(),
+			if err := tenantdb.InvoiceAdjustmentControls.Save(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
 			); err != nil {
-				return nil, err
+				r.l.Error(
+					"failed to update invoice adjustment control",
+					zap.String("orgID", entity.OrganizationID.String()),
+					zap.Error(err),
+				)
+				return nil, invoiceAdjustmentControlErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil

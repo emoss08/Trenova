@@ -5,7 +5,6 @@ import (
 	"errors"
 	"sync"
 	"testing"
-	"time"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
@@ -137,7 +136,7 @@ func newFixture(t *testing.T) *fixture {
 	return &fixture{
 		service: &Service{
 			repo:   repo,
-			loader: newLoader(repo, time.Now),
+			loader: newLoader(repo),
 			policies: fakePolicies{shipmentTool: {
 				Name:          shipmentTool,
 				Kind:          agent.ToolKindAction,
@@ -293,7 +292,7 @@ func TestSave_RefusesLooseningAndUnknownTools(t *testing.T) {
 	assert.Empty(t, f.repo.rows)
 }
 
-func TestSave_ForgetsTheCachedRules(t *testing.T) {
+func TestSave_TheNextReadSeesTheSavedRule(t *testing.T) {
 	t.Parallel()
 
 	f := newFixture(t)
@@ -336,33 +335,24 @@ func TestImpact_ComparesTheCurrentRuleWithTheProposedOne(t *testing.T) {
 	assert.Equal(t, agent.TierPropose, f.impact.requests[0].After.MaxTier)
 }
 
-func TestLoader_CachesPerTenantUntilItExpires(t *testing.T) {
+func TestLoader_IndexesTheTenantsOverridesByTool(t *testing.T) {
 	t.Parallel()
 
 	repo := newFakeRepo()
-	now := time.Unix(1_700_000_000, 0)
-	loader := newLoader(repo, func() time.Time { return now })
+	repo.rows[shipmentTool] = &agent.ToolRuleOverride{
+		ToolName: shipmentTool,
+		MaxTier:  agent.TierPropose,
+	}
+	loader := newLoader(repo)
 	tenant := pagination.TenantInfo{OrgID: "org_1", BuID: "bu_1"}
 
-	for range 3 {
-		_, err := loader.For(t.Context(), tenant)
+	for range 2 {
+		rules, err := loader.For(t.Context(), tenant)
 		require.NoError(t, err)
+		require.Contains(t, rules, shipmentTool)
+		assert.Equal(t, agent.TierPropose, rules[shipmentTool].MaxTier)
 	}
-	assert.Equal(t, 1, repo.lists)
-
-	now = now.Add(loaderTTL)
-	_, err := loader.For(t.Context(), tenant)
-	require.NoError(t, err)
-	assert.Equal(t, 2, repo.lists)
-
-	_, err = loader.For(t.Context(), pagination.TenantInfo{OrgID: "org_2", BuID: "bu_2"})
-	require.NoError(t, err)
-	assert.Equal(t, 3, repo.lists, "each tenant reads its own rules")
-
-	loader.Forget(tenant)
-	_, err = loader.For(t.Context(), tenant)
-	require.NoError(t, err)
-	assert.Equal(t, 4, repo.lists)
+	assert.Equal(t, 2, repo.lists, "the repository's result cache serves repeats")
 }
 
 func TestLoader_ReturnsTheReadError(t *testing.T) {
@@ -370,7 +360,7 @@ func TestLoader_ReturnsTheReadError(t *testing.T) {
 
 	repo := newFakeRepo()
 	repo.err = errors.New("db down")
-	loader := newLoader(repo, time.Now)
+	loader := newLoader(repo)
 
 	_, err := loader.For(t.Context(), pagination.TenantInfo{OrgID: "org_1", BuID: "bu_1"})
 	require.ErrorIs(t, err, repo.err)

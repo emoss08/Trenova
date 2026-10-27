@@ -1,7 +1,7 @@
 import { useT } from "@trenova/shared/i18n/use-t";
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { Spinner } from "@trenova/shared/components/ui/spinner";
-import type { ReportIrInput, ReportPreview } from "@/lib/graphql/reports";
+import type { ReportDefinitionInput, ReportPreview } from "@/lib/graphql/reports";
 import { cn } from "@trenova/shared/lib/utils";
 import type { ReportIR } from "@/types/report";
 import { AlertCircleIcon, TableIcon } from "@trenova/shared/components/icons";
@@ -14,7 +14,7 @@ import { ResultGrid, type GridSort } from "../../_components/result-grid";
 
 type PreviewGridProps = {
   ir: ReportIR;
-  previewInput: ReportIrInput | null;
+  previewInput: ReportDefinitionInput | null;
   previewParams?: Record<string, unknown>;
   preview: ReportPreview | undefined;
   loading: boolean;
@@ -142,6 +142,7 @@ export function PreviewGrid({
             chart={activeChart}
             columns={preview.columns}
             rows={rows}
+            timeZone={preview.timezone}
             className="min-h-0 flex-1"
           />
         </div>
@@ -149,6 +150,7 @@ export function PreviewGrid({
         <ResultGrid
           columns={preview.columns}
           rows={rows}
+          timeZone={preview.timezone}
           totals={totals}
           loading={loading}
           sort={sort}

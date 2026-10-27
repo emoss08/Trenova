@@ -2,12 +2,14 @@ package agentquerytoolservice
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 )
@@ -40,11 +42,22 @@ var (
 	NewListTractorsTool           = newListTractorsTool
 	NewListTrailersTool           = newListTrailersTool
 	NewListWorkersTool            = newListWorkersTool
+	NewListOrdersTool             = newListOrdersTool
+	NewListRecurringShipmentsTool = newListRecurringShipmentsTool
+	NewListFormulaTemplatesTool   = newListFormulaTemplatesTool
+	NewListInvoicesTool           = newListInvoicesTool
 )
+
+// convertedListSpecs are every list read through GraphQL by a spec: those
+// registered by the spec alone, and the inbox, whose search by words stays on
+// the retrieval index beside its GraphQL read.
+func convertedListSpecs() []graphQLListSpec {
+	return append(graphQLListSpecs(), inboundMessagesListSpec())
+}
 
 // ConvertedListNames are the list tools read through GraphQL by a spec.
 func ConvertedListNames() []string {
-	specs := graphQLListSpecs()
+	specs := convertedListSpecs()
 	names := make([]string, 0, len(specs))
 	for idx := range specs {
 		names = append(names, specs[idx].name)
@@ -55,7 +68,7 @@ func ConvertedListNames() []string {
 
 // ConvertedListResource is the resource a converted list reads.
 func ConvertedListResource(name string) permission.Resource {
-	specs := graphQLListSpecs()
+	specs := convertedListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
 			return specs[idx].resource
@@ -71,7 +84,7 @@ func ConvertedListTool(
 	reader agentports.GraphQLReader,
 	permissions permissionports.PermissionEngine,
 ) (agentports.AgentQueryTool, error) {
-	specs := graphQLListSpecs()
+	specs := convertedListSpecs()
 	for idx := range specs {
 		if specs[idx].name == name {
 			return newGraphQLReadTool(&specs[idx], reader, permissions)
@@ -92,6 +105,13 @@ func ConvertedGetNames() []string {
 	return names
 }
 
+// ConvertedGetSelfScoped reports whether a converted get reads the caller's
+// own record through a resolver that checks no resource, so only dispatch's
+// authorize of the tool's own policy can refuse it.
+func ConvertedGetSelfScoped(name string) bool {
+	return graphQLReads[name].SelfScoped
+}
+
 // ConvertedGetResource is the resource a converted get reads.
 func ConvertedGetResource(name string) permission.Resource {
 	specs := graphQLGetSpecs()
@@ -110,8 +130,33 @@ func ConvertedGetCall(tool agentports.AgentQueryTool, id pulid.ID) map[string]an
 	if !ok {
 		return nil
 	}
+	call := requiredCall(get.params, get.required)
+	switch {
+	case get.byID && get.spec.batch > 0:
+		call[get.spec.paramName] = []any{id.String()}
+	case get.byID:
+		call[get.spec.paramName] = id.String()
+	}
 
-	return map[string]any{get.spec.paramName: id.String()}
+	return call
+}
+
+// requiredCall names a value for each required argument: an enum's first
+// value, or an id.
+func requiredCall(params []graphQLParam, required []string) map[string]any {
+	call := make(map[string]any, len(required)+1)
+	for _, param := range params {
+		if !slices.Contains(required, param.Name) {
+			continue
+		}
+		if values, enumerated := param.Schema[toolschema.KeyEnum].([]string); enumerated {
+			call[param.Name] = values[0]
+			continue
+		}
+		call[param.Name] = requiredID(param)
+	}
+
+	return call
 }
 
 // ConvertedGetTool is the registered converted get of that name.
@@ -133,6 +178,11 @@ func ConvertedGetTool(
 // MinimalCall is the smallest call a converted list takes: a page of five,
 // or, for a list keyed by a record, that record's id.
 func MinimalCall(tool agentports.AgentQueryTool) map[string]any {
+	if list, isList := tool.(*graphQLListTool); isList {
+		call := requiredCall(list.params, list.required)
+		call["limit"] = 5
+		return call
+	}
 	keyed, ok := tool.(*graphQLUnpagedListTool)
 	if !ok {
 		return map[string]any{"limit": 5}
@@ -140,9 +190,24 @@ func MinimalCall(tool agentports.AgentQueryTool) map[string]any {
 	call := make(map[string]any, len(keyed.required))
 	for _, name := range keyed.required {
 		call[name] = pulid.MustNew("wrk_").String()
+		for _, param := range keyed.params {
+			if param.Name == name && param.Kind == paramReferences {
+				call[name] = []any{pulid.MustNew("wrk_").String()}
+			}
+		}
 	}
 
 	return call
+}
+
+// requiredID is an id for a required argument, or a list of one for an
+// argument that takes several.
+func requiredID(param graphQLParam) any {
+	if param.Kind == paramReferences {
+		return []any{pulid.MustNew("x_").String()}
+	}
+
+	return pulid.MustNew("x_").String()
 }
 
 // ExpectedMention is how a converted list's description must name one of its

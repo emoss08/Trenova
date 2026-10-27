@@ -91,8 +91,8 @@ type ListInvoiceLineChargesRequest struct {
 
 // InvoiceLineCharge is one shipment charge an invoice line bills.
 type InvoiceLineCharge struct {
-	AdditionalChargeID pulid.ID `bun:"additional_charge_id"`
-	ShipmentID         pulid.ID `bun:"shipment_id"`
+	AdditionalChargeID pulid.ID
+	ShipmentID         pulid.ID
 }
 
 // NetBilledByChargeRequest asks what is still billed of each shipment charge

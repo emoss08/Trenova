@@ -47,7 +47,10 @@ describe("reportPreviewFrom", () => {
         truncated: true,
       }),
     );
-    expect(preview.columns.map((column) => column.id)).toEqual(["customer", "revenue"]);
+    expect(preview.columns).toEqual([
+      { id: "customer", label: "Customer", type: "string", format: null },
+      { id: "revenue", label: "Revenue", type: "decimal", format: "currency" },
+    ]);
     expect(preview.rows).toEqual([
       ["Acme", "120.50"],
       [null, "9.00"],
@@ -324,12 +327,32 @@ describe("tableViewFrom", () => {
         total: 128,
         pages: 2,
       }).paging,
-    ).toEqual({ hasMore: true, nextCursor: "c-25", nextOffset: null, total: 128, pages: 2 });
+    ).toEqual({
+      hasMore: true,
+      nextCursor: "c-25",
+      nextOffset: null,
+      total: 128,
+      totalEstimated: false,
+      pages: 2,
+    });
+    expect(
+      view({
+        display: 1,
+        columns,
+        rows: [],
+        hasMore: true,
+        nextCursor: "c-25",
+        total: 1_250_000,
+        totalEstimated: true,
+        pages: 1,
+      }).paging,
+    ).toMatchObject({ total: 1_250_000, totalEstimated: true });
     expect(view({ display: 1, columns, rows: [], hasMore: true, nextOffset: 50 }).paging).toEqual({
       hasMore: true,
       nextCursor: "",
       nextOffset: 50,
       total: null,
+      totalEstimated: false,
       pages: 1,
     });
   });
@@ -346,6 +369,7 @@ describe("tableViewFrom", () => {
       nextCursor: "",
       nextOffset: null,
       total: null,
+      totalEstimated: false,
       pages: 1,
     });
     expect(resumesAfterAgent(paging)).toBe(false);
@@ -383,7 +407,14 @@ describe("tableViewFrom", () => {
   });
 
   it("goes on after the agent's rows only from a cursor or an offset", () => {
-    const base = { hasMore: true, nextCursor: "", nextOffset: null, total: null, pages: 1 };
+    const base = {
+      hasMore: true,
+      nextCursor: "",
+      nextOffset: null,
+      total: null,
+      totalEstimated: false,
+      pages: 1,
+    };
 
     expect(resumesAfterAgent({ ...base, nextCursor: "c-25" })).toBe(true);
     expect(resumesAfterAgent({ ...base, nextOffset: 0 })).toBe(true);

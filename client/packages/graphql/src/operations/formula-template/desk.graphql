@@ -1,0 +1,64 @@
+# The Desk's formula template list, read by the agent's formula_list_templates:
+# which rating methods exist and where each stands, without the source and
+# inputs the editor loads. A template is read whole through
+# DeskFormulaTemplateCard.
+query DeskFormulaTemplates($input: DataTableConnectionInput!, $includeTotalCount: Boolean = false) {
+  formulaTemplates(input: $input) {
+    edges {
+      node {
+        id
+        name
+        description
+        status
+        currentVersionNumber
+        testCount
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}
+
+# One formula template whole, read by the agent's formula_get_template: its
+# Tariff source, the inputs it declares, the libraries it imports, its review
+# state and version, and how much rates with it.
+query DeskFormulaTemplateCard($id: ID!) {
+  formulaTemplate(id: $id) {
+    id
+    name
+    description
+    source
+    inputs {
+      name
+      doc
+      type
+      descriptor
+      required
+      default
+    }
+    imports {
+      path
+      libraryId
+      versionNumber
+    }
+    testCount
+    status
+    submittedById
+    submittedAt
+    approvedById
+    approvedAt
+    reviewComment
+    metadata
+    version
+    sourceTemplateId
+    sourceVersionNumber
+    currentVersionNumber
+    usageCount
+    createdAt
+    updatedAt
+  }
+}

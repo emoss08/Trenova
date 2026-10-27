@@ -4,52 +4,95 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/documentcontentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/inboundmessagecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/document/documentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/documentcontent/documentcontentdb"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage/inboundmessagedb"
 	"github.com/emoss08/trenova/shared/intutils"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 const (
 	defaultCharsSample = 500
 	maxCharsSample     = 5000
-	charsSampleAlias   = "_sample"
-	charsColumn        = "chars"
+	charsSampleCTE     = "chars_sample"
 )
 
-var sourceChars = map[airetrieval.SourceType]func(*bun.SelectQuery) *bun.SelectQuery{
-	airetrieval.SourceTypeMemory: func(q *bun.SelectQuery) *bun.SelectQuery {
-		return q.ColumnExpr(
-			agentcol.MemoryColumns.Content.Expr("LENGTH(COALESCE({}, '')) AS " + charsColumn),
-		)
-	},
-	airetrieval.SourceTypeDocument: func(q *bun.SelectQuery) *bun.SelectQuery {
-		content := documentcontentcol.ContentColumns
-		doc := documentcol.DocumentColumns
+type sourceTable struct {
+	ids    func(after pulid.ID, limit int) keel.Projection
+	count  func(ctx context.Context, db *keel.DB) (int64, error)
+	sample func(limit int) *keel.CTETable
+}
 
-		return q.
-			ColumnExpr(content.ContentText.Expr("LENGTH(COALESCE({}, '')) AS " + charsColumn)).
-			Join("LEFT JOIN " + documentcontentcol.ContentTable.As(documentcontentcol.ContentTable.Alias)).
-			JoinOn(content.DocumentID.EqColumn(doc.ID)).
-			JoinOn(content.OrganizationID.EqColumn(doc.OrganizationID)).
-			JoinOn(content.BusinessUnitID.EqColumn(doc.BusinessUnitID))
+var sourceTables = map[airetrieval.SourceType]sourceTable{
+	airetrieval.SourceTypeMemory: {
+		ids: func(after pulid.ID, limit int) keel.Projection {
+			m := agentdb.Memories
+			return m.Pick(m.ID).
+				Where(keel.When(after.IsNotNil(), m.ID.Gt(after))).
+				Order(m.ID.Asc()).
+				Limit(limit)
+		},
+		count: func(ctx context.Context, db *keel.DB) (int64, error) {
+			return agentdb.Memories.Query().Count(ctx, db)
+		},
+		sample: func(limit int) *keel.CTETable {
+			m := agentdb.Memories
+			return charsSample(m.Pick(charCount(m.Content)).
+				Order(m.ID.Desc()).
+				Limit(limit))
+		},
 	},
-	airetrieval.SourceTypeInboundMessage: func(q *bun.SelectQuery) *bun.SelectQuery {
-		msg := inboundmessagecol.InboundMessageColumns
+	airetrieval.SourceTypeDocument: {
+		ids: func(after pulid.ID, limit int) keel.Projection {
+			d := documentdb.Documents
+			return d.Pick(d.ID).
+				Where(keel.When(after.IsNotNil(), d.ID.Gt(after))).
+				Order(d.ID.Asc()).
+				Limit(limit)
+		},
+		count: func(ctx context.Context, db *keel.DB) (int64, error) {
+			return documentdb.Documents.Query().Count(ctx, db)
+		},
+		sample: func(limit int) *keel.CTETable {
+			d := documentdb.Documents
+			dc := documentcontentdb.Contents
+			return charsSample(d.LeftJoin(dc, dc.DocumentID.EqCol(d.ID)).
+				Pick(charCount(dc.ContentText)).
+				Order(d.ID.Desc()).
+				Limit(limit))
+		},
+	},
+	airetrieval.SourceTypeInboundMessage: {
+		ids: func(after pulid.ID, limit int) keel.Projection {
+			m := inboundmessagedb.InboundMessages
+			return m.Pick(m.ID).
+				Where(keel.When(after.IsNotNil(), m.ID.Gt(after))).
+				Order(m.ID.Asc()).
+				Limit(limit)
+		},
+		count: func(ctx context.Context, db *keel.DB) (int64, error) {
+			return inboundmessagedb.InboundMessages.Query().Count(ctx, db)
+		},
+		sample: func(limit int) *keel.CTETable {
+			m := inboundmessagedb.InboundMessages
+			return charsSample(m.Pick(charCount(m.Subject).Add(charCount(m.TextBody))).
+				Order(m.ID.Desc()).
+				Limit(limit))
+		},
+	},
+}
 
-		return q.ColumnExpr(buncolgen.Expr(
-			"LENGTH(COALESCE({0}, '')) + LENGTH(COALESCE({1}, '')) AS "+charsColumn,
-			msg.Subject,
-			msg.TextBody,
-		))
-	},
+func charCount(c keel.StringValue) keel.Int32Expr {
+	return keel.StringOf(c).Coalesce("").Length()
+}
+
+func charsSample[T any](q *keel.Query[*T]) *keel.CTETable {
+	return keel.CTE(charsSampleCTE, []string{"chars"}, q)
 }
 
 func sourceTableFor(sourceType airetrieval.SourceType) (sourceTable, error) {
@@ -79,11 +122,7 @@ func (r *repository) CountSources(
 			return 0, err
 		}
 
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(table.model).
-			Apply(table.applyTenant(req.TenantInfo)).
-			Count(ctx)
+		count, err := table.count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return 0, fmt.Errorf("count %s sources: %w", req.SourceType, err)
 		}
@@ -107,14 +146,6 @@ func (r *repository) AverageSourceChars(
 		if err != nil {
 			return out, err
 		}
-		chars, ok := sourceChars[req.SourceType]
-		if !ok {
-			return out, fmt.Errorf(
-				"%w: source type %q has no text to measure",
-				airetrieval.ErrInvalidStorageRequest,
-				req.SourceType,
-			)
-		}
 
 		sample := req.Sample
 		if sample <= 0 {
@@ -122,19 +153,15 @@ func (r *repository) AverageSourceChars(
 		}
 		sample = intutils.Clamp(sample, 1, maxCharsSample)
 
-		dba := r.db.DBForContext(ctx)
-		newest := dba.NewSelect().
-			Model(table.model).
-			Apply(chars).
-			Apply(table.applyTenant(req.TenantInfo)).
-			OrderExpr(table.id.OrderDesc()).
-			Limit(int64(sample))
-
-		if err = dba.NewSelect().
-			TableExpr("(?) AS "+charsSampleAlias, newest).
-			ColumnExpr(buncolgen.Count("sampled")).
-			ColumnExpr("COALESCE(AVG("+charsSampleAlias+"."+charsColumn+"), 0) AS average_chars").
-			Scan(ctx, &out); err != nil {
+		newest := table.sample(sample)
+		out, err = keel.IntoOne[agentports.RetrievalSourceChars](
+			ctx,
+			r.db.Keel(ctx),
+			newest.Query().
+				With(newest).
+				Pick(keel.Count(), keel.CastFloat64(keel.NumericOf(newest.Col("chars").Avg()).Coalesce(0))),
+		)
+		if err != nil {
 			return agentports.RetrievalSourceChars{}, fmt.Errorf(
 				"measure %s text: %w",
 				req.SourceType,

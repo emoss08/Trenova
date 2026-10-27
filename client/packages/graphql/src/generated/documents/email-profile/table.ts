@@ -2,4 +2,4 @@
 import type { TypedDocumentString, EmailProfileTableQuery, EmailProfileTableQueryVariables, EmailProfileTableRowFieldsFragment } from "../../graphql";
 
 export const EmailProfileTableRowFieldsFragmentDoc = {"__meta__":{"fragmentName":"EmailProfileTableRowFields"}} as unknown as TypedDocumentString<EmailProfileTableRowFieldsFragment, unknown>;
-export const EmailProfileTableDocument = {"__meta__":{"kind":"query","name":"EmailProfileTable","hash":"sha256:6715e7bbdbc8507f91814cf918ce342f71e29f1ff52f82d38056f843a8ffa79f"}} as unknown as TypedDocumentString<EmailProfileTableQuery, EmailProfileTableQueryVariables>;
+export const EmailProfileTableDocument = {"__meta__":{"kind":"query","name":"EmailProfileTable","hash":"sha256:76532edd2b6f9987df507535891a1c12fdb68fc3cf82b90107a047c173d4d2f2"}} as unknown as TypedDocumentString<EmailProfileTableQuery, EmailProfileTableQueryVariables>;

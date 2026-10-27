@@ -14,8 +14,8 @@ watch), and that tool is neither offered nor granted while the vendor serves the
 Portal
 automation (`web_list_portal_sites`, `web_read_portal`, `web_use_portal`) is the second; Browser Use
 provides it, and [agent-portal-automation.md](agent-portal-automation.md) describes it. Data
-analysis (`report_analyze_data`) is the third; E2B provides it, and
-[agent-data-analysis.md](agent-data-analysis.md) describes it. Agents,
+analysis is not an extension: an agent's scripts do it inside Trenova
+([agent-code-mode.md](agent-code-mode.md)). Agents,
 the agent editor, the safety rules and the citation UI name the capability's tools, never a
 vendor, so an organization can move from one vendor to another without touching an agent.
 Only one extension may serve a capability at a time: turning on a second while the first is on
@@ -61,7 +61,7 @@ tool is offered asks it through `Offers`, `Grants` and `Serving`:
   an extension grants to every agent.
 
 Tool use is authorized on the capability's own resource (`web_research` read; `portal_automation`
-read to look and update to act; `data_analysis` read). Managing extensions, and the portal sites and task history,
+read to look and update to act). Managing extensions, and the portal sites and task history,
 needs `agent_extension` read and update.
 
 ## Extension commands: /browser, /search and /watch
@@ -132,9 +132,9 @@ the organization, which may have been written to steer an agent. It is declared 
 capability: `web_read_portal` returns a portal's page, while `web_list_portal_sites` returns what
 administrators wrote and `web_use_portal` returns only that the task started. A tool whose
 result is outside content only when it read something a person brought in declares
-`ReadsExternal: marked` instead and names what it read: `report_analyze_data` taints the run with
-each attached file it analyzed and caps nothing, because a report run is the organization's
-own data. Once a turn has a
+`ReadsExternal: marked` instead and names what it read: `analysis_run` taints the run with
+each attached file it read as a dataset and caps nothing, because a report run is the
+organization's own data. Once a turn has a
 successful result from such a tool, every write it asks for afterwards is capped at `Propose`, whatever the tier,
 the ceiling or the private-write rule would allow, and the model is told why. An escalation
 (`agent_raise_exception`, whose policy sets `Escalates`) is the exception: it only
@@ -253,8 +253,8 @@ connector cannot do what the capability needs.
 4. Add its catalog `definition` in `agentextensionservice/catalog.go`.
 5. Bundle the vendor's mark in `client/packages/shared/src/components/ui/logos/` from Brandfetch
    and register its domain, so the marketplace needs no network call to draw it. Use the SVG
-   Brandfetch lists; a vendor it has only as an image (E2B's icon) is bundled as that image,
-   unmodified, and drawn with an `img`.
+   Brandfetch lists; a vendor it has only as an image is bundled as that image, unmodified,
+   and drawn with an `img`.
 6. Add its strings to the translation catalogs (`task i18n`) and describe it in the AI control
    product guide.
 

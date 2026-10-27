@@ -7,11 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
-	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/accounting/accountingtest"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalperiodrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/modules/accounting/adapters/postgres/glaccountrepository"
@@ -24,7 +20,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalsourceports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -33,40 +28,15 @@ import (
 	"go.uber.org/zap"
 )
 
-type seededSourceOrg struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-type seededSourceUser struct {
-	ID pulid.ID `bun:"id"`
-}
-type seededSourceAccount struct {
-	ID pulid.ID `bun:"id"`
-}
-
 func TestGetByObjectReturnsLatestJournalSource(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
-
-	conn := postgres.NewTestConnection(db)
+	db := accountingtest.NewDevelopmentDatabase(t)
+	ctx := db.A.Ctx
+	conn := db.Conn
 	repo := New(Params{DB: conn, Logger: zap.NewNop()})
 	postingRepo := journalpostingrepository.New(
 		journalpostingrepository.Params{DB: conn, Logger: zap.NewNop()},
 	)
-	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupJournalSourceFixture(
-		t,
-		ctx,
-		conn,
-	)
+	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupJournalSourceFixture(t, db)
 	now := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 	sourceObjectID := pulid.MustNew("inv_").String()
 
@@ -95,10 +65,12 @@ func TestGetByObjectReturnsLatestJournalSource(t *testing.T) {
 
 func setupJournalSourceFixture(
 	t *testing.T,
-	ctx context.Context,
-	conn *postgres.Connection,
+	db *accountingtest.Database,
 ) (pulid.ID, pulid.ID, pulid.ID, pulid.ID, pulid.ID, []pulid.ID) {
 	t.Helper()
+
+	ctx := db.A.Ctx
+	conn := db.Conn
 	logger := zap.NewNop()
 	fiscalYearRepo := fiscalyearrepository.New(
 		fiscalyearrepository.Params{DB: conn, Logger: logger},
@@ -106,43 +78,10 @@ func setupJournalSourceFixture(
 	fiscalPeriodRepo := fiscalperiodrepository.New(
 		fiscalperiodrepository.Params{DB: conn, Logger: logger},
 	)
-	var org seededSourceOrg
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("organizations").
-			Column("id", "business_unit_id").
-			Limit(1).
-			Scan(ctx, &org),
-	)
-	var user seededSourceUser
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("users").
-			Column("id").
-			Where("current_organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Limit(1).
-			Scan(ctx, &user),
-	)
-	accounts := make([]seededSourceAccount, 0, 2)
-	require.NoError(
-		t,
-		conn.DB().
-			NewSelect().
-			Table("gl_accounts").
-			Column("id").
-			Where("organization_id = ?", org.ID).
-			Where("business_unit_id = ?", org.BusinessUnitID).
-			Where("status = 'Active'").
-			Order("account_code ASC").
-			Limit(2).
-			Scan(ctx, &accounts),
-	)
-	require.Len(t, accounts, 2)
+	org := struct{ ID, BusinessUnitID pulid.ID }{db.A.Info.OrgID, db.A.Info.BuID}
+	user := struct{ ID pulid.ID }{db.A.Info.UserID}
+	accounts := accountingtest.ActiveAccounts(t, db, db.A, 2)
+
 	fy, err := fiscalYearRepo.Create(
 		ctx,
 		&fiscalyear.FiscalYear{
@@ -176,10 +115,7 @@ func setupJournalSourceFixture(
 		},
 	)
 	require.NoError(t, err)
-	return org.ID, org.BusinessUnitID, user.ID, fy.ID, period.ID, []pulid.ID{
-		accounts[0].ID,
-		accounts[1].ID,
-	}
+	return org.ID, org.BusinessUnitID, user.ID, fy.ID, period.ID, accounts
 }
 
 type postedFixture struct {
@@ -273,19 +209,9 @@ func postInvoiceEntry(
 }
 
 func TestJournalCardReadsAnEntrysSourceReversalsAndAccountTypes(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
-	defer cleanup()
-	seedRegistry := seeder.NewRegistry()
-	seeds.Register(seedRegistry)
-	engine := seeder.NewEngine(
-		db,
-		seedRegistry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
-
-	conn := postgres.NewTestConnection(db)
+	db := accountingtest.NewDevelopmentDatabase(t)
+	ctx := db.A.Ctx
+	conn := db.Conn
 	logger := zap.NewNop()
 	repo := New(Params{DB: conn, Logger: logger})
 	postingRepo := journalpostingrepository.New(
@@ -295,11 +221,7 @@ func TestJournalCardReadsAnEntrysSourceReversalsAndAccountTypes(t *testing.T) {
 		journalreversalrepository.Params{DB: conn, Logger: logger},
 	)
 	accountRepo := glaccountrepository.New(glaccountrepository.Params{DB: conn, Logger: logger})
-	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupJournalSourceFixture(
-		t,
-		ctx,
-		conn,
-	)
+	orgID, buID, userID, fiscalYearID, periodID, accountIDs := setupJournalSourceFixture(t, db)
 	tenantInfo := pagination.TenantInfo{OrgID: orgID, BuID: buID}
 	at := time.Date(2027, time.January, 15, 0, 0, 0, 0, time.UTC).Unix()
 	fixture := func(number string) *postedFixture {

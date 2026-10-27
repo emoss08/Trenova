@@ -2,13 +2,13 @@ package triagemessagerepository
 
 import (
 	"context"
-	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/triage"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/triage/triagedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/triageports"
-	"github.com/emoss08/trenova/pkg/buncolgen/triagecol"
 	"go.uber.org/zap"
 )
 
@@ -24,23 +24,12 @@ func NewSenderHintRepository(p Params) triageports.SenderHintRepository {
 	}
 }
 
-func hintConflict() string {
-	cols := triagecol.SenderHintColumns
-
-	return "CONFLICT (" + strings.Join([]string{
-		cols.OrganizationID.Bare(),
-		cols.BusinessUnitID.Bare(),
-		cols.SenderDomain.Bare(),
-		cols.Classification.Bare(),
-	}, ", ") + ") DO UPDATE"
-}
-
 func (r *hintRepository) Upsert(
 	ctx context.Context,
 	req *triageports.UpsertSenderHintRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := triagecol.SenderHintColumns
+		h := triagedb.SenderHints
 		hint := &triage.SenderHint{
 			OrganizationID:  req.TenantInfo.OrgID,
 			BusinessUnitID:  req.TenantInfo.BuID,
@@ -50,13 +39,14 @@ func (r *hintRepository) Upsert(
 			LastCorrectedAt: req.At,
 		}
 
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(hint).
-			On(hintConflict()).
-			Set(cols.Corrections.IncConflict(1)).
-			Set(cols.LastCorrectedAt.SetExcluded()).
-			Exec(ctx)
+		_, err := h.Upsert(
+			ctx,
+			r.db.Keel(ctx),
+			[]*triage.SenderHint{hint},
+			keel.OnConflict(h.OrganizationID, h.BusinessUnitID, h.SenderDomain, h.Classification).
+				Update(h.LastCorrectedAt).
+				Set(h.Corrections.Increment(1)),
+		)
 		if err != nil {
 			r.l.Error("failed to record a sender hint",
 				zap.String("senderDomain", req.SenderDomain), zap.Error(err))
@@ -71,18 +61,16 @@ func (r *hintRepository) ListByDomain(
 	req triageports.ListSenderHintsRequest,
 ) ([]*triage.SenderHint, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*triage.SenderHint, error) {
-		cols := triagecol.SenderHintColumns
-		hints := make([]*triage.SenderHint, 0, req.Limit)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&hints).
-			Apply(triagecol.SenderHintApplyTenant(req.TenantInfo)).
-			Where(cols.SenderDomain.Eq(), req.SenderDomain).
-			Order(cols.Corrections.OrderDesc(), cols.LastCorrectedAt.OrderDesc()).
-			Limit(int64(req.Limit)).
-			Scan(ctx); err != nil {
+		h := triagedb.SenderHints
+		hints, err := h.Where(h.SenderDomain.Eq(req.SenderDomain)).
+			Order(h.Corrections.Desc(), h.LastCorrectedAt.Desc()).
+			Limit(max(req.Limit, 1)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
+		}
+		if hints == nil {
+			hints = []*triage.SenderHint{}
 		}
 
 		return hints, nil

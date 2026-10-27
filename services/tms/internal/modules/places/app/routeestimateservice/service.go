@@ -24,8 +24,6 @@ import (
 const (
 	routedLegTTL      = 6 * time.Hour
 	routedLegCapacity = 50_000
-	runtimeTTL        = 5 * time.Minute
-	runtimeCapacity   = 5_000
 	coordinatePlaces  = 3
 )
 
@@ -52,10 +50,9 @@ type Params struct {
 type resolveRuntime func(ctx context.Context, tenantInfo pagination.TenantInfo) tenantRuntime
 
 type service struct {
-	l        *zap.Logger
-	resolve  resolveRuntime
-	legs     *ttlcache.Cache[string, routeestimateports.LegEstimate]
-	runtimes *ttlcache.Cache[string, tenantRuntime]
+	l       *zap.Logger
+	resolve resolveRuntime
+	legs    *ttlcache.Cache[string, routeestimateports.LegEstimate]
 }
 
 func New(p Params) routeestimateports.RouteEstimator {
@@ -95,10 +92,6 @@ func newService(logger *zap.Logger, resolve resolveRuntime) *service {
 			TTL:        routedLegTTL,
 			MaxEntries: routedLegCapacity,
 		}),
-		runtimes: ttlcache.New[string, tenantRuntime](ttlcache.Options{
-			TTL:        runtimeTTL,
-			MaxEntries: runtimeCapacity,
-		}),
 	}
 }
 
@@ -123,7 +116,7 @@ func (s *service) EstimateLegs(
 		return out, nil
 	}
 
-	runtime := s.runtimeFor(ctx, tenantInfo)
+	runtime := s.resolve(ctx, tenantInfo)
 	if !runtime.ready || runtime.client == nil {
 		return out, nil
 	}
@@ -182,16 +175,6 @@ func (s *service) EstimateLegs(
 	}
 
 	return out, nil
-}
-
-func (s *service) runtimeFor(ctx context.Context, tenantInfo pagination.TenantInfo) tenantRuntime {
-	key := tenantInfo.OrgID.String() + ":" + tenantInfo.BuID.String()
-	if cached, ok := s.runtimes.Get(key); ok {
-		return cached
-	}
-	runtime := s.resolve(ctx, tenantInfo)
-	s.runtimes.Set(key, runtime)
-	return runtime
 }
 
 func planned(leg routeestimateports.Leg) routeestimateports.LegEstimate {

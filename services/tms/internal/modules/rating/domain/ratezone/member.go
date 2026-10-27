@@ -4,16 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
-
-var _ bun.BeforeAppendModelHook = (*RateZoneMember)(nil)
 
 var ErrMatchKeyNotApplied = errors.New(
 	"a rate zone member is written before its match key was applied",
@@ -26,24 +23,32 @@ var ErrMatchKeyNotApplied = errors.New(
 // other zones: nesting would turn membership from an indexed lookup into a
 // graph walk, and the rating path cannot afford that.
 type RateZoneMember struct {
-	bun.BaseModel `bun:"table:rate_zone_members,alias:rzm" json:"-"`
+	keel.Table `keel:"rate_zone_members"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	RateZoneID     pulid.ID `json:"rateZoneId"     bun:"rate_zone_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:rzm_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	RateZoneID     pulid.ID `json:"rateZoneId"     keel:"rate_zone_id"`
 
-	ScopeType  rategeo.ScopeType `json:"scopeType"  bun:"scope_type,type:rate_geo_scope_type_enum,notnull"`
-	ScopeValue string            `json:"scopeValue" bun:"scope_value,type:VARCHAR(120),nullzero"`
-	City       string            `json:"city"       bun:"city,type:VARCHAR(100),nullzero"`
-	MatchKey   string            `json:"matchKey"   bun:"match_key,type:VARCHAR(160),notnull"`
+	ScopeType  rategeo.ScopeType `json:"scopeType"  keel:"scope_type"`
+	ScopeValue string            `json:"scopeValue" keel:"scope_value,nullzero"`
+	City       string            `json:"city"       keel:"city,nullzero"`
+	MatchKey   string            `json:"matchKey"   keel:"match_key"`
 
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CreatedAt int64 `json:"createdAt" keel:"created_at,autocreate"`
+	UpdatedAt int64 `json:"updatedAt" keel:"updated_at,autoupdate"`
 
-	RateZone *RateZone `json:"-" bun:"rel:belongs-to,join:rate_zone_id=id"`
+	RateZone *RateZone `json:"-" keel:"belongs:rate_zone_id"`
 
 	keyApplied bool
+}
+
+func (rzm *RateZoneMember) BeforeUpdate(_ context.Context) error {
+	if rzm.MatchKey == "" {
+		return ErrMatchKeyNotApplied
+	}
+
+	return nil
 }
 
 // Scope reads the member back as the geography value object the key helpers
@@ -126,22 +131,9 @@ func (rzm *RateZoneMember) validateScope(multiErr *errortypes.MultiError) {
 	}
 }
 
-func (rzm *RateZoneMember) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (rzm *RateZoneMember) BeforeCreate(ctx context.Context) error {
 	if rzm.MatchKey == "" {
 		return ErrMatchKeyNotApplied
-	}
-
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if rzm.ID.IsNil() {
-			rzm.ID = pulid.MustNew("rzm_")
-		}
-		rzm.CreatedAt = now
-		rzm.UpdatedAt = now
-	case *bun.UpdateQuery:
-		rzm.UpdatedAt = now
 	}
 
 	return nil
@@ -161,4 +153,14 @@ func (rzm *RateZoneMember) GetBusinessUnitID() pulid.ID {
 
 func (rzm *RateZoneMember) GetTableName() string {
 	return "rate_zone_members"
+}
+
+func (RateZoneMember) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_rate_zone_members",
+			Field:   "members",
+			Message: "A place can appear only once in a rate zone",
+		},
+	}
 }

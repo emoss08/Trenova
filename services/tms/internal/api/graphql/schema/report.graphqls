@@ -6,26 +6,86 @@ type ReportCatalogEnumValue {
 }
 
 type ReportCatalogField {
+  "The field's key in a definition path, such as customer.name."
   key: String!
   label: String!
   description: String
+  "The value type: string, int, decimal, float, bool, date, timestamp, epoch, enum or json."
   type: String!
+  "The display kind the field carries, such as money, weight or percent."
   format: String
-  nullable: Boolean!
+  "Whether reports aggregate the field by default rather than group by it."
+  measure: Boolean!
   enumValues: [ReportCatalogEnumValue!]!
   aggregations: [String!]!
+  "The filter operators a condition on the field can use, in builder order."
+  operators: [String!]!
   filterable: Boolean!
   groupable: Boolean!
-  accessible: Boolean!
+  "Whether the caller may use the field in a report and, when not, what they lack."
+  access: ReportFieldAccess!
+  """
+  Whether the field is in its kind's reference view, so a report can show it
+  through a join from a record the caller reads without the kind's own read.
+  """
+  inReferenceView: Boolean!
+  "The protected field group the field belongs to, and whether the caller holds it."
+  protection: ReportFieldProtection
   sensitivity: String!
 }
 
+"""
+Whether a caller may use a catalog field or edge in a report, decided by the
+policy the report engine applies, so a field marked Available compiles and
+any other is refused.
+"""
+enum ReportFieldAccess {
+  "The caller may use it."
+  Available
+  """
+  It is outside its kind's reference view, and the caller cannot read the
+  kind. Through a join, only the kind's reference-view fields can be used.
+  """
+  NeedsKindRead
+  "It is ranked above the caller's sensitivity ceiling."
+  WithheldByCeiling
+  "It is in a protected field group the caller's role does not grant."
+  NeedsFieldGroup
+}
+
+type ReportFieldProtection {
+  group: ProtectedFieldGroup!
+  "Whether the caller's role grants the group."
+  held: Boolean!
+}
+
 type ReportCatalogEdge {
+  "The edge's name in a definition path."
   name: String!
   label: String!
+  description: String
+  "The key of the entity the edge leads to."
   target: String!
-  cardinality: String!
-  traversable: Boolean!
+  "Whether the edge leads to many records, so its fields are aggregated."
+  toMany: Boolean!
+  "Whether the edge picks one record of a list, such as a shipment's first stop."
+  pick: Boolean!
+  "Whether the caller may follow the edge in a report and, when not, what they lack."
+  access: ReportFieldAccess!
+  "Whether the edge is in its source kind's reference view."
+  inReferenceView: Boolean!
+  """
+  The kind whose read the caller lacks to follow the edge, when access is
+  NeedsKindRead.
+  """
+  needsReadOf: ReportCatalogKind
+}
+
+"A kind of record, as the report catalog names it."
+type ReportCatalogKind {
+  resource: String!
+  "The kind's plural label, such as Customers."
+  label: String!
 }
 
 type ReportCatalogEntity {
@@ -36,12 +96,32 @@ type ReportCatalogEntity {
   description: String
   category: String!
   ownScopeSupported: Boolean!
+  """
+  Whether the caller may read the kind. A report starts only from a kind the
+  caller reads; one they cannot read is reached through a join, and only its
+  reference-view fields are available.
+  """
+  readable: Boolean!
+  "Whether a run may export the kind's own fields."
+  exportable: Boolean!
   fields: [ReportCatalogField!]!
   edges: [ReportCatalogEdge!]!
 }
 
+"""
+The report catalog as the caller may use it: every kind they can read, and
+every kind they cannot read that they can still reach through a join, with
+only its reference-view fields available.
+"""
 type ReportCatalog {
   version: String!
+  """
+  The engine's rules a builder offers: operators per value type with their
+  operands, having operators, aggregations, date buckets, transforms, bands,
+  window functions, chart types, the display vocabulary, formula functions and
+  operators, column naming and definition limits.
+  """
+  rules: JSON!
   entities: [ReportCatalogEntity!]!
 }
 
@@ -92,6 +172,8 @@ type ReportDefinitionConnection {
   edges: [ReportDefinitionEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type ReportDefinitionRevision {
@@ -112,7 +194,7 @@ type ReportRunError {
   detail: String
 }
 
-type ReportRun {
+type ReportRun @kind(resource: "report") {
   id: ID!
   definitionId: ID
   revisionId: ID
@@ -127,8 +209,11 @@ type ReportRun {
   byteSize: Int!
   durationMs: Int!
   truncated: Boolean!
+  "Whether the run's rows were stored, so it can be compared with another run."
+  rowsStored: Boolean!
   error: ReportRunError
   artifactExpiresAt: Timestamp
+  "Whether the run's rows came from the report result cache rather than a statement."
   cacheHit: Boolean!
   queuedAt: Timestamp
   startedAt: Timestamp
@@ -146,6 +231,8 @@ type ReportRunConnection {
   edges: [ReportRunEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 # --- Report schedules --------------------------------------------------------
@@ -162,7 +249,7 @@ type ReportScheduleAlert {
   suppressWhileFiring: Boolean!
 }
 
-type ReportSchedule {
+type ReportSchedule @kind(resource: "report") {
   id: ID!
   definitionId: ID!
   cronExpression: String!
@@ -176,6 +263,8 @@ type ReportSchedule {
   alertFiring: Boolean!
   enabled: Boolean!
   runAsId: ID!
+  "Whether the person reading set the schedule up, and so may change or remove it."
+  mine: Boolean!
   lastRunId: ID
   nextRunAt: Timestamp
   consecutiveFailures: Int!
@@ -233,245 +322,36 @@ type ReportColumnDisplay {
   nullText: String!
   rules: [ReportDisplayRule!]!
   band: ReportBand
+  "Labels for enum values, by value."
+  labels: JSON
 }
 
 type ReportPreviewColumn {
   id: String!
   label: String!
   type: String!
-  format: String
   display: ReportColumnDisplay!
+  "The highest sensitivity of the fields the column reads."
+  sensitivity: String
 }
 
 type ReportPreview {
   columns: [ReportPreviewColumn!]!
+  "Detail and subtotal rows, each an array of values in column order."
   rows: Any!
+  """
+  Each row's grouping level: 0 for a detail row, and n for a subtotal that
+  rolls up the n innermost grouping columns.
+  """
+  levels: [Int!]!
+  "The grand total row, when the report asks for one."
   totals: Any
   truncated: Boolean!
-}
-
-# --- Desk report run card ---------------------------------------------------
-
-"""
-A report run as the Desk draws it: the run, the report it ran with the
-parameters it ran with, a bounded sample of its result and the person's
-previous run of the same report to compare it with.
-"""
-type ReportRunDeskCard {
-  run: ReportRun!
-  report: ReportRunDeskReport!
-  parameters: [ReportRunDeskParameter!]!
-  "The organization's time zone, in which the sample's dates and the parameter windows are written."
+  "The cursor of the next page when the preview was paged and more rows follow."
+  cursor: String
   timezone: String!
-  """
-  The columns, first rows and grand totals of the result. Absent while the run
-  is going, for a run that finished before samples were kept, after the run
-  expired, and when the result is withheld.
-  """
-  sample: ReportRunSample
-  """
-  Why a finished run's result is not shown: access (the person can no longer
-  read everything it shows) or changed (the report no longer runs as it did).
-  """
-  withheld: String
-  "The person's previous finished run of the same report with the same parameters."
-  previous: ReportRunDeskPrevious
-  "The schedule the run came from."
-  schedule: ReportSchedule
-  "The report's first chart, which decides how the result is pictured."
-  chart: ReportRunDeskChart
-  sort: [ReportRunDeskSort!]!
-}
-
-type ReportRunDeskReport {
-  name: String!
-  description: String!
-  category: String!
-  definitionId: ID
-  cannedKey: String
-}
-
-type ReportRunDeskParameter {
-  name: String!
-  label: String!
-  type: String!
-  value: Any
-  "The run did not set it, so it took the report's default."
-  isDefault: Boolean!
-  refEntity: String
-  "The range a relative or date-range parameter filtered on, as of when the run started."
-  windowStart: Timestamp
-  windowEnd: Timestamp
-}
-
-type ReportRunSample {
-  columns: [ReportPreviewColumn!]!
-  "Rows as arrays in column order: decimals as exact strings, dates as epoch seconds."
-  rows: Any!
-  totals: Any
-  "The result holds more rows than the sample."
-  more: Boolean!
-}
-
-type ReportRunDeskPrevious {
-  runId: ID!
-  completedAt: Timestamp!
-  rowCount: Int!
-  "The column each total belongs to, so totals are compared by column and not by position."
-  columnIds: [String!]!
-  totals: Any!
-}
-
-type ReportRunDeskChart {
-  type: String!
-  xColumnId: String
-  seriesIds: [String!]!
-}
-
-type ReportRunDeskSort {
-  columnId: String!
-  direction: String!
-}
-
-# --- IR inputs ---------------------------------------------------------------
-
-input ReportFieldRefInput {
-  path: [String!]
-  field: String!
-}
-
-input ReportComputedInput {
-  op: String!
-  leftId: String
-  rightId: String
-  leftValue: Float
-  rightValue: Float
-  format: String
-}
-
-input ReportTransformInput {
-  op: String!
-  precision: Int
-  factor: Float
-}
-
-input ReportDisplayRuleInput {
-  op: String!
-  value: Float!
-  upper: Float
-  tone: String!
-}
-
-input ReportDisplayInput {
-  style: String
-  decimals: Int
-  grouping: Boolean
-  currency: String
-  negative: String
-  notation: String
-  prefix: String
-  suffix: String
-  dateStyle: String
-  boolStyle: String
-  durationUnit: String
-  durationStyle: String
-  nullText: String
-  rules: [ReportDisplayRuleInput!]
-}
-
-input ReportBandInput {
-  width: Float
-  edges: [Float!]
-}
-
-input ReportColumnInput {
-  id: String!
-  ref: ReportFieldRefInput
-  kind: String!
-  agg: String
-  bucket: String
-  band: ReportBandInput
-  label: String
-  computed: ReportComputedInput
-  transform: ReportTransformInput
-  display: ReportDisplayInput
-  filter: ReportFilterGroupInput
-}
-
-input ReportChartGoalInput {
-  value: Float
-  columnId: String
-  label: String
-}
-
-input ReportChartInput {
-  id: String!
-  type: String!
-  title: String
-  xColumnId: String
-  seriesIds: [String!]
-  stacked: Boolean
-  hideLegend: Boolean
-  showValues: Boolean
-  curved: Boolean
-  limit: Int
-  compareId: String
-  goal: ReportChartGoalInput
-  latColumnId: String
-  lngColumnId: String
-  labelColumnId: String
-}
-
-input ReportFilterInput {
-  ref: ReportFieldRefInput!
-  operator: String!
-  value: Any
-  param: String
-  agg: String
-  transform: ReportTransformInput
-}
-
-input ReportFilterGroupInput {
-  op: String!
-  filters: [ReportFilterInput!]
-  groups: [ReportFilterGroupInput!]
-}
-
-input ReportSortInput {
-  columnId: String!
-  direction: String!
-}
-
-input ReportPivotInput {
-  ref: ReportFieldRefInput!
-  values: [String!]!
-  labels: [String!]
-  measureIds: [String!]!
-  includeOther: Boolean
-}
-
-input ReportParameterDefInput {
-  name: String!
-  label: String
-  type: String!
-  required: Boolean
-  default: Any
-  multi: Boolean
-  allowedValues: [String!]
-  refEntity: String
-}
-
-input ReportIRInput {
-  entity: String!
-  columns: [ReportColumnInput!]!
-  filters: ReportFilterGroupInput
-  having: ReportFilterGroupInput
-  sort: [ReportSortInput!]
-  limit: Int
-  pivot: ReportPivotInput
-  parameters: [ReportParameterDefInput!]
-  totals: Boolean
-  charts: [ReportChartInput!]
+  "The rollup that answered the report instead of the base tables, when one did."
+  rollup: String
 }
 
 input ReportDrillValueInput {
@@ -480,10 +360,13 @@ input ReportDrillValueInput {
 }
 
 input ReportDrillInput {
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
   params: JSON
   dimensions: [ReportDrillValueInput!]!
   columnId: String
+  "The pivot values of the cell drilled into, when the report pivots."
+  pivotValues: [String!]
   limit: Int
 }
 
@@ -495,7 +378,8 @@ input SaveReportDefinitionInput {
   visibility: String
   status: String
   defaultFormat: String
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
 }
 
 input UpdateReportDefinitionInput {
@@ -508,7 +392,8 @@ input UpdateReportDefinitionInput {
   visibility: String
   status: String
   defaultFormat: String
-  definition: ReportIRInput!
+  "A report definition in keel analytics IR version 2."
+  definition: JSON!
 }
 
 input RunReportInput {
@@ -624,18 +509,35 @@ input ReportDashboardTileInput {
   paramBindings: JSON
 }
 
+"A dashboard filter applied to every tile whose report starts from its entity."
 input ReportDashboardFilterInput {
   id: String!
   label: String
   entity: String!
-  ref: ReportFieldRefInput!
-  operator: String!
+  "The filtered field's path from the entity."
+  field: String!
+  op: String!
   default: Any
+}
+
+"A parameter a dashboard asks for once and binds to its tiles' report parameters."
+input ReportParameterInput {
+  name: String!
+  label: String
+  "The value type: string, int, decimal, float, bool, date, timestamp, epoch or enum."
+  type: String!
+  required: Boolean
+  multi: Boolean
+  default: Any
+  "The values the parameter may take, when it is limited to a list."
+  allowed: [Any!]
+  "The entity whose records the parameter picks, for a record picker."
+  entity: String
 }
 
 input ReportDashboardLayoutInput {
   tiles: [ReportDashboardTileInput!]!
-  parameters: [ReportParameterDefInput!]
+  parameters: [ReportParameterInput!]
   filters: [ReportDashboardFilterInput!]
 }
 
@@ -661,6 +563,81 @@ input UpdateReportDashboardInput {
 
 # --- Operations --------------------------------------------------------------
 
+# --- Desk report run card ---------------------------------------------------
+
+"""
+A report run as the Desk draws it: the run, the report it ran with the
+parameters it ran with, a sample of its result and the person's previous run
+of the same report to compare it with.
+"""
+type ReportRunDeskCard {
+  run: ReportRun!
+  report: ReportRunDeskReport!
+  parameters: [ReportRunDeskParameter!]!
+  "The organization's time zone, in which the parameter windows are written."
+  timezone: String!
+  """
+  The first rows and the grand total of the result, as a preview carries them.
+  Absent while the run is going, for a run that finished before samples were
+  kept, after the run expired, and when the result is withheld.
+  """
+  sample: ReportPreview
+  """
+  Why a finished run's result is not shown: access (the person can no longer
+  read everything it shows) or changed (the report no longer runs as it did).
+  """
+  withheld: String
+  "The person's previous finished run of the same report with the same parameters."
+  previous: ReportRunDeskPrevious
+  "The schedule the run came from."
+  schedule: ReportSchedule
+  "The report's first chart, which decides how the result is pictured."
+  chart: ReportRunDeskChart
+  sort: [ReportRunDeskSort!]!
+}
+
+type ReportRunDeskReport {
+  name: String!
+  description: String!
+  category: String!
+  definitionId: ID
+  cannedKey: String
+}
+
+type ReportRunDeskParameter {
+  name: String!
+  label: String!
+  type: String!
+  value: Any
+  "The run did not set it, so it took the report's default."
+  isDefault: Boolean!
+  "The kind of record the parameter's values are ids of."
+  entity: String
+  "The range a relative date parameter filtered on, as of when the run started."
+  windowStart: Timestamp
+  windowEnd: Timestamp
+}
+
+type ReportRunDeskPrevious {
+  runId: ID!
+  completedAt: Timestamp!
+  rowCount: Int!
+  "The column each total belongs to, so totals are compared by column and not by position."
+  columnIds: [String!]!
+  totals: Any!
+}
+
+type ReportRunDeskChart {
+  type: String!
+  x: String
+  series: [String!]!
+}
+
+type ReportRunDeskSort {
+  column: String!
+  desc: Boolean!
+}
+
 extend type Query {
   reportCatalog: ReportCatalog!
   cannedReports: [CannedReport!]!
@@ -674,12 +651,23 @@ extend type Query {
     filter: ReportRunsFilterInput
   ): ReportRunConnection!
   previewReport(
-    definition: ReportIRInput!
+    "A report definition in keel analytics IR version 2."
+    definition: JSON!
     params: JSON
     supersede: Boolean
+    "The cursor of the page to read, from the previous page's cursor."
+    cursor: String
+    "Rows per page; the preview is paged when set."
+    pageSize: Int
   ): ReportPreview!
   drillThroughReport(input: ReportDrillInput!): ReportPreview!
-  reportSchedules(definitionId: ID): [ReportSchedule!]!
+  reportSchedules(
+    definitionId: ID
+    "Only schedules that are switched on."
+    enabledOnly: Boolean
+    "At most this many schedules, from 1 to 100. Every schedule of a named report when left out; 20 across the organization."
+    limit: Int
+  ): [ReportSchedule!]!
   reportViews(definitionId: ID): [ReportView!]!
   reportView(id: ID!): ReportView!
   reportDashboards: [ReportDashboard!]!

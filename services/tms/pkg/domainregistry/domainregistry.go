@@ -79,17 +79,17 @@ func RegisterEntities() []any {
 		&edi.EDIMappingProfileItem{},
 		&edi.EDITransfer{},
 		&edi.EDIDocumentType{},
-		&edi.EDIPartnerSettingSchema{},
-		&edi.EDIPartnerSettingField{},
-		&edi.EDITemplate{},
-		&edi.EDITemplateVersion{},
-		&edi.EDITemplateSegment{},
-		&edi.EDIPartnerDocumentProfile{},
+		&edi.LadingProject{},
+		&edi.LadingVersion{},
+		&edi.LadingSample{},
+		&edi.LadingReplay{},
+		&edi.LadingShadowResult{},
+		&edi.FlowInstance{},
+		&edi.FlowEvent{},
 		&edi.EDIControlNumberSequence{},
 		&edi.EDIMessage{},
 		&edi.EDIInboundFile{},
 		&edi.EDIMessageValidationError{},
-		&edi.EDITestCase{},
 		&audit.Entry{},
 		&shipment.Assignment{},
 		&shipment.Stop{},
@@ -117,8 +117,8 @@ func RegisterEntities() []any {
 		&ratematrix.RateMatrix{},
 		&ratematrix.RateMatrixDimension{},
 		&ratematrix.RateMatrixCell{},
-		&ratematrix.DensityScale{},
-		&ratematrix.DensityScaleTier{},
+		&ratematrix.RateMatrixVersion{},
+		&ratematrix.RateMatrixReview{},
 		&ratesimulation.RateSimulation{},
 		&ratesimulation.RateSimulationResult{},
 		&rateimport.RateImportBatch{},
@@ -126,7 +126,6 @@ func RegisterEntities() []any {
 		&rateagreement.RateAgreement{},
 		&rateagreement.RateAgreementVersion{},
 		&rateagreement.RateAgreementRule{},
-		&rateagreement.RateAgreementRuleBreak{},
 		&rateagreement.RateAgreementAccessorial{},
 		&rateagreement.RateAgreementFuelBinding{},
 		&ratequote.RateQuote{},
@@ -135,13 +134,5 @@ func RegisterEntities() []any {
 		&factoring.AgreementDocumentType{},
 		&factoring.Noa{},
 		&factoring.InvoiceState{},
-	}
-}
-
-func RegisterManyToManyEntities() []any {
-	return []any{
-		&customer.CustomerBillingProfileDocumentType{},
-		&permission.RoleConstraintRole{},
-		&factoring.AgreementDocumentType{},
 	}
 }

@@ -4,20 +4,25 @@ package edimappingprofilerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/edi/adapters/postgres/ediscope"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
+)
+
+var (
+	partnerErrors = dberror.Mapping{Entity: "EDIPartner"}
+	profileErrors = dberror.Mapping{Entity: "EDIMappingProfile"}
+	itemErrors    = dberror.Mapping{Entity: "EDIMappingProfileItem"}
 )
 
 type Params struct {
@@ -43,41 +48,30 @@ func (r *repository) GetMappingProfile(
 	ctx context.Context,
 	req ediports.GetMappingProfileRequest,
 ) (*edi.EDIMappingProfile, error) {
-	partner, err := r.getPartnerByID(ctx, ediports.GetEDIPartnerByIDRequest{
-		ID:         req.PartnerID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMappingProfile, error) {
+		partner, err := r.getPartnerByID(ctx, req.TenantInfo, req.PartnerID)
+		if err != nil {
+			return nil, err
+		}
 
-	return r.ensureMappingProfile(ctx, partner)
+		return r.ensureMappingProfile(ctx, partner)
+	})
 }
 
 func (r *repository) getPartnerByID(
 	ctx context.Context,
-	req ediports.GetEDIPartnerByIDRequest,
+	tenant pagination.TenantInfo,
+	id pulid.ID,
 ) (*edi.EDIPartner, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIPartner, error) {
-		entity := new(edi.EDIPartner)
-		cols := edicol.EDIPartnerColumns
-		rel := edicol.EDIPartnerRelations
+	ep := edidb.EDIPartners
+	entity, err := ediscope.Tenant(ctx, ep.Where(ep.ID.Eq(id)), tenant).
+		Load(ep.InternalOrganization(), ep.Connection(), ep.DefaultTransport()).
+		One(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return nil, partnerErrors.Map(err, id.String())
+	}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation(rel.InternalOrganization).
-			Relation(rel.Connection).
-			Relation(rel.DefaultTransport).
-			Where(cols.ID.Eq(), req.ID).
-			Apply(edicol.EDIPartnerApplyTenant(req.TenantInfo)).
-			Scan(ctx)
-		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIPartner")
-		}
-
-		return entity, nil
-	})
+	return entity, nil
 }
 
 func (r *repository) ListMappingProfiles(
@@ -88,28 +82,10 @@ func (r *repository) ListMappingProfiles(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-			entities := make([]*edi.EDIMappingProfile, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.EDIMappingProfileColumns
-			rel := edicol.EDIMappingProfileRelations
+			mp := edidb.EDIMappingProfiles
+			q := withPartnerAndEntries(mp.Query()).Order(mp.CreatedAt.Desc())
 
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation(rel.Partner).
-				Relation(rel.Entries).
-				Apply(edicol.EDIMappingProfileApplyTenant(req.Filter.TenantInfo)).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				Order(cols.CreatedAt.OrderDesc()).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return &pagination.ListResult[*edi.EDIMappingProfile]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.Offset(ctx, r.db.Keel(ctx), q, req.Filter.Pagination)
 		},
 	)
 }
@@ -118,112 +94,63 @@ func (r *repository) ListMappingProfilesCursor(
 	ctx context.Context,
 	req *ediports.ListEDIMappingProfilesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*edi.EDIMappingProfile], error) {
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*edi.EDIMappingProfile)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							"emp",
-							req.Filter,
-							(*edi.EDIMappingProfile)(nil),
-						)
-						return applyMappingProfileListFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			return dbhelper.CursorList(ctx, dbhelper.CursorListParams[*edi.EDIMappingProfile]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*edi.EDIMappingProfile) *bun.SelectQuery {
-					rel := edicol.EDIMappingProfileRelations
-					return dba.
-						NewSelect().
-						Model(entities).
-						ColumnExpr(edicol.EDIMappingProfileTable.All()).
-						Relation(rel.Partner).
-						Relation(rel.Entries)
+			mp := edidb.EDIMappingProfiles
+			return listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				mp.Where(keel.When(req.PartnerID.IsNotNil(), mp.EDIPartnerID.Eq(req.PartnerID))),
+				&listquery.Request[edi.EDIMappingProfile]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
+					Shape:  withPartnerAndEntries,
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					sq, applyErr := querybuilder.ApplyCursorFilters(
-						sq,
-						"emp",
-						req.Filter,
-						req.Cursor,
-						(*edi.EDIMappingProfile)(nil),
-					)
-					if applyErr != nil {
-						return sq, applyErr
-					}
-					return applyMappingProfileListFilters(sq, req), nil
-				},
-			})
+			)
 		},
 	)
-}
-
-func applyMappingProfileListFilters(
-	q *bun.SelectQuery,
-	req *ediports.ListEDIMappingProfilesRequest,
-) *bun.SelectQuery {
-	if !req.PartnerID.IsNil() {
-		q = q.Where(edicol.EDIMappingProfileColumns.EDIPartnerID.Eq(), req.PartnerID)
-	}
-	return q
 }
 
 func (r *repository) SelectMappingProfileOptions(
 	ctx context.Context,
 	req *ediports.EDIMappingProfileSelectOptionsRequest,
 ) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.EDIMappingProfile], error) {
-			col := edicol.EDIMappingProfileColumns
-
-			return dbhelper.SelectOptions[*edi.EDIMappingProfile](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				mappingProfileOptionsQuery(req),
 				req.SelectQueryRequest,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						col.ID,
-						col.BusinessUnitID,
-						col.OrganizationID,
-						col.EDIPartnerID,
-						col.Name,
-						col.Description,
-					},
-					OrgColumnRef:     &col.OrganizationID,
-					BuColumnRef:      &col.BusinessUnitID,
-					SearchColumnRefs: []buncolgen.Column{col.Name, col.Description},
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						if req.PartnerID.IsNotNil() {
-							q = q.Where(col.EDIPartnerID.Eq(), req.PartnerID)
-						}
-
-						q = q.Relation(edicol.EDIMappingProfileRelations.Partner)
-
-						return q
-					},
-				},
+				mappingProfileSearch,
 			)
 		},
 	)
+}
+
+func mappingProfileOptionsQuery(
+	req *ediports.EDIMappingProfileSelectOptionsRequest,
+) *keel.Query[*edi.EDIMappingProfile] {
+	mp := edidb.EDIMappingProfiles
+	return mp.Pick(
+		mp.ID,
+		mp.BusinessUnitID,
+		mp.OrganizationID,
+		mp.EDIPartnerID,
+		mp.Name,
+		mp.Description,
+	).
+		Where(keel.When(req.PartnerID.IsNotNil(), mp.EDIPartnerID.Eq(req.PartnerID))).
+		Load(mp.Partner())
+}
+
+func mappingProfileSearch(s string) keel.Pred {
+	mp := edidb.EDIMappingProfiles
+	return keel.Or(mp.Name.ContainsFold(s), mp.Description.ContainsFold(s))
 }
 
 func (r *repository) GetMappingProfileByID(
@@ -231,21 +158,11 @@ func (r *repository) GetMappingProfileByID(
 	req ediports.GetMappingProfileByIDRequest,
 ) (*edi.EDIMappingProfile, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.EDIMappingProfile, error) {
-		profile := new(edi.EDIMappingProfile)
-		rel := edicol.EDIMappingProfileRelations
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(profile).
-			Relation(rel.Partner).
-			Relation(rel.Entries).
-			Where(edicol.EDIMappingProfileColumns.ID.Eq(), req.ProfileID).
-			Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return edicol.EDIMappingProfileScopeTenant(sq, req.TenantInfo)
-			}).
-			Scan(ctx)
+		mp := edidb.EDIMappingProfiles
+		profile, err := withPartnerAndEntries(mp.Where(mp.ID.Eq(req.ProfileID))).
+			One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "EDIMappingProfile")
+			return nil, profileErrors.Map(err, req.ProfileID.String())
 		}
 
 		return profile, nil
@@ -257,10 +174,7 @@ func (r *repository) SaveMappingItems(
 	req *ediports.SaveMappingItemsRequest,
 ) ([]*edi.EDIMappingProfileItem, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMappingProfileItem, error) {
-		partner, err := r.getPartnerByID(ctx, ediports.GetEDIPartnerByIDRequest{
-			ID:         req.PartnerID,
-			TenantInfo: req.TenantInfo,
-		})
+		partner, err := r.getPartnerByID(ctx, req.TenantInfo, req.PartnerID)
 		if err != nil {
 			return nil, err
 		}
@@ -270,64 +184,97 @@ func (r *repository) SaveMappingItems(
 			return nil, err
 		}
 
-		items := make([]*edi.EDIMappingProfileItem, 0, len(req.Items))
-		for _, item := range req.Items {
-			if item == nil {
-				continue
-			}
-			item.BusinessUnitID = req.TenantInfo.BuID
-			item.OrganizationID = req.TenantInfo.OrgID
-			item.EDIPartnerID = req.PartnerID
-			item.MappingProfileID = profile.ID
-			item.UpdatedByID = req.ActorID
-			if item.CreatedByID.IsNil() {
-				item.CreatedByID = req.ActorID
-			}
-			items = append(items, item)
-		}
-
-		if len(items) == 0 {
-			return []*edi.EDIMappingProfileItem{}, nil
-		}
-		itemCols := edicol.EDIMappingProfileItemColumns
-
-		_, err = r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&items).
-			On(`CONFLICT ("edi_partner_id", "business_unit_id", "organization_id", "entity_type", "source_id") DO UPDATE`).
-			Set(itemCols.TargetID.SetExcluded()).
-			Set(itemCols.TargetLabel.SetExcluded()).
-			Set(itemCols.SourceLabel.SetExcluded()).
-			Set(itemCols.UpdatedByID.SetExcluded()).
-			Set(itemCols.UpdatedAt.SetExpr(dbhelper.NowEpoch)).
-			Set(itemCols.Version.SetExpr(itemCols.Version.Qualified() + " + 1")).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return items, nil
+		return r.upsertItems(ctx, profile, req)
 	})
+}
+
+func (r *repository) upsertItems(
+	ctx context.Context,
+	profile *edi.EDIMappingProfile,
+	req *ediports.SaveMappingItemsRequest,
+) ([]*edi.EDIMappingProfileItem, error) {
+	items := make([]*edi.EDIMappingProfileItem, 0, len(req.Items))
+	sourceIDs := make([]pulid.ID, 0, len(req.Items))
+	for _, item := range req.Items {
+		if item == nil {
+			continue
+		}
+		item.BusinessUnitID = req.TenantInfo.BuID
+		item.OrganizationID = req.TenantInfo.OrgID
+		item.EDIPartnerID = req.PartnerID
+		item.MappingProfileID = profile.ID
+		item.UpdatedByID = req.ActorID
+		if item.CreatedByID.IsNil() {
+			item.CreatedByID = req.ActorID
+		}
+		items = append(items, item)
+		sourceIDs = append(sourceIDs, item.SourceID)
+	}
+	if len(items) == 0 {
+		return []*edi.EDIMappingProfileItem{}, nil
+	}
+
+	db := r.db.Keel(ctx)
+	mi := edidb.EDIMappingProfileItems
+	_, err := mi.Upsert(ctx, db, items, keel.OnConflict(
+		mi.EDIPartnerID,
+		mi.BusinessUnitID,
+		mi.OrganizationID,
+		mi.EntityType,
+		mi.SourceID,
+	).Update(mi.TargetID, mi.TargetLabel, mi.SourceLabel, mi.UpdatedByID))
+	if err != nil {
+		return nil, itemErrors.Map(err, req.PartnerID.String())
+	}
+
+	stored, err := ediscope.Tenant(
+		ctx,
+		mi.Where(mi.EDIPartnerID.Eq(req.PartnerID), mi.SourceID.In(sourceIDs...)),
+		req.TenantInfo,
+	).All(ctx, db)
+	if err != nil {
+		return nil, err
+	}
+
+	type itemKey struct {
+		entityType edi.MappingEntityType
+		sourceID   pulid.ID
+	}
+	byKey := make(map[itemKey]*edi.EDIMappingProfileItem, len(stored))
+	for _, row := range stored {
+		byKey[itemKey{entityType: row.EntityType, sourceID: row.SourceID}] = row
+	}
+
+	saved := make([]*edi.EDIMappingProfileItem, 0, len(items))
+	for _, item := range items {
+		if row, ok := byKey[itemKey{entityType: item.EntityType, sourceID: item.SourceID}]; ok {
+			*item = *row
+		}
+		saved = append(saved, item)
+	}
+
+	return saved, nil
 }
 
 func (r *repository) SaveMappingProfileItems(
 	ctx context.Context,
 	req *ediports.SaveMappingProfileItemsRequest,
 ) ([]*edi.EDIMappingProfileItem, error) {
-	profile, err := r.GetMappingProfileByID(ctx, ediports.GetMappingProfileByIDRequest{
-		ProfileID:  req.ProfileID,
-		TenantInfo: req.TenantInfo,
-	})
-	if err != nil {
-		return nil, err
-	}
+	return dbtx.Write(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMappingProfileItem, error) {
+		profile, err := r.GetMappingProfileByID(ctx, ediports.GetMappingProfileByIDRequest{
+			ProfileID:  req.ProfileID,
+			TenantInfo: req.TenantInfo,
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	return r.SaveMappingItems(ctx, &ediports.SaveMappingItemsRequest{
-		PartnerID:  profile.EDIPartnerID,
-		TenantInfo: req.TenantInfo,
-		ActorID:    req.ActorID,
-		Items:      req.Items,
+		return r.SaveMappingItems(ctx, &ediports.SaveMappingItemsRequest{
+			PartnerID:  profile.EDIPartnerID,
+			TenantInfo: req.TenantInfo,
+			ActorID:    req.ActorID,
+			Items:      req.Items,
+		})
 	})
 }
 
@@ -336,24 +283,11 @@ func (r *repository) DeleteMappingItem(
 	req ediports.DeleteMappingItemRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*edi.EDIMappingProfileItem)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				cols := edicol.EDIMappingProfileItemColumns
-				return edicol.EDIMappingProfileItemScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.MappingItemID).
-					Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		return dberror.CheckRowsAffected(
-			results,
-			"EDIMappingProfileItem",
-			req.MappingItemID.String(),
+		mi := edidb.EDIMappingProfileItems
+		return r.deleteItem(
+			ctx,
+			req.MappingItemID,
+			mi.Where(mi.ID.Eq(req.MappingItemID), mi.EDIPartnerID.Eq(req.PartnerID)),
 		)
 	})
 }
@@ -363,26 +297,26 @@ func (r *repository) DeleteMappingProfileItem(
 	req ediports.DeleteMappingProfileItemRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*edi.EDIMappingProfileItem)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				cols := edicol.EDIMappingProfileItemColumns
-				return edicol.EDIMappingProfileItemScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.MappingItemID).
-					Where(cols.MappingProfileID.Eq(), req.ProfileID)
-			}).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		return dberror.CheckRowsAffected(
-			results,
-			"EDIMappingProfileItem",
-			req.MappingItemID.String(),
+		mi := edidb.EDIMappingProfileItems
+		return r.deleteItem(
+			ctx,
+			req.MappingItemID,
+			mi.Where(mi.ID.Eq(req.MappingItemID), mi.MappingProfileID.Eq(req.ProfileID)),
 		)
 	})
+}
+
+func (r *repository) deleteItem(
+	ctx context.Context,
+	id pulid.ID,
+	q *keel.Query[*edi.EDIMappingProfileItem],
+) error {
+	n, err := q.Delete(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return itemErrors.Map(err, id.String())
+	}
+
+	return dberror.CheckAffected(n, "EDIMappingProfileItem", id.String())
 }
 
 func (r *repository) GetMappingItems(
@@ -390,28 +324,18 @@ func (r *repository) GetMappingItems(
 	req ediports.GetMappingItemsRequest,
 ) ([]*edi.EDIMappingProfileItem, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*edi.EDIMappingProfileItem, error) {
-		items := make([]*edi.EDIMappingProfileItem, 0, len(req.SourceIDs))
 		if len(req.SourceIDs) == 0 {
-			return items, nil
-		}
-		cols := edicol.EDIMappingProfileItemColumns
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&items).
-			Apply(edicol.EDIMappingProfileItemApplyTenant(req.TenantInfo)).
-			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			Where(cols.SourceID.In(), bun.List(req.SourceIDs))
-
-		if len(req.EntityTypes) > 0 {
-			query = query.Where(cols.EntityType.In(), bun.List(req.EntityTypes))
+			return []*edi.EDIMappingProfileItem{}, nil
 		}
 
-		if err := query.Scan(ctx); err != nil {
-			return nil, err
-		}
+		mi := edidb.EDIMappingProfileItems
+		q := mi.Where(
+			mi.EDIPartnerID.Eq(req.PartnerID),
+			mi.SourceID.In(req.SourceIDs...),
+			keel.When(len(req.EntityTypes) > 0, mi.EntityType.In(req.EntityTypes...)),
+		)
 
-		return items, nil
+		return ediscope.Tenant(ctx, q, req.TenantInfo).All(ctx, r.db.Keel(ctx))
 	})
 }
 
@@ -420,20 +344,15 @@ func (r *repository) GetMappingSummary(
 	req ediports.GetEDIMappingSummaryRequest,
 ) (*ediports.EDIMappingSummary, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ediports.EDIMappingSummary, error) {
-		dba := r.db.DBForContext(ctx)
+		db := r.db.Keel(ctx)
 		summary := &ediports.EDIMappingSummary{
 			Counts: make([]*ediports.EDIMappingEntityCount, 0, 8),
 		}
 
-		profile := new(edi.EDIMappingProfile)
-		profileCols := edicol.EDIMappingProfileColumns
-		err := dba.NewSelect().
-			Model(profile).
-			Column(profileCols.ID.Bare(), profileCols.UpdatedAt.Bare()).
-			Apply(edicol.EDIMappingProfileApplyTenant(req.TenantInfo)).
-			Where(profileCols.EDIPartnerID.Eq(), req.PartnerID).
-			Limit(1).
-			Scan(ctx)
+		mp := edidb.EDIMappingProfiles
+		profile, err := mp.Pick(mp.ID, mp.UpdatedAt).
+			Where(mp.EDIPartnerID.Eq(req.PartnerID)).
+			First(ctx, db)
 		if err != nil {
 			if dberror.IsNotFoundError(err) {
 				return summary, nil
@@ -443,21 +362,21 @@ func (r *repository) GetMappingSummary(
 		summary.ProfileID = profile.ID
 		summary.UpdatedAt = profile.UpdatedAt
 
-		cols := edicol.EDIMappingProfileItemColumns
-		if err = dba.NewSelect().
-			Model((*edi.EDIMappingProfileItem)(nil)).
-			ColumnExpr(cols.EntityType.As("entity_type")).
-			ColumnExpr(buncolgen.Count("count")).
-			ColumnExpr(buncolgen.Max(cols.UpdatedAt, "updated_at")).
-			Apply(edicol.EDIMappingProfileItemApplyTenant(req.TenantInfo)).
-			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			GroupExpr(cols.EntityType.Qualified()).
-			Order(cols.EntityType.OrderAsc()).
-			Scan(ctx, &summary.Counts); err != nil {
+		mi := edidb.EDIMappingProfileItems
+		counts, err := keel.Into[ediports.EDIMappingEntityCount](
+			ctx,
+			db,
+			mi.Where(mi.EDIPartnerID.Eq(req.PartnerID)).
+				Group(mi.EntityType).
+				Pick(mi.EntityType, keel.Count(), mi.UpdatedAt.Max()).
+				Order(mi.EntityType.Asc()),
+		)
+		if err != nil {
 			return nil, err
 		}
-		for _, count := range summary.Counts {
-			summary.UpdatedAt = max(summary.UpdatedAt, count.UpdatedAt)
+		for i := range counts {
+			summary.Counts = append(summary.Counts, &counts[i])
+			summary.UpdatedAt = max(summary.UpdatedAt, counts[i].UpdatedAt)
 		}
 
 		return summary, nil
@@ -468,40 +387,35 @@ func (r *repository) ensureMappingProfile(
 	ctx context.Context,
 	partner *edi.EDIPartner,
 ) (*edi.EDIMappingProfile, error) {
-	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.EDIMappingProfile, error) {
-		profile := new(edi.EDIMappingProfile)
-		cols := edicol.EDIMappingProfileColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(profile).
-			Relation(edicol.EDIMappingProfileRelations.Entries).
-			Where(cols.OrganizationID.Eq(), partner.OrganizationID).
-			Where(cols.BusinessUnitID.Eq(), partner.BusinessUnitID).
-			Where(cols.EDIPartnerID.Eq(), partner.ID).
-			Scan(ctx)
-		if err == nil {
-			return profile, nil
-		}
-		if !dberror.IsNotFoundError(err) {
-			return nil, err
-		}
-
-		profile = &edi.EDIMappingProfile{
-			BusinessUnitID: partner.BusinessUnitID,
-			OrganizationID: partner.OrganizationID,
-			EDIPartnerID:   partner.ID,
-			Name:           partner.Name + " Mapping Profile",
-		}
-
-		if _, err = r.db.DBForContext(ctx).
-			NewInsert().
-			Model(profile).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
-		}
-
+	db := r.db.Keel(ctx)
+	mp := edidb.EDIMappingProfiles
+	tenant := pagination.TenantInfo{OrgID: partner.OrganizationID, BuID: partner.BusinessUnitID}
+	profile, err := ediscope.Tenant(ctx, mp.Where(mp.EDIPartnerID.Eq(partner.ID)), tenant).
+		Load(mp.Entries()).
+		One(ctx, db)
+	if err == nil {
 		return profile, nil
-	})
+	}
+	if !dberror.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	profile = &edi.EDIMappingProfile{
+		BusinessUnitID: partner.BusinessUnitID,
+		OrganizationID: partner.OrganizationID,
+		EDIPartnerID:   partner.ID,
+		Name:           partner.Name + " Mapping Profile",
+	}
+	if err = mp.Create(ctx, db, profile); err != nil {
+		return nil, profileErrors.Map(err, profile.ID.String())
+	}
+
+	return profile, nil
+}
+
+func withPartnerAndEntries(
+	q *keel.Query[*edi.EDIMappingProfile],
+) *keel.Query[*edi.EDIMappingProfile] {
+	mp := edidb.EDIMappingProfiles
+	return q.Load(mp.Partner(), mp.Entries())
 }

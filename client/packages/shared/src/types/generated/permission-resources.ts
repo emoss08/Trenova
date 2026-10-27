@@ -24,7 +24,6 @@ export const Resource = {
   APIKey: "api_key",
   DataEntryControl: "data_entry_control",
   PlatformCatalog: "platform_catalog",
-  DocumentOperation: "document_operation",
   IdentityProvider: "identity_provider",
   SCIMDirectory: "scim_directory",
   ProvisioningAudit: "provisioning_audit",
@@ -120,6 +119,7 @@ export const Resource = {
   ChargeType: "charge_type",
   RevenueCode: "revenue_code",
   FormulaTemplate: "formula_template",
+  FormulaLibrary: "formula_library",
   FuelSurchargeProgram: "fuel_surcharge_program",
   DetentionPolicy: "detention_policy",
   Detention: "detention",
@@ -138,7 +138,6 @@ export const Resource = {
   AgentExtension: "agent_extension",
   WebResearch: "web_research",
   PortalAutomation: "portal_automation",
-  DataAnalysis: "data_analysis",
   CodeMode: "code_mode",
   AgentDefinition: "agent_definition",
   AgentMemory: "agent_memory",
@@ -215,7 +214,6 @@ export const Resource = {
   Document: "document",
   DocumentType: "document_type",
   DocumentControl: "document_control",
-  DocumentParsingRule: "document_parsing_rule",
   CaptureBatch: "capture_batch",
   CaptureDevice: "capture_device",
   CaptureProfile: "capture_profile",
@@ -267,6 +265,7 @@ export const PERMISSION_OPERATIONS = [
   "resolve",
   "manage",
   "post",
+  "approve_own",
 ] as const;
 
 export type PermissionOperation = (typeof PERMISSION_OPERATIONS)[number];

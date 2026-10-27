@@ -1,0 +1,115 @@
+{
+  "key": "accounting-open-drift-by-customer",
+  "version": "1.0.0",
+  "name": "Open Drift by Customer",
+  "description": "Open differences between Trenova and the accounting system, by customer, carrier or driver and the kind of difference, with the net amount",
+  "category": "Accounting",
+  "tags": [
+    "accounting",
+    "accounting-sync",
+    "drift"
+  ],
+  "defaultFormat": "xlsx",
+  "definition": {
+    "version": 2,
+    "entity": "accounting_drift_finding",
+    "columns": [
+      {
+        "id": "party",
+        "label": "Customer, Carrier or Driver",
+        "dimension": {
+          "field": "partyName"
+        }
+      },
+      {
+        "id": "kind",
+        "label": "Difference",
+        "dimension": {
+          "field": "kind"
+        }
+      },
+      {
+        "id": "currency",
+        "label": "Currency",
+        "dimension": {
+          "field": "currencyCode"
+        }
+      },
+      {
+        "id": "findings",
+        "label": "Findings",
+        "measure": {
+          "field": "id",
+          "agg": "count"
+        },
+        "display": {
+          "style": "number",
+          "decimals": 0,
+          "grouping": true
+        }
+      },
+      {
+        "id": "difference",
+        "label": "Net Difference",
+        "measure": {
+          "field": "differenceMinor",
+          "agg": "sum"
+        },
+        "transform": {
+          "op": "scale",
+          "factor": 0.01
+        },
+        "display": {
+          "style": "currency",
+          "decimals": 2,
+          "negative": "parentheses"
+        }
+      }
+    ],
+    "filters": {
+      "and": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "Open"
+        },
+        {
+          "field": "kind",
+          "op": "in",
+          "param": "driftKinds"
+        }
+      ]
+    },
+    "sort": [
+      {
+        "column": "findings",
+        "desc": true
+      }
+    ],
+    "parameters": [
+      {
+        "name": "driftKinds",
+        "label": "Kinds of difference",
+        "type": "enum",
+        "required": true,
+        "multi": true,
+        "default": [
+          "AmountMismatch",
+          "StatusMismatch",
+          "DeletedInProvider",
+          "VoidedInProvider",
+          "CustomerBalanceMismatch",
+          "TrialBalanceMismatch"
+        ],
+        "allowed": [
+          "AmountMismatch",
+          "StatusMismatch",
+          "DeletedInProvider",
+          "VoidedInProvider",
+          "CustomerBalanceMismatch",
+          "TrialBalanceMismatch"
+        ]
+      }
+    ]
+  }
+}

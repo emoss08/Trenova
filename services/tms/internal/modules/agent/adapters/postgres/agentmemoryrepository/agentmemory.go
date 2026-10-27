@@ -5,28 +5,27 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/keelkinds"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 const (
-	candidatePrealloc         = 64
 	maxSuggestionContextLimit = 500
+	memoryEntity              = "AgentMemory"
 )
+
+var memoryErrors = dberror.Mapping{Entity: memoryEntity}
 
 type Params struct {
 	fx.In
@@ -49,11 +48,7 @@ func New(p Params) agentports.AgentMemoryRepository {
 
 func (r *repository) Create(ctx context.Context, entity *agent.Memory) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentdb.Memories.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent memory", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent memory: %w", err)
@@ -61,10 +56,6 @@ func (r *repository) Create(ctx context.Context, entity *agent.Memory) (*agent.M
 
 		if entity.Status == agent.MemoryStatusActive && entity.Replaces() {
 			if err := r.retireSuperseded(ctx, retireSupersededParams{
-				tenant: pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				},
 				id:       *entity.SupersedesID,
 				byUserID: pulid.ConvertFromPtr(entity.CreatedByUserID),
 				at:       entity.CreatedAt,
@@ -78,28 +69,21 @@ func (r *repository) Create(ctx context.Context, entity *agent.Memory) (*agent.M
 }
 
 type retireSupersededParams struct {
-	tenant   pagination.TenantInfo
 	id       pulid.ID
 	byUserID pulid.ID
 	at       int64
 }
 
 func (r *repository) retireSuperseded(ctx context.Context, p retireSupersededParams) error {
-	cols := agentcol.MemoryColumns
-	if _, err := r.db.DBForContext(ctx).
-		NewUpdate().
-		Model((*agent.Memory)(nil)).
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return agentcol.MemoryScopeTenantUpdate(uq, p.tenant).
-				Where(cols.ID.Eq(), p.id).
-				Where(cols.Status.In(), bun.List(replaceableStatuses()))
-		}).
-		Set(cols.Status.Set(), agent.MemoryStatusRetired).
-		Set(cols.RetiredAt.Set(), p.at).
-		Set(cols.RetiredByUserID.Set(), nullableID(p.byUserID)).
-		Set(cols.UpdatedAt.Set(), p.at).
-		Set(cols.Version.Inc(1)).
-		Exec(ctx); err != nil {
+	m := agentdb.Memories
+	if _, err := m.Where(m.ID.Eq(p.id), m.Status.In(replaceableStatuses()...)).Update(
+		ctx,
+		r.db.Keel(ctx),
+		m.Status.To(agent.MemoryStatusRetired),
+		m.RetiredAt.To(p.at),
+		setID(m.RetiredByUserID, p.byUserID),
+		m.UpdatedAt.To(p.at),
+	); err != nil {
 		return fmt.Errorf("retire the agent memory a new one replaces: %w", err)
 	}
 
@@ -111,40 +95,25 @@ func (r *repository) retireSuperseded(ctx context.Context, p retireSupersededPar
 // rule, not its history.
 func (r *repository) Update(ctx context.Context, entity *agent.Memory) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		cols := agentcol.MemoryColumns
-		ov := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.MemoryScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: entity.OrganizationID,
-					BuID:  entity.BusinessUnitID,
-				}).Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), ov)
-			}).
-			Set(cols.Kind.Set(), entity.Kind).
-			Set(cols.Content.Set(), entity.Content).
-			Set(cols.SubjectType.Set(), entity.SubjectType).
-			Set(cols.SubjectID.Set(), entity.SubjectID).
-			Set(cols.SubjectLabel.Set(), entity.SubjectLabel).
-			Set(cols.ToolName.Set(), entity.ToolName).
-			Set(cols.ExpiresAt.Set(), entity.ExpiresAt).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Set(cols.Version.Set(), entity.Version).
-			Exec(ctx)
+		m := agentdb.Memories
+		err := m.Save(
+			ctx,
+			r.db.Keel(ctx),
+			entity,
+			m.Kind,
+			m.Content,
+			m.SubjectType,
+			m.SubjectID,
+			m.SubjectLabel,
+			m.ToolName,
+			m.ExpiresAt,
+		)
 		if err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, memoryErrors.Map(err, entity.ID.String())
+			}
+
 			return nil, fmt.Errorf("update agent memory: %w", err)
-		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("update agent memory rows: %w", err)
-		}
-		if rows == 0 {
-			return nil, dberror.CreateVersionMismatchError("AgentMemory", entity.ID.String())
 		}
 
 		return entity, nil
@@ -156,18 +125,9 @@ func (r *repository) GetByID(
 	req agentports.GetAgentMemoryByIDRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		entity := new(agent.Memory)
-		cols := agentcol.MemoryColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.MemoryScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := agentdb.Memories.Get(ctx, r.db.Keel(ctx), req.ID)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "AgentMemory")
+			return nil, memoryErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -183,16 +143,10 @@ func (r *repository) ListByIDs(
 			return []*agent.Memory{}, nil
 		}
 
-		cols := agentcol.MemoryColumns
-		entities := make([]*agent.Memory, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.MemoryScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.IDs))
-			}).
-			Scan(ctx)
+		m := agentdb.Memories
+		entities, err := m.Where(m.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent memories by ids: %w", err)
 		}
@@ -210,19 +164,13 @@ func (r *repository) ListReplacements(
 			return []*agent.Memory{}, nil
 		}
 
-		cols := agentcol.MemoryColumns
-		entities := make([]*agent.Memory, 0, len(req.ReplacedIDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.MemoryScopeTenant(sq, req.TenantInfo).
-					Where(cols.SupersedesID.In(), bun.List(req.ReplacedIDs)).
-					Where(cols.Status.In(), bun.List(agent.ReplacingMemoryStatuses()))
-			}).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			OrderExpr(cols.ID.OrderDesc()).
-			Scan(ctx)
+		m := agentdb.Memories
+		entities, err := m.Where(
+			m.SupersedesID.In(req.ReplacedIDs...),
+			m.Status.In(agent.ReplacingMemoryStatuses()...),
+		).
+			Order(m.CreatedAt.Desc(), m.ID.Desc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent memory replacements: %w", err)
 		}
@@ -235,63 +183,22 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentMemoryConnectionRequest,
 ) (*pagination.CursorListResult[*agent.Memory], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*agent.Memory], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*agent.Memory)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							agentcol.MemoryTable.Alias,
-							req.Filter,
-							(*agent.Memory)(nil),
-						)
-
-						return sq.Apply(agentcol.MemoryApplyTenant(req.Filter.TenantInfo))
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count agent memories", zap.Error(err))
-
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*agent.Memory]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*agent.Memory) *bun.SelectQuery {
-						q := dba.NewSelect().Model(entities)
-						if len(req.Columns) > 0 {
-							q = q.Column(req.Columns...)
-						}
-
-						return q
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return querybuilder.ApplyCursorFilters(
-							sq,
-							agentcol.MemoryTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*agent.Memory)(nil),
-						)
-					},
-				})
+				r.db.Keel(ctx),
+				agentdb.Memories.Query(),
+				&listquery.Request[agent.Memory]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.Columns,
+				},
+			)
 			if err != nil {
-				log.Error("failed to list agent memories", zap.Error(err))
+				r.l.Error("failed to list agent memories", zap.Error(err))
 
 				return nil, err
 			}
@@ -314,49 +221,29 @@ func (r *repository) ListActive(
 			return []*agent.Memory{}, nil
 		}
 
-		cols := agentcol.MemoryColumns
-		limit := boundedCandidateLimit(req.Limit)
-		rows := make([]*agent.Memory, 0, min(limit, candidatePrealloc))
+		m := agentdb.Memories
+		scope := make([]keel.Pred, 0, len(req.Subjects)+2)
+		if req.OrganizationWide {
+			scope = append(scope, keel.And(m.SubjectType.IsNull(), m.ToolName.IsNull()))
+		}
+		for _, subject := range req.Subjects {
+			scope = append(scope, keel.And(
+				m.SubjectType.Eq(subject.Type),
+				m.SubjectID.Eq(subject.ID),
+			))
+		}
+		if len(req.ToolNames) > 0 {
+			scope = append(scope, m.ToolName.In(req.ToolNames...))
+		}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = activeOnly(agentcol.MemoryScopeTenant(sq, req.TenantInfo), req.Now)
-				sq = forAgent(sq, req.AgentDefinitionID, req.Reader)
-
-				return sq.WhereGroup(" AND ", func(scope *bun.SelectQuery) *bun.SelectQuery {
-					if req.OrganizationWide {
-						scope = scope.WhereGroup(
-							" OR ",
-							func(wide *bun.SelectQuery) *bun.SelectQuery {
-								return wide.Where(cols.SubjectType.IsNull()).
-									Where(cols.ToolName.IsNull())
-							},
-						)
-					}
-					for _, subject := range req.Subjects {
-						scope = scope.WhereGroup(
-							" OR ",
-							func(one *bun.SelectQuery) *bun.SelectQuery {
-								return one.Where(cols.SubjectType.Eq(), subject.Type).
-									Where(cols.SubjectID.Eq(), subject.ID)
-							},
-						)
-					}
-					if len(req.ToolNames) > 0 {
-						scope = scope.WhereOr(cols.ToolName.In(), bun.In(req.ToolNames))
-					}
-
-					return scope
-				})
-			}).
-			OrderExpr(candidateOrder(), agent.MemoryKindInstruction).
-			OrderExpr(kindOrder()).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			OrderExpr(cols.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		rows, err := m.Where(
+			activeOnly(req.Now),
+			forAgent(req.AgentDefinitionID, req.Reader),
+			keel.Or(scope...),
+		).
+			Order(candidateOrder(), kindOrder(), m.CreatedAt.Desc(), m.ID.Asc()).
+			Limit(boundedCandidateLimit(req.Limit)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list active agent memories", zap.Error(err))
 
@@ -397,57 +284,40 @@ func (r *repository) Search(
 	return r.search(ctx, &req, fallback)
 }
 
+func searchQuery(
+	req *agentports.SearchAgentMemoriesRequest,
+	match *textMatch,
+) *keel.Query[*agent.Memory] {
+	m := agentdb.Memories
+	var subject keel.Pred
+	if req.Subject != nil {
+		subject = keel.And(m.SubjectType.Eq(req.Subject.Type), m.SubjectID.Eq(req.Subject.ID))
+	}
+	tool := strings.TrimSpace(req.ToolName)
+
+	q := m.Where(
+		activeOnly(req.Now),
+		forAgent(req.AgentDefinitionID, req.Reader),
+		match.matches(m.SearchVector),
+		keel.When(len(req.IDs) > 0, m.ID.In(req.IDs...)),
+		keel.When(req.Kind != "", m.Kind.Eq(req.Kind)),
+		subject,
+		keel.When(tool != "", m.ToolName.Eq(tool)),
+	)
+	if match != nil {
+		q = q.Order(keel.Desc(match.rank(m.SearchVector)))
+	}
+
+	return q.Order(kindOrder(), m.CreatedAt.Desc(), m.ID.Asc()).Limit(boundedRecallLimit(req.Limit))
+}
+
 func (r *repository) search(
 	ctx context.Context,
 	req *agentports.SearchAgentMemoriesRequest,
 	match *textMatch,
 ) ([]*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
-		cols := agentcol.MemoryColumns
-		limit := boundedRecallLimit(req.Limit)
-		rows := make([]*agent.Memory, 0, limit)
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = forAgent(
-					activeOnly(agentcol.MemoryScopeTenant(sq, req.TenantInfo), req.Now),
-					req.AgentDefinitionID,
-					req.Reader,
-				)
-				if match != nil {
-					sq = sq.Where(cols.SearchVector.Expr("{} @@ "+match.tsquery), match.args...)
-				}
-				if len(req.IDs) > 0 {
-					sq = sq.Where(cols.ID.In(), bun.List(req.IDs))
-				}
-				if req.Kind != "" {
-					sq = sq.Where(cols.Kind.Eq(), req.Kind)
-				}
-				if req.Subject != nil {
-					sq = sq.Where(cols.SubjectType.Eq(), req.Subject.Type).
-						Where(cols.SubjectID.Eq(), req.Subject.ID)
-				}
-				if tool := strings.TrimSpace(req.ToolName); tool != "" {
-					sq = sq.Where(cols.ToolName.Eq(), tool)
-				}
-
-				return sq
-			})
-		if match != nil {
-			query = query.OrderExpr(
-				cols.SearchVector.Expr("ts_rank_cd({}, "+match.tsquery+") DESC"),
-				match.args...,
-			)
-		}
-
-		err := query.
-			OrderExpr(kindOrder()).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			OrderExpr(cols.ID.OrderAsc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		rows, err := searchQuery(req, match).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to search agent memories", zap.Error(err))
 
@@ -469,50 +339,30 @@ func (r *repository) FindActive(
 	req agentports.FindActiveAgentMemoryRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		cols := agentcol.MemoryColumns
-		entity := new(agent.Memory)
+		m := agentdb.Memories
+		subject := m.SubjectType.IsNull()
+		if req.Subject != nil {
+			subject = keel.And(m.SubjectType.Eq(req.Subject.Type), m.SubjectID.Eq(req.Subject.ID))
+		}
+		tool := m.ToolName.IsNull()
+		if name := strings.TrimSpace(req.ToolName); name != "" {
+			tool = m.ToolName.Eq(name)
+		}
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = keptOnly(
-					agentcol.MemoryScopeTenant(sq, req.TenantInfo),
-					req.Now,
-					req.IncludeSuggested,
-				).
-					Where(cols.Content.Expr(memoryWords("{}")+" = "+memoryWords("?")), req.Content)
-				sq = sameReaders(sq, &req)
-				if !req.Tainted {
-					sq = sq.WhereGroup(" AND ", func(clean *bun.SelectQuery) *bun.SelectQuery {
-						return clean.Where(cols.Tainted.IsFalse()).
-							WhereOr(cols.ReviewedAt.IsNotNull())
-					})
-				}
-				if req.Subject != nil {
-					sq = sq.Where(cols.SubjectType.Eq(), req.Subject.Type).
-						Where(cols.SubjectID.Eq(), req.Subject.ID)
-				} else {
-					sq = sq.Where(cols.SubjectType.IsNull())
-				}
-				if tool := strings.TrimSpace(req.ToolName); tool != "" {
-					sq = sq.Where(cols.ToolName.Eq(), tool)
-				} else {
-					sq = sq.Where(cols.ToolName.IsNull())
-				}
-
-				return sq
-			}).
-			OrderExpr(taintsLast()).
-			OrderExpr(activeFirst()).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			Limit(1).
-			Scan(ctx)
+		entity, err := m.Where(
+			keptOnly(req.Now, req.IncludeSuggested),
+			foldedContent(m.Content).EqExpr(foldedContent(keel.Text(req.Content))),
+			sameReaders(&req),
+			keel.When(!req.Tainted, keel.Or(m.Tainted.IsFalse(), m.ReviewedAt.IsNotNull())),
+			subject,
+			tool,
+		).
+			Order(taintsLast(), activeFirst(), m.CreatedAt.Desc()).
+			First(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
+			return nil, nil
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, nil
-			}
-
 			return nil, fmt.Errorf("find agent memory: %w", err)
 		}
 
@@ -525,13 +375,7 @@ func (r *repository) CountActive(
 	req agentports.CountActiveAgentMemoriesRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agent.Memory)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return activeOnly(agentcol.MemoryScopeTenant(sq, req.TenantInfo), req.Now)
-			}).
-			Count(ctx)
+		count, err := agentdb.Memories.Where(activeOnly(req.Now)).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count active agent memories", zap.Error(err))
 
@@ -547,35 +391,23 @@ func (r *repository) SetStatus(
 	req agentports.SetAgentMemoryStatusQuery,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		cols := agentcol.MemoryColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.Memory)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.MemoryScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.NotEq(), req.Status).
-					Where(cols.Status.NotIn(), bun.List(suggestionStatuses()))
-			}).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.UpdatedAt.Set(), req.At).
-			Set(cols.Version.Inc(1))
-
+		m := agentdb.Memories
+		sets := []keel.Assignment{m.Status.To(req.Status), m.UpdatedAt.To(req.At)}
 		if req.Status == agent.MemoryStatusRetired {
-			query = query.
-				Set(cols.RetiredAt.Set(), req.At).
-				Set(cols.RetiredByUserID.Set(), nullableID(req.ByUserID))
+			sets = append(sets, m.RetiredAt.To(req.At), setID(m.RetiredByUserID, req.ByUserID))
 		} else {
-			query = query.
-				Set(cols.RetiredAt.Set(), nil).
-				Set(cols.RetiredByUserID.Set(), nil)
+			sets = append(sets, m.RetiredAt.ToNull(), m.RetiredByUserID.ToNull())
 		}
 
-		res, err := query.Exec(ctx)
+		n, err := m.Where(
+			m.ID.Eq(req.ID),
+			m.Status.Ne(req.Status),
+			m.Status.NotIn(suggestionStatuses()...),
+		).Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return nil, fmt.Errorf("set agent memory status: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "AgentMemory", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(n, memoryEntity, req.ID.String()); err != nil {
 			return nil, err
 		}
 
@@ -591,30 +423,24 @@ func (r *repository) Review(
 	req agentports.ReviewAgentMemoryQuery,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		cols := agentcol.MemoryColumns
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.Memory)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.MemoryScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Version.Eq(), req.Version).
-					Where(cols.Tainted.IsTrue()).
-					Where(cols.ReviewedAt.IsNull()).
-					Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
-						agent.MemoryStatusActive,
-						agent.MemoryStatusPaused,
-					}))
-			}).
-			Set(cols.ReviewedByUserID.Set(), nullableID(req.ByUserID)).
-			Set(cols.ReviewedAt.Set(), req.At).
-			Set(cols.UpdatedAt.Set(), req.At).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		m := agentdb.Memories
+		n, err := m.Where(
+			m.ID.Eq(req.ID),
+			m.Version.Eq(req.Version),
+			m.Tainted.IsTrue(),
+			m.ReviewedAt.IsNull(),
+			m.Status.In(agent.MemoryStatusActive, agent.MemoryStatusPaused),
+		).Update(
+			ctx,
+			r.db.Keel(ctx),
+			setID(m.ReviewedByUserID, req.ByUserID),
+			m.ReviewedAt.To(req.At),
+			m.UpdatedAt.To(req.At),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("review agent memory: %w", err)
 		}
-		if err = dberror.CheckRowsAffected(res, "AgentMemory", req.ID.String()); err != nil {
+		if err = dberror.CheckAffected(n, memoryEntity, req.ID.String()); err != nil {
 			return nil, err
 		}
 
@@ -634,17 +460,15 @@ func (r *repository) MarkUsed(
 			return nil
 		}
 
-		cols := agentcol.MemoryColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.Memory)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.MemoryScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.In(), bun.In(req.IDs))
-			}).
-			Set(cols.UseCount.Inc(1)).
-			Set(cols.LastUsedAt.Set(), req.At).
-			Exec(ctx); err != nil {
+		m := agentdb.Memories
+		if _, err := m.Where(m.ID.In(req.IDs...)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			m.UseCount.Increment(1),
+			m.LastUsedAt.To(req.At),
+			m.UpdatedAt.ToExpr(m.UpdatedAt),
+			m.Version.ToExpr(m.Version),
+		); err != nil {
 			return fmt.Errorf("mark agent memories used: %w", err)
 		}
 
@@ -657,42 +481,34 @@ func (r *repository) ListSuggestionContext(
 	req agentports.ListAgentMemorySuggestionContextRequest,
 ) ([]*agent.Memory, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.Memory, error) {
-		cols := agentcol.MemoryColumns
 		limit := req.Limit
 		if limit <= 0 || limit > maxSuggestionContextLimit {
 			limit = maxSuggestionContextLimit
 		}
-		rows := make([]*agent.Memory, 0, min(limit, candidatePrealloc))
 
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.MemoryScopeTenant(sq, req.TenantInfo).
-					WhereGroup(" AND ", func(scope *bun.SelectQuery) *bun.SelectQuery {
-						return scope.
-							WhereGroup(" OR ", func(active *bun.SelectQuery) *bun.SelectQuery {
-								return activeOnly(active, req.Now).
-									Where(cols.Scope.In(), bun.List(agentScopes())).
-									WhereGroup(" AND ", func(owner *bun.SelectQuery) *bun.SelectQuery {
-										return owner.Where(cols.AgentDefinitionID.IsNull()).
-											WhereOr(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
-									})
-							}).
-							WhereGroup(" OR ", func(pending *bun.SelectQuery) *bun.SelectQuery {
-								return pending.Where(cols.Status.Eq(), agent.MemoryStatusSuggested).
-									Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
-							}).
-							WhereGroup(" OR ", func(dismissed *bun.SelectQuery) *bun.SelectQuery {
-								return dismissed.Where(cols.Status.Eq(), agent.MemoryStatusDismissed).
-									Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID).
-									Where(cols.RetiredAt.Gte(), req.DismissedSince)
-							})
-					})
-			}).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+		m := agentdb.Memories
+		rows, err := m.Where(keel.Or(
+			keel.And(
+				activeOnly(req.Now),
+				m.Scope.In(agentScopes()...),
+				keel.Or(
+					m.AgentDefinitionID.IsNull(),
+					m.AgentDefinitionID.Eq(req.AgentDefinitionID),
+				),
+			),
+			keel.And(
+				m.Status.Eq(agent.MemoryStatusSuggested),
+				m.AgentDefinitionID.Eq(req.AgentDefinitionID),
+			),
+			keel.And(
+				m.Status.Eq(agent.MemoryStatusDismissed),
+				m.AgentDefinitionID.Eq(req.AgentDefinitionID),
+				m.RetiredAt.Gte(req.DismissedSince),
+			),
+		)).
+			Order(m.CreatedAt.Desc()).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list agent memory suggestion context", zap.Error(err))
 
@@ -708,57 +524,18 @@ func (r *repository) ResolveSuggestion(
 	req agentports.ResolveAgentMemorySuggestionRequest,
 ) (*agent.Memory, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.Memory, error) {
-		cols := agentcol.MemoryColumns
-		query := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*agent.Memory)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				from := []agent.MemoryStatus{agent.MemoryStatusSuggested}
-				if req.Reconsidered {
-					from = append(from, agent.MemoryStatusDismissed)
-				}
+		m := agentdb.Memories
+		from := []agent.MemoryStatus{agent.MemoryStatusSuggested}
+		if req.Reconsidered {
+			from = append(from, agent.MemoryStatusDismissed)
+		}
 
-				return agentcol.MemoryScopeTenantUpdate(uq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID).
-					Where(cols.Status.In(), bun.List(from)).
-					Where(cols.Version.Eq(), req.Version)
-			}).
-			Set(cols.Status.Set(), req.Status).
-			Set(cols.UpdatedAt.Set(), req.At).
-			Set(cols.Version.Inc(1))
-
+		sets := []keel.Assignment{m.Status.To(req.Status), m.UpdatedAt.To(req.At)}
 		switch req.Status {
 		case agent.MemoryStatusActive:
-			scope := req.Scope
-			if !scope.IsValid() {
-				scope = agent.MemoryScopeAgent
-			}
-			owner, role := pulid.Nil, pulid.Nil
-			switch scope {
-			case agent.MemoryScopeUser:
-				owner = req.OwnerUserID
-			case agent.MemoryScopeRole:
-				role = req.RoleID
-			}
-			var reviewedAt any
-			if req.ByUserID.IsNotNil() {
-				reviewedAt = req.At
-			}
-			query = query.
-				Set(cols.Content.Set(), req.Content).
-				Set(cols.Kind.Set(), req.Kind).
-				Set(cols.Scope.Set(), scope).
-				Set(cols.OwnerUserID.Set(), nullableID(owner)).
-				Set(cols.RoleID.Set(), nullableID(role)).
-				Set(cols.CreatedByUserID.SetExpr("COALESCE({}, ?)"), nullableID(req.ByUserID)).
-				Set(cols.ReviewedByUserID.Set(), nullableID(req.ByUserID)).
-				Set(cols.ReviewedAt.Set(), reviewedAt).
-				Set(cols.RetiredAt.Set(), nil).
-				Set(cols.RetiredByUserID.Set(), nil)
+			sets = append(sets, activation(&req)...)
 		case agent.MemoryStatusDismissed:
-			query = query.
-				Set(cols.RetiredAt.Set(), req.At).
-				Set(cols.RetiredByUserID.Set(), nullableID(req.ByUserID))
+			sets = append(sets, m.RetiredAt.To(req.At), setID(m.RetiredByUserID, req.ByUserID))
 		default:
 			return nil, fmt.Errorf(
 				"resolve agent memory suggestion: %q is not a resolution",
@@ -766,17 +543,16 @@ func (r *repository) ResolveSuggestion(
 			)
 		}
 
-		res, err := query.Exec(ctx)
+		n, err := m.Where(
+			m.ID.Eq(req.ID),
+			m.Status.In(from...),
+			m.Version.Eq(req.Version),
+		).Update(ctx, r.db.Keel(ctx), sets...)
 		if err != nil {
 			return nil, fmt.Errorf("resolve agent memory suggestion: %w", err)
 		}
-
-		rows, err := res.RowsAffected()
-		if err != nil {
-			return nil, fmt.Errorf("resolve agent memory suggestion rows: %w", err)
-		}
-		if rows == 0 {
-			return nil, dberror.CreateVersionMismatchError("AgentMemory", req.ID.String())
+		if n == 0 {
+			return nil, dberror.CreateVersionMismatchError(memoryEntity, req.ID.String())
 		}
 
 		resolved, err := r.GetByID(
@@ -788,7 +564,6 @@ func (r *repository) ResolveSuggestion(
 		}
 		if resolved.Status == agent.MemoryStatusActive && resolved.Replaces() {
 			if err = r.retireSuperseded(ctx, retireSupersededParams{
-				tenant:   req.TenantInfo,
 				id:       *resolved.SupersedesID,
 				byUserID: req.ByUserID,
 				at:       req.At,
@@ -801,66 +576,99 @@ func (r *repository) ResolveSuggestion(
 	})
 }
 
+func activation(req *agentports.ResolveAgentMemorySuggestionRequest) []keel.Assignment {
+	m := agentdb.Memories
+	scope := req.Scope
+	if !scope.IsValid() {
+		scope = agent.MemoryScopeAgent
+	}
+	owner, role := pulid.Nil, pulid.Nil
+	switch scope {
+	case agent.MemoryScopeUser:
+		owner = req.OwnerUserID
+	case agent.MemoryScopeRole:
+		role = req.RoleID
+	case agent.MemoryScopeOrganization, agent.MemoryScopeAgent:
+	}
+	reviewedAt := m.ReviewedAt.ToNull()
+	if req.ByUserID.IsNotNil() {
+		reviewedAt = m.ReviewedAt.To(req.At)
+	}
+
+	sets := []keel.Assignment{
+		m.Content.To(req.Content),
+		m.Kind.To(req.Kind),
+		m.Scope.To(scope),
+		setID(m.OwnerUserID, owner),
+		setID(m.RoleID, role),
+		setID(m.ReviewedByUserID, req.ByUserID),
+		reviewedAt,
+		m.RetiredAt.ToNull(),
+		m.RetiredByUserID.ToNull(),
+	}
+	if req.ByUserID.IsNotNil() {
+		sets = append(sets, m.CreatedByUserID.ToExpr(
+			m.CreatedByUserID.Coalesce(req.ByUserID.String()),
+		))
+	}
+
+	return sets
+}
+
 // forAgent keeps the memories a prompt for one agent may carry: those kept
 // for the whole organization, those kept for this agent alone, and those kept
 // for the person the prompt is for, themselves or one of their roles. A
 // prompt for no agent in particular carries none of the agent's, and one for
 // nobody in particular none of anybody's.
-func forAgent(sq *bun.SelectQuery, agentID pulid.ID, reader agent.MemoryReader) *bun.SelectQuery {
-	cols := agentcol.MemoryColumns
+func forAgent(agentID pulid.ID, reader agent.MemoryReader) keel.Pred {
+	m := agentdb.Memories
 
-	return sq.WhereGroup(" AND ", func(owner *bun.SelectQuery) *bun.SelectQuery {
-		owner = owner.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization)
-		if agentID.IsNotNil() {
-			owner = owner.WhereGroup(" OR ", func(own *bun.SelectQuery) *bun.SelectQuery {
-				return own.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
-					Where(cols.AgentDefinitionID.Eq(), agentID)
-			})
-		}
-
-		return forPerson(owner, reader)
-	})
+	return keel.Or(
+		m.Scope.Eq(agent.MemoryScopeOrganization),
+		keel.When(agentID.IsNotNil(), keel.And(
+			m.Scope.Eq(agent.MemoryScopeAgent),
+			m.AgentDefinitionID.Eq(agentID),
+		)),
+		forPerson(reader),
+	)
 }
 
-// forPerson adds, as alternatives, the memories kept for the reader and for
-// their roles.
-func forPerson(sq *bun.SelectQuery, reader agent.MemoryReader) *bun.SelectQuery {
-	cols := agentcol.MemoryColumns
-	if reader.UserID.IsNotNil() {
-		sq = sq.WhereGroup(" OR ", func(own *bun.SelectQuery) *bun.SelectQuery {
-			return own.Where(cols.Scope.Eq(), agent.MemoryScopeUser).
-				Where(cols.OwnerUserID.Eq(), reader.UserID)
-		})
-	}
-	if len(reader.RoleIDs) > 0 {
-		sq = sq.WhereGroup(" OR ", func(role *bun.SelectQuery) *bun.SelectQuery {
-			return role.Where(cols.Scope.Eq(), agent.MemoryScopeRole).
-				Where(cols.RoleID.In(), bun.List(reader.RoleIDs))
-		})
+// forPerson is, as alternatives, the memories kept for the reader and for
+// their roles; nil when the reader is nobody in particular.
+func forPerson(reader agent.MemoryReader) keel.Pred {
+	m := agentdb.Memories
+	if reader.UserID.IsNil() && len(reader.RoleIDs) == 0 {
+		return nil
 	}
 
-	return sq
+	return keel.Or(
+		keel.When(reader.UserID.IsNotNil(), keel.And(
+			m.Scope.Eq(agent.MemoryScopeUser),
+			m.OwnerUserID.Eq(reader.UserID),
+		)),
+		keel.When(len(reader.RoleIDs) > 0, keel.And(
+			m.Scope.Eq(agent.MemoryScopeRole),
+			m.RoleID.In(reader.RoleIDs...),
+		)),
+	)
 }
 
 // sameReaders keeps the rows read by exactly the readers the new memory
 // would be: the same agent, the same person or the same role.
-func sameReaders(
-	sq *bun.SelectQuery,
-	req *agentports.FindActiveAgentMemoryRequest,
-) *bun.SelectQuery {
-	cols := agentcol.MemoryColumns
+func sameReaders(req *agentports.FindActiveAgentMemoryRequest) keel.Pred {
+	m := agentdb.Memories
 	switch req.Scope {
 	case agent.MemoryScopeAgent:
-		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeAgent).
-			Where(cols.AgentDefinitionID.Eq(), req.AgentDefinitionID)
+		return keel.And(
+			m.Scope.Eq(agent.MemoryScopeAgent),
+			m.AgentDefinitionID.Eq(req.AgentDefinitionID),
+		)
 	case agent.MemoryScopeUser:
-		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeUser).
-			Where(cols.OwnerUserID.Eq(), req.OwnerUserID)
+		return keel.And(m.Scope.Eq(agent.MemoryScopeUser), m.OwnerUserID.Eq(req.OwnerUserID))
 	case agent.MemoryScopeRole:
-		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeRole).
-			Where(cols.RoleID.Eq(), req.RoleID)
+		return keel.And(m.Scope.Eq(agent.MemoryScopeRole), m.RoleID.Eq(req.RoleID))
 	default:
-		return sq.Where(cols.Scope.Eq(), agent.MemoryScopeOrganization)
+		return m.Scope.Eq(agent.MemoryScopeOrganization)
 	}
 }
 
@@ -875,24 +683,18 @@ func suggestionStatuses() []agent.MemoryStatus {
 	return []agent.MemoryStatus{agent.MemoryStatusSuggested, agent.MemoryStatusDismissed}
 }
 
-func activeOnly(sq *bun.SelectQuery, now int64) *bun.SelectQuery {
-	return keptOnly(sq, now, false)
+func activeOnly(now int64) keel.Pred {
+	return keptOnly(now, false)
 }
 
-func keptOnly(sq *bun.SelectQuery, now int64, includeSuggested bool) *bun.SelectQuery {
-	cols := agentcol.MemoryColumns
+func keptOnly(now int64, includeSuggested bool) keel.Pred {
+	m := agentdb.Memories
+	status := m.Status.Eq(agent.MemoryStatusActive)
 	if includeSuggested {
-		sq = sq.Where(cols.Status.In(), bun.List([]agent.MemoryStatus{
-			agent.MemoryStatusActive,
-			agent.MemoryStatusSuggested,
-		}))
-	} else {
-		sq = sq.Where(cols.Status.Eq(), agent.MemoryStatusActive)
+		status = m.Status.In(agent.MemoryStatusActive, agent.MemoryStatusSuggested)
 	}
 
-	return sq.WhereGroup(" AND ", func(expiry *bun.SelectQuery) *bun.SelectQuery {
-		return expiry.Where(cols.ExpiresAt.IsNull()).WhereOr(cols.ExpiresAt.Gt(), now)
-	})
+	return keel.And(status, keel.Or(m.ExpiresAt.IsNull(), m.ExpiresAt.Gt(now)))
 }
 
 func replaceableStatuses() []agent.MemoryStatus {
@@ -901,39 +703,48 @@ func replaceableStatuses() []agent.MemoryStatus {
 
 // taintsLast puts a memory that taints the turns reading it after one that
 // does not: a clean one, or a tainted one a person has reviewed.
-func taintsLast() string {
-	cols := agentcol.MemoryColumns
+func taintsLast() keel.Order {
+	m := agentdb.Memories
 
-	return "CASE WHEN " + cols.Tainted.Qualified() + " AND " + cols.ReviewedAt.Qualified() +
-		" IS NULL THEN 1 ELSE 0 END ASC"
+	return keel.CaseInt64().
+		When(keel.And(keel.BoolOf(m.Tainted), m.ReviewedAt.IsNull()), orderRank(1)).
+		Else(orderRank(0)).
+		Asc()
 }
 
-func activeFirst() string {
-	return "CASE " + agentcol.MemoryColumns.Status.Qualified() +
-		" WHEN 'Active' THEN 0 ELSE 1 END ASC"
-}
-
-// memoryWords is what a memory says with the case, spacing and punctuation
-// taken out: every run of anything but letters and digits becomes one space.
-func memoryWords(operand string) string {
-	return "BTRIM(REGEXP_REPLACE(LOWER(" + operand + "), '[^[:alnum:]]+', ' ', 'g'))"
+func activeFirst() keel.Order {
+	return keel.CaseInt64().
+		When(agentdb.Memories.Status.Eq(agent.MemoryStatusActive), orderRank(0)).
+		Else(orderRank(1)).
+		Asc()
 }
 
 // kindOrder puts instructions before corrections before procedures before
 // facts, the order a prompt reads them in.
-func kindOrder() string {
-	return "CASE " + agentcol.MemoryColumns.Kind.Qualified() +
-		" WHEN 'Instruction' THEN 0 WHEN 'Correction' THEN 1 WHEN 'Procedure' THEN 2 ELSE 3 END ASC"
+func kindOrder() keel.Order {
+	kind := agentdb.Memories.Kind
+
+	return keel.CaseInt64().
+		When(kind.Eq(agent.MemoryKindInstruction), orderRank(0)).
+		When(kind.Eq(agent.MemoryKindCorrection), orderRank(1)).
+		When(kind.Eq(agent.MemoryKindProcedure), orderRank(2)).
+		Else(orderRank(3)).
+		Asc()
 }
 
-func candidateOrder() string {
-	return buncolgen.Expr(
-		"CASE WHEN {0} IS NOT NULL THEN 0 WHEN {1} IS NULL AND {2} = ? THEN 1 "+
-			"WHEN {1} IS NOT NULL THEN 2 ELSE 3 END ASC",
-		agentcol.MemoryColumns.SubjectType,
-		agentcol.MemoryColumns.ToolName,
-		agentcol.MemoryColumns.Kind,
-	)
+func candidateOrder() keel.Order {
+	m := agentdb.Memories
+
+	return keel.CaseInt64().
+		When(m.SubjectType.IsNotNull(), orderRank(0)).
+		When(keel.And(m.ToolName.IsNull(), m.Kind.Eq(agent.MemoryKindInstruction)), orderRank(1)).
+		When(m.ToolName.IsNotNull(), orderRank(2)).
+		Else(orderRank(3)).
+		Asc()
+}
+
+func orderRank(n int64) keel.Int64Expr {
+	return keel.Int64(n)
 }
 
 func boundedCandidateLimit(limit int) int {
@@ -952,10 +763,14 @@ func boundedRecallLimit(limit int) int {
 	return min(limit, agent.MaxMemoryRecallLimit)
 }
 
-func nullableID(id pulid.ID) any {
+func setID(col keelkinds.PulidIDCol, id pulid.ID) keel.Assignment {
 	if id.IsNil() {
-		return nil
+		return col.ToNull()
 	}
 
-	return id
+	return col.To(id)
+}
+
+func foldedContent(v keel.StringValue) keel.StringExpr {
+	return keel.StringOf(v).Lower().RegexpReplace("[^[:alnum:]]+", " ", "g").Trim()
 }

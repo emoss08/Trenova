@@ -1,0 +1,441 @@
+=== literals
+tariff "t"
+let a = [1200, 2.35, 500 lb, $450, $2.35/mi, 18%, "x", @2026-10-22, @2026-10-22T08:00-05:00, true, false, none]
+---
+tariff "t"
+let a = (list 1200 2.35 500[lb] $450 $2.35/[mi] 18% (text "x") @2026-10-22 @2026-10-22T08:00:00-300m true false none)
+
+=== integer flag on a number with a unit
+tariff "t"
+let a = [3 pallet, 2.0 h, 1_200 lb]
+---
+tariff "t"
+let a = (list 3[pallet] 2.0[h] 1200[lb])
+
+=== density literal
+tariff "t"
+let a = 30 lb/ft3
+---
+tariff "t"
+let a = 30[lb/ft3]
+
+=== precedence of arithmetic
+tariff "t"
+let a = 1 + 2 * 3 - 4 / 5 % 6
+---
+tariff "t"
+let a = (- (+ 1 (* 2 3)) (% (/ 4 5) 6))
+
+=== unary minus binds tighter than multiplication
+tariff "t"
+let a = -x * -2
+---
+tariff "t"
+let a = (* (neg x) (neg 2))
+
+=== parentheses
+tariff "t"
+let a = (1 + 2) * ((3))
+---
+tariff "t"
+let a = (* (paren (+ 1 2)) (paren (paren 3)))
+
+=== comparisons
+tariff "t"
+let a = [x == y, x != y, x < y, x <= y, x > y, x >= y]
+---
+tariff "t"
+let a = (list (== x y) (!= x y) (< x y) (<= x y) (> x y) (>= x y))
+
+=== membership
+tariff "t"
+let a = rating.date.weekday in [Sat, Sun]
+let b = shipment.weight in 500 lb..2_000 lb
+let c = x not in xs
+---
+tariff "t"
+let a = (in (. (. rating date) weekday) (list Sat Sun))
+let b = (in (. shipment weight) (.. 500[lb] 2000[lb]))
+let c = (not in x xs)
+
+=== logic precedence
+tariff "t"
+let a = not a and b or c and not d
+---
+tariff "t"
+let a = (or (and (not a) b) (and c (not d)))
+
+=== not binds looser than comparison
+tariff "t"
+let a = not x == y
+---
+tariff "t"
+let a = (not (== x y))
+
+=== coalesce is loosest
+tariff "t"
+let a = x or y ?? z
+---
+tariff "t"
+let a = (?? (or x y) z)
+
+=== coalesce with fail
+tariff "t"
+let price = fuel.price ?? fail "No fuel price on {rating.date}"
+---
+tariff "t"
+let price = (?? (. fuel price) (fail (text "No fuel price on " (. rating date))))
+
+=== coalesce chains
+tariff "t"
+let a = x ?? y ?? 0 lb
+---
+tariff "t"
+let a = (?? (?? x y) 0[lb])
+
+=== ranges
+tariff "t"
+let a = [1..3, 1..=3, ..500 lb, 2_000 lb.., 1 + 1..2 * 2]
+---
+tariff "t"
+let a = (list (.. 1 3) (..= 1 3) (.. _ 500[lb]) (.. 2000[lb] _) (.. (+ 1 1) (* 2 2)))
+
+=== field access and optional chaining
+tariff "t"
+let a = shipment.trailerType?.code
+let b = lane.origin.zones
+---
+tariff "t"
+let a = (?. (. shipment trailerType) code)
+let b = (. (. lane origin) zones)
+
+=== keywords as member names
+tariff "t"
+let a = x.round()
+let b = w.in(cwt)
+let c = x.min(y).max(z)
+let d = rating.date.weekday
+---
+tariff "t"
+let a = (call (. x round))
+let b = (call (. w in) cwt)
+let c = (call (. (call (. x min) y) max) z)
+let d = (. (. rating date) weekday)
+
+=== in with a quotient unit
+tariff "t"
+let a = shipment.density.in(lb/ft3)
+---
+tariff "t"
+let a = (call (. (. shipment density) in) (/ lb ft3))
+
+=== in with a whole rate unit
+tariff "t"
+let a = rate.in($/cwt)
+---
+tariff "t"
+let a = (call (. rate in) (/ $ cwt))
+
+=== calls with named and positional arguments
+tariff "t"
+let a = deadhead(empty: 80 mi, rate: rate)
+let b = stepPercent(price, peg: fuelPeg, step: $0.05/gal, perStep: 0.5%)
+---
+tariff "t"
+let a = (call deadhead empty:80[mi] rate:rate)
+let b = (call stepPercent price peg:fuelPeg step:$0.05/[gal] perStep:0.5%)
+
+=== keywords as argument names
+tariff "t"
+let a = amount.roundUp(to: $5)
+---
+tariff "t"
+let a = (call (. amount roundUp) to:$5)
+
+=== trailing comma in arguments
+tariff "t"
+let a = f(
+  1,
+  2,
+)
+---
+tariff "t"
+let a = (call f 1 2)
+
+=== method call on a module
+tariff "t"
+let a = fuel.stepPercent(price, peg: peg, step: step, perStep: 1%)
+---
+tariff "t"
+let a = (call (. fuel stepPercent) price peg:peg step:step perStep:1%)
+
+=== conversions on type names
+tariff "t"
+let a = Number(i)
+let b = Int.parse(text)
+---
+tariff "t"
+let a = (call Number i)
+let b = (call Int::parse text)
+
+=== enum variants
+tariff "t"
+let a = Delivery
+let b = StopKind.Delivery
+let c = StopStatus.New
+---
+tariff "t"
+let a = Delivery
+let b = StopKind::Delivery
+let c = StopStatus::New
+
+=== codes and constants as values
+tariff "t"
+let a = DIESEL_BASE * 2
+---
+tariff "t"
+let a = (* DIESEL_BASE 2)
+
+=== index
+tariff "t"
+let a = tables.Zones[lane.origin.zip3, lane.destination.zip3]
+let b = xs[0]
+---
+tariff "t"
+let a = (index (. tables Zones) (. (. lane origin) zip3) (. (. lane destination) zip3))
+let b = (index xs 0)
+
+=== table methods
+tariff "t"
+let a = tables.Zones.cell(lane.origin.zip3, lane.destination.zip3)?.minimum
+---
+tariff "t"
+let a = (?. (call (. (. tables Zones) cell) (. (. lane origin) zip3) (. (. lane destination) zip3)) minimum)
+
+=== lists
+tariff "t"
+let a = []
+let b = [1]
+let c = [1, 2, 3,]
+---
+tariff "t"
+let a = (list)
+let b = (list 1)
+let c = (list 1 2 3)
+
+=== records
+tariff "t"
+let a = { code: "FSC", amount: $10 }
+let b = { a: { b: 1 } }
+---
+tariff "t"
+let a = (record code:(text "FSC") amount:$10)
+let b = (record a:(record b:1))
+
+=== record over lines with a trailing comma
+tariff "t"
+let a = {
+  code: "FSC",
+  amount: $10,
+}
+---
+tariff "t"
+let a = (record code:(text "FSC") amount:$10)
+
+=== record with keyword field names
+tariff "t"
+let a = { in: 1, to: 2 }
+---
+tariff "t"
+let a = (record in:1 to:2)
+
+=== if expression
+tariff "t"
+let a = if x > 1 { $10 } else { $20 }
+---
+tariff "t"
+let a = (if [(> x 1) => $10] else $20)
+
+=== if expression chain
+tariff "t"
+let a = if x > 2 { 3 } else if x > 1 { 2 } else { 1 }
+---
+tariff "t"
+let a = (if [(> x 2) => 3] [(> x 1) => 2] else 1)
+
+=== if let expression
+tariff "t"
+let a = if let w = shipment.weight { w } else { 0 lb }
+---
+tariff "t"
+let a = (if [let w = (. shipment weight) => w] else 0[lb])
+
+=== match expression
+tariff "t"
+let perCwt = match shipment.weight {
+  ..500 lb => $42.00/cwt
+  500 lb..2_000 lb => $35.50/cwt
+  _ => $22.75/cwt
+}
+---
+tariff "t"
+let perCwt = (match (. shipment weight) [(.. _ 500[lb]) => $42.00/[cwt]] [(.. 500[lb] 2000[lb]) => $35.50/[cwt]] [_ => $22.75/[cwt]])
+
+=== match expression with a record body
+tariff "t"
+let a = match x {
+  A => { code: "A" }
+  _ => { code: "B" }
+}
+---
+tariff "t"
+let a = (match x [A => (record code:(text "A"))] [_ => (record code:(text "B"))])
+
+=== lambdas
+tariff "t"
+let a = shipment.stops.count(s => s.kind == Delivery)
+let b = xs.sortBy((a, b) => a)
+let c = xs.sum(c => c.weight ?? 0 lb)
+---
+tariff "t"
+let a = (call (. (. shipment stops) count) (lambda (s) (== (. s kind) Delivery)))
+let b = (call (. xs sortBy) (lambda (a b) a))
+let c = (call (. xs sum) (lambda (c) (?? (. c weight) 0[lb])))
+
+=== lambda in a named argument
+tariff "t"
+let a = f(by: x => x.weight)
+---
+tariff "t"
+let a = (call f by:(lambda (x) (. x weight)))
+
+=== text with expressions
+tariff "t"
+let a = "{x} and {y.z} and {f(1, 2)} and {"nested {q}"}"
+---
+tariff "t"
+let a = (text x " and " (. y z) " and " (call f 1 2) " and " (text "nested " q))
+
+=== text with escaped braces
+tariff "t"
+let a = "{{literal}} {x}"
+---
+tariff "t"
+let a = (text "{literal} " x)
+
+=== temperature unit as a value in a conversion
+tariff "t"
+let a = shipment.temperature.min?.in(°C)
+---
+tariff "t"
+let a = (call (?. (. (. shipment temperature) min) in) °C)
+
+=== negative quantity
+tariff "t"
+let a = -5 °C
+---
+tariff "t"
+let a = (neg 5[°C])
+
+=== charge in tests
+tariff "t"
+test "t" {
+  expect charge(FSC) == $10 and total > $0
+}
+---
+tariff "t"
+test "t"
+  expect (and (== (call charge FSC) $10) (> total $0))
+
+=== chained comparison
+tariff "t"
+let a = 1 < x < 3
+---
+tariff "t"
+let a = (< (< 1 x) 3)
+! syntax 25..26 Comparisons can't be chained; write each one and join them with `and`
+
+=== lambda outside a call
+tariff "t"
+let a = x => x
+---
+tariff "t"
+let a = (lambda (x) x)
+! misplaced 19..25 A lambda like `x => …` can only be passed to a list method, like `stops.count(s => s.appointment)`
+
+=== fail outside a coalesce
+tariff "t"
+let a = fail "no"
+---
+tariff "t"
+let a = (fail (text "no"))
+! misplaced 19..28 `fail` can only be a statement, or follow `??` as in `fuel.price ?? fail "No fuel price"`
+
+=== empty record
+tariff "t"
+let a = {}
+---
+tariff "t"
+let a = (record)
+! syntax 19..21 A record needs at least one field, like `'{' name: value '}'`; an empty list is `[]`
+
+=== block used as a value
+tariff "t"
+let a = { 1 }
+---
+tariff "t"
+let a = ?
+! syntax 19..24 A block of statements can't be used as a value here; a record is written `'{' name: value '}'`
+
+=== if expression without else
+tariff "t"
+let a = if x { 1 }
+---
+tariff "t"
+let a = (if [x => 1] else ?)
+! syntax 19..29 An `if` that gives a value needs an `else` branch
+
+=== record field without a value
+tariff "t"
+let a = { a: }
+---
+tariff "t"
+let a = (record a:?)
+! syntax 24..25 Expected a value after `:`
+
+=== missing comma in a list
+tariff "t"
+let a = [1 2]
+---
+tariff "t"
+let a = (list 1 2)
+! syntax 22..23 Expected `,` or `]`
+
+=== index without keys
+tariff "t"
+let a = xs[]
+---
+tariff "t"
+let a = (index xs)
+! syntax 21..22 Expected at least one key in the brackets
+
+=== interpolation without a value
+tariff "t"
+let a = "x {} y"
+---
+tariff "t"
+let a = (text "x " ? " y")
+! syntax 22..24 Expected a value inside the braces; a literal brace is written twice, `'{{'` or `'}}'`
+
+=== a variant's property is a field and a conversion is a path
+tariff "t"
+let a = Class77_5.number
+let b = Int.parse("5")
+let c = StopKind.Delivery
+let d = rating.date.time in @08:00..@17:00
+---
+tariff "t"
+let a = (. Class77_5 number)
+let b = (call Int::parse (text "5"))
+let c = StopKind::Delivery
+let d = (in (. (. rating date) time) (.. @08:00:00 @17:00:00))

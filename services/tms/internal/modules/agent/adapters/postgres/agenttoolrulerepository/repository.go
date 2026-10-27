@@ -2,19 +2,16 @@ package agenttoolrulerepository
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
-
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 )
 
@@ -36,18 +33,14 @@ func New(p Params) agentports.AgentToolRuleOverrideRepository {
 
 func (r *repository) List(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) ([]*agent.ToolRuleOverride, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.ToolRuleOverride, error) {
-		overrides := make([]*agent.ToolRuleOverride, 0)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&overrides).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.ToolRuleOverrideScopeTenant(sq, tenantInfo)
-			}).
-			OrderExpr(agentcol.ToolRuleOverrideColumns.ToolName.OrderAsc()).
-			Scan(ctx)
+		o := agentdb.ToolRuleOverrides
+		overrides, err := o.Query().
+			Order(o.ToolName.Asc()).
+			Cache(resultcache.Settings()...).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list tool rule overrides: %w", err)
 		}
@@ -61,16 +54,9 @@ func (r *repository) Get(
 	req agentports.GetToolRuleOverrideRequest,
 ) (*agent.ToolRuleOverride, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.ToolRuleOverride, error) {
-		override := new(agent.ToolRuleOverride)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(override).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.ToolRuleOverrideScopeTenant(sq, req.TenantInfo).
-					Where(agentcol.ToolRuleOverrideColumns.ToolName.Eq(), req.ToolName)
-			}).
-			Scan(ctx)
-		if errors.Is(err, sql.ErrNoRows) {
+		o := agentdb.ToolRuleOverrides
+		override, err := o.Where(o.ToolName.Eq(req.ToolName)).One(ctx, r.db.Keel(ctx))
+		if dberror.IsNotFoundError(err) {
 			return nil, nil //nolint:nilnil // a tool no organization rule holds has none
 		}
 		if err != nil {
@@ -88,8 +74,7 @@ func (r *repository) Create(
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolRuleOverride, error) {
 		override.Version = 0
 		err := dbtx.Savepoint(ctx, r.db, func(ctx context.Context) error {
-			_, insertErr := r.db.DBForContext(ctx).NewInsert().Model(override).Exec(ctx)
-			return insertErr
+			return agentdb.ToolRuleOverrides.Create(ctx, r.db.Keel(ctx), override)
 		})
 		if dberror.IsUniqueConstraintViolation(err) {
 			return nil, dberror.CreateVersionMismatchError(entityName, override.ToolName)
@@ -107,33 +92,21 @@ func (r *repository) Update(
 	override *agent.ToolRuleOverride,
 ) (*agent.ToolRuleOverride, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.ToolRuleOverride, error) {
-		cols := agentcol.ToolRuleOverrideColumns
-		loaded := override.Version
-		override.Version++
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(override).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentcol.ToolRuleOverrideScopeTenantUpdate(uq, pagination.TenantInfo{
-					OrgID: override.OrganizationID,
-					BuID:  override.BusinessUnitID,
-				}).
-					Where(cols.ID.Eq(), override.ID).
-					Where(cols.Version.Eq(), loaded)
-			}).
-			Set(cols.MaxTier.Set(), override.MaxTier).
-			Set(cols.ReadsExternal.Set(), override.ReadsExternal).
-			Set(cols.Reason.Set(), override.Reason).
-			Set(cols.UpdatedByID.Set(), override.UpdatedByID).
-			Set(cols.Version.Set(), override.Version).
-			Set(cols.UpdatedAt.Set(), override.UpdatedAt).
-			Returning("*").
-			Exec(ctx)
+		o := agentdb.ToolRuleOverrides
+		err := o.Save(
+			ctx,
+			r.db.Keel(ctx),
+			override,
+			o.MaxTier,
+			o.ReadsExternal,
+			o.Reason,
+			o.UpdatedByID,
+		)
+		if dberror.IsVersionConflict(err) {
+			return nil, dberror.CreateVersionMismatchError(entityName, override.ToolName)
+		}
 		if err != nil {
 			return nil, fmt.Errorf("update tool rule override: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(res, entityName, override.ToolName); err != nil {
-			return nil, err
 		}
 
 		return override, nil

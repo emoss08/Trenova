@@ -1,26 +1,28 @@
 package ratezonerepository
 
 import (
+	"cmp"
 	"context"
+	"slices"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/ratezonecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/ratezone/ratezonedb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratezoneports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const busyMessage = "Rate zone is busy. Retry the request."
+
+var rateZoneErrors = dberror.Mapping{Entity: "RateZone"}
 
 type Params struct {
 	fx.In
@@ -41,26 +43,8 @@ func New(p Params) ratezoneports.RateZoneRepository {
 	}
 }
 
-func orderMembers(sq *bun.SelectQuery) *bun.SelectQuery {
-	return sq.Order(ratezonecol.RateZoneMemberColumns.MatchKey.OrderAsc())
-}
-
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *ratezoneports.ListRateZoneRequest,
-) *bun.SelectQuery {
-	cols := ratezonecol.RateZoneColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		ratezonecol.RateZoneTable.Alias,
-		req.Filter,
-		(*ratezone.RateZone)(nil),
-	)
-
-	return q.Apply(ratezonecol.RateZoneApplyTenant(req.Filter.TenantInfo)).
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
+func mapRateZoneError(err error, id string) error {
+	return dberror.MapRetryableTransactionError(rateZoneErrors.Map(err, id), busyMessage)
 }
 
 func (r *repository) List(
@@ -71,107 +55,18 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			entities := make([]*ratezone.RateZone, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).
-				ScanAndCount(ctx)
-			if err != nil {
-				log.Error("failed to scan and count rate zones", zap.Error(err))
-				return nil, err
-			}
-
-			return &pagination.ListResult[*ratezone.RateZone]{
-				Items: entities,
-				Total: int(total),
-			}, nil
-		},
-	)
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *ratezoneports.ListRateZoneConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		ratezonecol.RateZoneTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*ratezone.RateZone)(nil),
-	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *ratezoneports.ListRateZoneConnectionRequest,
-) *bun.SelectQuery {
-	return querybuilder.ApplyFiltersWithoutSort(
-		q,
-		ratezonecol.RateZoneTable.Alias,
-		req.Filter,
-		(*ratezone.RateZone)(nil),
-	)
-}
-
-func applyRateZoneColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return q.ColumnExpr(ratezonecol.RateZoneTable.All())
-	}
-
-	return q.Column(columns...)
-}
-
-func (r *repository) ListConnection(
-	ctx context.Context,
-	req *ratezoneports.ListRateZoneConnectionRequest,
-) (*pagination.CursorListResult[*ratezone.RateZone], error) {
-	return dbtx.Write(
-		ctx,
-		r.db,
-		func(ctx context.Context) (*pagination.CursorListResult[*ratezone.RateZone], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*ratezone.RateZone)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count rate zones", zap.Error(err))
-					return nil, err
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*ratezone.RateZone]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*ratezone.RateZone) *bun.SelectQuery {
-					return dba.
-						NewSelect().
-						Model(entities).
-						Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-							return applyRateZoneColumns(sq, req.RateZoneColumns)
-						})
+			rz := ratezonedb.RateZones
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				rz.Query(),
+				&listquery.Request[ratezone.RateZone]{
+					Filter: req.Filter,
+					Then:   []keel.Order{rz.CreatedAt.Desc()},
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return r.applyCursorPageFilters(sq, req)
-				},
-			})
+			)
 			if err != nil {
-				log.Error("failed to scan rate zones", zap.Error(err))
+				r.l.Error("failed to list rate zones", zap.Error(err))
 				return nil, err
 			}
 
@@ -180,99 +75,181 @@ func (r *repository) ListConnection(
 	)
 }
 
+func (r *repository) ListConnection(
+	ctx context.Context,
+	req *ratezoneports.ListRateZoneConnectionRequest,
+) (*pagination.CursorListResult[*ratezone.RateZone], error) {
+	return dbtx.Read(
+		ctx,
+		r.db,
+		func(ctx context.Context) (*pagination.CursorListResult[*ratezone.RateZone], error) {
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				ratezonedb.RateZones.Query(),
+				&listquery.Request[ratezone.RateZone]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.RateZoneColumns,
+				},
+			)
+			if err != nil {
+				r.l.Error("failed to list rate zones", zap.Error(err))
+				return nil, err
+			}
+
+			return result, nil
+		},
+	)
+}
+
+func zoneQuery(req *ratezoneports.GetRateZoneByIDRequest) *keel.Query[*ratezone.RateZone] {
+	rz := ratezonedb.RateZones
+	q := rz.Where(rz.ID.Eq(req.RateZoneID))
+	if req.IncludeMembers {
+		members := rz.Members()
+		q = q.Load(members.Order(members.MatchKey.Asc()))
+	}
+
+	return q
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *ratezoneports.GetRateZoneByIDRequest,
 ) (*ratezone.RateZone, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratezone.RateZone, error) {
-		log := r.l.With(
-			zap.String("operation", "GetByID"),
-			zap.String("id", req.RateZoneID.String()),
-		)
-
-		entity := new(ratezone.RateZone)
-		cols := ratezonecol.RateZoneColumns
-
-		q := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratezonecol.RateZoneScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RateZoneID)
-			})
-
-		if req.IncludeMembers {
-			q = q.Relation(buncolgen.Rel(ratezonecol.RateZoneRelations.Members), orderMembers)
-		}
-
-		if err := q.Scan(ctx); err != nil {
-			log.Error("failed to get rate zone", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "RateZone")
+		entity, err := zoneQuery(req).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to get rate zone",
+				zap.String("id", req.RateZoneID.String()),
+				zap.Error(err),
+			)
+			return nil, rateZoneErrors.Map(err, req.RateZoneID.String())
 		}
 
 		return entity, nil
 	})
 }
 
-// ResolveMembership turns a place's match keys into the zones that contain it.
-//
-// This runs twice on every rating, once per end of the lane, so it is served
-// entirely from the covering index on (organization, business unit, match key)
-// and returns nothing but the zone ids.
-func (r *repository) ResolveMembership(
+type laneZoneRow struct {
+	ID       pulid.ID
+	Code     string
+	MatchKey string
+}
+
+func laneZonesQuery(keys []string) *keel.Query[*ratezone.RateZoneMember] {
+	m := ratezonedb.RateZoneMembers
+	rz := ratezonedb.RateZones
+
+	return m.Join(rz, rz.ID.EqCol(m.RateZoneID)).
+		Where(m.MatchKey.In(keys...), rz.Status.Eq(domaintypes.StatusActive)).
+		Group(rz.ID, rz.Code, m.MatchKey).
+		Pick(rz.ID, rz.Code, m.MatchKey)
+}
+
+func (r *repository) ResolveLaneZones(
 	ctx context.Context,
-	req *ratezoneports.ResolveZoneMembershipRequest,
-) ([]pulid.ID, error) {
-	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		if len(req.MatchKeys) == 0 {
-			return nil, nil
+	req *ratezoneports.ResolveLaneZonesRequest,
+) (*ratezoneports.LaneZones, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*ratezoneports.LaneZones, error) {
+		keys := make([]string, 0, len(req.OriginKeys)+len(req.DestinationKeys))
+		keys = append(keys, req.OriginKeys...)
+		keys = append(keys, req.DestinationKeys...)
+		if len(keys) == 0 {
+			return &ratezoneports.LaneZones{}, nil
 		}
 
-		log := r.l.With(zap.String("operation", "ResolveMembership"))
-
-		memberCols := ratezonecol.RateZoneMemberColumns
-		zoneCols := ratezonecol.RateZoneColumns
-
-		zoneIDs := make([]pulid.ID, 0, len(req.MatchKeys))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*ratezone.RateZoneMember)(nil)).
-			ColumnExpr("DISTINCT "+memberCols.RateZoneID.String()).
-			Join(
-				"JOIN "+ratezonecol.RateZoneTable.As(ratezonecol.RateZoneTable.Alias)+
-					" ON "+zoneCols.ID.Qualified()+" = "+memberCols.RateZoneID.Qualified()+
-					" AND "+zoneCols.OrganizationID.Qualified()+" = "+memberCols.OrganizationID.Qualified()+
-					" AND "+zoneCols.BusinessUnitID.Qualified()+" = "+memberCols.BusinessUnitID.Qualified(),
-			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return ratezonecol.RateZoneMemberScopeTenant(sq, req.TenantInfo).
-					Where(memberCols.MatchKey.In(), bun.List(req.MatchKeys)).
-					Where(zoneCols.Status.Eq(), domaintypes.StatusActive)
-			}).
-			Scan(ctx, &zoneIDs)
+		rows, err := keel.Into[laneZoneRow](ctx, r.db.Keel(ctx), laneZonesQuery(keys))
 		if err != nil {
-			log.Error("failed to resolve zone membership", zap.Error(err))
+			r.l.Error("failed to resolve lane zones", zap.Error(err))
 			return nil, err
 		}
 
-		return zoneIDs, nil
+		return &ratezoneports.LaneZones{
+			Origin:      laneSide(rows, req.OriginKeys),
+			Destination: laneSide(rows, req.DestinationKeys),
+		}, nil
 	})
 }
 
-func (r *repository) insertMembers(ctx context.Context, entity *ratezone.RateZone) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if len(entity.Members) == 0 {
-			return nil
+func laneSide(rows []laneZoneRow, keys []string) []ratezoneports.ZoneRef {
+	rank := make(map[string]int, len(keys))
+	for index, key := range keys {
+		if _, seen := rank[key]; !seen {
+			rank[key] = index
+		}
+	}
+
+	best := make(map[pulid.ID]int, len(rows))
+	refs := make([]ratezoneports.ZoneRef, 0, len(rows))
+	for _, row := range rows {
+		position, ok := rank[row.MatchKey]
+		if !ok {
+			continue
+		}
+		current, seen := best[row.ID]
+		if !seen {
+			refs = append(refs, ratezoneports.ZoneRef{ID: row.ID, Code: row.Code})
+			best[row.ID] = position
+			continue
+		}
+		if position < current {
+			best[row.ID] = position
+		}
+	}
+
+	slices.SortStableFunc(refs, func(a, b ratezoneports.ZoneRef) int {
+		return cmp.Or(cmp.Compare(best[a.ID], best[b.ID]), cmp.Compare(a.Code, b.Code))
+	})
+	return refs
+}
+
+func (r *repository) GetCodesByIDs(
+	ctx context.Context,
+	_ pagination.TenantInfo,
+	ids []pulid.ID,
+) (map[pulid.ID]string, error) {
+	return dbtx.Read(ctx, r.db, func(ctx context.Context) (map[pulid.ID]string, error) {
+		codes := make(map[pulid.ID]string, len(ids))
+		if len(ids) == 0 {
+			return codes, nil
 		}
 
-		_, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&entity.Members).
-			Returning("*").
-			Exec(ctx)
+		rz := ratezonedb.RateZones
+		zones, err := rz.Pick(rz.ID, rz.Code).
+			Where(rz.ID.In(ids...)).
+			Limit(len(ids)).
+			List(ctx, r.db.Keel(ctx))
+		if err != nil {
+			r.l.Error("failed to read rate zone codes", zap.Error(err))
+			return nil, err
+		}
 
-		return err
+		for _, zone := range zones {
+			codes[zone.ID] = zone.Code
+		}
+
+		return codes, nil
 	})
+}
+
+func (r *repository) insertMembers(
+	ctx context.Context,
+	db *keel.DB,
+	entity *ratezone.RateZone,
+) error {
+	members := make([]*ratezone.RateZoneMember, 0, len(entity.Members))
+	for _, member := range entity.Members {
+		if member != nil {
+			members = append(members, member)
+		}
+	}
+	if len(members) == 0 {
+		return nil
+	}
+
+	return ratezonedb.RateZoneMembers.CreateMany(ctx, db, members)
 }
 
 func (r *repository) Create(
@@ -280,27 +257,18 @@ func (r *repository) Create(
 	entity *ratezone.RateZone,
 ) (*ratezone.RateZone, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratezone.RateZone, error) {
-		log := r.l.With(zap.String("operation", "Create"), zap.String("code", entity.Code))
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			if _, iErr := r.db.DBForContext(c).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(c); iErr != nil {
-				return iErr
-			}
-
+		db := r.db.Keel(ctx)
+		err := ratezonedb.RateZones.Create(ctx, db, entity)
+		if err == nil {
 			stampMembers(entity, false)
-
-			return r.insertMembers(c, entity)
-		})
+			err = r.insertMembers(ctx, db, entity)
+		}
 		if err != nil {
-			log.Error("failed to create rate zone", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Rate zone is busy. Retry the request.",
+			r.l.Error("failed to create rate zone",
+				zap.String("code", entity.Code),
+				zap.Error(err),
 			)
+			return nil, mapRateZoneError(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -317,61 +285,23 @@ func (r *repository) Update(
 	entity *ratezone.RateZone,
 ) (*ratezone.RateZone, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*ratezone.RateZone, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("id", entity.ID.String()),
-		)
+		db := r.db.Keel(ctx)
+		m := ratezonedb.RateZoneMembers
 
-		ov := entity.Version
-		entity.Version++
-
-		zoneCols := ratezonecol.RateZoneColumns
-		memberCols := ratezonecol.RateZoneMemberColumns
-
-		err := r.db.WithTx(ctx, kernelports.TxOptions{}, func(c context.Context, _ bun.Tx) error {
-			results, uErr := r.db.DBForContext(c).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(zoneCols.Version.Eq(), ov).
-				OmitZero().
-				Returning("*").
-				Exec(c)
-			if uErr != nil {
-				return uErr
-			}
-
-			if uErr = dberror.CheckRowsAffected(
-				results,
-				"RateZone",
-				entity.ID.String(),
-			); uErr != nil {
-				return uErr
-			}
-
-			if _, dErr := r.db.DBForContext(c).
-				NewDelete().
-				Model((*ratezone.RateZoneMember)(nil)).
-				WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-					return ratezonecol.RateZoneMemberScopeTenantDelete(dq, pagination.TenantInfo{
-						OrgID: entity.OrganizationID,
-						BuID:  entity.BusinessUnitID,
-					}).Where(memberCols.RateZoneID.Eq(), entity.ID)
-				}).
-				Exec(c); dErr != nil {
-				return dErr
-			}
-
+		err := ratezonedb.RateZones.Save(ctx, db, entity)
+		if err == nil {
+			_, err = m.Where(m.RateZoneID.Eq(entity.ID)).Delete(ctx, db)
+		}
+		if err == nil {
 			stampMembers(entity, true)
-
-			return r.insertMembers(c, entity)
-		})
+			err = r.insertMembers(ctx, db, entity)
+		}
 		if err != nil {
-			log.Error("failed to update rate zone", zap.Error(err))
-			return nil, dberror.MapRetryableTransactionError(
-				err,
-				"Rate zone is busy. Retry the request.",
+			r.l.Error("failed to update rate zone",
+				zap.String("id", entity.ID.String()),
+				zap.Error(err),
 			)
+			return nil, mapRateZoneError(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -383,59 +313,47 @@ func (r *repository) Delete(
 	req *ratezoneports.GetRateZoneByIDRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		log := r.l.With(
-			zap.String("operation", "Delete"),
-			zap.String("id", req.RateZoneID.String()),
+		err := ratezonedb.RateZones.DeleteRow(
+			ctx,
+			r.db.Keel(ctx),
+			&ratezone.RateZone{ID: req.RateZoneID},
 		)
-
-		cols := ratezonecol.RateZoneColumns
-		results, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*ratezone.RateZone)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				return ratezonecol.RateZoneScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.RateZoneID)
-			}).
-			Exec(ctx)
 		if err != nil {
-			log.Error("failed to delete rate zone", zap.Error(err))
-			return err
+			r.l.Error("failed to delete rate zone",
+				zap.String("id", req.RateZoneID.String()),
+				zap.Error(err),
+			)
+			return rateZoneErrors.Map(err, req.RateZoneID.String())
 		}
 
-		return dberror.CheckRowsAffected(results, "RateZone", req.RateZoneID.String())
+		return nil
 	})
+}
+
+func selectOptionsQuery() *keel.Query[*ratezone.RateZone] {
+	rz := ratezonedb.RateZones
+
+	return rz.Pick(rz.ID, rz.Code, rz.Name, rz.Description, rz.Kind, rz.Status).
+		Where(rz.Status.Eq(domaintypes.StatusActive))
 }
 
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,
 ) (*pagination.ListResult[*ratezone.RateZone], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*ratezone.RateZone], error) {
-			cols := ratezonecol.RateZoneColumns
+			rz := ratezonedb.RateZones
 
-			return dbhelper.SelectOptions[*ratezone.RateZone](
+			return listquery.SelectOptions(
 				ctx,
-				r.db.DBForContext(ctx),
+				r.db.Keel(ctx),
+				selectOptionsQuery(),
 				req,
-				&dbhelper.SelectOptionsConfig{
-					ColumnRefs: []buncolgen.Column{
-						cols.ID,
-						cols.Code,
-						cols.Name,
-						cols.Description,
-						cols.Kind,
-						cols.Status,
-					},
-					OrgColumnRef:     &cols.OrganizationID,
-					BuColumnRef:      &cols.BusinessUnitID,
-					SearchColumnRefs: []buncolgen.Column{cols.Code, cols.Name},
-					EntityName:       "RateZone",
-					QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-						return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
-					},
+				func(s string) keel.Pred {
+					return keel.Or(rz.Code.ContainsFold(s), rz.Name.ContainsFold(s))
 				},
 			)
 		},

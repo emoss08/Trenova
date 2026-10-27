@@ -105,6 +105,7 @@ query TrainingCourseTable($input: TrainingCoursesInput!, $includeTotalCount: Boo
       endCursor
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
   }
 }
 

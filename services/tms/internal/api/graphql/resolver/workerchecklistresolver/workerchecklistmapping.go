@@ -76,7 +76,6 @@ func checklistTemplateCursorConnectionToModel(
 ) (*gqlmodel.WorkerChecklistTemplateConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *worker.WorkerChecklistTemplate, cursor string) *gqlmodel.WorkerChecklistTemplateEdge {
 			return &gqlmodel.WorkerChecklistTemplateEdge{Node: node, Cursor: cursor}
@@ -95,7 +94,8 @@ func checklistTemplateCursorConnectionToModel(
 				func(edge *gqlmodel.WorkerChecklistTemplateEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

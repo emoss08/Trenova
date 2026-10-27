@@ -257,6 +257,6 @@ describe("RetrievalTab", () => {
     renderTab();
 
     const notice = await screen.findByTestId("retrieval-notice");
-    expect(within(notice).getByText("trenova db enable-vector")).toBeInTheDocument();
+    expect(within(notice).getByText("trenova-db enable-vector")).toBeInTheDocument();
   });
 });

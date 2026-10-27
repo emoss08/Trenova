@@ -60,9 +60,6 @@ var (
 	ErrProductionContentScanFailOpen = errors.New(
 		"production and staging refuse contentScan.failOpen: a file is held until the scanner can check it",
 	)
-	ErrMaxIdleConnsExceedsMaxOpenConns = errors.New(
-		"max idle connections cannot exceed max open connections",
-	)
 	ErrCacheMinIdleConnsExceedsPoolSize = errors.New(
 		"cache min idle connections cannot exceed pool size",
 	)
@@ -101,5 +98,17 @@ var (
 	ErrSectionAlreadyRegistered = errors.New("configuration section is already registered")
 	ErrSectionPathConflict      = errors.New(
 		"configuration section path is already owned by another section or by the base configuration",
+	)
+	ErrDatabaseSharedCacheNeedsCache = errors.New(
+		"database.cache.shared.enabled needs database.cache.enabled",
+	)
+	ErrDatabaseCacheListenPortNeedsHost = errors.New(
+		"database.cache.listenPort needs database.cache.listenHost",
+	)
+	ErrDatabaseCacheLocalBytesTooSmall = errors.New(
+		"database.cache.localBytes must be at least 1 MiB (1048576)",
+	)
+	ErrDatabaseTenantConcurrencyExceedsPool = errors.New(
+		"database.tenantConcurrency cannot exceed database.maxOpenConns",
 	)
 )

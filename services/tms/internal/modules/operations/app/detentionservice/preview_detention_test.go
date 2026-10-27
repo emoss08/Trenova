@@ -83,7 +83,7 @@ func pendingCharge() detention.DetentionOccurrence {
 		Status:             detention.OccurrenceStatusPending,
 		RequiresApproval:   true,
 		BillableAmount:     decimal.NewFromInt(425),
-		DriverPayAmount:    decimal.NewFromInt(100),
+		DriverPayAmount:    decimal.NewNullDecimal(decimal.NewFromInt(100)),
 		Currency:           "USD",
 		NotificationStatus: detention.NotificationStatusPending,
 		FreeTimeExpiresAt:  1_767_225_600,

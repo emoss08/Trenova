@@ -10,8 +10,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/projection"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/base"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -112,9 +112,10 @@ func agentEvaluationConnectionToModel(
 	}
 
 	return &gqlmodel.AgentEvaluationConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -124,11 +125,13 @@ func agentMemoryColumns(ctx context.Context, nodePathPrefix string) []string {
 		return selection.Columns
 	}
 
-	cols := agentcol.MemoryColumns
-	columns := sliceutils.AppendIfMissing(selection.Columns, cols.Tainted.Bare())
-	columns = sliceutils.AppendIfMissing(columns, cols.ReviewedByUserID.Bare())
+	m := agentdb.Memories
+	columns := selection.Columns
+	for _, column := range projection.ColumnNames(m.Tainted.Col, m.ReviewedByUserID.Col, m.ReviewedAt.Col) {
+		columns = sliceutils.AppendIfMissing(columns, column)
+	}
 
-	return sliceutils.AppendIfMissing(columns, cols.ReviewedAt.Bare())
+	return columns
 }
 
 func agentMemoryConnectionToModel(
@@ -146,9 +149,10 @@ func agentMemoryConnectionToModel(
 	}
 
 	return &gqlmodel.AgentMemoryConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -179,9 +183,10 @@ func agentReflectionConnectionToModel(
 	}
 
 	return &gqlmodel.AgentReflectionConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -247,9 +252,10 @@ func agentPlanConnectionToModel(
 	}
 
 	return &gqlmodel.AgentPlanConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -280,9 +286,10 @@ func agentRunConnectionToModel(
 	}
 
 	return &gqlmodel.AgentRunConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -301,9 +308,10 @@ func agentProposalConnectionToModel(
 	}
 
 	return &gqlmodel.AgentProposalConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 
@@ -322,9 +330,10 @@ func agentExceptionConnectionToModel(
 	}
 
 	return &gqlmodel.AgentExceptionConnection{
-		Edges:      page.Edges,
-		PageInfo:   page.PageInfo,
-		TotalCount: page.TotalCount,
+		Edges:           page.Edges,
+		PageInfo:        page.PageInfo,
+		TotalCount:      page.TotalCount,
+		TotalCountExact: page.TotalCountExact,
 	}, nil
 }
 

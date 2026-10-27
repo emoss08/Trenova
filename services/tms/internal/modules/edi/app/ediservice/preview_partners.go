@@ -183,7 +183,7 @@ func (s *Service) partnerName(ctx context.Context, recipient *edi.TenderRecipien
 		ID: recipient.EDIPartnerID,
 		TenantInfo: pagination.TenantInfo{
 			OrgID: recipient.SourceOrganizationID,
-			BuID:  recipient.SourceBusinessUnitID,
+			BuID:  recipient.BusinessUnitID,
 		},
 	})
 	if err != nil || partner == nil || strings.TrimSpace(partner.Name) == "" {

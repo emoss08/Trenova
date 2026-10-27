@@ -3,6 +3,7 @@ package kernelports
 import (
 	"context"
 
+	"github.com/emoss08/trenova/pkg/keelkinds"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/types/search"
@@ -54,10 +55,10 @@ type ListCustomerOpenBalancesRequest struct {
 }
 
 type CustomerOpenBalance struct {
-	CustomerID   pulid.ID `bun:"customer_id"`
-	OpenMinor    int64    `bun:"open_minor"`
-	OverdueMinor int64    `bun:"overdue_minor"`
-	CurrencyCode string   `bun:"currency_code"`
+	CustomerID   pulid.ID
+	OpenMinor    int64
+	OverdueMinor int64
+	CurrencyCode string
 }
 
 // CustomerOpenBalanceReader is provided by billing so a search can show what a
@@ -81,6 +82,13 @@ type ListVisibleRecordsRequest struct {
 // not check the kind's read: the database shows every row of a kind the
 // person cannot read (a record linking to one shows its reference view), so
 // a caller refuses such a kind before asking.
+type VisibleRecordSource struct {
+	Kind string
+	ID   keelkinds.PulidIDCol
+}
+
+type VisibleRecordSources []VisibleRecordSource
+
 type RecordVisibility interface {
 	Scoped(kind string) bool
 	VisibleIDs(ctx context.Context, req *ListVisibleRecordsRequest) ([]pulid.ID, error)

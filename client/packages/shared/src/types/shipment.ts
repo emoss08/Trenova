@@ -5,7 +5,6 @@ import { defaultBillTypeSchema } from "./bill-type";
 import { billingQueueStatusSchema } from "./billing-queue-status";
 import type { Commodity } from "./commodity";
 import { customerReferenceSchema, customerSchema } from "./customer";
-import { formulaReceiptSchema, formulaTemplateSchema } from "./formula-template";
 import {
   decimalNumberSchema,
   decimalStringSchema,
@@ -16,6 +15,12 @@ import {
   tenantInfoSchema,
 } from "./helpers";
 import { locationSchema } from "./location";
+import { tariffInputValuesSchema } from "./tariff";
+import {
+  storedTariffBillSchema,
+  storedTariffChoicesSchema,
+  tariffFormInputValuesSchema,
+} from "./tariff-form";
 import { userReferenceSchema } from "./user";
 import { translate } from "@trenova/shared/i18n/runtime";
 
@@ -606,6 +611,15 @@ export const additionalChargeSchema = z.object({
   fuelSurchargeProgramId: z.string().nullish(),
   fuelSurchargeDetail: fuelSurchargeDetailSchema.nullish(),
   isDetention: z.boolean().nullish(),
+  /**
+   * Billed by the shipment's tariff (`charge … as CODE`) and replaced on every
+   * re-rate, with the line's label, quantity and rate as the tariff wrote them.
+   */
+  isTariff: z.boolean().nullish(),
+  label: z.string().nullish(),
+  quantity: decimalStringSchema.nullish(),
+  rate: decimalStringSchema.nullish(),
+  rateUnit: z.string().nullish(),
 });
 
 export type AdditionalCharge = z.infer<typeof additionalChargeSchema>;
@@ -644,33 +658,40 @@ export type ShipmentCommodity = z.infer<typeof shipmentCommoditySchema>;
 export const shipmentCommodityCreateSchema = shipmentCommodityBaseSchema;
 export type ShipmentCommodityCreateInput = z.infer<typeof shipmentCommodityCreateSchema>;
 
-export const ratingBreakdownItemSchema = z.object({
-  name: z.string(),
-  label: z.string().optional().default(""),
-  amount: z.number(),
-  error: z.string().optional(),
-});
-export type RatingBreakdownItem = z.output<typeof ratingBreakdownItemSchema>;
+/** A charge something else would have generated that the tariff billed itself, by its code. */
+export const ratingSkipSchema = z.object({ code: z.string(), source: z.string() });
+export type RatingSkip = z.infer<typeof ratingSkipSchema>;
 
-export const ratingGuardrailSchema = z.object({
-  applied: z.boolean(),
-  bound: z.string().optional(),
-  rawResult: z.number(),
-  minCharge: z.number().nullish(),
-  maxCharge: z.number().nullish(),
+/** A person's approval of the reviews a tariff asked for on a shipment's rating. */
+export const ratingReviewApprovalSchema = z.object({
+  reviews: z.array(z.string()).nullish(),
+  approvedById: z.string(),
+  approvedAt: z.number(),
+  approvedBy: z.object({ id: z.string().nullish(), name: z.string() }).nullish(),
 });
-export type RatingGuardrail = z.output<typeof ratingGuardrailSchema>;
+export type RatingReviewApproval = z.infer<typeof ratingReviewApprovalSchema>;
 
+/**
+ * How the shipment was last rated: the tariff version that ran, its bill line
+ * by line (or why it refused), the input values it ran with, and the contract
+ * that priced it.
+ */
 export const ratingDetailSchema = z.object({
   formulaTemplateId: z.string(),
   formulaTemplateName: z.string(),
-  expression: z.string(),
-  resolvedVariables: z.record(z.string(), z.any()),
-  result: z.number(),
   ratedAt: z.number(),
   versionNumber: z.number().nullish(),
-  breakdown: z.array(ratingBreakdownItemSchema).nullish(),
-  guardrail: ratingGuardrailSchema.nullish(),
+  bill: storedTariffBillSchema.nullish(),
+  /** Why the tariff refused to rate, in its author's words; the shipment then has no bill. */
+  refusal: z.string().nullish(),
+  /** Every `best` and `worst` the rating evaluated: which option won and what each came to. */
+  choices: storedTariffChoicesSchema.optional(),
+  /** The input values the tariff ran with, resolved shipment over rule over agreement over default. */
+  inputs: tariffFormInputValuesSchema.nullish(),
+  /** Charges a contract, fuel program or detention policy would have added, left to the tariff. */
+  skipped: z.array(ratingSkipSchema).nullish(),
+  /** The module's per-statement values, for the Studio's trace view. */
+  trace: z.unknown().nullish(),
 
   // The contract that priced the shipment, when one did. These point at the
   // quote rather than duplicating it: the quote holds the full explanation, and
@@ -682,7 +703,10 @@ export const ratingDetailSchema = z.object({
   ruleLabel: z.string().nullish(),
   source: z.string().nullish(),
   explanation: z.string().nullish(),
-  receipt: formulaReceiptSchema.nullish(),
+  /** True while the bill's reviews wait on a person's approval, holding the shipment out of billing. */
+  awaitingReview: z.boolean().nullish(),
+  /** Who approved the reviews this rating carries, and when; null until someone does. */
+  reviewApproval: ratingReviewApprovalSchema.nullish(),
 });
 export type RatingDetail = z.infer<typeof ratingDetailSchema>;
 
@@ -733,7 +757,11 @@ const shipmentBaseSchema = z.object({
   cancelReason: optionalStringSchema,
   otherChargeAmount: decimalStringSchema.default(0),
   freightChargeAmount: decimalStringSchema.default(0),
-  baseRate: decimalStringSchema.default(0),
+  /**
+   * The tariff's input values the shipment carries: written by adopting a
+   * contract (its resolved values) or by hand, and reapplied on every re-rate.
+   */
+  tariffInputs: tariffFormInputValuesSchema.default({}),
   totalChargeAmount: decimalStringSchema.default(0),
   pieces: nullableIntegerSchema,
   weight: nullableIntegerSchema,
@@ -750,44 +778,88 @@ const shipmentBaseSchema = z.object({
   transferredToBillingAt: nullableIntegerSchema,
   markedReadyToBillAt: nullableIntegerSchema,
   billedAt: nullableIntegerSchema,
-  ratingUnit: z.number().int().positive().default(1),
   fuelSurchargeLocked: z.boolean().default(false),
   ratingDetail: ratingDetailSchema.nullable().optional(),
 });
 
-/** One charge a contract applies automatically to every shipment it prices. */
-export const contractRateAccessorialSchema = z.object({
-  accessorialChargeId: z.string(),
-  description: z.string(),
-  method: accessorialChargeMethodSchema.default("Flat"),
+/**
+ * One freight line of the shipment's bill: an uncoded charge of its tariff, or
+ * the one typed amount of a manual rate. Read-only; the rating writes them.
+ */
+export const shipmentFreightLineSchema = z.object({
+  label: z.string(),
+  /** What the line billed and at what rate; a flat line (a manual rate) has neither. */
+  quantity: decimalStringSchema.nullish(),
+  quantityUnit: z.string().nullish(),
+  rate: decimalStringSchema.nullish(),
+  rateUnit: z.string().nullish(),
   amount: decimalStringSchema,
-  unit: z.number(),
 });
-export type ContractRateAccessorial = z.infer<typeof contractRateAccessorialSchema>;
+export type ShipmentFreightLine = z.infer<typeof shipmentFreightLineSchema>;
+
+/**
+ * Who owns a system-generated charge: the fuel or detention program, the shipment's tariff (a
+ * coded line of its bill) or the rate agreement's accessorial schedule.
+ */
+export const chargeSystemOwnerSchema = z.enum([
+  "",
+  "FuelSurcharge",
+  "Detention",
+  "Tariff",
+  "RateAgreement",
+]);
+export type ChargeSystemOwner = z.infer<typeof chargeSystemOwnerSchema>;
+
+/** A charge a contract rate adds: a tariff's coded line or one of the agreement's accessorials. */
+export const contractRateChargeSchema = z.object({
+  accessorialChargeId: z.string(),
+  code: z.string().default(""),
+  description: z.string().default(""),
+  owner: chargeSystemOwnerSchema.catch(""),
+  /** The tariff's own label for its line, shown as written. */
+  label: z.string().default(""),
+  amount: decimalStringSchema,
+  quantity: decimalStringSchema,
+  rate: decimalStringSchema,
+  rateUnit: z.string().nullish(),
+});
+export type ContractRateCharge = z.infer<typeof contractRateChargeSchema>;
 
 /**
  * What the rate agreements charge for a shipment.
  *
  * The same shape answers both questions the billing panel asks — what would
  * this rate at, and what did the re-rate just apply — because a preview and an
- * application differ only in whether the numbers were kept.
+ * application differ only in whether the numbers were kept. Its freight lines and
+ * charges are the tariff's bill as the shipment stores it.
  */
 export const contractRateSchema = z.object({
   applied: z.boolean(),
   outcome: z.string(),
   agreementId: nullableStringSchema,
-  agreementName: z.string(),
+  agreementName: z.string().default(""),
   ruleId: nullableStringSchema,
-  ruleLabel: z.string(),
+  ruleLabel: z.string().default(""),
   formulaTemplateId: nullableStringSchema,
-  formulaTemplateName: z.string(),
-  baseRate: decimalStringSchema,
-  linehaulAmount: decimalStringSchema,
+  formulaTemplateName: z.string().default(""),
+  templateVersion: z.number().int().nullish(),
+  /** The input values adopting the contract would write onto the shipment. */
+  inputs: tariffInputValuesSchema.nullish().transform((value) => value ?? {}),
+  /** Why the tariff refused to rate, in its author's words, when it did. */
+  refusal: z.string().default(""),
+  freightLines: z
+    .array(shipmentFreightLineSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  freightAmount: decimalStringSchema,
   otherChargeAmount: decimalStringSchema,
   totalChargeAmount: decimalStringSchema,
-  previousLinehaulAmount: decimalStringSchema,
-  accessorials: z.array(contractRateAccessorialSchema).default([]),
-  explanation: z.string(),
+  charges: z
+    .array(contractRateChargeSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  previousFreightAmount: decimalStringSchema,
+  explanation: z.string().default(""),
 });
 export type ContractRate = z.infer<typeof contractRateSchema>;
 
@@ -806,9 +878,28 @@ export const shipmentProfitabilityEstimateSchema = z.object({
 });
 export type ShipmentProfitabilityEstimate = z.infer<typeof shipmentProfitabilityEstimateSchema>;
 
+/**
+ * The tariff a shipment names, as the shipment reads it: who it is, not its source. The full
+ * template (its source, inputs and tests) is read on its own, so a shipment never carries it.
+ */
+export const shipmentFormulaTemplateSchema = z.object({
+  id: optionalStringSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
+  name: z.string(),
+  description: z.string().nullish(),
+  status: z.string().nullish(),
+  version: z.number().optional(),
+  currentVersionNumber: z.number().int().nullish(),
+  createdAt: z.number().optional(),
+  updatedAt: z.number().optional(),
+});
+export type ShipmentFormulaTemplate = z.infer<typeof shipmentFormulaTemplateSchema>;
+
 export const shipmentSchema = z.object({
   ...tenantInfoSchema.shape,
   ...shipmentBaseSchema.shape,
+  freightLines: z.array(shipmentFreightLineSchema).default([]),
   profitabilityEstimate: shipmentProfitabilityEstimateSchema.nullish(),
   moves: z.array(shipmentMoveSchema).default([]),
   additionalCharges: z.array(additionalChargeSchema).default([]),
@@ -819,7 +910,7 @@ export const shipmentSchema = z.object({
   customer: linkedRecordSchema("customer", customerSchema).nullish(),
   billToCustomer: customerReferenceSchema.nullish(),
   owner: userReferenceSchema.nullish(),
-  formulaTemplate: linkedRecordSchema("formula_template", formulaTemplateSchema).nullish(),
+  formulaTemplate: linkedRecordSchema("formula_template", shipmentFormulaTemplateSchema).nullish(),
 });
 
 export type Shipment = z.infer<typeof shipmentSchema>;
@@ -1013,7 +1104,6 @@ export const previousRateSummarySchema = z.object({
   freightChargeAmount: decimalStringSchema,
   otherChargeAmount: decimalStringSchema,
   totalChargeAmount: decimalStringSchema,
-  ratingUnit: z.number(),
   pieces: z.number().nullable(),
   weight: z.number().nullable(),
   createdAt: z.number(),
@@ -1023,6 +1113,7 @@ export type PreviousRateSummary = z.infer<typeof previousRateSummarySchema>;
 export const previousRatesResponseSchema = z.object({
   items: z.array(previousRateSummarySchema),
   total: z.number(),
+  totalExact: z.boolean().default(true),
 });
 export type PreviousRatesResponse = z.infer<typeof previousRatesResponseSchema>;
 

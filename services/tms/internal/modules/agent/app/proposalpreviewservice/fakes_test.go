@@ -7,36 +7,33 @@ import (
 	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/agent/app/toolpreview"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type fakeDB struct {
-	kernelports.DBConnection
-
 	mu   sync.Mutex
 	opts []kernelports.TxOptions
 }
 
-func (f *fakeDB) WithTx(
+func (f *fakeDB) Transact(
 	ctx context.Context,
 	opts kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
+	fn func(context.Context) error,
 ) error {
 	f.mu.Lock()
 	f.opts = append(f.opts, opts)
 	f.mu.Unlock()
 
-	return fn(ctx, bun.Tx{})
+	return fn(ctx)
 }
 
 type fakeRegistry struct{ tools []agentports.AgentTool }

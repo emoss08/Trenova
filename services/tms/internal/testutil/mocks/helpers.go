@@ -36,7 +36,7 @@ func (n *NoopAuditService) List(
 	_ context.Context,
 	_ *auditports.ListAuditEntriesRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{}, nil
+	return &pagination.ListResult[*audit.Entry]{TotalExact: true}, nil
 }
 
 func (n *NoopAuditService) ListConnection(
@@ -50,7 +50,7 @@ func (n *NoopAuditService) ListByResourceID(
 	_ context.Context,
 	_ *auditports.ListByResourceIDRequest,
 ) (*pagination.ListResult[*audit.Entry], error) {
-	return &pagination.ListResult[*audit.Entry]{}, nil
+	return &pagination.ListResult[*audit.Entry]{TotalExact: true}, nil
 }
 
 func (n *NoopAuditService) GetByID(
@@ -106,6 +106,14 @@ func (a *AllowAllPermissionEngine) GetResourcePermissions(
 	_ string,
 ) (*permissionports.ResourcePermissionDetail, error) {
 	return nil, nil
+}
+
+func (a *AllowAllPermissionEngine) GetResourcePermissionsBatch(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+	resources []string,
+) (map[string]*permissionports.ResourcePermissionDetail, error) {
+	return permtest.Batch(ctx, a, userID, orgID, resources)
 }
 
 func (a *AllowAllPermissionEngine) InvalidateUser(_ context.Context, _, _ pulid.ID) error {

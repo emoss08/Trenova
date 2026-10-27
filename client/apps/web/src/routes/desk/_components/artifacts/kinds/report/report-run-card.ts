@@ -15,7 +15,7 @@ export function sourceOfRun(card: ReportRunDeskCard): SheetSource | null {
     rows: card.sample.rows,
     totals: card.sample.totals,
     rowCount: card.run.rowCount,
-    more: card.sample.more || card.run.rowCount > card.sample.rows.length,
+    more: card.sample.truncated || card.run.rowCount > card.sample.rows.length,
     truncated: card.run.truncated,
   };
 }
@@ -24,7 +24,12 @@ export function sourceOfRun(card: ReportRunDeskCard): SheetSource | null {
 export function sourceOfPreview(preview: ReportPreviewArtifact): SheetSource {
   return {
     columns: preview.columns.map((column) =>
-      sheetColumn({ id: column.id, label: column.label, type: column.type, format: column.format }),
+      sheetColumn({
+        id: column.id,
+        label: column.label,
+        type: column.type,
+        hint: hintOfStyle(column.format),
+      }),
     ),
     rows: preview.rows,
     totals: preview.totals,
@@ -32,6 +37,21 @@ export function sourceOfPreview(preview: ReportPreviewArtifact): SheetSource {
     more: preview.rowCount > preview.rows.length,
     truncated: preview.truncated,
   };
+}
+
+const STYLE_HINTS: Record<string, string> = {
+  currency: "money",
+  percent: "percent",
+  duration: "duration",
+};
+
+/**
+ * The format hint a preview column's display style stands for: a preview
+ * names each column's resolved style, and the rules resolve a display from a
+ * hint (money, percent, duration), not a style.
+ */
+export function hintOfStyle(style: string | null | undefined): string {
+  return (style && STYLE_HINTS[style]) || "";
 }
 
 export function hintsOf(card: ReportRunDeskCard): SheetHints {
@@ -115,7 +135,7 @@ function valueText(parameter: ReportRunDeskParameter, t: TranslateFn): string {
     if (value.length === 0) {
       return t("Any");
     }
-    if (parameter.refEntity) {
+    if (parameter.entity) {
       return t("{0, plural, one {# selected} other {# selected}}", value.length);
     }
     const named = value.slice(0, MAX_LISTED_VALUES).map((item) => translateLabel(String(item)));
@@ -129,7 +149,7 @@ function valueText(parameter: ReportRunDeskParameter, t: TranslateFn): string {
   if (typeof value === "number") {
     return value.toLocaleString();
   }
-  if (parameter.refEntity) {
+  if (parameter.entity) {
     return t("{0, plural, one {# selected} other {# selected}}", 1);
   }
   return translateLabel(String(value));

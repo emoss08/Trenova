@@ -201,6 +201,16 @@ var Shard = &gqlexec.Shard{
 				},
 				Marshal: gqlexec.Marshal(marshalOInt2ᚖint),
 			},
+			{
+				Name:     "totalCountExact",
+				NonNull:  true,
+				ChildErr: errNoChild8,
+				Resolve: func(ctx context.Context, ec *gqlexec.Exec, o any) (any, error) {
+					obj := o.(*gqlmodel.AccessorialChargeConnection)
+					return obj.TotalCountExact, nil
+				},
+				Marshal: gqlexec.Marshal(marshalNBoolean2bool),
+			},
 		}},
 		{Object: "AccessorialChargeEdge", Fields: []*gqlexec.Field{
 			{
@@ -280,6 +290,7 @@ var (
 	errNoChild5 = errors.New("field of type Float does not have child fields")
 	errNoChild6 = errors.New("field of type Int does not have child fields")
 	errNoChild7 = errors.New("field of type Timestamp does not have child fields")
+	errNoChild8 = errors.New("field of type Boolean does not have child fields")
 )
 
 func field_Query_accessorialCharges_args(ctx context.Context, ec *gqlexec.Exec, rawArgs map[string]any) (map[string]any, error) {
@@ -356,6 +367,14 @@ func marshalNAccessorialChargeEdge2ᚖgithubᚗcomᚋemoss08ᚋtrenovaᚋinterna
 
 func marshalNAccessorialMethod2githubᚗcomᚋemoss08ᚋtrenovaᚋinternalᚋmodulesᚋreferenceᚋdomainᚋaccessorialchargeᚐMethod(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v accessorialcharge.Method) graphql.Marshaler {
 	res := graphql.MarshalString(string(v))
+	if res == graphql.Null {
+		gqlexec.NullViolation(ctx)
+	}
+	return res
+}
+
+func marshalNBoolean2bool(ctx context.Context, ec *gqlexec.Exec, sel ast.SelectionSet, v bool) graphql.Marshaler {
+	res := graphql.MarshalBoolean(v)
 	if res == graphql.Null {
 		gqlexec.NullViolation(ctx)
 	}

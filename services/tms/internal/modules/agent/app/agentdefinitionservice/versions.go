@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/typeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -47,7 +46,7 @@ func (s *Service) inTransaction(
 	write saveFunc,
 ) (*agentdefinition.Definition, error) {
 	var saved *agentdefinition.Definition
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		saved, txErr = write(txCtx)
 		return txErr

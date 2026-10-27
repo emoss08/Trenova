@@ -1,17 +1,17 @@
-import { useT } from "@trenova/shared/i18n/use-t";
 import { AutoCompleteDateField } from "@/components/fields/date-field/date-field";
 import { InputField } from "@/components/fields/input-field";
 import { NumberField } from "@/components/fields/number-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Button } from "@trenova/shared/components/ui/button";
-import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
 import {
   carrierComplianceStatusChoices,
   carrierInsurancePolicyTypeChoices,
   carrierSafetyRatingChoices,
 } from "@/lib/choices";
+import { Button } from "@trenova/shared/components/ui/button";
+import { FormControl, FormGroup, FormSection } from "@trenova/shared/components/ui/form";
+import { useT } from "@trenova/shared/i18n/use-t";
 import type { Carrier } from "@trenova/shared/types/carrier";
 import { useFieldArray, useFormContext, useWatch } from "react-hook-form";
 
@@ -158,7 +158,7 @@ export function CarrierComplianceForm() {
         title={t("Compliance status")}
         description={t("Qualification standing and FMCSA safety rating for this carrier.")}
       >
-        <FormGroup cols={2}>
+        <FormGroup cols={1}>
           <FormControl>
             <SelectField
               control={control}

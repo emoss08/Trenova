@@ -32,6 +32,7 @@ type WorkerPTOConnection = {
     endCursor?: string | null;
   };
   totalCount?: number | null;
+  totalCountExact?: boolean | null;
 };
 
 function workerPTOConnectionToLimitOffset(
@@ -42,6 +43,7 @@ function workerPTOConnectionToLimitOffset(
   return {
     results,
     count: connection.totalCount ?? results.length,
+    totalCountExact: connection.totalCount == null || connection.totalCountExact !== false,
     next: connection.pageInfo?.hasNextPage ? (connection.pageInfo.endCursor ?? null) : null,
     prev: null,
   };

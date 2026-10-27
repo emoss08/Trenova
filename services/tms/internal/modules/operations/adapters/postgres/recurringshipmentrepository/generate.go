@@ -6,17 +6,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/recurringshipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/app/quotaservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/platformplanports"
 	"github.com/emoss08/trenova/internal/modules/kernel/domain/platformcatalog"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/order/orderdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/recurringshipment/recurringshipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/recurringshipmentports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -24,7 +25,6 @@ import (
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -52,7 +52,7 @@ func (r *repository) applyDerivedFields(
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		source, err := shipmentrepository.LoadShipmentGraphSource(
 			ctx,
-			r.db.DBForContext(ctx),
+			r.db.Keel(ctx),
 			pagination.TenantInfo{
 				OrgID: entity.OrganizationID,
 				BuID:  entity.BusinessUnitID,
@@ -168,101 +168,99 @@ func (r *repository) Generate(
 			)
 
 			result := new(recurringshipmentports.GenerateRecurringShipmentResult)
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					series, err := r.lockSeries(c, tx, req.TenantInfo, req.RecurringShipmentID)
-					if err != nil {
-						return err
+			db := r.db.Keel(ctx)
+			err := func(c context.Context) error {
+				series, err := r.lockSeries(c, db, req.TenantInfo, req.RecurringShipmentID)
+				if err != nil {
+					return err
+				}
+				result.Series = series
+
+				if validationErr := validateGenerationEligibility(
+					series,
+					req.Trigger,
+				); validationErr != nil {
+					return validationErr
+				}
+
+				occurrence, occErr := resolveOccurrence(series, req)
+				if occErr != nil {
+					return occErr
+				}
+
+				now := timeutils.NowUnix()
+
+				if req.Trigger == recurringshipment.RunTriggerAuto &&
+					occurrence.At < now-missedGraceSeconds {
+					return r.recordMissedOccurrence(c, db, series, occurrence, result)
+				}
+
+				alreadyGenerated, dupErr := r.occurrenceAlreadyGenerated(
+					c,
+					db,
+					series,
+					occurrence.At,
+				)
+				if dupErr != nil {
+					return dupErr
+				}
+
+				if alreadyGenerated && req.Trigger == recurringshipment.RunTriggerAuto {
+					return r.advanceSeriesOnly(c, db, series, occurrence)
+				}
+
+				if quotaErr := r.enforceGeneratedShipment(c, series); quotaErr != nil {
+					return quotaErr
+				}
+
+				generated, genErr := r.materializeOccurrence(c, db, series, occurrence, req)
+				if genErr != nil {
+					return genErr
+				}
+
+				run := &recurringshipment.RecurringShipmentRun{
+					BusinessUnitID:      series.BusinessUnitID,
+					OrganizationID:      series.OrganizationID,
+					RecurringShipmentID: series.ID,
+					GeneratedShipmentID: generated.ID,
+					TriggeredByID:       req.RequestedBy,
+					Status:              recurringshipment.RunStatusGenerated,
+					Trigger:             req.Trigger,
+					OccurrenceAt:        occurrence.At,
+				}
+				if occurrence.Shifted {
+					run.OriginalOccurrenceAt = &occurrence.OriginalAt
+				}
+
+				if insertErr := recurringshipmentdb.RecurringShipmentRuns.Create(
+					c,
+					db,
+					run,
+				); insertErr != nil {
+					return runErrors.Map(insertErr, run.ID.String())
+				}
+
+				series.GenerationCount++
+				series.LastOccurrenceAt = &occurrence.At
+				series.LastRunAt = &now
+				series.LastGeneratedShipmentID = generated.ID
+				series.ConsecutiveFailures = 0
+
+				if shouldAdvancePointer(series, req, occurrence) {
+					if advanceErr := advanceSeries(series, occurrence); advanceErr != nil {
+						return advanceErr
 					}
-					result.Series = series
+				}
 
-					if validationErr := validateGenerationEligibility(
-						series,
-						req.Trigger,
-					); validationErr != nil {
-						return validationErr
-					}
+				if updateErr := r.persistSeries(c, db, series); updateErr != nil {
+					return updateErr
+				}
 
-					occurrence, occErr := resolveOccurrence(series, req)
-					if occErr != nil {
-						return occErr
-					}
+				result.Run = run
+				result.Shipment = generated
 
-					now := timeutils.NowUnix()
-
-					if req.Trigger == recurringshipment.RunTriggerAuto &&
-						occurrence.At < now-missedGraceSeconds {
-						return r.recordMissedOccurrence(c, tx, series, occurrence, result)
-					}
-
-					alreadyGenerated, dupErr := r.occurrenceAlreadyGenerated(
-						c,
-						tx,
-						series,
-						occurrence.At,
-					)
-					if dupErr != nil {
-						return dupErr
-					}
-
-					if alreadyGenerated && req.Trigger == recurringshipment.RunTriggerAuto {
-						return r.advanceSeriesOnly(c, tx, series, occurrence)
-					}
-
-					if quotaErr := r.enforceGeneratedShipment(c, series); quotaErr != nil {
-						return quotaErr
-					}
-
-					generated, genErr := r.materializeOccurrence(c, tx, series, occurrence, req)
-					if genErr != nil {
-						return genErr
-					}
-
-					run := &recurringshipment.RecurringShipmentRun{
-						BusinessUnitID:      series.BusinessUnitID,
-						OrganizationID:      series.OrganizationID,
-						RecurringShipmentID: series.ID,
-						GeneratedShipmentID: generated.ID,
-						TriggeredByID:       req.RequestedBy,
-						Status:              recurringshipment.RunStatusGenerated,
-						Trigger:             req.Trigger,
-						OccurrenceAt:        occurrence.At,
-					}
-					if occurrence.Shifted {
-						run.OriginalOccurrenceAt = &occurrence.OriginalAt
-					}
-
-					if _, insertErr := tx.NewInsert().
-						Model(run).
-						Returning("*").
-						Exec(c); insertErr != nil {
-						return insertErr
-					}
-
-					series.GenerationCount++
-					series.LastOccurrenceAt = &occurrence.At
-					series.LastRunAt = &now
-					series.LastGeneratedShipmentID = generated.ID
-					series.ConsecutiveFailures = 0
-
-					if shouldAdvancePointer(series, req, occurrence) {
-						if advanceErr := advanceSeries(series, occurrence); advanceErr != nil {
-							return advanceErr
-						}
-					}
-
-					if updateErr := r.persistSeries(c, tx, series); updateErr != nil {
-						return updateErr
-					}
-
-					result.Run = run
-					result.Shipment = generated
-
-					return nil
-				},
-			)
+				return nil
+			}(ctx)
 			if err != nil {
 				log.Error("failed to generate recurring shipment occurrence", zap.Error(err))
 				return nil, dberror.MapRetryableTransactionError(
@@ -298,7 +296,7 @@ func (r *repository) PlanGenerate(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*recurringshipmentports.RecurringShipmentGenerationPlan, error) {
-			db := r.db.DBForContext(ctx)
+			db := r.db.Keel(ctx)
 			series, err := r.GetByID(ctx, &recurringshipmentports.GetRecurringShipmentByIDRequest{
 				ID:         req.RecurringShipmentID,
 				TenantInfo: req.TenantInfo,
@@ -375,54 +373,52 @@ func (r *repository) RecordGenerationFailure(
 			)
 
 			var series *recurringshipment.RecurringShipment
-			err := r.db.WithTx(
-				ctx,
-				kernelports.TxOptions{},
-				func(c context.Context, tx bun.Tx) error {
-					locked, err := r.lockSeries(c, tx, req.TenantInfo, req.RecurringShipmentID)
-					if err != nil {
-						return err
-					}
-					series = locked
+			db := r.db.Keel(ctx)
+			err := func(c context.Context) error {
+				locked, err := r.lockSeries(c, db, req.TenantInfo, req.RecurringShipmentID)
+				if err != nil {
+					return err
+				}
+				series = locked
 
-					run := &recurringshipment.RecurringShipmentRun{
-						BusinessUnitID:      series.BusinessUnitID,
-						OrganizationID:      series.OrganizationID,
-						RecurringShipmentID: series.ID,
-						Status:              recurringshipment.RunStatusFailed,
-						Trigger:             recurringshipment.RunTriggerAuto,
-						OccurrenceAt:        req.OccurrenceAt,
-						Detail:              req.Detail,
-					}
-					if _, insertErr := tx.NewInsert().
-						Model(run).
-						Returning("*").
-						Exec(c); insertErr != nil {
-						return insertErr
-					}
+				run := &recurringshipment.RecurringShipmentRun{
+					BusinessUnitID:      series.BusinessUnitID,
+					OrganizationID:      series.OrganizationID,
+					RecurringShipmentID: series.ID,
+					Status:              recurringshipment.RunStatusFailed,
+					Trigger:             recurringshipment.RunTriggerAuto,
+					OccurrenceAt:        req.OccurrenceAt,
+					Detail:              req.Detail,
+				}
+				if insertErr := recurringshipmentdb.RecurringShipmentRuns.Create(
+					c,
+					db,
+					run,
+				); insertErr != nil {
+					return runErrors.Map(insertErr, run.ID.String())
+				}
 
-					now := timeutils.NowUnix()
-					series.ConsecutiveFailures++
-					series.LastRunAt = &now
+				now := timeutils.NowUnix()
+				series.ConsecutiveFailures++
+				series.LastRunAt = &now
 
-					// Advance first so a persistently failing series can never spin on
-					// every dispatch tick.
-					occurrence := &recurringshipment.Occurrence{
-						At:         req.OccurrenceAt,
-						OriginalAt: seriesSourceSlot(series, req.OccurrenceAt),
-					}
-					if advanceErr := advanceSeries(series, occurrence); advanceErr != nil {
-						return advanceErr
-					}
+				// Advance first so a persistently failing series can never spin on
+				// every dispatch tick.
+				occurrence := &recurringshipment.Occurrence{
+					At:         req.OccurrenceAt,
+					OriginalAt: seriesSourceSlot(series, req.OccurrenceAt),
+				}
+				if advanceErr := advanceSeries(series, occurrence); advanceErr != nil {
+					return advanceErr
+				}
 
-					if series.ConsecutiveFailures >= maxConsecutiveGenerationFailures &&
-						series.Status == recurringshipment.StatusActive {
-						series.Status = recurringshipment.StatusPaused
-					}
+				if series.ConsecutiveFailures >= maxConsecutiveGenerationFailures &&
+					series.Status == recurringshipment.StatusActive {
+					series.Status = recurringshipment.StatusPaused
+				}
 
-					return r.persistSeries(c, tx, series)
-				},
-			)
+				return r.persistSeries(c, db, series)
+			}(ctx)
 			if err != nil {
 				log.Error("failed to record recurring generation failure", zap.Error(err))
 				return nil, err
@@ -435,22 +431,14 @@ func (r *repository) RecordGenerationFailure(
 
 func (r *repository) lockSeries(
 	ctx context.Context,
-	tx bun.Tx,
-	tenantInfo pagination.TenantInfo,
+	db *keel.DB,
+	_ pagination.TenantInfo,
 	seriesID pulid.ID,
 ) (*recurringshipment.RecurringShipment, error) {
-	rsh := recurringshipmentcol.RecurringShipmentColumns
-	series := new(recurringshipment.RecurringShipment)
-	err := tx.NewSelect().
-		Model(series).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return recurringshipmentcol.RecurringShipmentScopeTenant(sq, tenantInfo).
-				Where(rsh.ID.Eq(), seriesID)
-		}).
-		For("UPDATE").
-		Scan(ctx)
+	rsh := recurringshipmentdb.RecurringShipments
+	series, err := rsh.Where(rsh.ID.Eq(seriesID)).Lock(keel.ForUpdate).One(ctx, db)
 	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "RecurringShipment")
+		return nil, seriesErrors.Map(err, seriesID.String())
 	}
 
 	return series, nil
@@ -587,7 +575,7 @@ func advanceSeries(
 
 func (r *repository) recordMissedOccurrence(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	series *recurringshipment.RecurringShipment,
 	occurrence *recurringshipment.Occurrence,
 	result *recurringshipmentports.GenerateRecurringShipmentResult,
@@ -605,8 +593,8 @@ func (r *repository) recordMissedOccurrence(
 		run.OriginalOccurrenceAt = &occurrence.OriginalAt
 	}
 
-	if _, err := tx.NewInsert().Model(run).Returning("*").Exec(ctx); err != nil {
-		return err
+	if err := recurringshipmentdb.RecurringShipmentRuns.Create(ctx, db, run); err != nil {
+		return runErrors.Map(err, run.ID.String())
 	}
 
 	now := timeutils.NowUnix()
@@ -616,7 +604,7 @@ func (r *repository) recordMissedOccurrence(
 		return err
 	}
 
-	if err := r.persistSeries(ctx, tx, series); err != nil {
+	if err := r.persistSeries(ctx, db, series); err != nil {
 		return err
 	}
 
@@ -627,7 +615,7 @@ func (r *repository) recordMissedOccurrence(
 
 func (r *repository) advanceSeriesOnly(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	series *recurringshipment.RecurringShipment,
 	occurrence *recurringshipment.Occurrence,
 ) error {
@@ -638,41 +626,34 @@ func (r *repository) advanceSeriesOnly(
 		return err
 	}
 
-	return r.persistSeries(ctx, tx, series)
+	return r.persistSeries(ctx, db, series)
 }
 
 func (r *repository) occurrenceAlreadyGenerated(
 	ctx context.Context,
-	tx bun.IDB,
+	db *keel.DB,
 	series *recurringshipment.RecurringShipment,
 	occurrenceAt int64,
 ) (bool, error) {
-	rsr := recurringshipmentcol.RecurringShipmentRunColumns
+	rsr := recurringshipmentdb.RecurringShipmentRuns
 
-	return tx.NewSelect().
-		Model((*recurringshipment.RecurringShipmentRun)(nil)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return recurringshipmentcol.RecurringShipmentRunScopeTenant(sq, pagination.TenantInfo{
-				OrgID: series.OrganizationID,
-				BuID:  series.BusinessUnitID,
-			}).
-				Where(rsr.RecurringShipmentID.Eq(), series.ID).
-				Where(rsr.OccurrenceAt.Eq(), occurrenceAt).
-				Where(rsr.Status.Eq(), recurringshipment.RunStatusGenerated)
-		}).
-		Exists(ctx)
+	return rsr.Where(
+		rsr.RecurringShipmentID.Eq(series.ID),
+		rsr.OccurrenceAt.Eq(occurrenceAt),
+		rsr.Status.Eq(recurringshipment.RunStatusGenerated),
+	).Exists(ctx, db)
 }
 
 func (r *repository) materializeOccurrence(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	series *recurringshipment.RecurringShipment,
 	occurrence *recurringshipment.Occurrence,
 	req *recurringshipmentports.GenerateRecurringShipmentRequest,
 ) (*shipment.Shipment, error) {
 	source, err := shipmentrepository.LoadShipmentGraphSource(
 		ctx,
-		tx,
+		db,
 		pagination.TenantInfo{
 			OrgID: series.OrganizationID,
 			BuID:  series.BusinessUnitID,
@@ -685,7 +666,7 @@ func (r *repository) materializeOccurrence(
 
 	locationCode, businessUnitCode, err := shipmentrepository.ResolveSequenceCodes(
 		ctx,
-		tx,
+		db,
 		source,
 	)
 	if err != nil {
@@ -731,47 +712,32 @@ func (r *repository) materializeOccurrence(
 	autoOrder := shipmentrepository.BuildAutoOrder(generated, orderNumbers[0])
 	generated.OrderID = autoOrder.ID
 
-	if _, err = tx.NewInsert().Model(autoOrder).Returning("NULL").Exec(ctx); err != nil {
+	if err = orderdb.Orders.Create(ctx, db, autoOrder); err != nil {
+		return nil, err
+	}
+	if err = shipmentdb.Shipments.Create(ctx, db, generated); err != nil {
 		return nil, err
 	}
 
-	if _, err = tx.NewInsert().Model(generated).Returning("NULL").Exec(ctx); err != nil {
+	stops := make([]*shipment.Stop, 0, len(generated.Moves))
+	for _, move := range generated.Moves {
+		stops = append(stops, move.Stops...)
+	}
+	if err = shipmentdb.ShipmentMoves.CreateMany(ctx, db, generated.Moves); err != nil {
 		return nil, err
 	}
-
-	if len(generated.Moves) > 0 {
-		if _, err = tx.NewInsert().Model(&generated.Moves).Returning("NULL").Exec(ctx); err != nil {
-			return nil, err
-		}
-
-		stops := make([]*shipment.Stop, 0, len(generated.Moves))
-		for _, move := range generated.Moves {
-			stops = append(stops, move.Stops...)
-		}
-
-		if len(stops) > 0 {
-			if _, err = tx.NewInsert().Model(&stops).Returning("NULL").Exec(ctx); err != nil {
-				return nil, err
-			}
-		}
+	if err = shipmentdb.Stops.CreateMany(ctx, db, stops); err != nil {
+		return nil, err
 	}
-
-	if len(generated.AdditionalCharges) > 0 {
-		if _, err = tx.NewInsert().
-			Model(&generated.AdditionalCharges).
-			Returning("NULL").
-			Exec(ctx); err != nil {
-			return nil, err
-		}
+	if err = shipmentdb.AdditionalCharges.CreateMany(
+		ctx,
+		db,
+		generated.AdditionalCharges,
+	); err != nil {
+		return nil, err
 	}
-
-	if len(generated.Commodities) > 0 {
-		if _, err = tx.NewInsert().
-			Model(&generated.Commodities).
-			Returning("NULL").
-			Exec(ctx); err != nil {
-			return nil, err
-		}
+	if err = shipmentdb.ShipmentCommodities.CreateMany(ctx, db, generated.Commodities); err != nil {
+		return nil, err
 	}
 
 	return generated, nil
@@ -779,21 +745,15 @@ func (r *repository) materializeOccurrence(
 
 func (r *repository) persistSeries(
 	ctx context.Context,
-	tx bun.Tx,
+	db *keel.DB,
 	series *recurringshipment.RecurringShipment,
 ) error {
-	series.Version++
-
-	results, err := tx.NewUpdate().
-		Model(series).
-		WherePK().
-		Returning("*").
-		Exec(ctx)
+	err := recurringshipmentdb.RecurringShipments.Save(ctx, db, series)
 	if err != nil {
-		return err
+		return seriesErrors.Map(err, series.ID.String())
 	}
 
-	return dberror.CheckRowsAffected(results, "RecurringShipment", series.ID.String())
+	return nil
 }
 
 func deriveRecurringBOL(sourceBOL string, occurrenceAt int64, timezone string) string {

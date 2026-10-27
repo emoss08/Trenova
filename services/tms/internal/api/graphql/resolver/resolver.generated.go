@@ -67,9 +67,11 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/extractionshadowresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringcompanyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/factoringresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalperiodresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fiscalyearresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetcoderesolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fleetsafetyresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/formulalibraryresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/formulatemplateresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelpurchaseresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/fuelsurchargeresolver"
@@ -94,6 +96,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orderresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgholidayresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/orgstructureresolver"
+	"github.com/emoss08/trenova/internal/api/graphql/resolver/pageaccessresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/performancereviewresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/ptopolicyresolver"
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/rateresolver"
@@ -243,6 +246,7 @@ type Resolver struct {
 	dQFFile                            *workerdqfresolver.DQFFileResolver
 	dQFItem                            *workerdqfresolver.DQFItemResolver
 	detentionOccurrence                *detentionresolver.DetentionOccurrenceResolver
+	detentionPreviewResult             *detentionresolver.DetentionPreviewResultResolver
 	disciplinaryLadder                 *workersafetyresolver.DisciplinaryLadderResolver
 	distanceProfile                    *distanceprofileresolver.DistanceProfileResolver
 	documentTemplate                   *documenttemplateresolver.DocumentTemplateResolver
@@ -254,11 +258,10 @@ type Resolver struct {
 	driverSettlementLine               *driversettlementresolver.DriverSettlementLineResolver
 	driverSettlementLineGroup          *driversettlementresolver.DriverSettlementLineGroupResolver
 	drugAlcoholStanding                *workerdrugalcoholresolver.DrugAlcoholStandingResolver
-	ediAcknowledgmentConfig            *ediresolver.EdiAcknowledgmentConfigResolver
 	ediCarrierInvoice                  *carriersettlementresolver.EdiCarrierInvoiceResolver
+	ediFlowInstance                    *ediresolver.EdiFlowInstanceResolver
+	ediLadingVersion                   *ediresolver.EdiLadingVersionResolver
 	ediMessage                         *ediresolver.EdiMessageResolver
-	ediPartnerDocumentProfile          *ediresolver.EdiPartnerDocumentProfileResolver
-	ediTemplate                        *ediresolver.EdiTemplateResolver
 	ediTransfer                        *ediresolver.EdiTransferResolver
 	equipmentContinuity                *equipmentcontinuityresolver.EquipmentContinuityResolver
 	escrowAccount                      *driversettlementresolver.EscrowAccountResolver
@@ -291,7 +294,10 @@ type Resolver struct {
 	fiscalYear                         *fiscalyearresolver.FiscalYearResolver
 	fleetSafetyRank                    *fleetsafetyresolver.FleetSafetyRankResolver
 	fleetSafetyTerminal                *fleetsafetyresolver.FleetSafetyTerminalResolver
+	formulaLibraryImport               *formulatemplateresolver.FormulaLibraryImportResolver
+	formulaLibraryVersion              *formulalibraryresolver.FormulaLibraryVersionResolver
 	formulaTemplate                    *formulatemplateresolver.FormulaTemplateResolver
+	formulaTemplateTable               *formulatemplateresolver.FormulaTemplateTableResolver
 	fuelCard                           *fuelpurchaseresolver.FuelCardResolver
 	fuelCardDeskCard                   *fuelpurchaseresolver.FuelCardDeskCardResolver
 	fuelFeedStatus                     *fuelpurchaseresolver.FuelFeedStatusResolver
@@ -365,6 +371,10 @@ type Resolver struct {
 	portalCredential                   *driverportalresolver.PortalCredentialResolver
 	portalTraining                     *workertrainingresolver.PortalTrainingResolver
 	query                              *queryResolver
+	rateAgreement                      *rateresolver.RateAgreementResolver
+	rateMatrix                         *rateresolver.RateMatrixResolver
+	rateMatrixVersion                  *rateresolver.RateMatrixVersionResolver
+	reportSchedule                     *reportresolver.ReportScheduleResolver
 	reviewRating                       *performancereviewresolver.ReviewRatingResolver
 	riskDecision                       *securityactivityresolver.RiskDecisionResolver
 	role                               *roleresolver.RoleResolver
@@ -381,6 +391,7 @@ type Resolver struct {
 	shipmentMove                       *shipmentresolver.ShipmentMoveResolver
 	shipmentMoveJurisdictionMile       *shipmentresolver.ShipmentMoveJurisdictionMileResolver
 	shipmentRatingDetail               *shipmentresolver.ShipmentRatingDetailResolver
+	shipmentRatingReviewApproval       *shipmentresolver.ShipmentRatingReviewApprovalResolver
 	tCASubscription                    *tablechangealertresolver.TCASubscriptionResolver
 	tableConfiguration                 *tableconfigurationresolver.TableConfigurationResolver
 	tender                             *tenderresolver.TenderResolver
@@ -765,6 +776,10 @@ func FromServices(s *Services) *Resolver {
 		Core:                    s.Core,
 		FactoringCompanyService: s.FactoringCompanyService,
 	}
+	fiscalperiodDeps := &fiscalperiodresolver.Deps{
+		Core:                s.Core,
+		FiscalPeriodService: s.FiscalPeriodService,
+	}
 	fiscalyearDeps := &fiscalyearresolver.Deps{
 		Core:              s.Core,
 		FiscalYearService: s.FiscalYearService,
@@ -776,6 +791,10 @@ func FromServices(s *Services) *Resolver {
 	fleetsafetyDeps := &fleetsafetyresolver.Deps{
 		Core:                s.Core,
 		WorkerSafetyService: s.WorkerSafetyService,
+	}
+	formulalibraryDeps := &formulalibraryresolver.Deps{
+		Core:                  s.Core,
+		FormulaLibraryService: s.FormulaLibraryService,
 	}
 	formulatemplateDeps := &formulatemplateresolver.Deps{
 		Core:                   s.Core,
@@ -886,6 +905,10 @@ func FromServices(s *Services) *Resolver {
 	orgstructureDeps := &orgstructureresolver.Deps{
 		Core: s.Core,
 	}
+	pageaccessDeps := &pageaccessresolver.Deps{
+		Core:              s.Core,
+		PageAccessService: s.PageAccessService,
+	}
 	performancereviewDeps := &performancereviewresolver.Deps{
 		Core:                     s.Core,
 		PerformanceReviewService: s.PerformanceReviewService,
@@ -977,6 +1000,7 @@ func FromServices(s *Services) *Resolver {
 		FiscalPeriodRepo:             s.FiscalPeriodRepo,
 		EmailService:                 s.EmailService,
 		DistanceProfileService:       s.DistanceProfileService,
+		JournalEntryService:          s.JournalEntryService,
 		ServiceFailureReasonCodeSvc:  s.ServiceFailureReasonCodeSvc,
 		AiProviderService:            s.AiProviderService,
 		CaptureService:               s.CaptureService,
@@ -1003,16 +1027,17 @@ func FromServices(s *Services) *Resolver {
 		ServiceTypeService: s.ServiceTypeService,
 	}
 	shipmentDeps := &shipmentresolver.Deps{
-		Core:                    s.Core,
-		AnalyticsService:        s.AnalyticsService,
-		ShipmentService:         s.ShipmentService,
-		ShipmentCommentService:  s.ShipmentCommentService,
-		ShipmentEventService:    s.ShipmentEventService,
-		TrackingEventService:    s.TrackingEventService,
-		ShipmentImportAssistant: s.ShipmentImportAssistant,
-		InvoiceService:          s.InvoiceService,
-		DriverSettlementRepo:    s.DriverSettlementRepo,
-		CarrierSettlementRepo:   s.CarrierSettlementRepo,
+		Core:                        s.Core,
+		AnalyticsService:            s.AnalyticsService,
+		ShipmentService:             s.ShipmentService,
+		ShipmentCommentService:      s.ShipmentCommentService,
+		ShipmentRatingReviewService: s.ShipmentRatingReviewService,
+		ShipmentEventService:        s.ShipmentEventService,
+		TrackingEventService:        s.TrackingEventService,
+		ShipmentImportAssistant:     s.ShipmentImportAssistant,
+		InvoiceService:              s.InvoiceService,
+		DriverSettlementRepo:        s.DriverSettlementRepo,
+		CarrierSettlementRepo:       s.CarrierSettlementRepo,
 	}
 	shipmentboardDeps := &shipmentboardresolver.Deps{
 		Core:                   s.Core,
@@ -1261,6 +1286,7 @@ func FromServices(s *Services) *Resolver {
 		dQFFile:                      &workerdqfresolver.DQFFileResolver{Deps: workerdqfDeps},
 		dQFItem:                      &workerdqfresolver.DQFItemResolver{Deps: workerdqfDeps},
 		detentionOccurrence:          &detentionresolver.DetentionOccurrenceResolver{Deps: detentionDeps},
+		detentionPreviewResult:       &detentionresolver.DetentionPreviewResultResolver{Deps: detentionDeps},
 		disciplinaryLadder:           &workersafetyresolver.DisciplinaryLadderResolver{Deps: workersafetyDeps},
 		distanceProfile:              &distanceprofileresolver.DistanceProfileResolver{Deps: distanceprofileDeps},
 		documentTemplate:             &documenttemplateresolver.DocumentTemplateResolver{Deps: documenttemplateDeps},
@@ -1272,11 +1298,10 @@ func FromServices(s *Services) *Resolver {
 		driverSettlementLine:         &driversettlementresolver.DriverSettlementLineResolver{Deps: driversettlementDeps},
 		driverSettlementLineGroup:    &driversettlementresolver.DriverSettlementLineGroupResolver{Deps: driversettlementDeps},
 		drugAlcoholStanding:          &workerdrugalcoholresolver.DrugAlcoholStandingResolver{Deps: workerdrugalcoholDeps},
-		ediAcknowledgmentConfig:      &ediresolver.EdiAcknowledgmentConfigResolver{Deps: ediDeps},
 		ediCarrierInvoice:            &carriersettlementresolver.EdiCarrierInvoiceResolver{Deps: carriersettlementDeps},
+		ediFlowInstance:              &ediresolver.EdiFlowInstanceResolver{Deps: ediDeps},
+		ediLadingVersion:             &ediresolver.EdiLadingVersionResolver{Deps: ediDeps},
 		ediMessage:                   &ediresolver.EdiMessageResolver{Deps: ediDeps},
-		ediPartnerDocumentProfile:    &ediresolver.EdiPartnerDocumentProfileResolver{Deps: ediDeps},
-		ediTemplate:                  &ediresolver.EdiTemplateResolver{Deps: ediDeps},
 		ediTransfer:                  &ediresolver.EdiTransferResolver{Deps: ediDeps},
 		equipmentContinuity:          &equipmentcontinuityresolver.EquipmentContinuityResolver{Deps: equipmentcontinuityDeps},
 		escrowAccount:                &driversettlementresolver.EscrowAccountResolver{Deps: driversettlementDeps},
@@ -1309,7 +1334,10 @@ func FromServices(s *Services) *Resolver {
 		fiscalYear:                   &fiscalyearresolver.FiscalYearResolver{Deps: fiscalyearDeps},
 		fleetSafetyRank:              &fleetsafetyresolver.FleetSafetyRankResolver{Deps: fleetsafetyDeps},
 		fleetSafetyTerminal:          &fleetsafetyresolver.FleetSafetyTerminalResolver{Deps: fleetsafetyDeps},
+		formulaLibraryImport:         &formulatemplateresolver.FormulaLibraryImportResolver{Deps: formulatemplateDeps},
+		formulaLibraryVersion:        &formulalibraryresolver.FormulaLibraryVersionResolver{Deps: formulalibraryDeps},
 		formulaTemplate:              &formulatemplateresolver.FormulaTemplateResolver{Deps: formulatemplateDeps},
+		formulaTemplateTable:         &formulatemplateresolver.FormulaTemplateTableResolver{Deps: formulatemplateDeps},
 		fuelCard:                     &fuelpurchaseresolver.FuelCardResolver{Deps: fuelpurchaseDeps},
 		fuelCardDeskCard:             &fuelpurchaseresolver.FuelCardDeskCardResolver{Deps: fuelpurchaseDeps},
 		fuelFeedStatus:               &fuelpurchaseresolver.FuelFeedStatusResolver{Deps: fuelpurchaseDeps},
@@ -1539,9 +1567,11 @@ func FromServices(s *Services) *Resolver {
 			extractionshadowQuery:         &extractionshadowQuery{Deps: extractionshadowDeps},
 			factoringQuery:                &factoringQuery{Deps: factoringDeps},
 			factoringcompanyQuery:         &factoringcompanyQuery{Deps: factoringcompanyDeps},
+			fiscalperiodQuery:             &fiscalperiodQuery{Deps: fiscalperiodDeps},
 			fiscalyearQuery:               &fiscalyearQuery{Deps: fiscalyearDeps},
 			fleetcodeQuery:                &fleetcodeQuery{Deps: fleetcodeDeps},
 			fleetsafetyQuery:              &fleetsafetyQuery{Deps: fleetsafetyDeps},
+			formulalibraryQuery:           &formulalibraryQuery{Deps: formulalibraryDeps},
 			formulatemplateQuery:          &formulatemplateQuery{Deps: formulatemplateDeps},
 			fuelpurchaseQuery:             &fuelpurchaseQuery{Deps: fuelpurchaseDeps},
 			fuelsurchargeQuery:            &fuelsurchargeQuery{Deps: fuelsurchargeDeps},
@@ -1566,6 +1596,7 @@ func FromServices(s *Services) *Resolver {
 			orderQuery:                    &orderQuery{Deps: orderDeps},
 			orgholidayQuery:               &orgholidayQuery{Deps: orgholidayDeps},
 			orgstructureQuery:             &orgstructureQuery{Deps: orgstructureDeps},
+			pageaccessQuery:               &pageaccessQuery{Deps: pageaccessDeps},
 			performancereviewQuery:        &performancereviewQuery{Deps: performancereviewDeps},
 			ptopolicyQuery:                &ptopolicyQuery{Deps: ptopolicyDeps},
 			rateQuery:                     &rateQuery{Deps: rateDeps},
@@ -1610,6 +1641,10 @@ func FromServices(s *Services) *Resolver {
 			workersafetyQuery:             &workersafetyQuery{Deps: workersafetyDeps},
 			workertrainingQuery:           &workertrainingQuery{Deps: workertrainingDeps},
 		},
+		rateAgreement:                &rateresolver.RateAgreementResolver{Deps: rateDeps},
+		rateMatrix:                   &rateresolver.RateMatrixResolver{Deps: rateDeps},
+		rateMatrixVersion:            &rateresolver.RateMatrixVersionResolver{Deps: rateDeps},
+		reportSchedule:               &reportresolver.ReportScheduleResolver{Deps: reportDeps},
 		reviewRating:                 &performancereviewresolver.ReviewRatingResolver{Deps: performancereviewDeps},
 		riskDecision:                 &securityactivityresolver.RiskDecisionResolver{Deps: securityactivityDeps},
 		role:                         &roleresolver.RoleResolver{Deps: roleDeps},
@@ -1626,6 +1661,7 @@ func FromServices(s *Services) *Resolver {
 		shipmentMove:                 &shipmentresolver.ShipmentMoveResolver{Deps: shipmentDeps},
 		shipmentMoveJurisdictionMile: &shipmentresolver.ShipmentMoveJurisdictionMileResolver{Deps: shipmentDeps},
 		shipmentRatingDetail:         &shipmentresolver.ShipmentRatingDetailResolver{Deps: shipmentDeps},
+		shipmentRatingReviewApproval: &shipmentresolver.ShipmentRatingReviewApprovalResolver{Deps: shipmentDeps},
 		tCASubscription:              &tablechangealertresolver.TCASubscriptionResolver{Deps: tablechangealertDeps},
 		tableConfiguration:           &tableconfigurationresolver.TableConfigurationResolver{Deps: tableconfigurationDeps},
 		tender:                       &tenderresolver.TenderResolver{Deps: tenderDeps},
@@ -2115,6 +2151,10 @@ func (r *Resolver) DetentionOccurrence() generated.DetentionOccurrenceResolver {
 	return r.detentionOccurrence
 }
 
+func (r *Resolver) DetentionPreviewResult() generated.DetentionPreviewResultResolver {
+	return r.detentionPreviewResult
+}
+
 func (r *Resolver) DisciplinaryLadder() generated.DisciplinaryLadderResolver {
 	return r.disciplinaryLadder
 }
@@ -2159,24 +2199,20 @@ func (r *Resolver) DrugAlcoholStanding() generated.DrugAlcoholStandingResolver {
 	return r.drugAlcoholStanding
 }
 
-func (r *Resolver) EdiAcknowledgmentConfig() generated.EdiAcknowledgmentConfigResolver {
-	return r.ediAcknowledgmentConfig
-}
-
 func (r *Resolver) EdiCarrierInvoice() generated.EdiCarrierInvoiceResolver {
 	return r.ediCarrierInvoice
 }
 
+func (r *Resolver) EdiFlowInstance() generated.EdiFlowInstanceResolver {
+	return r.ediFlowInstance
+}
+
+func (r *Resolver) EdiLadingVersion() generated.EdiLadingVersionResolver {
+	return r.ediLadingVersion
+}
+
 func (r *Resolver) EdiMessage() generated.EdiMessageResolver {
 	return r.ediMessage
-}
-
-func (r *Resolver) EdiPartnerDocumentProfile() generated.EdiPartnerDocumentProfileResolver {
-	return r.ediPartnerDocumentProfile
-}
-
-func (r *Resolver) EdiTemplate() generated.EdiTemplateResolver {
-	return r.ediTemplate
 }
 
 func (r *Resolver) EdiTransfer() generated.EdiTransferResolver {
@@ -2307,8 +2343,20 @@ func (r *Resolver) FleetSafetyTerminal() generated.FleetSafetyTerminalResolver {
 	return r.fleetSafetyTerminal
 }
 
+func (r *Resolver) FormulaLibraryImport() generated.FormulaLibraryImportResolver {
+	return r.formulaLibraryImport
+}
+
+func (r *Resolver) FormulaLibraryVersion() generated.FormulaLibraryVersionResolver {
+	return r.formulaLibraryVersion
+}
+
 func (r *Resolver) FormulaTemplate() generated.FormulaTemplateResolver {
 	return r.formulaTemplate
+}
+
+func (r *Resolver) FormulaTemplateTable() generated.FormulaTemplateTableResolver {
+	return r.formulaTemplateTable
 }
 
 func (r *Resolver) FuelCard() generated.FuelCardResolver {
@@ -2768,9 +2816,11 @@ type queryResolver struct {
 	*extractionshadowQuery
 	*factoringQuery
 	*factoringcompanyQuery
+	*fiscalperiodQuery
 	*fiscalyearQuery
 	*fleetcodeQuery
 	*fleetsafetyQuery
+	*formulalibraryQuery
 	*formulatemplateQuery
 	*fuelpurchaseQuery
 	*fuelsurchargeQuery
@@ -2795,6 +2845,7 @@ type queryResolver struct {
 	*orderQuery
 	*orgholidayQuery
 	*orgstructureQuery
+	*pageaccessQuery
 	*performancereviewQuery
 	*ptopolicyQuery
 	*rateQuery
@@ -2838,6 +2889,22 @@ type queryResolver struct {
 	*workeroverviewQuery
 	*workersafetyQuery
 	*workertrainingQuery
+}
+
+func (r *Resolver) RateAgreement() generated.RateAgreementResolver {
+	return r.rateAgreement
+}
+
+func (r *Resolver) RateMatrix() generated.RateMatrixResolver {
+	return r.rateMatrix
+}
+
+func (r *Resolver) RateMatrixVersion() generated.RateMatrixVersionResolver {
+	return r.rateMatrixVersion
+}
+
+func (r *Resolver) ReportSchedule() generated.ReportScheduleResolver {
+	return r.reportSchedule
 }
 
 func (r *Resolver) ReviewRating() generated.ReviewRatingResolver {
@@ -2902,6 +2969,10 @@ func (r *Resolver) ShipmentMoveJurisdictionMile() generated.ShipmentMoveJurisdic
 
 func (r *Resolver) ShipmentRatingDetail() generated.ShipmentRatingDetailResolver {
 	return r.shipmentRatingDetail
+}
+
+func (r *Resolver) ShipmentRatingReviewApproval() generated.ShipmentRatingReviewApprovalResolver {
+	return r.shipmentRatingReviewApproval
 }
 
 func (r *Resolver) TCASubscription() generated.TCASubscriptionResolver {
@@ -3279,9 +3350,11 @@ type (
 	extractionshadowQuery           = extractionshadowresolver.QueryResolver
 	factoringQuery                  = factoringresolver.QueryResolver
 	factoringcompanyQuery           = factoringcompanyresolver.QueryResolver
+	fiscalperiodQuery               = fiscalperiodresolver.QueryResolver
 	fiscalyearQuery                 = fiscalyearresolver.QueryResolver
 	fleetcodeQuery                  = fleetcoderesolver.QueryResolver
 	fleetsafetyQuery                = fleetsafetyresolver.QueryResolver
+	formulalibraryQuery             = formulalibraryresolver.QueryResolver
 	formulatemplateQuery            = formulatemplateresolver.QueryResolver
 	fuelpurchaseQuery               = fuelpurchaseresolver.QueryResolver
 	fuelsurchargeQuery              = fuelsurchargeresolver.QueryResolver
@@ -3306,6 +3379,7 @@ type (
 	orderQuery                      = orderresolver.QueryResolver
 	orgholidayQuery                 = orgholidayresolver.QueryResolver
 	orgstructureQuery               = orgstructureresolver.QueryResolver
+	pageaccessQuery                 = pageaccessresolver.QueryResolver
 	performancereviewQuery          = performancereviewresolver.QueryResolver
 	ptopolicyQuery                  = ptopolicyresolver.QueryResolver
 	rateQuery                       = rateresolver.QueryResolver

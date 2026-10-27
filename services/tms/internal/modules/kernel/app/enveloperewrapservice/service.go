@@ -26,6 +26,7 @@ var ErrStorageRequired = errors.New("object storage is required to rewrap sealed
 
 type Deps struct {
 	Repository kernelports.EnvelopeRepository
+	Tenants    kernelports.TenantLister
 	Rewrapper  kernelports.EnvelopeRewrapper
 	Storage    kernelports.Client
 	Logger     *zap.Logger
@@ -33,6 +34,7 @@ type Deps struct {
 
 type Service struct {
 	repo      kernelports.EnvelopeRepository
+	tenants   kernelports.TenantLister
 	rewrapper kernelports.EnvelopeRewrapper
 	storage   kernelports.Client
 	logger    *zap.Logger
@@ -45,6 +47,7 @@ func New(deps Deps) *Service {
 	}
 	return &Service{
 		repo:      deps.Repository,
+		tenants:   deps.Tenants,
 		rewrapper: deps.Rewrapper,
 		storage:   deps.Storage,
 		logger:    logger,
@@ -145,7 +148,7 @@ func (s *Service) Run(
 		opts.BatchSize = defaultBatchSize
 	}
 
-	tenants, err := s.repo.ListTenants(ctx)
+	tenants, err := s.tenants.ListTenants(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -409,7 +412,7 @@ func (s *Service) rewrapObject(
 		if err = s.repo.SwapVersion(ctx, &kernelports.SwapEnvelopeVersionRequest{
 			Object:      object,
 			Row:         row,
-			Expected:    row.Extra[object.Version.Name],
+			Expected:    row.Extra[kernelports.EnvelopeColumnName(object.Version)],
 			Replacement: info.VersionID,
 		}); err != nil {
 			return outcomeCurrent, err

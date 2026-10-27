@@ -84,32 +84,32 @@ const payload = {
       },
     ],
   },
-  documentProfiles: [
+  sets: [
     {
       transactionSet: "214",
       direction: "Outbound",
-      name: "Acme Retail Group 214 outbound",
-      status: "Inactive",
       change: "Add",
       fields: [],
-      template: {
-        name: "Starter 214",
-        starter: true,
-        change: "Add",
-        met: 3,
-        unmet: [
-          {
-            segmentId: "MS1",
-            elementPosition: 1,
-            usage: "Mandatory",
-            problem: "The template does not write MS1",
-            source: { kind: "Document", page: 5, quote: "MS1 is mandatory" },
-          },
-        ],
-        considered: [],
-      },
+      requirements: 4,
+      unmet: [
+        {
+          segmentId: "MS1",
+          elementPosition: 1,
+          usage: "Mandatory",
+          problem: "The drafted map does not write MS1",
+          source: { kind: "Document", page: 5, quote: "MS1 is mandatory" },
+        },
+      ],
     },
   ],
+  project: {
+    role: "carrier",
+    change: "Add",
+    files: [{ path: "guides/214.lading", kind: "guide", change: "Add" }],
+    errors: 2,
+    warnings: 0,
+    diagnostics: [],
+  },
   mappings: [],
   samples: [{ page: 6, transactionSet: "204", parsed: true, overview: { x12Version: "004010" } }],
   gaps: [
@@ -159,7 +159,13 @@ describe("connectionDraftFrom", () => {
       note: "",
     });
     expect(draft.transport?.credentials).toHaveLength(2);
-    expect(draft.documentProfiles[0]?.template.unmet[0]?.segmentId).toBe("MS1");
+    expect(draft.sets[0]?.unmet[0]?.segmentId).toBe("MS1");
+    expect(draft.sets[0]?.requirements).toBe(4);
+    expect(draft.project?.files[0]).toEqual({
+      path: "guides/214.lading",
+      kind: "guide",
+      change: "Add",
+    });
     expect(draft.decisions[0]?.candidates).toHaveLength(2);
     expect(draft.samples[0]?.overview?.x12Version).toBe("004010");
   });
@@ -171,7 +177,8 @@ describe("connectionDraftFrom", () => {
     expect(odd?.value).toBe("");
     expect(odd?.change).toBe("None");
     expect(odd?.status).toBe("Unverified");
-    expect(connectionDraftFrom(artifactOf({})).documentProfiles).toEqual([]);
+    expect(connectionDraftFrom(artifactOf({})).sets).toEqual([]);
+    expect(connectionDraftFrom(artifactOf({})).project).toBeNull();
     expect(connectionDraftFrom(artifactOf({ transport: "nope" })).transport).toBeNull();
   });
 });
@@ -183,6 +190,7 @@ describe("draftOutline", () => {
     expect(outline.decisions).toBe(1);
     expect(outline.secretsToEnter).toEqual(["AS2 private key"]);
     expect(outline.unmet).toBe(1);
+    expect(outline.projectErrors).toBe(2);
     expect(outline.gaps).toBe(1);
     expect(outline.failures).toBe(1);
   });

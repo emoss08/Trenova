@@ -2,17 +2,13 @@ package agentquerytoolservice
 
 import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice"
-	"github.com/emoss08/trenova/internal/modules/agent/ports/agentextensionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/analysisports"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/scriptports"
 	"github.com/emoss08/trenova/internal/modules/billing/app/bankreceiptservice"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/bankreceiptworkitemports"
-	"github.com/emoss08/trenova/internal/modules/billing/ports/customerpaymentports"
-	"github.com/emoss08/trenova/internal/modules/documents/app/inboundmessageservice"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentports"
-	"github.com/emoss08/trenova/internal/modules/documents/ports/inboundmessageports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
-	"github.com/emoss08/trenova/internal/modules/operations/app/detentionservice"
-	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
@@ -20,8 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/ratequoteservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/telematicsservice"
-	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
-	"github.com/emoss08/trenova/internal/modules/workspace/app/emailservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"go.uber.org/fx"
 )
@@ -35,13 +29,7 @@ func ToolProviders() []any {
 	groups := [][]any{
 		coreToolProviders(),
 		accountingToolProviders(),
-		ledgerToolProviders(),
-		settlementToolProviders(),
 		receivableToolProviders(),
-		factoringToolProviders(),
-		driverPayToolProviders(),
-		ratingToolProviders(),
-		orderToolProviders(),
 		ediToolProviders(),
 		oversightToolProviders(),
 		importDraftToolProviders(),
@@ -70,52 +58,27 @@ func ToolProviders() []any {
 
 func coreToolProviders() []any {
 	return []any{
-		provideGetAccountingSyncStatusTool,
-		provideListAccountingSyncRecordsTool,
-		provideGetAccountingSyncRecordTool,
-		provideListAccountingInboundChangesTool,
-		provideListAccountingDriftFindingsTool,
-		provideListAccountingMappingGapsTool,
-		provideGetAccountingMappingTool,
 		newGetShipmentTool,
 		provideShipmentListTool,
-		provideGetWorkerTool,
 		newRecallMemoryTool,
 		newComposeTableViewTool,
 		newExplainRateTool,
 		newListDashboardsTool,
-		newListInvoicesTool,
-		newListCarrierCapacityPostingsTool,
-		newGetTractorTool,
-		newGetTrailerTool,
-		newGetInvoiceTool,
 		newListBillingQueueItemsTool,
 		newGetBillingQueueItemTool,
 		newListBillingTransferCandidatesTool,
-		provideGetDetentionOccurrenceTool,
-		newListCarrierIntelEventsTool,
-		newGetCustomerUpdatePreferencesTool,
 		newGetAgentRunTool,
-		newGetServiceFailureTool,
-		provideGetWorkerCredentialTool,
 		provideListReportsTool,
 		provideRunReportTool,
 		provideGetReportRunTool,
-		provideListReportRunsTool,
 		provideCompareReportRunsTool,
 		provideDescribeReportTool,
 		provideListReportDatasetsTool,
 		provideDescribeReportDatasetTool,
 		providePreviewReportTool,
 		provideGetShipmentTrackingTool,
-		provideListVehiclePositionsTool,
-		provideGetWorkerHOSTool,
 		provideGetDispatchBoardTool,
-		provideListServiceFailuresTool,
-		provideListServiceFailureReasonCodesTool,
-		provideListDetentionDeskTool,
 		provideListWeatherAlertsTool,
-		provideListEmailProfilesTool,
 		provideGetShipmentDraftTool,
 		provideGetDocumentSummaryTool,
 		provideReadAttachmentTool,
@@ -128,12 +91,8 @@ func coreToolProviders() []any {
 		provideGetInsightTool,
 		provideListBankReceiptExceptionsTool,
 		provideGetBankReceiptTool,
-		provideListCustomerPaymentsTool,
-		provideGetInboundMessageTool,
 		provideListInboundMessagesTool,
-		provideListTriageAssigneesTool,
 		provideSearchDocumentsTool,
-		newGetMyHomeLayoutTool,
 		newListHomeWidgetsTool,
 		newFindInTrenovaTool,
 		newOpenPageTool,
@@ -142,8 +101,7 @@ func coreToolProviders() []any {
 		newListPortalSitesTool,
 		newReadPortalTool,
 		newListWebWatchesTool,
-		provideAnalyzeDataTool,
-		newRunScriptTool,
+		provideRunScriptTool,
 	}
 }
 
@@ -175,21 +133,24 @@ func provideRunReportTool(
 	return newRunReportTool(reports, permissions)
 }
 
-func provideAnalyzeDataTool(
+func provideRunScriptTool(
 	reports *reporting.Service,
+	runner scriptports.Runner,
 	files documentports.ConversationFileReader,
-	analyzer agentextensionports.DataAnalyzer,
 	permissions permissionports.PermissionEngine,
+	analyses analysisports.RunRecorder,
 ) agentports.AgentQueryTool {
-	return newAnalyzeDataTool(reports, files, analyzer, permissions)
+	return newRunScriptTool(&runScriptToolParams{
+		Runner:      runner,
+		Reports:     reports,
+		Files:       files,
+		Permissions: permissions,
+		Analyses:    analyses,
+	})
 }
 
 func provideGetReportRunTool(reports *reporting.Service) agentports.AgentQueryTool {
 	return newGetReportRunTool(reports)
-}
-
-func provideListReportRunsTool(reports *reporting.Service) agentports.AgentQueryTool {
-	return newListReportRunsTool(reports)
 }
 
 func provideCompareReportRunsTool(reports *reporting.Service) agentports.AgentQueryTool {
@@ -200,25 +161,21 @@ func provideDescribeReportTool(reports *reporting.Service) agentports.AgentQuery
 	return newDescribeReportTool(reports)
 }
 
-func provideListReportDatasetsTool(
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListReportDatasetsTool(permissions)
+func provideListReportDatasetsTool(reports *reporting.Service) agentports.AgentQueryTool {
+	return newListReportDatasetsTool(reports)
 }
 
-func provideDescribeReportDatasetTool(
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newDescribeReportDatasetTool(permissions)
+func provideDescribeReportDatasetTool(reports *reporting.Service) agentports.AgentQueryTool {
+	return newDescribeReportDatasetTool(reports)
 }
 
 func providePreviewReportTool(reports *reporting.Service) agentports.AgentQueryTool {
 	return newPreviewReportTool(reports)
 }
 
-// The monitoring tools read the board, the telematics feed, service failures,
-// the detention desk and the weather feed through the narrow interfaces each
-// declares; the concrete services are what the graph holds.
+// The monitoring tools read the board, the telematics feed and the weather
+// feed through the narrow interfaces each declares; the concrete services are
+// what the graph holds.
 
 func provideGetShipmentTrackingTool(
 	shipments shipmentports.ShipmentRepository,
@@ -229,47 +186,16 @@ func provideGetShipmentTrackingTool(
 	return newGetShipmentTrackingTool(shipments, console, telematics, stopEtas)
 }
 
-func provideListVehiclePositionsTool(
-	telematics *telematicsservice.Service,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListVehiclePositionsTool(telematics, permissions)
-}
-
-func provideGetWorkerHOSTool(telematics *telematicsservice.Service) agentports.AgentQueryTool {
-	return newGetWorkerHOSTool(telematics)
-}
-
 func provideGetDispatchBoardTool(
 	board agentports.DispatchConsoleService,
 ) agentports.AgentQueryTool {
 	return newGetDispatchBoardTool(board)
 }
 
-func provideListServiceFailuresTool(
-	failures servicefailureports.ServiceFailureService,
-) agentports.AgentQueryTool {
-	return newListServiceFailuresTool(failures)
-}
-
-func provideListServiceFailureReasonCodesTool(
-	codes servicefailureports.ServiceFailureReasonCodeService,
-) agentports.AgentQueryTool {
-	return newListServiceFailureReasonCodesTool(codes)
-}
-
-func provideListDetentionDeskTool(desk *detentionservice.Service) agentports.AgentQueryTool {
-	return newListDetentionDeskTool(desk)
-}
-
 func provideListWeatherAlertsTool(
 	weather weatheralertports.WeatherAlertService,
 ) agentports.AgentQueryTool {
 	return newListWeatherAlertsTool(weather)
-}
-
-func provideListEmailProfilesTool(profiles *emailservice.Service) agentports.AgentQueryTool {
-	return newListEmailProfilesTool(profiles)
 }
 
 func provideGetDocumentSummaryTool(
@@ -309,8 +235,9 @@ func provideQuoteShipmentTool(
 func provideShopCarriersTool(
 	quotes *ratequoteservice.Service,
 	carriers carrierports.CarrierRepository,
+	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return newShopCarriersTool(quotes, carriers)
+	return newShopCarriersTool(quotes, carriers, permissions)
 }
 
 func provideRankMoveCandidatesTool(
@@ -345,47 +272,6 @@ func provideGetBankReceiptTool(
 	items bankreceiptworkitemports.BankReceiptWorkItemRepository,
 ) agentports.AgentQueryTool {
 	return newGetBankReceiptTool(receipts, items)
-}
-
-func provideListCustomerPaymentsTool(
-	payments customerpaymentports.CustomerPaymentService,
-) agentports.AgentQueryTool {
-	return newListCustomerPaymentsTool(payments)
-}
-
-func provideGetWorkerCredentialTool(
-	repo workerports.WorkerCredentialRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetWorkerCredentialTool(repo, permissions)
-}
-
-func provideGetWorkerTool(
-	repo workerports.WorkerRepository,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newGetWorkerTool(repo, permissions)
-}
-
-func provideGetInboundMessageTool(
-	messages *inboundmessageservice.Service,
-	replies inboundmessageports.InboundReplyRepository,
-) agentports.AgentQueryTool {
-	return newGetInboundMessageTool(messages, replies)
-}
-
-func provideListInboundMessagesTool(
-	messages *inboundmessageservice.Service,
-	searcher agentports.RetrievalSearcher,
-	permissions permissionports.PermissionEngine,
-) agentports.AgentQueryTool {
-	return newListInboundMessagesTool(messages, searcher, permissions)
-}
-
-func provideListTriageAssigneesTool(
-	inbox *inboundmessageservice.Service,
-) agentports.AgentQueryTool {
-	return newListTriageAssigneesTool(inbox)
 }
 
 func provideSearchDocumentsTool(

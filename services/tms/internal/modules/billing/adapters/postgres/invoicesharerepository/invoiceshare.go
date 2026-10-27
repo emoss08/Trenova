@@ -2,20 +2,21 @@ package invoicesharerepository
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var shareErrors = dberror.Mapping{Entity: "Invoice share"}
 
 type Params struct {
 	fx.In
@@ -36,33 +37,21 @@ func New(p Params) invoiceports.InvoiceShareRepository {
 	}
 }
 
-var recipientConflict = "CONFLICT (" + strings.Join([]string{
-	invoicecol.InvoiceShareColumns.InvoiceID.Bare(),
-	invoicecol.InvoiceShareColumns.OrganizationID.Bare(),
-	invoicecol.InvoiceShareColumns.BusinessUnitID.Bare(),
-	invoicecol.InvoiceShareColumns.SharedWithID.Bare(),
-}, ", ") + ") DO UPDATE"
-
 func (r *repository) Upsert(ctx context.Context, shares []*invoice.InvoiceShare) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
 		if len(shares) == 0 {
 			return nil
 		}
 
-		cols := invoicecol.InvoiceShareColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(&shares).
-			On(recipientConflict).
-			Set(cols.SharedByID.SetExcluded()).
-			Set(cols.Note.SetExcluded()).
-			Set(cols.Tab.SetExcluded()).
-			Set(cols.LastSharedAt.SetExcluded()).
-			Set(cols.UpdatedAt.SetExcluded()).
-			Set(cols.ShareCount.IncConflict(1)).
-			Exec(ctx); err != nil {
+		s := invoicedb.InvoiceShares
+		_, err := s.Upsert(ctx, r.db.Keel(ctx), shares,
+			keel.OnConflict(s.InvoiceID, s.OrganizationID, s.BusinessUnitID, s.SharedWithID).
+				Update(s.SharedByID, s.Note, s.Tab, s.LastSharedAt).
+				Set(s.ShareCount.Increment(1)),
+		)
+		if err != nil {
 			r.l.Error("failed to upsert invoice shares", zap.Error(err))
-			return fmt.Errorf("upsert invoice shares: %w", err)
+			return shareErrors.Map(err, "")
 		}
 
 		return nil
@@ -74,36 +63,31 @@ func (r *repository) ListByInvoiceID(
 	req *invoiceports.ListInvoiceSharesRequest,
 ) ([]*invoice.InvoiceShare, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*invoice.InvoiceShare, error) {
-		cols := invoicecol.InvoiceShareColumns
-		rel := invoicecol.InvoiceShareRelations
-
-		shares := make([]*invoice.InvoiceShare, 0)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&shares).
-			Apply(invoicecol.InvoiceShareApplyTenant(req.TenantInfo)).
-			Where(cols.InvoiceID.Eq(), req.InvoiceID).
-			Relation(rel.SharedWith, selectUserSummary).
-			Relation(rel.SharedBy, selectUserSummary).
-			Order(cols.LastSharedAt.OrderDesc(), cols.ID.OrderAsc()).
-			Scan(ctx); err != nil {
+		s := invoicedb.InvoiceShares
+		shares, err := s.Where(s.InvoiceID.Eq(req.InvoiceID)).
+			Load(userSummary(s.SharedWith()), userSummary(s.SharedBy())).
+			Order(s.LastSharedAt.Desc(), s.ID.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list invoice shares", zap.Error(err))
-			return nil, fmt.Errorf("list invoice shares: %w", err)
+			return nil, err
+		}
+		if shares == nil {
+			return []*invoice.InvoiceShare{}, nil
 		}
 
 		return shares, nil
 	})
 }
 
-func selectUserSummary(q *bun.SelectQuery) *bun.SelectQuery {
-	users := tenantcol.UserColumns
-	return q.Column(
-		users.ID.Bare(),
-		users.Name.Bare(),
-		users.Username.Bare(),
-		users.EmailAddress.Bare(),
-		users.Status.Bare(),
-		users.ProfilePicURL.Bare(),
-		users.ThumbnailURL.Bare(),
+func userSummary(u *tenantdb.UsersTable) *keel.Query[*tenant.User] {
+	return u.Pick(
+		u.ID,
+		u.Name,
+		u.Username,
+		u.EmailAddress,
+		u.Status,
+		u.ProfilePicURL,
+		u.ThumbnailURL,
 	)
 }

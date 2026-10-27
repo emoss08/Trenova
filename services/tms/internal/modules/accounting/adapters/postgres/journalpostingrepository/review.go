@@ -2,28 +2,25 @@ package journalpostingrepository
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"slices"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/journalentrycol"
-	"github.com/emoss08/trenova/pkg/buncolgen/journalsourcecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
-	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry/journalentrydb"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalsource/journalsourcedb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
-	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
+
+var journalEntryErrors = dberror.Mapping{Entity: "JournalEntry"}
 
 func NewReview(p Params) journalentryports.JournalReviewRepository {
 	return &repository{db: p.DB, l: p.Logger.Named("postgres.journal-review-repository")}
@@ -34,31 +31,18 @@ func (r *repository) LockEntry(
 	req journalentryports.LockJournalEntryRequest,
 ) (*journalentry.JournalEntry, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*journalentry.JournalEntry, error) {
-		entry := new(journalentry.JournalEntry)
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entry).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return journalentrycol.JournalEntryScopeTenant(sq, req.TenantInfo).
-					Where(journalentrycol.JournalEntryColumns.ID.Eq(), req.EntryID)
-			}).
-			For("UPDATE").
-			Scan(ctx)
+		db := r.db.Keel(ctx)
+		je := journalentrydb.JournalEntries
+		entry, err := je.Where(je.ID.Eq(req.EntryID)).Lock(keel.ForUpdate).One(ctx, db)
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "JournalEntry")
+			return nil, journalEntryErrors.Map(err, req.EntryID.String())
 		}
 
-		lines := make([]*journalentry.JournalEntryLine, 0, 2)
-		lineCols := journalentrycol.JournalEntryLineColumns
-		if err = r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&lines).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return journalentrycol.JournalEntryLineScopeTenant(sq, req.TenantInfo).
-					Where(lineCols.JournalEntryID.Eq(), req.EntryID)
-			}).
-			Order(lineCols.LineNumber.OrderAsc()).
-			Scan(ctx); err != nil {
+		jel := journalentrydb.JournalEntryLines
+		lines, err := jel.Where(jel.JournalEntryID.Eq(req.EntryID)).
+			Order(jel.LineNumber.Asc()).
+			All(ctx, db)
+		if err != nil {
 			return nil, fmt.Errorf("read journal entry lines: %w", err)
 		}
 		entry.Lines = lines
@@ -72,38 +56,35 @@ func (r *repository) ApproveEntry(
 	params *journalentryports.ApproveJournalEntryParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := journalentrycol.JournalEntryColumns
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*journalentry.JournalEntry)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return journalentrycol.JournalEntryScopeTenantUpdate(uq, params.TenantInfo).
-					Where(cols.ID.Eq(), params.EntryID).
-					Where(cols.Version.Eq(), params.Version).
-					Where(cols.Status.Eq(), journalentry.StatusPending)
-			}).
-			Set(cols.Status.Set(), journalentry.StatusApproved).
-			Set(cols.IsApproved.Set(), true).
-			Set(cols.ApprovedByID.Set(), params.ApprovedByID).
-			Set(cols.ApprovedAt.Set(), params.ApprovedAt).
-			Set(cols.UpdatedByID.Set(), params.ApprovedByID).
-			Set(cols.UpdatedAt.Set(), params.ApprovedAt).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		db := r.db.Keel(ctx)
+		je := journalentrydb.JournalEntries
+		affected, err := je.Where(
+			je.ID.Eq(params.EntryID),
+			je.Version.Eq(params.Version),
+			je.Status.Eq(journalentry.StatusPending),
+		).Update(
+			ctx,
+			db,
+			je.Status.To(journalentry.StatusApproved),
+			je.IsApproved.To(true),
+			je.ApprovedByID.To(params.ApprovedByID),
+			je.ApprovedAt.To(params.ApprovedAt),
+			je.UpdatedByID.To(params.ApprovedByID),
+			je.UpdatedAt.To(params.ApprovedAt),
+		)
 		if err != nil {
 			return fmt.Errorf("approve journal entry: %w", err)
 		}
-		if err = requireOneRow(result, "approved"); err != nil {
+		if err = requireOneRow(affected, "approved"); err != nil {
 			return err
 		}
 
-		return r.moveBatchAndSources(ctx, &stateChange{
-			tenantInfo: params.TenantInfo,
-			entryID:    params.EntryID,
-			batchID:    params.BatchID,
-			status:     string(journalentry.StatusApproved),
-			actorID:    params.ApprovedByID,
-			changedAt:  params.ApprovedAt,
+		return moveBatchAndSources(ctx, db, &stateChange{
+			entryID:   params.EntryID,
+			batchID:   params.BatchID,
+			status:    string(journalentry.StatusApproved),
+			actorID:   params.ApprovedByID,
+			changedAt: params.ApprovedAt,
 		})
 	})
 }
@@ -113,42 +94,39 @@ func (r *repository) PostEntry(
 	params *journalentryports.PostJournalEntryParams,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := journalentrycol.JournalEntryColumns
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*journalentry.JournalEntry)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return journalentrycol.JournalEntryScopeTenantUpdate(uq, params.TenantInfo).
-					Where(cols.ID.Eq(), params.EntryID).
-					Where(cols.Version.Eq(), params.Version).
-					Where(cols.Status.Eq(), journalentry.StatusApproved).
-					Where(cols.IsPosted.IsFalse())
-			}).
-			Set(cols.Status.Set(), journalentry.StatusPosted).
-			Set(cols.IsPosted.Set(), true).
-			Set(cols.PostedByID.Set(), params.PostedByID).
-			Set(cols.PostedAt.Set(), params.PostedAt).
-			Set(cols.FiscalYearID.Set(), params.FiscalYearID).
-			Set(cols.FiscalPeriodID.Set(), params.FiscalPeriodID).
-			Set(cols.AccountingDate.Set(), params.AccountingDate).
-			Set(cols.UpdatedByID.Set(), params.PostedByID).
-			Set(cols.UpdatedAt.Set(), params.PostedAt).
-			Set(cols.Version.Inc(1)).
-			Exec(ctx)
+		db := r.db.Keel(ctx)
+		je := journalentrydb.JournalEntries
+		affected, err := je.Where(
+			je.ID.Eq(params.EntryID),
+			je.Version.Eq(params.Version),
+			je.Status.Eq(journalentry.StatusApproved),
+			je.IsPosted.IsFalse(),
+		).Update(
+			ctx,
+			db,
+			je.Status.To(journalentry.StatusPosted),
+			je.IsPosted.To(true),
+			je.PostedByID.To(params.PostedByID),
+			je.PostedAt.To(params.PostedAt),
+			je.FiscalYearID.To(params.FiscalYearID),
+			je.FiscalPeriodID.To(params.FiscalPeriodID),
+			je.AccountingDate.To(params.AccountingDate),
+			je.UpdatedByID.To(params.PostedByID),
+			je.UpdatedAt.To(params.PostedAt),
+		)
 		if err != nil {
 			return fmt.Errorf("post journal entry: %w", err)
 		}
-		if err = requireOneRow(result, "posted"); err != nil {
+		if err = requireOneRow(affected, "posted"); err != nil {
 			return err
 		}
 
-		if err = r.moveBatchAndSources(ctx, &stateChange{
-			tenantInfo: params.TenantInfo,
-			entryID:    params.EntryID,
-			batchID:    params.BatchID,
-			status:     string(journalentry.StatusPosted),
-			actorID:    params.PostedByID,
-			changedAt:  params.PostedAt,
+		if err = moveBatchAndSources(ctx, db, &stateChange{
+			entryID:   params.EntryID,
+			batchID:   params.BatchID,
+			status:    string(journalentry.StatusPosted),
+			actorID:   params.PostedByID,
+			changedAt: params.PostedAt,
 			postedInto: &postedInto{
 				fiscalYearID:   params.FiscalYearID,
 				fiscalPeriodID: params.FiscalPeriodID,
@@ -158,12 +136,10 @@ func (r *repository) PostEntry(
 			return err
 		}
 
-		return r.applyBalances(ctx, balanceTarget{
-			organizationID: params.TenantInfo.OrgID.String(),
-			businessUnitID: params.TenantInfo.BuID.String(),
-			fiscalYearID:   params.FiscalYearID.String(),
-			fiscalPeriodID: params.FiscalPeriodID.String(),
-			entryID:        params.EntryID.String(),
+		return applyBalances(ctx, db, balanceTarget{
+			fiscalYearID:   params.FiscalYearID,
+			fiscalPeriodID: params.FiscalPeriodID,
+			entryID:        params.EntryID,
 		}, params.Lines)
 	})
 }
@@ -175,7 +151,6 @@ type postedInto struct {
 }
 
 type stateChange struct {
-	tenantInfo pagination.TenantInfo
 	entryID    pulid.ID
 	batchID    pulid.ID
 	status     string
@@ -184,54 +159,38 @@ type stateChange struct {
 	postedInto *postedInto
 }
 
-func (r *repository) moveBatchAndSources(ctx context.Context, change *stateChange) error {
-	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		if change.batchID.IsNotNil() {
-			batchCols := journalentrycol.JournalBatchColumns
-			update := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model((*journalentry.JournalBatch)(nil)).
-				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-					return journalentrycol.JournalBatchScopeTenantUpdate(uq, change.tenantInfo).
-						Where(batchCols.ID.Eq(), change.batchID)
-				}).
-				Set(batchCols.Status.Set(), change.status).
-				Set(batchCols.UpdatedByID.Set(), change.actorID).
-				Set(batchCols.UpdatedAt.Set(), change.changedAt)
-			if change.postedInto != nil {
-				update = update.
-					Set(batchCols.PostedAt.Set(), change.changedAt).
-					Set(batchCols.PostedByID.Set(), change.actorID).
-					Set(batchCols.FiscalYearID.Set(), change.postedInto.fiscalYearID).
-					Set(batchCols.FiscalPeriodID.Set(), change.postedInto.fiscalPeriodID).
-					Set(batchCols.AccountingDate.Set(), change.postedInto.accountingDate)
-			}
-			if _, err := update.Exec(ctx); err != nil {
-				return fmt.Errorf("update journal batch: %w", err)
-			}
+func moveBatchAndSources(ctx context.Context, db *keel.DB, change *stateChange) error {
+	if change.batchID.IsNotNil() {
+		jb := journalentrydb.JournalBatches
+		sets := []keel.Assignment{
+			jb.Status.To(change.status),
+			jb.UpdatedByID.To(change.actorID),
+			jb.UpdatedAt.To(change.changedAt),
 		}
+		if change.postedInto != nil {
+			sets = append(sets,
+				jb.PostedAt.To(change.changedAt),
+				jb.PostedByID.To(change.actorID),
+				jb.FiscalYearID.To(change.postedInto.fiscalYearID),
+				jb.FiscalPeriodID.To(change.postedInto.fiscalPeriodID),
+				jb.AccountingDate.To(change.postedInto.accountingDate),
+			)
+		}
+		if _, err := jb.Where(jb.ID.Eq(change.batchID)).Update(ctx, db, sets...); err != nil {
+			return fmt.Errorf("update journal batch: %w", err)
+		}
+	}
 
-		sourceCols := journalsourcecol.SourceColumns
-		if _, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*journalsource.Source)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return journalsourcecol.SourceScopeTenantUpdate(uq, change.tenantInfo).
-					Where(sourceCols.JournalEntryID.Eq(), change.entryID)
-			}).
-			Set(sourceCols.Status.Set(), change.status).
-			Exec(ctx); err != nil {
-			return fmt.Errorf("update journal sources: %w", err)
-		}
-		return nil
-	})
+	js := journalsourcedb.Sources
+	if _, err := js.Where(js.JournalEntryID.Eq(change.entryID)).
+		Update(ctx, db, js.Status.To(change.status)); err != nil {
+		return fmt.Errorf("update journal sources: %w", err)
+	}
+
+	return nil
 }
 
-func requireOneRow(result sql.Result, verb string) error {
-	affected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("read affected rows: %w", err)
-	}
+func requireOneRow(affected int64, verb string) error {
 	if affected != 1 {
 		return errortypes.NewConflictError(
 			"The journal entry changed before it could be " + verb + "; reload it and try again",
@@ -247,14 +206,7 @@ var reviewStatuses = []journalentry.Status{
 	journalentry.StatusApproved,
 }
 
-func (r *repository) applyReviewFilters(
-	q *bun.SelectQuery,
-	req *journalentryports.ListJournalReviewQuery,
-) *bun.SelectQuery {
-	cols := journalentrycol.JournalEntryColumns
-	if req.Filter != nil {
-		q = q.Apply(journalentrycol.JournalEntryApplyTenant(req.Filter.TenantInfo))
-	}
+func reviewFilters(req *journalentryports.ListJournalReviewQuery) []keel.Pred {
 	statuses := reviewStatuses
 	if len(req.Statuses) > 0 {
 		statuses = make([]journalentry.Status, 0, len(req.Statuses))
@@ -267,16 +219,16 @@ func (r *repository) applyReviewFilters(
 			statuses = reviewStatuses
 		}
 	}
-	return q.
-		Where(cols.Status.In(), bun.List(statuses)).
-		Where(cols.IsPosted.IsFalse())
+
+	je := journalentrydb.JournalEntries
+	return []keel.Pred{je.Status.In(statuses...), je.IsPosted.IsFalse()}
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *journalentryports.ListJournalReviewQuery,
 ) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*journalentry.JournalEntry], error) {
@@ -286,52 +238,13 @@ func (r *repository) ListConnection(
 				}
 			}
 
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*journalentry.JournalEntry)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							journalentrycol.JournalEntryTable.Alias,
-							req.Filter,
-							(*journalentry.JournalEntry)(nil),
-						)
-						return r.applyReviewFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					return nil, fmt.Errorf("count journal entries awaiting review: %w", err)
-				}
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*journalentry.JournalEntry]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(items *[]*journalentry.JournalEntry) *bun.SelectQuery {
-						return dba.NewSelect().
-							Model(items).
-							ColumnExpr(journalentrycol.JournalEntryTable.All())
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						sq, applyErr := querybuilder.ApplyCursorFilters(
-							sq,
-							journalentrycol.JournalEntryTable.Alias,
-							req.Filter,
-							req.Cursor,
-							(*journalentry.JournalEntry)(nil),
-						)
-						if applyErr != nil {
-							return sq, applyErr
-						}
-						return r.applyReviewFilters(sq, req), nil
-					},
+				r.db.Keel(ctx),
+				journalentrydb.JournalEntries.Where(reviewFilters(req)...),
+				&listquery.Request[journalentry.JournalEntry]{
+					Filter: req.Filter,
+					Cursor: req.Cursor,
 				},
 			)
 			if err != nil {
@@ -344,27 +257,26 @@ func (r *repository) ListConnection(
 
 func (r *repository) Summarize(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (*journalentryports.JournalReviewSummaryRow, error) {
 	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*journalentryports.JournalReviewSummaryRow, error) {
-			cols := journalentrycol.JournalEntryColumns
-			summary := new(journalentryports.JournalReviewSummaryRow)
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model((*journalentry.JournalEntry)(nil)).
-				ColumnExpr(buncolgen.CountFilter("awaiting_approval", cols.Status.Eq()), journalentry.StatusPending).
-				ColumnExpr(buncolgen.CountFilter("ready_to_post", cols.Status.Eq()), journalentry.StatusApproved).
-				ColumnExpr(buncolgen.Min(cols.AccountingDate, "oldest_accounting_date")).
-				Apply(journalentrycol.JournalEntryApplyTenant(tenantInfo)).
-				Where(cols.Status.In(), bun.List(reviewStatuses)).
-				Where(cols.IsPosted.IsFalse()).
-				Scan(ctx, summary); err != nil {
+			je := journalentrydb.JournalEntries
+			summary, err := keel.IntoOne[journalentryports.JournalReviewSummaryRow](
+				ctx,
+				r.db.Keel(ctx),
+				je.Pick(
+					keel.Count().Filter(je.Status.Eq(journalentry.StatusPending)),
+					keel.Count().Filter(je.Status.Eq(journalentry.StatusApproved)),
+					je.AccountingDate.Min(),
+				).Where(je.Status.In(reviewStatuses...), je.IsPosted.IsFalse()),
+			)
+			if err != nil {
 				return nil, fmt.Errorf("summarize journal entries awaiting review: %w", err)
 			}
-			return summary, nil
+			return &summary, nil
 		},
 	)
 }

@@ -7,8 +7,6 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestShipmentType_Validate(t *testing.T) {
@@ -87,72 +85,6 @@ func TestShipmentType_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestShipmentType_BeforeAppendModel(t *testing.T) {
-	t.Parallel()
-
-	t.Run("insert sets ID and CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		sht := &ShipmentType{}
-		require.True(t, sht.ID.IsNil())
-
-		err := sht.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.False(t, sht.ID.IsNil())
-		assert.NotZero(t, sht.CreatedAt)
-	})
-
-	t.Run("insert does not overwrite existing ID", func(t *testing.T) {
-		t.Parallel()
-
-		existingID := pulid.MustNew("sht_")
-		sht := &ShipmentType{ID: existingID}
-
-		err := sht.BeforeAppendModel(t.Context(), (*bun.InsertQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Equal(t, existingID, sht.ID)
-		assert.NotZero(t, sht.CreatedAt)
-	})
-
-	t.Run("update sets UpdatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		sht := &ShipmentType{}
-
-		err := sht.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.NotZero(t, sht.UpdatedAt)
-	})
-
-	t.Run("update does not set CreatedAt", func(t *testing.T) {
-		t.Parallel()
-
-		sht := &ShipmentType{}
-
-		err := sht.BeforeAppendModel(t.Context(), (*bun.UpdateQuery)(nil))
-		require.NoError(t, err)
-
-		assert.Zero(t, sht.CreatedAt)
-		assert.NotZero(t, sht.UpdatedAt)
-	})
-
-	t.Run("select query does nothing", func(t *testing.T) {
-		t.Parallel()
-
-		sht := &ShipmentType{}
-
-		err := sht.BeforeAppendModel(t.Context(), (*bun.SelectQuery)(nil))
-		require.NoError(t, err)
-
-		assert.True(t, sht.ID.IsNil())
-		assert.Zero(t, sht.CreatedAt)
-		assert.Zero(t, sht.UpdatedAt)
-	})
 }
 
 func TestShipmentType_GetTableName(t *testing.T) {

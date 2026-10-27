@@ -7,10 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/reference/domain/modeprofile"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/modeprofileports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"go.uber.org/zap"
 )
 
 const (
@@ -302,33 +300,6 @@ func sortCandidates(candidates []*modeprofile.Profile) {
 	})
 }
 
-func (s *service) loadActiveProfiles(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) ([]*modeprofile.Profile, error) {
-	if s.cacheRepo != nil {
-		cached, err := s.cacheRepo.GetActiveProfiles(ctx, tenantInfo)
-		if err == nil {
-			return cached, nil
-		}
-	}
-
-	profiles, err := s.profileRepo.GetActiveProfiles(ctx, tenantInfo)
-	if err != nil {
-		return nil, err
-	}
-
-	if s.cacheRepo != nil {
-		if cacheErr := s.cacheRepo.SetActiveProfiles(
-			ctx, tenantInfo, profiles,
-		); cacheErr != nil {
-			s.l.Warn("failed to populate mode profile cache", zap.Error(cacheErr))
-		}
-	}
-
-	return profiles, nil
-}
-
 func (s *service) Resolve(
 	ctx context.Context,
 	req *modeprofileports.ResolveModeProfileRequest,
@@ -338,7 +309,7 @@ func (s *service) Resolve(
 		at = timeutils.NowUnix()
 	}
 
-	candidates, err := s.loadActiveProfiles(ctx, req.TenantInfo)
+	candidates, err := s.profileRepo.GetActiveProfiles(ctx, req.TenantInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -350,15 +321,4 @@ func (s *service) Resolve(
 	sortCandidates(candidates)
 
 	return s.resolveFromCandidates(candidates, req, at), nil
-}
-
-func (s *service) InvalidateCache(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-) error {
-	if s.cacheRepo == nil {
-		return nil
-	}
-
-	return s.cacheRepo.Invalidate(ctx, tenantInfo)
 }

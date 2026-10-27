@@ -14,5 +14,6 @@ query SelectOptions($input: SelectOptionsInput!) {
       endCursor
     }
     totalCount
+    totalCountExact
   }
 }

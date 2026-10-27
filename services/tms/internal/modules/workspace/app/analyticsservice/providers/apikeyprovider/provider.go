@@ -6,13 +6,13 @@ import (
 	"math"
 	"time"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey/apikeydb"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -50,151 +50,77 @@ func (p *Provider) GetAnalyticsData(
 
 	tz := timeutils.NormalizeTimezone(opts.Timezone)
 
-	totalKeys, err := p.getTotalKeys(ctx, opts.OrgID, opts.BuID, tz)
+	counts, err := p.getKeyCounts(ctx, tz)
 	if err != nil {
-		log.Error("failed to get total keys", zap.Error(err))
+		log.Error("failed to get key counts", zap.Error(err))
 		return nil, err
 	}
 
-	activeKeys, err := p.getActiveKeys(ctx, opts.OrgID, opts.BuID, totalKeys.Count)
-	if err != nil {
-		log.Error("failed to get active keys", zap.Error(err))
-		return nil, err
-	}
-
-	revokedKeys, err := p.getRevokedKeys(ctx, opts.OrgID, opts.BuID, totalKeys.Count)
-	if err != nil {
-		log.Error("failed to get revoked keys", zap.Error(err))
-		return nil, err
-	}
-
-	requests, err := p.getRequests30d(ctx, opts.OrgID, opts.BuID, tz)
+	requests, err := p.getRequests30d(ctx, tz)
 	if err != nil {
 		log.Error("failed to get requests 30d", zap.Error(err))
 		return nil, err
 	}
 
+	total := int(counts.Total)
 	return kernelports.AnalyticsData{
-		"totalKeys":   totalKeys,
-		"activeKeys":  activeKeys,
-		"revokedKeys": revokedKeys,
+		"totalKeys": &TotalKeysCard{
+			Count:        total,
+			NewThisMonth: int(counts.NewThisMonth),
+		},
+		"activeKeys": &ActiveKeysCard{
+			Count:          int(counts.Active),
+			PercentOfTotal: percentOf(counts.Active, total),
+		},
+		"revokedKeys": &RevokedKeysCard{
+			Count:          int(counts.Revoked),
+			PercentOfTotal: percentOf(counts.Revoked, total),
+		},
 		"requests30d": requests,
 	}, nil
 }
 
-func (p *Provider) getTotalKeys(
-	ctx context.Context,
-	orgID, buID pulid.ID,
-	tz string,
-) (*TotalKeysCard, error) {
-	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*TotalKeysCard, error) {
+type keyCounts struct {
+	Total        int64
+	NewThisMonth int64
+	Active       int64
+	Revoked      int64
+}
+
+type dailyRequests struct {
+	Day   time.Time
+	Total int64
+}
+
+func percentOf(count int64, total int) float64 {
+	if total <= 0 {
+		return 0
+	}
+
+	return math.Round(float64(count)/float64(total)*1000) / 10
+}
+
+func (p *Provider) getKeyCounts(ctx context.Context, tz string) (keyCounts, error) {
+	return dbtx.Read(ctx, p.db, func(ctx context.Context) (keyCounts, error) {
 		loc, err := time.LoadLocation(tz)
 		if err != nil {
-			return nil, fmt.Errorf("load timezone %q: %w", tz, err)
-		}
-
-		total, err := p.db.DBForContext(ctx).NewSelect().
-			Model((*apikey.Key)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("ak.organization_id = ?", orgID).
-					Where("ak.business_unit_id = ?", buID)
-			}).
-			Count(ctx)
-		if err != nil {
-			return nil, err
+			return keyCounts{}, fmt.Errorf("load timezone %q: %w", tz, err)
 		}
 
 		now := time.Now().In(loc)
 		monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, loc).Unix()
 
-		newThisMonth, err := p.db.DBForContext(ctx).NewSelect().
-			Model((*apikey.Key)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("ak.organization_id = ?", orgID).
-					Where("ak.business_unit_id = ?", buID).
-					Where("ak.created_at >= ?", monthStart)
-			}).
-			Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		return &TotalKeysCard{
-			Count:        int(total),
-			NewThisMonth: int(newThisMonth),
-		}, nil
+		k := apikeydb.Keys
+		return keel.IntoOne[keyCounts](ctx, p.db.Keel(ctx), k.Pick(
+			keel.Count(),
+			keel.Count().Filter(k.CreatedAt.Gte(monthStart)),
+			keel.Count().Filter(k.Status.Eq(apikey.StatusActive)),
+			keel.Count().Filter(k.Status.Eq(apikey.StatusRevoked)),
+		))
 	})
 }
 
-func (p *Provider) getActiveKeys(
-	ctx context.Context,
-	orgID, buID pulid.ID,
-	total int,
-) (*ActiveKeysCard, error) {
-	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*ActiveKeysCard, error) {
-		count, err := p.db.DBForContext(ctx).NewSelect().
-			Model((*apikey.Key)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("ak.organization_id = ?", orgID).
-					Where("ak.business_unit_id = ?", buID).
-					Where("ak.status = ?", apikey.StatusActive)
-			}).
-			Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		var pct float64
-		if total > 0 {
-			pct = math.Round(float64(count)/float64(total)*1000) / 10
-		}
-
-		return &ActiveKeysCard{
-			Count:          int(count),
-			PercentOfTotal: pct,
-		}, nil
-	})
-}
-
-func (p *Provider) getRevokedKeys(
-	ctx context.Context,
-	orgID, buID pulid.ID,
-	total int,
-) (*RevokedKeysCard, error) {
-	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*RevokedKeysCard, error) {
-		count, err := p.db.DBForContext(ctx).NewSelect().
-			Model((*apikey.Key)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("ak.organization_id = ?", orgID).
-					Where("ak.business_unit_id = ?", buID).
-					Where("ak.status = ?", apikey.StatusRevoked)
-			}).
-			Count(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		var pct float64
-		if total > 0 {
-			pct = math.Round(float64(count)/float64(total)*1000) / 10
-		}
-
-		return &RevokedKeysCard{
-			Count:          int(count),
-			PercentOfTotal: pct,
-		}, nil
-	})
-}
-
-func (p *Provider) getRequests30d(
-	ctx context.Context,
-	orgID, buID pulid.ID,
-	tz string,
-) (*Requests30dCard, error) {
+func (p *Provider) getRequests30d(ctx context.Context, tz string) (*Requests30dCard, error) {
 	return dbtx.Read(ctx, p.db, func(ctx context.Context) (*Requests30dCard, error) {
 		loc, err := time.LoadLocation(tz)
 		if err != nil {
@@ -214,25 +140,16 @@ func (p *Provider) getRequests30d(
 			loc,
 		)
 
-		type dailyRow struct {
-			Day   time.Time `bun:"day"`
-			Total int64     `bun:"total"`
-		}
-
-		rows := make([]dailyRow, 0)
-		err = p.db.DBForContext(ctx).NewSelect().
-			TableExpr("api_key_usage_daily u").
-			ColumnExpr("u.usage_date AS day").
-			ColumnExpr("SUM(u.request_count) AS total").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("u.organization_id = ?", orgID).
-					Where("u.business_unit_id = ?", buID).
-					Where("u.usage_date >= ?", cutoff.Format("2006-01-02"))
-			}).
-			GroupExpr("u.usage_date").
-			OrderExpr("u.usage_date ASC").
-			Scan(ctx, &rows)
+		u := apikeydb.UsageDailies
+		cutoffDay := time.Date(cutoff.Year(), cutoff.Month(), cutoff.Day(), 0, 0, 0, 0, time.UTC)
+		rows, err := keel.Into[dailyRequests](
+			ctx,
+			p.db.Keel(ctx),
+			u.Where(u.UsageDate.Gte(cutoffDay)).
+				Group(u.UsageDate).
+				Pick(u.UsageDate, u.RequestCount.Sum()).
+				Order(u.UsageDate.Asc()),
+		)
 		if err != nil {
 			return nil, err
 		}

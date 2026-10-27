@@ -153,9 +153,6 @@ packages:
   github.com/emoss08/trenova/internal/modules/documents/ports/documentpacketruleports:
     config:
       all: true
-  github.com/emoss08/trenova/internal/modules/documents/ports/documentparsingruleports:
-    config:
-      all: true
   github.com/emoss08/trenova/internal/modules/documents/ports/documentports:
     config:
       all: true
@@ -313,6 +310,9 @@ packages:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/places/ports/storedmileageports:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/modules/rating/ports/formulalibraryports:
     config:
       all: true
   github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports:

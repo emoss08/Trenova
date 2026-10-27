@@ -66,7 +66,8 @@ func TestUsStateHandler_SelectOptions_Success(t *testing.T) {
 					CountryIso3:  "USA",
 				},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil)
 
 	handler := setupUsStateHandler(t, repo)

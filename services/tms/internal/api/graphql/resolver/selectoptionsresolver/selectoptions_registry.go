@@ -38,7 +38,7 @@ type SelectOptionsRequest struct {
 
 type selectOptionConnectionItem struct {
 	option *gqlmodel.SelectOption
-	cursor pagination.Cursor
+	cursor pagination.PositionCursor
 }
 
 func (r *Deps) RequireAuthContext(ctx context.Context) (*authctx.AuthContext, error) {
@@ -109,6 +109,9 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		},
 		gqlmodel.SelectOptionResourceGlAccount: {
 			Resolve: r.resolveGLAccountSelectOptions,
+		},
+		gqlmodel.SelectOptionResourceJournalEntry: {
+			Resolve: r.resolveJournalEntrySelectOptions,
 		},
 		gqlmodel.SelectOptionResourceIFTAFuelType: {
 			Resolve:  r.resolveIFTAFuelTypeSelectOptions,
@@ -204,12 +207,6 @@ func (r *Deps) SelectOptionRegistry() map[gqlmodel.SelectOptionResource]SelectOp
 		},
 		gqlmodel.SelectOptionResourceEDIPartner: {
 			Resolve: r.resolveEDIPartnerSelectOptions,
-		},
-		gqlmodel.SelectOptionResourceEDIPartnerDocumentProfile: {
-			Resolve: r.resolveEDIPartnerDocumentProfileSelectOptions,
-		},
-		gqlmodel.SelectOptionResourceEDITemplate: {
-			Resolve: r.resolveEDITemplateSelectOptions,
 		},
 		gqlmodel.SelectOptionResourceEDITransactionSet: {
 			Resolve:  r.resolveEDITransactionSetSelectOptions,
@@ -350,7 +347,7 @@ func equipmentTypeClassesFilter(filters map[string]any) []string {
 
 func selectOptionListConnection[T any](
 	result *pagination.ListResult[T],
-	offset int,
+	page pagination.Info,
 	mapper func(T) selectOptionConnectionItem,
 ) (*gqlmodel.SelectOptionConnection, error) {
 	items := make([]selectOptionConnectionItem, 0, len(result.Items))
@@ -358,7 +355,11 @@ func selectOptionListConnection[T any](
 		items = append(items, mapper(item))
 	}
 
-	return selectOptionConnection(items, result.Total, offset)
+	return selectOptionPage(items, selectOptionTotal{
+		count:       result.Total,
+		exact:       result.TotalExact,
+		hasNextPage: pagination.HasMore(result, page),
+	})
 }
 
 func selectOptionConnection(
@@ -366,11 +367,26 @@ func selectOptionConnection(
 	total int,
 	offset int,
 ) (*gqlmodel.SelectOptionConnection, error) {
-	hasNextPage := offset+len(items) < total
+	return selectOptionPage(items, selectOptionTotal{
+		count:       total,
+		exact:       true,
+		hasNextPage: offset+len(items) < total,
+	})
+}
 
+type selectOptionTotal struct {
+	count       int
+	exact       bool
+	hasNextPage bool
+}
+
+func selectOptionPage(
+	items []selectOptionConnectionItem,
+	total selectOptionTotal,
+) (*gqlmodel.SelectOptionConnection, error) {
 	edges := make([]*gqlmodel.SelectOptionEdge, len(items))
 	for i, item := range items {
-		cursor, err := pagination.EncodeCursor(item.cursor)
+		cursor, err := pagination.EncodePositionCursor(item.cursor)
 		if err != nil {
 			return nil, err
 		}
@@ -383,12 +399,13 @@ func selectOptionConnection(
 	return &gqlmodel.SelectOptionConnection{
 		Edges: edges,
 		PageInfo: base.PageInfo(
-			hasNextPage,
+			total.hasNextPage,
 			base.LastEdgeCursor(edges, func(edge *gqlmodel.SelectOptionEdge) string {
 				return edge.Cursor
 			}),
 		),
-		TotalCount: new(total),
+		TotalCount:      new(total.count),
+		TotalCountExact: total.exact,
 	}, nil
 }
 
@@ -421,9 +438,9 @@ func selectOptionConnectionItemFor(
 ) selectOptionConnectionItem {
 	return selectOptionConnectionItem{
 		option: option,
-		cursor: pagination.Cursor{
-			CreatedAt: createdAt,
-			ID:        id,
+		cursor: pagination.PositionCursor{
+			At: createdAt,
+			ID: id,
 		},
 	}
 }
@@ -549,59 +566,6 @@ func ediPartnerSelectOption(entity *edi.EDIPartner) *gqlmodel.SelectOption {
 		Meta: map[string]any{
 			"code": entity.Code,
 			"kind": string(entity.Kind),
-		},
-	}
-}
-
-func ediPartnerDocumentProfileSelectOptionItem(
-	entity *edi.EDIPartnerDocumentProfile,
-) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediPartnerDocumentProfileSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediPartnerDocumentProfileSelectOption(
-	entity *edi.EDIPartnerDocumentProfile,
-) *gqlmodel.SelectOption {
-	label := entity.Name
-	if entity.Partner != nil {
-		label = entity.Partner.Code + " - " + entity.Name
-	}
-	description := string(entity.TransactionSet) + " \u00b7 " + string(entity.Direction)
-	if entity.Standard != "" {
-		description = string(entity.Standard) + " \u00b7 " + description
-	}
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       label,
-		Description: stringutils.Ptr(description),
-		Meta: map[string]any{
-			"transactionSet": string(entity.TransactionSet),
-			"direction":      string(entity.Direction),
-			"standard":       string(entity.Standard),
-			"status":         string(entity.Status),
-		},
-	}
-}
-
-func ediTemplateSelectOptionItem(entity *edi.EDITemplate) selectOptionConnectionItem {
-	return selectOptionConnectionItemFor(
-		ediTemplateSelectOption(entity),
-		entity.CreatedAt,
-		entity.ID,
-	)
-}
-
-func ediTemplateSelectOption(entity *edi.EDITemplate) *gqlmodel.SelectOption {
-	return &gqlmodel.SelectOption{
-		ID:          entity.ID.String(),
-		Label:       entity.Name,
-		Description: stringutils.Ptr(entity.Description),
-		Meta: map[string]any{
-			"status": string(entity.Status),
 		},
 	}
 }

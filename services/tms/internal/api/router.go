@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/accountingwebhookhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentanalysishandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentdefinitionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentexceptionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentextensionhandler"
@@ -48,9 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
@@ -64,6 +63,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/formulalibraryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glaccounthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
@@ -159,6 +159,7 @@ type RouterParams struct {
 
 	AuthMiddleware                  *middleware.AuthMiddleware
 	ReadScopeMiddleware             *middleware.ReadScopeMiddleware
+	QueryBudgetMiddleware           *middleware.QueryBudgetMiddleware
 	ReadOnlyGuard                   *middleware.ReadOnlyGuard
 	RateLimiter                     *middleware.RateLimiter
 	IdempotencyMiddleware           *middleware.IdempotencyMiddleware
@@ -181,6 +182,7 @@ type RouterParams struct {
 	BankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	BankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	FormulaTemplateHandler          *formulatemplatehandler.Handler
+	FormulaLibraryHandler           *formulalibraryhandler.Handler
 	PageFavoriteHandler             *pagefavoritehandler.Handler
 	EquipmentTypeHandler            *equipmenttypehandler.Handler
 	EquipmentManufacturerHandler    *equipmentmanufacturerhandler.Handler
@@ -199,7 +201,6 @@ type RouterParams struct {
 	CustomFieldHandler              *customfieldhandler.Handler
 	DocumentHandler                 *documenthandler.Handler
 	ReportHandler                   *reporthandler.Handler
-	DocumentOperationsHandler       *documentoperationshandler.Handler
 	AccessorialChargeHandler        *accessorialchargehandler.Handler
 	AgentProposalHandler            *agentproposalhandler.Handler
 	AgentPlanHandler                *agentplanhandler.Handler
@@ -207,6 +208,7 @@ type RouterParams struct {
 	TableQueryHandler               *tablequeryhandler.Handler
 	AIProviderHandler               *aiproviderhandler.Handler
 	AgentExtensionHandler           *agentextensionhandler.Handler
+	AgentAnalysisHandler            *agentanalysishandler.Handler
 	AgentDefinitionHandler          *agentdefinitionhandler.Handler
 	AssistantHandler                *assistanthandler.Handler
 	InsightHandler                  *insighthandler.Handler
@@ -286,7 +288,6 @@ type RouterParams struct {
 	DataEntryControlHandler         *dataentrycontrolhandler.Handler
 	DispatchControlHandler          *dispatchcontrolhandler.Handler
 	DocumentControlHandler          *documentcontrolhandler.Handler
-	DocumentParsingRuleHandler      *documentparsingrulehandler.Handler
 	ExchangeRateHandler             *exchangeratehandler.Handler
 	DistanceControlHandler          *distancecontrolhandler.Handler
 	DistanceOverrideHandler         *distanceoverridehandler.Handler
@@ -305,6 +306,7 @@ type Router struct {
 	observabilityMiddleware         *observability.Middleware
 	authMiddleware                  *middleware.AuthMiddleware
 	readScopeMiddleware             *middleware.ReadScopeMiddleware
+	queryBudgetMiddleware           *middleware.QueryBudgetMiddleware
 	readOnlyGuard                   *middleware.ReadOnlyGuard
 	rateLimiter                     *middleware.RateLimiter
 	idempotencyMiddleware           *middleware.IdempotencyMiddleware
@@ -328,6 +330,7 @@ type Router struct {
 	bankReceiptBatchHandler         *bankreceiptbatchhandler.Handler
 	bankReceiptWorkItemHandler      *bankreceiptworkitemhandler.Handler
 	formulaTemplateHandler          *formulatemplatehandler.Handler
+	formulaLibraryHandler           *formulalibraryhandler.Handler
 	pageFavoriteHandler             *pagefavoritehandler.Handler
 	serviceTypeHandler              *servicetypehandler.Handler
 	orderHandler                    *orderhandler.Handler
@@ -357,7 +360,6 @@ type Router struct {
 	customFieldHandler              *customfieldhandler.Handler
 	documentHandler                 *documenthandler.Handler
 	reportHandler                   *reporthandler.Handler
-	documentOperationsHandler       *documentoperationshandler.Handler
 	accessorialChargeHandler        *accessorialchargehandler.Handler
 	agentProposalHandler            *agentproposalhandler.Handler
 	agentPlanHandler                *agentplanhandler.Handler
@@ -365,6 +367,7 @@ type Router struct {
 	tableQueryHandler               *tablequeryhandler.Handler
 	aiProviderHandler               *aiproviderhandler.Handler
 	agentExtensionHandler           *agentextensionhandler.Handler
+	agentAnalysisHandler            *agentanalysishandler.Handler
 	agentDefinitionHandler          *agentdefinitionhandler.Handler
 	assistantHandler                *assistanthandler.Handler
 	insightHandler                  *insighthandler.Handler
@@ -433,7 +436,6 @@ type Router struct {
 	dataEntryControlHandler         *dataentrycontrolhandler.Handler
 	dispatchControlHandler          *dispatchcontrolhandler.Handler
 	documentControlHandler          *documentcontrolhandler.Handler
-	documentParsingRuleHandler      *documentparsingrulehandler.Handler
 	exchangeRateHandler             *exchangeratehandler.Handler
 	distanceControlHandler          *distancecontrolhandler.Handler
 	distanceOverrideHandler         *distanceoverridehandler.Handler
@@ -455,6 +457,7 @@ func NewRouter(p RouterParams) *Router {
 		observabilityMiddleware:         p.ObservabilityMiddleware,
 		authMiddleware:                  p.AuthMiddleware,
 		readScopeMiddleware:             p.ReadScopeMiddleware,
+		queryBudgetMiddleware:           p.QueryBudgetMiddleware,
 		readOnlyGuard:                   p.ReadOnlyGuard,
 		rateLimiter:                     p.RateLimiter,
 		idempotencyMiddleware:           p.IdempotencyMiddleware,
@@ -477,6 +480,7 @@ func NewRouter(p RouterParams) *Router {
 		bankReceiptBatchHandler:         p.BankReceiptBatchHandler,
 		bankReceiptWorkItemHandler:      p.BankReceiptWorkItemHandler,
 		formulaTemplateHandler:          p.FormulaTemplateHandler,
+		formulaLibraryHandler:           p.FormulaLibraryHandler,
 		pageFavoriteHandler:             p.PageFavoriteHandler,
 		serviceTypeHandler:              p.ServiceTypeHandler,
 		orderHandler:                    p.OrderHandler,
@@ -506,7 +510,6 @@ func NewRouter(p RouterParams) *Router {
 		customFieldHandler:              p.CustomFieldHandler,
 		documentHandler:                 p.DocumentHandler,
 		reportHandler:                   p.ReportHandler,
-		documentOperationsHandler:       p.DocumentOperationsHandler,
 		accessorialChargeHandler:        p.AccessorialChargeHandler,
 		agentProposalHandler:            p.AgentProposalHandler,
 		agentPlanHandler:                p.AgentPlanHandler,
@@ -514,6 +517,7 @@ func NewRouter(p RouterParams) *Router {
 		tableQueryHandler:               p.TableQueryHandler,
 		aiProviderHandler:               p.AIProviderHandler,
 		agentExtensionHandler:           p.AgentExtensionHandler,
+		agentAnalysisHandler:            p.AgentAnalysisHandler,
 		agentDefinitionHandler:          p.AgentDefinitionHandler,
 		assistantHandler:                p.AssistantHandler,
 		insightHandler:                  p.InsightHandler,
@@ -582,7 +586,6 @@ func NewRouter(p RouterParams) *Router {
 		dataEntryControlHandler:         p.DataEntryControlHandler,
 		dispatchControlHandler:          p.DispatchControlHandler,
 		documentControlHandler:          p.DocumentControlHandler,
-		documentParsingRuleHandler:      p.DocumentParsingRuleHandler,
 		exchangeRateHandler:             p.ExchangeRateHandler,
 		distanceControlHandler:          p.DistanceControlHandler,
 		distanceOverrideHandler:         p.DistanceOverrideHandler,
@@ -647,6 +650,7 @@ func (r *Router) setupRoutes() {
 	r.setupGraphQLRoutes(r.s.router.Group(""))
 
 	v1 := r.s.router.Group("/api/v1")
+	v1.Use(r.queryBudgetMiddleware.Install())
 	r.setupProtectedRoutes(v1)
 	r.setupPublicRoutes(v1)
 }
@@ -695,6 +699,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.bankReceiptHandler.RegisterRoutes(protected)
 	r.bankReceiptWorkItemHandler.RegisterRoutes(protected)
 	r.formulaTemplateHandler.RegisterRoutes(protected)
+	r.formulaLibraryHandler.RegisterRoutes(protected)
 	r.pageFavoriteHandler.RegisterRoutes(protected)
 	r.equipmentManufacturerHandler.RegisterRoutes(protected)
 	r.equipmentTypeHandler.RegisterRoutes(protected)
@@ -712,7 +717,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.customFieldHandler.RegisterRoutes(protected)
 	r.documentHandler.RegisterRoutes(protected)
 	r.reportHandler.RegisterRoutes(protected)
-	r.documentOperationsHandler.RegisterRoutes(protected)
 	r.accessorialChargeHandler.RegisterRoutes(protected)
 	r.agentProposalHandler.RegisterRoutes(protected)
 	r.agentPlanHandler.RegisterRoutes(protected)
@@ -720,6 +724,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.tableQueryHandler.RegisterRoutes(protected)
 	r.aiProviderHandler.RegisterRoutes(protected)
 	r.agentExtensionHandler.RegisterRoutes(protected)
+	r.agentAnalysisHandler.RegisterRoutes(protected)
 	r.agentDefinitionHandler.RegisterRoutes(protected)
 	r.assistantHandler.RegisterRoutes(protected)
 	r.insightHandler.RegisterRoutes(protected)
@@ -790,7 +795,6 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dataEntryControlHandler.RegisterRoutes(protected)
 	r.dispatchControlHandler.RegisterRoutes(protected)
 	r.documentControlHandler.RegisterRoutes(protected)
-	r.documentParsingRuleHandler.RegisterRoutes(protected)
 	r.distanceControlHandler.RegisterRoutes(protected)
 	r.distanceOverrideHandler.RegisterRoutes(protected)
 	r.distanceProfileHandler.RegisterRoutes(protected)

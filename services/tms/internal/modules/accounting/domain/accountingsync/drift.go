@@ -5,13 +5,13 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -31,47 +31,55 @@ type DriftLine struct {
 	ProviderMinor int64          `json:"providerMinor"`
 }
 
+// Documents Trenova sent to the accounting system that now differ there, with both values and how each was settled
 type AccountingDriftFinding struct {
-	bun.BaseModel             `bun:"table:accounting_drift_findings,alias:acctdf" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                       json:"-"`
+	keel.Table `keel:"accounting_drift_findings,report=Accounting,label=Drift Finding"`
 
-	ID                 pulid.ID        `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID     pulid.ID        `json:"businessUnitId"     bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID     pulid.ID        `json:"organizationId"     bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	ConnectionID       pulid.ID        `json:"connectionId"       bun:"connection_id,type:VARCHAR(100),notnull"`
-	ObjectType         SyncObjectType  `json:"objectType"         bun:"object_type,type:VARCHAR(30),notnull"`
-	ObjectID           pulid.ID        `json:"objectId"           bun:"object_id,type:VARCHAR(100),notnull"`
-	ObjectNumber       string          `json:"objectNumber"       bun:"object_number,type:VARCHAR(100),nullzero"`
-	PartyID            pulid.ID        `json:"partyId"            bun:"party_id,type:VARCHAR(100),nullzero"`
-	PartyName          string          `json:"partyName"          bun:"party_name,type:VARCHAR(200),nullzero"`
-	ExternalID         string          `json:"externalId"         bun:"external_id,type:VARCHAR(100),nullzero"`
-	ExternalURL        string          `json:"externalUrl"        bun:"external_url,type:TEXT,nullzero"`
-	Kind               DriftKind       `json:"kind"               bun:"kind,type:VARCHAR(30),notnull"`
-	CurrencyCode       string          `json:"currencyCode"       bun:"currency_code,type:VARCHAR(3),notnull"`
-	TrenovaMinor       *int64          `json:"trenovaMinor"       bun:"trenova_minor,type:BIGINT,nullzero"`
-	ProviderMinor      *int64          `json:"providerMinor"      bun:"provider_minor,type:BIGINT,nullzero"`
-	DifferenceMinor    *int64          `json:"differenceMinor"    bun:"difference_minor,type:BIGINT,nullzero"`
-	TrenovaState       string          `json:"trenovaState"       bun:"trenova_state,type:VARCHAR(50),nullzero"`
-	ProviderState      string          `json:"providerState"      bun:"provider_state,type:VARCHAR(50),nullzero"`
-	Detail             []DriftLine     `json:"detail"             bun:"detail,type:JSONB,notnull"`
-	ProviderModifiedAt *int64          `json:"providerModifiedAt" bun:"provider_modified_at,type:BIGINT,nullzero"`
-	ProviderModifiedBy string          `json:"providerModifiedBy" bun:"provider_modified_by,type:VARCHAR(200),nullzero"`
-	Status             DriftStatus     `json:"status"             bun:"status,type:VARCHAR(20),notnull"`
-	Resolution         DriftResolution `json:"resolution"         bun:"resolution,type:VARCHAR(30),nullzero"`
-	ResolutionNote     string          `json:"resolutionNote"     bun:"resolution_note,type:TEXT,nullzero"`
-	FixObjectType      DriftFixObject  `json:"fixObjectType"      bun:"fix_object_type,type:VARCHAR(40),nullzero"`
-	FixObjectID        pulid.ID        `json:"fixObjectId"        bun:"fix_object_id,type:VARCHAR(100),nullzero"`
-	ResolvedByID       pulid.ID        `json:"resolvedById"       bun:"resolved_by_id,type:VARCHAR(100),nullzero"`
-	ResolvedAt         *int64          `json:"resolvedAt"         bun:"resolved_at,type:BIGINT,nullzero"`
-	DetectedAt         int64           `json:"detectedAt"         bun:"detected_at,type:BIGINT,notnull"`
-	LastSeenAt         int64           `json:"lastSeenAt"         bun:"last_seen_at,type:BIGINT,notnull"`
-	Version            int64           `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64           `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64           `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                 pulid.ID        `json:"id"                 keel:"id,pk,autoid:acctdf_"`
+	BusinessUnitID     pulid.ID        `json:"businessUnitId"     keel:"business_unit_id,pk,tenant"`
+	OrganizationID     pulid.ID        `json:"organizationId"     keel:"organization_id,pk,tenant"`
+	ConnectionID       pulid.ID        `json:"connectionId"       keel:"connection_id"`
+	ObjectType         SyncObjectType  `json:"objectType"         keel:"object_type,label=Document Type"`
+	ObjectID           pulid.ID        `json:"objectId"           keel:"object_id,label=Document ID"`
+	ObjectNumber       string          `json:"objectNumber"       keel:"object_number,nullzero,label=Document Number"`
+	PartyID            pulid.ID        `json:"partyId"            keel:"party_id,nullzero"`
+	PartyName          string          `json:"partyName"          keel:"party_name,nullzero"`
+	ExternalID         string          `json:"externalId"         keel:"external_id,nullzero,label=ID in the Books"`
+	ExternalURL        string          `json:"externalUrl"        keel:"external_url,nullzero,label=Link in the Books"`
+	Kind               DriftKind       `json:"kind"               keel:"kind,label=Difference"`
+	CurrencyCode       string          `json:"currencyCode"       keel:"currency_code,label=Currency"`
+	TrenovaMinor       *int64          `json:"trenovaMinor"       keel:"trenova_minor,label=Trenova Value (Minor)"`
+	ProviderMinor      *int64          `json:"providerMinor"      keel:"provider_minor,label=Books Value (Minor)"`
+	DifferenceMinor    *int64          `json:"differenceMinor"    keel:"difference_minor,label=Difference (Minor)"`
+	TrenovaState       string          `json:"trenovaState"       keel:"trenova_state,nullzero,label=State in Trenova"`
+	ProviderState      string          `json:"providerState"      keel:"provider_state,nullzero,label=State in the Books"`
+	Detail             []DriftLine     `json:"detail"             keel:"detail,jsonb,noreport"`
+	ProviderModifiedAt *int64          `json:"providerModifiedAt" keel:"provider_modified_at,label=Changed in the Books At"`
+	ProviderModifiedBy string          `json:"providerModifiedBy" keel:"provider_modified_by,nullzero,label=Changed in the Books By"`
+	Status             DriftStatus     `json:"status"             keel:"status"`
+	Resolution         DriftResolution `json:"resolution"         keel:"resolution,nullzero"`
+	ResolutionNote     string          `json:"resolutionNote"     keel:"resolution_note,nullzero,label=Note"`
+	FixObjectType      DriftFixObject  `json:"fixObjectType"      keel:"fix_object_type,nullzero,label=Fixed With"`
+	FixObjectID        pulid.ID        `json:"fixObjectId"        keel:"fix_object_id,nullzero,label=Fix ID"`
+	ResolvedByID       pulid.ID        `json:"resolvedById"       keel:"resolved_by_id,nullzero"`
+	ResolvedAt         *int64          `json:"resolvedAt"         keel:"resolved_at"`
+	DetectedAt         int64           `json:"detectedAt"         keel:"detected_at"`
+	LastSeenAt         int64           `json:"lastSeenAt"         keel:"last_seen_at"`
+	Version            int64           `json:"version"            keel:"version,version"`
+	CreatedAt          int64           `json:"createdAt"          keel:"created_at,autocreate"`
+	UpdatedAt          int64           `json:"updatedAt"          keel:"updated_at,autoupdate"`
 
-	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	ResolvedBy   *tenant.User         `json:"resolvedBy,omitempty"   bun:"rel:belongs-to,join:resolved_by_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty"`
+	ResolvedBy   *tenant.User         `json:"resolvedBy,omitempty"   keel:"belongs:resolved_by_id,noreport"`
+}
+
+func (f *AccountingDriftFinding) BeforeUpdate(_ context.Context) error {
+	if f.Detail == nil {
+		f.Detail = []DriftLine{}
+	}
+
+	return nil
 }
 
 type DriftObservation struct {
@@ -279,26 +287,29 @@ func (f *AccountingDriftFinding) GetPostgresSearchConfig() domaintypes.PostgresS
 	}
 }
 
-func (f *AccountingDriftFinding) BeforeAppendModel(_ context.Context, query bun.Query) error {
+func (f *AccountingDriftFinding) BeforeCreate(_ context.Context) error {
 	now := timeutils.NowUnix()
 	if f.Detail == nil {
 		f.Detail = []DriftLine{}
 	}
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if f.ID.IsNil() {
-			f.ID = pulid.MustNew(driftFindingIDPrefix)
-		}
-		if f.DetectedAt == 0 {
-			f.DetectedAt = now
-		}
-		if f.LastSeenAt == 0 {
-			f.LastSeenAt = now
-		}
-		f.CreatedAt = now
-		f.UpdatedAt = now
-	case *bun.UpdateQuery:
-		f.UpdatedAt = now
+	f.stampSeen(now)
+	f.stampSeen(timeutils.NowUnix())
+
+	return nil
+}
+
+func (f *AccountingDriftFinding) BeforeSave(_ context.Context) error {
+	if f.Detail == nil {
+		f.Detail = []DriftLine{}
 	}
 	return nil
+}
+
+func (f *AccountingDriftFinding) stampSeen(now int64) {
+	if f.DetectedAt == 0 {
+		f.DetectedAt = now
+	}
+	if f.LastSeenAt == 0 {
+		f.LastSeenAt = now
+	}
 }

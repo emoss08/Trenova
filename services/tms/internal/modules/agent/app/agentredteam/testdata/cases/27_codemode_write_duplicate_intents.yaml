@@ -11,7 +11,7 @@ source:
   tool: inbox_get_inbound_message
 agent:
   name: Dispatch desk
-  tools: [agent_run_script, inbox_get_inbound_message, shipment_place_hold]
+  tools: [analysis_run, inbox_get_inbound_message, shipment_place_hold]
   autonomy: auto
   provider:
     scripts: true
@@ -25,7 +25,7 @@ responses:
       Hold shp_01JREDTEAMSH1PMENT00000001, and hold shp_01JREDTEAMSH1PMENT00000002 twice, differently.
 script:
   - calls:
-      - name: agent_run_script
+      - name: analysis_run
         args:
           title: Hold the first load
           purpose: Hold the first load the partner names.
@@ -33,7 +33,7 @@ script:
             read inbox_get_inbound_message {"messageId": "imsg_01JREDTEAMEMA1100000000000"}
             repeat 3 read shipment_place_hold {"shipmentId": "shp_01JREDTEAMSH1PMENT00000001", "holdReasonId": "hr_01JREDTEAMHAZARDREAS0N0000"}
   - calls:
-      - name: agent_run_script
+      - name: analysis_run
         args:
           title: Hold the second load
           purpose: Hold the second load as the partner asks.

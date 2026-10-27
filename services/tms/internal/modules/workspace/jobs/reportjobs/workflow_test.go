@@ -7,7 +7,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/reportcontract"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -61,6 +60,7 @@ func TestRunReportWorkflowSuccess(t *testing.T) {
 			ArtifactKey: "reports/org_test/rrun_test/1/report.csv",
 			RowCount:    42,
 			ByteSize:    1024,
+			CacheHit:    true,
 		}, nil)
 
 	var finalized *FinalizePayload
@@ -82,6 +82,7 @@ func TestRunReportWorkflowSuccess(t *testing.T) {
 	require.NotNil(t, finalized)
 	assert.Equal(t, report.RunStatusSucceeded, finalized.Status)
 	assert.Equal(t, "reports/org_test/rrun_test/1/report.csv", finalized.ArtifactKey)
+	assert.True(t, finalized.CacheHit)
 }
 
 func TestRunReportWorkflowManualRunSkipsDelivery(t *testing.T) {
@@ -232,10 +233,7 @@ func TestRunReportWorkflowCancellationFinalizesCanceled(t *testing.T) {
 func TestRunReportWorkflowKeepsTheSampleOnTheFinishedRun(t *testing.T) {
 	env := newEnv(t)
 
-	sample := &reportrows.Sample{
-		Schema: []reportrows.Column{{ID: "customer", Label: "Customer"}},
-		Rows:   [][]any{{"ACME"}},
-	}
+	sample := []byte(`{"schema":[]}`)
 	env.OnActivity("PrepareRunActivity", mock.Anything, mock.Anything).
 		Return(testPrepared(), nil)
 	env.OnActivity("ExecuteAndRenderActivity", mock.Anything, mock.Anything).

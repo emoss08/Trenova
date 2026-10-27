@@ -3,15 +3,15 @@ package accountingsyncrepository
 import (
 	"context"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/integration"
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -21,6 +21,8 @@ const (
 	defaultSubscriptionPageLimit = 100
 	maxSubscriptionLookup        = 1000
 )
+
+var subscriptionErrors = dberror.Mapping{Entity: subscriptionEntity}
 
 type SubscriptionParams struct {
 	fx.In
@@ -51,20 +53,10 @@ func (r *subscriptionRepository) ListByConnection(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingsync.AccountingWebhookSubscription, error) {
-			entities := make([]*accountingsync.AccountingWebhookSubscription, 0)
-			cols := accountingsynccol.AccountingWebhookSubscriptionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(accountingsynccol.AccountingWebhookSubscriptionApplyTenant(req.TenantInfo)).
-				Where(cols.ConnectionID.Eq(), req.ConnectionID).
-				Order(cols.Resource.OrderAsc()).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ws := accountingsyncdb.AccountingWebhookSubscriptions
+			return ws.Where(ws.ConnectionID.Eq(req.ConnectionID)).
+				Order(ws.Resource.Asc()).
+				All(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -88,19 +80,13 @@ func (r *subscriptionRepository) ListByExternalIDs(
 		ctx,
 		r.db,
 		func(ctx context.Context) ([]*accountingsync.AccountingWebhookSubscription, error) {
-			entities := make([]*accountingsync.AccountingWebhookSubscription, 0, len(externalIDs))
-			cols := accountingsynccol.AccountingWebhookSubscriptionColumns
-
-			if err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Where(cols.IntegrationType.Eq(), integrationType).
-				Where(cols.ExternalSubscriptionID.In(), bun.List(externalIDs)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			ws := accountingsyncdb.AccountingWebhookSubscriptions
+			return ws.AllTenants().
+				Where(
+					ws.IntegrationType.Eq(integrationType),
+					ws.ExternalSubscriptionID.In(externalIDs...),
+				).
+				All(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -125,34 +111,27 @@ func (r *subscriptionRepository) ListConnections(
 				limit = defaultSubscriptionPageLimit
 			}
 
-			db := r.db.DBForContext(ctx)
-			entities := make([]*accountingsync.AccountingConnection, 0, limit)
-			cols := accountingsynccol.AccountingConnectionColumns
-			subCols := accountingsynccol.AccountingWebhookSubscriptionColumns
+			ac := accountingsyncdb.AccountingConnections
+			ws := accountingsyncdb.AccountingWebhookSubscriptions
+			held := ws.AllTenants().Where(
+				ws.ConnectionID.EqCol(ac.ID),
+				ws.BusinessUnitID.EqCol(ac.BusinessUnitID),
+				ws.OrganizationID.EqCol(ac.OrganizationID),
+			)
 
-			held := db.NewSelect().
-				Model((*accountingsync.AccountingWebhookSubscription)(nil)).
-				ColumnExpr("1").
-				Where(subCols.ConnectionID.EqColumn(cols.ID)).
-				Where(subCols.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-				Where(subCols.OrganizationID.EqColumn(cols.OrganizationID))
-
-			q := db.NewSelect().
-				Model(&entities).
-				ExcludeColumn(tokenColumns()...).
-				Where(cols.IntegrationType.In(), bun.List(req.IntegrationTypes)).
-				WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-					return q.Where(cols.Status.NotEq(), accountingsync.ConnectionStatusDisconnected).
-						WhereOr("EXISTS (?)", held)
-				})
-			if !req.AfterID.IsNil() {
-				q = q.Where(cols.ID.Gt(), req.AfterID)
-			}
-			if err := q.Order(cols.ID.OrderAsc()).Limit(int64(limit)).Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return entities, nil
+			return withoutTokens().
+				AllTenants().
+				Where(
+					ac.IntegrationType.In(req.IntegrationTypes...),
+					keel.Or(
+						ac.Status.Ne(accountingsync.ConnectionStatusDisconnected),
+						keel.Exists(held),
+					),
+					keel.When(!req.AfterID.IsNil(), ac.ID.Gt(req.AfterID)),
+				).
+				Order(ac.ID.Asc()).
+				Limit(limit).
+				List(ctx, r.db.Keel(ctx))
 		},
 	)
 }
@@ -165,12 +144,13 @@ func (r *subscriptionRepository) Create(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingWebhookSubscription, error) {
-			if _, err := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(entity).
-				Returning("*").
-				Exec(ctx); err != nil {
-				return nil, err
+			err := accountingsyncdb.AccountingWebhookSubscriptions.Create(
+				ctx,
+				r.db.Keel(ctx),
+				entity,
+			)
+			if err != nil {
+				return nil, subscriptionErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -186,27 +166,11 @@ func (r *subscriptionRepository) Update(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*accountingsync.AccountingWebhookSubscription, error) {
-			cols := accountingsynccol.AccountingWebhookSubscriptionColumns
 			ov := entity.Version
-			entity.Version++
-
-			results, err := r.db.DBForContext(ctx).
-				NewUpdate().
-				Model(entity).
-				WherePK().
-				Where(cols.Version.Eq(), ov).
-				Exec(ctx)
+			err := accountingsyncdb.AccountingWebhookSubscriptions.Save(ctx, r.db.Keel(ctx), entity)
 			if err != nil {
 				entity.Version = ov
-				return nil, err
-			}
-			if err = dberror.CheckRowsAffected(
-				results,
-				subscriptionEntity,
-				entity.ID.String(),
-			); err != nil {
-				entity.Version = ov
-				return nil, err
+				return nil, subscriptionErrors.Map(err, entity.ID.String())
 			}
 
 			return entity, nil
@@ -219,16 +183,8 @@ func (r *subscriptionRepository) Delete(
 	req accountingsyncports.DeleteAccountingWebhookSubscriptionRequest,
 ) error {
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		cols := accountingsynccol.AccountingWebhookSubscriptionColumns
-
-		_, err := r.db.DBForContext(ctx).
-			NewDelete().
-			Model((*accountingsync.AccountingWebhookSubscription)(nil)).
-			WhereGroup(" AND ", func(q *bun.DeleteQuery) *bun.DeleteQuery {
-				return accountingsynccol.AccountingWebhookSubscriptionScopeTenantDelete(q, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Exec(ctx)
+		ws := accountingsyncdb.AccountingWebhookSubscriptions
+		_, err := ws.Where(ws.ID.Eq(req.ID)).Delete(ctx, r.db.Keel(ctx))
 		return err
 	})
 }

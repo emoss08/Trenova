@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/watchtowerrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/watchtower"
@@ -16,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -24,7 +24,7 @@ const baseTime = int64(1_700_000_000)
 
 type harness struct {
 	ctx    context.Context
-	db     *bun.DB
+	db     *keel.DB
 	repo   watchtowerports.WatchtowerRepository
 	tenant pagination.TenantInfo
 	userID pulid.ID
@@ -207,11 +207,43 @@ func TestEventsAreAppendOnly(t *testing.T) {
 	h := newHarness(t)
 
 	created := h.upsert(t, "sf_5", watchtower.SeverityWarning)
-	_, err := h.db.NewRaw(
-		`UPDATE watchtower_item_events SET note = 'changed' WHERE item_id = ?`,
-		created.ID,
-	).Exec(h.ctx)
+	_, err := keel.Exec(
+		h.ctx,
+		h.db,
+		`UPDATE watchtower_item_events SET note = 'changed' WHERE item_id = $1`,
+		created.ID.String(),
+	)
 	require.Error(t, err)
+}
+
+func TestAnotherTenantReadsNoneOfTheItems(t *testing.T) {
+	h := newHarness(t)
+
+	created := h.upsert(t, "sf_14", watchtower.SeverityCritical)
+	other := seedtest.SeedAdditionalTenant(t, h.ctx, h.db, "WT")
+	otherCtx := other.Ctx(h.ctx)
+
+	listed, err := h.repo.List(
+		otherCtx,
+		watchtowerports.ListWatchtowerItemsQuery{TenantInfo: other.Info()},
+	)
+	require.NoError(t, err)
+	assert.Empty(t, listed)
+
+	_, err = h.repo.GetByID(otherCtx, watchtowerports.GetWatchtowerItemRequest{
+		ID:         created.ID,
+		TenantInfo: other.Info(),
+	})
+	require.Error(t, err)
+
+	counts, err := h.repo.Counts(otherCtx, watchtowerports.CountWatchtowerItemsRequest{
+		TenantInfo: other.Info(),
+		ReaderID:   other.User.ID,
+		Now:        baseTime,
+	})
+	require.NoError(t, err)
+	assert.Zero(t, counts.Unresolved)
+	assert.Empty(t, counts.ByKind)
 }
 
 func TestAttentionQueriesFindOverdueAndWakingItems(t *testing.T) {

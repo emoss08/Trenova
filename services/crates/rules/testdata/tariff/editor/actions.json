@@ -1,0 +1,1556 @@
+{
+ "cases": [
+  {
+   "name": "a rate option: the label plus Rate, after the last input",
+   "source": [
+    "tariff \"Dry van\"",
+    "",
+    "/// Paid per stop.",
+    "input stopFee: Money = $75",
+    "",
+    "charge \"Linehaul\" (quantity: shipment.distance, rate: |$2.35/mi|)",
+    "charge \"Stops\" = stopFee"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "input linehaulRate: Money/mi = $2.35/mi\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "linehaulRate",
+        "range": {
+         "text": "$2.35/mi"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"Dry van\"",
+       "",
+       "/// Paid per stop.",
+       "input stopFee: Money = $75",
+       "input linehaulRate: Money/mi = $2.35/mi",
+       "",
+       "charge \"Linehaul\" (quantity: shipment.distance, rate: linehaulRate)",
+       "charge \"Stops\" = stopFee"
+      ],
+      "select": {
+       "text": "linehaulRate"
+      },
+      "title": {
+       "args": [
+        "`$2.35/mi`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a quantity option: the label plus Quantity",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "input fee: Money = $75",
+    "",
+    "charge \"Extra drops\" (quantity: |2, rate: fee)"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "input extraDropsQuantity: Int = 2\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "extraDropsQuantity",
+        "range": {
+         "text": "2"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input fee: Money = $75",
+       "input extraDropsQuantity: Int = 2",
+       "",
+       "charge \"Extra drops\" (quantity: extraDropsQuantity, rate: fee)"
+      ],
+      "select": {
+       "text": "extraDropsQuantity"
+      },
+      "title": {
+       "args": [
+        "`2`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a charge's amount: the label plus Amount, after the header with blank lines",
+   "source": [
+    "tariff \"t\"",
+    "charge \"Flat rate\" = |$450|"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput flatRateAmount: Money = $450\n\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "flatRateAmount",
+        "range": {
+         "text": "$450"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input flatRateAmount: Money = $450",
+       "",
+       "charge \"Flat rate\" = flatRateAmount"
+      ],
+      "select": {
+       "text": "flatRateAmount"
+      },
+      "title": {
+       "args": [
+        "`$450`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "after the uses when there is no input",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "use std.fuel.{ stepPercent }",
+    "",
+    "charge \"Fuel\" as FSC = $100 * stepPercent($3.20/gal, peg: $1.20/gal, step: $0.05/gal, perStep: |0.5%|)"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput perStep: Percent = 0.5%\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "perStep",
+        "range": {
+         "text": "0.5%"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "use std.fuel.{ stepPercent }",
+       "",
+       "input perStep: Percent = 0.5%",
+       "",
+       "charge \"Fuel\" as FSC = $100 * stepPercent($3.20/gal, peg: $1.20/gal, step: $0.05/gal, perStep: perStep)"
+      ],
+      "select": {
+       "text": "perStep"
+      },
+      "title": {
+       "args": [
+        "`0.5%`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "after the header's doc",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "/// A flat tariff.",
+    "",
+    "charge \"Flat\" = |$450|"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput flatAmount: Money = $450\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "flatAmount",
+        "range": {
+         "text": "$450"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "/// A flat tariff.",
+       "",
+       "input flatAmount: Money = $450",
+       "",
+       "charge \"Flat\" = flatAmount"
+      ],
+      "select": {
+       "text": "flatAmount"
+      },
+      "title": {
+       "args": [
+        "`$450`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a let's value: the name plus Default",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "let fuelPercent = |18%|",
+    "charge \"Fuel\" as FSC = $100 * fuelPercent"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput fuelPercentDefault: Percent = 18%\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "fuelPercentDefault",
+        "range": {
+         "text": "18%"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input fuelPercentDefault: Percent = 18%",
+       "",
+       "let fuelPercent = fuelPercentDefault",
+       "charge \"Fuel\" as FSC = $100 * fuelPercent"
+      ],
+      "select": {
+       "text": "fuelPercentDefault"
+      },
+      "title": {
+       "args": [
+        "`18%`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a named argument: its parameter",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "use std.accessorials.{ detention }",
+    "",
+    "for stop in shipment.stops {",
+    "  charge \"Detention\" as DET = detention(stop.dwell ?? 0 h, rate: |$65/h|)",
+    "}"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput rate: Money/h = $65/h\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "rate",
+        "range": {
+         "text": "$65/h"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "use std.accessorials.{ detention }",
+       "",
+       "input rate: Money/h = $65/h",
+       "",
+       "for stop in shipment.stops {",
+       "  charge \"Detention\" as DET = detention(stop.dwell ?? 0 h, rate: rate)",
+       "}"
+      ],
+      "select": {
+       "text": "rate"
+      },
+      "title": {
+       "args": [
+        "`$65/h`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "anything else: value",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "let heavy = (shipment.weight ?? 0 lb) > |10_000 lb|",
+    "if heavy {",
+    "  charge \"Heavy\" = $50",
+    "}"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: Weight = 10_000 lb\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "10_000 lb"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: Weight = 10_000 lb",
+       "",
+       "let heavy = (shipment.weight ?? 0 lb) > value",
+       "if heavy {",
+       "  charge \"Heavy\" = $50",
+       "}"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`10_000 lb`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a taken name gets a number",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "input value: Money = $1",
+    "let value2 = 3",
+    "charge \"A\" = value * value2 + |$5|"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "input value3: Money = $5\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value3",
+        "range": {
+         "text": "$5"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: Money = $1",
+       "input value3: Money = $5",
+       "let value2 = 3",
+       "charge \"A\" = value * value2 + value3"
+      ],
+      "select": {
+       "text": "value3"
+      },
+      "title": {
+       "args": [
+        "`$5`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a name a local takes anywhere is taken",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "fn fee(amount: Money) -> Money = amount",
+    "charge \"A\" = fee(amount: |$5|)"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput amount2: Money = $5\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "amount2",
+        "range": {
+         "text": "$5"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input amount2: Money = $5",
+       "",
+       "fn fee(amount: Money) -> Money = amount",
+       "charge \"A\" = fee(amount: amount2)"
+      ],
+      "select": {
+       "text": "amount2"
+      },
+      "title": {
+       "args": [
+        "`$5`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "an enum variant",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "let drops = shipment.stops.count(s => s.kind == |Delivery|)",
+    "charge \"Drops\" = $10 * drops"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: StopKind = Delivery\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "Delivery"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: StopKind = Delivery",
+       "",
+       "let drops = shipment.stops.count(s => s.kind == value)",
+       "charge \"Drops\" = $10 * drops"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`Delivery`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a qualified variant",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "let drops = shipment.stops.count(s => s.kind == StopKind.Deli|very)",
+    "charge \"Drops\" = $10 * drops"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: StopKind = StopKind.Delivery\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "StopKind.Delivery"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: StopKind = StopKind.Delivery",
+       "",
+       "let drops = shipment.stops.count(s => s.kind == value)",
+       "charge \"Drops\" = $10 * drops"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`StopKind.Delivery`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "text",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "if lane.origin.state == |\"TX\"| {",
+    "  charge \"Texas\" = $5",
+    "}"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: Text = \"TX\"\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "\"TX\""
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: Text = \"TX\"",
+       "",
+       "if lane.origin.state == value {",
+       "  charge \"Texas\" = $5",
+       "}"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`\"TX\"`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a date",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "if rating.date.date >= |@2026-01-01| {",
+    "  charge \"New year\" = $5",
+    "}"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: Date = @2026-01-01\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "@2026-01-01"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: Date = @2026-01-01",
+       "",
+       "if rating.date.date >= value {",
+       "  charge \"New year\" = $5",
+       "}"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`@2026-01-01`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a date-time",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "if rating.date >= |@2026-01-01T08:00-05:00| {",
+    "  charge \"Later\" = $5",
+    "}"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: DateTime = @2026-01-01T08:00-05:00\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "@2026-01-01T08:00-05:00"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: DateTime = @2026-01-01T08:00-05:00",
+       "",
+       "if rating.date >= value {",
+       "  charge \"Later\" = $5",
+       "}"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`@2026-01-01T08:00-05:00`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a bool",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "let applies = |true|",
+    "if applies {",
+    "  charge \"Fee\" = $5",
+    "}"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput appliesDefault: Bool = true\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "appliesDefault",
+        "range": {
+         "text": "true"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input appliesDefault: Bool = true",
+       "",
+       "let applies = appliesDefault",
+       "if applies {",
+       "  charge \"Fee\" = $5",
+       "}"
+      ],
+      "select": {
+       "text": "appliesDefault"
+      },
+      "title": {
+       "args": [
+        "`true`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a length",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "if shipment.linearFeet > |48 ft| {",
+    "  charge \"Long\" = $5",
+    "}"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: Length = 48 ft\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "48 ft"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: Length = 48 ft",
+       "",
+       "if shipment.linearFeet > value {",
+       "  charge \"Long\" = $5",
+       "}"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`48 ft`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a whole number and a decimal",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "let factor = |2.5|",
+    "charge \"A\" = $10 * factor * 2"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput factorDefault: Number = 2.5\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "factorDefault",
+        "range": {
+         "text": "2.5"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input factorDefault: Number = 2.5",
+       "",
+       "let factor = factorDefault",
+       "charge \"A\" = $10 * factor * 2"
+      ],
+      "select": {
+       "text": "factorDefault"
+      },
+      "title": {
+       "args": [
+        "`2.5`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a negative amount takes its minus",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "charge \"Discount\" = |-$5|"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput discountAmount: Money = -$5\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "discountAmount",
+        "range": {
+         "text": "-$5"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input discountAmount: Money = -$5",
+       "",
+       "charge \"Discount\" = discountAmount"
+      ],
+      "select": {
+       "text": "discountAmount"
+      },
+      "title": {
+       "args": [
+        "`-$5`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a cursor in a negated literal takes it whole",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "charge \"Discount\" = -$|5"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput discountAmount: Money = -$5\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "discountAmount",
+        "range": {
+         "text": "-$5"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input discountAmount: Money = -$5",
+       "",
+       "charge \"Discount\" = discountAmount"
+      ],
+      "select": {
+       "text": "discountAmount"
+      },
+      "title": {
+       "args": [
+        "`-$5`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a selection after the minus takes the amount alone",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "charge \"Discount\" = -|$5|"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: Money = $5\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "$5"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: Money = $5",
+       "",
+       "charge \"Discount\" = -value"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`$5`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "inside the literal, the cursor is enough",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "charge \"Flat\" = $4|50"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput flatAmount: Money = $450\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "flatAmount",
+        "range": {
+         "text": "$450"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input flatAmount: Money = $450",
+       "",
+       "charge \"Flat\" = flatAmount"
+      ],
+      "select": {
+       "text": "flatAmount"
+      },
+      "title": {
+       "args": [
+        "`$450`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "equal values match, and the default keeps the selected text",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "input other: Money/mi = $1/mi",
+    "",
+    "charge \"Loaded\" (quantity: shipment.distance, rate: |$2.35/mi|)",
+    "charge \"Empty\" (quantity: 10 mi, rate: $2.350/mi)",
+    "fn deadhead(miles: Distance) -> Money = $2.35/mi * miles",
+    "charge \"Deadhead\" = deadhead(5 mi)",
+    "charge \"Other\" = $2.35/km * 1 km + other * 1 mi"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "input loadedRate: Money/mi = $2.35/mi\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "loadedRate",
+        "range": {
+         "text": "$2.35/mi"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input other: Money/mi = $1/mi",
+       "input loadedRate: Money/mi = $2.35/mi",
+       "",
+       "charge \"Loaded\" (quantity: shipment.distance, rate: loadedRate)",
+       "charge \"Empty\" (quantity: 10 mi, rate: $2.350/mi)",
+       "fn deadhead(miles: Distance) -> Money = $2.35/mi * miles",
+       "charge \"Deadhead\" = deadhead(5 mi)",
+       "charge \"Other\" = $2.35/km * 1 km + other * 1 mi"
+      ],
+      "select": {
+       "text": "loadedRate"
+      },
+      "title": {
+       "args": [
+        "`$2.35/mi`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     },
+     {
+      "edits": [
+       {
+        "insert": "input loadedRate: Money/mi = $2.35/mi\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "loadedRate",
+        "range": {
+         "text": "$2.35/mi"
+        }
+       },
+       {
+        "insert": "loadedRate",
+        "range": {
+         "text": "$2.350/mi"
+        }
+       }
+      ],
+      "id": "promote-input-all",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input other: Money/mi = $1/mi",
+       "input loadedRate: Money/mi = $2.35/mi",
+       "",
+       "charge \"Loaded\" (quantity: shipment.distance, rate: loadedRate)",
+       "charge \"Empty\" (quantity: 10 mi, rate: loadedRate)",
+       "fn deadhead(miles: Distance) -> Money = $2.35/mi * miles",
+       "charge \"Deadhead\" = deadhead(5 mi)",
+       "charge \"Other\" = $2.35/km * 1 km + other * 1 mi"
+      ],
+      "select": {
+       "text": "loadedRate"
+      },
+      "title": {
+       "args": [
+        "`$2.35/mi`",
+        2
+       ],
+       "message": "Promote all {1} uses of {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a match pattern's literal is not replaced",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "let fee = match shipment.pieces ?? 0 {",
+    "  5 => $1",
+    "  _ => $2",
+    "}",
+    "charge \"A\" = fee * |5| + $1 * 5"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: Int = 5\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "5"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: Int = 5",
+       "",
+       "let fee = match shipment.pieces ?? 0 {",
+       "  5 => $1",
+       "  _ => $2",
+       "}",
+       "charge \"A\" = fee * value + $1 * 5"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`5`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     },
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: Int = 5\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "5"
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "5"
+        }
+       }
+      ],
+      "id": "promote-input-all",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input value: Int = 5",
+       "",
+       "let fee = match shipment.pieces ?? 0 {",
+       "  5 => $1",
+       "  _ => $2",
+       "}",
+       "charge \"A\" = fee * value + $1 * value"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`5`",
+        2
+       ],
+       "message": "Promote all {1} uses of {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "in a condition",
+   "source": [
+    "condition \"Heavy\"",
+    "",
+    "(shipment.weight ?? 0 lb) > |10_000 lb|"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput value: Weight = 10_000 lb\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "value",
+        "range": {
+         "text": "10_000 lb"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "condition \"Heavy\"",
+       "",
+       "input value: Weight = 10_000 lb",
+       "",
+       "(shipment.weight ?? 0 lb) > value"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`10_000 lb`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "inside an option",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "best \"Linehaul\" {",
+    "  option \"Flat\" {",
+    "    charge \"Flat\" = |$500|",
+    "  }",
+    "  option \"Per mile\" {",
+    "    charge \"Per mile\" (quantity: shipment.distance, rate: $2/mi)",
+    "  }",
+    "}"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "\ninput flatAmount: Money = $500\n",
+        "range": {
+         "text": ""
+        }
+       },
+       {
+        "insert": "flatAmount",
+        "range": {
+         "text": "$500"
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "",
+       "input flatAmount: Money = $500",
+       "",
+       "best \"Linehaul\" {",
+       "  option \"Flat\" {",
+       "    charge \"Flat\" = flatAmount",
+       "  }",
+       "  option \"Per mile\" {",
+       "    charge \"Per mile\" (quantity: shipment.distance, rate: $2/mi)",
+       "  }",
+       "}"
+      ],
+      "select": {
+       "text": "flatAmount"
+      },
+      "title": {
+       "args": [
+        "`$500`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "a file whose last line is the last input",
+   "source": [
+    "tariff \"t\"",
+    "input fee: Money = $1",
+    "charge \"A\" = fee + |$2|",
+    "input last: Money = $3"
+   ],
+   "expect": {
+    "actions": [
+     {
+      "edits": [
+       {
+        "insert": "value",
+        "range": {
+         "text": "$2"
+        }
+       },
+       {
+        "insert": "\ninput value: Money = $2",
+        "range": {
+         "text": ""
+        }
+       }
+      ],
+      "id": "promote-input",
+      "result": [
+       "tariff \"t\"",
+       "input fee: Money = $1",
+       "charge \"A\" = fee + value",
+       "input last: Money = $3",
+       "input value: Money = $2"
+      ],
+      "select": {
+       "text": "value"
+      },
+      "title": {
+       "args": [
+        "`$2`"
+       ],
+       "message": "Promote {0} to an input"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "name": "nothing in a function",
+   "source": [
+    "tariff \"t\"",
+    "fn fee() -> Money = |$5|",
+    "charge \"A\" = fee()"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing in a test",
+   "source": [
+    "tariff \"t\"",
+    "charge \"A\" = $5",
+    "test \"t\" {",
+    "  expect total == |$5|",
+    "}"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing in a property",
+   "source": [
+    "tariff \"t\"",
+    "charge \"A\" = $5",
+    "property \"p\" {",
+    "  vary shipment.weight in |1 lb|..2 lb",
+    "  expect total >= $0",
+    "}"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing in a match pattern",
+   "source": [
+    "tariff \"t\"",
+    "let fee = match shipment.pieces ?? 0 {",
+    "  |5| => $1",
+    "  _ => $2",
+    "}",
+    "charge \"A\" = fee"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing in an input's default",
+   "source": [
+    "tariff \"t\"",
+    "input fee: Money = |$5|",
+    "charge \"A\" = fee"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing in an input's constraint",
+   "source": [
+    "tariff \"t\"",
+    "input fee: Money = $5 where |$1|..$10",
+    "charge \"A\" = fee"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing in a const",
+   "source": [
+    "tariff \"t\"",
+    "const FEE = |$5|",
+    "charge \"A\" = FEE"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing in a library",
+   "source": [
+    "library \"l\"",
+    "fn fee() -> Money = |$5|"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing on a name",
+   "source": [
+    "tariff \"t\"",
+    "let fee = $5",
+    "charge \"A\" = |fee|"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing across two literals",
+   "source": [
+    "tariff \"t\"",
+    "charge \"A\" = |$5 + $6|"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing on none",
+   "source": [
+    "tariff \"t\"",
+    "let w = shipment.weight ?? |none| ?? 0 lb",
+    "charge \"A\" = $1/lb * w"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing on interpolated text",
+   "source": [
+    "tariff \"t\"",
+    "note |\"Weight {shipment.weight ?? 0 lb}\"|",
+    "charge \"A\" = $1"
+   ],
+   "expect": {
+    "actions": []
+   }
+  },
+  {
+   "name": "nothing on a charge label",
+   "source": [
+    "tariff \"t\"",
+    "charge |\"Flat\"| = $1"
+   ],
+   "expect": {
+    "actions": []
+   }
+  }
+ ]
+}

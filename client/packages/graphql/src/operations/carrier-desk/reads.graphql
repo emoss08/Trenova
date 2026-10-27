@@ -1,0 +1,89 @@
+# The Desk's carrier reads: the trucks carriers say they have available, and
+# carrier freight invoices matched against what each load was expected to cost.
+
+# Capacity postings, a page at a time.
+query DeskCarrierCapacityPostings(
+  $input: DataTableConnectionInput!
+  $openOnly: Boolean = false
+  $includeTotalCount: Boolean = false
+) {
+  carrierCapacityPostings(input: $input, openOnly: $openOnly) {
+    edges {
+      node {
+        id
+        carrierId
+        carrier {
+          id
+          name
+        }
+        originLocationId
+        originLocation {
+          id
+          name
+          city
+        }
+        originStateId
+        originState {
+          id
+          abbreviation
+        }
+        originRadiusMiles
+        destinationStateId
+        destinationState {
+          id
+          abbreviation
+        }
+        equipmentTypeId
+        equipmentType {
+          id
+          code
+        }
+        availableFrom
+        availableTo
+        truckCount
+        rateMethod
+        rate
+        source
+        version
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+  }
+}
+
+# Carrier invoice matches, newest first, by limit and offset.
+query DeskCarrierInvoiceMatches(
+  $status: CarrierInvoiceMatchStatus
+  $carrierId: ID
+  $limit: Int
+  $offset: Int
+) {
+  carrierInvoiceMatches(status: $status, carrierId: $carrierId, limit: $limit, offset: $offset) {
+    items {
+      id
+      ediCarrierInvoiceId
+      documentAiExtractionId
+      carrierId
+      carrier {
+        id
+        name
+      }
+      carrierSettlementId
+      status
+      matchedVia
+      invoiceNumber
+      invoiceTotalMinor
+      expectedTotalMinor
+      varianceMinor
+      currencyCode
+      resolutionNote
+      resolvedAt
+      createdAt
+    }
+  }
+}

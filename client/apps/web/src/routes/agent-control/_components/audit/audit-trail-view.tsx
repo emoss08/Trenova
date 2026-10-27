@@ -6,6 +6,7 @@ import {
   aiAuditEventTableGraphQLConfig,
   type AIAuditEventRow,
 } from "@/lib/graphql/ai-audit";
+import { Button } from "@trenova/shared/components/ui/button";
 import { EmptyTable } from "@trenova/shared/components/ui/empty-table";
 import { useT } from "@trenova/shared/i18n/use-t";
 import type { DataTableEmptyStateRenderProps } from "@trenova/shared/types/data-table";
@@ -26,7 +27,6 @@ import {
 } from "./audit-model";
 import { AuditScopeBar } from "./audit-scope-bar";
 import { ExportTrailDialog } from "./export-trail-dialog";
-import { Button } from "@trenova/shared/components/ui/button";
 
 /** The trail is written by a projector every minute; the table reads again on that beat. */
 const TRAIL_REFRESH_MS = 60_000;
@@ -98,7 +98,7 @@ export default function AuditTrailView({ onOpenExports }: { onOpenExports: () =>
   );
 
   return (
-    <div className="flex min-w-0 flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4 pt-2">
       <AuditScopeBar
         scope={scope}
         onChange={changeScope}

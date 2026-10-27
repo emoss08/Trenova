@@ -1,17 +1,17 @@
 package worker_test
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/internal/testutil/keeltest"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
-	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/pkg/listquery"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 func unixPtr(v int64) *int64 { return &v }
@@ -180,9 +180,7 @@ func TestProfileRollup_Equal(t *testing.T) {
 // the joined table, so this pins the SQL rather than merely asserting the
 // query is non-nil.
 func TestWorkerSearchConfig_ProfileIsFilterableAndSortable(t *testing.T) {
-	querybuilder.ClearCaches()
-	entity := &worker.Worker{}
-	config := querybuilder.GetFieldConfiguration(entity)
+	config := listquery.Describe(&worker.Worker{}, workerdb.WorkersSchema())
 
 	for _, field := range []string{
 		"profile.complianceStatus",
@@ -196,37 +194,20 @@ func TestWorkerSearchConfig_ProfileIsFilterableAndSortable(t *testing.T) {
 }
 
 func TestWorkerSearchConfig_ProfileFilterJoinsAndQualifies(t *testing.T) {
-	querybuilder.ClearCaches()
-	entity := &worker.Worker{}
-	db := bun.NewDB(nil, pgdialect.New())
-
-	query := db.NewSelect().
-		Model((*worker.Worker)(nil)).
-		ModelTableExpr("workers AS wrk")
-	qb := querybuilder.NewWithPostgresSearch(
-		query,
-		"wrk",
-		querybuilder.GetFieldConfiguration(entity),
-		entity,
-	)
-	qb.WithTraversalSupport(true)
-	qb.ApplyFilters([]domaintypes.FieldFilter{
-		{
-			Field:    "profile.trainingHealth",
-			Operator: dbtype.OpEqual,
-			Value:    string(worker.TrainingHealthOverdue),
+	w := workerdb.Workers
+	q := listquery.Filter(w.Query(), &pagination.QueryOptions{
+		FieldFilters: []domaintypes.FieldFilter{
+			{
+				Field:    "profile.trainingHealth",
+				Operator: dbtype.OpEqual,
+				Value:    string(worker.TrainingHealthOverdue),
+			},
 		},
 	})
 
-	sql := qb.GetQuery().String()
-	assert.Contains(t, sql, "worker_profiles")
-	assert.Contains(t, sql, "wprof")
-	assert.Contains(t, sql, "training_health")
-	// The join has to hang off the worker row, not float free.
-	assert.True(
-		t,
-		strings.Contains(sql, "wprof.worker_id = wrk.id"),
-		"expected the profile join to be keyed on the worker, got: %s",
-		sql,
-	)
+	sql, args := keeltest.Render(t, q)
+	assert.Contains(t, sql, `"worker_profiles"`)
+	assert.Contains(t, sql, `"training_health"`)
+	assert.Contains(t, sql, `"worker_id"`, "the profile join hangs off the worker row")
+	assert.Contains(t, args, string(worker.TrainingHealthOverdue))
 }

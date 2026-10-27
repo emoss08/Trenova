@@ -1,17 +1,17 @@
 package reporting
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/compiler"
+	"github.com/emoss08/keel/analytics"
+	"github.com/emoss08/keel/analytics/export"
+	"github.com/emoss08/keel/analytics/ir"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportcatalog"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
@@ -21,12 +21,12 @@ type RunCard struct {
 	Report     RunCardReport
 	Parameters []RunCardParameter
 	Timezone   string
-	Sample     *reportrows.Sample
+	Sample     *PreviewResult
 	Withheld   RunCardWithheld
 	Previous   *RunCardPrevious
 	Schedule   *report.ReportSchedule
-	Chart      *report.ChartSpec
-	Sort       []report.SortSpec
+	Chart      *ir.Chart
+	Sort       []ir.Sort
 }
 
 type RunCardWithheld string
@@ -47,10 +47,10 @@ type RunCardReport struct {
 type RunCardParameter struct {
 	Name        string
 	Label       string
-	Type        reportcatalog.FieldType
+	Type        string
 	Value       any
 	IsDefault   bool
-	RefEntity   string
+	Entity      string
 	WindowStart int64
 	WindowEnd   int64
 }
@@ -59,7 +59,7 @@ type RunCardPrevious struct {
 	RunID       pulid.ID
 	CompletedAt int64
 	RowCount    int64
-	Schema      []reportrows.Column
+	ColumnIDs   []string
 	Totals      []any
 }
 
@@ -74,7 +74,7 @@ func (s *Service) GetRunCard(ctx context.Context, req *GetRunRequest) (*RunCard,
 		Run:        run,
 		Timezone:   timezone,
 		Parameters: []RunCardParameter{},
-		Sort:       []report.SortSpec{},
+		Sort:       []ir.Sort{},
 	}
 
 	definition, err := s.runCardReport(ctx, req, card)
@@ -94,7 +94,7 @@ func (s *Service) GetRunCard(ctx context.Context, req *GetRunRequest) (*RunCard,
 		card.Schedule = s.runCardSchedule(ctx, req, run)
 	}
 
-	if run.Sample == nil {
+	if len(run.Sample) == 0 {
 		return card, nil
 	}
 	if err = s.authorizeStoredRun(ctx, req, run); err != nil {
@@ -105,17 +105,31 @@ func (s *Service) GetRunCard(ctx context.Context, req *GetRunRequest) (*RunCard,
 		card.Withheld = withheld
 		return card, nil
 	}
-	card.Sample = run.Sample
+	if card.Sample, err = sampleResult(ctx, run.Sample); err != nil {
+		s.l.Warn("failed to read a report run's sample",
+			zap.String("runId", run.ID.String()), zap.Error(err))
+		return card, nil
+	}
+	card.Sample.Timezone = timezone
 	card.Previous = s.runCardPrevious(ctx, req, run)
 
 	return card, nil
+}
+
+func sampleResult(ctx context.Context, sample []byte) (*PreviewResult, error) {
+	envelope, err := export.ReadJSON(bytes.NewReader(sample))
+	if err != nil {
+		return nil, err
+	}
+
+	return collectRows(ctx, envelope.Table.Reader(), 0)
 }
 
 func (s *Service) runCardReport(
 	ctx context.Context,
 	req *GetRunRequest,
 	card *RunCard,
-) (definition *report.Definition, err error) {
+) (definition *ir.Definition, err error) {
 	run := card.Run
 	switch {
 	case !run.DefinitionID.IsNil():
@@ -139,7 +153,7 @@ func (s *Service) savedRunCardReport(
 	ctx context.Context,
 	req *GetRunRequest,
 	card *RunCard,
-) (definition *report.Definition, err error) {
+) (definition *ir.Definition, err error) {
 	run := card.Run
 	entity, err := s.defRepo.GetByID(ctx, &reportports.GetReportDefinitionRequest{
 		TenantInfo:   req.TenantInfo,
@@ -216,16 +230,25 @@ func (s *Service) runCardPrevious(
 		}
 		return nil
 	}
-	if previous.Sample == nil || len(previous.Sample.Totals) == 0 {
+	if len(previous.Sample) == 0 {
 		return nil
+	}
+	sample, err := sampleResult(ctx, previous.Sample)
+	if err != nil || sample.Totals == nil {
+		return nil
+	}
+
+	columnIDs := make([]string, 0, len(sample.Columns))
+	for i := range sample.Columns {
+		columnIDs = append(columnIDs, sample.Columns[i].ID)
 	}
 
 	return &RunCardPrevious{
 		RunID:       previous.ID,
 		CompletedAt: previous.CompletedAt,
 		RowCount:    previous.RowCount,
-		Schema:      previous.Sample.Schema,
-		Totals:      previous.Sample.Totals,
+		ColumnIDs:   columnIDs,
+		Totals:      sample.Totals,
 	}
 }
 
@@ -244,7 +267,7 @@ func withheldReason(err error) (RunCardWithheld, bool) {
 }
 
 func runCardParameters(
-	definition *report.Definition,
+	definition *ir.Definition,
 	run *report.ReportRun,
 	timezone string,
 ) []RunCardParameter {
@@ -273,16 +296,15 @@ func runCardParameters(
 		parameter := RunCardParameter{
 			Name:      def.Name,
 			Label:     def.Label,
-			Type:      def.Type,
+			Type:      string(def.Type),
 			Value:     value,
 			IsDefault: isDefault,
-			RefEntity: def.RefEntity,
+			Entity:    def.Entity,
 		}
 		if op, ok := parameterOperator(definition, def.Name); ok {
-			start, end, windowed := compiler.ParameterWindow(op, value, loc, now)
-			if windowed {
-				parameter.WindowStart = start
-				parameter.WindowEnd = end
+			if from, to, rangeErr := analytics.RelativeRange(op, value, now, loc); rangeErr == nil {
+				parameter.WindowStart = from.Unix()
+				parameter.WindowEnd = to.Unix()
 			}
 		}
 		parameters = append(parameters, parameter)
@@ -291,18 +313,30 @@ func runCardParameters(
 	return parameters
 }
 
-func parameterOperator(
-	definition *report.Definition,
-	name string,
-) (op dbtype.Operator, ok bool) {
-	find := func(filter *report.FieldFilter) error {
-		if !ok && filter.Param == name {
-			op, ok = filter.Operator, true
+func parameterOperator(definition *ir.Definition, name string) (ir.Op, bool) {
+	for _, filter := range []*ir.Filter{definition.Filters, definition.Having} {
+		if op, ok := filterOperator(filter, name); ok {
+			return op, true
 		}
-		return nil
 	}
-	_ = definition.Filters.Walk(find)
-	_ = definition.Having.Walk(find)
 
-	return op, ok
+	return "", false
+}
+
+func filterOperator(filter *ir.Filter, name string) (ir.Op, bool) {
+	if filter == nil {
+		return "", false
+	}
+	if filter.Param == name {
+		return filter.Op, true
+	}
+	for _, group := range [][]ir.Filter{filter.And, filter.Or} {
+		for i := range group {
+			if op, ok := filterOperator(&group[i], name); ok {
+				return op, true
+			}
+		}
+	}
+
+	return "", false
 }

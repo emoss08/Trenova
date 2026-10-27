@@ -508,6 +508,7 @@ function InvoiceCard({
           <ChargeBill
             rows={rows}
             foot={foot}
+            tariffNotes={record.ratingNotes}
             note={
               record.shipmentCount > 1
                 ? t(

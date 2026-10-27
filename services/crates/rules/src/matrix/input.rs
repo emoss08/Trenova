@@ -2,13 +2,15 @@
 //! write them.
 //!
 //! A cell's four key and bound pairs are positional: pair zero belongs to the dimension at
-//! position zero. Exact axes fill the key and leave the bounds empty; range axes the reverse.
+//! position zero. Exact axes fill the key and leave the bounds empty; range axes the reverse;
+//! a zip-range axis (`kind` `ZipRange`, `matchMode` `Range`) holds its range's first postal
+//! code in the key and its last in `dNKeyTo`.
 
 use crate::allocation::input::nullable;
 use crate::allocation::input::optional_decimal;
-use crate::ops::RequestError;
 use rust_decimal::Decimal;
 use serde::Deserialize;
+use trenova_module_kit::ops::RequestError;
 
 /// How many axes a matrix can declare.
 pub const MAX_DIMENSIONS: usize = 4;
@@ -20,6 +22,8 @@ pub enum MatchMode {
     Exact,
     /// By which band the lookup's quantity falls in.
     Range,
+    /// By which inclusive postal-code range the key falls in: a `ZipRange` axis.
+    Postal,
     /// Neither; the axis constrains nothing, as in Go.
     Other,
 }
@@ -47,6 +51,7 @@ impl Dimension {
     pub fn mode(&self) -> MatchMode {
         match self.match_mode.as_str() {
             "Exact" => MatchMode::Exact,
+            "Range" if self.kind == crate::tariff::schema::ZIP_RANGE => MatchMode::Postal,
             "Range" => MatchMode::Range,
             _ => MatchMode::Other,
         }
@@ -92,6 +97,7 @@ impl Dimension {
             "ServiceType" => "Service",
             "Custom" => "Custom",
             "Quantity" => "Quantity",
+            "ZipRange" => "Postal range",
             other => other,
         };
         name.to_owned()
@@ -112,6 +118,15 @@ pub struct Cell {
     pub d2_key: Option<String>,
     /// The exact key on axis 3.
     pub d3_key: Option<String>,
+    /// The last postal code of the range on axis 0, when it is a zip-range axis (the first is
+    /// `d0_key`).
+    pub d0_key_to: Option<String>,
+    /// The last postal code of the range on axis 1.
+    pub d1_key_to: Option<String>,
+    /// The last postal code of the range on axis 2.
+    pub d2_key_to: Option<String>,
+    /// The last postal code of the range on axis 3.
+    pub d3_key_to: Option<String>,
     /// The band's lower bound on axis 0.
     #[serde(deserialize_with = "optional_decimal")]
     pub d0_min: Option<Decimal>,
@@ -147,6 +162,19 @@ impl Cell {
             1 => &self.d1_key,
             2 => &self.d2_key,
             3 => &self.d3_key,
+            _ => &None,
+        };
+        key.as_deref().unwrap_or_default()
+    }
+
+    /// The last postal code of the range on a zip-range axis (`KeyToAt`); empty when unset.
+    #[must_use]
+    pub fn key_to_at(&self, slot: usize) -> &str {
+        let key = match slot {
+            0 => &self.d0_key_to,
+            1 => &self.d1_key_to,
+            2 => &self.d2_key_to,
+            3 => &self.d3_key_to,
             _ => &None,
         };
         key.as_deref().unwrap_or_default()

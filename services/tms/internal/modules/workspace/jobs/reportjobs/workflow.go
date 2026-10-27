@@ -16,7 +16,10 @@ const (
 	ErrTypeReportValidation    = "REPORT_VALIDATION"
 	ErrTypeReportAuthorization = "REPORT_AUTHORIZATION"
 	ErrTypeReportTooExpensive  = "REPORT_TOO_EXPENSIVE"
+	ErrTypeReportBusy          = "REPORT_BUSY"
 )
+
+const busyRetryDelay = 15 * time.Second
 
 var prepareActivityOptions = workflow.ActivityOptions{
 	StartToCloseTimeout: 1 * time.Minute,
@@ -89,6 +92,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.ReportTaskQueue,
 			Description: "Fail report runs whose workflows are no longer running",
 		},
+		{
+			Name:        "CheckReportDefinitionsAgainstCatalogWorkflow",
+			Fn:          CheckReportDefinitionsAgainstCatalogWorkflow,
+			TaskQueue:   temporaltype.ReportTaskQueue,
+			Description: "Mark saved reports that no longer validate against the report catalog",
+		},
 	}
 }
 
@@ -118,7 +127,7 @@ func RunReportWorkflow(
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    5 * time.Second,
 			BackoffCoefficient: 2.0,
-			MaximumAttempts:    2,
+			MaximumAttempts:    4,
 			MaximumInterval:    time.Minute,
 			NonRetryableErrorTypes: []string{
 				ErrTypeReportValidation,
@@ -290,6 +299,22 @@ func ReconcileZombieReportRunsWorkflow(
 	var result *ReconcileZombiesResult
 	if err := workflow.ExecuteActivity(
 		ctx, a.ReconcileZombieRunsActivity,
+	).Get(ctx, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func CheckReportDefinitionsAgainstCatalogWorkflow(
+	ctx workflow.Context,
+) (*CheckCatalogResult, error) {
+	ctx = workflow.WithActivityOptions(ctx, cleanupActivityOptions)
+
+	var a *Activities
+	var result *CheckCatalogResult
+	if err := workflow.ExecuteActivity(
+		ctx, a.CheckDefinitionsAgainstCatalogActivity,
 	).Get(ctx, &result); err != nil {
 		return nil, err
 	}

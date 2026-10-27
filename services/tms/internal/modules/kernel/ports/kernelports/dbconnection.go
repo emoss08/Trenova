@@ -5,19 +5,36 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/uptrace/bun"
+	"github.com/emoss08/keel"
 )
 
 type TxOptions struct {
 	Isolation   sql.IsolationLevel
 	ReadOnly    bool
 	LockTimeout time.Duration
+	Settings    []TxSetting
+}
+
+type TxSetting struct {
+	Name  string
+	Value string
+}
+
+type Transactor interface {
+	Transact(ctx context.Context, opts TxOptions, fn func(context.Context) error) error
+}
+
+type Detacher interface {
+	RunDetached(ctx context.Context, readOnly bool, fn func(context.Context) error) error
+}
+
+type Savepointer interface {
+	Savepoint(ctx context.Context, fn func(context.Context) error) error
 }
 
 type DBConnection interface {
-	DB() *bun.DB
-	DBForContext(ctx context.Context) bun.IDB
-	WithTx(ctx context.Context, opts TxOptions, fn func(context.Context, bun.Tx) error) error
+	Transactor
+	Keel(ctx context.Context) *keel.DB
 	HealthCheck(ctx context.Context) error
 	IsHealthy(ctx context.Context) bool
 	Close() error

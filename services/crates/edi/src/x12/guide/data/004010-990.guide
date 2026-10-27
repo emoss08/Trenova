@@ -1,0 +1,9 @@
+guide x12.004010.990 | Response to a Load Tender
+set 990 GF 004010
+
+ST M 1
+B1 M 1
+N9 O 1
+G62 O 1
+K1 O 1
+SE M 1

@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -163,7 +162,7 @@ func (s *Service) ingest(ctx context.Context, in *ingestInput) (*FetchResult, er
 	raised := carrierintel.NewlyRaised(priorFindings, findings)
 	events := s.buildEvents(in, snapshot, changes, raised, current, now)
 
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if len(result.Raw) > 0 {
 			raw, rawErr := s.rawRepo.Insert(txCtx, &carrierintel.CarrierIntelRawPayload{
 				OrganizationID: in.tenant.OrgID,
@@ -228,7 +227,7 @@ func (s *Service) confirmUnchanged(
 		event.SnapshotID = current.ID
 	}
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if txErr := s.snapshotRepo.UpdateEvaluation(txCtx, current); txErr != nil {
 			return txErr
 		}

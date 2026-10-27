@@ -125,7 +125,6 @@ func workerCredentialTypeCursorConnectionToModel(
 ) (*gqlmodel.WorkerCredentialTypeConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *worker.WorkerCredentialType, cursor string) *gqlmodel.WorkerCredentialTypeEdge {
 			return &gqlmodel.WorkerCredentialTypeEdge{Node: node, Cursor: cursor}
@@ -144,7 +143,8 @@ func workerCredentialTypeCursorConnectionToModel(
 				func(edge *gqlmodel.WorkerCredentialTypeEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

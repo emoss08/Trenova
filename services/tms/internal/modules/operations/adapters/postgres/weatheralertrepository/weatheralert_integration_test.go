@@ -5,12 +5,12 @@ package weatheralertrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/weatheralert"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/weatheralertports"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/postgis"
 	"github.com/paulmach/orb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,6 +24,7 @@ func TestUpsertAlertAndExpireStaleAlerts(t *testing.T) {
 	defer cleanup()
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 
@@ -60,6 +61,19 @@ func TestUpsertAlertAndExpireStaleAlerts(t *testing.T) {
 	require.Len(t, activities, 1)
 	assert.Equal(t, weatheralert.ActivityTypeIssued, activities[0].ActivityType)
 
+	stored, err := repo.GetByID(ctx, weatheralertports.GetWeatherAlertByIDRequest{
+		ID:         activeAlerts[0].ID,
+		TenantInfo: tenantInfo,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, stored.Geometry, "the polygon is written and read back")
+	assert.Equal(t, int64(0), stored.Version, "writing the geometry does not bump the version")
+
+	other := seedtest.SeedAdditionalTenant(t, ctx, db, "WA")
+	elsewhere, err := repo.GetActiveAlerts(other.Ctx(ctx), other.Info())
+	require.NoError(t, err)
+	assert.Empty(t, elsewhere)
+
 	expiredAt := int64(20)
 	expires := int64(1)
 	alert.Expires = &expires
@@ -81,6 +95,7 @@ func TestListByNWSIDsReturnsTheStoredMessages(t *testing.T) {
 	defer cleanup()
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenantInfo := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 

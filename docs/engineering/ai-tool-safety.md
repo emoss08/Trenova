@@ -10,7 +10,7 @@ policies, so this page cannot drift from what runs: CI regenerates it and fails
 when it differs. Each tool is listed once, under the furthest class its work
 can reach.
 
-Tools listed: 634.
+Tools listed: 638.
 
 ## The model
 
@@ -88,7 +88,7 @@ and Confidential fields never reach a model at all.
 
 | Class | Means | Runs at most | Held once tainted | Tools that reach it |
 | --- | --- | --- | --- | --- |
-| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 211 |
+| Reads only | Looks something up. Nothing changes and nothing is sent. | Automatic | No | 215 |
 | The caller's own records | Changes only the records of the person using the agent. | Automatic | No | 9 |
 | Inside the organization | Changes records only people inside the organization see. | Automatic | No | 266 |
 | Seen by a customer | Changes something a customer can see. | Ask first | Yes | 5 |
@@ -115,7 +115,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List agent runs (`agent_list_runs`) | Reads only | Automatic | — | When the record is marked, from run record | Lists agent runs, whose summaries may repeat outside text a run read; a run on a conversation is listed only to the person who owns it. |
 | Open agent page (`agent_open_page`) | Reads only | Automatic | — | — | Opens a page in the caller's own browser; nothing changes and nothing is sent. |
 | Read agent attachment (`agent_read_attachment`) | Reads only | Automatic | — | Always, from attachment | Reads text from a file the person attached to their own conversation; nothing changes and nothing is sent. |
-| Run agent script (`agent_run_script`) | Reads only | Automatic | — | When the record is marked, from record note, inbound message, document, EDI, bank receipt, weather, attachment, memory or run record | Runs a short script in a sandbox that cannot reach the network; every read it makes is one of the agent's own reads, run as the person under the same checks, and the call carries the taint of every read that brought outside text in. It changes nothing itself: a change it prepares is proposed with the rest of its batch for a person to approve. |
+| Run agent script (`analysis_run`) | Reads only | Automatic | — | When the record is marked, from record note, inbound message, document, EDI, bank receipt, weather, attachment, memory or run record | Runs a short script in an interpreter that cannot reach the network or a file; every read it makes is one of the agent's own reads, run as the person under the same checks, and the call carries the taint of every read that brought outside text in. It changes nothing itself: a change it prepares is proposed with the rest of its batch for a person to approve. |
 | Ask user (`ask_user`) | Reads only | Automatic | — | — | Asks the person in the conversation a question; nothing is saved or sent. |
 | Get billing queue item (`billing_get_queue_item`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List billing queue items (`billing_list_queue_items`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -154,7 +154,7 @@ Looks something up. Nothing changes and nothing is sent.
 | List EDI tender changes (`edi_list_tender_changes`) | Reads only | Automatic | — | Always, from EDI | Lists changes another organization wrote to loads tendered over EDI; nothing changes and nothing is sent. |
 | List EDI transfer changes (`edi_list_transfer_changes`) | Reads only | Automatic | — | Always, from EDI | Lists statuses another organization reported on a linked load; nothing changes and nothing is sent. |
 | List EDI transfers (`edi_list_transfers`) | Reads only | Automatic | — | Always, from EDI | Lists load tenders trading partners sent, whose contents the partner wrote; nothing changes and nothing is sent. |
-| Preview EDI x12 (`edi_preview_x12`) | Reads only | Automatic | — | When the record is marked, from EDI | Renders the X12 a send would produce from records already in Trenova, with the partner profile's findings; nothing is saved and nothing is sent. |
+| Preview EDI x12 (`edi_preview_x12`) | Reads only | Automatic | — | When the record is marked, from EDI | Renders the X12 a send would produce from records already in Trenova, with what the partner's Lading version found; nothing is saved and nothing is sent. |
 | Get tractor (`equipment_get_tractor`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get trailer (`equipment_get_trailer`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List equipment manufacturers (`equipment_list_manufacturers`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -166,21 +166,26 @@ Looks something up. Nothing changes and nothing is sent.
 | List service failure reason codes (`exception_list_service_failure_reason_codes`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List service failures (`exception_list_service_failures`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List watchtower items (`exception_list_watchtower_items`) | Reads only | Automatic | — | When the record is marked, from inbound message, EDI, weather or run record | Reads the watchtower feed, whose headlines can quote an inbound email, an EDI file, a weather alert or a run that read outside text; it changes nothing, not even what the person has seen. |
-| Get factoring agreement (`factoring_get_agreement`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring readiness (`factoring_get_readiness`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring remittance (`factoring_get_remittance`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring reserve balance (`factoring_get_reserve_balance`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get factoring submission (`factoring_get_submission`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| List factoring agreements (`factoring_list_agreements`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring noas (`factoring_list_noas`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring readiness (`factoring_list_readiness`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring remittances (`factoring_list_remittances`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List factoring submissions (`factoring_list_submissions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Find tools (`find_tools`) | Reads only | Automatic | — | — | Loads more of the agent's own tools into the turn; it reads the catalog and changes nothing. |
-| Describe formula schema (`formula_describe_schema`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Check formula (`formula_check`) | Reads only | Automatic | — | — | Checks source the model holds; nothing is saved and nothing is sent. |
+| Describe formula language (`formula_describe_language`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Get formula library (`formula_get_library`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get formula template (`formula_get_template`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Library formula propose (`formula_library_propose`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
+| List formula libraries (`formula_list_libraries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List formula templates (`formula_list_templates`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
+| Preview formula (`formula_preview`) | Reads only | Automatic | — | — | Rates source with the engine, for the sample record or a shipment the caller may read; nothing is saved and nothing is sent. |
 | Propose formula (`formula_propose`) | Reads only | Automatic | — | — | Changes the person's own editor, which they can undo; nothing is saved and nothing is sent. |
-| Test formula expression (`formula_test_expression`) | Reads only | Automatic | — | — | Prices an expression with the formula engine, for sample values or a shipment the caller may read; nothing is saved and nothing is sent. |
+| Run formula tests (`formula_run_tests`) | Reads only | Automatic | — | — | Runs the tests in source the model holds; nothing is saved and nothing is sent. |
 | List fuel cards (`fuel_list_cards`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List IFTA jurisdictions (`fuel_list_ifta_jurisdictions`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List IFTA mileage entries (`fuel_list_ifta_mileage_entries`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
@@ -252,7 +257,6 @@ Looks something up. Nothing changes and nothing is sent.
 | List receivable credit memo applications (`receivable_list_credit_memo_applications`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List customer payments (`receivable_list_customer_payments`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | List receivable open items (`receivable_list_open_items`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
-| Analyze report data (`report_analyze_data`) | Reads only | Automatic | — | When the record is marked, from attachment | Runs code over report results and files the person already read, in a sandbox that cannot reach the network; it changes nothing, and it carries the taint of any attached file it reads. |
 | Compare report runs (`report_compare_runs`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Compose report table view (`report_compose_table_view`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |
 | Get report (`report_get`) | Reads only | Automatic | — | — | Reads records the caller may already open; it changes nothing and sends nothing. |

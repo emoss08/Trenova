@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/airetrievalrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aituneuprepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/aiusagerepository"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/analysisrunrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantartifactrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantcaserepository"
 	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/assistantqueuerepository"
@@ -106,6 +107,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/aitraininghistoryservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aituneupservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/aiusageservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/analysisrunservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/approvalwindow"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantcaseservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/assistantfollowupservice"
@@ -129,6 +131,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/recordanchorservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalquery"
 	"github.com/emoss08/trenova/internal/modules/agent/app/retrievalservice"
+	"github.com/emoss08/trenova/internal/modules/agent/app/scriptrunner"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentbriefingservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/shipmentimportassistantservice"
 	"github.com/emoss08/trenova/internal/modules/agent/app/tablequeryservice"
@@ -258,7 +261,7 @@ func SharedOptions() fx.Option {
 			agentextensionrepository.NewUsageRepository,
 			agentextensionrepository.NewPortalSiteRepository,
 			agentextensionrepository.NewPortalRunRepository,
-			agentextensionrepository.NewAnalysisRunRepository,
+			analysisrunrepository.New,
 			agentextensionrepository.NewWebWatchRepository,
 			agentextensionrepository.NewWebWatchFindingRepository,
 			agentrunservice.NewValidator,
@@ -380,6 +383,8 @@ func SharedOptions() fx.Option {
 			aidocumentservice.NewContract,
 		),
 		agentextensionservice.Module,
+		scriptrunner.Module,
+		analysisrunservice.Module,
 		productguideservice.Module,
 		retrievalquery.Module,
 		agentguard.Module,

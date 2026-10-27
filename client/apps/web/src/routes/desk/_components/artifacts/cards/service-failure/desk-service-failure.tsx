@@ -4,6 +4,7 @@ import { choiceLabel, serviceFailureSourceChoices, serviceFailureTypeChoices } f
 import { serviceFailure } from "@/lib/queries/service-failure";
 import { useQuery } from "@tanstack/react-query";
 import { useT } from "@trenova/shared/i18n/use-t";
+import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import { cn } from "@trenova/shared/lib/utils";
 import { useMemo } from "react";
 import { Link } from "react-router";
@@ -327,7 +328,9 @@ function ServiceFailureCard({
         aside={
           otherFailures.total ? (
             <span className="dk-warn">
-              {t("{0, plural, one {# other} other {# others}}", otherFailures.total)}
+              {otherFailures.totalExact
+                ? t("{0, plural, one {# other} other {# others}}", otherFailures.total)
+                : t("About {0} others", formatRowTotal(otherFailures.total, false))}
             </span>
           ) : undefined
         }

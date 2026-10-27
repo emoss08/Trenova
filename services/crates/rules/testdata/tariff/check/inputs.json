@@ -1,0 +1,723 @@
+{
+ "cases": [
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": null,
+     "default": {
+      "$q": "450",
+      "u": "$"
+     },
+     "descriptor": {
+      "kind": "money"
+     },
+     "doc": null,
+     "name": "minimumCharge",
+     "range": {
+      "from": 18,
+      "to": 31
+     },
+     "required": false,
+     "type": "Money"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$q": "2.35",
+      "u": "$/mi"
+     },
+     "descriptor": {
+      "dimension": "Money/Distance",
+      "kind": "quantity",
+      "unit": "$/mi"
+     },
+     "doc": "Paid per loaded mile.",
+     "name": "rate",
+     "range": {
+      "from": 78,
+      "to": 82
+     },
+     "required": false,
+     "type": "Money/mi"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$q": "18",
+      "u": "%"
+     },
+     "descriptor": {
+      "kind": "percent"
+     },
+     "doc": null,
+     "name": "fuelPercent",
+     "range": {
+      "from": 110,
+      "to": 121
+     },
+     "required": false,
+     "type": "Percent"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$n": "2"
+     },
+     "descriptor": {
+      "kind": "int"
+     },
+     "doc": null,
+     "name": "drops",
+     "range": {
+      "from": 143,
+      "to": 148
+     },
+     "required": false,
+     "type": "Int"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$n": "1.5"
+     },
+     "descriptor": {
+      "kind": "number"
+     },
+     "doc": null,
+     "name": "factor",
+     "range": {
+      "from": 164,
+      "to": 170
+     },
+     "required": false,
+     "type": "Number"
+    },
+    {
+     "constraint": null,
+     "default": "Standard",
+     "descriptor": {
+      "kind": "text"
+     },
+     "doc": null,
+     "name": "label",
+     "range": {
+      "from": 191,
+      "to": 196
+     },
+     "required": false,
+     "type": "Text"
+    },
+    {
+     "constraint": null,
+     "default": false,
+     "descriptor": {
+      "kind": "bool"
+     },
+     "doc": null,
+     "name": "waived",
+     "range": {
+      "from": 222,
+      "to": 228
+     },
+     "required": false,
+     "type": "Bool"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$date": "2026-10-22"
+     },
+     "descriptor": {
+      "kind": "date"
+     },
+     "doc": null,
+     "name": "starts",
+     "range": {
+      "from": 249,
+      "to": 255
+     },
+     "required": false,
+     "type": "Date"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$date": "2026-10-22T08:00:00-05:00"
+     },
+     "descriptor": {
+      "kind": "dateTime"
+     },
+     "doc": null,
+     "name": "cutoff",
+     "range": {
+      "from": 282,
+      "to": 288
+     },
+     "required": false,
+     "type": "DateTime"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$q": "2",
+      "u": "h"
+     },
+     "descriptor": {
+      "dimension": "Duration",
+      "kind": "quantity",
+      "unit": "h"
+     },
+     "doc": null,
+     "name": "free",
+     "range": {
+      "from": 331,
+      "to": 335
+     },
+     "required": false,
+     "type": "Duration"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$q": "1",
+      "u": "cwt"
+     },
+     "descriptor": {
+      "dimension": "Weight",
+      "kind": "quantity",
+      "unit": "lb"
+     },
+     "doc": null,
+     "name": "threshold",
+     "range": {
+      "from": 358,
+      "to": 367
+     },
+     "required": false,
+     "type": "Weight"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$q": "8",
+      "u": "lb/ft3"
+     },
+     "descriptor": {
+      "dimension": "Weight/Volume",
+      "kind": "quantity",
+      "unit": "lb/ft3"
+     },
+     "doc": null,
+     "name": "density",
+     "range": {
+      "from": 390,
+      "to": 397
+     },
+     "required": false,
+     "type": "Weight/Volume"
+    },
+    {
+     "constraint": null,
+     "default": "Sell",
+     "descriptor": {
+      "kind": "enum",
+      "name": "RatingMode",
+      "ordered": false,
+      "variants": [
+       "Sell",
+       "Buy"
+      ]
+     },
+     "doc": null,
+     "name": "mode",
+     "range": {
+      "from": 430,
+      "to": 434
+     },
+     "required": false,
+     "type": "RatingMode"
+    },
+    {
+     "constraint": null,
+     "default": null,
+     "descriptor": {
+      "inner": {
+       "dimension": "Weight",
+       "kind": "quantity",
+       "unit": "lb"
+      },
+      "kind": "optional"
+     },
+     "doc": null,
+     "name": "tolerance",
+     "range": {
+      "from": 460,
+      "to": 469
+     },
+     "required": false,
+     "type": "Weight?"
+    }
+   ],
+   "name": "input descriptors and defaults",
+   "source": [
+    "tariff \"t\"",
+    "",
+    "input minimumCharge: Money = $450",
+    "/// Paid per loaded mile.",
+    "input rate: Money/mi = $2.35/mi",
+    "input fuelPercent: Percent = 18%",
+    "input drops: Int = 2",
+    "input factor: Number = 1.5",
+    "input label: Text = \"Standard\"",
+    "input waived: Bool = false",
+    "input starts: Date = @2026-10-22",
+    "input cutoff: DateTime = @2026-10-22T08:00-05:00",
+    "input free: Duration = 2 h",
+    "input threshold: Weight = 1 cwt",
+    "input density: Weight/Volume = 8 lb/ft3",
+    "input mode: RatingMode = Sell",
+    "input tolerance: Weight? = none",
+    "charge \"x\" = rate * shipment.distance + minimumCharge * fuelPercent + $1 * drops + $1 * factor",
+    "note \"{label} {waived} {starts} {cutoff} {free} {threshold} {density} {mode} {tolerance ?? 0 lb}\""
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": null,
+     "default": null,
+     "descriptor": {
+      "dimension": "Money/Distance",
+      "kind": "quantity",
+      "unit": "$/mi"
+     },
+     "doc": null,
+     "name": "rate",
+     "range": {
+      "from": 17,
+      "to": 21
+     },
+     "required": true,
+     "type": "Money/mi"
+    }
+   ],
+   "name": "a required input has no default",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi",
+    "charge \"x\" = rate * shipment.distance"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": null,
+     "default": [
+      {
+       "from": {
+        "$q": "0",
+        "u": "lb"
+       },
+       "minimum": null,
+       "rate": {
+        "$q": "20",
+        "u": "$/cwt"
+       }
+      },
+      {
+       "from": {
+        "$q": "500",
+        "u": "lb"
+       },
+       "minimum": {
+        "$q": "75",
+        "u": "$"
+       },
+       "rate": {
+        "$q": "18",
+        "u": "$/cwt"
+       }
+      }
+     ],
+     "descriptor": {
+      "item": {
+       "fields": [
+        {
+         "doc": null,
+         "name": "from",
+         "type": {
+          "dimension": "Weight",
+          "kind": "quantity",
+          "unit": "lb"
+         }
+        },
+        {
+         "doc": null,
+         "name": "rate",
+         "type": {
+          "dimension": "Money/Weight",
+          "kind": "quantity",
+          "unit": "$/cwt"
+         }
+        },
+        {
+         "doc": null,
+         "name": "minimum",
+         "type": {
+          "inner": {
+           "kind": "money"
+          },
+          "kind": "optional"
+         }
+        }
+       ],
+       "kind": "record",
+       "name": "Break"
+      },
+      "kind": "list"
+     },
+     "doc": null,
+     "name": "breaks",
+     "range": {
+      "from": 119,
+      "to": 125
+     },
+     "required": false,
+     "type": "List<Break>"
+    },
+    {
+     "constraint": null,
+     "default": [],
+     "descriptor": {
+      "item": {
+       "kind": "text"
+      },
+      "kind": "list"
+     },
+     "doc": null,
+     "name": "zips",
+     "range": {
+      "from": 241,
+      "to": 245
+     },
+     "required": false,
+     "type": "List<Text>"
+    }
+   ],
+   "name": "list and record inputs",
+   "source": [
+    "tariff \"t\"",
+    "charge \"y\" = $1",
+    "/// One weight break.",
+    "type Break = { from: Weight, rate: Money/cwt, minimum: Money? }",
+    "input breaks: List<Break> = [{ from: 0 lb, rate: $20/cwt, minimum: none }, { from: 500 lb, rate: $18/cwt, minimum: $75 }]",
+    "input zips: List<Text> = []",
+    "charge \"x\" = $1 * (breaks.len + zips.len)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": null,
+     "default": {
+      "$q": "200.5",
+      "u": "$"
+     },
+     "descriptor": {
+      "kind": "money"
+     },
+     "doc": null,
+     "name": "fee",
+     "range": {
+      "from": 35,
+      "to": 38
+     },
+     "required": false,
+     "type": "Money"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$q": "15",
+      "u": "%"
+     },
+     "descriptor": {
+      "kind": "percent"
+     },
+     "doc": null,
+     "name": "share",
+     "range": {
+      "from": 71,
+      "to": 76
+     },
+     "required": false,
+     "type": "Percent"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$q": "2",
+      "u": "%"
+     },
+     "descriptor": {
+      "kind": "percent"
+     },
+     "doc": null,
+     "name": "steps",
+     "range": {
+      "from": 103,
+      "to": 108
+     },
+     "required": false,
+     "type": "Percent"
+    },
+    {
+     "constraint": null,
+     "default": {
+      "$n": "0.25"
+     },
+     "descriptor": {
+      "kind": "number"
+     },
+     "doc": null,
+     "name": "part",
+     "range": {
+      "from": 135,
+      "to": 139
+     },
+     "required": false,
+     "type": "Number"
+    }
+   ],
+   "name": "a default that folds arithmetic and constants",
+   "source": [
+    "tariff \"t\"",
+    "const BASE = $100",
+    "input fee: Money = BASE * 2 + $0.50",
+    "input share: Percent = 10% + 5%",
+    "input steps: Percent = 4 * 0.5%",
+    "input part: Number = 1 / 4",
+    "charge \"x\" = fee * share + fee * steps + $1 * part"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "shipment",
+     "code": "not-constant",
+     "message": "`shipment` is the record being rated, which isn't known before rating: a constant or default must be computed from literals and other constants"
+    }
+   ],
+   "name": "a default must be constant",
+   "source": [
+    "tariff \"t\"",
+    "input miles: Distance = shipment.distance",
+    "charge \"x\" = $1/mi * miles"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "a",
+     "code": "not-constant",
+     "message": "`a` is an input, which isn't known before rating: a constant or default must be computed from literals and other constants",
+     "nth": 3
+    }
+   ],
+   "name": "a default may not read another input",
+   "source": [
+    "tariff \"t\"",
+    "input a: Money = $1",
+    "input b: Money = a",
+    "charge \"x\" = a + b"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "$2/cwt",
+     "code": "type-mismatch",
+     "message": "`$2/cwt` is money per hundredweight, but `rate` is declared as money per mile"
+    }
+   ],
+   "name": "a default of the wrong type",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $2/cwt",
+    "charge \"x\" = rate * shipment.distance"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": null,
+     "default": {
+      "$q": "1.5",
+      "u": "$/km"
+     },
+     "descriptor": {
+      "dimension": "Money/Distance",
+      "kind": "quantity",
+      "unit": "$/mi"
+     },
+     "doc": null,
+     "name": "rate",
+     "range": {
+      "from": 17,
+      "to": 21
+     },
+     "required": false,
+     "type": "Money/mi"
+    }
+   ],
+   "name": "a default given in another unit of the dimension",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Money/mi = $1.5/km",
+    "charge \"x\" = rate * shipment.distance"
+   ]
+  },
+  {
+   "diagnostics": [
+    {
+     "at": "rate",
+     "code": "unused",
+     "message": "The input `rate` is never used"
+    },
+    {
+     "at": "Mony",
+     "code": "unknown-type",
+     "fixes": [
+      {
+       "label": "Change to `Money`",
+       "result": [
+        "tariff \"t\"",
+        "input rate: Money = $1",
+        "charge \"x\" = $1"
+       ]
+      }
+     ],
+     "message": "`Mony` isn't a type. Did you mean `Money`?"
+    }
+   ],
+   "name": "an input with an unknown type",
+   "source": [
+    "tariff \"t\"",
+    "input rate: Mony = $1",
+    "charge \"x\" = $1"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": null,
+     "default": {
+      "end": {
+       "$n": "17"
+      },
+      "start": {
+       "$n": "8"
+      }
+     },
+     "descriptor": {
+      "fields": [
+       {
+        "doc": null,
+        "name": "start",
+        "type": {
+         "kind": "int"
+        }
+       },
+       {
+        "doc": null,
+        "name": "end",
+        "type": {
+         "kind": "int"
+        }
+       }
+      ],
+      "kind": "record",
+      "name": null
+     },
+     "doc": null,
+     "name": "window",
+     "range": {
+      "from": 17,
+      "to": 23
+     },
+     "required": false,
+     "type": "{ start: Int, end: Int }"
+    }
+   ],
+   "name": "an inline record input",
+   "source": [
+    "tariff \"t\"",
+    "input window: { start: Int, end: Int } = { start: 8, end: 17 }",
+    "charge \"x\" = $1 * (window.end - window.start)"
+   ]
+  },
+  {
+   "diagnostics": [],
+   "inputs": [
+    {
+     "constraint": null,
+     "default": [],
+     "descriptor": {
+      "item": {
+       "fields": [
+        {
+         "doc": "Where the break starts.",
+         "name": "from",
+         "type": {
+          "dimension": "Weight",
+          "kind": "quantity",
+          "unit": "lb"
+         }
+        },
+        {
+         "doc": "The rate from there.",
+         "name": "rate",
+         "type": {
+          "dimension": "Money/Weight",
+          "kind": "quantity",
+          "unit": "$/cwt"
+         }
+        }
+       ],
+       "kind": "record",
+       "name": "Break"
+      },
+      "kind": "list"
+     },
+     "doc": null,
+     "name": "breaks",
+     "range": {
+      "from": 141,
+      "to": 147
+     },
+     "required": false,
+     "type": "List<Break>"
+    }
+   ],
+   "name": "a record input's field docs label the form's columns",
+   "source": [
+    "tariff \"t\"",
+    "charge \"y\" = $1",
+    "type Break = {",
+    "  /// Where the break starts.",
+    "  from: Weight,",
+    "  /// The rate from there.",
+    "  rate: Money/cwt",
+    "}",
+    "input breaks: List<Break> = []",
+    "note \"{breaks.len}\""
+   ]
+  }
+ ]
+}

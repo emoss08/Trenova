@@ -283,7 +283,7 @@ export function editorValuesFromPreset(
     thinkingStyle: "Auto",
     advisorEnabled: false,
     advisorModel: "",
-    scripts: false,
+    scripts: true,
     scriptWrites: false,
     maxTokens: "8192",
     embeddingDimensionsChoice:

@@ -35,6 +35,7 @@ describe("fetchRecordShipments", () => {
         edges: [{ node: node("shp_1") }, { node: node("shp_2") }],
         pageInfo: { hasNextPage: true, endCursor: "c2" },
         totalCount: 12,
+        totalCountExact: true,
       },
     } as never);
     const controller = new AbortController();
@@ -60,6 +61,7 @@ describe("fetchRecordShipments", () => {
     expect(page).toEqual({
       rows: [node("shp_1"), node("shp_2")],
       total: 12,
+      totalExact: true,
       endCursor: "c2",
       hasNextPage: true,
     });
@@ -109,9 +111,28 @@ describe("fetchRecordShipments", () => {
     expect(page).toEqual({
       rows: [node("shp_3")],
       total: null,
+      totalExact: true,
       endCursor: null,
       hasNextPage: false,
     });
+  });
+
+  it("keeps a total the server estimated marked as an estimate", async () => {
+    requestGraphQLMock.mockResolvedValue({
+      shipments: {
+        edges: [{ node: node("shp_1") }],
+        pageInfo: { hasNextPage: true, endCursor: "c1" },
+        totalCount: 48_200,
+        totalCountExact: false,
+      },
+    } as never);
+
+    const page = await fetchRecordShipments(
+      { kind: "customer", id: "cus_1" },
+      { first: 1, after: null },
+    );
+
+    expect(page).toMatchObject({ total: 48_200, totalExact: false });
   });
 
   it("counts the rows it got when the server leaves the total out of a first page", async () => {

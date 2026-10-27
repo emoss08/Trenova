@@ -20,9 +20,8 @@ export function wireMessage(overrides: Record<string, unknown> = {}): Record<str
     organizationId: "org_1",
     ediPartnerId: "edip_1",
     documentTypeId: "edidt_x12_214_outbound",
-    partnerDocumentProfileId: "edipdp_1",
-    templateId: "editpl_1",
-    templateVersionId: "editplv_1",
+    ladingVersionId: "ldv_1",
+    flowInstanceId: "edfi_1",
     shipmentId: "shp_1",
     invoiceId: "",
     transferId: "",
@@ -32,7 +31,6 @@ export function wireMessage(overrides: Record<string, unknown> = {}): Record<str
     transactionSet: "214",
     x12Version: "004010",
     status: "Generated",
-    validationMode: "Strict",
     interchangeControlNumber: "000000417",
     groupControlNumber: "417",
     transactionControlNumber: "0001",
@@ -103,59 +101,6 @@ export function wireMessage(overrides: Record<string, unknown> = {}): Record<str
       updatedAt: NOW - 30 * 24 * HOUR,
     },
     ...overrides,
-  };
-}
-
-/**
- * The wire form of the message's partner document profile, as edi.EDIPartnerDocumentProfile
- * marshals it. Its acknowledgment column defaults to '{}', so a profile saved without
- * acknowledgment expectations sends every field at its zero value: an empty type and an
- * empty severity.
- */
-export function wireDocumentProfile(
-  acknowledgment: Record<string, unknown> = {
-    expected: false,
-    type: "",
-    slaInMinutes: 0,
-    missingAckSeverity: "",
-  },
-): Record<string, unknown> {
-  return {
-    id: "edipdp_1",
-    businessUnitId: "bu_1",
-    organizationId: "org_1",
-    ediPartnerId: "edip_1",
-    documentTypeId: "edidt_1",
-    templateId: "editpl_1",
-    templateVersionId: null,
-    name: "Tyson 214",
-    status: "Active",
-    direction: "Outbound",
-    standard: "X12",
-    transactionSet: "214",
-    x12VersionOverride: "",
-    functionalGroupId: "QM",
-    envelope: {
-      interchangeSenderQualifier: "ZZ",
-      interchangeSenderId: "TRENOVA",
-      interchangeReceiverQualifier: "ZZ",
-      interchangeReceiverId: "TYSON",
-      applicationSenderCode: "TRENOVA",
-      applicationReceiverCode: "TYSON",
-      interchangeUsageIndicator: "P",
-      elementSeparator: "*",
-      segmentTerminator: "~",
-      componentSeparator: ">",
-      repetitionSeparator: "^",
-    },
-    acknowledgment,
-    validationMode: "Strict",
-    partnerSettings: {},
-    partnerSettingsSchemaId: null,
-    partnerSettingsSchemaVersion: 0,
-    version: 1,
-    createdAt: NOW - 30 * 24 * HOUR,
-    updatedAt: NOW - 30 * 24 * HOUR,
   };
 }
 
@@ -355,9 +300,8 @@ export function wireInspection(
     },
     provenance: {
       messageId: "edimsg_1",
-      profileId: "edipdp_1",
-      templateId: "editpl_1",
-      templateVersionId: "editplv_1",
+      ladingVersionId: "ldv_1",
+      flowInstanceId: "edfi_1",
       generatedAt: NOW - 2 * HOUR,
       generatedById: "usr_1",
       ...overrides.provenance,

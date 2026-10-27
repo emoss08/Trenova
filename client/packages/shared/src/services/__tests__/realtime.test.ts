@@ -347,8 +347,112 @@ describe("RealtimeClient", () => {
     expect(apiPost).toHaveBeenLastCalledWith(path, { connectionId: "rtc_2" });
 
     leave();
+    await tick(999);
+    expect(apiDelete).not.toHaveBeenCalled();
+    await tick(1);
     expect(apiDelete).toHaveBeenCalledWith(`${path}?connectionId=rtc_2`);
     expect(seen.at(-1)).toEqual([]);
+    client.disconnect();
+  });
+
+  it("keeps the membership when the last join is released and the scope is joined again within the grace", async () => {
+    const scope = "view:Shipment";
+    const path = "/realtime/presence/Shipment/";
+    apiPost.mockResolvedValue({
+      scope,
+      members: [{ userId: "usr_2", connectionId: "rtc_9", name: "Pat" }],
+    });
+
+    const stream = streamReply();
+    const client = new RealtimeClient();
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    stream.send("ready", ready("rtc_1"));
+    await tick();
+
+    // React StrictMode runs an effect, its cleanup and the effect again in one commit.
+    const unsubscribe = client.subscribePresence(scope, () => undefined);
+    const leave = client.joinScope(scope, path);
+    unsubscribe();
+    leave();
+    const seen: string[][] = [];
+    client.subscribePresence(scope, (members) =>
+      seen.push(members.map((member) => member.connectionId)),
+    );
+    client.joinScope(scope, path);
+    await tick(5_000);
+
+    expect(apiPost).toHaveBeenCalledTimes(1);
+    expect(apiPost).toHaveBeenCalledWith(path, { connectionId: "rtc_1" });
+    expect(apiDelete).not.toHaveBeenCalled();
+    expect(seen.at(-1)).toEqual(["rtc_9"]);
+    client.disconnect();
+  });
+
+  it("sends a join only after the scope's leave in flight has been answered", async () => {
+    const scope = "view:Shipment";
+    const path = "/realtime/presence/Shipment/";
+    apiPost.mockResolvedValue({ scope, members: [] });
+    let answerLeave: () => void = () => undefined;
+    apiDelete.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          answerLeave = resolve;
+        }),
+    );
+
+    const stream = streamReply();
+    const client = new RealtimeClient();
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    stream.send("ready", ready("rtc_1"));
+    await tick();
+
+    const leave = client.joinScope(scope, path);
+    await tick();
+    leave();
+    await tick(1_000);
+    expect(apiDelete).toHaveBeenCalledWith(`${path}?connectionId=rtc_1`);
+
+    client.joinScope(scope, path);
+    await tick();
+    expect(apiPost).toHaveBeenCalledTimes(1);
+
+    answerLeave();
+    await tick();
+    expect(apiPost).toHaveBeenCalledTimes(2);
+    expect(apiPost).toHaveBeenLastCalledWith(path, { connectionId: "rtc_1" });
+    client.disconnect();
+  });
+
+  it("joins again on a new connection when the scope was in its grace across a reconnect", async () => {
+    const scope = "view:Shipment";
+    const path = "/realtime/presence/Shipment/";
+    apiPost.mockResolvedValue({ scope, members: [] });
+
+    const first = streamReply();
+    const client = new RealtimeClient();
+    client.connect({ identity: "usr_1", joinUsers: false });
+    await tick();
+    first.send("ready", ready("rtc_1"));
+    await tick();
+
+    const leave = client.joinScope(scope, path);
+    await tick();
+    leave();
+
+    const second = streamReply();
+    first.end();
+    await tick(250);
+    second.send("ready", ready("rtc_2"));
+    await tick();
+
+    client.joinScope(scope, path);
+    await tick(5_000);
+
+    expect(apiPost).toHaveBeenCalledTimes(2);
+    expect(apiPost).toHaveBeenLastCalledWith(path, { connectionId: "rtc_2" });
+    expect(apiDelete).not.toHaveBeenCalled();
     client.disconnect();
   });
 
@@ -481,9 +585,11 @@ describe("RealtimeClient", () => {
     expect(apiPost).toHaveBeenCalledTimes(1);
 
     leaveViewers();
+    await tick(1_000);
     expect(apiDelete).not.toHaveBeenCalled();
     leaveTyping();
     leaveTyping();
+    await tick(1_000);
     expect(apiDelete).toHaveBeenCalledTimes(1);
     client.disconnect();
   });

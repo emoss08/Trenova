@@ -47,7 +47,7 @@ func (s *Service) ApplyExternalTenderResponse(
 	recipient := req.Recipient
 	tenantInfo := pagination.TenantInfo{
 		OrgID:  recipient.SourceOrganizationID,
-		BuID:   recipient.SourceBusinessUnitID,
+		BuID:   recipient.BusinessUnitID,
 		UserID: req.ActorID,
 	}
 	tenderStatus := shipment.TenderStatusAccepted
@@ -114,7 +114,7 @@ func (s *Service) RecordExternalShipmentStatus(
 	}
 	tenantInfo := pagination.TenantInfo{
 		OrgID: req.Recipient.SourceOrganizationID,
-		BuID:  req.Recipient.SourceBusinessUnitID,
+		BuID:  req.Recipient.BusinessUnitID,
 	}
 	metadata := map[string]any{"recipientId": req.Recipient.ID}
 	comment := externalShipmentStatusComment(externalShipmentStatusCommentParams{
@@ -314,92 +314,6 @@ func externalShipmentStatusDescription(statusCode string) string {
 	}
 }
 
-func (s *Service) EnsureOutboundDocumentProfile(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	partnerID pulid.ID,
-	transactionSet edi.TransactionSet,
-) (*edi.EDIPartnerDocumentProfile, error) {
-	profile, err := s.documentProfileRepo.GetActivePartnerDocumentProfile(
-		ctx,
-		ediports.GetActiveEDIPartnerDocumentProfileRequest{
-			PartnerID:      partnerID,
-			TenantInfo:     tenantInfo,
-			TransactionSet: transactionSet,
-			Direction:      edi.DocumentDirectionOutbound,
-		},
-	)
-	if err == nil {
-		return profile, nil
-	}
-	if !errortypes.IsNotFoundError(err) {
-		return nil, err
-	}
-
-	envelope, err := s.partnerEnvelopeSettings(ctx, tenantInfo, partnerID)
-	if err != nil {
-		return nil, err
-	}
-	template, _, err := s.templateRepo.EnsureBaseTemplate(ctx, tenantInfo, transactionSet)
-	if err != nil {
-		return nil, err
-	}
-	return s.UpsertPartnerDocumentProfile(ctx, &UpsertEDIPartnerDocumentProfileRequest{
-		TenantInfo:     tenantInfo,
-		EDIPartnerID:   partnerID,
-		TemplateID:     template.ID,
-		Status:         edi.DocumentStatusActive,
-		Envelope:       envelope,
-		Acknowledgment: edi.AcknowledgmentConfig{Type: edi.AcknowledgmentTypeNone},
-		ValidationMode: edi.ValidationModeWarnOnly,
-	}, nil)
-}
-
-func (s *Service) partnerEnvelopeSettings(
-	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
-	partnerID pulid.ID,
-) (edi.X12EnvelopeSettings, error) {
-	profiles, err := s.documentProfileRepo.ListPartnerDocumentProfiles(
-		ctx,
-		&ediports.ListEDIPartnerDocumentProfilesRequest{
-			Filter: &pagination.QueryOptions{
-				TenantInfo: tenantInfo,
-				Pagination: pagination.Info{Limit: 50},
-			},
-			PartnerID: partnerID,
-		},
-	)
-	if err != nil {
-		return edi.X12EnvelopeSettings{}, err
-	}
-	var inbound *edi.EDIPartnerDocumentProfile
-	for _, candidate := range profiles.Items {
-		if candidate == nil || candidate.Status != edi.DocumentStatusActive {
-			continue
-		}
-		if candidate.Direction == edi.DocumentDirectionOutbound {
-			return candidate.Envelope, nil
-		}
-		if inbound == nil {
-			inbound = candidate
-		}
-	}
-	if inbound != nil {
-		envelope := inbound.Envelope
-		envelope.InterchangeSenderID, envelope.InterchangeReceiverID =
-			envelope.InterchangeReceiverID, envelope.InterchangeSenderID
-		envelope.ApplicationSenderCode, envelope.ApplicationReceiverCode =
-			envelope.ApplicationReceiverCode, envelope.ApplicationSenderCode
-		return envelope, nil
-	}
-	return edi.X12EnvelopeSettings{}, errortypes.NewValidationError(
-		"partnerDocumentProfileId",
-		errortypes.ErrInvalidOperation,
-		"Partner requires at least one document profile with envelope identifiers before acknowledgments or responses can be generated",
-	)
-}
-
 func (s *Service) generateExternalTenderResponse(
 	ctx context.Context,
 	transfer *edi.EDITransfer,
@@ -414,23 +328,26 @@ func (s *Service) generateExternalTenderResponse(
 		UserID: actorID,
 	}
 	ctx = dbscope.WithTenant(ctx, tenantInfo.DBTenant())
-	profile, err := s.EnsureOutboundDocumentProfile(
-		ctx,
-		tenantInfo,
-		transfer.TargetPartnerID,
-		edi.TransactionSet990,
-	)
+	taken, _, err := s.DecideTender(ctx, &DecideTenderRequest{
+		TenantInfo: tenantInfo,
+		TransferID: transfer.ID,
+		Accept:     transfer.Status == edi.TransferStatusApproved,
+		Reason:     transfer.RejectionReason,
+		ActorID:    actorID,
+	})
 	if err != nil {
 		s.l.Warn(
-			"failed to resolve outbound 990 document profile for EDI tender response",
+			"the partner's flow failed to answer the EDI tender",
 			zap.String("transferId", transfer.ID.String()),
 			zap.Error(err),
 		)
+	}
+	if taken {
 		return
 	}
 	if _, err = s.GenerateDocument(
 		ctx,
-		tenderResponseRequest(tenantInfo, transfer, profile.ID, actorID),
+		tenderResponseRequest(tenantInfo, transfer, actorID),
 	); err != nil {
 		s.l.Warn(
 			"failed to generate outbound 990 EDI tender response",
@@ -473,13 +390,6 @@ func (s *Service) ListMessagesCursor(
 	req *ediports.ListEDIMessagesRequest,
 ) (*pagination.CursorListResult[*edi.EDIMessage], error) {
 	return s.messageRepo.ListMessagesCursor(ctx, req)
-}
-
-func (s *Service) ListTemplatesCursor(
-	ctx context.Context,
-	req *ediports.ListEDITemplatesRequest,
-) (*pagination.CursorListResult[*edi.EDITemplate], error) {
-	return s.templateRepo.ListTemplatesCursor(ctx, req)
 }
 
 func (s *Service) ListMappingProfilesCursor(

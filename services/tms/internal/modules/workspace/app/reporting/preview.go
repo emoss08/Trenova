@@ -4,95 +4,48 @@ import (
 	"context"
 	"errors"
 	"io"
-	"sync"
 	"time"
 
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
-	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"go.uber.org/zap"
+	"github.com/emoss08/keel/analytics"
+	"github.com/emoss08/keel/analytics/ir"
+	"github.com/emoss08/keel/analytics/table"
+	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
+	"github.com/emoss08/trenova/pkg/reportvalue"
 )
 
-type previewSlot struct {
-	generation uint64
-	cancel     context.CancelFunc
-}
-
-// previewLimiter enforces single-flight previews per user: starting a new
-// preview cancels the user's previous in-flight one. Only callers that opt in
-// participate — a surface that loads several previews at once (a dashboard)
-// would otherwise cancel all but its last one.
-type previewLimiter struct {
-	mu         sync.Mutex
-	generation uint64
-	inflight   map[string]previewSlot
-}
-
-func newPreviewLimiter() *previewLimiter {
-	return &previewLimiter{inflight: make(map[string]previewSlot)}
-}
-
-func (p *previewLimiter) acquire(userID string, cancel context.CancelFunc) uint64 {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if previous, ok := p.inflight[userID]; ok {
-		previous.cancel()
-	}
-	p.generation++
-	p.inflight[userID] = previewSlot{generation: p.generation, cancel: cancel}
-	return p.generation
-}
-
-func (p *previewLimiter) release(userID string, generation uint64) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if current, ok := p.inflight[userID]; ok && current.generation == generation {
-		delete(p.inflight, userID)
-	}
-}
+const previewSupersedeKey = "preview"
 
 type PreviewRequest struct {
 	Request
 
-	Definition *report.Definition
+	Definition *ir.Definition
 	Params     map[string]any
-	// Supersede marks this preview as replacing the caller's previous one, so
-	// the builder's in-flight query is dropped on the next keystroke. Surfaces
-	// that issue independent previews in parallel must leave it unset.
-	Supersede bool
+	Supersede  bool
+	Cursor     string
+	PageSize   int
 
-	// export marks a preview whose rows leave the product as a file, which
-	// needs the export operation like a report run.
 	export bool
 }
 
 type PreviewResult struct {
-	Columns   []reportports.ReportResultColumn
-	Rows      []reportports.ReportRow
-	Totals    reportports.ReportRow
+	Columns   []table.Column
+	Rows      [][]any
+	Levels    []table.Level
+	Totals    []any
 	Truncated bool
+	Cursor    string
+	Timezone  string
+	Rollup    string
 }
 
 func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*PreviewResult, error) {
 	started := time.Now()
-
-	previewCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	if req.Supersede {
-		userKey := req.TenantInfo.UserID.String()
-		generation := s.previews.acquire(userKey, cancel)
-		defer s.previews.release(userKey, generation)
-	}
-
-	result, err := s.runPreview(previewCtx, req)
+	result, err := s.runPreview(ctx, req)
 
 	if s.metrics != nil {
 		outcome := "success"
 		switch {
-		case errors.Is(previewCtx.Err(), context.Canceled):
+		case errors.Is(err, context.Canceled):
 			outcome = "superseded"
 		case err != nil:
 			outcome = "error"
@@ -103,61 +56,83 @@ func (s *Service) Preview(ctx context.Context, req *PreviewRequest) (*PreviewRes
 	return result, err
 }
 
-func (s *Service) runPreview(
-	ctx context.Context,
-	req *PreviewRequest,
-) (*PreviewResult, error) {
-	compile := s.compiler.CompileForPreview
+func (s *Service) runPreview(ctx context.Context, req *PreviewRequest) (*PreviewResult, error) {
+	mode := reportaccess.ModeRead
 	if req.export {
-		compile = s.compiler.Compile
+		mode = reportaccess.ModeExport
 	}
-	compiled, err := compile(ctx, &reportports.ReportCompileRequest{
-		Definition:  req.Definition,
-		Tenant:      req.TenantInfo,
-		Params:      req.Params,
-		OrgTimezone: s.orgTimezone(ctx, req.TenantInfo),
-		NowUnix:     timeutils.NowUnix(),
+	key := ""
+	if req.Supersede {
+		key = previewSupersedeKey
+	}
+	prepared, err := s.Prepare(ctx, &PrepareParams{
+		Tenant:     req.TenantInfo,
+		Definition: req.Definition,
+		Params:     req.Params,
+		Mode:       mode,
+		Key:        key,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	var result *analytics.Result
+	if req.PageSize > 0 {
+		size := min(req.PageSize, s.cfg.GetPreviewRowLimit())
+		result, err = s.engine.Page(prepared.Context, &prepared.Request, req.Cursor, size)
+	} else {
+		result, err = s.engine.Preview(prepared.Context, &prepared.Request)
+	}
 	if err != nil {
 		if s.metrics != nil {
 			s.metrics.RecordCompileError("preview")
 		}
-		return nil, err
+		return nil, EngineError(prepared.Context, prepared.Access, err)
 	}
 
-	rowLimit := int64(s.cfg.GetPreviewRowLimit())
-	reader, err := s.executor.Open(ctx, &reportports.OpenReportDatasetRequest{
-		Compiled: compiled,
-		MaxRows:  rowLimit,
-		Timeout:  s.cfg.GetPreviewStatementTimeout(),
-	})
+	out, err := collectPreview(prepared.Context, result)
 	if err != nil {
-		s.l.Error("failed to open preview dataset", zap.Error(err))
 		return nil, err
 	}
-	defer reader.Close()
+	out.Timezone = prepared.Location.String()
+	return out, nil
+}
 
-	rows := make([]reportports.ReportRow, 0, rowLimit)
+func collectPreview(ctx context.Context, result *analytics.Result) (*PreviewResult, error) {
+	out, err := collectRows(ctx, result, result.Len())
+	if err != nil {
+		return nil, err
+	}
+	out.Rollup = result.Rollup()
+	out.Cursor = result.Cursor()
+	return out, nil
+}
+
+func collectRows(ctx context.Context, reader table.Reader, size int) (*PreviewResult, error) {
+	columns := reader.Columns()
+	out := &PreviewResult{
+		Columns: columns,
+		Rows:    make([][]any, 0, size),
+	}
 	for {
-		row, nextErr := reader.Next(ctx)
-		if errors.Is(nextErr, io.EOF) {
+		batch, err := reader.Next(ctx)
+		if errors.Is(err, io.EOF) {
 			break
 		}
-		if nextErr != nil {
-			return nil, nextErr
+		if err != nil {
+			return nil, err
 		}
-		rows = append(rows, row)
+		for i := range batch.Len {
+			row := reportvalue.Row(columns, batch, i)
+			level := batch.Level(i)
+			if level == table.Total {
+				out.Totals = row
+				continue
+			}
+			out.Rows = append(out.Rows, row)
+			out.Levels = append(out.Levels, level)
+		}
 	}
-
-	totals, err := reader.Totals(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PreviewResult{
-		Columns:   reader.Schema(),
-		Rows:      rows,
-		Totals:    totals,
-		Truncated: reader.Truncated(),
-	}, nil
+	out.Truncated = reader.Truncated()
+	return out, nil
 }

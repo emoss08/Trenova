@@ -2,18 +2,16 @@ package factoringrepository
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring/factoringdb"
 	"github.com/emoss08/trenova/internal/modules/billing/ports/factoringports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
-	"github.com/emoss08/trenova/pkg/buncolgen/factoringcol"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -23,15 +21,20 @@ const (
 	activeOverlapIndex = "ex_factoring_agreements_active_overlap"
 )
 
+var (
+	agreementErrors = dberror.Mapping{Entity: agreementEntity}
+	feeTierErrors   = dberror.Mapping{Entity: "FactoringFeeTier"}
+)
+
 type Params struct {
 	fx.In
 
-	DB     kernelports.DBConnection
+	DB     *postgres.Connection
 	Logger *zap.Logger
 }
 
 type agreementRepository struct {
-	db kernelports.DBConnection
+	db *postgres.Connection
 	l  *zap.Logger
 }
 
@@ -47,21 +50,14 @@ func (r *agreementRepository) Create(
 	entity *factoring.Agreement,
 ) (*factoring.Agreement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Agreement, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, translateAgreementError(err, "create factoring agreement")
+		if err := factoringdb.Agreements.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, translateAgreementError(err, entity.ID)
 		}
 		if err := r.replaceChildren(ctx, entity); err != nil {
 			return nil, err
 		}
 
-		return r.load(ctx, entity.ID, pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		})
+		return r.load(ctx, entity.ID)
 	})
 }
 
@@ -70,35 +66,15 @@ func (r *agreementRepository) Update(
 	entity *factoring.Agreement,
 ) (*factoring.Agreement, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*factoring.Agreement, error) {
-		previousVersion := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			ExcludeColumn(
-				factoringcol.AgreementColumns.CreatedAt.Bare(),
-				factoringcol.AgreementColumns.FactoringCompanyID.Bare(),
-			).
-			WherePK().
-			Where(factoringcol.AgreementColumns.Version.Eq(), previousVersion).
-			Exec(ctx)
-		if err != nil {
-			entity.Version = previousVersion
-			return nil, translateAgreementError(err, "update factoring agreement")
+		a := factoringdb.Agreements
+		if err := a.SaveExcept(ctx, r.db.Keel(ctx), entity, a.FactoringCompanyID); err != nil {
+			return nil, translateAgreementError(err, entity.ID)
 		}
-		if err = dberror.CheckRowsAffected(res, agreementEntity, entity.ID.String()); err != nil {
-			entity.Version = previousVersion
-			return nil, err
-		}
-		if err = r.replaceChildren(ctx, entity); err != nil {
+		if err := r.replaceChildren(ctx, entity); err != nil {
 			return nil, err
 		}
 
-		return r.load(ctx, entity.ID, pagination.TenantInfo{
-			OrgID: entity.OrganizationID,
-			BuID:  entity.BusinessUnitID,
-		})
+		return r.load(ctx, entity.ID)
 	})
 }
 
@@ -107,7 +83,7 @@ func (r *agreementRepository) GetByID(
 	req factoringports.GetAgreementRequest,
 ) (*factoring.Agreement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Agreement, error) {
-		return r.load(ctx, req.ID, req.TenantInfo)
+		return r.load(ctx, req.ID)
 	})
 }
 
@@ -116,16 +92,16 @@ func (r *agreementRepository) ListByFactoringCompany(
 	req factoringports.ListAgreementsRequest,
 ) ([]*factoring.Agreement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*factoring.Agreement, error) {
-		cols := factoringcol.AgreementColumns
-		rows := make([]*factoring.Agreement, 0, 4)
-		if err := r.withChildren(r.db.DBForContext(ctx).NewSelect().Model(&rows)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return factoringcol.AgreementScopeTenant(sq, req.TenantInfo).
-					Where(cols.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-			}).
-			Order(cols.EffectiveFrom.OrderDesc(), cols.ID.OrderDesc()).
-			Scan(ctx); err != nil {
-			return nil, fmt.Errorf("list factoring agreements: %w", err)
+		a := factoringdb.Agreements
+		rows, err := withChildren().
+			Where(a.FactoringCompanyID.Eq(req.FactoringCompanyID)).
+			Order(a.EffectiveFrom.Desc(), a.ID.Desc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, err
+		}
+		if rows == nil {
+			return []*factoring.Agreement{}, nil
 		}
 
 		return rows, nil
@@ -144,20 +120,19 @@ func (r *agreementRepository) ListByFactoringCompanyIDs(
 			if len(req.FactoringCompanyIDs) == 0 {
 				return result, nil
 			}
-			cols := factoringcol.AgreementColumns
-			rows := make([]*factoring.Agreement, 0, len(req.FactoringCompanyIDs))
-			if err := r.withChildren(r.db.DBForContext(ctx).NewSelect().Model(&rows)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return factoringcol.AgreementScopeTenant(sq, req.TenantInfo).
-						Where(cols.FactoringCompanyID.In(), bun.List(req.FactoringCompanyIDs))
-				}).
-				Order(cols.EffectiveFrom.OrderDesc(), cols.ID.OrderDesc()).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list factoring agreements by factor: %w", err)
+
+			a := factoringdb.Agreements
+			rows, err := withChildren().
+				Where(a.FactoringCompanyID.In(req.FactoringCompanyIDs...)).
+				Order(a.EffectiveFrom.Desc(), a.ID.Desc()).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
 			}
 			for _, row := range rows {
 				result[row.FactoringCompanyID] = append(result[row.FactoringCompanyID], row)
 			}
+
 			return result, nil
 		},
 	)
@@ -168,17 +143,12 @@ func (r *agreementRepository) GetInForce(
 	req factoringports.GetAgreementInForceRequest,
 ) (*factoring.Agreement, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*factoring.Agreement, error) {
-		entity := new(factoring.Agreement)
-		if err := r.withChildren(r.db.DBForContext(ctx).NewSelect().Model(entity)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return inForce(
-					factoringcol.AgreementScopeTenant(sq, req.TenantInfo),
-					req.At,
-				).Where(factoringcol.AgreementColumns.FactoringCompanyID.Eq(), req.FactoringCompanyID)
-			}).
-			Limit(1).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, agreementEntity)
+		a := factoringdb.Agreements
+		entity, err := withChildren().
+			Where(inForce(req.At), a.FactoringCompanyID.Eq(req.FactoringCompanyID)).
+			First(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, agreementErrors.Map(err, "")
 		}
 
 		return entity, nil
@@ -198,19 +168,12 @@ func (r *agreementRepository) ListInForce(
 				return result, nil
 			}
 
-			rows := make([]*factoring.Agreement, 0, len(req.FactoringCompanyIDs))
-			if err := r.withChildren(r.db.DBForContext(ctx).NewSelect().Model(&rows)).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return inForce(
-						factoringcol.AgreementScopeTenant(sq, req.TenantInfo),
-						req.At,
-					).Where(
-						factoringcol.AgreementColumns.FactoringCompanyID.In(),
-						bun.List(req.FactoringCompanyIDs),
-					)
-				}).
-				Scan(ctx); err != nil {
-				return nil, fmt.Errorf("list factoring agreements in force: %w", err)
+			a := factoringdb.Agreements
+			rows, err := withChildren().
+				Where(inForce(req.At), a.FactoringCompanyID.In(req.FactoringCompanyIDs...)).
+				All(ctx, r.db.Keel(ctx))
+			if err != nil {
+				return nil, err
 			}
 
 			for _, row := range rows {
@@ -222,50 +185,32 @@ func (r *agreementRepository) ListInForce(
 	)
 }
 
-func (r *agreementRepository) load(
-	ctx context.Context,
-	id pulid.ID,
-	tenantInfo pagination.TenantInfo,
-) (*factoring.Agreement, error) {
-	entity := new(factoring.Agreement)
-	if err := r.withChildren(r.db.DBForContext(ctx).NewSelect().Model(entity)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return factoringcol.AgreementScopeTenant(sq, tenantInfo).
-				Where(factoringcol.AgreementColumns.ID.Eq(), id)
-		}).
-		Scan(ctx); err != nil {
-		return nil, dberror.HandleNotFoundError(err, agreementEntity)
+func (r *agreementRepository) load(ctx context.Context, id pulid.ID) (*factoring.Agreement, error) {
+	entity, err := withChildren().
+		Where(factoringdb.Agreements.ID.Eq(id)).
+		One(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return nil, agreementErrors.Map(err, id.String())
 	}
 
 	return entity, nil
 }
 
-func (r *agreementRepository) withChildren(q *bun.SelectQuery) *bun.SelectQuery {
-	return q.
-		Relation(
-			factoringcol.AgreementRelations.FeeTiers,
-			func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(factoringcol.FeeTierColumns.DaysFrom.OrderAsc())
-			},
-		).
-		Relation("DocumentTypes")
+func withChildren() *keel.Query[*factoring.Agreement] {
+	a := factoringdb.Agreements
+	tiers := a.FeeTiers()
+
+	return a.Load(tiers.Order(tiers.DaysFrom.Asc()), a.DocumentTypes())
 }
 
 func (r *agreementRepository) replaceChildren(
 	ctx context.Context,
 	entity *factoring.Agreement,
 ) error {
-	dba := r.db.DBForContext(ctx)
-	tenant := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
-
-	if _, err := dba.NewDelete().
-		Model((*factoring.FeeTier)(nil)).
-		Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return factoringcol.FeeTierScopeTenantDelete(dq, tenant).
-				Where(factoringcol.FeeTierColumns.AgreementID.Eq(), entity.ID)
-		}).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("clear factoring fee tiers: %w", err)
+	db := r.db.Keel(ctx)
+	ft := factoringdb.FeeTiers
+	if _, err := ft.Where(ft.AgreementID.Eq(entity.ID)).Delete(ctx, db); err != nil {
+		return feeTierErrors.Map(err, entity.ID.String())
 	}
 
 	if len(entity.FeeTiers) > 0 {
@@ -281,59 +226,39 @@ func (r *agreementRepository) replaceChildren(
 				FlatMinor:      tier.FlatMinor,
 			})
 		}
-		if _, err := dba.NewInsert().Model(&tiers).Exec(ctx); err != nil {
-			return fmt.Errorf("insert factoring fee tiers: %w", err)
+		if err := ft.CreateMany(ctx, db, tiers); err != nil {
+			return feeTierErrors.Map(err, entity.ID.String())
 		}
 	}
 
-	if _, err := dba.NewDelete().
-		Model((*factoring.AgreementDocumentType)(nil)).
-		Apply(func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return factoringcol.AgreementDocumentTypeScopeTenantDelete(dq, tenant).
-				Where(factoringcol.AgreementDocumentTypeColumns.AgreementID.Eq(), entity.ID)
-		}).
-		Exec(ctx); err != nil {
-		return fmt.Errorf("clear factoring agreement document types: %w", err)
+	err := keel.SetLinks(
+		ctx,
+		db,
+		factoringdb.Agreements.DocumentTypes(),
+		entity.ID,
+		entity.DocumentTypeIDs(),
+	)
+	if dberror.IsForeignKeyConstraintViolation(err) {
+		return errortypes.NewValidationError(
+			"documentTypeIds",
+			errortypes.ErrInvalid,
+			"One of the required document types does not exist",
+		)
 	}
 
-	typeIDs := entity.DocumentTypeIDs()
-	if len(typeIDs) == 0 {
-		return nil
-	}
-	links := make([]*factoring.AgreementDocumentType, 0, len(typeIDs))
-	for _, typeID := range typeIDs {
-		links = append(links, &factoring.AgreementDocumentType{
-			OrganizationID: entity.OrganizationID,
-			BusinessUnitID: entity.BusinessUnitID,
-			AgreementID:    entity.ID,
-			DocumentTypeID: typeID,
-		})
-	}
-	if _, err := dba.NewInsert().Model(&links).Exec(ctx); err != nil {
-		if dberror.IsForeignKeyConstraintViolation(err) {
-			return errortypes.NewValidationError(
-				"documentTypeIds",
-				errortypes.ErrInvalid,
-				"One of the required document types does not exist",
-			)
-		}
-		return fmt.Errorf("insert factoring agreement document types: %w", err)
-	}
-
-	return nil
+	return err
 }
 
-func inForce(q *bun.SelectQuery, at int64) *bun.SelectQuery {
-	cols := factoringcol.AgreementColumns
-	return q.
-		Where(cols.Status.Eq(), factoring.AgreementStatusActive).
-		Where(cols.EffectiveFrom.Lte(), at).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where(cols.EffectiveTo.IsNull()).WhereOr(cols.EffectiveTo.Gt(), at)
-		})
+func inForce(at int64) keel.Pred {
+	a := factoringdb.Agreements
+	return keel.And(
+		a.Status.Eq(factoring.AgreementStatusActive),
+		a.EffectiveFrom.Lte(at),
+		keel.Or(a.EffectiveTo.IsNull(), a.EffectiveTo.Gt(at)),
+	)
 }
 
-func translateAgreementError(err error, action string) error {
+func translateAgreementError(err error, id pulid.ID) error {
 	if dberror.IsExclusionConstraintViolation(err) &&
 		dberror.ExtractConstraintName(err) == activeOverlapIndex {
 		return errortypes.NewValidationError(
@@ -349,5 +274,6 @@ func translateAgreementError(err error, action string) error {
 			"The agreement terms are not valid",
 		)
 	}
-	return fmt.Errorf("%s: %w", action, err)
+
+	return agreementErrors.Map(err, id.String())
 }

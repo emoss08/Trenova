@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier"
@@ -20,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/rating/ports/ratequoteports"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/tarifftypes"
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -329,10 +331,6 @@ func (t *quoteShipmentTool) ParamSchema() map[string]any {
 				"type":        "integer",
 				"description": "Weight in pounds, when known.",
 			},
-			"ratingUnit": map[string]any{
-				"type":        "integer",
-				"description": "Rating units; defaults to 1.",
-			},
 			"asOf": map[string]any{
 				"type":        "string",
 				"description": "Rate as of this date, YYYY-MM-DD. Defaults to the first stop's date, then today.",
@@ -356,17 +354,20 @@ type quoteStopParam struct {
 }
 
 type quoteView struct {
-	Outcome           string           `json:"outcome"`
-	Amount            decimal.Decimal  `json:"amount"`
-	Currency          string           `json:"currency"`
-	BaseRate          *decimal.Decimal `json:"baseRate,omitempty"`
-	AgreementID       string           `json:"agreementId,omitempty"`
-	RuleID            string           `json:"ruleId,omitempty"`
-	FormulaTemplateID string           `json:"formulaTemplateId,omitempty"`
-	BillToCustomerID  string           `json:"billToCustomerId,omitempty"`
-	Lane              []string         `json:"lane"`
-	TotalDistance     float64          `json:"totalDistance"`
-	Note              string           `json:"note,omitempty"`
+	Outcome           string            `json:"outcome"`
+	Amount            decimal.Decimal   `json:"amount"`
+	Total             decimal.Decimal   `json:"total"`
+	Currency          string            `json:"currency"`
+	Inputs            map[string]string `json:"inputs,omitempty"`
+	Lines             []quoteLine       `json:"lines,omitempty"`
+	Refusal           string            `json:"refusal,omitempty"`
+	AgreementID       string            `json:"agreementId,omitempty"`
+	RuleID            string            `json:"ruleId,omitempty"`
+	FormulaTemplateID string            `json:"formulaTemplateId,omitempty"`
+	BillToCustomerID  string            `json:"billToCustomerId,omitempty"`
+	Lane              []string          `json:"lane"`
+	TotalDistance     float64           `json:"totalDistance"`
+	Note              string            `json:"note,omitempty"`
 }
 
 func (t *quoteShipmentTool) Query(
@@ -414,10 +415,6 @@ func (t *quoteShipmentTool) Query(
 	if weight := optionalInt(params.Params, "weight", 0); weight > 0 {
 		value := int64(weight)
 		entity.Weight = &value
-	}
-	entity.RatingUnit = int64(optionalInt(params.Params, "ratingUnit", 1))
-	if entity.RatingUnit <= 0 {
-		entity.RatingUnit = 1
 	}
 
 	asOf := entity.Moves[0].Stops[0].ScheduledWindowStart
@@ -541,7 +538,6 @@ func (t *quoteShipmentTool) hypotheticalShipment(
 		OrganizationID: tenantInfo.OrgID,
 		BusinessUnitID: tenantInfo.BuID,
 		Status:         shipment.StatusNew,
-		RatingUnit:     1,
 		Moves:          []*shipment.ShipmentMove{move},
 	}, nil
 }
@@ -583,12 +579,12 @@ func quoteViewOf(rated *ratequoteports.RatedShipment, lane []string) *quoteView 
 	view := &quoteView{
 		Outcome:  string(rated.Outcome),
 		Amount:   rated.Amount,
+		Total:    rated.Total,
 		Currency: rated.Currency,
+		Inputs:   inputTexts(rated.TariffInputs),
+		Lines:    quoteLines(rated.Bill),
+		Refusal:  rated.Refusal,
 		Lane:     lane,
-	}
-	if rated.BaseRate.Valid {
-		base := rated.BaseRate.Decimal
-		view.BaseRate = &base
 	}
 	if rated.AgreementID != nil {
 		view.AgreementID = rated.AgreementID.String()
@@ -621,6 +617,7 @@ func quoteViewOf(rated *ratequoteports.RatedShipment, lane []string) *quoteView 
 type shopCarriersTool struct {
 	shopper  carrierShopper
 	carriers shopCarrierReader
+	access   fieldAccess
 }
 
 // shopCarrierReader reads the shopped carriers' standing, so "the cheapest
@@ -636,8 +633,13 @@ type shopCarrierReader interface {
 func newShopCarriersTool(
 	shopper carrierShopper,
 	carriers shopCarrierReader,
+	permissions permissionports.PermissionEngine,
 ) agentports.AgentQueryTool {
-	return &shopCarriersTool{shopper: shopper, carriers: carriers}
+	return &shopCarriersTool{
+		shopper:  shopper,
+		carriers: carriers,
+		access:   newFieldAccess(permissions),
+	}
 }
 
 func (t *shopCarriersTool) Name() string { return "carrier_shop" }
@@ -681,21 +683,21 @@ func (t *shopCarriersTool) Policy() agentports.ToolPolicy {
 }
 
 type shopOptionView struct {
-	Rank            int             `json:"rank"`
-	CarrierID       string          `json:"carrierId"`
-	CarrierName     string          `json:"carrierName"`
-	Outcome         string          `json:"outcome"`
-	Priced          bool            `json:"priced"`
-	Cost            decimal.Decimal `json:"cost"`
-	Currency        string          `json:"currency"`
-	MarginAmount    decimal.Decimal `json:"marginAmount"`
-	MarginPercent   decimal.Decimal `json:"marginPercent"`
-	BelowFloor      bool            `json:"belowFloor"`
-	Status          string          `json:"status,omitempty"`
-	Compliance      string          `json:"compliance,omitempty"`
-	GuideRank       int16           `json:"guideRank,omitempty"`
-	OfferTTLSeconds int32           `json:"offerTtlSeconds,omitempty"`
-	Note            string          `json:"note,omitempty"`
+	Rank            int              `json:"rank"`
+	CarrierID       string           `json:"carrierId"`
+	CarrierName     string           `json:"carrierName"`
+	Outcome         string           `json:"outcome"`
+	Priced          bool             `json:"priced"`
+	Cost            decimal.Decimal  `json:"cost"`
+	Currency        string           `json:"currency"`
+	MarginAmount    *decimal.Decimal `json:"marginAmount,omitempty"`
+	MarginPercent   *decimal.Decimal `json:"marginPercent,omitempty"`
+	BelowFloor      *bool            `json:"belowFloor,omitempty"`
+	Status          string           `json:"status,omitempty"`
+	Compliance      string           `json:"compliance,omitempty"`
+	GuideRank       int16            `json:"guideRank,omitempty"`
+	OfferTTLSeconds int32            `json:"offerTtlSeconds,omitempty"`
+	Note            string           `json:"note,omitempty"`
 }
 
 type shopView struct {
@@ -746,10 +748,16 @@ func (t *shopCarriersTool) Query(
 		}
 	}
 
+	visible := t.access.groups(ctx, params)
+	if err = ratequoteports.AuthorizeShopStrategy(req.Strategy, visible); err != nil {
+		return nil, err
+	}
+
 	result, err := t.shopper.Shop(ctx, req)
 	if err != nil {
 		return nil, err
 	}
+	result.WithholdFields(visible)
 
 	view := shopViewOf(result)
 	t.standing(ctx, req.TenantInfo, view)
@@ -811,7 +819,7 @@ func shopViewOf(result *ratequoteports.ShopResult) *shopView {
 		if option == nil {
 			continue
 		}
-		view.Options = append(view.Options, shopOptionView{
+		row := shopOptionView{
 			Rank:            option.Rank,
 			CarrierID:       option.CarrierID.String(),
 			CarrierName:     option.CarrierName,
@@ -819,13 +827,16 @@ func shopViewOf(result *ratequoteports.ShopResult) *shopView {
 			Priced:          option.Priced(),
 			Cost:            option.Cost,
 			Currency:        option.Currency,
-			MarginAmount:    option.Margin.Amount,
-			MarginPercent:   option.Margin.Percent,
-			BelowFloor:      option.Margin.BelowFloor,
 			GuideRank:       option.GuideRank,
 			OfferTTLSeconds: option.OfferTTLSeconds,
 			Note:            option.Note,
-		})
+		}
+		if margin := option.Margin; margin != nil {
+			row.MarginAmount = &margin.Amount
+			row.MarginPercent = &margin.Percent
+			row.BelowFloor = &margin.BelowFloor
+		}
+		view.Options = append(view.Options, row)
 	}
 	switch {
 	case len(view.Options) == 0:
@@ -854,4 +865,37 @@ func optionalPulid(params map[string]any, key string) (pulid.ID, bool, error) {
 	}
 
 	return id, true, nil
+}
+
+type quoteLine struct {
+	Label  string          `json:"label"`
+	Code   string          `json:"code,omitempty"`
+	Amount decimal.Decimal `json:"amount"`
+}
+
+func quoteLines(bill *tarifftypes.Bill) []quoteLine {
+	if bill == nil {
+		return nil
+	}
+	lines := make([]quoteLine, 0, len(bill.Lines))
+	for i := range bill.Lines {
+		line := &bill.Lines[i]
+		label := line.Label
+		if label == "" {
+			label = string(line.Kind)
+		}
+		lines = append(lines, quoteLine{Label: label, Code: line.Code, Amount: line.Amount})
+	}
+	return lines
+}
+
+func inputTexts(inputs tarifftypes.Inputs) map[string]string {
+	if len(inputs) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(inputs))
+	for name, raw := range inputs {
+		out[name] = tarifftypes.DisplayValue(raw)
+	}
+	return out
 }

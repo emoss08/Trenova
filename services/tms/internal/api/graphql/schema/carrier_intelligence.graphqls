@@ -535,6 +535,8 @@ type CarrierIntelEventConnection {
   edges: [CarrierIntelEventEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type CarrierMonitoringEnrollment {
@@ -573,6 +575,8 @@ type CarrierMonitoringEnrollmentConnection {
   edges: [CarrierMonitoringEnrollmentEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 type CarrierIntelOverride {
@@ -871,9 +875,13 @@ input CarrierIntelEventFilterInput {
   statuses: [CarrierIntelEventStatus!]
   severities: [CarrierIntelSeverity!]
   categories: [CarrierIntelSection!]
+  "Only this carrier's events."
   carrierId: ID
+  "Only events about this kind of subject: a carrier, an organization, a customer or a prospect vetted by its DOT number."
   subjectType: CarrierIntelSubjectType
+  "Only events about this subject, by its id or DOT number as the event names it."
   subjectId: String
+  "Only events nobody has resolved or dismissed yet: Open and Acknowledged."
   openOnly: Boolean
 }
 

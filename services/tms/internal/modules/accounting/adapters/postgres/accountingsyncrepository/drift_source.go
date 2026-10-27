@@ -3,32 +3,30 @@ package accountingsyncrepository
 import (
 	"context"
 	"fmt"
-	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/accountingsynccol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/carriersettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customercol"
-	"github.com/emoss08/trenova/pkg/buncolgen/customerpaymentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/driversettlementcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/fiscalperiodcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/invoicecol"
-	"github.com/emoss08/trenova/pkg/buncolgen/workercol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/accountingsync/accountingsyncdb"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
+	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod/fiscalperioddb"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/accountingsyncports"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/customerpayment/customerpaymentdb"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice"
+	"github.com/emoss08/trenova/internal/modules/billing/domain/invoice/invoicedb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/carrier/carrierdb"
+	"github.com/emoss08/trenova/internal/modules/parties/domain/customer/customerdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/carriersettlement/carriersettlementdb"
 	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement"
-	"github.com/emoss08/trenova/pkg/buncolgen"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/driversettlement/driversettlementdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -62,64 +60,48 @@ func NewDriftSource(p DriftSourceParams) accountingsyncports.AccountingDriftSour
 	}
 }
 
-func joinOn(table buncolgen.TableInfo, alias string, conditions ...string) string {
-	return "JOIN " + table.As(alias) + " ON " + strings.Join(conditions, " AND ")
-}
-
 func (s *driftSource) ScopeStart(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 ) (int64, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) (int64, error) {
-		cols := fiscalperiodcol.FiscalPeriodColumns
-		var start int64
-		if err := s.db.DBForContext(ctx).
-			NewSelect().
-			Model((*fiscalperiod.FiscalPeriod)(nil)).
-			ColumnExpr("COALESCE(MIN("+cols.StartDate.Qualified()+"), 0)").
-			Where(cols.OrganizationID.Eq(), tenantInfo.OrgID).
-			Where(cols.BusinessUnitID.Eq(), tenantInfo.BuID).
-			Where(cols.Status.In(), bun.List(fiscalperiod.UnclosedStatuses())).
-			Scan(ctx, &start); err != nil {
+		fp := fiscalperioddb.FiscalPeriods
+		start, err := keel.IntoOne[int64](
+			ctx,
+			s.db.Keel(ctx),
+			fp.Pick(keel.Int64Of(fp.StartDate.Min()).Coalesce(0)).
+				Where(fp.Status.In(fiscalperiod.UnclosedStatuses()...)),
+		)
+		if err != nil {
 			return 0, fmt.Errorf("find the start of the earliest open period: %w", err)
 		}
 		return start, nil
 	})
 }
 
-func (s *driftSource) newerCreate(dba bun.IDB) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	newer := func(c buncolgen.Column) buncolgen.Column { return c.WithAlias(newerRecordAlias) }
-	return dba.NewSelect().
-		TableExpr(accountingsynccol.AccountingSyncRecordTable.As(newerRecordAlias)).
-		ColumnExpr("1").
-		Where(newer(records.OrganizationID).EqColumn(records.OrganizationID)).
-		Where(newer(records.BusinessUnitID).EqColumn(records.BusinessUnitID)).
-		Where(newer(records.ConnectionID).EqColumn(records.ConnectionID)).
-		Where(newer(records.ObjectType).EqColumn(records.ObjectType)).
-		Where(newer(records.ObjectID).EqColumn(records.ObjectID)).
-		Where(newer(records.Status).Eq(), accountingsync.SyncStatusSynced).
-		Where(newer(records.Operation).In(), bun.List(accountingsync.DriftCreateOperations())).
-		Where(newer(records.Revision).Qualified() + " > " + records.Revision.Qualified())
-}
-
-func (s *driftSource) latestSynced(
-	q *bun.SelectQuery,
-	dba bun.IDB,
-	tenantInfo pagination.TenantInfo,
+func latestSynced(
 	connectionID pulid.ID,
 	objectTypes []accountingsync.SyncObjectType,
-) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	return q.
-		Where(records.OrganizationID.Eq(), tenantInfo.OrgID).
-		Where(records.BusinessUnitID.Eq(), tenantInfo.BuID).
-		Where(records.ConnectionID.Eq(), connectionID).
-		Where(records.Status.Eq(), accountingsync.SyncStatusSynced).
-		Where(records.Operation.In(), bun.List(accountingsync.DriftCreateOperations())).
-		Where(records.ObjectType.In(), bun.List(objectTypes)).
-		Where(records.ExternalID.IsNotNull()).
-		Where("NOT EXISTS (?)", s.newerCreate(dba))
+) []keel.Pred {
+	sr := accountingsyncdb.AccountingSyncRecords
+	newer := sr.As(newerRecordAlias)
+	creates := accountingsync.DriftCreateOperations()
+
+	return []keel.Pred{
+		sr.ConnectionID.Eq(connectionID),
+		sr.Status.Eq(accountingsync.SyncStatusSynced),
+		sr.Operation.In(creates...),
+		sr.ObjectType.In(objectTypes...),
+		sr.ExternalID.IsNotNull(),
+		keel.NotExists(newer.Where(
+			newer.ConnectionID.EqCol(sr.ConnectionID),
+			newer.ObjectType.EqCol(sr.ObjectType),
+			newer.ObjectID.EqCol(sr.ObjectID),
+			newer.Status.Eq(accountingsync.SyncStatusSynced),
+			newer.Operation.In(creates...),
+			keel.Int64Of(newer.Revision).GtExpr(sr.Revision),
+		)),
+	}
 }
 
 func (s *driftSource) ListRecords(
@@ -136,29 +118,16 @@ func (s *driftSource) ListRecords(
 			}
 			limit = intutils.Clamp(limit, 1, maxDriftBatch)
 
-			records := accountingsynccol.AccountingSyncRecordColumns
-			dba := s.db.DBForContext(ctx)
-			entities := make([]*accountingsync.AccountingSyncRecord, 0, limit)
-			query := dba.NewSelect().Model(&entities)
-			query = s.latestSynced(
-				query,
-				dba,
-				req.TenantInfo,
-				req.ConnectionID,
-				accountingsync.DriftObjectTypes(),
-			)
-			query = query.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.
-					Where(records.DocumentDate.IsNull()).
-					WhereOr(records.DocumentDate.Gte(), req.DatedFrom)
-			})
-			if !req.AfterID.IsNil() {
-				query = query.Where(records.ID.Gt(), req.AfterID)
-			}
-			if err := query.
-				Order(records.ID.OrderAsc()).
-				Limit(int64(limit)).
-				Scan(ctx); err != nil {
+			sr := accountingsyncdb.AccountingSyncRecords
+			entities, err := sr.Where(latestSynced(req.ConnectionID, accountingsync.DriftObjectTypes())...).
+				Where(
+					keel.Or(sr.DocumentDate.IsNull(), sr.DocumentDate.Gte(req.DatedFrom)),
+					keel.When(!req.AfterID.IsNil(), sr.ID.Gt(req.AfterID)),
+				).
+				Order(sr.ID.Asc()).
+				Limit(limit).
+				List(ctx, s.db.Keel(ctx))
+			if err != nil {
 				return nil, fmt.Errorf("list records to compare: %w", err)
 			}
 			return entities, nil
@@ -174,272 +143,190 @@ func (s *driftSource) ListStates(
 		ctx,
 		s.db,
 		func(ctx context.Context) ([]*accountingsyncports.AccountingDriftState, error) {
-			states := make([]*accountingsyncports.AccountingDriftState, 0, len(req.ObjectIDs))
 			if len(req.ObjectIDs) == 0 {
-				return states, nil
+				return []*accountingsyncports.AccountingDriftState{}, nil
 			}
 
-			var query *bun.SelectQuery
-			dba := s.db.DBForContext(ctx)
+			var query keel.Projection
 			switch {
 			case req.ObjectType.IsSalesDocument():
-				query = s.salesStates(dba, req)
+				query = salesStates(req)
 			case req.ObjectType == accountingsync.SyncObjectCustomerPayment:
-				query = s.paymentStates(dba, req)
+				query = paymentStates(req)
 			case req.ObjectType == accountingsync.SyncObjectCreditApplication:
-				query = s.applicationStates(dba, req)
+				query = applicationStates(req)
 			case req.ObjectType.IsPayable() && !req.ObjectType.IsVendor():
 				if req.ObjectType.IsDriverSettlement() {
-					query = s.driverStates(dba, req)
+					query = driverStates(req)
 				} else {
-					query = s.carrierStates(dba, req)
+					query = carrierStates(req)
 				}
 			default:
 				return nil, fmt.Errorf("drift does not compare %s", req.ObjectType)
 			}
-			if err := query.Scan(ctx, &states); err != nil {
+
+			states, err := keel.Into[accountingsyncports.AccountingDriftState](
+				ctx,
+				s.db.Keel(ctx),
+				query,
+			)
+			if err != nil {
 				return nil, fmt.Errorf("read %s states: %w", req.ObjectType, err)
 			}
-			return states, nil
+			return sliceutils.Pointers(states), nil
 		},
 	)
 }
 
-func (s *driftSource) reflectedMemos(
-	dba bun.IDB,
+func reflectedMemos(
 	connectionID pulid.ID,
-	sum *buncolgen.Column,
-) *bun.SelectQuery {
-	inv := invoicecol.InvoiceColumns
-	records := accountingsynccol.AccountingSyncRecordColumns
-	memo := func(c buncolgen.Column) buncolgen.Column { return c.WithAlias(reflectedMemoAlias) }
-	rec := func(c buncolgen.Column) buncolgen.Column { return c.WithAlias(reflectedRecordAlias) }
-	return dba.NewSelect().
-		TableExpr(invoicecol.InvoiceTable.As(reflectedMemoAlias)).
-		ColumnExpr("COALESCE(SUM("+memo(*sum).Qualified()+"), 0)").
-		Join(joinOn(
-			accountingsynccol.AccountingSyncRecordTable,
-			reflectedRecordAlias,
-			rec(records.OrganizationID).EqColumn(memo(inv.OrganizationID)),
-			rec(records.BusinessUnitID).EqColumn(memo(inv.BusinessUnitID)),
-			rec(records.ObjectID).EqColumn(memo(inv.ID)),
-		)).
-		Where(memo(inv.OrganizationID).EqColumn(inv.OrganizationID)).
-		Where(memo(inv.BusinessUnitID).EqColumn(inv.BusinessUnitID)).
-		Where(memo(inv.ReferenceInvoiceID).EqColumn(inv.ID)).
-		Where(memo(inv.Status).Eq(), invoice.StatusPosted).
-		Where(rec(records.ConnectionID).Eq(), connectionID).
-		Where(rec(records.Status).Eq(), accountingsync.SyncStatusSkipped).
+	amount func(memo *invoicedb.InvoicesTable) keel.Expr,
+) keel.Expr {
+	inv := invoicedb.Invoices
+	memo := inv.As(reflectedMemoAlias)
+	rec := accountingsyncdb.AccountingSyncRecords.As(reflectedRecordAlias)
+
+	return keel.Scalar(memo.Join(rec, rec.ObjectID.EqCol(memo.ID)).
+		Pick(keel.Int64Of(keel.Sum(amount(memo))).Coalesce(0)).
 		Where(
-			rec(records.ExternalRefs).Qualified()+" ->> ? IS NOT NULL",
-			accountingsync.ExternalRefReflectedIn,
-		)
+			memo.ReferenceInvoiceID.EqCol(inv.ID),
+			memo.Status.Eq(invoice.StatusPosted),
+			rec.ConnectionID.Eq(connectionID),
+			rec.Status.Eq(accountingsync.SyncStatusSkipped),
+			rec.ExternalRefs.Text(accountingsync.ExternalRefReflectedIn).IsNotNull(),
+		))
 }
 
-func (s *driftSource) salesStates(
-	dba bun.IDB,
-	req *accountingsyncports.ListAccountingDriftStatesRequest,
-) *bun.SelectQuery {
-	inv := invoicecol.InvoiceColumns
-	cus := customercol.CustomerColumns
-	return dba.NewSelect().
-		Model((*invoice.Invoice)(nil)).
-		ColumnExpr(inv.ID.As("object_id")).
-		ColumnExpr(inv.Number.As("number")).
-		ColumnExpr(inv.CustomerID.As("party_id")).
-		ColumnExpr(cus.Name.As("party_name")).
-		ColumnExpr(inv.CurrencyCode.As("currency_code")).
-		ColumnExpr("ABS("+inv.TotalAmountMinor.Qualified()+") AS amount_minor").
-		ColumnExpr(inv.BalanceDueMinor.As("open_minor")).
-		ColumnExpr(inv.AppliedAmountMinor.As("applied_minor")).
-		ColumnExpr(
-			"(?) AS reflected_minor",
-			s.reflectedMemos(dba, req.ConnectionID, &invoicecol.InvoiceColumns.TotalAmountMinor),
+func salesStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+	inv := invoicedb.Invoices
+	cus := customerdb.Customers
+	return inv.Join(cus, cus.ID.EqCol(inv.CustomerID)).
+		Pick(
+			inv.ID,
+			inv.Number,
+			inv.CustomerID,
+			cus.Name,
+			inv.CurrencyCode,
+			inv.TotalAmountMinor.Abs(),
+			inv.BalanceDueMinor,
+			inv.AppliedAmountMinor,
+			reflectedMemos(req.ConnectionID, func(memo *invoicedb.InvoicesTable) keel.Expr {
+				return memo.TotalAmountMinor
+			}),
+			inv.Status.Eq(invoice.StatusVoided),
+			inv.Status,
 		).
-		ColumnExpr(inv.Status.Qualified()+" = ? AS voided", invoice.StatusVoided).
-		ColumnExpr(inv.Status.As("state")).
-		Join(joinOn(
-			customercol.CustomerTable,
-			customercol.CustomerTable.Alias,
-			cus.ID.EqColumn(inv.CustomerID),
-			cus.OrganizationID.EqColumn(inv.OrganizationID),
-			cus.BusinessUnitID.EqColumn(inv.BusinessUnitID),
-		)).
-		Apply(invoicecol.InvoiceApplyTenant(req.TenantInfo)).
-		Where(inv.ID.In(), bun.List(req.ObjectIDs))
+		Where(inv.ID.In(req.ObjectIDs...))
 }
 
-func (s *driftSource) paymentStates(
-	dba bun.IDB,
-	req *accountingsyncports.ListAccountingDriftStatesRequest,
-) *bun.SelectQuery {
-	cp := customerpaymentcol.PaymentColumns
-	cus := customercol.CustomerColumns
-	return dba.NewSelect().
-		Model((*customerpayment.Payment)(nil)).
-		ColumnExpr(cp.ID.As("object_id")).
-		ColumnExpr(cp.ReferenceNumber.As("number")).
-		ColumnExpr(cp.CustomerID.As("party_id")).
-		ColumnExpr(cus.Name.As("party_name")).
-		ColumnExpr(cp.CurrencyCode.As("currency_code")).
-		ColumnExpr(cp.AmountMinor.As("amount_minor")).
-		ColumnExpr(cp.UnappliedAmountMinor.As("open_minor")).
-		ColumnExpr(cp.AppliedAmountMinor.As("applied_minor")).
-		ColumnExpr(cp.Status.Qualified()+" = ? AS voided", customerpayment.StatusReversed).
-		ColumnExpr(cp.Status.As("state")).
-		Join(joinOn(
-			customercol.CustomerTable,
-			customercol.CustomerTable.Alias,
-			cus.ID.EqColumn(cp.CustomerID),
-			cus.OrganizationID.EqColumn(cp.OrganizationID),
-			cus.BusinessUnitID.EqColumn(cp.BusinessUnitID),
-		)).
-		Apply(customerpaymentcol.PaymentApplyTenant(req.TenantInfo)).
-		Where(cp.ID.In(), bun.List(req.ObjectIDs))
-}
-
-func (s *driftSource) applicationStates(
-	dba bun.IDB,
-	req *accountingsyncports.ListAccountingDriftStatesRequest,
-) *bun.SelectQuery {
-	cma := customerpaymentcol.CreditMemoApplicationColumns
-	inv := invoicecol.InvoiceColumns
-	cus := customercol.CustomerColumns
-	return dba.NewSelect().
-		Model((*customerpayment.CreditMemoApplication)(nil)).
-		ColumnExpr(cma.ID.As("object_id")).
-		ColumnExpr(inv.Number.As("number")).
-		ColumnExpr(inv.CustomerID.As("party_id")).
-		ColumnExpr(cus.Name.As("party_name")).
-		ColumnExpr(inv.CurrencyCode.As("currency_code")).
-		ColumnExpr(cma.AppliedAmountMinor.As("amount_minor")).
-		ColumnExpr(cma.AppliedAmountMinor.As("applied_minor")).
-		ColumnExpr(
-			cma.Status.Qualified()+" = ? AS voided",
-			customerpayment.CreditApplicationStatusUnapplied,
+func paymentStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+	cp := customerpaymentdb.Payments
+	cus := customerdb.Customers
+	return cp.Join(cus, cus.ID.EqCol(cp.CustomerID)).
+		Pick(
+			cp.ID,
+			cp.ReferenceNumber.Coalesce(""),
+			cp.CustomerID,
+			cus.Name,
+			cp.CurrencyCode,
+			cp.AmountMinor,
+			cp.UnappliedAmountMinor,
+			cp.AppliedAmountMinor,
+			keel.Int64(0),
+			cp.Status.Eq(customerpayment.StatusReversed),
+			cp.Status,
 		).
-		ColumnExpr(cma.Status.As("state")).
-		Join(joinOn(
-			invoicecol.InvoiceTable,
-			invoicecol.InvoiceTable.Alias,
-			inv.ID.EqColumn(cma.CreditMemoInvoiceID),
-			inv.OrganizationID.EqColumn(cma.OrganizationID),
-			inv.BusinessUnitID.EqColumn(cma.BusinessUnitID),
-		)).
-		Join(joinOn(
-			customercol.CustomerTable,
-			customercol.CustomerTable.Alias,
-			cus.ID.EqColumn(inv.CustomerID),
-			cus.OrganizationID.EqColumn(inv.OrganizationID),
-			cus.BusinessUnitID.EqColumn(inv.BusinessUnitID),
-		)).
-		Apply(customerpaymentcol.CreditMemoApplicationApplyTenant(req.TenantInfo)).
-		Where(cma.ID.In(), bun.List(req.ObjectIDs))
+		Where(cp.ID.In(req.ObjectIDs...))
+}
+
+func applicationStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+	cma := customerpaymentdb.CreditMemoApplications
+	inv := invoicedb.Invoices
+	cus := customerdb.Customers
+	return cma.Join(inv, inv.ID.EqCol(cma.CreditMemoInvoiceID)).
+		Join(cus, cus.ID.EqCol(inv.CustomerID)).
+		Pick(
+			cma.ID,
+			inv.Number,
+			inv.CustomerID,
+			cus.Name,
+			inv.CurrencyCode,
+			cma.AppliedAmountMinor,
+			keel.Int64(0),
+			cma.AppliedAmountMinor,
+			keel.Int64(0),
+			cma.Status.Eq(customerpayment.CreditApplicationStatusUnapplied),
+			cma.Status,
+		).
+		Where(cma.ID.In(req.ObjectIDs...))
 }
 
 func settlementVoided(
 	objectType accountingsync.SyncObjectType,
-	status string,
-	voided, paid string,
-) (expr string, args []any) {
+	isVoided, isPaid keel.Pred,
+) keel.Expr {
 	if objectType.IsBillPayment() {
-		return status + " <> ? AS voided", []any{paid}
+		return keel.Not(isPaid)
 	}
-	return status + " = ? AS voided", []any{voided}
+	return isVoided
 }
 
-func (s *driftSource) carrierStates(
-	dba bun.IDB,
-	req *accountingsyncports.ListAccountingDriftStatesRequest,
-) *bun.SelectQuery {
-	cs := carriersettlementcol.CarrierSettlementColumns
-	carr := carriercol.CarrierColumns
-	voided, args := settlementVoided(
-		req.ObjectType,
-		cs.Status.Qualified(),
-		string(carriersettlement.StatusVoided),
-		string(carriersettlement.StatusPaid),
-	)
-	return dba.NewSelect().
-		Model((*carriersettlement.CarrierSettlement)(nil)).
-		ColumnExpr(cs.ID.As("object_id")).
-		ColumnExpr(cs.SettlementNumber.As("number")).
-		ColumnExpr(cs.CarrierID.As("party_id")).
-		ColumnExpr(carr.Name.As("party_name")).
-		ColumnExpr(cs.CurrencyCode.As("currency_code")).
-		ColumnExpr("ABS("+cs.NetPayableMinor.Qualified()+") AS amount_minor").
-		ColumnExpr(voided, args...).
-		ColumnExpr(cs.Status.As("state")).
-		Join(joinOn(
-			carriercol.CarrierTable,
-			carriercol.CarrierTable.Alias,
-			carr.ID.EqColumn(cs.CarrierID),
-			carr.OrganizationID.EqColumn(cs.OrganizationID),
-			carr.BusinessUnitID.EqColumn(cs.BusinessUnitID),
-		)).
-		Apply(carriersettlementcol.CarrierSettlementApplyTenant(req.TenantInfo)).
-		Where(cs.ID.In(), bun.List(req.ObjectIDs))
-}
-
-func (s *driftSource) driverStates(
-	dba bun.IDB,
-	req *accountingsyncports.ListAccountingDriftStatesRequest,
-) *bun.SelectQuery {
-	ds := driversettlementcol.SettlementColumns
-	wrk := workercol.WorkerColumns
-	voided, args := settlementVoided(
-		req.ObjectType,
-		ds.Status.Qualified(),
-		string(driversettlement.StatusVoided),
-		string(driversettlement.StatusPaid),
-	)
-	return dba.NewSelect().
-		Model((*driversettlement.Settlement)(nil)).
-		ColumnExpr(ds.ID.As("object_id")).
-		ColumnExpr(ds.SettlementNumber.As("number")).
-		ColumnExpr(ds.WorkerID.As("party_id")).
-		ColumnExpr(
-			"TRIM(CONCAT("+wrk.FirstName.Qualified()+", ' ', "+
-				wrk.LastName.Qualified()+")) AS party_name",
+func carrierStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+	cs := carriersettlementdb.CarrierSettlements
+	carr := carrierdb.Carriers
+	return cs.Join(carr, carr.ID.EqCol(cs.CarrierID)).
+		Pick(
+			cs.ID,
+			cs.SettlementNumber,
+			cs.CarrierID,
+			carr.Name,
+			cs.CurrencyCode,
+			cs.NetPayableMinor.Abs(),
+			keel.Int64(0),
+			keel.Int64(0),
+			keel.Int64(0),
+			settlementVoided(
+				req.ObjectType,
+				cs.Status.Eq(carriersettlement.StatusVoided),
+				cs.Status.Eq(carriersettlement.StatusPaid),
+			),
+			cs.Status,
 		).
-		ColumnExpr(ds.CurrencyCode.As("currency_code")).
-		ColumnExpr("ABS("+ds.NetPayMinor.Qualified()+") AS amount_minor").
-		ColumnExpr(voided, args...).
-		ColumnExpr(ds.Status.As("state")).
-		Join(joinOn(
-			workercol.WorkerTable,
-			workercol.WorkerTable.Alias,
-			wrk.ID.EqColumn(ds.WorkerID),
-			wrk.OrganizationID.EqColumn(ds.OrganizationID),
-			wrk.BusinessUnitID.EqColumn(ds.BusinessUnitID),
-		)).
-		Apply(driversettlementcol.SettlementApplyTenant(req.TenantInfo)).
-		Where(ds.ID.In(), bun.List(req.ObjectIDs))
+		Where(cs.ID.In(req.ObjectIDs...))
 }
 
-func (s *driftSource) balanceDocuments(
-	dba bun.IDB,
+func driverStates(req *accountingsyncports.ListAccountingDriftStatesRequest) keel.Projection {
+	ds := driversettlementdb.Settlements
+	wrk := workerdb.Workers
+	return ds.Join(wrk, wrk.ID.EqCol(ds.WorkerID)).
+		Pick(
+			ds.ID,
+			ds.SettlementNumber,
+			ds.WorkerID,
+			wrk.FirstName.Cat(keel.Text(" "), wrk.LastName).Trim(),
+			ds.CurrencyCode,
+			ds.NetPayMinor.Abs(),
+			keel.Int64(0),
+			keel.Int64(0),
+			keel.Int64(0),
+			settlementVoided(
+				req.ObjectType,
+				ds.Status.Eq(driversettlement.StatusVoided),
+				ds.Status.Eq(driversettlement.StatusPaid),
+			),
+			ds.Status,
+		).
+		Where(ds.ID.In(req.ObjectIDs...))
+}
+
+func balanceDocuments(
 	req *accountingsyncports.ListAccountingDriftBalancesRequest,
-) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	inv := invoicecol.InvoiceColumns
-	query := dba.NewSelect().
-		Model((*accountingsync.AccountingSyncRecord)(nil)).
-		Join(joinOn(
-			invoicecol.InvoiceTable,
-			invoicecol.InvoiceTable.Alias,
-			inv.ID.EqColumn(records.ObjectID),
-			inv.OrganizationID.EqColumn(records.OrganizationID),
-			inv.BusinessUnitID.EqColumn(records.BusinessUnitID),
-		)).
-		Where(inv.InvoiceDate.Gte(), req.DatedFrom)
-	return s.latestSynced(
-		query,
-		dba,
-		req.TenantInfo,
-		req.ConnectionID,
-		accountingsync.DriftBalanceObjectTypes(),
-	)
+) *keel.Query[*accountingsync.AccountingSyncRecord] {
+	sr := accountingsyncdb.AccountingSyncRecords
+	inv := invoicedb.Invoices
+	return sr.Join(inv, inv.ID.EqCol(sr.ObjectID)).
+		Where(inv.InvoiceDate.Gte(req.DatedFrom)).
+		Where(latestSynced(req.ConnectionID, accountingsync.DriftBalanceObjectTypes())...)
 }
 
 func (s *driftSource) ListBalances(
@@ -456,54 +343,49 @@ func (s *driftSource) ListBalances(
 			}
 			customers = intutils.Clamp(customers, 1, maxDriftCustomers)
 
-			inv := invoicecol.InvoiceColumns
-			cus := customercol.CustomerColumns
-			records := accountingsynccol.AccountingSyncRecordColumns
-			dba := s.db.DBForContext(ctx)
+			db := s.db.Keel(ctx)
+			inv := invoicedb.Invoices
+			cus := customerdb.Customers
+			sr := accountingsyncdb.AccountingSyncRecords
 
-			ids := make([]pulid.ID, 0, customers)
-			page := s.balanceDocuments(dba, req).
-				ColumnExpr("DISTINCT " + inv.CustomerID.Qualified())
-			if !req.AfterCustomerID.IsNil() {
-				page = page.Where(inv.CustomerID.Gt(), req.AfterCustomerID)
-			}
-			if err := page.
-				OrderExpr(inv.CustomerID.Qualified()+" ASC").
-				Limit(int64(customers)).
-				Scan(ctx, &ids); err != nil {
+			ids, err := keel.Into[pulid.ID](ctx, db, balanceDocuments(req).
+				Group(inv.CustomerID).
+				Pick(inv.CustomerID).
+				Where(keel.When(!req.AfterCustomerID.IsNil(), inv.CustomerID.Gt(req.AfterCustomerID))).
+				Order(inv.CustomerID.Asc()).
+				Limit(customers))
+			if err != nil {
 				return nil, fmt.Errorf("list customers to balance: %w", err)
 			}
-
-			lines := make([]*accountingsyncports.AccountingDriftBalanceLine, 0, len(ids))
 			if len(ids) == 0 {
-				return lines, nil
+				return []*accountingsyncports.AccountingDriftBalanceLine{}, nil
 			}
-			if err := s.balanceDocuments(dba, req).
-				ColumnExpr(inv.CustomerID.As("customer_id")).
-				ColumnExpr(cus.Name.As("customer_name")).
-				ColumnExpr(inv.CurrencyCode.As("currency_code")).
-				ColumnExpr(records.ObjectType.As("object_type")).
-				ColumnExpr(inv.ID.As("object_id")).
-				ColumnExpr(inv.Number.As("number")).
-				ColumnExpr(
-					inv.BalanceDueMinor.Qualified()+" + (?) AS open_minor",
-					s.reflectedMemos(dba, req.ConnectionID, &inv.BalanceDueMinor),
-				).
-				ColumnExpr(records.ExternalID.As("external_id")).
-				Join(joinOn(
-					customercol.CustomerTable,
-					customercol.CustomerTable.Alias,
-					cus.ID.EqColumn(inv.CustomerID),
-					cus.OrganizationID.EqColumn(inv.OrganizationID),
-					cus.BusinessUnitID.EqColumn(inv.BusinessUnitID),
-				)).
-				Where(inv.CustomerID.In(), bun.List(ids)).
-				OrderExpr(inv.CustomerID.Qualified()+" ASC").
-				OrderExpr(inv.ID.Qualified()+" ASC").
-				Scan(ctx, &lines); err != nil {
+
+			lines, err := keel.Into[accountingsyncports.AccountingDriftBalanceLine](
+				ctx,
+				db,
+				balanceDocuments(req).
+					Join(cus, cus.ID.EqCol(inv.CustomerID)).
+					Pick(
+						inv.CustomerID,
+						cus.Name,
+						inv.CurrencyCode,
+						sr.ObjectType,
+						inv.ID,
+						inv.Number,
+						inv.BalanceDueMinor.Add(keel.Int64Of(reflectedMemos(
+							req.ConnectionID,
+							func(memo *invoicedb.InvoicesTable) keel.Expr { return memo.BalanceDueMinor },
+						))),
+						sr.ExternalID,
+					).
+					Where(inv.CustomerID.In(ids...)).
+					Order(inv.CustomerID.Asc(), inv.ID.Asc()),
+			)
+			if err != nil {
 				return nil, fmt.Errorf("list balances to compare: %w", err)
 			}
-			return lines, nil
+			return sliceutils.Pointers(lines), nil
 		},
 	)
 }
@@ -513,24 +395,27 @@ func (s *driftSource) ListPendingCustomers(
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, s.db, func(ctx context.Context) ([]pulid.ID, error) {
-		ids := make([]pulid.ID, 0, len(req.CustomerIDs))
 		if len(req.CustomerIDs) == 0 {
-			return ids, nil
+			return []pulid.ID{}, nil
 		}
-		dba := s.db.DBForContext(ctx)
-		queries := []*bun.SelectQuery{
-			s.waitingInbound(dba, req),
-			s.unsettledSales(dba, req),
-			s.unsettledPayments(dba, req),
-			s.unsettledApplications(dba, req),
+
+		found := make([][]pulid.ID, 4)
+		err := keel.Batch(
+			ctx,
+			s.db.Keel(ctx),
+			keel.IntoSlice(waitingInbound(req), &found[0]),
+			keel.IntoSlice(unsettledSales(req), &found[1]),
+			keel.IntoSlice(unsettledPayments(req), &found[2]),
+			keel.IntoSlice(unsettledApplications(req), &found[3]),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("list customers with changes still waiting: %w", err)
 		}
+
+		ids := make([]pulid.ID, 0, len(req.CustomerIDs))
 		seen := make(map[pulid.ID]struct{}, len(req.CustomerIDs))
-		for _, query := range queries {
-			found := make([]pulid.ID, 0, len(req.CustomerIDs))
-			if err := query.Scan(ctx, &found); err != nil {
-				return nil, fmt.Errorf("list customers with changes still waiting: %w", err)
-			}
-			for _, id := range found {
+		for _, group := range found {
+			for _, id := range group {
 				if _, dup := seen[id]; dup {
 					continue
 				}
@@ -542,104 +427,71 @@ func (s *driftSource) ListPendingCustomers(
 	})
 }
 
-func (s *driftSource) waitingInbound(
-	dba bun.IDB,
+func waitingInbound(
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
-) *bun.SelectQuery {
-	cols := accountingsynccol.AccountingInboundChangeColumns
-	return dba.NewSelect().
-		Model((*accountingsync.AccountingInboundChange)(nil)).
-		ColumnExpr("DISTINCT "+cols.PartyObjectID.Qualified()).
-		Apply(accountingsynccol.AccountingInboundChangeApplyTenant(req.TenantInfo)).
-		Where(cols.ConnectionID.Eq(), req.ConnectionID).
-		Where(cols.Kind.Eq(), accountingsync.InboundCustomerPayment).
-		Where(cols.Status.In(), bun.List([]accountingsync.InboundChangeStatus{
-			accountingsync.InboundStatusDetected,
-			accountingsync.InboundStatusProposed,
-		})).
-		Where(cols.PartyObjectID.In(), bun.List(req.CustomerIDs))
+) keel.Projection {
+	ic := accountingsyncdb.AccountingInboundChanges
+	return ic.Group(ic.PartyObjectID).
+		Pick(ic.PartyObjectID).
+		Where(
+			ic.ConnectionID.Eq(req.ConnectionID),
+			ic.Kind.Eq(accountingsync.InboundCustomerPayment),
+			ic.Status.In(accountingsync.InboundStatusDetected, accountingsync.InboundStatusProposed),
+			ic.PartyObjectID.In(req.CustomerIDs...),
+		)
 }
 
-func (s *driftSource) unsettledRecords(
-	dba bun.IDB,
+func unsettledRecords(
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
-	objectTypes []accountingsync.SyncObjectType,
-) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	return dba.NewSelect().
-		Model((*accountingsync.AccountingSyncRecord)(nil)).
-		Apply(accountingsynccol.AccountingSyncRecordApplyTenant(req.TenantInfo)).
-		Where(records.ConnectionID.Eq(), req.ConnectionID).
-		Where(records.ObjectType.In(), bun.List(objectTypes)).
-		Where(records.Status.NotIn(), bun.List(accountingsync.FinalSyncStatuses()))
+	objectTypes ...accountingsync.SyncObjectType,
+) *keel.Query[*accountingsync.AccountingSyncRecord] {
+	sr := accountingsyncdb.AccountingSyncRecords
+	return sr.Where(
+		sr.ConnectionID.Eq(req.ConnectionID),
+		sr.ObjectType.In(objectTypes...),
+		sr.Status.NotIn(accountingsync.FinalSyncStatuses()...),
+	)
 }
 
-func (s *driftSource) unsettledSales(
-	dba bun.IDB,
+func unsettledSales(
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
-) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	inv := invoicecol.InvoiceColumns
-	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
+) keel.Projection {
+	sr := accountingsyncdb.AccountingSyncRecords
+	inv := invoicedb.Invoices
+	return unsettledRecords(
+		req,
 		accountingsync.SyncObjectInvoice,
 		accountingsync.SyncObjectCreditMemo,
 		accountingsync.SyncObjectDebitMemo,
-	}).
-		ColumnExpr("DISTINCT "+inv.CustomerID.Qualified()).
-		Join(joinOn(
-			invoicecol.InvoiceTable,
-			invoicecol.InvoiceTable.Alias,
-			inv.ID.EqColumn(records.ObjectID),
-			inv.OrganizationID.EqColumn(records.OrganizationID),
-			inv.BusinessUnitID.EqColumn(records.BusinessUnitID),
-		)).
-		Where(inv.CustomerID.In(), bun.List(req.CustomerIDs))
+	).
+		Join(inv, inv.ID.EqCol(sr.ObjectID)).
+		Group(inv.CustomerID).
+		Pick(inv.CustomerID).
+		Where(inv.CustomerID.In(req.CustomerIDs...))
 }
 
-func (s *driftSource) unsettledPayments(
-	dba bun.IDB,
+func unsettledPayments(
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
-) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	cp := customerpaymentcol.PaymentColumns
-	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
-		accountingsync.SyncObjectCustomerPayment,
-	}).
-		ColumnExpr("DISTINCT "+cp.CustomerID.Qualified()).
-		Join(joinOn(
-			customerpaymentcol.PaymentTable,
-			customerpaymentcol.PaymentTable.Alias,
-			cp.ID.EqColumn(records.ObjectID),
-			cp.OrganizationID.EqColumn(records.OrganizationID),
-			cp.BusinessUnitID.EqColumn(records.BusinessUnitID),
-		)).
-		Where(cp.CustomerID.In(), bun.List(req.CustomerIDs))
+) keel.Projection {
+	sr := accountingsyncdb.AccountingSyncRecords
+	cp := customerpaymentdb.Payments
+	return unsettledRecords(req, accountingsync.SyncObjectCustomerPayment).
+		Join(cp, cp.ID.EqCol(sr.ObjectID)).
+		Group(cp.CustomerID).
+		Pick(cp.CustomerID).
+		Where(cp.CustomerID.In(req.CustomerIDs...))
 }
 
-func (s *driftSource) unsettledApplications(
-	dba bun.IDB,
+func unsettledApplications(
 	req *accountingsyncports.ListAccountingDriftPendingCustomersRequest,
-) *bun.SelectQuery {
-	records := accountingsynccol.AccountingSyncRecordColumns
-	cma := customerpaymentcol.CreditMemoApplicationColumns
-	inv := invoicecol.InvoiceColumns
-	return s.unsettledRecords(dba, req, []accountingsync.SyncObjectType{
-		accountingsync.SyncObjectCreditApplication,
-	}).
-		ColumnExpr("DISTINCT "+inv.CustomerID.Qualified()).
-		Join(joinOn(
-			customerpaymentcol.CreditMemoApplicationTable,
-			customerpaymentcol.CreditMemoApplicationTable.Alias,
-			cma.ID.EqColumn(records.ObjectID),
-			cma.OrganizationID.EqColumn(records.OrganizationID),
-			cma.BusinessUnitID.EqColumn(records.BusinessUnitID),
-		)).
-		Join(joinOn(
-			invoicecol.InvoiceTable,
-			invoicecol.InvoiceTable.Alias,
-			inv.ID.EqColumn(cma.CreditMemoInvoiceID),
-			inv.OrganizationID.EqColumn(cma.OrganizationID),
-			inv.BusinessUnitID.EqColumn(cma.BusinessUnitID),
-		)).
-		Where(inv.CustomerID.In(), bun.List(req.CustomerIDs))
+) keel.Projection {
+	sr := accountingsyncdb.AccountingSyncRecords
+	cma := customerpaymentdb.CreditMemoApplications
+	inv := invoicedb.Invoices
+	return unsettledRecords(req, accountingsync.SyncObjectCreditApplication).
+		Join(cma, cma.ID.EqCol(sr.ObjectID)).
+		Join(inv, inv.ID.EqCol(cma.CreditMemoInvoiceID)).
+		Group(inv.CustomerID).
+		Pick(inv.CustomerID).
+		Where(inv.CustomerID.In(req.CustomerIDs...))
 }

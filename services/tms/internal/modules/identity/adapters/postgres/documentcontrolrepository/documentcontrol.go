@@ -3,19 +3,19 @@ package documentcontrolrepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/tenantcol"
-
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var documentControlErrors = dberror.Mapping{Entity: "DocumentControl"}
 
 type Params struct {
 	fx.In
@@ -41,22 +41,15 @@ func (r *repository) Get(
 	req tenantports.GetDocumentControlRequest,
 ) (*tenant.DocumentControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
-		log := r.l.With(
-			zap.String("operation", "Get"),
-			zap.String("orgID", req.TenantInfo.OrgID.String()),
-			zap.String("buID", req.TenantInfo.BuID.String()),
-		)
-
-		entity := new(tenant.DocumentControl)
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return tenantcol.DocumentControlScopeTenant(sq, req.TenantInfo)
-			}).
-			Scan(ctx); err != nil {
-			log.Error("failed to get document control", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "DocumentControl")
+		entity, err := r.find(ctx)
+		if err != nil {
+			r.l.Error(
+				"failed to get document control",
+				zap.String("orgID", req.TenantInfo.OrgID.String()),
+				zap.String("buID", req.TenantInfo.BuID.String()),
+				zap.Error(err),
+			)
+			return nil, documentControlErrors.Map(err, req.TenantInfo.OrgID.String())
 		}
 
 		return entity, nil
@@ -68,12 +61,8 @@ func (r *repository) Create(
 	entity *tenant.DocumentControl,
 ) (*tenant.DocumentControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := tenantdb.DocumentControls.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, documentControlErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -85,27 +74,8 @@ func (r *repository) Update(
 	entity *tenant.DocumentControl,
 ) (*tenant.DocumentControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.DocumentControl, error) {
-		ov := entity.Version
-		entity.Version++
-		cols := tenantcol.DocumentControlColumns
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where(cols.Version.Eq(), ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			result,
-			"DocumentControl",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := tenantdb.DocumentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, documentControlErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -118,31 +88,20 @@ func (r *repository) GetOrCreate(
 ) (*tenant.DocumentControl, error) {
 	return dbtx.GetOrCreate(ctx, r.db, dbtx.GetOrCreateSpec[*tenant.DocumentControl]{
 		Find: func(ctx context.Context) (*tenant.DocumentControl, error) {
-			found := new(tenant.DocumentControl)
-			if scanErr := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(found).
-				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return tenantcol.DocumentControlScopeTenant(sq, pagination.TenantInfo{
-						OrgID: orgID,
-						BuID:  buID,
-					})
-				}).
-				Scan(ctx); scanErr != nil {
-				return nil, scanErr
-			}
-
-			return found, nil
+			return dbtx.Read(ctx, r.db, r.find)
 		},
 		Create: func(ctx context.Context) error {
-			_, insertErr := r.db.DBForContext(ctx).
-				NewInsert().
-				Model(tenant.NewDefaultDocumentControl(orgID, buID)).
-				On(`CONFLICT ("organization_id", "business_unit_id") DO NOTHING`).
-				Exec(ctx)
-			if insertErr != nil {
+			dc := tenantdb.DocumentControls
+			_, err := dc.CreateOrSkip(
+				ctx,
+				r.db.Keel(ctx),
+				[]*tenant.DocumentControl{tenant.NewDefaultDocumentControl(orgID, buID)},
+				dc.OrganizationID,
+				dc.BusinessUnitID,
+			)
+			if err != nil {
 				return dberror.MapRetryableTransactionError(
-					insertErr,
+					err,
 					"Document control is busy. Retry the request.",
 				)
 			}
@@ -153,7 +112,11 @@ func (r *repository) GetOrCreate(
 			return tenant.NewDefaultDocumentControl(orgID, buID)
 		},
 		MapError: func(err error) error {
-			return dberror.HandleNotFoundError(err, "DocumentControl")
+			return documentControlErrors.Map(err, orgID.String())
 		},
 	})
+}
+
+func (r *repository) find(ctx context.Context) (*tenant.DocumentControl, error) {
+	return tenantdb.DocumentControls.Cache(resultcache.Settings()...).One(ctx, r.db.Keel(ctx))
 }

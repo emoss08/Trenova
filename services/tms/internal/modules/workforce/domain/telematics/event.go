@@ -1,36 +1,49 @@
 package telematics
 
 import (
+	"context"
+
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
+const defaultProvider = "Samsara"
+
 type TelematicsEvent struct {
-	bun.BaseModel `bun:"table:telematics_events,alias:tlev" json:"-"`
+	keel.Table `keel:"telematics_events"`
 
-	ID             pulid.ID       `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID       `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID       `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	Provider       string         `json:"provider"       bun:"provider,type:VARCHAR(32),notnull,default:'Samsara'"`
-	EventID        string         `json:"eventId"        bun:"event_id,type:TEXT,notnull"`
-	EventType      EventType      `json:"eventType"      bun:"event_type,type:VARCHAR(64),notnull"`
-	OccurredAt     int64          `json:"occurredAt"     bun:"occurred_at,type:BIGINT,notnull"`
-	TractorID      pulid.ID       `json:"tractorId"      bun:"tractor_id,type:VARCHAR(100),nullzero"`
-	WorkerID       pulid.ID       `json:"workerId"       bun:"worker_id,type:VARCHAR(100),nullzero"`
-	LocationID     pulid.ID       `json:"locationId"     bun:"location_id,type:VARCHAR(100),nullzero"`
-	AddressName    string         `json:"addressName"    bun:"address_name,type:TEXT,nullzero"`
-	Payload        map[string]any `json:"payload"        bun:"payload,type:JSONB,nullzero"`
-	CreatedAt      int64          `json:"createdAt"      bun:"created_at,type:BIGINT,notnull"`
+	ID             pulid.ID       `json:"id"             keel:"id,pk"`
+	OrganizationID pulid.ID       `json:"organizationId" keel:"organization_id,pk,tenant"`
+	BusinessUnitID pulid.ID       `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	Provider       string         `json:"provider"       keel:"provider"`
+	EventID        string         `json:"eventId"        keel:"event_id"`
+	EventType      EventType      `json:"eventType"      keel:"event_type"`
+	OccurredAt     int64          `json:"occurredAt"     keel:"occurred_at"`
+	TractorID      pulid.ID       `json:"tractorId"      keel:"tractor_id,nullzero"`
+	WorkerID       pulid.ID       `json:"workerId"       keel:"worker_id,nullzero"`
+	LocationID     pulid.ID       `json:"locationId"     keel:"location_id,nullzero"`
+	AddressName    string         `json:"addressName"    keel:"address_name,nullzero"`
+	Payload        map[string]any `json:"payload"        keel:"payload,jsonb,nullzero"`
+	CreatedAt      int64          `json:"createdAt"      keel:"created_at"`
 
-	StopOutcome       StopOutcome        `json:"stopOutcome"       bun:"stop_outcome,type:VARCHAR(20),nullzero"`
-	StopVisit         shipment.VisitKind `json:"stopVisit"         bun:"stop_visit,type:VARCHAR(20),nullzero"`
-	ShipmentMoveID    pulid.ID           `json:"shipmentMoveId"    bun:"shipment_move_id,type:VARCHAR(100),nullzero"`
-	StopID            pulid.ID           `json:"stopId"            bun:"stop_id,type:VARCHAR(100),nullzero"`
-	StopOutcomeReason string             `json:"stopOutcomeReason" bun:"stop_outcome_reason,type:TEXT,nullzero"`
+	StopOutcome       StopOutcome        `json:"stopOutcome"       keel:"stop_outcome,nullzero"`
+	StopVisit         shipment.VisitKind `json:"stopVisit"         keel:"stop_visit,nullzero"`
+	ShipmentMoveID    pulid.ID           `json:"shipmentMoveId"    keel:"shipment_move_id,nullzero"`
+	StopID            pulid.ID           `json:"stopId"            keel:"stop_id,nullzero"`
+	StopOutcomeReason string             `json:"stopOutcomeReason" keel:"stop_outcome_reason,nullzero"`
+	MoveShipmentID    pulid.ID           `json:"-"                 keel:"move_shipment_id,computed,nullzero"`
+}
+
+func (e *TelematicsEvent) BeforeCreate(_ context.Context) error {
+	if e.Provider == "" {
+		e.Provider = defaultProvider
+	}
+
+	return nil
 }
 
 func NewEventID() pulid.ID {

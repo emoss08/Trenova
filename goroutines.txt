@@ -1,0 +1,845 @@
+goroutine 5871 [running]:
+runtime/pprof.writeGoroutineStacks({0x1183de28, 0x1d175e55e870})
+	runtime/pprof/pprof.go:816 +0x69
+runtime/pprof.writeGoroutine({0x1183de28?, 0x1d175e55e870?}, 0x1d1762fe0b00?)
+	runtime/pprof/pprof.go:779 +0x25
+runtime/pprof.(*Profile).WriteTo(0x127264b0?, {0x1183de28?, 0x1d175e55e870?}, 0xc?)
+	runtime/pprof/pprof.go:405 +0x149
+net/http/pprof.handler.ServeHTTP({0x7c60151, 0x9}, {0x1186fe68, 0x1d175e55e870}, 0x1d175d75ec80)
+	net/http/pprof/pprof.go:272 +0x554
+net/http.(*ServeMux).ServeHTTP(0x4910d9?, {0x1186fe68, 0x1d175e55e870}, 0x1d175d75ec80)
+	net/http/server.go:2903 +0x1cf
+net/http.serverHandler.ServeHTTP({0x1d1762c7d9c0?}, {0x1186fe68?, 0x1d175e55e870?}, 0x1?)
+	net/http/server.go:3413 +0x8e
+net/http.(*conn).serve(0x1d1762d72b40, {0x118788d0, 0x1d1758120270})
+	net/http/server.go:2137 +0x6dc
+created by net/http.(*Server).Serve in goroutine 147
+	net/http/server.go:3581 +0x4fd
+
+goroutine 1 [chan receive, 7 minutes]:
+go.uber.org/fx.(*App).run(0x1d17578989a0, 0x1d175d8edb30)
+	go.uber.org/fx@v1.24.0/app.go:613 +0xaf
+go.uber.org/fx.(*App).Run(0x1d17578989a0)
+	go.uber.org/fx@v1.24.0/app.go:600 +0x2e
+github.com/emoss08/trenova/internal/bootstrap/apiapp.Run({0x11861b20, 0x1d1758036e28})
+	github.com/emoss08/trenova/internal/bootstrap/apiapp/apiapp.go:63 +0x7a
+github.com/emoss08/trenova/cmd/cli/api.runAPI(0x1d1757d3e400?, {0x7c39583?, 0x4?, 0x7c39463?})
+	github.com/emoss08/trenova/cmd/cli/api/run_api.go:29 +0x18
+github.com/spf13/cobra.(*Command).execute(0x1299c1b0, {0x12c45ac0, 0x0, 0x0})
+	github.com/spf13/cobra@v1.10.2/command.go:1015 +0xb3c
+github.com/spf13/cobra.(*Command).ExecuteC(0x1299b650)
+	github.com/spf13/cobra@v1.10.2/command.go:1148 +0x450
+github.com/spf13/cobra.(*Command).Execute(...)
+	github.com/spf13/cobra@v1.10.2/command.go:1071
+main.main()
+	github.com/emoss08/trenova/cmd/cli/main.go:39 +0x45
+
+goroutine 39 [select]:
+go.opencensus.io/stats/view.(*worker).start(0x1d1755f88500)
+	go.opencensus.io@v0.24.0/stats/view/worker.go:292 +0xa5
+created by go.opencensus.io/stats/view.init.0 in goroutine 1
+	go.opencensus.io@v0.24.0/stats/view/worker.go:34 +0x98
+
+goroutine 51 [select]:
+github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1()
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:86 +0xf7
+created by github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...] in goroutine 1
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:82 +0x354
+
+goroutine 52 [select]:
+github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1()
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:86 +0xf7
+created by github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...] in goroutine 1
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:82 +0x354
+
+goroutine 53 [select]:
+github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1()
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:86 +0xf7
+created by github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...] in goroutine 1
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:82 +0x354
+
+goroutine 67 [chan receive, 7 minutes]:
+google.golang.org/grpc/internal/grpcsync.(*CallbackSerializer).run(0x1d17579f06b0, {0x11878908, 0x1d1757590cd0})
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:114 +0x10d
+created by google.golang.org/grpc/internal/grpcsync.NewCallbackSerializer in goroutine 1
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:57 +0x13d
+
+goroutine 69 [chan receive, 7 minutes]:
+google.golang.org/grpc/internal/grpcsync.(*CallbackSerializer).run(0x1d17579f06f0, {0x11878908, 0x1d1757591540})
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:114 +0x10d
+created by google.golang.org/grpc/internal/grpcsync.NewCallbackSerializer in goroutine 1
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:57 +0x13d
+
+goroutine 68 [chan receive, 7 minutes]:
+google.golang.org/grpc/internal/grpcsync.(*CallbackSerializer).run(0x1d17579f06d0, {0x11878908, 0x1d17575914f0})
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:114 +0x10d
+created by google.golang.org/grpc/internal/grpcsync.NewCallbackSerializer in goroutine 1
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:57 +0x13d
+
+goroutine 340 [select]:
+github.com/emoss08/trenova/internal/api/handlers/realtimehandler.(*Handler).stream(0x1d175a298510, 0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/handlers/realtimehandler/handler.go:155 +0x62f
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*IdempotencyMiddleware).Handle.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/idempotency.go:92 +0x3fb
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*ReadOnlyGuard).Guard.func1(0x1d175a35cc00?)
+	github.com/emoss08/trenova/internal/api/middleware/readonly.go:99 +0x53
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*PasswordChangeMiddleware).RequireCurrentPassword.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/passwordchange.go:40 +0x53
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*CSRFMiddleware).RequireToken.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/csrf.go:56 +0x15d
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*LocaleMiddleware).Resolve.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/locale.go:22 +0x186
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*RateLimiter).ByPrincipal.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/ratelimit.go:134 +0x65
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*ReadScopeMiddleware).Install.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/readscope.go:34 +0x125
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/responseguard.(*Guard).Install.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/responseguard/guard.go:79 +0x9b
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*AuthMiddleware).RequireAuth.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/auth.go:50 +0x75
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*QueryBudgetMiddleware).Install.func1(0x1d175a35cc00?)
+	github.com/emoss08/trenova/internal/api/middleware/querybudget.go:38 +0x2e5
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/infrastructure/observability.(*Middleware).TracingMiddleware.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/infrastructure/observability/middleware.go:82 +0xaac
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/gin-contrib/zap.GinzapWithConfig.func1(0x1d175a35cc00)
+	github.com/gin-contrib/zap@v1.1.9/zap.go:76 +0xae
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.NewTokenRedactionMiddleware.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/tokenredaction.go:35 +0x218
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*LocaleMiddleware).Resolve.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/locale.go:22 +0x186
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*CSRFBrowserGuard).Guard.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/csrf.go:89 +0x96
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.(*TenantBoundaryMiddleware).Track.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/tenantboundary.go:41 +0xb8
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.NewRequestMetaMiddleware.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/requestmeta.go:16 +0x3c7
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/gin-contrib/requestid.New.func2(0x1d175a35cc00)
+	github.com/gin-contrib/requestid@v1.0.8/requestid.go:48 +0xf8
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/gin-gonic/gin.CustomRecoveryWithWriter.func1(0x7d16742?)
+	github.com/gin-gonic/gin@v1.12.0/recovery.go:90 +0x51
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.NewSecurityHeadersMiddleware.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/securityheaders.go:19 +0x3e
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/emoss08/trenova/internal/api/middleware.NewVaryOriginMiddleware.func1(0x1d175a35cc00)
+	github.com/emoss08/trenova/internal/api/middleware/varyorigin.go:13 +0x3d
+github.com/gin-gonic/gin.(*Context).Next(0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/context.go:192 +0x5f
+github.com/gin-gonic/gin.(*Engine).handleHTTPRequest(0x1d175c546000, 0x1d175a35cc00)
+	github.com/gin-gonic/gin@v1.12.0/gin.go:722 +0x45b
+github.com/gin-gonic/gin.(*Engine).ServeHTTP(0x1d175c546000, {0x1186fe68, 0x1d176575d1d0}, 0x1d175fa48140)
+	github.com/gin-gonic/gin@v1.12.0/gin.go:672 +0x1dc
+github.com/emoss08/trenova/internal/api/middleware.NewRequestTimeoutHandler.func1({0x1186fe68, 0x1d176575d1d0}, 0x1d175fa48140)
+	github.com/emoss08/trenova/internal/api/middleware/timeout.go:28 +0x43f
+net/http.HandlerFunc.ServeHTTP(0x4910d9?, {0x1186fe68?, 0x1d176575d1d0?}, 0x1d175c789af0?)
+	net/http/server.go:2338 +0x29
+net/http.serverHandler.ServeHTTP({0x1d175a351180?}, {0x1186fe68?, 0x1d176575d1d0?}, 0x1?)
+	net/http/server.go:3413 +0x8e
+net/http.(*conn).serve(0x1d175a089710, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2137 +0x6dc
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 325 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e014ea00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175dcd1100?, 0x1d175d748000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175dcd1100, {0x1d175d748000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175dcd1100, {0x1d175d748000?, 0x5141c0?, 0x1d175dcd1100?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175de9e8c8, {0x1d175d748000?, 0x1bf08eaf88?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d17599e0e40, {0x1d175d748000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175d722060)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175d722060, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d175a2ccbd0, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 115 [select, 7 minutes]:
+github.com/emoss08/trenova/internal/infrastructure/realtimebroker.(*Publisher).run(0x1d1757e36dd0)
+	github.com/emoss08/trenova/internal/infrastructure/realtimebroker/publisher.go:145 +0x165
+created by github.com/emoss08/trenova/internal/infrastructure/realtimebroker.NewPublisher.func1 in goroutine 89
+	github.com/emoss08/trenova/internal/infrastructure/realtimebroker/publisher.go:67 +0x5f
+
+goroutine 234 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e01d9c00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175a3f8880?, 0x1d175aefe000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175a3f8880, {0x1d175aefe000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175a3f8880, {0x1d175aefe000?, 0x5141c0?, 0x1d175a3f8880?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175a2830f0, {0x1d175aefe000?, 0x1bf08ead4c?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d1757d48f80, {0x1d175aefe000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175b0e0480)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175b0e0480, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d175c53f560, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 163 [select]:
+github.com/emoss08/trenova/internal/infrastructure/realtimebroker.(*Broker).maintain(0x1d175c2bf300)
+	github.com/emoss08/trenova/internal/infrastructure/realtimebroker/broker.go:523 +0x1b1
+created by github.com/emoss08/trenova/internal/infrastructure/realtimebroker.(*Broker).start in goroutine 89
+	github.com/emoss08/trenova/internal/infrastructure/realtimebroker/broker.go:119 +0x13b
+
+goroutine 93 [select]:
+github.com/emoss08/keel.(*versioner).run(0x1d175a45a240)
+	github.com/emoss08/keel@v0.2.0/dataversion.go:115 +0xef
+created by github.com/emoss08/keel.startVersioner in goroutine 89
+	github.com/emoss08/keel@v0.2.0/dataversion.go:105 +0x125
+
+goroutine 86 [chan receive, 7 minutes]:
+google.golang.org/grpc/internal/grpcsync.(*CallbackSerializer).run(0x1d1758cd1580, {0x11878908, 0x1d1758478aa0})
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:114 +0x10d
+created by google.golang.org/grpc/internal/grpcsync.NewCallbackSerializer in goroutine 70
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:57 +0x13d
+
+goroutine 70 [select]:
+github.com/emoss08/trenova/internal/infrastructure/imaging.(*endpointSet).watch(0x1d1758ee83f0)
+	github.com/emoss08/trenova/internal/infrastructure/imaging/endpoints.go:175 +0x274
+created by github.com/emoss08/trenova/internal/infrastructure/imaging.newEndpointSet in goroutine 1
+	github.com/emoss08/trenova/internal/infrastructure/imaging/endpoints.go:161 +0x339
+
+goroutine 71 [select]:
+github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1()
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:86 +0xf7
+created by github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...] in goroutine 1
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:82 +0x354
+
+goroutine 87 [chan receive, 7 minutes]:
+google.golang.org/grpc/internal/grpcsync.(*CallbackSerializer).run(0x1d1758cd15a0, {0x11878908, 0x1d1758478af0})
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:114 +0x10d
+created by google.golang.org/grpc/internal/grpcsync.NewCallbackSerializer in goroutine 70
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:57 +0x13d
+
+goroutine 88 [chan receive, 7 minutes]:
+google.golang.org/grpc/internal/grpcsync.(*CallbackSerializer).run(0x1d1758cd15c0, {0x11878908, 0x1d1758478b40})
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:114 +0x10d
+created by google.golang.org/grpc/internal/grpcsync.NewCallbackSerializer in goroutine 70
+	google.golang.org/grpc@v1.84.0/internal/grpcsync/callback_serializer.go:57 +0x13d
+
+goroutine 72 [select]:
+github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...].func1()
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:86 +0xf7
+created by github.com/hashicorp/golang-lru/v2/expirable.NewLRU[...] in goroutine 1
+	github.com/hashicorp/golang-lru/v2@v2.0.7/expirable/expirable_lru.go:82 +0x354
+
+goroutine 58 [select]:
+github.com/jackc/pgx/v5/pgxpool.(*Pool).backgroundHealthCheck(0x1d175a975a40)
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:510 +0xc8
+github.com/jackc/pgx/v5/pgxpool.NewWithConfig.func5()
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:337 +0x3d
+created by github.com/jackc/pgx/v5/pgxpool.NewWithConfig in goroutine 89
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:334 +0x465
+
+goroutine 94 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e0265a00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175d2fa280?, 0x1d175a46a000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175d2fa280, {0x1d175a46a000, 0x2000, 0x2000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175d2fa280, {0x1d175a46a000?, 0x492b5f?, 0xd0?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175611e6f8, {0x1d175a46a000?, 0x8c0b5f?, 0x1d17597d9bb0?})
+	net/net.go:196 +0x45
+github.com/jackc/pgx/v5/pgconn/internal/bgreader.(*BGReader).Read(0x1d175a45a340, {0x1d175a46a000, 0x2000, 0x2000})
+	github.com/jackc/pgx/v5@v5.11.0/pgconn/internal/bgreader/bgreader.go:100 +0xcb
+io.ReadAtLeast({0x11841188, 0x1d175a45a340}, {0x1d175a46a000, 0x2000, 0x2000}, 0x5)
+	io/io.go:335 +0x83
+github.com/jackc/pgx/v5/pgproto3.(*chunkReader).Next(0x1d17587799e0, 0x5)
+	github.com/jackc/pgx/v5@v5.11.0/pgproto3/chunkreader.go:80 +0x289
+github.com/jackc/pgx/v5/pgproto3.(*Frontend).Receive(0x1d175a514008)
+	github.com/jackc/pgx/v5@v5.11.0/pgproto3/frontend.go:313 +0x3c
+github.com/jackc/pgx/v5/pgconn.(*PgConn).peekMessage(0x1d175a527708)
+	github.com/jackc/pgx/v5@v5.11.0/pgconn/pgconn.go:643 +0x155
+github.com/jackc/pgx/v5/pgconn.(*PgConn).receiveMessage(0x1d175a527708)
+	github.com/jackc/pgx/v5@v5.11.0/pgconn/pgconn.go:667 +0x26
+github.com/jackc/pgx/v5/pgconn.(*PgConn).WaitForNotification(0x1d175a527708, {0x11878978, 0x1d175741f6c0})
+	github.com/jackc/pgx/v5@v5.11.0/pgconn/pgconn.go:1189 +0x32e
+github.com/jackc/pgx/v5.(*Conn).WaitForNotification(0x1d1757466b40, {0x11878978?, 0x1d175741f6c0?})
+	github.com/jackc/pgx/v5@v5.11.0/conn.go:431 +0x9b
+github.com/emoss08/keel.(*versionBus).listen(0x1d175ec98608, {0x11878908, 0x1d175ac59e00}, 0x1d1757466b40)
+	github.com/emoss08/keel@v0.2.0/versionbus.go:227 +0x68
+github.com/emoss08/keel.(*versionBus).run(0x1d175ec98608, {0x11878908, 0x1d175ac59e00}, 0x1d175957d7b8?)
+	github.com/emoss08/keel@v0.2.0/versionbus.go:196 +0xb3
+created by github.com/emoss08/keel.(*versionBus).start in goroutine 89
+	github.com/emoss08/keel@v0.2.0/versionbus.go:139 +0x1b9
+
+goroutine 95 [select]:
+github.com/jackc/pgx/v5/pgxpool.(*Pool).backgroundHealthCheck(0x1d175a974000)
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:510 +0xc8
+github.com/jackc/pgx/v5/pgxpool.NewWithConfig.func5()
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:337 +0x3d
+created by github.com/jackc/pgx/v5/pgxpool.NewWithConfig in goroutine 89
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:334 +0x465
+
+goroutine 48 [select]:
+github.com/emoss08/keel.(*versioner).run(0x1d175f9cb700)
+	github.com/emoss08/keel@v0.2.0/dataversion.go:115 +0xef
+created by github.com/emoss08/keel.startVersioner in goroutine 89
+	github.com/emoss08/keel@v0.2.0/dataversion.go:105 +0x125
+
+goroutine 107 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e0265200, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175ad28f00?, 0x1d17575e2000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175ad28f00, {0x1d17575e2000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175ad28f00, {0x1d17575e2000?, 0x5141c0?, 0x1d175ad28f00?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d176e39d170, {0x1d17575e2000?, 0x1bf08ead53?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d1759168b00, {0x1d17575e2000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d1756d18360)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d1756d18360, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d1758ee8ea0, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 118 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6f0a21a00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d1757624600?, 0x1d1759788000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d1757624600, {0x1d1759788000, 0x8000, 0x8000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d1757624600, {0x1d1759788000?, 0x1?, 0x7c3947f?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d1756380028, {0x1d1759788000?, 0x4ec30f?, 0x2d?})
+	net/net.go:196 +0x45
+bufio.(*Reader).fill(0x1d1758e7e000)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d1758e7e000, 0x1)
+	bufio/bufio.go:152 +0x52
+github.com/redis/go-redis/v9/internal/proto.(*Reader).PeekReplyType(0x1d1756380030)
+	github.com/redis/go-redis/v9@v9.23.0/internal/proto/reader.go:95 +0x25
+github.com/redis/go-redis/v9/push.(*Processor).processPendingNotifications(0x1d1759580048, {0x11878908, 0x1d175c79eaf0}, {{0xfbc5c70, 0x1d1758762000}, {0xfb71e88, 0x1d1758774000}, {0x0, 0x0}, {0xfb71980, ...}, ...}, ...)
+	github.com/redis/go-redis/v9@v9.23.0/push/processor.go:113 +0xd1
+github.com/redis/go-redis/v9/push.(*Processor).ProcessPendingNotifications(0x0?, {0x11878908?, 0x1d175c79eaf0?}, {{0xfbc5c70, 0x1d1758762000}, {0xfb71e88, 0x1d1758774000}, {0x0, 0x0}, {0xfb71980, ...}, ...}, ...)
+	github.com/redis/go-redis/v9@v9.23.0/push/processor.go:65 +0x65
+github.com/redis/go-redis/v9.(*baseClient).processPendingPushNotificationWithReader(0xee2715df9?, {0x11878908?, 0x1d175c79eaf0?}, 0x64ee20e1c5?, 0x12c0aba0?)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:3489 +0x1b4
+github.com/redis/go-redis/v9.(*baseClient)._process.func1.3(0x1d1756380030)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1801 +0x99
+github.com/redis/go-redis/v9/internal/pool.(*Conn).WithReader(0x1d17575bc000, {0x118787b8?, 0x12c45ac0?}, 0x1d17575bc000?, 0x1d175c8637a8)
+	github.com/redis/go-redis/v9@v9.23.0/internal/pool/conn.go:1188 +0x12e
+github.com/redis/go-redis/v9.(*baseClient)._process.func1({0x11878908, 0x1d175c79eaf0}, 0x1d17575bc000)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1799 +0x45c
+github.com/redis/go-redis/v9.(*baseClient).withConn(0x1d1758762000, {0x11878908, 0x1d175c79eaf0}, 0x1d175c863928)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1348 +0xcf
+github.com/redis/go-redis/v9.(*baseClient)._process(0x11878908?, {0x11878908?, 0x1d175c79eaf0?}, {0x1189fd50?, 0x1d175f6bb680?}, 0x0?, 0x0?)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1741 +0x145
+github.com/redis/go-redis/v9.(*baseClient).processWithRetry(0x1d1758762000, {0x11878908, 0x1d175c79eaf0}, {0x1189fd50, 0x1d175f6bb680}, 0x0, 0x0, 0x1100000000?)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1597 +0x112
+github.com/redis/go-redis/v9.(*baseClient).processCommand(0x1d1758762000, {0x11878908, 0x1d175c79eaf0}, {0x1189fd50, 0x1d175f6bb680}, 0x0, 0x0)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1556 +0x9e
+github.com/redis/go-redis/v9.(*baseClient).processStartingAt(0x1d1758762000, {0x11878908, 0x1d175c79eaf0}, {0x1189fd50, 0x1d175f6bb680}, 0x0, {0x1d1757e2eb05?, 0xa000000000001?, 0x0?})
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1525 +0x186
+github.com/redis/go-redis/v9.(*baseClient).process(...)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1508
+github.com/redis/go-redis/v9.(*hooksMixin).processHook(...)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:261
+github.com/redis/go-redis/v9.(*Client).Process(0x1d175c863bb0?, {0x11878908?, 0x1d175c79eaf0?}, {0x1189fd50, 0x1d175f6bb680})
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:2751 +0x43
+github.com/redis/go-redis/v9.cmdable.XReadGroup(0x1d1758746460, {0x11878908, 0x1d175c79eaf0}, 0x1d175c863f00)
+	github.com/redis/go-redis/v9@v9.23.0/stream_commands.go:382 +0x889
+github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice.(*Consumer).consumeLoop(0x1d17589e21b0, {0x11878908, 0x1d175c79eaf0})
+	github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice/consumer.go:167 +0x17a
+created by github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice.(*Consumer).Start in goroutine 89
+	github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice/consumer.go:84 +0x130
+
+goroutine 119 [select]:
+github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice.(*Consumer).retryLoop(0x1d17589e21b0, {0x11878908, 0x1d175c79eaf0})
+	github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice/consumer.go:204 +0xe5
+created by github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice.(*Consumer).Start in goroutine 89
+	github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice/consumer.go:85 +0x191
+
+goroutine 120 [select, 3 minutes]:
+github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice.(*Consumer).trimLoop(0x1d17589e21b0, {0x11878908, 0x1d175c79eaf0})
+	github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice/consumer.go:267 +0xea
+created by github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice.(*Consumer).Start in goroutine 89
+	github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice/consumer.go:86 +0x1f2
+
+goroutine 194 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6f0a21600, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d1757328000?, 0x1d175af96000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d1757328000, {0x1d175af96000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d1757328000, {0x1d175af96000?, 0x5141c0?, 0x1d1757328000?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d17595807b0, {0x1d175af96000?, 0x1bf08eae39?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d17553d3a80, {0x1d175af96000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175d318000)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175d318000, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d175a7be120, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 5872 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e0321a00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175f2bd180?, 0x1d1762c7d9e1?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175f2bd180, {0x1d1762c7d9e1, 0x1, 0x1})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175f2bd180, {0x1d1762c7d9e1?, 0x126ade60?, 0x1d175957ef70?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175ee1b840, {0x1d1762c7d9e1?, 0x1001d1765aa3470?, 0xc1d6c0?})
+	net/net.go:196 +0x45
+net/http.(*connReader).backgroundRead(0x1d1762c7d9c0)
+	net/http/server.go:746 +0x32
+created by net/http.(*connReader).startBackgroundRead in goroutine 5871
+	net/http/server.go:742 +0xba
+
+goroutine 61 [select]:
+github.com/jackc/pgx/v5/pgxpool.(*Pool).backgroundHealthCheck(0x1d175c79a1c0)
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:510 +0xc8
+github.com/jackc/pgx/v5/pgxpool.NewWithConfig.func5()
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:337 +0x3d
+created by github.com/jackc/pgx/v5/pgxpool.NewWithConfig in goroutine 89
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:334 +0x465
+
+goroutine 124 [select]:
+github.com/emoss08/keel.(*versioner).run(0x1d1760411800)
+	github.com/emoss08/keel@v0.2.0/dataversion.go:115 +0xef
+created by github.com/emoss08/keel.startVersioner in goroutine 89
+	github.com/emoss08/keel@v0.2.0/dataversion.go:105 +0x125
+
+goroutine 81 [select, 3 minutes]:
+github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs.(*catalogHeartbeat).run(0x1d1758988390, {0x11878908, 0x1d1757a3bb30}, 0x1d175909a700?)
+	github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/catalogheartbeat.go:67 +0x10e
+created by github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs.StartCatalogHeartbeat.func1 in goroutine 89
+	github.com/emoss08/trenova/internal/modules/workspace/jobs/reportjobs/catalogheartbeat.go:46 +0xa9
+
+goroutine 101 [select]:
+github.com/emoss08/keel.(*versioner).run(0x1d1760b99500)
+	github.com/emoss08/keel@v0.2.0/dataversion.go:115 +0xef
+created by github.com/emoss08/keel.startVersioner in goroutine 89
+	github.com/emoss08/keel@v0.2.0/dataversion.go:105 +0x125
+
+goroutine 130 [select]:
+github.com/jackc/pgx/v5/pgxpool.(*Pool).backgroundHealthCheck(0x1d175c79a380)
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:510 +0xc8
+github.com/jackc/pgx/v5/pgxpool.NewWithConfig.func5()
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:337 +0x3d
+created by github.com/jackc/pgx/v5/pgxpool.NewWithConfig in goroutine 89
+	github.com/jackc/pgx/v5@v5.11.0/pgxpool/pool.go:334 +0x465
+
+goroutine 329 [IO wait, 3 minutes]:
+internal/poll.runtime_pollWait(0x72f6e014dc00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175e1f9680?, 0x1d175e1fa000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175e1f9680, {0x1d175e1fa000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175e1f9680, {0x1d175e1fa000?, 0x5141c0?, 0x1d175e1f9680?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175de9e950, {0x1d175e1fa000?, 0x1bf08eacdf?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d175a38a880, {0x1d175e1fa000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175e185aa0)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175e185aa0, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d175a2ccf30, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 147 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e01daa00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175833f500?, 0x100?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Accept(0x1d175833f500)
+	internal/poll/fd_unix.go:618 +0x27d
+net.(*netFD).accept(0x1d175833f500)
+	net/fd_unix.go:149 +0x29
+net.(*TCPListener).accept(0x1d1760411840)
+	net/tcpsock_posix.go:159 +0x1b
+net.(*TCPListener).Accept(0x1d1760411840)
+	net/tcpsock.go:387 +0x30
+net/http.(*Server).Serve(0x1d175762a500, {0x1186ff58, 0x1d1760411840})
+	net/http/server.go:3551 +0x379
+net/http.(*Server).ListenAndServe(0x1d175762a500)
+	net/http/server.go:3462 +0x71
+github.com/emoss08/trenova/internal/api.(*PprofServer).Start.func1()
+	github.com/emoss08/trenova/internal/api/pprofserver.go:82 +0x2e
+created by github.com/emoss08/trenova/internal/api.(*PprofServer).Start in goroutine 89
+	github.com/emoss08/trenova/internal/api/pprofserver.go:81 +0x19b
+
+goroutine 148 [IO wait, 7 minutes]:
+internal/poll.runtime_pollWait(0x72f6e01da800, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175a5b4500?, 0x4901d3?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Accept(0x1d175a5b4500)
+	internal/poll/fd_unix.go:618 +0x27d
+net.(*netFD).accept(0x1d175a5b4500)
+	net/fd_unix.go:149 +0x29
+net.(*TCPListener).accept(0x1d17604118c0)
+	net/tcpsock_posix.go:159 +0x1b
+net.(*TCPListener).Accept(0x1d17604118c0)
+	net/tcpsock.go:387 +0x30
+net/http.(*Server).Serve(0x1d175762b180, {0x1186ff58, 0x1d17604118c0})
+	net/http/server.go:3551 +0x379
+net/http.(*Server).ListenAndServe(0x1d175762b180)
+	net/http/server.go:3462 +0x71
+github.com/emoss08/trenova/internal/api.(*MonitoringServer).Start.func1()
+	github.com/emoss08/trenova/internal/api/monitoringserver.go:111 +0x2e
+created by github.com/emoss08/trenova/internal/api.(*MonitoringServer).Start in goroutine 89
+	github.com/emoss08/trenova/internal/api/monitoringserver.go:110 +0x539
+
+goroutine 162 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6f0a21400, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175ad29180?, 0x1d175d3aa000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175ad29180, {0x1d175d3aa000, 0x8000, 0x8000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175ad29180, {0x1d175d3aa000?, 0x72f6e0437e20?, 0x72f7390d3580?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175ac252a8, {0x1d175d3aa000?, 0x4ec30f?, 0x2d?})
+	net/net.go:196 +0x45
+bufio.(*Reader).fill(0x1d175a0fd4a0)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175a0fd4a0, 0x1)
+	bufio/bufio.go:152 +0x52
+github.com/redis/go-redis/v9/internal/proto.(*Reader).PeekReplyType(0x1d175ac252b0)
+	github.com/redis/go-redis/v9@v9.23.0/internal/proto/reader.go:95 +0x25
+github.com/redis/go-redis/v9/push.(*Processor).processPendingNotifications(0x1d1759580048, {0x11878908, 0x1d1758bd2230}, {{0xfbc5c70, 0x1d1758762000}, {0xfb71e88, 0x1d1758774000}, {0x0, 0x0}, {0xfb71980, ...}, ...}, ...)
+	github.com/redis/go-redis/v9@v9.23.0/push/processor.go:113 +0xd1
+github.com/redis/go-redis/v9/push.(*Processor).ProcessPendingNotifications(0x0?, {0x11878908?, 0x1d1758bd2230?}, {{0xfbc5c70, 0x1d1758762000}, {0xfb71e88, 0x1d1758774000}, {0x0, 0x0}, {0xfb71980, ...}, ...}, ...)
+	github.com/redis/go-redis/v9@v9.23.0/push/processor.go:65 +0x65
+github.com/redis/go-redis/v9.(*baseClient).processPendingPushNotificationWithReader(0xee2715dfa?, {0x11878908?, 0x1d1758bd2230?}, 0x6541de257b?, 0x12c0aba0?)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:3489 +0x1b4
+github.com/redis/go-redis/v9.(*baseClient)._process.func1.3(0x1d175ac252b0)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1801 +0x99
+github.com/redis/go-redis/v9/internal/pool.(*Conn).WithReader(0x1d175ab98000, {0x118787b8?, 0x12c45ac0?}, 0x1d175ab98000?, 0x1d175fc3b820)
+	github.com/redis/go-redis/v9@v9.23.0/internal/pool/conn.go:1188 +0x12e
+github.com/redis/go-redis/v9.(*baseClient)._process.func1({0x11878908, 0x1d1758bd2230}, 0x1d175ab98000)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1799 +0x45c
+github.com/redis/go-redis/v9.(*baseClient).withConn(0x1d1758762000, {0x11878908, 0x1d1758bd2230}, 0x1d175fc3b9a0)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1348 +0xcf
+github.com/redis/go-redis/v9.(*baseClient)._process(0x11878908?, {0x11878908?, 0x1d1758bd2230?}, {0x1189fd50?, 0x1d175e902580?}, 0x0?, 0x1d1762d3ec38?)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1741 +0x145
+github.com/redis/go-redis/v9.(*baseClient).processWithRetry(0x1d1758762000, {0x11878908, 0x1d1758bd2230}, {0x1189fd50, 0x1d175e902580}, 0x0, 0x0, 0x1d0000000000?)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1597 +0x112
+github.com/redis/go-redis/v9.(*baseClient).processCommand(0x1d1758762000, {0x11878908, 0x1d1758bd2230}, {0x1189fd50, 0x1d175e902580}, 0x0, 0x0)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1556 +0x9e
+github.com/redis/go-redis/v9.(*baseClient).processStartingAt(0x1d1758762000, {0x11878908, 0x1d1758bd2230}, {0x1189fd50, 0x1d175e902580}, 0x0, {0x1d175fc3bbc0?, 0xa000000000001?, 0x0?})
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1525 +0x186
+github.com/redis/go-redis/v9.(*baseClient).process(...)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:1508
+github.com/redis/go-redis/v9.(*hooksMixin).processHook(...)
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:261
+github.com/redis/go-redis/v9.(*Client).Process(0x1d175fc3bc28?, {0x11878908?, 0x1d1758bd2230?}, {0x1189fd50, 0x1d175e902580})
+	github.com/redis/go-redis/v9@v9.23.0/redis.go:2751 +0x43
+github.com/redis/go-redis/v9.cmdable.XRead(0x1d1758746460, {0x11878908, 0x1d1758bd2230}, 0x1d175fc3be48)
+	github.com/redis/go-redis/v9@v9.23.0/stream_commands.go:277 +0x722
+github.com/emoss08/trenova/internal/infrastructure/realtimebroker.(*Broker).fanout(0x1d175c2bf300, {0x1d175f9d6300, 0x10, 0x1d1755a08fb8?})
+	github.com/emoss08/trenova/internal/infrastructure/realtimebroker/broker.go:201 +0x2ac
+created by github.com/emoss08/trenova/internal/infrastructure/realtimebroker.(*Broker).start in goroutine 89
+	github.com/emoss08/trenova/internal/infrastructure/realtimebroker/broker.go:117 +0xd1
+
+goroutine 151 [select, 7 minutes]:
+go.uber.org/fx.(*signalReceivers).relayer(0x1d1757898a08)
+	go.uber.org/fx@v1.24.0/signal.go:84 +0xa5
+created by go.uber.org/fx.(*signalReceivers).Start in goroutine 1
+	go.uber.org/fx@v1.24.0/signal.go:112 +0x1c5
+
+goroutine 164 [select]:
+github.com/emoss08/trenova/internal/infrastructure/realtimebroker.(*Broker).cleanup(0x1d175c2bf300)
+	github.com/emoss08/trenova/internal/infrastructure/realtimebroker/broker.go:363 +0x1ad
+created by github.com/emoss08/trenova/internal/infrastructure/realtimebroker.(*Broker).start in goroutine 89
+	github.com/emoss08/trenova/internal/infrastructure/realtimebroker/broker.go:120 +0x187
+
+goroutine 165 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e01da600, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175a5b4580?, 0x100?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Accept(0x1d175a5b4580)
+	internal/poll/fd_unix.go:618 +0x27d
+net.(*netFD).accept(0x1d175a5b4580)
+	net/fd_unix.go:149 +0x29
+net.(*TCPListener).accept(0x1d1760411940)
+	net/tcpsock_posix.go:159 +0x1b
+net.(*TCPListener).Accept(0x1d1760411940)
+	net/tcpsock.go:387 +0x30
+net/http.(*Server).Serve(0x1d175762b900, {0x1186ff58, 0x1d1760411940})
+	net/http/server.go:3551 +0x379
+net/http.(*Server).ListenAndServe(0x1d175762b900)
+	net/http/server.go:3462 +0x71
+github.com/emoss08/trenova/internal/api.(*Server).Start.func1()
+	github.com/emoss08/trenova/internal/api/server.go:110 +0x2e
+created by github.com/emoss08/trenova/internal/api.(*Server).Start in goroutine 89
+	github.com/emoss08/trenova/internal/api/server.go:109 +0x245
+
+goroutine 166 [select]:
+github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice.(*UsageBuffer).Start.func1.1()
+	github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice/usagebuffer.go:181 +0xf4
+created by github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice.(*UsageBuffer).Start.func1 in goroutine 89
+	github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice/usagebuffer.go:176 +0xb8
+
+goroutine 168 [syscall, 7 minutes]:
+os/signal.signal_recv()
+	runtime/sigqueue.go:152 +0x98
+os/signal.loop()
+	os/signal/signal_unix.go:23 +0x13
+created by os/signal.Notify.func2.1 in goroutine 1
+	os/signal/signal.go:164 +0x1f
+
+goroutine 141 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e01da200, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175c067700?, 0x1d175d3f4000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175c067700, {0x1d175d3f4000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175c067700, {0x1d175d3f4000?, 0x5141c0?, 0x1d175c067700?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175d314a10, {0x1d175d3f4000?, 0x1bf08eaf89?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d175865bbc0, {0x1d175d3f4000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175d3cbe60)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175d3cbe60, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d1756ae2990, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 309 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e0322a00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175bb3de00?, 0x1d175e40f000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175bb3de00, {0x1d175e40f000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175bb3de00, {0x1d175e40f000?, 0x5141c0?, 0x1d175bb3de00?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d1764202228, {0x1d175e40f000?, 0x1bf08eaf8a?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d175a40a840, {0x1d175e40f000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175bd80900)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175bd80900, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d1758aa39e0, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 328 [IO wait, 3 minutes]:
+internal/poll.runtime_pollWait(0x72f6e014de00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175e1f9600?, 0x1d175d3c1000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175e1f9600, {0x1d175d3c1000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175e1f9600, {0x1d175d3c1000?, 0x5141c0?, 0x1d175e1f9600?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175de9e948, {0x1d175d3c1000?, 0x1bf08eaee6?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d175a3e9dc0, {0x1d175d3c1000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175d3c2720)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175d3c2720, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d175a2cce10, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 342 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e014e000, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175da82800?, 0x1d175bbdb000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175da82800, {0x1d175bbdb000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175da82800, {0x1d175bbdb000?, 0x5141c0?, 0x1d175da82800?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175d2b9060, {0x1d175bbdb000?, 0x1bf08eae4b?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d175a351380, {0x1d175bbdb000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175d18fa40)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175d18fa40, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d175a089b90, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 5185 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e01d9e00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175e3a6280?, 0x1d1759ec6000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175e3a6280, {0x1d1759ec6000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175e3a6280, {0x1d1759ec6000?, 0x5141c0?, 0x1d175e3a6280?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d1764180380, {0x1d1759ec6000?, 0x1bf08eaea2?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d175878ddc0, {0x1d1759ec6000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175b0599e0)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175b0599e0, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d17678bacf0, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd
+
+goroutine 5282 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6e01da000, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175da82500?, 0x1d175a3511a1?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175da82500, {0x1d175a3511a1, 0x1, 0x1})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175da82500, {0x1d175a3511a1?, 0x1d175d16e7a0?, 0x119babf?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175d2b9000, {0x1d175a3511a1?, 0x1d17579ccad8?, 0x1d175d16e788?})
+	net/net.go:196 +0x45
+net/http.(*connReader).backgroundRead(0x1d175a351180)
+	net/http/server.go:746 +0x32
+created by net/http.(*connReader).startBackgroundRead in goroutine 340
+	net/http/server.go:742 +0xba
+
+goroutine 3194 [IO wait]:
+internal/poll.runtime_pollWait(0x72f6bc41ee00, 0x72)
+	runtime/netpoll.go:351 +0x85
+internal/poll.(*pollDesc).wait(0x1d175c066780?, 0x1d17568ca000?, 0x0)
+	internal/poll/fd_poll_runtime.go:84 +0x27
+internal/poll.(*pollDesc).waitRead(...)
+	internal/poll/fd_poll_runtime.go:89
+internal/poll.(*FD).Read(0x1d175c066780, {0x1d17568ca000, 0x1000, 0x1000})
+	internal/poll/fd_unix.go:170 +0x2a8
+net.(*netFD).Read(0x1d175c066780, {0x1d17568ca000?, 0x5141c0?, 0x1d175c066780?})
+	net/fd_posix.go:68 +0x25
+net.(*conn).Read(0x1d175f336288, {0x1d17568ca000?, 0x1bf08eaf77?, 0x72?})
+	net/net.go:196 +0x45
+net/http.(*connReader).Read(0x1d17603df480, {0x1d17568ca000, 0x1000, 0x1000})
+	net/http/server.go:856 +0x150
+bufio.(*Reader).fill(0x1d175d722d80)
+	bufio/bufio.go:113 +0x103
+bufio.(*Reader).Peek(0x1d175d722d80, 0x4)
+	bufio/bufio.go:152 +0x52
+net/http.(*conn).serve(0x1d1766dbdcb0, {0x118788d0, 0x1d1758120900})
+	net/http/server.go:2173 +0x833
+created by net/http.(*Server).Serve in goroutine 165
+	net/http/server.go:3581 +0x4fd

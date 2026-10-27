@@ -30,6 +30,7 @@ query OrderTable($input: DataTableConnectionInput!, $includeTotalCount: Boolean 
       }
     }
     totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
     pageInfo {
       ...DataTablePageInfoFields
     }

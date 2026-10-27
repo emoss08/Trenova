@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/kernel/domain/usstate/usstatedb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/internal/modules/places/domain/location/locationdb"
+	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker/workerdb"
+	"github.com/emoss08/trenova/shared/sliceutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,6 +34,23 @@ func NewSearchCardReader(p SearchCardParams) shipmentports.ShipmentSearchCardRea
 	return &searchCardReader{db: p.DB, l: p.Logger.Named("postgres.shipment-search-card-reader")}
 }
 
+const (
+	originStopAlias     = "origin_stp"
+	originMoveAlias     = "origin_sm"
+	originLocationAlias = "origin_loc"
+	originStateAlias    = "origin_ust"
+	destStopAlias       = "dest_stp"
+	destMoveAlias       = "dest_sm"
+	destLocationAlias   = "dest_loc"
+	destStateAlias      = "dest_ust"
+	driverAssignAlias   = "drv_asg"
+	driverMoveAlias     = "drv_sm"
+	driverSeatAlias     = "drv_seat"
+	driverWorkerAlias   = "drv"
+	seatSourceName      = "seat"
+	seatSourceWorkerID  = "worker_id"
+)
+
 var liveShipmentStatuses = []shipment.Status{
 	shipment.StatusNew,
 	shipment.StatusPartiallyAssigned,
@@ -46,6 +66,65 @@ var openMoveStatuses = []shipment.MoveStatus{
 	shipment.MoveStatusInTransit,
 }
 
+type stopPlace struct {
+	stop  *shipmentdb.StopsTable
+	loc   *locationdb.LocationsTable
+	state *usstatedb.UsStatesTable
+	query *keel.Query[*shipment.Stop]
+}
+
+func firstPickupPlace() stopPlace {
+	st := shipmentdb.Stops.As(originStopAlias)
+	sm := shipmentdb.ShipmentMoves.As(originMoveAlias)
+
+	return stopPlace{
+		stop:  st,
+		loc:   locationdb.Locations.As(originLocationAlias),
+		state: usstatedb.UsStates.As(originStateAlias),
+		query: st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
+			Where(
+				sm.ShipmentID.EqCol(shipmentdb.Shipments.ID),
+				st.Type.In(shipment.PickupStopTypes()...),
+			).
+			Order(sm.Sequence.Asc(), st.Sequence.Asc()).
+			Limit(1).
+			Pick(st.LocationID),
+	}
+}
+
+func lastDeliveryPlace() stopPlace {
+	st := shipmentdb.Stops.As(destStopAlias)
+	sm := shipmentdb.ShipmentMoves.As(destMoveAlias)
+
+	return stopPlace{
+		stop:  st,
+		loc:   locationdb.Locations.As(destLocationAlias),
+		state: usstatedb.UsStates.As(destStateAlias),
+		query: st.Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
+			Where(
+				sm.ShipmentID.EqCol(shipmentdb.Shipments.ID),
+				st.Type.In(shipment.DeliveryStopTypes()...),
+			).
+			Order(sm.Sequence.Desc(), st.Sequence.Desc()).
+			Limit(1).
+			Pick(st.LocationID),
+	}
+}
+
+func (p stopPlace) join(q *keel.Query[*shipment.Shipment]) *keel.Query[*shipment.Shipment] {
+	return q.LeftJoinLateral(p.query).
+		LeftJoin(p.loc, p.loc.ID.EqCol(p.stop.LocationID)).
+		LeftJoin(p.state, p.state.ID.EqCol(p.loc.StateID))
+}
+
+func (p stopPlace) city() keel.StringExpr {
+	return p.loc.City.Coalesce("")
+}
+
+func (p stopPlace) stateCode() keel.StringExpr {
+	return p.state.Abbreviation.Coalesce("")
+}
+
 func (r *searchCardReader) ListSearchCards(
 	ctx context.Context,
 	req *shipmentports.ListShipmentSearchCardsRequest,
@@ -58,100 +137,55 @@ func (r *searchCardReader) ListSearchCards(
 				return nil, nil
 			}
 
-			cards := make([]*shipmentports.ShipmentSearchCard, 0, len(req.ShipmentIDs))
-			err := searchCardsQuery(r.db.DBForContext(ctx), req).
-				Scan(ctx, &cards)
+			sp := shipmentdb.Shipments
+			origin := firstPickupPlace()
+			dest := lastDeliveryPlace()
+			asg := shipmentdb.Assignments.As(driverAssignAlias)
+			sm := shipmentdb.ShipmentMoves.As(driverMoveAlias)
+			seat := workerdb.Workers.As(driverSeatAlias)
+			drv := workerdb.Workers.As(driverWorkerAlias)
+			driver := asg.Join(sm, sm.ID.EqCol(asg.ShipmentMoveID)).
+				Join(seat, seat.ID.EqCol(asg.PrimaryWorkerID)).
+				Where(
+					sm.ShipmentID.EqCol(sp.ID),
+					sm.Status.Ne(shipment.MoveStatusCanceled),
+					asg.ArchivedAt.IsNull(),
+					asg.Status.Ne(shipment.AssignmentStatusCanceled),
+				).
+				Order(keel.Asc(sm.Status.Eq(shipment.MoveStatusCompleted)), sm.Sequence.Asc()).
+				Limit(1).
+				Pick(asg.PrimaryWorkerID)
+
+			q := dest.join(origin.join(sp.Query())).
+				LeftJoinLateral(driver).
+				LeftJoin(drv, drv.ID.EqCol(asg.PrimaryWorkerID)).
+				Pick(
+					sp.ID,
+					sp.ProNumber.Coalesce(""),
+					sp.BOL.Coalesce(""),
+					sp.Status,
+					sp.CustomerID.Coalesce(""),
+					sp.Customer().Name.Coalesce(""),
+					sp.Customer().Code.Coalesce(""),
+					sp.ServiceType().Code.Coalesce(""),
+					origin.city(),
+					origin.stateCode(),
+					dest.city(),
+					dest.stateCode(),
+					drv.ID.Coalesce(""),
+					keel.ConcatWS(" ", drv.FirstName, drv.LastName).Coalesce(""),
+				).
+				Where(sp.ID.In(req.ShipmentIDs...))
+
+			cards, err := keel.Into[shipmentports.ShipmentSearchCard](ctx, r.db.Keel(ctx), q)
 			if err != nil {
 				r.l.Error("failed to list shipment search cards", zap.Error(err))
 				return nil, fmt.Errorf("list shipment search cards: %w", err)
 			}
 
-			return cards, nil
+			return sliceutils.Pointers(cards), nil
 		},
 	)
-}
-
-func searchCardsQuery(
-	db bun.IDB,
-	req *shipmentports.ListShipmentSearchCardsRequest,
-) *bun.SelectQuery {
-	sp := shipmentcol.ShipmentColumns
-
-	return db.
-		NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		ColumnExpr("sp.id AS shipment_id").
-		ColumnExpr("COALESCE(sp.pro_number, '') AS pro_number").
-		ColumnExpr("COALESCE(sp.bol, '') AS bol").
-		ColumnExpr("sp.status AS status").
-		ColumnExpr("COALESCE(sp.customer_id, '') AS customer_id").
-		ColumnExpr("COALESCE(cus.name, '') AS customer_name").
-		ColumnExpr("COALESCE(cus.code, '') AS customer_code").
-		ColumnExpr("COALESCE(svt.code, '') AS service_type_code").
-		ColumnExpr("COALESCE(origin.city, '') AS origin_city").
-		ColumnExpr("COALESCE(origin.state, '') AS origin_state").
-		ColumnExpr("COALESCE(dest.city, '') AS destination_city").
-		ColumnExpr("COALESCE(dest.state, '') AS destination_state").
-		ColumnExpr("COALESCE(drv.id, '') AS driver_id").
-		ColumnExpr("COALESCE(drv.name, '') AS driver_name").
-		Join("LEFT JOIN customers AS cus ON cus.id = sp.customer_id").
-		Join("AND cus.organization_id = sp.organization_id").
-		Join("AND cus.business_unit_id = sp.business_unit_id").
-		Join("LEFT JOIN service_types AS svt ON svt.id = sp.service_type_id").
-		Join("AND svt.organization_id = sp.organization_id").
-		Join("AND svt.business_unit_id = sp.business_unit_id").
-		Join(`LEFT JOIN LATERAL (
-	SELECT loc.city AS city, ust.abbreviation AS state
-	FROM stops AS stp
-	JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id
-	LEFT JOIN locations AS loc ON loc.id = stp.location_id
-	LEFT JOIN us_states AS ust ON ust.id = loc.state_id
-	WHERE smv.shipment_id = sp.id
-	  AND smv.organization_id = sp.organization_id
-	  AND smv.business_unit_id = sp.business_unit_id
-	  AND stp.type IN ('Pickup', 'SplitPickup')
-	ORDER BY smv.sequence ASC, stp.sequence ASC
-	LIMIT 1
-		) AS origin ON TRUE`).
-		Join(`LEFT JOIN LATERAL (
-	SELECT loc.city AS city, ust.abbreviation AS state
-	FROM stops AS stp
-	JOIN shipment_moves AS smv ON smv.id = stp.shipment_move_id
-	LEFT JOIN locations AS loc ON loc.id = stp.location_id
-	LEFT JOIN us_states AS ust ON ust.id = loc.state_id
-	WHERE smv.shipment_id = sp.id
-	  AND smv.organization_id = sp.organization_id
-	  AND smv.business_unit_id = sp.business_unit_id
-	  AND stp.type IN ('Delivery', 'SplitDelivery')
-	ORDER BY smv.sequence DESC, stp.sequence DESC
-	LIMIT 1
-		) AS dest ON TRUE`).
-		Join(`LEFT JOIN LATERAL (
-	SELECT wrk.id AS id, CONCAT_WS(' ', wrk.first_name, wrk.last_name) AS name
-	FROM shipment_moves AS smv
-	JOIN assignments AS asg ON asg.shipment_move_id = smv.id
-	  AND asg.organization_id = smv.organization_id
-	  AND asg.business_unit_id = smv.business_unit_id
-	  AND asg.archived_at IS NULL
-	  AND asg.status != ?
-	JOIN workers AS wrk ON wrk.id = asg.primary_worker_id
-	  AND wrk.organization_id = asg.organization_id
-	  AND wrk.business_unit_id = asg.business_unit_id
-	WHERE smv.shipment_id = sp.id
-	  AND smv.organization_id = sp.organization_id
-	  AND smv.business_unit_id = sp.business_unit_id
-	  AND smv.status != ?
-	ORDER BY (smv.status = ?) ASC, smv.sequence ASC
-	LIMIT 1
-		) AS drv ON TRUE`,
-			shipment.AssignmentStatusCanceled,
-			shipment.MoveStatusCanceled,
-			shipment.MoveStatusCompleted,
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-				Where(sp.ID.In(), bun.List(req.ShipmentIDs))
-		})
 }
 
 func (r *searchCardReader) ListPartyLinks(
@@ -189,85 +223,60 @@ func (r *searchCardReader) customerLinks(
 	ctx context.Context,
 	req *shipmentports.ListShipmentPartyLinksRequest,
 ) ([]*shipmentports.ShipmentPartyLink, error) {
-	links := make([]*shipmentports.ShipmentPartyLink, 0, req.CustomerLimit)
-	err := customerLinksQuery(r.db.DBForContext(ctx), req).
-		Scan(ctx, &links)
+	sp := shipmentdb.Shipments
+	links, err := keel.Into[shipmentports.ShipmentPartyLink](ctx, r.db.Keel(ctx), sp.
+		Pick(sp.ID, sp.CustomerID, keel.Text("")).
+		Where(
+			sp.CustomerID.In(req.CustomerIDs...),
+			sp.Status.Ne(shipment.StatusCanceled),
+		).
+		Order(keel.Desc(sp.Status.In(liveShipmentStatuses...)), sp.UpdatedAt.Desc()).
+		Limit(req.CustomerLimit))
 	if err != nil {
 		r.l.Error("failed to list customer shipments for search", zap.Error(err))
 		return nil, fmt.Errorf("list customer shipments for search: %w", err)
 	}
 
-	return links, nil
+	return sliceutils.Pointers(links), nil
 }
 
 func (r *searchCardReader) workerLinks(
 	ctx context.Context,
 	req *shipmentports.ListShipmentPartyLinksRequest,
 ) ([]*shipmentports.ShipmentPartyLink, error) {
-	links := make([]*shipmentports.ShipmentPartyLink, 0, len(req.WorkerIDs))
-	err := workerLinksQuery(r.db.DBForContext(ctx), req).Scan(ctx, &links)
+	asg := shipmentdb.Assignments
+	sm := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+	seat := keel.Rows(
+		seatSourceName,
+		[]string{seatSourceWorkerID},
+		keel.ArrayOfString(asg.PrimaryWorkerID, asg.SecondaryWorkerID).Unnest(),
+	)
+	workerID := seat.Col(seatSourceWorkerID)
+
+	links, err := keel.Into[shipmentports.ShipmentPartyLink](ctx, r.db.Keel(ctx), asg.
+		Join(sm, sm.ID.EqCol(asg.ShipmentMoveID)).
+		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+		JoinLateral(seat).
+		DistinctOn(workerID).
+		Pick(sp.ID, keel.Text(""), workerID).
+		Where(
+			asg.ArchivedAt.IsNull(),
+			asg.Status.Ne(shipment.AssignmentStatusCanceled),
+			sm.Status.In(openMoveStatuses...),
+			sp.Status.In(liveShipmentStatuses...),
+			workerID.In(keel.Strings(req.WorkerIDs)),
+		).
+		Order(
+			workerID.Asc(),
+			keel.Desc(sm.Status.Eq(shipment.MoveStatusInTransit)),
+			sm.Sequence.Asc(),
+			sp.UpdatedAt.Desc(),
+		))
 	if err != nil {
 		r.l.Error("failed to list worker loads for search", zap.Error(err))
 		return nil, fmt.Errorf("list worker loads for search: %w", err)
 	}
 
-	return links, nil
-}
-
-func customerLinksQuery(
-	db bun.IDB,
-	req *shipmentports.ListShipmentPartyLinksRequest,
-) *bun.SelectQuery {
-	sp := shipmentcol.ShipmentColumns
-
-	return db.
-		NewSelect().
-		Model((*shipment.Shipment)(nil)).
-		ColumnExpr("sp.id AS shipment_id").
-		ColumnExpr("sp.customer_id AS customer_id").
-		ColumnExpr("'' AS worker_id").
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-				Where(sp.CustomerID.In(), bun.List(req.CustomerIDs)).
-				Where(sp.Status.NotEq(), shipment.StatusCanceled)
-		}).
-		OrderExpr("(sp.status IN (?)) DESC", bun.List(liveShipmentStatuses)).
-		OrderExpr("sp.updated_at DESC").
-		Limit(int64(req.CustomerLimit))
-}
-
-func workerLinksQuery(
-	db bun.IDB,
-	req *shipmentports.ListShipmentPartyLinksRequest,
-) *bun.RawQuery {
-	return db.NewRaw(`
-		SELECT DISTINCT ON (seat.worker_id)
-			sp.id AS shipment_id,
-			'' AS customer_id,
-			seat.worker_id AS worker_id
-		FROM assignments AS asg
-		JOIN shipment_moves AS smv ON smv.id = asg.shipment_move_id
-		  AND smv.organization_id = asg.organization_id
-		  AND smv.business_unit_id = asg.business_unit_id
-		JOIN shipments AS sp ON sp.id = smv.shipment_id
-		  AND sp.organization_id = smv.organization_id
-		  AND sp.business_unit_id = smv.business_unit_id
-		CROSS JOIN LATERAL (VALUES (asg.primary_worker_id), (asg.secondary_worker_id)) AS seat(worker_id)
-		WHERE asg.organization_id = ?
-		  AND asg.business_unit_id = ?
-		  AND asg.archived_at IS NULL
-		  AND asg.status != ?
-		  AND smv.status IN (?)
-		  AND sp.status IN (?)
-		  AND seat.worker_id IN (?)
-		ORDER BY seat.worker_id, (smv.status = ?) DESC, smv.sequence ASC, sp.updated_at DESC
-	`,
-		req.TenantInfo.OrgID,
-		req.TenantInfo.BuID,
-		shipment.AssignmentStatusCanceled,
-		bun.List(openMoveStatuses),
-		bun.List(liveShipmentStatuses),
-		bun.List(req.WorkerIDs),
-		shipment.MoveStatusInTransit,
-	)
+	return sliceutils.Pointers(links), nil
 }

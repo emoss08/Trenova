@@ -93,3 +93,40 @@ query DeskFuelCardCard($id: ID!) {
     }
   }
 }
+
+# The Desk's fuel card list, read by the agent's fuel_list_cards: each card's
+# provider, last four, status, expiry and who carries it, without the
+# provider's own card id, the notes and the cancellation reason the edit panel
+# loads.
+query DeskFuelCards($input: FuelCardsInput!, $includeTotalCount: Boolean = false) {
+  fuelCards(input: $input) {
+    edges {
+      node {
+        id
+        provider
+        lastFour
+        label
+        status
+        expiresAt
+        discoveredAt
+        cancelledAt
+        assignedTractorId
+        assignedWorkerId
+        assignedTractor {
+          id
+          code
+        }
+        assignedWorker {
+          id
+          wholeName
+        }
+      }
+    }
+    totalCount @include(if: $includeTotalCount)
+    totalCountExact @include(if: $includeTotalCount)
+    pageInfo {
+      endCursor
+      hasNextPage
+    }
+  }
+}

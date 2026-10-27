@@ -17,7 +17,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -222,10 +221,10 @@ func (s *Service) AcceptOffer(
 
 	if !resuming {
 		accepted := false
-		err = s.db.WithTx(
+		err = s.db.Transact(
 			ctx,
 			kernelports.TxOptions{},
-			func(txCtx context.Context, _ bun.Tx) error {
+			func(txCtx context.Context) error {
 				tenderMoved, txErr := s.repo.UpdateTenderStatus(
 					txCtx,
 					&tenderports.UpdateTenderStatusRequest{

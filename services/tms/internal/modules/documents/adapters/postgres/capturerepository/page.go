@@ -3,19 +3,19 @@ package capturerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/capturecol"
-
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
+	"github.com/emoss08/trenova/internal/modules/documents/domain/capture/capturedb"
 	"github.com/emoss08/trenova/internal/modules/documents/ports/captureports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/zap"
 )
+
+var pageErrors = dberror.Mapping{Entity: "Capture page"}
 
 type pageRepository struct {
 	db *postgres.Connection
@@ -37,34 +37,27 @@ func (r *pageRepository) Insert(
 	entity *capture.CapturePage,
 ) (*capture.CapturePage, bool, error) {
 	return dbtx.Write2(ctx, r.db, func(ctx context.Context) (*capture.CapturePage, bool, error) {
-		result, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			On("CONFLICT (batch_id, business_unit_id, organization_id, sequence) DO NOTHING").
-			Returning("*").
-			Exec(ctx)
+		p := capturedb.CapturePages
+		db := r.db.Keel(ctx)
+		inserted, err := p.CreateOrSkip(
+			ctx,
+			db,
+			[]*capture.CapturePage{entity},
+			p.BatchID,
+			p.BusinessUnitID,
+			p.OrganizationID,
+			p.Sequence,
+		)
 		if err != nil {
 			return nil, false, err
 		}
-
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return nil, false, err
-		}
-		if affected > 0 {
+		if inserted > 0 {
 			return entity, true, nil
 		}
 
-		existing, err := r.GetBySequence(ctx, captureports.GetCapturePageBySequenceRequest{
-			BatchID: entity.BatchID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: entity.OrganizationID,
-				BuID:  entity.BusinessUnitID,
-			},
-			Sequence: entity.Sequence,
-		})
+		existing, err := bySequence(entity.BatchID, entity.Sequence).One(ctx, db)
 		if err != nil {
-			return nil, false, err
+			return nil, false, pageErrors.Map(err, entity.BatchID.String())
 		}
 
 		return existing, false, nil
@@ -76,21 +69,8 @@ func (r *pageRepository) Update(
 	entity *capture.CapturePage,
 ) (*capture.CapturePage, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*capture.CapturePage, error) {
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"Capture page",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := capturedb.CapturePages.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, pageErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
@@ -102,40 +82,33 @@ func (r *pageRepository) RecordInspection(
 	entity *capture.CapturePage,
 ) (bool, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (bool, error) {
-		cols := capturecol.CapturePageColumns
-		ti := pagination.TenantInfo{OrgID: entity.OrganizationID, BuID: entity.BusinessUnitID}
 		markers, err := sonic.Marshal(entity.Markers)
 		if err != nil {
 			return false, err
 		}
 
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model((*capture.CapturePage)(nil)).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return capturecol.CapturePageScopeTenantUpdate(uq, ti).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Status.Eq(), capture.PageReceived)
-			}).
-			Set(cols.Status.Set(), entity.Status).
-			Set(cols.WidthPx.Set(), entity.WidthPx).
-			Set(cols.HeightPx.Set(), entity.HeightPx).
-			Set(cols.ThumbnailPath.Set(), bun.NullZero(entity.ThumbnailPath)).
-			Set(cols.BlankScore.Set(), entity.BlankScore).
-			Set(cols.Markers.String()+" = ?::jsonb", string(markers)).
-			Set(cols.FailureMessage.Set(), bun.NullZero(entity.FailureMessage)).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			Exec(ctx)
+		p := capturedb.CapturePages
+		blankScore := p.BlankScore.ToNull()
+		if entity.BlankScore != nil {
+			blankScore = p.BlankScore.To(*entity.BlankScore)
+		}
+
+		n, err := p.Where(p.ID.Eq(entity.ID), p.Status.Eq(capture.PageReceived)).Update(
+			ctx,
+			r.db.Keel(ctx),
+			p.Status.To(entity.Status),
+			p.WidthPx.To(int64(entity.WidthPx)),
+			p.HeightPx.To(int64(entity.HeightPx)),
+			p.ThumbnailPath.To(entity.ThumbnailPath),
+			blankScore,
+			p.Markers.ToExpr(keel.JSONB(markers)),
+			p.FailureMessage.To(entity.FailureMessage),
+		)
 		if err != nil {
 			return false, err
 		}
 
-		affected, err := results.RowsAffected()
-		if err != nil {
-			return false, err
-		}
-
-		return affected == 1, nil
+		return n == 1, nil
 	})
 }
 
@@ -144,15 +117,9 @@ func (r *pageRepository) GetByID(
 	req captureports.GetCapturePageByIDRequest,
 ) (*capture.CapturePage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePage, error) {
-		entity := new(capture.CapturePage)
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(capturecol.CapturePageApplyTenant(req.TenantInfo)).
-			Where(capturecol.CapturePageColumns.ID.Eq(), req.ID).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Capture page")
+		entity, err := capturedb.CapturePages.Get(ctx, r.db.Keel(ctx), req.ID)
+		if err != nil {
+			return nil, pageErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -164,21 +131,19 @@ func (r *pageRepository) GetBySequence(
 	req captureports.GetCapturePageBySequenceRequest,
 ) (*capture.CapturePage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*capture.CapturePage, error) {
-		entity := new(capture.CapturePage)
-		cols := capturecol.CapturePageColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(capturecol.CapturePageApplyTenant(req.TenantInfo)).
-			Where(cols.BatchID.Eq(), req.BatchID).
-			Where(cols.Sequence.Eq(), req.Sequence).
-			Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "Capture page")
+		entity, err := bySequence(req.BatchID, req.Sequence).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, pageErrors.Map(err, req.BatchID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+func bySequence(batchID pulid.ID, sequence int) *keel.Query[*capture.CapturePage] {
+	p := capturedb.CapturePages
+
+	return p.Where(p.BatchID.Eq(batchID), p.Sequence.Eq(int64(sequence)))
 }
 
 func (r *pageRepository) ListByBatch(
@@ -186,17 +151,15 @@ func (r *pageRepository) ListByBatch(
 	req captureports.ListCapturePagesRequest,
 ) ([]*capture.CapturePage, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*capture.CapturePage, error) {
-		entities := make([]*capture.CapturePage, 0)
-		cols := capturecol.CapturePageColumns
-
-		if err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&entities).
-			Apply(capturecol.CapturePageApplyTenant(req.TenantInfo)).
-			Where(cols.BatchID.Eq(), req.BatchID).
-			Order(cols.Sequence.OrderAsc()).
-			Scan(ctx); err != nil {
+		p := capturedb.CapturePages
+		entities, err := p.Where(p.BatchID.Eq(req.BatchID)).
+			Order(p.Sequence.Asc()).
+			All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			return nil, err
+		}
+		if entities == nil {
+			entities = []*capture.CapturePage{}
 		}
 
 		return entities, nil

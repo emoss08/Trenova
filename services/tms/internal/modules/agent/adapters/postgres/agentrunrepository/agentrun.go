@@ -4,20 +4,24 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation/conversationdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+const runEntity = "AgentRun"
+
+var runErrors = dberror.Mapping{Entity: runEntity}
 
 type Params struct {
 	fx.In
@@ -38,22 +42,39 @@ func New(p Params) agentports.AgentRunRepository {
 	}
 }
 
-func (r *repository) filterQuery(
-	q *bun.SelectQuery,
-	req *agentports.ListAgentRunRequest,
-) *bun.SelectQuery {
-	cols := agentcol.AgentRunColumns
-	q = querybuilder.ApplyFilters(
-		q,
-		agentcol.AgentRunTable.Alias,
-		req.Filter,
-		(*agent.AgentRun)(nil),
-	)
+// ReadableBy keeps the runs a reader may see: for a person, every run but
+// those of conversations someone else owns. run is the runs table as the
+// statement references it.
+func ReadableBy(run *agentdb.AgentRunsTable, reader agentports.RunReader) keel.Pred {
+	if !reader.ForPerson() {
+		return nil
+	}
 
-	return q.Apply(agentcol.AgentRunApplyTenant(req.Filter.TenantInfo)).
-		Limit(int64(req.Filter.Pagination.SafeLimit())).
-		Offset(int64(req.Filter.Pagination.SafeOffset())).
-		Order(cols.CreatedAt.OrderDesc())
+	notThread := run.SubjectType.Ne(agent.SubjectAssistantThread)
+	if reader.UserID().IsNil() {
+		return notThread
+	}
+
+	thread := conversationdb.Threads.As("readable_thread")
+
+	return keel.Or(notThread, keel.Exists(thread.Where(
+		thread.ID.EqCol(run.SubjectID),
+		thread.UserID.Eq(reader.UserID()),
+	)))
+}
+
+func readableRuns(reader agentports.RunReader) *keel.Query[*agent.AgentRun] {
+	run := agentdb.AgentRuns
+
+	return run.Omit(run.Transcript).Where(ReadableBy(run, reader))
+}
+
+func transcripts(ids []pulid.ID, reader agentports.RunReader) *keel.Query[*agent.AgentRun] {
+	run := agentdb.AgentRuns
+
+	return run.Pick(run.ID, run.BusinessUnitID, run.OrganizationID, run.Transcript).
+		Where(run.ID.In(ids...), ReadableBy(run, reader)).
+		Limit(len(ids))
 }
 
 func (r *repository) List(
@@ -64,112 +85,57 @@ func (r *repository) List(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*agent.AgentRun], error) {
-			log := r.l.With(zap.String("operation", "List"))
-
-			entities := make([]*agent.AgentRun, 0, req.Filter.Pagination.SafeLimit())
-			total, err := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Apply(withoutTranscript).
-				Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-					return r.filterQuery(sq, req)
-				}).ScanAndCount(ctx)
+			run := agentdb.AgentRuns
+			result, err := listquery.List(
+				ctx,
+				r.db.Keel(ctx),
+				run.Where(ReadableBy(run, req.Reader)),
+				&listquery.Request[agent.AgentRun]{
+					Filter: req.Filter,
+					Shape: func(q *keel.Query[*agent.AgentRun]) *keel.Query[*agent.AgentRun] {
+						return q.Omit(run.Transcript)
+					},
+					Then: []keel.Order{run.CreatedAt.Desc()},
+				},
+			)
 			if err != nil {
-				log.Error("failed to scan and count agent runs", zap.Error(err))
+				r.l.Error("failed to scan and count agent runs", zap.Error(err))
 				return nil, err
 			}
 
-			return &pagination.ListResult[*agent.AgentRun]{Items: entities, Total: int(total)}, nil
+			return result, nil
 		},
 	)
-}
-
-func (r *repository) applyTotalCountFilters(
-	q *bun.SelectQuery,
-	req *agentports.ListAgentRunConnectionRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFiltersWithoutSort(
-		q,
-		agentcol.AgentRunTable.Alias,
-		req.Filter,
-		(*agent.AgentRun)(nil),
-	)
-
-	return q.Apply(agentcol.AgentRunApplyTenant(req.Filter.TenantInfo))
-}
-
-func (r *repository) applyCursorPageFilters(
-	q *bun.SelectQuery,
-	req *agentports.ListAgentRunConnectionRequest,
-) (*bun.SelectQuery, error) {
-	return querybuilder.ApplyCursorFilters(
-		q,
-		agentcol.AgentRunTable.Alias,
-		req.Filter,
-		req.Cursor,
-		(*agent.AgentRun)(nil),
-	)
-}
-
-func applyAgentRunColumns(q *bun.SelectQuery, columns []string) *bun.SelectQuery {
-	if len(columns) == 0 {
-		return withoutTranscript(q)
-	}
-
-	return q.Column(columns...)
-}
-
-func withoutTranscript(q *bun.SelectQuery) *bun.SelectQuery {
-	return q.ExcludeColumn(agentcol.AgentRunColumns.Transcript.String())
 }
 
 func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentRunConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRun], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRun], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.
-					NewSelect().
-					Model((*agent.AgentRun)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						return r.applyTotalCountFilters(sq, req)
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count agent runs", zap.Error(err))
-					return nil, err
+			run := agentdb.AgentRuns
+			request := &listquery.Request[agent.AgentRun]{
+				Filter:  req.Filter,
+				Cursor:  req.Cursor,
+				Columns: req.Columns,
+			}
+			if len(req.Columns) == 0 {
+				request.Shape = func(q *keel.Query[*agent.AgentRun]) *keel.Query[*agent.AgentRun] {
+					return q.Omit(run.Transcript)
 				}
-				totalCount = new(int(total))
 			}
 
-			result, err := dbhelper.CursorList(
+			result, err := listquery.Connection(
 				ctx,
-				dbhelper.CursorListParams[*agent.AgentRun]{
-					Filter:     req.Filter,
-					Cursor:     req.Cursor,
-					TotalCount: totalCount,
-					Query: func(entities *[]*agent.AgentRun) *bun.SelectQuery {
-						return dba.
-							NewSelect().
-							Model(entities).
-							Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-								return applyAgentRunColumns(sq, req.Columns)
-							})
-					},
-					Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-						return r.applyCursorPageFilters(sq, req)
-					},
-				})
+				r.db.Keel(ctx),
+				run.Where(ReadableBy(run, req.Reader)),
+				request,
+			)
 			if err != nil {
-				log.Error("failed to scan agent runs", zap.Error(err))
+				r.l.Error("failed to scan agent runs", zap.Error(err))
 				return nil, err
 			}
 
@@ -187,17 +153,11 @@ func (r *repository) ListByIDs(
 			return []*agent.AgentRun{}, nil
 		}
 
-		cols := agentcol.AgentRunColumns
-		runs := make([]*agent.AgentRun, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&runs).
-			Apply(withoutTranscript).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.In(req.IDs))
-			}).
-			Scan(ctx)
+		run := agentdb.AgentRuns
+		runs, err := readableRuns(req.Reader).
+			Where(run.ID.In(req.IDs...)).
+			Limit(len(req.IDs)).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list agent runs by ids", zap.Error(err))
 
@@ -217,22 +177,7 @@ func (r *repository) ListTranscriptsByIDs(
 			return []*agent.AgentRun{}, nil
 		}
 
-		cols := agentcol.AgentRunColumns
-		runs := make([]*agent.AgentRun, 0, len(req.IDs))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&runs).
-			Column(
-				cols.ID.String(),
-				cols.BusinessUnitID.String(),
-				cols.OrganizationID.String(),
-				cols.Transcript.String(),
-			).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.In(), bun.List(req.IDs))
-			}).
-			Scan(ctx)
+		runs, err := transcripts(req.IDs, req.Reader).List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to list agent run transcripts by ids", zap.Error(err))
 
@@ -248,22 +193,12 @@ func (r *repository) GetByID(
 	req agentports.GetAgentRunByIDRequest,
 ) (*agent.AgentRun, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
-		log := r.l.With(zap.String("operation", "GetByID"), zap.String("id", req.ID.String()))
-
-		entity := new(agent.AgentRun)
-		cols := agentcol.AgentRunColumns
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Apply(withoutTranscript).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentRunScopeTenant(sq, *req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		run := agentdb.AgentRuns
+		entity, err := readableRuns(req.Reader).Where(run.ID.Eq(req.ID)).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			log.Error("failed to get agent run", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "AgentRun")
+			r.l.Error("failed to get agent run",
+				zap.String("id", req.ID.String()), zap.Error(err))
+			return nil, runErrors.Map(err, req.ID.String())
 		}
 
 		return entity, nil
@@ -275,50 +210,45 @@ func (r *repository) Create(
 	entity *agent.AgentRun,
 ) (*agent.AgentRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
-		log := r.l.With(zap.String("operation", "Create"))
-
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			log.Error("failed to create agent run", zap.Error(err))
-			return nil, err
+		if err := agentdb.AgentRuns.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error("failed to create agent run", zap.Error(err))
+			return nil, runErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
 }
 
+// Update saves the run under its version. A run read without its transcript
+// keeps the stored one.
 func (r *repository) Update(
 	ctx context.Context,
 	entity *agent.AgentRun,
 ) (*agent.AgentRun, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agent.AgentRun, error) {
-		log := r.l.With(zap.String("operation", "Update"), zap.String("id", entity.ID.String()))
-
-		ov := entity.Version
-		entity.Version++
-		cols := agentcol.AgentRunColumns
-
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).WherePK().
-			Where(cols.Version.Eq(), ov).
-			OmitZero().
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update agent run", zap.Error(err))
-			return nil, err
+		run := agentdb.AgentRuns
+		var err error
+		if entity.Transcript == nil {
+			err = run.SaveExcept(ctx, r.db.Keel(ctx), entity, run.Transcript)
+		} else {
+			err = run.Save(ctx, r.db.Keel(ctx), entity)
 		}
-
-		if err = dberror.CheckRowsAffected(results, "AgentRun", entity.ID.String()); err != nil {
-			return nil, err
+		if err != nil {
+			r.l.Error("failed to update agent run",
+				zap.String("id", entity.ID.String()), zap.Error(err))
+			return nil, runErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil
 	})
+}
+
+func closedRunStatuses() []agent.RunStatus {
+	return []agent.RunStatus{
+		agent.RunStatusCompleted,
+		agent.RunStatusShadowCompleted,
+		agent.RunStatusFailed,
+	}
 }
 
 func (r *repository) CountOpen(
@@ -326,26 +256,12 @@ func (r *repository) CountOpen(
 	req agentports.CountOpenAgentRunsRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := agentcol.AgentRunColumns
-
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agent.AgentRun)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = agentcol.AgentRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
-					Where(cols.Status.NotIn(), bun.In([]agent.RunStatus{
-						agent.RunStatusCompleted,
-						agent.RunStatusShadowCompleted,
-						agent.RunStatusFailed,
-					}))
-				if req.SubjectID.IsNotNil() {
-					sq = sq.Where(cols.SubjectID.Eq(), req.SubjectID)
-				}
-
-				return sq
-			}).
-			Count(ctx)
+		run := agentdb.AgentRuns
+		count, err := run.Where(
+			run.AgentDefinitionID.Eq(req.DefinitionID),
+			run.Status.NotIn(closedRunStatuses()...),
+			keel.When(req.SubjectID.IsNotNil(), run.SubjectID.Eq(req.SubjectID)),
+		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count open agent runs", zap.Error(err))
 			return 0, err
@@ -360,17 +276,11 @@ func (r *repository) CountSince(
 	req agentports.CountAgentRunsSinceRequest,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := agentcol.AgentRunColumns
-
-		count, err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agent.AgentRun)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentcol.AgentRunScopeTenant(sq, req.TenantInfo).
-					Where(cols.AgentDefinitionID.Eq(), req.DefinitionID).
-					Where(cols.CreatedAt.Gte(), req.Since)
-			}).
-			Count(ctx)
+		run := agentdb.AgentRuns
+		count, err := run.Where(
+			run.AgentDefinitionID.Eq(req.DefinitionID),
+			run.CreatedAt.Gte(req.Since),
+		).Count(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to count agent runs since", zap.Error(err))
 

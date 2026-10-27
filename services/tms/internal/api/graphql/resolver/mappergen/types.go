@@ -98,10 +98,10 @@ type goField struct {
 	GoName   string
 	JSONName string
 	Type     typeRef
-	Bun      bunTag
+	Column   columnTag
 }
 
-type bunTag struct {
+type columnTag struct {
 	Present  bool
 	Ignored  bool
 	Nullzero bool

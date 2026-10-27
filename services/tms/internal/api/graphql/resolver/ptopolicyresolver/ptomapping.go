@@ -138,7 +138,6 @@ func ptoPolicyCursorConnectionToModel(
 ) (*gqlmodel.PTOPolicyConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *worker.PTOPolicy, cursor string) *gqlmodel.PTOPolicyEdge {
 			return &gqlmodel.PTOPolicyEdge{Node: node, Cursor: cursor}
@@ -157,7 +156,8 @@ func ptoPolicyCursorConnectionToModel(
 				func(edge *gqlmodel.PTOPolicyEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 
@@ -166,7 +166,6 @@ func ptoLedgerCursorConnectionToModel(
 ) (*gqlmodel.WorkerPTOLedgerConnection, error) {
 	edges, err := base.EntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(node *worker.WorkerPTOLedgerEntry, cursor string) *gqlmodel.WorkerPTOLedgerEdge {
 			return &gqlmodel.WorkerPTOLedgerEdge{Node: node, Cursor: cursor}
@@ -185,7 +184,8 @@ func ptoLedgerCursorConnectionToModel(
 				func(edge *gqlmodel.WorkerPTOLedgerEdge) string { return edge.Cursor },
 			),
 		),
-		TotalCount: result.TotalCount,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 	}, nil
 }
 

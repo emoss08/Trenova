@@ -4,20 +4,18 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/stopeta/stopetadb"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/stopetaports"
-	"github.com/emoss08/trenova/pkg/buncolgen/locationcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-	"github.com/emoss08/trenova/pkg/buncolgen/stopetacol"
-	"github.com/emoss08/trenova/pkg/buncolgen/usstatecol"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -87,62 +85,68 @@ func (r *repository) ReplaceForShipments(
 	}
 
 	return dbtx.WriteErr(ctx, r.db, func(ctx context.Context) error {
-		db := r.db.DBForContext(ctx)
-		cols := stopetacol.StopETAColumns
-
-		_, err := db.NewDelete().
-			Model((*stopeta.StopETA)(nil)).
-			WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-				dq = stopetacol.StopETAScopeTenantDelete(dq, req.TenantInfo).
-					Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
-				if len(keep) > 0 {
-					dq = dq.Where(cols.StopID.NotIn(), bun.List(keep))
-				}
-				return dq
-			}).
-			Exec(ctx)
-		if err != nil {
+		e := stopetadb.StopETAs
+		stale := e.Where(e.ShipmentID.In(req.ShipmentIDs...))
+		if len(keep) > 0 {
+			stale = stale.Where(e.StopID.NotIn(keep...))
+		}
+		if _, err := stale.Delete(ctx, r.db.Keel(ctx)); err != nil {
 			return fmt.Errorf("delete stale stop etas: %w", err)
 		}
 		if len(rows) == 0 {
 			return nil
 		}
 
-		_, err = db.NewInsert().
-			Model(&rows).
-			On("CONFLICT (organization_id, business_unit_id, stop_id) DO UPDATE").
-			Set(cols.ShipmentID.SetExcluded()).
-			Set(cols.ShipmentMoveID.SetExcluded()).
-			Set(cols.MoveSequence.SetExcluded()).
-			Set(cols.StopSequence.SetExcluded()).
-			Set(cols.Arrived.SetExcluded()).
-			Set(cols.EstimatedArrival.SetExcluded()).
-			Set(cols.EstimatedDeparture.SetExcluded()).
-			Set(cols.WindowEnd.SetExcluded()).
-			Set(cols.SlackMinutes.SetExcluded()).
-			Set(cols.Verdict.SetExcluded()).
-			Set(cols.Basis.SetExcluded()).
-			Set(cols.DriveMethod.SetExcluded()).
-			Set(cols.MilesRemaining.SetExcluded()).
-			Set(cols.DriveMinutes.SetExcluded()).
-			Set(cols.RestMinutes.SetExcluded()).
-			Set(cols.InputAt.SetExcluded()).
-			Set(cols.InputStale.SetExcluded()).
-			Set(cols.ThresholdMinutes.SetExcluded()).
-			Set(cols.Reason.SetExcluded()).
-			Set(cols.ComputedAt.SetExcluded()).
-			Where(cols.ComputedAt.Qualified() + " <= EXCLUDED.computed_at").
-			Exec(ctx)
-		if err != nil {
+		if _, err := e.Upsert(ctx, r.db.Keel(ctx), rows, newerETA()); err != nil {
 			return fmt.Errorf("upsert stop etas: %w", err)
 		}
 		return nil
 	})
 }
 
+func newerETA() keel.Conflict {
+	e := stopetadb.StopETAs
+	newer := keel.Int64Of(e.ComputedAt).LteExpr(keel.Int64Of(e.ComputedAt.Excluded()))
+	text := func(c keel.StringCol) keel.Assignment {
+		return c.ToExpr(keel.CaseString().When(newer, keel.StringOf(c.Excluded())).Else(c))
+	}
+	bigint := func(c keel.Int64Col) keel.Assignment {
+		return c.ToExpr(keel.CaseInt64().When(newer, keel.Int64Of(c.Excluded())).Else(c))
+	}
+	boolean := func(c keel.BoolCol) keel.Assignment {
+		return c.ToExpr(keel.CaseBool().When(newer, keel.BoolOf(c.Excluded())).Else(c))
+	}
+	float := func(c keel.Float64Col) keel.Assignment {
+		return c.ToExpr(keel.CaseFloat64().When(newer, keel.Float64Of(c.Excluded())).Else(c))
+	}
+
+	return keel.OnConflict(e.OrganizationID, e.BusinessUnitID, e.StopID).Set(
+		text(e.ShipmentID.StringCol),
+		text(e.ShipmentMoveID.StringCol),
+		bigint(e.MoveSequence),
+		bigint(e.StopSequence),
+		boolean(e.Arrived),
+		bigint(e.EstimatedArrival),
+		bigint(e.EstimatedDeparture),
+		bigint(e.WindowEnd),
+		bigint(e.SlackMinutes),
+		text(e.Verdict.StringCol),
+		text(e.Basis.StringCol),
+		text(e.DriveMethod.StringCol),
+		float(e.MilesRemaining),
+		bigint(e.DriveMinutes),
+		bigint(e.RestMinutes),
+		bigint(e.InputAt),
+		boolean(e.InputStale),
+		bigint(e.ThresholdMinutes),
+		text(e.Reason),
+		bigint(e.ComputedAt),
+	)
+}
+
 func (r *repository) ListByShipmentIDs(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	shipmentIDs []pulid.ID,
 ) ([]*stopeta.StopETA, error) {
 	if len(shipmentIDs) == 0 {
@@ -150,20 +154,10 @@ func (r *repository) ListByShipmentIDs(
 	}
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*stopeta.StopETA, error) {
-		cols := stopetacol.StopETAColumns
-		entities := make([]*stopeta.StopETA, 0, len(shipmentIDs)*2)
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model(&entities).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return stopetacol.StopETAScopeTenant(sq, tenantInfo).
-					Where(cols.ShipmentID.In(), bun.List(shipmentIDs))
-			}).
-			Order(
-				cols.ShipmentID.OrderAsc(),
-				cols.MoveSequence.OrderAsc(),
-				cols.StopSequence.OrderAsc(),
-			).
-			Scan(ctx)
+		e := stopetadb.StopETAs
+		entities, err := e.Where(e.ShipmentID.In(shipmentIDs...)).
+			Order(e.ShipmentID.Asc(), e.MoveSequence.Asc(), e.StopSequence.Asc()).
+			All(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list stop etas by shipment: %w", err)
 		}
@@ -188,7 +182,7 @@ func (r *repository) ListAttention(
 		for _, row := range rows {
 			stopIDs = append(stopIDs, row.StopID)
 		}
-		meta, err := r.stopMeta(ctx, req.TenantInfo, stopIDs)
+		meta, err := r.stopMeta(ctx, stopIDs)
 		if err != nil {
 			return nil, err
 		}
@@ -214,37 +208,22 @@ func (r *repository) attentionRows(
 	ctx context.Context,
 	req *stopetaports.ListAttentionRequest,
 ) ([]*stopeta.StopETA, error) {
-	cols := stopetacol.StopETAColumns
-	sp := shipmentcol.ShipmentColumns
-	spTable := shipmentcol.ShipmentTable
+	e := stopetadb.StopETAs
+	sp := shipmentdb.Shipments
 
-	entities := make([]*stopeta.StopETA, 0)
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model(&entities).
-		Join("JOIN "+spTable.As(spTable.Alias)).
-		JoinOn(sp.ID.EqColumn(cols.ShipmentID)).
-		JoinOn(sp.OrganizationID.EqColumn(cols.OrganizationID)).
-		JoinOn(sp.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = stopetacol.StopETAScopeTenant(sq, req.TenantInfo).
-				Where(cols.Verdict.In(), bun.List([]stopeta.Verdict{
-					stopeta.VerdictAtRisk,
-					stopeta.VerdictLate,
-				})).
-				Where(cols.Arrived.IsFalse()).
-				Where(sp.Status.In(), bun.List(req.Statuses))
-			if len(req.ShipmentIDs) > 0 {
-				sq = sq.Where(cols.ShipmentID.In(), bun.List(req.ShipmentIDs))
-			}
-			return sq
-		}).
-		Order(
-			cols.ShipmentID.OrderAsc(),
-			cols.MoveSequence.OrderAsc(),
-			cols.StopSequence.OrderAsc(),
-		).
-		Limit(int64(boundedLimit(req.Limit, defaultAttentionLimit, maxAttentionLimit))).
-		Scan(ctx)
+	q := e.Join(sp, sp.ID.EqCol(e.ShipmentID)).Where(
+		e.Verdict.In(stopeta.VerdictAtRisk, stopeta.VerdictLate),
+		e.Arrived.IsFalse(),
+		sp.Status.In(req.Statuses...),
+	)
+	if len(req.ShipmentIDs) > 0 {
+		q = q.Where(e.ShipmentID.In(req.ShipmentIDs...))
+	}
+
+	entities, err := q.
+		Order(e.ShipmentID.Asc(), e.MoveSequence.Asc(), e.StopSequence.Asc()).
+		Limit(boundedLimit(req.Limit, defaultAttentionLimit, maxAttentionLimit)).
+		List(ctx, r.db.Keel(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("list stop etas needing attention: %w", err)
 	}
@@ -252,59 +231,39 @@ func (r *repository) attentionRows(
 }
 
 type stopMetaRow struct {
-	StopID       pulid.ID          `bun:"stop_id"`
-	StopType     shipment.StopType `bun:"stop_type"`
-	ProNumber    string            `bun:"pro_number"`
-	OwnerID      pulid.ID          `bun:"owner_id"`
-	LocationName string            `bun:"location_name"`
-	City         string            `bun:"city"`
-	StateCode    string            `bun:"state_code"`
+	StopID       pulid.ID
+	StopType     shipment.StopType
+	ProNumber    string
+	OwnerID      pulid.ID
+	LocationName string
+	City         string
+	StateCode    string
 }
 
 func (r *repository) stopMeta(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
 	stopIDs []pulid.ID,
 ) (map[pulid.ID]stopMetaRow, error) {
-	stp := shipmentcol.StopColumns
-	sm := shipmentcol.ShipmentMoveColumns
-	sp := shipmentcol.ShipmentColumns
-	loc := locationcol.LocationColumns
-	ust := usstatecol.UsStateColumns
-	smTable := shipmentcol.ShipmentMoveTable
-	spTable := shipmentcol.ShipmentTable
-	locTable := locationcol.LocationTable
-	ustTable := usstatecol.UsStateTable
+	st := shipmentdb.Stops
+	sm := shipmentdb.ShipmentMoves
+	sp := shipmentdb.Shipments
+	loc := st.Location()
+	ust := loc.State()
 
-	rows := make([]stopMetaRow, 0, len(stopIDs))
-	err := r.db.DBForContext(ctx).NewSelect().
-		Model((*shipment.Stop)(nil)).
-		ColumnExpr(stp.ID.As("stop_id")).
-		ColumnExpr(stp.Type.As("stop_type")).
-		ColumnExpr(sp.ProNumber.As("pro_number")).
-		ColumnExpr(sp.OwnerID.As("owner_id")).
-		ColumnExpr(loc.Name.Expr("COALESCE({}, '')")+" AS location_name").
-		ColumnExpr(loc.City.Expr("COALESCE({}, '')")+" AS city").
-		ColumnExpr(ust.Abbreviation.Expr("COALESCE({}, '')")+" AS state_code").
-		Join("JOIN "+smTable.As(smTable.Alias)).
-		JoinOn(sm.ID.EqColumn(stp.ShipmentMoveID)).
-		JoinOn(sm.OrganizationID.EqColumn(stp.OrganizationID)).
-		JoinOn(sm.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
-		Join("JOIN "+spTable.As(spTable.Alias)).
-		JoinOn(sp.ID.EqColumn(sm.ShipmentID)).
-		JoinOn(sp.OrganizationID.EqColumn(sm.OrganizationID)).
-		JoinOn(sp.BusinessUnitID.EqColumn(sm.BusinessUnitID)).
-		Join("LEFT JOIN "+locTable.As(locTable.Alias)).
-		JoinOn(loc.ID.EqColumn(stp.LocationID)).
-		JoinOn(loc.OrganizationID.EqColumn(stp.OrganizationID)).
-		JoinOn(loc.BusinessUnitID.EqColumn(stp.BusinessUnitID)).
-		Join("LEFT JOIN "+ustTable.As(ustTable.Alias)).
-		JoinOn(ust.ID.EqColumn(loc.StateID)).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return shipmentcol.StopScopeTenant(sq, tenantInfo).
-				Where(stp.ID.In(), bun.List(stopIDs))
-		}).
-		Scan(ctx, &rows)
+	rows, err := keel.Into[stopMetaRow](ctx, r.db.Keel(ctx), st.
+		Join(sm, sm.ID.EqCol(st.ShipmentMoveID)).
+		Join(sp, sp.ID.EqCol(sm.ShipmentID)).
+		Pick(
+			st.ID,
+			st.Type,
+			sp.ProNumber,
+			sp.OwnerID.Coalesce(""),
+			loc.Name.Coalesce(""),
+			loc.City.Coalesce(""),
+			ust.Abbreviation.Coalesce(""),
+		).
+		Where(st.ID.In(stopIDs...)).
+		Limit(len(stopIDs)))
 	if err != nil {
 		return nil, fmt.Errorf("list stop details for etas: %w", err)
 	}
@@ -316,69 +275,43 @@ func (r *repository) stopMeta(
 	return out, nil
 }
 
-type shipmentIDRow struct {
-	ShipmentID pulid.ID `bun:"shipment_id"`
-}
-
 func (r *repository) ListTrackedShipmentIDs(
 	ctx context.Context,
 	req *stopetaports.ListTrackedShipmentIDsRequest,
 ) ([]pulid.ID, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pulid.ID, error) {
-		db := r.db.DBForContext(ctx)
-		sp := shipmentcol.ShipmentColumns
-		cols := stopetacol.StopETAColumns
-		spTable := shipmentcol.ShipmentTable
+		sp := shipmentdb.Shipments
+		e := stopetadb.StopETAs
 
-		tracked := make([]shipmentIDRow, 0)
-		err := db.NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			ColumnExpr(sp.ID.As("shipment_id")).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return shipmentcol.ShipmentScopeTenant(sq, req.TenantInfo).
-					Where(sp.Status.In(), bun.List(req.Statuses))
-			}).
-			Order(sp.ID.OrderAsc()).
-			Limit(int64(boundedLimit(req.Limit, defaultTrackedLimit, maxTrackedLimit))).
-			Scan(ctx, &tracked)
+		var tracked, leftover []pulid.ID
+		err := keel.Batch(
+			ctx,
+			r.db.Keel(ctx),
+			keel.IntoSlice(sp.Pick(sp.ID).
+				Where(sp.Status.In(req.Statuses...)).
+				Order(sp.ID.Asc()).
+				Limit(boundedLimit(req.Limit, defaultTrackedLimit, maxTrackedLimit)), &tracked),
+			keel.IntoSlice(e.DistinctOn(e.ShipmentID).
+				Pick(e.ShipmentID).
+				Join(sp, sp.ID.EqCol(e.ShipmentID)).
+				Where(sp.Status.NotIn(req.Statuses...)).
+				Order(e.ShipmentID.Asc()).
+				Limit(maxTrackedLimit), &leftover),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list tracked shipments: %w", err)
 		}
 
-		leftover := make([]shipmentIDRow, 0)
-		err = db.NewSelect().
-			Model((*stopeta.StopETA)(nil)).
-			DistinctOn(cols.ShipmentID.Qualified()).
-			ColumnExpr(cols.ShipmentID.As("shipment_id")).
-			Join("JOIN "+spTable.As(spTable.Alias)).
-			JoinOn(sp.ID.EqColumn(cols.ShipmentID)).
-			JoinOn(sp.OrganizationID.EqColumn(cols.OrganizationID)).
-			JoinOn(sp.BusinessUnitID.EqColumn(cols.BusinessUnitID)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return stopetacol.StopETAScopeTenant(sq, req.TenantInfo).
-					Where(sp.Status.NotIn(), bun.List(req.Statuses))
-			}).
-			Order(cols.ShipmentID.OrderAsc()).
-			Limit(int64(maxTrackedLimit)).
-			Scan(ctx, &leftover)
-		if err != nil {
-			return nil, fmt.Errorf("list shipments with stale stop etas: %w", err)
-		}
-
 		ids := make([]pulid.ID, 0, len(tracked)+len(leftover))
-		for _, row := range tracked {
-			ids = append(ids, row.ShipmentID)
-		}
-		for _, row := range leftover {
-			ids = append(ids, row.ShipmentID)
-		}
+		ids = append(ids, tracked...)
+		ids = append(ids, leftover...)
 		return ids, nil
 	})
 }
 
 type tenantRow struct {
-	OrganizationID pulid.ID `bun:"organization_id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
+	OrganizationID pulid.ID
+	BusinessUnitID pulid.ID
 }
 
 func (r *repository) ListActiveTenants(
@@ -388,31 +321,23 @@ func (r *repository) ListActiveTenants(
 	ctx = dbscope.WithSystem(ctx, "list organizations with shipments whose arrivals are projected")
 
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		db := r.db.DBForContext(ctx)
-		sp := shipmentcol.ShipmentColumns
-		cols := stopetacol.StopETAColumns
+		sp := shipmentdb.Shipments
+		e := stopetadb.StopETAs
 
-		fromShipments := make([]tenantRow, 0)
-		err := db.NewSelect().
-			Model((*shipment.Shipment)(nil)).
-			Distinct().
-			ColumnExpr(sp.OrganizationID.As("organization_id")).
-			ColumnExpr(sp.BusinessUnitID.As("business_unit_id")).
-			Where(sp.Status.In(), bun.List(statuses)).
-			Scan(ctx, &fromShipments)
+		var fromShipments, fromEtas []tenantRow
+		err := keel.Batch(
+			ctx,
+			r.db.Keel(ctx),
+			keel.IntoSlice(sp.AllTenants().
+				Group(sp.OrganizationID, sp.BusinessUnitID).
+				Pick(sp.OrganizationID, sp.BusinessUnitID).
+				Where(sp.Status.In(statuses...)), &fromShipments),
+			keel.IntoSlice(e.AllTenants().
+				Group(e.OrganizationID, e.BusinessUnitID).
+				Pick(e.OrganizationID, e.BusinessUnitID), &fromEtas),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("list tenants with tracked shipments: %w", err)
-		}
-
-		fromEtas := make([]tenantRow, 0)
-		err = db.NewSelect().
-			Model((*stopeta.StopETA)(nil)).
-			Distinct().
-			ColumnExpr(cols.OrganizationID.As("organization_id")).
-			ColumnExpr(cols.BusinessUnitID.As("business_unit_id")).
-			Scan(ctx, &fromEtas)
-		if err != nil {
-			return nil, fmt.Errorf("list tenants with stop etas: %w", err)
 		}
 
 		seen := make(map[tenantRow]struct{}, len(fromShipments)+len(fromEtas))

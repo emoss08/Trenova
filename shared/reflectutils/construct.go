@@ -32,5 +32,12 @@ func Construct(constructor any, supplied map[reflect.Type]reflect.Value) (built 
 		}
 	}()
 
-	return fn.Call(args)[0].Interface(), nil
+	out := fn.Call(args)
+	if last := out[len(out)-1]; len(out) > 1 && last.Type().Implements(errorType) && !last.IsNil() {
+		return nil, last.Interface().(error)
+	}
+
+	return out[0].Interface(), nil
 }
+
+var errorType = reflect.TypeFor[error]()

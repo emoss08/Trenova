@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
@@ -91,7 +90,7 @@ func (s *Service) SubmitDraft(
 	}}
 
 	var executed *invoiceadjustment.InvoiceAdjustment
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		if _, txErr := s.repo.UpdateAdjustment(txCtx, entity); txErr != nil {
 			return txErr
 		}
@@ -164,10 +163,10 @@ func (s *Service) Submit( //nolint:funlen // legacy workflow
 	}
 
 	var result *invoiceadjustment.InvoiceAdjustment
-	err = s.db.WithTx(
+	err = s.db.Transact(
 		ctx,
 		kernelports.TxOptions{LockTimeout: 5 * 1000000000},
-		func(txCtx context.Context, _ bun.Tx) error {
+		func(txCtx context.Context) error {
 			group, groupErr := s.ensureCorrectionGroup(txCtx, computation.invoice)
 			if groupErr != nil {
 				return groupErr

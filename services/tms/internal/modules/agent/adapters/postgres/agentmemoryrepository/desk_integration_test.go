@@ -28,15 +28,13 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
-	tx, err := db.BeginTx(ctx, nil)
-	require.NoError(t, err)
 	jordanUser := seedtest.NewUser(data.Organization.ID, data.BusinessUnit.ID).
 		WithUsername("jordan").
 		WithEmail("jordan@example.com").
-		Build(t, ctx, tx)
-	require.NoError(t, tx.Commit())
+		Build(t, ctx, db)
 	avery, jordan := data.User.ID, jordanUser.ID
 	billing, dispatch := pulid.MustNew("rol_"), pulid.MustNew("rol_")
 	now := timeutils.NowUnix()
@@ -63,7 +61,7 @@ func TestDeskMemories_ReachOnlyTheirReadersAndPauseReachesNobody(t *testing.T) {
 	billings := keep("Acme is billed net-45.", agent.MemoryScopeRole, pulid.Nil, billing)
 	dispatchs := keep("Dispatch note.", agent.MemoryScopeRole, pulid.Nil, dispatch)
 	paused := keep("Harbor wants PODs on every invoice.", agent.MemoryScopeUser, avery, pulid.Nil)
-	_, err = repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
+	_, err := repo.SetStatus(ctx, agentports.SetAgentMemoryStatusQuery{
 		ID: paused.ID, TenantInfo: tenant, Status: agent.MemoryStatusPaused, At: now,
 	})
 	require.NoError(t, err)
@@ -163,6 +161,7 @@ func TestDeskMemories_PageNewestFirstAndRevise(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	reader := agent.MemoryReader{UserID: data.User.ID}
@@ -218,6 +217,7 @@ func TestMemoryPreference_SavesOneRowPerPerson(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
+	ctx = data.Ctx(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
 	tenant := pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID}
 	req := agentports.GetAgentMemoryPreferenceRequest{TenantInfo: tenant, UserID: data.User.ID}

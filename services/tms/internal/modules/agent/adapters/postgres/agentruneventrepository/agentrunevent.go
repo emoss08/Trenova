@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/agentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/agent/adapters/postgres/agentrunrepository"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agent/agentdb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
-	"github.com/emoss08/trenova/pkg/dbhelper"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -52,10 +51,7 @@ func (r *repository) Append(
 			return nil
 		}
 
-		_, err := r.db.DBForContext(ctx).NewInsert().
-			Model(&req.Events).
-			Exec(ctx)
-		if err != nil {
+		if err := agentdb.AgentRunEvents.CreateMany(ctx, r.db.Keel(ctx), req.Events); err != nil {
 			r.l.Error("failed to append agent run events",
 				zap.Int("events", len(req.Events)),
 				zap.Error(err),
@@ -75,21 +71,15 @@ func (r *repository) Append(
 // rather than started again at one, which would collide.
 func (r *repository) NextSequence(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
+	_ pagination.TenantInfo,
 	ownerKind string,
 	ownerID pulid.ID,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := agentcol.AgentRunEventColumns
-
-		var highest int
-		err := r.db.DBForContext(ctx).NewSelect().
-			Model((*agent.AgentRunEvent)(nil)).
-			ColumnExpr("COALESCE(MAX(?), 0)", bun.Ident(cols.Sequence.String())).
-			Apply(agentcol.AgentRunEventApplyTenant(tenantInfo)).
-			Where(cols.OwnerKind.Eq(), ownerKind).
-			Where(cols.OwnerID.Eq(), ownerID).
-			Scan(ctx, &highest)
+		e := agentdb.AgentRunEvents
+		highest, err := keel.IntoOne[int](ctx, r.db.Keel(ctx), e.
+			Pick(keel.Int64Of(e.Sequence.Max()).Coalesce(0)).
+			Where(e.OwnerKind.Eq(ownerKind), e.OwnerID.Eq(ownerID)))
 		if err != nil {
 			r.l.Error("failed to read the next event sequence",
 				zap.String("owner", ownerID.String()),
@@ -103,30 +93,34 @@ func (r *repository) NextSequence(
 	})
 }
 
+func listQuery(req *agentports.ListAgentRunEventsRequest) *keel.Query[*agent.AgentRunEvent] {
+	e := agentdb.AgentRunEvents
+
+	return e.Where(
+		e.OwnerKind.Eq(req.OwnerKind),
+		e.OwnerID.Eq(req.OwnerID),
+		ofReadableRuns(req.Reader),
+		keel.When(req.After > 0, e.Sequence.Gt(int64(req.After))),
+	).Order(e.Sequence.Asc())
+}
+
 func (r *repository) List(
 	ctx context.Context,
 	req agentports.ListAgentRunEventsRequest,
 ) ([]*agent.AgentRunEvent, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agent.AgentRunEvent, error) {
-		cols := agentcol.AgentRunEventColumns
-		events := make([]*agent.AgentRunEvent, 0, 32)
+		q := listQuery(&req)
 
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&events).
-			Apply(agentcol.AgentRunEventApplyTenant(req.TenantInfo)).
-			Where(cols.OwnerKind.Eq(), req.OwnerKind).
-			Where(cols.OwnerID.Eq(), req.OwnerID).
-			Order(cols.Sequence.OrderAsc())
-
-		if req.After > 0 {
-			q = q.Where(cols.Sequence.Gt(), req.After)
-		}
-
+		var (
+			events []*agent.AgentRunEvent
+			err    error
+		)
 		if req.Limit > 0 {
-			q = q.Limit(int64(req.Limit))
+			events, err = q.Limit(req.Limit).List(ctx, r.db.Keel(ctx))
+		} else {
+			events, err = q.All(ctx, r.db.Keel(ctx))
 		}
-
-		if err := q.Scan(ctx); err != nil {
+		if err != nil {
 			r.l.Error("failed to list agent run events",
 				zap.String("owner", req.OwnerID.String()),
 				zap.Error(err),
@@ -143,63 +137,26 @@ func (r *repository) ListConnection(
 	ctx context.Context,
 	req *agentports.ListAgentRunEventConnectionRequest,
 ) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
-	return dbtx.Write(
+	return dbtx.Read(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.CursorListResult[*agent.AgentRunEvent], error) {
-			log := r.l.With(zap.String("operation", "ListConnection"))
-
-			dba := r.db.DBForContext(ctx)
-
-			var totalCount *int
-			if req.Cursor.IncludeTotalCount {
-				total, err := dba.NewSelect().
-					Model((*agent.AgentRunEvent)(nil)).
-					Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-						sq = querybuilder.ApplyFiltersWithoutSort(
-							sq,
-							agentcol.AgentRunEventTable.Alias,
-							req.Filter,
-							(*agent.AgentRunEvent)(nil),
-						)
-
-						return ownedBy(sq, req.OwnerKind).
-							Apply(agentcol.AgentRunEventApplyTenant(req.Filter.TenantInfo))
-					}).
-					Count(ctx)
-				if err != nil {
-					log.Error("failed to count agent run events", zap.Error(err))
-
-					return nil, fmt.Errorf("count agent run events: %w", err)
-				}
-
-				totalCount = new(int(total))
-			}
-
-			result, err := dbhelper.CursorList(ctx, dbhelper.CursorListParams[*agent.AgentRunEvent]{
-				Filter:     req.Filter,
-				Cursor:     req.Cursor,
-				TotalCount: totalCount,
-				Query: func(entities *[]*agent.AgentRunEvent) *bun.SelectQuery {
-					q := dba.NewSelect().Model(entities)
-					if len(req.Columns) > 0 {
-						q = q.Column(req.Columns...)
-					}
-
-					return q
+			e := agentdb.AgentRunEvents
+			result, err := listquery.Connection(
+				ctx,
+				r.db.Keel(ctx),
+				e.Where(
+					keel.When(req.OwnerKind != "", e.OwnerKind.Eq(req.OwnerKind)),
+					ofReadableRuns(req.Reader),
+				),
+				&listquery.Request[agent.AgentRunEvent]{
+					Filter:  req.Filter,
+					Cursor:  req.Cursor,
+					Columns: req.Columns,
 				},
-				Apply: func(sq *bun.SelectQuery) (*bun.SelectQuery, error) {
-					return querybuilder.ApplyCursorFilters(
-						ownedBy(sq, req.OwnerKind),
-						agentcol.AgentRunEventTable.Alias,
-						req.Filter,
-						req.Cursor,
-						(*agent.AgentRunEvent)(nil),
-					)
-				},
-			})
+			)
 			if err != nil {
-				log.Error("failed to list agent run events", zap.Error(err))
+				r.l.Error("failed to list agent run events", zap.Error(err))
 
 				return nil, fmt.Errorf("list agent run events: %w", err)
 			}
@@ -209,46 +166,44 @@ func (r *repository) ListConnection(
 	)
 }
 
-// ownedBy keeps a list to one kind of owner, when one is named.
-func ownedBy(sq *bun.SelectQuery, ownerKind string) *bun.SelectQuery {
-	if ownerKind == "" {
-		return sq
+// ofReadableRuns keeps, for a person, the events of the runs they may read;
+// an event an assistant turn owns is the turn's, and stays.
+func ofReadableRuns(reader agentports.RunReader) keel.Pred {
+	if !reader.ForPerson() {
+		return nil
 	}
 
-	return sq.Where(agentcol.AgentRunEventColumns.OwnerKind.Eq(), ownerKind)
+	e := agentdb.AgentRunEvents
+	run := agentdb.AgentRuns.As("event_run")
+
+	return keel.Or(
+		e.OwnerKind.Ne(string(agentports.RunStepOwnerAgentRun)),
+		keel.Exists(run.Where(
+			run.ID.EqCol(e.OwnerID),
+			agentrunrepository.ReadableBy(run, reader),
+		)),
+	)
 }
 
-// Prune drops a batch of old events. Deliberately not tenant-scoped: the sweep
-// runs for the whole installation.
+// Prune drops a batch of old events of the tenant on the context.
 func (r *repository) Prune(
 	ctx context.Context,
 	req agentports.PruneAgentRunEventsRequest,
 ) (int, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := agentcol.AgentRunEventColumns
-
-		dba := r.db.DBForContext(ctx)
-		doomed := dba.NewSelect().
-			Model((*agent.AgentRunEvent)(nil)).
-			Column(cols.ID.String()).
-			Where(cols.CreatedAt.Lt(), req.Before).
-			Limit(int64(req.Limit))
-
-		result, err := dba.NewDelete().
-			Model((*agent.AgentRunEvent)(nil)).
-			Where(cols.ID.In(), doomed).
-			Exec(ctx)
+		e := agentdb.AgentRunEvents
+		doomed := agentdb.AgentRunEvents.As("doomed")
+		n, err := e.Where(e.ID.InQuery(doomed.
+			Pick(doomed.ID).
+			Where(doomed.CreatedAt.Lt(req.Before)).
+			Limit(req.Limit))).
+			Delete(ctx, r.db.Keel(ctx))
 		if err != nil {
 			r.l.Error("failed to prune agent run events", zap.Error(err))
 
 			return 0, fmt.Errorf("prune agent run events: %w", err)
 		}
 
-		affected, err := result.RowsAffected()
-		if err != nil {
-			return 0, fmt.Errorf("prune agent run events: %w", err)
-		}
-
-		return int(affected), nil
+		return int(n), nil
 	})
 }

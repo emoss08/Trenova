@@ -40,6 +40,138 @@ func (_m *MockRateMatrixRepository) EXPECT() *MockRateMatrixRepository_Expecter 
 	return &MockRateMatrixRepository_Expecter{mock: &_m.Mock}
 }
 
+// CopyVersion provides a mock function for the type MockRateMatrixRepository
+func (_mock *MockRateMatrixRepository) CopyVersion(ctx context.Context, req *ratematrixports.CopyVersionRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CopyVersion")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.CopyVersionRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.CopyVersionRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.CopyVersionRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRateMatrixRepository_CopyVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CopyVersion'
+type MockRateMatrixRepository_CopyVersion_Call struct {
+	*mock.Call
+}
+
+// CopyVersion is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *ratematrixports.CopyVersionRequest
+func (_e *MockRateMatrixRepository_Expecter) CopyVersion(ctx interface{}, req interface{}) *MockRateMatrixRepository_CopyVersion_Call {
+	return &MockRateMatrixRepository_CopyVersion_Call{Call: _e.mock.On("CopyVersion", ctx, req)}
+}
+
+func (_c *MockRateMatrixRepository_CopyVersion_Call) Run(run func(ctx context.Context, req *ratematrixports.CopyVersionRequest)) *MockRateMatrixRepository_CopyVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *ratematrixports.CopyVersionRequest
+		if args[1] != nil {
+			arg1 = args[1].(*ratematrixports.CopyVersionRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_CopyVersion_Call) Return(n int64, err error) *MockRateMatrixRepository_CopyVersion_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_CopyVersion_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.CopyVersionRequest) (int64, error)) *MockRateMatrixRepository_CopyVersion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountMisfitCells provides a mock function for the type MockRateMatrixRepository
+func (_mock *MockRateMatrixRepository) CountMisfitCells(ctx context.Context, req *ratematrixports.CountMisfitCellsRequest) (int64, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountMisfitCells")
+	}
+
+	var r0 int64
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.CountMisfitCellsRequest) (int64, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.CountMisfitCellsRequest) int64); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.CountMisfitCellsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRateMatrixRepository_CountMisfitCells_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountMisfitCells'
+type MockRateMatrixRepository_CountMisfitCells_Call struct {
+	*mock.Call
+}
+
+// CountMisfitCells is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *ratematrixports.CountMisfitCellsRequest
+func (_e *MockRateMatrixRepository_Expecter) CountMisfitCells(ctx interface{}, req interface{}) *MockRateMatrixRepository_CountMisfitCells_Call {
+	return &MockRateMatrixRepository_CountMisfitCells_Call{Call: _e.mock.On("CountMisfitCells", ctx, req)}
+}
+
+func (_c *MockRateMatrixRepository_CountMisfitCells_Call) Run(run func(ctx context.Context, req *ratematrixports.CountMisfitCellsRequest)) *MockRateMatrixRepository_CountMisfitCells_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *ratematrixports.CountMisfitCellsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*ratematrixports.CountMisfitCellsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_CountMisfitCells_Call) Return(n int64, err error) *MockRateMatrixRepository_CountMisfitCells_Call {
+	_c.Call.Return(n, err)
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_CountMisfitCells_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.CountMisfitCellsRequest) (int64, error)) *MockRateMatrixRepository_CountMisfitCells_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function for the type MockRateMatrixRepository
 func (_mock *MockRateMatrixRepository) Create(ctx context.Context, entity *ratematrix.RateMatrix) (*ratematrix.RateMatrix, error) {
 	ret := _mock.Called(ctx, entity)
@@ -132,7 +264,7 @@ type MockRateMatrixRepository_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetRateMatrixByIDRequest
+//   - req *ratematrixports.GetRateMatrixByIDRequest
 func (_e *MockRateMatrixRepository_Expecter) Delete(ctx interface{}, req interface{}) *MockRateMatrixRepository_Delete_Call {
 	return &MockRateMatrixRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, req)}
 }
@@ -161,74 +293,6 @@ func (_c *MockRateMatrixRepository_Delete_Call) Return(err error) *MockRateMatri
 }
 
 func (_c *MockRateMatrixRepository_Delete_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetRateMatrixByIDRequest) error) *MockRateMatrixRepository_Delete_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetByCode provides a mock function for the type MockRateMatrixRepository
-func (_mock *MockRateMatrixRepository) GetByCode(ctx context.Context, req *ratematrixports.GetRateMatrixByCodeRequest) (*ratematrix.RateMatrix, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByCode")
-	}
-
-	var r0 *ratematrix.RateMatrix
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetRateMatrixByCodeRequest) (*ratematrix.RateMatrix, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetRateMatrixByCodeRequest) *ratematrix.RateMatrix); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ratematrix.RateMatrix)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.GetRateMatrixByCodeRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockRateMatrixRepository_GetByCode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByCode'
-type MockRateMatrixRepository_GetByCode_Call struct {
-	*mock.Call
-}
-
-// GetByCode is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.GetRateMatrixByCodeRequest
-func (_e *MockRateMatrixRepository_Expecter) GetByCode(ctx interface{}, req interface{}) *MockRateMatrixRepository_GetByCode_Call {
-	return &MockRateMatrixRepository_GetByCode_Call{Call: _e.mock.On("GetByCode", ctx, req)}
-}
-
-func (_c *MockRateMatrixRepository_GetByCode_Call) Run(run func(ctx context.Context, req *ratematrixports.GetRateMatrixByCodeRequest)) *MockRateMatrixRepository_GetByCode_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *ratematrixports.GetRateMatrixByCodeRequest
-		if args[1] != nil {
-			arg1 = args[1].(*ratematrixports.GetRateMatrixByCodeRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockRateMatrixRepository_GetByCode_Call) Return(rateMatrix *ratematrix.RateMatrix, err error) *MockRateMatrixRepository_GetByCode_Call {
-	_c.Call.Return(rateMatrix, err)
-	return _c
-}
-
-func (_c *MockRateMatrixRepository_GetByCode_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetRateMatrixByCodeRequest) (*ratematrix.RateMatrix, error)) *MockRateMatrixRepository_GetByCode_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -268,7 +332,7 @@ type MockRateMatrixRepository_GetByID_Call struct {
 
 // GetByID is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.GetRateMatrixByIDRequest
+//   - req *ratematrixports.GetRateMatrixByIDRequest
 func (_e *MockRateMatrixRepository_Expecter) GetByID(ctx interface{}, req interface{}) *MockRateMatrixRepository_GetByID_Call {
 	return &MockRateMatrixRepository_GetByID_Call{Call: _e.mock.On("GetByID", ctx, req)}
 }
@@ -297,6 +361,74 @@ func (_c *MockRateMatrixRepository_GetByID_Call) Return(rateMatrix *ratematrix.R
 }
 
 func (_c *MockRateMatrixRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetRateMatrixByIDRequest) (*ratematrix.RateMatrix, error)) *MockRateMatrixRepository_GetByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetByIDs provides a mock function for the type MockRateMatrixRepository
+func (_mock *MockRateMatrixRepository) GetByIDs(ctx context.Context, req *ratematrixports.GetRateMatricesByIDsRequest) ([]*ratematrix.RateMatrix, error) {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByIDs")
+	}
+
+	var r0 []*ratematrix.RateMatrix
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetRateMatricesByIDsRequest) ([]*ratematrix.RateMatrix, error)); ok {
+		return returnFunc(ctx, req)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetRateMatricesByIDsRequest) []*ratematrix.RateMatrix); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*ratematrix.RateMatrix)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.GetRateMatricesByIDsRequest) error); ok {
+		r1 = returnFunc(ctx, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockRateMatrixRepository_GetByIDs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByIDs'
+type MockRateMatrixRepository_GetByIDs_Call struct {
+	*mock.Call
+}
+
+// GetByIDs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *ratematrixports.GetRateMatricesByIDsRequest
+func (_e *MockRateMatrixRepository_Expecter) GetByIDs(ctx interface{}, req interface{}) *MockRateMatrixRepository_GetByIDs_Call {
+	return &MockRateMatrixRepository_GetByIDs_Call{Call: _e.mock.On("GetByIDs", ctx, req)}
+}
+
+func (_c *MockRateMatrixRepository_GetByIDs_Call) Run(run func(ctx context.Context, req *ratematrixports.GetRateMatricesByIDsRequest)) *MockRateMatrixRepository_GetByIDs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *ratematrixports.GetRateMatricesByIDsRequest
+		if args[1] != nil {
+			arg1 = args[1].(*ratematrixports.GetRateMatricesByIDsRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_GetByIDs_Call) Return(rateMatrixs []*ratematrix.RateMatrix, err error) *MockRateMatrixRepository_GetByIDs_Call {
+	_c.Call.Return(rateMatrixs, err)
+	return _c
+}
+
+func (_c *MockRateMatrixRepository_GetByIDs_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetRateMatricesByIDsRequest) ([]*ratematrix.RateMatrix, error)) *MockRateMatrixRepository_GetByIDs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -336,7 +468,7 @@ type MockRateMatrixRepository_List_Call struct {
 
 // List is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListRateMatrixRequest
+//   - req *ratematrixports.ListRateMatrixRequest
 func (_e *MockRateMatrixRepository_Expecter) List(ctx interface{}, req interface{}) *MockRateMatrixRepository_List_Call {
 	return &MockRateMatrixRepository_List_Call{Call: _e.mock.On("List", ctx, req)}
 }
@@ -404,7 +536,7 @@ type MockRateMatrixRepository_ListCells_Call struct {
 
 // ListCells is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListRateMatrixCellsRequest
+//   - req *ratematrixports.ListRateMatrixCellsRequest
 func (_e *MockRateMatrixRepository_Expecter) ListCells(ctx interface{}, req interface{}) *MockRateMatrixRepository_ListCells_Call {
 	return &MockRateMatrixRepository_ListCells_Call{Call: _e.mock.On("ListCells", ctx, req)}
 }
@@ -472,7 +604,7 @@ type MockRateMatrixRepository_ListConnection_Call struct {
 
 // ListConnection is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ListRateMatrixConnectionRequest
+//   - req *ratematrixports.ListRateMatrixConnectionRequest
 func (_e *MockRateMatrixRepository_Expecter) ListConnection(ctx interface{}, req interface{}) *MockRateMatrixRepository_ListConnection_Call {
 	return &MockRateMatrixRepository_ListConnection_Call{Call: _e.mock.On("ListConnection", ctx, req)}
 }
@@ -505,142 +637,6 @@ func (_c *MockRateMatrixRepository_ListConnection_Call) RunAndReturn(run func(ct
 	return _c
 }
 
-// LookupCells provides a mock function for the type MockRateMatrixRepository
-func (_mock *MockRateMatrixRepository) LookupCells(ctx context.Context, req *ratematrixports.LookupRateMatrixCellsRequest) ([]*ratematrix.RateMatrixCell, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for LookupCells")
-	}
-
-	var r0 []*ratematrix.RateMatrixCell
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.LookupRateMatrixCellsRequest) ([]*ratematrix.RateMatrixCell, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.LookupRateMatrixCellsRequest) []*ratematrix.RateMatrixCell); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ratematrix.RateMatrixCell)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.LookupRateMatrixCellsRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockRateMatrixRepository_LookupCells_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LookupCells'
-type MockRateMatrixRepository_LookupCells_Call struct {
-	*mock.Call
-}
-
-// LookupCells is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.LookupRateMatrixCellsRequest
-func (_e *MockRateMatrixRepository_Expecter) LookupCells(ctx interface{}, req interface{}) *MockRateMatrixRepository_LookupCells_Call {
-	return &MockRateMatrixRepository_LookupCells_Call{Call: _e.mock.On("LookupCells", ctx, req)}
-}
-
-func (_c *MockRateMatrixRepository_LookupCells_Call) Run(run func(ctx context.Context, req *ratematrixports.LookupRateMatrixCellsRequest)) *MockRateMatrixRepository_LookupCells_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *ratematrixports.LookupRateMatrixCellsRequest
-		if args[1] != nil {
-			arg1 = args[1].(*ratematrixports.LookupRateMatrixCellsRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockRateMatrixRepository_LookupCells_Call) Return(rateMatrixCells []*ratematrix.RateMatrixCell, err error) *MockRateMatrixRepository_LookupCells_Call {
-	_c.Call.Return(rateMatrixCells, err)
-	return _c
-}
-
-func (_c *MockRateMatrixRepository_LookupCells_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.LookupRateMatrixCellsRequest) ([]*ratematrix.RateMatrixCell, error)) *MockRateMatrixRepository_LookupCells_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetLookupData provides a mock function for the type MockRateMatrixRepository
-func (_mock *MockRateMatrixRepository) GetLookupData(ctx context.Context, req *ratematrixports.GetRateMatrixLookupDataRequest) ([]*ratematrixports.RateMatrixLookupData, error) {
-	ret := _mock.Called(ctx, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetLookupData")
-	}
-
-	var r0 []*ratematrixports.RateMatrixLookupData
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetRateMatrixLookupDataRequest) ([]*ratematrixports.RateMatrixLookupData, error)); ok {
-		return returnFunc(ctx, req)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrixports.GetRateMatrixLookupDataRequest) []*ratematrixports.RateMatrixLookupData); ok {
-		r0 = returnFunc(ctx, req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ratematrixports.RateMatrixLookupData)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrixports.GetRateMatrixLookupDataRequest) error); ok {
-		r1 = returnFunc(ctx, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// MockRateMatrixRepository_GetLookupData_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLookupData'
-type MockRateMatrixRepository_GetLookupData_Call struct {
-	*mock.Call
-}
-
-// GetLookupData is a helper method to define mock.On call
-//   - ctx context.Context
-//   - req *repositories.GetRateMatrixLookupDataRequest
-func (_e *MockRateMatrixRepository_Expecter) GetLookupData(ctx interface{}, req interface{}) *MockRateMatrixRepository_GetLookupData_Call {
-	return &MockRateMatrixRepository_GetLookupData_Call{Call: _e.mock.On("GetLookupData", ctx, req)}
-}
-
-func (_c *MockRateMatrixRepository_GetLookupData_Call) Run(run func(ctx context.Context, req *ratematrixports.GetRateMatrixLookupDataRequest)) *MockRateMatrixRepository_GetLookupData_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 *ratematrixports.GetRateMatrixLookupDataRequest
-		if args[1] != nil {
-			arg1 = args[1].(*ratematrixports.GetRateMatrixLookupDataRequest)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *MockRateMatrixRepository_GetLookupData_Call) Return(rateMatrixLookupDatas []*ratematrixports.RateMatrixLookupData, err error) *MockRateMatrixRepository_GetLookupData_Call {
-	_c.Call.Return(rateMatrixLookupDatas, err)
-	return _c
-}
-
-func (_c *MockRateMatrixRepository_GetLookupData_Call) RunAndReturn(run func(ctx context.Context, req *ratematrixports.GetRateMatrixLookupDataRequest) ([]*ratematrixports.RateMatrixLookupData, error)) *MockRateMatrixRepository_GetLookupData_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // ReplaceCells provides a mock function for the type MockRateMatrixRepository
 func (_mock *MockRateMatrixRepository) ReplaceCells(ctx context.Context, req *ratematrixports.ReplaceRateMatrixCellsRequest) error {
 	ret := _mock.Called(ctx, req)
@@ -665,7 +661,7 @@ type MockRateMatrixRepository_ReplaceCells_Call struct {
 
 // ReplaceCells is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req *repositories.ReplaceRateMatrixCellsRequest
+//   - req *ratematrixports.ReplaceRateMatrixCellsRequest
 func (_e *MockRateMatrixRepository_Expecter) ReplaceCells(ctx interface{}, req interface{}) *MockRateMatrixRepository_ReplaceCells_Call {
 	return &MockRateMatrixRepository_ReplaceCells_Call{Call: _e.mock.On("ReplaceCells", ctx, req)}
 }
@@ -834,57 +830,70 @@ func (_c *MockRateMatrixRepository_Update_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
-// GetLookupStamp provides a mock function for the type MockRateMatrixRepository
-func (_mock *MockRateMatrixRepository) GetLookupStamp(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error) {
-	ret := _mock.Called(ctx, tenantInfo)
+// UpdateHeader provides a mock function for the type MockRateMatrixRepository
+func (_mock *MockRateMatrixRepository) UpdateHeader(ctx context.Context, entity *ratematrix.RateMatrix) (*ratematrix.RateMatrix, error) {
+	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetLookupStamp")
+		panic("no return value specified for UpdateHeader")
 	}
 
-	var r0 string
+	var r0 *ratematrix.RateMatrix
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) (string, error)); ok {
-		return returnFunc(ctx, tenantInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrix.RateMatrix) (*ratematrix.RateMatrix, error)); ok {
+		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo) string); ok {
-		r0 = returnFunc(ctx, tenantInfo)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *ratematrix.RateMatrix) *ratematrix.RateMatrix); ok {
+		r0 = returnFunc(ctx, entity)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*ratematrix.RateMatrix)
+		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo) error); ok {
-		r1 = returnFunc(ctx, tenantInfo)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *ratematrix.RateMatrix) error); ok {
+		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// MockRateMatrixRepository_GetLookupStamp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLookupStamp'
-type MockRateMatrixRepository_GetLookupStamp_Call struct {
+// MockRateMatrixRepository_UpdateHeader_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateHeader'
+type MockRateMatrixRepository_UpdateHeader_Call struct {
 	*mock.Call
 }
 
-// GetLookupStamp is a helper method to define mock.On call
+// UpdateHeader is a helper method to define mock.On call
 //   - ctx context.Context
-//   - tenantInfo pagination.TenantInfo
-func (_e *MockRateMatrixRepository_Expecter) GetLookupStamp(ctx interface{}, tenantInfo interface{}) *MockRateMatrixRepository_GetLookupStamp_Call {
-	return &MockRateMatrixRepository_GetLookupStamp_Call{Call: _e.mock.On("GetLookupStamp", ctx, tenantInfo)}
+//   - entity *ratematrix.RateMatrix
+func (_e *MockRateMatrixRepository_Expecter) UpdateHeader(ctx interface{}, entity interface{}) *MockRateMatrixRepository_UpdateHeader_Call {
+	return &MockRateMatrixRepository_UpdateHeader_Call{Call: _e.mock.On("UpdateHeader", ctx, entity)}
 }
 
-func (_c *MockRateMatrixRepository_GetLookupStamp_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo)) *MockRateMatrixRepository_GetLookupStamp_Call {
+func (_c *MockRateMatrixRepository_UpdateHeader_Call) Run(run func(ctx context.Context, entity *ratematrix.RateMatrix)) *MockRateMatrixRepository_UpdateHeader_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(pagination.TenantInfo))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *ratematrix.RateMatrix
+		if args[1] != nil {
+			arg1 = args[1].(*ratematrix.RateMatrix)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
 
-func (_c *MockRateMatrixRepository_GetLookupStamp_Call) Return(s string, err error) *MockRateMatrixRepository_GetLookupStamp_Call {
-	_c.Call.Return(s, err)
+func (_c *MockRateMatrixRepository_UpdateHeader_Call) Return(rateMatrix *ratematrix.RateMatrix, err error) *MockRateMatrixRepository_UpdateHeader_Call {
+	_c.Call.Return(rateMatrix, err)
 	return _c
 }
 
-func (_c *MockRateMatrixRepository_GetLookupStamp_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo) (string, error)) *MockRateMatrixRepository_GetLookupStamp_Call {
+func (_c *MockRateMatrixRepository_UpdateHeader_Call) RunAndReturn(run func(ctx context.Context, entity *ratematrix.RateMatrix) (*ratematrix.RateMatrix, error)) *MockRateMatrixRepository_UpdateHeader_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/shopspring/decimal"
-	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/zap"
 )
@@ -760,7 +759,7 @@ func (s *Service) persistAndStart(
 		return nil, multiErr
 	}
 
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		_, txErr := s.repo.Create(txCtx, entity)
 		if dberror.IsUniqueConstraintViolation(txErr) {
 			return errortypes.NewBusinessError(

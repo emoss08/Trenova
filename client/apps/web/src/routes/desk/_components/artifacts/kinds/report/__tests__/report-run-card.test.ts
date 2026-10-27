@@ -27,7 +27,7 @@ function parameter(overrides: Partial<ReportRunDeskParameter>): ReportRunDeskPar
     type: "int",
     value: 30,
     isDefault: false,
-    refEntity: null,
+    entity: null,
     windowStart: null,
     windowEnd: null,
     ...overrides,
@@ -78,12 +78,10 @@ describe("parameterText", () => {
     expect(parameterText(parameter({ value: ["A", "B", "C", "D", "E"] }), t)).toBe(
       "A, B, C and 2 more",
     );
-    expect(parameterText(parameter({ value: ["cus_1", "cus_2"], refEntity: "customer" }), t)).toBe(
+    expect(parameterText(parameter({ value: ["cus_1", "cus_2"], entity: "customer" }), t)).toBe(
       "2 selected",
     );
-    expect(parameterText(parameter({ value: "cus_1", refEntity: "customer" }), t)).toBe(
-      "1 selected",
-    );
+    expect(parameterText(parameter({ value: "cus_1", entity: "customer" }), t)).toBe("1 selected");
   });
 
   it("says a parameter left empty applies to anything, and a flag yes or no", () => {
@@ -125,13 +123,13 @@ function card(overrides: Partial<ReportRunDeskCard> = {}): ReportRunDeskCard {
           id: "customer",
           label: "Customer",
           type: "string",
-          format: null,
+          sensitivity: null,
           display: null as never,
         },
       ],
       rows: [["Acme"]],
       totals: null,
-      more: false,
+      truncated: false,
     },
     withheld: null,
     previous: null,
@@ -148,6 +146,20 @@ describe("sourceOfRun", () => {
     expect(source?.rowCount).toBe(214);
     expect(source?.more).toBe(true);
     expect(sourceOfRun(card({ sample: null }))).toBeNull();
+  });
+
+  it("knows the sample left rows out even when the run's count says nothing more", () => {
+    const base = card();
+    const source = sourceOfRun(
+      card({
+        run: { rowCount: 1, truncated: false } as ReportRunDeskCard["run"],
+        sample: { ...base.sample!, truncated: true },
+      }),
+    );
+    expect(source?.more).toBe(true);
+    expect(sourceOfRun(card({ run: { rowCount: 1, truncated: false } as never }))?.more).toBe(
+      false,
+    );
   });
 });
 
@@ -168,21 +180,23 @@ describe("sheetWindow", () => {
 });
 
 describe("sourceOfPreview", () => {
-  it("reads a preview's catalog types, and knows when it read fewer rows than came back", () => {
+  it("reads a preview's value types and styles, and knows when it read fewer rows than came back", () => {
     const source = sourceOfPreview({
       name: "",
       dataset: "invoice",
       columns: [
         { id: "customer", label: "Customer", type: "string", format: null },
-        { id: "revenue", label: "Revenue", type: "decimal", format: "money" },
+        { id: "revenue", label: "Revenue", type: "decimal", format: "currency" },
+        { id: "share", label: "Share", type: "float", format: "percent" },
       ] as never,
-      rows: [["Acme", "10"]],
+      rows: [["Acme", "10", 0.4]],
       totals: null,
       rowCount: 63,
       truncated: false,
     });
-    expect(source.columns.map((column) => column.numeric)).toEqual([false, true]);
-    expect(source.columns[1].hint).toBe("money");
+    expect(source.columns.map((column) => column.numeric)).toEqual([false, true, true]);
+    expect(source.columns.map((column) => column.hint)).toEqual(["", "money", "percent"]);
+    expect(source.columns[2].percent).toBe(true);
     expect(source.more).toBe(true);
   });
 });

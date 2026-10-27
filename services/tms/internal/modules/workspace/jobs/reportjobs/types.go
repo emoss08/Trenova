@@ -3,7 +3,6 @@ package reportjobs
 import (
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/reportports"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -39,24 +38,24 @@ type ExecuteResult struct {
 	CacheHit          bool                      `json:"cacheHit"`
 	ArtifactExpiresAt int64                     `json:"artifactExpiresAt,omitempty"`
 	Digest            *reportports.ReportDigest `json:"digest,omitempty"`
-	Sample            *reportrows.Sample        `json:"sample,omitempty"`
+	Sample            []byte                    `json:"sample,omitempty"`
 }
 
 type FinalizePayload struct {
-	RunID             pulid.ID           `json:"runId"`
-	OrganizationID    pulid.ID           `json:"organizationId"`
-	BusinessUnitID    pulid.ID           `json:"businessUnitId"`
-	Status            report.RunStatus   `json:"status"`
-	Error             *report.RunError   `json:"error,omitempty"`
-	ArtifactKey       string             `json:"artifactKey,omitempty"`
-	RowsKey           string             `json:"rowsKey,omitempty"`
-	CacheHit          bool               `json:"cacheHit"`
-	ArtifactExpiresAt int64              `json:"artifactExpiresAt,omitempty"`
-	RowCount          int64              `json:"rowCount"`
-	ByteSize          int64              `json:"byteSize"`
-	Truncated         bool               `json:"truncated"`
-	DurationMs        int64              `json:"durationMs"`
-	Sample            *reportrows.Sample `json:"sample,omitempty"`
+	RunID             pulid.ID         `json:"runId"`
+	OrganizationID    pulid.ID         `json:"organizationId"`
+	BusinessUnitID    pulid.ID         `json:"businessUnitId"`
+	Status            report.RunStatus `json:"status"`
+	Error             *report.RunError `json:"error,omitempty"`
+	ArtifactKey       string           `json:"artifactKey,omitempty"`
+	RowsKey           string           `json:"rowsKey,omitempty"`
+	CacheHit          bool             `json:"cacheHit"`
+	ArtifactExpiresAt int64            `json:"artifactExpiresAt,omitempty"`
+	RowCount          int64            `json:"rowCount"`
+	ByteSize          int64            `json:"byteSize"`
+	Truncated         bool             `json:"truncated"`
+	DurationMs        int64            `json:"durationMs"`
+	Sample            []byte           `json:"sample,omitempty"`
 }
 
 type RunReportResult struct {

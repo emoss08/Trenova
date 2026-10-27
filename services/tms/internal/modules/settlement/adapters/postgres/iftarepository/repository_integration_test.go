@@ -4,19 +4,24 @@ package iftarepository_test
 
 import (
 	"context"
+
 	"testing"
 	"time"
 	_ "time/tzdata"
 
-	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
+	"github.com/emoss08/trenova/pkg/dbscope"
+	"github.com/jackc/pgx/v5"
+
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/settlement/adapters/postgres/iftarepository"
+	"github.com/emoss08/trenova/internal/modules/settlement/domain/ifta"
 	"github.com/emoss08/trenova/internal/modules/settlement/ports/iftaports"
+	"github.com/emoss08/trenova/internal/testutil/cachetest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -25,7 +30,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -33,7 +37,10 @@ const testPeriodZone = "America/New_York"
 
 type fixture struct {
 	ctx        context.Context
-	db         *bun.DB
+	ctxA       context.Context
+	ctxB       context.Context
+	db         *keel.DB
+	dsn        string
 	repo       iftaports.IFTARepository
 	tenantA    pagination.TenantInfo
 	tenantB    pagination.TenantInfo
@@ -51,42 +58,31 @@ type fixture struct {
 func setup(t *testing.T) *fixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, dsn, cleanup := seededtest.SetupTestDBWithDSN(t)
 	t.Cleanup(cleanup)
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(db, registry, &config.Config{
-		System: config.SystemConfig{SystemUserPassword: "integration-system-password"},
-	})
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{
-		Environment: common.EnvDevelopment,
-		Force:       true,
-	})
+	orgs, err := keel.QueryAll(
+		ctx,
+		db,
+		pgx.RowToStructByPos[orgRow],
+		"SELECT id, business_unit_id FROM organizations ORDER BY created_at ASC LIMIT 1",
+	)
 	require.NoError(t, err)
-
-	var org struct {
-		ID             pulid.ID `bun:"id"`
-		BusinessUnitID pulid.ID `bun:"business_unit_id"`
-	}
-	require.NoError(t, db.NewSelect().
-		TableExpr("organizations").
-		Column("id", "business_unit_id").
-		Order("created_at ASC").
-		Limit(1).
-		Scan(ctx, &org))
-	tenantA := pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID}
+	require.Len(t, orgs, 1)
+	tenantA := pagination.TenantInfo{OrgID: orgs[0].ID, BuID: orgs[0].BusinessUnitID}
 
 	other := seedtest.SeedAdditionalTenant(t, ctx, db, "IFB")
 	tenantB := pagination.TenantInfo{OrgID: other.Organization.ID, BuID: other.BusinessUnit.ID}
 
 	f := &fixture{
-		ctx: ctx,
-		db:  db,
+		ctx:  ctx,
+		ctxA: dbscope.WithTenant(ctx, tenantA.DBTenant()),
+		ctxB: dbscope.WithTenant(ctx, tenantB.DBTenant()),
+		db:   db,
+		dsn:  dsn,
 		repo: iftarepository.New(iftarepository.Params{
-			DB:                postgres.NewTestConnection(db),
-			Logger:            zap.NewNop(),
-			JurisdictionCache: &FakeJurisdictionCache{},
+			DB:     postgres.NewTestConnection(db),
+			Logger: zap.NewNop(),
 		}),
 		tenantA: tenantA,
 		tenantB: tenantB,
@@ -97,9 +93,9 @@ func setup(t *testing.T) *fixture {
 	f.locationID = f.tenantScalar(t, "locations", "id", tenantA)
 	f.tractorID = f.tenantScalar(t, "tractors", "id", tenantA)
 
-	f.tx, err = f.repo.GetJurisdictionByCode(ctx, "US", "TX")
+	f.tx, err = f.repo.GetJurisdictionByCode(f.ctxA, "US", "TX")
 	require.NoError(t, err)
-	f.ok, err = f.repo.GetJurisdictionByCode(ctx, "US", "OK")
+	f.ok, err = f.repo.GetJurisdictionByCode(f.ctxA, "US", "OK")
 	require.NoError(t, err)
 
 	loc, err := time.LoadLocation(testPeriodZone)
@@ -109,15 +105,24 @@ func setup(t *testing.T) *fixture {
 	return f
 }
 
+type orgRow struct {
+	ID             pulid.ID
+	BusinessUnitID pulid.ID
+}
+
+func (f *fixture) as(tenant pagination.TenantInfo) context.Context {
+	return dbscope.WithTenant(f.ctx, tenant.DBTenant())
+}
+
 func (f *fixture) scalar(t *testing.T, table, column, where string, value any) pulid.ID {
 	t.Helper()
-	var id pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		TableExpr(table).
-		Column(column).
-		Where(where+" = ?", value).
-		Limit(1).
-		Scan(f.ctx, &id), "no %s row for the fixture", table)
+	id, err := keel.QueryValue[pulid.ID](
+		f.ctx,
+		f.db,
+		"SELECT "+column+" FROM "+table+" WHERE "+where+" = $1 LIMIT 1",
+		value,
+	)
+	require.NoError(t, err, "no %s row for the fixture", table)
 	return id
 }
 
@@ -127,15 +132,15 @@ func (f *fixture) tenantScalar(
 	tenant pagination.TenantInfo,
 ) pulid.ID {
 	t.Helper()
-	var id pulid.ID
-	require.NoError(t, f.db.NewSelect().
-		TableExpr(table).
-		Column(column).
-		Where("organization_id = ?", tenant.OrgID).
-		Where("business_unit_id = ?", tenant.BuID).
-		Order("created_at ASC").
-		Limit(1).
-		Scan(f.ctx, &id), "no %s row for the fixture", table)
+	id, err := keel.QueryValue[pulid.ID](
+		f.ctx,
+		f.db,
+		"SELECT "+column+" FROM "+table+
+			" WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY created_at ASC LIMIT 1",
+		tenant.OrgID.String(),
+		tenant.BuID.String(),
+	)
+	require.NoError(t, err, "no %s row for the fixture", table)
 	return id
 }
 
@@ -161,8 +166,7 @@ func (f *fixture) insertMove(t *testing.T, spec moveSpec) *shipment.ShipmentMove
 		Distance:       &distance,
 		DistanceUnits:  spec.units,
 	}
-	_, err := f.db.NewInsert().Model(move).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.ShipmentMoves.Create(f.ctxA, f.db, move))
 
 	stop := &shipment.Stop{
 		OrganizationID:       f.tenantA.OrgID,
@@ -174,17 +178,18 @@ func (f *fixture) insertMove(t *testing.T, spec moveSpec) *shipment.ShipmentMove
 		ScheduledWindowStart: f.start,
 		ActualDeparture:      spec.completedAt,
 	}
-	_, err = f.db.NewInsert().Model(stop).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.Stops.Create(f.ctxA, f.db, stop))
 
 	if spec.updatedAt != nil {
-		_, err = f.db.NewUpdate().
-			Model((*shipment.ShipmentMove)(nil)).
-			Set("updated_at = ?", *spec.updatedAt).
-			Where("id = ?", move.ID).
-			Where("organization_id = ?", f.tenantA.OrgID).
-			Where("business_unit_id = ?", f.tenantA.BuID).
-			Exec(f.ctx)
+		_, err := keel.Exec(
+			f.ctxA,
+			f.db,
+			"UPDATE shipment_moves SET updated_at = $1 WHERE id = $2 AND organization_id = $3 AND business_unit_id = $4",
+			*spec.updatedAt,
+			move.ID.String(),
+			f.tenantA.OrgID.String(),
+			f.tenantA.BuID.String(),
+		)
 		require.NoError(t, err)
 	}
 
@@ -213,8 +218,7 @@ func (f *fixture) insertRow(
 		Source:           shipment.JurisdictionMileSourceRouteCalculation,
 		CalculatedAt:     f.start,
 	}
-	_, err := f.db.NewInsert().Model(row).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.ShipmentMoveJurisdictionMiles.Create(f.ctxA, f.db, row))
 }
 
 func (f *fixture) assign(t *testing.T, move *shipment.ShipmentMove, archived bool) {
@@ -231,8 +235,7 @@ func (f *fixture) assign(t *testing.T, move *shipment.ShipmentMove, archived boo
 		archivedAt := f.start + 10
 		assignment.ArchivedAt = &archivedAt
 	}
-	_, err := f.db.NewInsert().Model(assignment).Exec(f.ctx)
-	require.NoError(t, err)
+	require.NoError(t, shipmentdb.Assignments.Create(f.ctxA, f.db, assignment))
 }
 
 func (f *fixture) manualEntry(
@@ -256,7 +259,7 @@ func (f *fixture) manualEntry(
 		ShipmentMoveID: moveID,
 		CreatedByID:    f.userID,
 	}
-	created, err := f.repo.CreateMileageEntry(f.ctx, entry)
+	created, err := f.repo.CreateMileageEntry(f.as(tenant), entry)
 	require.NoError(t, err)
 	return created
 }
@@ -281,7 +284,7 @@ func (f *fixture) draft(
 		PeriodEnd:       f.end,
 		CurrencyCode:    "USD",
 	}
-	created, err := f.repo.CreateReturn(f.ctx, ret)
+	created, err := f.repo.CreateReturn(f.as(tenant), ret)
 	require.NoError(t, err)
 	return created
 }
@@ -435,7 +438,7 @@ func TestAccumulateMiles(t *testing.T) {
 	f.insertRow(t, inTransit, "US", "TX", 100, miles)
 	f.assign(t, inTransit, false)
 
-	result, err := f.repo.AccumulateMiles(f.ctx, &iftaports.AccumulateMilesRequest{
+	result, err := f.repo.AccumulateMiles(f.ctxA, &iftaports.AccumulateMilesRequest{
 		TenantInfo: f.tenantA,
 		Start:      f.start,
 		End:        f.end,
@@ -482,7 +485,7 @@ func TestAccumulateMiles(t *testing.T) {
 	assert.Equal(t, "300.000", result.Mismatches[0].MoveDistance.StringFixed(3))
 	assert.Equal(t, "100.000", result.Mismatches[0].AttributedMiles.StringFixed(3))
 
-	otherTenant, err := f.repo.AccumulateMiles(f.ctx, &iftaports.AccumulateMilesRequest{
+	otherTenant, err := f.repo.AccumulateMiles(f.ctxB, &iftaports.AccumulateMilesRequest{
 		TenantInfo: f.tenantB,
 		Start:      f.start,
 		End:        f.end,
@@ -507,7 +510,7 @@ func TestReturns_TenantIsolationAndOpenReturnRule(t *testing.T) {
 
 	original := f.draft(t, f.tenantA, 0, nil)
 
-	_, err := f.repo.CreateReturn(f.ctx, &ifta.Return{
+	_, err := f.repo.CreateReturn(f.ctxA, &ifta.Return{
 		OrganizationID: f.tenantA.OrgID,
 		BusinessUnitID: f.tenantA.BuID,
 		Year:           f.period.Year,
@@ -520,26 +523,26 @@ func TestReturns_TenantIsolationAndOpenReturnRule(t *testing.T) {
 	var conflict *errortypes.ConflictError
 	require.ErrorAs(t, err, &conflict, "two open returns for one period are rejected")
 
-	open, err := f.repo.GetOpenReturnForPeriod(f.ctx, &iftaports.GetOpenReturnForPeriodRequest{
+	open, err := f.repo.GetOpenReturnForPeriod(f.ctxA, &iftaports.GetOpenReturnForPeriodRequest{
 		TenantInfo: f.tenantA, Year: f.period.Year, Quarter: f.period.Quarter,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, open)
 	assert.Equal(t, original.ID, open.ID)
 
-	openB, err := f.repo.GetOpenReturnForPeriod(f.ctx, &iftaports.GetOpenReturnForPeriodRequest{
+	openB, err := f.repo.GetOpenReturnForPeriod(f.ctxB, &iftaports.GetOpenReturnForPeriodRequest{
 		TenantInfo: f.tenantB, Year: f.period.Year, Quarter: f.period.Quarter,
 	})
 	require.NoError(t, err)
 	assert.Nil(t, openB, "the other tenant sees no open return")
 
-	_, err = f.repo.GetReturnByID(f.ctx, &iftaports.GetReturnByIDRequest{
+	_, err = f.repo.GetReturnByID(f.ctxB, &iftaports.GetReturnByIDRequest{
 		ID: original.ID, TenantInfo: f.tenantB,
 	})
 	var notFound *errortypes.NotFoundError
 	require.ErrorAs(t, err, &notFound)
 
-	err = f.repo.DeleteReturn(f.ctx, &iftaports.DeleteReturnRequest{
+	err = f.repo.DeleteReturn(f.ctxB, &iftaports.DeleteReturnRequest{
 		ID: original.ID, TenantInfo: f.tenantB, Version: original.Version,
 	})
 	require.Error(t, err, "the other tenant cannot delete it")
@@ -560,12 +563,12 @@ func TestReturns_TenantIsolationAndOpenReturnRule(t *testing.T) {
 		LineTotalMinor: 2000,
 	}}
 	original.TotalMiles = decimal.NewFromInt(1000)
-	computed, err := f.repo.ReplaceReturnLines(f.ctx, original, lines)
+	computed, err := f.repo.ReplaceReturnLines(f.ctxA, original, lines)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), computed.Version)
 	require.NotNil(t, computed.ComputedAt)
 
-	loaded, err := f.repo.GetReturnByID(f.ctx, &iftaports.GetReturnByIDRequest{
+	loaded, err := f.repo.GetReturnByID(f.ctxA, &iftaports.GetReturnByIDRequest{
 		ID: original.ID, TenantInfo: f.tenantA, IncludeLines: true, IncludeJurisdictions: true,
 	})
 	require.NoError(t, err)
@@ -574,10 +577,10 @@ func TestReturns_TenantIsolationAndOpenReturnRule(t *testing.T) {
 	require.NotNil(t, loaded.Lines[0].Jurisdiction)
 	assert.Equal(t, "TX", loaded.Lines[0].Jurisdiction.Code)
 
-	recomputed, err := f.repo.ReplaceReturnLines(f.ctx, loaded, nil)
+	recomputed, err := f.repo.ReplaceReturnLines(f.ctxA, loaded, nil)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), recomputed.Version)
-	reloaded, err := f.repo.GetReturnByID(f.ctx, &iftaports.GetReturnByIDRequest{
+	reloaded, err := f.repo.GetReturnByID(f.ctxA, &iftaports.GetReturnByIDRequest{
 		ID: original.ID, TenantInfo: f.tenantA, IncludeLines: true,
 	})
 	require.NoError(t, err)
@@ -585,7 +588,7 @@ func TestReturns_TenantIsolationAndOpenReturnRule(t *testing.T) {
 
 	stale := *reloaded
 	stale.Version = 0
-	_, err = f.repo.UpdateReturn(f.ctx, &stale)
+	_, err = f.repo.UpdateReturn(f.ctxA, &stale)
 	require.Error(t, err, "stale version is rejected")
 }
 
@@ -600,11 +603,11 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 	original.FiledAt = ptr(now - 60)
 	original.FiledByID = f.userID
 	original.FilingReference = "TX-2020-Q1-0001"
-	filed, err := f.repo.UpdateReturn(f.ctx, original)
+	filed, err := f.repo.UpdateReturn(f.ctxA, original)
 	require.NoError(t, err)
 	assert.Equal(t, ifta.ReturnStatusFiled, filed.Status)
 
-	open, err := f.repo.GetOpenReturnForPeriod(f.ctx, &iftaports.GetOpenReturnForPeriodRequest{
+	open, err := f.repo.GetOpenReturnForPeriod(f.ctxA, &iftaports.GetOpenReturnForPeriodRequest{
 		TenantInfo: f.tenantA, Year: f.period.Year, Quarter: f.period.Quarter,
 	})
 	require.NoError(t, err)
@@ -615,7 +618,7 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 	assert.Equal(t, 1, amendment.AmendmentNumber)
 
 	latest, err := f.repo.GetLatestReturnForPeriod(
-		f.ctx,
+		f.ctxA,
 		&iftaports.GetLatestReturnForPeriodRequest{
 			TenantInfo: f.tenantA, Year: f.period.Year, Quarter: f.period.Quarter,
 		},
@@ -624,7 +627,7 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 	require.NotNil(t, latest)
 	assert.Equal(t, amendment.ID, latest.ID)
 
-	list, err := f.repo.ListReturns(f.ctx, &iftaports.ListReturnsRequest{
+	list, err := f.repo.ListReturns(f.ctxA, &iftaports.ListReturnsRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: f.tenantA},
 		Cursor: pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
 		Year:   f.period.Year,
@@ -635,7 +638,7 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 	require.Len(t, list.Items, 2)
 	assert.Equal(t, amendment.ID, list.Items[0].ID, "highest amendment first")
 
-	listB, err := f.repo.ListReturns(f.ctx, &iftaports.ListReturnsRequest{
+	listB, err := f.repo.ListReturns(f.ctxB, &iftaports.ListReturnsRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: f.tenantB},
 		Cursor: pagination.CursorInfo{Limit: 10},
 		Year:   f.period.Year,
@@ -648,7 +651,7 @@ func TestReturns_AmendmentCoexistsWithTheFiledOriginal(t *testing.T) {
 func TestTaxRates_UpsertUpdatesInPlace(t *testing.T) {
 	f := setup(t)
 
-	first, err := f.repo.UpsertTaxRates(f.ctx, []*ifta.TaxRate{{
+	first, err := f.repo.UpsertTaxRates(f.ctxA, []*ifta.TaxRate{{
 		JurisdictionID: f.tx.ID,
 		Year:           f.period.Year,
 		Quarter:        f.period.Quarter,
@@ -661,7 +664,7 @@ func TestTaxRates_UpsertUpdatesInPlace(t *testing.T) {
 	assert.False(t, first[0].ID.IsNil())
 	assert.Equal(t, int64(0), first[0].Version)
 
-	second, err := f.repo.UpsertTaxRates(f.ctx, []*ifta.TaxRate{
+	second, err := f.repo.UpsertTaxRates(f.ctxA, []*ifta.TaxRate{
 		{
 			JurisdictionID:         f.tx.ID,
 			Year:                   f.period.Year,
@@ -687,7 +690,7 @@ func TestTaxRates_UpsertUpdatesInPlace(t *testing.T) {
 	assert.True(t, second[0].SurchargeRatePerGallon.Valid)
 	assert.Equal(t, "corrected", second[0].SourceNote)
 
-	resolved, err := f.repo.ResolveRates(f.ctx, &iftaports.ResolveRatesRequest{
+	resolved, err := f.repo.ResolveRates(f.ctxA, &iftaports.ResolveRatesRequest{
 		Year: f.period.Year, Quarter: f.period.Quarter,
 	})
 	require.NoError(t, err)
@@ -696,7 +699,7 @@ func TestTaxRates_UpsertUpdatesInPlace(t *testing.T) {
 		JurisdictionID: f.ok.ID, FuelType: domaintypes.IFTAFuelTypeDiesel,
 	}].RatePerGallon.StringFixed(4))
 
-	list, err := f.repo.ListTaxRates(f.ctx, &iftaports.ListTaxRatesRequest{
+	list, err := f.repo.ListTaxRates(f.ctxA, &iftaports.ListTaxRatesRequest{
 		Cursor:              pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
 		Year:                f.period.Year,
 		Quarter:             f.period.Quarter,
@@ -708,8 +711,8 @@ func TestTaxRates_UpsertUpdatesInPlace(t *testing.T) {
 	require.Len(t, list.Items, 2)
 	require.NotNil(t, list.Items[0].Jurisdiction)
 
-	require.NoError(t, f.repo.DeleteTaxRate(f.ctx, second[1].ID, second[1].Version))
-	require.Error(t, f.repo.DeleteTaxRate(f.ctx, second[0].ID, second[0].Version+7),
+	require.NoError(t, f.repo.DeleteTaxRate(f.ctxA, second[1].ID, second[1].Version))
+	require.Error(t, f.repo.DeleteTaxRate(f.ctxA, second[0].ID, second[0].Version+7),
 		"a stale version does not delete")
 }
 
@@ -719,20 +722,20 @@ func TestMileageEntries_TenantIsolation(t *testing.T) {
 	entry := f.manualEntry(t, f.tenantA, "123.45", nil)
 	assert.False(t, entry.ID.IsNil())
 
-	_, err := f.repo.GetMileageEntryByID(f.ctx, &iftaports.GetMileageEntryByIDRequest{
+	_, err := f.repo.GetMileageEntryByID(f.ctxB, &iftaports.GetMileageEntryByIDRequest{
 		ID: entry.ID, TenantInfo: f.tenantB,
 	})
 	var notFound *errortypes.NotFoundError
 	require.ErrorAs(t, err, &notFound)
 
-	listB, err := f.repo.ListMileageEntries(f.ctx, &iftaports.ListMileageEntriesRequest{
+	listB, err := f.repo.ListMileageEntries(f.ctxB, &iftaports.ListMileageEntriesRequest{
 		Filter: &pagination.QueryOptions{TenantInfo: f.tenantB},
 		Cursor: pagination.CursorInfo{Limit: 10},
 	})
 	require.NoError(t, err)
 	assert.Empty(t, listB.Items)
 
-	listA, err := f.repo.ListMileageEntries(f.ctx, &iftaports.ListMileageEntriesRequest{
+	listA, err := f.repo.ListMileageEntries(f.ctxA, &iftaports.ListMileageEntriesRequest{
 		Filter:         &pagination.QueryOptions{TenantInfo: f.tenantA},
 		Cursor:         pagination.CursorInfo{Limit: 10, IncludeTotalCount: true},
 		TractorID:      f.tractorID,
@@ -744,17 +747,17 @@ func TestMileageEntries_TenantIsolation(t *testing.T) {
 	require.Len(t, listA.Items, 1)
 	require.NotNil(t, listA.Items[0].Tractor)
 
-	err = f.repo.DeleteMileageEntry(f.ctx, &iftaports.DeleteMileageEntryRequest{
+	err = f.repo.DeleteMileageEntry(f.ctxB, &iftaports.DeleteMileageEntryRequest{
 		ID: entry.ID, TenantInfo: f.tenantB, Version: entry.Version,
 	})
 	require.Error(t, err, "the other tenant cannot delete it")
 
 	entry.Miles = decimal.RequireFromString("200.00")
-	updated, err := f.repo.UpdateMileageEntry(f.ctx, entry)
+	updated, err := f.repo.UpdateMileageEntry(f.ctxA, entry)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), updated.Version)
 
-	require.NoError(t, f.repo.DeleteMileageEntry(f.ctx, &iftaports.DeleteMileageEntryRequest{
+	require.NoError(t, f.repo.DeleteMileageEntry(f.ctxA, &iftaports.DeleteMileageEntryRequest{
 		ID: entry.ID, TenantInfo: f.tenantA, Version: updated.Version,
 	}))
 }
@@ -762,7 +765,7 @@ func TestMileageEntries_TenantIsolation(t *testing.T) {
 func TestJurisdictions_LookupByCode(t *testing.T) {
 	f := setup(t)
 
-	found, err := f.repo.FindJurisdictionsByCodes(f.ctx, []string{"US_TX", "TX", "ca-on", "MX_CH"})
+	found, err := f.repo.FindJurisdictionsByCodes(f.ctxA, []string{"US_TX", "TX", "ca-on", "MX_CH"})
 	require.NoError(t, err)
 	assert.Equal(t, f.tx.ID, found["US_TX"].ID)
 	assert.Equal(t, f.tx.ID, found["TX"].ID, "a bare code is a US state")
@@ -772,14 +775,48 @@ func TestJurisdictions_LookupByCode(t *testing.T) {
 	assert.False(t, unknown)
 
 	members, err := f.repo.ListJurisdictions(
-		f.ctx,
+		f.ctxA,
 		&iftaports.ListJurisdictionsRequest{MembersOnly: true},
 	)
 	require.NoError(t, err)
-	all, err := f.repo.ListJurisdictions(f.ctx, &iftaports.ListJurisdictionsRequest{})
+	all, err := f.repo.ListJurisdictions(f.ctxA, &iftaports.ListJurisdictionsRequest{})
 	require.NoError(t, err)
 	assert.Less(t, len(members), len(all))
 	for _, j := range members {
 		assert.True(t, j.IsIftaMember)
 	}
+}
+
+func TestJurisdictionLookupsShareOneCachedCatalogRead(t *testing.T) {
+	f := setup(t)
+
+	cached := cachetest.Open(t, f.ctx, f.dsn)
+	repo := iftarepository.New(iftarepository.Params{
+		DB:     postgres.NewTestConnection(cached),
+		Logger: zap.NewNop(),
+	})
+
+	var all []*ifta.Jurisdiction
+	cachetest.RequireMiss(t, cached, func() error {
+		var err error
+		all, err = repo.ListJurisdictions(f.ctxA, &iftaports.ListJurisdictionsRequest{})
+		return err
+	})
+	require.NotEmpty(t, all)
+
+	var texas *ifta.Jurisdiction
+	cachetest.RequireHit(t, cached, func() error {
+		var err error
+		texas, err = repo.GetJurisdictionByCode(f.ctxA, "us", " tx ")
+		return err
+	})
+	assert.Equal(t, "TX", texas.Code)
+
+	cachetest.RequireHit(t, cached, func() error {
+		found, err := repo.GetJurisdictionsByIDs(f.ctxA, []pulid.ID{texas.ID})
+		if err == nil {
+			assert.Len(t, found, 1)
+		}
+		return err
+	})
 }

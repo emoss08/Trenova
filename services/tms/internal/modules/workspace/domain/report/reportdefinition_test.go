@@ -3,6 +3,8 @@ package report_test
 import (
 	"testing"
 
+	"github.com/emoss08/keel/analytics/ir"
+
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -21,7 +23,7 @@ func saveable() *report.ReportDefinition {
 		Visibility:     report.VisibilityPrivate,
 		Status:         report.DefinitionStatusActive,
 		DefaultFormat:  report.FormatCSV,
-		Definition:     &report.Definition{Entity: "shipment"},
+		Definition:     &ir.Definition{Version: ir.Version, Entity: "shipment"},
 	}
 }
 
@@ -74,4 +76,36 @@ func TestValidate_StillRefusesWhatTheCallerOwes(t *testing.T) {
 	blank.Name = ""
 
 	require.NotEmpty(t, messages(blank))
+}
+
+func TestDefinitionParameterNamesKeepDefinitionOrder(t *testing.T) {
+	def := &ir.Definition{Parameters: []ir.Parameter{
+		{Name: "status"}, {Name: "region"}, {Name: "customer"},
+	}}
+
+	assert.Equal(t, []string{"status", "region", "customer"}, report.ParameterNames(def))
+	assert.Empty(t, report.ParameterNames(&ir.Definition{}))
+}
+
+func TestDecodeDefinitionFillsTheVersionAndRejectsUnknownKeys(t *testing.T) {
+	def, err := report.DecodeDefinition(map[string]any{
+		"entity": "shipment",
+		"columns": []any{
+			map[string]any{"id": "pro", "dimension": map[string]any{"field": "proNumber"}},
+		},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, ir.Version, def.Version)
+	assert.Equal(t, "proNumber", def.Columns[0].Dimension.Field)
+
+	_, err = report.DecodeDefinition(map[string]any{"entity": "shipment", "colums": []any{}})
+	require.Error(t, err)
+
+	_, err = report.DecodeDefinition(nil)
+	require.Error(t, err)
+}
+
+func TestDefinitionJSONSchemaIsKeelsSchema(t *testing.T) {
+	schema := report.DefinitionJSONSchema()
+	assert.Contains(t, schema, "$defs", "keel's embedded schema no longer decodes")
 }

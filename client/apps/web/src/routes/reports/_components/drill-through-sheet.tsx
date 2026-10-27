@@ -10,7 +10,7 @@ import {
 import { Skeleton } from "@trenova/shared/components/ui/skeleton";
 import { useReportDrillThrough } from "@/hooks/use-reports";
 import { graphQLErrorMessage } from "@trenova/shared/lib/graphql";
-import type { ReportIrInput } from "@/lib/graphql/reports";
+import type { ReportDefinitionInput } from "@/lib/graphql/reports";
 import { AlertCircleIcon } from "@trenova/shared/components/icons";
 import { useMemo } from "react";
 import { ResultGrid } from "./result-grid";
@@ -29,7 +29,7 @@ export type DrillTarget = {
 type DrillThroughSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  definition: ReportIrInput | null;
+  definition: ReportDefinitionInput | null;
   params?: Record<string, unknown>;
   target: DrillTarget | null;
 };
@@ -105,6 +105,7 @@ export function DrillThroughSheet({
                 <ResultGrid
                   columns={drill.data?.columns ?? []}
                   rows={rows}
+                  timeZone={drill.data?.timezone}
                   density="compact"
                   emptyMessage={t("No records matched this cell.")}
                 />

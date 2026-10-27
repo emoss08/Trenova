@@ -154,12 +154,12 @@ type FindNearestActualTimelineEventRequest struct {
 }
 
 type ActualTimelineEvent struct {
-	Timestamp      int64                   `json:"timestamp"      bun:"timestamp"`
-	EventType      ActualTimelineEventType `json:"eventType"      bun:"event_type"`
-	StopID         pulid.ID                `json:"stopId"         bun:"stop_id"`
-	ShipmentMoveID pulid.ID                `json:"shipmentMoveId" bun:"shipment_move_id"`
-	ShipmentID     pulid.ID                `json:"shipmentId"     bun:"shipment_id"`
-	LocationName   string                  `json:"locationName"   bun:"location_name"`
+	Timestamp      int64                   `json:"timestamp"`
+	EventType      ActualTimelineEventType `json:"eventType"`
+	StopID         pulid.ID                `json:"stopId"`
+	ShipmentMoveID pulid.ID                `json:"shipmentMoveId"`
+	ShipmentID     pulid.ID                `json:"shipmentId"`
+	LocationName   string                  `json:"locationName"`
 }
 
 type FindOverlappingActualTimelineWindowRequest struct {
@@ -169,10 +169,10 @@ type FindOverlappingActualTimelineWindowRequest struct {
 }
 
 type ActualTimelineWindow struct {
-	StartTimestamp int64    `json:"startTimestamp" bun:"start_timestamp"`
-	EndTimestamp   int64    `json:"endTimestamp"   bun:"end_timestamp"`
-	ShipmentMoveID pulid.ID `json:"shipmentMoveId" bun:"shipment_move_id"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id"`
+	StartTimestamp int64    `json:"startTimestamp"`
+	EndTimestamp   int64    `json:"endTimestamp"`
+	ShipmentMoveID pulid.ID `json:"shipmentMoveId"`
+	ShipmentID     pulid.ID `json:"shipmentId"`
 }
 
 type AssignmentRepository interface {

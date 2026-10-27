@@ -6,10 +6,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/keel"
+	"github.com/emoss08/trenova/pkg/dbscope"
+
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
 	"github.com/emoss08/trenova/internal/modules/billing/domain/billingqueue"
@@ -19,32 +20,20 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
-type syncTenant struct {
-	ID             pulid.ID `bun:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id"`
-}
-
-type syncShipment struct {
-	ID      pulid.ID `bun:"id"`
-	PayerID pulid.ID `bun:"payer_id"`
-}
-
 type syncShipmentRow struct {
-	BillingTransferStatus  *string `bun:"billing_transfer_status"`
-	TransferredToBillingAt *int64  `bun:"transferred_to_billing_at"`
+	BillingTransferStatus  *string
+	TransferredToBillingAt *int64
 }
 
 type syncFixture struct {
 	ctx          context.Context
-	db           *bun.DB
+	db           *keel.DB
 	repo         *repository
 	shipmentRepo shipmentports.ShipmentRepository
 	tenant       pagination.TenantInfo
@@ -55,33 +44,21 @@ type syncFixture struct {
 func setupSyncFixture(t *testing.T) *syncFixture {
 	t.Helper()
 
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
+	var orgID, buID, shipmentID, payerID pulid.ID
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		"SELECT id, business_unit_id FROM organizations ORDER BY id LIMIT 1",
+	).Scan(&orgID, &buID))
+	require.NoError(t, db.Pool().QueryRow(ctx,
+		`SELECT id, COALESCE(bill_to_customer_id, customer_id) FROM shipments
+		WHERE organization_id = $1 AND business_unit_id = $2 ORDER BY created_at ASC LIMIT 1`,
+		orgID, buID,
+	).Scan(&shipmentID, &payerID))
 
-	var org syncTenant
-	require.NoError(t, db.NewSelect().
-		Table("organizations").Column("id", "business_unit_id").Limit(1).Scan(ctx, &org))
-
-	var shipment syncShipment
-	require.NoError(t, db.NewSelect().
-		Table("shipments").
-		Column("id").
-		ColumnExpr("COALESCE(bill_to_customer_id, customer_id) AS payer_id").
-		Where("organization_id = ?", org.ID).
-		Where("business_unit_id = ?", org.BusinessUnitID).
-		Order("created_at ASC").
-		Limit(1).Scan(ctx, &shipment))
-
+	tenant := pagination.TenantInfo{OrgID: orgID, BuID: buID}
+	ctx = dbscope.WithTenant(ctx, tenant.DBTenant())
 	conn := postgres.NewTestConnection(db)
 	logger := zap.NewNop()
 
@@ -105,9 +82,9 @@ func setupSyncFixture(t *testing.T) *syncFixture {
 				shipmentcommodityrepository.Params{DB: conn, Logger: logger},
 			),
 		}),
-		tenant:     pagination.TenantInfo{OrgID: org.ID, BuID: org.BusinessUnitID},
-		shipmentID: shipment.ID,
-		payerID:    shipment.PayerID,
+		tenant:     tenant,
+		shipmentID: shipmentID,
+		payerID:    payerID,
 	}
 }
 
@@ -149,11 +126,10 @@ func (f *syncFixture) shipmentRow(t *testing.T) syncShipmentRow {
 	t.Helper()
 
 	var row syncShipmentRow
-	require.NoError(t, f.db.NewSelect().
-		Table("shipments").
-		Column("billing_transfer_status", "transferred_to_billing_at").
-		Where("id = ?", f.shipmentID).
-		Scan(f.ctx, &row))
+	require.NoError(t, f.db.Pool().QueryRow(f.ctx,
+		"SELECT billing_transfer_status, transferred_to_billing_at FROM shipments WHERE id = $1",
+		f.shipmentID,
+	).Scan(&row.BillingTransferStatus, &row.TransferredToBillingAt))
 	return row
 }
 

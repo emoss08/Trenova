@@ -1,51 +1,41 @@
 import type { AnalysisView } from "@/components/assistant/analysis-result";
 import type { TranslateFn } from "@trenova/shared/i18n/use-t";
 import type { BadgeAttrProps } from "@trenova/shared/lib/status-phase";
-import type { AnalysisRun, AnalysisRunStatus } from "@/types/agent-extension";
+import type { AnalysisRun, AnalysisRunStatus } from "@/types/analysis";
 
-/** How an analysis ended: ran clean, the code raised, or the sandbox could not finish it. */
+/** How a script that showed something ended: ran clean, raised, hit a limit or could not run. */
 export function analysisRunStatusAttrs(t: TranslateFn): Record<AnalysisRunStatus, BadgeAttrProps> {
   return {
-    Running: {
-      phase: "active",
-      text: t("Running"),
-      description: t("The code is running in the sandbox"),
-    },
     Succeeded: {
       phase: "complete",
       text: t("Done"),
-      description: t("The code ran to the end"),
+      description: t("The script ran to the end"),
     },
     Errored: {
       phase: "attention",
-      text: t("Code error"),
-      description: t("The code raised an error; the agent can fix it and run it again"),
+      text: t("Script error"),
+      description: t("The script raised an error; the agent can fix it and run it again"),
     },
-    Failed: {
-      phase: "failed",
-      text: t("Failed"),
-      description: t("The sandbox could not run the code"),
+    Stopped: {
+      phase: "attention",
+      text: t("Stopped"),
+      description: t("The script reached a limit on its reads or memory and was stopped"),
     },
     TimedOut: {
       phase: "failed",
       text: t("Timed out"),
-      description: t("The code ran out of time and was stopped"),
+      description: t("The script ran out of time and was stopped"),
+    },
+    Failed: {
+      phase: "failed",
+      text: t("Failed"),
+      description: t("The script could not be run"),
     },
   };
 }
 
-/**
- * A stored run as the result view draws it. The history does not carry chart
- * titles, so each chart is named by its place; what was printed to stderr
- * follows stdout, as the agent read it.
- */
+/** A stored run as the result view draws it. */
 export function analysisViewOf(run: AnalysisRun): AnalysisView {
-  const stdout = run.stdout.trim();
-  const stderr = run.stderr.trim();
-  // i18n-ignore: the stream's own name, as the agent read it, not interface text
-  const marked = `[stderr]\n${stderr}`;
-  const output = stderr === "" ? stdout : [stdout, marked].filter(Boolean).join("\n");
-
   return {
     runId: run.id,
     status: run.status,
@@ -53,20 +43,16 @@ export function analysisViewOf(run: AnalysisRun): AnalysisView {
     code: run.code,
     datasets: run.datasets.map((dataset) => ({
       name: dataset.name,
-      path: dataset.path,
       source: dataset.source,
+      sourceId: dataset.sourceId,
       label: dataset.label,
       rows: dataset.rows,
     })),
-    output,
-    results: run.results,
+    output: run.output.trimEnd(),
+    charts: run.charts,
     tables: run.tables,
     figures: run.figures,
     layout: run.layout,
-    charts: Array.from({ length: run.chartCount }, (_, index) => ({
-      position: index + 1,
-      title: "",
-    })),
     error:
       run.errorName !== ""
         ? { name: run.errorName, value: run.errorValue, traceback: run.traceback }

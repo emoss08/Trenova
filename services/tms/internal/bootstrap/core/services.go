@@ -4,6 +4,7 @@ package core
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/bootstrap/crossref"
 	"github.com/emoss08/trenova/internal/infrastructure/inboundmail"
 	"github.com/emoss08/trenova/internal/infrastructure/temporaljobs/workflowstarter"
 	"github.com/emoss08/trenova/internal/modules/accounting/app/ledgersync"
@@ -20,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/operations/ports/tenderports"
 	"github.com/emoss08/trenova/internal/modules/parties/ports/carrierintelports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/carrierassignmentservice"
-	"github.com/emoss08/trenova/internal/modules/rating/app/fuelsurchargeservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/carriersettlementservice"
 	"github.com/emoss08/trenova/internal/modules/settlement/app/driversettlementservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/app/driverportalservice"
@@ -28,7 +28,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workforce/app/workerservice"
 	"github.com/emoss08/trenova/internal/modules/workforce/ports/workerports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablechangealertservice"
-	"github.com/emoss08/trenova/pkg/formulatemplatetypes"
 	"github.com/emoss08/trenova/pkg/seqgen"
 	"go.uber.org/fx"
 )
@@ -38,6 +37,11 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	workflowstarter.NewSignalStarter,
 	newDetectorRegistry,
 	newBriefingSources,
+	crossref.VisibleRecordSources,
+	crossref.OrderReferences,
+	crossref.TemplateConsumers,
+	crossref.RotaAssignments,
+	crossref.LocationColumns,
 	fx.Annotate(
 		internaledistatussync.New,
 		fx.As(new(shipmenteventports.ShipmentEventObserver)),
@@ -71,10 +75,6 @@ var ServiceModule = fx.Module("api-services", ledgersync.Module, fx.Provide(
 	),
 	fx.Annotate(
 		func(g seqgen.Generator) invoiceadjustmentports.InvoiceAdjustGenerator { return g },
-	),
-	fx.Annotate(
-		func(s *fuelsurchargeservice.Service) formulatemplatetypes.ContextVariableProvider { return s },
-		fx.ResultTags(`group:"formula_context_variables"`),
 	),
 ), fx.Invoke(
 	// The table-change-alert consumer reads the tca:events stream GTC fills

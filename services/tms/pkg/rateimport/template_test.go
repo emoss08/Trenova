@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
 	"github.com/emoss08/trenova/pkg/rateimport"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,10 +23,8 @@ func TestTemplateCSV_ImportsCleanly(t *testing.T) {
 	assert.Empty(t, unplaced, "every template header must be a name the importer recognises")
 	require.NoError(t, mapping.Validate())
 
-	templates := func(string) (pulid.ID, bool) { return pulid.MustNew("ft_"), true }
-
 	for index, row := range sheet.Rows {
-		rule, parseErr := rateimport.ParseRow(mapping, row, templates)
+		rule, parseErr := rateimport.ParseRow(mapping, row, resolveTemplate)
 		require.NoErrorf(t, parseErr, "template example row %d must parse", index+1)
 		require.NotNil(t, rule)
 		require.NoError(t, rateagreement.ApplyLanes(t.Context(), []*rateagreement.RateAgreementRule{rule}))

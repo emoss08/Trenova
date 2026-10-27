@@ -134,6 +134,7 @@ query ArDashboardKpis {
   arDashboardKpis {
     asOfDate
     overview {
+      hasInvoiced
       totalOpenMinor
       overdueMinor
       unappliedCashMinor
@@ -153,12 +154,28 @@ query ArDashboardKpis {
     }
     currentDsoDays
     dsoDeltaDays
-    cei
-    avgDaysToPay
     overduePercent
-    writeOffRatio
-    disputeRate
-    shortPayRate
+    collection {
+      totals {
+        periodStart
+        periodEnd
+        beginningOpenMinor
+        endingOpenMinor
+        endingCurrentMinor
+        creditSalesMinor
+        collectedMinor
+        avgDaysToPay
+        shortPayMinor
+        shortPayApplicationCount
+        applicationCount
+        disputedInvoiceCount
+        postedInvoiceCount
+      }
+      cei
+      writeOffRatio
+      disputeRate
+      shortPayRate
+    }
   }
 }
 
@@ -194,30 +211,6 @@ query ArCashFlowForecast($pastWeeks: Int, $futureWeeks: Int) {
     factorAdvancesMinor
     reserveReleasesMinor
     isForecast
-  }
-}
-
-query ArCollectionPerformance($periodDays: Int) {
-  arCollectionPerformance(periodDays: $periodDays) {
-    totals {
-      periodStart
-      periodEnd
-      beginningOpenMinor
-      endingOpenMinor
-      endingCurrentMinor
-      creditSalesMinor
-      collectedMinor
-      avgDaysToPay
-      shortPayMinor
-      shortPayApplicationCount
-      applicationCount
-      disputedInvoiceCount
-      postedInvoiceCount
-    }
-    cei
-    writeOffRatio
-    disputeRate
-    shortPayRate
   }
 }
 

@@ -25,15 +25,11 @@ type generatorOptions struct {
 	OutputPath   string
 	GqlgenPath   string
 	DomainDir    string
-	BuncolgenDir string
 	GoModPath    string
 }
 
-type fieldMapRegistration struct {
-	Values       map[string]string
-	GoExpression string
-	Relations    map[string]string
-	EntityName   string
+type tableColumnMap struct {
+	Values map[string]string
 }
 
 type goStruct struct {
@@ -61,7 +57,6 @@ type discovery struct {
 	Manifest   manifest
 	Gqlgen     gqlgenConfig
 	Structs    map[string]goStruct
-	FieldMaps  map[string]fieldMapRegistration
 	Selections map[string]typeSelection
 	Skipped    map[string]string
 }
@@ -69,21 +64,20 @@ type discovery struct {
 type typeSelection struct {
 	TypeName string
 	Struct   goStruct
-	FieldMap fieldMapRegistration
+	Columns  tableColumnMap
 }
 
 type generatedSpec struct {
 	Name          string
-	FieldMap      string
 	AlwaysColumns []string
 	Fields        []generatedField
 }
 
 type generatedField struct {
-	Name        string
-	FieldMapKey string
-	Special     string
-	Relation    *generatedRelation
+	Name     string
+	Column   string
+	Special  string
+	Relation *generatedRelation
 }
 
 type generatedRelation struct {

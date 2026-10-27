@@ -47,14 +47,16 @@ func TestList_Success(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"item1", "item2", "item3"},
-			Total: 3,
+			Items:      []string{"item1", "item2", "item3"},
+			Total:      3,
+			TotalExact: true,
 		}, nil
 	})
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"count":3`)
 	assert.Contains(t, w.Body.String(), `"results":["item1","item2","item3"]`)
+	assert.Contains(t, w.Body.String(), `"totalCountExact":true`)
 }
 
 func TestList_FunctionError(t *testing.T) {
@@ -92,8 +94,9 @@ func TestList_EmptyResult(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{},
-			Total: 0,
+			Items:      []string{},
+			Total:      0,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -121,8 +124,9 @@ func TestList_WithPagination(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"a", "b"},
-			Total: 10,
+			Items:      []string{"a", "b"},
+			Total:      10,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -133,6 +137,7 @@ func TestList_WithPagination(t *testing.T) {
 	assert.Equal(t, 10, response.Count)
 	require.NotNil(t, response.TotalCount)
 	assert.Equal(t, 10, *response.TotalCount)
+	assert.True(t, response.TotalCountExact)
 	assert.Len(t, response.Results, 2)
 
 	var fields map[string]any
@@ -159,8 +164,9 @@ func TestList_RejectsOffset(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"last"},
-			Total: 91,
+			Items:      []string{"last"},
+			Total:      91,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -187,8 +193,9 @@ func TestList_WithFilters(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"test"},
-			Total: 1,
+			Items:      []string{"test"},
+			Total:      1,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -216,8 +223,9 @@ func TestList_WithSort(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"z", "a"},
-			Total: 2,
+			Items:      []string{"z", "a"},
+			Total:      2,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -245,8 +253,9 @@ func TestList_WithGeoFilters(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"nearby"},
-			Total: 1,
+			Items:      []string{"nearby"},
+			Total:      1,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -273,8 +282,9 @@ func TestList_WithAggregateFilters(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"multi-stop"},
-			Total: 1,
+			Items:      []string{"multi-stop"},
+			Total:      1,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -301,8 +311,9 @@ func TestList_WithFilterGroups(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"active-item"},
-			Total: 1,
+			Items:      []string{"active-item"},
+			Total:      1,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -329,8 +340,9 @@ func TestList_OffsetDoesNotReturnPreviousPageURL(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"item"},
-			Total: 100,
+			Items:      []string{"item"},
+			Total:      100,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -353,14 +365,16 @@ func TestSelectOptions_Success(t *testing.T) {
 
 	SelectOptions[string](c, req, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"opt1", "opt2"},
-			Total: 2,
+			Items:      []string{"opt1", "opt2"},
+			Total:      2,
+			TotalExact: true,
 		}, nil
 	})
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"count":2`)
 	assert.Contains(t, w.Body.String(), `"results":["opt1","opt2"]`)
+	assert.Contains(t, w.Body.String(), `"totalCountExact":true`)
 }
 
 func TestSelectOptions_FunctionError(t *testing.T) {
@@ -398,8 +412,9 @@ func TestSelectOptions_EmptyResult(t *testing.T) {
 
 	SelectOptions[string](c, req, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{},
-			Total: 0,
+			Items:      []string{},
+			Total:      0,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -427,8 +442,9 @@ func TestSelectOptions_WithNextPage(t *testing.T) {
 
 	SelectOptions[string](c, req, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"a", "b", "c", "d", "e"},
-			Total: 20,
+			Items:      []string{"a", "b", "c", "d", "e"},
+			Total:      20,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -455,8 +471,9 @@ func TestSelectOptions_WithPreviousPage(t *testing.T) {
 
 	SelectOptions[string](c, req, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"f", "g"},
-			Total: 12,
+			Items:      []string{"f", "g"},
+			Total:      12,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -483,8 +500,9 @@ func TestSelectOptions_NoMorePages(t *testing.T) {
 
 	SelectOptions[string](c, req, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"only"},
-			Total: 1,
+			Items:      []string{"only"},
+			Total:      1,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -527,64 +545,14 @@ func TestList_StructType(t *testing.T) {
 				{ID: "1", Name: "First"},
 				{ID: "2", Name: "Second"},
 			},
-			Total: 2,
+			Total:      2,
+			TotalExact: true,
 		}, nil
 	})
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"id":"1"`)
 	assert.Contains(t, w.Body.String(), `"name":"First"`)
-}
-
-func TestList_UsesQueryOptionsCursorSortForEndCursor(t *testing.T) {
-	t.Parallel()
-
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(
-		http.MethodGet,
-		`http://example.com/api/items?limit=2&sort=[{"field":"name","direction":"asc"}]`,
-		nil,
-	)
-
-	eh := newTestErrorHandler()
-	opts := &QueryOptions{
-		Pagination: Info{Limit: 2, Offset: 0},
-	}
-	lastID := pulid.MustNew("item_")
-
-	List[cursorTestItem](c, opts, eh, func() (*ListResult[cursorTestItem], error) {
-		opts.CursorSort = []CursorSortField{
-			{Field: "name", Direction: "asc"},
-			{Field: "id", Direction: "asc"},
-		}
-
-		return &ListResult[cursorTestItem]{
-			Items: []cursorTestItem{
-				{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
-				{ID: lastID, CreatedAt: 1710000001000, Name: "Beta"},
-			},
-			Total: 2,
-		}, nil
-	})
-
-	require.Equal(t, http.StatusOK, w.Code)
-
-	var response struct {
-		EndCursor string `json:"endCursor"`
-	}
-	require.NoError(t, sonic.Unmarshal(w.Body.Bytes(), &response))
-	require.NotEmpty(t, response.EndCursor)
-
-	cursor, err := DecodeCursor(response.EndCursor)
-	require.NoError(t, err)
-	assert.Equal(t, lastID, cursor.ID)
-	assert.Equal(t, []CursorSortField{
-		{Field: "name", Direction: "asc"},
-		{Field: "id", Direction: "asc"},
-	}, cursor.Sort)
-	assert.Equal(t, []any{"Beta", lastID.String()}, cursor.Values)
 }
 
 func TestList_OverfetchesAndTrimsCursorPage(t *testing.T) {
@@ -609,7 +577,8 @@ func TestList_OverfetchesAndTrimsCursorPage(t *testing.T) {
 				{ID: pulid.MustNew("item_"), CreatedAt: 1710000001000, Name: "Beta"},
 				{ID: pulid.MustNew("item_"), CreatedAt: 1710000002000, Name: "Gamma"},
 			},
-			Total: 3,
+			Total:      3,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -653,7 +622,8 @@ func TestCursorList_UsesTotalCountForRESTCursorResponseCount(t *testing.T) {
 					{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
 					{ID: pulid.MustNew("item_"), CreatedAt: 1710000001000, Name: "Beta"},
 				},
-				TotalCount: &total,
+				TotalCount:      &total,
+				TotalCountExact: true,
 			}, nil
 		},
 	)
@@ -665,7 +635,46 @@ func TestCursorList_UsesTotalCountForRESTCursorResponseCount(t *testing.T) {
 	assert.Equal(t, total, response.Count)
 	require.NotNil(t, response.TotalCount)
 	assert.Equal(t, total, *response.TotalCount)
+	assert.True(t, response.TotalCountExact)
 	assert.Len(t, response.Results, 2)
+}
+
+func TestCursorList_CarriesAnEstimatedTotal(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "http://example.com/api/items?limit=2", nil)
+
+	eh := newTestErrorHandler()
+	opts := &QueryOptions{
+		Pagination: Info{Limit: 2, Offset: 0},
+	}
+	total := 1_250_000
+
+	CursorList[cursorTestItem](
+		c,
+		opts,
+		eh,
+		func(_ CursorInfo) (*CursorListResult[cursorTestItem], error) {
+			return &CursorListResult[cursorTestItem]{
+				Items: []cursorTestItem{
+					{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
+				},
+				TotalCount: &total,
+			}, nil
+		},
+	)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var response CursorResponse[[]cursorTestItem]
+	require.NoError(t, sonic.Unmarshal(w.Body.Bytes(), &response))
+	require.NotNil(t, response.TotalCount)
+	assert.Equal(t, total, *response.TotalCount)
+	assert.False(t, response.TotalCountExact)
+	assert.Contains(t, w.Body.String(), `"totalCountExact":false`)
 }
 
 func TestCursorList_FallsBackToPageLengthWhenTotalCountIsUnavailable(t *testing.T) {
@@ -704,68 +713,6 @@ func TestCursorList_FallsBackToPageLengthWhenTotalCountIsUnavailable(t *testing.
 	assert.Contains(t, w.Body.String(), `"totalCount":null`)
 }
 
-func TestList_ReturnsCursorValidationError(t *testing.T) {
-	t.Parallel()
-
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/api/items?limit=10", nil)
-
-	eh := newTestErrorHandler()
-	opts := &QueryOptions{
-		Pagination: Info{Limit: 10, Offset: 0},
-	}
-
-	List[cursorTestItem](c, opts, eh, func() (*ListResult[cursorTestItem], error) {
-		opts.CursorError = errors.New("cursor sort does not match request sort")
-
-		return &ListResult[cursorTestItem]{
-			Items: []cursorTestItem{
-				{ID: pulid.MustNew("item_"), CreatedAt: 1710000000000, Name: "Alpha"},
-			},
-			Total: 1,
-		}, nil
-	})
-
-	assert.NotEqual(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cursor sort does not match request sort")
-}
-
-func TestList_ReturnsCursorEncodeError(t *testing.T) {
-	t.Parallel()
-
-	gin.SetMode(gin.TestMode)
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request = httptest.NewRequest(http.MethodGet, "/api/items?limit=10", nil)
-
-	eh := newTestErrorHandler()
-	opts := &QueryOptions{
-		Pagination: Info{Limit: 10, Offset: 0},
-	}
-
-	List[cursorTestItemWithoutID](
-		c,
-		opts,
-		eh,
-		func() (*ListResult[cursorTestItemWithoutID], error) {
-			opts.CursorSort = []CursorSortField{
-				{Field: "name", Direction: "asc"},
-				{Field: "id", Direction: "asc"},
-			}
-
-			return &ListResult[cursorTestItemWithoutID]{
-				Items: []cursorTestItemWithoutID{{Name: "Alpha"}},
-				Total: 1,
-			}, nil
-		},
-	)
-
-	assert.NotEqual(t, http.StatusOK, w.Code)
-	assert.Contains(t, w.Body.String(), "cursor field")
-}
-
 func TestSelectOptions_StructType(t *testing.T) {
 	t.Parallel()
 
@@ -784,7 +731,8 @@ func TestSelectOptions_StructType(t *testing.T) {
 			Items: []testItem{
 				{ID: "x", Name: "Option X"},
 			},
-			Total: 1,
+			Total:      1,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -806,8 +754,9 @@ func TestList_BindQueryError(t *testing.T) {
 
 	List[string](c, opts, eh, func() (*ListResult[string], error) {
 		return &ListResult[string]{
-			Items: []string{"should not reach"},
-			Total: 1,
+			Items:      []string{"should not reach"},
+			Total:      1,
+			TotalExact: true,
 		}, nil
 	})
 
@@ -844,4 +793,150 @@ func TestNormalizeSlice_StringsAndNils(t *testing.T) {
 	strSlice, ok := result.([]string)
 	assert.True(t, ok)
 	assert.Equal(t, []string{"hello", "world"}, strSlice)
+}
+
+func TestList_FollowsItsOffsetCursorToTheNextPage(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	after := EncodeOffsetCursor(listCursorScope, 2)
+	c.Request = httptest.NewRequest(
+		http.MethodGet,
+		"http://example.com/api/items?limit=2&after="+after,
+		nil,
+	)
+
+	opts := &QueryOptions{Pagination: Info{Limit: 2}}
+	List[cursorTestItem](c, opts, newTestErrorHandler(), func() (*ListResult[cursorTestItem], error) {
+		assert.Equal(t, 2, opts.Pagination.SafeOffset())
+		assert.Equal(t, 3, opts.Pagination.SafeLimit())
+
+		return &ListResult[cursorTestItem]{
+			Items: []cursorTestItem{
+				{ID: pulid.MustNew("item_"), Name: "Gamma"},
+				{ID: pulid.MustNew("item_"), Name: "Delta"},
+			},
+			Total:      4,
+			TotalExact: true,
+		}, nil
+	})
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"hasNextPage":false`)
+	assert.Contains(t, w.Body.String(), `"endCursor":""`)
+}
+
+func TestList_RefusesACursorItDidNotIssue(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/items?limit=10&after=nonsense", nil)
+
+	called := false
+	List[cursorTestItem](c, &QueryOptions{Pagination: Info{Limit: 10}}, newTestErrorHandler(),
+		func() (*ListResult[cursorTestItem], error) {
+			called = true
+			return &ListResult[cursorTestItem]{}, nil
+		})
+
+	assert.False(t, called)
+	assert.NotEqual(t, http.StatusOK, w.Code)
+}
+
+func TestList_CarriesAnEstimatedTotal(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodGet, "http://example.com/api/items?limit=2", nil)
+
+	eh := newTestErrorHandler()
+	opts := &QueryOptions{
+		Pagination: Info{Limit: 2, Offset: 0},
+	}
+
+	List[string](c, opts, eh, func() (*ListResult[string], error) {
+		return &ListResult[string]{
+			Items: []string{"a", "b", "c"},
+			Total: 1_250_000,
+		}, nil
+	})
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var response CursorResponse[[]string]
+	require.NoError(t, sonic.Unmarshal(w.Body.Bytes(), &response))
+	assert.Equal(t, 1_250_000, response.Count)
+	require.NotNil(t, response.TotalCount)
+	assert.Equal(t, 1_250_000, *response.TotalCount)
+	assert.False(t, response.TotalCountExact)
+	assert.True(t, response.HasNextPage)
+	assert.Contains(t, w.Body.String(), `"totalCountExact":false`)
+}
+
+func TestSelectOptions_PagesPastAnEstimatedTotalByAFullPage(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(
+		http.MethodGet,
+		"http://example.com/api/select-options?limit=2&offset=20000",
+		nil,
+	)
+
+	eh := newTestErrorHandler()
+	req := &SelectQueryRequest{
+		Pagination: Info{Limit: 2, Offset: 20_000},
+	}
+
+	SelectOptions[string](c, req, eh, func() (*ListResult[string], error) {
+		return &ListResult[string]{
+			Items: []string{"a", "b"},
+			Total: 10_001,
+		}, nil
+	})
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var response Response[[]string]
+	require.NoError(t, sonic.Unmarshal(w.Body.Bytes(), &response))
+	assert.Equal(t, 10_001, response.Count)
+	assert.False(t, response.TotalCountExact)
+	assert.Contains(t, response.Next, "offset=20002")
+}
+
+func TestSelectOptions_StopsAtAShortPageOfAnEstimatedTotal(t *testing.T) {
+	t.Parallel()
+
+	gin.SetMode(gin.TestMode)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(
+		http.MethodGet,
+		"http://example.com/api/select-options?limit=5",
+		nil,
+	)
+
+	eh := newTestErrorHandler()
+	req := &SelectQueryRequest{
+		Pagination: Info{Limit: 5, Offset: 0},
+	}
+
+	SelectOptions[string](c, req, eh, func() (*ListResult[string], error) {
+		return &ListResult[string]{
+			Items: []string{"a"},
+			Total: 1_250_000,
+		}, nil
+	})
+
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"next":""`)
+	assert.Contains(t, w.Body.String(), `"totalCountExact":false`)
 }

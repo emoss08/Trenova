@@ -5,34 +5,49 @@ enum FormulaTemplateStatus {
   InReview
 }
 
-enum FormulaTemplateType {
-  FreightCharge
-  AccessorialCharge
-}
-
-"How a formula's computed charge is reduced to its billable precision."
-enum RateRoundingMode {
-  HalfUp
-  HalfEven
-  Up
-  Down
-  None
-}
-
-type FormulaTemplateVariableDefinition {
+"An input a formula declares. Its value comes from the rate agreement rule, then the agreement, then this default."
+type FormulaInputDeclaration {
   name: String!
+  "The input's doc comment, which labels it in the inputs form."
+  doc: String!
+  "The type as written in the source, such as Money/mi or List<Break>."
   type: String!
-  description: String!
+  "The type's structure, which the inputs form is built from. Its shape is the module's type descriptor."
+  descriptor: Any
   required: Boolean!
-  "Formula variable defaults can be scalar, array, object, or null by template design."
-  defaultValue: Any
-  source: String
+  "The default as a wire value, or null when the input has none."
+  default: Any
+  """
+  The values the input accepts, from its where clause, or null when it has none:
+  {"range": {"min": wire | null, "max": wire | null, "maxInclusive": bool}} (the
+  minimum is inclusive and an open end is null) or {"oneOf": [wire, ...]}. For a
+  list input it bounds each item.
+  """
+  constraint: Any
 }
 
-type FormulaTemplateBreakdownDefinition {
-  name: String!
-  label: String!
-  expression: String!
+"An organization library a formula version imports, pinned to the version it was checked against."
+type FormulaLibraryImport {
+  "The module path the source imports: org.<name>."
+  path: String!
+  libraryId: ID!
+  versionNumber: Int!
+  library: FormulaLibrary
+}
+
+"A rate table a formula version reads, pinned to the published matrix version it was checked against."
+type FormulaTemplateTable {
+  "The table's code, as the source reads it: tables.<code>."
+  code: String!
+  rateMatrixId: ID!
+  versionNumber: Int!
+  """
+  The matrix's newest published version. Greater than versionNumber when a
+  newer version is available; approving a new template version adopts it.
+  """
+  latestVersionNumber: Int!
+  "Whether the matrix is archived, so no new template version can read it."
+  archived: Boolean!
 }
 
 type FormulaTemplate {
@@ -41,16 +56,17 @@ type FormulaTemplate {
   organizationId: ID!
   name: String!
   description: String!
-  type: FormulaTemplateType!
-  expression: String!
+  "The formula's Tariff source."
+  source: String!
+  "The inputs the source declares, as the last check derived them."
+  inputs: [FormulaInputDeclaration!]!
+  "The organization libraries the source imports. Approval pins each to the version approved at that moment."
+  imports: [FormulaLibraryImport!]!
+  "The rate tables the source reads, each pinned to the published version the last check read."
+  tables: [FormulaTemplateTable!]!
+  "How many test blocks the source holds."
+  testCount: Int!
   status: FormulaTemplateStatus!
-  schemaId: String!
-  variableDefinitions: [FormulaTemplateVariableDefinition!]!
-  breakdownDefinitions: [FormulaTemplateBreakdownDefinition!]!
-  minCharge: Decimal
-  maxCharge: Decimal
-  roundingMode: RateRoundingMode!
-  roundingPrecision: Int!
   submittedById: ID
   submittedAt: Timestamp
   approvedById: ID
@@ -64,10 +80,8 @@ type FormulaTemplate {
   currentVersionNumber: Int!
   createdAt: Timestamp!
   updatedAt: Timestamp!
-  "How many shipments, accessorial charges, and rate agreement rules or accessorials rate with this template."
+  "How many shipments, rate agreement rules and billing fallbacks rate with this template."
   usageCount: Int!
-  "How many saved scenarios gate this template's approval."
-  scenarioCount: Int!
   businessUnit: BusinessUnit
   organization: Organization
 }
@@ -81,6 +95,8 @@ type FormulaTemplateConnection {
   edges: [FormulaTemplateEdge!]!
   pageInfo: PageInfo!
   totalCount: Int
+  "Whether totalCount was counted; false when it is the planner's estimate of a list too large to count."
+  totalCountExact: Boolean!
 }
 
 extend type Query {

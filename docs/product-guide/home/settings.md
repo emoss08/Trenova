@@ -20,9 +20,9 @@ Keywords: out of office, vacation, focus mode, do not disturb, availability, han
 4. Choose **Available** when you are back.
 
 ### Change your theme, language or time zone
-Keywords: dark mode, light mode, 24-hour clock, timezone, language, reduce motion
+Keywords: dark mode, light mode, 24-hour clock, timezone, language, reduce motion, vim keys
 1. Open [Settings](/settings) and go to **Preferences**.
-2. Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement.
+2. Change **Theme**, **Language**, **Time zone** or **Time format**. **Reduce motion** cuts slides and other movement. **Vim keys in the formula editor** gives the formula editor Vim's modes and AstroNvim's keys.
 
 ### Hide the assistant
 Keywords: turn off the assistant, hide Nova, remove the AI button, disable AI chat, Ctrl+J

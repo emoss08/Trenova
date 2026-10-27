@@ -6,13 +6,17 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/resultcache"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var shipmentControlErrors = dberror.Mapping{Entity: "ShipmentControl"}
 
 type Params struct {
 	fx.In
@@ -38,20 +42,10 @@ func (r *repository) Get(
 	req tenantports.GetShipmentControlRequest,
 ) (*tenant.ShipmentControl, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*tenant.ShipmentControl, error) {
-		log := r.l.With(
-			zap.String("operation", "Get"),
-			zap.String("orgID", req.TenantInfo.OrgID.String()),
-			zap.String("buID", req.TenantInfo.BuID.String()),
-		)
-
-		entity := new(tenant.ShipmentControl)
-		if err := r.db.DBForContext(ctx).NewSelect().
-			Model(entity).
-			Where("sc.organization_id = ?", req.TenantInfo.OrgID).
-			Where("sc.business_unit_id = ?", req.TenantInfo.BuID).
-			Scan(ctx); err != nil {
-			log.Error("failed to get shipment control", zap.Error(err))
-			return nil, dberror.HandleNotFoundError(err, "ShipmentControl")
+		entity, err := tenantdb.ShipmentControls.Cache(resultcache.Settings()...).
+			One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, shipmentControlErrors.Map(err, req.TenantInfo.OrgID.String())
 		}
 
 		return entity, nil
@@ -67,28 +61,26 @@ func (r *repository) ListDetentionEngineTenants(
 ) ([]pagination.TenantInfo, error) {
 	ctx = dbscope.WithSystem(ctx, "list organizations with the detention engine on")
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]pagination.TenantInfo, error) {
-		rows := make([]tenant.ShipmentControl, 0, 16)
-
-		q := r.db.DBForContext(ctx).NewSelect().
-			Model(&rows).
-			Column("sc.organization_id", "sc.business_unit_id").
-			Where("sc.use_detention_policy_engine = TRUE").
-			Order("sc.organization_id ASC")
-
+		sc := tenantdb.ShipmentControls
+		q := sc.AllTenants().
+			Pick(sc.OrganizationID, sc.BusinessUnitID).
+			Where(sc.UseDetentionPolicyEngine.IsTrue()).
+			Order(sc.OrganizationID.Asc())
 		if limit > 0 {
-			q = q.Limit(int64(limit))
+			q = q.Limit(limit)
 		}
 
-		if err := q.Scan(ctx); err != nil {
+		rows, err := q.All(ctx, r.db.Keel(ctx))
+		if err != nil {
 			r.l.Error("failed to list detention engine tenants", zap.Error(err))
 			return nil, err
 		}
 
 		tenants := make([]pagination.TenantInfo, 0, len(rows))
-		for i := range rows {
+		for _, row := range rows {
 			tenants = append(tenants, pagination.TenantInfo{
-				OrgID: rows[i].OrganizationID,
-				BuID:  rows[i].BusinessUnitID,
+				OrgID: row.OrganizationID,
+				BuID:  row.BusinessUnitID,
 			})
 		}
 
@@ -101,32 +93,13 @@ func (r *repository) Update(
 	entity *tenant.ShipmentControl,
 ) (*tenant.ShipmentControl, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*tenant.ShipmentControl, error) {
-		log := r.l.With(
-			zap.String("operation", "Update"),
-			zap.String("orgID", entity.OrganizationID.String()),
-		)
-
-		ov := entity.Version
-		entity.Version++
-
-		result, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			log.Error("failed to update shipment control", zap.Error(err))
-			return nil, err
-		}
-
-		if err = dberror.CheckRowsAffected(
-			result,
-			"ShipmentControl",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
+		if err := tenantdb.ShipmentControls.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			r.l.Error(
+				"failed to update shipment control",
+				zap.String("orgID", entity.OrganizationID.String()),
+				zap.Error(err),
+			)
+			return nil, shipmentControlErrors.Map(err, entity.ID.String())
 		}
 
 		return entity, nil

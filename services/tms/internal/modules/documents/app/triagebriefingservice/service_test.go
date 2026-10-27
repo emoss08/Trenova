@@ -41,7 +41,11 @@ func (f fakeMailboxes) List(
 	context.Context,
 	*inboundmessageports.ListMailboxesRequest,
 ) (*pagination.ListResult[*inboundmessage.Mailbox], error) {
-	return &pagination.ListResult[*inboundmessage.Mailbox]{Items: f.items, Total: len(f.items)}, nil
+	return &pagination.ListResult[*inboundmessage.Mailbox]{
+		Items:      f.items,
+		Total:      len(f.items),
+		TotalExact: true,
+	}, nil
 }
 
 type fakeMessages struct {

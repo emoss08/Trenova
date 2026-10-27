@@ -3,18 +3,20 @@ package edicarrierinvoicerepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/edicol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
+	"github.com/emoss08/trenova/internal/modules/edi/domain/edi/edidb"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/listquery"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/querybuilder"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+var carrierInvoiceErrors = dberror.Mapping{Entity: "CarrierInvoice"}
 
 type Params struct {
 	fx.In
@@ -43,35 +45,23 @@ func (r *repository) ListCarrierInvoices(
 		ctx,
 		r.db,
 		func(ctx context.Context) (*pagination.ListResult[*edi.CarrierInvoice], error) {
-			entities := make([]*edi.CarrierInvoice, 0, req.Filter.Pagination.SafeLimit())
-			cols := edicol.CarrierInvoiceColumns
+			ci := edidb.CarrierInvoices
+			q := ci.Where(
+				keel.When(
+					req.ReconciliationStatus != "",
+					ci.ReconciliationStatus.Eq(req.ReconciliationStatus),
+				),
+				keel.When(req.PartnerID.IsNotNil(), ci.EDIPartnerID.Eq(req.PartnerID)),
+				keel.When(req.ShipmentID.IsNotNil(), ci.ShipmentID.Eq(req.ShipmentID)),
+			)
 
-			query := r.db.DBForContext(ctx).
-				NewSelect().
-				Model(&entities).
-				Relation("Partner")
-			if req.ReconciliationStatus != "" {
-				query = query.Where(cols.ReconciliationStatus.Eq(), req.ReconciliationStatus)
-			}
-			if req.PartnerID.IsNotNil() {
-				query = query.Where(cols.EDIPartnerID.Eq(), req.PartnerID)
-			}
-			if req.ShipmentID.IsNotNil() {
-				query = query.Where(cols.ShipmentID.Eq(), req.ShipmentID)
-			}
-
-			total, err := querybuilder.ApplyFilters(query, "ecinv", req.Filter, (*edi.CarrierInvoice)(nil)).
-				Order(cols.CreatedAt.OrderDesc()).
-				Limit(int64(req.Filter.Pagination.SafeLimit())).
-				Offset(int64(req.Filter.Pagination.SafeOffset())).
-				ScanAndCount(ctx)
-			if err != nil {
-				return nil, err
-			}
-			return &pagination.ListResult[*edi.CarrierInvoice]{
-				Items: entities,
-				Total: int(total),
-			}, nil
+			return listquery.List(ctx, r.db.Keel(ctx), q, &listquery.Request[edi.CarrierInvoice]{
+				Filter: req.Filter,
+				Shape: func(q *keel.Query[*edi.CarrierInvoice]) *keel.Query[*edi.CarrierInvoice] {
+					return q.Load(ci.Partner())
+				},
+				Then: []keel.Order{ci.CreatedAt.Desc()},
+			})
 		},
 	)
 }
@@ -81,18 +71,12 @@ func (r *repository) GetCarrierInvoiceByID(
 	req ediports.GetEDICarrierInvoiceByIDRequest,
 ) (*edi.CarrierInvoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
-		entity := new(edi.CarrierInvoice)
-		cols := edicol.CarrierInvoiceColumns
-
-		query := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Relation("Partner").
-			Where(cols.ID.Eq(), req.ID).
-			Apply(edicol.CarrierInvoiceApplyTenant(req.TenantInfo))
-		if err := query.Scan(ctx); err != nil {
-			return nil, dberror.HandleNotFoundError(err, "CarrierInvoice")
+		ci := edidb.CarrierInvoices
+		entity, err := ci.Where(ci.ID.Eq(req.ID)).Load(ci.Partner()).One(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return nil, carrierInvoiceErrors.Map(err, req.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -102,20 +86,16 @@ func (r *repository) GetCarrierInvoiceByNumber(
 	req *ediports.GetEDICarrierInvoiceByNumberRequest,
 ) (*edi.CarrierInvoice, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
-		entity := new(edi.CarrierInvoice)
-		cols := edicol.CarrierInvoiceColumns
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			Where(cols.EDIPartnerID.Eq(), req.PartnerID).
-			Where(cols.InvoiceNumberKey.Eq(), edi.InvoiceNumberKey(req.InvoiceNumber)).
-			Where(cols.DuplicateOfID.IsNull()).
-			Apply(edicol.CarrierInvoiceApplyTenant(req.TenantInfo)).
-			Scan(ctx)
+		ci := edidb.CarrierInvoices
+		entity, err := ci.Where(
+			ci.EDIPartnerID.Eq(req.PartnerID),
+			ci.InvoiceNumberKey.Eq(edi.InvoiceNumberKey(req.InvoiceNumber)),
+			ci.DuplicateOfID.IsNull(),
+		).One(ctx, r.db.Keel(ctx))
 		if err != nil {
-			return nil, dberror.HandleNotFoundError(err, "CarrierInvoice")
+			return nil, carrierInvoiceErrors.Map(err, req.InvoiceNumber)
 		}
+
 		return entity, nil
 	})
 }
@@ -125,13 +105,10 @@ func (r *repository) CreateCarrierInvoice(
 	entity *edi.CarrierInvoice,
 ) (*edi.CarrierInvoice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
-			return nil, err
+		if err := edidb.CarrierInvoices.Create(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, carrierInvoiceErrors.Map(err, entity.ID.String())
 		}
+
 		return entity, nil
 	})
 }
@@ -141,26 +118,10 @@ func (r *repository) UpdateCarrierInvoice(
 	entity *edi.CarrierInvoice,
 ) (*edi.CarrierInvoice, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*edi.CarrierInvoice, error) {
-		ov := entity.Version
-		entity.Version++
-		results, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			WherePK().
-			Where("version = ?", ov).
-			Returning("*").
-			Exec(ctx)
-		if err != nil {
-			entity.Version = ov
-			return nil, err
+		if err := edidb.CarrierInvoices.Save(ctx, r.db.Keel(ctx), entity); err != nil {
+			return nil, carrierInvoiceErrors.Map(err, entity.ID.String())
 		}
-		if err = dberror.CheckRowsAffected(
-			results,
-			"CarrierInvoice",
-			entity.ID.String(),
-		); err != nil {
-			return nil, err
-		}
+
 		return entity, nil
 	})
 }

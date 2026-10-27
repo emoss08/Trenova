@@ -4,16 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/agentprofile/agentprofiledb"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentprofileports"
-	"github.com/emoss08/trenova/pkg/buncolgen/agentprofilecol"
 	"github.com/emoss08/trenova/pkg/dberror"
-	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/shared/timeutils"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -21,6 +19,8 @@ const (
 	defaultGuidanceList = 100
 	maxGuidanceList     = 200
 )
+
+var guidanceErrors = dberror.Mapping{Entity: "Guidance"}
 
 type guidanceRepository struct {
 	db *postgres.Connection
@@ -34,18 +34,14 @@ func NewGuidance(p Params) agentprofileports.GuidanceRepository {
 	}
 }
 
-func scopeGuidanceSubject(
-	sq *bun.SelectQuery,
-	ref agentprofileports.SubjectRef,
-) *bun.SelectQuery {
-	cols := agentprofilecol.GuidanceColumns
-	sq = agentprofilecol.GuidanceScopeTenant(sq, ref.Tenant()).
-		Where(cols.Subject.Eq(), ref.Subject)
+func guidanceSubject(ref agentprofileports.SubjectRef) keel.Pred {
+	g := agentprofiledb.Guidances
+	person := g.UserID.IsNull()
 	if ref.Subject == agentprofile.SubjectUser {
-		return sq.Where(cols.UserID.Eq(), ref.PersonID)
+		person = g.UserID.Eq(ref.PersonID)
 	}
 
-	return sq.Where(cols.UserID.IsNull())
+	return keel.And(g.Subject.Eq(ref.Subject), person)
 }
 
 // ListActive is what the next version of the profile is written from, oldest
@@ -55,20 +51,11 @@ func (r *guidanceRepository) ListActive(
 	ref agentprofileports.SubjectRef,
 ) ([]*agentprofile.Guidance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentprofile.Guidance, error) {
-		cols := agentprofilecol.GuidanceColumns
-		rows := make([]*agentprofile.Guidance, 0, agentprofile.MaxActiveGuidance)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scopeGuidanceSubject(sq, ref).
-					Where(cols.Status.Eq(), agentprofile.GuidanceStatusActive)
-			}).
-			OrderExpr(cols.CreatedAt.OrderAsc()).
-			OrderExpr(cols.ID.OrderAsc()).
+		g := agentprofiledb.Guidances
+		rows, err := g.Where(guidanceSubject(ref), g.Status.Eq(agentprofile.GuidanceStatusActive)).
+			Order(g.CreatedAt.Asc(), g.ID.Asc()).
 			Limit(agentprofile.MaxActiveGuidance).
-			Scan(ctx)
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list active agent profile guidance: %w", err)
 		}
@@ -84,35 +71,35 @@ func (r *guidanceRepository) List(
 	req *agentprofileports.ListGuidanceRequest,
 ) ([]*agentprofile.Guidance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) ([]*agentprofile.Guidance, error) {
-		cols := agentprofilecol.GuidanceColumns
 		limit := req.Limit
 		if limit <= 0 {
 			limit = defaultGuidanceList
 		}
 		limit = min(limit, maxGuidanceList)
 
-		rows := make([]*agentprofile.Guidance, 0, min(limit, agentprofile.MaxActiveGuidance))
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&rows).
-			Relation(agentprofilecol.GuidanceRelations.CreatedBy).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				sq = scopeGuidanceSubject(sq, req.Ref)
-				if !req.IncludeRetired {
-					sq = sq.Where(cols.Status.In(), bun.List(openGuidanceStatuses()))
-				}
-
-				return sq
-			}).
-			OrderExpr(
-				cols.Status.Expr("CASE {} WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END"),
-				agentprofile.GuidanceStatusActive,
-				agentprofile.GuidanceStatusSuggested,
+		g := agentprofiledb.Guidances
+		rows, err := g.Load(g.CreatedBy()).
+			Where(
+				guidanceSubject(req.Ref),
+				keel.When(!req.IncludeRetired, g.Status.In(openGuidanceStatuses()...)),
 			).
-			OrderExpr(cols.CreatedAt.OrderDesc()).
-			OrderExpr(cols.ID.OrderDesc()).
-			Limit(int64(limit)).
-			Scan(ctx)
+			Order(
+				keel.CaseInt64().
+					When(
+						g.Status.Eq(agentprofile.GuidanceStatusActive),
+						keel.Int64(0),
+					).
+					When(
+						g.Status.Eq(agentprofile.GuidanceStatusSuggested),
+						keel.Int64(1),
+					).
+					Else(keel.Int64(2)).
+					Asc(),
+				g.CreatedAt.Desc(),
+				g.ID.Desc(),
+			).
+			Limit(limit).
+			List(ctx, r.db.Keel(ctx))
 		if err != nil {
 			return nil, fmt.Errorf("list agent profile guidance: %w", err)
 		}
@@ -141,15 +128,13 @@ func (r *guidanceRepository) count(
 	statuses []agentprofile.GuidanceStatus,
 ) (int, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (int, error) {
-		cols := agentprofilecol.GuidanceColumns
+		g := agentprofiledb.Guidances
+		n, err := g.Where(guidanceSubject(ref), g.Status.In(statuses...)).Count(ctx, r.db.Keel(ctx))
+		if err != nil {
+			return 0, fmt.Errorf("count agent profile guidance: %w", err)
+		}
 
-		return dbhelper.Count(ctx, r.db.DBForContext(ctx).
-			NewSelect().
-			Model((*agentprofile.Guidance)(nil)).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return scopeGuidanceSubject(sq, ref).
-					Where(cols.Status.In(), bun.List(statuses))
-			}))
+		return int(n), nil
 	})
 }
 
@@ -167,22 +152,11 @@ func (r *guidanceRepository) GetByID(
 	req agentprofileports.GetGuidanceRequest,
 ) (*agentprofile.Guidance, error) {
 	return dbtx.Read(ctx, r.db, func(ctx context.Context) (*agentprofile.Guidance, error) {
-		cols := agentprofilecol.GuidanceColumns
-		entity := new(agentprofile.Guidance)
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(entity).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return agentprofilecol.GuidanceScopeTenant(sq, req.TenantInfo).
-					Where(cols.ID.Eq(), req.ID)
-			}).
-			Scan(ctx)
+		entity, err := agentprofiledb.Guidances.Get(ctx, r.db.Keel(ctx), req.ID)
+		if dberror.IsNotFoundError(err) {
+			return nil, errortypes.NewNotFoundError("Guidance not found")
+		}
 		if err != nil {
-			if dberror.IsNotFoundError(err) {
-				return nil, errortypes.NewNotFoundError("Guidance not found")
-			}
-
 			return nil, fmt.Errorf("get agent profile guidance: %w", err)
 		}
 
@@ -195,11 +169,7 @@ func (r *guidanceRepository) Create(
 	entity *agentprofile.Guidance,
 ) (*agentprofile.Guidance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentprofile.Guidance, error) {
-		if _, err := r.db.DBForContext(ctx).
-			NewInsert().
-			Model(entity).
-			Returning("*").
-			Exec(ctx); err != nil {
+		if err := agentprofiledb.Guidances.Create(ctx, r.db.Keel(ctx), entity); err != nil {
 			r.l.Error("failed to create agent profile guidance", zap.Error(err))
 
 			return nil, fmt.Errorf("create agent profile guidance: %w", err)
@@ -216,32 +186,14 @@ func (r *guidanceRepository) Update(
 	entity *agentprofile.Guidance,
 ) (*agentprofile.Guidance, error) {
 	return dbtx.Write(ctx, r.db, func(ctx context.Context) (*agentprofile.Guidance, error) {
-		cols := agentprofilecol.GuidanceColumns
-		previous := entity.Version
-		entity.Version++
-
-		res, err := r.db.DBForContext(ctx).
-			NewUpdate().
-			Model(entity).
-			Column(
-				cols.Status.Bare(),
-				cols.RetiredByID.Bare(),
-				cols.RetiredAt.Bare(),
-				cols.Version.Bare(),
-			).
-			Set(cols.UpdatedAt.Set(), timeutils.NowUnix()).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return agentprofilecol.GuidanceScopeTenantUpdate(uq, entityTenant(entity)).
-					Where(cols.ID.Eq(), entity.ID).
-					Where(cols.Version.Eq(), previous)
-			}).
-			Returning("*").
-			Exec(ctx)
+		g := agentprofiledb.Guidances
+		err := g.Save(ctx, r.db.Keel(ctx), entity, g.Status, g.RetiredByID, g.RetiredAt)
 		if err != nil {
+			if dberror.IsVersionConflict(err) {
+				return nil, guidanceErrors.Map(err, entity.ID.String())
+			}
+
 			return nil, fmt.Errorf("update agent profile guidance: %w", err)
-		}
-		if err = dberror.CheckRowsAffected(res, "Guidance", entity.ID.String()); err != nil {
-			return nil, err
 		}
 
 		return entity, nil

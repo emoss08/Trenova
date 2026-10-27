@@ -2,11 +2,10 @@ package ediservice
 
 import (
 	"context"
-	"fmt"
-	"slices"
+	"errors"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/edi/app/edix12"
+	"github.com/emoss08/trenova/internal/modules/edi/app/edilading"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
@@ -20,32 +19,13 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-const serviceFailure214TriggerReference = "serviceFailure214Trigger"
-
-type serviceFailure214Settings struct {
-	Enabled                 bool
-	SendOnReviewed          bool
-	SendOnResolved          bool
-	MandatoryOnReviewed     bool
-	MandatoryOnResolved     bool
-	StatusCode              string
-	RequireStatusReasonCode bool
-	RequireLocation         bool
-	RequireLocationName     bool
-	RequireCityState        bool
-	RequirePostalCode       bool
-	RequireTimeCode         bool
-	TimeCode                string
-	RequireStop             bool
-	RequireProNumber        bool
-	RequireBOL              bool
-	AcceptedReasonCodes     map[string]struct{}
-}
+const (
+	serviceFailure214TriggerReference = "serviceFailure214Trigger"
+	serviceFailureEvent               = "ServiceFailure"
+)
 
 type serviceFailure214Candidate struct {
-	partner  *edi.EDIPartner
-	profile  *edi.EDIPartnerDocumentProfile
-	settings serviceFailure214Settings
+	partner *edi.EDIPartner
 }
 
 func (s *Service) PreviewServiceFailure214ForLifecycle(
@@ -95,12 +75,7 @@ func (s *Service) serviceFailure214Lifecycle(
 		return result, err
 	}
 
-	payload := buildServiceFailure214LifecyclePayload(
-		failure,
-		source,
-		candidate.settings,
-		req.Trigger,
-	)
+	payload := buildServiceFailure214LifecyclePayload(failure, source, req.Trigger)
 	if err = s.applyServiceFailure214ReasonMapping(
 		ctx,
 		req.TenantInfo,
@@ -110,18 +85,37 @@ func (s *Service) serviceFailure214Lifecycle(
 	); err != nil {
 		return nil, err
 	}
-	diagnostics := serviceFailurePayloadDiagnostics(payload.ShipmentStatus, candidate.settings)
+	diagnostics := serviceFailurePayloadDiagnostics(payload.ShipmentStatus)
 	result = &servicefailureports.ServiceFailure214LifecycleResult{
-		Trigger:                  req.Trigger,
-		Action:                   ediports.ServiceFailureEDIActionSkipped,
-		EDIPartnerID:             candidate.partner.ID,
-		PartnerDocumentProfileID: candidate.profile.ID,
-		Mandatory:                candidate.settings.mandatory(req.Trigger),
-		Diagnostics:              diagnostics,
+		Trigger:      req.Trigger,
+		Action:       ediports.ServiceFailureEDIActionSkipped,
+		EDIPartnerID: candidate.partner.ID,
+		Mandatory:    true,
+		Diagnostics:  diagnostics,
 	}
 	if hasErrorDiagnostics(diagnostics) {
 		result.Action = ediports.ServiceFailureEDIActionBlocked
 		result.SkippedReason = "service failure 214 payload has blocking diagnostics"
+		return result, nil
+	}
+	request := &ediports.GenerateEDIDocumentRequest{
+		TenantInfo:       req.TenantInfo,
+		EDIPartnerID:     candidate.partner.ID,
+		ShipmentID:       failure.ShipmentID,
+		ServiceFailureID: failure.ID,
+		TransactionSet:   edi.TransactionSet214,
+		Direction:        edi.DocumentDirectionOutbound,
+		Payload:          &payload,
+		GeneratedByID:    req.GeneratedByID,
+	}
+	preview, err := s.PreviewOutboundDocument(ctx, request)
+	if err != nil {
+		return nil, err
+	}
+	result.Diagnostics = append(result.Diagnostics, preview.Document.Diagnostics...)
+	if preview.Blocking {
+		result.Action = ediports.ServiceFailureEDIActionBlocked
+		result.SkippedReason = "the partner's 214 map or rules refuse this service failure"
 		return result, nil
 	}
 	if !generate {
@@ -130,17 +124,12 @@ func (s *Service) serviceFailure214Lifecycle(
 		return result, nil
 	}
 
-	message, err := s.GenerateDocument(ctx, &ediports.GenerateEDIDocumentRequest{
-		TenantInfo:               req.TenantInfo,
-		PartnerDocumentProfileID: candidate.profile.ID,
-		EDIPartnerID:             candidate.partner.ID,
-		ShipmentID:               failure.ShipmentID,
-		ServiceFailureID:         failure.ID,
-		TransactionSet:           edi.TransactionSet214,
-		Direction:                edi.DocumentDirectionOutbound,
-		Payload:                  &payload,
-		GeneratedByID:            req.GeneratedByID,
-	})
+	message, err := s.GenerateDocument(ctx, request)
+	if errors.Is(err, ediports.ErrSendDeferred) {
+		result.Action = ediports.ServiceFailureEDIActionQueued
+		result.SkippedReason = "the partner's flow sends it with its next batch"
+		return result, nil
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -297,11 +286,11 @@ func (s *Service) resolveServiceFailure214Candidate(
 		), nil
 	}
 
-	candidates := make([]serviceFailure214Candidate, 0, partners.Total)
+	candidates := make([]serviceFailure214Candidate, 0, len(partners.Items))
 	activeOutboundPartners := 0
 	capabilityDisabled := false
-	inactiveProfile := false
-	triggerDisabled := false
+	noVersion := false
+	flowSilent := false
 	for _, partner := range partners.Items {
 		if partner == nil {
 			continue
@@ -318,65 +307,35 @@ func (s *Service) resolveServiceFailure214Candidate(
 			capabilityDisabled = true
 			continue
 		}
-		profiles, profileErr := s.documentProfileRepo.ListPartnerDocumentProfiles(
-			ctx,
-			&ediports.ListEDIPartnerDocumentProfilesRequest{
-				Filter: &pagination.QueryOptions{
-					TenantInfo: req.TenantInfo,
-					Pagination: pagination.Info{Limit: pagination.MaxLimit},
-				},
-				PartnerID:      partner.ID,
-				TransactionSet: edi.TransactionSet214,
-				Direction:      edi.DocumentDirectionOutbound,
-				Standard:       edi.EDIStandardX12,
-			},
-		)
-		if profileErr != nil {
-			return nil, nil, profileErr
+		program, programErr := s.lading.Active(ctx, req.TenantInfo, partner.ID)
+		if errors.Is(programErr, edilading.ErrNoProject) ||
+			errors.Is(programErr, edilading.ErrNoActiveVersion) {
+			noVersion = true
+			continue
 		}
-		for _, profile := range profiles.Items {
-			if profile == nil {
-				continue
-			}
-			if profile.Status != edi.DocumentStatusActive {
-				inactiveProfile = true
-				continue
-			}
-			settings, settingDiagnostics := parseServiceFailure214Settings(profile.PartnerSettings)
-			if hasErrorDiagnostics(settingDiagnostics) {
-				result := &servicefailureports.ServiceFailure214LifecycleResult{
-					Trigger:                  req.Trigger,
-					Action:                   ediports.ServiceFailureEDIActionBlocked,
-					EDIPartnerID:             partner.ID,
-					PartnerDocumentProfileID: profile.ID,
-					Mandatory:                true,
-					SkippedReason:            "service failure 214 partner settings are invalid",
-					Diagnostics:              settingDiagnostics,
-				}
-				return nil, result, nil
-			}
-			if !settings.enabledForTrigger(req.Trigger) {
-				triggerDisabled = true
-				continue
-			}
-			candidates = append(candidates, serviceFailure214Candidate{
-				partner:  partner,
-				profile:  profile,
-				settings: settings,
-			})
+		if programErr != nil {
+			return nil, nil, programErr
 		}
+		if _, clause := program.Manifest.Sending(
+			string(edi.TransactionSet214),
+			serviceFailureEvent,
+		); clause == nil {
+			flowSilent = true
+			continue
+		}
+		candidates = append(candidates, serviceFailure214Candidate{partner: partner})
 	}
 
 	switch len(candidates) {
 	case 0:
-		reason := "service failure 214 trigger disabled"
+		reason := "the partner's flow sends no 214 on a service failure"
 		switch {
 		case activeOutboundPartners == 0:
 			reason = "EDI partner is inactive or outbound disabled"
 		case capabilityDisabled:
 			reason = "shipment status capability disabled"
-		case inactiveProfile && !triggerDisabled:
-			reason = "service failure 214 partner document profile inactive"
+		case noVersion && !flowSilent:
+			reason = "the partner has no active Lading version"
 		}
 		return nil, skippedServiceFailure214Result(req.Trigger, reason), nil
 	case 1:
@@ -384,12 +343,10 @@ func (s *Service) resolveServiceFailure214Candidate(
 	default:
 		result := skippedServiceFailure214Result(
 			req.Trigger,
-			"ambiguous service failure 214 partner document profile",
+			"more than one of the customer's EDI partners sends a 214 on a service failure",
 		)
-		if hasMandatoryServiceFailure214Candidate(candidates, req.Trigger) {
-			result.Action = ediports.ServiceFailureEDIActionBlocked
-			result.Mandatory = true
-		}
+		result.Action = ediports.ServiceFailureEDIActionBlocked
+		result.Mandatory = true
 		return nil, result, nil
 	}
 }
@@ -425,18 +382,11 @@ func (s *Service) shipmentStatusCapabilityEnabled(
 func buildServiceFailure214LifecyclePayload(
 	failure *servicefailure.ServiceFailure,
 	source *shipment.Shipment,
-	settings serviceFailure214Settings,
 	trigger servicefailureports.ServiceFailureEDITrigger,
 ) edi.DocumentPayload {
 	payload := buildServiceFailureShipmentStatusPayload(failure, source)
 	if payload.ShipmentStatus == nil {
 		return payload
-	}
-	if strings.TrimSpace(failure.X12StatusCodeOverride) == "" && settings.StatusCode != "" {
-		payload.ShipmentStatus.StatusCode = settings.StatusCode
-	}
-	if settings.TimeCode != "" {
-		payload.ShipmentStatus.EventTimeCode = settings.TimeCode
 	}
 	if payload.ShipmentStatus.References == nil {
 		payload.ShipmentStatus.References = map[string]string{}
@@ -446,279 +396,49 @@ func buildServiceFailure214LifecyclePayload(
 	return payload
 }
 
-func parseServiceFailure214Settings(
-	settings map[string]any,
-) (serviceFailure214Settings, []edix12.Diagnostic) {
-	rawValue, ok := settings["serviceFailure214"]
-	if !ok || rawValue == nil {
-		return serviceFailure214Settings{}, nil
-	}
-	raw, ok := rawValue.(map[string]any)
-	if !ok {
-		return serviceFailure214Settings{}, []edix12.Diagnostic{
-			serviceFailure214PartnerSettingDiagnostic(
-				partnerSettingTypeInvalidCode,
-				"serviceFailure214",
-				"serviceFailure214 must be an object",
-				"Use an object with enabled, trigger, requirement, and optional code settings.",
-			),
-		}
-	}
-	diagnostics := validateServiceFailure214PartnerSettings(
-		&edi.EDIPartnerDocumentProfile{
-			Standard:       edi.EDIStandardX12,
-			TransactionSet: edi.TransactionSet214,
-			Direction:      edi.DocumentDirectionOutbound,
-		},
-		settings,
-	)
-	parsed := serviceFailure214Settings{
-		StatusCode:          normalizedX12Code(rawString(raw, "statusCode")),
-		TimeCode:            normalizedX12Code(rawString(raw, "timeCode")),
-		AcceptedReasonCodes: normalizedCodeSet(rawSlice(raw, "acceptedReasonCodes")),
-	}
-	parsed.Enabled = rawBool(raw, "enabled")
-	parsed.SendOnReviewed = rawBool(raw, "sendOnReviewed")
-	parsed.SendOnResolved = rawBool(raw, "sendOnResolved")
-	parsed.MandatoryOnReviewed = rawBool(raw, "mandatoryOnReviewed")
-	parsed.MandatoryOnResolved = rawBool(raw, "mandatoryOnResolved")
-	parsed.RequireStatusReasonCode = rawBool(raw, "requireStatusReasonCode")
-	parsed.RequireLocation = rawBool(raw, "requireLocation")
-	parsed.RequireLocationName = rawBool(raw, "requireLocationName")
-	parsed.RequireCityState = rawBool(raw, "requireCityState")
-	parsed.RequirePostalCode = rawBool(raw, "requirePostalCode")
-	parsed.RequireTimeCode = rawBool(raw, "requireTimeCode")
-	parsed.RequireStop = rawBool(raw, "requireStop")
-	parsed.RequireProNumber = rawBool(raw, "requireProNumber")
-	parsed.RequireBOL = rawBool(raw, "requireBol")
-	return parsed, diagnostics
-}
-
-func rawBool(settings map[string]any, key string) bool {
-	value, _ := settings[key].(bool)
-	return value
-}
-
-func rawString(settings map[string]any, key string) string {
-	value, _ := settings[key].(string)
-	return value
-}
-
-func rawSlice(settings map[string]any, key string) []string {
-	value, ok := settings[key]
-	if !ok {
-		return nil
-	}
-	switch typed := value.(type) {
-	case []string:
-		return typed
-	case []any:
-		values := make([]string, 0, len(typed))
-		for _, item := range typed {
-			if text, ok := item.(string); ok {
-				values = append(values, text)
-			}
-		}
-		return values
-	default:
-		return nil
-	}
-}
-
-func normalizedCodeSet(values []string) map[string]struct{} {
-	if len(values) == 0 {
-		return nil
-	}
-	set := make(map[string]struct{}, len(values))
-	for _, value := range values {
-		normalized := normalizedX12Code(value)
-		if normalized == "" {
-			continue
-		}
-		set[normalized] = struct{}{}
-	}
-	return set
-}
-
 func normalizedX12Code(value string) string {
 	return strings.ToUpper(strings.TrimSpace(value))
 }
 
-func (s serviceFailure214Settings) enabledForTrigger(
-	trigger servicefailureports.ServiceFailureEDITrigger,
-) bool {
-	if !s.Enabled {
-		return false
-	}
-	switch trigger {
-	case servicefailureports.ServiceFailureEDITriggerReviewed:
-		return s.SendOnReviewed || s.MandatoryOnReviewed
-	case servicefailureports.ServiceFailureEDITriggerResolved:
-		return s.SendOnResolved || s.MandatoryOnResolved
-	default:
-		return false
-	}
-}
-
-func (s serviceFailure214Settings) mandatory(
-	trigger servicefailureports.ServiceFailureEDITrigger,
-) bool {
-	switch trigger {
-	case servicefailureports.ServiceFailureEDITriggerReviewed:
-		return s.MandatoryOnReviewed
-	case servicefailureports.ServiceFailureEDITriggerResolved:
-		return s.MandatoryOnResolved
-	default:
-		return false
-	}
-}
-
-func serviceFailure214Diagnostics(
-	payload *edi.ShipmentStatusPayload,
-	settings serviceFailure214Settings,
-) []edix12.Diagnostic {
+func serviceFailure214Diagnostics(payload *edi.ShipmentStatusPayload) []edi.Diagnostic {
 	if payload == nil {
-		return []edix12.Diagnostic{serviceFailure214Diagnostic(
-			"required",
+		return []edi.Diagnostic{requiredServiceFailure214Diagnostic(
 			"shipmentStatus",
 			"EDI 214 shipment status payload is required",
 			"Build the shipment status payload before generating the 214.",
 		)}
 	}
-	diagnostics := make([]edix12.Diagnostic, 0, 6)
+	diagnostics := make([]edi.Diagnostic, 0, 6)
 	statusCode := normalizedX12Code(payload.StatusCode)
 	reasonCode := normalizedX12Code(payload.StatusReasonCode)
 	if payload.EventDate == 0 {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
+		diagnostics = append(diagnostics, requiredServiceFailure214Diagnostic(
 			"shipmentStatus.eventDate",
 			"Service failure 214 event date is required",
 			"Set the service failure detection, creation, or actual arrival timestamp before generating the 214.",
 		))
 	}
 	if payload.EventTime == 0 {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
+		diagnostics = append(diagnostics, requiredServiceFailure214Diagnostic(
 			"shipmentStatus.eventTime",
 			"Service failure 214 event time is required",
 			"Set the service failure detection, creation, or actual arrival timestamp before generating the 214.",
 		))
 	}
-	if settings.RequireTimeCode && strings.TrimSpace(payload.EventTimeCode) == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.eventTimeCode",
-			"Partner profile requires an AT7 time code for service failure 214 generation",
-			"Set serviceFailure214.timeCode on the partner document profile or include shipmentStatus.eventTimeCode.",
-		))
-	}
 	if statusCode == "SD" && reasonCode == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
+		diagnostics = append(diagnostics, requiredServiceFailure214Diagnostic(
 			"shipmentStatus.statusReasonCode",
 			"X12 214 service failure status code SD requires a status reason code",
 			"Set an override reason code or configure a default reason code on the service failure reason code.",
 		))
 	}
-	if statusCode != "SD" && settings.RequireStatusReasonCode && reasonCode == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.statusReasonCode",
-			"Partner profile requires a shipment status reason code",
-			"Set an override reason code or configure a default reason code on the service failure reason code.",
-		))
-	}
-	if settings.RequireBOL && strings.TrimSpace(payload.BOL) == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.bol",
-			"Partner profile requires a BOL for service failure 214 generation",
-			"Set the shipment BOL before generating the 214.",
-		))
-	}
-	if settings.RequireProNumber && strings.TrimSpace(payload.ProNumber) == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.proNumber",
-			"Partner profile requires a PRO number for service failure 214 generation",
-			"Set the shipment PRO number before generating the 214.",
-		))
-	}
-	if settings.RequireStop && payload.StopID.IsNil() {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.stopId",
-			"Partner profile requires a stop for service failure 214 generation",
-			"Link the service failure to a shipment stop before generating the 214.",
-		))
-	}
-	if settings.RequireLocation && payload.LocationID.IsNil() &&
-		strings.TrimSpace(payload.LocationName) == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.locationName",
-			"Partner profile requires a location identifier or name for service failure 214 generation",
-			"Link the service failure stop to a location or provide a location name before generating the 214.",
-		))
-	}
-	if settings.RequireLocationName && strings.TrimSpace(payload.LocationName) == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.locationName",
-			"Partner profile requires a location name for service failure 214 generation",
-			"Set the service failure stop location name before generating the 214.",
-		))
-	}
-	if settings.RequireCityState &&
-		(strings.TrimSpace(payload.City) == "" || strings.TrimSpace(payload.StateCode) == "") {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.city",
-			"Partner profile requires city and state for service failure 214 generation",
-			"Set the service failure stop city and state before generating the 214.",
-		))
-	}
-	if settings.RequirePostalCode && strings.TrimSpace(payload.PostalCode) == "" {
-		diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-			"required",
-			"shipmentStatus.postalCode",
-			"Partner profile requires postal code for service failure 214 generation",
-			"Set the service failure stop postal code before generating the 214.",
-		))
-	}
-	if len(settings.AcceptedReasonCodes) > 0 && reasonCode != "" {
-		if _, ok := settings.AcceptedReasonCodes[reasonCode]; !ok {
-			diagnostics = append(diagnostics, serviceFailure214Diagnostic(
-				"unsupported_reason_code",
-				"shipmentStatus.statusReasonCode",
-				fmt.Sprintf(
-					"Status reason code %s is not accepted by the partner profile; accepted codes are %s",
-					reasonCode,
-					formatAcceptedReasonCodes(settings.AcceptedReasonCodes),
-				),
-				"Use one of the accepted partner reason codes for this service failure 214.",
-			))
-		}
-	}
 	return diagnostics
 }
 
-func formatAcceptedReasonCodes(codes map[string]struct{}) string {
-	if len(codes) == 0 {
-		return "unrestricted"
-	}
-	values := make([]string, 0, len(codes))
-	for code := range codes {
-		values = append(values, code)
-	}
-	slices.Sort(values)
-	return strings.Join(values, ", ")
-}
-
-func serviceFailure214Diagnostic(code, path, message, suggestedFix string) edix12.Diagnostic {
-	diagnostic := edix12.Diagnostic{
+func requiredServiceFailure214Diagnostic(path, message, suggestedFix string) edi.Diagnostic {
+	diagnostic := edi.Diagnostic{
 		Severity:     edi.ValidationSeverityError,
-		Code:         code,
+		Code:         "required",
 		SegmentID:    "AT7",
 		Path:         path,
 		Message:      message,
@@ -730,21 +450,9 @@ func serviceFailure214Diagnostic(code, path, message, suggestedFix string) edix1
 	return diagnostic
 }
 
-func hasErrorDiagnostics(diagnostics []edix12.Diagnostic) bool {
+func hasErrorDiagnostics(diagnostics []edi.Diagnostic) bool {
 	for _, diagnostic := range diagnostics {
 		if diagnostic.Severity == edi.ValidationSeverityError {
-			return true
-		}
-	}
-	return false
-}
-
-func hasMandatoryServiceFailure214Candidate(
-	candidates []serviceFailure214Candidate,
-	trigger servicefailureports.ServiceFailureEDITrigger,
-) bool {
-	for _, candidate := range candidates {
-		if candidate.settings.mandatory(trigger) {
 			return true
 		}
 	}
@@ -759,7 +467,7 @@ func skippedServiceFailure214Result(
 		Trigger:       trigger,
 		Action:        ediports.ServiceFailureEDIActionSkipped,
 		SkippedReason: reason,
-		Diagnostics:   []edix12.Diagnostic{},
+		Diagnostics:   []edi.Diagnostic{},
 	}
 }
 
@@ -768,11 +476,10 @@ func duplicateServiceFailure214Result(
 	message *edi.EDIMessage,
 ) *servicefailureports.ServiceFailure214LifecycleResult {
 	return &servicefailureports.ServiceFailure214LifecycleResult{
-		Trigger:                  trigger,
-		Action:                   ediports.ServiceFailureEDIActionDuplicate,
-		MessageID:                message.ID,
-		EDIPartnerID:             message.EDIPartnerID,
-		PartnerDocumentProfileID: message.PartnerDocumentProfileID,
-		Diagnostics:              []edix12.Diagnostic{},
+		Trigger:      trigger,
+		Action:       ediports.ServiceFailureEDIActionDuplicate,
+		MessageID:    message.ID,
+		EDIPartnerID: message.EDIPartnerID,
+		Diagnostics:  []edi.Diagnostic{},
 	}
 }

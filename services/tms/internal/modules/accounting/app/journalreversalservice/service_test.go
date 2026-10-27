@@ -1,21 +1,22 @@
 package journalreversalservice
 
 import (
+	"context"
+	"testing"
+
+	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks/fiscalperiodportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalentryportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/journalreversalportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"context"
-	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/fiscalperiod"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalentry"
 	"github.com/emoss08/trenova/internal/modules/accounting/domain/journalreversal"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/fiscalperiodports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalentryports"
 	"github.com/emoss08/trenova/internal/modules/accounting/ports/journalreversalports"
-	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -23,7 +24,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 )
 
 func TestCreateJournalReversalPendingApprovalWhenConfigured(t *testing.T) {
@@ -153,8 +153,9 @@ func TestListAndGetJournalReversal(t *testing.T) {
 		List(mock.Anything, mock.Anything).
 		Return(
 			&pagination.ListResult[*journalreversal.Reversal]{
-				Items: []*journalreversal.Reversal{entity},
-				Total: 1,
+				Items:      []*journalreversal.Reversal{entity},
+				Total:      1,
+				TotalExact: true,
 			},
 			nil,
 		)
@@ -361,7 +362,7 @@ func TestPostBlocksAlreadyReversedEntry(t *testing.T) {
 		).
 		Return(reversal, nil)
 	svc := &Service{
-		db:                  fakeReversalDB{},
+		db:                  dbtest.NopConnection{},
 		journalEntryRepo:    entryRepo,
 		journalReversalRepo: reversalRepo,
 		journalPostingRepo:  journalentryportsmock.NewMockJournalPostingRepository(t),
@@ -454,7 +455,7 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 		GetByOrgID(mock.Anything, orgID).
 		Return(&tenant.AccountingControl{FunctionalCurrencyCode: "USD"}, nil)
 	svc := &Service{
-		db:                  fakeReversalDB{},
+		db:                  dbtest.NopConnection{},
 		journalEntryRepo:    entryRepo,
 		journalReversalRepo: reversalRepo,
 		journalPostingRepo:  postingRepo,
@@ -485,22 +486,6 @@ func TestPostCreatesReversalAndMarksOriginalReversed(t *testing.T) {
 	assert.Equal(t, entryID, markReq.OriginalEntryID)
 	assert.Equal(t, result.ReversalJournalEntryID, markReq.ReversalEntryID)
 }
-
-type fakeReversalDB struct{}
-
-func (fakeReversalDB) DB() *bun.DB                          { return nil }
-func (fakeReversalDB) DBForContext(context.Context) bun.IDB { return nil }
-
-func (fakeReversalDB) WithTx(
-	ctx context.Context,
-	_ kernelports.TxOptions,
-	fn func(context.Context, bun.Tx) error,
-) error {
-	return fn(ctx, bun.Tx{})
-}
-func (fakeReversalDB) HealthCheck(context.Context) error { return nil }
-func (fakeReversalDB) IsHealthy(context.Context) bool    { return true }
-func (fakeReversalDB) Close() error                      { return nil }
 
 func postedEntry(id, orgID, buID pulid.ID) *journalentry.JournalEntry {
 	return &journalentry.JournalEntry{

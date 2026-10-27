@@ -6,178 +6,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolschema"
+	"github.com/emoss08/keel/analytics/diff"
+	"github.com/emoss08/keel/analytics/export"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
-	"github.com/emoss08/trenova/internal/modules/workspace/domain/report"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/reportdiff"
-	"github.com/emoss08/trenova/pkg/reportrows"
 	"github.com/emoss08/trenova/pkg/toolschema"
 	"github.com/emoss08/trenova/shared/pulid"
 )
-
-// maxListedRuns bounds what report_list_runs returns. A run row is small, but
-// the point of the tool is to find the two runs worth comparing, and a
-// hundred of them is a list nobody reads and a model picks from badly.
-const maxListedRuns = 25
-
-type listReportRunsTool struct {
-	reports reportRunner
-}
-
-func newListReportRunsTool(reports reportRunner) agentports.AgentQueryTool {
-	return &listReportRunsTool{reports: reports}
-}
-
-func (t *listReportRunsTool) Name() string { return "report_list_runs" }
-
-func (t *listReportRunsTool) Description() string {
-	return "List recent runs the person you are acting for made of a report, newest " +
-		"first, so you can name the two worth comparing; another person's runs are never " +
-		"listed. Use this before report_compare_runs, which needs run ids and " +
-		"has no other way to learn them. Each row says whether the run finished and " +
-		"whether its rows were stored — a run whose rows were not stored cannot be " +
-		"compared, and there is no way to recover them short of running the report again."
-}
-
-func (t *listReportRunsTool) ParamSchema() map[string]any {
-	return map[string]any{
-		"type": "object",
-		"properties": map[string]any{
-			"definitionId": agenttoolschema.OfResource(map[string]any{
-				toolschema.KeyType: toolschema.TypeString,
-				toolschema.KeyDescription: "The saved report to list runs of, from report_list. " +
-					"Omit to list the person's recent runs across every report.",
-			}, permission.ResourceReport),
-			paramLimit: limitSchema(maxListedRuns, maxListedRuns),
-		},
-		"additionalProperties": false,
-	}
-}
-
-func (t *listReportRunsTool) Policy() agentports.ToolPolicy {
-	return readPolicy(t.Name(), readSpec{
-		resource: permission.ResourceReport,
-	})
-}
-
-func (t *listReportRunsTool) Query(
-	ctx context.Context,
-	params *agentports.QueryToolParams,
-) (any, error) {
-	if err := guardQuery(params); err != nil {
-		return nil, err
-	}
-
-	var definitionID pulid.ID
-	if raw := optionalString(params.Params, "definitionId"); raw != "" {
-		parsed, err := requirePulid(params.Params, "definitionId")
-		if err != nil {
-			return nil, err
-		}
-		definitionID = parsed
-	}
-
-	limit := optionalInt(params.Params, "limit", maxListedRuns)
-	if limit <= 0 || limit > maxListedRuns {
-		limit = maxListedRuns
-	}
-
-	runs, err := t.reports.ListRuns(ctx, &reporting.ListRunsRequest{
-		Request:      reportingRequestFor(params),
-		DefinitionID: definitionID,
-		Limit:        limit,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	rows := make([]reportRunRow, 0, len(runs))
-	comparable := 0
-	for _, run := range runs {
-		row := toRunRow(run)
-		if row.Comparable {
-			comparable++
-		}
-		rows = append(rows, row)
-	}
-
-	return map[string]any{
-		"runs": rows,
-		"note": listedRunsNote(len(rows), comparable),
-	}, nil
-}
-
-// reportRunRow is one run, said the way a decision about comparing it needs.
-type reportRunRow struct {
-	RunID        string `json:"runId"`
-	DefinitionID string `json:"definitionId,omitempty"`
-	ReportName   string `json:"reportName,omitempty"`
-	ReportKey    string `json:"reportKey,omitempty"`
-	Status       string `json:"status"`
-	Format       string `json:"format,omitempty"`
-	RowCount     int64  `json:"rowCount,omitempty"`
-	Truncated    bool   `json:"truncated,omitempty"`
-	CreatedAt    int64  `json:"createdAt"`
-	// Comparable is stated rather than left to be inferred from the status: a
-	// succeeded run whose rows were never stored looks identical to one that
-	// can be compared, and the difference is not recoverable.
-	Comparable bool   `json:"comparable"`
-	Reason     string `json:"reason,omitempty"`
-}
-
-func toRunRow(run *report.ReportRun) reportRunRow {
-	row := reportRunRow{
-		RunID:     run.ID.String(),
-		ReportKey: run.CannedKey,
-		Status:    string(run.Status),
-		Format:    string(run.Format),
-		RowCount:  run.RowCount,
-		Truncated: run.Truncated,
-		CreatedAt: run.CreatedAt,
-	}
-	if !run.DefinitionID.IsNil() {
-		row.DefinitionID = run.DefinitionID.String()
-	}
-	if run.ReportDefinition != nil {
-		row.ReportName = run.ReportDefinition.Name
-	}
-
-	switch {
-	case run.Status != report.RunStatusSucceeded:
-		row.Reason = "This run ended as " + string(run.Status) + ", so it has no rows."
-	case run.RowsKey == "":
-		row.Reason = "This run was generated before its rows were stored, " +
-			"so it cannot be compared."
-	default:
-		row.Comparable = true
-	}
-
-	return row
-}
-
-func listedRunsNote(total, comparable int) string {
-	switch {
-	case total == 0:
-		return "There are no runs of this report yet. Run it with report_run; " +
-			"a comparison needs two runs of the same report."
-	case comparable == 0:
-		return "None of these runs can be compared. Run the report again — runs " +
-			"from now on store their rows."
-	case comparable == 1:
-		return "Only one of these runs can be compared. Run the report again to " +
-			"have a second one to compare it against."
-	default:
-		return fmt.Sprintf(
-			"%d of these %d runs can be compared. Pass two of their run ids to "+
-				"report_compare_runs, earlier one first.",
-			comparable, total,
-		)
-	}
-}
 
 type compareReportRunsTool struct {
 	reports reportRunner
@@ -276,11 +114,16 @@ func (t *compareReportRunsTool) Query(
 		return nil, err
 	}
 
-	result, err := reportdiff.Compare(before.rows, after.rows, reportdiff.Options{
-		Keys:             optionalStrings(params.Params, "keys"),
-		Measures:         optionalStrings(params.Params, "measures"),
-		IncludeUnchanged: optionalBool(params.Params, "includeUnchanged"),
-	})
+	result, err := diff.Compare(
+		ctx,
+		before.rows.Table.Reader(),
+		after.rows.Table.Reader(),
+		diff.Options{
+			Keys:             optionalStrings(params.Params, "keys"),
+			Measures:         optionalStrings(params.Params, "measures"),
+			IncludeUnchanged: optionalBool(params.Params, "includeUnchanged"),
+		},
+	)
 	if err != nil {
 		return nil, describeCompareRefusal(err)
 	}
@@ -302,15 +145,15 @@ func (t *compareReportRunsTool) Query(
 // renders. The two sides are described as well as diffed: "up 4%" means
 // nothing without knowing which two days it is between.
 type reportRunComparison struct {
-	Before    comparedRun               `json:"before"`
-	After     comparedRun               `json:"after"`
-	Keys      []string                  `json:"keys"`
-	Measures  []string                  `json:"measures"`
-	Summary   reportdiff.Summary        `json:"summary"`
-	Changes   []reportdiff.Change       `json:"changes"`
-	Totals    []reportdiff.MeasureTotal `json:"totals"`
-	Truncated bool                      `json:"truncated,omitempty"`
-	Note      string                    `json:"note"`
+	Before    comparedRun    `json:"before"`
+	After     comparedRun    `json:"after"`
+	Keys      []string       `json:"keys"`
+	Measures  []string       `json:"measures"`
+	Summary   diff.Summary   `json:"summary"`
+	Changes   []diff.Change  `json:"changes"`
+	Totals    []diff.Measure `json:"totals"`
+	Truncated bool           `json:"truncated,omitempty"`
+	Note      string         `json:"note"`
 }
 
 type comparedRun struct {
@@ -322,7 +165,7 @@ type comparedRun struct {
 }
 
 type loadedRun struct {
-	rows    *reportrows.Envelope
+	rows    *export.Envelope
 	summary comparedRun
 }
 
@@ -350,9 +193,9 @@ func (t *compareReportRunsTool) readRun(
 
 	summary := comparedRun{
 		RunID:       run.ID.String(),
-		GeneratedAt: rows.Meta.GeneratedAt,
-		RowCount:    int64(len(rows.Rows)),
-		Truncated:   rows.Summary.Truncated,
+		GeneratedAt: rows.Meta.GeneratedAt.Unix(),
+		RowCount:    rows.RowCount,
+		Truncated:   rows.Truncated != export.NotTruncated,
 	}
 	if run.ReportDefinition != nil {
 		summary.ReportName = run.ReportDefinition.Name
@@ -377,19 +220,19 @@ func prefixRunFailure(field string, err error) error {
 // business error and says what to do instead.
 func describeCompareRefusal(err error) error {
 	switch {
-	case errors.Is(err, reportdiff.ErrUnknownColumn):
+	case errors.Is(err, diff.ErrUnknownColumn):
 		return errortypes.NewValidationError("keys", errortypes.ErrInvalid, err.Error())
-	case errors.Is(err, reportdiff.ErrSchemaMismatch):
+	case errors.Is(err, diff.ErrSchemaMismatch):
 		return errortypes.NewBusinessError(
 			"These two runs do not have the same columns, so they cannot be compared: " +
 				err.Error() + ". Run the report again to get two runs of the same shape.",
 		)
-	case errors.Is(err, reportdiff.ErrNoKeys):
+	case errors.Is(err, diff.ErrNoKeys):
 		return errortypes.NewBusinessError(
 			"This report has no column that identifies a row, so its rows cannot be " +
 				"matched across two runs. Compare a report that groups by something.",
 		)
-	case errors.Is(err, reportdiff.ErrNoMeasures):
+	case errors.Is(err, diff.ErrNoMeasures):
 		return errortypes.NewBusinessError(
 			"This report has no numeric column, so there is nothing to compare " +
 				"between two runs beyond which rows are present.",
@@ -399,7 +242,7 @@ func describeCompareRefusal(err error) error {
 	}
 }
 
-func comparisonNote(result *reportdiff.Result) string {
+func comparisonNote(result *diff.Result) string {
 	parts := make([]string, 0, 4)
 	if result.Summary.Added > 0 {
 		parts = append(parts, fmt.Sprintf("%d added", result.Summary.Added))

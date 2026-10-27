@@ -209,12 +209,14 @@ func TestTractorConnectionToModel_PropagatesTotalCount(t *testing.T) {
 				Code:      "TRC-100",
 			},
 		},
-		TotalCount: &total,
+		TotalCount:  &total,
+		EdgeCursors: []string{"edge-1"},
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, connection.TotalCount)
 	assert.Equal(t, total, *connection.TotalCount)
+	assert.False(t, connection.TotalCountExact, "a total the result does not mark exact is an estimate")
 	assert.Len(t, connection.Edges, 1)
 }
 

@@ -5,13 +5,19 @@ export type GenericLimitOffsetResponse<T> = {
   results: T[];
   count: number;
   totalCount?: number | null;
+  /** False when count and totalCount are the server's estimate of a list too large to count. */
+  totalCountExact?: boolean;
   next: string | null;
   prev: string | null;
+  /** A REST cursor list's own paging: whether a page follows, and the cursor that reads it. */
+  hasNextPage?: boolean;
+  endCursor?: string;
   pageInfo?: {
     mode: "cursor" | "offset";
     hasNextPage: boolean;
     endCursor: string | null;
     totalCount: number | null;
+    totalCountExact?: boolean;
   };
 };
 
@@ -20,14 +26,18 @@ export function createLimitOffsetResponse<ItemType extends z.ZodType>(itemSchema
     results: z.array(itemSchema),
     count: z.number(),
     totalCount: z.number().nullable().optional(),
+    totalCountExact: z.boolean().optional(),
     next: z.string().nullable().default(null),
     prev: z.string().nullable().default(null),
+    hasNextPage: z.boolean().optional(),
+    endCursor: z.string().optional(),
     pageInfo: z
       .object({
         mode: z.enum(["cursor", "offset"]),
         hasNextPage: z.boolean(),
         endCursor: z.string().nullable(),
         totalCount: z.number().nullable(),
+        totalCountExact: z.boolean().optional(),
       })
       .optional(),
   });

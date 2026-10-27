@@ -37,8 +37,10 @@ export type ResourceCategory = {
   resources: ResourceDefinition[];
 };
 
-export async function getAvailableResources(): Promise<ResourceCategory[]> {
-  return api.get<ResourceCategory[]>("/permissions/resources");
+export async function getAvailableResources(
+  options: { signal?: AbortSignal } = {},
+): Promise<ResourceCategory[]> {
+  return api.get<ResourceCategory[]>("/permissions/resources", { signal: options.signal });
 }
 
 export type BundleGrant = {
@@ -70,12 +72,16 @@ export type BundleCatalog = {
   templates: JobTemplate[];
 };
 
-export async function getPermissionBundles(): Promise<BundleCatalog> {
-  return api.get<BundleCatalog>("/permissions/bundles");
+export async function getPermissionBundles(
+  options: { signal?: AbortSignal } = {},
+): Promise<BundleCatalog> {
+  return api.get<BundleCatalog>("/permissions/bundles", { signal: options.signal });
 }
 
-export async function getAvailableOperations(): Promise<OperationDefinition[]> {
-  return api.get<OperationDefinition[]>("/permissions/operations");
+export async function getAvailableOperations(
+  options: { signal?: AbortSignal } = {},
+): Promise<OperationDefinition[]> {
+  return api.get<OperationDefinition[]>("/permissions/operations", { signal: options.signal });
 }
 
 export type ListRolesParams = {

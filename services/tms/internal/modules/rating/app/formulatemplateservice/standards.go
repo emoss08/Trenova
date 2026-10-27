@@ -6,25 +6,21 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/rating/app/formulatemplateservice/standardcatalog"
+	"github.com/emoss08/trenova/internal/modules/rating/app/tariff"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/uptrace/bun"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"go.uber.org/zap"
 )
 
 type StandardTemplate struct {
-	Name                string                             `json:"name"`
-	Description         string                             `json:"description"`
-	Type                formulatemplate.TemplateType       `json:"type"`
-	Expression          string                             `json:"expression"`
-	SchemaID            string                             `json:"schemaId"`
-	VariableDefinitions []*formulatypes.VariableDefinition `json:"variableDefinitions"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Source      string `json:"source"`
 }
 
-// ListStandards exposes the vendor-curated catalog without installing it, so
-// the studio can offer every standard as a starting point for a new template.
 func (s *Service) ListStandards() ([]StandardTemplate, error) {
 	catalog, err := standardcatalog.Load()
 	if err != nil {
@@ -33,20 +29,12 @@ func (s *Service) ListStandards() ([]StandardTemplate, error) {
 
 	standards := make([]StandardTemplate, 0, len(catalog))
 	for _, entry := range catalog {
-		variables := entry.VariableDefinitions
-		if variables == nil {
-			variables = []*formulatypes.VariableDefinition{}
-		}
 		standards = append(standards, StandardTemplate{
-			Name:                entry.Name,
-			Description:         entry.Description,
-			Type:                entry.Type,
-			Expression:          entry.Expression,
-			SchemaID:            entry.SchemaID,
-			VariableDefinitions: variables,
+			Name:        entry.Name,
+			Description: entry.Description,
+			Source:      entry.Source,
 		})
 	}
-
 	return standards, nil
 }
 
@@ -55,11 +43,6 @@ type InstallStandardsResponse struct {
 	Skipped   []string                           `json:"skipped"`
 }
 
-// InstallStandards creates the standard template library for a tenant. It is
-// idempotent by name: templates the organization already has are skipped, so a
-// re-run only fills gaps and never duplicates the set an organization's
-// contracts already point at. The catalog is vendor-curated and validated at
-// install time, so the templates land Active without a review cycle.
 func (s *Service) InstallStandards(
 	ctx context.Context,
 	tenantInfo pagination.TenantInfo,
@@ -99,60 +82,45 @@ func (s *Service) InstallStandards(
 			continue
 		}
 
-		entity := formulatemplate.Seed{
-			OrganizationID:      tenantInfo.OrgID,
-			BusinessUnitID:      tenantInfo.BuID,
-			Name:                entry.Name,
-			Description:         entry.Description,
-			Type:                entry.Type,
-			Expression:          entry.Expression,
-			SchemaID:            entry.SchemaID,
-			VariableDefinitions: entry.VariableDefinitions,
-			Status:              formulatemplate.StatusDraft,
-		}.Build()
-
-		if vErr := s.validateTemplate(ctx, entity); vErr != nil {
-			log.Error("standard template failed validation",
+		entity, buildErr := s.standardTemplate(ctx, tenantInfo, &entry)
+		if buildErr != nil {
+			log.Error("standard template failed its checks",
 				zap.String("template", entry.Name),
-				zap.Error(vErr),
+				zap.Error(buildErr),
 			)
-			return nil, vErr
+			return nil, buildErr
 		}
-
 		pending = append(pending, entity)
 	}
 
+	now := timeutils.NowUnix()
 	var installed []*formulatemplate.FormulaTemplate
-	err = s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err = s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		installed = make([]*formulatemplate.FormulaTemplate, 0, len(pending))
 		for _, entity := range pending {
 			created, txErr := s.repo.Create(txCtx, entity)
 			if txErr != nil {
-				log.Error("failed to create standard template",
-					zap.String("template", entity.Name),
-					zap.Error(txErr),
-				)
 				return txErr
 			}
 
-			if txErr = s.createVersionSnapshot(
-				txCtx,
+			version := formulatemplate.NewVersionFromTemplate(
 				created,
 				1,
 				tenantInfo.UserID,
 				"Standard template installed",
 				nil,
-			); txErr != nil {
-				log.Error("failed to create version snapshot", zap.Error(txErr))
+			)
+			version.EffectiveFrom = &now
+			if _, txErr = s.versionRepo.Create(txCtx, version); txErr != nil {
 				return txErr
 			}
 
 			installed = append(installed, created)
 		}
-
 		return nil
 	})
 	if err != nil {
+		log.Error("failed to install standard templates", zap.Error(err))
 		return nil, err
 	}
 
@@ -169,4 +137,46 @@ func (s *Service) InstallStandards(
 	}
 
 	return &InstallStandardsResponse{Installed: installed, Skipped: skipped}, nil
+}
+
+func (s *Service) standardTemplate(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	entry *standardcatalog.Template,
+) (*formulatemplate.FormulaTemplate, error) {
+	entity := formulatemplate.Seed{
+		OrganizationID: tenantInfo.OrgID,
+		BusinessUnitID: tenantInfo.BuID,
+		Name:           entry.Name,
+		Description:    entry.Description,
+		Source:         entry.Source,
+		Status:         formulatemplate.StatusActive,
+	}.Build()
+
+	content, err := s.checkContent(ctx, &contentRequest{
+		tenant: tenantInfo,
+		source: entity.Source,
+		mode:   tariff.LibrariesLatest,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if refusal := content.refusal(); refusal != nil {
+		return nil, refusal
+	}
+	if !content.testsPass() {
+		return nil, errortypes.NewBusinessError(
+			"The standard template {0} does not pass its own tests on this server",
+			entry.Name,
+		)
+	}
+
+	applyContent(entity, content)
+	now := timeutils.NowUnix()
+	if tenantInfo.UserID.IsNotNil() {
+		approver := tenantInfo.UserID
+		entity.ApprovedByID = &approver
+	}
+	entity.ApprovedAt = &now
+	return entity, nil
 }

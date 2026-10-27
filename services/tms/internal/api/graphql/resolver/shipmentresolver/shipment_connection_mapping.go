@@ -15,7 +15,6 @@ func shipmentConnectionToModel(
 ) (*gqlmodel.ShipmentConnection, error) {
 	edges, endCursor, err := mappedEntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		func(entity *shipmentdomain.Shipment) (*gqlmodel.Shipment, error) {
 			return base.ShipmentToModel(ctx, entity)
@@ -31,8 +30,9 @@ func shipmentConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.ShipmentConnection{
-		Edges:      edges,
-		TotalCount: result.TotalCount,
+		Edges:           edges,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 		PageInfo: base.PageInfo(
 			result.HasNextPage,
 			endCursor,
@@ -45,7 +45,6 @@ func shipmentCommentConnectionToModel(
 ) (*gqlmodel.ShipmentCommentConnection, error) {
 	edges, endCursor, err := mappedEntityCursorEdges(
 		result.Items,
-		result.CursorSort,
 		result,
 		shipmentCommentToModel,
 		func(node *gqlmodel.ShipmentComment, cursor string) *gqlmodel.ShipmentCommentEdge {
@@ -59,8 +58,9 @@ func shipmentCommentConnectionToModel(
 		return nil, err
 	}
 	return &gqlmodel.ShipmentCommentConnection{
-		Edges:      edges,
-		TotalCount: result.TotalCount,
+		Edges:           edges,
+		TotalCount:      result.TotalCount,
+		TotalCountExact: result.TotalCountExact,
 		PageInfo: base.PageInfo(
 			result.HasNextPage,
 			endCursor,

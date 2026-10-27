@@ -133,9 +133,15 @@ type CursorState = {
   scopeKey: string;
   cursors: Record<number, string | null>;
   totalCount: number | null;
+  totalCountExact: boolean;
 };
 
-const EMPTY_CURSOR_STATE: CursorState = { scopeKey: "", cursors: { 0: null }, totalCount: null };
+const EMPTY_CURSOR_STATE: CursorState = {
+  scopeKey: "",
+  cursors: { 0: null },
+  totalCount: null,
+  totalCountExact: true,
+};
 const EMPTY_PINNING = { left: [] as string[], right: [] as string[] };
 const EMPTY_GROUP_KEYS: DataTableGroupKey[] = [];
 const NO_ROW_ACTIONS: never[] = [];
@@ -455,12 +461,19 @@ export function DataTable<TData extends Record<string, any>>({
     const nextPageIndex = zeroBasedPageIndex + 1;
     const nextCursor = pageInfo.hasNextPage && pageInfo.endCursor ? pageInfo.endCursor : null;
     const pageTotalCount = pageInfo.totalCount ?? null;
+    const pageTotalExact = pageInfo.totalCountExact !== false;
     setCursorState((current) => {
       const inScope = current.scopeKey === cursorScopeKey;
       const scoped = inScope ? current : EMPTY_CURSOR_STATE;
       const totalCount = pageTotalCount ?? scoped.totalCount;
+      const totalCountExact = pageTotalCount !== null ? pageTotalExact : scoped.totalCountExact;
       const cursorKnown = nextCursor === null || scoped.cursors[nextPageIndex] === nextCursor;
-      if (inScope && cursorKnown && totalCount === scoped.totalCount) {
+      if (
+        inScope &&
+        cursorKnown &&
+        totalCount === scoped.totalCount &&
+        totalCountExact === scoped.totalCountExact
+      ) {
         return current;
       }
 
@@ -473,6 +486,7 @@ export function DataTable<TData extends Record<string, any>>({
               [nextPageIndex]: nextCursor,
             },
         totalCount,
+        totalCountExact,
       };
     });
   }, [cursorScopeKey, dataQuery.data?.pageInfo, zeroBasedPageIndex]);
@@ -589,6 +603,12 @@ export function DataTable<TData extends Record<string, any>>({
   const totalCount = cursorPageInfo
     ? (cursorPageInfo.totalCount ?? scopedCursorState.totalCount)
     : (dataQuery.data?.count ?? null);
+  const totalCountExact =
+    cursorPageInfo?.totalCount != null
+      ? cursorPageInfo.totalCountExact !== false
+      : cursorPageInfo
+        ? scopedCursorState.totalCountExact
+        : dataQuery.data?.totalCountExact !== false;
   const rowCount =
     totalCount ??
     (cursorPageInfo
@@ -998,13 +1018,12 @@ export function DataTable<TData extends Record<string, any>>({
   });
 
   const restoreView = useLatestCallback(async (id: string) => {
-    try {
-      const view = await queryClient.fetchQuery({
-        ...tableConfiguration.detail(id),
-        staleTime: 60_000,
-      });
-      if (view) setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
-    } catch {
+    const view = await queryClient
+      .fetchQuery({ ...tableConfiguration.detail(id), staleTime: 60_000 })
+      .catch(() => null);
+    if (view) {
+      setActiveView({ id: view.id, name: view.name, config: view.tableConfig });
+    } else {
       setActiveView((current) => (current?.id === id ? null : current));
     }
   });
@@ -1291,7 +1310,9 @@ export function DataTable<TData extends Record<string, any>>({
   const writeColumnLayout = useLatestCallback(() => {
     const element = tableElementRef.current;
     if (!element) return;
-    const { vars, totalSize } = columnLayout(table.getFlatHeaders());
+    const { vars, totalSize, pinnedStartSize, pinnedEndSize } = columnLayout(
+      table.getFlatHeaders(),
+    );
     for (const name of writtenLayoutVarsRef.current) {
       if (!(name in vars)) element.style.removeProperty(name);
     }
@@ -1299,6 +1320,11 @@ export function DataTable<TData extends Record<string, any>>({
       element.style.setProperty(name, vars[name]);
     }
     element.style.minWidth = `${totalSize}px`;
+    // The sideways fades sit outside the table, beside the pinned columns rather
+    // than over them, so their widths go on the container the fades share.
+    const container = element.closest<HTMLElement>('[data-slot="table-container"]');
+    container?.style.setProperty("--dt-pin-start", `${pinnedStartSize}px`);
+    container?.style.setProperty("--dt-pin-end", `${pinnedEndSize}px`);
     writtenLayoutVarsRef.current = Object.keys(vars);
   });
   useLayoutEffect(() => {
@@ -1388,6 +1414,7 @@ export function DataTable<TData extends Record<string, any>>({
         columnVisibility={liveColumnVisibility}
         columnIds={table.getAllLeafColumns().map((column) => column.id)}
         rowCount={totalCount}
+        rowCountExact={totalCountExact}
       />
       <DataTablePanelWrapper>
         <DataTablePanelContent>
@@ -1452,6 +1479,7 @@ export function DataTable<TData extends Record<string, any>>({
                 selection={selectionAtom}
                 pageRowIds={pageRowIds}
                 totalCount={totalCount}
+                totalCountExact={totalCountExact}
                 maxSelectable={BULK_SELECT_MAX}
                 onEditAllMatching={canBulkEdit ? editAllMatching : undefined}
                 isSelectingAll={isSelectingAll}
@@ -1500,7 +1528,9 @@ export function DataTable<TData extends Record<string, any>>({
                     role="grid"
                     aria-label={name}
                     aria-rowcount={
-                      totalCount != null ? totalCount + 1 + table.getTopRows().length : -1
+                      totalCount != null && totalCountExact
+                        ? totalCount + 1 + table.getTopRows().length
+                        : -1
                     }
                     aria-colcount={visibleLeafColumns.length}
                     aria-multiselectable
@@ -1515,7 +1545,14 @@ export function DataTable<TData extends Record<string, any>>({
                     )}
                     // The vertical track starts below the sticky column header, so the
                     // scrollbar runs beside the rows and never over the header.
-                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[65vh] rounded-lg border border-border [&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)!"
+                    containerClassName="bleed:h-full bleed:max-h-none bleed:rounded-none bleed:border-0 max-h-[65vh] rounded-lg border border-border [&>[data-slot=scroll-area-scrollbar][data-orientation=vertical]]:top-(--row-head-h)! [&>[data-slot=scroll-area-mask][data-orientation=horizontal]]:left-[var(--dt-pin-start,0px)] [&>[data-slot=scroll-area-mask][data-orientation=horizontal]]:right-[var(--dt-pin-end,0px)]"
+                    // The fades sit between the sticky rows, which would otherwise
+                    // cover them: below the column header and the group header stuck
+                    // under it (h-9), and above the totals row, which measures itself.
+                    maskClassName={cn(
+                      "bottom-[var(--dt-foot-h,0px)]",
+                      grouping ? "top-[calc(var(--row-head-h)+2.25rem)]" : "top-(--row-head-h)",
+                    )}
                     ref={tableElementRef}
                   >
                     <TableHeader className="sticky top-0 z-20">
@@ -1597,6 +1634,7 @@ export function DataTable<TData extends Record<string, any>>({
                 hasNextPage={cursorPageInfo?.hasNextPage}
                 currentPageRowCount={currentPageRowCount}
                 totalCount={totalCount}
+                totalCountExact={totalCountExact}
                 pageSizeOptions={pageSizeOptions}
                 leading={footerLeading}
               />

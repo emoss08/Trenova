@@ -3,56 +3,31 @@ package formulatemplaterepository
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/formulatemplatecol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate/formulatemplatedb"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
 type statsRow struct {
-	ID            pulid.ID `bun:"id"`
-	UsageCount    int      `bun:"usage_count"`
-	ScenarioCount int      `bun:"scenario_count"`
+	ID         pulid.ID
+	UsageCount int64
 }
 
-// statsQuery counts, per template, everything that rates with it and every
-// scenario that guards it. Each consumer is its own tenant-scoped subselect so
-// the page costs one round trip however many rows it holds.
-func statsQuery(
-	q *bun.SelectQuery,
-	req *formulatemplateports.GetFormulaTemplateStatsRequest,
-) *bun.SelectQuery {
-	ft := formulatemplatecol.FormulaTemplateColumns
+func (r *repository) statsQuery(
+	templateIDs []pulid.ID,
+) *keel.Query[*formulatemplate.FormulaTemplate] {
+	ft := formulatemplatedb.FormulaTemplates
+	rr := rateagreementdb.RateAgreementRules
+	rules := keel.Scalar(rr.Pick(keel.Count()).Where(rr.FormulaTemplateID.EqCol(ft.ID)))
 
-	consumer := func(table string) string {
-		return "(SELECT COUNT(*) FROM " + table + " c " +
-			"WHERE c.formula_template_id = ft.id " +
-			"AND c.organization_id = ft.organization_id " +
-			"AND c.business_unit_id = ft.business_unit_id)"
-	}
-
-	return q.
-		TableExpr("formula_templates AS ft").
-		ColumnExpr("ft.id AS id").
-		ColumnExpr(
-			consumer("shipments")+" + "+
-				consumer("rate_matrices")+" + "+
-				consumer("rate_agreement_rules")+" + "+
-				consumer("rate_agreement_accessorials")+" AS usage_count",
-		).
-		ColumnExpr(
-			"(SELECT COUNT(*) FROM formula_template_test_cases tc "+
-				"WHERE tc.template_id = ft.id "+
-				"AND tc.organization_id = ft.organization_id "+
-				"AND tc.business_unit_id = ft.business_unit_id) AS scenario_count",
-		).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return formulatemplatecol.FormulaTemplateScopeTenant(sq, req.TenantInfo).
-				Where(ft.ID.In(), bun.In(req.TemplateIDs))
-		})
+	return ft.Pick(ft.ID, keel.Int64Of(r.shipmentUsage(ft)).Add(keel.Int64Of(rules))).
+		Where(ft.ID.In(templateIDs...)).
+		Limit(len(templateIDs))
 }
 
 func (r *repository) CountStatsByIDs(
@@ -68,22 +43,18 @@ func (r *repository) CountStatsByIDs(
 				return stats, nil
 			}
 
-			log := r.l.With(zap.String("operation", "CountStatsByIDs"))
-
-			var rows []statsRow
-			if err := statsQuery(
-				r.db.DBForContext(ctx).NewSelect(),
-				req,
-			).Scan(ctx, &rows); err != nil {
-				log.Error("failed to count formula template stats", zap.Error(err))
+			rows, err := keel.Into[statsRow](ctx, r.db.Keel(ctx), r.statsQuery(req.TemplateIDs))
+			if err != nil {
+				r.l.Error(
+					"failed to count formula template stats",
+					zap.String("operation", "CountStatsByIDs"),
+					zap.Error(err),
+				)
 				return nil, err
 			}
 
 			for _, row := range rows {
-				stats[row.ID] = formulatemplateports.TemplateStats{
-					UsageCount:    row.UsageCount,
-					ScenarioCount: row.ScenarioCount,
-				}
+				stats[row.ID] = formulatemplateports.TemplateStats{UsageCount: int(row.UsageCount)}
 			}
 
 			return stats, nil

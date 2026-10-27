@@ -3,44 +3,43 @@
 package shipmentservice
 
 import (
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
 	"context"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/commodity"
-	"github.com/emoss08/trenova/internal/modules/rating/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
-	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
-	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/environment"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/resolver"
-	"github.com/emoss08/trenova/internal/modules/rating/app/formula/schema"
-	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
+	"github.com/emoss08/keel"
+
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
-	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/modules/billing/adapters/postgres/chargeallocationrepository"
-	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
-	"github.com/emoss08/trenova/internal/modules/rating/adapters/postgres/formulatemplaterepository"
-	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/hazmatsegregationrulerepository"
+	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
+	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/orderrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentadditionalchargerepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentcommodityrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/shipmentcontrolrepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
-	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
+	"github.com/emoss08/trenova/internal/modules/operations/app/shipmentcommercial"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
+	"github.com/emoss08/trenova/internal/modules/operations/operationstest"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/formulatemplateports"
-	"github.com/emoss08/trenova/internal/modules/rating/ports/ratematrixports"
+	"github.com/emoss08/trenova/internal/modules/rating/ports/tariffports"
+	"github.com/emoss08/trenova/internal/modules/rating/ratingtest"
+	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/accessorialchargerepository"
+	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/commodityrepository"
+	"github.com/emoss08/trenova/internal/modules/reference/adapters/postgres/hazmatsegregationrulerepository"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazardousmaterial"
+	"github.com/emoss08/trenova/internal/modules/reference/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/modules/reference/ports/accessorialchargeports"
 	"github.com/emoss08/trenova/internal/testutil"
 	internaltestutil "github.com/emoss08/trenova/internal/testutil"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
+	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -48,7 +47,6 @@ import (
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -63,6 +61,7 @@ func TestCreateIntegration_PersistsAdditionalChargesAndCommodities(t *testing.T)
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckForDuplicateBOLs = true
 		sc.CheckHazmatSegregation = false
@@ -126,7 +125,7 @@ func TestCreateIntegration_PersistsAdditionalChargesAndCommodities(t *testing.T)
 	assert.Equal(t, accessorial.ID, persisted.AdditionalCharges[0].AccessorialChargeID)
 	assert.Equal(t, commodityEntity.ID, persisted.Commodities[0].CommodityID)
 	assert.True(t, decimal.NewFromInt(15).Equal(persisted.OtherChargeAmount.Decimal))
-	assert.True(t, decimal.NewFromInt(16).Equal(persisted.TotalChargeAmount.Decimal))
+	assert.True(t, decimal.NewFromInt(15).Equal(persisted.TotalChargeAmount.Decimal))
 	require.NotNil(t, persisted.AdditionalCharges[0].AccessorialCharge)
 	require.NotNil(t, persisted.Commodities[0].Commodity)
 }
@@ -142,6 +141,7 @@ func TestUpdateIntegration_SyncsNestedChargesAndCommodities(t *testing.T) {
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckForDuplicateBOLs = true
 		sc.CheckHazmatSegregation = false
@@ -263,7 +263,7 @@ func TestUpdateIntegration_SyncsNestedChargesAndCommodities(t *testing.T) {
 	require.Len(t, persisted.AdditionalCharges, 2)
 	require.Len(t, persisted.Commodities, 2)
 	assert.True(t, decimal.NewFromInt(30).Equal(persisted.OtherChargeAmount.Decimal))
-	assert.True(t, decimal.NewFromInt(31).Equal(persisted.TotalChargeAmount.Decimal))
+	assert.True(t, decimal.NewFromInt(30).Equal(persisted.TotalChargeAmount.Decimal))
 	assert.Equal(t, loaded.AdditionalCharges[0].ID, persisted.AdditionalCharges[0].ID)
 	assert.Equal(t, commodityOne.ID, persisted.Commodities[0].CommodityID)
 	assert.Equal(t, int64(110), persisted.Commodities[0].Weight)
@@ -283,6 +283,7 @@ func TestUpdateIntegration_ReplacesExistingCommodityInPlace(t *testing.T) {
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckForDuplicateBOLs = true
 		sc.CheckHazmatSegregation = false
@@ -374,6 +375,7 @@ func TestUpdateIntegration_ReplacesExistingAdditionalChargeInPlace(t *testing.T)
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckForDuplicateBOLs = true
 		sc.CheckHazmatSegregation = false
@@ -468,6 +470,7 @@ func TestCreateIntegration_RejectsManualDetentionChargeWhenAutoGenerated(t *test
 	t.Cleanup(cleanup)
 
 	svc, _, controlRepo, _, tenantInfo, fixture, data := newIntegrationShipmentService(t, ctx, db)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	detentionCharge := testutil.MustCreateAccessorialCharge(
 		t,
 		ctx,
@@ -520,6 +523,7 @@ func TestUpdateIntegration_RejectsManualDetentionChargeWhenAutoGenerated(t *test
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	manualCharge := testutil.MustCreateAccessorialCharge(
 		t,
 		ctx,
@@ -598,6 +602,7 @@ func TestCreateIntegration_RejectsHazmatSegregationConflicts(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	svc, _, controlRepo, _, tenantInfo, fixture, data := newIntegrationShipmentService(t, ctx, db)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckHazmatSegregation = true
 	})
@@ -662,12 +667,9 @@ func TestCreateIntegration_RejectsHazmatSegregationConflicts(t *testing.T) {
 	assertErrorField(t, multiErr, "commodities[0].commodityId")
 	assertErrorField(t, multiErr, "commodities[1].commodityId")
 
-	count, getErr := db.NewSelect().
-		Table("shipments").
-		Where("organization_id = ?", tenantInfo.OrgID).
-		Where("business_unit_id = ?", tenantInfo.BuID).
-		Where("bol = ?", entity.BOL).
-		Count(ctx)
+	count, getErr := keel.QueryValue[int64](ctx, db,
+		"SELECT count(*) FROM shipments WHERE organization_id = $1 AND business_unit_id = $2 AND bol = $3",
+		tenantInfo.OrgID.String(), tenantInfo.BuID.String(), entity.BOL)
 	require.NoError(t, getErr)
 	assert.Equal(t, int64(0), count)
 }
@@ -683,6 +685,7 @@ func TestUpdateIntegration_ReconcilesDetentionCharge(t *testing.T) {
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	detentionCharge := testutil.MustCreateAccessorialCharge(
 		t,
 		ctx,
@@ -747,7 +750,7 @@ func TestUpdateIntegration_ReconcilesDetentionCharge(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, persisted.AdditionalCharges)
 	assert.True(t, decimal.NewFromInt(0).Equal(persisted.OtherChargeAmount.Decimal))
-	assert.True(t, decimal.NewFromInt(1).Equal(persisted.TotalChargeAmount.Decimal))
+	assert.True(t, decimal.NewFromInt(0).Equal(persisted.TotalChargeAmount.Decimal))
 }
 
 func TestCreateIntegration_RatesWithHydratedCommodityDetails(t *testing.T) {
@@ -761,6 +764,7 @@ func TestCreateIntegration_RatesWithHydratedCommodityDetails(t *testing.T) {
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckForDuplicateBOLs = true
 		sc.CheckHazmatSegregation = false
@@ -792,25 +796,14 @@ func TestCreateIntegration_RatesWithHydratedCommodityDetails(t *testing.T) {
 		pulid.Nil,
 	)
 
-	_, err := db.NewUpdate().
-		Model((*formulatemplate.FormulaTemplate)(nil)).
-		Set("expression = ?", "totalLinearFeet + (hasHazmat ? 25 : 0)").
-		Where("id = ?", fixture.FormulaTemplate.ID).
-		Exec(ctx)
+	_, err := keel.Exec(ctx, db,
+		"UPDATE commodities SET linear_feet_per_unit = $1 WHERE id = $2",
+		1.25, commodityOne.ID.String())
 	require.NoError(t, err)
 
-	_, err = db.NewUpdate().
-		Model((*commodity.Commodity)(nil)).
-		Set("linear_feet_per_unit = ?", 1.25).
-		Where("id = ?", commodityOne.ID).
-		Exec(ctx)
-	require.NoError(t, err)
-
-	_, err = db.NewUpdate().
-		Model((*commodity.Commodity)(nil)).
-		Set("linear_feet_per_unit = ?", 2.0).
-		Where("id = ?", commodityTwo.ID).
-		Exec(ctx)
+	_, err = keel.Exec(ctx, db,
+		"UPDATE commodities SET linear_feet_per_unit = $1 WHERE id = $2",
+		2.0, commodityTwo.ID.String())
 	require.NoError(t, err)
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
@@ -856,6 +849,7 @@ func TestUpdateIntegration_RecalculatesWithHydratedCommodityDetails(t *testing.T
 		ctx,
 		db,
 	)
+	ctx = integrationTenantContext(ctx, tenantInfo)
 	configureShipmentControl(t, ctx, controlRepo, tenantInfo, func(sc *tenant.ShipmentControl) {
 		sc.CheckForDuplicateBOLs = true
 		sc.CheckHazmatSegregation = false
@@ -878,18 +872,9 @@ func TestUpdateIntegration_RecalculatesWithHydratedCommodityDetails(t *testing.T
 		pulid.Nil,
 	)
 
-	_, err := db.NewUpdate().
-		Model((*formulatemplate.FormulaTemplate)(nil)).
-		Set("expression = ?", "totalLinearFeet").
-		Where("id = ?", fixture.FormulaTemplate.ID).
-		Exec(ctx)
-	require.NoError(t, err)
-
-	_, err = db.NewUpdate().
-		Model((*commodity.Commodity)(nil)).
-		Set("linear_feet_per_unit = ?", 1.0).
-		Where("id IN (?)", bun.List([]pulid.ID{commodityOne.ID, commodityTwo.ID})).
-		Exec(ctx)
+	_, err := keel.Exec(ctx, db,
+		"UPDATE commodities SET linear_feet_per_unit = $1 WHERE id = ANY($2)",
+		1.0, []string{commodityOne.ID.String(), commodityTwo.ID.String()})
 	require.NoError(t, err)
 
 	entity := makeIntegrationShipment(t, ctx, db, fixture, tenantInfo, data.User.ID)
@@ -918,11 +903,9 @@ func TestUpdateIntegration_RecalculatesWithHydratedCommodityDetails(t *testing.T
 	})
 	require.NoError(t, err)
 
-	_, err = db.NewUpdate().
-		Model((*commodity.Commodity)(nil)).
-		Set("linear_feet_per_unit = ?", 2.0).
-		Where("id = ?", commodityOne.ID).
-		Exec(ctx)
+	_, err = keel.Exec(ctx, db,
+		"UPDATE commodities SET linear_feet_per_unit = $1 WHERE id = $2",
+		2.0, commodityOne.ID.String())
 	require.NoError(t, err)
 
 	loaded.Commodities = []*shipment.ShipmentCommodity{
@@ -966,7 +949,7 @@ func TestUpdateIntegration_RecalculatesWithHydratedCommodityDetails(t *testing.T
 func newIntegrationShipmentService(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 ) (
 	shipmentports.ShipmentService,
 	shipmentports.ShipmentRepository,
@@ -983,7 +966,7 @@ func newIntegrationShipmentService(
 func newIntegrationShipmentServiceWith(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	override func(*Params),
 ) (
 	shipmentports.ShipmentService,
@@ -1043,24 +1026,6 @@ func newIntegrationShipmentServiceWith(
 		DB:     conn,
 		Logger: zap.NewNop(),
 	})
-	formulaRepo := formulatemplaterepository.New(formulatemplaterepository.Params{
-		DB:     conn,
-		Logger: zap.NewNop(),
-	})
-
-	registry := schema.NewRegistry()
-	testutil.RegisterShipmentFormulaSchema(t, registry)
-	res := resolver.NewResolver()
-	formulaSvc := formula.NewService(formula.ServiceParams{
-		Logger:         zap.NewNop(),
-		Registry:       registry,
-		Environment: environment.NewBuilder(environment.Params{Registry: registry, Resolver: res}),
-		Resolver:       res,
-		Repo:           formulaRepo,
-		VersionRepo:    shipIntgStubVersionRepo{},
-		RateMatrixRepo: shipIntgStubMatrixRepo{},
-	})
-
 	validator := NewValidator(ValidatorParams{
 		DB:                        conn,
 		ControlRepo:               controlRepo,
@@ -1071,7 +1036,18 @@ func newIntegrationShipmentServiceWith(
 	})
 
 	audit := &mocks.NoopAuditService{}
-	commercial := newTestCommercialCalculator(t, formulaSvc, accessorialRepo)
+	commercial := shipmentcommercial.New(shipmentcommercial.Params{
+		Logger: zap.NewNop(),
+		RateEngine: ratingtest.NewStack(t, ratingtest.StackOptions{
+			Any: &tariffports.Template{
+				TemplateID:    pulid.MustNew("ft_"),
+				VersionNumber: 1,
+				Name:          "Linear feet",
+				Source:        integrationTariff,
+			},
+		}).Engine,
+		AccessorialRepo: accessorialRepo,
+	})
 
 	params := Params{
 		Logger:          zap.NewNop(),
@@ -1107,7 +1083,7 @@ func newIntegrationShipmentServiceWith(
 func insertShipmentControl(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 ) {
 	t.Helper()
@@ -1124,8 +1100,11 @@ func insertShipmentControl(
 		AllowMoveRemovals:            true,
 		CheckHazmatSegregation:       true,
 	}
-	_, err := db.NewInsert().Model(entity).Exec(ctx)
-	require.NoError(t, err)
+	require.NoError(t, tenantdb.ShipmentControls.Create(
+		integrationTenantContext(ctx, tenantInfo),
+		db,
+		entity,
+	))
 }
 
 func configureShipmentControl(
@@ -1147,7 +1126,7 @@ func configureShipmentControl(
 func makeIntegrationShipment(
 	t *testing.T,
 	ctx context.Context,
-	db *bun.DB,
+	db *keel.DB,
 	fixture *testutil.ShipmentIntegrationFixture,
 	tenantInfo pagination.TenantInfo,
 	userID pulid.ID,
@@ -1183,7 +1162,6 @@ func makeIntegrationShipment(
 		FormulaTemplateID: fixture.FormulaTemplate.ID,
 		Status:            shipment.StatusNew,
 		BOL:               "BOL-INTEGRATION",
-		RatingUnit:        1,
 		Moves: []*shipment.ShipmentMove{
 			{
 				Status:   shipment.MoveStatusNew,
@@ -1214,11 +1192,18 @@ func makeIntegrationShipment(
 	}
 }
 
+func integrationTenantContext(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+) context.Context {
+	return dbscope.WithTenant(ctx, tenantInfo.DBTenant())
+}
+
 func int16PtrForIntegration(v int16) *int16 {
 	return &v
 }
 
-func int8PtrForIntegration(v int8) *int8 {
+func int8PtrForIntegration(v int16) *int16 {
 	return &v
 }
 
@@ -1230,38 +1215,8 @@ func timeutilsNow() int64 {
 	return timeutils.NowUnix()
 }
 
-type shipIntgStubVersionRepo struct {
-	formulatemplateports.FormulaTemplateVersionRepository
-}
+const integrationTariff = `tariff "Linear feet"
 
-func (shipIntgStubVersionRepo) GetEffectiveVersion(
-	_ context.Context,
-	_ *formulatemplateports.GetEffectiveVersionRequest,
-) (*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-func (shipIntgStubVersionRepo) ListApproved(
-	_ context.Context,
-	_ *formulatemplateports.ListScheduledVersionsRequest,
-) ([]*formulatemplate.FormulaTemplateVersion, error) {
-	return nil, nil
-}
-
-type shipIntgStubMatrixRepo struct {
-	ratematrixports.RateMatrixRepository
-}
-
-func (shipIntgStubMatrixRepo) GetLookupData(
-	_ context.Context,
-	_ *ratematrixports.GetRateMatrixLookupDataRequest,
-) ([]*ratematrixports.RateMatrixLookupData, error) {
-	return nil, nil
-}
-
-func (shipIntgStubMatrixRepo) GetLookupStamp(
-	context.Context,
-	pagination.TenantInfo,
-) (string, error) {
-	return "", nil
-}
+charge "Linear feet" (quantity: shipment.linearFeet, rate: $1/ft)
+charge "Hazmat" = if shipment.hazmat { $25 } else { $0 }
+`

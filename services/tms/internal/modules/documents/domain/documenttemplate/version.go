@@ -5,15 +5,13 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/validationframework"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/emoss08/trenova/shared/timeutils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/uptrace/bun"
 )
 
 // VersionStatus is where a version sits in its lifecycle.
@@ -54,7 +52,6 @@ func VersionStatusFromString(v string) (VersionStatus, error) {
 }
 
 var (
-	_ bun.BeforeAppendModelHook          = (*DocumentTemplateVersion)(nil)
 	_ validationframework.TenantedEntity = (*DocumentTemplateVersion)(nil)
 )
 
@@ -64,58 +61,57 @@ var (
 // copied from an old one rather than editing history, so the bytes a customer
 // received can always be reproduced from the version a generated document names.
 type DocumentTemplateVersion struct {
-	bun.BaseModel             `bun:"table:document_template_versions,alias:dtv" json:"-"`
-	pagination.CursorValueSet `bun:",embed"                                     json:"-"`
+	keel.Table `keel:"document_template_versions"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	TemplateID     pulid.ID `json:"templateId"     bun:"template_id,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             keel:"id,pk,autoid:dtv_"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" keel:"business_unit_id,pk,tenant"`
+	OrganizationID pulid.ID `json:"organizationId" keel:"organization_id,pk,tenant"`
+	TemplateID     pulid.ID `json:"templateId"     keel:"template_id"`
 
 	// SourceVersionID records what this was copied from, which is what makes a
 	// rollback auditable rather than a mystery edit.
-	SourceVersionID *pulid.ID `json:"sourceVersionId" bun:"source_version_id,type:VARCHAR(100),nullzero"`
+	SourceVersionID *pulid.ID `json:"sourceVersionId" keel:"source_version_id"`
 
-	VersionNumber int64         `json:"versionNumber" bun:"version_number,type:BIGINT,notnull"`
-	Status        VersionStatus `json:"status"        bun:"status,type:document_template_version_status_enum,notnull,default:'Draft'"`
+	VersionNumber int64         `json:"versionNumber" keel:"version_number"`
+	Status        VersionStatus `json:"status"        keel:"status"`
 
-	Subject    string `json:"subject"    bun:"subject,type:TEXT,nullzero"`
-	BodyHTML   string `json:"bodyHtml"   bun:"body_html,type:TEXT,nullzero"`
-	BodyText   string `json:"bodyText"   bun:"body_text,type:TEXT,nullzero"`
-	CSSContent string `json:"cssContent" bun:"css_content,type:TEXT,nullzero"`
-	HeaderHTML string `json:"headerHtml" bun:"header_html,type:TEXT,nullzero"`
-	FooterHTML string `json:"footerHtml" bun:"footer_html,type:TEXT,nullzero"`
+	Subject    string `json:"subject"    keel:"subject,nullzero"`
+	BodyHTML   string `json:"bodyHtml"   keel:"body_html,nullzero"`
+	BodyText   string `json:"bodyText"   keel:"body_text,nullzero"`
+	CSSContent string `json:"cssContent" keel:"css_content,nullzero"`
+	HeaderHTML string `json:"headerHtml" keel:"header_html,nullzero"`
+	FooterHTML string `json:"footerHtml" keel:"footer_html,nullzero"`
 
-	PageSize     PageSize    `json:"pageSize"     bun:"page_size,type:document_template_page_size_enum,nullzero"`
-	Orientation  Orientation `json:"orientation"  bun:"orientation,type:document_template_orientation_enum,nullzero"`
-	MarginTop    *float64    `json:"marginTop"    bun:"margin_top,type:NUMERIC(6,2),nullzero"`
-	MarginBottom *float64    `json:"marginBottom" bun:"margin_bottom,type:NUMERIC(6,2),nullzero"`
-	MarginLeft   *float64    `json:"marginLeft"   bun:"margin_left,type:NUMERIC(6,2),nullzero"`
-	MarginRight  *float64    `json:"marginRight"  bun:"margin_right,type:NUMERIC(6,2),nullzero"`
+	PageSize     PageSize    `json:"pageSize"     keel:"page_size,nullzero"`
+	Orientation  Orientation `json:"orientation"  keel:"orientation,nullzero"`
+	MarginTop    *float64    `json:"marginTop"    keel:"margin_top"`
+	MarginBottom *float64    `json:"marginBottom" keel:"margin_bottom"`
+	MarginLeft   *float64    `json:"marginLeft"   keel:"margin_left"`
+	MarginRight  *float64    `json:"marginRight"  keel:"margin_right"`
 
 	// ContentHash identifies these bytes. A generated document records it alongside
 	// the version id so a mismatch is detectable even if a row were tampered with.
-	ContentHash string `json:"contentHash" bun:"content_hash,type:VARCHAR(64),notnull"`
+	ContentHash string `json:"contentHash" keel:"content_hash"`
 
 	// StarterHash is the built-in's hash at the time this version was seeded from
 	// it, so the editor can say "the built-in has changed since you started".
-	StarterHash string `json:"starterHash" bun:"starter_hash,type:VARCHAR(64),nullzero"`
+	StarterHash string `json:"starterHash" keel:"starter_hash,nullzero"`
 
-	PublishNotes  string    `json:"publishNotes"  bun:"publish_notes,type:TEXT,nullzero"`
-	PublishedByID *pulid.ID `json:"publishedById" bun:"published_by_id,type:VARCHAR(100),nullzero"`
-	PublishedAt   *int64    `json:"publishedAt"   bun:"published_at,type:BIGINT,nullzero"`
-	ArchivedByID  *pulid.ID `json:"archivedById"  bun:"archived_by_id,type:VARCHAR(100),nullzero"`
-	ArchivedAt    *int64    `json:"archivedAt"    bun:"archived_at,type:BIGINT,nullzero"`
+	PublishNotes  string    `json:"publishNotes"  keel:"publish_notes,nullzero"`
+	PublishedByID *pulid.ID `json:"publishedById" keel:"published_by_id"`
+	PublishedAt   *int64    `json:"publishedAt"   keel:"published_at"`
+	ArchivedByID  *pulid.ID `json:"archivedById"  keel:"archived_by_id"`
+	ArchivedAt    *int64    `json:"archivedAt"    keel:"archived_at"`
 
-	Version     int64     `json:"version"     bun:"version,type:BIGINT,notnull"`
-	CreatedAt   int64     `json:"createdAt"   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64     `json:"updatedAt"   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	CreatedByID *pulid.ID `json:"createdById" bun:"created_by_id,type:VARCHAR(100),nullzero"`
-	UpdatedByID *pulid.ID `json:"updatedById" bun:"updated_by_id,type:VARCHAR(100),nullzero"`
+	Version     int64     `json:"version"     keel:"version,version"`
+	CreatedAt   int64     `json:"createdAt"   keel:"created_at,autocreate"`
+	UpdatedAt   int64     `json:"updatedAt"   keel:"updated_at,autoupdate"`
+	CreatedByID *pulid.ID `json:"createdById" keel:"created_by_id"`
+	UpdatedByID *pulid.ID `json:"updatedById" keel:"updated_by_id"`
 
-	BusinessUnit *tenant.BusinessUnit `json:"-"                  bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *tenant.Organization `json:"-"                  bun:"rel:belongs-to,join:organization_id=id"`
-	Template     *DocumentTemplate    `json:"template,omitempty" bun:"rel:belongs-to,join:template_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-"`
+	Organization *tenant.Organization `json:"-"`
+	Template     *DocumentTemplate    `json:"template,omitempty" keel:"belongs:template_id"`
 }
 
 func (v *DocumentTemplateVersion) GetID() pulid.ID { return v.ID }
@@ -271,21 +267,34 @@ func marginRules() []validation.Rule {
 	}
 }
 
-func (v *DocumentTemplateVersion) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
-
-	switch query.(type) {
-	case *bun.InsertQuery:
-		if v.ID.IsNil() {
-			v.ID = pulid.MustNew("dtv_")
-		}
-		v.CreatedAt = now
-		v.UpdatedAt = now
-	case *bun.UpdateQuery:
-		v.UpdatedAt = now
+func (v *DocumentTemplateVersion) BeforeCreate(ctx context.Context) error {
+	if v.Status == "" {
+		v.Status = VersionStatusDraft
 	}
 
 	return nil
+}
+
+func (DocumentTemplateVersion) Constraints() []keel.Constraint {
+	return []keel.Constraint{
+		{
+			Name:    "uq_document_template_versions_one_draft",
+			Message: "This template already has a draft. Edit it or delete it before starting another.",
+		},
+		{
+			Name:    "uq_document_template_versions_one_active",
+			Field:   "status",
+			Message: "This template already has an active version",
+		},
+		{
+			Name:    "fk_document_template_versions_source",
+			Message: "Source version does not exist",
+		},
+		{
+			Name:    "fk_document_template_versions_template",
+			Message: "Document template does not exist",
+		},
+	}
 }
 
 func floatOr(value *float64, fallback float64) float64 {

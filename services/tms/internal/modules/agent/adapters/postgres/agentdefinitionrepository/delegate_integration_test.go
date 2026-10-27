@@ -5,14 +5,12 @@ package agentdefinitionrepository
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/infrastructure/config"
-	"github.com/emoss08/trenova/internal/infrastructure/database/common"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeder"
-	"github.com/emoss08/trenova/internal/infrastructure/database/seeds"
+	"github.com/emoss08/keel"
+
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
+
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
-	"github.com/emoss08/trenova/internal/testutil/seedtest"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -26,40 +24,20 @@ array as '{}', and the column helper replaced that "{}" with the column name,
 so Postgres was handed the array literal "delegate_ids".
 */
 func TestDelete_RemovesTheAgentFromEveryAllowlist(t *testing.T) {
-	ctx, db, cleanup := seedtest.SetupTestDB(t)
+	ctx, db, cleanup := seededtest.SetupTestDB(t)
 	t.Cleanup(cleanup)
 
-	registry := seeder.NewRegistry()
-	seeds.Register(registry)
-	engine := seeder.NewEngine(
-		db,
-		registry,
-		&config.Config{System: config.SystemConfig{SystemUserPassword: "test-system-password"}},
-	)
-	_, err := engine.Execute(ctx, seeder.ExecuteOptions{Environment: common.EnvDevelopment})
-	require.NoError(t, err)
-
-	var rows []tierDefinitionRow
-	require.NoError(t, db.NewSelect().
-		Table("agent_definitions").
-		Column("id", "organization_id", "business_unit_id").
-		Where("system_key IS NULL").
-		OrderExpr("id").
-		Limit(2).
-		Scan(ctx, &rows))
-	require.Len(t, rows, 2)
+	rows := findDefinitions(t, ctx, db, "system_key IS NULL", 2)
 	asker, asked := rows[0], rows[1]
 	require.Equal(t, asker.OrganizationID, asked.OrganizationID)
 
-	_, err = db.NewUpdate().
-		Table("agent_definitions").
-		Set("delegate_ids = ARRAY[?]::text[]", asked.ID.String()).
-		Where("id = ?", asker.ID).
-		Exec(ctx)
+	_, err := keel.Exec(ctx, db,
+		"UPDATE agent_definitions SET delegate_ids = ARRAY[$1]::text[] WHERE id = $2",
+		asked.ID.String(), asker.ID.String())
 	require.NoError(t, err)
 
+	ctx, tenant := asked.tenant(ctx)
 	repo := New(Params{DB: postgres.NewTestConnection(db), Logger: zap.NewNop()})
-	tenant := pagination.TenantInfo{OrgID: asked.OrganizationID, BuID: asked.BusinessUnitID}
 
 	require.NoError(t, repo.Delete(ctx, agentdefinitionports.DeleteAgentDefinitionRequest{
 		ID:         asked.ID,

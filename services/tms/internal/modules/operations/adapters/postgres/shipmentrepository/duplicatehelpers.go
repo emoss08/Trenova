@@ -3,18 +3,16 @@ package shipmentrepository
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/shipmentcol"
-
+	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/order"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
-	"github.com/emoss08/trenova/pkg/buncolgen"
-	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment/shipmentdb"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const maxShipmentBOLLength = 100
@@ -97,6 +95,8 @@ func CopyShipmentGraph(source *shipment.Shipment, spec ShipmentCopySpec) *shipme
 		TractorTypeID:       source.TractorTypeID,
 		TrailerTypeID:       source.TrailerTypeID,
 		FormulaTemplateID:   source.FormulaTemplateID,
+		TariffInputs:        source.TariffInputs.Clone(),
+		FreightLines:        slices.Clone(source.FreightLines),
 		Status:              shipment.StatusNew,
 		ProNumber:           spec.ProNumber,
 		BOL:                 spec.BOL,
@@ -107,7 +107,6 @@ func CopyShipmentGraph(source *shipment.Shipment, spec ShipmentCopySpec) *shipme
 		Weight:              intutils.ClonePointer(source.Weight),
 		TemperatureMin:      intutils.ClonePointer(source.TemperatureMin),
 		TemperatureMax:      intutils.ClonePointer(source.TemperatureMax),
-		RatingUnit:          source.RatingUnit,
 		EnteredByID:         spec.RequestedBy,
 	}
 
@@ -206,37 +205,28 @@ func BuildAutoOrder(entity *shipment.Shipment, orderNumber string) *order.Order 
 // produce copies.
 func LoadShipmentGraphSource(
 	ctx context.Context,
-	db bun.IDB,
+	db *keel.DB,
 	tenantInfo pagination.TenantInfo,
 	shipmentID pulid.ID,
 ) (*shipment.Shipment, error) {
-	sp := shipmentcol.ShipmentColumns
-	sm := shipmentcol.ShipmentMoveColumns
-	stp := shipmentcol.StopColumns
-	entity := new(shipment.Shipment)
-	err := db.
-		NewSelect().
-		Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return shipmentcol.ShipmentScopeTenant(sq, tenantInfo).
-				Where(sp.ID.Eq(), shipmentID)
-		}).
-		RelationWithOpts(shipmentcol.ShipmentRelations.Moves, bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(sm.Sequence.OrderAsc())
-			},
-		}).
-		RelationWithOpts(buncolgen.Rel(shipmentcol.ShipmentRelations.Moves, shipmentcol.ShipmentMoveRelations.Stops), bun.RelationOpts{
-			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Order(stp.Sequence.OrderAsc())
-			},
-		}).
-		Relation(shipmentcol.ShipmentRelations.AdditionalCharges).
-		Relation(shipmentcol.ShipmentRelations.ChargeAllocations).
-		Relation(shipmentcol.ShipmentRelations.Commodities).
-		Scan(ctx)
+	q, err := tenantShipments(ctx, tenantInfo)
 	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Shipment")
+		return nil, err
+	}
+
+	sp := shipmentdb.Shipments
+	m := sp.Moves()
+	st := m.Stops()
+	entity, err := q.Where(sp.ID.Eq(shipmentID)).
+		Load(
+			m.Order(m.Sequence.Asc()).Load(st.Order(st.Sequence.Asc())),
+			sp.AdditionalCharges(),
+			sp.ChargeAllocations(),
+			sp.Commodities(),
+		).
+		One(ctx, db)
+	if err != nil {
+		return nil, shipmentErrors.Map(err, shipmentID.String())
 	}
 
 	return entity, nil

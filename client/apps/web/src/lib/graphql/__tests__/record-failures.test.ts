@@ -94,6 +94,7 @@ describe("fetchRecordFailures", () => {
         edges: [],
         pageInfo: { hasNextPage: false, endCursor: null },
         totalCount: 0,
+        totalCountExact: true,
       },
     } as never);
 
@@ -102,7 +103,13 @@ describe("fetchRecordFailures", () => {
       { first: 5, after: null },
     );
 
-    expect(page).toEqual({ rows: [], total: 0, endCursor: null, hasNextPage: false });
+    expect(page).toEqual({
+      rows: [],
+      total: 0,
+      totalExact: true,
+      endCursor: null,
+      hasNextPage: false,
+    });
     expect(lastCall().variables).toMatchObject({ locationId: null, shipmentId: "shp_1" });
   });
 

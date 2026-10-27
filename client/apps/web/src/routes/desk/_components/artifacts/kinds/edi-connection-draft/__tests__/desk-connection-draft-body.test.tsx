@@ -85,34 +85,39 @@ function draftPayload(overrides: Record<string, unknown> = {}): Record<string, u
         },
       ],
     },
-    documentProfiles: [
+    sets: [
       {
         transactionSet: "214",
         direction: "Outbound",
-        name: "Acme Retail Group 214 outbound",
-        status: "Inactive",
         change: "Add",
         fields: [],
-        template: {
-          name: "Shipment status 214",
-          starter: true,
-          change: "Add",
-          met: 4,
-          unmet: [
-            {
-              segmentId: "MS1",
-              elementPosition: 1,
-              usage: "Mandatory",
-              codes: [],
-              problem: "The template does not write MS1",
-              source: source(5, "MS1 is mandatory"),
-            },
-          ],
-          considered: [],
-        },
+        requirements: 5,
+        unmet: [
+          {
+            segmentId: "MS1",
+            elementPosition: 1,
+            usage: "Mandatory",
+            codes: [],
+            problem: "The drafted map does not write MS1",
+            source: source(5, "MS1 is mandatory"),
+          },
+        ],
+        unverified: [],
         controlNumbers: [],
       },
     ],
+    project: {
+      projectId: "",
+      role: "carrier",
+      change: "Add",
+      files: [
+        { path: "partner.lading", kind: "partner", change: "Add" },
+        { path: "guides/214.lading", kind: "guide", change: "Add" },
+      ],
+      errors: 0,
+      warnings: 1,
+      diagnostics: [],
+    },
     mappings: [
       {
         entityType: "Location",
@@ -230,6 +235,8 @@ describe("DeskConnectionDraftBody", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("MS1, element 1")).toBeInTheDocument();
     expect(screen.getByText("Appendix B is missing")).toBeInTheDocument();
+    expect(screen.getByText("guides/214.lading")).toBeInTheDocument();
+    expect(screen.getByText("214 to the partner")).toBeInTheDocument();
     expect(screen.getByText("The envelope matches the drafted profile.")).toBeInTheDocument();
   });
 

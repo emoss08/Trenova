@@ -12,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 )
 
 const (
@@ -321,7 +320,7 @@ func (s *LedgerService) recordItemMovement(
 ) (*factoringports.ReserveMovementResult, error) {
 	var entry *factoring.ReserveEntry
 	var updated *factoring.Submission
-	err := s.db.WithTx(ctx, kernelports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+	err := s.db.Transact(ctx, kernelports.TxOptions{}, func(txCtx context.Context) error {
 		var txErr error
 		if entry, txErr = s.postMovement(txCtx, draft.input); txErr != nil {
 			return txErr

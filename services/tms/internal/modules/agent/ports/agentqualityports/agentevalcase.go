@@ -46,13 +46,13 @@ type ListEvalCaseCaptureCandidatesRequest struct {
 }
 
 type EvalCaseCaptureCandidate struct {
-	OrganizationID    pulid.ID `bun:"organization_id"`
-	BusinessUnitID    pulid.ID `bun:"business_unit_id"`
-	ProposalID        pulid.ID `bun:"proposal_id"`
-	DecisionID        pulid.ID `bun:"decision_id"`
-	DecidedByUserID   pulid.ID `bun:"decided_by_user_id"`
-	AgentDefinitionID pulid.ID `bun:"agent_definition_id"`
-	DecidedAt         int64    `bun:"decided_at"`
+	OrganizationID    pulid.ID
+	BusinessUnitID    pulid.ID
+	ProposalID        pulid.ID
+	DecisionID        pulid.ID
+	DecidedByUserID   pulid.ID
+	AgentDefinitionID pulid.ID
+	DecidedAt         int64
 }
 
 func (c *EvalCaseCaptureCandidate) TenantInfo() pagination.TenantInfo {

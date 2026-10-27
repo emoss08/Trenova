@@ -1,0 +1,31 @@
+library common
+
+crosswalk stopTypes: Code<S502> <-> StopType {
+  "LD", "CL", "PL" <-> Pickup
+  "UL", "CU", "PU" <-> Delivery
+}
+
+crosswalk purposes: Code<B2A01> <-> TenderPurpose {
+  "00" <-> Original
+  "01" <-> Cancel
+  "04" <-> Change
+  "05" -> Change
+}
+
+/// The appointment window from a stop's dates.
+fn window(dates: [Segment<G62>], zone: Zone) -> Window? {
+  let opens = dates.find(d => d.01 in ["37", "53", "69", "70"])
+  let closes = dates.find(d => d.01 in ["38", "54"])
+  Window {
+    start <- at(opens.02, opens.04, zone)
+    end   <- at(closes.02, closes.04, zone)
+  }
+}
+
+fn zip5(postal: Text) -> Text = postal.digits().take(5)
+
+const heavy = 40_000 lb
+
+test "zip5 keeps five digits" {
+  expect zip5("60601-1234") == "60601"
+}

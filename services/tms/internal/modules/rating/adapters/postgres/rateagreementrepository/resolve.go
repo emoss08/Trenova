@@ -4,14 +4,14 @@ import (
 	"context"
 	"sort"
 
-	"github.com/emoss08/trenova/pkg/buncolgen/rateagreementcol"
-
+	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/dbtx"
+	"github.com/emoss08/trenova/internal/modules/places/domain/rategeo"
 	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement"
+	"github.com/emoss08/trenova/internal/modules/rating/domain/rateagreement/rateagreementdb"
 	"github.com/emoss08/trenova/internal/modules/rating/ports/rateagreementports"
-	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 )
 
@@ -21,28 +21,6 @@ import (
 // problem — overlapping contracts, or lanes written far broader than intended —
 // and the quote says so rather than quietly scanning through them.
 const DefaultCandidateLimit = 200
-
-// agreementJoin joins the owning agreement under the alias buncolgen generates
-// for it, so every reference to an agreement column in this file is the same
-// generated constant used everywhere else.
-//
-// It is written out rather than declared with bun's Relation because a relation
-// join is aliased by the relation's name, and ordering by a column under an
-// alias the ORM chose would silently stop working if that field were ever
-// renamed. Which rule wins is not something to leave resting on that.
-func agreementJoin() string {
-	agreementCols := rateagreementcol.RateAgreementColumns
-	ruleCols := rateagreementcol.RateAgreementRuleColumns
-
-	return "JOIN " + rateagreementcol.RateAgreementTable.As(
-		rateagreementcol.RateAgreementTable.Alias,
-	) +
-		" ON " + agreementCols.ID.Qualified() + " = " + ruleCols.RateAgreementID.Qualified() +
-		" AND " + agreementCols.OrganizationID.Qualified() + " = " +
-		ruleCols.OrganizationID.Qualified() +
-		" AND " + agreementCols.BusinessUnitID.Qualified() + " = " +
-		ruleCols.BusinessUnitID.Qualified()
-}
 
 // ResolveRules fetches every rule that could price one lane.
 //
@@ -90,7 +68,7 @@ func (r *repository) ResolveRules(
 			}
 
 			merged := mergeCandidates(keyed, radius)
-			if err = r.attachAgreements(ctx, req.TenantInfo, merged); err != nil {
+			if err = r.attachAgreements(ctx, merged); err != nil {
 				log.Error("failed to load agreements for candidates", zap.Error(err))
 				return nil, err
 			}
@@ -123,76 +101,62 @@ func (r *repository) ResolveRules(
 // on every server, on every run. Without it the winner would follow whatever
 // order the database happened to return, and the same shipment could rate two
 // ways.
-func candidateOrder(q *bun.SelectQuery) *bun.SelectQuery {
-	cols := rateagreementcol.RateAgreementRuleColumns
-	agreementCols := rateagreementcol.RateAgreementColumns
+func candidateOrder(
+	q *keel.Query[*rateagreement.RateAgreementRule],
+) *keel.Query[*rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+	ra := rateagreementdb.RateAgreements
 
-	return q.
-		OrderExpr(cols.Priority.Qualified() + " DESC").
-		OrderExpr(agreementCols.Priority.Qualified() + " DESC").
-		OrderExpr(cols.SpecificityScore.Qualified() + " DESC").
-		OrderExpr(cols.EffectiveFrom.Qualified() + " DESC").
-		OrderExpr(cols.ID.Qualified() + " ASC")
+	return q.Order(
+		rr.Priority.Desc(),
+		ra.Priority.Desc(),
+		rr.SpecificityScore.Desc(),
+		rr.EffectiveFrom.Desc(),
+		rr.ID.Asc(),
+	)
 }
 
-func (r *repository) baseCandidateQuery(
-	ctx context.Context,
+func baseCandidateQuery(
 	req *rateagreementports.ResolveRateRulesRequest,
-	entities *[]*rateagreement.RateAgreementRule,
-) *bun.SelectQuery {
-	cols := rateagreementcol.RateAgreementRuleColumns
-	agreementCols := rateagreementcol.RateAgreementColumns
+) *keel.Query[*rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+	ra := rateagreementdb.RateAgreements
 
-	return r.db.DBForContext(ctx).
-		NewSelect().
-		Model(entities).
-		ColumnExpr(rateagreementcol.RateAgreementRuleTable.All()).
-		Join(agreementJoin()).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			sq = rateagreementcol.RateAgreementRuleScopeTenant(sq, req.TenantInfo).
-				Where(cols.PartyType.Eq(), req.PartyType).
-				Where(cols.EffectiveFrom.Lte(), req.AsOf).
-				WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
-					return wq.
-						Where(cols.EffectiveTo.IsNull()).
-						WhereOr(cols.EffectiveTo.Gt(), req.AsOf)
-				})
+	// A rule cannot outlive the contract it belongs to. Suspending or
+	// expiring an agreement has to stop it pricing even where its rules
+	// are still individually within their own windows, which is how a
+	// contract is taken out of service without editing every lane.
+	//
+	// One agreement can be exempted, for a simulation: a draft contract
+	// is by definition not Active, and the whole point is to see what it
+	// would do. Relaxing the real query rather than writing a second one
+	// is what makes a simulated rate the same rate the contract will
+	// produce once it is signed.
+	inService := keel.And(
+		rr.Status.Eq(rateagreement.RuleStatusActive),
+		ra.Status.Eq(rateagreement.StatusActive),
+		effectiveAt(ruleWindowColumns{from: ra.EffectiveFrom, to: ra.EffectiveTo}, req.AsOf),
+	)
+	if req.SimulateAgreementID != nil && !req.SimulateAgreementID.IsNil() {
+		inService = keel.Or(inService, rr.RateAgreementID.Eq(*req.SimulateAgreementID))
+	}
 
-			if len(req.PartyIDs) > 0 {
-				sq = sq.Where(cols.PartyID.In(), bun.List(req.PartyIDs))
-			}
+	return rr.Join(ra, ra.ID.EqCol(rr.RateAgreementID)).Where(
+		rr.PartyType.Eq(req.PartyType),
+		effectiveAt(ruleWindow(), req.AsOf),
+		keel.When(len(req.PartyIDs) > 0, rr.PartyID.In(req.PartyIDs...)),
+		inService,
+	)
+}
 
-			// A rule cannot outlive the contract it belongs to. Suspending or
-			// expiring an agreement has to stop it pricing even where its rules
-			// are still individually within their own windows, which is how a
-			// contract is taken out of service without editing every lane.
-			//
-			// One agreement can be exempted, for a simulation: a draft contract
-			// is by definition not Active, and the whole point is to see what it
-			// would do. Relaxing the real query rather than writing a second one
-			// is what makes a simulated rate the same rate the contract will
-			// produce once it is signed.
-			return sq.
-				WhereGroup(" AND ", func(wq *bun.SelectQuery) *bun.SelectQuery {
-					wq = wq.WhereGroup(" AND ", func(aq *bun.SelectQuery) *bun.SelectQuery {
-						return aq.
-							Where(cols.Status.Eq(), rateagreement.RuleStatusActive).
-							Where(agreementCols.Status.Eq(), rateagreement.StatusActive).
-							Where(agreementCols.EffectiveFrom.Lte(), req.AsOf).
-							WhereGroup(" AND ", func(eq *bun.SelectQuery) *bun.SelectQuery {
-								return eq.
-									Where(agreementCols.EffectiveTo.IsNull()).
-									WhereOr(agreementCols.EffectiveTo.Gt(), req.AsOf)
-							})
-					})
+func keyedRulesQuery(
+	req *rateagreementports.ResolveRateRulesRequest,
+	limit int,
+) *keel.Query[*rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
 
-					if req.SimulateAgreementID != nil && !req.SimulateAgreementID.IsNil() {
-						wq = wq.WhereOr(cols.RateAgreementID.Eq(), *req.SimulateAgreementID)
-					}
-
-					return wq
-				})
-		})
+	return candidateOrder(baseCandidateQuery(req).Where(rr.LaneKey.In(req.LaneKeys...))).
+		Limit(limit + 1)
 }
 
 func (r *repository) resolveKeyedRules(
@@ -204,21 +168,9 @@ func (r *repository) resolveKeyedRules(
 		return nil, nil
 	}
 
-	cols := rateagreementcol.RateAgreementRuleColumns
-	entities := make([]*rateagreement.RateAgreementRule, 0, limit)
-
 	// One row over the limit, so the caller can tell a full page from a capped
 	// one without a second count.
-	err := r.baseCandidateQuery(ctx, req, &entities).
-		Where(cols.LaneKey.In(), bun.List(req.LaneKeys)).
-		Apply(candidateOrder).
-		Limit(int64(limit + 1)).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return entities, nil
+	return keyedRulesQuery(req, limit).List(ctx, r.db.Keel(ctx))
 }
 
 // resolveRadiusRules finds the lanes described by a circle around a point.
@@ -227,6 +179,28 @@ func (r *repository) resolveKeyedRules(
 // predicate against the partial GiST indexes instead. There are only ever a
 // handful per organization, which is why a second query is cheaper than trying
 // to force both shapes through one.
+func radiusMatch(scope keel.StringValue, center, radius keel.Expr, lon, lat float64) keel.Pred {
+	return keel.Or(
+		keel.StringOf(scope).NeExpr(keel.ConstText(string(rategeo.ScopeTypeRadius))),
+		postgis.DWithin(center, postgis.Pt(lon, lat), radius),
+	)
+}
+
+func radiusRulesQuery(
+	req *rateagreementports.ResolveRateRulesRequest,
+	limit int,
+) *keel.Query[*rateagreement.RateAgreementRule] {
+	rr := rateagreementdb.RateAgreementRules
+
+	return candidateOrder(baseCandidateQuery(req).Where(
+		rr.LaneKey.Eq(rateagreement.RadiusLaneKey),
+		radiusMatch(rr.OriginScopeType, rr.OriginCenter, rr.OriginRadiusMeters,
+			*req.OriginLongitude, *req.OriginLatitude),
+		radiusMatch(rr.DestinationScopeType, rr.DestinationCenter, rr.DestinationRadiusMeters,
+			*req.DestinationLongitude, *req.DestinationLatitude),
+	)).Limit(limit + 1)
+}
+
 func (r *repository) resolveRadiusRules(
 	ctx context.Context,
 	req *rateagreementports.ResolveRateRulesRequest,
@@ -237,36 +211,7 @@ func (r *repository) resolveRadiusRules(
 		return nil, nil
 	}
 
-	cols := rateagreementcol.RateAgreementRuleColumns
-	entities := make([]*rateagreement.RateAgreementRule, 0, limit)
-
-	err := r.baseCandidateQuery(ctx, req, &entities).
-		Where(cols.LaneKey.Eq(), rateagreement.RadiusLaneKey).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where(
-					cols.OriginScopeType.Qualified()+" <> 'Radius'"+
-						" OR ST_DWithin("+cols.OriginCenter.Qualified()+
-						", ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, "+
-						cols.OriginRadiusMeters.Qualified()+")",
-					*req.OriginLongitude, *req.OriginLatitude,
-				).
-				Where(
-					cols.DestinationScopeType.Qualified()+" <> 'Radius'"+
-						" OR ST_DWithin("+cols.DestinationCenter.Qualified()+
-						", ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, "+
-						cols.DestinationRadiusMeters.Qualified()+")",
-					*req.DestinationLongitude, *req.DestinationLatitude,
-				)
-		}).
-		Apply(candidateOrder).
-		Limit(int64(limit + 1)).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return entities, nil
+	return radiusRulesQuery(req, limit).List(ctx, r.db.Keel(ctx))
 }
 
 // attachAgreements loads the handful of distinct agreements behind a candidate
@@ -276,50 +221,38 @@ func (r *repository) resolveRadiusRules(
 // the name that goes in the trace, and the ordering needs its priority.
 func (r *repository) attachAgreements(
 	ctx context.Context,
-	tenantInfo pagination.TenantInfo,
 	rules []*rateagreement.RateAgreementRule,
 ) error {
-	return dbtx.ReadErr(ctx, r.db, func(ctx context.Context) error {
-		if len(rules) == 0 {
-			return nil
-		}
-
-		ids := make([]pulid.ID, 0, len(rules))
-		seen := make(map[pulid.ID]struct{}, len(rules))
-		for _, rule := range rules {
-			if _, dup := seen[rule.RateAgreementID]; dup {
-				continue
-			}
-			seen[rule.RateAgreementID] = struct{}{}
-			ids = append(ids, rule.RateAgreementID)
-		}
-
-		cols := rateagreementcol.RateAgreementColumns
-		agreements := make([]*rateagreement.RateAgreement, 0, len(ids))
-
-		err := r.db.DBForContext(ctx).
-			NewSelect().
-			Model(&agreements).
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return rateagreementcol.RateAgreementScopeTenant(sq, tenantInfo).
-					Where(cols.ID.In(), bun.List(ids))
-			}).
-			Scan(ctx)
-		if err != nil {
-			return err
-		}
-
-		byID := make(map[pulid.ID]*rateagreement.RateAgreement, len(agreements))
-		for _, agreement := range agreements {
-			byID[agreement.ID] = agreement
-		}
-
-		for _, rule := range rules {
-			rule.Agreement = byID[rule.RateAgreementID]
-		}
-
+	if len(rules) == 0 {
 		return nil
-	})
+	}
+
+	ids := make([]pulid.ID, 0, len(rules))
+	seen := make(map[pulid.ID]struct{}, len(rules))
+	for _, rule := range rules {
+		if _, dup := seen[rule.RateAgreementID]; dup {
+			continue
+		}
+		seen[rule.RateAgreementID] = struct{}{}
+		ids = append(ids, rule.RateAgreementID)
+	}
+
+	ra := rateagreementdb.RateAgreements
+	agreements, err := ra.Where(ra.ID.In(ids...)).Limit(len(ids)).List(ctx, r.db.Keel(ctx))
+	if err != nil {
+		return err
+	}
+
+	byID := make(map[pulid.ID]*rateagreement.RateAgreement, len(agreements))
+	for _, agreement := range agreements {
+		byID[agreement.ID] = agreement
+	}
+
+	for _, rule := range rules {
+		rule.Agreement = byID[rule.RateAgreementID]
+	}
+
+	return nil
 }
 
 // mergeCandidates combines the two result sets, dropping duplicates.

@@ -342,12 +342,13 @@ export const dispatchControlSchema = z
       .max(720, { error: () => translate("POD grace cannot exceed 720 hours") })
       .default(24),
     tenderCounterOffersEnabled: z.boolean().default(true),
+    /** Null to a reader without the margins field group; the server keeps the stored floor. */
     tenderCounterMarginFloorPercent: percentSchema({
       min: "-100",
       max: "100",
       fallback: "10",
       label: "Margin floor",
-    }),
+    }).nullable(),
     tenderAutoAcceptCounters: z.boolean().default(false),
     tenderCounterDecisionMinutes: z
       .number({ error: () => translate("Enter how long dispatch has to answer a counter") })

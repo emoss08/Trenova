@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/accountingwebhookhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accountsreceivablehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/accounttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/agentanalysishandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentdefinitionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentexceptionhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/agentextensionhandler"
@@ -45,9 +46,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/distanceprofilehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
-	"github.com/emoss08/trenova/internal/api/handlers/documentparsingrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
@@ -61,6 +60,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalperiodhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fiscalyearhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcodehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/formulalibraryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/formulatemplatehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glaccounthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/glbalancehandler"
@@ -145,6 +145,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	driverportalhandler.New,
 	pushhandler.New,
 	notificationpreferencehandler.New,
+	formulalibraryhandler.New,
 	formulatemplatehandler.New,
 	pagefavoritehandler.New,
 	equipmenttypehandler.New,
@@ -167,7 +168,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	customfieldhandler.New,
 	documenthandler.New,
 	reporthandler.New,
-	documentoperationshandler.New,
 	documentpacketrulehandler.New,
 	documenttemplatehandler.New,
 	accessorialchargehandler.New,
@@ -180,6 +180,7 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	insighthandler.New,
 	aiproviderhandler.New,
 	agentextensionhandler.New,
+	agentanalysishandler.New,
 	agentrunhandler.New,
 	assignmenthandler.New,
 	accountsreceivablehandler.New,
@@ -255,7 +256,6 @@ var HandlersModule = fx.Module("api-handlers", fx.Provide(
 	dataentrycontrolhandler.New,
 	dispatchcontrolhandler.New,
 	documentcontrolhandler.New,
-	documentparsingrulehandler.New,
 	distancecontrolhandler.New,
 	distanceoverridehandler.New,
 	distanceprofilehandler.New,

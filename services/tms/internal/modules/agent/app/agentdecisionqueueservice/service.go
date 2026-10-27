@@ -119,7 +119,8 @@ func (s *Service) ListPending(
 		if countErr != nil {
 			return nil, countErr
 		}
-		out.TotalCount = &total
+		out.TotalCount = new(int(total.N))
+		out.TotalCountExact = total.Exact
 	}
 
 	return out, nil
@@ -214,12 +215,17 @@ func (s *Service) Count(
 		return 0, err
 	}
 
-	return s.queue.CountPending(ctx, agentports.ListPendingDecisionsQuery{
+	count, err := s.queue.CountPending(ctx, agentports.ListPendingDecisionsQuery{
 		TenantInfo:     tenant,
 		Audience:       audienceOf(usable),
 		Now:            timeutils.NowUnix(),
 		ActionableOnly: true,
 	})
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count.N), nil
 }
 
 // withheld reports a reader who may use no agent at all, so nothing any
@@ -473,16 +479,18 @@ func decisionErrorMessage(err error) string {
 }
 
 func encodeCursor(entry agentports.PendingDecisionEntry) (string, error) {
-	return pagination.EncodeCursor(pagination.Cursor{CreatedAt: entry.CreatedAt, ID: entry.ID})
+	return pagination.EncodePositionCursor(
+		pagination.PositionCursor{At: entry.CreatedAt, ID: entry.ID},
+	)
 }
 
 func decodeCursor(encoded string) (agentports.PendingDecisionCursor, error) {
-	cursor, err := pagination.DecodeCursor(encoded)
+	cursor, err := pagination.DecodePositionCursor(encoded)
 	if err != nil {
 		return agentports.PendingDecisionCursor{}, err
 	}
 
-	return agentports.PendingDecisionCursor{CreatedAt: cursor.CreatedAt, ID: cursor.ID}, nil
+	return agentports.PendingDecisionCursor{CreatedAt: cursor.At, ID: cursor.ID}, nil
 }
 
 func (s *Service) DecideManyOwn(
