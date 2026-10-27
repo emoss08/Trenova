@@ -1455,7 +1455,7 @@ mod findings {
 
     #[test]
     fn a_map_whose_guide_is_unknown_is_reported_once_not_at_its_tests_rules_and_flows() {
-        let found = codes("maps/tender-in.lading", "from acme.204", "from acme_204");
+        let found = codes("maps/tender-in.lading", "from acme.204", "from acme.990");
         assert!(found.contains(&"unknown-guide"), "{found:?}");
         assert!(!found.contains(&"test-here"), "{found:?}");
         assert!(!found.contains(&"unknown-map"), "{found:?}");
