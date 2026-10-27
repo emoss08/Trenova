@@ -887,8 +887,16 @@ A project version is **Draft**, **Certified**, **Active**, **Shadow**, **Superse
 ## The editor
 
 The studio (`/edi/lading/:partnerId`, `client/apps/web/src/routes/edi/lading/`) edits one
-partner's project: the version picker and its actions above, the file tree with each file's
-error and warning counts, one editor per file (`components/lading-editor/`), and the panels below.
+partner's project: the version picker and its actions above, the file tree, one editor per file
+(`components/lading-editor/`), and the panels below. The file tree arranges the project by what uses what (`projectMap`): the partner file, each
+flow with the maps and rules its clauses name (from `lading.check`'s flows), the shared guides
+and libraries, the files no flow reaches, and the samples. Its header says whether the project
+checks clean, each file shows its error and warning counts, a map's set and direction and the map
+a rules file checks, Mod-P filters by path, and rows rename in place (a sample's rename rewrites
+the quoted paths tests read it by). Adding opens a palette of every kind of file and sample (type
+to filter, or a kind's letter), then that kind's form; a source file's options (a map's
+direction, input, document and guide; the map rules check; the base a guide narrows) shape a
+starter it previews, and the partner file is the module's own starter's (`lading.starter`).
 A partner without a project gets the start form, which writes the starter for the chosen role
 and sets as the first draft. Everything about the text is computed by the module in the browser,
 against the organisation and custom fields from `GET /edi/lading/context/`:
@@ -918,8 +926,10 @@ against the organisation and custom fields from `GET /edi/lading/context/`:
   live data (the saved version on the server, lookups answered from the organisation's records);
   the transactions, findings, outcomes, the document, the written X12, the lookups asked for and
   the unmapped codes; its values feed hover and inlays;
-- **release:** replays of each inbound map against the active version, with their differences,
-  and the shadow's results;
+- **release:** the steps to live traffic (saved, replayed, certified, shadow, live) worked out
+  from the version, the working copy and its replays (`releaseStages`), then the replays of each
+  inbound map against the active version, or the shadow's messages, as a table with the
+  selected row's differences beside it;
 - **settings:** the partner settings the partner file declares, changed on the active version
   without a new version;
 - **notes** for the version.

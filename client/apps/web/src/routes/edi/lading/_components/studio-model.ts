@@ -4,6 +4,7 @@ import type {
   LadingEdit,
   LadingFile,
   LadingLineage,
+  LadingMap,
   LadingRunInput,
   LadingRunResult,
   LadingRunValue,
@@ -11,7 +12,7 @@ import type {
   LadingSetting,
   LadingSource,
 } from "@trenova/shared/edi/lading";
-import type { LadingVersion } from "@trenova/shared/types/lading";
+import type { LadingReplay, LadingVersion } from "@trenova/shared/types/lading";
 
 /**
  * The version the studio opens: the one the address names when the project has it, else the
@@ -58,11 +59,51 @@ export function isDirty(
   );
 }
 
-export type NewPathProblem = "empty" | "notRelative" | "notLading" | "taken";
+/** The kinds of source file, each named by its header's first keyword. */
+export type LadingFileKind = "partner" | "guide" | "map" | "rules" | "flow" | "library";
+
+/** The folder the studio puts each kind of new file in; the partner file sits at the root. */
+export const FILE_FOLDERS: Record<LadingFileKind, string> = {
+  partner: "",
+  guide: "guides/",
+  map: "maps/",
+  rules: "rules/",
+  flow: "flows/",
+  library: "lib/",
+};
+
+export const SAMPLE_FOLDER = "samples/";
+
+/** How a sample is read: X12, CSV, JSON, or a Trenova document for an outbound test. */
+export type SampleFormat = "x12" | "csv" | "json" | "document";
+
+/** The ending a new sample of each format takes. */
+export const SAMPLE_ENDINGS: Record<SampleFormat, string> = {
+  x12: ".x12",
+  csv: ".csv",
+  json: ".json",
+  document: ".document.json",
+};
 
 /**
- * Why a path cannot be added, or null when it can: a source file's path ends in `.lading`, every
- * path is relative and inside the project, and no two files or samples share one.
+ * A sample's format from its name: `.x12`, `.edi` and `.txt` are X12, `.document.json` a
+ * Trenova document, `.json` and `.csv` as named. Null for any other name.
+ */
+export function sampleFormat(path: string): SampleFormat | null {
+  const lower = path.toLowerCase();
+  if (lower.endsWith(".document.json")) return "document";
+  if (lower.endsWith(".json")) return "json";
+  if (lower.endsWith(".csv")) return "csv";
+  if (lower.endsWith(".x12") || lower.endsWith(".edi") || lower.endsWith(".txt")) return "x12";
+  return null;
+}
+
+export type NewPathProblem = "empty" | "notRelative" | "notLading" | "notSample" | "taken";
+
+/**
+ * Why a path cannot be added, or null when it can: a source file's path ends in `.lading`, a
+ * sample's in an ending a sample is read by, every path is relative and inside the project, and
+ * no two files or samples share one.
  */
 export function newPathProblem(
   path: string,
@@ -79,41 +120,265 @@ export function newPathProblem(
     return "notRelative";
   }
   if (kind === "file" && !trimmed.endsWith(".lading")) return "notLading";
+  if (kind === "sample" && sampleFormat(trimmed) === null) return "notSample";
   if (taken.includes(trimmed)) return "taken";
   return null;
 }
 
-/** The words of a file's name: `tender-in.lading` is `tender` and `in`. */
+/**
+ * The path a new entry is saved at: its kind's folder, the name as typed, and the kind's ending,
+ * which a name that already carries it does not repeat.
+ */
+export function entryPath(kind: LadingFileKind | SampleFormat, name: string): string {
+  const trimmed = name.trim().replace(/^\/+/, "");
+  if (trimmed === "") return "";
+  if (kind in SAMPLE_ENDINGS) {
+    const ending = SAMPLE_ENDINGS[kind as SampleFormat];
+    const base = trimmed.toLowerCase().endsWith(ending) ? trimmed : `${trimmed}${ending}`;
+    return `${SAMPLE_FOLDER}${base}`;
+  }
+  if (kind === "partner") return "partner.lading";
+  const base = trimmed.endsWith(".lading") ? trimmed : `${trimmed}.lading`;
+  return `${FILE_FOLDERS[kind as LadingFileKind]}${base}`;
+}
+
+/** The words of a name: `tender-in.lading` is `tender` and `in`, `tenderIn` is the same. */
+function nameWords(text: string): string[] {
+  return text
+    .replace(/\.lading$/, "")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+    .map((word) => word.toLowerCase());
+}
+
+/** The words of a file's name, without its folders. */
 function fileWords(path: string): string[] {
-  const base = (path.split("/").pop() ?? "file").replace(/\.lading$/, "");
-  const words = base.split(/[^A-Za-z0-9]+/).filter(Boolean);
+  const words = nameWords(path.split("/").pop() ?? "");
   return words.length > 0 ? words : ["file"];
 }
 
-/** A Lading name from a file's name, in the camelCase names take: `tender-in` is `tenderIn`. */
-function camelName(path: string): string {
+/**
+ * A Lading name from a file's name or any text, in the camelCase names take: `tender-in` is
+ * `tenderIn`, `Acme Manufacturing` is `acmeManufacturing`.
+ */
+export function ladingName(path: string): string {
   const [first = "file", ...rest] = fileWords(path);
-  const head = /^\d/.test(first) ? `file${first}` : first.charAt(0).toLowerCase() + first.slice(1);
+  const head = /^\d/.test(first) ? `file${first}` : first;
   return head + rest.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join("");
 }
 
+/** A name as a file name: `tenderIn` is `tender-in`. */
+export function kebabName(name: string): string {
+  return nameWords(name).join("-");
+}
+
+/** Text as it may sit inside a Lading string: no closing quote and no interpolation braces. */
+function quoted(text: string): string {
+  return `"${text.replaceAll('"', "'").replace(/[{}]/g, "")}"`;
+}
+
+/** What a new source file starts as, beyond the name its path gives it. */
+export type FileStarter =
+  | { kind: "guide"; base: string; title: string }
+  | { kind: "map"; direction: "inbound"; input: "x12"; guide: string; document: string }
+  | { kind: "map"; direction: "inbound"; input: "csv" | "json"; document: string }
+  | { kind: "map"; direction: "outbound"; document: string; guide: string }
+  | { kind: "rules"; map: string }
+  | { kind: "flow"; partner: string }
+  | { kind: "library" };
+
 /**
- * The starter text of a new file, from the header its folder suggests. A guide is named with
+ * The starter text of a new source file: its header, named from its path. A guide is named with
  * dots, as maps name it (`guides/acme-204.lading` is `acme.204`); every other file takes a
- * camelCase name.
+ * camelCase name. A map reading CSV starts with one column to show the shape.
  */
-export function newFileSource(path: string, partner: string): string {
-  const name = camelName(path);
-  if (path.startsWith("maps/")) return `map ${name}\n  from x12.004010.204\n  to   loadTender\n`;
-  if (path.startsWith("flows/")) return `flow ${name} with ${partner}\n`;
-  if (path.startsWith("guides/")) {
-    const guide = fileWords(path)
-      .map((word) => word.toLowerCase())
-      .join(".");
-    return `guide ${guide} from x12.004010.204 ""\n`;
+export function starterSource(path: string, starter: FileStarter): string {
+  const name = ladingName(path);
+  switch (starter.kind) {
+    case "guide":
+      return `guide ${fileWords(path).join(".")} from ${starter.base} ${quoted(starter.title)}\n`;
+    case "map": {
+      if (starter.direction === "outbound") {
+        return `map ${name}\n  from ${starter.document}\n  to   ${starter.guide}\n`;
+      }
+      if (starter.input === "csv") {
+        return `map ${name}\n  from csv {\n    reference: Text\n  }\n  to   ${starter.document}\n`;
+      }
+      const from = starter.input === "json" ? "json" : starter.guide;
+      return `map ${name}\n  from ${from}\n  to   ${starter.document}\n`;
+    }
+    case "rules":
+      return `rules ${name} for ${starter.map}\n`;
+    case "flow":
+      return `flow ${name} with ${starter.partner}\n`;
+    case "library":
+      return `library ${name}\n`;
   }
-  if (path.startsWith("rules/")) return `rules ${name} for ${name}\n`;
-  return `library ${name}\n`;
+}
+
+/** The stem a document's files are named by: `loadTender` is `tender`. */
+export function documentStem(document: string): string {
+  return nameWords(document).pop() ?? document;
+}
+
+/** A name not yet taken: the name itself, else the name with the first free number after it. */
+export function freeName(
+  kind: LadingFileKind | SampleFormat,
+  name: string,
+  taken: readonly string[],
+): string {
+  if (!taken.includes(entryPath(kind, name))) return name;
+  for (let n = 2; ; n += 1) {
+    const next = `${name}-${n}`;
+    if (!taken.includes(entryPath(kind, next))) return next;
+  }
+}
+
+/**
+ * The project with an entry moved to a new path. A sample's tests read it by its quoted path, so
+ * every file's `"old/path"` becomes `"new/path"`; a source file is referred to by its declared
+ * name, which a move leaves alone.
+ */
+export function renameEntry(
+  project: { files: readonly LadingFile[]; samples: readonly LadingSample[] },
+  from: string,
+  to: string,
+): { files: LadingFile[]; samples: LadingSample[] } {
+  const isSample = project.samples.some((sample) => sample.path === from);
+  const files = project.files.map((file) => {
+    const path = file.path === from ? to : file.path;
+    const source = isSample ? file.source.replaceAll(`"${from}"`, `"${to}"`) : file.source;
+    return path === file.path && source === file.source ? file : { path, source };
+  });
+  const samples = project.samples.map((sample) =>
+    sample.path === from ? { ...sample, path: to } : sample,
+  );
+  return { files, samples };
+}
+
+/** What a row in the file tree is: a kind of source file, a file without a header, or a sample. */
+export type TreeKind = LadingFileKind | "other" | "sample";
+
+/** One row of the file tree, with what the check knows about it. */
+export type TreeEntry = {
+  path: string;
+  kind: TreeKind;
+  /** The path as the row shows it: without its kind's folder, nor `.lading`. */
+  label: string;
+  map?: LadingMap;
+  rulesFor?: string;
+  guideBase?: string | null;
+  format?: SampleFormat;
+};
+
+/** One flow in the file tree, with the maps and rules its clauses use under it. */
+export type FlowBranch = { flow: TreeEntry; children: TreeEntry[] };
+
+/**
+ * The project as the file tree shows it: the partner file, each flow with the maps and rules it
+ * uses, the guides and libraries every file shares, the files no flow reaches (a map or rules
+ * file no clause names, a file without a header), and the samples.
+ */
+export type ProjectMap = {
+  partner: TreeEntry[];
+  flows: FlowBranch[];
+  shared: TreeEntry[];
+  loose: TreeEntry[];
+  samples: TreeEntry[];
+};
+
+const FILE_KINDS = new Set<string>(["partner", "guide", "map", "rules", "flow", "library"]);
+
+function rowLabel(path: string, folder: string): string {
+  const inside = folder !== "" && path.startsWith(folder) ? path.slice(folder.length) : path;
+  return inside.replace(/\.lading$/, "");
+}
+
+const byPath = (a: TreeEntry, b: TreeEntry) => a.path.localeCompare(b.path);
+
+/**
+ * The project arranged by what uses what, from the check. A file's kind is the one its header
+ * names, wherever the file sits. Under a flow come the map and rules of each clause in clause
+ * order, each map followed by any other rules file written for it; a map two flows use appears
+ * under both. Guides come before libraries in the shared files.
+ */
+export function projectMap(
+  files: readonly LadingFile[],
+  samples: readonly LadingSample[],
+  check: LadingCheck,
+): ProjectMap {
+  const kinds = new Map(check.files.map((file) => [file.path, file.kind] as const));
+  const maps = new Map(check.maps.map((map) => [map.path, map] as const));
+  const rules = new Map(check.rules.map((rule) => [rule.path, rule.map] as const));
+  const guides = new Map(
+    check.guides.flatMap((guide) => (guide.path ? [[guide.path, guide.base] as const] : [])),
+  );
+  const entries = new Map<string, TreeEntry>();
+  for (const file of files) {
+    const found = kinds.get(file.path) ?? "";
+    const kind: TreeKind = FILE_KINDS.has(found) ? (found as LadingFileKind) : "other";
+    entries.set(file.path, {
+      path: file.path,
+      kind,
+      label: rowLabel(file.path, kind === "other" ? "" : FILE_FOLDERS[kind]),
+      map: maps.get(file.path),
+      rulesFor: rules.get(file.path),
+      guideBase: guides.get(file.path),
+    });
+  }
+  const all = [...entries.values()];
+  const ofKind = (kind: TreeKind) => all.filter((entry) => entry.kind === kind).sort(byPath);
+
+  const mapPath = new Map(check.maps.map((map) => [map.name, map.path] as const));
+  const rulesPath = new Map(check.rules.map((rule) => [rule.name, rule.path] as const));
+  const rulesOf = (mapName: string) =>
+    check.rules.filter((rule) => rule.map === mapName).map((rule) => rule.path);
+
+  const reached = new Set<string>();
+  const flows = ofKind("flow").map((flow) => {
+    const clauses = check.flows.find((item) => item.path === flow.path)?.clauses ?? [];
+    const paths: string[] = [];
+    const take = (path: string | undefined) => {
+      if (path && entries.has(path) && !paths.includes(path)) paths.push(path);
+    };
+    for (const clause of clauses) {
+      if (clause.map) {
+        take(mapPath.get(clause.map));
+        if (clause.rules) take(rulesPath.get(clause.rules));
+        for (const path of rulesOf(clause.map)) take(path);
+      } else if (clause.rules) {
+        take(rulesPath.get(clause.rules));
+      }
+    }
+    for (const path of paths) reached.add(path);
+    return { flow, children: paths.map((path) => entries.get(path) as TreeEntry) };
+  });
+
+  const loose = all
+    .filter(
+      (entry) =>
+        entry.kind === "other" ||
+        ((entry.kind === "map" || entry.kind === "rules") && !reached.has(entry.path)),
+    )
+    .sort(byPath);
+
+  return {
+    partner: ofKind("partner"),
+    flows,
+    shared: [...ofKind("guide"), ...ofKind("library")],
+    loose,
+    samples: samples
+      .map(
+        (sample): TreeEntry => ({
+          path: sample.path,
+          kind: "sample",
+          label: rowLabel(sample.path, SAMPLE_FOLDER),
+          format: sampleFormat(sample.path) ?? "x12",
+        }),
+      )
+      .sort(byPath),
+  };
 }
 
 export type Problem = LadingDiagnostic & { path: string };
@@ -131,6 +396,18 @@ export function projectProblems(check: LadingCheck): Problem[] {
       a.path.localeCompare(b.path) ||
       a.range.from - b.range.from,
   );
+}
+
+/**
+ * Entries under the file they belong to. The files keep the order of their first entry, so with
+ * `projectProblems`' order a file with an error comes before one with only warnings.
+ */
+export function byFile<T extends { path: string }>(
+  entries: readonly T[],
+): { path: string; entries: T[] }[] {
+  const byPath = new Map<string, T[]>();
+  for (const entry of entries) byPath.set(entry.path, [...(byPath.get(entry.path) ?? []), entry]);
+  return [...byPath].map(([path, inFile]) => ({ path, entries: inFile }));
 }
 
 /** How many errors and warnings each file has, for the file tree. */
@@ -277,4 +554,97 @@ export function applyFileEdits(
     if (!files.some((file) => file.path === path)) next.push({ path, source: edit("", changes) });
   }
   return next;
+}
+
+/** Where a version stands on one step of its way to live traffic. */
+export type StageState = "done" | "running" | "attention" | "failed" | "pending" | "skipped";
+
+export type ReleaseStage =
+  | { key: "saved"; state: StageState }
+  | {
+      key: "replayed";
+      state: StageState;
+      clean: number;
+      total: number;
+      reason?: "noActive" | "isActive" | "noInbound";
+    }
+  | { key: "certified"; state: StageState }
+  | { key: "shadow"; state: StageState }
+  | { key: "live"; state: StageState; superseded: boolean };
+
+const CERTIFIED_OR_LATER = new Set<LadingVersion["status"]>([
+  "Certified",
+  "Shadow",
+  "Active",
+  "Superseded",
+]);
+
+/**
+ * The steps between a version and live traffic, each as far as this version has come: saved,
+ * replayed (each inbound map with a finished replay and no new rejection, against the active
+ * version), certified, shadowed (optional) and live. A step that cannot apply is skipped.
+ */
+export function releaseStages(input: {
+  version: Pick<LadingVersion, "id" | "status" | "shadowUntil">;
+  activeVersionId: string | null | undefined;
+  dirty: boolean;
+  inboundMaps: readonly string[];
+  replays: readonly Pick<LadingReplay, "map" | "status" | "summary">[];
+}): ReleaseStage[] {
+  const { version, activeVersionId, dirty, inboundMaps, replays } = input;
+  const certified = CERTIFIED_OR_LATER.has(version.status);
+
+  const replayed = (): ReleaseStage => {
+    const total = inboundMaps.length;
+    const base = { key: "replayed" as const, total };
+    if (!activeVersionId) return { ...base, state: "skipped", clean: 0, reason: "noActive" };
+    if (activeVersionId === version.id) {
+      return { ...base, state: "skipped", clean: 0, reason: "isActive" };
+    }
+    if (total === 0) return { ...base, state: "skipped", clean: 0, reason: "noInbound" };
+    const finished = (map: string) =>
+      replays.filter((replay) => replay.map === map && replay.status === "Completed");
+    const clean = inboundMaps.filter((map) =>
+      finished(map).some((replay) => (replay.summary?.newlyRejected ?? 0) === 0),
+    ).length;
+    const rejecting = inboundMaps.some(
+      (map) =>
+        finished(map).length > 0 &&
+        finished(map).every((replay) => (replay.summary?.newlyRejected ?? 0) > 0),
+    );
+    const running = replays.some((replay) => replay.status === "Running");
+    const state: StageState =
+      clean === total
+        ? "done"
+        : running
+          ? "running"
+          : rejecting
+            ? "failed"
+            : clean > 0
+              ? "attention"
+              : "pending";
+    return { ...base, state, clean };
+  };
+
+  return [
+    { key: "saved", state: version.status !== "Draft" || !dirty ? "done" : "attention" },
+    replayed(),
+    { key: "certified", state: certified ? "done" : "pending" },
+    {
+      key: "shadow",
+      state:
+        version.status === "Shadow"
+          ? "running"
+          : version.shadowUntil != null
+            ? "done"
+            : version.status === "Active" || version.status === "Superseded"
+              ? "skipped"
+              : "pending",
+    },
+    {
+      key: "live",
+      state: version.status === "Active" || version.status === "Superseded" ? "done" : "pending",
+      superseded: version.status === "Superseded",
+    },
+  ];
 }
