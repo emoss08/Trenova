@@ -3,7 +3,7 @@ import { useT } from "@trenova/shared/i18n/use-t";
 import { cn } from "@trenova/shared/lib/utils";
 import { formatRowTotal } from "@trenova/shared/lib/row-total";
 import type { CSSProperties } from "react";
-import type { TableReader } from "../../artifact-payloads";
+import type { ArtifactReader } from "../../artifact-payloads";
 import { ArtIcon } from "../../desk-art-kinds";
 import { PAGE_SIZES, railPages, type PageSize } from "./table-pages";
 import type { TablePages } from "./use-table-pages";
@@ -13,7 +13,13 @@ import type { TablePages } from "./use-table-pages";
  * pages with the agent's and the ones read marked, the way through, and how
  * many rows a page holds. The agent's pages wear its accent.
  */
-export function TablePager({ pages, reader }: { pages: TablePages; reader: TableReader | null }) {
+export function TablePager({
+  pages,
+  reader,
+}: {
+  pages: TablePages;
+  reader: ArtifactReader | null;
+}) {
   const t = useT();
   const accent = reader ? resolveAgentIdentity(reader).accent : "slate";
   const start = pages.page * pages.size;

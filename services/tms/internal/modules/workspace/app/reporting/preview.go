@@ -99,14 +99,23 @@ func (s *Service) runPreview(ctx context.Context, req *PreviewRequest) (*Preview
 }
 
 func collectPreview(ctx context.Context, result *analytics.Result) (*PreviewResult, error) {
-	columns := result.Columns()
+	out, err := collectRows(ctx, result, result.Len())
+	if err != nil {
+		return nil, err
+	}
+	out.Rollup = result.Rollup()
+	out.Cursor = result.Cursor()
+	return out, nil
+}
+
+func collectRows(ctx context.Context, reader table.Reader, size int) (*PreviewResult, error) {
+	columns := reader.Columns()
 	out := &PreviewResult{
 		Columns: columns,
-		Rows:    make([][]any, 0, result.Len()),
-		Rollup:  result.Rollup(),
+		Rows:    make([][]any, 0, size),
 	}
 	for {
-		batch, err := result.Next(ctx)
+		batch, err := reader.Next(ctx)
 		if errors.Is(err, io.EOF) {
 			break
 		}
@@ -124,7 +133,6 @@ func collectPreview(ctx context.Context, result *analytics.Result) (*PreviewResu
 			out.Levels = append(out.Levels, level)
 		}
 	}
-	out.Truncated = result.Truncated()
-	out.Cursor = result.Cursor()
+	out.Truncated = reader.Truncated()
 	return out, nil
 }

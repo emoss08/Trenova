@@ -141,6 +141,7 @@ type Service struct {
 	notifier      raiseNotifier
 	completion    agentports.StructuredCompleter
 	reports       *reporting.Service
+	reportRuns    reportRerunner
 	queries       agentports.AgentQueryToolRegistry
 	pdfs          documenttemplateports.PDFRenderer
 	memories      agentports.AgentMemoryService
@@ -189,6 +190,7 @@ func New(p Params) *Service {
 		queries:       p.Queries,
 		pdfs:          p.PDFs,
 		reports:       p.Reports,
+		reportRuns:    reportRerunnerOf(p.Reports),
 		memories:      p.Memories,
 		quota:         p.Quota,
 	}

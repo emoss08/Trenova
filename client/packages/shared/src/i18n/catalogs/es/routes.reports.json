@@ -285,7 +285,6 @@
   "revenue, weekly": "ingresos, semanal",
   "row limit reached": "se alcanzó el límite de filas",
   "vs previous": "vs. anterior",
-  "vs {0}": "frente a {0}",
   "{0, plural, one {# field in this report is unavailable to you} other {# fields in this report are unavailable to you}}": "{0, plural, one {# campo de este informe no está disponible para usted} other {# campos de este informe no están disponibles para usted}}",
   "{0, plural, one {# in-app recipient} other {# in-app recipients}}": "{0, plural, one {# destinatario en la aplicación} other {# destinatarios en la aplicación}}",
   "{0, plural, one {# report} other {# reports}}": "{0, plural, one {# informe} other {# informes}}",

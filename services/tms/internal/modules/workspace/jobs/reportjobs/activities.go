@@ -402,10 +402,7 @@ func (a *Activities) ExecuteAndRenderActivity(
 	}
 	defer stream.Close()
 
-	var digest *digestCapture
-	if prepared.WantDigest {
-		digest = newDigestCapture(reportports.MaxDigestRows)
-	}
+	digest := newDigestCapture(reportports.MaxDigestRows)
 	source := newRunReader(stream, func() {
 		activity.RecordHeartbeat(ctx)
 	}, heartbeatEveryRows, digest)
@@ -432,14 +429,16 @@ func (a *Activities) ExecuteAndRenderActivity(
 	}
 	result.CacheHit = stream.Cached()
 
-	if digest != nil {
-		captured, digestErr := digest.digest(run.Context, stream.Columns())
-		if digestErr != nil {
-			a.l.Warn("failed to capture report digest", zap.Error(digestErr))
-		} else {
-			result.Digest = captured
-		}
+	captured, digestErr := digest.digest(run.Context, stream.Columns())
+	if digestErr != nil {
+		a.l.Warn("failed to capture report digest", zap.Error(digestErr))
+
+		return result, nil
 	}
+	if prepared.WantDigest {
+		result.Digest = captured
+	}
+	result.Sample = runSampleOf(captured)
 
 	return result, nil
 }
@@ -538,6 +537,14 @@ func (a *Activities) renderToStorage(
 	}, nil
 }
 
+func runSampleOf(digest *reportports.ReportDigest) []byte {
+	if digest.IsEmpty() || len(digest.Envelope) > report.MaxRunSampleBytes {
+		return nil
+	}
+
+	return digest.Envelope
+}
+
 func drain(ctx context.Context, source *runReader) error {
 	for {
 		_, err := source.Next(ctx)
@@ -609,6 +616,7 @@ func (a *Activities) FinalizeRunActivity(
 	if payload.Status == report.RunStatusSucceeded {
 		run.ArtifactKey = payload.ArtifactKey
 		run.RowsKey = payload.RowsKey
+		run.Sample = payload.Sample
 		run.ArtifactExpiresAt = now + int64(a.cfg.GetArtifactRetention().Seconds())
 		if payload.ArtifactExpiresAt > 0 {
 			run.ArtifactExpiresAt = payload.ArtifactExpiresAt
@@ -801,6 +809,7 @@ func (a *Activities) CleanupExpiredArtifactsActivity(
 			}
 
 			run.Status = report.RunStatusExpired
+			run.Sample = nil
 			if _, err = a.runRepo.Update(runScope(ctx, run), run); err != nil {
 				a.l.Warn("failed to mark report run expired",
 					zap.String("runId", run.ID.String()), zap.Error(err))

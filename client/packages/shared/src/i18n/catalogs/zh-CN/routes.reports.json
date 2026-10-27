@@ -285,7 +285,6 @@
   "revenue, weekly": "营收，每周",
   "row limit reached": "已达数据行上限",
   "vs previous": "较上期",
-  "vs {0}": "相对于 {0}",
   "{0, plural, one {# field in this report is unavailable to you} other {# fields in this report are unavailable to you}}": "{0, plural, other {此报表中有 # 个字段您无法使用}}",
   "{0, plural, one {# in-app recipient} other {# in-app recipients}}": "{0, plural, other {# 位应用内收件人}}",
   "{0, plural, one {# report} other {# reports}}": "{0, plural, other {# 份报表}}",

@@ -1,5 +1,5 @@
 {
-  "version": "sha256:db7cf4dc48fd682c05ce41ce8c837a931447195447d5d0ea8d3292f61111f8ff",
+  "version": "sha256:f3afb3c2e16a246604325a66702184857f07c008ef79f05d357c06b29f96fae0",
   "screens": [
     {
       "path": "/",
@@ -2732,6 +2732,16 @@
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
         },
         {
           "method": "POST",
@@ -7415,6 +7425,16 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/",
           "requires": []
         },
@@ -8133,6 +8153,16 @@
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
         },
         {
           "method": "POST",
@@ -8899,6 +8929,16 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/",
           "requires": []
         },
@@ -9616,6 +9656,16 @@
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
         },
         {
           "method": "POST",
@@ -13505,6 +13555,16 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/",
           "requires": []
         },
@@ -15093,6 +15153,16 @@
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
         },
         {
           "method": "POST",
@@ -16752,6 +16822,16 @@
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
         },
         {
           "method": "POST",
@@ -30687,6 +30767,16 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/",
           "requires": []
         },
@@ -31569,6 +31659,16 @@
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/",
           "requires": []
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/",
+          "requires": [
+            {
+              "resource": "report",
+              "operation": "export"
+            }
+          ]
         },
         {
           "method": "POST",

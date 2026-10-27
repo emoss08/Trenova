@@ -66,7 +66,8 @@ func (r *runRepository) ListConnection(
 			result, err := listquery.Connection(
 				ctx,
 				r.db.Keel(ctx),
-				reportdb.ReportRuns.Where(runConnectionScope(req)...),
+				reportdb.ReportRuns.Omit(reportdb.ReportRuns.Sample).
+					Where(runConnectionScope(req)...),
 				&listquery.Request[report.ReportRun]{
 					Filter: req.Filter,
 					Cursor: req.Cursor,

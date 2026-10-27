@@ -25,6 +25,11 @@ const next = (times) => async (page) => {
   }
 };
 
+const readAgain = async (page) => {
+  await page.getByRole("button", { name: "Read again now" }).click();
+  await page.waitForTimeout(1200);
+};
+
 const shots = [
   { name: "agent-light", path: PAGE, stage: "paged", colorScheme: "light", full: true },
   { name: "agent-dark", path: PAGE, stage: "paged", colorScheme: "dark", full: true },
@@ -80,6 +85,30 @@ const shots = [
   },
   { name: "locked-light", path: PAGE, stage: "locked", colorScheme: "light", full: true },
   { name: "unnamed-light", path: PAGE, stage: "unnamed", colorScheme: "light", full: true },
+  {
+    name: "again-light",
+    path: PAGE,
+    stage: "paged",
+    colorScheme: "light",
+    full: true,
+    act: readAgain,
+  },
+  {
+    name: "again-dark",
+    path: PAGE,
+    stage: "paged",
+    colorScheme: "dark",
+    full: true,
+    act: readAgain,
+  },
+  {
+    name: "again-whole-light",
+    path: PAGE,
+    stage: "whole",
+    colorScheme: "light",
+    full: true,
+    act: readAgain,
+  },
   {
     name: "withheld-dark",
     path: PAGE,

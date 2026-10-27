@@ -37,6 +37,7 @@ export const SCENARIO_DEFAULTS = {
   deskPlan: process.env.MOCK_DESK_PLAN ?? "awaiting",
   // the Desk table conversation's list: paged | slow | failing | locked | withheld | cut | whole | short
   deskTable: process.env.MOCK_DESK_TABLE ?? "paged",
+  deskReport: process.env.MOCK_DESK_REPORT ?? "finished",
   // the command palette's waiting counts in the sidebar and on the palette's home
   palette: process.env.MOCK_PALETTE === "1",
 };

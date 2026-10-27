@@ -25591,6 +25591,81 @@ input UpdateReportDashboardInput {
 
 # --- Operations --------------------------------------------------------------
 
+# --- Desk report run card ---------------------------------------------------
+
+"""
+A report run as the Desk draws it: the run, the report it ran with the
+parameters it ran with, a sample of its result and the person's previous run
+of the same report to compare it with.
+"""
+type ReportRunDeskCard {
+  run: ReportRun!
+  report: ReportRunDeskReport!
+  parameters: [ReportRunDeskParameter!]!
+  "The organization's time zone, in which the parameter windows are written."
+  timezone: String!
+  """
+  The first rows and the grand total of the result, as a preview carries them.
+  Absent while the run is going, for a run that finished before samples were
+  kept, after the run expired, and when the result is withheld.
+  """
+  sample: ReportPreview
+  """
+  Why a finished run's result is not shown: access (the person can no longer
+  read everything it shows) or changed (the report no longer runs as it did).
+  """
+  withheld: String
+  "The person's previous finished run of the same report with the same parameters."
+  previous: ReportRunDeskPrevious
+  "The schedule the run came from."
+  schedule: ReportSchedule
+  "The report's first chart, which decides how the result is pictured."
+  chart: ReportRunDeskChart
+  sort: [ReportRunDeskSort!]!
+}
+
+type ReportRunDeskReport {
+  name: String!
+  description: String!
+  category: String!
+  definitionId: ID
+  cannedKey: String
+}
+
+type ReportRunDeskParameter {
+  name: String!
+  label: String!
+  type: String!
+  value: Any
+  "The run did not set it, so it took the report's default."
+  isDefault: Boolean!
+  "The kind of record the parameter's values are ids of."
+  entity: String
+  "The range a relative date parameter filtered on, as of when the run started."
+  windowStart: Timestamp
+  windowEnd: Timestamp
+}
+
+type ReportRunDeskPrevious {
+  runId: ID!
+  completedAt: Timestamp!
+  rowCount: Int!
+  "The column each total belongs to, so totals are compared by column and not by position."
+  columnIds: [String!]!
+  totals: Any!
+}
+
+type ReportRunDeskChart {
+  type: String!
+  x: String
+  series: [String!]!
+}
+
+type ReportRunDeskSort {
+  column: String!
+  desc: Boolean!
+}
+
 extend type Query {
   reportCatalog: ReportCatalog!
   cannedReports: [CannedReport!]!
@@ -25598,6 +25673,8 @@ extend type Query {
   reportDefinitions(input: DataTableConnectionInput!): ReportDefinitionConnection!
   reportDefinitionRevisions(definitionId: ID!, limit: Int): [ReportDefinitionRevision!]!
   reportRun(id: ID!): ReportRun!
+  "A report run as the Desk card draws it; the run and its schedule are the root record."
+  reportRunDeskCard(id: ID!): ReportRunDeskCard! @authorizes(resource: "report")
   reportRuns(
     input: DataTableConnectionInput!
     filter: ReportRunsFilterInput

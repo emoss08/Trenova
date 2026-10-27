@@ -1707,6 +1707,10 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
         {
@@ -4498,6 +4502,10 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
         {
@@ -4881,6 +4889,10 @@
         {
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
         },
         {
           "method": "POST",
@@ -5305,6 +5317,10 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
         {
@@ -5687,6 +5703,10 @@
         {
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
         },
         {
           "method": "POST",
@@ -7724,6 +7744,10 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
         {
@@ -8505,6 +8529,10 @@
         {
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
         },
         {
           "method": "POST",
@@ -9366,6 +9394,10 @@
         {
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
         },
         {
           "method": "POST",
@@ -16819,6 +16851,10 @@
         },
         {
           "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
+        },
+        {
+          "method": "POST",
           "path": "/assistant/threads/:param/artifacts/:param/versions/"
         },
         {
@@ -17279,6 +17315,10 @@
         {
           "method": "GET",
           "path": "/assistant/threads/:param/artifacts/:param/rows/"
+        },
+        {
+          "method": "POST",
+          "path": "/assistant/threads/:param/artifacts/:param/run/"
         },
         {
           "method": "POST",
