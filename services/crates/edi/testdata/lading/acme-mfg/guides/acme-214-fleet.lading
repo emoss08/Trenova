@@ -1,0 +1,5 @@
+guide acme.214.fleet from acme.214 "Acme Private Fleet Status Guide v1.0"
+
+/// Acme's fleet always sends a city and state with a status.
+0205.0210.MS1 required { 01 required; 02 required }
+0205.L11 { 02 codes "QN" }

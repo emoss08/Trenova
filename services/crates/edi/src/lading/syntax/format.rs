@@ -2,8 +2,9 @@
 //!
 //! The formatter reprints the tokens it was given, so nothing is ever lost: comments stay where
 //! they were written, line breaks the author made stay, and blank lines collapse to one. It
-//! fixes indentation (two spaces per brace, two more for a line that continues the one before
-//! or a clause of the line above), spacing around every token, and aligns the arrows of
+//! fixes indentation (what a bracket opens sits two spaces deeper than the line that opened it,
+//! and its closer lines up with that line; a line that continues the one before or a clause of
+//! the line above takes two more), spacing around every token, and aligns the arrows of
 //! consecutive assignments and the keywords of a map's header. A file with syntax errors is
 //! left as it is.
 
@@ -57,13 +58,29 @@ const CLAUSE_WORDS: &[&str] = &[
     "until",
     "keep",
     "else",
+    "then",
 ];
+
+/// A bracket the printer is inside.
+#[derive(Debug, Clone, Copy)]
+struct Open {
+    /// What opened it.
+    kind: Tok,
+    /// The indent of the line that opened it, which its closer takes.
+    line: usize,
+}
+
+impl Open {
+    /// The indent of what it holds.
+    fn content(self) -> usize {
+        self.line + 2
+    }
+}
 
 /// Where the printer is.
 #[derive(Debug, Default)]
 struct State {
-    depth: usize,
-    paren_depth: usize,
+    open: Vec<Open>,
     comment: usize,
     blank_pending: bool,
     previous_continues: bool,
@@ -125,7 +142,7 @@ impl<'a> Printer<'a> {
         }
         while let Some(comment) = self.comments.get(self.state.comment) {
             let text = self.comment_text(comment);
-            self.push(self.state.depth * 2, text);
+            self.push(self.content_indent(), text);
             self.state.comment += 1;
         }
         self.align();
@@ -163,45 +180,63 @@ impl<'a> Printer<'a> {
                 self.push_blank();
             }
             self.state.blank_pending = false;
-            let depth = if token.kind == Tok::RBrace {
-                self.state.depth.saturating_sub(1)
+            let indent = if is_closer(token.kind) {
+                self.state.open.last().map_or(0, |open| open.line)
             } else {
-                self.state.depth
+                self.content_indent()
             };
             let text = self.comment_text(comment);
-            self.push(depth * 2, text);
+            self.push(indent, text);
             self.state.comment += 1;
         }
     }
 
-    /// The indentation of a source line starting at `start`.
-    fn indent_of(&mut self, start: usize) -> (usize, bool) {
+    /// The indent of a line inside the innermost open bracket.
+    fn content_indent(&self) -> usize {
+        self.state.open.last().map_or(0, |open| open.content())
+    }
+
+    /// The indentation of the source line `[start, end)`.
+    fn indent_of(&mut self, start: usize, end: usize) -> (usize, bool) {
         let token = self.tokens[start];
         let first = self.text(&token);
-        let base = if token.kind == Tok::RBrace {
-            self.state.depth.saturating_sub(1)
-        } else {
-            self.state.depth
-        };
+        let closers = self.tokens[start..end]
+            .iter()
+            .take_while(|token| is_closer(token.kind))
+            .count();
+        let still_open = self.state.open.len().saturating_sub(closers);
+        if closers > 0 {
+            let indent = self.state.open.get(still_open).map_or(0, |open| open.line);
+            self.state.clause_parent = None;
+            return (indent, false);
+        }
+        let base = self.content_indent();
         let second = self.tokens.get(start + 1).map(|next| next.kind);
         let assignment_like = matches!(
             second,
             Some(Tok::LArrow | Tok::Colon | Tok::Dot | Tok::LBracket | Tok::Assign | Tok::LParen)
         );
         let crosswalk_else = first == "else" && matches!(second, Some(Tok::RArrow | Tok::LArrow));
+        let match_else = first == "else" && second == Some(Tok::FatArrow);
         let starts_clause = token.kind == Tok::RArrow
             || (token.kind == Tok::Name
                 && CLAUSE_WORDS.contains(&first)
                 && !assignment_like
-                && !crosswalk_else);
+                && !crosswalk_else
+                && !match_else);
         let clause_tail = token.kind == Tok::Name
             && matches!(first, "keep" | "hold")
             && self.state.clause_parent.is_some()
             && !assignment_like;
-        let continuation = self.state.previous_continues || self.state.paren_depth > 0;
-        let mut indent = base * 2;
+        let in_brackets = self
+            .state
+            .open
+            .last()
+            .is_some_and(|open| open.kind != Tok::LBrace);
+        let continuation = self.state.previous_continues && !in_brackets;
+        let mut indent = base;
         if clause_tail {
-            indent = self.state.clause_parent.unwrap_or(base) * 2 + 4;
+            indent = self.state.clause_parent.unwrap_or(base) + 4;
         } else if continuation || starts_clause {
             indent += 2;
         }
@@ -217,7 +252,7 @@ impl<'a> Printer<'a> {
     fn line(&mut self, start: usize, end: usize) {
         let token = self.tokens[start];
         let first = self.text(&token);
-        let (indent, starts_clause) = self.indent_of(start);
+        let (indent, starts_clause) = self.indent_of(start, end);
         let mut text = self.render_line(start, end);
         let second = self.tokens.get(start + 1).map(|next| next.kind);
         let arrow = if base_is_assignment(&self.tokens[start..end]) {
@@ -242,17 +277,19 @@ impl<'a> Printer<'a> {
         });
         for token in &self.tokens[start..end] {
             match token.kind {
-                Tok::LBrace => self.state.depth += 1,
-                Tok::RBrace => self.state.depth = self.state.depth.saturating_sub(1),
-                Tok::LParen | Tok::LBracket => self.state.paren_depth += 1,
-                Tok::RParen | Tok::RBracket => {
-                    self.state.paren_depth = self.state.paren_depth.saturating_sub(1);
+                Tok::LBrace | Tok::LParen | Tok::LBracket => self.state.open.push(Open {
+                    kind: token.kind,
+                    line: indent,
+                }),
+                kind if is_closer(kind) => {
+                    self.state.open.pop();
                 }
                 _ => {}
             }
         }
         let last = self.tokens[end.saturating_sub(1).max(start)];
-        self.state.previous_continues = last.kind.continues_line() && last.kind != Tok::LBrace;
+        self.state.previous_continues = last.kind.continues_line()
+            && !matches!(last.kind, Tok::LBrace | Tok::LParen | Tok::LBracket);
     }
 
     /// Appends the comment after the code of the line `[start, end)`.
@@ -371,11 +408,17 @@ impl<'a> Printer<'a> {
         let mut index = 0;
         while index < self.lines.len() {
             if self.lines[index].arrow.is_some() {
+                let indent = self.lines[index].indent;
                 let mut end = index;
-                while end < self.lines.len()
-                    && self.lines[end].arrow.is_some()
-                    && self.lines[end].indent == self.lines[index].indent
-                {
+                while let Some(line) = self.lines.get(end) {
+                    let same_level = line.arrow.is_some() && line.indent == indent;
+                    // A deeper line with no arrow continues the assignment above it (an `else`,
+                    // a record's fields), so the group goes on past it.
+                    let continues =
+                        line.arrow.is_none() && line.indent > indent && !line.text.is_empty();
+                    if !same_level && !continues {
+                        break;
+                    }
                     end += 1;
                 }
                 let width = self.lines[index..end]
@@ -440,6 +483,11 @@ impl<'a> Printer<'a> {
     }
 }
 
+/// Whether a token closes a bracket.
+fn is_closer(kind: Tok) -> bool {
+    matches!(kind, Tok::RBrace | Tok::RParen | Tok::RBracket)
+}
+
 /// Whether a line is `target <- value` with a plain target (a name and fields).
 fn base_is_assignment(tokens: &[Token]) -> bool {
     let mut index = 0;
@@ -492,6 +540,8 @@ mod tests {
         include_str!("../../../testdata/lading/acme/lib/common.lading"),
         include_str!("../../../testdata/lading/acme/maps/tender-in.lading"),
         include_str!("../../../testdata/lading/acme/maps/status-out.lading"),
+        include_str!("../../../testdata/lading/acme/maps/response-out.lading"),
+        include_str!("../../../testdata/lading/acme/maps/invoice-out.lading"),
         include_str!("../../../testdata/lading/acme/rules/tender-checks.lading"),
         include_str!("../../../testdata/lading/acme/flows/tender.lading"),
     ];
@@ -521,6 +571,38 @@ mod tests {
             formatted,
             "map m\n  from loadTender\n  to   x12.004010.214\n\nB10 { 01 <- proNumber, 02 <- key }\n0205 <- each events as e {\n  LX { 01 <- index + 1 }\n}\n"
         );
+    }
+
+    #[test]
+    fn a_block_opened_on_a_clause_line_is_indented_under_it() {
+        let source = "map orders\n  from csv {\n    order: Text\n    weight: Weight lb\n  }\n  to loadTender\n";
+        assert_eq!(format(source).expect("formats"), source);
+    }
+
+    #[test]
+    fn a_closing_bracket_lines_up_with_the_line_that_opened_it() {
+        let source = "test \"t\" {\n  event TenderOffered {\n    stops: [\n      { sequence: 1 },\n      { sequence: 2 }\n    ]\n  }\n  expect sent 204\n}\n";
+        assert_eq!(format(source).expect("formats"), source);
+        let call = "map m\n  from x12.004010.204\n  to   loadTender\n\nshipmentType <- lookup ShipmentType(match B206 {\n  \"TP\" => \"BROKERED\"\n  else => \"TRUCKLOAD\"\n})\n";
+        assert_eq!(format(call).expect("formats"), call);
+    }
+
+    #[test]
+    fn a_match_else_arm_is_an_arm_not_a_clause() {
+        let source = "library l\n\nfn f(code: Text) -> Text = match code {\n  \"1\" => \"One\"\n  else => \"Other\"\n}\n";
+        assert_eq!(format(source).expect("formats"), source);
+    }
+
+    #[test]
+    fn then_and_else_continue_the_if_above() {
+        let source = "library l\n\nfn f(code: Text) -> Text? {\n  let found = if code == \"SD\"\n    then code\n    else none\n  found\n}\n";
+        assert_eq!(format(source).expect("formats"), source);
+    }
+
+    #[test]
+    fn arrows_align_across_a_continued_assignment() {
+        let source = "map m\n  from x12.004010.204\n  to   loadTender\n\nkey      <- B204\n  else reject \"No key\"\npurpose  <- B2A01 via purposes\nweight   <- L301\npieces   <- L311\ncustomer <- none\n";
+        assert_eq!(format(source).expect("formats"), source);
     }
 
     #[test]

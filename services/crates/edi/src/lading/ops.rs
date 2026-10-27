@@ -814,6 +814,35 @@ mod tests {
         assert!(labels.contains(&"0310"), "{labels:?}");
     }
 
+    fn labels(out: &Json) -> Vec<String> {
+        out["items"]
+            .as_array()
+            .expect("items")
+            .iter()
+            .filter_map(|item| item["label"].as_str().map(str::to_owned))
+            .collect()
+    }
+
+    #[test]
+    fn completion_inside_a_compared_text_lists_the_element_codes() {
+        let path = "maps/tender-in.lading";
+        let offset = offset_of(path, "02 == \"BM\"", 7);
+        let out = call("lading.complete", json!({ "path": path, "offset": offset }));
+        let labels = labels(&out);
+        assert!(labels.iter().any(|label| label == "BM"), "{labels:?}");
+        assert!(labels.iter().any(|label| label == "PO"), "{labels:?}");
+        assert_eq!(out["range"]["from"], offset);
+        assert_eq!(out["range"]["to"], offset + 2);
+    }
+
+    #[test]
+    fn completion_inside_a_list_after_in_lists_the_element_codes() {
+        let path = "lib/common.lading";
+        let offset = offset_of(path, "\"53\"", 1);
+        let out = call("lading.complete", json!({ "path": path, "offset": offset }));
+        assert!(labels(&out).iter().any(|label| label == "53"), "{out}");
+    }
+
     #[test]
     fn hover_names_an_element() {
         let path = "maps/tender-in.lading";

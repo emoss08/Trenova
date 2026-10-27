@@ -12,7 +12,7 @@ use crate::lading::schema;
 use crate::lading::stdlib::{self, Receiver};
 use crate::lading::syntax::ast::{Header, Item, Stmt};
 use crate::lading::syntax::token::Tok;
-use crate::lading::types::{NodeRef, Type};
+use crate::lading::types::{NodeRef, Place, Type};
 use crate::x12::guide::compiled::NodeKind;
 
 /// One completion.
@@ -82,6 +82,9 @@ fn snippet(label: &str, kind: &'static str, detail: &str, insert: &str, sort: &s
 #[must_use]
 #[allow(clippy::too_many_lines)]
 pub fn complete(session: &Session, offset: u32) -> Completion {
+    if let Some(found) = quoted_codes(session, offset) {
+        return found;
+    }
     let word = session.word_at(offset);
     let range = word.map_or(Span::new(offset, offset), |token| {
         Span::new(token.span.start, offset.max(token.span.start))
@@ -249,6 +252,87 @@ pub fn complete(session: &Session, offset: u32) -> Completion {
     items.sort_by(|a, b| a.sort.cmp(&b.sort).then_with(|| a.label.cmp(&b.label)));
     items.dedup_by(|a, b| a.label == b.label && a.kind == b.kind);
     Completion { range, items }
+}
+
+/// The codes of the element a text is compared with, when the cursor is inside it:
+/// `L11[02 == "|"]`, `qualifier != "|"`, `d.01 in ["37", "|"]`.
+fn quoted_codes(session: &Session, offset: u32) -> Option<Completion> {
+    let text = session.tokens.iter().copied().find(|token| {
+        token.kind == Tok::Text && token.span.start < offset && offset < token.span.end
+    })?;
+    let before = session.before(text.span.start);
+    let mut tokens = before
+        .iter()
+        .rev()
+        .copied()
+        .filter(|token| token.kind != Tok::Newline);
+    let mut previous = tokens.next()?;
+    if matches!(previous.kind, Tok::Comma | Tok::LBracket) {
+        while previous.kind != Tok::LBracket {
+            previous = tokens
+                .next()
+                .filter(|token| matches!(token.kind, Tok::Text | Tok::Comma | Tok::LBracket))?;
+        }
+        let keyword = tokens.next()?;
+        if session.text(keyword.span) != "in" {
+            return None;
+        }
+    } else if !matches!(previous.kind, Tok::EqEq | Tok::NotEq) {
+        return None;
+    }
+    let subject = tokens.next()?;
+    let typed = session
+        .program
+        .facts
+        .type_ending_at(session.unit, subject.span.end)?;
+    let Type::Code(element, place) = typed.ty.unwrapped() else {
+        return None;
+    };
+    let codes = element_codes(&session.program, element, *place)?;
+    let range = Span::new(text.span.start + 1, offset);
+    let typed = session.text(range).to_lowercase();
+    let items = codes
+        .into_iter()
+        .enumerate()
+        .filter(|(_, (code, description))| {
+            typed.is_empty()
+                || code.to_lowercase().starts_with(&typed)
+                || description.to_lowercase().contains(&typed)
+        })
+        .map(|(order, (code, description))| {
+            item(code, "constant", description, None, &format!("{order:05}"))
+        })
+        .collect();
+    Some(Completion {
+        range: Span::new(range.start, text.span.end - 1),
+        items,
+    })
+}
+
+/// The codes an element takes, from the node its value was read at when the checker knew it.
+fn element_codes(program: &Program, element: &str, place: Place) -> Option<Vec<(String, String)>> {
+    let Some(nav::Reference::Element(segment, position)) = nav::reference(element) else {
+        return None;
+    };
+    if let Place(Some(reference)) = place {
+        return nav::codes(
+            &program.guides[reference.guide].compiled,
+            Some(reference.node),
+            segment,
+            position,
+        );
+    }
+    let guide = program
+        .guides
+        .iter()
+        .position(|entry| entry.unit.is_some() && entry.compiled.uses_segment(segment))
+        .or_else(|| {
+            program
+                .guides
+                .iter()
+                .position(|entry| entry.compiled.uses_segment(segment))
+        })?;
+    nav::codes(&program.guides[guide].compiled, None, segment, position)
 }
 
 fn types(items: &mut Vec<Item2>) {
@@ -821,8 +905,8 @@ fn members(session: &Session, dot: u32, items: &mut Vec<Item2>) {
         {
             vec![Receiver::List, Receiver::X12]
         }
-        Type::List(_) => vec![Receiver::List],
-        Type::Text | Type::Code(_) => vec![Receiver::Text],
+        Type::List(_) | Type::Json => vec![Receiver::List],
+        Type::Text | Type::Code(..) => vec![Receiver::Text],
         Type::Int | Type::Decimal | Type::Percent => vec![Receiver::Number],
         Type::Money => vec![Receiver::Money, Receiver::Number],
         Type::Measure(_) => vec![Receiver::Measure, Receiver::Number],

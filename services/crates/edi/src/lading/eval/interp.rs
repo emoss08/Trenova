@@ -574,6 +574,17 @@ impl<'p> Interp<'p> {
                 }
                 Value::list(values)
             }
+            ExprKind::Map(entries) => {
+                let mut map = BTreeMap::new();
+                for (key, value) in entries {
+                    let key = display(&self.eval(frame, key)?);
+                    let value = self.eval(frame, value)?;
+                    if !value.is_none() {
+                        map.insert(key, value);
+                    }
+                }
+                Value::Map(Rc::new(map))
+            }
             ExprKind::Record { ty, fields } => {
                 self.record(frame, ty.as_ref().map(|ident| ident.name.as_str()), fields)?
             }
@@ -768,10 +779,9 @@ impl<'p> Interp<'p> {
                 "zone" => reference.zone.map_or(Value::None, Value::Zone),
                 _ => self.property(frame, value, name)?,
             },
-            (Value::Json(json), MemberKind::Name) => match json.get(name) {
-                Some(found) if !found.is_null() => Value::Json(Rc::new(found.clone())),
-                _ => Value::None,
-            },
+            (Value::Json(json), MemberKind::Name) => {
+                json.get(name).map_or(Value::None, Value::json)
+            }
             (_, MemberKind::Name) => self.property(frame, value, name)?,
             _ => Value::None,
         })
@@ -838,9 +848,7 @@ impl<'p> Interp<'p> {
                         .and_then(|position| json.get(position)),
                     other => json.get(display(other)),
                 };
-                Ok(found
-                    .filter(|found| !found.is_null())
-                    .map_or(Value::None, |found| Value::Json(Rc::new(found.clone()))))
+                Ok(found.map_or(Value::None, Value::json))
             }
             _ => Ok(Value::None),
         }
@@ -1271,7 +1279,7 @@ fn fits_value(value: &Value, ty: &Type) -> bool {
     match (value, ty.unwrapped()) {
         (Value::Enum(owner, _), Type::Enum(name)) => owner == name,
         (Value::Enum(..), _) | (_, Type::Enum(_)) => false,
-        (Value::Text(_), Type::Text | Type::Code(_))
+        (Value::Text(_), Type::Text | Type::Code(..))
         | (Value::Int(_) | Value::Decimal(_), Type::Int | Type::Decimal)
         | (Value::Ref(_), Type::Ref(_))
         | (_, Type::Any) => true,

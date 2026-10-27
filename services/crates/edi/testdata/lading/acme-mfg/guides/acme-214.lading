@@ -1,0 +1,10 @@
+guide acme.214 from x12.004010.214 "Acme Manufacturing Shipment Status Guide v2.0"
+
+/// Acme matches every status to the load by its shipment ID.
+B10 { 02 required; 03 required }
+L11 max 5 { 02 codes "BM", "PO", "QN" }
+MAN unused
+K1 unused
+loop 0205 required
+0205.0210.AT7 { 01 codes "X3", "AF", "X1", "D1", "CD", "X6", "AG", "SD", "AA", "A9", "CP", "P1"; 05 required; 06 required }
+0205.0210.MS1 { 03 codes "US", "CA" }

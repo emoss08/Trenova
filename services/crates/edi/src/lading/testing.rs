@@ -765,8 +765,10 @@ impl<'p> Runner<'p> {
         let mut state = FlowState::default();
         let mut actions: Vec<FlowAction> = Vec::new();
         let mut wake: Option<i64> = None;
+        let mut control_numbers = 0u32;
         for (step_kind, span) in steps {
             self.given_step(step_kind, *span);
+            let mut moves_load: Option<&'static str> = None;
             let event = match step_kind {
                 TestStep::Receive { file, source } => {
                     let text = if *file {
@@ -820,6 +822,7 @@ impl<'p> Runner<'p> {
                     let given = self.given.clone();
                     let interp = Interp::new(program, &given, RUN_STEPS);
                     let document = interp.coerce(document, &Type::Record(name));
+                    moves_load = load_state_after(&kind.name);
                     Some(FlowEvent::Trenova {
                         event: kind.name.clone(),
                         document: to_json(&document),
@@ -908,6 +911,11 @@ impl<'p> Runner<'p> {
                 self.absorb_flow(&result, &mut actions);
                 state = result.state;
                 wake = result.wake;
+                if let Some(next) = moves_load
+                    && state.load.exists
+                {
+                    next.clone_into(&mut state.load.state);
+                }
                 let sent: Vec<String> = result
                     .actions
                     .iter()
@@ -917,9 +925,10 @@ impl<'p> Runner<'p> {
                     })
                     .collect();
                 for id in sent {
+                    control_numbers += 1;
                     let report = FlowEvent::Sent {
-                        id: id.clone(),
-                        control: id,
+                        id,
+                        control: format!("{control_numbers:04}"),
                     };
                     let result = step(
                         program,
@@ -977,6 +986,17 @@ impl<'p> Runner<'p> {
         };
         let _ = route(program, flow, &event, self.given.now);
         Some(event)
+    }
+}
+
+/// The state a test's load moves to on one of Trenova's events, as the shipment's would: in
+/// production the host reports the shipment's state with every message.
+fn load_state_after(event: &str) -> Option<&'static str> {
+    match event {
+        "Dispatched" => Some("dispatched"),
+        "Delivered" => Some("delivered"),
+        "InvoicePosted" => Some("invoiced"),
+        _ => None,
     }
 }
 

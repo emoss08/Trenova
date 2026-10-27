@@ -1,0 +1,70 @@
+map invoiceOut
+  from freightInvoice
+  to   x12.004010.210
+
+B3 {
+  02 <- number
+  03 <- key
+  04 <- "PP"
+  06 <- date
+  07 <- total
+  09 <- deliveryDate
+  10 <- if exists deliveryDate then "035" else none
+  11 <- org.scac
+}
+
+// Every reference at the heading, one N9 each: an `each` with no loop writes its segments at
+// the current level.
+each refs as ref {
+  N9 { 01 <- ref.key, 02 <- ref.value }
+}
+
+when exists billTo {
+  0100 {
+    N1 { 01 <- "BT", 02 <- billTo.name }
+    N3 when exists billTo.address { 01 <- billTo.address.line1, 02 <- billTo.address.line2 }
+    N4 when exists billTo.address {
+      01 <- billTo.address.city
+      02 <- billTo.address.state
+      03 <- billTo.address.postal
+      04 <- billTo.address.country
+    }
+  }
+}
+
+0400 <- each lines as line {
+  LX { 01 <- line.sequence }
+  L5 when exists line.description { 01 <- line.sequence, 02 <- line.description.truncate(50) }
+  L1 {
+    01 <- line.sequence
+    02 <- line.rate
+    03 <- if exists line.rate then "PM" else none
+    04 <- line.amount
+    08 <- line.code
+  }
+}
+
+K1 { 01 <- "Billed by {org.name}".truncate(30), 02 <- "For {partner.name}".truncate(30) }
+
+L3 { 01 <- weight.value(lb), 02 <- if exists weight then "G" else none, 05 <- total, 12 <- if exists weight then "L" else none }
+
+test "an invoice writes its lines and total" {
+  given freightInvoice {
+    number: "INV-1001"
+    date: @2026-03-05
+    key: "AM-48213"
+    deliveryDate: @2026-03-04
+    total: $2_531.10
+    billTo: { name: "Acme Manufacturing Co", address: { line1: "1 Industrial Pkwy", city: "Detroit", state: "MI", postal: "48201", country: "US" } }
+    lines: [
+      { sequence: 1, description: "Linehaul", rate: 2.45, amount: $2_145.00 },
+      { sequence: 2, code: "FUE", description: "Fuel surcharge", amount: $386.10 }
+    ]
+    refs: ["BM": "BOL-77120", "PO": "PO-559031"]
+  }
+  expect x12 contains "B3**INV-1001*AM-48213*PP**20260305*253110**20260304*035*TRNV~"
+  expect x12 contains "N9*BM*BOL-77120~N9*PO*PO-559031~"
+  expect x12 contains "N1*BT*Acme Manufacturing Co~"
+  expect x12 contains "L1*2***38610****FUE~"
+  expect x12 contains "L3*****253110~"
+}

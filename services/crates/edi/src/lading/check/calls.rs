@@ -100,15 +100,34 @@ impl Checker<'_> {
                     .map(|function| function.name.to_owned())
                     .collect();
                 candidates.extend(self.visible_functions(env.unit));
-                let mut diagnostic = Diagnostic::error(
-                    "unknown-function",
-                    callee.span,
-                    Message::with(
-                        message!("There is no function named {0}"),
-                        [MessageArg::from(name.as_str())],
-                    ),
-                );
-                if let Some(close) = nearest(name, candidates.iter().map(String::as_str)) {
+                let library =
+                    self.unused_library_with(env.unit, name, |decl| matches!(decl, Decl::Fn(_)));
+                let mut diagnostic = if let Some(library) = &library {
+                    Diagnostic::error(
+                        "unknown-function",
+                        callee.span,
+                        Message::with(
+                            message!("{0} is in the library {1}, which this file does not use"),
+                            [
+                                MessageArg::from(name.as_str()),
+                                MessageArg::from(library.as_str()),
+                            ],
+                        ),
+                    )
+                    .with_fix(self.use_fix(env.unit, library))
+                } else {
+                    Diagnostic::error(
+                        "unknown-function",
+                        callee.span,
+                        Message::with(
+                            message!("There is no function named {0}"),
+                            [MessageArg::from(name.as_str())],
+                        ),
+                    )
+                };
+                if library.is_none()
+                    && let Some(close) = nearest(name, candidates.iter().map(String::as_str))
+                {
                     diagnostic = diagnostic.with_fix(super::replace_fix(callee.span, close));
                 }
                 self.report(env.unit, diagnostic);
@@ -391,6 +410,11 @@ impl Checker<'_> {
         {
             return Ok(ty);
         }
+        if matches!(first.unwrapped(), Type::Json)
+            && let Some(ty) = self.list_function(env, call, &Type::Json)?
+        {
+            return Ok(ty);
+        }
         let text = Type::Text;
         let int = Type::Int;
         match name {
@@ -513,7 +537,12 @@ impl Checker<'_> {
                 Self::arity(call, 1, 1)?;
                 if !matches!(
                     first,
-                    Type::Text | Type::Code(_) | Type::Int | Type::Decimal | Type::Json | Type::Any
+                    Type::Text
+                        | Type::Code(..)
+                        | Type::Int
+                        | Type::Decimal
+                        | Type::Json
+                        | Type::Any
                 ) {
                     return Err(mismatch(call.inputs[0].span(), &Type::Text, &first));
                 }

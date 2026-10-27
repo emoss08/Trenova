@@ -1,0 +1,36 @@
+guide acme.204 from x12.004010.204 "Acme Manufacturing Load Tender Guide v5.1"
+
+/// Acme's shipment ID; every later message quotes it.
+B2 { 01 unused; 04 required "Acme's load number, AM- and five digits"; 06 codes "PP", "CC", "TP" }
+B2A { 01 codes "00", "01", "04", "05"; 02 fixed "LT" }
+L11 max 20 { 01 length 1..20; 02 codes "BM", "PO", "DJ", "CR", "SI" }
+G62 unused
+MS3 unused
+LH6 unused
+NTE max 5 { 01 codes "LOI", "DEL", "SPH" }
+
+loop 0100 required min 2 max 3
+0100.N1 { 01 codes "BT", "SH", "CN"; 04 required }
+0100.N3 required
+loop 0200 max 1
+0200.N7 { 02 length 1..10 }
+
+loop 0300 min 2 max 12
+0300.S5 { 02 codes "LD", "UL", "CL", "CU" }
+0300.L11 max 5 { 02 codes "PU", "AO", "DO" }
+0300.G62 min 1 { 01 codes "69", "70", "37", "38", "53", "54"; 03 codes "U", "X", "G", "Y"; 04 required }
+0300.AT8 { 01 codes "G", "N"; 02 codes "L", "K" }
+0300.LAD { 13 repeat 1 }
+0300.0310.N1 { 01 codes "SH", "CN"; 04 required }
+0300.0310.N4 { 03 length 5..9; 04 codes "US", "CA" }
+0300.0310.G61 syntax P0304
+loop 0300.0320 max 20
+0300.0320.L5 { 02 required; 03 length 1..10 }
+0300.0320.0325.LH1 { 03 required }
+loop 0300.0350 unused
+loop 0300.0370 unused
+
+L3 required { 01 required; 05 required; 12 codes "L", "K" }
+
+severity invalid-code warning
+severity segment-count-mismatch error

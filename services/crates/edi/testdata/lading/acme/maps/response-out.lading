@@ -11,7 +11,7 @@ B1 {
 N9 when exists reason { 01 <- "ZZ", 02 <- reason.truncate(30) }
 
 crosswalk decisions: Decision <-> Code<B104> {
-  Accept  <-> "A"
+  Accept <-> "A"
   Decline <-> "D"
 }
 

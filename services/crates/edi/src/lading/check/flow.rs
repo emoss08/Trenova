@@ -1,7 +1,7 @@
 //! Checks flows: that each clause names maps, rules, events and purposes that exist and fit
 //! together, and that each action suits the document it acts on.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use trenova_module_kit::diagnostic::{Diagnostic, nearest};
 use trenova_module_kit::message;
@@ -13,7 +13,7 @@ use super::{Checker, MapInfo, Program, Source};
 use crate::lading::facts::Target;
 use crate::lading::schema;
 use crate::lading::syntax::ast::{
-    Action, ExpectAck, FlowDecl, Ident, Item, Otherwise, Receive, Respond, Send,
+    Action, ExpectAck, FlowDecl, Header, Ident, Item, Otherwise, Receive, Respond, Send,
 };
 use crate::lading::types::Type;
 
@@ -119,6 +119,120 @@ impl Checker<'_> {
                 FlowDecl::Respond(respond) => self.respond(&mut env, respond, tender_received),
                 FlowDecl::Send(send) => self.send(&mut env, send),
                 FlowDecl::Expect(expect) => self.expect_ack(&mut env, expect),
+            }
+        }
+    }
+
+    /// Reports a set or event two clauses would both take. The runtime hands each message and
+    /// each Trenova event to the first flow that takes it, so a second flow receiving the same
+    /// set, responding with it or sending on the same event would never run.
+    pub(crate) fn check_flow_routing(&mut self) {
+        let program: &Program = self.program;
+        let mut received: BTreeMap<String, String> = BTreeMap::new();
+        let mut responded: BTreeMap<String, String> = BTreeMap::new();
+        let mut events: BTreeMap<String, String> = BTreeMap::new();
+        for unit in 0..program.units.len() {
+            let Header::Flow { name, .. } = program.units[unit].header() else {
+                continue;
+            };
+            let flow = name.name.clone();
+            let mut sent = BTreeSet::new();
+            for item in program.units[unit].items() {
+                let Item::Flow(clause) = item else {
+                    continue;
+                };
+                match clause {
+                    FlowDecl::Receive(receive) => {
+                        let set = &receive.set;
+                        match received.get(&set.name) {
+                            Some(other) if *other != flow => self.report(
+                                unit,
+                                Diagnostic::error(
+                                    "flow-receive-taken",
+                                    set.span,
+                                    Message::with(
+                                        message!(
+                                            "Flow {0} already receives {1}, and each {1} goes to the first flow that receives it: receive it in one flow"
+                                        ),
+                                        [Arg::from(other.as_str()), Arg::from(set.name.as_str())],
+                                    ),
+                                ),
+                            ),
+                            Some(_) => {}
+                            None => {
+                                received.insert(set.name.clone(), flow.clone());
+                            }
+                        }
+                    }
+                    FlowDecl::Respond(respond) => {
+                        let set = &respond.set;
+                        if let Some(other) = responded.get(&set.name) {
+                            let message = if *other == flow {
+                                Message::with(
+                                    message!("The flow already responds with {0}"),
+                                    [Arg::from(set.name.as_str())],
+                                )
+                            } else {
+                                Message::with(
+                                    message!(
+                                        "Flow {0} already responds with {1}: respond in one flow"
+                                    ),
+                                    [Arg::from(other.as_str()), Arg::from(set.name.as_str())],
+                                )
+                            };
+                            self.report(
+                                unit,
+                                Diagnostic::error("flow-respond-taken", set.span, message),
+                            );
+                        } else {
+                            responded.insert(set.name.clone(), flow.clone());
+                        }
+                    }
+                    FlowDecl::Send(send) => {
+                        for event in &send.events {
+                            if !sent.insert((send.set.name.clone(), event.name.clone())) {
+                                self.report(
+                                    unit,
+                                    Diagnostic::error(
+                                        "duplicate-send",
+                                        event.span,
+                                        Message::with(
+                                            message!("The flow already sends {0} on {1}"),
+                                            [
+                                                Arg::from(send.set.name.as_str()),
+                                                Arg::from(event.name.as_str()),
+                                            ],
+                                        ),
+                                    ),
+                                );
+                                continue;
+                            }
+                            match events.get(&event.name) {
+                                Some(other) if *other != flow => self.report(
+                                    unit,
+                                    Diagnostic::error(
+                                        "flow-event-taken",
+                                        event.span,
+                                        Message::with(
+                                            message!(
+                                                "Flow {0} already sends on {1}, and each event goes to the first flow that sends on it: send on it from one flow"
+                                            ),
+                                            [
+                                                Arg::from(other.as_str()),
+                                                Arg::from(event.name.as_str()),
+                                            ],
+                                        ),
+                                    ),
+                                ),
+                                Some(_) => {}
+                                None => {
+                                    events.insert(event.name.clone(), flow.clone());
+                                }
+                            }
+                        }
+                    }
+                    FlowDecl::Expect(_) => {}
+                }
             }
         }
     }

@@ -1,0 +1,40 @@
+partner acmeManufacturing "Acme Manufacturing"
+
+// The envelope. Acme sends under its DUNS number (qualifier 01); we answer under our mutually
+// defined ID. Switch usage to production once a version is certified.
+interchange {
+  them 01 "007912345"
+  us ZZ "TRNVLOGISTICS"
+  group "ACMEMFG" <-> "TRENOVA"
+  version 004010
+  separators "*" "~" ">" "^"
+  usage test
+}
+
+zone America/Detroit
+currency "USD"
+
+/// Accept Acme tenders automatically, without a planner.
+setting autoAccept: Bool = false
+/// Send a decline automatically when a rule declines a tender.
+setting autoDecline: Bool = true
+/// The heaviest load accepted automatically.
+setting maxWeight: Weight = 44_000 lb in 1 lb..80_000 lb
+/// The most stops one Acme load may have.
+setting maxStops: Int = 6 in 2..12
+/// Acme's fuel surcharge, as a share of the tendered total.
+setting fuelSurcharge: Percent = 18% in 0%..60%
+/// The lowest total accepted automatically.
+setting minimumCharge: Money = $350.00 in $0.00..$5_000.00
+/// The rate per mile used to sanity-check a tender.
+setting ratePerMile: Decimal = 2.45 in 0.50..10.00
+/// How long a planner has to answer a tender.
+setting answerWithin: Duration = 2 h in 15 min..24 h
+/// The longest trailer Acme's docks take.
+setting trailerLength: Length = 53 ft in 20 ft..53 ft
+/// The most cube one trailer carries.
+setting maxCube: Volume = 3_800 ft3 in 100 ft3..4_000 ft3
+/// The warmest a reefer may run on Acme's frozen loads.
+setting maxReeferTemp: Temperature = 0 °F in -20 °F..40 °F
+/// A note sent with every decline.
+setting declineNote: Text = "Call Trenova dispatch at 313-555-0100"
