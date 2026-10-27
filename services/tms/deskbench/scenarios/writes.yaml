@@ -134,8 +134,9 @@ scenarios:
 
   - name: assign-a-driver
     description: >
-      Dispatch's core write, with a driver named by first name only. The windows are rolled
-      forward first so the load can still be made, and David Park is a driver who is compliant.
+      Dispatch's core write, with the driver named the way dispatch says it once asked which
+      David (a tenant has several). The windows are rolled forward first so the load can still
+      be made, and David Park is a driver who is compliant.
       It shares SEED-SHP-002 with lifecycle-carrier-covered, which covers it with a carrier, so
       the two never run at once and each starts from the load uncovered.
     exclusive: peak-shipments
@@ -183,7 +184,7 @@ scenarios:
           AND sp.pro_number = 'SEED-SHP-002'
           AND st.status = 'New'
     steps:
-      - say: "put david on the peak ltl load to chicago, trc-002 and a dry van"
+      - say: "put david park on the peak ltl load to chicago, trc-002 and a dry van"
         expect:
           calls: ["shipment_list|shipment_get|worker_list"]
           proposals: [{ tool: dispatch_assign_move }]

@@ -19,20 +19,21 @@ import (
 )
 
 type Scenario struct {
-	Name        string       `yaml:"name"        json:"name"`
-	Description string       `yaml:"description" json:"description,omitempty"`
-	Tags        []string     `yaml:"tags"        json:"tags,omitempty"`
-	Agent       string       `yaml:"agent"       json:"agent,omitempty"`
-	User        string       `yaml:"user"        json:"user,omitempty"`
-	Provider    string       `yaml:"provider"    json:"provider,omitempty"`
-	Formula     *FormulaPage `yaml:"formula"     json:"formula,omitempty"`
-	Palette     bool         `yaml:"palette"     json:"palette,omitempty"`
-	Exclusive   string       `yaml:"exclusive"   json:"exclusive,omitempty"`
-	Setup       []string     `yaml:"setup"       json:"setup,omitempty"`
-	Steps       []Step       `yaml:"steps"       json:"steps"`
-	Source      string       `yaml:"-"           json:"source,omitempty"`
-	Mode        ScriptMode   `yaml:"mode"        json:"mode,omitempty"`
-	Pair        string       `yaml:"pair"        json:"pair,omitempty"`
+	Name        string        `yaml:"name"        json:"name"`
+	Description string        `yaml:"description" json:"description,omitempty"`
+	Tags        []string      `yaml:"tags"        json:"tags,omitempty"`
+	Agent       string        `yaml:"agent"       json:"agent,omitempty"`
+	User        string        `yaml:"user"        json:"user,omitempty"`
+	Provider    string        `yaml:"provider"    json:"provider,omitempty"`
+	Formula     *FormulaPage  `yaml:"formula"     json:"formula,omitempty"`
+	Palette     bool          `yaml:"palette"     json:"palette,omitempty"`
+	Exclusive   string        `yaml:"exclusive"   json:"exclusive,omitempty"`
+	Requires    []Requirement `yaml:"requires"    json:"requires,omitempty"`
+	Setup       []string      `yaml:"setup"       json:"setup,omitempty"`
+	Steps       []Step        `yaml:"steps"       json:"steps"`
+	Source      string        `yaml:"-"           json:"source,omitempty"`
+	Mode        ScriptMode    `yaml:"mode"        json:"mode,omitempty"`
+	Pair        string        `yaml:"pair"        json:"pair,omitempty"`
 
 	Split          evalsplit.Split `yaml:"split"          json:"split,omitempty"`
 	ExpectedTools  []string        `yaml:"expectedTools"  json:"expectedTools,omitempty"`
@@ -551,6 +552,11 @@ func (s *Scenario) applyDefaults(defaults *Scenario) {
 			s.Tags = append(s.Tags, tag)
 		}
 	}
+	for _, requirement := range defaults.Requires {
+		if !slices.Contains(s.Requires, requirement) {
+			s.Requires = append(s.Requires, requirement)
+		}
+	}
 }
 
 func (s *Scenario) Validate() error {
@@ -563,6 +569,11 @@ func (s *Scenario) Validate() error {
 	for idx, statement := range s.Setup {
 		if err := validSetup(statement); err != nil {
 			return fmt.Errorf("%s setup %d: %w", s.Name, idx+1, err)
+		}
+	}
+	for idx := range s.Requires {
+		if err := s.Requires[idx].validate(); err != nil {
+			return fmt.Errorf("%s requires %d: %w", s.Name, idx+1, err)
 		}
 	}
 	if err := s.validatePalette(); err != nil {

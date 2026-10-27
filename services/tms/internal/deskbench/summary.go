@@ -118,9 +118,15 @@ func RenderSummary(r *Report) string {
 	var b strings.Builder
 
 	summary := r.Summary
-	fmt.Fprintf(&b, "Desk bench: %d/%d cases passed in %s · %s\n",
-		summary.Passed, summary.Cases, r.Meta.FinishedAt.Sub(r.Meta.StartedAt).Round(time.Second),
+	fmt.Fprintf(&b, "Desk bench: %d/%d cases passed", summary.Passed, summary.Cases)
+	if summary.Skipped > 0 {
+		fmt.Fprintf(&b, ", %d skipped", summary.Skipped)
+	}
+	fmt.Fprintf(&b, " in %s · %s\n", r.Meta.FinishedAt.Sub(r.Meta.StartedAt).Round(time.Second),
 		usageLine(summary.Usage))
+	if r.Meta.Data.Shape != "" {
+		fmt.Fprintf(&b, "Data: %s\n", r.Meta.Data)
+	}
 	if r.Meta.Commit != "" {
 		fmt.Fprintf(&b, "Commit %s\n", r.Meta.Commit)
 	}
@@ -137,7 +143,7 @@ func RenderSummary(r *Report) string {
 	renderCells(&b, summary.Cells, summary.PassK)
 	renderMatrix(&b, summary.Matrix, summary.PassK)
 	renderCellChanges(&b, r.CellChanges)
-	renderComparison(&b, r.Comparison)
+	renderComparison(&b, r.Comparison, r.ComparisonNote)
 	renderTroubles(&b, r)
 
 	return b.String()
@@ -220,12 +226,15 @@ func renderMatrix(b *strings.Builder, rows []MatrixRow, k int) {
 	_ = table.Flush()
 }
 
-func renderComparison(b *strings.Builder, entries []CompareEntry) {
+func renderComparison(b *strings.Builder, entries []CompareEntry, note string) {
 	if len(entries) == 0 {
 		return
 	}
 
 	b.WriteString("\nAgainst the earlier run:\n")
+	if note != "" {
+		fmt.Fprintf(b, "  Note: %s.\n", note)
+	}
 	for idx := range entries {
 		entry := &entries[idx]
 		if entry.Change == changeSame {
@@ -280,6 +289,13 @@ func renderTroubles(b *strings.Builder, r *Report) {
 				fmt.Fprintf(b, " — %s", item.Detail)
 			}
 			b.WriteString("\n")
+		}
+	}
+
+	if skipped := r.Summary.SkippedCases; len(skipped) > 0 {
+		b.WriteString("\nSkipped, neither passed nor failed:\n")
+		for _, item := range skipped {
+			fmt.Fprintf(b, "  %s (%d trials): %s\n", item.Case, item.Trials, item.Reason)
 		}
 	}
 }

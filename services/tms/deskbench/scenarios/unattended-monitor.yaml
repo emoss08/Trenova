@@ -102,6 +102,8 @@ scenarios:
       board and the detention desk and puts the notice to FreshHaul in front of a person.
     expectedTools: [dispatch_get_board, detention_list_occurrences]
     exclusive: detention-seed
+    requires:
+      - emailProfile: Notifications
     setup:
       - >
         DELETE FROM inbound_messages WHERE provider_message_id = 'bench-freshhaul-waiver-note'
@@ -256,6 +258,8 @@ scenarios:
     tags: [unattended, customer-updates]
     expectedTools: [customer_get_update_preferences, "shipment_get|shipment_get_tracking"]
     exclusive: dispatch-board
+    requires:
+      - emailProfile: Operations
     setup:
       - *shp008-no-forwarded-note
       - >
@@ -267,7 +271,7 @@ scenarios:
           (id, organization_id, business_unit_id, shipment_move_id, primary_worker_id, tractor_id, status)
         SELECT 'asn_01JBENCH00000000000000CS02', sm.organization_id, sm.business_unit_id, sm.id,
           (SELECT w.id FROM workers AS w WHERE w.organization_id = sm.organization_id
-            AND w.first_name = 'John' AND w.last_name = 'Smith'),
+            AND w.email = 'john.smith@example.com'),
           (SELECT t.id FROM tractors AS t WHERE t.organization_id = sm.organization_id
             AND t.code = 'TRC-101'),
           'InProgress'
@@ -343,6 +347,8 @@ scenarios:
     expectedTools: ["exception_get_service_failure|exception_list_service_failures", exception_list_service_failure_reason_codes]
     forbiddenTools: [exception_void_service_failure]
     exclusive: service-failure-seed
+    requires:
+      - emailProfile: Operations
     setup:
       - >
         UPDATE customers SET status_update_preference = 'ArrivalsAndDepartures',

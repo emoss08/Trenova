@@ -46,14 +46,15 @@ scenarios:
     description: >
       The morning summary, asked for loosely. Dispatch desk holds the dispatch board (DB-019) and
       not the daily briefing, so the board is its rundown; reading it once and answering from it is
-      the job, not tracking every late move.
+      the job, not tracking every late move. On a tenant's board the window holds more moves than
+      one read returns, so the limit leaves room for one more page of it.
     tags: [briefing]
     steps:
       - say: "gimme the rundown for today"
         expect:
           calls: ["dispatch_get_board|insight_get_daily_briefing|exception_list_watchtower_items|shipment_list"]
           maxFailedCalls: 0
-          maxCalls: 5
+          maxCalls: 6
           noProposals: true
           rubric: >
             Summarizes what needs attention today in a few lines, leading with what is urgent

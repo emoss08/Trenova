@@ -106,13 +106,17 @@ scenarios:
           calls: ["exception_list_service_failures"]
           noProposals: true
           rubric: >
-            Lists each late or missed stop with how late, the customer and the recorded reason,
-            and says which have no reason recorded rather than assigning blame itself.
+            Says how many late or missed stops there were this week and lists them with how late,
+            the customer and the recorded reason (every one when there are a few, the latest first
+            and the list cut with a count of the rest when there are many), and says which have no
+            reason recorded rather than assigning blame itself.
 
   - name: tell-the-customer-its-late
     description: >
       A customer update about a delayed load, written and proposed. FreshHaul takes no routine
       arrival or departure notices, which must not stop an update the person asked for.
+    requires:
+      - emailProfile: Operations
     steps:
       - say: "email freshhaul that the reefer to LA is running behind, new eta is tomorrow at 10am"
         expect:

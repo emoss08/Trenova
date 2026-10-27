@@ -3,9 +3,27 @@ defaults:
 
 scenarios:
   - name: weekly-driver-settlement
-    description: Paying a driver for last week.
+    description: >
+      Paying a driver for last week. The setup removes any draft settlement for Carlos Rivera
+      from the last three weeks that a scheduled generation or an earlier run made (the fixture
+      seeds none for him), releasing its pay events first as the application does, so last week
+      is unsettled and generating it is the right answer.
     agent: Settlements clerk
     tags: [settlements, write]
+    setup:
+      - >
+        UPDATE driver_pay_events SET status = 'Accrued', settlement_id = NULL,
+          settlement_line_id = NULL
+        WHERE status = 'Settled' AND settlement_id IN (
+          SELECT ds.id FROM driver_settlements AS ds JOIN workers AS w ON w.id = ds.worker_id
+          WHERE w.email = 'carlos.rivera@example.com' AND ds.status = 'Draft'
+            AND ds.settlement_number NOT LIKE 'SEED-%'
+            AND ds.period_end > EXTRACT(EPOCH FROM now())::bigint - 21 * 86400)
+      - >
+        DELETE FROM driver_settlements AS ds USING workers AS w
+        WHERE w.id = ds.worker_id AND w.email = 'carlos.rivera@example.com'
+          AND ds.status = 'Draft' AND ds.settlement_number NOT LIKE 'SEED-%'
+          AND ds.period_end > EXTRACT(EPOCH FROM now())::bigint - 21 * 86400
     steps:
       - say: "run carlos rivera's settlement for last week"
         expect:
@@ -96,9 +114,20 @@ scenarios:
             including that the invoice or payment does not exist yet if so.
 
   - name: ifta-quarter
-    description: The quarterly fuel tax return.
+    description: >
+      The quarterly fuel tax return. The volume seed computes a return for every past quarter
+      (finalized while it is still due), and an earlier run may have drafted one, so the setup
+      removes last quarter's working copy (a draft or a finalized return not yet filed) and the
+      quarter has no return to collide with. A filed return is left alone: it is the state's
+      record.
     agent: Fuel and IFTA clerk
     tags: [fuel, write]
+    setup:
+      - >
+        DELETE FROM ifta_returns
+        WHERE status IN ('Draft', 'Finalized')
+          AND year = EXTRACT(YEAR FROM date_trunc('quarter', now()) - interval '3 months')::int
+          AND quarter = EXTRACT(QUARTER FROM date_trunc('quarter', now()) - interval '3 months')::int
     steps:
       - say: "put together our IFTA return for last quarter"
         expect:

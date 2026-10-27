@@ -20,7 +20,8 @@ scenarios:
   - name: late-loads-this-morning
     description: >
       An opening question with a deadline in it. "Late" should be read as delayed, or past
-      its appointment, and the answer should say which it used.
+      its appointment, and the answer should say which it used. A tenant has a few late loads or
+      a hundred, so the reply is held to the count and to naming real ones, not to every row.
     steps:
       - say: "anything running late? need to know before my 9am call"
         page: { path: /shipments, title: Shipments }
@@ -30,11 +31,15 @@ scenarios:
           noProposals: true
           noRecordIds: true
           facts:
-            - sql: select pro_number from shipments where status = 'Delayed' order by pro_number
-              note: each delayed shipment's pro number
+            - sql: select count(*) from shipments where status = 'Delayed'
+              note: the number of delayed shipments
+            - sql: select pro_number from shipments where status = 'Delayed'
+              any: true
+              note: at least one delayed shipment, by pro number
           rubric: >
-            Lists each late load by pro number with its customer and how it is late, and says
-            what it counted as late.
+            Says how many loads are late and what it counted as late, then names them by pro
+            number with the customer and how each is late: every one when there are a few, the
+            most pressing ones when there are many, saying the list is cut and offering the rest.
 
   - name: load-by-description
     description: >

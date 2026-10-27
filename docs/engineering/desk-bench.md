@@ -123,6 +123,41 @@ namespace), so a conversation appears once its turns finish. A formula scenario'
 is always removed at the end, since the studio keeps one thread per person and template and the
 next run would otherwise replay this one's history.
 
+### The data it runs on
+
+Run the bench on a tenant-sized organization: `task db-reset` (migrations, then the fixtures),
+then `task db-seed-volume` (ten thousand shipments, four hundred drivers, a year of history). The
+volume is part of what is measured: a search word that names several kinds of record, a tool
+budget spent reading a hundred delayed loads, holds filed for drivers already off dispatch only
+show on data the size of a real tenant's. The fixture seed alone is the small, exact case, useful
+for checking one fix.
+
+Before anything is written, `run`, `baseline`, `sweep` and `gate` profile the bench user's
+organization (`ProfileData`, `preflight.go`):
+
+- **No fixture data refuses the run.** The scenarios name the fixture seed's records (`SEED-…`),
+  so an organization without them cannot run them.
+- **The shape is recorded.** `fixture seed` or `fixture and volume seeds` (a driver email ending
+  `@drivers.example.com`, which only the volume seed writes) goes into `report.json`
+  (`meta.data`) and the top of `summary.md`. A comparison between runs on different shapes says
+  so, since the pass rate moves with the data.
+- **Drift is reported, not refused.** The count of changes earlier bench runs approved that are
+  still in the data is printed beside the shape; `task db-reset` starts from clean.
+
+Write scenarios to hold on both shapes: a fact that scales (a count, or the newest few rows) rather
+than one row per delayed load; a person or load named the way a dispatcher would after "which
+one?"; a setup that creates or restores the record the scenario reads rather than trusting the
+seed's copy; a fact computed from the database at the step rather than a figure written in the
+file. In SQL, find a fixture driver by the fixture's email (`carlos.rivera@example.com`), never by
+first and last name: the volume seed draws its four hundred names from common lists, so a second
+John Smith turns a one-row subquery into an error and a join into two rows. `ask` is never
+profiled.
+
+Some scenarios need more than data: an extension with an API key, an email profile, a partner's
+live EDI. A scenario lists those under `requires` (see Scenarios), and a case whose requirement
+is unmet is skipped with the reason instead of failing on a refusal nobody can fix by editing a
+prompt.
+
 ### Cells: `+advisor`
 
 `+advisor` gives the cell's model Anthropic's advisor tool, overriding the provider's own
@@ -169,7 +204,7 @@ Each run writes to `.deskbench/runs/<time>-<ask|run>/`:
 
 | File | What it holds |
 |---|---|
-| `summary.md` | pass matrix by scenario and model, the comparison, tools that were refused or failed with sample reasons, model calls worth a look (cut off, retried, fell back, unparsed arguments), every failing check |
+| `summary.md` | pass matrix by scenario and model, the comparison, tools that were refused or failed with sample reasons, model calls worth a look (cut off, retried, fell back, unparsed arguments), every failing check, and every skipped case with its reason |
 | `transcript.md` | each case's steps and checks, then each turn as a timeline: model calls (thinking, text, the calls asked for), tool calls (verdict, timing, arguments, the result the model read), notable stream events (`retrying`, `reply_regrounded`, `run_tainted`, `refused`, `world_changed`, delegation, memory), proposals with their preview, and the reply |
 | `report.json` | all of it, machine-readable |
 | `calls/<case>/turnNN-callNNN.json` | one model call exactly as sent and received: messages, the tool names offered, the result |
@@ -178,6 +213,12 @@ Each run writes to `.deskbench/runs/<time>-<ask|run>/`:
 | `live.log` | the run as it happened, line by line |
 | `worker.log` | the in-process worker's JSON log |
 | `temporal.log` | the Temporal SDK's own log |
+
+A skipped case (an unmet `requires`, or a scenario the tool-count sweep cannot hold) is neither
+passed nor failed: it is left out of the matrix, the cells, pass^k and the comparison, counted as
+`skipped` in the headline, listed under "Skipped, neither passed nor failed" with its reason
+(`summary.skippedCases` in `report.json`, `skipped` on the case), marked `SKIP` in
+`transcript.md` and the progress lines, and never makes `desk run` exit non-zero.
 
 A call file names its system prompt and tool list by digest, so two calls with the same
 `systemDigest` saw the same prompt and a changed digest after an edit is the edit taking effect.
@@ -391,7 +432,7 @@ scenarios:
 | `proposals` | a proposal of `tool` was filed whose arguments contain `args` (strings compared case-insensitively, numbers by value) |
 | `noProposals` | nothing was proposed |
 | `executed` | on a decide step: every approved change ran without an error |
-| `facts` | the first column of each row the query returns is stated in the reply (numbers within the grounding guard's rounding, a whole count up to twelve also as its word, text by containment); `any: true` needs one row |
+| `facts` | the first column of each row the query returns is stated in the reply (numbers within the grounding guard's rounding, a whole count up to twelve also as its word, text by containment, zero also as "none" or "no …"); `any: true` needs one row; a query that returns no rows fails |
 | `maxSeconds` | the step's turns took at most this long |
 | `rubric` | not checked; printed beside the step for whoever reads the transcript |
 
@@ -474,6 +515,36 @@ A step can carry `setup` too: statements of the same kind, run just before that 
 decides, so a scenario can change the world between a proposal and its approval (a stale
 approval). A fire step cannot; its setup is the scenario's.
 
+A scenario (or a file's `defaults`, which every scenario in it then carries) lists what the
+environment must hold under `requires`, one entry per need, checked under the bench user's tenant
+before the case's setup runs:
+
+```yaml
+requires:
+  - extension: BrowserUse        # the extension enabled with an API key (Exa, Parallel, BrowserUse)
+  - emailProfile: Notifications  # an active profile assigned to this purpose or to General
+  - ediLading: ACMEMFG           # the partner (by code) has an active Lading version
+```
+
+`emailProfile` names the purpose the tool sends under, because that is how a send picks its
+profile (assigned to the purpose, else to General; `is_default` plays no part):
+`detention_send_notice` sends as `Notifications`, `customer_send_email` and the customer update
+as `Operations`. A case with an unmet requirement is skipped with "needs …" naming each one and
+where to set it up; it runs no setup and opens no conversation. `portal.yaml` needs
+`BrowserUse`; the detention-notice and customer-email scenarios need their email profile;
+`edi-preview-214` needs Acme's active Lading version.
+
+### Statements are planned in CI
+
+`TestScenarioStatements_PlanAgainstTheMigratedSchema` (`scenario_sql_integration_test.go`,
+integration build tag) loads every scenario file and runs `EXPLAIN` on every setup statement
+(the scenario's and each step's), every fact, every `db` check, every mention's `find`, every
+fire `subject` and every `requires` probe, with `{{run}}` and `{{subject}}` replaced by a quoted
+dummy id, against the migrated schema, and the bench's own fixture-data checks with them. A
+statement that does not plan fails with its scenario, where it sits and its text, so a migration
+that drops or renames a column a scenario names fails in CI instead of on the next bench run
+(DB-247: thirty cases failed in 0 s on setup after the tariff and Lading migrations).
+
 ### Labels and splits
 
 Every scenario is in one of three splits: `development` (tune against it), `held-out` (look at it
@@ -543,7 +614,7 @@ steps:
       proposals:
         - tool: detention_send_notice
       db:
-        - sql: SELECT count(*) FROM agent_exceptions WHERE run_id = '{{run}}'
+        - sql: SELECT count(*) FROM agent_exceptions WHERE run_id = {{run}}
           equals: "1"
 ```
 
@@ -576,7 +647,8 @@ instructions, tools, events and data access, with learning off. It stays disable
 its own case runs, so real development events never start it. The bench waits until the run is
 `AwaitingDecision`, `Completed`, `ShadowCompleted` or `Failed`, grades it, then rejects what it
 proposed, waits for the run to settle and cancels it if it has not. `{{run}}` and `{{subject}}`
-are replaced in checks with the run's and subject's ids. Unattended scenarios live in
+are replaced in checks with the run's and subject's ids, quoted, so a check writes `run_id =
+{{run}}` without quotes of its own. Unattended scenarios live in
 `scenarios/unattended-*.yaml`, are tagged `unattended`, and cover every event template and
 LoadMonitor.
 
@@ -698,4 +770,6 @@ trenova desk findings --area anthropic --format json
   bench stops waiting a few seconds after the last turn ends. Scheduled and event runs are
   followed only when a `fire` step starts them.
 - Approved writes are real. Run against a seeded development database, and `task db-reset`
-  when a run has moved the data too far.
+  when a run has moved the data too far. The preflight catches another seed and bulk drift, not
+  one record an earlier approval changed (last week's settlement already drafted, a credential
+  renewed): a scenario that reads one record puts it back with `setup`.

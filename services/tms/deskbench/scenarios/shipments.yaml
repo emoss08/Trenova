@@ -140,7 +140,7 @@ scenarios:
         FROM shipment_moves AS sm
         JOIN shipments AS sp ON sp.id = sm.shipment_id
         JOIN workers AS w ON w.organization_id = sm.organization_id
-          AND w.first_name = 'John' AND w.last_name = 'Smith'
+          AND w.email = 'john.smith@example.com'
         JOIN tractors AS t ON t.organization_id = sm.organization_id AND t.code = 'TRC-003'
         JOIN trailers AS tr ON tr.organization_id = sm.organization_id AND tr.code = 'TRL-002'
         WHERE sp.pro_number = 'SEED-SHP-008' AND sm.sequence = 1

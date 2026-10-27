@@ -19,6 +19,7 @@ const (
 	argsLimit     = 2000
 	passMark      = "PASS"
 	failMark      = "FAIL"
+	skipMark      = "SKIP"
 	checkPass     = "[x]"
 	checkFail     = "[ ]"
 )
@@ -41,8 +42,9 @@ func renderTranscript(r *Report) string {
 	b.Grow(64 * 1024)
 
 	fmt.Fprintf(&b, "# Desk bench transcript\n\n")
-	fmt.Fprintf(&b, "Started %s, %d cases, %d passed. Worker log: `%s`.\n\n",
-		r.Meta.StartedAt.Format(time.RFC3339), r.Summary.Cases, r.Summary.Passed, r.Meta.WorkerLog)
+	fmt.Fprintf(&b, "Started %s, %d cases, %d passed, %d skipped. Worker log: `%s`.\n\n",
+		r.Meta.StartedAt.Format(time.RFC3339), r.Summary.Cases, r.Summary.Passed,
+		r.Summary.Skipped, r.Meta.WorkerLog)
 
 	for _, result := range r.Cases {
 		renderCase(&b, result)
@@ -52,10 +54,7 @@ func renderTranscript(r *Report) string {
 }
 
 func renderCase(b *strings.Builder, result *CaseResult) {
-	mark := passMark
-	if !result.Passed {
-		mark = failMark
-	}
+	mark := result.Verdict()
 	fmt.Fprintf(b, "---\n\n## %s %s #%d\n\n", mark, result.Key(), result.Repeat)
 	if result.Scenario.Description != "" {
 		fmt.Fprintf(b, "%s\n\n", strings.TrimSpace(result.Scenario.Description))
@@ -74,6 +73,9 @@ func renderCase(b *strings.Builder, result *CaseResult) {
 	}
 	if result.Error != "" {
 		fmt.Fprintf(b, "- **Error:** %s\n", result.Error)
+	}
+	if result.Skipped != "" {
+		fmt.Fprintf(b, "- **Skipped:** %s\n", result.Skipped)
 	}
 	b.WriteString("\n")
 

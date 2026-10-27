@@ -138,12 +138,12 @@ scenarios:
     setup:
       - >
         INSERT INTO shipments
-          (id, pro_number, organization_id, business_unit_id, status, bol, rating_unit,
-           freight_charge_amount, other_charge_amount, total_charge_amount, base_rate, pieces,
+          (id, pro_number, organization_id, business_unit_id, status, bol,
+           freight_charge_amount, other_charge_amount, total_charge_amount, pieces,
            weight, shipment_type_id, service_type_id, customer_id, formula_template_id,
            entry_method, freight_terms)
         SELECT 'shp_01JBENCH000000000000000EC1', 'SEED-BENCH-EC-01', s.organization_id,
-          s.business_unit_id, 'New', 'BOL-BENCH-EC-01', 1, 95, 0, 95, 95, 26, 41000,
+          s.business_unit_id, 'New', 'BOL-BENCH-EC-01', 95, 0, 95, 26, 41000,
           s.shipment_type_id, s.service_type_id, s.customer_id,
           (SELECT id FROM formula_templates WHERE organization_id = s.organization_id
             AND business_unit_id = s.business_unit_id AND name = 'Per Mile' LIMIT 1),
@@ -152,7 +152,7 @@ scenarios:
         ON CONFLICT DO NOTHING
       - >
         UPDATE shipments SET status = 'New', freight_charge_amount = 95, other_charge_amount = 0,
-          total_charge_amount = 95, base_rate = 95, rate_locked = false, rate_override_amount = NULL
+          total_charge_amount = 95, rate_locked = false, rate_override_amount = NULL
         WHERE pro_number = 'SEED-BENCH-EC-01'
       - >
         INSERT INTO shipment_moves (id, organization_id, business_unit_id, shipment_id, status, loaded, sequence)
@@ -207,13 +207,13 @@ scenarios:
     setup:
       - >
         INSERT INTO shipments
-          (id, pro_number, organization_id, business_unit_id, status, bol, rating_unit,
-           freight_charge_amount, other_charge_amount, total_charge_amount, base_rate, pieces,
+          (id, pro_number, organization_id, business_unit_id, status, bol,
+           freight_charge_amount, other_charge_amount, total_charge_amount, pieces,
            weight, shipment_type_id, service_type_id, customer_id, formula_template_id,
            entry_method, freight_terms, rating_detail)
         SELECT 'shp_01JBENCH000000000000000EC2', 'SEED-BENCH-EC-02', s.organization_id,
-          s.business_unit_id, 'New', 'BOL-2026-0003', s.rating_unit, s.freight_charge_amount,
-          s.other_charge_amount, s.total_charge_amount, s.base_rate, s.pieces, s.weight,
+          s.business_unit_id, 'New', 'BOL-2026-0003', s.freight_charge_amount,
+          s.other_charge_amount, s.total_charge_amount, s.pieces, s.weight,
           s.shipment_type_id, s.service_type_id, s.customer_id, s.formula_template_id,
           'Manual', s.freight_terms, s.rating_detail
         FROM shipments AS s WHERE s.pro_number = 'SEED-SHP-009'
@@ -278,12 +278,12 @@ scenarios:
     setup:
       - >
         INSERT INTO shipments
-          (id, pro_number, organization_id, business_unit_id, status, bol, rating_unit,
-           freight_charge_amount, other_charge_amount, total_charge_amount, base_rate, pieces,
+          (id, pro_number, organization_id, business_unit_id, status, bol,
+           freight_charge_amount, other_charge_amount, total_charge_amount, pieces,
            weight, shipment_type_id, service_type_id, customer_id, formula_template_id,
            entry_method, freight_terms, external_reference)
         SELECT 'shp_01JBENCH000000000000000EC3', 'SEED-BENCH-EC-03', s.organization_id,
-          s.business_unit_id, 'New', 'BOL-RNGE-60412', 1, 3800, 0, 3800, 3800, 22, 36000,
+          s.business_unit_id, 'New', 'BOL-RNGE-60412', 3800, 0, 3800, 22, 36000,
           s.shipment_type_id, s.service_type_id, c.id, s.formula_template_id, 'EDI', 'Prepaid',
           'RNGE-60412'
         FROM shipments AS s

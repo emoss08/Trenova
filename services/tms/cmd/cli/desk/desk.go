@@ -40,6 +40,7 @@ const (
 	formatCSV       = "csv"
 	formatJSON      = "json"
 	statusAll       = "all"
+	kindAsk         = "ask"
 )
 
 var cfg *config.Config
@@ -251,7 +252,7 @@ func runAsk(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	report, outDir, err := execute(cmd.Context(), executeOptions{kind: "ask"}, deskbench.RunOptions{
+	report, outDir, err := execute(cmd.Context(), executeOptions{kind: kindAsk}, deskbench.RunOptions{
 		Scenarios: []*deskbench.Scenario{scenario},
 		User:      flags.user,
 		Agent:     flags.agent,
@@ -468,6 +469,12 @@ func execute(
 		return nil, "", err
 	}
 
+	data, err := profileData(ctx, bench, run.kind)
+	if err != nil {
+		_ = bench.Close()
+		return nil, "", err
+	}
+
 	if err = syncBenchAgents(ctx, bench); err != nil {
 		_ = bench.Close()
 		return nil, "", err
@@ -483,6 +490,8 @@ func execute(
 		PassK:     run.passK,
 		Label:     run.label,
 		Threshold: run.threshold,
+
+		Data: data,
 	}
 	fmt.Fprintf(
 		os.Stderr,
@@ -501,6 +510,7 @@ func execute(
 	report := deskbench.BuildReport(meta, cases)
 	if baseline != nil {
 		report.Comparison = deskbench.Compare(baseline, report)
+		report.ComparisonNote = deskbench.ComparedDataNote(baseline.Meta.Data, report.Meta.Data)
 		report.CellChanges = deskbench.CompareCells(baseline, report)
 	}
 	if !run.noWrite {
@@ -518,6 +528,31 @@ func execute(
 	}
 
 	return report, outDir, nil
+}
+
+func profileData(
+	ctx context.Context,
+	bench *deskbench.Bench,
+	kind string,
+) (deskbench.DataProfile, error) {
+	if kind == kindAsk {
+		return deskbench.DataProfile{}, nil
+	}
+	session, err := bench.SessionFor(ctx, flags.user)
+	if err != nil {
+		return deskbench.DataProfile{}, err
+	}
+	data, err := bench.ProfileData(ctx, session)
+	if errors.Is(err, deskbench.ErrNoFixtureData) {
+		return data, fmt.Errorf("%w. Reset the database with `task db-reset`, and add "+
+			"`task db-seed-volume` for a tenant-sized organization", err)
+	}
+	if err != nil {
+		return data, err
+	}
+	fmt.Fprintf(os.Stderr, "desk bench: data: %s\n", data)
+
+	return data, nil
 }
 
 func syncBenchAgents(ctx context.Context, bench *deskbench.Bench) error {
@@ -623,9 +658,10 @@ func commit() string {
 }
 
 func printProgress(result *deskbench.CaseResult) {
-	mark := "PASS"
-	if !result.Passed {
-		mark = "FAIL"
+	if result.Skipped != "" {
+		fmt.Fprintf(os.Stderr, "%s %s #%d: %s\n", result.Verdict(), result.Key(), result.Repeat,
+			result.Skipped)
+		return
 	}
 
 	toolCalls, refused := 0, 0
@@ -640,9 +676,9 @@ func printProgress(result *deskbench.CaseResult) {
 		}
 	}
 
-	fmt.Fprintf(os.Stderr, "%s %s #%d (%s, %d tool calls, %d refused)\n", mark, result.Key(),
-		result.Repeat, result.FinishedAt.Sub(result.StartedAt).Round(100*time.Millisecond),
-		toolCalls, refused)
+	fmt.Fprintf(os.Stderr, "%s %s #%d (%s, %d tool calls, %d refused)\n", result.Verdict(),
+		result.Key(), result.Repeat,
+		result.FinishedAt.Sub(result.StartedAt).Round(100*time.Millisecond), toolCalls, refused)
 	for _, err := range result.Errors() {
 		fmt.Fprintf(os.Stderr, "     error: %s\n", err)
 	}

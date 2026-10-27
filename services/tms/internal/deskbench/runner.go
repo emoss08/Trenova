@@ -78,6 +78,17 @@ func (c *CaseResult) Errors() []string {
 	return errs
 }
 
+func (c *CaseResult) Verdict() string {
+	switch {
+	case c.Skipped != "":
+		return skipMark
+	case c.Passed:
+		return passMark
+	default:
+		return failMark
+	}
+}
+
 func (c *CaseResult) ID() string {
 	return stringutils.SlugifyASCII(c.Scenario.Name, slugLength) + "--" +
 		stringutils.SlugifyASCII(c.Provider, slugLength) + "--" + strconv.Itoa(c.Repeat)
@@ -254,6 +265,16 @@ func (b *Bench) runCase(ctx context.Context, opts *RunOptions, planned plannedCa
 		result.ProviderKind = string(provider.Kind)
 	}
 	result.Effort = string(cell.Effort)
+
+	unmet, err := b.unmetRequirements(ctx, session, scenario.Requires)
+	if err != nil {
+		result.Error = err.Error()
+		return result
+	}
+	if unmet != "" {
+		result.Skipped = unmet
+		return result
+	}
 
 	b.tidied.Do(func() {
 		if tidyErr := b.runStatements(ctx, session, benchLeftovers()); tidyErr != nil {

@@ -286,15 +286,16 @@ scenarios:
           formula_template_id = (SELECT ft.id FROM formula_templates AS ft
                                  WHERE ft.organization_id = sp.organization_id
                                    AND ft.business_unit_id = sp.business_unit_id
-                                   AND ft.name = 'Flat Rate' AND ft.type = 'FreightCharge'
+                                   AND ft.name = 'Flat Rate'
                                  LIMIT 1),
-          base_rate = 3200, freight_charge_amount = 3200, other_charge_amount = 0,
+          tariff_inputs = '{"rate": {"u": "$", "$q": "3200"}}'::jsonb,
+          freight_charge_amount = 3200, other_charge_amount = 0,
           total_charge_amount = 3200, rating_detail = NULL, rate_quote_id = NULL,
           rate_agreement_id = NULL, rate_agreement_rule_id = NULL, rate_override_amount = NULL,
           rate_override_reason = NULL, rate_override_by_id = NULL, rate_override_at = NULL,
           rate_locked = false, auto_rated = false, auto_rated_at = NULL
         WHERE sp.pro_number = 'SEED-SHP-001'
-          AND (sp.rate_quote_id IS NOT NULL OR sp.base_rate IS DISTINCT FROM 3200
+          AND (sp.rate_quote_id IS NOT NULL OR sp.tariff_inputs->'rate'->>'$q' IS DISTINCT FROM '3200'
             OR sp.total_charge_amount IS DISTINCT FROM 3200)
       - >
         UPDATE shipments SET status = 'New', canceled_at = NULL, canceled_by_id = NULL,

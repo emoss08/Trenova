@@ -88,6 +88,16 @@ func seededHoldReasons() []*holdreason.HoldReason {
 		},
 		{
 			Type:                  holdreason.HoldTypeOperational,
+			Code:                  "MISSED_PICKUP",
+			Label:                 "Missed pickup",
+			Description:           "The pickup window passed with nobody at the shipper; it needs a new appointment.",
+			DefaultSeverity:       holdreason.HoldSeverityBlocking,
+			DefaultBlocksDispatch: true,
+
+			SortOrder: 100,
+		},
+		{
+			Type:                  holdreason.HoldTypeOperational,
 			Code:                  "EQUIP_ISSUE",
 			Label:                 "Equipment problem",
 			Description:           "The tractor or trailer for the load is out of service or unsuitable.",

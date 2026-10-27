@@ -104,11 +104,13 @@ scenarios:
             already invoiced, with nothing proposed that would duplicate it.
 
   - name: request-time-off
-    description: Time off asked for on a driver's behalf.
+    description: >
+      Time off asked for on a driver's behalf. A tenant has several drivers called Carlos, so he is
+      named the way a dispatcher names him once asked which one.
     agent: Workforce coordinator
     tags: [workforce]
     steps:
-      - say: "carlos needs next friday off, put it in as vacation"
+      - say: "carlos rivera needs next friday off, put it in as vacation"
         expect:
           calls: ["worker_list"]
           proposals: [{ tool: worker_request_pto }]
@@ -118,17 +120,51 @@ scenarios:
             plainly what time off already covers that day.
 
   - name: approve-pending-time-off
-    description: Clearing what is waiting.
+    description: >
+      Clearing what is waiting. The fixture seed gives Jane Doe and the other first drivers
+      eighty time-off records each, a score of them still requested and most beyond her balance,
+      so the scenario owns its driver's pending requests instead: Emily Chen has none seeded, and
+      the setup files two (two vacation days in about three weeks, one sick day in about twelve
+      days) and keeps them requested and ahead of today on every run.
     agent: Workforce coordinator
     tags: [workforce]
+    setup:
+      - >
+        INSERT INTO worker_pto
+          (id, worker_id, business_unit_id, organization_id, status, type, start_date, end_date,
+           reason, days)
+        SELECT v.id, w.id, w.business_unit_id, w.organization_id, 'Requested',
+          v.kind::worker_pto_type_enum,
+          EXTRACT(EPOCH FROM date_trunc('day', now()))::bigint + v.start_off,
+          EXTRACT(EPOCH FROM date_trunc('day', now()))::bigint + v.end_off,
+          v.reason, v.days
+        FROM workers AS w
+        CROSS JOIN (VALUES
+            ('wrkpto_01JBENCH00000000000000PT01', 'Vacation', 1951200, 2066400, 'Family vacation', 2),
+            ('wrkpto_01JBENCH00000000000000PT02', 'Sick', 1087200, 1116000, 'Doctor visit', 1))
+          AS v (id, kind, start_off, end_off, reason, days)
+        WHERE w.email = 'emily.chen@example.com'
+        ON CONFLICT DO NOTHING
+      - >
+        UPDATE worker_pto AS p
+        SET status = 'Requested', approver_id = NULL, rejector_id = NULL, cancelled_by_id = NULL,
+          rejection_reason = NULL, cancellation_reason = NULL,
+          start_date = EXTRACT(EPOCH FROM date_trunc('day', now()))::bigint + v.start_off,
+          end_date = EXTRACT(EPOCH FROM date_trunc('day', now()))::bigint + v.end_off
+        FROM (VALUES
+            ('wrkpto_01JBENCH00000000000000PT01', 1951200, 2066400),
+            ('wrkpto_01JBENCH00000000000000PT02', 1087200, 1116000))
+          AS v (id, start_off, end_off)
+        WHERE p.id = v.id AND p.status IN ('Requested', 'Rejected', 'Cancelled')
     steps:
-      - say: "approve whatever pto jane has pending"
+      - say: "approve whatever pto emily chen has pending"
         expect:
           calls: ["worker_list_time_off"]
           proposals: [{ tool: worker_approve_pto }]
           maxFailedCalls: 1
           rubric: >
-            Lists Jane Doe's requested time off and proposes approving those requests, naming the
+            Lists Emily Chen's requested time off (two vacation days in about three weeks and a
+            sick day in about twelve days) and proposes approving both requests, naming the
             dates, rather than approving anything not requested.
 
   - name: log-a-fuel-purchase

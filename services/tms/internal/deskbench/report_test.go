@@ -244,3 +244,38 @@ func TestSummarize_ReportsTheShareOfCallsWhoseArgumentsWereAccepted(t *testing.T
 	assert.Equal(t, evalsplit.HeldOut, heldOut.Split)
 	assert.InDelta(t, 0.875, heldOut.Measures.ArgumentValidity.Mean, 1e-9)
 }
+
+func TestSummarize_ReportsASkippedCaseApartFromPassesAndFailures(t *testing.T) {
+	t.Parallel()
+
+	ran := &Scenario{Name: "late-loads", Split: evalsplit.Development}
+	portal := &Scenario{Name: "portal-read", Split: evalsplit.Development}
+	reason := "needs the BrowserUse extension enabled with an API key"
+	skipped := func() *CaseResult {
+		result := benchCase(portal, "Haiku", false, 0, 0, 0, "0")
+		result.Skipped = reason
+		return result
+	}
+	cases := []*CaseResult{
+		benchCase(ran, "Haiku", true, 2, 1000, 9000, "0.010"),
+		benchCase(ran, "Haiku", false, 2, 1000, 9000, "0.010"),
+		skipped(),
+		skipped(),
+	}
+
+	report := BuildReport(ReportMeta{PassK: 2}, cases)
+	summary := report.Summary
+	assert.Equal(t, 2, summary.Cases, "a skipped case is not a trial")
+	assert.Equal(t, 1, summary.Passed)
+	assert.Equal(t, 2, summary.Skipped)
+	assert.Equal(t, []SkippedCase{{Case: "portal-read @ Haiku", Trials: 2, Reason: reason}},
+		summary.SkippedCases)
+	require.Len(t, summary.Matrix, 1, "a skipped scenario has no row to pass or fail")
+	assert.Empty(t, summary.Failing)
+
+	rendered := RenderSummary(report)
+	assert.Contains(t, rendered, "1/2 cases passed, 2 skipped")
+	assert.Contains(t, rendered, "portal-read @ Haiku (2 trials): "+reason)
+	assert.Equal(t, skipMark, cases[2].Verdict())
+	assert.Equal(t, failMark, cases[1].Verdict())
+}

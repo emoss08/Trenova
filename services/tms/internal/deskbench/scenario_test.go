@@ -193,3 +193,43 @@ func TestValidate_AStepSetupChangesRowsBeforeItsStepAndNeverBeforeAFire(t *testi
 	}
 	require.ErrorContains(t, fired.Validate(), "a fire step's setup is the scenario's setup")
 }
+
+func TestValidate_ARequirementNamesOneThingTheEnvironmentNeeds(t *testing.T) {
+	t.Parallel()
+
+	scenario := func(requires ...deskbench.Requirement) *deskbench.Scenario {
+		return &deskbench.Scenario{
+			Name:     "needs-something",
+			Requires: requires,
+			Steps:    []deskbench.Step{{Say: "send acme the detention notice"}},
+		}
+	}
+
+	require.NoError(t, scenario(
+		deskbench.Requirement{Extension: "BrowserUse"},
+		deskbench.Requirement{EmailProfile: "Notifications"},
+		deskbench.Requirement{EDILading: "ACMEMFG"},
+	).Validate())
+	require.ErrorContains(t, scenario(deskbench.Requirement{}).Validate(), "names one of")
+	require.ErrorContains(t, scenario(deskbench.Requirement{
+		Extension: "BrowserUse", EmailProfile: "General",
+	}).Validate(), "names one of")
+	require.ErrorContains(t, scenario(deskbench.Requirement{Extension: "Chrome"}).Validate(),
+		`extension "Chrome"`)
+	require.ErrorContains(t, scenario(deskbench.Requirement{EmailProfile: "Marketing"}).Validate(),
+		"not an email purpose")
+	require.ErrorContains(t, scenario(deskbench.Requirement{EDILading: "  "}).Validate(),
+		"partner by its code")
+}
+
+func TestLoadScenarios_APortalScenarioNeedsTheBrowserExtensionFromItsDefaults(t *testing.T) {
+	t.Parallel()
+
+	scenarios, err := deskbench.LoadScenarios([]string{"../../deskbench/scenarios/portal.yaml"})
+	require.NoError(t, err)
+	require.NotEmpty(t, scenarios)
+	for _, scenario := range scenarios {
+		assert.Contains(t, scenario.Requires, deskbench.Requirement{Extension: "BrowserUse"},
+			scenario.Name)
+	}
+}

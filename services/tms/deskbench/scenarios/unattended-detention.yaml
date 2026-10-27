@@ -65,6 +65,8 @@ scenarios:
     expectedTools: ["detention_get_occurrence|detention_list_occurrences"]
     forbiddenTools: [detention_waive, detention_approve]
     exclusive: detention-seed
+    requires:
+      - emailProfile: Notifications
     setup:
       - &det002-no-waiver-note >
         DELETE FROM inbound_messages WHERE provider_message_id = 'bench-freshhaul-waiver-note'
@@ -204,6 +206,8 @@ scenarios:
     expectedTools: ["detention_get_occurrence|detention_list_occurrences"]
     forbiddenTools: [detention_waive, detention_approve]
     exclusive: detention-seed
+    requires:
+      - emailProfile: Notifications
     setup:
       - *det002-no-waiver-note
       - *det002-no-notices

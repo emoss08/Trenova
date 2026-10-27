@@ -16,13 +16,13 @@ scenarios:
         SET expires_at = EXTRACT(EPOCH FROM now())::bigint - 345600
         FROM workers AS w, worker_credential_types AS t
         WHERE wc.worker_id = w.id AND t.id = wc.credential_type_id
-          AND w.first_name = 'Robert' AND w.last_name = 'Brown'
+          AND w.email = 'robert.b@example.com'
           AND t.name IN ('DOT Medical Card', 'DOT Physical') AND wc.status <> 'Archived'
     steps:
       - fire:
           agent: CredentialDesk
           event: worker_credential.expiring
-          subject: select id from workers where first_name = 'Robert' and last_name = 'Brown'
+          subject: select id from workers where email = 'robert.b@example.com'
         expect:
           run: AwaitingDecision
           proposals:
@@ -43,24 +43,64 @@ scenarios:
     description: >
       Carlos Rivera's annual motor vehicle record review comes due in thirty days and everything
       else he holds is current. A good run asks for the renewal and stops: nothing has lapsed, so
-      there is no hold.
+      there is no hold. The credential seed runs before the driver-pay seed adds Carlos, so he may
+      have no papers on file at all; the setup files his MVR review, DOT medical card and DOT
+      physical (an active one of a type he already holds is kept and only its date set), puts
+      back any of them an earlier run archived, and dates his profile to match.
     tags: [unattended, credentials]
     expectedTools: ["worker_get|worker_get_credential|worker_list_credentials"]
     forbiddenTools: [worker_place_dispatch_hold]
     exclusive: credential-seed
     setup:
       - >
+        INSERT INTO worker_credentials
+          (id, business_unit_id, organization_id, worker_id, credential_type_id, status,
+           issuing_authority, issued_at, expires_at, verified_at, verified_by_id)
+        SELECT v.id, w.business_unit_id, w.organization_id, w.id, t.id, 'Active', v.authority,
+          EXTRACT(EPOCH FROM now())::bigint - v.issued_ago,
+          EXTRACT(EPOCH FROM now())::bigint + v.expires_in,
+          EXTRACT(EPOCH FROM now())::bigint - 259200,
+          (SELECT id FROM users WHERE username = 'admin')
+        FROM workers AS w
+        CROSS JOIN (VALUES
+            ('wcred_01JBENCH00000000000000MVR1', 'MVR', NULL, 28944000, 2592000),
+            ('wcred_01JBENCH00000000000000MED1', 'MED_CARD', 'Certified Medical Examiner',
+              28512000, 34560000),
+            ('wcred_01JBENCH00000000000000PHY1', 'DOT_PHYSICAL', NULL, 28512000, 34560000))
+          AS v (id, code, authority, issued_ago, expires_in)
+        JOIN worker_credential_types AS t ON t.code = v.code
+          AND t.organization_id = w.organization_id AND t.business_unit_id = w.business_unit_id
+        WHERE w.email = 'carlos.rivera@example.com'
+        ON CONFLICT DO NOTHING
+      - >
         UPDATE worker_credentials AS wc
-        SET expires_at = EXTRACT(EPOCH FROM now())::bigint + 2592000
+        SET status = 'Active', archived_at = NULL, archived_by_id = NULL, archive_reason = NULL
+        WHERE wc.id IN ('wcred_01JBENCH00000000000000MVR1', 'wcred_01JBENCH00000000000000MED1',
+            'wcred_01JBENCH00000000000000PHY1')
+          AND wc.status <> 'Active'
+          AND NOT EXISTS (SELECT 1 FROM worker_credentials AS o
+            WHERE o.worker_id = wc.worker_id AND o.credential_type_id = wc.credential_type_id
+              AND o.status = 'Active')
+      - >
+        UPDATE worker_credentials AS wc
+        SET expires_at = EXTRACT(EPOCH FROM now())::bigint
+          + CASE WHEN t.code = 'MVR' THEN 2592000 ELSE 34560000 END
         FROM workers AS w, worker_credential_types AS t
         WHERE wc.worker_id = w.id AND t.id = wc.credential_type_id
-          AND w.first_name = 'Carlos' AND w.last_name = 'Rivera'
-          AND t.name = 'Motor Vehicle Record Review' AND wc.status <> 'Archived'
+          AND w.email = 'carlos.rivera@example.com'
+          AND t.code IN ('MVR', 'MED_CARD', 'DOT_PHYSICAL') AND wc.status = 'Active'
+      - >
+        UPDATE worker_profiles AS wp
+        SET medical_card_expiry = EXTRACT(EPOCH FROM now())::bigint + 34560000,
+          physical_due_date = EXTRACT(EPOCH FROM now())::bigint + 34560000,
+          mvr_due_date = EXTRACT(EPOCH FROM now())::bigint + 2592000
+        FROM workers AS w
+        WHERE wp.worker_id = w.id AND w.email = 'carlos.rivera@example.com'
     steps:
       - fire:
           agent: CredentialDesk
           event: worker_credential.expiring
-          subject: select id from workers where first_name = 'Carlos' and last_name = 'Rivera'
+          subject: select id from workers where email = 'carlos.rivera@example.com'
         expect:
           run: AwaitingDecision
           proposals:

@@ -103,8 +103,11 @@ scenarios:
 
   - name: edi-preview-214
     description: >
-      What a 214 would look like before it goes, through the same path a send takes, with the
-      partner profile's findings.
+      What a 214 would look like before it goes, through the same path a send takes, with what
+      the partner's active Lading version finds in it. Without an active version there is
+      nothing to render, so the case needs one.
+    requires:
+      - ediLading: ACMEMFG
     steps:
       - say: "before we send acme a status on this load, show me the 214 it would get"
         mentions:
@@ -121,17 +124,19 @@ scenarios:
           replyIncludes: ["214"]
           noProposals: true
           rubric: >
-            Shows or describes the 214 segment by segment (B10, AT7), says whether Acme's
-            profile would let it go and what it would flag, and notes the control numbers are
-            assigned on sending. Proposes nothing.
+            Shows or describes the 214 segment by segment (B10, AT7), says whether Acme's active
+            Lading version would let it go and what it would flag, and notes the control numbers
+            are assigned on sending. Proposes nothing.
 
   - name: edi-guide-new-partner
     description: >
       A partner's seven-page implementation guide, attached as a PDF, becomes one proposal for
       the whole connection. Every value is cited to its page; the keystore password on page 2
-      is never taken; the sample 204 on page 7 is run through the parser; the MS1 rule the base
-      214 does not meet and the missing Appendix B are listed. Approving writes it all
-      inactive in one transaction.
+      is never taken; the sample 204 on page 7 is run through the parser; the MS1 rule the
+      starter Lading project's 214 map does not write and the missing Appendix B are listed.
+      Approving writes it in one transaction and nothing goes live: the partner and its AS2
+      transport inactive, the transport with no credential from the guide, and the Lading
+      project as a draft version with no active version until it is tested and certified.
     exclusive: acme-retail-edi
     setup:
       - >
@@ -156,21 +161,41 @@ scenarios:
             page 6), and points to the draft.
             It takes the test AS2 URL and ISA15 T because the guide says to begin in test, and
             starts ISA13 at 1000. It says which credentials to enter after approval and never
-            repeats or stores the keystore password. It names the MS1 rule the base 214 template
-            does not meet and the Appendix B charge codes the guide does not include. It then
-            proposes edi_apply_connection_draft with the same input and the draft's digest.
+            repeats or stores the keystore password. It names the mandatory MS1 rule the starter
+            Lading project's 214 map does not write and the Appendix B charge codes the guide does
+            not include, and says the project is saved as a draft to test and certify in the
+            Lading studio before anything is sent. It then proposes edi_apply_connection_draft
+            with the same input and the draft's digest.
       - decide: approve
         tool: edi_apply_connection_draft
         expect:
           executed: true
-          facts:
+          db:
+            - sql: select status from edi_partners where code = 'ACMERETAIL'
+              equals: Inactive
+              note: the partner saved inactive
             - sql: >
-                select count(*) from edi_partner_document_profiles dp
-                join edi_partners p on p.id = dp.edi_partner_id
-                  and p.organization_id = dp.organization_id
-                  and p.business_unit_id = dp.business_unit_id
-                where p.code = 'ACMERETAIL' and dp.status = 'Inactive'
-              note: the document profiles saved, all inactive
+                select bool_and(cp.status = 'Inactive' and cp.encrypted_secrets = '{}'::jsonb
+                  and cp.config::text not ilike '%Acme#Test2026%')
+                from edi_communication_profiles cp
+                join edi_partners p on p.id = cp.edi_partner_id
+                  and p.organization_id = cp.organization_id
+                  and p.business_unit_id = cp.business_unit_id
+                where p.code = 'ACMERETAIL'
+              equals: "true"
+              note: its transport saved inactive, holding no credential from the guide
+            - sql: >
+                select count(*) from edi_lading_projects lp
+                join edi_partners p on p.id = lp.edi_partner_id
+                  and p.organization_id = lp.organization_id
+                  and p.business_unit_id = lp.business_unit_id
+                join edi_lading_versions v on v.project_id = lp.id
+                  and v.organization_id = lp.organization_id
+                  and v.business_unit_id = lp.business_unit_id
+                where p.code = 'ACMERETAIL' and lp.active_version_id is null
+                  and v.status = 'Draft'
+              equals: "1"
+              note: its Lading project saved as one draft version, none active
 
   - name: edi-guide-revised
     description: >
@@ -187,13 +212,15 @@ scenarios:
           maxFailedCalls: 2
           replyIncludes: ["Priya Raman", "5000"]
           replyExcludes: ["Acme#Test2026", "new partner|new trading partner"]
-          facts:
+          db:
             - sql: select count(*) from edi_partners where code = 'ACMERETAIL'
-              note: there is still one Acme Retail partner
+              equals: "1"
+              note: still one Acme Retail partner
           rubric: >
             Matches the existing ACMERETAIL partner rather than adding one, and lists only the
             changes with their pages: the coordinator Priya Raman and her email, ISA13 from 5000
             (forward from wherever the sequence stands, never back), and MS1 now optional, which
-            also clears the unmet rule. Proposes the change set with edi_apply_connection_draft;
-            when ACMERETAIL does not exist yet (this scenario run alone), it says so and drafts a
-            new connection instead.
+            also clears the rule the 214 map did not write. The change lands in the partner's one
+            Lading project, in its open draft, never in a second project. Proposes the change set
+            with edi_apply_connection_draft; when ACMERETAIL does not exist yet (this scenario run
+            alone), it says so and drafts a new connection instead.

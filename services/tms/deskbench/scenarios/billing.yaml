@@ -13,15 +13,28 @@ scenarios:
           noProposals: true
           facts:
             - sql: >
-                select count(*) from shipments s where s.status in ('ReadyToInvoice', 'Completed')
-                  and not exists (select 1 from billing_queue_items b where b.shipment_id = s.id)
+                with outside_queue as (
+                  select status from shipments
+                  where status in ('ReadyToInvoice', 'Completed')
+                    and coalesce(billing_transfer_status, '') in ('', 'SentBackToOps'))
+                select n from (
+                  select 'ready' as grp, count(*) filter (where status = 'ReadyToInvoice') as n
+                  from outside_queue
+                  union all
+                  select 'completed', count(*) filter (where status = 'Completed') from outside_queue
+                  union all
+                  select 'all', count(*) from outside_queue) as counts
+                where n > 0 or grp = 'all'
+              any: true
               note: >
-                how many delivered loads can go to billing (ready to invoice or completed, none yet
-                in the billing queue); an empty group need not be named as zero
+                how many delivered loads can go to billing, counted as the transfer candidates are
+                (ready to invoice or completed, outside the billing queue): the ready ones, the
+                completed ones or both together; an empty group need not be named as zero
           rubric: >
-            Gives both groups: the shipments already ready to invoice and the completed ones that
-            can be transferred to billing, each with its customer and amount or a table it kept,
-            and offers the next step.
+            Gives both groups with how many are in each: the shipments already ready to invoice
+            and the completed ones that can be transferred to billing, with the customers and
+            amounts of the largest or a table it kept rather than every row of a long list, and
+            offers the next step.
 
   - name: why-this-charge
     description: A customer called about the total and billing wants the breakdown.
@@ -41,8 +54,9 @@ scenarios:
 
   - name: nothing-open-for-acme
     description: >
-      No invoices are seeded, so the honest answer is that nothing is owed. The agent should
-      say so rather than read a shipment total as a balance.
+      What Acme owes is what its open posted invoices hold, which other cases post and pay, so
+      the figure is read from the database. Shipment totals ($2,950, $3,200) are not a balance,
+      and with no open invoice the honest answer is that nothing is owed.
     tags: [receivables]
     agent: Receivables
     steps:
@@ -53,8 +67,9 @@ scenarios:
           noProposals: true
           replyExcludes: ["$2,950", "$3,200"]
           rubric: >
-            Says Acme has no open invoices, so nothing is owed or past due, without reading
-            shipment totals as receivables.
+            Gives Acme Manufacturing's open balance from its open posted invoices and how much of
+            it is more than 30 days past due, or says it has no open invoices and owes nothing,
+            without reading shipment totals as receivables.
 
   - name: completed-not-invoiced
     description: Work that was delivered but never moved to billing.
@@ -65,8 +80,10 @@ scenarios:
           maxFailedCalls: 0
           noProposals: true
           rubric: >
-            Finds Completed shipments with no invoice and not ReadyToInvoice, by pro number,
-            and explains what moving them to billing would do.
+            Finds Completed shipments with no invoice and not ReadyToInvoice and says how many
+            there are, names them by pro number (the oldest first, and only the first few when
+            there are many, saying the list is cut), and explains what moving them to billing
+            would do.
 
   - name: lumper-charge-on-a-load
     description: >

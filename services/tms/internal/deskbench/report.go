@@ -43,28 +43,38 @@ type ReportMeta struct {
 	PassK      int       `json:"passK,omitempty"`
 	Label      string    `json:"label,omitempty"`
 	Threshold  *int      `json:"toolDisclosureThreshold,omitempty"`
+
+	Data DataProfile `json:"data"`
 }
 
 type Report struct {
-	SchemaVersion int            `json:"schemaVersion,omitempty"`
-	Meta          ReportMeta     `json:"meta"`
-	Summary       Summary        `json:"summary"`
-	ToolHealth    []ToolHealth   `json:"toolHealth"`
-	ModelNotes    []ModelNote    `json:"modelNotes,omitempty"`
-	Cases         []*CaseResult  `json:"cases"`
-	Comparison    []CompareEntry `json:"comparison,omitempty"`
-	CellChanges   []CellChange   `json:"cellChanges,omitempty"`
+	SchemaVersion  int            `json:"schemaVersion,omitempty"`
+	Meta           ReportMeta     `json:"meta"`
+	Summary        Summary        `json:"summary"`
+	ToolHealth     []ToolHealth   `json:"toolHealth"`
+	ModelNotes     []ModelNote    `json:"modelNotes,omitempty"`
+	Cases          []*CaseResult  `json:"cases"`
+	Comparison     []CompareEntry `json:"comparison,omitempty"`
+	ComparisonNote string         `json:"comparisonNote,omitempty"`
+	CellChanges    []CellChange   `json:"cellChanges,omitempty"`
 }
 
 type Summary struct {
-	Cases   int         `json:"cases"`
-	Passed  int         `json:"passed"`
-	Skipped int         `json:"skipped,omitempty"`
-	PassK   int         `json:"passK,omitempty"`
-	Usage   Usage       `json:"usage"`
-	Matrix  []MatrixRow `json:"matrix"`
-	Cells   []CellRow   `json:"cells,omitempty"`
-	Failing []Failing   `json:"failing,omitempty"`
+	Cases        int           `json:"cases"`
+	Passed       int           `json:"passed"`
+	Skipped      int           `json:"skipped,omitempty"`
+	SkippedCases []SkippedCase `json:"skippedCases,omitempty"`
+	PassK        int           `json:"passK,omitempty"`
+	Usage        Usage         `json:"usage"`
+	Matrix       []MatrixRow   `json:"matrix"`
+	Cells        []CellRow     `json:"cells,omitempty"`
+	Failing      []Failing     `json:"failing,omitempty"`
+}
+
+type SkippedCase struct {
+	Case   string `json:"case"`
+	Trials int    `json:"trials"`
+	Reason string `json:"reason"`
 }
 
 type Measures struct {
@@ -447,9 +457,16 @@ func summarize(cases []*CaseResult, k int) Summary {
 	order := make([]string, 0, len(cases))
 	ran := make([]*CaseResult, 0, len(cases))
 
+	skipped := make(map[SkippedCase]int, 4)
 	for _, result := range cases {
 		if result.Skipped != "" {
 			summary.Skipped++
+			key := SkippedCase{Case: result.Key(), Reason: result.Skipped}
+			if _, seen := skipped[key]; !seen {
+				skipped[key] = len(summary.SkippedCases)
+				summary.SkippedCases = append(summary.SkippedCases, key)
+			}
+			summary.SkippedCases[skipped[key]].Trials++
 			continue
 		}
 		ran = append(ran, result)

@@ -157,7 +157,9 @@ scenarios:
     description: >
       The conversation reads a load, changes it, and asks about it again. The later turns should
       answer from the records read again at the start of each turn, not from what an earlier turn
-      said, and without looking the load up again.
+      said, and without looking the load up again. The coverage question allows one call: after
+      an approved change an agent may fairly re-read the load's assignment once to confirm it,
+      which is not the search for the load this case guards against.
     agent: Bench · Operations
     tags: [anchors]
     exclusive: SEED-SHP-004
@@ -182,10 +184,10 @@ scenarios:
             for the load again.
       - say: "and is it covered yet"
         expect:
-          maxCalls: 0
+          maxCalls: 1
           rubric: >
             Answers whether a driver or carrier is on SEED-SHP-004 from the records in play, with
-            no tool call.
+            at most one read of its coverage and no search for the load.
 
   - name: records-in-play-are-dated
     description: >

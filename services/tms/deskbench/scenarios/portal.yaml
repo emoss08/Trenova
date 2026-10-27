@@ -1,5 +1,7 @@
 defaults:
   tags: [portal, extensions]
+  requires:
+    - extension: BrowserUse
 
 # Portal automation runs a real cloud browser on the organization's Browser Use account against
 # the sites set up in AI Control. The development seed (OutboundChannels) gives the organization
