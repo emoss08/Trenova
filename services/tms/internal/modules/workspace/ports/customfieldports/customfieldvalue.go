@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/customfield"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -57,4 +58,20 @@ type CustomFieldValueRepository interface {
 	CountResourcesByDefinition(ctx context.Context, req *GetValuesByDefinitionRequest) (int, error)
 
 	GetOptionUsageCounts(ctx context.Context, req *GetOptionUsageRequest) (map[string]int, error)
+}
+
+type NamedValues interface {
+	GetNamed(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		resourceType string,
+		resourceID string,
+	) (map[string]any, error)
+	SaveNamed(
+		ctx context.Context,
+		tenantInfo pagination.TenantInfo,
+		resourceType string,
+		resourceID string,
+		values map[string]any,
+	) *errortypes.MultiError
 }

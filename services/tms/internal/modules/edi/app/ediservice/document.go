@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/edi/ports/ediports"
+	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/servicefailureports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmenteventports"
 	"github.com/emoss08/trenova/internal/modules/operations/ports/shipmentports"
@@ -319,7 +320,11 @@ func (s *Service) documentFor(
 		if tender.TenderOfferID.IsNotNil() {
 			key = tender.TenderOfferID.String()
 		}
-		document, err = ladingdoc.FromLoadTender(tender, key, zones)
+		custom, customErr := s.loadCustomFields(ctx, tenantInfo, tender.ShipmentID)
+		if customErr != nil {
+			return "", nil, customErr
+		}
+		document, err = ladingdoc.FromLoadTender(tender, key, zones, custom)
 	case payload.TenderResponse != nil:
 		key = s.tenderKey(ctx, tenantInfo, payload.TenderResponse.TransferID)
 		document, err = ladingdoc.FromTenderResponse(
@@ -336,7 +341,11 @@ func (s *Service) documentFor(
 			status.BOL,
 			status.ShipmentID.String(),
 		)
-		document, err = ladingdoc.FromShipmentStatus(status, key, zones)
+		custom, customErr := s.loadCustomFields(ctx, tenantInfo, status.ShipmentID)
+		if customErr != nil {
+			return "", nil, customErr
+		}
+		document, err = ladingdoc.FromShipmentStatus(status, key, zones, custom)
 	case payload.FreightInvoice != nil:
 		invoicePayload := payload.FreightInvoice
 		key = stringutils.FirstNonEmpty(
@@ -344,7 +353,11 @@ func (s *Service) documentFor(
 			invoicePayload.BOL,
 			invoicePayload.ShipmentID.String(),
 		)
-		document, err = ladingdoc.FromFreightInvoice(invoicePayload, key, zones.Default)
+		custom, customErr := s.loadCustomFields(ctx, tenantInfo, invoicePayload.ShipmentID)
+		if customErr != nil {
+			return "", nil, customErr
+		}
+		document, err = ladingdoc.FromFreightInvoice(invoicePayload, key, zones.Default, custom)
 	default:
 		return "", nil, errortypes.NewValidationError(
 			"payload",
@@ -357,6 +370,26 @@ func (s *Service) documentFor(
 		return "", nil, errortypes.NewValidationError("payload", errortypes.ErrInvalid, err.Error())
 	}
 	return key, document, nil
+}
+
+func (s *Service) loadCustomFields(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	shipmentID pulid.ID,
+) (map[string]any, error) {
+	if s.customFields == nil || shipmentID.IsNil() {
+		return map[string]any{}, nil
+	}
+	values, err := s.customFields.GetNamed(
+		ctx,
+		tenantInfo,
+		(&shipment.Shipment{}).GetResourceType(),
+		shipmentID.String(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("read the load's custom fields: %w", err)
+	}
+	return values, nil
 }
 
 // tenderKey is the partner's identifier of the load a transfer tendered.

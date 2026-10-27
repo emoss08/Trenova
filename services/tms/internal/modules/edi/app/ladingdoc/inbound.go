@@ -199,6 +199,7 @@ func ToLoadTender(
 		OtherChargeAmount:        amountOf(document.OtherCharges),
 		RatingDetail:             map[string]any{externalShipmentID: document.Key},
 		RequiredMappingEntityIDs: map[edi.MappingEntityType][]pulid.ID{},
+		CustomFields:             document.Custom,
 	}
 	if payment := paymentCodes[document.Payment]; payment != "" {
 		payload.RatingDetail["paymentMethod"] = payment

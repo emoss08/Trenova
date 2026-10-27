@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/places/ports/locationports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/notificationservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -84,6 +85,7 @@ type Params struct {
 	Metrics             *metrics.Registry             `optional:"true"`
 	Plans               platformplanports.PlanService `optional:"true"`
 	Realtime            agentports.RealtimeService    `optional:"true"`
+	CustomFields        customfieldports.NamedValues  `optional:"true"`
 }
 
 type Service struct {
@@ -135,6 +137,7 @@ type Service struct {
 	lifecycleApplier    *internaledilifecycle.Applier
 	metrics             *metrics.EDI
 	plans               platformplanports.PlanService
+	customFields        customfieldports.NamedValues
 }
 
 func New(p Params) *Service {
@@ -190,6 +193,7 @@ func New(p Params) *Service {
 		transport:           p.Transport,
 		orderDerivation:     p.OrderDerivation,
 		plans:               p.Plans,
+		customFields:        p.CustomFields,
 		lifecycleApplier: internaledilifecycle.New(internaledilifecycle.Params{
 			ShipmentRepo: p.ShipmentRepo,
 			Coordinator:  p.Coordinator,

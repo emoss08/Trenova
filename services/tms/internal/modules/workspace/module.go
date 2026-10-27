@@ -41,6 +41,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tableexportservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/tablelayoutservice"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/webpushservice"
+	"github.com/emoss08/trenova/internal/modules/workspace/ports/customfieldports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/emailports"
 	"go.uber.org/fx"
 )
@@ -93,6 +94,7 @@ func SharedOptions() fx.Option {
 			auditservice.NewSecurityAuditor,
 			customfieldservice.New,
 			customfieldservice.NewValuesService,
+			func(s *customfieldservice.ValuesService) customfieldports.NamedValues { return s },
 			emailservice.New,
 			func(s *emailservice.Service) emailports.EmailService { return s },
 			func(s *emailservice.Service) emailports.EmailSenderResolver { return s },

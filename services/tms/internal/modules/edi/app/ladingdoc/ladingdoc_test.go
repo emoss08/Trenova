@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/edi/app/ladingdoc"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/pkg/lading"
+	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -99,7 +101,7 @@ func TestAStatusPayloadWritesA214(t *testing.T) {
 			City:         "Chicago",
 			StateCode:    "IL",
 		}},
-	}, "L-1001", ladingdoc.Zones{Default: "America/Chicago"})
+	}, "L-1001", ladingdoc.Zones{Default: "America/Chicago"}, nil)
 	require.NoError(t, err)
 
 	result, err := lading.Default().Run(context.Background(), encoded, &lading.RunRequest{
@@ -126,7 +128,7 @@ func TestAnInvoicePayloadWritesA210(t *testing.T) {
 		LineCharges: []edi.FreightInvoiceCharge{
 			{Sequence: 1, Amount: decimal.RequireFromString("1250.5")},
 		},
-	}, "L-1001", "America/Chicago")
+	}, "L-1001", "America/Chicago", nil)
 	require.NoError(t, err)
 
 	result, err := lading.Default().Run(context.Background(), encoded, &lading.RunRequest{
@@ -156,7 +158,7 @@ func TestATenderPayloadWritesA204(t *testing.T) {
 	}, "tof_1", ladingdoc.Zones{
 		Default:   "America/New_York",
 		Locations: map[pulid.ID]string{locationID: "America/Chicago"},
-	})
+	}, nil)
 	require.NoError(t, err)
 
 	result, err := lading.Default().Run(context.Background(), encoded, &lading.RunRequest{
@@ -169,6 +171,41 @@ func TestATenderPayloadWritesA204(t *testing.T) {
 	require.NotNil(t, result.Output)
 	assert.Contains(t, result.Output.Text, "B2**TRNV**tof_1**PP~")
 	assert.Contains(t, result.Output.Text, "G62*37*20260110*U*0800*CT~")
+}
+
+func TestAnOutboundDocumentCarriesTheLoadsCustomFields(t *testing.T) {
+	t.Parallel()
+
+	custom := map[string]any{"po_number": "PO-559031", "declared_value": 1250.5}
+	document, err := ladingdoc.FromShipmentStatus(&edi.ShipmentStatusPayload{
+		Events: []edi.ShipmentStatusEvent{{StatusCode: "X1", EventAt: 1_768_055_400}},
+	}, "L-1001", ladingdoc.Zones{Default: "America/Chicago"}, custom)
+	require.NoError(t, err)
+
+	var decoded map[string]any
+	require.NoError(t, sonic.Unmarshal(document, &decoded))
+	assert.Equal(
+		t,
+		map[string]any{"po_number": "PO-559031", "declared_value": 1250.5},
+		decoded["custom"],
+	)
+}
+
+func TestATendersCustomFieldsReachItsPayloadByName(t *testing.T) {
+	t.Parallel()
+
+	payload, _, err := ladingdoc.ToLoadTender(
+		jsonutils.RawJSON(
+			`{"key":"L-1","stops":[],"custom":{"po_number":"PO-559031","declared_value":"1250.50"}}`,
+		),
+		ladingdoc.Unmapped{},
+	)
+	require.NoError(t, err)
+	assert.Equal(
+		t,
+		map[string]any{"po_number": "PO-559031", "declared_value": "1250.50"},
+		payload.CustomFields,
+	)
 }
 
 func TestStatusCodesRoundTrip(t *testing.T) {

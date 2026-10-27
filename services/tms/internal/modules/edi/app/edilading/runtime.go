@@ -254,7 +254,9 @@ func customFieldType(fieldType customfield.FieldType) string {
 		return "Date"
 	case customfield.FieldTypeBoolean:
 		return "Bool"
-	case customfield.FieldTypeText, customfield.FieldTypeSelect, customfield.FieldTypeMultiSelect:
+	case customfield.FieldTypeMultiSelect:
+		return "Texts"
+	case customfield.FieldTypeText, customfield.FieldTypeSelect:
 	}
 	return "Text"
 }
