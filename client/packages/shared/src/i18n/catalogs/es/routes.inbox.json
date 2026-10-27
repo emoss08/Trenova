@@ -563,7 +563,6 @@
   "{0, plural, one {# left for you} other {# left for you}}": "{0, plural, one {# pendiente para usted} other {# pendientes para usted}}",
   "{0, plural, one {# looks off} other {# look off}}": "{0, plural, one {# parece raro} other {# parecen raros}}",
   "{0, plural, one {# needs your call} other {# need your call}}": "{0, plural, one {# requiere su decisión} other {# requieren su decisión}}",
-  "{0, plural, one {# selected} other {# selected}}": "{0, plural, one {# seleccionado} other {# seleccionados}}",
   "{0, plural, one {# waiting} other {# waiting}}": "{0, plural, one {# en espera} other {# en espera}}",
   "{0, plural, one {# without a record} other {# without a record}}": "{0, plural, one {# sin registro} other {# sin registro}}",
   "{0, plural, one {# would have needed a person — narrow the sender to avoid it} other {# would have needed a person — narrow the sender to avoid them}}": "{0, plural, one {# habría necesitado a una persona: acote el remitente para evitarlo} other {# habrían necesitado a una persona: acote el remitente para evitarlos}}",

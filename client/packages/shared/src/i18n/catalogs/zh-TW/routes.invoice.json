@@ -193,7 +193,6 @@
   "Separate multiple addresses with commas.": "多個地址請以逗號分隔。",
   "Service date": "服務日期",
   "Set rebill amounts manually": "手動設定重新開單金額",
-  "Share": "分享",
   "Share invoice {0}": "分享發票 {0}",
   "Shared by {0} on {1}": "由 {0} 於 {1} 分享",
   "Shared with {0, plural, one {# teammate} other {# teammates}}. Everyone got a notification, but some emails couldn't be sent.": "已分享給 {0, plural, other {# 位團隊成員}}。所有人都已收到通知，但部分電子郵件無法寄出。",

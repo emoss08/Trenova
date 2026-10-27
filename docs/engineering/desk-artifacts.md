@@ -80,12 +80,11 @@ artifacts/
 
 Anything that belongs to one artifact lives in that artifact's folder. A part two
 kinds or two cards use moves to `kinds/artifact-body-parts.tsx`, `record-card/` or
-`skeletons/`; a kind or a card never imports another's folder, except that a report
-is drawn as a table and reads `kinds/table/`. Shared card styles are the `dk-rec-*` classes in
+`skeletons/`; a kind or a card never imports another's folder. Shared card styles are the `dk-rec-*` classes in
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-pln-*` for the plan, `dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card, `dk-tv-*` for a table that pages; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card, `dk-tv-*` for a table that pages, `dk-rr-*` for a report run or preview; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
 `dk-ecd-*` for the EDI connection draft.
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
@@ -606,6 +605,38 @@ the agent read. `tableArtifact` keeps the agent's rows with where the list goes 
 The mock API's `athr_desk_table` conversation serves it (`handlers/desktable.mjs`, the
 `deskTable` scenario: paged, slow, failing, locked, withheld, cut, whole, short), and
 `e2e/mock-api/desk-table-screenshots.mjs` shoots each state.
+
+## A report run
+
+A `report_run` artifact is the report the agent (or the person) ran, followed to its result;
+a `report_preview` is the same sheet for the rows a preview read. Both draw in
+`kinds/report/` from one sheet model (`report-sheet.ts`), fed by the run's stored sample or the
+preview's payload.
+
+- **A finished run keeps a sample.** The executor's digest reader (the one scheduled email
+  digests use) keeps the first 20 rows, the grand totals and the columns with their resolved
+  display; `FinalizeRunActivity` stores them on `report_runs.sample` (`reportrows.Sample`,
+  raw values, at most 48 KB, trailing rows dropped to fit). Lists never select it, and expiry
+  clears it with the file. A run that finished before samples has none; its card shows the
+  run and the download.
+- **One read draws the card.** `reportRunDeskCard(id)` (`reporting.GetRunCard`) returns the
+  run, the report's name, description and category, its parameters with the window a relative
+  parameter resolved to when the run started (`compiler.ParameterWindow`), the sample, the
+  person's previous finished run of the same report and parameters
+  (`ReportRunRepository.LatestComparable`, behind `idx_report_runs_comparable`), the schedule it
+  came from and the report's first chart and sort. A finished run's sample is withheld
+  (`withheld`: `access` or `changed`) exactly when its download would be refused.
+- **The picture follows the report.** The report's own chart decides: bar, pie and donut rank
+  (a bar in each row, with each row's share of the grand total), line and area trend (columns
+  and a line by period), map, scatter and KPI leave the table. Without a chart a result led by
+  dates trends and one led by a label ranks by its sorted measure, else its first money measure.
+  A trend is drawn only when the sample holds every period.
+- **Figures are the grand totals**, against the previous run's ("vs Oct 20"), never summed on
+  the client. A capped run says its figures are of the kept rows and compares nothing.
+- **Run again** (`POST …/artifacts/:id/run/`, `report:export`) starts the same report with the
+  same parameters and format with the person's access and keeps it as the artifact's next
+  version, `ranByPerson` set; on a preview it is "Run the full report", refused for a definition
+  that was never saved. The card names the agent that ran it from `readBy`, like a table.
 
 ## How a row opens in place
 
