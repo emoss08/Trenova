@@ -332,7 +332,7 @@ func TestSettings_EncodesEachValueForTheRun(t *testing.T) {
 
 	empty, err := Settings(&edi.LadingProject{})
 	require.NoError(t, err)
-	assert.Nil(t, empty)
+	assert.Empty(t, empty, "a project with no settings sends none")
 }
 
 func TestCustomFieldTypesAreTheOnesLadingReads(t *testing.T) {
