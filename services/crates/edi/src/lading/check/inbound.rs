@@ -619,7 +619,7 @@ fn unknown_field(path: &str, name: &str, names: &[&str]) -> Message {
         );
     }
     let closest = nearest(name, names.iter().copied());
-    let named: Vec<&str> = closest
+    let listed: Vec<&str> = closest
         .into_iter()
         .chain(
             names
@@ -636,7 +636,7 @@ fn unknown_field(path: &str, name: &str, names: &[&str]) -> Message {
         [
             Arg::from(name),
             Arg::from(names.len()),
-            Arg::from(named.join(", ")),
+            Arg::from(listed.join(", ")),
         ],
     )
 }
