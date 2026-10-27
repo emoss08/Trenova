@@ -581,7 +581,7 @@ mod tests {
 
     #[test]
     fn a_closing_bracket_lines_up_with_the_line_that_opened_it() {
-        let source = "test \"t\" {\n  event TenderOffered {\n    stops: [\n      { sequence: 1 },\n      { sequence: 2 }\n    ]\n  }\n  expect sent 204\n}\n";
+        let source = "flow f with acme\n\ntest \"t\" {\n  event TenderOffered {\n    stops: [\n      { sequence: 1 },\n      { sequence: 2 }\n    ]\n  }\n  expect sent 204\n}\n";
         assert_eq!(format(source).expect("formats"), source);
         let call = "map m\n  from x12.004010.204\n  to   loadTender\n\nshipmentType <- lookup ShipmentType(match B206 {\n  \"TP\" => \"BROKERED\"\n  else => \"TRUCKLOAD\"\n})\n";
         assert_eq!(format(call).expect("formats"), call);

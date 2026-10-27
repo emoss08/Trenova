@@ -309,7 +309,9 @@ fn quoted_codes(session: &Session, offset: u32) -> Option<Completion> {
     })
 }
 
-/// The codes an element takes, from the node its value was read at when the checker knew it.
+/// The codes an element takes, from the node its value was read at when the checker knew it;
+/// otherwise from the first use of its segment that lists codes for it, the project's own guides
+/// before the built-in ones.
 fn element_codes(program: &Program, element: &str, place: Place) -> Option<Vec<(String, String)>> {
     let Some(nav::Reference::Element(segment, position)) = nav::reference(element) else {
         return None;
@@ -322,17 +324,19 @@ fn element_codes(program: &Program, element: &str, place: Place) -> Option<Vec<(
             position,
         );
     }
-    let guide = program
+    let (own, builtin): (Vec<_>, Vec<_>) = program
         .guides
         .iter()
-        .position(|entry| entry.unit.is_some() && entry.compiled.uses_segment(segment))
-        .or_else(|| {
-            program
-                .guides
-                .iter()
-                .position(|entry| entry.compiled.uses_segment(segment))
-        })?;
-    nav::codes(&program.guides[guide].compiled, None, segment, position)
+        .partition(|entry| entry.unit.is_some());
+    own.into_iter().chain(builtin).find_map(|entry| {
+        let compiled = &entry.compiled;
+        (0..compiled.node_count())
+            .filter(
+                |node| matches!(&compiled.node(*node).kind, NodeKind::Segment(id) if id == segment),
+            )
+            .find_map(|node| nav::codes(compiled, Some(node), segment, position))
+            .filter(|codes| !codes.is_empty())
+    })
 }
 
 fn types(items: &mut Vec<Item2>) {

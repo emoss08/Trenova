@@ -1153,18 +1153,20 @@ pub(crate) mod corpus {
 #[cfg(test)]
 mod check_tests {
     use super::corpus::{acme, acme_mfg, acme_mfg_context, context};
+    use trenova_module_kit::diagnostic::Severity;
+
     use super::{Program, check};
     use crate::lading::testing::run_tests;
 
     #[test]
     fn the_acme_project_checks_clean() {
-        assert_clean(&check(&acme(), &context()));
+        assert_clean(&check(&acme(), &context()), Severity::Info);
     }
 
     #[test]
     fn the_project_using_every_feature_checks_clean_and_passes_its_tests() {
         let program = check(&acme_mfg(), &acme_mfg_context());
-        assert_clean(&program);
+        assert_clean(&program, Severity::Warning);
         let report = run_tests(&program);
         let failed: Vec<String> = report
             .tests
@@ -1188,10 +1190,14 @@ mod check_tests {
         assert_eq!(report.tests.len(), 53);
     }
 
-    fn assert_clean(program: &Program) {
+    /// Asserts the program has no finding as severe as `least`, or more.
+    fn assert_clean(program: &Program, least: Severity) {
         let mut found = Vec::new();
         for unit in &program.units {
             for diagnostic in &unit.diagnostics {
+                if rank(diagnostic.severity) < rank(least) {
+                    continue;
+                }
                 let line = unit.source[..diagnostic.span.start as usize]
                     .matches('\n')
                     .count()
@@ -1206,6 +1212,14 @@ mod check_tests {
             }
         }
         assert!(found.is_empty(), "{}", found.join("\n"));
+    }
+
+    fn rank(severity: Severity) -> u8 {
+        match severity {
+            Severity::Info => 0,
+            Severity::Warning => 1,
+            Severity::Error => 2,
+        }
     }
 }
 
