@@ -744,7 +744,8 @@
 }
 .dk-ax-ki.dk-k-table,
 .dk-ax-ki.dk-k-report,
-.dk-ax-ki.dk-k-analysis {
+.dk-ax-ki.dk-k-analysis,
+.dk-ax-ki.dk-k-board {
   color: oklch(0.6 0.16 255);
 }
 .dk-ax-ki.dk-k-record {
@@ -17344,5 +17345,1135 @@ button.dk-fcd-buy:hover {
   .dk-rr-tr .dk-rr-shim-bar,
   .dk-rr-stamp.dk-run .dk-rr-stamp-s i {
     animation: none;
+  }
+}
+
+/* A board: the agent's answer laid out as a case. The agent's words are written (the verdict,
+   prose and notes); Trenova's data is printed on exhibits, each on a tab naming its source. */
+.dk-bd {
+  container: dkbd / inline-size;
+}
+
+/* ------------------------------------------------------------- masthead */
+.dk-bd-mast {
+  padding: 4px 22px 22px;
+}
+.dk-bd-mast-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 11px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-bd-mast-top > span:first-child {
+  color: var(--dsk-fg2);
+}
+.dk-bd-mast-top i {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--dsk-faint);
+}
+/* read live: a postmark in the corner */
+.dk-bd-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  font: 500 11px var(--dk-plex);
+  color: var(--dsk-fg2);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-bd-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dsk-success);
+  box-shadow: 0 0 0 3px var(--dsk-success-sub);
+}
+.dk-bd-live.dk-wait i {
+  background: var(--dsk-faint);
+  box-shadow: 0 0 0 3px var(--dsk-sunken);
+  animation: dk-bd-breathe 1.4s ease-in-out infinite;
+}
+@keyframes dk-bd-breathe {
+  50% {
+    opacity: 0.3;
+  }
+}
+/* the question, as the person asked it in the conversation */
+.dk-bd-asked {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+.dk-bd-asked > span:first-child {
+  font-size: 11px;
+  color: var(--dsk-subtle);
+  padding-bottom: 6px;
+}
+.dk-bd-bubble {
+  max-width: 46ch;
+  padding: 6px 12px;
+  border-radius: 14px 14px 14px 4px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+}
+.dk-bd-title {
+  margin: 14px 0 0;
+  font: 500 30px/1.14 var(--font-newsreader);
+  letter-spacing: -0.012em;
+  color: var(--dsk-fg);
+}
+.dk-bd-verdict {
+  margin: 12px 0 0;
+  max-width: 64ch;
+  font: 400 17px/1.6 var(--font-newsreader);
+  color: var(--dsk-fg);
+}
+.dk-bd-by {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-bd-agent {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font: 600 9px var(--dk-plex);
+  color: var(--dsk-agent-on);
+  background: var(--dsk-agent);
+}
+
+/* a phrase the answer rests on: marked as with a highlighter, citing its exhibit */
+.dk-bd-hl {
+  --dk-bd-ink: color-mix(in oklab, var(--dsk-blue) 26%, transparent);
+  padding: 0 2px;
+  margin: 0 -2px;
+  border-radius: 2px;
+  background: linear-gradient(
+    transparent 50%,
+    var(--dk-bd-ink) 50%,
+    var(--dk-bd-ink) 94%,
+    transparent 94%
+  );
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.dk-bd-hl.dk-warn {
+  --dk-bd-ink: color-mix(in oklab, var(--dsk-warn) 42%, transparent);
+}
+.dk-bd-n {
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  margin-left: 3px;
+  border-radius: 50%;
+  font: 600 9.5px/1 var(--dk-plex);
+  vertical-align: 0.38em;
+  color: var(--dsk-fg);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-strong);
+}
+.dk-bd-n.dk-off {
+  color: var(--dsk-faint);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+  text-decoration: line-through;
+}
+
+/* -------------------------------------------------------------- the desk */
+.dk-bd-desk {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 34px 16px;
+  padding: 34px 22px 26px;
+  border-top: 1px solid var(--dsk-b-sub);
+  background-color: var(--dsk-sunken);
+  background-image: radial-gradient(var(--dsk-b) 0.8px, transparent 0.8px);
+  background-size: 14px 14px;
+}
+.dk-bd-desk > * {
+  grid-column: span 2;
+}
+.dk-bd-desk > .dk-bd-half {
+  grid-column: span 1;
+}
+.dk-bd-desk > .dk-bd-note {
+  align-self: start;
+}
+
+/* an exhibit: printed by Trenova, on a tab that names what it reads */
+.dk-bd-ex {
+  position: relative;
+  min-width: 0;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--dsk-b);
+  border-radius: 0 12px 12px 12px;
+  background: var(--dsk-card);
+}
+.dk-bd-tab {
+  position: absolute;
+  bottom: 100%;
+  left: -1px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: calc(100% - 60px);
+  height: 26px;
+  margin-bottom: -1px;
+  padding: 0 12px 0 8px;
+  border: 1px solid var(--dsk-b);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: var(--dsk-card);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+  white-space: nowrap;
+}
+.dk-bd-tab .dk-bd-n {
+  margin: 0;
+  vertical-align: 0;
+}
+.dk-bd-tab > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dk-bd-src {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: -2px 0 12px;
+  font: 400 11px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-bd-src b {
+  font-weight: 500;
+  color: var(--dsk-fg2);
+}
+
+/* a note: the agent's own words on a slip, folded at the corner */
+.dk-bd-note {
+  position: relative;
+  padding: 14px 18px 15px 16px;
+  border-radius: 12px 2px 12px 12px;
+  color: var(--dsk-fg);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-bd-note::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 0 0 0 6px;
+  background: linear-gradient(
+    225deg,
+    var(--dsk-sunken) 50%,
+    color-mix(in oklab, var(--dsk-fg) 14%, var(--dk-bd-paper, var(--dsk-card))) 50%
+  );
+}
+.dk-bd-note-h {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--dsk-subtle);
+}
+.dk-bd-note-h svg {
+  flex: none;
+}
+.dk-bd-note > b {
+  display: block;
+  font: 600 16.5px/1.35 var(--font-newsreader);
+}
+.dk-bd-note > p {
+  margin: 4px 0 0;
+  font: 400 15px/1.55 var(--font-newsreader);
+}
+.dk-bd-note .dk-bd-chips {
+  margin-top: 10px;
+}
+.dk-bd-note.dk-warn {
+  --dk-bd-paper: var(--dsk-warn-sub);
+  background: var(--dsk-warn-sub);
+  box-shadow: none;
+}
+.dk-bd-note.dk-warn .dk-bd-note-h {
+  color: var(--dsk-warn-fg);
+}
+.dk-bd-note.dk-info {
+  --dk-bd-paper: var(--dsk-blue-sub);
+  background: var(--dsk-blue-sub);
+  box-shadow: none;
+}
+.dk-bd-note.dk-info .dk-bd-note-h {
+  color: var(--dsk-blue-fg);
+}
+.dk-bd-note.dk-ok {
+  --dk-bd-paper: var(--dsk-success-sub);
+  background: var(--dsk-success-sub);
+  box-shadow: none;
+}
+.dk-bd-note.dk-ok .dk-bd-note-h {
+  color: var(--dsk-success-fg);
+}
+.dk-bd-note.dk-bad {
+  --dk-bd-paper: var(--dsk-fg);
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-fg);
+  box-shadow: none;
+}
+.dk-bd-note.dk-bad .dk-bd-note-h {
+  color: color-mix(in oklab, var(--dsk-ink-fg) 70%, transparent);
+}
+.dk-bd-note.dk-bad .dk-bd-ref {
+  color: var(--dsk-ink-fg);
+  background: color-mix(in oklab, var(--dsk-ink-fg) 14%, transparent);
+  box-shadow: none;
+}
+
+/* prose: the agent's words, between the exhibits */
+.dk-bd-prose {
+  margin: 0;
+  max-width: 64ch;
+  padding: 0 4px;
+  font: 400 15.5px/1.6 var(--font-newsreader);
+  color: var(--dsk-fg);
+}
+
+/* a record named in the words: its label, read from the record, opening it */
+.dk-bd-ref {
+  display: inline;
+  padding: 1px 6px;
+  border: 0;
+  border-radius: 6px;
+  font: 500 0.82em var(--dk-plex);
+  color: var(--dsk-fg);
+  background: var(--dsk-sunken);
+  box-shadow: inset 0 0 0 1px var(--dsk-b-sub);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.dk-bd-ref:hover {
+  background: var(--dsk-hover);
+}
+span.dk-bd-ref {
+  cursor: default;
+}
+.dk-bd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dk-bd-chips .dk-bd-ref {
+  font-size: 11.5px;
+}
+
+/* --------------------------------------------------------------- readout */
+.dk-bd-read {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 4), minmax(0, 1fr));
+}
+.dk-bd-read > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 2px 14px;
+  border-left: 1px dashed var(--dsk-b);
+}
+.dk-bd-read > div:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+.dk-bd-read dt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-bd-read dt i {
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+}
+.dk-bd-read .dk-bad dt i {
+  background: var(--dsk-fg);
+}
+.dk-bd-read .dk-warn dt i {
+  background: var(--dsk-warn);
+}
+.dk-bd-read dd {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  font: 500 25px/1.15 var(--dk-plex);
+  letter-spacing: -0.02em;
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-bd-read .dk-warn dd {
+  color: var(--dsk-warn-fg);
+}
+.dk-bd-read dd s {
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--dsk-faint);
+}
+.dk-bd-read dd s + span {
+  font-size: 14px;
+  color: var(--dsk-faint);
+}
+.dk-bd-read em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-bd-read em.dk-moved {
+  color: var(--dsk-warn-fg);
+}
+
+/* ------------------------------------------- records, each a row to open */
+.dk-bd-rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0 -16px -16px;
+}
+.dk-bd-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 10px 16px;
+  border: 0;
+  border-top: 1px solid var(--dsk-b-sub);
+  font: inherit;
+  text-align: start;
+  color: inherit;
+  text-decoration: none;
+  background: none;
+  cursor: pointer;
+}
+div.dk-bd-row {
+  cursor: default;
+}
+div.dk-bd-row:not(.dk-gone):hover {
+  background: none;
+}
+.dk-bd-row:hover {
+  background: var(--dsk-hover);
+}
+.dk-bd-row:last-child {
+  border-radius: 0 0 12px 12px;
+}
+.dk-bd-who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dk-bd-who b {
+  font: 500 13px var(--dk-plex);
+  color: var(--dsk-fg);
+}
+.dk-bd-who span {
+  font-size: 12px;
+  color: var(--dsk-subtle);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dk-bd-who span i {
+  font-style: normal;
+  color: var(--dsk-faint);
+}
+.dk-bd-amt {
+  font: 500 12.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  text-align: right;
+  color: var(--dsk-fg);
+}
+.dk-bd-amt span {
+  display: block;
+  font: 400 11px var(--font-sans, inherit);
+  color: var(--dsk-subtle);
+}
+/* how far behind its appointment a load runs, against the furthest behind */
+.dk-bd-behind {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.dk-bd-behind > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font: 400 11px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-bd-behind > span b {
+  font-weight: 500;
+  color: var(--dsk-warn-fg);
+}
+.dk-bd-track {
+  position: relative;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--dsk-sunken);
+}
+.dk-bd-track > i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 3px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dsk-warn) 0 3px,
+    color-mix(in oklab, var(--dsk-warn) 55%, transparent) 3px 6px
+  );
+}
+.dk-bd-track > i.dk-bd-held {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--dsk-fg2) 0 3px,
+    color-mix(in oklab, var(--dsk-fg2) 35%, transparent) 3px 6px
+  );
+}
+/* a record the reader may not read: the "could not be read" head, as a row */
+.dk-bd-row.dk-gone {
+  grid-template-columns: auto minmax(0, 1fr);
+  cursor: default;
+  color: var(--dsk-subtle);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 7px,
+    color-mix(in oklab, var(--dsk-b-sub) 60%, transparent) 7px 8px
+  );
+}
+.dk-bd-row.dk-gone .dk-bd-who b {
+  font: 500 12.5px var(--font-sans, inherit);
+  color: var(--dsk-fg2);
+}
+.dk-bd-lock {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: var(--dsk-subtle);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+
+/* ------------------------------------------- a record's log, hour by hour */
+.dk-bd-log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dk-bd-log li {
+  display: grid;
+  grid-template-columns: 64px 14px minmax(0, 1fr);
+  gap: 0 10px;
+  padding: 0 0 12px;
+}
+.dk-bd-log time {
+  padding-top: 1px;
+  font: 500 11.5px var(--dk-plex);
+  font-feature-settings: "tnum";
+  text-align: right;
+  color: var(--dsk-fg2);
+}
+.dk-bd-log li > i {
+  position: relative;
+}
+.dk-bd-log li > i::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-faint);
+}
+.dk-bd-log li > i::after {
+  content: "";
+  position: absolute;
+  top: 16px;
+  bottom: -9px;
+  left: 6.5px;
+  width: 1px;
+  background: var(--dsk-b);
+}
+.dk-bd-log li:last-child > i::after {
+  display: none;
+}
+.dk-bd-log li.dk-warn > i::before {
+  background: var(--dsk-warn);
+  box-shadow: none;
+}
+.dk-bd-log li.dk-bad > i::before {
+  background: var(--dsk-fg);
+  box-shadow: none;
+}
+.dk-bd-log li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--dsk-fg);
+}
+.dk-bd-log li > div em {
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+
+/* ----------------------------------- head to head: records as the columns */
+.dk-bd-h2h {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+}
+.dk-bd-h2h col.dk-lab {
+  width: 30%;
+}
+.dk-bd-h2h thead th {
+  padding: 0 6px 12px;
+  vertical-align: bottom;
+  text-align: center;
+  font-weight: 400;
+}
+.dk-bd-h2h thead th:first-child {
+  text-align: left;
+  padding-left: 0;
+  font-size: 11.5px;
+  color: var(--dsk-subtle);
+}
+.dk-bd-face {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 12px 8px 10px;
+  border: 0;
+  border-radius: 12px;
+  font: inherit;
+  color: inherit;
+  text-decoration: none;
+  background: var(--dsk-sunken);
+  cursor: pointer;
+}
+.dk-bd-face.dk-still {
+  cursor: default;
+}
+.dk-bd-face.dk-gone {
+  cursor: default;
+  color: var(--dsk-subtle);
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-bd-ref:focus-visible,
+.dk-bd-row:focus-visible,
+.dk-bd-face:focus-visible {
+  outline: 2px solid var(--dsk-ring);
+  outline-offset: -2px;
+}
+button.dk-bd-face:hover,
+a.dk-bd-face:hover {
+  background: var(--dsk-hover);
+}
+.dk-bd-mono {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font: 600 12px var(--dk-plex);
+  color: var(--dsk-fg);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
+}
+.dk-bd-face b {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--dsk-fg);
+  line-height: 1.25;
+}
+.dk-bd-face small {
+  font: 400 10.5px var(--dk-plex);
+  color: var(--dsk-subtle);
+}
+.dk-bd-h2h tbody th,
+.dk-bd-h2h tbody td {
+  padding: 8px 6px;
+  border-top: 1px dashed var(--dsk-b);
+}
+.dk-bd-h2h tbody th {
+  padding-left: 0;
+  text-align: left;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--dsk-fg2);
+}
+.dk-bd-h2h tbody th span {
+  display: block;
+  font-size: 10.5px;
+  color: var(--dsk-faint);
+}
+.dk-bd-h2h td {
+  text-align: center;
+  font: 400 13px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg2);
+}
+.dk-bd-h2h td.dk-win > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 2px 7px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--dsk-success-fg);
+  background: var(--dsk-success-sub);
+}
+.dk-bd-h2h tfoot td,
+.dk-bd-h2h tfoot th {
+  padding: 10px 6px 0;
+  border-top: 1px solid var(--dsk-b);
+}
+.dk-bd-h2h tfoot th {
+  padding-left: 0;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-bd-wins {
+  display: inline-flex;
+  gap: 3px;
+}
+.dk-bd-wins i {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--dsk-b);
+}
+.dk-bd-wins i.dk-on {
+  background: var(--dsk-success);
+}
+
+/* ------------------------------------- the close: one pip for every check */
+.dk-bd-pips {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 12), minmax(0, 1fr));
+  gap: 4px;
+}
+.dk-bd-pips i {
+  height: 22px;
+  border-radius: 4px;
+  background: var(--dsk-success);
+}
+.dk-bd-pips i.dk-bad {
+  background: var(--dsk-fg);
+}
+.dk-bd-pips i.dk-warn {
+  background: var(--dsk-warn);
+}
+.dk-bd-pips i.dk-info {
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+.dk-bd-pips-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.dk-bd-pips-h b {
+  font: 500 30px/1 var(--dk-plex);
+  letter-spacing: -0.03em;
+  color: var(--dsk-fg);
+}
+.dk-bd-pips-h b small {
+  margin-left: 4px;
+  font-size: 14px;
+  letter-spacing: 0;
+  color: var(--dsk-subtle);
+}
+.dk-bd-pips-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--dsk-fg2);
+}
+.dk-bd-pips-key span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dk-bd-pips-key i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--dsk-success);
+}
+.dk-bd-pips-key i.dk-bad {
+  background: var(--dsk-fg);
+}
+.dk-bd-pips-key i.dk-warn {
+  background: var(--dsk-warn);
+}
+.dk-bd-pips-key i.dk-info {
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1.5px var(--dsk-b-strong);
+}
+
+/* checks, each with the records it counts */
+.dk-bd-checks {
+  display: flex;
+  flex-direction: column;
+  margin: 0 -16px -16px;
+}
+.dk-bd-checks > p {
+  margin: 0;
+  padding: 10px 16px 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dsk-subtle);
+  border-top: 1px solid var(--dsk-b-sub);
+}
+.dk-bd-checks > p:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.dk-bd-ck {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  padding: 8px 16px 12px;
+}
+.dk-bd-ck > .dk-rec-ci {
+  grid-column: 1;
+  grid-row: 1 / span 3;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+}
+.dk-bd-ck.dk-bad > .dk-rec-ci {
+  color: var(--dsk-ink-fg);
+  background: var(--dsk-fg);
+}
+.dk-bd-ck.dk-warn > .dk-rec-ci {
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-bd-ck.dk-info > .dk-rec-ci {
+  color: var(--dsk-fg2);
+  background: var(--dsk-sunken);
+}
+.dk-bd-ck.dk-ok > .dk-rec-ci {
+  color: var(--dsk-success-fg);
+  background: var(--dsk-success-sub);
+}
+.dk-bd-ck > b {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dsk-fg);
+}
+.dk-bd-ck > .dk-bd-ck-d {
+  grid-column: 2;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--dsk-subtle);
+}
+.dk-bd-ck > .dk-bd-chips {
+  grid-column: 2;
+  margin-top: 6px;
+}
+.dk-bd-count {
+  grid-column: 3;
+  grid-row: 1;
+  font: 500 15px var(--dk-plex);
+  font-feature-settings: "tnum";
+  color: var(--dsk-fg);
+}
+.dk-bd-count s {
+  margin-left: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--dsk-faint);
+}
+.dk-bd-ck.dk-ok > b,
+.dk-bd-ck.dk-ok .dk-bd-count {
+  color: var(--dsk-success-fg);
+}
+
+/* ------------------------------------------------- empty, unread, waiting */
+.dk-bd-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0 2px;
+  font: 400 15px/1.5 var(--font-newsreader);
+  color: var(--dsk-fg2);
+}
+.dk-bd-empty > span:first-child {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--dsk-success-fg);
+  background: var(--dsk-success-sub);
+}
+.dk-bd-ex.dk-unread {
+  background: transparent;
+  border-style: dashed;
+}
+.dk-bd-ex.dk-unread .dk-bd-tab {
+  background: var(--dsk-sunken);
+  border-style: dashed;
+  color: var(--dsk-subtle);
+}
+.dk-bd-unread {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--dsk-subtle);
+}
+.dk-bd-unread b {
+  display: block;
+  font-weight: 500;
+  color: var(--dsk-fg2);
+}
+.dk-bd-unread > span:first-child {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--dsk-warn-fg);
+  background: var(--dsk-warn-sub);
+}
+.dk-bd-wait {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-bd-wait > i {
+  display: block;
+  height: 11px;
+  border-radius: 6px;
+}
+.dk-bd-wait.dk-rows > i {
+  height: 34px;
+  border-radius: 8px;
+}
+.dk-bd-wait.dk-read {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.dk-bd-wait.dk-read > span {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dk-bd-wait.dk-read i {
+  display: block;
+  height: 10px;
+  width: 60%;
+  border-radius: 5px;
+}
+.dk-bd-wait.dk-read i + i {
+  height: 24px;
+  width: 80%;
+}
+
+/* ---------------------------------------------------------------- the foot */
+.dk-bd-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 22px;
+  border-top: 1px solid var(--dsk-b-sub);
+  font-size: 12px;
+  color: var(--dsk-subtle);
+}
+.dk-bd-foot > span {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.dk-bd-foot .dk-bd-n {
+  margin: 0;
+  vertical-align: 0;
+}
+.dk-bd-foot > button {
+  margin-left: auto;
+}
+
+/* a value that could not be read, said where the value would stand */
+.dk-bd-read dd .dk-bd-gone {
+  font: 400 13px var(--font-sans, inherit);
+  letter-spacing: 0;
+  color: var(--dsk-subtle);
+}
+
+/* a share of the whole: the figure over a filled bar */
+.dk-bd-pct {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dk-bd-pct > b {
+  font: 500 30px/1 var(--dk-plex);
+  letter-spacing: -0.03em;
+  color: var(--dsk-fg);
+}
+.dk-bd-bar {
+  display: block;
+  height: 12px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--dsk-sunken);
+}
+.dk-bd-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--dsk-success);
+}
+
+.dk-bd-foot-read {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: 6px;
+  color: var(--dsk-fg2);
+}
+
+/* waiting: each block's shape, in its place */
+.dk-bd-verdict.dk-bd-wait > i {
+  height: 14px;
+}
+.dk-bd-wait > i.dk-bd-wait-h {
+  width: 30%;
+  height: 26px;
+}
+.dk-bd-wait > i.dk-bd-wait-bar {
+  height: 22px;
+}
+.dk-bd-wait-box {
+  display: block;
+  height: 180px;
+  border-radius: 8px;
+}
+.dk-bd-wait-src {
+  display: block;
+  width: 40%;
+  height: 10px;
+  border-radius: 5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dk-bd-live.dk-wait i {
+    animation: none;
+  }
+}
+
+@container dkbd (max-width: 640px) {
+  .dk-bd-mast {
+    padding: 4px 16px 18px;
+  }
+  .dk-bd-title {
+    font-size: 25px;
+  }
+  .dk-bd-verdict {
+    font-size: 16px;
+  }
+  .dk-bd-desk {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 30px 12px 20px;
+  }
+  .dk-bd-desk > *,
+  .dk-bd-desk > .dk-bd-half {
+    grid-column: span 1;
+  }
+  .dk-bd-read {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 0;
+  }
+  .dk-bd-read > div:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .dk-bd-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .dk-bd-row .dk-bd-behind {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .dk-bd-pips {
+    gap: 3px;
+  }
+  .dk-bd-pips i {
+    height: 18px;
+  }
+  .dk-bd-h2h col.dk-lab {
+    width: 34%;
+  }
+  .dk-bd-face {
+    padding: 10px 4px 8px;
+  }
+  .dk-bd-face small {
+    display: none;
+  }
+  .dk-bd-foot {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+  .dk-bd-wait.dk-read {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

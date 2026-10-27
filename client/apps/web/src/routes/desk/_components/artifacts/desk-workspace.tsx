@@ -37,6 +37,9 @@ import { recordCardFor } from "./cards/registry";
 import { DeskArtifactBrowser } from "./desk-artifact-browser";
 import { DeskArtifactsEmpty } from "./desk-artifacts-empty";
 import { DeskAnalysisBody } from "./kinds/analysis/desk-analysis-body";
+import { DeskBoardBody } from "./kinds/board/desk-board-body";
+import { BoardSkeleton } from "./kinds/board/board-skeleton";
+import { boardFrom } from "./artifact-payloads";
 import { DeskPortalBody } from "./kinds/portal/desk-portal-body";
 import { PortalTaskSkeleton } from "./kinds/portal/portal-task-skeleton";
 import { DeskDecisionBody } from "./kinds/decision/desk-decision-body";
@@ -378,6 +381,8 @@ export function ArtifactBody({
       return <DeskConnectionDraftBody artifact={artifact} />;
     case "analysis":
       return <DeskAnalysisBody artifact={artifact} />;
+    case "board":
+      return <DeskBoardBody artifact={artifact} />;
     case "portal_task":
       return <DeskPortalBody artifact={artifact} />;
     case "navigation":
@@ -453,6 +458,9 @@ function ArtifactBodySkeleton({ artifact }: { artifact: AssistantArtifact }) {
   }
   if (artifact.kind === "portal_task") {
     return <PortalTaskSkeleton />;
+  }
+  if (artifact.kind === "board") {
+    return <BoardSkeleton layout={boardFrom(artifact)} question={artifact.turn} />;
   }
   if (artifact.kind === "plan") {
     return <PlanSkeleton />;

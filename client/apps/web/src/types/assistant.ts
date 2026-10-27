@@ -171,6 +171,7 @@ export const artifactKindSchema = z.enum([
   "edi_connection_draft",
   "analysis",
   "portal_task",
+  "board",
 ]);
 
 /**

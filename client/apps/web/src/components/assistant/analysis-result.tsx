@@ -177,7 +177,8 @@ export function AnalysisResult({ analysis }: { analysis: AnalysisView }) {
 }
 
 /** A table the analysis showed, its values read as their kinds and numbers aligned right. */
-function AnalysisTableView({ table }: { table: AnalysisTable }) {
+/** A table an analysis showed, its first rows and how many it holds. */
+export function AnalysisTableView({ table }: { table: AnalysisTable }) {
   const t = useT();
   const shown = table.rows.length;
 
