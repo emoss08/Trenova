@@ -4,7 +4,8 @@ A dependency-free Node server that stands in for the TMS API, so the shipments b
 (`/shipment-management/shipments`, with each shipment's Customer tracking tab), the customer
 tracking page (`/shipment-tracking/<token>`), AI control (`/admin/agent-control`), Triage (`/triage`, the
 redesign of `/inbox`), the Desk (`/desk`), the Formula Studio
-(`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`) and the formula libraries can be run, clicked through and screenshotted without Postgres, Redis,
+(`/billing/configuration-files/formula-templates/new`, `…/<id>/edit`), the formula libraries and the
+Lading studio (`/edi/lading/<partnerId>`) can be run, clicked through and screenshotted without Postgres, Redis,
 Temporal or an AI provider. It answers the REST session endpoints the app shell needs, every
 GraphQL operation those pages send, and the realtime stream, from a deterministic fixture.
 
@@ -49,6 +50,7 @@ anchor. A scenario is set from the environment when the server starts, or at any
 | `deskSlug`           | an artifact slug                                 | `tractor-t-101` | The card the Desk cards conversation (`thr_desk_cards`) holds                                                                                                                                                                                                                                                                                                                                                     |
 | `deskReply`          | `idle` \| `working`                              | `idle`          | The Desk's live conversation (`athr_desk_live`): nothing under way, or a reply under way that has been steered once, with two follow-ups queued                                                                                                                                                                                                                                                                   |
 | `agentMatch`         | `match` \| `none` \| `nobody` \| `hold`          | `match`         | The Desk's agent suggestion (`MyAgentMatch`, `handlers/agentrecommendation.mjs`): the agent whose tools fit the question, no tool matching, tools matching that none of the person's agents holds, or the request left open (the "finding the agent" state). Suggestions the page records (`RecordMyAgentSuggestion`, `SettleMyAgentSuggestion`) are kept and counted in AI analytics with a month of seeded ones |
+| `lading`             | `draft` \| `shadow`                              | `draft`         | The Lading studio: Acme Retail Group's version 3 as a draft, replayed once against version 2, or certified and six days into a shadow beside it                                                                                                                                                                                                                                                                   |
 
 ```bash
 curl -X POST localhost:8080/__mock/scenario \
@@ -61,7 +63,7 @@ curl -X POST localhost:8080/__mock/scenario \
 so an open page refetches. Environment equivalents: `MOCK_BOARD`, `MOCK_AI=0`,
 `MOCK_OPERATION_TYPE`, `MOCK_HOS=0`, `MOCK_MAPS=1`, `MOCK_LIST_ROWS`, `MOCK_AI_PROVIDERS`,
 `MOCK_AI_PAUSED=1`, `MOCK_DESK`, `MOCK_DESK_SLUG`, `MOCK_TRIAGE`, `MOCK_TRIAGE_TIME`,
-`MOCK_TRIAGE_REPLY_MS`, `MOCK_PALETTE=1`, plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
+`MOCK_TRIAGE_REPLY_MS`, `MOCK_PALETTE=1`, `MOCK_LADING`, plus `MOCK_TRIAGE_LIVE_MS` (the live arrival interval, default 26000),
 `MOCK_API_PORT` (default 8080) and `MOCK_API_PUBLIC_URL` (the origin avatar URLs are built on).
 
 The board briefing is stored the way the server stores it: written on the first read of a
@@ -292,6 +294,39 @@ menu, rename after it, and nothing to promote), the hover's bounds, the preview'
 sample and on a real shipment, the trace's choice, the inputs' bounds (an out-of-bounds value and
 the service select), the submit dialog's coverage warning, and the shipment's choices
 (`shipment-rating-choices`).
+
+## Lading studio
+
+The Lading studio (`/edi/lading/edip_lading_acme`, and `/edi/lading/edip_lading_northwind` for a
+partner with no project yet) reads its routes from `handlers/lading.mjs`, which serves what
+`edihandler`'s Lading routes serve: the context, the catalog, projects, versions, drafts, settings,
+runs, tests, certify, activate, archive, shadow, shadow results and replays, and the partner the
+page header reads. Every check, test, run, replay and shadow comparison is the answer of the
+client's own `edi.wasm`, loaded in Node by `edi.mjs`, so the studio and the mock agree the way the
+studio and the TMS do.
+
+`fixtures/lading.mjs` builds Acme Retail Group's project from the module's carrier starter:
+version 1 (the test envelope, superseded), version 2 (production, active) and version 3, which
+saves Acme's PO number to the `po_number` custom field and holds a store delivery that has no
+closing time. Each version is checked with its samples, which its flow tests read. The fixture
+also builds 35 days of Acme's 204s, about three a day, with a PO number on most tenders from two
+weeks back and no closing time on some; a replay or the shadow reads those messages through both
+versions, its lookups answered from the fixture's mappings. In the `draft` scenario version 3 has
+one replay of `tenderIn` over the 30 days before its last save; in `shadow` it was certified six
+days ago and has read every tender since beside version 2. Certify asks what the TMS asks: no
+errors, every test passing, every flow clause tested, and a clean replay of every inbound map
+since the last save.
+
+```bash
+node e2e/mock-api/lading-studio-screenshots.mjs [outDir] [name,name,...]
+```
+
+walks the studio in light and dark at 1600 by 1000 and 1.5x: the partner file, a map with a
+hover, a typo the checker names the closest custom field for, completion of `custom.`, the rules
+and flow files, the tests panel, a run with live data and a value's lineage, the release panel's
+replay and shadow, the active version's settings, the version picker and the start form. It
+writes to `e2e/mock-api/screenshots/lading-studio` by default. `CHROMIUM_PATH` names the browser
+when Playwright's own is not installed, and `SCALE` overrides the device scale.
 
 ## Screenshots
 
@@ -578,6 +613,8 @@ fixtures/palette.mjs  The command palette's customers, workers, shipments, docum
 fixtures/triage.mjs   Triage's sources, messages, rules, templates and team, from the prototype
 fixtures/formula.mjs  Tariff sources for the templates, libraries and standards, the shipments and the team
 rules.mjs             The client's rules.wasm in Node: every check, test, bill and scaffold
+edi.mjs               The client's edi.wasm in Node: every Lading check, test, run and replay
+fixtures/lading.mjs   Acme Retail Group's Lading project, its versions and samples, and a month of its 204s
 fixtures/ai/          Catalogs dumped from the Go service
 handlers/rest.mjs     REST routes the shell and board call
 handlers/graphql.mjs  GraphQL operations, keyed by operation name
@@ -594,11 +631,14 @@ handlers/triage.mjs   Triage's GraphQL operations shaped to their selections, pr
 handlers/formula.mjs  The Formula Studio's templates, context, preview, review, backtest and GraphQL
 handlers/formula-library.mjs  Formula libraries: GraphQL reads, REST writes, review, usages
 handlers/formula-nova.mjs  Nova on both Studios: the one-shots and the page conversation's turns
+handlers/lading.mjs   The Lading studio's REST routes: projects, versions, runs, tests, release, replays and shadow
+editor-points.mjs     Where to point in a CodeMirror editor, for the Studio walkthroughs
 screenshots.mjs       Playwright walkthrough of every board scenario
 ai-control-screenshots.mjs  Playwright walkthrough of AI control
 desk-cards-screenshots.mjs  Playwright walkthrough of the Desk's resource cards
 desk-case-screenshots.mjs   Playwright walkthrough of a Desk case and a reply under way
 desk-edi-draft-screenshots.mjs  Playwright walkthrough of an EDI connection drafted from a guide
+lading-studio-screenshots.mjs  Playwright walkthrough of the Lading studio
 settings-screenshots.mjs    Playwright walkthrough of Settings
 palette-screenshots.mjs     Playwright walkthrough of the command palette
 triage-screenshots.mjs  Playwright walkthrough of Triage

@@ -17,11 +17,13 @@ import { FORMULA_ROUTES } from "./formula.mjs";
 import { FORMULA_LIBRARY_ROUTES } from "./formula-library.mjs";
 import { FORMULA_NOVA_ROUTES } from "./formula-nova.mjs";
 import { CUSTOMER_TRACKING_ROUTES } from "./customertracking.mjs";
+import { LADING_ROUTES } from "./lading.mjs";
 
 const EMPTY_PAGE = { results: [], count: 0, next: null, prev: null };
 
 const ROUTES = [
   ...CUSTOMER_TRACKING_ROUTES,
+  ...LADING_ROUTES,
   ...FORMULA_NOVA_ROUTES,
   ...FORMULA_ROUTES,
   ...FORMULA_LIBRARY_ROUTES,
