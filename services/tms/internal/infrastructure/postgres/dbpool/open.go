@@ -7,11 +7,13 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
+	"github.com/emoss08/keel/numeric"
 	"github.com/emoss08/keel/postgis"
 	"github.com/emoss08/keel/schema"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -100,7 +102,7 @@ func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 			UnmarshalNumber: sonic.Config{UseNumber: true}.Froze().Unmarshal,
 		},
 		Observers:        observers,
-		AfterConnect:     postgis.Register,
+		AfterConnect:     registerTypes,
 		ReadIsolation:    keel.RepeatableRead,
 		DeadlineTimeouts: true,
 	}
@@ -109,6 +111,14 @@ func KeelConfig(guard Guard, observers []keel.Observer) keel.Config {
 	}
 
 	return cfg
+}
+
+func registerTypes(ctx context.Context, conn *pgx.Conn) error {
+	if err := postgis.Register(ctx, conn); err != nil {
+		return err
+	}
+
+	return numeric.Register(ctx, conn)
 }
 
 func tenantOf(ctx context.Context) ([]any, bool) {
