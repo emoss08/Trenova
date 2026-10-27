@@ -64,11 +64,37 @@ export function checkProject(
   return check;
 }
 
-/** The check of the file the editor shows, or null while the project has none at its path. */
-export function checkedFile(service: LadingLanguageService): LadingCheckedFile | null {
-  const check = checkProject(service.edi(), service.project(), service.context());
+/**
+ * The check of the file the editor shows, or null while the project has none at its path. Given
+ * the editor's text, it checks the project with that text, which the studio may not hold yet.
+ */
+export function checkedFile(
+  service: LadingLanguageService,
+  source?: string,
+): LadingCheckedFile | null {
+  const project = source === undefined ? service.project() : liveProject(service, source);
+  const check = checkProject(service.edi(), project, service.context());
   return check.files.find((file) => file.path === service.path()) ?? null;
 }
+
+/** A request about an offset of the file as the editor holds it now. */
+export function ladingRequest(service: LadingLanguageService, source: string, offset: number) {
+  return {
+    project: liveProject(service, source),
+    context: service.context(),
+    path: service.path(),
+    offset,
+  };
+}
+
+/**
+ * The last live project made from each project the studio held, so every tool asking about the
+ * same text (the linter, folding, completion) shares one object and so one check.
+ */
+const lastLive = new WeakMap<
+  LadingProjectInput,
+  { path: string; source: string; project: LadingProjectInput }
+>();
 
 /**
  * The project with the edited file as the editor holds it now. The studio learns of an edit after
@@ -78,10 +104,14 @@ export function liveProject(service: LadingLanguageService, source: string): Lad
   const project = service.project();
   const path = service.path();
   if (project.files.find((file) => file.path === path)?.source === source) return project;
-  return {
+  const last = lastLive.get(project);
+  if (last && last.path === path && last.source === source) return last.project;
+  const live = {
     ...project,
     files: project.files.map((file) => (file.path === path ? { path, source } : file)),
   };
+  lastLive.set(project, { path, source, project: live });
+  return live;
 }
 
 const reported = new Set<string>();

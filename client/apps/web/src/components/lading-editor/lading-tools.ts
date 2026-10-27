@@ -1,11 +1,13 @@
 // lading-tools.ts is the Lading editor's tools beyond the cursor's help: signature help
 // (`lading.signature`) while the cursor is inside a call, inlay values (`lading.inlays`) from the
 // last run for what is on screen, Find references (Shift-F12, `lading.references`), rename (F2,
-// `lading.rename`) and the refactorings (Mod-., `lading.actions`: extract a crosswalk or a
-// function, promote a literal to a partner setting, move to a library). Rename and the
+// `lading.rename`) and the fixes and refactorings (Mod-.: the fixes of the findings on the line,
+// then `lading.actions`: extract a crosswalk or a function, promote a literal to a partner
+// setting, move to a library). Rename and the
 // refactorings can edit several files: the edits to this file are one undoable change here, and
 // the rest go to the studio through the service.
 
+import { forEachDiagnostic } from "@codemirror/lint";
 import { Prec, RangeSetBuilder, StateEffect, StateField, type Extension } from "@codemirror/state";
 import {
   Decoration,
@@ -334,7 +336,26 @@ export function findLadingReferences(view: EditorView): boolean {
   return true;
 }
 
-/** Offers the refactorings for the selection, or says there are none here. */
+/** The fixes of the findings on the selection's line, first in the menu as in VS Code. */
+function fixesAt(view: EditorView): MenuItem[] {
+  const { from, to } = view.state.selection.main;
+  const first = view.state.doc.lineAt(from).from;
+  const last = view.state.doc.lineAt(to).to;
+  const items: MenuItem[] = [];
+  forEachDiagnostic(view.state, (diagnostic, start, end) => {
+    if (start > last || end < first) return;
+    for (const action of diagnostic.actions ?? []) {
+      items.push({
+        label: action.name,
+        detail: diagnostic.message,
+        run: (target) => action.apply(target, start, end),
+      });
+    }
+  });
+  return items;
+}
+
+/** Offers the fixes and refactorings for the selection, or says there are none here. */
 export function showLadingActions(view: EditorView): boolean {
   if (view.state.readOnly) return false;
   const service = view.state.facet(ladingServiceFacet);
@@ -350,16 +371,24 @@ export function showLadingActions(view: EditorView): boolean {
       }),
     [],
   );
-  if (actions.length === 0) {
-    showEditorNotice(view, translate("Nothing here can be refactored"));
+  const items: MenuItem[] = [
+    ...fixesAt(view),
+    ...actions.map((action) => ({
+      label: translateMessage(action.title),
+      run: () => service.applyEdits(action.edits),
+    })),
+  ];
+  if (items.length === 0) {
+    showEditorNotice(view, translate("Nothing here can be fixed or refactored"));
     return true;
   }
-  const items: MenuItem[] = actions.map((action) => ({
-    label: translateMessage(action.title),
-    run: () => service.applyEdits(action.edits),
-  }));
   view.dispatch({
-    effects: setMenu.of({ pos: from, title: translate("Refactorings"), items, active: 0 }),
+    effects: setMenu.of({
+      pos: from,
+      title: translate("Fixes and refactorings"),
+      items,
+      active: 0,
+    }),
   });
   return true;
 }
