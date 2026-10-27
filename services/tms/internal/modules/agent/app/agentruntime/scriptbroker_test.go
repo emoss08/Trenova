@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentextension"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiprovider"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/codemode"
+	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -624,6 +625,98 @@ func TestScriptGateReadsTheAnsweringProviderAtDispatch(t *testing.T) {
 	})
 	assert.True(t, failover.Failed, "a failover to a provider without scripts runs no code")
 	assert.Contains(t, scripts.asked, scriptProvider)
+}
+
+// A model that analyzed a report in a script that only printed shows what it
+// found by continuing that script with the lines that show. The continuation
+// costs the turn no script of its own, and a script is continued once.
+func TestATurnContinuesAScriptThatShowedNothingOnce(t *testing.T) {
+	t.Parallel()
+
+	earlier := agentports.ToolCall{
+		ID:        "call_printed",
+		Name:      codemode.ToolRunScript,
+		Arguments: map[string]any{"code": "total = len(lanes)"},
+	}
+	continuation := func(id string) agentports.ToolCall {
+		return agentports.ToolCall{
+			ID:   id,
+			Name: codemode.ToolRunScript,
+			Arguments: map[string]any{
+				codemode.ParamScriptContinues: "call_printed",
+				"code":                        "show_figure('Lanes', total)",
+			},
+		}
+	}
+	shows, again := continuation("call_shows"), continuation("call_again")
+	asked := func(call agentports.ToolCall) conversation.Message {
+		return conversation.Message{
+			Role: conversation.RoleAssistant,
+			ToolCalls: []conversation.ToolCallRecord{
+				{ID: call.ID, Name: call.Name, Arguments: call.Arguments},
+			},
+		}
+	}
+	turn := &Turn{result: &agentports.RunResult{Messages: []conversation.Message{
+		asked(earlier), asked(shows), asked(again),
+	}}}
+
+	assert.Nil(t, turn.continueScript(&shows), "only a script its answer marked continuable")
+
+	turn.noteContinuable(&earlier, &toolOutcome{continuable: true})
+	assert.Equal(t, earlier.Arguments, turn.continueScript(&shows))
+	assert.Equal(t, earlier.Arguments, turn.continueScript(&shows), "asking again is the same claim")
+	assert.Equal(t, 1, turn.scriptPosition(&shows), "the continuation is not counted")
+
+	assert.Nil(t, turn.continueScript(&again), "a script is continued once")
+	assert.Equal(t, 2, turn.scriptPosition(&again))
+}
+
+func TestAContinuationKeepsTheNameOfTheScriptItContinues(t *testing.T) {
+	t.Parallel()
+
+	earlier := map[string]any{
+		codemode.ParamScriptTitle:   "Lane performance analysis",
+		codemode.ParamScriptPurpose: "Totals and the weakest lanes.",
+		codemode.ParamScriptCode:    "total = len(lanes)",
+	}
+	sent := map[string]any{
+		codemode.ParamScriptContinues: "call_printed",
+		codemode.ParamScriptCode:      "show_figure('Lanes', total)",
+	}
+
+	inherited := inheritScriptName(sent, earlier)
+	assert.Equal(t, "Lane performance analysis", inherited[codemode.ParamScriptTitle])
+	assert.Equal(t, "Totals and the weakest lanes.", inherited[codemode.ParamScriptPurpose])
+	assert.NotContains(t, sent, codemode.ParamScriptTitle, "the call as sent is left alone")
+
+	sent[codemode.ParamScriptTitle] = "Top lanes"
+	assert.Equal(t, "Top lanes", inheritScriptName(sent, earlier)[codemode.ParamScriptTitle],
+		"a title of its own is kept")
+	assert.Equal(t, sent, inheritScriptName(sent, nil), "a script of its own is untouched")
+}
+
+func TestScriptToolRefusesAContinuationOfNothingItMayContinue(t *testing.T) {
+	t.Parallel()
+
+	tool := queryTool("shipment_list", map[string]any{"items": []any{}}, nil)
+	h := newScriptHarness(t, []agentports.AgentQueryTool{tool}, nil, nil)
+
+	refused := h.rt.DispatchStep(t.Context(), h.req, DispatchCall{
+		Call: agentports.ToolCall{
+			ID:        "call_continues",
+			Name:      codemode.ToolRunScript,
+			Arguments: map[string]any{codemode.ParamScriptContinues: "call_unknown"},
+		},
+		Taint:          &agent.RunTaint{},
+		Model:          scriptModel,
+		Provider:       aiprovider.KindAnthropicMessages,
+		ProviderID:     scriptProvider,
+		ScriptPosition: 1,
+	})
+	assert.True(t, refused.Failed)
+	assert.Contains(t, refused.Content, "continues names no script of this turn")
+	assert.Zero(t, h.script.calls, "no sandbox is asked for")
 }
 
 func TestScriptTraceAndSteps(t *testing.T) {

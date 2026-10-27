@@ -3377,14 +3377,19 @@
       }
     },
     {
-      "name": "agent_run_script",
-      "description": "Run a short Python script that calls the reads you hold and works out, totals, compares or charts what they return. Use it for every record of a list, two sources reconciled, a report run or attached spreadsheet analyzed, or any figure no read gives; for one or two reads in a row, call the reads themselves. Call a read as trenova.<namespace>.<the rest of its name>(**parameters), as trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters and results are exactly the tool's. trenova.tools() lists what you may call, trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call raises trenova.Refused. Only what you print, one trenova.result(value) and what you show come back. A script changes nothing: a change it calls is proposed as one batch for a person to approve.",
+      "name": "analysis_run",
+      "description": "Run a short Python script that calls the reads you hold and works out, totals, compares or charts what they return. Use it for every record of a list, two sources reconciled, a report run or attached spreadsheet analyzed, or any figure no read gives; for one or two reads in a row, call the reads themselves. Call a read as trenova.<namespace>.<the rest of its name>(**parameters), as trenova.shipment.list(status=[\"InTransit\"]) for shipment_list; parameters and results are exactly the tool's. trenova.tools() lists what you may call, trenova.gather(a.defer(...), b.defer(...)) runs several at once, and a refused call raises trenova.Refused. The person sees only what the script shows with show_figure, show_table and show_chart, kept beside the conversation as an analysis under its title; what it prints and one trenova.result(value) come back to you alone. A script changes nothing: a change it calls is proposed as one batch for a person to approve.",
       "parameters": {
         "additionalProperties": false,
         "properties": {
           "code": {
-            "description": "The Python to run, in a sandboxed interpreter: trenova is already there; json, datetime, math, re, collections and itertools import as usual; date.today() is the organization's today; classes cannot inherit; there are no files, packages or network. print() what you need to answer and pass one summary to trenova.result(). Show the person the answer with show_figure(label, value, kind), show_table(rows, title) and show_chart(kind, x, y, title, value_kind), kind bar, line, area, scatter or pie and y a list or {series: list}; value kinds are money, count, percent (a fraction) and number. mean, median, percentile, stdev and group_by are built in.",
+            "description": "The Python to run, in a sandboxed interpreter: trenova is already there; json, datetime, math, re, collections and itertools import as usual; date.today() is the organization's today; classes cannot inherit; there are no files, packages or network. Show the person the answer with show_figure(label, value, kind), show_table(rows, title) and show_chart(kind, x, y, title, value_kind), kind bar, line, area, scatter or pie and y a list or {series: list}; value kinds are money, count, percent (a fraction) and number. mean, median, percentile, stdev and group_by are built in. print() and trenova.result() are for you: the person sees only what is shown.",
             "maxLength": 20000,
+            "type": "string"
+          },
+          "continues": {
+            "description": "Only a scriptId an analysis_run answer of this turn gave you, never a dataset's name; leave it out otherwise. This code then runs after that script, with every name it left and over its datasets, so send only what to show, without datasets or inputs; it keeps that script's title and purpose unless you give others.",
+            "maxLength": 200,
             "type": "string"
           },
           "datasets": {
@@ -3473,6 +3478,8 @@
         "go through all",
         "analyze",
         "analysis",
+        "analyst",
+        "run analyst",
         "chart",
         "graph",
         "plot",

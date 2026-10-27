@@ -9,10 +9,7 @@ export function DataRetentionSkeleton() {
   const t = useT();
 
   return (
-    <SkeletonRegion
-      label={t("Loading data retention settings")}
-      className="flex max-w-5xl flex-col gap-4"
-    >
+    <SkeletonRegion label={t("Loading data retention settings")} className="flex flex-col gap-4">
       <Card className="gap-0 py-0">
         <div className="border-border grid grid-cols-[minmax(0,1fr)_12rem_9rem_10rem] gap-4 border-b px-4 py-2.5">
           <Skeleton className="h-3 w-12" />

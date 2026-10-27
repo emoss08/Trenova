@@ -80,7 +80,7 @@ export default function DataRetentionForm({
           await mutateAsync(values);
         })}
       >
-        <div className="flex max-w-5xl flex-col gap-4 pb-14">
+        <div className="flex flex-col gap-4 pb-14">
           {readOnly && (
             <Alert variant="info" size="sm">
               <AlertDescription>

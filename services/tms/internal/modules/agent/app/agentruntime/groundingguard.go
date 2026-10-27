@@ -70,7 +70,7 @@ type groundingFinding struct {
 	offered []string
 	// read is a finding on a reply that filed nothing, held only to the
 	// amounts the conversation read; analyze is whether the agent can work a
-	// missing one out with agent_run_script.
+	// missing one out with analysis_run.
 	read    bool
 	analyze bool
 }
@@ -363,7 +363,7 @@ func (f groundingFinding) amountsCorrection() string {
 	b.WriteString(". A total, share, average or difference no tool returned is one you " +
 		"worked out yourself, and a reply never states one as if a record held it.")
 	if f.analyze {
-		b.WriteString(" Work each one out with agent_run_script over the rows it comes from, " +
+		b.WriteString(" Work each one out with analysis_run over the rows it comes from, " +
 			"then write the reply from its result.")
 	} else {
 		b.WriteString(" Write the reply again from what the tools returned. Where they do " +

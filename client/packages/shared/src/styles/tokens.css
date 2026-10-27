@@ -68,6 +68,7 @@
   --hue-indigo: 283;
   --hue-teal: 182;
   --hue-amber: 98;
+  --hue-orange: 50;
   --hue-rose: 2;
   --hue-emerald: 147;
   --hue-sky: 232;
@@ -503,6 +504,10 @@
   --accent-amber-on-subtle: oklch(0.5 0.103 var(--hue-amber));
   --accent-amber-border: oklch(0.914 0.05 var(--hue-amber));
 
+  /* A glow colour, not a badge accent: it is outside BADGE_ACCENTS so the
+     hash-assigned identity accents keep their colours. */
+  --accent-orange: oklch(0.7 0.18 var(--hue-orange));
+
   --accent-rose: oklch(0.636 0.212 var(--hue-rose));
   --accent-rose-subtle: oklch(0.958 0.021 var(--hue-rose));
   --accent-rose-on-subtle: oklch(0.535 0.188 var(--hue-rose));
@@ -723,6 +728,8 @@
   --accent-amber-subtle: oklch(0.258 0.053 var(--hue-amber));
   --accent-amber-on-subtle: oklch(0.8 0.15 var(--hue-amber));
   --accent-amber-border: oklch(0.348 0.072 var(--hue-amber));
+
+  --accent-orange: oklch(0.74 0.17 var(--hue-orange));
 
   --accent-rose: oklch(0.693 0.189 var(--hue-rose));
   --accent-rose-subtle: oklch(0.263 0.059 var(--hue-rose));

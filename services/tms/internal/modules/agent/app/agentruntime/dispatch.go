@@ -36,6 +36,8 @@ type toolOutcome struct {
 	// batch is what a script prepared and filed for a person as one batch;
 	// none of it ran.
 	batch []agentports.PendingAction
+	// continuable marks a script a later call of the turn may continue.
+	continuable bool
 	// data is what a query tool returned, before it was encoded for the
 	// model. The caller may turn it into something a person sees.
 	data    any
@@ -147,6 +149,9 @@ func (s *Service) dispatch(ctx context.Context, p dispatchParams) toolOutcome {
 			}
 		}
 
+		if tool.Policy().Script == agentports.ScriptRunner {
+			call.Arguments = inheritScriptName(call.Arguments, p.gate.continues)
+		}
 		contract, err := contractCall(
 			s.arguments, call.Name, tool.ParamSchema(), call.Arguments, organizationToday(req),
 		)
@@ -716,8 +721,9 @@ func (s *Service) runQueryTool(
 // queryExtras is what only the tool that runs a script is handed: the broker
 // its reads go through and the step it is claimed under.
 type queryExtras struct {
-	broker  codemode.Broker
-	stepKey string
+	broker    codemode.Broker
+	stepKey   string
+	continues map[string]any
 }
 
 func (s *Service) runQueryToolWith(
@@ -739,6 +745,8 @@ func (s *Service) runQueryToolWith(
 		RunID:             req.RunID,
 		Broker:            extras.broker,
 		StepKey:           extras.stepKey,
+		CallID:            call.ID,
+		Continues:         extras.continues,
 	})
 	if refused, ok := errors.AsType[*agentports.ReadRefusedError](err); ok {
 		return refusedOutcome(

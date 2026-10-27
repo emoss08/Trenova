@@ -107,6 +107,7 @@ func (s *Service) Run(
 		Index:    index,
 		Inputs:   inputs,
 		Datasets: datasets,
+		Earlier:  req.Earlier,
 		Clock:    scriptvm.Clock{Now: time.Now(), Location: location(req.Timezone)},
 		Limits: scriptvm.Limits{
 			OutputChars: limits.OutputChars,

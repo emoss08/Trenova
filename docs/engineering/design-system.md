@@ -155,6 +155,10 @@ Eight categorical accents on the same hue family: `accent-indigo`, `accent-teal`
 `accent-slate`. Rungs are `--accent-x`, `--accent-x-on-subtle`,
 `--accent-x-subtle`, `--accent-x-border`.
 
+`--accent-orange` is a single rung for glows (Browser Use's extension tile), not a ninth badge
+accent: `BADGE_ACCENTS` drives the hash-assigned identity accents by modulo, so adding to it
+would recolour every agent and person.
+
 Use an accent when the set has **no severity ordering**: a HOS duty status, an
 agent trigger type, a pricing method, W-2 versus 1099. None of those members is
 further along or worse than another, and giving one a tone says something false —

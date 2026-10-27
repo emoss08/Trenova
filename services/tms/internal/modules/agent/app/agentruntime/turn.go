@@ -64,6 +64,11 @@ type Turn struct {
 	questions map[string]struct{}
 	decisions map[pulid.ID]struct{}
 	shown     map[string][]string
+	// continuable is every script of the turn a later call may continue, by
+	// its call id, and continuing every call that continues one, by its own
+	// call id, with the id of the script it continues.
+	continuable map[string]struct{}
+	continuing  map[string]string
 	// callIDs is every tool call id the conversation holds, so a provider
 	// that reuses one is given a fresh id rather than a clash.
 	callIDs map[string]struct{}
@@ -180,11 +185,14 @@ type DispatchCall struct {
 	// Model, Provider and ProviderID are what answered the completion that
 	// asked for the call, and ScriptPosition is how many scripts the turn has
 	// asked for up to and including this one; the code-mode gate reads the
-	// answering provider's settings and the count.
-	Model          string          `json:"model,omitempty"`
-	Provider       aiprovider.Kind `json:"provider,omitempty"`
-	ProviderID     pulid.ID        `json:"providerId,omitempty"`
-	ScriptPosition int             `json:"scriptPosition,omitempty"`
+	// answering provider's settings and the count. ScriptContinues is the
+	// arguments of the script of the turn the call continues, which the count
+	// leaves out.
+	Model           string          `json:"model,omitempty"`
+	Provider        aiprovider.Kind `json:"provider,omitempty"`
+	ProviderID      pulid.ID        `json:"providerId,omitempty"`
+	ScriptPosition  int             `json:"scriptPosition,omitempty"`
+	ScriptContinues map[string]any  `json:"scriptContinues,omitempty"`
 }
 
 // ToolOutcome is what one tool call came to.
@@ -212,6 +220,9 @@ type ToolOutcome struct {
 	// Shown is what the call put in front of the person, which the loop
 	// keeps when it is a table, for the pass over the final reply.
 	Shown *agentports.ShownArtifact `json:"shown,omitempty"`
+	// Continuable marks a script that read a dataset and showed nothing,
+	// which a later call of the turn may continue.
+	Continuable bool `json:"continuable,omitempty"`
 	// Data is what a query tool returned before it was encoded for the model.
 	// It never crosses a durable boundary: whatever needs it runs where the
 	// tool ran.
@@ -235,6 +246,7 @@ func (o toolOutcome) exported() ToolOutcome {
 		Memories:       o.memories,
 		SavedMemory:    o.saved,
 		Shown:          o.shown,
+		Continuable:    o.continuable,
 		Data:           o.data,
 		RanWith:        o.ranWith,
 	}
@@ -256,6 +268,7 @@ func (o ToolOutcome) internal() toolOutcome {
 		memories:       o.Memories,
 		saved:          o.SavedMemory,
 		shown:          o.Shown,
+		continuable:    o.Continuable,
 		data:           o.Data,
 		ranWith:        o.RanWith,
 	}
@@ -330,6 +343,10 @@ type TurnState struct {
 	// ToolMemories are the carried memories about a tool the turn has not
 	// called yet.
 	ToolMemories map[string][]pulid.ID `json:"toolMemories,omitempty"`
+	// Continuable are the scripts a later call may continue, by call id, and
+	// Continuing each call that continues one, with the id it continues.
+	Continuable []string          `json:"continuable,omitempty"`
+	Continuing  map[string]string `json:"continuing,omitempty"`
 
 	ProviderKind aiprovider.Kind `json:"providerKind,omitempty"`
 }
@@ -380,8 +397,22 @@ func (t *Turn) State() TurnState {
 		TaintOpened:     slices.Clone(t.opened),
 		World:           t.world.clone(),
 		ToolMemories:    cloneToolMemories(t.toolMemories),
+		Continuable:     slices.Sorted(maps.Keys(t.continuable)),
+		Continuing:      maps.Clone(t.continuing),
 		ProviderKind:    t.providerKind,
 	}
+}
+
+func restoreContinuable(ids []string) map[string]struct{} {
+	if len(ids) == 0 {
+		return nil
+	}
+	continuable := make(map[string]struct{}, len(ids))
+	for _, id := range ids {
+		continuable[id] = struct{}{}
+	}
+
+	return continuable
 }
 
 // ToolsState is the turn's current tool set as data, for answering find_tools
@@ -445,6 +476,8 @@ func (s *Service) RestoreTurn(req *agentports.RunRequest, state TurnState) *Turn
 		external:     state.ExternalContent,
 		world:        state.World.clone(),
 		toolMemories: cloneToolMemories(state.ToolMemories),
+		continuable:  restoreContinuable(state.Continuable),
+		continuing:   maps.Clone(state.Continuing),
 		providerKind: state.ProviderKind,
 	}
 }
@@ -1051,6 +1084,7 @@ func (s *Service) DispatchStep(
 			provider:   call.Provider,
 			providerID: call.ProviderID,
 			position:   call.ScriptPosition,
+			continues:  call.ScriptContinues,
 		},
 	})
 	outcome.summary = summarizeOutcome(call.Call, outcome)

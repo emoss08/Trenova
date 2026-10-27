@@ -36,6 +36,7 @@ type wireStart struct {
 	Index    string     `json:"index"`
 	Inputs   string     `json:"inputs"`
 	Datasets string     `json:"datasets"`
+	Earlier  string     `json:"earlier,omitempty"`
 	Clock    wireClock  `json:"clock"`
 	Limits   wireLimits `json:"limits"`
 }
@@ -74,6 +75,7 @@ func startRequest(program *Program) ([]byte, error) {
 		Index:    rawOr(program.Index, emptyIndex),
 		Inputs:   rawOr(program.Inputs, emptyInput),
 		Datasets: rawOr(program.Datasets, emptyList),
+		Earlier:  program.Earlier,
 		Clock:    clockOf(program.Clock),
 		Limits: wireLimits{
 			OutputChars: limits.OutputChars,

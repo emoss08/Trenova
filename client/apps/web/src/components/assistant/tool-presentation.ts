@@ -156,7 +156,7 @@ const TOOL_TITLES: Record<string, string> = defineLabels({
   web_list_portal_sites: "List portal sites",
   web_read_portal: "Look something up on a portal",
   web_use_portal: "Do something on a portal",
-  agent_run_script: "Run a script",
+  analysis_run: "Run a script",
   worker_approve_pto: "Approve time off",
   worker_reject_pto: "Decline time off",
   worker_cancel_pto: "Cancel time off",

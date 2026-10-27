@@ -36,6 +36,10 @@ pub struct Start {
     /// Their rows are not here: the SDK pages them in with [`HostFunction::Rows`].
     #[serde(default = "no_datasets")]
     pub datasets: String,
+    /// The script this one continues, run first with its printing discarded and its result
+    /// dropped, so `code` starts from every name it left behind. Empty for a script of its own.
+    #[serde(default)]
+    pub earlier: String,
     /// The instant `date.today()` and `datetime.now()` read, in the organization's zone.
     pub clock: Clock,
     /// What the run may spend.

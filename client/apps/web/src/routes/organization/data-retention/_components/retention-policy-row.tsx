@@ -55,7 +55,7 @@ export function RetentionPolicyRow({
   return (
     <TableRow className="align-top hover:bg-transparent">
       <TableCell className="py-3 pl-4 whitespace-normal">
-        <div className="flex max-w-sm flex-col gap-0.5">
+        <div className="flex max-w-2xl flex-col gap-0.5">
           <span className="text-sm font-medium">{label}</span>
           <span className="text-foreground-muted text-xs leading-relaxed">{description}</span>
           {minDays !== undefined && (

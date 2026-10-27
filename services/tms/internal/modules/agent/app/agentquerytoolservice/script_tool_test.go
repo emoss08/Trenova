@@ -399,6 +399,89 @@ func TestRunScriptThatOnlyPrintedIsNotKept(t *testing.T) {
 	assert.Contains(t, answer.Note, scriptPlainNote)
 }
 
+// A Report analyst analyzed a lane report in three scripts that only printed,
+// so the person saw no analysis. A script that read a dataset and showed
+// nothing is told to run again and show, not just that nothing was shown.
+func TestRunScriptThatReadADatasetAndOnlyPrintedIsToldToShow(t *testing.T) {
+	t.Parallel()
+
+	h := newScriptHarness()
+	h.params.CallID = "call_printed"
+	runID := h.seedRun(t, h.params.Actor.UserID)
+	h.runner.outcome = &scriptports.Outcome{Status: scriptports.Succeeded, Output: "2 lanes\n"}
+
+	answer, err := h.query(t, map[string]any{"name": "lanes", "reportRunId": runID.String()})
+	require.NoError(t, err)
+
+	assert.Nil(t, h.analyses.recorded)
+	assert.Contains(t, answer.Note, scriptUnshownAnalysisNote)
+	assert.NotContains(t, answer.Note, scriptPlainNote)
+	assert.Equal(t, "call_printed", answer.ScriptID, "the call that continues it names it so")
+	assert.True(t, answer.ScriptContinuable())
+}
+
+// The continuation sends only the lines that show. It runs after the earlier
+// script, over that script's datasets, and the analysis keeps all the code.
+func TestRunScriptContinuesTheScriptItNames(t *testing.T) {
+	t.Parallel()
+
+	h := newScriptHarness()
+	h.params.CallID = "call_shows"
+	runID := h.seedRun(t, h.params.Actor.UserID)
+	h.params.Continues = map[string]any{
+		"title":    "Lane margin",
+		"purpose":  "Margin by lane for Q3",
+		"code":     "total = len(lanes)\n",
+		"datasets": []any{map[string]any{"name": "lanes", "reportRunId": runID.String()}},
+	}
+	h.runner.outcome = &scriptports.Outcome{Status: scriptports.Succeeded, Shown: shownFigure()}
+
+	answer, err := h.query(t)
+	require.NoError(t, err)
+
+	asked := h.runner.asked
+	require.NotNil(t, asked)
+	assert.Equal(t, "total = len(lanes)\n", asked.Earlier)
+	assert.Equal(t, "show_figure('Lanes', len(lanes))", asked.Code)
+	require.Len(t, asked.Datasets, 1, "it reads the datasets of the script it continues")
+	run := h.analyses.recorded
+	require.NotNil(t, run)
+	assert.Equal(t, "total = len(lanes)\n\nshow_figure('Lanes', len(lanes))", run.Code)
+	assert.Equal(t, "Lane margin", run.Title)
+	assert.Empty(t, answer.ScriptID)
+}
+
+func TestRunScriptContinuationThatStillShowsNothingCannotBeContinued(t *testing.T) {
+	t.Parallel()
+
+	h := newScriptHarness()
+	h.params.CallID = "call_shows"
+	runID := h.seedRun(t, h.params.Actor.UserID)
+	h.params.Continues = map[string]any{
+		"code":     "total = len(lanes)\n",
+		"datasets": []any{map[string]any{"name": "lanes", "reportRunId": runID.String()}},
+	}
+	h.runner.outcome = &scriptports.Outcome{Status: scriptports.Succeeded}
+
+	answer, err := h.query(t)
+	require.NoError(t, err)
+
+	assert.Empty(t, answer.ScriptID)
+	assert.Contains(t, answer.Note, scriptPlainNote)
+}
+
+func TestRunScriptContinuationReadsNoDatasetsOfItsOwn(t *testing.T) {
+	t.Parallel()
+
+	h := newScriptHarness()
+	runID := h.seedRun(t, h.params.Actor.UserID)
+	h.params.Continues = map[string]any{"code": "total = 1\n"}
+
+	_, err := h.query(t, map[string]any{"name": "lanes", "reportRunId": runID.String()})
+	require.ErrorIs(t, err, errContinuationReadsItsOwn)
+	assert.Nil(t, h.runner.asked)
+}
+
 func TestRunScriptKeepsTheErrorOfAScriptThatShowedAndRaised(t *testing.T) {
 	t.Parallel()
 

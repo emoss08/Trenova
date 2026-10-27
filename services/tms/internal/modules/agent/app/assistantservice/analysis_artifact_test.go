@@ -60,6 +60,22 @@ func TestArtifactFromObservation_AnAnalysisKeepsItsFiguresChartsAndCode(t *testi
 		"an analysis is made on purpose, and kept whether or not the reply names it")
 }
 
+// A continuation's call holds only the lines it added; its answer carries the
+// whole code that ran, which is what the card shows.
+func TestArtifactFromObservation_AContinuationKeepsTheWholeCode(t *testing.T) {
+	t.Parallel()
+
+	result := analysisResult()
+	result["code"] = "total = 1\n\nshow_figure('Total', total)"
+
+	artifact := artifactFromObservation(
+		analysisObservation(result, "show_figure('Total', total)"),
+	)
+
+	require.NotNil(t, artifact)
+	assert.Equal(t, "total = 1\n\nshow_figure('Total', total)", artifact.Payload["code"])
+}
+
 func TestArtifactFromObservation_AnAnalysisWithoutARunIsNotKept(t *testing.T) {
 	t.Parallel()
 

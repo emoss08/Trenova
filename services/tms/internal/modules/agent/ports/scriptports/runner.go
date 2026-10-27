@@ -47,11 +47,14 @@ type Request struct {
 	Title      string
 	Purpose    string
 	Code       string
-	Inputs     map[string]any
-	Datasets   []Dataset
-	Timezone   string
-	Broker     codemode.Broker
-	StepKey    string
+	// Earlier is the code of the script this one continues, run quietly
+	// before it.
+	Earlier  string
+	Inputs   map[string]any
+	Datasets []Dataset
+	Timezone string
+	Broker   codemode.Broker
+	StepKey  string
 }
 
 type Outcome struct {

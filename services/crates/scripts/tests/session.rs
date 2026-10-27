@@ -508,3 +508,46 @@ fn with_datasets_bound_a_traceback_still_names_the_script() {
         error.traceback
     );
 }
+
+#[test]
+fn a_continuation_starts_from_the_earlier_script_and_keeps_only_its_own_output() {
+    let mut overrides = ar_dataset();
+    overrides["earlier"] = json!(
+        "total = sum(row[\"Open Balance\"] for row in ar)\nprint(\"earlier\", total)\ntrenova.result(total)\n"
+    );
+    let run = run_with(
+        "show_figure(\"Open AR\", total, \"money\")\nprint(\"shown\")\ntrenova.result(total * 2)\n",
+        &overrides,
+    );
+    ok(&run);
+    assert_eq!(run.done.output, "shown\n");
+    let results: Vec<&Value> = run
+        .calls
+        .iter()
+        .filter(|(function, _)| *function == HostFunction::Result)
+        .map(|(_, payload)| payload)
+        .collect();
+    assert_eq!(results, [&json!(481.0)], "only the script's own result reaches the host");
+    assert!(
+        run.calls
+            .iter()
+            .any(|(function, payload)| *function == HostFunction::Show && payload["value"] == 240.5)
+    );
+}
+
+#[test]
+fn a_continuation_names_the_earlier_script_and_its_own_in_a_traceback() {
+    let mut overrides = ar_dataset();
+    overrides["earlier"] = json!("rows = len(ar)\n");
+    let run = run_with("print(rows)\nmissing\n", &overrides);
+    assert_eq!(run.done.status, EndStatus::Raised);
+    let traceback = run.done.error.expect("the NameError").traceback;
+    assert!(traceback.contains("File \"script.py\", line 2"), "{traceback}");
+
+    overrides["earlier"] = json!("rows = len(ar)\nar[0]['Missing']\n");
+    let run = run_with("print(rows)\n", &overrides);
+    assert_eq!(run.done.status, EndStatus::Raised);
+    let traceback = run.done.error.expect("the KeyError").traceback;
+    assert!(traceback.contains("File \"earlier.py\", line 2"), "{traceback}");
+    assert_eq!(run.done.output, "", "the earlier script prints nothing");
+}

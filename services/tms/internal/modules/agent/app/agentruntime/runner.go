@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 
@@ -628,6 +629,8 @@ func (s *Service) emitToolStarted(effects TurnEffects, call *agentports.ToolCall
 // dispatchCall is a call the loop has decided to make, with what the turn
 // knew when it decided.
 func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) DispatchCall {
+	continues := t.continueScript(call)
+
 	return DispatchCall{
 		Call:                 *call,
 		CompletionText:       completionText,
@@ -641,12 +644,14 @@ func (t *Turn) dispatchCall(call *agentports.ToolCall, completionText string) Di
 		Model:                t.result.Model,
 		Provider:             t.providerKind,
 		ProviderID:           t.result.ProviderID,
+		ScriptContinues:      continues,
 		ScriptPosition:       t.scriptPosition(call),
 	}
 }
 
 // scriptPosition is how many calls to the script tool the turn has made up to
-// and including this one, zero for any other tool.
+// and including this one, zero for any other tool. A call that continues a
+// script is not counted: it finishes what that script began.
 func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
 	if call.Name != codemode.ToolRunScript {
 		return 0
@@ -657,7 +662,9 @@ func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
 			if made.Name != codemode.ToolRunScript {
 				continue
 			}
-			position++
+			if _, continues := t.continuing[made.ID]; !continues {
+				position++
+			}
 			if made.ID == call.ID {
 				return position
 			}
@@ -665,6 +672,62 @@ func (t *Turn) scriptPosition(call *agentports.ToolCall) int {
 	}
 
 	return position + 1
+}
+
+// continueScript is the arguments of the script of this turn that call
+// continues: one whose answer marked it continuable and that no other call
+// has continued. It claims that script for call, so a second call naming it
+// runs nothing. Nil when call continues nothing it may.
+func (t *Turn) continueScript(call *agentports.ToolCall) map[string]any {
+	if call.Name != codemode.ToolRunScript {
+		return nil
+	}
+	earlier := strings.TrimSpace(stringArg(call.Arguments, codemode.ParamScriptContinues))
+	if earlier == "" {
+		return nil
+	}
+	if _, ok := t.continuable[earlier]; !ok {
+		return nil
+	}
+	for other, continued := range t.continuing {
+		if continued == earlier && other != call.ID {
+			return nil
+		}
+	}
+	arguments := t.scriptArguments(earlier)
+	if arguments == nil {
+		return nil
+	}
+	if t.continuing == nil {
+		t.continuing = make(map[string]string, 1)
+	}
+	t.continuing[call.ID] = earlier
+
+	return arguments
+}
+
+// scriptArguments is what the turn's script call with id was asked to run.
+func (t *Turn) scriptArguments(id string) map[string]any {
+	for idx := range t.result.Messages {
+		for _, made := range t.result.Messages[idx].ToolCalls {
+			if made.ID == id && made.Name == codemode.ToolRunScript {
+				return made.Arguments
+			}
+		}
+	}
+
+	return nil
+}
+
+// noteContinuable keeps a script a later call of the turn may continue.
+func (t *Turn) noteContinuable(call *agentports.ToolCall, outcome *toolOutcome) {
+	if !outcome.continuable || call.ID == "" {
+		return
+	}
+	if t.continuable == nil {
+		t.continuable = make(map[string]struct{}, 1)
+	}
+	t.continuable[call.ID] = struct{}{}
 }
 
 // settleDispatched folds what a dispatched call came to into the turn: the
@@ -697,6 +760,7 @@ func (s *Service) settleDispatched(
 	if !outcome.failed {
 		t.noteToolMemories(effects, call.Name)
 		t.noteShown(&call)
+		t.noteContinuable(&call, &outcome)
 		t.noteWorld(effects, &call, &outcome)
 	}
 }
@@ -854,7 +918,11 @@ func (s *Service) observe(
 		outcome.shown = shown
 	}
 
+	mistake, fixable := errors.AsType[*agentports.PublishMistake](err)
 	switch {
+	case outcome.publishes && fixable:
+		return failedOutcome("Tool %q did not keep the document: %s. Fix the call and send "+
+			"it again.", publishArtifactName, mistake.Reason)
 	case outcome.publishes && err != nil:
 		return failedOutcome("Tool %q could not keep the document: %s. Put the text in your "+
 			"reply instead.", publishArtifactName, err.Error())

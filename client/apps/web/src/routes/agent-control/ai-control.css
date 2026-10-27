@@ -894,7 +894,7 @@
 .aic .caps.two{grid-template-columns:1fr}
 }
 .aic .mkt-g{gap:12px;border:0}
-.aic .mkt-t{border:0!important}
+.aic .mkt-t{border:1px solid var(--b);border-radius:12px}
 .aic .mg{position:relative;isolation:isolate;overflow:hidden;border-radius:12px;border:1px solid transparent;background:linear-gradient(var(--canvas) 0 0) padding-box,radial-gradient(220px circle at var(--mx,-200px) var(--my,-200px),var(--gf),var(--gt),var(--b) 100%) border-box;text-align:left}
 .aic .mg-bg{position:absolute;inset:0;z-index:0;border-radius:inherit;background:var(--canvas)}
 .aic .mg-orb{position:absolute;left:0;top:0;z-index:1;width:420px;height:420px;border-radius:9999px;filter:blur(60px);opacity:0;background:linear-gradient(90deg,var(--gf),var(--gt));mix-blend-mode:screen;pointer-events:none;will-change:transform,opacity}

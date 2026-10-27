@@ -139,8 +139,8 @@ strata:
       mode: chat
     heldOut:
       - analysis-billed-still-open
-      - analysis-figure-checked-against-the-database
       - analysis-not-a-general-computer
+      - analysis-shown-not-printed
       - analysis-trend-chart
       - revenue-by-customer
   - stratum:

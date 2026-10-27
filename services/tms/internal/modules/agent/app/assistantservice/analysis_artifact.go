@@ -2,9 +2,13 @@ package assistantservice
 
 import (
 	"maps"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/analysis"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
+	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantartifactports"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/emoss08/trenova/shared/typeutils"
 )
@@ -53,10 +57,11 @@ func analysisArtifact(
 	for _, key := range modelOnlyKeys {
 		delete(payload, key)
 	}
-	payload[analysisKeyCode] = stringutils.TruncateRunes(
-		typeutils.StringOfTrimmed(arguments[analysisKeyCode]),
-		analysis.MaxCodeRunes,
-	)
+	code := typeutils.StringOfTrimmed(result[analysisKeyCode])
+	if code == "" {
+		code = typeutils.StringOfTrimmed(arguments[analysisKeyCode])
+	}
+	payload[analysisKeyCode] = stringutils.TruncateRunes(code, analysis.MaxCodeRunes)
 	for payloadSize(payload) > assistantartifact.MaxPayloadBytes {
 		output, _ := payload[analysisKeyOutput].(string)
 		runes := []rune(output)
@@ -83,6 +88,36 @@ func analysisArtifact(
 		Payload:          payload,
 		SourceToolCallID: callID,
 	}
+}
+
+// withAnalyses is a document's text with each analysis it names added after
+// it, written from what the analysis kept: a model that retyped an analysis
+// into a document copied its figures by hand, and a person who asked to
+// publish the analysis got a second, unchecked copy of it.
+func (r *artifactRecorder) withAnalyses(body string, ids []pulid.ID) (string, error) {
+	if len(ids) == 0 {
+		return body, nil
+	}
+	var sb strings.Builder
+	sb.WriteString(strings.TrimRight(body, "\n"))
+	for _, id := range ids {
+		kept, err := r.repo.GetByID(r.ctx, assistantartifactports.GetArtifactRequest{
+			ID:         id,
+			TenantInfo: r.tenant,
+		})
+		if err != nil || kept.ThreadID != r.thread.ID ||
+			kept.Kind != assistantartifact.KindAnalysis {
+			return "", errUnknownAnalysis
+		}
+		var shown analysis.Display
+		if err = jsonutils.Convert(kept.Payload, &shown); err != nil {
+			return "", errUnknownAnalysis
+		}
+		sb.WriteString("\n\n")
+		sb.WriteString(shown.Markdown(kept.Title))
+	}
+
+	return sb.String(), nil
 }
 
 // showedAnything reports whether an analysis displayed a figure, a table or a
