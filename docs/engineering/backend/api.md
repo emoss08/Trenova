@@ -95,9 +95,15 @@ rather than raising the ceiling.
   carries `totalExact` beside `total`, as does a GraphQL list type with a `total` or `totalCount`
   (`totalExact`/`totalCountExact: Boolean!`).
 - Register the constructor in `bootstrap/modules/api/handlers.go` and call `RegisterRoutes` from
-  `internal/api/router.go`. The protected group already applies auth, read scope, rate limiting
-  by principal, CSRF, the read-only guard and idempotency; a public route (token links,
+  `internal/api/router.go`. The protected group already applies auth, read scope, the API-key
+  rate limit (`ByAPIKey`), CSRF, the read-only guard and idempotency; a public route (token links,
   webhooks) applies its own rate limit (`ByPublicToken`, `ByClientIP`) and verifies its token or
   signature (`shared/webhooksig`) before reading anything.
+- Request-rate limits are for external callers only: API keys (per key and per organization)
+  and anonymous or token-addressed public routes. Signed-in sessions and Capture devices are
+  first-party and never request-rate limited, on GraphQL or REST, because one bulk upload or
+  Desk turn is many requests. Bound what a person can cost with the GraphQL cost budget and a
+  targeted limit on the expensive action itself (sign-in, reset email, report run), never a
+  per-session request count.
 - Edition routes join through `internal/api/routegroup`, never by editing `router.go` from Cloud.
 - Every write route needs write coverage ([agent-write-coverage.md](../agent-write-coverage.md)).

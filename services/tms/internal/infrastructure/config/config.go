@@ -572,7 +572,6 @@ type RateLimitScope string
 
 const (
 	RateLimitScopeAnonymous   RateLimitScope = "anonymous"
-	RateLimitScopeUser        RateLimitScope = "user"
 	RateLimitScopeAPIKey      RateLimitScope = "apiKey"
 	RateLimitScopeTenant      RateLimitScope = "tenant"
 	RateLimitScopePublicToken RateLimitScope = "publicToken"
@@ -586,11 +585,9 @@ const (
 	RateLimitFailureModeAllow = "allow"
 	RateLimitFailureModeDeny  = "deny"
 
-	defaultRateLimitRequestsPerMinute = 60
-	defaultRateLimitBurstSize         = 10
-	defaultRateLimitCleanupInterval   = time.Minute
-	defaultRateLimitStoreTimeout      = 250 * time.Millisecond
-	defaultRateLimitKeyPrefix         = "ratelimit:v1"
+	defaultRateLimitCleanupInterval = time.Minute
+	defaultRateLimitStoreTimeout    = 250 * time.Millisecond
+	defaultRateLimitKeyPrefix       = "ratelimit:v1"
 )
 
 type RateLimitScopeConfig struct {
@@ -605,12 +602,9 @@ type RateLimitConfig struct {
 	FailureMode        string               `mapstructure:"failureMode"        validate:"omitempty,oneof=local allow deny"`
 	KeyPrefix          string               `mapstructure:"keyPrefix"`
 	StoreTimeout       time.Duration        `mapstructure:"storeTimeout"`
-	RequestsPerMinute  int                  `mapstructure:"requestsPerMinute"  validate:"min=1,max=10000"`
-	BurstSize          int                  `mapstructure:"burstSize"          validate:"min=1,max=1000"`
 	CleanupInterval    time.Duration        `mapstructure:"cleanupInterval"`
 	ExemptPathPrefixes []string             `mapstructure:"exemptPathPrefixes"`
 	Anonymous          RateLimitScopeConfig `mapstructure:"anonymous"`
-	User               RateLimitScopeConfig `mapstructure:"user"`
 	APIKey             RateLimitScopeConfig `mapstructure:"apiKey"`
 	Tenant             RateLimitScopeConfig `mapstructure:"tenant"`
 	PublicToken        RateLimitScopeConfig `mapstructure:"publicToken"`
@@ -628,18 +622,10 @@ type rateLimitScopeDefaults struct {
 }
 
 var rateLimitScopeDefaultTable = map[RateLimitScope]rateLimitScopeDefaults{
-	RateLimitScopeUser:        {requestsPerMinute: 600, burstSize: 60},
+	RateLimitScopeAnonymous:   {requestsPerMinute: 300, burstSize: 60},
 	RateLimitScopeAPIKey:      {requestsPerMinute: 300, burstSize: 30},
 	RateLimitScopeTenant:      {requestsPerMinute: 6000, burstSize: 600},
-	RateLimitScopePublicToken: {requestsPerMinute: 10, burstSize: 5},
-}
-
-func (c *RateLimitConfig) GetRequestsPerMinute() int {
-	return intutils.WithDefault(c.RequestsPerMinute, defaultRateLimitRequestsPerMinute)
-}
-
-func (c *RateLimitConfig) GetBurstSize() int {
-	return intutils.WithDefault(c.BurstSize, defaultRateLimitBurstSize)
+	RateLimitScopePublicToken: {requestsPerMinute: 60, burstSize: 20},
 }
 
 func (c *RateLimitConfig) GetCleanupInterval() time.Duration {
@@ -673,16 +659,9 @@ func (c *RateLimitConfig) GetStoreTimeout() time.Duration {
 
 func (c *RateLimitConfig) ScopePolicy(scope RateLimitScope) RateLimitScopePolicy {
 	var scopeCfg RateLimitScopeConfig
-	defaults := rateLimitScopeDefaults{
-		requestsPerMinute: c.GetRequestsPerMinute(),
-		burstSize:         c.GetBurstSize(),
-	}
-
 	switch scope {
 	case RateLimitScopeAnonymous:
 		scopeCfg = c.Anonymous
-	case RateLimitScopeUser:
-		scopeCfg = c.User
 	case RateLimitScopeAPIKey:
 		scopeCfg = c.APIKey
 	case RateLimitScopeTenant:
@@ -693,9 +672,7 @@ func (c *RateLimitConfig) ScopePolicy(scope RateLimitScope) RateLimitScopePolicy
 		return RateLimitScopePolicy{}
 	}
 
-	if d, ok := rateLimitScopeDefaultTable[scope]; ok {
-		defaults = d
-	}
+	defaults := rateLimitScopeDefaultTable[scope]
 
 	return RateLimitScopePolicy{
 		Enabled: c.Enabled && !scopeCfg.Disabled,

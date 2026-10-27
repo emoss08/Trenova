@@ -154,10 +154,9 @@ func TestRateLimit_ForgedForwardedForCannotMintNewBuckets(t *testing.T) {
 		},
 		Security: config.SecurityConfig{
 			RateLimit: config.RateLimitConfig{
-				Enabled:           true,
-				RequestsPerMinute: 60,
-				BurstSize:         1,
-				CleanupInterval:   time.Minute,
+				Enabled:         true,
+				Anonymous:       config.RateLimitScopeConfig{RequestsPerMinute: 60, BurstSize: 1},
+				CleanupInterval: time.Minute,
 			},
 		},
 	}

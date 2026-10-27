@@ -88,13 +88,8 @@ security:
     enabled: true
     store: redis
     failureMode: local
-    requestsPerMinute: 30
-    burstSize: 10
     anonymous:
-      requestsPerMinute: 30
-      burstSize: 10
-    user:
-      requestsPerMinute: 600
+      requestsPerMinute: 300
       burstSize: 60
     apiKey:
       requestsPerMinute: 300
@@ -103,8 +98,8 @@ security:
       requestsPerMinute: 6000
       burstSize: 600
     publicToken:
-      requestsPerMinute: 10
-      burstSize: 5
+      requestsPerMinute: 60
+      burstSize: 20
   passwordReset:
     baseUrl: https://tms.example.com # Origin the emailed reset link is built against. Not inferred from the request Host header; leave empty and no reset email is sent.
     tokenTtl: 30m # How long a reset link stays redeemable. It is a bearer credential sitting in a mailbox.
