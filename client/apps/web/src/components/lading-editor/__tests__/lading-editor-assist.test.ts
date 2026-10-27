@@ -83,7 +83,7 @@ describe("checkProject", () => {
       errors: 0,
       warnings: 0,
     };
-    const call = vi.fn(() => empty);
+    const call = vi.fn((_op: string, _input: { context: unknown }) => empty);
     const edi = { call } as unknown as EdiRuntime;
     const before = { org: { name: "Trenova", scac: "TRNV", zone: "America/Chicago" } };
     const after = {
@@ -93,10 +93,7 @@ describe("checkProject", () => {
     checkProject(edi, project, before);
     checkProject(edi, project, before);
     checkProject(edi, project, after);
-    expect(call.mock.calls.map(([, input]) => (input as { context: unknown }).context)).toEqual([
-      before,
-      after,
-    ]);
+    expect(call.mock.calls.map(([, input]) => input.context)).toEqual([before, after]);
   });
 });
 

@@ -212,7 +212,7 @@ export function starterSource(path: string, starter: FileStarter): string {
         // i18n-ignore: Lading source written into the new file
         return `map ${name}\n  from csv {\n    reference: Text\n  }\n  to   ${starter.document}\n`;
       }
-      const from = starter.input === "json" ? "json" : starter.guide;
+      const from = starter.input === "x12" ? starter.guide : "json";
       // i18n-ignore: Lading source written into the new file
       return `map ${name}\n  from ${from}\n  to   ${starter.document}\n`;
     }
