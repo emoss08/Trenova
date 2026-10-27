@@ -159,7 +159,7 @@ export function checkGroups(
     bad: t("Blocks it"),
     warn: t("Needs a look"),
     info: t("Worth knowing"),
-    ok: t("Clear"),
+    ok: t("All clear"),
   };
   return (["bad", "warn", "info", "ok"] as const)
     .map((tone) => ({

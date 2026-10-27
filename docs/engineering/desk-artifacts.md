@@ -84,7 +84,7 @@ kinds or two cards use moves to `kinds/artifact-body-parts.tsx`, `record-card/` 
 `routes/desk/_styles/desk-v2.css`; a card's own styles take its own prefix
 (`dk-pln-*` for the plan, `dk-bi-*` for the billing item, `dk-ft-*` for the formula template, `dk-sh-*` for the
 shipment, `dk-cu-*` for the customer, `dk-ra-*` for the rate agreement, `dk-tr-*` for the
-tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card, `dk-tv-*` for a table that pages, `dk-rr-*` for a report run or preview; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
+tractor, `dk-tl-*` for the trailer, `dk-wk-*` for the worker, `dk-lo-*` for the location, `dk-ca-*` for the carrier, `dk-or-*` for the order, `dk-svf-*` for the service failure, `dk-edi-*` for the EDI message, `dk-eif-*` for the EDI inbound file, `dk-tdr-*` for the EDI transfer, `dk-inv-*` for the invoice, `dk-pay-*` for the worker settlement, `dk-cset-*` for the carrier settlement, `dk-dtn-*` for the detention charge, `dk-edp-*` for the EDI partner, `dk-jen-*` for the journal entry, `dk-mj-*` for the manual journal, `dk-fpu-*` for the fuel purchase, `dk-fcd-*` for the fuel card, `dk-tv-*` for a table that pages, `dk-rr-*` for a report run or preview, `dk-bd-*` for a board; the parts the two settlement cards share are `dk-rec-*` in `record-card/`, and so are the parts the two journal cards share: `dk-rec-jrnl`, `dk-rec-eqn`, `dk-rec-jref`, `dk-rec-seal` and `dk-rec-period`; the two fuel cards share `dk-fu-*`). An artifact kind drawn on the card frame takes one too:
 `dk-ecd-*` for the EDI connection draft.
 Before taking a prefix or a modifier class, search every stylesheet the Desk loads, the
 Desk chat's `components/desk-chat/desk-chat.css` included: `dk-sf` is the chat's tool
@@ -641,6 +641,41 @@ preview's payload.
   same parameters and format with the person's access and keeps it as the artifact's next
   version, `ranByPerson` set; on a preview it is "Run the full report", refused for a definition
   that was never saved. The card names the agent that ran it from `readBy`, like a table.
+
+## A board
+
+A `board` is an answer the agent laid out with `show_board`: a title, a verdict, and up to eight
+blocks (figures, records, compare, table, chart, timeline, checks, meter, prose, note; two notes
+at most). The agent writes only words; every value is read by the server.
+
+- **The layout is a JSON spec, validated in Go** (`domain/board`, `board.Parse`): blocks name
+  records by ID, Home metrics by their key (`board.MetricKeys`, from the Home layout), an
+  analysis's table or chart by its artifact and index, a table view, or one record's history.
+  Limits: 25 records a list, 120 a board, 12 checks. The verdict and the words cite a block by
+  its place as `[phrase][n]`, drawn as that exhibit's numeral; a cite past the last block or of a
+  words block is refused, and so are amounts the agent did not read (the runtime's amounts
+  guard) and records no tool result named.
+- **One read fills it** (`deskBoardCard(threadId, artifactId)`, `boardcardservice`): the thread
+  must be the reader's, every record kind is checked with `HasPermission`, records are read in
+  one batch per kind under the reader's row scope (`recordsummaryrepository`), measures
+  (lateness, amount due, age, waiting) are worked out in the organization's time zone, metrics
+  come from the same computation as Home (`AnalyticsIncludeMetrics`, AR from
+  `GetDashboardKPIs`) and a history from the audit log. A block the reader may not read is drawn
+  unreadable, never fails the board; a record they may not read is counted, never named.
+- **Live, with what it said.** The payload keeps the layout and a snapshot of every value the
+  answer showed (`board.Payload`); a figure that moved since says what it was ("6 → 2, since the
+  answer at 10:50 AM"). A board is always linked from the reply (`MustBeLinked`), revises as its
+  next version through `boardId`, and its markdown (the brief, capped) is what the next turn sees.
+- **Drawn as a case** in `kinds/board/`: a masthead (the question, the title, the verdict with
+  its phrases highlighted and numbered), a dotted desk of exhibits on folder tabs naming where
+  each was read, notes on folded slips, and a foot that lists what each numeral read and copies
+  the board as text. Records open in place as their own cards (`recordCardFor`) when the reader
+  may read the kind, else link to their page. There are no actions on a board. A half block
+  pairs with its neighbour; one left alone draws full width (`halfBlocks`).
+
+The mock API's `athr_desk_board` conversation (`handlers/deskboard.mjs`, the `deskBoard`
+scenario: live, moved, reading) serves three boards, and
+`e2e/mock-api/desk-board-screenshots.mjs` shoots them.
 
 ## How a row opens in place
 

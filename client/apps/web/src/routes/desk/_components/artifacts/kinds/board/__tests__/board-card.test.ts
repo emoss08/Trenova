@@ -173,7 +173,7 @@ describe("checkGroups", () => {
     const groups = checkGroups(closeBoard().blocks[0].checks, t);
     expect(groups.map((group) => [group.tone, group.label, group.checks.length])).toEqual([
       ["bad", "Blocks it", 1],
-      ["ok", "Clear", 1],
+      ["ok", "All clear", 1],
     ]);
   });
 });

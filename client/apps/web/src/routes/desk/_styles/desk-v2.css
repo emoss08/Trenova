@@ -17451,8 +17451,9 @@ button.dk-fcd-buy:hover {
   height: 20px;
   border-radius: 6px;
   font: 600 9px var(--dk-plex);
-  color: var(--dsk-agent-on);
-  background: var(--dsk-agent);
+  color: var(--dsk-fg);
+  background: var(--dsk-card);
+  box-shadow: inset 0 0 0 1px var(--dsk-b);
 }
 
 /* a phrase the answer rests on: marked as with a highlighter, citing its exhibit */
@@ -17515,6 +17516,7 @@ button.dk-fcd-buy:hover {
 
 /* an exhibit: printed by Trenova, on a tab that names what it reads */
 .dk-bd-ex {
+  container: dkbdex / inline-size;
   position: relative;
   min-width: 0;
   padding: 14px 16px 16px;
@@ -17723,8 +17725,9 @@ span.dk-bd-ref {
 }
 .dk-bd-read dd {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 8px;
+  gap: 0 8px;
   margin: 0;
   font: 500 25px/1.15 var(--dk-plex);
   letter-spacing: -0.02em;
@@ -17733,6 +17736,9 @@ span.dk-bd-ref {
 }
 .dk-bd-read .dk-warn dd {
   color: var(--dsk-warn-fg);
+}
+.dk-bd-read dd > * {
+  white-space: nowrap;
 }
 .dk-bd-read dd s {
   font-size: 15px;
@@ -18164,7 +18170,7 @@ a.dk-bd-face:hover {
   flex-direction: column;
   margin: 0 -16px -16px;
 }
-.dk-bd-checks > p {
+.dk-bd-checks > div > p {
   margin: 0;
   padding: 10px 16px 6px;
   font-size: 11px;
@@ -18172,7 +18178,7 @@ a.dk-bd-face:hover {
   color: var(--dsk-subtle);
   border-top: 1px solid var(--dsk-b-sub);
 }
-.dk-bd-checks > p:first-child {
+.dk-bd-checks > div:first-child > p {
   border-top: 0;
   padding-top: 0;
 }
@@ -18421,6 +18427,24 @@ a.dk-bd-face:hover {
   }
 }
 
+@container dkbdex (max-width: 560px) {
+  .dk-bd-row:has(.dk-bd-behind) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .dk-bd-row .dk-bd-behind {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .dk-bd-read {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 0;
+  }
+  .dk-bd-read > div:nth-child(odd) {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
 @container dkbd (max-width: 640px) {
   .dk-bd-mast {
     padding: 4px 16px 18px;
@@ -18447,7 +18471,7 @@ a.dk-bd-face:hover {
     padding-left: 0;
     border-left: 0;
   }
-  .dk-bd-row {
+  .dk-bd-row:has(.dk-bd-behind) {
     grid-template-columns: minmax(0, 1fr) auto;
   }
   .dk-bd-row .dk-bd-behind {

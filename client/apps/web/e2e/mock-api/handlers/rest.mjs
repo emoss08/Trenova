@@ -7,6 +7,7 @@ import { DESK_CASE_ROUTES } from "./deskcase.mjs";
 import { EDI_DRAFT_ROUTES } from "./deskedidraft.mjs";
 import { DESK_PLAN_ROUTES } from "./deskplan.mjs";
 import { DESK_REPORT_ROUTES } from "./deskreport.mjs";
+import { DESK_BOARD_ROUTES } from "./deskboard.mjs";
 import { DESK_TABLE_ROUTES } from "./desktable.mjs";
 import { EXTRACTION_ROUTES } from "./deskextraction.mjs";
 import { DESK_THREAD_ROUTES } from "./deskthreads.mjs";
@@ -32,6 +33,7 @@ const ROUTES = [
   ...DESK_PLAN_ROUTES,
   ...DESK_TABLE_ROUTES,
   ...DESK_REPORT_ROUTES,
+  ...DESK_BOARD_ROUTES,
   ...EXTRACTION_ROUTES,
   ...DESK_THREAD_ROUTES,
   ...PALETTE_ROUTES,

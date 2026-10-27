@@ -38,6 +38,8 @@ export const SCENARIO_DEFAULTS = {
   // the Desk table conversation's list: paged | slow | failing | locked | withheld | cut | whole | short
   deskTable: process.env.MOCK_DESK_TABLE ?? "paged",
   deskReport: process.env.MOCK_DESK_REPORT ?? "finished",
+  // the Desk boards conversation: live | moved (read after figures moved and access changed) | reading
+  deskBoard: process.env.MOCK_DESK_BOARD ?? "live",
   // the Lading studio: draft (Acme's version 3 being written) | shadow (version 3 in shadow)
   lading: process.env.MOCK_LADING ?? "draft",
   // the command palette's waiting counts in the sidebar and on the palette's home

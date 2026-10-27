@@ -541,6 +541,20 @@ is at `…/a/revenue-by-customer-preview`. It shoots each on the artifact's page
 conversation and in a narrow window, and writes to `e2e/mock-api/screenshots/desk-report` by
 default.
 
+Boards the agent laid out with `show_board` have their own walkthrough:
+
+```bash
+node e2e/mock-api/desk-board-screenshots.mjs [outDir] [name,name,...]
+```
+
+It opens `/desk/c/athr_desk_board/a/six-late-shipments` (`handlers/deskboard.mjs`): Dispatch Desk
+answered three questions as boards (six late loads, three carriers head to head, the October
+close, at `…/carriers-head-to-head` and `…/october-close`). `DeskBoardCard` answers as the
+`deskBoard` scenario field says: `live` (as answered), `moved` (figures moved since the answer, a
+shipment and the chart's analysis no longer readable) or `reading` (held, so each board draws its
+skeleton). It shoots each on the artifact's page, beside the conversation and in a narrow window,
+and writes to `e2e/mock-api/screenshots/desk-board` by default.
+
 The Desk's extraction artifact, what document intelligence read off a file, has its own
 walkthrough:
 

@@ -40,6 +40,5 @@
   "Select origin facility": "選擇起點場站",
   "Shown wherever a tender references this guide.": "凡要約參照此指引之處均會顯示。",
   "State only": "僅州別",
-  "Which lane this guide covers. The most specific matching guide wins: exact locations beat city+state, which beats state-only.": "此指引涵蓋的路線。最具體的相符指引優先：精確地點優於城市＋州別，城市＋州別又優於僅州別。",
-  "{0, plural, one {# carrier} other {# carriers}}": "{0, plural, other {# 家承運業者}}"
+  "Which lane this guide covers. The most specific matching guide wins: exact locations beat city+state, which beats state-only.": "此指引涵蓋的路線。最具體的相符指引優先：精確地點優於城市＋州別，城市＋州別又優於僅州別。"
 }

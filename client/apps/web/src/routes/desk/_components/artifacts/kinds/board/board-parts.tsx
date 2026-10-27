@@ -268,7 +268,7 @@ export function Readout({
                       <span aria-hidden="true">→</span>
                     </>
                   )}
-                  {formatBoardValue(figure.value)}
+                  <span>{formatBoardValue(figure.value)}</span>
                 </>
               )}
             </dd>
@@ -655,7 +655,7 @@ export function Pips({ meter }: { meter: DeskBoardMeter }) {
       <div className="dk-bd-pips-key">
         <span>
           <i />
-          {t("Clear {0}", meter.clear)}
+          {t("All clear {0}", meter.clear)}
         </span>
         {counts.info > 0 && (
           <span>

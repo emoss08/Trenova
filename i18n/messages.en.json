@@ -12149,15 +12149,6 @@
       "go/other"
     ]
   },
-  "A step of this plan changes a record that has changed since the plan was proposed, so it cannot be approved as it stands. Reject it, or ask the agent again for a current plan": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "A step waits on a document type that does not exist": {
     "sites": 1,
     "scope": [
@@ -23977,12 +23968,21 @@
     ]
   },
   "All clear": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk"
+    ]
+  },
+  "All clear {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
       "routes/desk"
     ]
   },
@@ -31970,7 +31970,7 @@
     ]
   },
   "Approved, but {0} didn't go through": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -39131,6 +39131,15 @@
       "routes/agent-control"
     ]
   },
+  "Back to the board": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Back to the briefing": {
     "sites": 2,
     "scope": [
@@ -43414,6 +43423,24 @@
       "routes/ifta-return"
     ]
   },
+  "Blocks it": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Blocks it {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Blocks rates that fall below an agreement's margin floor instead of only flagging them.": {
     "sites": 1,
     "scope": [
@@ -43442,11 +43469,13 @@
     ]
   },
   "Board": {
-    "sites": 1,
+    "sites": 6,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/components",
+      "routes/desk",
       "routes/dispatch-console"
     ]
   },
@@ -43457,6 +43486,15 @@
     ],
     "areas": [
       "routes/scheduling"
+    ]
+  },
+  "Board not found": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
     ]
   },
   "Bodies and attachments are read": {
@@ -52432,13 +52470,14 @@
     ]
   },
   "Chart": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "apps/web/types",
+      "routes/desk",
       "routes/home",
       "routes/reports",
       "routes/worker"
@@ -53468,6 +53507,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "Checks clear": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Checks the document of": {
@@ -64390,7 +64438,7 @@
     ]
   },
   "Copied": {
-    "sites": 21,
+    "sites": 22,
     "scope": [
       "ts"
     ],
@@ -64646,6 +64694,15 @@
     ]
   },
   "Copy as Markdown": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Copy as text": {
     "sites": 1,
     "scope": [
       "ts"
@@ -65857,7 +65914,7 @@
     ]
   },
   "Could not be read": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -73390,6 +73447,15 @@
       "routes/agent-control"
     ]
   },
+  "Dated {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Dates": {
     "sites": 3,
     "scope": [
@@ -77474,7 +77540,7 @@
     ]
   },
   "Delivered": {
-    "sites": 25,
+    "sites": 26,
     "scope": [
       "go",
       "ts"
@@ -77541,7 +77607,7 @@
     ]
   },
   "Delivered {0}": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -87396,7 +87462,7 @@
     ]
   },
   "Due {0}": {
-    "sites": 7,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -100401,6 +100467,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Exhibit {0}": {
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Exit fullscreen": {
@@ -131757,7 +131832,16 @@
     ]
   },
   "It may have been removed, or you may not be allowed to see it.": {
-    "sites": 2,
+    "sites": 3,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "It may have been removed, or you may not be allowed to see it. The rest of the board stands.": {
+    "sites": 1,
     "scope": [
       "ts"
     ],
@@ -141084,6 +141168,15 @@
       "routes/shipment"
     ]
   },
+  "Live · read {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Live · updated {0}": {
     "sites": 1,
     "scope": [
@@ -149809,13 +149902,14 @@
     ]
   },
   "Measure": {
-    "sites": 7,
+    "sites": 8,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/home",
       "routes/reports"
     ]
@@ -156551,13 +156645,22 @@
     ]
   },
   "Needs a look": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
       "routes/desk",
       "routes/scheduling"
+    ]
+  },
+  "Needs a look {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Needs a sign-in code": {
@@ -168888,6 +168991,15 @@
       "routes/factoring-submission"
     ]
   },
+  "Not carried out": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Not checked": {
     "sites": 1,
     "scope": [
@@ -171239,6 +171351,15 @@
       "routes/desk"
     ]
   },
+  "Nothing has been done to this record yet.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Nothing has been done to this settlement yet.": {
     "sites": 2,
     "scope": [
@@ -172968,12 +173089,13 @@
     ]
   },
   "Nothing was changed.": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
     "areas": [
-      "apps/web/components"
+      "apps/web/components",
+      "apps/web/lib"
     ]
   },
   "Nothing was changed. Ask again if you still want to make the change.": {
@@ -207516,13 +207638,23 @@
     ]
   },
   "Read from {0}": {
-    "sites": 3,
+    "sites": 4,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
+      "routes/desk",
       "routes/inbox"
+    ]
+  },
+  "Read from {0} · {1} you may read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Read fuel card transactions for all connected tenants and post the ones that resolve": {
@@ -208140,6 +208272,15 @@
       "routes/desk"
     ]
   },
+  "Reading the board…": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Reading the conversation…": {
     "sites": 1,
     "scope": [
@@ -208304,7 +208445,7 @@
     ]
   },
   "Reading…": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -208313,13 +208454,14 @@
     ]
   },
   "Reads": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/agent-control",
+      "routes/desk",
       "routes/edi"
     ]
   },
@@ -225873,6 +226015,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "Rows won": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Rubric": {
@@ -246274,7 +246425,7 @@
     ]
   },
   "Since {0}": {
-    "sites": 10,
+    "sites": 11,
     "scope": [
       "ts"
     ],
@@ -261562,6 +261713,15 @@
       "api/handlers"
     ]
   },
+  "The analysis this came from could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The analysis you opened": {
     "sites": 1,
     "scope": [
@@ -263455,6 +263615,15 @@
     "areas": [
       "apps/web/edi",
       "edi/lading"
+    ]
+  },
+  "The chart has nothing to draw.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "The chart of accounts and its running balances": {
@@ -275152,15 +275321,6 @@
       "routes/desk"
     ]
   },
-  "The record this change is for has changed since it was proposed, so it cannot be approved as it stands. Reject it, or ask the agent again for a current one": {
-    "sites": 1,
-    "scope": [
-      "go"
-    ],
-    "areas": [
-      "go/other"
-    ]
-  },
   "The record this change is for is set when it is proposed and cannot be changed. Reject it and ask the agent again for the record you mean": {
     "sites": 1,
     "scope": [
@@ -278538,6 +278698,24 @@
       "routes/hazardous-material"
     ]
   },
+  "The table has no rows now.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "The table this came from could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "The tamper-evident record of what agents did, for whom, and who decided": {
     "sites": 1,
     "scope": [
@@ -281893,6 +282071,15 @@
       "routes/detention-intelligence"
     ]
   },
+  "These figures could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "These files add up to {0}. A reply can carry {1} in all, so remove one to send it.": {
     "sites": 1,
     "scope": [
@@ -282030,6 +282217,15 @@
     "areas": [
       "apps/web/rules",
       "rules/tariff"
+    ]
+  },
+  "These records could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "These results were cut short at the row limit. Narrow the filters or export a wider format to see everything.": {
@@ -282872,6 +283068,15 @@
       "rules/tariff"
     ]
   },
+  "This board could not be read. It may belong to someone else.": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This brace closes nothing": {
     "sites": 2,
     "scope": [
@@ -283027,7 +283232,7 @@
     ]
   },
   "This carrier could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -283181,11 +283386,12 @@
     ]
   },
   "This changed since you opened it": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "apps/web/lib",
       "routes/desk"
     ]
   },
@@ -283768,7 +283974,7 @@
     ]
   },
   "This customer could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -285297,7 +285503,7 @@
     ]
   },
   "This invoice could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -285703,7 +285909,7 @@
     ]
   },
   "This journal entry could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -286064,7 +286270,7 @@
     ]
   },
   "This location could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -287307,6 +287513,15 @@
       "apps/web/components"
     ]
   },
+  "This record could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "This record is missing its closing brace": {
     "sites": 2,
     "scope": [
@@ -287336,6 +287551,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "This record's history could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "This records that someone checked these limits against the state, and does not change them. If the numbers are wrong, edit the rule instead — that clears the verification on its own.": {
@@ -288138,7 +288362,7 @@
     ]
   },
   "This shipment could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -288893,7 +289117,7 @@
     ]
   },
   "This tractor could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -288911,7 +289135,7 @@
     ]
   },
   "This trailer could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -289417,7 +289641,7 @@
     ]
   },
   "This worker could not be read": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -295520,6 +295744,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "Trenova's figures": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "Trenova's role with this partner": {
@@ -309371,6 +309604,15 @@
       "routes/desk"
     ]
   },
+  "What I'd do": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "What If": {
     "sites": 1,
     "scope": [
@@ -318639,6 +318881,33 @@
       "routes/my-team"
     ]
   },
+  "Worth acting on": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Worth knowing": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "Worth knowing {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "Worth watching": {
     "sites": 1,
     "scope": [
@@ -320323,6 +320592,15 @@
     ],
     "areas": [
       "apps/web/lib"
+    ]
+  },
+  "You asked": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "You authored part of this revision, so another reviewer must approve it": {
@@ -324331,6 +324609,15 @@
       "routes/inbox"
     ]
   },
+  "a table": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "a teammate": {
     "sites": 4,
     "scope": [
@@ -324678,6 +324965,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "an analysis": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "an enum": {
@@ -325691,6 +325987,15 @@
     ],
     "areas": [
       "routes/carrier-settlement"
+    ]
+  },
+  "could not be read": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "could not check the extension's daily limit": {
@@ -329811,6 +330116,15 @@
       "routes/home"
     ]
   },
+  "its history": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "its quarter": {
     "sites": 1,
     "scope": [
@@ -330137,6 +330451,15 @@
       "routes/inbox"
     ]
   },
+  "listing shipments by their holds needs read access to shipment holds": {
+    "sites": 1,
+    "scope": [
+      "go"
+    ],
+    "areas": [
+      "go/other"
+    ]
+  },
   "litre": {
     "sites": 2,
     "scope": [
@@ -330218,6 +330541,15 @@
     ],
     "areas": [
       "go/other"
+    ]
+  },
+  "lower is better": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "lowercase": {
@@ -331040,6 +331372,15 @@
       "routes/agent-control"
     ]
   },
+  "of {0, plural, one {# check clear} other {# checks clear}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "of {0}": {
     "sites": 8,
     "scope": [
@@ -331273,11 +331614,12 @@
     ]
   },
   "on time": {
-    "sites": 1,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment"
     ]
   },
@@ -332153,6 +332495,15 @@
       "routes/desk"
     ]
   },
+  "read {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "readings disagree: {0}": {
     "sites": 1,
     "scope": [
@@ -332730,6 +333081,15 @@
       "go/other"
     ]
   },
+  "several sources": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "sftp.factor.com": {
     "sites": 1,
     "scope": [
@@ -332856,6 +333216,15 @@
     ],
     "areas": [
       "routes/edi"
+    ]
+  },
+  "since the answer at {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "since {0}": {
@@ -333310,6 +333679,15 @@
       "apps/web/components"
     ]
   },
+  "the analysis “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "the bill being built": {
     "sites": 2,
     "scope": [
@@ -333349,6 +333727,15 @@
     ],
     "areas": [
       "routes/inbox"
+    ]
+  },
+  "the checks above": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "the customer": {
@@ -333544,6 +333931,15 @@
     "areas": [
       "routes/carrier-monitoring",
       "routes/ifta-jurisdiction-mileage"
+    ]
+  },
+  "the table “{0}”": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "the tariff": {
@@ -334652,6 +335048,15 @@
       "routes/desk"
     ]
   },
+  "waiting {0}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "waived · {0}": {
     "sites": 1,
     "scope": [
@@ -335506,11 +335911,12 @@
     ]
   },
   "{0, plural, one {# carrier} other {# carriers}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/routing-guide"
     ]
   },
@@ -335862,7 +336268,7 @@
     ]
   },
   "{0, plural, one {# customer} other {# customers}}": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
@@ -336388,6 +336794,15 @@
       "routes/settlement-workspace"
     ]
   },
+  "{0, plural, one {# exhibit} other {# exhibits}}": {
+    "sites": 2,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# expired or revoked link} other {# expired or revoked links}}": {
     "sites": 1,
     "scope": [
@@ -336766,13 +337181,14 @@
     ]
   },
   "{0, plural, one {# invoice} other {# invoices}}": {
-    "sites": 9,
+    "sites": 10,
     "scope": [
       "ts"
     ],
     "areas": [
       "apps/web/components",
       "routes/accounting-dashboard",
+      "routes/desk",
       "routes/factoring",
       "routes/factoring-submission",
       "routes/home"
@@ -336962,6 +337378,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# journal entry} other {# journal entries}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# kind of record} other {# kinds of record}}": {
@@ -337166,7 +337591,7 @@
     ]
   },
   "{0, plural, one {# location} other {# locations}}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "ts"
     ],
@@ -337499,6 +337924,15 @@
     ],
     "areas": [
       "apps/web/components"
+    ]
+  },
+  "{0, plural, one {# more you may not read} other {# more you may not read}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# move} other {# moves}}": {
@@ -338239,7 +338673,7 @@
     ]
   },
   "{0, plural, one {# record} other {# records}}": {
-    "sites": 4,
+    "sites": 5,
     "scope": [
       "ts"
     ],
@@ -338815,7 +339249,7 @@
     ]
   },
   "{0, plural, one {# shipment} other {# shipments}}": {
-    "sites": 8,
+    "sites": 9,
     "scope": [
       "ts"
     ],
@@ -339236,6 +339670,24 @@
       "routes/agent-control"
     ]
   },
+  "{0, plural, one {# tractor} other {# tractors}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
+  "{0, plural, one {# trailer} other {# trailers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0, plural, one {# transaction set handled} other {# transaction sets handled}}": {
     "sites": 1,
     "scope": [
@@ -339463,6 +339915,15 @@
     ],
     "areas": [
       "routes/admin"
+    ]
+  },
+  "{0, plural, one {# worker} other {# workers}}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0, plural, one {# working} other {# working}}": {
@@ -342884,6 +343345,15 @@
       "routes/agent-control"
     ]
   },
+  "{0} answered at {1}": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} appears {1} times here, more than its maximum of {2}": {
     "sites": 2,
     "scope": [
@@ -343142,6 +343612,15 @@
       "routes/desk"
     ]
   },
+  "{0} at the stop": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} at {1}": {
     "sites": 2,
     "scope": [
@@ -343281,11 +343760,12 @@
     ]
   },
   "{0} behind": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
+      "routes/desk",
       "routes/shipment",
       "routes/worker"
     ]
@@ -344835,12 +345315,13 @@
     ]
   },
   "{0} due": {
-    "sites": 2,
+    "sites": 3,
     "scope": [
       "ts"
     ],
     "areas": [
-      "routes/customer-statement"
+      "routes/customer-statement",
+      "routes/desk"
     ]
   },
   "{0} due as of {1}.": {
@@ -349392,7 +349873,7 @@
     ]
   },
   "{0} late": {
-    "sites": 5,
+    "sites": 6,
     "scope": [
       "ts"
     ],
@@ -351278,6 +351759,15 @@
       "routes/admin"
     ]
   },
+  "{0} of {1} rows won": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
+    ]
+  },
   "{0} of {1} runs completed": {
     "sites": 1,
     "scope": [
@@ -351551,6 +352041,15 @@
     ],
     "areas": [
       "routes/org-structure"
+    ]
+  },
+  "{0} old": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0} on": {
@@ -355914,6 +356413,15 @@
     ],
     "areas": [
       "routes/detention-intelligence"
+    ]
+  },
+  "{0}% clear": {
+    "sites": 1,
+    "scope": [
+      "ts"
+    ],
+    "areas": [
+      "routes/desk"
     ]
   },
   "{0}% confidence": {
