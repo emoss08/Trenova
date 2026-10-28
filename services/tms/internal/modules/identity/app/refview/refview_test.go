@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -31,7 +32,7 @@ func (a access) Ceiling(
 func TestDecide_ANestedRecordShowsItsViewWithoutItsKindsRead(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permission.NewRegistry())
+	views := refview.New(permissioncatalog.NewRegistry())
 	none := access{}
 
 	assert.Equal(t, refview.Visible,
@@ -45,7 +46,7 @@ func TestDecide_ANestedRecordShowsItsViewWithoutItsKindsRead(t *testing.T) {
 func TestDecide_TheKindsReadShowsTheWholeRecord(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permission.NewRegistry())
+	views := refview.New(permissioncatalog.NewRegistry())
 	reader := access{reads: map[permission.Resource]bool{permission.ResourceWorker: true}}
 
 	assert.Equal(t, refview.Visible,
@@ -55,7 +56,7 @@ func TestDecide_TheKindsReadShowsTheWholeRecord(t *testing.T) {
 func TestDecide_RootAndSelfScopedRecordsAreNotGatedByKind(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permission.NewRegistry())
+	views := refview.New(permissioncatalog.NewRegistry())
 	for _, reach := range []refview.Reach{refview.Root, refview.SelfScoped} {
 		assert.Equal(t, refview.Visible,
 			views.Decide(t.Context(), access{}, permission.ResourceWorker, "phoneNumber", reach))
@@ -65,7 +66,7 @@ func TestDecide_RootAndSelfScopedRecordsAreNotGatedByKind(t *testing.T) {
 func TestDecide_TheCeilingAppliesInsideAView(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permission.NewRegistry())
+	views := refview.New(permissioncatalog.NewRegistry())
 	public := access{ceiling: permission.SensitivityPublic, applies: true}
 
 	assert.Equal(t, refview.WithheldSensitivity,
@@ -79,7 +80,7 @@ func TestDecide_TheCeilingAppliesInsideAView(t *testing.T) {
 func TestFilter_SplitsFieldsInOrder(t *testing.T) {
 	t.Parallel()
 
-	views := refview.New(permission.NewRegistry())
+	views := refview.New(permissioncatalog.NewRegistry())
 	visible, withheld := views.Filter(t.Context(), access{}, permission.ResourceCustomer,
 		[]string{"name", "creditLimit", "code"}, refview.Nested)
 
@@ -90,7 +91,9 @@ func TestFilter_SplitsFieldsInOrder(t *testing.T) {
 func TestPersonAccess_ReadsThroughTheEngineOncePerKind(t *testing.T) {
 	t.Parallel()
 
-	engine := &mocks.DenyResourcesPermissionEngine{Denied: []string{permission.ResourceWorker.String()}}
+	engine := &mocks.DenyResourcesPermissionEngine{
+		Denied: []string{permission.ResourceWorker.String()},
+	}
 	actor := &permissionports.RequestActor{
 		PrincipalType:  permissionports.PrincipalTypeUser,
 		PrincipalID:    pulid.MustNew("usr_"),

@@ -3,8 +3,6 @@ package rolehandler_test
 import (
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"net/http"
 	"testing"
 
@@ -13,8 +11,11 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -45,7 +46,7 @@ func setupRoleHandler(t *testing.T, repo *permissionportsmock.MockRoleRepository
 		Notifier:         &permchangetest.Recorder{},
 		PermissionEngine: permEngine,
 		Validator:        roleservice.NewTestValidator(),
-		Registry:         permission.NewEmptyRegistry(),
+		Registry:         permissioncatalog.NewEmptyRegistry(),
 	})
 
 	cfg := &config.Config{

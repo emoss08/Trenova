@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/permissionlint"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -37,7 +38,7 @@ func TestEveryCheckedPermissionIsDeclared(t *testing.T) {
 	pairs := result.Pairs
 	require.Greater(t, len(pairs), 500, "the analyzer stopped finding permission checks")
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	var undeclared []string
 	for _, pair := range pairs {
 		if !registry.Declares(pair.Resource, permission.Operation(pair.Operation)) {
@@ -164,7 +165,7 @@ func TestEveryClientPermissionGateIsDeclared(t *testing.T) {
 	require.Greater(t, len(result.Pairs), 50, "the client analyzer stopped finding gates")
 	require.Empty(t, result.Unresolved, "these gates name a resource the client does not know")
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	var undeclared []string
 	for _, pair := range result.Pairs {
 		if !registry.Declares(pair.Resource, permission.Operation(pair.Operation)) {

@@ -420,7 +420,7 @@ reads as root records, and the linked fields it selects. Three reads are built o
 | `pageAccessPreview(input:)` | `role` read | a saved or draft role's access to a screen, with the roles it inherits |
 | `pageAccessScreens`, `roleResourceGuides(input:)` | `role` read | the screens to preview; the role editor's sentence for each resource and the screens its grant affects |
 
-A preview unites the role's grants as the engine does (`permission.GrantsOf`: implied operations,
+A preview unites the role's grants as the engine does (`permissioncatalog.GrantsOf`: implied operations,
 a parent resource's grant reaching its children, the widest ceiling) and decides each field through
 `refview.RoleAccess`, so it shows what the field guard will do. It is the role's grants alone:
 organization access policies (ABAC), data scopes and row-level security narrow what a person

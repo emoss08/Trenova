@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/airetrieval"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/productguide"
 	"github.com/emoss08/trenova/shared/rankfusion"
 	"go.uber.org/zap"
@@ -72,7 +72,7 @@ func NewOffline(catalog *productguide.Catalog) *Service {
 		l:         zap.NewNop(),
 		catalog:   catalog,
 		index:     buildIndex(catalog),
-		resources: permission.NewRegistry(),
+		resources: permissioncatalog.NewRegistry(),
 		items:     CatalogItems(catalog),
 	}
 }

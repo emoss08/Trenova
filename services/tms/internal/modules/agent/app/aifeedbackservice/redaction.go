@@ -8,6 +8,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 )
 
 var jsonPairPattern = regexp.MustCompile(
@@ -60,7 +61,7 @@ type redactor struct {
 }
 
 func newRedactor(tools toolResourceLookup) *redactor {
-	return &redactor{tools: tools, registry: permission.NewRegistry()}
+	return &redactor{tools: tools, registry: permissioncatalog.NewRegistry()}
 }
 
 func (r *redactor) restrictedValues(results []toolResult) []string {

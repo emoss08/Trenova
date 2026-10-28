@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/domain/pagedraft"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -85,7 +86,7 @@ func IsKnownPageEntityType(kind string) bool {
 	return kind != string(permission.KindAssistantThread) && permission.RecordKind(kind).Known()
 }
 
-var pageResources = permission.NewRegistry()
+var pageResources = permissioncatalog.NewRegistry()
 
 // IsKnownPageResource reports whether a table's resource names something the
 // permission registry knows, which is the set of resources a list page can

@@ -28,7 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/toolschema"
@@ -118,7 +118,7 @@ type Service struct {
 	rateLimits kernelports.RateLimitStore
 	pools      matchPools
 	matchable  func() []string
-	registry   *permission.Registry
+	registry   *permissioncatalog.Registry
 	codeMode   codemode.Gate
 	scripts    llmports.ScriptProviders
 	shadow     shadowVerdicts
@@ -150,7 +150,7 @@ func New(p Params) *Service {
 		rateLimits:  p.RateLimits,
 		pools:       newMatchPools(),
 		matchable:   matchableTools(p.Catalog),
-		registry:    permission.NewRegistry(),
+		registry:    permissioncatalog.NewRegistry(),
 		codeMode:    codeModeGate(p.Config),
 		scripts:     p.Scripts,
 		shadow:      shadowFrom(p.Shadow),

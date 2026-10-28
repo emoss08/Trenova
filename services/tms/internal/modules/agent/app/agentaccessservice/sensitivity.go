@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 )
 
 // HeldTool is a tool an agent holds, with the grant it needs of the person
@@ -36,7 +37,7 @@ func AnySensitive(rules ...SensitiveToolRule) SensitiveToolRule {
 
 // RestrictedResourceRule marks a tool whose resource is restricted or
 // confidential by default.
-func RestrictedResourceRule(registry *permission.Registry) SensitiveToolRule {
+func RestrictedResourceRule(registry *permissioncatalog.Registry) SensitiveToolRule {
 	return func(tool HeldTool) bool {
 		if registry == nil || tool.Resource == "" {
 			return false
@@ -63,7 +64,7 @@ func LeavesOrganizationRule() SensitiveToolRule {
 
 // DefaultSensitiveRule is the rule the audience suggestion reads. Another
 // reason a tool is sensitive is ORed in here.
-func DefaultSensitiveRule(registry *permission.Registry) SensitiveToolRule {
+func DefaultSensitiveRule(registry *permissioncatalog.Registry) SensitiveToolRule {
 	return AnySensitive(RestrictedResourceRule(registry), LeavesOrganizationRule())
 }
 

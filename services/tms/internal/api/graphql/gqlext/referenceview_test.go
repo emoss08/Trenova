@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/selfscoped"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -134,7 +135,8 @@ func TestEveryKindToKindFieldIsCovered(t *testing.T) {
 				continue
 			}
 			named := stringutils.ConvertCamelToSnake(field.Name)
-			if !registry.HasResource(named) && !registry.HasResource(strings.TrimSuffix(named, "s")) {
+			if !registry.HasResource(named) &&
+				!registry.HasResource(strings.TrimSuffix(named, "s")) {
 				continue
 			}
 			key := name + "." + field.Name
@@ -204,9 +206,14 @@ func TestReferenceFragmentsAreGenerated(t *testing.T) {
 	} {
 		got, err := os.ReadFile(filepath.Join(repoRootFromHere, path))
 		require.NoError(t, err)
-		assert.Equal(t, want, string(got),
+		assert.Equal(
+			t,
+			want,
+			string(got),
 			"%s is out of date: run `go run ./internal/api/graphql/gqlext/refgen` from services/tms, "+
-				"then `pnpm --filter @trenova/graphql codegen`", path)
+				"then `pnpm --filter @trenova/graphql codegen`",
+			path,
+		)
 	}
 	assert.NotContains(t, fragments, "{\n}",
 		"a kind type with none of its view's fields, such as a summary, has no fragment")
@@ -293,7 +300,10 @@ func resolverReadChecks(t *testing.T) map[string][]string {
 			key := strings.ToLower(src[loc[2]:loc[3]] + "." + src[loc[4]:loc[5]])
 			for _, m := range resolverCheck.FindAllStringSubmatch(body, -1) {
 				op := operations[m[2]]
-				if slices.Contains(permission.Implied([]permission.Operation{op}), permission.OpRead) {
+				if slices.Contains(
+					permission.Implied([]permission.Operation{op}),
+					permission.OpRead,
+				) {
 					checks[key] = append(checks[key], constants[m[1]])
 				}
 			}
@@ -337,7 +347,7 @@ func TestEveryRootOfADatabaseScopedKindChecksItsRead(t *testing.T) {
 	t.Parallel()
 
 	schema := loadSchema(t)
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	kinds, err := KindTypes(schema, registry)
 	require.NoError(t, err)
 	scoped := registry.DatabaseScopedResources()
@@ -358,8 +368,14 @@ func TestEveryRootOfADatabaseScopedKindChecksItsRead(t *testing.T) {
 					continue
 				}
 				reached++
-				if !slices.Contains(checks[strings.ToLower(root.Name+"."+field.Name)], kind.String()) {
-					unchecked = append(unchecked, fmt.Sprintf("%s.%s returns %s", root.Name, field.Name, kind))
+				if !slices.Contains(
+					checks[strings.ToLower(root.Name+"."+field.Name)],
+					kind.String(),
+				) {
+					unchecked = append(
+						unchecked,
+						fmt.Sprintf("%s.%s returns %s", root.Name, field.Name, kind),
+					)
 				}
 			}
 		}

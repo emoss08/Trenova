@@ -233,7 +233,7 @@ only, from:
   permission the screen needs is asked of the engine in one `CheckBatch`.
 - `pageAccessPreview(input:)` for a role, saved (`roleId`) or as the role editor holds it
   (`draft`), with the roles it inherits. It needs role read, like the role editor. The grants are
-  united by `permission.GrantsOf` with their implied operations and the widest ceiling, wrapped in
+  united by `permissioncatalog.GrantsOf` with their implied operations and the widest ceiling, wrapped in
   `refview.RoleAccess`, and every field goes through `refview` (`Decide`, `DecidePart`) with the
   role's ceiling (`fieldsensitivity.RoleCeiling`), so the preview cannot disagree with the guard.
   It is worked out before organization access policies (ABAC), and an inherited role from another

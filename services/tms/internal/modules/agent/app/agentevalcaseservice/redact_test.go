@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/conversation"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,15 +56,15 @@ func (r fakeQueryRegistry) All() []agenttoolports.AgentQueryTool { return nil }
 
 func (r fakeQueryRegistry) Descriptors() []agenttoolports.AgentToolDescriptor { return nil }
 
-func testRegistry(t *testing.T) *permission.Registry {
+func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	t.Helper()
 
-	registry := permission.NewEmptyRegistry()
-	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+	registry := permissioncatalog.NewEmptyRegistry()
+	require.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
 		Resource:    resourceCustomer.String(),
 		DisplayName: "Customer",
 		Category:    "Test",
-		Operations:  []permission.OperationDefinition{{Operation: permission.OpRead}},
+		Operations:  []permissioncatalog.OperationDefinition{{Operation: permission.OpRead}},
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"name":                permission.SensitivityPublic,
 			"creditLimit":         permission.SensitivityRestricted,
@@ -75,11 +76,11 @@ func testRegistry(t *testing.T) *permission.Registry {
 		},
 		DefaultSensitivity: permission.SensitivityInternal,
 	}))
-	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+	require.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
 		Resource:    resourceLedger.String(),
 		DisplayName: "Ledger",
 		Category:    "Test",
-		Operations:  []permission.OperationDefinition{{Operation: permission.OpRead}},
+		Operations:  []permissioncatalog.OperationDefinition{{Operation: permission.OpRead}},
 		FieldSensitivities: map[string]permission.FieldSensitivity{
 			"id": permission.SensitivityPublic,
 		},

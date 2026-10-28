@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/stringutils"
@@ -103,7 +104,7 @@ type FieldGuardParams struct {
 type FieldGuardExtension struct {
 	engine    permissionports.PermissionEngine
 	fields    ProtectedFieldMap
-	registry  *permission.Registry
+	registry  *permissioncatalog.Registry
 	views     *refview.Views
 	resources map[string]permission.Resource
 	scoped    []string
@@ -154,7 +155,7 @@ func (e *FieldGuardExtension) Validate(schema graphql.ExecutableSchema) error {
 // type with no resource of its own belongs to the record that carries it.
 func ResourceTypes(
 	schema *ast.Schema,
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 ) map[string]permission.Resource {
 	out := make(map[string]permission.Resource)
 	if schema == nil || registry == nil {
@@ -178,7 +179,7 @@ func ResourceTypes(
 // customer, so a projection is gated as the record it projects.
 func KindTypes(
 	schema *ast.Schema,
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 ) (map[string]permission.Resource, error) {
 	out := ResourceTypes(schema, registry)
 	if schema == nil {

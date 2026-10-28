@@ -2,7 +2,6 @@ package apikeyhandler_test
 
 import (
 	"context"
-	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"net/http"
 	"testing"
 	"time"
@@ -14,8 +13,10 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/apikeyservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/apikeyportsmock"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -27,7 +28,9 @@ import (
 	"go.uber.org/zap"
 )
 
-func setupAPIKeyHandler(t *testing.T) (*apikeyhandler.Handler, *apikeyportsmock.MockAPIKeyRepository) {
+func setupAPIKeyHandler(
+	t *testing.T,
+) (*apikeyhandler.Handler, *apikeyportsmock.MockAPIKeyRepository) {
 	t.Helper()
 
 	repo := apikeyportsmock.NewMockAPIKeyRepository(t)
@@ -53,7 +56,7 @@ func setupAPIKeyHandler(t *testing.T) (*apikeyhandler.Handler, *apikeyportsmock.
 	svc := apikeyservice.New(apikeyservice.Params{
 		Logger:   zap.NewNop(),
 		Repo:     repo,
-		Registry: permissiondomain.NewRegistry(),
+		Registry: permissioncatalog.NewRegistry(),
 		Engine:   &mocks.AllowAllPermissionEngine{},
 		Config:   cfg,
 	})

@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -40,14 +41,18 @@ type ToolPolicies interface {
 // bound, and the sensitivity of every path, so a reader's own ceiling can be
 // applied when the row is read.
 type Redactor struct {
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 	policies ToolPolicies
 	masker   Masker
 }
 
-func NewRedactor(registry *permission.Registry, policies ToolPolicies, masker Masker) *Redactor {
+func NewRedactor(
+	registry *permissioncatalog.Registry,
+	policies ToolPolicies,
+	masker Masker,
+) *Redactor {
 	if registry == nil {
-		registry = permission.NewRegistry()
+		registry = permissioncatalog.NewRegistry()
 	}
 
 	return &Redactor{registry: registry, policies: policies, masker: masker}

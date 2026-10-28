@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -31,12 +32,12 @@ import (
 // ceiling; Internal ones are shown to anyone who may read the record.
 type fieldAccess struct {
 	permissions permissionports.PermissionEngine
-	registry    *permission.Registry
+	registry    *permissioncatalog.Registry
 	threads     assistantports.ThreadOwnerRepository
 }
 
 func newFieldAccess(permissions permissionports.PermissionEngine) fieldAccess {
-	return fieldAccess{permissions: permissions, registry: permission.NewRegistry()}
+	return fieldAccess{permissions: permissions, registry: permissioncatalog.NewRegistry()}
 }
 
 func (a fieldAccess) withThreads(threads assistantports.ThreadOwnerRepository) fieldAccess {
@@ -348,7 +349,7 @@ func (a fieldAccess) gateAt(
 	ceiling permission.FieldSensitivity,
 ) *fieldGate {
 	if a.registry == nil {
-		a.registry = permission.NewRegistry()
+		a.registry = permissioncatalog.NewRegistry()
 	}
 
 	return &fieldGate{access: a, resource: resource, ceiling: ceiling}

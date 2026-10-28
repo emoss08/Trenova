@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 )
 
 // maxDepth bounds the walk. Nothing a handler returns nests this deep; a value
@@ -49,7 +50,7 @@ type walker struct {
 	ctx        context.Context
 	decider    decider
 	planner    *planner
-	registry   *permission.Registry
+	registry   *permissioncatalog.Registry
 	selfScoped bool
 
 	path     []string

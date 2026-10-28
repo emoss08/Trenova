@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/permissionlint"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/require"
 )
 
@@ -73,7 +74,11 @@ func resolverAction(function string) string {
 	return strings.ToLower(function)
 }
 
-func operationLabel(registry *permission.Registry, resource string, op permission.Operation) string {
+func operationLabel(
+	registry *permissioncatalog.Registry,
+	resource string,
+	op permission.Operation,
+) string {
 	def, ok := registry.Get(resource)
 	if !ok {
 		return ""
@@ -86,7 +91,11 @@ func operationLabel(registry *permission.Registry, resource string, op permissio
 	return ""
 }
 
-func namesAction(registry *permission.Registry, pair permissionlint.Pair, action string) bool {
+func namesAction(
+	registry *permissioncatalog.Registry,
+	pair permissionlint.Pair,
+	action string,
+) bool {
 	op := permission.Operation(pair.Operation)
 	if natural, ok := actionOperations[action]; ok && natural == op {
 		return true
@@ -122,7 +131,7 @@ func TestEveryActionIsGatedByAPermissionThatNamesIt(t *testing.T) {
 	result, err := permissionlint.Analyze(consts, handlersDir, resolverDir)
 	require.NoError(t, err)
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	type site struct {
 		action string
 		pairs  []permissionlint.Pair
@@ -164,7 +173,10 @@ func TestEveryActionIsGatedByAPermissionThatNamesIt(t *testing.T) {
 		}
 		if !named {
 			pair := s.pairs[0]
-			unnamed = append(unnamed, key+" "+pair.Route+" "+s.action+" -> "+pair.Resource+":"+pair.Operation)
+			unnamed = append(
+				unnamed,
+				key+" "+pair.Route+" "+s.action+" -> "+pair.Resource+":"+pair.Operation,
+			)
 		}
 	}
 	sort.Strings(unnamed)

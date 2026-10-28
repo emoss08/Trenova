@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/llmports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -37,7 +37,7 @@ type Params struct {
 	Repo       retrievalports.AIRetrievalRepository
 	Sources    retrievalports.RetrievalSourceRepository
 	Usage      aiusageports.AIUsageRepository
-	Registry   *permission.Registry
+	Registry   *permissioncatalog.Registry
 	Embeddings aiusageports.EmbeddingService     `optional:"true"`
 	Signals    kernelports.WorkflowSignalStarter `optional:"true"`
 	Workflows  kernelports.WorkflowStarter       `optional:"true"`
@@ -48,7 +48,7 @@ type Service struct {
 	repo       retrievalports.AIRetrievalRepository
 	sources    retrievalports.RetrievalSourceRepository
 	usage      aiusageports.AIUsageRepository
-	registry   *permission.Registry
+	registry   *permissioncatalog.Registry
 	embeddings aiusageports.EmbeddingService
 	signals    kernelports.WorkflowSignalStarter
 	workflows  kernelports.WorkflowStarter
@@ -58,7 +58,7 @@ type Service struct {
 func New(p Params) *Service { //nolint:gocritic // fx param structs are passed by value
 	registry := p.Registry
 	if registry == nil {
-		registry = permission.NewRegistry()
+		registry = permissioncatalog.NewRegistry()
 	}
 
 	return &Service{

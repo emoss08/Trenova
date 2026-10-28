@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detector"
 	"github.com/emoss08/trenova/internal/modules/agent/app/insightservice/detectors"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/insightports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/require"
 )
@@ -64,16 +64,26 @@ func everyDetectorFinds() *fakeMetrics {
 func TestEveryDetectorDeclaresEveryKindItsFindingsName(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	for _, d := range detectors.All(everyDetectorFinds()) {
 		declared := d.Resources()
 		require.NotEmptyf(t, declared, "%s declares no kind of record", d.Key())
 		for _, kind := range declared {
 			def, ok := registry.Get(kind.String())
 			require.Truef(t, ok, "%s declares %q, which is not a registered kind", d.Key(), kind)
-			require.Truef(t, slices.ContainsFunc(def.Operations, func(op permission.OperationDefinition) bool {
-				return op.Operation == d.Operation()
-			}), "%s needs %s on %q, which the kind does not offer", d.Key(), d.Operation(), kind)
+			require.Truef(
+				t,
+				slices.ContainsFunc(
+					def.Operations,
+					func(op permissioncatalog.OperationDefinition) bool {
+						return op.Operation == d.Operation()
+					},
+				),
+				"%s needs %s on %q, which the kind does not offer",
+				d.Key(),
+				d.Operation(),
+				kind,
+			)
 		}
 
 		findings, err := d.Detect(t.Context(), testParams())

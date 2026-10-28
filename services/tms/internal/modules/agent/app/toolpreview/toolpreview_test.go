@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/domain/assistantartifact"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
@@ -36,11 +37,11 @@ type testRecord struct {
 	UpdatedAt      int64           `json:"updatedAt"`
 }
 
-func testRegistry(t *testing.T) *permission.Registry {
+func testRegistry(t *testing.T) *permissioncatalog.Registry {
 	t.Helper()
 
-	registry := permission.NewEmptyRegistry()
-	require.NoError(t, registry.Register(&permission.ResourceDefinition{
+	registry := permissioncatalog.NewEmptyRegistry()
+	require.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
 		Resource:           testResource.String(),
 		DefaultSensitivity: permission.SensitivityInternal,
 		FieldSensitivities: map[string]permission.FieldSensitivity{

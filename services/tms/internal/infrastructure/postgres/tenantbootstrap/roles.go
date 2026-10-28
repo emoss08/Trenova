@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -18,7 +19,7 @@ const (
 type AdminRoleParams struct {
 	Scope     Scope
 	CreatedBy pulid.ID
-	Registry  *permission.Registry
+	Registry  *permissioncatalog.Registry
 }
 
 func CreateAdminRole(
@@ -46,7 +47,7 @@ func CreateAdminRole(
 
 	registry := params.Registry
 	if registry == nil {
-		registry = permission.NewRegistry()
+		registry = permissioncatalog.NewRegistry()
 	}
 
 	grants := planAdminGrants(registry, role.ID, nil, now).add

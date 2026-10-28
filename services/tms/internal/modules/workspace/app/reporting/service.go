@@ -5,10 +5,9 @@ import (
 	"fmt"
 
 	"github.com/emoss08/keel/analytics/ir"
-
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -76,7 +75,7 @@ func New(p Params) (*Service, error) {
 	access, err := reportaccess.New(reportaccess.Params{
 		Catalog:  p.Engine.Catalog(),
 		Engine:   p.PermissionEngine,
-		Registry: permission.NewRegistry(),
+		Registry: permissioncatalog.NewRegistry(),
 		Views:    p.ReferenceViews,
 		Fields:   p.FieldAccess,
 	})

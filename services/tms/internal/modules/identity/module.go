@@ -67,7 +67,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/tenanttimezone"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/workerptoservice"
-	permissiondomain "github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/apikeyports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
@@ -146,8 +146,8 @@ func SharedOptions() fx.Option {
 			func(s *readscopeservice.Service) permissionports.ReadScopes { return s },
 			roleservice.New,
 			pageaccessservice.New,
-			permissiondomain.NewRegistry,
-			permissiondomain.NewRouteRegistry,
+			permissioncatalog.NewRegistry,
+			permissioncatalog.NewRouteRegistry,
 			roleassignmentservice.New,
 			tenanttimezone.New,
 			passwordresetservice.New,

@@ -5,19 +5,20 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSensitiveTools_NamesToolsOnRestrictedResources(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewEmptyRegistry()
+	registry := permissioncatalog.NewEmptyRegistry()
 	for resource, sensitivity := range map[permission.Resource]permission.FieldSensitivity{
 		"shipment":   permission.SensitivityInternal,
 		"worker_pay": permission.SensitivityConfidential,
 		"api_key":    permission.SensitivityRestricted,
 	} {
-		assert.NoError(t, registry.Register(&permission.ResourceDefinition{
+		assert.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
 			Resource:           resource.String(),
 			DisplayName:        resource.String(),
 			DefaultSensitivity: sensitivity,
@@ -41,8 +42,8 @@ func TestSensitiveTools_NamesToolsOnRestrictedResources(t *testing.T) {
 func TestAnySensitive_OrsItsRules(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewEmptyRegistry()
-	assert.NoError(t, registry.Register(&permission.ResourceDefinition{
+	registry := permissioncatalog.NewEmptyRegistry()
+	assert.NoError(t, registry.Register(&permissioncatalog.ResourceDefinition{
 		Resource:           "worker_pay",
 		DisplayName:        "worker_pay",
 		DefaultSensitivity: permission.SensitivityConfidential,
@@ -63,7 +64,7 @@ func TestAnySensitive_OrsItsRules(t *testing.T) {
 func TestDefaultSensitiveRule_NamesToolsWhoseWorkLeavesTheOrganization(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewEmptyRegistry()
+	registry := permissioncatalog.NewEmptyRegistry()
 	held := []HeldTool{
 		{
 			Name:      "customer_send_email",

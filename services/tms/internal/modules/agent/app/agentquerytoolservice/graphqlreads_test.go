@@ -7,7 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/filtercatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ import (
 func TestGraphQLReadsAreBoundToRegisteredResources(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	for tool, read := range graphQLReads {
 		if read.SelfScoped {
 			assert.Emptyf(t, read.Resource, "%s reads the caller's own record, checked by no "+

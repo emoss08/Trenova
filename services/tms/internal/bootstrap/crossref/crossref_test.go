@@ -3,7 +3,7 @@ package crossref
 import (
 	"testing"
 
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,5 +15,5 @@ func TestVisibleRecordSources_CoverEveryKindTheDatabaseScopes(t *testing.T) {
 	for _, source := range sources {
 		kinds = append(kinds, source.Kind)
 	}
-	assert.ElementsMatch(t, permission.NewRegistry().DatabaseScopedResources(), kinds)
+	assert.ElementsMatch(t, permissioncatalog.NewRegistry().DatabaseScopedResources(), kinds)
 }

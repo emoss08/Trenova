@@ -29,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/tractor"
 	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/adapters/postgres/workerrepository"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -99,7 +100,7 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 		Config:   enforced,
 		DB:       owner,
 		Engine:   noWorkerRead,
-		Registry: permission.NewRegistry(),
+		Registry: permissioncatalog.NewRegistry(),
 	})
 	principal := &permissionports.PermissionCheckRequest{
 		PrincipalType:  permissionports.PrincipalTypeUser,
@@ -112,8 +113,12 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 
 	t.Run("row-level security off shows the reference view", func(t *testing.T) {
 		var response tractorDriversResponse
-		raw := screenPost(t, screenClient(t, readscope.With(tenantCtx, nil), owner, noWorkerRead, tenant),
-			tractorDriversQuery, &response)
+		raw := screenPost(
+			t,
+			screenClient(t, readscope.With(tenantCtx, nil), owner, noWorkerRead, tenant),
+			tractorDriversQuery,
+			&response,
+		)
 
 		require.Len(t, response.Tractors.Edges, 1)
 		node := response.Tractors.Edges[0].Node
@@ -148,7 +153,11 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 		require.Len(t, response.Tractors.Edges, 1)
 		node := response.Tractors.Edges[0].Node
 		assert.Equal(t, driverID.String(), node.PrimaryWorkerID)
-		require.NotNil(t, node.PrimaryWorker, "the database returns the driver the tractor links to")
+		require.NotNil(
+			t,
+			node.PrimaryWorker,
+			"the database returns the driver the tractor links to",
+		)
 		assert.Equal(t, driverID.String(), node.PrimaryWorker.ID)
 		assert.Equal(t, "Hidden Driver", node.PrimaryWorker.WholeName,
 			"a driver's name is in the worker reference view")
@@ -171,12 +180,22 @@ func TestScreenRead_ATractorsDriverShowsTheWorkerReferenceView(t *testing.T) {
 
 	t.Run("a linked field outside the view that is non-null is refused", func(t *testing.T) {
 		var response map[string]any
-		err := screenClient(t, readscope.With(tenantCtx, nil), owner, noWorkerRead, tenant).Post(`query {
+		err := screenClient(
+			t,
+			readscope.With(tenantCtx, nil),
+			owner,
+			noWorkerRead,
+			tenant,
+		).Post(`query {
 			tractors(input: { first: 10 }, includeWorkerDetails: true) {
 				edges { node { id primaryWorker { id phoneNumber } } }
 			}
 		}`, &response)
-		require.Error(t, err, "a non-null field outside the view needs @requiresRead and worker read")
+		require.Error(
+			t,
+			err,
+			"a non-null field outside the view needs @requiresRead and worker read",
+		)
 		assert.Contains(t, err.Error(), "@requiresRead")
 	})
 }

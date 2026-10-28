@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -129,7 +130,7 @@ func TestAgentsUsable_AnUnattendedActorIsNotReadAsItsSystemUser(t *testing.T) {
 }
 
 func registeredResources() map[permission.Resource]struct{} {
-	all := permission.NewRegistry().All()
+	all := permissioncatalog.NewRegistry().All()
 	resources := make(map[permission.Resource]struct{}, len(all))
 	for _, resource := range all {
 		resources[permission.Resource(resource.Resource)] = struct{}{}

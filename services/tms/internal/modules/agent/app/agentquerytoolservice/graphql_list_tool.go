@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/graphqlreadports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/dbtype"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -255,7 +256,7 @@ type graphQLListTool struct {
 	instead     []insteadRead
 	reader      graphqlreadports.GraphQLReader
 	permissions permissionports.PermissionEngine
-	registry    *permission.Registry
+	registry    *permissioncatalog.Registry
 	rowFields   []graphQLField
 	columns     agenttoolschema.EnumSource[string]
 }

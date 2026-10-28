@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/documents/domain/capture"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -110,14 +110,27 @@ func TestTargetValidate(t *testing.T) {
 		fields   []string
 	}{
 		{name: "empty optional", target: capture.Target{}},
-		{name: "empty required", target: capture.Target{}, required: true, fields: []string{"targetType"}},
+		{
+			name:     "empty required",
+			target:   capture.Target{},
+			required: true,
+			fields:   []string{"targetType"},
+		},
 		{
 			name:   "document type without record",
 			target: capture.Target{DocumentTypeID: &docType},
 			fields: []string{"targetType"},
 		},
-		{name: "kind without id", target: capture.Target{ResourceType: "shipment"}, fields: []string{"targetId"}},
-		{name: "id without kind", target: capture.Target{ResourceID: &id}, fields: []string{"targetType"}},
+		{
+			name:   "kind without id",
+			target: capture.Target{ResourceType: "shipment"},
+			fields: []string{"targetId"},
+		},
+		{
+			name:   "id without kind",
+			target: capture.Target{ResourceID: &id},
+			fields: []string{"targetType"},
+		},
 		{
 			name:   "unfileable kind",
 			target: capture.Target{ResourceType: "invoice", ResourceID: &id},
@@ -129,8 +142,12 @@ func TestTargetValidate(t *testing.T) {
 			required: true,
 		},
 		{
-			name:     "shipment",
-			target:   capture.Target{ResourceType: "shipment", ResourceID: &id, DocumentTypeID: &docType},
+			name: "shipment",
+			target: capture.Target{
+				ResourceType:   "shipment",
+				ResourceID:     &id,
+				DocumentTypeID: &docType,
+			},
 			required: true,
 		},
 	}
@@ -140,7 +157,11 @@ func TestTargetValidate(t *testing.T) {
 			t.Parallel()
 
 			multiErr := errortypes.NewMultiError()
-			tt.target.Validate(multiErr, capture.TargetFields{Type: "targetType", ID: "targetId"}, tt.required)
+			tt.target.Validate(
+				multiErr,
+				capture.TargetFields{Type: "targetType", ID: "targetId"},
+				tt.required,
+			)
 			assert.ElementsMatch(t, tt.fields, errorFields(multiErr))
 		})
 	}
@@ -156,7 +177,7 @@ func TestAssistantThreadIsATargetButNotAFilingDestination(t *testing.T) {
 func TestFileableResourcesAreRealResources(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	for _, resource := range capture.FileableResources() {
 		_, ok := registry.Get(resource.String())
 		assert.True(t, ok, "%s is fileable but not a registered resource", resource)
@@ -202,7 +223,11 @@ func TestProfileValidate(t *testing.T) {
 	bad.SeparatorStrategies = []capture.SeparatorStrategy{"Staple"}
 	multiErr = errortypes.NewMultiError()
 	bad.Validate(multiErr)
-	assert.ElementsMatch(t, []string{"dpi", "jpegQuality", "separatorStrategies"}, errorFields(multiErr))
+	assert.ElementsMatch(
+		t,
+		[]string{"dpi", "jpegQuality", "separatorStrategies"},
+		errorFields(multiErr),
+	)
 }
 
 func TestBatchSettleFiling(t *testing.T) {
@@ -220,7 +245,11 @@ func TestBatchSettleFiling(t *testing.T) {
 	batch.SettleFiling()
 	assert.Equal(t, capture.BatchFiled, batch.Status)
 
-	discarded := &capture.CaptureBatch{Status: capture.BatchDiscarded, ItemCount: 1, FiledItemCount: 1}
+	discarded := &capture.CaptureBatch{
+		Status:         capture.BatchDiscarded,
+		ItemCount:      1,
+		FiledItemCount: 1,
+	}
 	discarded.SettleFiling()
 	assert.Equal(t, capture.BatchDiscarded, discarded.Status, "a settled batch stays settled")
 }

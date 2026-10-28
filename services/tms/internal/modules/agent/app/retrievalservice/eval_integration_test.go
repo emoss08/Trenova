@@ -28,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/testutil/retrievaltest"
 	"github.com/emoss08/trenova/internal/testutil/seedtest"
 	"github.com/emoss08/trenova/pkg/dbscope"
@@ -62,7 +63,7 @@ type evalHarness struct {
 	sources  retrievalports.RetrievalSourceRepository
 	memories agentmemoryports.AgentMemoryRepository
 	threads  assistantports.ThreadOwnerRepository
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 	data     *seedtest.TestData
 	tenant   pagination.TenantInfo
 }
@@ -98,7 +99,7 @@ func newEvalHarness(t *testing.T) (*evalHarness, evalSuites) {
 			DB:     conn,
 			Logger: zap.NewNop(),
 		}),
-		registry: permission.NewRegistry(),
+		registry: permissioncatalog.NewRegistry(),
 		data:     data,
 		tenant:   pagination.TenantInfo{OrgID: data.Organization.ID, BuID: data.BusinessUnit.ID},
 	}
@@ -226,7 +227,7 @@ func loadFixture(t *testing.T) (*agentevalgate.EmbeddingFixture, bool) {
 	return fixture, true
 }
 
-func access(registry *permission.Registry) retrievaltest.Access {
+func access(registry *permissioncatalog.Registry) retrievaltest.Access {
 	return retrievaltest.Access{Registry: registry}
 }
 

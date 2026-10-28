@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/billing/domain/factoring"
 	"github.com/emoss08/trenova/internal/modules/edi/domain/edi"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/servicefailure"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/carrierintel"
@@ -86,13 +87,13 @@ var namedKinds = map[reflect.Type]permission.Resource{
 
 // kindTable maps a Go type to the kind of record it holds.
 type kindTable struct {
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 
 	mu    sync.RWMutex
 	kinds map[reflect.Type]permission.Resource
 }
 
-func newKindTable(registry *permission.Registry) *kindTable {
+func newKindTable(registry *permissioncatalog.Registry) *kindTable {
 	return &kindTable{
 		registry: registry,
 		kinds:    make(map[reflect.Type]permission.Resource, len(namedKinds)+32),
@@ -127,13 +128,13 @@ var namedKindsByName = func() map[string]permission.Resource {
 	return out
 }()
 
-func resolveKind(registry *permission.Registry, t reflect.Type) permission.Resource {
+func resolveKind(registry *permissioncatalog.Registry, t reflect.Type) permission.Resource {
 	return kindOfName(registry, t.PkgPath(), t.Name())
 }
 
 // kindOfName is the kind of the domain type a package path and type name
 // name, so a tool reading source agrees with what a response is gated as.
-func kindOfName(registry *permission.Registry, pkgPath, name string) permission.Resource {
+func kindOfName(registry *permissioncatalog.Registry, pkgPath, name string) permission.Resource {
 	if kind, ok := namedKindsByName[pkgPath+"."+name]; ok {
 		return kind
 	}

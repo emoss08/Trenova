@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/app/agenttoolpolicy"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiauditports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/realtimeports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -25,7 +25,7 @@ type Params struct {
 	ExportRepo    aiauditports.AIAuditExportRepository
 	Retention     tenantports.DataRetentionRepository
 	Policies      *agenttoolpolicy.Catalog
-	Registry      *permission.Registry
+	Registry      *permissioncatalog.Registry
 	Permissions   permissionports.PermissionEngine
 	Storage       kernelports.Client
 	Workflows     kernelports.WorkflowStarter

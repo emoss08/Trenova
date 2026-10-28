@@ -9,12 +9,13 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agent"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/productguide"
 )
 
 const artifactProbeID = "artifact-probe"
 
-var permissionRegistry = sync.OnceValue(permission.NewRegistry)
+var permissionRegistry = sync.OnceValue(permissioncatalog.NewRegistry)
 
 type Spec struct {
 	ToolName string

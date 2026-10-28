@@ -11,6 +11,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 )
 
 // Reach is how the record holding a field was reached.
@@ -54,10 +55,10 @@ type Access interface {
 }
 
 type Views struct {
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 }
 
-func New(registry *permission.Registry) *Views {
+func New(registry *permissioncatalog.Registry) *Views {
 	if registry == nil {
 		registry = fieldsensitivity.DefaultRegistry()
 	}
@@ -69,7 +70,7 @@ func Default() *Views {
 	return New(fieldsensitivity.DefaultRegistry())
 }
 
-func (v *Views) Registry() *permission.Registry { return v.registry }
+func (v *Views) Registry() *permissioncatalog.Registry { return v.registry }
 
 // InView reports whether a field is in a kind's reference view.
 func (v *Views) InView(kind permission.Resource, field string) bool {

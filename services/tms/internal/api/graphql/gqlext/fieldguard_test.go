@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/gqlctx"
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -53,10 +54,14 @@ func TestProtectedFieldsAreTheDeclaredSet(t *testing.T) {
 		"WorkerCredential": {
 			"number": permission.FieldGroupPersonal,
 		},
-		"RateAgreement":                  margins("marginFloorPercent", "maxPayPercentOfSell"),
-		"CostingControl":                 margins("targetMarginPercent"),
-		"ResolvedCostProfile":            margins("targetMarginPercent"),
-		"FleetCostSummary":               margins("avgMarginPercent", "unprofitableCount", "totalRevenue"),
+		"RateAgreement":       margins("marginFloorPercent", "maxPayPercentOfSell"),
+		"CostingControl":      margins("targetMarginPercent"),
+		"ResolvedCostProfile": margins("targetMarginPercent"),
+		"FleetCostSummary": margins(
+			"avgMarginPercent",
+			"unprofitableCount",
+			"totalRevenue",
+		),
 		"Query":                          margins("shipmentProfitability"),
 		"Shipment":                       margins("profitabilityEstimate"),
 		"ShipmentProfitabilityAnalytics": margins("avgMarginPct", "unprofitableCount"),
@@ -98,7 +103,7 @@ func TestEveryProtectedTypeSaysWhatStandsBehindIt(t *testing.T) {
 func TestEveryProtectedFieldIsConfidentialInTheRegistry(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	declared := protectedTypes()
 	checked := 0
 	for object, fields := range loadProtectedFields(t) {
@@ -221,7 +226,10 @@ type Agreement {
 
 	require.NoError(t, err)
 	assert.Equal(t, ProtectedFieldMap{
-		"Agreement": {"floor": permission.FieldGroupMargins, "owner": permission.FieldGroupPersonal},
+		"Agreement": {
+			"floor": permission.FieldGroupMargins,
+			"owner": permission.FieldGroupPersonal,
+		},
 	}, fields)
 }
 
@@ -282,10 +290,13 @@ func resolveThrough(
 	t.Helper()
 
 	resolved := false
-	result, err := guard.InterceptField(fieldContext(ctx, object, field), func(context.Context) (any, error) {
-		resolved = true
-		return "stored value", nil
-	})
+	result, err := guard.InterceptField(
+		fieldContext(ctx, object, field),
+		func(context.Context) (any, error) {
+			resolved = true
+			return "stored value", nil
+		},
+	)
 	require.NoError(t, err)
 	return result, resolved
 }

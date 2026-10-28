@@ -2,11 +2,12 @@ package roleservice
 
 import (
 	"errors"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/rbactest"
 	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
@@ -56,7 +57,7 @@ func setupTestService(t *testing.T) *testServiceDeps {
 		notifier:   notifier,
 		permEngine: permEngine,
 		validator:  newStubValidator(),
-		registry:   permission.NewRegistry(),
+		registry:   permissioncatalog.NewRegistry(),
 		auditor:    recorder,
 		scopes:     scopepolicytest.Enforcing(),
 	}
@@ -80,7 +81,7 @@ func (d *testServiceDeps) expectFullEffectivePermissions() {
 }
 
 func testFullEffectivePermissions() *permissionports.EffectivePermissions {
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	resources := make(map[string]permissionports.EffectiveResourcePermission, len(registry.All()))
 	for _, def := range registry.All() {
 		operations := make([]permission.Operation, len(def.Operations))
@@ -488,9 +489,15 @@ func TestDeleteResourcePermission_Success(t *testing.T) {
 	deps.roleRepo.On("DeleteResourcePermission", ctx, permissionports.DeleteResourcePermissionRequest{
 		PermissionID: permID,
 		RoleID:       roleID,
-	}).Return(nil)
+	}).
+		Return(nil)
 
-	err := deps.svc.DeleteResourcePermission(ctx, pagination.TenantInfo{OrgID: orgID}, permID, roleID)
+	err := deps.svc.DeleteResourcePermission(
+		ctx,
+		pagination.TenantInfo{OrgID: orgID},
+		permID,
+		roleID,
+	)
 
 	require.NoError(t, err)
 
@@ -849,16 +856,18 @@ func TestCircularInheritance_IndirectCycle(t *testing.T) {
 
 	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == roleB
-	})).Return(&permission.Role{
-		ID:            roleB,
-		ParentRoleIDs: []pulid.ID{roleA},
-	}, nil)
+	})).
+		Return(&permission.Role{
+			ID:            roleB,
+			ParentRoleIDs: []pulid.ID{roleA},
+		}, nil)
 	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == roleA
-	})).Return(&permission.Role{
-		ID:            roleA,
-		ParentRoleIDs: []pulid.ID{roleC},
-	}, nil)
+	})).
+		Return(&permission.Role{
+			ID:            roleA,
+			ParentRoleIDs: []pulid.ID{roleC},
+		}, nil)
 
 	err := deps.svc.CreateRole(ctx, CreateRoleRequest{
 		ActorID:        actorID,
@@ -919,10 +928,11 @@ func TestCircularInheritance_ValidChain(t *testing.T) {
 
 	deps.roleRepo.On("GetByID", ctx, mock.MatchedBy(func(req permissionports.GetRoleByIDRequest) bool {
 		return req.ID == parentRoleID
-	})).Return(&permission.Role{
-		ID:            parentRoleID,
-		ParentRoleIDs: []pulid.ID{},
-	}, nil)
+	})).
+		Return(&permission.Role{
+			ID:            parentRoleID,
+			ParentRoleIDs: []pulid.ID{},
+		}, nil)
 	deps.roleRepo.On("GetRolesWithInheritance", ctx, []pulid.ID{parentRoleID}).
 		Return([]*permission.Role{{
 			ID:             parentRoleID,
@@ -984,7 +994,12 @@ func TestDeleteResourcePermission_SystemRole_Fails(t *testing.T) {
 		IsSystem: true,
 	}, nil)
 
-	err := deps.svc.DeleteResourcePermission(ctx, pagination.TenantInfo{OrgID: orgID}, permID, roleID)
+	err := deps.svc.DeleteResourcePermission(
+		ctx,
+		pagination.TenantInfo{OrgID: orgID},
+		permID,
+		roleID,
+	)
 
 	require.Error(t, err)
 	assert.Equal(t, ErrCannotModifySystemRole, err)
@@ -1154,7 +1169,12 @@ func TestDeleteResourcePermission_GetRoleError(t *testing.T) {
 		TenantInfo: pagination.TenantInfo{OrgID: orgID},
 	}).Return(nil, errors.New("not found"))
 
-	err := deps.svc.DeleteResourcePermission(ctx, pagination.TenantInfo{OrgID: orgID}, permID, roleID)
+	err := deps.svc.DeleteResourcePermission(
+		ctx,
+		pagination.TenantInfo{OrgID: orgID},
+		permID,
+		roleID,
+	)
 
 	require.Error(t, err)
 
@@ -1167,7 +1187,7 @@ func TestNew(t *testing.T) {
 	roleRepo := permissionportsmock.NewMockRoleRepository(t)
 	permEngine := permissionportsmock.NewMockPermissionEngine(t)
 	validator := newStubValidator()
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 
 	svc := New(Params{
 		Logger:           zap.NewNop(),
@@ -1392,9 +1412,15 @@ func TestDeleteResourcePermission_NotFoundError(t *testing.T) {
 	deps.roleRepo.On("DeleteResourcePermission", ctx, permissionports.DeleteResourcePermissionRequest{
 		PermissionID: permID,
 		RoleID:       roleID,
-	}).Return(errors.New("not found"))
+	}).
+		Return(errors.New("not found"))
 
-	err := deps.svc.DeleteResourcePermission(ctx, pagination.TenantInfo{OrgID: orgID}, permID, roleID)
+	err := deps.svc.DeleteResourcePermission(
+		ctx,
+		pagination.TenantInfo{OrgID: orgID},
+		permID,
+		roleID,
+	)
 
 	require.Error(t, err)
 	assert.Equal(t, "not found", err.Error())

@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentdefinitionports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/memtable"
@@ -46,7 +46,7 @@ type Params struct {
 	Definitions agentdefinitionports.AgentDefinitionRepository
 	Controls    tenantports.AgentControlRepository
 	Trust       agenttoolports.AgentToolTrustRepository
-	Registry    *permission.Registry
+	Registry    *permissioncatalog.Registry
 	Rules       agenttoolports.ToolRuleOverrides `optional:"true"`
 }
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
@@ -32,7 +33,7 @@ type Params struct {
 	RBACRepo         permissionports.RBACRepository
 	PermissionEngine permissionports.PermissionEngine
 	Validator        *Validator
-	Registry         *permission.Registry
+	Registry         *permissioncatalog.Registry
 	Auditor          permissionports.SecurityAuditor
 	Notifier         permissionports.PermissionChangeNotifier
 	Scopes           permissionports.ScopePolicy
@@ -47,7 +48,7 @@ type Service struct {
 	rbacRepo   permissionports.RBACRepository
 	permEngine permissionports.PermissionEngine
 	validator  *Validator
-	registry   *permission.Registry
+	registry   *permissioncatalog.Registry
 	auditor    permissionports.SecurityAuditor
 	scopes     permissionports.ScopePolicy
 	activation iamports.RoleActivationPolicy

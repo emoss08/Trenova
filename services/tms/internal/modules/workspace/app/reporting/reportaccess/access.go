@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/keel/analytics"
 	"github.com/emoss08/keel/analytics/table"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/pagination"
 )
@@ -103,7 +104,7 @@ const (
 type Params struct {
 	Catalog  *analytics.Catalog
 	Engine   permissionports.PermissionEngine
-	Registry *permission.Registry
+	Registry *permissioncatalog.Registry
 	Views    permissionports.ReferenceViews
 	Fields   permissionports.FieldAccess
 }
@@ -111,7 +112,7 @@ type Params struct {
 type Resolver struct {
 	catalog  *analytics.Catalog
 	engine   permissionports.PermissionEngine
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 	views    permissionports.ReferenceViews
 	fields   permissionports.FieldAccess
 	kinds    map[*analytics.Entity]kind
@@ -123,7 +124,7 @@ func New(p Params) (*Resolver, error) {
 		return nil, errNoCatalog
 	}
 	if p.Registry == nil {
-		p.Registry = permission.NewRegistry()
+		p.Registry = permissioncatalog.NewRegistry()
 	}
 	r := &Resolver{
 		catalog:  p.Catalog,

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,16 +25,19 @@ var kindsGrantedOnTheirOwn = []permission.Resource{
 func TestCheck_AWorkerGrantReachesNoKindGrantedOnItsOwn(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	worker := permission.ResourceWorker.String()
 	for _, kind := range kindsGrantedOnTheirOwn {
 		t.Run(kind.String(), func(t *testing.T) {
 			t.Parallel()
 
-			eng, userID, orgID := cachedEngine(t, map[string]*permissionports.CachedResourcePermission{
-				worker: cachedGrant(permission.DataScopeOrganization,
-					registry.GetOperationsForResource(worker)...),
-			})
+			eng, userID, orgID := cachedEngine(
+				t,
+				map[string]*permissionports.CachedResourcePermission{
+					worker: cachedGrant(permission.DataScopeOrganization,
+						registry.GetOperationsForResource(worker)...),
+				},
+			)
 			check := func(resource string, op permission.Operation) bool {
 				result, err := eng.Check(t.Context(), &permissionports.PermissionCheckRequest{
 					UserID:         userID,
@@ -63,9 +67,12 @@ func TestCheck_AKindGrantedOnItsOwnAnswersToItsOwnGrant(t *testing.T) {
 		t.Run(kind.String(), func(t *testing.T) {
 			t.Parallel()
 
-			eng, userID, orgID := cachedEngine(t, map[string]*permissionports.CachedResourcePermission{
-				kind.String(): cachedGrant(permission.DataScopeTeam, permission.OpRead),
-			})
+			eng, userID, orgID := cachedEngine(
+				t,
+				map[string]*permissionports.CachedResourcePermission{
+					kind.String(): cachedGrant(permission.DataScopeTeam, permission.OpRead),
+				},
+			)
 			check := func(resource permission.Resource, op permission.Operation) *permissionports.PermissionCheckResult {
 				result, err := eng.Check(t.Context(), &permissionports.PermissionCheckRequest{
 					UserID:         userID,

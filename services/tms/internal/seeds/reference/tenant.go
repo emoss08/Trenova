@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/seeds/seedenv"
 )
 
@@ -89,7 +89,7 @@ var TableChangeAlertAllowlist = perTenant(tenantSeed{
 var AdministratorPermissions = perTenant(tenantSeed{
 	name:        "administrator_permissions",
 	description: "Grants every registered resource and operation to the administrator role",
-	fingerprint: func() string { return permission.NewRegistry().GrantFingerprint() },
+	fingerprint: func() string { return permissioncatalog.NewRegistry().GrantFingerprint() },
 	apply:       reconcileAdministratorPermissions,
 })
 
@@ -98,6 +98,11 @@ func reconcileAdministratorPermissions(
 	db *keel.DB,
 	scope tenantbootstrap.Scope,
 ) (int, error) {
-	result, err := tenantbootstrap.ReconcileAdminRole(ctx, db, scope, permission.NewRegistry())
+	result, err := tenantbootstrap.ReconcileAdminRole(
+		ctx,
+		db,
+		scope,
+		permissioncatalog.NewRegistry(),
+	)
 	return result.GrantsAdded + result.GrantsExtended, err
 }

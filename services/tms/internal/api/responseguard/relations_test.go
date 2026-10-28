@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/schemadiff"
 	"github.com/emoss08/trenova/internal/modules/identity/app/fieldsensitivity"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/stringutils"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/tools/go/packages"
@@ -400,7 +401,10 @@ func TestCarriedListsOnlyTypesWithNoKind(t *testing.T) {
 	for key := range carried {
 		pkgPath, name := splitTypeKey(key)
 		if kind := kindOfName(registry, pkgPath, name); kind != "" {
-			stale = append(stale, fmt.Sprintf("%s is the %s kind; remove it from carried", key, kind))
+			stale = append(
+				stale,
+				fmt.Sprintf("%s is the %s kind; remove it from carried", key, kind),
+			)
 			continue
 		}
 		if _, ok := targets[key]; !ok {
@@ -562,7 +566,11 @@ func TestNamedKindsAreRegisteredResources(t *testing.T) {
 
 // rootKindsOf is every kind a response written as typ returns as its own
 // record: the value itself, each item of a list, or each item of a page.
-func rootKindsOf(registry *permission.Registry, typ types.Type, depth int) []permission.Resource {
+func rootKindsOf(
+	registry *permissioncatalog.Registry,
+	typ types.Type,
+	depth int,
+) []permission.Resource {
 	if depth > maxDepth {
 		return nil
 	}
@@ -605,7 +613,7 @@ func rootKindsOf(registry *permission.Registry, typ types.Type, depth int) []per
 // whose every route requires an operation on the kind (or marks its records
 // as references), may write one as the response's own record.
 func TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler(t *testing.T) {
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	scoped := registry.DatabaseScopedResources()
 
 	var outside []string
@@ -616,9 +624,16 @@ func TestEveryRESTRootOfADatabaseScopedKindIsWrittenByItsOwnHandler(t *testing.T
 				continue
 			}
 			reached++
-			own := "internal/api/handlers/" + strings.ReplaceAll(kind.String(), "_", "") + "handler/"
+			own := "internal/api/handlers/" + strings.ReplaceAll(
+				kind.String(),
+				"_",
+				"",
+			) + "handler/"
 			if !strings.Contains(position, own) {
-				outside = append(outside, fmt.Sprintf("%s writes %s", shortPosition(position), kind))
+				outside = append(
+					outside,
+					fmt.Sprintf("%s writes %s", shortPosition(position), kind),
+				)
 			}
 		}
 	}

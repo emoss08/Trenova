@@ -3,11 +3,6 @@ package userhandler_test
 import (
 	"errors"
 	"fmt"
-	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
-	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
-	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"net/http"
 	"testing"
 	"time"
@@ -19,11 +14,17 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/userservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/session"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/internal/testutil/mocks/kernelportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/sessionportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
+	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -100,7 +101,7 @@ func setupUserHandler(t *testing.T, opts setupOptions) *userhandler.Handler {
 		Notifier:         &permchangetest.Recorder{},
 		PermissionEngine: opts.permEngine,
 		Validator:        roleservice.NewTestValidator(),
-		Registry:         permission.NewEmptyRegistry(),
+		Registry:         permissioncatalog.NewEmptyRegistry(),
 	})
 
 	errorHandler := helpers.NewErrorHandler(helpers.ErrorHandlerParams{
@@ -253,7 +254,11 @@ func makeUserRepo(t *testing.T) *tenantportsmock.MockUserRepository {
 	return repo
 }
 
-func makeUserRepoWithGetByID(t *testing.T, user *tenant.User, err error) *tenantportsmock.MockUserRepository {
+func makeUserRepoWithGetByID(
+	t *testing.T,
+	user *tenant.User,
+	err error,
+) *tenantportsmock.MockUserRepository {
 	t.Helper()
 	repo := tenantportsmock.NewMockUserRepository(t)
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(user, err)
@@ -967,7 +972,9 @@ func TestUserHandler_UpdateMySettings_Success(t *testing.T) {
 		return assert.ObjectsAreEqual([]string{"timezone", "time_format"}, req.Columns) &&
 			req.Entity.Timezone == "America/Chicago" &&
 			req.Entity.TimeFormat == domaintypes.TimeFormat24Hour
-	})).Return(user, nil).Once()
+	})).
+		Return(user, nil).
+		Once()
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(user, nil).Once()
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})
@@ -1024,7 +1031,9 @@ func TestUserHandler_UpdateMyAssistantVisibility_HidesTheAssistant(t *testing.T)
 	repo.On("UpdateColumns", mock.Anything, mock.MatchedBy(func(req tenantports.UpdateUserColumnsRequest) bool {
 		return assert.ObjectsAreEqual([]string{"assistant_hidden"}, req.Columns) &&
 			req.Entity.AssistantHidden
-	})).Return(hidden, nil).Once()
+	})).
+		Return(hidden, nil).
+		Once()
 	repo.On("GetByID", mock.Anything, mock.Anything).Return(hidden, nil).Once()
 
 	handler := setupUserHandler(t, setupOptions{userRepo: repo})

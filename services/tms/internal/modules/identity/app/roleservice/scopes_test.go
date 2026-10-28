@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/scopepolicytest"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -63,7 +64,7 @@ func TestCreateRole_RefusesADatabaseScopeWhileTheDatabaseDoesNotEnforceIt(t *tes
 	t.Parallel()
 
 	deps := setupTestService(t)
-	deps.svc.scopes = &scopepolicytest.Policy{Registry: permission.NewRegistry()}
+	deps.svc.scopes = &scopepolicytest.Policy{Registry: permissioncatalog.NewRegistry()}
 
 	err := deps.svc.CreateRole(t.Context(), CreateRoleRequest{
 		ActorID:        pulid.MustNew("usr_"),
@@ -87,7 +88,7 @@ func TestUpdateRole_KeepsAScopeTheRoleAlreadyHeld(t *testing.T) {
 
 	deps := setupTestService(t)
 	deps.expectFullEffectivePermissions()
-	deps.svc.scopes = &scopepolicytest.Policy{Registry: permission.NewRegistry()}
+	deps.svc.scopes = &scopepolicytest.Policy{Registry: permissioncatalog.NewRegistry()}
 	ctx := t.Context()
 	orgID := pulid.MustNew("org_")
 	roleID := pulid.MustNew("rol_")
@@ -143,7 +144,10 @@ func TestCreateResourcePermission_RefusesTeamOnAKindWithoutTeams(t *testing.T) {
 
 type activationPolicy bool
 
-func (p activationPolicy) RoleActivationRequired(context.Context, pagination.TenantInfo) (bool, error) {
+func (p activationPolicy) RoleActivationRequired(
+	context.Context,
+	pagination.TenantInfo,
+) (bool, error) {
 	return bool(p), nil
 }
 

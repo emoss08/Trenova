@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
@@ -26,10 +27,10 @@ func ReconcileAdminRole(
 	ctx context.Context,
 	db *keel.DB,
 	scope Scope,
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 ) (AdminReconcileResult, error) {
 	if registry == nil {
-		registry = permission.NewRegistry()
+		registry = permissioncatalog.NewRegistry()
 	}
 
 	r := permissiondb.Roles
@@ -83,7 +84,7 @@ func ReconcileAdminRole(
 }
 
 func planAdminGrants(
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 	roleID pulid.ID,
 	held []*permission.ResourcePermission,
 	now int64,
@@ -94,7 +95,7 @@ func planAdminGrants(
 	}
 
 	definitions := registry.All()
-	slices.SortFunc(definitions, func(a, b *permission.ResourceDefinition) int {
+	slices.SortFunc(definitions, func(a, b *permissioncatalog.ResourceDefinition) int {
 		if a.Resource < b.Resource {
 			return -1
 		}

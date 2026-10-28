@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
@@ -46,7 +47,7 @@ func cachedEngine(
 func TestGetResourcePermissions_AgreesWithCheckOnEveryKind(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	scenarios := []struct {
 		name  string
 		grant func(child, parent string) map[string]*permissionports.CachedResourcePermission
@@ -159,7 +160,7 @@ func TestGetResourcePermissionsBatch_AgreesWithGetResourcePermissionsOnEveryKind
 	})
 	ctx := t.Context()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	resources := make([]string, 0, len(registry.All()))
 	for _, def := range registry.All() {
 		resources = append(resources, def.Resource)

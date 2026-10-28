@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/canned"
@@ -303,7 +304,7 @@ func catalogResolver(t *testing.T, engine permissionports.PermissionEngine) *rep
 	t.Helper()
 	catalog, err := reportengine.NewCatalog()
 	require.NoError(t, err)
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	resolver, err := reportaccess.New(reportaccess.Params{
 		Catalog:  catalog,
 		Engine:   engine,

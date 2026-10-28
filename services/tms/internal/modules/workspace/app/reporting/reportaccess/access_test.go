@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -68,7 +69,7 @@ func newFixture(t *testing.T, groups permission.FieldGroupSet) *fixture {
 	catalog, err := sharedCatalog()
 	require.NoError(t, err)
 	engine := &countingEngine{Engine: permtest.AllowAll()}
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	resolver, err := reportaccess.New(reportaccess.Params{
 		Catalog:  catalog,
 		Engine:   engine,

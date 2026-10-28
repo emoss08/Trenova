@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
@@ -32,14 +33,14 @@ type Params struct {
 	DB       kernelports.Detacher
 	Engine   permissionports.PermissionEngine
 	Teams    TeamDirectory
-	Registry *permission.Registry
+	Registry *permissioncatalog.Registry
 }
 
 type Service struct {
 	db                kernelports.Detacher
 	engine            permissionports.PermissionEngine
 	teams             TeamDirectory
-	registry          *permission.Registry
+	registry          *permissioncatalog.Registry
 	kinds             []string
 	databaseEnforcing bool
 }

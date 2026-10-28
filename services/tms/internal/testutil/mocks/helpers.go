@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/modules/equipment/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/parties/domain/customer"
 	"github.com/emoss08/trenova/internal/modules/places/domain/location"
@@ -60,7 +61,10 @@ func (n *NoopAuditService) GetByID(
 	return nil, nil
 }
 
-func (n *NoopAuditService) LogAction(_ *auditports.LogActionParams, _ ...auditports.LogOption) error {
+func (n *NoopAuditService) LogAction(
+	_ *auditports.LogActionParams,
+	_ ...auditports.LogOption,
+) error {
 	return nil
 }
 
@@ -124,7 +128,7 @@ func (a *AllowAllPermissionEngine) GetEffectivePermissions(
 	_ context.Context,
 	_, _ pulid.ID,
 ) (*permissionports.EffectivePermissions, error) {
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	resources := make(map[string]permissionports.EffectiveResourcePermission, len(registry.All()))
 	for _, def := range registry.All() {
 		operations := make([]permission.Operation, len(def.Operations))

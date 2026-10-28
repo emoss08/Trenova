@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -234,7 +235,7 @@ func (b *indexBatch) readMessages(ctx context.Context) error {
 	return nil
 }
 
-func DocumentTextEmbeddable(registry *permission.Registry, owner permission.Resource) bool {
+func DocumentTextEmbeddable(registry *permissioncatalog.Registry, owner permission.Resource) bool {
 	if registry == nil || owner == "" {
 		return false
 	}

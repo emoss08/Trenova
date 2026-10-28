@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/workforce/domain/worker"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
@@ -85,7 +86,7 @@ func newService(
 		DB:       &inlineDetacher{},
 		Engine:   engine,
 		Teams:    teams,
-		Registry: permission.NewRegistry(),
+		Registry: permissioncatalog.NewRegistry(),
 	})
 }
 
@@ -216,7 +217,11 @@ func TestGrants_ResolvesInATransactionOfItsOwn(t *testing.T) {
 	engine := permissionportsmock.NewMockPermissionEngine(t)
 	engine.On("CheckBatch", mock.Anything, mock.Anything).
 		Return(func(_ context.Context, req *permissionports.BatchPermissionCheckRequest) *permissionports.BatchPermissionCheckResult {
-			return scopesFor(map[string]permission.DataScope{"shipment": permission.DataScopeOwn})(req)
+			return scopesFor(
+				map[string]permission.DataScope{"shipment": permission.DataScopeOwn},
+			)(
+				req,
+			)
 		}, nil)
 	detacher := &inlineDetacher{}
 	svc := New(Params{
@@ -224,14 +229,16 @@ func TestGrants_ResolvesInATransactionOfItsOwn(t *testing.T) {
 		DB:       detacher,
 		Engine:   engine,
 		Teams:    &fakeTeams{},
-		Registry: permission.NewRegistry(),
+		Registry: permissioncatalog.NewRegistry(),
 	})
 
 	_, err := svc.Grants(t.Context(), principal())
 	require.NoError(t, err)
 	assert.Equal(t, 1, detacher.calls, "the grants never join the caller's transaction")
 
-	_, err = New(Params{Config: &config.Config{}, DB: detacher, Registry: permission.NewRegistry()}).
+	_, err = New(
+		Params{Config: &config.Config{}, DB: detacher, Registry: permissioncatalog.NewRegistry()},
+	).
 		Grants(t.Context(), principal())
 	require.NoError(t, err)
 	assert.Equal(t, 1, detacher.calls, "a database that enforces no scope opens no transaction")

@@ -5,12 +5,16 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func fullGrants(registry *permission.Registry, roleID pulid.ID) []*permission.ResourcePermission {
+func fullGrants(
+	registry *permissioncatalog.Registry,
+	roleID pulid.ID,
+) []*permission.ResourcePermission {
 	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
 	for _, def := range registry.All() {
 		ops := make([]permission.Operation, 0, len(def.Operations))
@@ -31,7 +35,7 @@ func fullGrants(registry *permission.Registry, roleID pulid.ID) []*permission.Re
 func TestPlanAdminGrants_NothingToDoForACompleteRole(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 
 	plan := planAdminGrants(registry, roleID, fullGrants(registry, roleID), 100)
@@ -43,7 +47,7 @@ func TestPlanAdminGrants_NothingToDoForACompleteRole(t *testing.T) {
 func TestPlanAdminGrants_AddsAResourceTheRoleNeverHad(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	held := fullGrants(registry, roleID)
 	var dropped *permission.ResourcePermission
@@ -54,7 +58,11 @@ func TestPlanAdminGrants_AddsAResourceTheRoleNeverHad(t *testing.T) {
 	require.Len(t, plan.add, 1)
 	assert.Equal(t, dropped.Resource, plan.add[0].Resource)
 	assert.Equal(t, roleID, plan.add[0].RoleID)
-	assert.ElementsMatch(t, registry.GetOperationsForResource(dropped.Resource), plan.add[0].Operations)
+	assert.ElementsMatch(
+		t,
+		registry.GetOperationsForResource(dropped.Resource),
+		plan.add[0].Operations,
+	)
 	assert.Equal(t, permission.DataScopeOrganization, plan.add[0].DataScope)
 	assert.Empty(t, plan.extend)
 }
@@ -62,7 +70,7 @@ func TestPlanAdminGrants_AddsAResourceTheRoleNeverHad(t *testing.T) {
 func TestPlanAdminGrants_ExtendsAResourceMissingAnOperation(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	held := fullGrants(registry, roleID)
 	var target *permission.ResourcePermission
@@ -88,7 +96,7 @@ func TestPlanAdminGrants_ExtendsAResourceMissingAnOperation(t *testing.T) {
 func TestPlanAdminGrants_KeepsOperationsTheRegistryNoLongerDeclares(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	held := fullGrants(registry, roleID)
 	held[0].Operations = append(held[0].Operations, permission.OpManage)
@@ -104,7 +112,7 @@ func TestPlanAdminGrants_KeepsOperationsTheRegistryNoLongerDeclares(t *testing.T
 func TestPlanAdminGrants_GrantsLeaveToAnAdministratorWhoHoldsOnlyWorkers(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
 	for _, rp := range fullGrants(registry, roleID) {
@@ -115,7 +123,12 @@ func TestPlanAdminGrants_GrantsLeaveToAnAdministratorWhoHoldsOnlyWorkers(t *test
 
 	plan := planAdminGrants(registry, roleID, held, 100)
 
-	require.Len(t, plan.add, 1, "worker_leave is its own grant, so a worker grant does not cover it")
+	require.Len(
+		t,
+		plan.add,
+		1,
+		"worker_leave is its own grant, so a worker grant does not cover it",
+	)
 	assert.Equal(t, permission.ResourceWorkerLeave.String(), plan.add[0].Resource)
 	assert.ElementsMatch(t, []permission.Operation{
 		permission.OpRead,
@@ -132,7 +145,7 @@ func TestPlanAdminGrants_GrantsLeaveToAnAdministratorWhoHoldsOnlyWorkers(t *test
 func TestPlanAdminGrants_GrantsEveryHRKindToAnAdministratorWhoHoldsOnlyWorkers(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	own := []permission.Resource{
 		permission.ResourceWorkerInjury,
@@ -163,10 +176,12 @@ func TestPlanAdminGrants_GrantsEveryHRKindToAnAdministratorWhoHoldsOnlyWorkers(t
 	assert.Empty(t, plan.extend)
 }
 
-func TestPlanAdminGrants_GivesAnAdministratorPortalInvitationsAndKeepsRetiredOperations(t *testing.T) {
+func TestPlanAdminGrants_GivesAnAdministratorPortalInvitationsAndKeepsRetiredOperations(
+	t *testing.T,
+) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	roleID := pulid.MustNew("rol_")
 	portal := permission.ResourceDriverPortal.String()
 	held := make([]*permission.ResourcePermission, 0, len(registry.All()))
@@ -177,7 +192,12 @@ func TestPlanAdminGrants_GivesAnAdministratorPortalInvitationsAndKeepsRetiredOpe
 	}
 
 	plan := planAdminGrants(registry, roleID, held, 100)
-	require.Len(t, plan.add, 1, "driver_portal is its own grant, so a worker grant does not cover it")
+	require.Len(
+		t,
+		plan.add,
+		1,
+		"driver_portal is its own grant, so a worker grant does not cover it",
+	)
 	assert.Equal(t, portal, plan.add[0].Resource)
 	assert.ElementsMatch(t, []permission.Operation{
 		permission.OpRead,
@@ -197,5 +217,9 @@ func TestPlanAdminGrants_GivesAnAdministratorPortalInvitationsAndKeepsRetiredOpe
 	}
 	plan = planAdminGrants(registry, roleID, append(held, previous), 100)
 	assert.Empty(t, plan.add)
-	assert.Empty(t, plan.extend, "an administrator who held the old operations already invites and revokes")
+	assert.Empty(
+		t,
+		plan.extend,
+		"an administrator who held the old operations already invites and revokes",
+	)
 }

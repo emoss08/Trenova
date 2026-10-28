@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/infrastructure/reportengine"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/reporting/reportaccess"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ var restOnlyProtected = map[permission.Resource]map[string]permission.FieldGroup
 func TestEveryRESTOnlyProtectedFieldIsConfidentialInTheRegistry(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	for resource, fields := range restOnlyProtected {
 		for field := range fields {
 			assert.Equalf(t, permission.SensitivityConfidential,

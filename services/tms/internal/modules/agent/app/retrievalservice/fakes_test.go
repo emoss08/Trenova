@@ -10,7 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aiusageports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -427,7 +427,7 @@ func newTestService(settings *airetrieval.Settings) *testService {
 		Repo:       repo,
 		Sources:    sources,
 		Usage:      usage,
-		Registry:   permission.NewRegistry(),
+		Registry:   permissioncatalog.NewRegistry(),
 		Embeddings: embeddings,
 		Signals:    signals,
 	})

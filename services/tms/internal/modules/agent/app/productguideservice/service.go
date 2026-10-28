@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/productguideports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -66,7 +67,7 @@ type Service struct {
 	permissions   permissionports.PermissionEngine
 	organizations tenantports.OrganizationRepository
 	index         []indexedPage
-	resources     *permission.Registry
+	resources     *permissioncatalog.Registry
 	vectorizer    retrievalports.QueryVectorizer
 	vectors       retrievalports.CatalogVectorIndex
 	items         []retrievalports.EmbeddingCatalogItem
@@ -100,7 +101,7 @@ func newService(p Params, catalog *productguide.Catalog) *Service {
 		permissions:   p.Permissions,
 		organizations: p.Organizations,
 		index:         buildIndex(catalog),
-		resources:     permission.NewRegistry(),
+		resources:     permissioncatalog.NewRegistry(),
 		vectorizer:    p.Vectorizer,
 		vectors:       p.CatalogVectors,
 		items:         CatalogItems(catalog),
@@ -401,7 +402,7 @@ func withQuery(path string, query map[string]string) string {
 type access struct {
 	allowed      map[string]bool
 	capabilities tenantports.OrganizationCapabilities
-	resources    *permission.Registry
+	resources    *permissioncatalog.Registry
 }
 
 func (s *Service) access(

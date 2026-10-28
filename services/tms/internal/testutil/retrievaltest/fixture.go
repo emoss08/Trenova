@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/retrievalports"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 )
@@ -113,7 +114,7 @@ func (v FixtureVectorizer) Availability(
 type Access struct {
 	Unreadable map[permission.Resource]bool
 	Ceiling    permission.FieldSensitivity
-	Registry   *permission.Registry
+	Registry   *permissioncatalog.Registry
 	Tenant     pagination.TenantInfo
 	UserID     pulid.ID
 	Threads    assistantports.ThreadOwnerRepository

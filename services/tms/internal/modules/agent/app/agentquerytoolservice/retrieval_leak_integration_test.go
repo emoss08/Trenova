@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/adapters/postgres/retrievalsourcerepository"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -137,7 +138,7 @@ func TestSearchToolsNeverLeakAndMarkEveryRecord(t *testing.T) {
 		Logger:     zap.NewNop(),
 		Repo:       repo,
 		Sources:    sources,
-		Registry:   permission.NewRegistry(),
+		Registry:   permissioncatalog.NewRegistry(),
 		Vectorizer: vectorizer,
 	})
 	permissions := &readPermissions{readable: map[permission.Resource]bool{}}

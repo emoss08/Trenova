@@ -8,6 +8,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/operations/domain/shipment"
@@ -80,7 +81,7 @@ func (r reader) provider() *Provider {
 		groups = groups.With(permission.FieldGroupMargins)
 	}
 	return &Provider{
-		views:       refview.NewPort(refview.New(permission.NewRegistry()), engine),
+		views:       refview.NewPort(refview.New(permissioncatalog.NewRegistry()), engine),
 		fieldAccess: groupAccess{visible: groups},
 	}
 }

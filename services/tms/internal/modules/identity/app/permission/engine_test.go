@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/domain/apikey"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/iam"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/iamports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -36,7 +37,10 @@ func allRolesKey(userID, orgID pulid.ID) permissionports.PermissionCacheKey {
 	}
 }
 
-func activeRolesKey(ctx context.Context, userID, orgID pulid.ID) permissionports.PermissionCacheKey {
+func activeRolesKey(
+	ctx context.Context,
+	userID, orgID pulid.ID,
+) permissionports.PermissionCacheKey {
 	return permissionports.PermissionCacheKey{
 		UserID:  userID,
 		OrgID:   orgID,
@@ -65,8 +69,8 @@ func setupTestEngine(
 		rbacRepo:      &rbactest.Repository{},
 		cacheRepo:     cacheRepo,
 		userRepo:      userRepo,
-		registry:      permission.NewRegistry(),
-		routeRegistry: permission.NewRouteRegistry(),
+		registry:      permissioncatalog.NewRegistry(),
+		routeRegistry: permissioncatalog.NewRouteRegistry(),
 		metrics:       metricsRegistry,
 		l:             logger.Named("test.permission-engine"),
 	}
@@ -971,7 +975,8 @@ func TestGetResourcePermissionsBatch_ReadsThePermissionsOnce(t *testing.T) {
 		},
 	}, nil).Once()
 	cacheRepo.On("Set", ctx, allRolesKey(userID, orgID), mock.AnythingOfType("*permissionports.CachedPermissions"), cacheTTL).
-		Return(nil).Once()
+		Return(nil).
+		Once()
 
 	details, err := eng.GetResourcePermissionsBatch(
 		ctx, userID, orgID, []string{"shipment", "customer", "shipment", "not_a_resource"},

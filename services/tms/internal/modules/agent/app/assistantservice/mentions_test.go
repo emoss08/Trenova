@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -259,7 +260,7 @@ func TestMentionKindsAreKindsOfRecordGuardedByTheirResource(t *testing.T) {
 		assert.True(t, candidate.kind.Known(), candidate.kind)
 		assert.True(
 			t,
-			permission.NewRegistry().HasResource(candidate.kind.Resource().String()),
+			permissioncatalog.NewRegistry().HasResource(candidate.kind.Resource().String()),
 			candidate.kind,
 		)
 	}

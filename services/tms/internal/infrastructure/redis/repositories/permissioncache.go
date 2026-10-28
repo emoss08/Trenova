@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/redis/go-redis/v9"
@@ -37,7 +37,7 @@ type permissionCacheRepository struct {
 func NewPermissionCacheRepository(
 	p PermissionCacheRepositoryParams,
 ) permissionports.PermissionCacheRepository {
-	grants := permission.NewRegistry().GrantFingerprint()[:grantFingerprintPrefix]
+	grants := permissioncatalog.NewRegistry().GrantFingerprint()[:grantFingerprintPrefix]
 
 	return &permissionCacheRepository{
 		client: p.Client,

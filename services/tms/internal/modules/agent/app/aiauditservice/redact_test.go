@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/domain/aiaudit"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/workspace/app/auditservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -45,7 +46,7 @@ func testPolicies() fakePolicies {
 
 func testRedactor() *Redactor {
 	return NewRedactor(
-		permission.NewRegistry(),
+		permissioncatalog.NewRegistry(),
 		testPolicies(),
 		auditservice.NewSensitiveDataManager(config.EncryptionConfig{}),
 	)
@@ -176,7 +177,7 @@ func TestReaderArguments_KeepsAnAlertsDetailsRestricted(t *testing.T) {
 	t.Parallel()
 
 	redactor := NewRedactor(
-		permission.NewRegistry(),
+		permissioncatalog.NewRegistry(),
 		fakePolicies{"report_create_table_change_alert": {
 			Name:     "report_create_table_change_alert",
 			Kind:     agent.ToolKindAction,

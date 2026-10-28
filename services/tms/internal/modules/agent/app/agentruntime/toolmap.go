@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/modules/agent/domain/agentdefinition"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 
 func (s *Service) toolMap(names []string) []agentdefinition.ToolNamespace {
 	if s.registry == nil {
-		s.registry = permission.NewRegistry()
+		s.registry = permissioncatalog.NewRegistry()
 	}
 	type area struct {
 		resources []string

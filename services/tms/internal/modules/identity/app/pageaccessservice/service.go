@@ -13,6 +13,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pageaccess"
@@ -30,13 +31,13 @@ type Params struct {
 
 	Engine   permissionports.PermissionEngine
 	Roles    permissionports.RoleRepository
-	Registry *permission.Registry
+	Registry *permissioncatalog.Registry
 }
 
 type Service struct {
 	engine   permissionports.PermissionEngine
 	roles    permissionports.RoleRepository
-	registry *permission.Registry
+	registry *permissioncatalog.Registry
 	views    *refview.Views
 	manifest *pageaccess.Manifest
 	// readBy is how many screens read each kind as root records.
@@ -213,9 +214,9 @@ func (s *Service) grants(
 	tenant pagination.TenantInfo,
 	roleID pulid.ID,
 	draft *RoleDraft,
-) (permission.RoleGrants, error) {
+) (permissioncatalog.RoleGrants, error) {
 	if (roleID.IsNil()) == (draft == nil) {
-		return permission.RoleGrants{}, errortypes.NewValidationError(
+		return permissioncatalog.RoleGrants{}, errortypes.NewValidationError(
 			"roleId", errortypes.ErrInvalid, "Choose a saved role or send the role being edited",
 		)
 	}
@@ -224,7 +225,7 @@ func (s *Service) grants(
 	if draft != nil {
 		built, err := s.draftRole(draft)
 		if err != nil {
-			return permission.RoleGrants{}, err
+			return permissioncatalog.RoleGrants{}, err
 		}
 		role = built
 	} else {
@@ -233,7 +234,7 @@ func (s *Service) grants(
 			TenantInfo: tenant,
 		})
 		if err != nil {
-			return permission.RoleGrants{}, err
+			return permissioncatalog.RoleGrants{}, err
 		}
 		role = saved
 	}
@@ -242,24 +243,24 @@ func (s *Service) grants(
 	if len(role.ParentRoleIDs) > 0 {
 		inherited, err := s.roles.GetRolesWithInheritance(ctx, role.ParentRoleIDs)
 		if err != nil {
-			return permission.RoleGrants{}, err
+			return permissioncatalog.RoleGrants{}, err
 		}
 		found := make(map[pulid.ID]struct{}, len(inherited))
 		for _, parent := range inherited {
 			if parent.OrganizationID.IsNotNil() && parent.OrganizationID != tenant.OrgID {
-				return permission.RoleGrants{}, foreignParentError()
+				return permissioncatalog.RoleGrants{}, foreignParentError()
 			}
 			found[parent.ID] = struct{}{}
 		}
 		for _, id := range role.ParentRoleIDs {
 			if _, ok := found[id]; !ok {
-				return permission.RoleGrants{}, foreignParentError()
+				return permissioncatalog.RoleGrants{}, foreignParentError()
 			}
 		}
 		roles = append(roles, inherited...)
 	}
 
-	return permission.GrantsOf(roles...), nil
+	return permissioncatalog.GrantsOf(roles...), nil
 }
 
 func foreignParentError() error {

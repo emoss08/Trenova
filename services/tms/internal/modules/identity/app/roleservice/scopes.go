@@ -4,12 +4,13 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 )
 
 func unenforcedScopes(
 	policy scopePolicy,
-	registry *permission.Registry,
+	registry *permissioncatalog.Registry,
 	permissions []*permission.ResourcePermission,
 	existing []*permission.ResourcePermission,
 	field func(index int) string,

@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/kernel/ports/kernelports"
 	"github.com/emoss08/trenova/internal/modules/workspace/ports/auditports"
@@ -268,7 +269,7 @@ func newFixture(t *testing.T) *fixture {
 		notifier:    f.notifier,
 		permissions: f.permissions,
 		audit:       f.audit,
-		sensitive:   DefaultSensitiveRule(permission.NewRegistry()),
+		sensitive:   DefaultSensitiveRule(permissioncatalog.NewRegistry()),
 	}
 
 	return f

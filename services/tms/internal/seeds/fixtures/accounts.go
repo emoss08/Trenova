@@ -6,7 +6,7 @@ import (
 
 	"github.com/emoss08/keel/seed"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/tenantbootstrap"
-	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant/tenantdb"
 	"github.com/emoss08/trenova/internal/seeds/reference"
@@ -128,7 +128,7 @@ func runAdminAccount(ctx context.Context, r *seed.Run) error {
 		return fmt.Errorf("create admin user: %w", err)
 	}
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	for i, org := range orgs {
 		membership := &tenant.OrganizationMembership{
 			BusinessUnitID: bu.ID,

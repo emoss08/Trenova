@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/shopspring/decimal"
@@ -636,7 +637,7 @@ func TestRetryAtBacksOffAndGivesUp(t *testing.T) {
 func TestDocumentTextEmbeddable(t *testing.T) {
 	t.Parallel()
 
-	registry := permission.NewRegistry()
+	registry := permissioncatalog.NewRegistry()
 	assert.True(t, DocumentTextEmbeddable(registry, document.OwnerResource("shipment")))
 	assert.True(t, DocumentTextEmbeddable(registry, document.OwnerResource("Customer")))
 	assert.False(t, DocumentTextEmbeddable(registry, document.OwnerResource("worker")))

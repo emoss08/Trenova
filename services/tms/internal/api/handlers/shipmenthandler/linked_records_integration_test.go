@@ -8,8 +8,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/emoss08/trenova/internal/testutil/seededtest"
-
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/keel"
 	"github.com/emoss08/trenova/internal/api/middleware"
@@ -19,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/app/readscopeservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/modules/operations/adapters/postgres/shipmentrepository"
@@ -29,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/testutil/dbtest"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/shipmentportsmock"
+	"github.com/emoss08/trenova/internal/testutil/seededtest"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/dbscope"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -135,9 +135,11 @@ func serveExpandedShipment(
 	gin.SetMode(gin.TestMode)
 
 	repo := shipmentrepository.New(shipmentrepository.Params{
-		DB:             conn,
-		Logger:         zap.NewNop(),
-		MoveRepository: shipmentmoverepository.New(shipmentmoverepository.Params{DB: conn, Logger: zap.NewNop()}),
+		DB:     conn,
+		Logger: zap.NewNop(),
+		MoveRepository: shipmentmoverepository.New(
+			shipmentmoverepository.Params{DB: conn, Logger: zap.NewNop()},
+		),
 	})
 	service := shipmentportsmock.NewMockShipmentService(t)
 	service.EXPECT().
@@ -252,7 +254,7 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 		Config:   enforced,
 		DB:       rls,
 		Engine:   shipmentOnly,
-		Registry: permission.NewRegistry(),
+		Registry: permissioncatalog.NewRegistry(),
 	})
 
 	body, header := serveExpandedShipment(t, ctx, rls, load, shipmentOnly, true, scopes)
@@ -268,13 +270,20 @@ func TestGetShipment_UnderRowLevelSecurityShowsTheDriversReferenceView(t *testin
 	assert.Contains(t, header.Get(responseguard.WithheldHeader), "moves.assignment.primaryWorker")
 	assert.NotEmpty(t, body["proNumber"])
 
-	whole, header := serveExpandedShipment(t, ctx, rls, load, &mocks.DenyResourcesPermissionEngine{}, true,
+	whole, header := serveExpandedShipment(
+		t,
+		ctx,
+		rls,
+		load,
+		&mocks.DenyResourcesPermissionEngine{},
+		true,
 		readscopeservice.New(readscopeservice.Params{
 			Config:   enforced,
 			DB:       rls,
 			Engine:   &mocks.DenyResourcesPermissionEngine{},
-			Registry: permission.NewRegistry(),
-		}))
+			Registry: permissioncatalog.NewRegistry(),
+		}),
+	)
 	assert.Equal(t, driverHomeAddress, primaryWorkerOf(t, whole)["addressLine1"])
 	assert.NotContains(t, header.Get(responseguard.WithheldHeader), "primaryWorker")
 }

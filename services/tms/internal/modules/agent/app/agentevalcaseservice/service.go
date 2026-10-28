@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/aifeedbackports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/assistantports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
@@ -131,7 +132,7 @@ type Params struct {
 	Conversations assistantports.ConversationRepository
 	Feedback      aifeedbackports.AIFeedbackRepository
 	Retention     tenantports.DataRetentionRepository
-	Registry      *permission.Registry
+	Registry      *permissioncatalog.Registry
 	QueryTools    agenttoolports.AgentQueryToolRegistry
 	ActionTools   agenttoolports.AgentToolRegistry
 	Subjects      agentruntimeports.AgentSubjectDescriber `optional:"true"`

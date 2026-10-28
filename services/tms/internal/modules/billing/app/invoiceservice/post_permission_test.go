@@ -6,6 +6,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/billing/ports/invoiceports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -101,10 +102,15 @@ func TestGuardPosterLetsTheSystemPost(t *testing.T) {
 func TestPostingNeedsOnlyReadBesidesItself(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, []permission.Operation{permission.OpRead}, permission.Dependencies[permission.OpPost])
+	assert.Equal(
+		t,
+		[]permission.Operation{permission.OpRead},
+		permission.Dependencies[permission.OpPost],
+	)
 	assert.Contains(
 		t,
-		permission.NewRegistry().GetOperationsForResource(permission.ResourceInvoice.String()),
+		permissioncatalog.NewRegistry().
+			GetOperationsForResource(permission.ResourceInvoice.String()),
 		permission.OpPost,
 	)
 }

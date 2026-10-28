@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/identity/adapters/postgres/rolerepository"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission/permissiondb"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/permchangetest"
 	"github.com/emoss08/trenova/internal/testutil/permtest"
@@ -114,7 +115,7 @@ func (p *integrationPermCacheRepo) InvalidateOrganization(
 type integrationPermEngine struct {
 	roleRepo  permissionports.RoleRepository
 	cacheRepo permissionports.PermissionCacheRepository
-	registry  *permission.Registry
+	registry  *permissioncatalog.Registry
 }
 
 func (e *integrationPermEngine) Check(
@@ -321,7 +322,7 @@ func setupIntegrationService(t *testing.T) *integrationFixture {
 	permEngine := &integrationPermEngine{
 		roleRepo:  roleRepo,
 		cacheRepo: cacheRepo,
-		registry:  permission.NewRegistry(),
+		registry:  permissioncatalog.NewRegistry(),
 	}
 
 	svc := &Service{
@@ -336,7 +337,7 @@ func setupIntegrationService(t *testing.T) *integrationFixture {
 				WithModelName("Role").
 				Build(),
 		},
-		registry: permission.NewRegistry(),
+		registry: permissioncatalog.NewRegistry(),
 	}
 
 	return &integrationFixture{
@@ -399,12 +400,15 @@ func seedActorRole(
 		require.NoError(t, permissiondb.ResourcePermissions.CreateMany(f.ctx, f.db, grants))
 	}
 
-	require.NoError(t, permissiondb.UserRoleAssignments.Create(f.ctx, f.db, &permission.UserRoleAssignment{
-		UserID:         f.actorID(),
-		OrganizationID: f.orgID(),
-		RoleID:         actorRole.ID,
-		AssignedAt:     timeutils.NowUnix(),
-	}))
+	require.NoError(
+		t,
+		permissiondb.UserRoleAssignments.Create(f.ctx, f.db, &permission.UserRoleAssignment{
+			UserID:         f.actorID(),
+			OrganizationID: f.orgID(),
+			RoleID:         actorRole.ID,
+			AssignedAt:     timeutils.NowUnix(),
+		}),
+	)
 
 	return actorRole.ID
 }

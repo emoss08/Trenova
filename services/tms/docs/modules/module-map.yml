@@ -33,6 +33,7 @@ modules:
       - instancebootstrap
       - onboarding
       - permission
+      - permissioncatalog
       - platformplan
       - session
       - subscription

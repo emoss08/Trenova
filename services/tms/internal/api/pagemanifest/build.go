@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/routelint"
 	"github.com/emoss08/trenova/internal/modules/identity/app/refview"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/pageaccess"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -54,7 +55,7 @@ type RestCall struct {
 type Inputs struct {
 	Screens    Screens
 	Schema     *ast.Schema
-	Registry   *permission.Registry
+	Registry   *permissioncatalog.Registry
 	Operations ast.OperationList
 	Fragments  ast.FragmentDefinitionList
 	Routes     []routelint.Route

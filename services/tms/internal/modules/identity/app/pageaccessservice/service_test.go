@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/modules/identity/app/pageaccessservice"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/permissionports"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/internal/testutil/mocks/permissionportsmock"
@@ -86,7 +87,7 @@ func newService(
 	return pageaccessservice.NewWithManifest(pageaccessservice.Params{
 		Engine:   eng,
 		Roles:    roles,
-		Registry: permission.NewRegistry(),
+		Registry: permissioncatalog.NewRegistry(),
 	}, manifest)
 }
 
@@ -128,7 +129,9 @@ func TestPreview_ADraftRoleSeesALinkedKindThroughItsViewOnly(t *testing.T) {
 		Location: "/shipments",
 		Draft: &pageaccessservice.RoleDraft{
 			MaxSensitivity: permission.SensitivityInternal,
-			Permissions:    []pageaccessservice.DraftPermission{grant("shipment", permission.OpRead)},
+			Permissions: []pageaccessservice.DraftPermission{
+				grant("shipment", permission.OpRead),
+			},
 		},
 	})
 	require.NoError(t, err)
@@ -203,7 +206,9 @@ func TestPreview_AViewFieldAboveTheRolesCeilingIsWithheld(t *testing.T) {
 		Location: "/shipments",
 		Draft: &pageaccessservice.RoleDraft{
 			MaxSensitivity: permission.SensitivityPublic,
-			Permissions:    []pageaccessservice.DraftPermission{grant("shipment", permission.OpRead)},
+			Permissions: []pageaccessservice.DraftPermission{
+				grant("shipment", permission.OpRead),
+			},
 		},
 	})
 	require.NoError(t, err)
@@ -312,7 +317,9 @@ func TestPreview_RefusesAnAmbiguousOrInvalidRole(t *testing.T) {
 			Tenant: tenant, Location: "/shipments",
 			Draft: &pageaccessservice.RoleDraft{
 				MaxSensitivity: permission.SensitivityInternal,
-				Permissions:    []pageaccessservice.DraftPermission{grant("nope", permission.OpRead)},
+				Permissions: []pageaccessservice.DraftPermission{
+					grant("nope", permission.OpRead),
+				},
 			},
 		},
 		"undeclared operation": {

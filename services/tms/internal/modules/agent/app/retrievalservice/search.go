@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/domain/document"
 	"github.com/emoss08/trenova/internal/modules/documents/domain/inboundmessage"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/shared/intutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -40,7 +41,7 @@ type SearcherParams struct {
 	Logger     *zap.Logger
 	Repo       retrievalports.AIRetrievalRepository
 	Sources    retrievalports.RetrievalSourceRepository
-	Registry   *permission.Registry
+	Registry   *permissioncatalog.Registry
 	Vectorizer retrievalports.QueryVectorizer `optional:"true"`
 }
 
@@ -48,7 +49,7 @@ type Searcher struct {
 	l          *zap.Logger
 	repo       retrievalports.AIRetrievalRepository
 	sources    retrievalports.RetrievalSourceRepository
-	registry   *permission.Registry
+	registry   *permissioncatalog.Registry
 	vectorizer retrievalports.QueryVectorizer
 	tuning     SearchTuning
 }
@@ -56,7 +57,7 @@ type Searcher struct {
 func NewSearcher(p SearcherParams) *Searcher {
 	registry := p.Registry
 	if registry == nil {
-		registry = permission.NewRegistry()
+		registry = permissioncatalog.NewRegistry()
 	}
 
 	return &Searcher{

@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agentruntimeports"
 	"github.com/emoss08/trenova/internal/modules/agent/ports/agenttoolports"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
+	"github.com/emoss08/trenova/internal/modules/identity/domain/permissioncatalog"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -162,7 +163,7 @@ func TestToolMap_GroupsTheToolsByAreaOfTrenova(t *testing.T) {
 		logger:      zap.NewNop(),
 		queryTools:  query,
 		actionTools: &stubActionRegistry{},
-		registry:    permission.NewRegistry(),
+		registry:    permissioncatalog.NewRegistry(),
 	}
 
 	areas := service.toolMap([]string{
