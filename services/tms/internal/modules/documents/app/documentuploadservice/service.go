@@ -189,6 +189,9 @@ func (s *Service) CreateSession(
 			)
 		}
 
+		if err = s.requireLineageOfResource(ctx, req, lineageID); err != nil {
+			return nil, err
+		}
 		session.LineageID = &lineageID
 	}
 
@@ -562,6 +565,36 @@ func verifyMultipartUpload(
 	}
 
 	return nil
+}
+
+func (s *Service) requireLineageOfResource(
+	ctx context.Context,
+	req *documentuploadports.CreateSessionRequest,
+	lineageID pulid.ID,
+) error {
+	versions, err := s.documentRepo.ListVersions(ctx, documentports.ListDocumentVersionsRequest{
+		LineageID:  lineageID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+	if len(versions) == 0 {
+		return errortypes.NewNotFoundError("Document lineage not found within your organization")
+	}
+	for _, version := range versions {
+		if version == nil || !version.IsCurrentVersion {
+			continue
+		}
+		if version.ResourceID != req.ResourceID || version.ResourceType != req.ResourceType {
+			return errortypes.NewConflictError(
+				"Document lineage does not belong to the selected resource",
+			)
+		}
+		return nil
+	}
+
+	return errortypes.NewConflictError("Document lineage does not have a current version")
 }
 
 func (s *Service) Cancel(ctx context.Context, req *documentuploadports.CancelRequest) error {

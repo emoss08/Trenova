@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/modules/documents/ports/documentuploadports"
 	"github.com/emoss08/trenova/internal/modules/kernel/app/encryptionservice"
 	"github.com/emoss08/trenova/internal/testutil/mocks/contentscanportsmock"
+	"github.com/emoss08/trenova/internal/testutil/mocks/documentportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/documentuploadportsmock"
 	"github.com/emoss08/trenova/internal/testutil/objectstoretest"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -265,4 +266,35 @@ func TestCancel_LeavesTheFileOfAFinishedUploadAlone(t *testing.T) {
 		_, kept := storage.Object(session.StoragePath)
 		assert.True(t, kept, "the %s session's document still reads its file", finished.Status)
 	}
+}
+
+// An upload session that names a lineage becomes that lineage's current
+// version. A lineage of another record must be refused, or a POD on one load
+// would be replaced, and hidden from billing, by a file uploaded to another.
+func TestCreateSession_RefusesALineageOfAnotherRecord(t *testing.T) {
+	t.Parallel()
+
+	tenant := pagination.TenantInfo{OrgID: pulid.MustNew("org_"), BuID: pulid.MustNew("bu_")}
+	lineageID := pulid.MustNew("doc_")
+	documents := documentportsmock.NewMockDocumentRepository(t)
+	documents.EXPECT().ListVersions(mock.Anything, mock.Anything).Return([]*document.Document{{
+		ID:               lineageID,
+		ResourceID:       "shp_theirs",
+		ResourceType:     "shipment",
+		IsCurrentVersion: true,
+	}}, nil).Twice()
+	svc := &Service{l: zap.NewNop(), documentRepo: documents}
+
+	err := svc.requireLineageOfResource(t.Context(), &documentuploadports.CreateSessionRequest{
+		TenantInfo:   tenant,
+		ResourceID:   "shp_mine",
+		ResourceType: "shipment",
+	}, lineageID)
+	require.Error(t, err)
+
+	require.NoError(t, svc.requireLineageOfResource(t.Context(), &documentuploadports.CreateSessionRequest{
+		TenantInfo:   tenant,
+		ResourceID:   "shp_theirs",
+		ResourceType: "shipment",
+	}, lineageID), "a new version of the record's own document is allowed")
 }
