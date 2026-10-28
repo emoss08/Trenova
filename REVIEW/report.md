@@ -8,7 +8,7 @@ numbers are in [baseline.md](baseline.md).
 
 | Check | Baseline (`36d426b9`) | Final (this branch) |
 |---|---|---|
-| Go unit tests (`services/tms`, `-tags=nomsgpack`) | 12 packages failing | FINAL_GO_UNIT |
+| Go unit tests (`services/tms`, `-tags=nomsgpack`) | 12 packages failing | 2 failing, both waiting on you (below); 865 pass, `minio` included once its image can be pulled |
 | Go integration tests in the 11 packages this branch touches | not run (CI red) | all 11 pass on PostGIS 18 and Redis 8, including the two new ones |
 | golangci-lint v2.12.2 as CI runs it (`--new-from-rev`), and archlint | not established (CI Lint dies at "Set up Go") | 0 new issues; archlint clean. A full run without `--new-from-rev` reports 704 issues, all pre-existing (CI gates on new issues only) |
 | Codegen checks (gqlexec + e2e, agentread, schema stamp, projections, keel tables, safety doc, write coverage) | not run | all pass with no diff |
@@ -24,7 +24,8 @@ What is still red and why:
 
 - `internal/deskbench` `TestScenarioSplits_MatchTheLedger`: the split ledger needs a
   decision, not a fix (§5).
-- `agent/app/agentevalgate` `Test*AgainstFloorsHybrid`: the stored query embeddings were
+- `agent/app/agentevalgate` `Test*AgainstFloorsHybrid` (its snapshot and ledger tests now
+  pass): the stored query embeddings were
   recorded with an earlier embedding model and need re-recording against Ollama
   `nomic-embed-text`, which this environment cannot reach. Re-record with `-update`, then
   run without it.
@@ -154,6 +155,7 @@ Every security fix in §2 marked **Fixed** is also a bug fix, with its own regre
 | `userservice`, `userhandler` ChangeMyPassword tests | the call takes the session scope now (and assert the new behaviour) |
 | permission engine and cache fakes | `Epoch` takes the user and returns both epochs |
 | `userresolver` harness | built the user service without the permission engine production always wires, which the sign-in check of `8243ca21` reads |
+| `agentevalgate` catalog snapshot and selection ledger | the snapshot carries the corrected tool descriptions; taking `masterdata_create_commodity` off the intake template moved one case ("discard the blank scanned page") into the Master data steward's held-out split (§5) |
 | `config` "database defaults" | asserted the `prefer` default the config's own validation refused; the new `TestAConfigWithoutAnSSLModeLoadsWithTLSRequired` failed against it |
 
 ### The code was wrong, so it was fixed
@@ -174,7 +176,8 @@ No test was deleted, skipped or loosened, and no lint suppression was added.
   a risk desk must not change a carrier's status) and `masterdata_create_commodity` to
   IntakeDesk (not on the agent allow-list). Both are removed and marked `// REVIEW:` in
   `agentdefinition/tools.go`. Either keep them out, or add the tool to the allow-list and
-  change the test that forbids it.
+  change the test that forbids it. Removing the intake tool moved one eval case into the
+  held-out split (`24987baf`); restoring it moves the case back.
 - **Desk credential list.** The operation no longer selects `Worker.canBeAssigned`,
   `assignmentBlocked` and `profile.complianceStatus`. If the desk needs them, make the fields
   nullable and `@requiresRead` so they can leave the reference view. That is a schema change.
