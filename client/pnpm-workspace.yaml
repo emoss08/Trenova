@@ -16,6 +16,10 @@ overrides:
   # GHSA-834v-8h66-3h79: vitest's optional happy-dom peer resolved to a
   # version that runs an unsanitized import alias as host code.
   happy-dom: ^21.0.4
+  # GHSA-238p-pmpm-9mq7: rehype-katex and micromark-extension-math (via
+  # remark-math) still declare katex ^0.16, which has no fixed release; the
+  # app renders with katex 0.19, so they share it.
+  katex: ^0.19.1
 # Packages that must resolve once (see singleton-packages.ts). Every
 # package.json references them as "catalog:" so versions cannot drift.
 catalog:
