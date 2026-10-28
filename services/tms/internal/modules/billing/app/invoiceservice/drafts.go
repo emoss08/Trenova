@@ -43,6 +43,11 @@ func (s *Service) UpdateDraft(
 	if err = refuseDeliveryUpdate(entity, req); err != nil {
 		return nil, err
 	}
+	if req.AttachmentIDs != nil {
+		if err = s.requireAttachable(ctx, req.TenantInfo, actor, *req.AttachmentIDs); err != nil {
+			return nil, err
+		}
+	}
 
 	previous := *entity
 	applyDraftUpdate(entity, req)

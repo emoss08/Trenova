@@ -321154,7 +321154,7 @@
     ]
   },
   "You do not have permission to read documents": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
@@ -321199,7 +321199,7 @@
     ]
   },
   "You do not have permission to send {0}": {
-    "sites": 1,
+    "sites": 2,
     "scope": [
       "go"
     ],
