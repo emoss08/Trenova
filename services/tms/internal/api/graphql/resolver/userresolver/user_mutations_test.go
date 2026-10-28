@@ -11,9 +11,9 @@ import (
 	"github.com/emoss08/trenova/internal/api/graphql/resolver/resolvertest"
 	"github.com/emoss08/trenova/internal/modules/identity/app/passwordresetservice"
 	"github.com/emoss08/trenova/internal/modules/identity/app/roleservice"
-	"github.com/emoss08/trenova/internal/modules/identity/identitytest"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/permission"
 	"github.com/emoss08/trenova/internal/modules/identity/domain/tenant"
+	"github.com/emoss08/trenova/internal/modules/identity/identitytest"
 	"github.com/emoss08/trenova/internal/modules/identity/ports/tenantports"
 	"github.com/emoss08/trenova/internal/testutil/mocks/auditportsmock"
 	"github.com/emoss08/trenova/internal/testutil/mocks/tenantportsmock"
@@ -76,10 +76,11 @@ func newHarness(t *testing.T, granted ...string) *harness {
 	permissions := &resolvertest.GrantingPermissionEngine{Granted: grants}
 
 	service := identitytest.NewUserServiceForTest(identitytest.UserServiceDeps{
-		Users:   repo,
-		Audit:   audit,
-		Roles:   roles,
-		Invites: invites,
+		Users:       repo,
+		Audit:       audit,
+		Roles:       roles,
+		Invites:     invites,
+		Permissions: permissions,
 	})
 
 	userID := pulid.MustNew("usr_")
